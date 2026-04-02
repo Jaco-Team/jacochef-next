@@ -240,15 +240,15 @@ function getOcrResolveIssue(ocrItem, vendorItem, selectedPackOption) {
 }
 
 function getOcrQuantityData(ocrItem, pqValue = "") {
-  const quantity = parseOcrAmount(ocrItem?.quantity, 2);
+  const quantity = parseOcrAmount(ocrItem?.quantity, BILLING_PACK_COUNT_SCALE);
   const resolvedPq = normalizeOcrText(pqValue);
   const pqNumber = parseOcrNumericValue(resolvedPq || ocrItem?.pq);
 
   if (quantity && pqNumber !== null && pqNumber > 0) {
     return {
       count: quantity,
-      pq: resolvedPq || parseOcrAmount(pqNumber, 2),
-      factUnit: (Number(quantity) * pqNumber).toFixed(2),
+      pq: resolvedPq || parseOcrAmount(pqNumber, BILLING_PACK_COUNT_SCALE),
+      factUnit: getBillingQuantityText(Number(quantity) * pqNumber),
     };
   }
 
@@ -369,6 +369,21 @@ function getBillItemUnitPrice(item) {
 }
 
 const BILLING_DECIMAL_SCALE = 2;
+const BILLING_PACK_COUNT_SCALE = 3;
+
+function truncateBillingNumericValue(value, fractionDigits = BILLING_PACK_COUNT_SCALE) {
+  const numericValue = parseOcrNumericValue(value);
+
+  if (numericValue === null) {
+    return null;
+  }
+
+  const factor = 10 ** fractionDigits;
+  const adjustedValue = numericValue + (numericValue >= 0 ? 1 : -1) * 1e-9;
+  const truncatedValue = Math.trunc(adjustedValue * factor) / factor;
+
+  return Number(truncatedValue.toFixed(fractionDigits));
+}
 
 function formatBillingNumber(
   value,
@@ -389,6 +404,23 @@ function formatBillingNumber(
 
 function formatBillingAmount(value) {
   return formatBillingNumber(value, BILLING_DECIMAL_SCALE, BILLING_DECIMAL_SCALE);
+}
+
+function formatBillingQuantity(
+  value,
+  minimumFractionDigits = 0,
+  maximumFractionDigits = BILLING_PACK_COUNT_SCALE,
+) {
+  const numericValue = truncateBillingNumericValue(value, maximumFractionDigits);
+
+  if (numericValue === null) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(numericValue);
 }
 
 function formatBillingInteger(value) {
@@ -415,8 +447,53 @@ function formatBillingFieldValue(value) {
     : formatBillingAmount(numericValue);
 }
 
+function getBillingQuantityText(value, fractionDigits = BILLING_PACK_COUNT_SCALE) {
+  const numericValue = truncateBillingNumericValue(value, fractionDigits);
+
+  if (numericValue === null) {
+    return "";
+  }
+
+  return numericValue.toFixed(fractionDigits).replace(/\.?0+$/, "");
+}
+
+function getBillingFactUnitText(countValue, pqValue) {
+  const numericCount = parseOcrNumericValue(countValue);
+  const numericPq = parseOcrNumericValue(pqValue);
+
+  if (numericCount === null || numericPq === null) {
+    return "";
+  }
+
+  return getBillingQuantityText(numericCount * numericPq);
+}
+
+function formatBillingQuantityFieldValue(value) {
+  const normalizedValue = normalizeOcrText(value);
+
+  if (!normalizedValue.length) {
+    return "";
+  }
+
+  const quantityText = getBillingQuantityText(value);
+
+  return quantityText.length
+    ? quantityText.replace(/\./g, ",")
+    : normalizedValue.replace(/\./g, ",");
+}
+
 function formatBillingValueWithUnit(value, unit = "") {
   const formattedValue = formatBillingNumber(value);
+
+  if (formattedValue === "—") {
+    return unit ? `— ${unit}` : "—";
+  }
+
+  return unit ? `${formattedValue} ${unit}` : formattedValue;
+}
+
+function formatBillingQuantityWithUnit(value, unit = "") {
+  const formattedValue = formatBillingQuantity(value);
 
   if (formattedValue === "—") {
     return unit ? `— ${unit}` : "—";
@@ -436,7 +513,7 @@ function formatBillingPackOptions(options = []) {
 
     return {
       ...option,
-      name: formatBillingNumber(numericValue),
+      name: formatBillingQuantity(numericValue),
     };
   });
 }
@@ -467,11 +544,15 @@ function getRoundedBillingDecimalText(value, fractionDigits = BILLING_DECIMAL_SC
 
 function getBillingDecimalEvent(
   event,
-  { fixed = false, fractionDigits = BILLING_DECIMAL_SCALE } = {},
+  { fixed = false, fractionDigits = BILLING_DECIMAL_SCALE, stripTrailingSeparator = false } = {},
 ) {
-  const nextValue = fixed
+  let nextValue = fixed
     ? getRoundedBillingDecimalText(event?.target?.value, fractionDigits)
     : normalizeBillingDecimalText(event?.target?.value, fractionDigits);
+
+  if (stripTrailingSeparator) {
+    nextValue = nextValue.replace(/[.]$/, "");
+  }
 
   if (event?.target) {
     event.target.value = nextValue;
@@ -1615,7 +1696,7 @@ const useStore = create((set, get) => ({
         return it;
       });
 
-      item.fact_unit = Number(item.fact_unit).toFixed(2);
+      item.fact_unit = getBillingQuantityText(item.fact_unit);
       item.price_item = item.price;
       item.price = getBillItemUnitPrice(item);
 
@@ -1987,10 +2068,7 @@ const useStore = create((set, get) => ({
 
   changeCount: (event) => {
     const count = event.target.value;
-    const numericPq = parseOcrNumericValue(get().pq);
-    const numericCount = parseOcrNumericValue(count);
-    const fact_unit =
-      numericPq !== null && numericCount !== null ? (numericPq * numericCount).toFixed(2) : "";
+    const fact_unit = getBillingFactUnitText(count, get().pq);
 
     set({
       count,
@@ -2000,10 +2078,7 @@ const useStore = create((set, get) => ({
 
   reCount: () => {
     const count = get().count;
-    const numericPq = parseOcrNumericValue(get().pq);
-    const numericCount = parseOcrNumericValue(count);
-    const fact_unit =
-      numericPq !== null && numericCount !== null ? (numericPq * numericCount).toFixed(2) : "";
+    const fact_unit = getBillingFactUnitText(count, get().pq);
 
     set({
       fact_unit: fact_unit ? fact_unit : "",
@@ -2217,7 +2292,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].pq = pq;
     vendor_items[0].all_ed_izmer = all_ed_izmer;
     vendor_items[0].count = count;
-    vendor_items[0].fact_unit = Number(fact_unit).toFixed(2);
+    vendor_items[0].fact_unit = getBillingQuantityText(fact_unit);
     vendor_items[0].price_item = summ;
     vendor_items[0].price_w_nds = sum_w_nds;
     vendor_items[0].price = getBillItemUnitPrice(vendor_items[0]);
@@ -2231,7 +2306,7 @@ const useStore = create((set, get) => ({
           it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
       );
 
-      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
       const nds = get().check_nds_bill(
@@ -2322,7 +2397,7 @@ const useStore = create((set, get) => ({
       );
 
       // if(item){
-      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
       const nds = get().check_nds_bill(
@@ -2447,13 +2522,11 @@ const useStore = create((set, get) => ({
         const numericValue = parseOcrNumericValue(value);
 
         if (type === "pq") {
-          item.fact_unit =
-            numericPq !== null && numericCount !== null ? (numericPq * numericCount).toFixed(2) : 0;
+          item.fact_unit = getBillingFactUnitText(item.count, item.pq) || 0;
         }
 
         if (numericValue !== null && numericValue > 0 && type === "count") {
-          item.fact_unit =
-            numericValue !== null && numericPq !== null ? (numericValue * numericPq).toFixed(2) : 0;
+          item.fact_unit = getBillingFactUnitText(value, item.pq) || 0;
         } else {
           if (type === "count") {
             item.fact_unit = 0;
@@ -2590,11 +2663,20 @@ function FormVendorItems({ showHeader = true }) {
           type="text"
           inputProps={{ inputMode: "decimal" }}
           isDecimalMask
-          decimalScale={BILLING_DECIMAL_SCALE}
+          decimalScale={BILLING_PACK_COUNT_SCALE}
           label="Кол-во упаковок"
           value={count}
-          func={(event) => changeCount(getBillingDecimalEvent(event))}
-          onBlur={(event) => changeCount(getBillingDecimalEvent(event, { fixed: true }))}
+          func={(event) =>
+            changeCount(getBillingDecimalEvent(event, { fractionDigits: BILLING_PACK_COUNT_SCALE }))
+          }
+          onBlur={(event) =>
+            changeCount(
+              getBillingDecimalEvent(event, {
+                fractionDigits: BILLING_PACK_COUNT_SCALE,
+                stripTrailingSeparator: true,
+              }),
+            )
+          }
         />
       </Grid>
       <Grid
@@ -2606,7 +2688,7 @@ function FormVendorItems({ showHeader = true }) {
         <MyTextInput
           label="Кол-вo"
           disabled={true}
-          value={formatBillingFieldValue(fact_unit)}
+          value={formatBillingQuantityFieldValue(fact_unit)}
           className="disabled_input"
         />
       </Grid>
@@ -2777,11 +2859,14 @@ function VendorItemsTableEdit({ showHeader = true }) {
                       </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
-                        {formatBillingValueWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
+                        {formatBillingQuantityWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
                       </TableCell>
-                      <TableCell>{formatBillingNumber(item?.data_bill?.count)}</TableCell>
+                      <TableCell>{formatBillingQuantity(item?.data_bill?.count)}</TableCell>
                       <TableCell style={{ whiteSpace: "nowrap" }}>
-                        {formatBillingValueWithUnit(item?.data_bill?.fact_unit, item.ed_izmer_name)}
+                        {formatBillingQuantityWithUnit(
+                          item?.data_bill?.fact_unit,
+                          item.ed_izmer_name,
+                        )}
                       </TableCell>
                       <TableCell>{item?.data_bill?.nds}</TableCell>
                       <TableCell>{formatBillingCurrency(item?.data_bill?.price)}</TableCell>
@@ -2842,15 +2927,25 @@ function VendorItemsTableEdit({ showHeader = true }) {
                         type="text"
                         inputProps={{ inputMode: "decimal" }}
                         isDecimalMask
-                        decimalScale={BILLING_DECIMAL_SCALE}
+                        decimalScale={BILLING_PACK_COUNT_SCALE}
                         label=""
                         value={item.count}
                         func={(event) =>
-                          changeDataTable(getBillingDecimalEvent(event), "count", item.id, key)
+                          changeDataTable(
+                            getBillingDecimalEvent(event, {
+                              fractionDigits: BILLING_PACK_COUNT_SCALE,
+                            }),
+                            "count",
+                            item.id,
+                            key,
+                          )
                         }
                         onBlur={(event) =>
                           changeDataTable(
-                            getBillingDecimalEvent(event, { fixed: true }),
+                            getBillingDecimalEvent(event, {
+                              fractionDigits: BILLING_PACK_COUNT_SCALE,
+                              stripTrailingSeparator: true,
+                            }),
                             "count",
                             item.id,
                             key,
@@ -2859,7 +2954,7 @@ function VendorItemsTableEdit({ showHeader = true }) {
                       />
                     </TableCell>
                     <TableCell style={{ whiteSpace: "nowrap" }}>
-                      {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                     </TableCell>
                     <TableCell>{item.nds}</TableCell>
                     <TableCell className="ceil_white">
@@ -3037,11 +3132,14 @@ function VendorItemsTableView({ showHeader = true }) {
                       </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
-                        {formatBillingValueWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
+                        {formatBillingQuantityWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
                       </TableCell>
-                      <TableCell>{formatBillingNumber(item?.data_bill?.count)}</TableCell>
+                      <TableCell>{formatBillingQuantity(item?.data_bill?.count)}</TableCell>
                       <TableCell style={{ whiteSpace: "nowrap" }}>
-                        {formatBillingValueWithUnit(item?.data_bill?.fact_unit, item.ed_izmer_name)}
+                        {formatBillingQuantityWithUnit(
+                          item?.data_bill?.fact_unit,
+                          item.ed_izmer_name,
+                        )}
                       </TableCell>
                       <TableCell>{item?.data_bill?.nds}</TableCell>
                       <TableCell>{formatBillingCurrency(item?.data_bill?.price)}</TableCell>
@@ -3068,10 +3166,12 @@ function VendorItemsTableView({ showHeader = true }) {
                       </TableCell>
                     )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
-                    <TableCell className="ceil_white">{formatBillingNumber(item.pq)}</TableCell>
-                    <TableCell className="ceil_white">{formatBillingNumber(item.count)}</TableCell>
+                    <TableCell className="ceil_white">{formatBillingQuantity(item.pq)}</TableCell>
+                    <TableCell className="ceil_white">
+                      {formatBillingQuantity(item.count)}
+                    </TableCell>
                     <TableCell style={{ whiteSpace: "nowrap" }}>
-                      {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                     </TableCell>
                     <TableCell>{item.nds}</TableCell>
                     <TableCell className="ceil_white">
@@ -3173,11 +3273,14 @@ function VendorItemsTableView_min() {
                     </TableCell>
                     <TableCell>До</TableCell>
                     <TableCell>
-                      {formatBillingValueWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
                     </TableCell>
-                    <TableCell>{formatBillingNumber(item?.data_bill?.count)}</TableCell>
+                    <TableCell>{formatBillingQuantity(item?.data_bill?.count)}</TableCell>
                     <TableCell style={{ whiteSpace: "nowrap" }}>
-                      {formatBillingValueWithUnit(item?.data_bill?.fact_unit, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(
+                        item?.data_bill?.fact_unit,
+                        item.ed_izmer_name,
+                      )}
                     </TableCell>
                     <TableCell>{item?.data_bill?.nds}</TableCell>
                     <TableCell>{formatBillingCurrency(item?.data_bill?.price)}</TableCell>
@@ -3198,10 +3301,10 @@ function VendorItemsTableView_min() {
                     </TableCell>
                   )}
                   {!item?.data_bill ? null : <TableCell>После</TableCell>}
-                  <TableCell className="ceil_white">{formatBillingNumber(item.pq)}</TableCell>
-                  <TableCell className="ceil_white">{formatBillingNumber(item.count)}</TableCell>
+                  <TableCell className="ceil_white">{formatBillingQuantity(item.pq)}</TableCell>
+                  <TableCell className="ceil_white">{formatBillingQuantity(item.count)}</TableCell>
                   <TableCell style={{ whiteSpace: "nowrap" }}>
-                    {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                    {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                   </TableCell>
                   <TableCell>{item.nds}</TableCell>
                   <TableCell className="ceil_white">
@@ -4094,11 +4197,11 @@ class Billing_Accordion extends React.Component {
                       >
                         <TableCell> {item.item_name} </TableCell>
                         <TableCell>
-                          {formatBillingValueWithUnit(item.pq, item.ed_izmer_name)}
+                          {formatBillingQuantityWithUnit(item.pq, item.ed_izmer_name)}
                         </TableCell>
-                        <TableCell>{formatBillingNumber(item.count)}</TableCell>
+                        <TableCell>{formatBillingQuantity(item.count)}</TableCell>
                         <TableCell>
-                          {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                          {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                         </TableCell>
                         <TableCell>{formatBillingCurrency(item.price_w_nds)}</TableCell>
                       </TableRow>
@@ -4559,6 +4662,7 @@ class Billing_Edit_ extends React.Component {
       module: "billing",
       module_name: "",
       is_load: false,
+      isSavingAction: false,
       isUploadProcessing: false,
       uploadBackdropMeta: {
         mainFiles: 0,
@@ -4616,6 +4720,21 @@ class Billing_Edit_ extends React.Component {
       this.myDropzone.off?.(eventName, this.syncDropzoneCounts);
     });
   }
+
+  startSaveAction = () => {
+    this.isClick = true;
+    this.setState({
+      isSavingAction: true,
+    });
+  };
+
+  finishSaveAction = (nextState = {}) => {
+    this.isClick = false;
+    this.setState({
+      isSavingAction: false,
+      ...nextState,
+    });
+  };
 
   getData_old = (method, data = {}) => {
     this.setState({
@@ -5209,7 +5328,7 @@ class Billing_Edit_ extends React.Component {
   async saveNewBill(type_save, check_err = true) {
     if (this.isClick === true) return;
 
-    this.isClick = true;
+    this.startSaveAction();
 
     if (type_save != "type") {
       this.setState({
@@ -5261,7 +5380,7 @@ class Billing_Edit_ extends React.Component {
     if (new_bill_items.length > 0) {
       showAlert(false, "Не все даныне в товаре заполнены");
 
-      this.isClick = false;
+      this.finishSaveAction();
 
       return;
     }
@@ -5304,7 +5423,7 @@ class Billing_Edit_ extends React.Component {
         modelCheckErrItems: true,
       });
 
-      this.isClick = false;
+      this.finishSaveAction();
 
       return;
     }
@@ -5312,7 +5431,7 @@ class Billing_Edit_ extends React.Component {
     if (!this.myDropzone || this.myDropzone["files"].length === 0) {
       showAlert(false, "Нет изображений документа");
 
-      this.isClick = false;
+      this.finishSaveAction();
 
       return;
     }
@@ -5324,7 +5443,7 @@ class Billing_Edit_ extends React.Component {
     ) {
       showAlert(false, "Нет изображений счет-фактуры");
 
-      this.isClick = false;
+      this.finishSaveAction();
 
       return;
     }
@@ -5364,66 +5483,76 @@ class Billing_Edit_ extends React.Component {
       bill_base_id: bill_base_id,
     };
 
-    const res = await this.getData("save_new", data);
+    try {
+      const res = await this.getData("save_new", data);
 
-    if (res.st === true) {
-      if (res?.text && res.text.length > 0) {
+      if (res.st === true) {
+        if (res?.text && res.text.length > 0) {
+          showAlert(res.st, res.text);
+        }
+
+        global_point_id = point?.id;
+        global_new_bill_id = res.bill_id;
+
+        const mainUploadFiles = this.getPendingDropzoneFiles(this.myDropzone);
+        const facturUploadFiles =
+          parseInt(type) == 2 && DropzoneDop ? this.getPendingDropzoneFiles(DropzoneDop) : [];
+        const uploadTargets = [
+          mainUploadFiles.length ? { dropzone: this.myDropzone } : null,
+          facturUploadFiles.length ? { dropzone: DropzoneDop } : null,
+        ].filter(Boolean);
+
+        is_return = false;
+
+        this.setState({
+          isUploadProcessing: uploadTargets.length > 0,
+          uploadBackdropMeta: {
+            mainFiles: mainUploadFiles.length,
+            facturFiles: facturUploadFiles.length,
+          },
+        });
+
+        const uploadPromises = uploadTargets.map(({ dropzone }) =>
+          this.waitForDropzoneQueue(dropzone),
+        );
+
+        this.myDropzone.processQueue();
+
+        if (parseInt(type) == 2 && DropzoneDop && facturUploadFiles.length > 0) {
+          DropzoneDop.processQueue();
+        }
+
+        const uploadResults = await Promise.all(uploadPromises);
+        const hasUploadErrors = uploadResults.some((item) => item.hasErrors);
+
+        this.finishSaveAction({
+          isUploadProcessing: false,
+          uploadBackdropMeta: {
+            mainFiles: 0,
+            facturFiles: 0,
+          },
+        });
+
+        if (hasUploadErrors) {
+          showAlert(false, "Документ сохранен, но часть изображений не загрузилась");
+          return;
+        }
+
+        window.location = "/billing";
+      } else {
+        this.finishSaveAction();
         showAlert(res.st, res.text);
       }
-
-      global_point_id = point?.id;
-      global_new_bill_id = res.bill_id;
-
-      const mainUploadFiles = this.getPendingDropzoneFiles(this.myDropzone);
-      const facturUploadFiles =
-        parseInt(type) == 2 && DropzoneDop ? this.getPendingDropzoneFiles(DropzoneDop) : [];
-      const uploadTargets = [
-        mainUploadFiles.length ? { dropzone: this.myDropzone } : null,
-        facturUploadFiles.length ? { dropzone: DropzoneDop } : null,
-      ].filter(Boolean);
-
-      is_return = false;
-
-      this.setState({
-        isUploadProcessing: uploadTargets.length > 0,
-        uploadBackdropMeta: {
-          mainFiles: mainUploadFiles.length,
-          facturFiles: facturUploadFiles.length,
-        },
-      });
-
-      const uploadPromises = uploadTargets.map(({ dropzone }) =>
-        this.waitForDropzoneQueue(dropzone),
-      );
-
-      this.myDropzone.processQueue();
-
-      if (parseInt(type) == 2 && DropzoneDop && facturUploadFiles.length > 0) {
-        DropzoneDop.processQueue();
-      }
-
-      const uploadResults = await Promise.all(uploadPromises);
-      const hasUploadErrors = uploadResults.some((item) => item.hasErrors);
-
-      this.setState({
+    } catch (error) {
+      console.error("Failed to save new billing document", error);
+      this.finishSaveAction({
         isUploadProcessing: false,
         uploadBackdropMeta: {
           mainFiles: 0,
           facturFiles: 0,
         },
       });
-
-      this.isClick = false;
-
-      if (hasUploadErrors) {
-        showAlert(false, "Документ сохранен, но часть изображений не загрузилась");
-        return;
-      }
-
-      window.location = "/billing";
-    } else {
-      this.isClick = false;
-      showAlert(res.st, res.text);
+      showAlert(false, "Не удалось сохранить документ. Попробуй еще раз");
     }
   }
 
@@ -5452,6 +5581,7 @@ class Billing_Edit_ extends React.Component {
       is_horizontal,
       is_vertical,
     } = this.props.store;
+    const isSaveActionLocked = this.state.isSavingAction || this.state.isUploadProcessing;
 
     return (
       <>
@@ -5465,6 +5595,7 @@ class Billing_Edit_ extends React.Component {
           }}
           open={
             this.state.is_load ||
+            this.state.isSavingAction ||
             this.state.isOcrLoad ||
             this.state.isUploadProcessing ||
             is_load_store
@@ -5582,6 +5713,7 @@ class Billing_Edit_ extends React.Component {
               variant="contained"
               onClick={this.saveNewBill.bind(this, "type", false)}
               color="success"
+              disabled={isSaveActionLocked}
               sx={{
                 minWidth: { xs: 0, sm: 210 },
                 width: { xs: "100%", sm: "auto" },
@@ -5701,13 +5833,13 @@ class Billing_Edit_ extends React.Component {
                           variant="body2"
                           color="text.secondary"
                         >
-                          OCR: {formatBillingNumber(item.ocrItem?.quantity)}
-                          {formatBillingNumber(item.ocrItem?.quantity) === "—" ? "" : " упак."}
+                          OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
+                          {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
                           {normalizeOcrText(item.ocrItem?.pq)
-                            ? ` x ${formatBillingNumber(item.ocrItem?.pq)}`
+                            ? ` x ${formatBillingQuantity(item.ocrItem?.pq)}`
                             : ""}
                           {item.selectedPq
-                            ? ` = ${formatBillingNumber(
+                            ? ` = ${formatBillingQuantity(
                                 getOcrQuantityData(
                                   item.ocrItem,
                                   normalizeOcrText(item.selectedPq?.name ?? item.selectedPq?.id),
@@ -5868,7 +6000,6 @@ class Billing_Edit_ extends React.Component {
             <BillingPageHero
               onBack={this.returnFN.bind(this)}
               title="Новый документ"
-              subtitle="Собери накладную в одном потоке: проверь реквизиты, загрузи фотографии, распознай OCR и сразу отмодерируй позиции перед сохранением."
             />
 
             <BillingSection
@@ -6025,6 +6156,7 @@ class Billing_Edit_ extends React.Component {
                           variant="contained"
                           color="success"
                           onClick={this.saveNewBill.bind(this, "current", true)}
+                          disabled={isSaveActionLocked}
                           sx={{
                             minWidth: { xs: "100%", sm: 180 },
                             height: 48,
@@ -6041,6 +6173,7 @@ class Billing_Edit_ extends React.Component {
                           variant="contained"
                           color="info"
                           onClick={this.saveNewBill.bind(this, "next", true)}
+                          disabled={isSaveActionLocked}
                           sx={{
                             minWidth: { xs: "100%", sm: 220 },
                             height: 48,

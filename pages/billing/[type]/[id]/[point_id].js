@@ -146,6 +146,7 @@ var global_new_bill_id = 0;
 var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
+var is_return = false;
 const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
 const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
 // const API_URL = "http://127.0.0.1:8000/api";
@@ -220,6 +221,21 @@ function parseBillingNumericValue(value) {
 }
 
 const BILLING_DECIMAL_SCALE = 2;
+const BILLING_PACK_COUNT_SCALE = 3;
+
+function truncateBillingNumericValue(value, fractionDigits = BILLING_PACK_COUNT_SCALE) {
+  const numericValue = parseBillingNumericValue(value);
+
+  if (numericValue === null) {
+    return null;
+  }
+
+  const factor = 10 ** fractionDigits;
+  const adjustedValue = numericValue + (numericValue >= 0 ? 1 : -1) * 1e-9;
+  const truncatedValue = Math.trunc(adjustedValue * factor) / factor;
+
+  return Number(truncatedValue.toFixed(fractionDigits));
+}
 
 function formatBillingNumber(
   value,
@@ -240,6 +256,23 @@ function formatBillingNumber(
 
 function formatBillingAmount(value) {
   return formatBillingNumber(value, BILLING_DECIMAL_SCALE, BILLING_DECIMAL_SCALE);
+}
+
+function formatBillingQuantity(
+  value,
+  minimumFractionDigits = 0,
+  maximumFractionDigits = BILLING_PACK_COUNT_SCALE,
+) {
+  const numericValue = truncateBillingNumericValue(value, maximumFractionDigits);
+
+  if (numericValue === null) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(numericValue);
 }
 
 function formatBillingCurrency(value) {
@@ -277,6 +310,41 @@ function formatBillingFieldValue(value) {
     : formatBillingAmount(numericValue);
 }
 
+function getBillingQuantityText(value, fractionDigits = BILLING_PACK_COUNT_SCALE) {
+  const numericValue = truncateBillingNumericValue(value, fractionDigits);
+
+  if (numericValue === null) {
+    return "";
+  }
+
+  return numericValue.toFixed(fractionDigits).replace(/\.?0+$/, "");
+}
+
+function getBillingFactUnitText(countValue, pqValue) {
+  const numericCount = parseBillingNumericValue(countValue);
+  const numericPq = parseBillingNumericValue(pqValue);
+
+  if (numericCount === null || numericPq === null) {
+    return "";
+  }
+
+  return getBillingQuantityText(numericCount * numericPq);
+}
+
+function formatBillingQuantityFieldValue(value) {
+  const normalizedValue = normalizeBillingText(value);
+
+  if (!normalizedValue.length) {
+    return "";
+  }
+
+  const quantityText = getBillingQuantityText(value);
+
+  return quantityText.length
+    ? quantityText.replace(/\./g, ",")
+    : normalizedValue.replace(/\./g, ",");
+}
+
 function formatBillingValueWithUnit(value, unit = "") {
   const formattedValue = formatBillingNumber(value);
 
@@ -285,6 +353,33 @@ function formatBillingValueWithUnit(value, unit = "") {
   }
 
   return unit ? `${formattedValue} ${unit}` : formattedValue;
+}
+
+function formatBillingQuantityWithUnit(value, unit = "") {
+  const formattedValue = formatBillingQuantity(value);
+
+  if (formattedValue === "—") {
+    return unit ? `— ${unit}` : "—";
+  }
+
+  return unit ? `${formattedValue} ${unit}` : formattedValue;
+}
+
+function parseAccessFlag(value) {
+  return parseInt(value, 10) === 1;
+}
+
+function getBillingSectionMode(access, key) {
+  const editKey = `${key}_edit`;
+  const viewKey = `${key}_view`;
+  const canEdit = parseAccessFlag(access?.[editKey]);
+  const canView = canEdit || parseAccessFlag(access?.[viewKey]);
+
+  return canEdit ? "edit" : canView ? "show" : "hidden";
+}
+
+function hasBillingActionAccess(access, key) {
+  return parseAccessFlag(access?.[`${key}_access`]);
 }
 
 function formatBillingPackOptions(options = []) {
@@ -298,7 +393,7 @@ function formatBillingPackOptions(options = []) {
 
     return {
       ...option,
-      name: formatBillingNumber(numericValue),
+      name: formatBillingQuantity(numericValue),
     };
   });
 }
@@ -328,11 +423,15 @@ function getRoundedBillingDecimalText(value, fractionDigits = BILLING_DECIMAL_SC
 
 function getBillingDecimalEvent(
   event,
-  { fixed = false, fractionDigits = BILLING_DECIMAL_SCALE } = {},
+  { fixed = false, fractionDigits = BILLING_DECIMAL_SCALE, stripTrailingSeparator = false } = {},
 ) {
-  const nextValue = fixed
+  let nextValue = fixed
     ? getRoundedBillingDecimalText(event?.target?.value, fractionDigits)
     : normalizeBillingDecimalText(event?.target?.value, fractionDigits);
+
+  if (stripTrailingSeparator) {
+    nextValue = nextValue.replace(/[.]$/, "");
+  }
 
   if (event?.target) {
     event.target.value = nextValue;
@@ -478,15 +577,15 @@ function getOcrResolveIssue(ocrItem, vendorItem, selectedPackOption) {
 }
 
 function getOcrQuantityData(ocrItem, pqValue = "") {
-  const quantity = parseOcrAmount(ocrItem?.quantity, 2);
+  const quantity = parseOcrAmount(ocrItem?.quantity, BILLING_PACK_COUNT_SCALE);
   const resolvedPq = normalizeBillingText(pqValue);
   const pqNumber = parseBillingNumericValue(resolvedPq || ocrItem?.pq);
 
   if (quantity && pqNumber !== null && pqNumber > 0) {
     return {
       count: quantity,
-      pq: resolvedPq || parseOcrAmount(pqNumber, 2),
-      factUnit: (Number(quantity) * pqNumber).toFixed(2),
+      pq: resolvedPq || parseOcrAmount(pqNumber, BILLING_PACK_COUNT_SCALE),
+      factUnit: getBillingQuantityText(Number(quantity) * pqNumber),
     };
   }
 
@@ -1338,11 +1437,9 @@ var dropzoneOptions_bill = {
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      /*if( type_bill == 'bill' ){
-
-      }else{*/
-      window.location = "/billing";
-      //}
+      if (is_return == true) {
+        window.location = "/billing";
+      }
     });
 
     this.on("sending", function (file, xhr, data) {
@@ -1426,7 +1523,9 @@ var dropzoneOptions_bill_factur = {
       //show_modal_message('Результат операции', 'Накладная успешно сохранена');
       //window.location.pathname = '/billing';
 
-      window.location.pathname = "/billing";
+      if (is_return == true) {
+        window.location.pathname = "/billing";
+      }
     });
 
     this.on("sending", function (file, xhr, data) {
@@ -1680,7 +1779,7 @@ const useStore = create((set, get) => ({
         return it;
       });
 
-      item.fact_unit = Number(item.fact_unit).toFixed(2);
+      item.fact_unit = getBillingQuantityText(item.fact_unit);
       item.price_item = item.price;
       item.price = getBillItemUnitPrice(item);
       item.one_price_bill = item.price;
@@ -2194,10 +2293,7 @@ const useStore = create((set, get) => ({
 
   changeCount: (event) => {
     const count = event.target.value;
-    const pqValue = parseBillingNumericValue(get().pq);
-    const countValue = parseBillingNumericValue(count);
-    const fact_unit =
-      pqValue !== null && countValue !== null ? (pqValue * countValue).toFixed(2) : "";
+    const fact_unit = getBillingFactUnitText(count, get().pq);
 
     set({
       count,
@@ -2207,10 +2303,7 @@ const useStore = create((set, get) => ({
 
   reCount: () => {
     const count = get().count;
-    const pqValue = parseBillingNumericValue(get().pq);
-    const countValue = parseBillingNumericValue(count);
-    const fact_unit =
-      pqValue !== null && countValue !== null ? (pqValue * countValue).toFixed(2) : "";
+    const fact_unit = getBillingFactUnitText(count, get().pq);
 
     set({
       fact_unit,
@@ -2383,7 +2476,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].pq = pq;
     vendor_items[0].all_ed_izmer = all_ed_izmer;
     vendor_items[0].count = count;
-    vendor_items[0].fact_unit = Number(fact_unit).toFixed(2);
+    vendor_items[0].fact_unit = getBillingQuantityText(fact_unit);
     vendor_items[0].price_item = summ;
     vendor_items[0].price_w_nds = sum_w_nds;
     vendor_items[0].price = getBillItemUnitPrice(vendor_items[0]);
@@ -2398,7 +2491,7 @@ const useStore = create((set, get) => ({
           it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
       );
 
-      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
       const nds = get().check_nds_bill(
@@ -2501,7 +2594,7 @@ const useStore = create((set, get) => ({
         item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
       }
 
-      item.fact_unit = (Number(item.count) * Number(item.pq)).toFixed(2);
+      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
       // item.price_w_nds = Number(count) == 0 ? 0 : item.price_w_nds;
       item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
@@ -2651,13 +2744,11 @@ const useStore = create((set, get) => ({
         const numericValue = parseBillingNumericValue(value);
 
         if (type === "pq") {
-          item.fact_unit =
-            numericPq !== null && numericCount !== null ? (numericPq * numericCount).toFixed(2) : 0;
+          item.fact_unit = getBillingFactUnitText(item.count, item.pq) || 0;
         }
 
         if (numericValue !== null && numericValue > 0 && type === "count") {
-          item.fact_unit =
-            numericPq !== null && numericValue !== null ? (numericValue * numericPq).toFixed(2) : 0;
+          item.fact_unit = getBillingFactUnitText(value, item.pq) || 0;
         } else {
           if (type === "count") {
             item.fact_unit = 0;
@@ -3020,12 +3111,21 @@ function FormVendorItems() {
           type="text"
           inputProps={{ inputMode: "decimal" }}
           isDecimalMask
-          decimalScale={BILLING_DECIMAL_SCALE}
+          decimalScale={BILLING_PACK_COUNT_SCALE}
           label="Кол-во упаковок"
           sx={billingCompactTextInputSx}
           value={count}
-          func={(event) => changeCount(getBillingDecimalEvent(event))}
-          onBlur={(event) => changeCount(getBillingDecimalEvent(event, { fixed: true }))}
+          func={(event) =>
+            changeCount(getBillingDecimalEvent(event, { fractionDigits: BILLING_PACK_COUNT_SCALE }))
+          }
+          onBlur={(event) =>
+            changeCount(
+              getBillingDecimalEvent(event, {
+                fractionDigits: BILLING_PACK_COUNT_SCALE,
+                stripTrailingSeparator: true,
+              }),
+            )
+          }
         />
       </Grid>
       <Grid
@@ -3037,7 +3137,7 @@ function FormVendorItems() {
         <MyTextInput
           label="Кол-вo"
           disabled={true}
-          value={formatBillingFieldValue(fact_unit)}
+          value={formatBillingQuantityFieldValue(fact_unit)}
           sx={billingCompactTextInputSx}
         />
       </Grid>
@@ -3204,11 +3304,14 @@ function VendorItemsTableEdit() {
                       </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
-                        {formatBillingValueWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
+                        {formatBillingQuantityWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
                       </TableCell>
-                      <TableCell>{formatBillingNumber(item?.data_bill?.count)}</TableCell>
+                      <TableCell>{formatBillingQuantity(item?.data_bill?.count)}</TableCell>
                       <TableCell style={{ whiteSpace: "nowrap" }}>
-                        {formatBillingValueWithUnit(item?.data_bill?.fact_unit, item.ed_izmer_name)}
+                        {formatBillingQuantityWithUnit(
+                          item?.data_bill?.fact_unit,
+                          item.ed_izmer_name,
+                        )}
                       </TableCell>
                       <TableCell>{item?.data_bill?.nds}</TableCell>
                       <TableCell sx={billingNumericCellSx}>
@@ -3301,16 +3404,26 @@ function VendorItemsTableEdit() {
                         type="text"
                         inputProps={{ inputMode: "decimal" }}
                         isDecimalMask
-                        decimalScale={BILLING_DECIMAL_SCALE}
+                        decimalScale={BILLING_PACK_COUNT_SCALE}
                         label=""
                         sx={billingNumericInputSx}
                         value={item.count}
                         func={(event) =>
-                          changeDataTable(getBillingDecimalEvent(event), "count", item.id, key)
+                          changeDataTable(
+                            getBillingDecimalEvent(event, {
+                              fractionDigits: BILLING_PACK_COUNT_SCALE,
+                            }),
+                            "count",
+                            item.id,
+                            key,
+                          )
                         }
                         onBlur={(event) =>
                           changeDataTable(
-                            getBillingDecimalEvent(event, { fixed: true }),
+                            getBillingDecimalEvent(event, {
+                              fractionDigits: BILLING_PACK_COUNT_SCALE,
+                              stripTrailingSeparator: true,
+                            }),
                             "count",
                             item.id,
                             key,
@@ -3319,7 +3432,7 @@ function VendorItemsTableEdit() {
                       />
                     </TableCell>
                     <TableCell sx={billingNumericCellSx}>
-                      {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                     </TableCell>
                     <TableCell>{item.nds}</TableCell>
                     <TableCell className="ceil_white">
@@ -3485,11 +3598,14 @@ function VendorItemsTableView() {
                     </TableCell>
                     <TableCell>До</TableCell>
                     <TableCell>
-                      {formatBillingValueWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
                     </TableCell>
-                    <TableCell>{formatBillingNumber(item?.data_bill?.count)}</TableCell>
+                    <TableCell>{formatBillingQuantity(item?.data_bill?.count)}</TableCell>
                     <TableCell style={{ whiteSpace: "nowrap" }}>
-                      {formatBillingValueWithUnit(item?.data_bill?.fact_unit, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(
+                        item?.data_bill?.fact_unit,
+                        item.ed_izmer_name,
+                      )}
                     </TableCell>
                     <TableCell>{item?.data_bill?.nds}</TableCell>
                     <TableCell sx={billingNumericCellSx}>
@@ -3521,10 +3637,10 @@ function VendorItemsTableView() {
                     </TableCell>
                   )}
                   {!item?.data_bill ? null : <TableCell>После</TableCell>}
-                  <TableCell className="ceil_white">{formatBillingNumber(item.pq)}</TableCell>
-                  <TableCell className="ceil_white">{formatBillingNumber(item.count)}</TableCell>
+                  <TableCell className="ceil_white">{formatBillingQuantity(item.pq)}</TableCell>
+                  <TableCell className="ceil_white">{formatBillingQuantity(item.count)}</TableCell>
                   <TableCell sx={billingNumericCellSx}>
-                    {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                    {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                   </TableCell>
                   <TableCell>{item.nds}</TableCell>
                   <TableCell
@@ -3627,11 +3743,14 @@ function VendorItemsTableView_min() {
                     </TableCell>
                     <TableCell>До</TableCell>
                     <TableCell>
-                      {formatBillingValueWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(item?.data_bill?.pq, item.ed_izmer_name)}
                     </TableCell>
-                    <TableCell>{formatBillingNumber(item?.data_bill?.count)}</TableCell>
+                    <TableCell>{formatBillingQuantity(item?.data_bill?.count)}</TableCell>
                     <TableCell style={{ whiteSpace: "nowrap" }}>
-                      {formatBillingValueWithUnit(item?.data_bill?.fact_unit, item.ed_izmer_name)}
+                      {formatBillingQuantityWithUnit(
+                        item?.data_bill?.fact_unit,
+                        item.ed_izmer_name,
+                      )}
                     </TableCell>
                     <TableCell>{item?.data_bill?.nds}</TableCell>
                     <TableCell sx={billingNumericCellSx}>
@@ -3656,10 +3775,10 @@ function VendorItemsTableView_min() {
                     </TableCell>
                   )}
                   {!item?.data_bill ? null : <TableCell>После</TableCell>}
-                  <TableCell className="ceil_white">{formatBillingNumber(item.pq)}</TableCell>
-                  <TableCell className="ceil_white">{formatBillingNumber(item.count)}</TableCell>
+                  <TableCell className="ceil_white">{formatBillingQuantity(item.pq)}</TableCell>
+                  <TableCell className="ceil_white">{formatBillingQuantity(item.count)}</TableCell>
                   <TableCell sx={billingNumericCellSx}>
-                    {formatBillingValueWithUnit(item.fact_unit, item.ed_izmer_name)}
+                    {formatBillingQuantityWithUnit(item.fact_unit, item.ed_izmer_name)}
                   </TableCell>
                   <TableCell>{item.nds}</TableCell>
                   <TableCell
@@ -4792,7 +4911,7 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                         ...(pqTone ?? {}),
                       }}
                     >
-                      {formatBillingValueWithUnit(
+                      {formatBillingQuantityWithUnit(
                         unwrapBillingHistoryValue(itemRow.pq),
                         unwrapBillingHistoryValue(itemRow.ei_name),
                       )}
@@ -4803,7 +4922,7 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                         ...(countTone ?? {}),
                       }}
                     >
-                      {formatBillingNumber(unwrapBillingHistoryValue(itemRow.count))}
+                      {formatBillingQuantity(unwrapBillingHistoryValue(itemRow.count))}
                     </TableCell>
                     <TableCell
                       sx={{
@@ -4811,7 +4930,7 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                         ...(factCountTone ?? {}),
                       }}
                     >
-                      {formatBillingValueWithUnit(
+                      {formatBillingQuantityWithUnit(
                         unwrapBillingHistoryValue(itemRow.fact_count),
                         unwrapBillingHistoryValue(itemRow.ei_name),
                       )}
@@ -5373,6 +5492,12 @@ class Billing_Edit_ extends React.Component {
       module: "billing",
       module_name: "",
       is_load: false,
+      isSavingAction: false,
+      isUploadProcessing: false,
+      uploadBackdropMeta: {
+        mainFiles: 0,
+        facturFiles: 0,
+      },
 
       acces: null,
       type_doc: "",
@@ -5396,6 +5521,21 @@ class Billing_Edit_ extends React.Component {
       delText: "",
     };
   }
+
+  startSaveAction = () => {
+    this.isClick = true;
+    this.setState({
+      isSavingAction: true,
+    });
+  };
+
+  finishSaveAction = (nextState = {}) => {
+    this.isClick = false;
+    this.setState({
+      isSavingAction: false,
+      ...nextState,
+    });
+  };
 
   async componentDidMount() {
     const { clearForm } = this.props.store;
@@ -5434,8 +5574,10 @@ class Billing_Edit_ extends React.Component {
       vendor_id: res?.vendors[0]?.id,
     };
 
+    const nextAcces = res?.upd_access ?? null;
+
     this.setState({
-      acces: res?.acces,
+      acces: nextAcces,
       type_doc: data_bill[2],
     });
 
@@ -5444,7 +5586,7 @@ class Billing_Edit_ extends React.Component {
 
     const { getDataBill, setAcces } = this.props.store;
 
-    setAcces(res?.acces);
+    setAcces(nextAcces);
     getDataBill(res, point, items.items, docs);
 
     document.title = "Накладные";
@@ -5548,6 +5690,60 @@ class Billing_Edit_ extends React.Component {
 
   getOcrImageFiles = () => {
     return this.getMainDropzoneFiles().filter((file) => isImageDropzoneFile(file));
+  };
+
+  getPendingDropzoneFiles = (dropzone) => {
+    if (!dropzone) {
+      return [];
+    }
+
+    const queuedFiles = dropzone.getQueuedFiles?.() ?? [];
+    const uploadingFiles = dropzone.getUploadingFiles?.() ?? [];
+    const activeFiles = [...queuedFiles, ...uploadingFiles];
+
+    if (activeFiles.length) {
+      return activeFiles;
+    }
+
+    const acceptedFiles = dropzone.getAcceptedFiles?.() ?? dropzone.files ?? [];
+
+    return acceptedFiles.filter(
+      (file) =>
+        file && file.status !== "success" && file.status !== "canceled" && file.status !== "error",
+    );
+  };
+
+  waitForDropzoneQueue = (dropzone) => {
+    const pendingFiles = this.getPendingDropzoneFiles(dropzone);
+
+    if (!dropzone || !pendingFiles.length) {
+      return Promise.resolve({ hasErrors: false, filesCount: 0 });
+    }
+
+    return new Promise((resolve) => {
+      let isResolved = false;
+
+      const finalize = () => {
+        if (isResolved) {
+          return;
+        }
+
+        isResolved = true;
+
+        dropzone.off?.("queuecomplete", handleQueueComplete);
+
+        resolve({
+          hasErrors: dropzone.files.some((file) => file?.status === "error"),
+          filesCount: pendingFiles.length,
+        });
+      };
+
+      const handleQueueComplete = () => {
+        finalize();
+      };
+
+      dropzone.on("queuecomplete", handleQueueComplete);
+    });
   };
 
   getStoredOcrImageNames = () => {
@@ -6079,7 +6275,7 @@ class Billing_Edit_ extends React.Component {
   async saveEditBill(type_save, check_err = true) {
     if (this.isClick === true) return;
 
-    this.isClick = true;
+    this.startSaveAction();
 
     if (type_save != "type") {
       this.setState({
@@ -6134,7 +6330,7 @@ class Billing_Edit_ extends React.Component {
     if (new_bill_items.length > 0) {
       showAlert(false, "Не все даныне в товаре заполнены");
 
-      this.isClick = false;
+      this.finishSaveAction();
 
       return;
     }
@@ -6188,7 +6384,7 @@ class Billing_Edit_ extends React.Component {
         modelCheckErrItems: true,
       });
 
-      this.isClick = false;
+      this.finishSaveAction();
 
       return;
     }
@@ -6197,7 +6393,7 @@ class Billing_Edit_ extends React.Component {
       if (imgs_bill.length == 0 && (!DropzoneMain || DropzoneMain["files"].length === 0)) {
         showAlert(false, "Нет изображений документа");
 
-        this.isClick = false;
+        this.finishSaveAction();
 
         return;
       }
@@ -6210,7 +6406,7 @@ class Billing_Edit_ extends React.Component {
       ) {
         showAlert(false, "Нет изображений счет-фактуры");
 
-        this.isClick = false;
+        this.finishSaveAction();
 
         return;
       }
@@ -6261,42 +6457,86 @@ class Billing_Edit_ extends React.Component {
       count_change,
     };
 
-    const res = await this.getData("save_edit", data);
+    try {
+      const res = await this.getData("save_edit", data);
 
-    if (res.st === true) {
-      setTimeout(() => {
-        this.isClick = false;
-      }, 20000);
+      if (res.st === true) {
+        if (res?.text && res.text.length > 0) {
+          showAlert(res.st, res.text);
+        }
 
-      if (res?.text && res.text.length > 0) {
-        showAlert(res.st, res.text);
-      }
+        global_point_id = point?.id;
+        global_new_bill_id = res.bill_id;
 
-      global_point_id = point?.id;
-      global_new_bill_id = res.bill_id;
+        const mainUploadFiles = DropzoneMain ? this.getPendingDropzoneFiles(DropzoneMain) : [];
+        const facturUploadFiles =
+          parseInt(type) == 2 && DropzoneDop ? this.getPendingDropzoneFiles(DropzoneDop) : [];
+        const uploadTargets = [
+          mainUploadFiles.length ? { dropzone: DropzoneMain } : null,
+          facturUploadFiles.length ? { dropzone: DropzoneDop } : null,
+        ].filter(Boolean);
 
-      if (DropzoneMain && DropzoneMain["files"].length > 0) {
-        i = imgs_bill.length + 1;
-        DropzoneMain.processQueue();
-      }
+        if (!uploadTargets.length) {
+          this.finishSaveAction();
+          window.location.pathname = "/billing";
+          return;
+        }
 
-      if (parseInt(type) == 2 && DropzoneDop && DropzoneDop["files"].length > 0) {
-        i = imgs_factur.length + 1;
-        DropzoneDop.processQueue();
-      }
+        is_return = false;
 
-      if (
-        (!DropzoneMain || DropzoneMain["files"].length == 0) &&
-        (!DropzoneDop || DropzoneDop["files"].length == 0)
-      ) {
+        this.setState({
+          isUploadProcessing: true,
+          uploadBackdropMeta: {
+            mainFiles: mainUploadFiles.length,
+            facturFiles: facturUploadFiles.length,
+          },
+        });
+
+        const uploadPromises = uploadTargets.map(({ dropzone }) =>
+          this.waitForDropzoneQueue(dropzone),
+        );
+
+        if (mainUploadFiles.length) {
+          i = imgs_bill.length + 1;
+          DropzoneMain.processQueue();
+        }
+
+        if (facturUploadFiles.length) {
+          i = imgs_factur.length + 1;
+          DropzoneDop.processQueue();
+        }
+
+        const uploadResults = await Promise.all(uploadPromises);
+        const hasUploadErrors = uploadResults.some((item) => item.hasErrors);
+
+        this.finishSaveAction({
+          isUploadProcessing: false,
+          uploadBackdropMeta: {
+            mainFiles: 0,
+            facturFiles: 0,
+          },
+        });
+
+        if (hasUploadErrors) {
+          showAlert(false, "Документ сохранен, но часть изображений не загрузилась");
+          return;
+        }
+
         window.location.pathname = "/billing";
+      } else {
+        showAlert(res.st, res.text);
+        this.finishSaveAction();
       }
-    } else {
-      showAlert(res.st, res.text);
-
-      setTimeout(() => {
-        this.isClick = false;
-      }, 10000);
+    } catch (error) {
+      console.error("Failed to save billing edit document", error);
+      this.finishSaveAction({
+        isUploadProcessing: false,
+        uploadBackdropMeta: {
+          mainFiles: 0,
+          facturFiles: 0,
+        },
+      });
+      showAlert(false, "Не удалось сохранить документ. Попробуй еще раз");
     }
   }
 
@@ -6521,9 +6761,13 @@ class Billing_Edit_ extends React.Component {
       isImageFileName(fileName),
     ).length;
     const canUseOcr = [2, 5].includes(parseInt(bill?.type));
+    const headerMode = getBillingSectionMode(acces, "header");
+    const photoMode = getBillingSectionMode(acces, "photo");
+    const itemsMode = getBillingSectionMode(acces, "items");
+    const footerMode = getBillingSectionMode(acces, "footer");
 
     const actionButtons = [
-      parseInt(acces?.only_delete) === 1
+      hasBillingActionAccess(acces, "only_delete")
         ? {
             key: "delete",
             label: "Удалить документ",
@@ -6534,7 +6778,7 @@ class Billing_Edit_ extends React.Component {
             },
           }
         : null,
-      parseInt(acces?.only_return) === 1
+      hasBillingActionAccess(acces, "only_return")
         ? {
             key: "return-manager",
             label: "Ошибка: вернуть управляющему",
@@ -6544,7 +6788,7 @@ class Billing_Edit_ extends React.Component {
             },
           }
         : null,
-      parseInt(acces?.only_save) === 1
+      hasBillingActionAccess(acces, "only_save")
         ? {
             key: "save",
             label: "Сохранить изменения",
@@ -6552,7 +6796,7 @@ class Billing_Edit_ extends React.Component {
             onClick: this.saveEditBill.bind(this, "current", true),
           }
         : null,
-      parseInt(acces?.send_1c) === 1
+      hasBillingActionAccess(acces, "send_1c")
         ? {
             key: "send-1c",
             label: "Отправить в 1С",
@@ -6560,7 +6804,7 @@ class Billing_Edit_ extends React.Component {
             onClick: this.saveEditBill.bind(this, "next", true),
           }
         : null,
-      parseInt(acces?.pay) === 1
+      hasBillingActionAccess(acces, "pay")
         ? {
             key: "pay",
             label: "Оплатить",
@@ -6568,7 +6812,7 @@ class Billing_Edit_ extends React.Component {
             onClick: this.saveEditBill.bind(this, "next", true),
           }
         : null,
-      parseInt(acces?.true_price) === 1
+      hasBillingActionAccess(acces, "true_price")
         ? {
             key: "confirm-prices",
             label: "Подтвердить ценники",
@@ -6578,7 +6822,7 @@ class Billing_Edit_ extends React.Component {
             },
           }
         : null,
-      parseInt(acces?.save_send) === 1
+      hasBillingActionAccess(acces, "save_send")
         ? {
             key: "save-send",
             label: "Сохранить и отправить",
@@ -6586,7 +6830,7 @@ class Billing_Edit_ extends React.Component {
             onClick: this.saveEditBill.bind(this, "next", true),
           }
         : null,
-      parseInt(acces?.delete_1c) === 1
+      hasBillingActionAccess(acces, "delete_1c")
         ? {
             key: "delete-1c",
             label: "Удалить из 1С",
@@ -6597,7 +6841,7 @@ class Billing_Edit_ extends React.Component {
             },
           }
         : null,
-      parseInt(acces?.return_to_bux) === 1
+      hasBillingActionAccess(acces, "return_to_bux")
         ? {
             key: "return-bux",
             label: "Вернуть в бухгалтерию",
@@ -6607,12 +6851,26 @@ class Billing_Edit_ extends React.Component {
           }
         : null,
     ].filter(Boolean);
+    const isSaveActionLocked = this.state.isSavingAction || this.state.isUploadProcessing;
+    let nextSectionStep = 1;
+    const headerEyebrow = headerMode !== "hidden" ? `Шаг ${nextSectionStep++}` : null;
+    const photoEyebrow = photoMode !== "hidden" ? `Шаг ${nextSectionStep++}` : null;
+    const itemsFormEyebrow = itemsMode === "edit" ? `Шаг ${nextSectionStep++}` : null;
+    const itemsTableEyebrow = itemsMode === "edit" ? `Шаг ${nextSectionStep++}` : null;
+    const itemsViewEyebrow = itemsMode === "show" ? `Шаг ${nextSectionStep++}` : null;
+    const footerEyebrow = footerMode !== "hidden" ? `Шаг ${nextSectionStep++}` : null;
 
     return (
       <>
         <Backdrop
           style={{ zIndex: 99 }}
-          open={this.state.is_load || is_load_store}
+          open={
+            this.state.is_load ||
+            this.state.isSavingAction ||
+            this.state.isUploadProcessing ||
+            this.state.isOcrLoad ||
+            is_load_store
+          }
         >
           <CircularProgress color="inherit" />
         </Backdrop>
@@ -6623,7 +6881,7 @@ class Billing_Edit_ extends React.Component {
             image={image}
             store={this.props.store}
             delImg={this.delImg.bind(this)}
-            isDelImg={parseInt(acces?.del_img) == 1 ? true : false}
+            isDelImg={hasBillingActionAccess(acces, "del_img")}
           />
         )}
         <MyAlert
@@ -6943,6 +7201,7 @@ class Billing_Edit_ extends React.Component {
               variant="contained"
               onClick={this.saveEditBill.bind(this, "type", false)}
               color="success"
+              disabled={isSaveActionLocked}
               sx={billingDialogButtonSx}
             >
               Сохранить документ
@@ -7056,13 +7315,13 @@ class Billing_Edit_ extends React.Component {
                           variant="body2"
                           color="text.secondary"
                         >
-                          OCR: {formatBillingNumber(item.ocrItem?.quantity)}
-                          {formatBillingNumber(item.ocrItem?.quantity) === "—" ? "" : " упак."}
+                          OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
+                          {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
                           {normalizeBillingText(item.ocrItem?.pq)
-                            ? ` x ${formatBillingNumber(item.ocrItem?.pq)}`
+                            ? ` x ${formatBillingQuantity(item.ocrItem?.pq)}`
                             : ""}
                           {item.selectedPq
-                            ? ` = ${formatBillingNumber(
+                            ? ` = ${formatBillingQuantity(
                                 getOcrQuantityData(
                                   item.ocrItem,
                                   normalizeBillingText(
@@ -7180,87 +7439,98 @@ class Billing_Edit_ extends React.Component {
             ...billingPageFieldSx,
             ...billingEditFieldOverridesSx,
             maxWidth: is_vertical ? "50%" : "100%",
-            mb: is_horizontal ? "700px" : 4,
+            pb: is_horizontal
+              ? {
+                  xs: "calc(56dvh + 40px)",
+                  md: "calc(54vh + 56px)",
+                }
+              : 0,
+            mb: 4,
           }}
         >
           <BillingPageHero
             onBack={this.returnFN.bind(this)}
             title={bill?.number ? `Документ №${bill.number}` : "Редактирование документа"}
-            subtitle={`Проверь реквизиты${point?.name ? ` для кафе ${point.name}` : ""}, файлы, позиции и комментарии перед сохранением изменений.`}
           />
 
-          <BillingSection
-            eyebrow="Шаг 1"
-            title="Реквизиты документа"
-            description="Проверь кафе, тип документа, номер, даты и связанные реквизиты перед сохранением."
-          >
-            <FormHeader_new
-              type_doc={this.state.type_doc}
-              page="edit"
-              type_edit={parseInt(acces?.header) === 1 ? "edit" : "show"}
-            />
-          </BillingSection>
+          {headerMode === "hidden" ? null : (
+            <BillingSection
+              eyebrow={headerEyebrow}
+              title="Реквизиты документа"
+              description="Проверь кафе, тип документа, номер, даты и связанные реквизиты перед сохранением."
+            >
+              <FormHeader_new
+                type_doc={this.state.type_doc}
+                page="edit"
+                type_edit={headerMode}
+              />
+            </BillingSection>
+          )}
 
-          <BillingSection
-            eyebrow="Шаг 2"
-            title="Файлы документа"
-            description="Проверь сохранённые изображения документа и дозагрузи новые страницы, если это нужно."
-          >
-            <FormImage_new
-              type_doc={this.state.type_doc}
-              type_edit={parseInt(acces?.photo) === 1 ? "edit" : "show"}
-              onAddBillFilesClick={this.openMainDropzonePicker}
-              onAddFacturFilesClick={this.openFacturDropzonePicker}
-              onOcrClick={this.sendFilesToOcr}
-              isOcrLoad={this.state.isOcrLoad}
-              isOcrDisabled={
-                this.state.isOcrLoad ||
-                !point?.id ||
-                !type ||
-                this.state.ocrImageFilesCount + storedOcrImagesCount === 0
-              }
-              showOcrButton={canUseOcr}
-            />
-          </BillingSection>
+          {photoMode === "hidden" ? null : (
+            <BillingSection
+              eyebrow={photoEyebrow}
+              title="Файлы документа"
+              description="Проверь сохранённые изображения документа и дозагрузи новые страницы, если это нужно."
+            >
+              <FormImage_new
+                type_doc={this.state.type_doc}
+                type_edit={photoMode}
+                onAddBillFilesClick={this.openMainDropzonePicker}
+                onAddFacturFilesClick={this.openFacturDropzonePicker}
+                onOcrClick={this.sendFilesToOcr}
+                isOcrLoad={this.state.isOcrLoad}
+                isOcrDisabled={
+                  this.state.isOcrLoad ||
+                  !point?.id ||
+                  !type ||
+                  this.state.ocrImageFilesCount + storedOcrImagesCount === 0
+                }
+                showOcrButton={canUseOcr}
+              />
+            </BillingSection>
+          )}
 
-          {parseInt(acces?.items) === 1 ? (
+          {itemsMode === "edit" ? (
             <>
               <BillingSection
-                eyebrow="Шаг 3"
+                eyebrow={itemsFormEyebrow}
                 title="Подбор товара поставщика"
                 description="Найди товар поставщика, выбери упаковку и добавь строку вручную, если нужно скорректировать документ."
               >
                 <FormVendorItems />
               </BillingSection>
               <BillingSection
-                eyebrow="Шаг 4"
+                eyebrow={itemsTableEyebrow}
                 title="Товары в документе"
                 description="Проверь упаковку, суммы и предупреждения по ценнику. Изменения сравниваются с исходной накладной."
               >
                 <VendorItemsTableEdit />
               </BillingSection>
             </>
-          ) : (
+          ) : itemsMode === "show" ? (
             <BillingSection
-              eyebrow="Шаг 3"
+              eyebrow={itemsViewEyebrow}
               title="Товары в документе"
               description="Ниже показан текущий состав накладной и расхождения относительно исходных данных."
             >
               <VendorItemsTableView />
             </BillingSection>
-          )}
+          ) : null}
 
-          <BillingSection
-            eyebrow="Шаг 5"
-            title="Комментарии и приёмка"
-            description="Укажи комментарии, сотрудников и дополнительные отметки по документу."
-          >
-            <FormOther_new
-              type_doc={this.state.type_doc}
-              page="edit"
-              type_edit={parseInt(acces?.footer) === 1 ? "edit" : "show"}
-            />
-          </BillingSection>
+          {footerMode === "hidden" ? null : (
+            <BillingSection
+              eyebrow={footerEyebrow}
+              title="Комментарии и приёмка"
+              description="Укажи комментарии, сотрудников и дополнительные отметки по документу."
+            >
+              <FormOther_new
+                type_doc={this.state.type_doc}
+                page="edit"
+                type_edit={footerMode}
+              />
+            </BillingSection>
+          )}
 
           <BillingSection
             eyebrow="История"
@@ -7304,6 +7574,7 @@ class Billing_Edit_ extends React.Component {
                           variant={action.variant}
                           fullWidth
                           onClick={action.onClick}
+                          disabled={isSaveActionLocked}
                           sx={{
                             ...getBillingActionButtonSx(action.key),
                           }}
