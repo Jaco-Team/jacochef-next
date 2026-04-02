@@ -3892,9 +3892,11 @@ class StatSale_Tab_Dynamic extends React.Component {
               </td>
               <td style={{ border: "1px solid #ddd", padding: "8px" }}>100%</td>
               <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {yearly_totals?.effect_avg?.toFixed(2) || "-"}%
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
                 {currentMonth?.effect?.toFixed(2) || "-"}%
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
               <td
                 style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
               >
@@ -4538,9 +4540,11 @@ class StatSale_Tab_Dynamic extends React.Component {
               </td>
               <td style={{ border: "1px solid #ddd", padding: "8px" }}>100%</td>
               <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+                {yearly_totals?.effect_avg?.toFixed(2) || "-"}%
+              </td>
+              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
                 {currentMonth?.effect?.toFixed(2) || "-"}%
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
               <td
                 style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
               >
