@@ -3410,10 +3410,11 @@ class StatSale_Tab_Dynamic extends React.Component {
   }
 
   get_data_clients = async (exp = false) => {
-    const { date_start, date_end } = this.state;
+    const { date_start, date_end, point } = this.state;
     const data = {
       date_start,
       date_end,
+      points: point,
     };
 
     // export
@@ -3527,6 +3528,12 @@ class StatSale_Tab_Dynamic extends React.Component {
     }
   };
 
+  changePoints(data, event, value) {
+    this.setState({
+      [data]: value,
+    });
+  }
+
   renderTable = () => {
     const { data_clients_list, yearly_totals } = this.state;
 
@@ -3543,25 +3550,6 @@ class StatSale_Tab_Dynamic extends React.Component {
 
     // Подсчитываем общее количество строк данных для rowspan
     const totalDataRows = 3 + 1 + 4 + 1; // ПРОДУКТЫ(3) + ЭФФЕКТИВНОСТЬ(1) + АККАУНТЫ(4) + АУДИТОРИЯ(1)
-
-    // Вспомогательный компонент для секционного заголовка
-    const SectionHeader = ({ title, icon, color }) => (
-      <tr>
-        <td
-          colSpan={totalCols + 1}
-          style={{
-            padding: "10px 8px",
-            backgroundColor: color,
-            fontWeight: "600",
-            fontSize: "13px",
-            borderBottom: "2px solid #ccc",
-            borderTop: "1px solid #ddd",
-          }}
-        >
-          {icon} {title}
-        </td>
-      </tr>
-    );
 
     // Вспомогательная функция для ячеек месяца
     const renderMonthCells = (month, metricKey) => {
@@ -3599,7 +3587,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             style={{
               border: "1px solid #ddd",
               padding: "4px",
-              textAlign: "right",
+              textAlign: "center",
               backgroundColor: "#fff",
               borderRight: "2px solid #ccc",
             }}
@@ -3611,6 +3599,22 @@ class StatSale_Tab_Dynamic extends React.Component {
         </React.Fragment>
       );
     };
+
+    // Вспомогательная функция для ячейки с процентом
+    const renderPercentCell = (value) => (
+      <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}>
+        {value !== null && value !== undefined && value !== "-"
+          ? `${typeof value === "number" ? value.toFixed(2) : value}%`
+          : "-"}
+      </td>
+    );
+
+    // Вспомогательная функция для ячейки с прочерком
+    const renderDashCell = (customStyle = {}) => (
+      <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center", ...customStyle }}>
+        -
+      </td>
+    );
 
     return (
       <div
@@ -3624,11 +3628,28 @@ class StatSale_Tab_Dynamic extends React.Component {
         <table
           style={{
             width: "100%",
+            minWidth: "800px",
             borderCollapse: "collapse",
             fontSize: "12px",
             fontFamily: "Arial, sans-serif",
+            tableLayout: "fixed",
           }}
         >
+          <colgroup>
+            <col style={{ width: "120px" }} />
+            <col style={{ width: "150px" }} />
+            <col style={{ width: "80px" }} />
+            <col style={{ width: "80px" }} />
+            <col style={{ width: "90px" }} />
+            <col style={{ width: "70px" }} />
+            {monthsWithData.map(() => (
+              <React.Fragment key="col-group">
+                <col style={{ width: "70px" }} />
+                <col style={{ width: "70px" }} />
+                <col style={{ width: "70px" }} />
+              </React.Fragment>
+            ))}
+          </colgroup>
           <thead>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
               <th
@@ -3641,7 +3662,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   left: 0,
                   backgroundColor: "#f5f5f5",
                   zIndex: 3,
-                  minWidth: "120px",
                 }}
               >
                 Источник
@@ -3656,7 +3676,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   left: 120,
                   backgroundColor: "#f5f5f5",
                   zIndex: 3,
-                  minWidth: "150px",
                 }}
               >
                 Метрика
@@ -3667,7 +3686,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "80px",
                 }}
               >
                 План год
@@ -3678,7 +3696,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "80px",
                 }}
               >
                 Факт год
@@ -3689,7 +3706,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "90px",
                 }}
               >
                 Факт по тек.мес
@@ -3700,27 +3716,25 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "70px",
                 }}
               >
                 Динамика
               </th>
 
               {monthsWithData.map((month, idx) => (
-                <React.Fragment key={`header-${month.month}`}>
-                  <th
-                    colSpan={3}
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "8px",
-                      textAlign: "center",
-                      backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
-                      fontWeight: "600",
-                    }}
-                  >
-                    {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
-                  </th>
-                </React.Fragment>
+                <th
+                  key={`header-${month.month}`}
+                  colSpan={3}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: "8px",
+                    textAlign: "center",
+                    backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
+                    fontWeight: "600",
+                  }}
+                >
+                  {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
+                </th>
               ))}
             </tr>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
@@ -3779,7 +3793,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   left: 0,
                   backgroundColor: "#e3f2fd",
                   zIndex: 2,
-                  minWidth: "120px",
                 }}
               >
                 Все источники
@@ -3797,20 +3810,28 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Роллы
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.rolly_plan?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.rolly?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.rolly_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.rolly_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.rolly_dynamics)}
+              {renderPercentCell(yearly_totals?.rolly_dynamics_avg, true)}
               {monthsWithData.map((month) => renderMonthCells(month, "rolly"))}
             </tr>
 
@@ -3828,20 +3849,28 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Пицца
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.pizza_plan?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.pizza?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.pizza_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.pizza_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.pizza_dynamics)}
+              {renderPercentCell(yearly_totals?.pizza_dynamics_avg)}
               {monthsWithData.map((month) => renderMonthCells(month, "pizza"))}
             </tr>
 
@@ -3859,20 +3888,28 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Заказы
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.order_plan?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.order?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.order_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.order_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.order_dynamics)}
+              {renderPercentCell(yearly_totals?.order_dynamics_avg)}
               {monthsWithData.map((month) => renderMonthCells(month, "order"))}
             </tr>
 
@@ -3890,36 +3927,15 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Эфф-ть/Загрузка
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>100%</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {yearly_totals?.effect_avg?.toFixed(2) || "-"}%
-              </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.effect?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                -
-              </td>
+              {renderPercentCell(100)}
+              {renderPercentCell(yearly_totals?.effect_avg)}
+              {renderPercentCell(currentMonth?.effect)}
+              {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
                 <React.Fragment key={`eff-${month.month}`}>
-                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
-                    100%
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
-                    {month.effect?.toFixed(2) || "-"}%
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "4px",
-                      textAlign: "right",
-                      borderRight: "2px solid #ccc",
-                    }}
-                  >
-                    -
-                  </td>
+                  {renderPercentCell(100)}
+                  {renderPercentCell(month.effect)}
+                  {renderDashCell({ borderRight: "2px solid #ccc" })}
                 </React.Fragment>
               ))}
             </tr>
@@ -3938,16 +3954,12 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Аккаунтов
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+              {renderDashCell()}
+              <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "right" }}>
                 {currentMonth?.active?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                -
-              </td>
+              {renderDashCell()}
+              {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => renderMonthCells(month, "active"))}
             </tr>
 
@@ -3966,24 +3978,18 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 └─ Доля аккаунтов
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                -
-              </td>
+              {renderDashCell()}
+              {renderDashCell()}
+              {renderDashCell()}
+              {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
                 <React.Fragment key={`share-active-${month.month}`}>
-                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
-                    -
-                  </td>
+                  {renderDashCell()}
                   <td
                     style={{
                       border: "1px solid #ddd",
                       padding: "4px",
-                      textAlign: "right",
+                      textAlign: "center",
                       fontStyle: "italic",
                       color: "#666",
                     }}
@@ -3992,16 +3998,7 @@ class StatSale_Tab_Dynamic extends React.Component {
                       ? ((month.active / month.residents) * 100).toFixed(2) + "%"
                       : "-"}
                   </td>
-                  <td
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "4px",
-                      textAlign: "right",
-                      borderRight: "2px solid #ccc",
-                    }}
-                  >
-                    -
-                  </td>
+                  {renderDashCell({ borderRight: "2px solid #ccc" })}
                 </React.Fragment>
               ))}
             </tr>
@@ -4020,18 +4017,12 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Активные аккаунты
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+              {renderDashCell()}
+              <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "right" }}>
                 {currentMonth?.register?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.register_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.register_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.register_dynamics)}
+              {renderPercentCell(yearly_totals?.register_dynamics_avg, true)}
               {monthsWithData.map((month) => renderMonthCells(month, "register"))}
             </tr>
 
@@ -4051,24 +4042,18 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 └─ Доля активных аккаунтов
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>-</td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                -
-              </td>
+              {renderDashCell()}
+              {renderDashCell()}
+              {renderDashCell()}
+              {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
                 <React.Fragment key={`share-reg-${month.month}`}>
-                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
-                    -
-                  </td>
+                  {renderDashCell()}
                   <td
                     style={{
                       border: "1px solid #ddd",
                       padding: "4px",
-                      textAlign: "right",
+                      textAlign: "center",
                       fontStyle: "italic",
                       color: "#666",
                     }}
@@ -4077,16 +4062,7 @@ class StatSale_Tab_Dynamic extends React.Component {
                       ? ((month.register / month.residents) * 100).toFixed(2) + "%"
                       : "-"}
                   </td>
-                  <td
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "4px",
-                      textAlign: "right",
-                      borderRight: "2px solid #ccc",
-                    }}
-                  >
-                    -
-                  </td>
+                  {renderDashCell({ borderRight: "2px solid #ccc" })}
                 </React.Fragment>
               ))}
             </tr>
@@ -4111,6 +4087,7 @@ class StatSale_Tab_Dynamic extends React.Component {
                 style={{
                   border: "1px solid #ddd",
                   padding: "8px",
+                  textAlign: "right",
                   fontWeight: "500",
                   borderBottom: "2px solid #ccc",
                 }}
@@ -4118,25 +4095,17 @@ class StatSale_Tab_Dynamic extends React.Component {
                 {yearly_totals?.residents?.toLocaleString("ru-RU") || "-"}
               </td>
               <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderBottom: "2px solid #ccc" }}
-              >
-                {currentMonth?.residents?.toLocaleString("ru-RU") || "-"}
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderBottom: "2px solid #ccc" }}
-              >
-                100%
-              </td>
-              <td
                 style={{
                   border: "1px solid #ddd",
                   padding: "8px",
+                  textAlign: "right",
                   borderBottom: "2px solid #ccc",
-                  borderRight: "2px solid #ccc",
                 }}
               >
-                -
+                {currentMonth?.residents?.toLocaleString("ru-RU") || "-"}
               </td>
+              {renderPercentCell(100, false, { borderBottom: "2px solid #ccc" })}
+              {renderDashCell({ borderBottom: "2px solid #ccc", borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
                 <React.Fragment key={`residents-${month.month}`}>
                   <td
@@ -4163,7 +4132,7 @@ class StatSale_Tab_Dynamic extends React.Component {
                     style={{
                       border: "1px solid #ddd",
                       padding: "4px",
-                      textAlign: "right",
+                      textAlign: "center",
                       borderBottom: "2px solid #ccc",
                       borderRight: "2px solid #ccc",
                     }}
@@ -4190,26 +4159,7 @@ class StatSale_Tab_Dynamic extends React.Component {
     const totalCols = 5 + monthsWithData.length * 3;
 
     // Подсчитываем общее количество строк данных для rowspan
-    const totalDataRows = 3 + 1 + 4 + 1; // ПРОДУКТЫ(3) + ЭФФЕКТИВНОСТЬ(1) + АККАУНТЫ(4) + АУДИТОРИЯ(1)
-
-    // Вспомогательный компонент для секционного заголовка
-    const SectionHeader = ({ title, icon, color }) => (
-      <tr>
-        <td
-          colSpan={totalCols + 1}
-          style={{
-            padding: "10px 8px",
-            backgroundColor: color,
-            fontWeight: "600",
-            fontSize: "13px",
-            borderBottom: "2px solid #ccc",
-            borderTop: "1px solid #ddd",
-          }}
-        >
-          {icon} {title}
-        </td>
-      </tr>
-    );
+    const totalDataRows = 3 + 1; // Только продукты (3) + эффективность (1)
 
     // Вспомогательная функция для ячеек месяца
     const renderMonthCells = (month, metricKey) => {
@@ -4247,7 +4197,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             style={{
               border: "1px solid #ddd",
               padding: "4px",
-              textAlign: "right",
+              textAlign: "center",
               backgroundColor: "#fff",
               borderRight: "2px solid #ccc",
             }}
@@ -4259,6 +4209,22 @@ class StatSale_Tab_Dynamic extends React.Component {
         </React.Fragment>
       );
     };
+
+    // Вспомогательная функция для ячейки с процентом
+    const renderPercentCell = (value, customStyle = {}) => (
+      <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center", ...customStyle }}>
+        {value !== null && value !== undefined && value !== "-"
+          ? `${typeof value === "number" ? value.toFixed(2) : value}%`
+          : "-"}
+      </td>
+    );
+
+    // Вспомогательная функция для ячейки с прочерком
+    const renderDashCell = (customStyle = {}) => (
+      <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center", ...customStyle }}>
+        -
+      </td>
+    );
 
     return (
       <div
@@ -4272,11 +4238,28 @@ class StatSale_Tab_Dynamic extends React.Component {
         <table
           style={{
             width: "100%",
+            minWidth: "800px",
             borderCollapse: "collapse",
             fontSize: "12px",
             fontFamily: "Arial, sans-serif",
+            tableLayout: "fixed",
           }}
         >
+          <colgroup>
+            <col style={{ width: "120px" }} />
+            <col style={{ width: "150px" }} />
+            <col style={{ width: "80px" }} />
+            <col style={{ width: "80px" }} />
+            <col style={{ width: "90px" }} />
+            <col style={{ width: "70px" }} />
+            {monthsWithData.map(() => (
+              <React.Fragment key="col-group">
+                <col style={{ width: "70px" }} />
+                <col style={{ width: "70px" }} />
+                <col style={{ width: "70px" }} />
+              </React.Fragment>
+            ))}
+          </colgroup>
           <thead>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
               <th
@@ -4289,7 +4272,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   left: 0,
                   backgroundColor: "#f5f5f5",
                   zIndex: 3,
-                  minWidth: "120px",
                 }}
               >
                 Источник
@@ -4304,7 +4286,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   left: 120,
                   backgroundColor: "#f5f5f5",
                   zIndex: 3,
-                  minWidth: "150px",
                 }}
               >
                 Метрика
@@ -4315,7 +4296,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "80px",
                 }}
               >
                 План год
@@ -4326,7 +4306,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "80px",
                 }}
               >
                 Факт год
@@ -4337,7 +4316,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "90px",
                 }}
               >
                 Факт по тек.мес
@@ -4348,27 +4326,25 @@ class StatSale_Tab_Dynamic extends React.Component {
                   border: "1px solid #ddd",
                   padding: "8px",
                   textAlign: "center",
-                  minWidth: "70px",
                 }}
               >
                 Динамика
               </th>
 
               {monthsWithData.map((month, idx) => (
-                <React.Fragment key={`header-${month.month}`}>
-                  <th
-                    colSpan={3}
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "8px",
-                      textAlign: "center",
-                      backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
-                      fontWeight: "600",
-                    }}
-                  >
-                    {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
-                  </th>
-                </React.Fragment>
+                <th
+                  key={`header-${month.month}`}
+                  colSpan={3}
+                  style={{
+                    border: "1px solid #ddd",
+                    padding: "8px",
+                    textAlign: "center",
+                    backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
+                    fontWeight: "600",
+                  }}
+                >
+                  {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
+                </th>
               ))}
             </tr>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
@@ -4427,7 +4403,6 @@ class StatSale_Tab_Dynamic extends React.Component {
                   left: 0,
                   backgroundColor: "#e3f2fd",
                   zIndex: 2,
-                  minWidth: "120px",
                 }}
               >
                 {title}
@@ -4445,20 +4420,30 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Роллы
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.rolly_plan?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.rolly?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.rolly_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.rolly_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.rolly_dynamics)}
+              {renderPercentCell(yearly_totals?.rolly_dynamics_avg, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "rolly"))}
             </tr>
 
@@ -4476,20 +4461,30 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Пицца
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.pizza_plan?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.pizza?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.pizza_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.pizza_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.pizza_dynamics)}
+              {renderPercentCell(yearly_totals?.pizza_dynamics_avg, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "pizza"))}
             </tr>
 
@@ -4507,20 +4502,30 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Заказы
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.order_plan?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px", fontWeight: "500" }}>
+              <td
+                style={{
+                  border: "1px solid #ddd",
+                  padding: "8px",
+                  textAlign: "right",
+                  fontWeight: "500",
+                }}
+              >
                 {yearly_totals?.order?.toLocaleString("ru-RU") || "-"}
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.order_dynamics?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                {yearly_totals?.order_dynamics_avg?.toFixed(2) || "-"}%
-              </td>
+              {renderPercentCell(currentMonth?.order_dynamics)}
+              {renderPercentCell(yearly_totals?.order_dynamics_avg, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "order"))}
             </tr>
 
@@ -4538,36 +4543,15 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Эфф-ть/Загрузка
               </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>100%</td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {yearly_totals?.effect_avg?.toFixed(2) || "-"}%
-              </td>
-              <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                {currentMonth?.effect?.toFixed(2) || "-"}%
-              </td>
-              <td
-                style={{ border: "1px solid #ddd", padding: "8px", borderRight: "2px solid #ccc" }}
-              >
-                -
-              </td>
+              {renderPercentCell(100)}
+              {renderPercentCell(yearly_totals?.effect_avg)}
+              {renderPercentCell(currentMonth?.effect)}
+              {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
                 <React.Fragment key={`eff-${month.month}`}>
-                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
-                    100%
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "right" }}>
-                    {month.effect?.toFixed(2) || "-"}%
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "4px",
-                      textAlign: "right",
-                      borderRight: "2px solid #ccc",
-                    }}
-                  >
-                    -
-                  </td>
+                  {renderPercentCell(100)}
+                  {renderPercentCell(month.effect)}
+                  {renderDashCell({ borderRight: "2px solid #ccc" })}
                 </React.Fragment>
               ))}
             </tr>
@@ -4618,6 +4602,20 @@ class StatSale_Tab_Dynamic extends React.Component {
                 views={["month", "year"]}
                 value={this.state.date_start}
                 func={this.changeDateRange.bind(this, "date_start")}
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 9,
+              }}
+            >
+              <MyAutocomplite
+                label="Точка"
+                multiple={true}
+                data={this.props.points}
+                value={this.state.point}
+                func={this.changePoints.bind(this, "point")}
               />
             </Grid>
             <Grid
