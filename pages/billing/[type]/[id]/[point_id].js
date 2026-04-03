@@ -2076,7 +2076,7 @@ const useStore = create((set, get) => ({
             get().addItem_fast(
               this_bill.count,
               this_bill.fact_unit,
-              this_bill.price,
+              this_bill.price_item ?? this_bill.price,
               this_bill.price_w_nds,
               this_bill.ed_izmer_name,
               this_bill.pq,
