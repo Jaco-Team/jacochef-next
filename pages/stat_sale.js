@@ -2396,7 +2396,7 @@ class StatSale_Tab_Sett extends React.Component {
                         {...a11yProps(2)}
                       />
                     ) : null}
-                    {this.props.acces.client_view && this.props.acces.client_view ? (
+                    {this.props.acces.dynamic_view && this.props.acces.dynamic_view ? (
                       <Tab
                         label="Лимиты (Динамика)"
                         {...a11yProps(3)}
@@ -3601,13 +3601,26 @@ class StatSale_Tab_Dynamic extends React.Component {
     };
 
     // Вспомогательная функция для ячейки с процентом
-    const renderPercentCell = (value) => (
-      <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}>
-        {value !== null && value !== undefined && value !== "-"
-          ? `${typeof value === "number" ? value.toFixed(2) : value}%`
-          : "-"}
-      </td>
-    );
+    const renderPercentCell = (value, isBold = false, customStyle = {}) => {
+      const baseStyle = {
+        border: "1px solid #ddd",
+        padding: "8px",
+        textAlign: "center",
+        fontWeight: isBold ? "bold" : "normal",
+        boxSizing: "border-box", // предотвращает "вылезание" padding за границы
+      };
+
+      // Кастомные стили приоритетнее базовых
+      const mergedStyle = { ...baseStyle, ...customStyle };
+
+      return (
+        <td style={mergedStyle}>
+          {value !== null && value !== undefined && value !== "-"
+            ? `${typeof value === "number" ? value.toFixed(2) : value}%`
+            : "-"}
+        </td>
+      );
+    };
 
     // Вспомогательная функция для ячейки с прочерком
     const renderDashCell = (customStyle = {}) => (
@@ -3831,7 +3844,9 @@ class StatSale_Tab_Dynamic extends React.Component {
                 {yearly_totals?.rolly?.toLocaleString("ru-RU") || "-"}
               </td>
               {renderPercentCell(currentMonth?.rolly_dynamics)}
-              {renderPercentCell(yearly_totals?.rolly_dynamics_avg, true)}
+              {renderPercentCell(yearly_totals?.rolly_dynamics_avg, false, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "rolly"))}
             </tr>
 
@@ -3870,7 +3885,9 @@ class StatSale_Tab_Dynamic extends React.Component {
                 {yearly_totals?.pizza?.toLocaleString("ru-RU") || "-"}
               </td>
               {renderPercentCell(currentMonth?.pizza_dynamics)}
-              {renderPercentCell(yearly_totals?.pizza_dynamics_avg)}
+              {renderPercentCell(yearly_totals?.pizza_dynamics_avg, false, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "pizza"))}
             </tr>
 
@@ -3909,7 +3926,9 @@ class StatSale_Tab_Dynamic extends React.Component {
                 {yearly_totals?.order?.toLocaleString("ru-RU") || "-"}
               </td>
               {renderPercentCell(currentMonth?.order_dynamics)}
-              {renderPercentCell(yearly_totals?.order_dynamics_avg)}
+              {renderPercentCell(yearly_totals?.order_dynamics_avg, false, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "order"))}
             </tr>
 
@@ -3954,12 +3973,16 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Аккаунтов
               </td>
-              {renderDashCell()}
+              <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "right" }}>
+                {yearly_totals?.register_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
               <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "right" }}>
                 {currentMonth?.active?.toLocaleString("ru-RU") || "-"}
               </td>
-              {renderDashCell()}
-              {renderDashCell({ borderRight: "2px solid #ccc" })}
+              {renderPercentCell(currentMonth?.active_dynamics)}
+              {renderPercentCell(currentMonth?.active_dynamics, false, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "active"))}
             </tr>
 
@@ -4017,12 +4040,16 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 Активные аккаунты
               </td>
-              {renderDashCell()}
+              <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "right" }}>
+                {yearly_totals?.active_plan?.toLocaleString("ru-RU") || "-"}
+              </td>
               <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "right" }}>
                 {currentMonth?.register?.toLocaleString("ru-RU") || "-"}
               </td>
               {renderPercentCell(currentMonth?.register_dynamics)}
-              {renderPercentCell(yearly_totals?.register_dynamics_avg, true)}
+              {renderPercentCell(currentMonth?.register_dynamics, false, {
+                borderRight: "2px solid #ccc",
+              })}
               {monthsWithData.map((month) => renderMonthCells(month, "register"))}
             </tr>
 
@@ -4594,7 +4621,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 6,
+                sm: 3,
               }}
             >
               <MyDatePickerNewViews
@@ -4607,7 +4634,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 9,
+                sm: 3,
               }}
             >
               <MyAutocomplite
@@ -4621,7 +4648,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             <Grid
               size={{
                 xs: 12,
-                sm: 6,
+                sm: 3,
               }}
             >
               <MyDatePickerNewViews
@@ -5626,12 +5653,16 @@ class StatSale_ extends React.Component {
                   {...a11yProps(1)}
                   sx={{ minWidth: "fit-content", flex: 1 }}
                 />
-                <Tab
-                  label="Динамика"
-                  {...a11yProps(2)}
-                  sx={{ minWidth: "fit-content", flex: 1 }}
-                />
-                {this.state.acces.client_edit || this.state.acces.sale_edit ? (
+                {this.state.acces.dynamic_edit ? (
+                  <Tab
+                    label="Динамика"
+                    {...a11yProps(2)}
+                    sx={{ minWidth: "fit-content", flex: 1 }}
+                  />
+                ) : null}
+                {this.state.acces.client_edit ||
+                this.state.acces.sale_edit ||
+                this.state.acces.dynamic_edit ? (
                   <Tab
                     label="Настройки"
                     {...a11yProps(3)}
