@@ -32,6 +32,7 @@ import { api_laravel, api_laravel_local } from "@/src/api_new";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import HistoryClientModalCrm from "@/components/crm/HistoryClientModalCrm";
+import MyAlert from "@/ui/MyAlert";
 
 export default function CrmPage() {
   const {
@@ -268,11 +269,25 @@ export default function CrmPage() {
     const refreshToken = useClientHistoryStore.getState().refreshToken;
 
     // validate
-    if (!date_start || !date_end || !order_types?.length || !refreshToken) {
-      console.log("Skipping fetch client history due to missing params");
+    if (!date_start) {
+      showAlert("Укажите дату начала", false);
       return;
     }
-    // TODO more variants to skip
+
+    if (!date_end) {
+      showAlert("Укажите дату окончания", false);
+      return;
+    }
+
+    if (!order_types?.length) {
+      showAlert("Укажите кто оформил", false);
+      return;
+    }
+
+    if (!refreshToken) {
+      showAlert("Проблема с токеном", false);
+      return;
+    }
 
     const resData = await getData("get_client_history", {
       date_start: dayjs(date_start).format("YYYY-MM-DD"),
@@ -313,6 +328,12 @@ export default function CrmPage() {
       isLoading={is_load}
       setIsLoading={(is_load) => updateMain({ is_load })}
     >
+      <MyAlert
+        isOpen={isAlert}
+        onClose={closeAlert}
+        status={alertStatus}
+        text={alertMessage}
+      />
       <Backdrop
         sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
         open={is_load}
