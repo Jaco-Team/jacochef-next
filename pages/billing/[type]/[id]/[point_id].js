@@ -965,6 +965,18 @@ const billingDialogButtonSx = {
   boxShadow: "none",
 };
 
+const billingAccountantCommentHighlightSx = {
+  display: "grid",
+  gap: 1.1,
+  width: "100%",
+  padding: { xs: "14px 16px", sm: "18px 20px" },
+  borderRadius: "16px",
+  border: "1px solid rgba(245, 158, 11, 0.34)",
+  background:
+    "linear-gradient(135deg, rgba(255, 251, 235, 0.98) 0%, rgba(254, 243, 199, 0.82) 100%)",
+  boxShadow: "0 12px 26px rgba(245, 158, 11, 0.14)",
+};
+
 const billingActionsCardSx = {
   display: "grid",
   gap: 2,
@@ -1193,7 +1205,7 @@ const billingDropzoneSx = {
     position: "relative",
     padding: "24px",
     background:
-      "linear-gradient(135deg, rgba(255, 247, 237, 1) 0%, rgba(254, 226, 226, 0.92) 100%)",
+      "linear-gradient(135deg, rgba(241, 245, 249, 1) 0%, rgba(226, 232, 240, 0.92) 100%)",
   },
   "&.dropzone .dz-preview.dz-file-preview .dz-image img": {
     display: "none",
@@ -1932,12 +1944,14 @@ const useStore = create((set, get) => ({
       modalDialog: false,
       is_horizontal: false,
       is_vertical: false,
-      openImgType: "",
+      // openImgType: "",
     });
   },
 
   openImageBill: (image, type) => {
     get().handleResize();
+
+    console.log("type_type", type);
 
     set({
       modalDialog: true,
@@ -4233,9 +4247,43 @@ function FormOther_new({ page, type_edit, type_doc }) {
     state.comment_bux,
     state.delete_text,
   ]);
+  const hasAccountantComment = Boolean(comment_bux?.toString().trim());
 
   return (
     <>
+      {page !== "new" && hasAccountantComment ? (
+        <Grid
+          size={{
+            xs: 12,
+            sm: 12,
+          }}
+        >
+          <Box sx={billingAccountantCommentHighlightSx}>
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "#92400e",
+              }}
+            >
+              Комментарий бухгалтера
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: { xs: 16, sm: 17 },
+                lineHeight: 1.5,
+                fontWeight: 600,
+                color: "#111827",
+                wordBreak: "break-word",
+              }}
+            >
+              {comment_bux}
+            </Typography>
+          </Box>
+        </Grid>
+      ) : null}
       {parseInt(type) === 1 ? null : type_doc === "bill_ex" ? null : (
         <>
           <Grid
@@ -4298,19 +4346,6 @@ function FormOther_new({ page, type_edit, type_doc }) {
               Причина удаления:&nbsp;
             </Typography>
             <Typography>{delete_text}</Typography>
-          </Grid>
-
-          <Grid
-            style={{ display: "flex", marginBottom: 20 }}
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <Typography style={{ fontWeight: "bold", color: "#9e9e9e" }}>
-              Комментарий бухгалтера:&nbsp;
-            </Typography>
-            <Typography>{comment_bux}</Typography>
           </Grid>
         </>
       )}
@@ -5513,6 +5548,7 @@ class Billing_Edit_ extends React.Component {
       modelCheckErrItems: false,
       modelCheckDel1c: false,
       modelCheckPrice: false,
+      modelCheckBuxComment: false,
 
       items_err: [],
       thisTypeSave: "",
@@ -5588,6 +5624,15 @@ class Billing_Edit_ extends React.Component {
 
     setAcces(nextAcces);
     getDataBill(res, point, items.items, docs);
+    const accountantComment = res?.bill?.com_bux?.toString().trim();
+    const billStatus = parseInt(res?.bill?.status ?? res?.bill?.type);
+    const isCreatedBill = billStatus === 2;
+
+    if (accountantComment && isCreatedBill) {
+      this.setState({
+        modelCheckBuxComment: true,
+      });
+    }
 
     document.title = "Накладные";
 
@@ -6629,6 +6674,9 @@ class Billing_Edit_ extends React.Component {
   async delImgTrue() {
     const { bill, point, closeDialog, setImgList, showAlert, openImgType } = this.props.store;
 
+    console.log("type_type delImgTrue", openImgType);
+    console.log("type_type delImgTrue bill", this.props.store);
+
     const data = {
       bill_id: bill.id,
       point_id: point?.id,
@@ -6750,6 +6798,7 @@ class Billing_Edit_ extends React.Component {
       bill_list,
       bill_items,
       imgs_bill,
+      comment_bux,
       vendor_itemsCopy,
       point,
       is_horizontal,
@@ -6890,6 +6939,58 @@ class Billing_Edit_ extends React.Component {
           status={err_status}
           text={err_text}
         />
+        <Dialog
+          open={this.state.modelCheckBuxComment}
+          onClose={() => {
+            this.setState({ modelCheckBuxComment: false });
+          }}
+          fullWidth
+          maxWidth="sm"
+          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+        >
+          <DialogTitle
+            sx={{
+              px: { xs: 2.5, md: 4 },
+              pt: { xs: 2.5, md: 3.5 },
+              pb: { xs: 1.75, md: 2.25 },
+              borderBottom: "1px solid rgba(148, 163, 184, 0.2)",
+            }}
+          >
+            <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
+              Комментарий бухгалтера
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2.5, md: 4 }, pt: 3.5, pb: { xs: 0.5, md: 1 } }}>
+            <DialogContentText sx={{ mb: 2.5, color: "#334155", whiteSpace: "pre-wrap" }}>
+              {comment_bux}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions
+            disableSpacing
+            sx={{
+              px: { xs: 2.5, md: 4 },
+              pb: { xs: 2, md: 2.5 },
+              pt: 0,
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={() => {
+                this.setState({ modelCheckBuxComment: false });
+              }}
+              color="success"
+              sx={{
+                ...billingDialogButtonSx,
+                width: { xs: "100%", sm: "auto" },
+                minWidth: { xs: 0, sm: 160 },
+                height: 48,
+              }}
+            >
+              Хорошо
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Dialog
           open={this.state.modelCheckDel}
           onClose={() => {
@@ -7098,6 +7199,7 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="xs"
+          sx={{ zIndex: 2100 }}
           PaperProps={{ sx: billingConfirmDialogPaperSx }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
