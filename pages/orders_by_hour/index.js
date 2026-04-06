@@ -588,13 +588,6 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
   return (
     <>
       <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography
-          variant="h6"
-          sx={{ mb: 2, fontWeight: "bold" }}
-        >
-          {cafeName}
-        </Typography>
-
         <Box sx={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
             <thead>
@@ -748,6 +741,7 @@ function OrdersPage() {
   const [settings, setSettings] = useState([]);
   const [changes, setChanges] = useState(false);
   const [timeDiv, setTimeDiv] = useState("");
+  const [acces, setAcces] = useState({});
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -755,6 +749,7 @@ function OrdersPage() {
       setModule(data.module_info);
       setPoints(data.points);
       setSettings(data.settings);
+      setAcces(data.access);
     });
   }, []);
 
@@ -927,7 +922,7 @@ function OrdersPage() {
 
               <Grid size={{ xs: 12, sm: 2 }}>
                 <MyDatePickerNew
-                  label="Дата начала"
+                  label="Дата"
                   value={dateStart}
                   func={(e) => setDateStart(formatDate(e))}
                 />
@@ -962,13 +957,15 @@ function OrdersPage() {
                 </Button>
               </Grid>
               <Grid size={{ xs: 12, sm: 1 }}>
-                <Button
-                  onClick={() => exportExcel()}
-                  variant="contained"
-                  style={{ backgroundColor: "#1E5945" }}
-                >
-                  <ExcelIcon /> .xlsx
-                </Button>
+                {acces?.export_excel_access ? (
+                  <Button
+                    onClick={() => exportExcel()}
+                    variant="contained"
+                    style={{ backgroundColor: "#1E5945" }}
+                  >
+                    <ExcelIcon /> .xlsx
+                  </Button>
+                ) : null}
               </Grid>
               <Grid size={{ xs: 12, sm: 12 }}>
                 <Typography>{timeDiv}</Typography>
