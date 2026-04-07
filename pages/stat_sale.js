@@ -4624,11 +4624,12 @@ class StatSale_Tab_Dynamic extends React.Component {
                 sm: 3,
               }}
             >
-              <MyDatePickerNewViews
-                label="Дата от"
-                views={["month", "year"]}
-                value={this.state.date_start}
-                func={this.changeDateRange.bind(this, "date_start")}
+              <MyAutocomplite
+                label="Точка"
+                multiple={true}
+                data={this.props.points}
+                value={this.state.point}
+                func={this.changePoints.bind(this, "point")}
               />
             </Grid>
             <Grid
@@ -4637,12 +4638,11 @@ class StatSale_Tab_Dynamic extends React.Component {
                 sm: 3,
               }}
             >
-              <MyAutocomplite
-                label="Точка"
-                multiple={true}
-                data={this.props.points}
-                value={this.state.point}
-                func={this.changePoints.bind(this, "point")}
+              <MyDatePickerNewViews
+                label="Дата от"
+                views={["month", "year"]}
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, "date_start")}
               />
             </Grid>
             <Grid
