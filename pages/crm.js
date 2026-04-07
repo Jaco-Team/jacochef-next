@@ -33,6 +33,7 @@ import useMyAlert from "@/src/hooks/useMyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import HistoryClientModalCrm from "@/components/crm/HistoryClientModalCrm";
 import MyAlert from "@/ui/MyAlert";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 export default function CrmPage() {
   const {
@@ -63,8 +64,8 @@ export default function CrmPage() {
     points_history: initialForm.points_history,
     promo: initialForm.promo,
     promo_dr: initialForm.promo_dr,
-    order_types: initialForm.order_types,
-    delivery_type: initialForm.delivery_type,
+    order_types: order_types_all,
+    delivery_type: delivery_types,
     items: initialForm.items,
     number: initialForm.number,
     date_start: initialForm.date_start,
@@ -284,11 +285,6 @@ export default function CrmPage() {
       return;
     }
 
-    if (!refreshToken) {
-      showAlert("Проблема с токеном", false);
-      return;
-    }
-
     const resData = await getData("get_client_history", {
       date_start: dayjs(date_start).format("YYYY-MM-DD"),
       date_end: dayjs(date_end).format("YYYY-MM-DD"),
@@ -371,12 +367,13 @@ export default function CrmPage() {
             sm: 4,
           }}
         >
-          <MyAutocomplite
+          <CityCafeAutocomplete2
             label="Кафе"
-            multiple={true}
-            data={points}
+            points={points}
             value={form.points_history}
-            func={(_, v) => setField("points_history", v)}
+            onChange={(v) => setField("points_history", v)}
+            withAll
+            withAllSelected
           />
         </Grid>
         <Grid
