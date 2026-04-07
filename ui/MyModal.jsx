@@ -1,6 +1,7 @@
 "use client";
 import { Dialog, DialogTitle, IconButton, useMediaQuery, useTheme } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import useFullScreen from "@/src/hooks/useFullScreen";
 
 /**
  * Generic modal wrapper — minimal, override-safe, MUI 7-compliant.
@@ -17,14 +18,13 @@ export default function MyModal({
   children,
   ...rest
 }) {
-  const theme = useTheme();
-  const fullscreen = useMediaQuery(theme.breakpoints.down(fsBp));
+  const fullScreen = useFullScreen();
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth={fullWidth}
-      fullscreen={fullscreen}
+      fullScreen={fullScreen}
       maxWidth={maxWidth}
       scroll={scroll}
       {...rest}
