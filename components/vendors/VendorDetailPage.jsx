@@ -258,7 +258,10 @@ export default function VendorDetailPage() {
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={1}
-                      sx={{ alignSelf: { xs: "center", sm: "auto" } }}
+                      sx={{
+                        alignSelf: { xs: "center", sm: "auto" },
+                        width: { xs: "100%", sm: "auto" },
+                      }}
                     >
                       <Button
                         variant="outlined"
