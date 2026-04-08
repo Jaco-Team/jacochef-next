@@ -14,6 +14,12 @@
 - Do not remove existing behavior unless explicitly requested.
 - If replacing a user flow, preserve the old capability elsewhere unless the user asked to remove it.
 
+## Output And Communication
+
+- Do not print file diffs, patch contents, plan contents, or long file summaries into chat unless explicitly requested.
+- When the user asks to write or update a file, prefer doing the work in the file and replying with a minimal status update only.
+- Keep chat responses concise by default and avoid echoing content that already exists in repository files.
+
 ## Formatting And Checks
 
 - Run `npx prettier --check <file>` after edits.
