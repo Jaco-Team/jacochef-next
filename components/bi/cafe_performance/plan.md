@@ -22,9 +22,8 @@ This plan assumes the goal is to build a production-ready frontend module shell 
 - Do not use `useEffect` dependencies tied directly to legacy `api_laravel` references.
 - Reuse existing project primitives first:
   - `TabPanel`
-  - `CityCafeAutocomplete2`
-  - `MyDatePickerNew`
-  - `MySelect` / `MyAutocomplite` where appropriate
+  - `MyAutocomplite`
+  - `MyDatePicker`
   - `MyAlert`
 - Use Zustand for page state.
 - Use MUI 7 and keep the module visually aligned with the existing admin app, not a full Lovable clone.
@@ -41,7 +40,7 @@ Observed patterns across the reference:
   - page title
   - updated timestamp
   - cafe selector
-  - period selector
+  - date range selector
 - Five main views with distinct content blocks
 - Strong card-based layout
 - Dense but readable KPI presentation
@@ -129,20 +128,19 @@ Use Zustand similarly to `dds`, but split bootstrap state from per-screen payloa
 
 Store should include:
 
-- `module: "bi_cafe_performance"`
+- `module: "cafe_performance"`
 - `moduleName`
 - `access`
 - `loading`
 - `tab`
 - `points`
-- `periodTypes`
 - `stageTypes`
 - `orderTypes`
 - `categories`
 - `defaults`
 - `filters`
-  - `period_type`
-  - `date`
+  - `date_start`
+  - `date_end`
   - `point_list`
   - `category_ids`
   - `stage_type`
@@ -180,15 +178,16 @@ On mount:
 
 Centralize a single request builder to avoid drift:
 
-- `period_type`
-- `date`
+- `date_start`
+- `date_end`
 - `point_list: [{ id }]`
 - `category_ids`
 - `stage_type`
 
 Rules:
 
-- always send `date`
+- always send `date_start`
+- always send `date_end`
 - always send at least one point id
 - send `category_ids: []` for all categories unless backend requires omission
 - keep `stage_type` in shared payload for all requests if harmless, since backend accepts it
@@ -314,10 +313,10 @@ Recommended shell:
 
 Filter panel should include:
 
-- `CityCafeAutocomplete2` for `point_list`
+- `MyAutocomplite` for `point_list`
 - period type select using `MySelect`
 - date control:
-  - first version: `MyDatePickerNew` for all period types
+  - first version: `MyDatePicker` for the range fields
   - week/month specialization can be added if the UX becomes awkward
 - category multi-select:
   - if `MyAutocomplite` supports the needed multi-select UX cleanly, use it

@@ -22,7 +22,7 @@ Error shape:
 
 Endpoint:
 
-- `bi_cafe_performance/get_all`
+- `cafe_performance/get_all`
 
 Request body:
 
@@ -47,11 +47,6 @@ Response shape:
     }
   ],
   "access": [],
-  "period_types": [
-    { "id": "day", "name": "Day" },
-    { "id": "week", "name": "Week" },
-    { "id": "month", "name": "Month" }
-  ],
   "stage_types": [
     { "id": "ROLL", "name": "Крутка" },
     { "id": "OVEN", "name": "Печь" },
@@ -64,8 +59,8 @@ Response shape:
   ],
   "categories": [{ "id": 9, "name": "Category", "type_cat": 0 }],
   "defaults": {
-    "period_type": "day",
-    "date": "2026-04-08",
+    "date_start": "2026-04-01",
+    "date_end": "2026-04-08",
     "stage_type": "PACK",
     "point_list": [
       {
@@ -83,19 +78,19 @@ Response shape:
 
 Endpoints:
 
-- `bi_cafe_performance/get_dashboard`
-- `bi_cafe_performance/get_kitchen`
-- `bi_cafe_performance/get_leaders`
-- `bi_cafe_performance/get_quality`
-- `bi_cafe_performance/get_delivery`
+- `cafe_performance/get_dashboard`
+- `cafe_performance/get_kitchen`
+- `cafe_performance/get_leaders`
+- `cafe_performance/get_quality`
+- `cafe_performance/get_delivery`
 
 Shared request body:
 
 ```json
 {
   "data": {
-    "period_type": "day",
-    "date": "2026-04-08",
+    "date_start": "2026-04-01",
+    "date_end": "2026-04-08",
     "point_list": [{ "id": 1 }],
     "category_ids": [9, 10, 14],
     "stage_type": "PACK"
@@ -105,9 +100,8 @@ Shared request body:
 
 Request notes:
 
-- `date` is required.
+- `date_start` and `date_end` are required.
 - `point_list` is required and must contain at least one allowed point id.
-- `period_type` supports `day`, `week`, `month`.
 - `category_ids` is optional. Empty means all categories.
 - `stage_type` is only used by kitchen, but the backend accepts it in the shared payload.
 

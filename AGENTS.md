@@ -22,7 +22,8 @@
 
 ## Formatting And Checks
 
-- Run `npx prettier --check <file>` after edits.
+- Do not run `prettier`, `eslint`, `lint`, or similar formatting/check commands unless the user explicitly asks.
+- Assume formatting/check hooks are handled by husky or the user's normal workflow.
 - Keep code style consistent with the surrounding file.
 - Avoid adding new dependencies unless required.
 

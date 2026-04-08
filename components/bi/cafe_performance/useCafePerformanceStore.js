@@ -1,0 +1,79 @@
+"use client";
+
+import { create } from "zustand";
+
+const emptyScreenMap = {
+  dashboard: null,
+  kitchen: null,
+  leaders: null,
+  quality: null,
+  delivery: null,
+};
+
+const useCafePerformanceStore = create((set) => ({
+  module: "cafe_performance",
+  moduleName: "Эффективность кафе",
+  access: [],
+  loading: false,
+  bootstrapped: false,
+  tab: 0,
+  points: [],
+  stageTypes: [],
+  orderTypes: [],
+  categories: [],
+  defaults: {},
+  filters: {
+    date_start: null,
+    date_end: null,
+    point_list: [],
+    category_ids: [],
+    stage_type: "",
+  },
+  loadedTabs: {},
+  metaByScreen: emptyScreenMap,
+  dashboardData: null,
+  kitchenData: null,
+  leadersData: null,
+  qualityData: null,
+  deliveryData: null,
+
+  setLoading: (loading) => set({ loading }),
+  setTab: (tab) => set({ tab }),
+  setBootstrap: (payload) =>
+    set({
+      bootstrapped: true,
+      access: payload.access || [],
+      points: payload.points || [],
+      stageTypes: payload.stageTypes || [],
+      orderTypes: payload.orderTypes || [],
+      categories: payload.categories || [],
+      defaults: payload.defaults || {},
+      filters: payload.filters,
+      moduleName: payload.moduleName || "Эффективность кафе",
+    }),
+  setFilters: (nextFilters) =>
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        ...nextFilters,
+      },
+    })),
+  setScreenData: (screenKey, payload) =>
+    set((state) => ({
+      [`${screenKey}Data`]: payload,
+      metaByScreen: {
+        ...state.metaByScreen,
+        [screenKey]: payload?.meta || null,
+      },
+    })),
+  markTabLoaded: (screenKey) =>
+    set((state) => ({
+      loadedTabs: {
+        ...state.loadedTabs,
+        [screenKey]: true,
+      },
+    })),
+  resetLoadedTabs: () => set({ loadedTabs: {} }),
+}));
+
+export default useCafePerformanceStore;
