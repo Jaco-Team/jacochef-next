@@ -5,7 +5,7 @@ import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import { Button, Grid, Stack, Tab, Tabs } from "@mui/material";
 import dayjs from "dayjs";
 import useMarketingTabStore from "./useMarketingTabStore";
-import ModalOrder from "../ModalOrder";
+import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import InnerTabStats from "./InnerTabStats";
@@ -140,7 +140,7 @@ export default function SiteClientsMarketingTab(props) {
           />
         </>
       </SiteClientsMarketingOrdersModal>
-      <ModalOrder
+      <OrderDetailsModal
         open={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
         order={order}

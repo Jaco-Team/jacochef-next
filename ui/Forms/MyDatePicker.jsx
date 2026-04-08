@@ -1,25 +1,41 @@
 "use client";
 
-import { Typography } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
+import { NoSsr } from "@mui/material";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
+
+dayjs.locale("ru");
 
 export function MyDatePicker(props) {
   return (
-    <>
-      <Typography>{props.label}</Typography>
-      <DatePicker
-        format="YYYY-MM-DD"
-        multiple
-        sort
-        //mask="____/__/__"
-        //multiple={ props.multiple && props.multiple === true ? true : false }
-        //disableCloseOnSelect={true}
-        //inputFormat="yyyy-MM-dd"
-        style={{ width: "100%" }}
-        label={props.label}
-        value={props.value}
-        onChange={props.func}
-      />
-    </>
+    <NoSsr>
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale="ru"
+      >
+        <DatePicker
+          format={props.format ?? "YYYY-MM-DD"}
+          label={props.label}
+          value={props.value ? dayjs(props.value) : null}
+          onChange={props.func}
+          minDate={props.minDate ? dayjs(props.minDate) : undefined}
+          maxDate={props.maxDate ? dayjs(props.maxDate) : undefined}
+          disabled={!!props.disabled}
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              size: "small",
+              sx: props.sx || {},
+            },
+            actionBar: {
+              actions: props.customActions ? ["clear", "accept"] : ["cancel", "accept"],
+            },
+            field: { clearable: props.clearable },
+          }}
+        />
+      </LocalizationProvider>
+    </NoSsr>
   );
 }

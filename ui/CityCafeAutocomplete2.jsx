@@ -223,8 +223,17 @@ export default function CityCafeAutocomplete2({
   }, [cities, cafesByOrganization, groupMode]);
 
   useEffect(() => {
-    withAll && withAllSelected && setValueSafe([ALL_OPTION]);
-  }, [withAll, allCafes]);
+    if (!withAll || !withAllSelected || !points.length) return;
+
+    const controlledValue = value ?? innerValue;
+    const isAlreadyAllSelected =
+      controlledValue.length === points.length &&
+      points.every((point) => controlledValue.some((item) => item.id === point.id));
+
+    if (!isAlreadyAllSelected) {
+      setValueSafe([ALL_OPTION]);
+    }
+  }, [innerValue, points, value, withAll, withAllSelected]);
 
   const groupBy = useCallback(
     (opt) => {

@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import { LoadingProvider } from "@/components/site_clients/useClientsLoadingContext";
 import HistoryClientModal from "@/components/site_clients/history/HistoryClientModal";
-import ModalOrder from "@/components/site_clients/ModalOrder";
+import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import {
   MyAutoCompleteWithAll,
   MyAutocomplite,
@@ -395,7 +395,7 @@ export default function CrmPage() {
           onClose={() => setClientModalOpened(false)}
         />
       )}
-      <ModalOrder
+      <OrderDetailsModal
         open={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
         order={order}

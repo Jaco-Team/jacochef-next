@@ -20,9 +20,11 @@ import {
 } from "@mui/material";
 import { memo } from "react";
 
-const ModalOrder = ({ open, onClose, order: orderObj }) => {
+const OrderDetailsModal = ({ open, onClose, order: orderObj }) => {
   if (!orderObj) return null;
+
   const { order, order_items = [], err_order = null } = orderObj;
+
   return (
     <Dialog
       open={open}
@@ -274,4 +276,4 @@ const ModalOrder = ({ open, onClose, order: orderObj }) => {
   );
 };
 
-export default memo(ModalOrder);
+export default memo(OrderDetailsModal);
