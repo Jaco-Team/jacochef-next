@@ -18,6 +18,7 @@ import queryString from "query-string";
 
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 class PromoItemsStat_ extends React.Component {
   constructor(props) {
@@ -54,50 +55,19 @@ class PromoItemsStat_ extends React.Component {
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
+  getData = async (method, data = {}) => {
+    this.setState({ is_load: true });
 
-    return fetch("https://jacochef.ru/api/index_new.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: queryString.stringify({
-        method: method,
-        module: this.state.module,
-        version: 2,
-        login: localStorage.getItem("token"),
-        data: JSON.stringify(data),
-      }),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.st === false && json.type == "redir") {
-          window.location.pathname = "/";
-          return;
-        }
-
-        if (json.st === false && json.type == "auth") {
-          window.location.pathname = "/auth";
-          return;
-        }
-
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 300);
-
-        return json;
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          is_load: false,
-        });
-      });
+    try {
+      const result = await api_laravel(this.state.module, method, data);
+      return result?.data;
+    } catch (error) {
+      return { st: false, text: error.message || "Ошибка запроса" };
+    } finally {
+      setTimeout(() => {
+        this.setState({ is_load: false });
+      }, 500);
+    }
   };
 
   async getStat() {
@@ -258,7 +228,10 @@ class PromoItemsStat_ extends React.Component {
               <TableHead>
                 <TableRow>
                   <TableCell>Название</TableCell>
-                  <TableCell>Кол-во</TableCell>
+                  <TableCell>Клиентов</TableCell>
+                  {this.state.stats && this.state.stats[0]?.summ !== undefined ? (
+                    <TableCell>Сумма</TableCell>
+                  ) : null}
                 </TableRow>
               </TableHead>
 
@@ -269,6 +242,11 @@ class PromoItemsStat_ extends React.Component {
                       <TableRow key={key}>
                         <TableCell style={{ textAlign: "left" }}>{item.name} </TableCell>
                         <TableCell style={{ textAlign: "left" }}>{item.count} </TableCell>
+                        {this.state.stats && this.state.stats[0]?.summ !== undefined ? (
+                          <TableCell style={{ textAlign: "left" }}>
+                            {new Intl.NumberFormat("ru-RU").format(item.summ || 0)} ₽
+                          </TableCell>
+                        ) : null}
                       </TableRow>
                     ))}
               </TableBody>
