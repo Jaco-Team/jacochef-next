@@ -41,7 +41,7 @@ export default function useApi(module) {
   if (!process.env.NEXT_PUBLIC_API_URL) {
     const fallback_laravel = (...args) => {
       console.log("api_laravel fallback mode. Missing .env config");
-      api_fallback(module, ...args);
+      return api_fallback(module, ...args);
     };
     const fallback_upload = () => console.log("api_upload fallback mode. Missing .env config");
     return {
