@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useShallow } from "zustand/react/shallow";
+import dayjs from "dayjs";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import useVendorAccess from "./useVendorAccess";
@@ -33,6 +34,7 @@ export default function useVendorDetailsPage(vendorId) {
   const {
     allItems,
     bindDeclarationId,
+    docModalExpiresAt,
     docModalFile,
     docModalItemId,
     mails,
@@ -40,6 +42,7 @@ export default function useVendorDetailsPage(vendorId) {
     setAllDeclarations,
     setAllItems,
     setBindDeclarationId,
+    setDocModalExpiresAt,
     setDocModalFile,
     setDocModalItemId,
     setIsDocModalOpen,
@@ -57,6 +60,7 @@ export default function useVendorDetailsPage(vendorId) {
     useShallow((state) => ({
       allItems: state.allItems || [],
       bindDeclarationId: state.bindDeclarationId,
+      docModalExpiresAt: state.docModalExpiresAt,
       docModalFile: state.docModalFile,
       docModalItemId: state.docModalItemId,
       mails: state.mails || [],
@@ -64,6 +68,7 @@ export default function useVendorDetailsPage(vendorId) {
       setAllDeclarations: state.setAllDeclarations,
       setAllItems: state.setAllItems,
       setBindDeclarationId: state.setBindDeclarationId,
+      setDocModalExpiresAt: state.setDocModalExpiresAt,
       setDocModalFile: state.setDocModalFile,
       setDocModalItemId: state.setDocModalItemId,
       setIsDocModalOpen: state.setIsDocModalOpen,
@@ -139,6 +144,7 @@ export default function useVendorDetailsPage(vendorId) {
         allDeclarations: sharedAllDeclarations,
         vendorItems: productsResponse.vendor_items || [],
         allItems: sharedAllItems,
+        history: infoResponse.history || [],
       });
       document.title = infoResponse.vendor?.name || "Поставщик";
       return true;
@@ -318,7 +324,7 @@ export default function useVendorDetailsPage(vendorId) {
     return isSaved;
   };
 
-  const handleUploadDeclaration = async (itemId, file) => {
+  const handleUploadDeclaration = async (itemId, file, expiresAt = docModalExpiresAt) => {
     if (!canUpload) {
       showAlert("Недостаточно прав для загрузки деклараций", false);
       return null;
@@ -332,6 +338,8 @@ export default function useVendorDetailsPage(vendorId) {
       setLoading(true);
       const response = await api_upload("upload_declaration", file, {
         item_id: Number(itemId),
+        expires_at:
+          expiresAt && dayjs(expiresAt).isValid() ? dayjs(expiresAt).format("YYYY-MM-DD") : "",
       });
 
       if (!response?.st) {
@@ -361,6 +369,7 @@ export default function useVendorDetailsPage(vendorId) {
   const closeDocModal = () => {
     setIsDocModalOpen(false);
     setDocModalFile(null);
+    setDocModalExpiresAt(null);
     setBindDeclarationId("");
   };
 
@@ -374,6 +383,7 @@ export default function useVendorDetailsPage(vendorId) {
       setDocModalItemId(String(itemId));
     }
     setDocModalFile(null);
+    setDocModalExpiresAt(null);
     setBindDeclarationId("");
     setIsDocModalOpen(true);
   };
@@ -405,6 +415,7 @@ export default function useVendorDetailsPage(vendorId) {
       handleDeclarationResponse(response);
       showAlert("Декларация привязана", true);
       setBindDeclarationId("");
+      setDocModalExpiresAt(null);
       return response;
     } catch (error) {
       showAlert(error?.message || "Не удалось привязать декларацию", false);
@@ -433,7 +444,7 @@ export default function useVendorDetailsPage(vendorId) {
       return;
     }
 
-    const response = await handleUploadDeclaration(docModalItemId, docModalFile);
+    const response = await handleUploadDeclaration(docModalItemId, docModalFile, docModalExpiresAt);
     if (response?.st) {
       closeDocModal();
     }

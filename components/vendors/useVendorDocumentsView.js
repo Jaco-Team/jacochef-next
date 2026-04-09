@@ -5,16 +5,23 @@ import { useShallow } from "zustand/react/shallow";
 import useVendorDetailsStore from "./useVendorDetailsStore";
 
 export default function useVendorDocumentsView() {
-  const { allDeclarations, bindDeclarationId, docModalFile, docModalItemId, vendorItems } =
-    useVendorDetailsStore(
-      useShallow((state) => ({
-        allDeclarations: state.allDeclarations || [],
-        bindDeclarationId: state.bindDeclarationId,
-        docModalFile: state.docModalFile,
-        docModalItemId: state.docModalItemId,
-        vendorItems: state.vendorItems || [],
-      })),
-    );
+  const {
+    allDeclarations,
+    bindDeclarationId,
+    docModalExpiresAt,
+    docModalFile,
+    docModalItemId,
+    vendorItems,
+  } = useVendorDetailsStore(
+    useShallow((state) => ({
+      allDeclarations: state.allDeclarations || [],
+      bindDeclarationId: state.bindDeclarationId,
+      docModalExpiresAt: state.docModalExpiresAt,
+      docModalFile: state.docModalFile,
+      docModalItemId: state.docModalItemId,
+      vendorItems: state.vendorItems || [],
+    })),
+  );
 
   const vendorItemsOptions = useMemo(
     () =>
@@ -58,6 +65,7 @@ export default function useVendorDocumentsView() {
   return {
     availableDeclarationsForBind,
     bindDeclarationId,
+    docModalExpiresAt,
     docModalFile,
     docModalItemId,
     vendorDeclarations,
