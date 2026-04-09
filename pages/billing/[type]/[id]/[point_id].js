@@ -59,6 +59,8 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
@@ -5518,6 +5520,7 @@ class Billing_Modal extends React.Component {
 
 class Billing_Edit_ extends React.Component {
   isClick = false;
+  isRedirectingAfterSave = false;
   ocrDropzone = null;
 
   constructor(props) {
@@ -5533,6 +5536,10 @@ class Billing_Edit_ extends React.Component {
         mainFiles: 0,
         facturFiles: 0,
       },
+      saveNoticeOpen: false,
+      saveNoticeText: "",
+      saveNoticeSeverity: "warning",
+      saveNoticeKey: 0,
 
       acces: null,
       type_doc: "",
@@ -5565,11 +5572,50 @@ class Billing_Edit_ extends React.Component {
     });
   };
 
+  canStartSaveAction = () => {
+    return !(
+      this.isClick ||
+      this.isRedirectingAfterSave ||
+      this.state.isSavingAction ||
+      this.state.isUploadProcessing
+    );
+  };
+
+  lockSaveActionUntilRedirect = (nextState = {}) => {
+    this.isClick = true;
+    this.isRedirectingAfterSave = true;
+    this.setState({
+      isSavingAction: true,
+      isUploadProcessing: false,
+      ...nextState,
+    });
+  };
+
   finishSaveAction = (nextState = {}) => {
     this.isClick = false;
+    this.isRedirectingAfterSave = false;
     this.setState({
       isSavingAction: false,
       ...nextState,
+    });
+  };
+
+  showSaveNotice = (text, severity = "warning") => {
+    this.setState({
+      saveNoticeOpen: true,
+      saveNoticeText: text,
+      saveNoticeSeverity: severity,
+      saveNoticeKey: Date.now(),
+    });
+  };
+
+  closeSaveNotice = (_, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    this.setState({
+      saveNoticeOpen: false,
     });
   };
 
@@ -5648,6 +5694,8 @@ class Billing_Edit_ extends React.Component {
   }
 
   componentWillUnmount() {
+    this.isClick = false;
+    this.isRedirectingAfterSave = false;
     this.unbindOcrDropzoneEvents();
   }
 
@@ -6318,7 +6366,10 @@ class Billing_Edit_ extends React.Component {
   };
 
   async saveEditBill(type_save, check_err = true) {
-    if (this.isClick === true) return;
+    if (!this.canStartSaveAction()) {
+      this.showSaveNotice("Сохранение уже выполняется. Повторный клик заблокирован.");
+      return;
+    }
 
     this.startSaveAction();
 
@@ -6374,6 +6425,7 @@ class Billing_Edit_ extends React.Component {
 
     if (new_bill_items.length > 0) {
       showAlert(false, "Не все даныне в товаре заполнены");
+      this.showSaveNotice("Сохранение остановлено: не все данные по товарам заполнены.");
 
       this.finishSaveAction();
 
@@ -6428,6 +6480,7 @@ class Billing_Edit_ extends React.Component {
         items_err: items_color,
         modelCheckErrItems: true,
       });
+      this.showSaveNotice("Сохранение остановлено: есть позиции с предупреждением по ценнику.");
 
       this.finishSaveAction();
 
@@ -6437,6 +6490,7 @@ class Billing_Edit_ extends React.Component {
     if (type_save !== "return") {
       if (imgs_bill.length == 0 && (!DropzoneMain || DropzoneMain["files"].length === 0)) {
         showAlert(false, "Нет изображений документа");
+        this.showSaveNotice("Сохранение остановлено: не загружено изображение документа.");
 
         this.finishSaveAction();
 
@@ -6450,6 +6504,7 @@ class Billing_Edit_ extends React.Component {
         (!DropzoneDop || DropzoneDop["files"].length === 0)
       ) {
         showAlert(false, "Нет изображений счет-фактуры");
+        this.showSaveNotice("Сохранение остановлено: не загружено изображение счет-фактуры.");
 
         this.finishSaveAction();
 
@@ -6522,7 +6577,7 @@ class Billing_Edit_ extends React.Component {
         ].filter(Boolean);
 
         if (!uploadTargets.length) {
-          this.finishSaveAction();
+          this.lockSaveActionUntilRedirect();
           window.location.pathname = "/billing";
           return;
         }
@@ -6564,12 +6619,23 @@ class Billing_Edit_ extends React.Component {
 
         if (hasUploadErrors) {
           showAlert(false, "Документ сохранен, но часть изображений не загрузилась");
+          this.showSaveNotice(
+            "Документ сохранен, но часть изображений не загрузилась. Если повторится, сообщи разработчикам.",
+            "warning",
+          );
           return;
         }
 
+        this.lockSaveActionUntilRedirect();
         window.location.pathname = "/billing";
       } else {
         showAlert(res.st, res.text);
+        this.showSaveNotice(
+          res?.text
+            ? `Сохранение отклонено сервером: ${res.text}`
+            : "Сохранение отклонено сервером.",
+          "warning",
+        );
         this.finishSaveAction();
       }
     } catch (error) {
@@ -6582,6 +6648,10 @@ class Billing_Edit_ extends React.Component {
         },
       });
       showAlert(false, "Не удалось сохранить документ. Попробуй еще раз");
+      this.showSaveNotice(
+        "Неожиданная ошибка при сохранении. Если проблема повторится, сообщи разработчикам.",
+        "error",
+      );
     }
   }
 
@@ -6638,6 +6708,7 @@ class Billing_Edit_ extends React.Component {
 
     if (this.state.delText.length <= 3) {
       showAlert(false, "Надо указать причину удаления");
+      this.showSaveNotice("Удаление остановлено: укажи причину подробнее.", "warning");
 
       return;
     }
@@ -6661,6 +6732,10 @@ class Billing_Edit_ extends React.Component {
       window.location = "/billing";
     } else {
       showAlert(res.st, res.text);
+      this.showSaveNotice(
+        res?.text ? `Удаление отклонено: ${res.text}` : "Удаление отклонено сервером.",
+        "warning",
+      );
     }
   }
 
@@ -6702,6 +6777,7 @@ class Billing_Edit_ extends React.Component {
 
     if (this.state.delText.length <= 3) {
       showAlert(false, "Надо указать комментарий");
+      this.showSaveNotice("Подтверждение остановлено: добавь комментарий.", "warning");
 
       return;
     }
@@ -6725,6 +6801,12 @@ class Billing_Edit_ extends React.Component {
       window.location = "/billing";
     } else {
       showAlert(res.st, res.text);
+      this.showSaveNotice(
+        res?.text
+          ? `Подтверждение ценников отклонено: ${res.text}`
+          : "Подтверждение ценников отклонено сервером.",
+        "warning",
+      );
     }
   }
 
@@ -6740,6 +6822,7 @@ class Billing_Edit_ extends React.Component {
 
     if (this.state.delText.length <= 3) {
       showAlert(false, "Надо указать причину удаления");
+      this.showSaveNotice("Удаление из 1С остановлено: укажи причину подробнее.", "warning");
 
       return;
     }
@@ -6759,6 +6842,10 @@ class Billing_Edit_ extends React.Component {
       window.location = "/billing";
     } else {
       showAlert(res.st, res.text);
+      this.showSaveNotice(
+        res?.text ? `Удаление из 1С отклонено: ${res.text}` : "Удаление из 1С отклонено сервером.",
+        "warning",
+      );
     }
   }
 
@@ -6779,6 +6866,12 @@ class Billing_Edit_ extends React.Component {
       window.location = "/billing";
     } else {
       showAlert(res.st, res.text);
+      this.showSaveNotice(
+        res?.text
+          ? `Возврат в бухгалтерию отклонен: ${res.text}`
+          : "Возврат в бухгалтерию отклонен сервером.",
+        "warning",
+      );
     }
   }
 
@@ -6939,6 +7032,27 @@ class Billing_Edit_ extends React.Component {
           status={err_status}
           text={err_text}
         />
+        <Snackbar
+          key={this.state.saveNoticeKey}
+          open={this.state.saveNoticeOpen}
+          autoHideDuration={4200}
+          onClose={this.closeSaveNotice}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert
+            onClose={this.closeSaveNotice}
+            severity={this.state.saveNoticeSeverity}
+            variant="filled"
+            sx={{
+              width: "100%",
+              maxWidth: 420,
+              boxShadow: "0 12px 30px rgba(15, 23, 42, 0.18)",
+              alignItems: "center",
+            }}
+          >
+            {this.state.saveNoticeText}
+          </Alert>
+        </Snackbar>
         <Dialog
           open={this.state.modelCheckBuxComment}
           onClose={() => {
@@ -7186,6 +7300,7 @@ class Billing_Edit_ extends React.Component {
               variant="contained"
               onClick={this.saveEditBill.bind(this, "return", false)}
               color="warning"
+              disabled={isSaveActionLocked}
               sx={billingDialogButtonSx}
             >
               Вернуть
