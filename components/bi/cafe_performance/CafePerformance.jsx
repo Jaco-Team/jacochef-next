@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import dayjs from "dayjs";
-import { Backdrop, CircularProgress, Grid, Paper, Tab, Tabs } from "@mui/material";
+import { useCallback, useEffect, useMemo } from "react";
+import { Backdrop, CircularProgress, Grid, Paper, Tab, Tabs, Typography } from "@mui/material";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
-import { formatYMD } from "@/src/helpers/ui/formatDate";
-import { CAFE_PERFORMANCE_TABS } from "./config";
 import useCafePerformanceStore from "./useCafePerformanceStore";
 import PageFilters from "./components/PageFilters";
 import WarningList from "./components/WarningList";
@@ -19,15 +16,41 @@ import LeadersTab from "./tabs/LeadersTab";
 import QualityTab from "./tabs/QualityTab";
 import DeliveryTab from "./tabs/DeliveryTab";
 
-const buildRequestPayload = (activeFilters) => ({
-  date_start: activeFilters.date_start ? formatYMD(activeFilters.date_start) : formatYMD(dayjs()),
-  date_end: activeFilters.date_end ? formatYMD(activeFilters.date_end) : formatYMD(dayjs()),
-  point_list: (activeFilters.point_list || []).map((item) => ({ id: item.id })),
-  category_ids: activeFilters.category_ids || [],
-  stage_type: activeFilters.stage_type,
-});
+const buildRequestPayload = (activeFilters, tabKey) => {
+  const payload = {
+    period_type: activeFilters.period_type || "day",
+    date_start: activeFilters.date_start || null,
+    date_end: activeFilters.date_end || null,
+    point_list: (activeFilters.point_list || []).map((item) => ({ id: item.id })),
+  };
 
-const normalizeDate = (value) => (value ? dayjs(value) : null);
+  if (tabKey === "kitchen") {
+    payload.category_ids = activeFilters.category_ids || [];
+    payload.stage_type = activeFilters.stage_type || "";
+  }
+
+  return payload;
+};
+
+const getPresetByType = (presets = [], periodType) =>
+  presets.find((item) => item.period_type === periodType) || null;
+
+const buildPeriodFilterState = (defaults = {}, presets = []) => {
+  const activePreset = getPresetByType(presets, defaults.period_type) ||
+    presets[0] || {
+      period_type: defaults.period_type || "day",
+      date_start: defaults.date_start || null,
+      date_end: defaults.date_end || null,
+      period_label: defaults.period_label || "",
+    };
+
+  return {
+    period_type: activePreset.period_type || "day",
+    date_start: activePreset.date_start || defaults.date_start || null,
+    date_end: activePreset.date_end || defaults.date_end || null,
+    period_label: activePreset.period_label || defaults.period_label || "",
+  };
+};
 
 export default function CafePerformance() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
@@ -40,6 +63,7 @@ export default function CafePerformance() {
   const points = useCafePerformanceStore((s) => s.points);
   const stageTypes = useCafePerformanceStore((s) => s.stageTypes);
   const categories = useCafePerformanceStore((s) => s.categories);
+  const defaults = useCafePerformanceStore((s) => s.defaults);
   const filters = useCafePerformanceStore((s) => s.filters);
   const loadedTabs = useCafePerformanceStore((s) => s.loadedTabs);
   const metaByScreen = useCafePerformanceStore((s) => s.metaByScreen);
@@ -68,6 +92,14 @@ export default function CafePerformance() {
   }));
 
   const { api_laravel } = useApi(module);
+  const CAFE_PERFORMANCE_TABS = [
+    { id: 0, key: "dashboard", label: "Дашборд", method: "get_dashboard" },
+    { id: 1, key: "kitchen", label: "Кухня", method: "get_kitchen" },
+    { id: 2, key: "leaders", label: "Лидеры", method: "get_leaders" },
+    { id: 3, key: "quality", label: "Качество", method: "get_quality" },
+    { id: 4, key: "delivery", label: "Доставка", method: "get_delivery" },
+  ];
+
   const currentTab = CAFE_PERFORMANCE_TABS[tab] || CAFE_PERFORMANCE_TABS[0];
 
   const formatters = useMemo(
@@ -89,6 +121,11 @@ export default function CafePerformance() {
     [],
   );
   const currentMeta = metaByScreen[currentTab.key] || null;
+  const periodPresets = defaults?.period_presets || [];
+  const activePeriodLabel =
+    currentMeta?.period?.type === filters.period_type
+      ? currentMeta?.period?.label
+      : filters.period_label;
   const currentStageName = useMemo(
     () => stageTypes.find((item) => item.id === filters.stage_type)?.name || "",
     [filters.stage_type, stageTypes],
@@ -104,9 +141,9 @@ export default function CafePerformance() {
         if (!res?.st) throw new Error(res?.text || "Ошибка загрузки модуля");
 
         const defaults = res.defaults || {};
+        const periodPresets = res.period_presets || [];
         const normalizedFilters = {
-          date_start: normalizeDate(defaults.date_start) || dayjs(),
-          date_end: normalizeDate(defaults.date_end) || dayjs(),
+          ...buildPeriodFilterState(defaults, periodPresets),
           point_list: defaults.point_list || [],
           category_ids: [],
           stage_type: defaults.stage_type || res.stage_types?.[0]?.id || "",
@@ -115,7 +152,7 @@ export default function CafePerformance() {
         const firstTab = CAFE_PERFORMANCE_TABS[0];
         const firstTabResponse = await api_laravel(
           firstTab.method,
-          buildRequestPayload(normalizedFilters),
+          buildRequestPayload(normalizedFilters, firstTab.key),
         );
         if (!firstTabResponse?.st) {
           throw new Error(firstTabResponse?.text || "Ошибка загрузки данных");
@@ -130,7 +167,10 @@ export default function CafePerformance() {
           stageTypes: res.stage_types,
           orderTypes: res.order_types,
           categories: res.categories,
-          defaults,
+          defaults: {
+            ...defaults,
+            period_presets: periodPresets,
+          },
           filters: normalizedFilters,
         });
 
@@ -159,7 +199,10 @@ export default function CafePerformance() {
     const run = async () => {
       setLoading(true);
       try {
-        const res = await api_laravel(currentTab.method, buildRequestPayload(filters));
+        const res = await api_laravel(
+          currentTab.method,
+          buildRequestPayload(filters, currentTab.key),
+        );
         if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
         if (cancelled) return;
         setScreenData(currentTab.key, res);
@@ -179,12 +222,34 @@ export default function CafePerformance() {
   }, [bootstrapped, currentTab.key, loadedTabs]);
 
   const handleFilterChange = (key, value) => {
-    if (key === "date_start" || key === "date_end") {
-      setFilters({ [key]: normalizeDate(value) });
+    if (key === "period_type") {
+      const nextPreset = getPresetByType(periodPresets, value);
+
+      setFilters({
+        period_type: value,
+        date_start: nextPreset?.date_start || null,
+        date_end: nextPreset?.date_end || null,
+        period_label: nextPreset?.period_label || "",
+      });
       return;
     }
     setFilters({ [key]: value });
   };
+
+  const loadTabs = useCallback(
+    async (tabConfigs) => {
+      for (const tabConfig of tabConfigs) {
+        const res = await api_laravel(
+          tabConfig.method,
+          buildRequestPayload(filters, tabConfig.key),
+        );
+        if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
+        setScreenData(tabConfig.key, res);
+        markTabLoaded(tabConfig.key);
+      }
+    },
+    [api_laravel, filters, markTabLoaded, setScreenData],
+  );
 
   const handleApply = async () => {
     if (!filters.point_list?.length) {
@@ -192,13 +257,8 @@ export default function CafePerformance() {
       return;
     }
 
-    if (!filters.date_start || !filters.date_end) {
+    if (!filters.period_type || !filters.date_start || !filters.date_end) {
       showAlert("Укажите период");
-      return;
-    }
-
-    if (dayjs(filters.date_start).isAfter(dayjs(filters.date_end), "day")) {
-      showAlert("Дата от не может быть позже даты до");
       return;
     }
 
@@ -208,13 +268,19 @@ export default function CafePerformance() {
       const tabsToLoad = visitedTabs.length ? visitedTabs : [currentTab];
 
       resetLoadedTabs();
+      await loadTabs(tabsToLoad);
+    } catch (error) {
+      showAlert(error?.message || "Ошибка загрузки");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      for (const tabConfig of tabsToLoad) {
-        const res = await api_laravel(tabConfig.method, buildRequestPayload(filters));
-        if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
-        setScreenData(tabConfig.key, res);
-        markTabLoaded(tabConfig.key);
-      }
+  const handleKitchenApply = async () => {
+    setLoading(true);
+    try {
+      resetLoadedTabs();
+      await loadTabs([CAFE_PERFORMANCE_TABS[1]]);
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки");
     } finally {
@@ -240,6 +306,11 @@ export default function CafePerformance() {
             data={kitchenData}
             formatters={formatters}
             stageName={currentStageName}
+            filters={filters}
+            categories={categories}
+            stageTypes={stageTypes}
+            onFilterChange={handleFilterChange}
+            onApply={handleKitchenApply}
           />
         ),
       },
@@ -305,12 +376,15 @@ export default function CafePerformance() {
         className="container_first_child"
       >
         <Grid size={12}>
+          <Typography variant="h5">{moduleName || "Эффективность кафе"}</Typography>
+        </Grid>
+
+        <Grid size={12}>
           <PageFilters
-            moduleName={moduleName}
             filters={filters}
+            periodPresets={periodPresets}
+            periodLabel={activePeriodLabel}
             points={points}
-            categories={categories}
-            stageTypes={stageTypes}
             generatedAt={currentMeta?.generated_at}
             onFilterChange={handleFilterChange}
             onApply={handleApply}

@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import {
+  Button,
   Grid,
   Stack,
   Table,
@@ -11,19 +13,100 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { MyAutocomplite } from "@/ui/Forms";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
 
-export default function KitchenTab({ data, formatters, stageName }) {
+export default function KitchenTab({
+  data,
+  formatters,
+  stageName,
+  filters,
+  categories,
+  stageTypes,
+  onFilterChange,
+  onApply,
+}) {
   if (!data) return <EmptyState />;
 
   const summary = data.stage_summary || {};
   const cards = data.best_employee_cards || [];
   const rows = data.employee_table || [];
+  const selectedCategories = useMemo(
+    () => categories.filter((category) => filters.category_ids.includes(category.id)),
+    [categories, filters.category_ids],
+  );
 
   return (
     <Stack spacing={3}>
+      <SectionCard title="Фильтры кухни">
+        <Grid
+          container
+          spacing={2}
+          alignItems="flex-start"
+        >
+          <Grid size={{ xs: 12, md: 5 }}>
+            <MyAutocomplite
+              label="Категории"
+              multiple
+              data={categories}
+              value={selectedCategories}
+              func={(_, value) =>
+                onFilterChange(
+                  "category_ids",
+                  value.map((item) => item.id),
+                )
+              }
+              getOptionLabel={(option) => option?.name || ""}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Stack spacing={1}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Этап кухни
+              </Typography>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={filters.stage_type || ""}
+                onChange={(_, value) => {
+                  if (value) onFilterChange("stage_type", value);
+                }}
+                sx={{ flexWrap: "wrap", alignSelf: "flex-start" }}
+              >
+                {stageTypes.map((stage) => (
+                  <ToggleButton
+                    key={stage.id}
+                    value={stage.id}
+                  >
+                    {stage.name}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 2 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={onApply}
+              sx={{ minHeight: 56 }}
+            >
+              Показать
+            </Button>
+          </Grid>
+        </Grid>
+      </SectionCard>
+
       <SectionCard
         title="Сводка этапа"
         subtitle={stageName ? `Текущий этап: ${stageName}` : null}

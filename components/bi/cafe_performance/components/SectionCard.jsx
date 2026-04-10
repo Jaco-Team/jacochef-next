@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Paper, Typography } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
 
 export default function SectionCard({ title, subtitle, action, children, sx = {} }) {
   return (
@@ -8,26 +8,23 @@ export default function SectionCard({ title, subtitle, action, children, sx = {}
       elevation={0}
       sx={{
         p: { xs: 2, md: 3 },
-        borderRadius: 3,
         border: "1px solid",
         borderColor: "divider",
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,250,251,0.96) 100%)",
+        backgroundColor: "background.paper",
         ...sx,
       }}
     >
       {(title || subtitle || action) && (
-        <Box
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          alignItems={{ xs: "flex-start", md: "center" }}
+          justifyContent="space-between"
+          spacing={2}
           sx={{
-            display: "flex",
-            alignItems: { xs: "flex-start", md: "center" },
-            justifyContent: "space-between",
-            gap: 2,
             mb: 2,
-            flexDirection: { xs: "column", md: "row" },
           }}
         >
-          <Box>
+          <Stack spacing={0.5}>
             {title && (
               <Typography
                 variant="h6"
@@ -45,9 +42,9 @@ export default function SectionCard({ title, subtitle, action, children, sx = {}
                 {subtitle}
               </Typography>
             )}
-          </Box>
+          </Stack>
           {action}
-        </Box>
+        </Stack>
       )}
       {children}
     </Paper>

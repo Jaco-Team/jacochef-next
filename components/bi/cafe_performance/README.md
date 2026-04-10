@@ -18,309 +18,102 @@ Error shape:
 }
 ```
 
-### Bootstrap
+# CafePerformance FE API Instruction
 
-Endpoint:
+Use the backend period payload as the source of truth for the date shown near the `day / week / month` switch.
 
-- `cafe_performance/get_all`
+## Bootstrap
 
-Request body:
+Read `defaults` from `POST /api/cafe_performance/get_all`.
+
+Important fields:
+
+- `defaults.period_type`
+- `defaults.date`
+- `defaults.date_start`
+- `defaults.date_end`
+- `defaults.period_label`
+- `period_presets[]`
+
+`period_presets[]` is ready for the switch UI:
 
 ```json
-{
-  "data": {}
-}
-```
-
-Response shape:
-
-```json
-{
-  "st": true,
-  "module_info": {},
-  "points": [
-    {
-      "id": 1,
-      "name": "Point name",
-      "city_id": 1,
-      "base": "jaco_rolls_1"
-    }
-  ],
-  "access": [],
-  "stage_types": [
-    { "id": "ROLL", "name": "Крутка" },
-    { "id": "OVEN", "name": "Печь" },
-    { "id": "PACK", "name": "Упаковка" }
-  ],
-  "order_types": [
-    { "id": "DELIVERY", "name": "Доставка", "source_ids": [1] },
-    { "id": "TAKEAWAY", "name": "Самовывоз", "source_ids": [2] },
-    { "id": "HALL", "name": "Зал", "source_ids": [3, 4] }
-  ],
-  "categories": [{ "id": 9, "name": "Category", "type_cat": 0 }],
-  "defaults": {
-    "date_start": "2026-04-01",
-    "date_end": "2026-04-08",
-    "stage_type": "PACK",
-    "point_list": [
-      {
-        "id": 1,
-        "name": "Point name",
-        "city_id": 1,
-        "base": "jaco_rolls_1"
-      }
-    ]
+[
+  {
+    "period_type": "day",
+    "date": "2026-04-10",
+    "date_start": "2026-04-10",
+    "date_end": "2026-04-10",
+    "period_label": "10.04.2026",
+    "is_single_day": true
+  },
+  {
+    "period_type": "week",
+    "date": "2026-04-10",
+    "date_start": "2026-04-06",
+    "date_end": "2026-04-12",
+    "period_label": "06.04.2026 - 12.04.2026",
+    "is_single_day": false
   }
-}
+]
 ```
 
-### Screen Request
+## Screen Requests
 
-Endpoints:
+Send explicit dates in every screen request.
 
-- `cafe_performance/get_dashboard`
-- `cafe_performance/get_kitchen`
-- `cafe_performance/get_leaders`
-- `cafe_performance/get_quality`
-- `cafe_performance/get_delivery`
-
-Shared request body:
+Preferred request shape:
 
 ```json
 {
   "data": {
-    "date_start": "2026-04-01",
-    "date_end": "2026-04-08",
+    "period_type": "week",
+    "date_start": "2026-04-06",
+    "date_end": "2026-04-12",
     "point_list": [{ "id": 1 }],
-    "category_ids": [9, 10, 14],
+    "category_ids": [],
     "stage_type": "PACK"
   }
 }
 ```
 
-Request notes:
+Do not rely on `period_type` alone for display. The UI should render the date from the API response.
 
-- `date_start` and `date_end` are required.
-- `point_list` is required and must contain at least one allowed point id.
-- `category_ids` is optional. Empty means all categories.
-- `stage_type` is only used by kitchen, but the backend accepts it in the shared payload.
+## Screen Responses
 
-Shared `meta` block in screen responses:
+Read the visible period from `meta.period`:
+
+- `meta.period.label`
+- `meta.period.date_start`
+- `meta.period.date_end`
+- `meta.period.is_single_day`
+
+Example:
 
 ```json
 {
   "meta": {
     "period": {
-      "type": "day",
-      "date": "2026-04-08",
-      "start_date": "2026-04-08",
-      "end_date": "2026-04-08"
-    },
-    "previous_period": {
-      "start_date": "2026-04-07",
-      "end_date": "2026-04-07"
-    },
-    "points": [{ "id": 1, "name": "Point name" }],
-    "generated_at": "2026-04-08T12:00:00+03:00",
-    "warnings": [
-      "SLA thresholds are provisional hardcoded defaults for the first backend version.",
-      "Remake metrics are not backed by a confirmed production source yet and return null.",
-      "Stage mapping currently assumes stage_1=ROLL, stage_2=OVEN, stage_3=PACK."
-    ]
+      "type": "week",
+      "date_start": "2026-04-06",
+      "date_end": "2026-04-12",
+      "label": "06.04.2026 - 12.04.2026",
+      "is_single_day": false
+    }
   }
 }
 ```
 
-### Dashboard Response
+## FE Change Required
 
-```json
-{
-  "st": true,
-  "summary": {
-    "sla_position": 92.15,
-    "sla_order": 88.4,
-    "p50_position": 742.0,
-    "complaints_per_100_orders": 1.73
-  },
-  "category_cards": [
-    {
-      "category_id": 9,
-      "category_name": "Роллы",
-      "p50": 680.0,
-      "p90": 1180.0,
-      "sla": 93.22,
-      "sample_size": 421
-    }
-  ],
-  "sla_by_category": [
-    {
-      "category_id": 9,
-      "category_name": "Роллы",
-      "sla": 93.22,
-      "sample_size": 421
-    }
-  ],
-  "channel_summary": [
-    {
-      "order_type": "DELIVERY",
-      "p50": 2140.0,
-      "p90": 3620.0,
-      "sla": 86.91,
-      "count": 188
-    }
-  ],
-  "meta": {}
-}
-```
+For the Lovable screen:
 
-### Kitchen Response
+1. Keep the `day / week / month` switch.
+2. Next to it, render `meta.period.label`.
+3. When the user changes the switch, pick the matching object from `period_presets[]`.
+4. Send its `date_start` and `date_end` in the next API request.
+5. After response, trust `meta.period.label` instead of recomputing the text on the client.
 
-```json
-{
-  "st": true,
-  "stage_summary": {
-    "stage_type": "PACK",
-    "p50": 97.0,
-    "p90": 201.0,
-    "sla": 90.18,
-    "share_long_stage_percent": 3.74,
-    "count": 512
-  },
-  "best_employee_cards": [
-    {
-      "id": "fastest_employee",
-      "employee_id": 17,
-      "employee_name": "Иван",
-      "stage_type": "PACK",
-      "metric": "p50",
-      "value": 84.0,
-      "sample_size": 96
-    }
-  ],
-  "employee_table": [
-    {
-      "employee_id": 17,
-      "employee_name": "Иван",
-      "stage_type": "PACK",
-      "p50": 84.0,
-      "p90": 166.0,
-      "sla": 94.79,
-      "stability": 97.92,
-      "share_long_stage_percent": 2.08,
-      "sample_size": 96,
-      "is_valid_for_rating": true
-    }
-  ],
-  "meta": {}
-}
-```
-
-### Leaders Response
-
-```json
-{
-  "st": true,
-  "top_employee_cards": [
-    {
-      "employee_id": 17,
-      "employee_name": "Иван",
-      "stage_type": "PACK",
-      "p50": 84.0,
-      "p90": 166.0,
-      "sla": 94.79,
-      "stability": 97.92,
-      "share_long_stage_percent": 2.08,
-      "sample_size": 96,
-      "is_valid_for_rating": true
-    }
-  ],
-  "cafe_ranking": [
-    {
-      "point_id": 1,
-      "point_name": "Point name",
-      "p50": 742.0,
-      "p90": 1298.0,
-      "sla": 91.4,
-      "sample_size": 512,
-      "is_valid_for_rating": true,
-      "score": 79.03
-    }
-  ],
-  "meta": {}
-}
-```
-
-### Quality Response
-
-```json
-{
-  "st": true,
-  "summary": {
-    "complaints_per_100_orders": 1.73,
-    "complaints_per_100_items": 0.98,
-    "remakes_per_100_items": null,
-    "anomaly_share_percent": 4.11
-  },
-  "reasons_breakdown": [
-    {
-      "reason_code": "ice_item",
-      "count": 7,
-      "share_percent": 26.92
-    }
-  ],
-  "complaints_by_category": [
-    {
-      "category_id": 9,
-      "category_name": "Роллы",
-      "complaints_per_100_items": 1.21,
-      "complaints_count": 5,
-      "item_count": 412
-    }
-  ],
-  "anomalies_by_stage_category": [
-    {
-      "stage_type": "PACK",
-      "category_id": 9,
-      "category_name": "Роллы",
-      "count": 210,
-      "long_count": 8,
-      "share_long_stage_percent": 3.81
-    }
-  ],
-  "meta": {}
-}
-```
-
-### Delivery Response
-
-```json
-{
-  "st": true,
-  "overall": {
-    "p50": 1180.0,
-    "p90": 2440.0,
-    "sla": 87.22,
-    "count": 188
-  },
-  "channel_cards": [
-    {
-      "order_type": "DELIVERY",
-      "p50": 1180.0,
-      "p90": 2440.0,
-      "sla": 87.22,
-      "count": 188
-    }
-  ],
-  "trend": [
-    {
-      "date": "2026-04-08",
-      "order_type": "DELIVERY",
-      "p50": 1180.0,
-      "count": 188
-    }
-  ],
-  "meta": {}
-}
 ```
 
 FE notes:
@@ -329,3 +122,4 @@ FE notes:
 - `remakes_per_100_items` is currently always `null`.
 - `reasons_breakdown` may contain `UNKNOWN` when a negative feedback row has no selected checkbox reason.
 - `complaints_by_category` only includes categories that have at least one complaint-linked item in the selected slice.
+```

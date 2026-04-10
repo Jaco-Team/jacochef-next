@@ -23,8 +23,10 @@ const useCafePerformanceStore = create((set) => ({
   categories: [],
   defaults: {},
   filters: {
+    period_type: "day",
     date_start: null,
     date_end: null,
+    period_label: "",
     point_list: [],
     category_ids: [],
     stage_type: "",

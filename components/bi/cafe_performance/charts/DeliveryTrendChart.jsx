@@ -32,8 +32,9 @@ export default function DeliveryTrendChart({ data = [] }) {
       .map((item) => ({
         date: dayjs(item.date).valueOf(),
         order_type: item.order_type,
-        p50: Number(item.p50 || 0),
+        p50: Math.max(0, Number(item.p50 || 0)),
       }))
+      .filter((item) => Number.isFinite(item.date) && Number.isFinite(item.p50))
       .sort((a, b) => a.date - b.date);
 
     const orderTypes = [...new Set(rows.map((item) => item.order_type))];
@@ -47,6 +48,7 @@ export default function DeliveryTrendChart({ data = [] }) {
 
     const yAxis = chart.yAxes.push(
       am5xy.ValueAxis.new(root, {
+        min: 0,
         renderer: am5xy.AxisRendererY.new(root, {}),
       }),
     );

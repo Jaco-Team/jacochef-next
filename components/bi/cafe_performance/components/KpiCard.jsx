@@ -5,12 +5,12 @@ import { Paper, Stack, Typography } from "@mui/material";
 export default function KpiCard({ label, value, caption, tone = "default" }) {
   const palette =
     tone === "success"
-      ? { border: "#C8E6C9", bg: "#F1F8E9", accent: "#2E7D32" }
+      ? { border: "success.light", bg: "background.paper", accent: "success.main" }
       : tone === "warning"
-        ? { border: "#FFE0B2", bg: "#FFF8E1", accent: "#EF6C00" }
+        ? { border: "warning.light", bg: "background.paper", accent: "warning.dark" }
         : tone === "danger"
-          ? { border: "#FFCDD2", bg: "#FFF5F5", accent: "#C62828" }
-          : { border: "#E5E7EB", bg: "#FFFFFF", accent: "#16324F" };
+          ? { border: "error.light", bg: "background.paper", accent: "error.main" }
+          : { border: "divider", bg: "background.paper", accent: "text.primary" };
 
   return (
     <Paper
@@ -18,7 +18,7 @@ export default function KpiCard({ label, value, caption, tone = "default" }) {
       sx={{
         p: 2,
         height: "100%",
-        borderRadius: 3,
+        minWidth: 0,
         border: "1px solid",
         borderColor: palette.border,
         backgroundColor: palette.bg,

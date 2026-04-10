@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   Box,
   Button,
@@ -12,62 +11,38 @@ import {
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs";
-import { MyAutocomplite, MyDatePicker } from "@/ui/Forms";
+import { MyAutocomplite } from "@/ui/Forms";
+
+const getPeriodName = (periodType) => {
+  if (periodType === "day") return "День";
+  if (periodType === "week") return "Неделя";
+  if (periodType === "month") return "Месяц";
+  return periodType;
+};
 
 export default function PageFilters({
-  moduleName,
   filters,
+  periodPresets,
+  periodLabel,
   points,
-  categories,
-  stageTypes,
   generatedAt,
   onFilterChange,
   onApply,
 }) {
-  const selectedCategories = useMemo(
-    () => categories.filter((category) => filters.category_ids.includes(category.id)),
-    [categories, filters.category_ids],
-  );
+  const availablePeriods = periodPresets?.length
+    ? periodPresets
+    : [{ period_type: filters.period_type || "day" }];
 
   const generatedLabel = generatedAt ? dayjs(generatedAt).format("DD.MM.YYYY HH:mm") : null;
 
   return (
     <Box>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        justifyContent="space-between"
-        spacing={2}
-        sx={{ mb: 3 }}
-      >
-        <Box>
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: 700 }}
-          >
-            {moduleName || "Эффективность кафе"}
-          </Typography>
-          <Typography sx={{ color: "#6B7280", mt: 0.5 }}>
-            KPI по скорости, качеству и каналам продаж
-          </Typography>
-        </Box>
-        {generatedLabel ? (
-          <Chip
-            label={`Обновлено: ${generatedLabel}`}
-            sx={{
-              alignSelf: { xs: "flex-start", md: "center" },
-              bgcolor: "#F3F4F6",
-              color: "#374151",
-              borderRadius: "999px",
-            }}
-          />
-        ) : null}
-      </Stack>
-
       <Grid
         container
         spacing={2}
+        alignItems="flex-start"
       >
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <MyAutocomplite
             label="Кафе"
             multiple
@@ -79,43 +54,38 @@ export default function PageFilters({
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <MyDatePicker
-            label="Дата от"
-            value={filters.date_start}
-            maxDate={filters.date_end}
-            func={(value) => onFilterChange("date_start", value)}
-          />
+        <Grid size={{ xs: 12, md: 5 }}>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={filters.period_type || ""}
+            onChange={(_, value) => {
+              if (value) onFilterChange("period_type", value);
+            }}
+            sx={{ flexWrap: "wrap", alignSelf: "flex-start" }}
+          >
+            {availablePeriods.map((period) => (
+              <ToggleButton
+                key={period.period_type}
+                value={period.period_type}
+              >
+                {getPeriodName(period.period_type)}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+
+          {periodLabel ? (
+            <Chip
+              label={periodLabel}
+              variant="outlined"
+              sx={{ width: "fit-content", ml: 2 }}
+            />
+          ) : null}
         </Grid>
 
         <Grid size={{ xs: 12, md: 2 }}>
-          <MyDatePicker
-            label="Дата до"
-            value={filters.date_end}
-            minDate={filters.date_start}
-            func={(value) => onFilterChange("date_end", value)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 3 }}>
-          <MyAutocomplite
-            label="Категории"
-            multiple
-            data={categories}
-            value={selectedCategories}
-            func={(_, value) =>
-              onFilterChange(
-                "category_ids",
-                value.map((item) => item.id),
-              )
-            }
-            getOptionLabel={(option) => option?.name || ""}
-            isOptionEqualToValue={(option, value) => option?.id === value?.id}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 1 }}>
           <Button
+            fullWidth
             variant="contained"
             onClick={onApply}
           >
@@ -123,51 +93,14 @@ export default function PageFilters({
           </Button>
         </Grid>
 
-        {!!stageTypes?.length && (
+        {generatedLabel ? (
           <Grid size={12}>
-            <Stack spacing={1}>
-              <Typography
-                variant="body2"
-                sx={{ color: "#4B5563" }}
-              >
-                Этап кухни
-              </Typography>
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={filters.stage_type || ""}
-                onChange={(_, value) => {
-                  if (value) onFilterChange("stage_type", value);
-                }}
-                sx={{
-                  flexWrap: "wrap",
-                  gap: 1,
-                  "& .MuiToggleButton-root": {
-                    borderRadius: "999px !important",
-                    borderColor: "#D1D5DB",
-                    color: "#374151",
-                    px: 2,
-                    bgcolor: "#fff",
-                  },
-                  "& .MuiToggleButton-root.Mui-selected": {
-                    bgcolor: "#1F2937",
-                    color: "#fff",
-                    "&:hover": { bgcolor: "#111827" },
-                  },
-                }}
-              >
-                {stageTypes.map((stage) => (
-                  <ToggleButton
-                    key={stage.id}
-                    value={stage.id}
-                  >
-                    {stage.name}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Stack>
+            <Chip
+              label={`Обновлено: ${generatedLabel}`}
+              variant="outlined"
+            />
           </Grid>
-        )}
+        ) : null}
       </Grid>
     </Box>
   );
