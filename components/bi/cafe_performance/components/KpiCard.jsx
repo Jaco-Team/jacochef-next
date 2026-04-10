@@ -1,39 +1,30 @@
 "use client";
 
-import { Paper, Stack, Typography } from "@mui/material";
+import { Card, CardContent, Typography } from "@mui/material";
 
 export default function KpiCard({ label, value, caption, tone = "default" }) {
-  const palette =
+  const valueColor =
     tone === "success"
-      ? { border: "success.light", bg: "background.paper", accent: "success.main" }
+      ? "success.main"
       : tone === "warning"
-        ? { border: "warning.light", bg: "background.paper", accent: "warning.dark" }
+        ? "warning.dark"
         : tone === "danger"
-          ? { border: "error.light", bg: "background.paper", accent: "error.main" }
-          : { border: "divider", bg: "background.paper", accent: "text.primary" };
+          ? "error.main"
+          : "text.primary";
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2,
-        height: "100%",
-        minWidth: 0,
-        border: "1px solid",
-        borderColor: palette.border,
-        backgroundColor: palette.bg,
-      }}
-    >
-      <Stack spacing={1}>
+    <Card variant="outlined">
+      <CardContent>
         <Typography
           variant="body2"
           color="text.secondary"
+          gutterBottom
         >
           {label}
         </Typography>
         <Typography
           variant="h4"
-          sx={{ fontWeight: 700, color: palette.accent, lineHeight: 1.1 }}
+          color={valueColor}
         >
           {value}
         </Typography>
@@ -41,11 +32,12 @@ export default function KpiCard({ label, value, caption, tone = "default" }) {
           <Typography
             variant="caption"
             color="text.secondary"
+            display="block"
           >
             {caption}
           </Typography>
         ) : null}
-      </Stack>
-    </Paper>
+      </CardContent>
+    </Card>
   );
 }

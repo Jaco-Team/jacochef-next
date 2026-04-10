@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid, Stack, Typography } from "@mui/material";
+import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
 import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
@@ -57,7 +57,7 @@ export default function DashboardTab({ data, formatters }) {
             {categoryCards.map((item) => (
               <Grid
                 key={item.category_id}
-                size={{ xs: 12, md: 6, xl: 4 }}
+                size={{ xs: 12, md: 6, lg: 4 }}
               >
                 <KpiCard
                   label={item.category_name}
@@ -86,31 +86,29 @@ export default function DashboardTab({ data, formatters }) {
             {channelSummary.length ? (
               <Stack spacing={1.5}>
                 {channelSummary.map((item) => (
-                  <Stack
+                  <Card
                     key={item.order_type}
-                    spacing={0.5}
-                    sx={{
-                      p: 2,
-                      borderRadius: 3,
-                      bgcolor: "#F8FAFC",
-                      border: "1px solid",
-                      borderColor: "divider",
-                    }}
+                    variant="outlined"
                   >
-                    <Typography sx={{ fontWeight: 700 }}>{item.order_type}</Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      P50 {formatters.duration(item.p50)} • P90 {formatters.duration(item.p90)}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      SLA {formatters.percent(item.sla)} • {formatters.integer(item.count)} заказов
-                    </Typography>
-                  </Stack>
+                    <CardContent>
+                      <Stack spacing={0.5}>
+                        <Typography variant="subtitle2">{item.order_type}</Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          P50 {formatters.duration(item.p50)} • P90 {formatters.duration(item.p90)}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          SLA {formatters.percent(item.sla)} • {formatters.integer(item.count)}{" "}
+                          заказов
+                        </Typography>
+                      </Stack>
+                    </CardContent>
+                  </Card>
                 ))}
               </Stack>
             ) : (

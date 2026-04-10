@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Box,
-  Button,
-  Chip,
-  Grid,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Chip, Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import dayjs from "dayjs";
 import { MyAutocomplite } from "@/ui/Forms";
 
@@ -62,7 +53,6 @@ export default function PageFilters({
             onChange={(_, value) => {
               if (value) onFilterChange("period_type", value);
             }}
-            sx={{ flexWrap: "wrap", alignSelf: "flex-start" }}
           >
             {availablePeriods.map((period) => (
               <ToggleButton
@@ -78,7 +68,7 @@ export default function PageFilters({
             <Chip
               label={periodLabel}
               variant="outlined"
-              sx={{ width: "fit-content", ml: 2 }}
+              sx={{ ml: 2 }}
             />
           ) : null}
         </Grid>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo } from "react";
-import { Backdrop, CircularProgress, Grid, Paper, Tab, Tabs, Typography } from "@mui/material";
+import { Backdrop, CircularProgress, Grid, Tab, Tabs, Typography } from "@mui/material";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
@@ -356,8 +356,8 @@ export default function CafePerformance() {
   return (
     <>
       <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
         open={loading}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
       >
         <CircularProgress />
       </Backdrop>
@@ -392,23 +392,20 @@ export default function CafePerformance() {
         </Grid>
 
         <Grid size={12}>
-          <Paper sx={{ borderRadius: 3 }}>
-            <Tabs
-              value={tab}
-              onChange={(_, value) => setTab(value)}
-              variant="scrollable"
-              scrollButtons={false}
-            >
-              {tabs.map((item) => (
-                <Tab
-                  key={item.key}
-                  label={item.label}
-                  {...a11yProps(item.id)}
-                  sx={{ minWidth: "fit-content", flex: 1 }}
-                />
-              ))}
-            </Tabs>
-          </Paper>
+          <Tabs
+            value={tab}
+            onChange={(_, value) => setTab(value)}
+            variant="scrollable"
+            scrollButtons={false}
+          >
+            {tabs.map((item) => (
+              <Tab
+                key={item.key}
+                label={item.label}
+                {...a11yProps(item.id)}
+              />
+            ))}
+          </Tabs>
         </Grid>
 
         <Grid size={12}>

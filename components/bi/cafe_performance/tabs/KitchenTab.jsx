@@ -80,7 +80,6 @@ export default function KitchenTab({
                 onChange={(_, value) => {
                   if (value) onFilterChange("stage_type", value);
                 }}
-                sx={{ flexWrap: "wrap", alignSelf: "flex-start" }}
               >
                 {stageTypes.map((stage) => (
                   <ToggleButton
@@ -99,7 +98,6 @@ export default function KitchenTab({
               fullWidth
               variant="contained"
               onClick={onApply}
-              sx={{ minHeight: 56 }}
             >
               Показать
             </Button>
@@ -159,7 +157,7 @@ export default function KitchenTab({
             {cards.map((item) => (
               <Grid
                 key={item.id}
-                size={{ xs: 12, md: 6, xl: 4 }}
+                size={{ xs: 12, md: 6, lg: 4 }}
               >
                 <KpiCard
                   label={item.employee_name}
@@ -203,7 +201,7 @@ export default function KitchenTab({
                         spacing={1}
                         alignItems="center"
                       >
-                        <Typography sx={{ fontWeight: 600 }}>{item.employee_name}</Typography>
+                        <Typography variant="subtitle2">{item.employee_name}</Typography>
                         {!item.is_valid_for_rating && (
                           <Typography
                             variant="caption"

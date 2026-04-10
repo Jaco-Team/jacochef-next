@@ -32,7 +32,7 @@ export default function LeadersTab({ data, formatters }) {
             {topCards.map((item) => (
               <Grid
                 key={`${item.employee_id}-${item.stage_type}`}
-                size={{ xs: 12, md: 6, xl: 4 }}
+                size={{ xs: 12, md: 6, lg: 4 }}
               >
                 <KpiCard
                   label={`${item.employee_name} • ${item.stage_type}`}
@@ -71,7 +71,7 @@ export default function LeadersTab({ data, formatters }) {
                         spacing={1}
                         alignItems="center"
                       >
-                        <Typography sx={{ fontWeight: 600 }}>{item.point_name}</Typography>
+                        <Typography variant="subtitle2">{item.point_name}</Typography>
                         {!item.is_valid_for_rating && (
                           <Typography
                             variant="caption"
