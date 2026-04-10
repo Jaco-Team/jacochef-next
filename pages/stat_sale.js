@@ -3672,12 +3672,12 @@ class StatSale_Tab_Dynamic extends React.Component {
         <table
           style={{
             width: "100%",
-            minWidth: "800px",
+            minWidth: "1200px",
             borderCollapse: "collapse",
-            fontSize: "12px",
             fontFamily: "Arial, sans-serif",
             tableLayout: "fixed",
           }}
+          className="medium-table"
         >
           <colgroup>
             <col style={{ width: "120px" }} />
@@ -4281,6 +4281,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             fontFamily: "Arial, sans-serif",
             tableLayout: "fixed",
           }}
+          className="medium-table"
         >
           <colgroup>
             <col style={{ width: "120px" }} />
@@ -4718,13 +4719,43 @@ const DataTable = ({ tableData, openGraphModal }) => {
     return `${currentLastTwo}/${previousLastTwo}`;
   };
 
+  const getPreviousMonthHeader = (formatted) => {
+    const parts = formatted.split("-");
+    if (parts.length < 2) return formatted;
+
+    const month = parts[0];
+    const year = parts[1];
+
+    let currentMonth = parseInt(month, 10);
+    let currentYear = parseInt(year, 10);
+
+    let previousMonth = currentMonth - 1;
+    let previousYear = currentYear;
+
+    if (previousMonth === 0) {
+      previousMonth = 12;
+      previousYear = currentYear - 1;
+    }
+
+    const previousMonthFormatted = previousMonth.toString().padStart(2, "0");
+
+    const currentLastTwo = currentYear.toString().slice(-2);
+    const previousLastTwo = previousYear.toString().slice(-2);
+
+    if (currentYear === previousYear) {
+      return `${month}/${previousMonthFormatted}`;
+    }
+
+    return `${previousMonthFormatted}-${previousLastTwo}/${month}-${currentLastTwo}`;
+  };
+
   const renderMonthHeader = (formattedMonth) => {
     const parts = formattedMonth.split("-");
     const isoDate = `${parts[1]}-${parts[0]}-01`;
     return (
       <TableCell
         key={formattedMonth}
-        colSpan={4}
+        colSpan={5}
         sx={{
           backgroundColor: "#dcdcdc",
           minWidth: 4 * 80,
@@ -4849,6 +4880,9 @@ const DataTable = ({ tableData, openGraphModal }) => {
                 <TableCell sx={cellStylesHeader}>
                   {getPreviousPeriodHeader(formattedMonth)}
                 </TableCell>
+                <TableCell sx={cellStylesHeader}>
+                  {getPreviousMonthHeader(formattedMonth)}
+                </TableCell>
               </React.Fragment>
             ))}
           </TableRow>
@@ -4940,10 +4974,18 @@ const DataTable = ({ tableData, openGraphModal }) => {
                         sx={{
                           minWidth: "80px",
                           color: Number(cellData.percent_compare_rolls) > 0 ? "green" : "red",
-                          borderRight: thickBorder,
                         }}
                       >
                         {cellData.percent_compare_rolls ?? 0}%
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          minWidth: "80px",
+                          color: Number(cellData.percent_compare_rolls_mom) > 0 ? "green" : "red",
+                          borderRight: thickBorder,
+                        }}
+                      >
+                        {cellData.percent_compare_rolls_mom ?? 0}%
                       </TableCell>
                     </React.Fragment>
                   );
@@ -4996,10 +5038,18 @@ const DataTable = ({ tableData, openGraphModal }) => {
                         sx={{
                           minWidth: "80px",
                           color: Number(cellData.percent_compare_pizza) > 0 ? "green" : "red",
-                          borderRight: thickBorder,
                         }}
                       >
                         {cellData.percent_compare_pizza ?? 0}%
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          minWidth: "80px",
+                          color: Number(cellData.percent_compare_pizza_mom) > 0 ? "green" : "red",
+                          borderRight: thickBorder,
+                        }}
+                      >
+                        {cellData.percent_compare_pizza_mom ?? 0}%
                       </TableCell>
                     </React.Fragment>
                   );
