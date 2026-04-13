@@ -56,7 +56,7 @@ function Pages() {
     setIsLoad(true);
 
     try {
-      const result = await api_laravel_local("billing", method, data);
+      const result = await api_laravel("billing", method, data);
       return result.data;
     } finally {
       setIsLoad(false);
@@ -87,7 +87,7 @@ function Pages() {
     setIsLoad(true);
 
     try {
-      await api_laravel_local("billing", "save_reconciliation", {
+      await api_laravel("billing", "save_reconciliation", {
         ocr_id: currentItem.id,
         product_name: selectedProduct,
       });
