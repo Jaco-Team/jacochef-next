@@ -39,7 +39,6 @@ export default function KitchenTab({
   categories,
   stageTypes,
   onFilterChange,
-  onApply,
   onStageChange,
 }) {
   if (!data) return <EmptyState />;

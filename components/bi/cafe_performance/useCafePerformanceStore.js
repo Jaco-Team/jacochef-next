@@ -2,13 +2,29 @@
 
 import { create } from "zustand";
 
-const emptyScreenMap = {
-  dashboard: null,
-  kitchen: null,
-  leaders: null,
-  quality: null,
-  delivery: null,
+export const EMPTY_FILTERS = {
+  period_type: "day",
+  date_start: null,
+  date_end: null,
+  period_label: "",
+  point_list: [],
+  category_ids: [],
+  stage_type: "",
 };
+
+const createEmptyScreen = () => ({
+  data: null,
+  meta: null,
+  queryKey: "",
+});
+
+const createEmptyScreens = () => ({
+  dashboard: createEmptyScreen(),
+  kitchen: createEmptyScreen(),
+  leaders: createEmptyScreen(),
+  quality: createEmptyScreen(),
+  delivery: createEmptyScreen(),
+});
 
 const useCafePerformanceStore = create((set) => ({
   module: "cafe_performance",
@@ -22,21 +38,9 @@ const useCafePerformanceStore = create((set) => ({
   orderTypes: [],
   categories: [],
   defaults: {},
-  filters: {
-    period_type: "day",
-    date_start: null,
-    date_end: null,
-    period_label: "",
-    point_list: [],
-    category_ids: [],
-    stage_type: "",
-  },
-  metaByScreen: emptyScreenMap,
-  dashboardData: null,
-  kitchenData: null,
-  leadersData: null,
-  qualityData: null,
-  deliveryData: null,
+  filters: EMPTY_FILTERS,
+  appliedFilters: EMPTY_FILTERS,
+  screens: createEmptyScreens(),
 
   setLoading: (loading) => set({ loading }),
   setTab: (tab) => set({ tab }),
@@ -49,7 +53,8 @@ const useCafePerformanceStore = create((set) => ({
       orderTypes: payload.orderTypes || [],
       categories: payload.categories || [],
       defaults: payload.defaults || {},
-      filters: payload.filters,
+      filters: payload.filters || EMPTY_FILTERS,
+      appliedFilters: payload.appliedFilters || payload.filters || EMPTY_FILTERS,
       moduleName: payload.moduleName || "Эффективность кафе",
     }),
   setFilters: (nextFilters) =>
@@ -59,14 +64,32 @@ const useCafePerformanceStore = create((set) => ({
         ...nextFilters,
       },
     })),
-  setScreenData: (screenKey, payload) =>
+  setAppliedFilters: (nextFilters) =>
     set((state) => ({
-      [`${screenKey}Data`]: payload,
-      metaByScreen: {
-        ...state.metaByScreen,
-        [screenKey]: payload?.meta || null,
+      appliedFilters: {
+        ...state.appliedFilters,
+        ...nextFilters,
       },
     })),
+  setScreenResult: (screenKey, payload, queryKey) =>
+    set((state) => ({
+      screens: {
+        ...state.screens,
+        [screenKey]: {
+          data: payload || null,
+          meta: payload?.meta || null,
+          queryKey: queryKey || "",
+        },
+      },
+    })),
+  resetScreens: (screenKeys) =>
+    set((state) => {
+      const nextScreens = { ...state.screens };
+      screenKeys.forEach((screenKey) => {
+        nextScreens[screenKey] = createEmptyScreen();
+      });
+      return { screens: nextScreens };
+    }),
 }));
 
 export default useCafePerformanceStore;
