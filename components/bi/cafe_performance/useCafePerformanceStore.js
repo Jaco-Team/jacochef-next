@@ -31,7 +31,6 @@ const useCafePerformanceStore = create((set) => ({
     category_ids: [],
     stage_type: "",
   },
-  loadedTabs: {},
   metaByScreen: emptyScreenMap,
   dashboardData: null,
   kitchenData: null,
@@ -68,14 +67,6 @@ const useCafePerformanceStore = create((set) => ({
         [screenKey]: payload?.meta || null,
       },
     })),
-  markTabLoaded: (screenKey) =>
-    set((state) => ({
-      loadedTabs: {
-        ...state.loadedTabs,
-        [screenKey]: true,
-      },
-    })),
-  resetLoadedTabs: () => set({ loadedTabs: {} }),
 }));
 
 export default useCafePerformanceStore;

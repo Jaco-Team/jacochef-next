@@ -67,7 +67,6 @@ export default function CafePerformance() {
   const categories = useCafePerformanceStore((s) => s.categories);
   const defaults = useCafePerformanceStore((s) => s.defaults);
   const filters = useCafePerformanceStore((s) => s.filters);
-  const loadedTabs = useCafePerformanceStore((s) => s.loadedTabs);
   const metaByScreen = useCafePerformanceStore((s) => s.metaByScreen);
   const dashboardData = useCafePerformanceStore((s) => s.dashboardData);
   const kitchenData = useCafePerformanceStore((s) => s.kitchenData);
@@ -75,23 +74,15 @@ export default function CafePerformance() {
   const qualityData = useCafePerformanceStore((s) => s.qualityData);
   const deliveryData = useCafePerformanceStore((s) => s.deliveryData);
 
-  const {
-    setLoading,
-    setBootstrap,
-    setFilters,
-    setTab,
-    setScreenData,
-    markTabLoaded,
-    resetLoadedTabs,
-  } = useCafePerformanceStore((s) => ({
-    setLoading: s.setLoading,
-    setBootstrap: s.setBootstrap,
-    setFilters: s.setFilters,
-    setTab: s.setTab,
-    setScreenData: s.setScreenData,
-    markTabLoaded: s.markTabLoaded,
-    resetLoadedTabs: s.resetLoadedTabs,
-  }));
+  const { setLoading, setBootstrap, setFilters, setTab, setScreenData } = useCafePerformanceStore(
+    (s) => ({
+      setLoading: s.setLoading,
+      setBootstrap: s.setBootstrap,
+      setFilters: s.setFilters,
+      setTab: s.setTab,
+      setScreenData: s.setScreenData,
+    }),
+  );
 
   const { api_laravel } = useApi(module);
   const CAFE_PERFORMANCE_TABS = [
@@ -103,6 +94,14 @@ export default function CafePerformance() {
   ];
 
   const currentTab = CAFE_PERFORMANCE_TABS[tab] || CAFE_PERFORMANCE_TABS[0];
+  const currentTabDataMap = {
+    dashboard: dashboardData,
+    kitchen: kitchenData,
+    leaders: leadersData,
+    quality: qualityData,
+    delivery: deliveryData,
+  };
+  const currentTabData = currentTabDataMap[currentTab.key] || null;
 
   const formatters = useMemo(
     () => ({
@@ -178,7 +177,6 @@ export default function CafePerformance() {
         });
 
         setScreenData(firstTab.key, firstTabResponse);
-        markTabLoaded(firstTab.key);
         document.title = res?.module_info?.name || "Эффективность кафе";
       } catch (error) {
         if (!cancelled) showAlert(error?.message || "Ошибка загрузки");
@@ -195,7 +193,7 @@ export default function CafePerformance() {
   }, []);
 
   useEffect(() => {
-    if (!bootstrapped || loadedTabs[currentTab.key]) return;
+    if (!bootstrapped || currentTabData) return;
 
     let cancelled = false;
 
@@ -209,7 +207,6 @@ export default function CafePerformance() {
         if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
         if (cancelled) return;
         setScreenData(currentTab.key, res);
-        markTabLoaded(currentTab.key);
       } catch (error) {
         if (!cancelled) showAlert(error?.message || "Ошибка загрузки");
       } finally {
@@ -222,7 +219,7 @@ export default function CafePerformance() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapped, currentTab.key, loadedTabs]);
+  }, [bootstrapped, currentTab.key, currentTabData]);
 
   const handleFilterChange = (key, value) => {
     if (key === "period_type") {
@@ -239,19 +236,36 @@ export default function CafePerformance() {
     setFilters({ [key]: value });
   };
 
-  const loadTabs = useCallback(
-    async (tabConfigs, nextFilters = filters) => {
-      for (const tabConfig of tabConfigs) {
-        const res = await api_laravel(
-          tabConfig.method,
-          buildRequestPayload(nextFilters, tabConfig.key),
-        );
-        if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
-        setScreenData(tabConfig.key, res);
-        markTabLoaded(tabConfig.key);
-      }
+  const loadTab = useCallback(
+    async (tabConfig, nextFilters = filters) => {
+      const res = await api_laravel(
+        tabConfig.method,
+        buildRequestPayload(nextFilters, tabConfig.key),
+      );
+      if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
+      setScreenData(tabConfig.key, res);
+      return res;
     },
-    [api_laravel, filters, markTabLoaded, setScreenData],
+    [api_laravel, filters, setScreenData],
+  );
+
+  const clearTabData = useCallback(
+    (screenKey) => {
+      setScreenData(screenKey, null);
+    },
+    [setScreenData],
+  );
+
+  const clearAllTabData = useCallback(() => {
+    CAFE_PERFORMANCE_TABS.forEach((item) => clearTabData(item.key));
+  }, [clearTabData]);
+
+  const reloadActiveTab = useCallback(
+    async (nextFilters = filters) => {
+      clearAllTabData();
+      await loadTab(currentTab, nextFilters);
+    },
+    [clearAllTabData, currentTab, filters, loadTab],
   );
 
   const handleApply = async () => {
@@ -267,11 +281,7 @@ export default function CafePerformance() {
 
     setLoading(true);
     try {
-      const visitedTabs = CAFE_PERFORMANCE_TABS.filter((item) => loadedTabs[item.key]);
-      const tabsToLoad = visitedTabs.length ? visitedTabs : [currentTab];
-
-      resetLoadedTabs();
-      await loadTabs(tabsToLoad);
+      await reloadActiveTab();
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки");
     } finally {
@@ -282,8 +292,7 @@ export default function CafePerformance() {
   const handleKitchenApply = async () => {
     setLoading(true);
     try {
-      resetLoadedTabs();
-      await loadTabs([CAFE_PERFORMANCE_TABS[1]]);
+      await reloadActiveTab();
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки");
     } finally {
@@ -302,8 +311,8 @@ export default function CafePerformance() {
     setFilters({ stage_type: stageType });
     setLoading(true);
     try {
-      resetLoadedTabs();
-      await loadTabs([CAFE_PERFORMANCE_TABS[1]], nextFilters);
+      clearTabData("kitchen");
+      await loadTab(CAFE_PERFORMANCE_TABS[1], nextFilters);
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки");
     } finally {
