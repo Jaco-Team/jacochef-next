@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   Grid,
   Stack,
@@ -9,11 +10,22 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
 } from "@mui/material";
 import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
 import ReasonsBreakdownChart from "../charts/ReasonsBreakdownChart";
+
+const compareValues = (left, right) => {
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
+  if (typeof left === "string" && typeof right === "string") {
+    return left.localeCompare(right, "ru");
+  }
+  return left > right ? 1 : left < right ? -1 : 0;
+};
 
 export default function QualityTab({ data, formatters }) {
   if (!data) return <EmptyState />;
@@ -21,6 +33,24 @@ export default function QualityTab({ data, formatters }) {
   const summary = data.summary || {};
   const complaintsByCategory = data.complaints_by_category || [];
   const anomalies = data.anomalies_by_stage_category || [];
+  const [sortBy, setSortBy] = useState("count");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const sortedAnomalies = useMemo(() => {
+    return [...anomalies].sort((left, right) => {
+      const result = compareValues(left?.[sortBy], right?.[sortBy]);
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [anomalies, sortBy, sortDirection]);
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortBy(field);
+    setSortDirection(field === "stage_type" || field === "category_name" ? "asc" : "desc");
+  };
 
   return (
     <Stack spacing={3}>
@@ -104,15 +134,57 @@ export default function QualityTab({ data, formatters }) {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Этап</TableCell>
-                  <TableCell>Категория</TableCell>
-                  <TableCell>Всего</TableCell>
-                  <TableCell>Длинные</TableCell>
-                  <TableCell>Доля длинных</TableCell>
+                  <TableCell sortDirection={sortBy === "stage_type" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "stage_type"}
+                      direction={sortBy === "stage_type" ? sortDirection : "asc"}
+                      onClick={() => handleSort("stage_type")}
+                    >
+                      Этап
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "category_name" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "category_name"}
+                      direction={sortBy === "category_name" ? sortDirection : "asc"}
+                      onClick={() => handleSort("category_name")}
+                    >
+                      Категория
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "count" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "count"}
+                      direction={sortBy === "count" ? sortDirection : "desc"}
+                      onClick={() => handleSort("count")}
+                    >
+                      Всего
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "long_count" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "long_count"}
+                      direction={sortBy === "long_count" ? sortDirection : "desc"}
+                      onClick={() => handleSort("long_count")}
+                    >
+                      Длинные
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell
+                    sortDirection={sortBy === "share_long_stage_percent" ? sortDirection : false}
+                  >
+                    <TableSortLabel
+                      active={sortBy === "share_long_stage_percent"}
+                      direction={sortBy === "share_long_stage_percent" ? sortDirection : "desc"}
+                      onClick={() => handleSort("share_long_stage_percent")}
+                    >
+                      Доля длинных
+                    </TableSortLabel>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {anomalies.map((item) => (
+                {sortedAnomalies.map((item) => (
                   <TableRow key={`${item.stage_type}-${item.category_id}`}>
                     <TableCell>{item.stage_type}</TableCell>
                     <TableCell>{item.category_name}</TableCell>

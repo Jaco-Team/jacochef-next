@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  Button,
   Grid,
   Stack,
   Table,
@@ -11,6 +10,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import { MyAutocomplite } from "@/ui/Forms";
@@ -20,6 +20,16 @@ import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
 import { getStageTypeLabel } from "../config";
+
+const compareValues = (left, right) => {
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
+  if (typeof left === "string" && typeof right === "string") {
+    return left.localeCompare(right, "ru");
+  }
+  return left > right ? 1 : left < right ? -1 : 0;
+};
 
 export default function KitchenTab({
   data,
@@ -37,10 +47,28 @@ export default function KitchenTab({
   const summary = data.stage_summary || {};
   const cards = data.best_employee_cards || [];
   const rows = data.employee_table || [];
+  const [sortBy, setSortBy] = useState("employee_name");
+  const [sortDirection, setSortDirection] = useState("asc");
   const selectedCategories = useMemo(
     () => categories.filter((category) => filters.category_ids.includes(category.id)),
     [categories, filters.category_ids],
   );
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((left, right) => {
+      const result = compareValues(left?.[sortBy], right?.[sortBy]);
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [rows, sortBy, sortDirection]);
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortBy(field);
+    setSortDirection(field === "employee_name" ? "asc" : "desc");
+  };
 
   return (
     <Stack spacing={3}>
@@ -167,17 +195,75 @@ export default function KitchenTab({
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Сотрудник</TableCell>
-                  <TableCell>P50</TableCell>
-                  <TableCell>P90</TableCell>
-                  <TableCell>SLA</TableCell>
-                  <TableCell>Стабильность</TableCell>
-                  <TableCell>Длинные этапы</TableCell>
-                  <TableCell>Выборка</TableCell>
+                  <TableCell sortDirection={sortBy === "employee_name" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "employee_name"}
+                      direction={sortBy === "employee_name" ? sortDirection : "asc"}
+                      onClick={() => handleSort("employee_name")}
+                    >
+                      Сотрудник
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "p50" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "p50"}
+                      direction={sortBy === "p50" ? sortDirection : "desc"}
+                      onClick={() => handleSort("p50")}
+                    >
+                      P50
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "p90" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "p90"}
+                      direction={sortBy === "p90" ? sortDirection : "desc"}
+                      onClick={() => handleSort("p90")}
+                    >
+                      P90
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "sla" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "sla"}
+                      direction={sortBy === "sla" ? sortDirection : "desc"}
+                      onClick={() => handleSort("sla")}
+                    >
+                      SLA
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "stability" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "stability"}
+                      direction={sortBy === "stability" ? sortDirection : "desc"}
+                      onClick={() => handleSort("stability")}
+                    >
+                      Стабильность
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell
+                    sortDirection={sortBy === "share_long_stage_percent" ? sortDirection : false}
+                  >
+                    <TableSortLabel
+                      active={sortBy === "share_long_stage_percent"}
+                      direction={sortBy === "share_long_stage_percent" ? sortDirection : "desc"}
+                      onClick={() => handleSort("share_long_stage_percent")}
+                    >
+                      Длинные этапы
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortBy === "sample_size" ? sortDirection : false}>
+                    <TableSortLabel
+                      active={sortBy === "sample_size"}
+                      direction={sortBy === "sample_size" ? sortDirection : "desc"}
+                      onClick={() => handleSort("sample_size")}
+                    >
+                      Выборка
+                    </TableSortLabel>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((item) => (
+                {sortedRows.map((item) => (
                   <TableRow key={item.employee_id}>
                     <TableCell>
                       <Stack
