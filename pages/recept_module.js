@@ -69,6 +69,8 @@ class ReceptModule_Modal_Container extends React.Component {
       apps,
       pf_list,
       all_pf_list,
+      ingredientQuantities,
+      changeIngredientQuantity,
       changeItem,
       changeItemData,
       changeItemChecked,
@@ -207,8 +209,8 @@ class ReceptModule_Modal_Container extends React.Component {
                         <MyTextInput
                           type="number"
                           id={"item_for_add_" + item.id}
-                          //defaultValue={''}
-                          //func={changeQuantity.bind(this)}
+                          value={ingredientQuantities?.[item.id] ?? ""}
+                          func={changeIngredientQuantity.bind(this, item.id)}
                         />
                       </TableCell>
                       <TableCell>{item.ei_name}</TableCell>
@@ -328,6 +330,7 @@ class ReceptModule_Modal_Edit extends React.Component {
       changeItem,
       changeItemData,
       changeItemChecked,
+      changeIngredientQuantity,
       addIngredientsRecipe,
       dellIngredientsRecipe,
       rec,
@@ -421,6 +424,8 @@ class ReceptModule_Modal_Edit extends React.Component {
                       apps={apps}
                       pf_list={pf_list}
                       all_pf_list={all_pf_list}
+                      ingredientQuantities={this.props.ingredientQuantities}
+                      changeIngredientQuantity={changeIngredientQuantity.bind(this)}
                       changeItem={changeItem.bind(this)}
                       changeItemData={changeItemData.bind(this)}
                       changeItemChecked={changeItemChecked.bind(this)}
@@ -535,6 +540,7 @@ class ReceptModule_ extends React.Component {
       all_pf_list: [],
       allCount: 0,
       hist: [],
+      ingredientQuantities: {},
 
       dateUpdate: null,
 
@@ -656,6 +662,7 @@ class ReceptModule_ extends React.Component {
       all_pf_list: res.all_pf_list,
       storages: res.all_storages,
       allCount: allCount,
+      ingredientQuantities: {},
       type: "new",
     });
   }
@@ -683,6 +690,7 @@ class ReceptModule_ extends React.Component {
       all_pf_list: res.all_pf_list,
       storages: res.all_storages,
       allCount: allCount,
+      ingredientQuantities: {},
       type: "edit",
     });
   }
@@ -711,6 +719,7 @@ class ReceptModule_ extends React.Component {
       storages: res.all_storages,
       allCount: allCount,
       hist: res.hist,
+      ingredientQuantities: {},
       type: "edit",
     });
   }
@@ -741,6 +750,7 @@ class ReceptModule_ extends React.Component {
       allCount: allCount,
       hist: res.hist,
       dateUpdate: res.rec.date_start,
+      ingredientQuantities: {},
       type: "edit",
     });
   }
@@ -890,15 +900,29 @@ class ReceptModule_ extends React.Component {
     });
   }
 
+  changeIngredientQuantity(itemId, event) {
+    this.setState((prevState) => ({
+      ingredientQuantities: {
+        ...prevState.ingredientQuantities,
+        [itemId]: event.target.value,
+      },
+    }));
+  }
+
   addIngredientsRecipe(item) {
     let pf_list = [...this.state.pf_list];
 
     let check = pf_list.find((el) => el.id === item.id);
 
-    let quantity = document.getElementById("item_for_add_" + item.id).value;
+    let quantity = this.state.ingredientQuantities?.[item.id] ?? "";
 
     if (check || quantity < 1) {
-      document.getElementById("item_for_add_" + item.id).value = "";
+      this.setState((prevState) => ({
+        ingredientQuantities: {
+          ...prevState.ingredientQuantities,
+          [item.id]: "",
+        },
+      }));
       return;
     }
 
@@ -919,11 +943,13 @@ class ReceptModule_ extends React.Component {
 
     pf_list.map((el) => (el.percent = (100 / (allCount / parseFloat(el.count))).toFixed(2)));
 
-    document.getElementById("item_for_add_" + item.id).value = "";
-
     this.setState({
       pf_list: pf_list,
       allCount: allCount,
+      ingredientQuantities: {
+        ...this.state.ingredientQuantities,
+        [item.id]: "",
+      },
     });
   }
 
@@ -1030,6 +1056,7 @@ class ReceptModule_ extends React.Component {
             changeItem={this.changeItem.bind(this)}
             changeItemData={this.changeItemData.bind(this)}
             changeItemChecked={this.changeItemChecked.bind(this)}
+            changeIngredientQuantity={this.changeIngredientQuantity.bind(this)}
             addIngredientsRecipe={this.addIngredientsRecipe.bind(this)}
             dellIngredientsRecipe={this.dellIngredientsRecipe.bind(this)}
             openModalHistNew={this.openModalHistNew.bind(this)}
@@ -1039,6 +1066,7 @@ class ReceptModule_ extends React.Component {
             apps={this.state.apps}
             pf_list={this.state.pf_list}
             all_pf_list={this.state.all_pf_list}
+            ingredientQuantities={this.state.ingredientQuantities}
             saveEdit={this.saveEditItem.bind(this)}
             saveNew={this.saveNewItem.bind(this)}
             type={this.state.type}
