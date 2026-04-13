@@ -7,6 +7,42 @@ import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import { Box } from "@mui/material";
 import EmptyState from "../components/EmptyState";
 
+const normalizeReasonLabel = (reason) => {
+  if (reason == null) return "";
+  if (typeof reason === "string") return reason.trim();
+  if (typeof reason === "object") {
+    return String(
+      reason.name || reason.label || reason.reason_name || reason.reason_code || "",
+    ).trim();
+  }
+  return String(reason).trim();
+};
+
+const buildReasonLabel = (item) => {
+  const singleLabel = normalizeReasonLabel(
+    item?.reason_name || item?.label || item?.reason || item?.reason_code,
+  );
+
+  const groupedReasons = [
+    ...(Array.isArray(item?.reasons) ? item.reasons : []),
+    ...(Array.isArray(item?.reason_list) ? item.reason_list : []),
+    ...(Array.isArray(item?.reason_names) ? item.reason_names : []),
+  ]
+    .map(normalizeReasonLabel)
+    .filter(Boolean)
+    .filter((value, index, array) => array.indexOf(value) === index);
+
+  if (groupedReasons.length > 1) {
+    return `${groupedReasons[0]} и еще ${groupedReasons.length - 1}`;
+  }
+
+  if (groupedReasons.length === 1) {
+    return groupedReasons[0];
+  }
+
+  return singleLabel || "—";
+};
+
 export default function ReasonsBreakdownChart({ data = [] }) {
   const chartRef = useRef(null);
 
@@ -44,7 +80,7 @@ export default function ReasonsBreakdownChart({ data = [] }) {
 
     series.data.setAll(
       data.map((item) => ({
-        label: item.reason_code === "UNKNOWN" ? "Без причины" : item.reason_code,
+        label: buildReasonLabel(item),
         count: Number(item.count || 0),
       })),
     );

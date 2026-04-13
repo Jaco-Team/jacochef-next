@@ -214,7 +214,7 @@ export default function useCafePerformanceController() {
       } catch (error) {
         if (!cancelled) showAlert(error?.message || "Ошибка загрузки");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
@@ -240,7 +240,7 @@ export default function useCafePerformanceController() {
       } catch (error) {
         if (!cancelled) showAlert(error?.message || "Ошибка загрузки");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
