@@ -19,6 +19,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
+import { getStageTypeLabel } from "../config";
 
 export default function KitchenTab({
   data,
@@ -29,6 +30,7 @@ export default function KitchenTab({
   stageTypes,
   onFilterChange,
   onApply,
+  onStageChange,
 }) {
   if (!data) return <EmptyState />;
 
@@ -48,7 +50,7 @@ export default function KitchenTab({
           spacing={2}
           alignItems="flex-start"
         >
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <MyAutocomplite
               label="Категории"
               multiple
@@ -65,42 +67,24 @@ export default function KitchenTab({
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Stack spacing={1}>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-              >
-                Этап кухни
-              </Typography>
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={filters.stage_type || ""}
-                onChange={(_, value) => {
-                  if (value) onFilterChange("stage_type", value);
-                }}
-              >
-                {stageTypes.map((stage) => (
-                  <ToggleButton
-                    key={stage.id}
-                    value={stage.id}
-                  >
-                    {stage.name}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Stack>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 2 }}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={onApply}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={filters.stage_type || ""}
+              onChange={(_, value) => {
+                if (value) onStageChange(value);
+              }}
             >
-              Показать
-            </Button>
+              {stageTypes.map((stage) => (
+                <ToggleButton
+                  key={stage.id}
+                  value={stage.id}
+                >
+                  {getStageTypeLabel(stage.id)}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </Grid>
         </Grid>
       </SectionCard>

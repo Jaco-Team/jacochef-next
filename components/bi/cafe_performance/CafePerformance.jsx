@@ -15,6 +15,7 @@ import KitchenTab from "./tabs/KitchenTab";
 import LeadersTab from "./tabs/LeadersTab";
 import QualityTab from "./tabs/QualityTab";
 import DeliveryTab from "./tabs/DeliveryTab";
+import { buildOrderTypeNameMap, getStageTypeLabel } from "./config";
 
 const buildRequestPayload = (activeFilters, tabKey) => {
   const payload = {
@@ -62,6 +63,7 @@ export default function CafePerformance() {
   const tab = useCafePerformanceStore((s) => s.tab);
   const points = useCafePerformanceStore((s) => s.points);
   const stageTypes = useCafePerformanceStore((s) => s.stageTypes);
+  const orderTypes = useCafePerformanceStore((s) => s.orderTypes);
   const categories = useCafePerformanceStore((s) => s.categories);
   const defaults = useCafePerformanceStore((s) => s.defaults);
   const filters = useCafePerformanceStore((s) => s.filters);
@@ -126,10 +128,11 @@ export default function CafePerformance() {
     currentMeta?.period?.type === filters.period_type
       ? currentMeta?.period?.label
       : filters.period_label;
-  const currentStageName = useMemo(
-    () => stageTypes.find((item) => item.id === filters.stage_type)?.name || "",
-    [filters.stage_type, stageTypes],
-  );
+  const currentStageName = useMemo(() => {
+    const currentStage = stageTypes.find((item) => item.id === filters.stage_type);
+    return currentStage ? getStageTypeLabel(currentStage.id) : "";
+  }, [filters.stage_type, stageTypes]);
+  const orderTypeNameMap = useMemo(() => buildOrderTypeNameMap(orderTypes), [orderTypes]);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,11 +240,11 @@ export default function CafePerformance() {
   };
 
   const loadTabs = useCallback(
-    async (tabConfigs) => {
+    async (tabConfigs, nextFilters = filters) => {
       for (const tabConfig of tabConfigs) {
         const res = await api_laravel(
           tabConfig.method,
-          buildRequestPayload(filters, tabConfig.key),
+          buildRequestPayload(nextFilters, tabConfig.key),
         );
         if (!res?.st) throw new Error(res?.text || "Ошибка загрузки данных");
         setScreenData(tabConfig.key, res);
@@ -288,6 +291,26 @@ export default function CafePerformance() {
     }
   };
 
+  const handleKitchenStageChange = async (stageType) => {
+    if (!stageType || stageType === filters.stage_type) return;
+
+    const nextFilters = {
+      ...filters,
+      stage_type: stageType,
+    };
+
+    setFilters({ stage_type: stageType });
+    setLoading(true);
+    try {
+      resetLoadedTabs();
+      await loadTabs([CAFE_PERFORMANCE_TABS[1]], nextFilters);
+    } catch (error) {
+      showAlert(error?.message || "Ошибка загрузки");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const tabs = useMemo(
     () => [
       {
@@ -296,6 +319,8 @@ export default function CafePerformance() {
           <DashboardTab
             data={dashboardData}
             formatters={formatters}
+            orderTypes={orderTypes}
+            orderTypeNameMap={orderTypeNameMap}
           />
         ),
       },
@@ -311,6 +336,7 @@ export default function CafePerformance() {
             stageTypes={stageTypes}
             onFilterChange={handleFilterChange}
             onApply={handleKitchenApply}
+            onStageChange={handleKitchenStageChange}
           />
         ),
       },
@@ -338,6 +364,8 @@ export default function CafePerformance() {
           <DeliveryTab
             data={deliveryData}
             formatters={formatters}
+            orderTypes={orderTypes}
+            orderTypeNameMap={orderTypeNameMap}
           />
         ),
       },
@@ -349,7 +377,12 @@ export default function CafePerformance() {
       formatters,
       kitchenData,
       leadersData,
+      orderTypeNameMap,
+      orderTypes,
       qualityData,
+      categories,
+      filters,
+      stageTypes,
     ],
   );
 

@@ -7,9 +7,9 @@ import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import dayjs from "dayjs";
 import { Box } from "@mui/material";
 import EmptyState from "../components/EmptyState";
-import { ORDER_TYPE_COLORS } from "../config";
+import { getOrderTypeColor, getOrderTypeLabel, sortByOrderTypes } from "../config";
 
-export default function DeliveryTrendChart({ data = [] }) {
+export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTypeNameMap = {} }) {
   const chartRef = useRef(null);
 
   useEffect(() => {
@@ -37,7 +37,12 @@ export default function DeliveryTrendChart({ data = [] }) {
       .filter((item) => Number.isFinite(item.date) && Number.isFinite(item.p50))
       .sort((a, b) => a.date - b.date);
 
-    const orderTypes = [...new Set(rows.map((item) => item.order_type))];
+    const trendOrderTypes = sortByOrderTypes(
+      [...new Set(rows.map((item) => item.order_type))].map((orderType) => ({
+        order_type: orderType,
+      })),
+      orderTypes,
+    ).map((item) => item.order_type);
 
     const xAxis = chart.xAxes.push(
       am5xy.DateAxis.new(root, {
@@ -53,11 +58,11 @@ export default function DeliveryTrendChart({ data = [] }) {
       }),
     );
 
-    orderTypes.forEach((orderType) => {
-      const color = ORDER_TYPE_COLORS[orderType] || "#6B7280";
+    trendOrderTypes.forEach((orderType, index) => {
+      const color = getOrderTypeColor(orderType, index);
       const series = chart.series.push(
         am5xy.LineSeries.new(root, {
-          name: orderType,
+          name: getOrderTypeLabel(orderType, orderTypeNameMap),
           xAxis,
           yAxis,
           valueYField: "p50",
@@ -91,7 +96,7 @@ export default function DeliveryTrendChart({ data = [] }) {
     return () => {
       root.dispose();
     };
-  }, [data]);
+  }, [data, orderTypeNameMap, orderTypes]);
 
   if (!data.length) return <EmptyState />;
 

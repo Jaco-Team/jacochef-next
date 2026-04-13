@@ -5,12 +5,13 @@ import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
 import DeliveryTrendChart from "../charts/DeliveryTrendChart";
+import { getOrderTypeLabel, sortByOrderTypes } from "../config";
 
-export default function DeliveryTab({ data, formatters }) {
+export default function DeliveryTab({ data, formatters, orderTypes, orderTypeNameMap }) {
   if (!data) return <EmptyState />;
 
   const overall = data.overall || {};
-  const channelCards = data.channel_cards || [];
+  const channelCards = sortByOrderTypes(data.channel_cards || [], orderTypes);
 
   return (
     <Stack spacing={3}>
@@ -60,7 +61,9 @@ export default function DeliveryTab({ data, formatters }) {
                   >
                     <CardContent>
                       <Stack spacing={0.5}>
-                        <Typography variant="subtitle2">{item.order_type}</Typography>
+                        <Typography variant="subtitle2">
+                          {getOrderTypeLabel(item.order_type, orderTypeNameMap)}
+                        </Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -86,7 +89,11 @@ export default function DeliveryTab({ data, formatters }) {
         </Grid>
         <Grid size={{ xs: 12, lg: 8 }}>
           <SectionCard title="Тренд P50 по каналам">
-            <DeliveryTrendChart data={data.trend || []} />
+            <DeliveryTrendChart
+              data={data.trend || []}
+              orderTypes={orderTypes}
+              orderTypeNameMap={orderTypeNameMap}
+            />
           </SectionCard>
         </Grid>
       </Grid>
