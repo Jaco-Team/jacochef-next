@@ -18,6 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
@@ -32,6 +33,7 @@ import TabInfo from "./tabs/TabInfo";
 import TabLocations from "./tabs/TabLocations";
 import TabProducts from "./tabs/TabProducts";
 import TabDocuments from "./tabs/TabDocuments";
+import TabHistory from "./tabs/TabHistory";
 import ModalAddDeclaration from "./ModalAddDeclaration";
 import VendorInfoEditorDialog from "./VendorInfoEditorDialog";
 import VendorPointMailsDialog from "./VendorPointMailsDialog";
@@ -54,6 +56,12 @@ const TAB_DEFINITIONS = [
     key: "documents",
     label: "Документы",
     icon: <DescriptionOutlinedIcon fontSize="small" />,
+  },
+  {
+    index: 4,
+    key: "history",
+    label: "История",
+    icon: <HistoryOutlinedIcon fontSize="small" />,
   },
 ];
 
@@ -129,12 +137,12 @@ export default function VendorDetailPage() {
         allCities={allCities}
         isSubmitting={isLoading}
         onClose={() => setIsInfoDialogOpen(false)}
-        onSubmit={async (nextVendor, nextVendorCities) => {
+        onSubmit={withConfirm(async (nextVendor, nextVendorCities) => {
           const isSaved = await handleVendorInfoSubmit(nextVendor, nextVendorCities);
           if (isSaved) {
             setIsInfoDialogOpen(false);
           }
-        }}
+        }, "Сохранить изменения в информации о поставщике?")}
       />
       <VendorPointMailsDialog
         open={isPointMailsDialogOpen}
@@ -143,12 +151,12 @@ export default function VendorDetailPage() {
         vendorCities={vendorCities}
         isSubmitting={isLoading}
         onClose={() => setIsPointMailsDialogOpen(false)}
-        onSubmit={async (nextMails) => {
+        onSubmit={withConfirm(async (nextMails) => {
           const isSaved = await handleVendorMailsSubmit(nextMails);
           if (isSaved) {
             setIsPointMailsDialogOpen(false);
           }
-        }}
+        }, "Сохранить изменения в email по точкам?")}
       />
 
       <Grid
@@ -157,10 +165,10 @@ export default function VendorDetailPage() {
         spacing={3}
       >
         <Grid
-          size={{ xs: 12, md: 3 }}
-          sx={{ display: { xs: "none", md: "block" } }}
+          size={{ xs: 12, sm: 3, md: 2 }}
+          sx={{ display: { xs: "none", md: "block" }, position: "relative" }}
         >
-          <Card sx={{ minHeight: "calc(100vh - 120px)" }}>
+          <Card sx={{ minHeight: "calc(100vh - 120px)", position: "sticky", top: 80 }}>
             <CardContent sx={{ p: 0 }}>
               <Stack spacing={0}>
                 <Button
@@ -222,7 +230,7 @@ export default function VendorDetailPage() {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 9 }}>
+        <Grid size={{ xs: 12, md: 10 }}>
           <Stack
             spacing={3}
             sx={{ pb: { xs: 10, md: 0 } }}
@@ -308,6 +316,7 @@ export default function VendorDetailPage() {
                       () => handleQuickToggleVendorField("is_show"),
                       "Изменить активность поставщика?",
                     )}
+                    withConfirm={withConfirm}
                   />
                 </TabPanel>
                 <TabPanel
@@ -343,6 +352,12 @@ export default function VendorDetailPage() {
                     handleUnbindDeclaration={handleUnbindDeclaration}
                     openDocModal={openDocModal}
                   />
+                </TabPanel>
+                <TabPanel
+                  value={activeTab}
+                  index={4}
+                >
+                  <TabHistory />
                 </TabPanel>
               </>
             )}

@@ -1,11 +1,22 @@
 "use client";
 
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
-import { Box, Card, CardActionArea, CardContent, Chip, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Chip,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import SmallFont from "@/ui/SmallFont";
+import formatPhone from "@/src/helpers/ui/formatPhone";
 import { formatPlural } from "@/src/helpers/utils/i18n";
 import { getCityNamesByIds } from "./vendorFormUtils";
 
@@ -16,7 +27,8 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
 
   const cityNames = getCityNamesByIds(vendor.cities, cities);
   const items = Number(vendor.items_count || 0);
-  const phone = (vendor.phone ?? "").trim();
+  const expiringDeclarations = vendor.expiring_declarations;
+  const phone = formatPhone(vendor.phone);
   const email = (vendor.email ?? "").trim();
   const addr = (vendor.addr ?? "").trim();
 
@@ -45,15 +57,15 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
       ) : null}
 
       <CardActionArea
-        sx={{ height: "100%" }}
+        sx={{ height: "100%", display: "flex", alignItems: "stretch" }}
         onClick={() => onClick?.(vendor)}
       >
         <CardContent
           sx={{
             display: "flex",
+            flex: 1,
             flexDirection: "column",
             gap: 1,
-            flex: 1,
             justifyContent: "space-between",
             pr: action ? 7 : 2,
           }}
@@ -70,7 +82,7 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
           </Stack>
 
           {cityNames.length ? (
-            <Box sx={{ mt: "auto" }}>
+            <Box>
               {cityNames.map((cityName) => (
                 <Chip
                   key={`${vendor.id}-${cityName}`}
@@ -113,13 +125,13 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
             </Typography>
           ) : null}
 
-          <Box sx={{ flexGrow: 1 }} />
-
           <Stack
             direction="row"
             alignItems="center"
-            justifyContent="flex-end"
+            justifyContent="flex-start"
+            justifySelf="flex-end"
             spacing={1}
+            flexWrap="wrap"
             sx={{ mt: "auto" }}
           >
             <InventoryOutlinedIcon fontSize="small" />
@@ -127,6 +139,21 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
               label={formatPlural(items, ["продукт", "продукта", "продуктов"])}
               size="small"
             />
+            {expiringDeclarations ? (
+              <Tooltip title="Количество истекающих деклараций">
+                <Chip
+                  icon={<DescriptionOutlinedIcon />}
+                  label={expiringDeclarations}
+                  size="small"
+                  sx={{
+                    color: "error.main",
+                    "& .MuiChip-icon": {
+                      color: "error.main",
+                    },
+                  }}
+                />
+              </Tooltip>
+            ) : null}
           </Stack>
         </CardContent>
       </CardActionArea>

@@ -29,6 +29,7 @@
 ## Output
 
 - Keep output tokens minimal.
+- The project UI/content may be in Russian, but all assistant/user-facing chat replies must be in English unless the user explicitly asks for another language.
 - Give a brief plan, do the work, then give a minimal close-out.
 - Do not print or summarize diffs/changelogs in responses when the user can inspect files directly.
 - Do not include edit summaries, file change counts, or tool-generated `(+/-)` change stats in responses.
