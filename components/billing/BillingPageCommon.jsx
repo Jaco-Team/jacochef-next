@@ -323,7 +323,7 @@ export function BillingPageHero({ onBack, title, subtitle }) {
   );
 }
 
-export function BillingSection({ eyebrow, title, description, children }) {
+export function BillingSection({ eyebrow, title, description, children, hideHeader = false }) {
   return (
     <Grid
       size={{
@@ -335,50 +335,52 @@ export function BillingSection({ eyebrow, title, description, children }) {
         elevation={0}
         sx={billingSectionPaperSx}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.75,
-            mb: 3,
-          }}
-        >
-          <Typography
+        {hideHeader ? null : (
+          <Box
             sx={{
-              textTransform: "uppercase",
-              letterSpacing: "0.16em",
-              fontSize: 12,
-              fontWeight: 700,
-              color: "#9f1239",
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.75,
+              mb: 3,
             }}
           >
-            {eyebrow}
-          </Typography>
-          <Typography
-            component="h2"
-            sx={{
-              fontSize: { xs: 24, md: 30 },
-              lineHeight: 1.1,
-              fontWeight: 800,
-              letterSpacing: "-0.03em",
-              color: "#111827",
-            }}
-          >
-            {title}
-          </Typography>
-          {!description ? null : (
             <Typography
               sx={{
-                maxWidth: 820,
-                color: "#6b7280",
-                fontSize: 15,
-                lineHeight: 1.65,
+                textTransform: "uppercase",
+                letterSpacing: "0.16em",
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#9f1239",
               }}
             >
-              {description}
+              {eyebrow}
             </Typography>
-          )}
-        </Box>
+            <Typography
+              component="h2"
+              sx={{
+                fontSize: { xs: 24, md: 30 },
+                lineHeight: 1.1,
+                fontWeight: 800,
+                letterSpacing: "-0.03em",
+                color: "#111827",
+              }}
+            >
+              {title}
+            </Typography>
+            {!description ? null : (
+              <Typography
+                sx={{
+                  maxWidth: 820,
+                  color: "#6b7280",
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                }}
+              >
+                {description}
+              </Typography>
+            )}
+          </Box>
+        )}
         <Grid
           container
           spacing={3}
