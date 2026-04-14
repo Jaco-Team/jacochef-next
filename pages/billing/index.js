@@ -43,6 +43,7 @@ import { formatDateReverse, formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { billingPageFieldSx } from "@/components/billing/BillingPageCommon";
+import ContrastIcon from "@mui/icons-material/Contrast";
 
 const bill_status = [
   {
@@ -242,6 +243,7 @@ class Billing_ extends React.Component {
 
       modelCheckPay: false,
       acces_bux_pay: false,
+      acces: {},
     };
   }
 
@@ -257,6 +259,7 @@ class Billing_ extends React.Component {
       billings: bill_status,
       status: bill_status[0].id,
       types: types,
+      acces: data.acces,
       acces_bux_pay: parseInt(data.acces_bux_pay) == 1 ? true : false,
     });
 
@@ -966,12 +969,34 @@ class Billing_ extends React.Component {
             >
               <Button
                 component={Link}
+                href="/billing/pages"
+                variant="contained"
+                startIcon={<ContrastIcon />}
+                sx={{
+                  ...actionButtonSx,
+                  flexShrink: 0,
+                  maxWidth: 190,
+                  backgroundColor: "#A8E4A0",
+                  display: this.state.acces?.pages_access ? "flex" : "none",
+                  color: "#1f2937",
+                  "&:hover": {
+                    backgroundColor: "#BDECB6",
+                    boxShadow: "none",
+                    color: "#111827",
+                  },
+                }}
+              >
+                Сверка наименований
+              </Button>
+              <Button
+                component={Link}
                 href="/billing/new"
                 variant="contained"
                 startIcon={<AddRoundedIcon />}
                 sx={{
                   ...actionButtonSx,
                   flexShrink: 0,
+                  maxWidth: 190,
                   backgroundColor: "#1f2937",
                   "&:hover": {
                     backgroundColor: "#111827",

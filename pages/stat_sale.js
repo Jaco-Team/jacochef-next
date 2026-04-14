@@ -3390,11 +3390,11 @@ class StatSale_Tab_Dynamic extends React.Component {
     this.state = {
       date_start: formatDateMin(new Date()),
       date_end: formatDateMin(new Date()),
-      data_clients_list: [],
+      data_clients_list: {},
       res: {},
-      data_clients_list_cafe: [],
-      data_clients_list_kc: [],
-      data_clients_list_site: [],
+      data_clients_list_cafe: {},
+      data_clients_list_kc: {},
+      data_clients_list_site: {},
       yearly_totals: null,
       yearly_totals_cafe: null,
       yearly_totals_kc: null,
@@ -3408,6 +3408,19 @@ class StatSale_Tab_Dynamic extends React.Component {
       [type]: formatDateMin(data),
     });
   }
+
+  /**
+   * Конвертирует объект { "2025-1": {...}, "2026-4": {...} }
+   * в отсортированный массив по дате
+   */
+  objectToSortedArray = (obj) => {
+    if (!obj || typeof obj !== "object") return [];
+
+    return Object.values(obj).sort((a, b) => {
+      if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
+      return a.month - b.month;
+    });
+  };
 
   get_data_clients = async (exp = false) => {
     const { date_start, date_end, point } = this.state;
@@ -3441,10 +3454,8 @@ class StatSale_Tab_Dynamic extends React.Component {
           },
         );
 
-        // Проверяем тип ответа
         const contentType = response.headers["content-type"];
 
-        // Если вернулся JSON с ошибкой
         if (contentType && contentType.includes("application/json")) {
           const text = await response.data.text();
           const errorData = JSON.parse(text);
@@ -3452,18 +3463,15 @@ class StatSale_Tab_Dynamic extends React.Component {
           return;
         }
 
-        // Проверяем размер файла
         if (response.data.size === 0) {
           this.props.openAlert(false, "Ошибка: получен пустой файл");
           return;
         }
 
-        // Создаем ссылку для скачивания
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
         link.href = url;
 
-        // Получаем имя файла из заголовка или генерируем сами
         let fileName = `stat_dynamics_${new Date().toISOString().split("T")[0]}.xlsx`;
         const contentDisposition = response.headers["content-disposition"];
         if (contentDisposition) {
@@ -3477,7 +3485,6 @@ class StatSale_Tab_Dynamic extends React.Component {
         document.body.appendChild(link);
         link.click();
 
-        // Очищаем
         setTimeout(() => {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
@@ -3513,11 +3520,12 @@ class StatSale_Tab_Dynamic extends React.Component {
 
     if (res.st) {
       this.setState({
-        data_clients_list: res.res || [],
-        res: res || [],
-        data_clients_list_cafe: res.res_cafe || [],
-        data_clients_list_kc: res.res_kc || [],
-        data_clients_list_site: res.res_site || [],
+        // ✅ Данные приходят как объекты { "2025-1": {...} }
+        data_clients_list: res.res || {},
+        res: res || {},
+        data_clients_list_cafe: res.res_cafe || {},
+        data_clients_list_kc: res.res_kc || {},
+        data_clients_list_site: res.res_site || {},
         yearly_totals: res.yearly_totals || null,
         yearly_totals_cafe: res.yearly_totals_cafe || null,
         yearly_totals_kc: res.yearly_totals_kc || null,
@@ -3534,31 +3542,59 @@ class StatSale_Tab_Dynamic extends React.Component {
     });
   }
 
+  objectToSortedArray = (obj) => {
+    if (!obj || typeof obj !== "object") return [];
+
+    return Object.entries(obj)
+      .map(([key, value]) => {
+        // Ключ в формате "2025-1" или "2025-12"
+        const parts = key.split("-");
+        const yearFromKey = parts[0];
+        const monthFromKey = parseInt(parts[1]);
+
+        return {
+          ...value,
+          // Если year уже есть в данных — используем его, иначе берем из ключа
+          year: value.year || yearFromKey,
+          // Если month уже есть — используем его, иначе из ключа
+          month: value.month || monthFromKey,
+        };
+      })
+      .sort((a, b) => {
+        if (parseInt(a.year) !== parseInt(b.year)) {
+          return parseInt(a.year) - parseInt(b.year);
+        }
+        return a.month - b.month;
+      });
+  };
+
   renderTable = () => {
     const { data_clients_list, yearly_totals } = this.state;
 
-    if (!data_clients_list.length) return null;
+    // ✅ Конвертируем объект в отсортированный массив
+    const monthsArray = this.objectToSortedArray(data_clients_list);
 
-    // Фильтруем месяцы с данными
-    const monthsWithData = data_clients_list.filter(
-      (m) => m.rolly !== 0 || m.pizza !== 0 || m.order !== 0,
+    if (!monthsArray.length) return null;
+
+    // ✅ Показываем ВСЕ месяцы диапазона (убрали фильтрацию по нулям)
+    const monthsWithData = monthsArray;
+
+    // ✅ Ищем текущий месяц по году и месяцу
+    const now = new Date();
+    const currentMonth = monthsArray.find(
+      (m) => m.month === now.getMonth() + 1 && parseInt(m.year) === now.getFullYear(),
     );
-    const currentMonth = data_clients_list.find((m) => m.month === new Date().getMonth() + 1);
 
-    // Количество колонок для секционных заголовков (5 фикс + 3 * кол-во месяцев)
     const totalCols = 5 + monthsWithData.length * 3;
+    const totalDataRows = 3 + 1 + 4 + 1;
 
-    // Подсчитываем общее количество строк данных для rowspan
-    const totalDataRows = 3 + 1 + 4 + 1; // ПРОДУКТЫ(3) + ЭФФЕКТИВНОСТЬ(1) + АККАУНТЫ(4) + АУДИТОРИЯ(1)
-
-    // Вспомогательная функция для ячеек месяца
     const renderMonthCells = (month, metricKey) => {
       const planValue = month[`${metricKey}_plan`];
       const factValue = month[metricKey];
       const dynamicsValue = month[`${metricKey}_dynamics`];
 
       return (
-        <React.Fragment key={`cell-${month.month}-${metricKey}`}>
+        <React.Fragment key={`cell-${month.year}-${month.month}-${metricKey}`}>
           <td
             style={{
               border: "1px solid #ddd",
@@ -3600,19 +3636,15 @@ class StatSale_Tab_Dynamic extends React.Component {
       );
     };
 
-    // Вспомогательная функция для ячейки с процентом
     const renderPercentCell = (value, isBold = false, customStyle = {}) => {
       const baseStyle = {
         border: "1px solid #ddd",
         padding: "8px",
         textAlign: "center",
         fontWeight: isBold ? "bold" : "normal",
-        boxSizing: "border-box", // предотвращает "вылезание" padding за границы
+        boxSizing: "border-box",
       };
-
-      // Кастомные стили приоритетнее базовых
       const mergedStyle = { ...baseStyle, ...customStyle };
-
       return (
         <td style={mergedStyle}>
           {value !== null && value !== undefined && value !== "-"
@@ -3622,7 +3654,6 @@ class StatSale_Tab_Dynamic extends React.Component {
       );
     };
 
-    // Вспомогательная функция для ячейки с прочерком
     const renderDashCell = (customStyle = {}) => (
       <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center", ...customStyle }}>
         -
@@ -3641,12 +3672,12 @@ class StatSale_Tab_Dynamic extends React.Component {
         <table
           style={{
             width: "100%",
-            minWidth: "800px",
+            minWidth: "1200px",
             borderCollapse: "collapse",
-            fontSize: "12px",
             fontFamily: "Arial, sans-serif",
             tableLayout: "fixed",
           }}
+          className="medium-table"
         >
           <colgroup>
             <col style={{ width: "120px" }} />
@@ -3655,8 +3686,8 @@ class StatSale_Tab_Dynamic extends React.Component {
             <col style={{ width: "80px" }} />
             <col style={{ width: "90px" }} />
             <col style={{ width: "70px" }} />
-            {monthsWithData.map(() => (
-              <React.Fragment key="col-group">
+            {monthsWithData.map((_, idx) => (
+              <React.Fragment key={`col-${idx}`}>
                 <col style={{ width: "70px" }} />
                 <col style={{ width: "70px" }} />
                 <col style={{ width: "70px" }} />
@@ -3695,48 +3726,31 @@ class StatSale_Tab_Dynamic extends React.Component {
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 План год
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 Факт год
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 Факт по тек.мес
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 Динамика
               </th>
-
               {monthsWithData.map((month, idx) => (
                 <th
-                  key={`header-${month.month}`}
+                  key={`header-${month.year}-${month.month}`}
                   colSpan={3}
                   style={{
                     border: "1px solid #ddd",
@@ -3746,13 +3760,13 @@ class StatSale_Tab_Dynamic extends React.Component {
                     fontWeight: "600",
                   }}
                 >
-                  {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
+                  {month.month_name + " " + month.year}
                 </th>
               ))}
             </tr>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
               {monthsWithData.map((month) => (
-                <React.Fragment key={`subheader-${month.month}`}>
+                <React.Fragment key={`subheader-${month.year}-${month.month}`}>
                   <th
                     style={{
                       border: "1px solid #ddd",
@@ -3790,7 +3804,6 @@ class StatSale_Tab_Dynamic extends React.Component {
               ))}
             </tr>
           </thead>
-
           <tbody>
             {/* Роллы */}
             <tr style={{ backgroundColor: "#fafafa" }}>
@@ -3951,7 +3964,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               {renderPercentCell(currentMonth?.effect)}
               {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
-                <React.Fragment key={`eff-${month.month}`}>
+                <React.Fragment key={`eff-${month.year}-${month.month}`}>
                   {renderPercentCell(100)}
                   {renderPercentCell(month.effect)}
                   {renderDashCell({ borderRight: "2px solid #ccc" })}
@@ -4006,7 +4019,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               {renderDashCell()}
               {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
-                <React.Fragment key={`share-active-${month.month}`}>
+                <React.Fragment key={`share-active-${month.year}-${month.month}`}>
                   {renderDashCell()}
                   <td
                     style={{
@@ -4053,7 +4066,6 @@ class StatSale_Tab_Dynamic extends React.Component {
               {monthsWithData.map((month) => renderMonthCells(month, "register"))}
             </tr>
 
-            {/* Доля регистраций */}
             <tr style={{ backgroundColor: "#fff" }}>
               <td
                 style={{
@@ -4074,7 +4086,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               {renderDashCell()}
               {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
-                <React.Fragment key={`share-reg-${month.month}`}>
+                <React.Fragment key={`share-reg-${month.year}-${month.month}`}>
                   {renderDashCell()}
                   <td
                     style={{
@@ -4094,7 +4106,6 @@ class StatSale_Tab_Dynamic extends React.Component {
               ))}
             </tr>
 
-            {/* Жители */}
             <tr style={{ backgroundColor: "#fafafa" }}>
               <td
                 style={{
@@ -4134,7 +4145,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               {renderPercentCell(100, false, { borderBottom: "2px solid #ccc" })}
               {renderDashCell({ borderBottom: "2px solid #ccc", borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
-                <React.Fragment key={`residents-${month.month}`}>
+                <React.Fragment key={`residents-${month.year}-${month.month}`}>
                   <td
                     style={{
                       border: "1px solid #ddd",
@@ -4175,27 +4186,28 @@ class StatSale_Tab_Dynamic extends React.Component {
     );
   };
 
-  renderTableMini = (title, data_clients_list, yearly_totals) => {
-    if (!data_clients_list.length) return null;
+  renderTableMini = (title, dataObj, yearly_totals) => {
+    // ✅ Конвертируем объект в массив
+    const monthsArray = this.objectToSortedArray(dataObj);
 
-    const monthsWithData = data_clients_list.filter(
-      (m) => m.rolly !== 0 || m.pizza !== 0 || m.order !== 0,
+    if (!monthsArray.length) return null;
+
+    const monthsWithData = monthsArray; // Показываем все месяцы
+
+    const now = new Date();
+    const currentMonth = monthsArray.find(
+      (m) => m.month === now.getMonth() + 1 && parseInt(m.year) === now.getFullYear(),
     );
-    const currentMonth = data_clients_list.find((m) => m.month === new Date().getMonth() + 1);
 
-    const totalCols = 5 + monthsWithData.length * 3;
+    const totalDataRows = 3 + 1;
 
-    // Подсчитываем общее количество строк данных для rowspan
-    const totalDataRows = 3 + 1; // Только продукты (3) + эффективность (1)
-
-    // Вспомогательная функция для ячеек месяца
     const renderMonthCells = (month, metricKey) => {
       const planValue = month[`${metricKey}_plan`];
       const factValue = month[metricKey];
       const dynamicsValue = month[`${metricKey}_dynamics`];
 
       return (
-        <React.Fragment key={`cell-${month.month}-${metricKey}`}>
+        <React.Fragment key={`cell-${month.year}-${month.month}-${metricKey}`}>
           <td
             style={{
               border: "1px solid #ddd",
@@ -4237,7 +4249,6 @@ class StatSale_Tab_Dynamic extends React.Component {
       );
     };
 
-    // Вспомогательная функция для ячейки с процентом
     const renderPercentCell = (value, customStyle = {}) => (
       <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center", ...customStyle }}>
         {value !== null && value !== undefined && value !== "-"
@@ -4246,7 +4257,6 @@ class StatSale_Tab_Dynamic extends React.Component {
       </td>
     );
 
-    // Вспомогательная функция для ячейки с прочерком
     const renderDashCell = (customStyle = {}) => (
       <td style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center", ...customStyle }}>
         -
@@ -4271,6 +4281,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             fontFamily: "Arial, sans-serif",
             tableLayout: "fixed",
           }}
+          className="medium-table"
         >
           <colgroup>
             <col style={{ width: "120px" }} />
@@ -4279,8 +4290,8 @@ class StatSale_Tab_Dynamic extends React.Component {
             <col style={{ width: "80px" }} />
             <col style={{ width: "90px" }} />
             <col style={{ width: "70px" }} />
-            {monthsWithData.map(() => (
-              <React.Fragment key="col-group">
+            {monthsWithData.map((_, idx) => (
+              <React.Fragment key={`col-mini-${idx}`}>
                 <col style={{ width: "70px" }} />
                 <col style={{ width: "70px" }} />
                 <col style={{ width: "70px" }} />
@@ -4319,64 +4330,55 @@ class StatSale_Tab_Dynamic extends React.Component {
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 План год
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 Факт год
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 Факт по тек.мес
               </th>
               <th
                 rowSpan={2}
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "center",
-                }}
+                style={{ border: "1px solid #ddd", padding: "8px", textAlign: "center" }}
               >
                 Динамика
               </th>
+              {monthsWithData.map((month, idx) => {
+                // ✅ Для мини-таблиц month_name не содержит год — добавляем вручную
+                const hasYearInName = month.month_name && /\d{4}$/.test(month.month_name);
+                const displayName = hasYearInName
+                  ? month.month_name
+                  : `${month.month_name} ${month.year}`;
 
-              {monthsWithData.map((month, idx) => (
-                <th
-                  key={`header-${month.month}`}
-                  colSpan={3}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    textAlign: "center",
-                    backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
-                    fontWeight: "600",
-                  }}
-                >
-                  {month.month_name.charAt(0).toUpperCase() + month.month_name.slice(1)}
-                </th>
-              ))}
+                return (
+                  <th
+                    key={`header-mini-${month.year}-${month.month}`}
+                    colSpan={3}
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "8px",
+                      textAlign: "center",
+                      backgroundColor: `hsl(${idx * 45}, 75%, 92%)`,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {displayName ? displayName.charAt(0).toUpperCase() + displayName.slice(1) : ""}
+                  </th>
+                );
+              })}
             </tr>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
               {monthsWithData.map((month) => (
-                <React.Fragment key={`subheader-${month.month}`}>
+                <React.Fragment key={`subheader-mini-${month.year}-${month.month}`}>
                   <th
                     style={{
                       border: "1px solid #ddd",
@@ -4414,9 +4416,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               ))}
             </tr>
           </thead>
-
           <tbody>
-            {/* Роллы */}
             <tr style={{ backgroundColor: "#fafafa" }}>
               <td
                 rowSpan={totalDataRows}
@@ -4575,7 +4575,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               {renderPercentCell(currentMonth?.effect)}
               {renderDashCell({ borderRight: "2px solid #ccc" })}
               {monthsWithData.map((month) => (
-                <React.Fragment key={`eff-${month.month}`}>
+                <React.Fragment key={`eff-mini-${month.year}-${month.month}`}>
                   {renderPercentCell(100)}
                   {renderPercentCell(month.effect)}
                   {renderDashCell({ borderRight: "2px solid #ccc" })}
@@ -4604,10 +4604,7 @@ class StatSale_Tab_Dynamic extends React.Component {
     return (
       <Grid
         style={{ paddingTop: 0 }}
-        size={{
-          xs: 12,
-          sm: 12,
-        }}
+        size={{ xs: 12, sm: 12 }}
       >
         <TabPanel
           value={activeTab}
@@ -4618,25 +4615,7 @@ class StatSale_Tab_Dynamic extends React.Component {
             container
             spacing={3}
           >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyDatePickerNewViews
-                label="Дата от"
-                views={["month", "year"]}
-                value={this.state.date_start}
-                func={this.changeDateRange.bind(this, "date_start")}
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
+            <Grid size={{ xs: 12, sm: 3 }}>
               <MyAutocomplite
                 label="Точка"
                 multiple={true}
@@ -4645,12 +4624,15 @@ class StatSale_Tab_Dynamic extends React.Component {
                 func={this.changePoints.bind(this, "point")}
               />
             </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNewViews
+                label="Дата от"
+                views={["month", "year"]}
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, "date_start")}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <MyDatePickerNewViews
                 label="Дата до"
                 views={["month", "year"]}
@@ -4658,13 +4640,7 @@ class StatSale_Tab_Dynamic extends React.Component {
                 func={this.changeDateRange.bind(this, "date_end")}
               />
             </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
+            <Grid size={{ xs: 12, sm: 3 }}>
               <Button
                 variant="contained"
                 onClick={() => this.get_data_clients()}
@@ -4672,7 +4648,7 @@ class StatSale_Tab_Dynamic extends React.Component {
               >
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
-              {this.props.canExport && data_clients_list.length > 0 && (
+              {this.props.canExport && this.objectToSortedArray(data_clients_list).length > 0 && (
                 <DownloadButton
                   variant="contained"
                   color="success"
@@ -4685,69 +4661,37 @@ class StatSale_Tab_Dynamic extends React.Component {
               )}
             </Grid>
 
-            {data_clients_list.length > 0 && (
+            {this.objectToSortedArray(data_clients_list).length > 0 && (
               <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                sx={{
-                  mt: 3,
-                  mb: 5,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
+                size={{ xs: 12, sm: 12 }}
+                sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
               >
                 {this.renderTable()}
               </Grid>
             )}
 
-            {data_clients_list_cafe.length > 0 && (
+            {this.objectToSortedArray(data_clients_list_cafe).length > 0 && (
               <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                sx={{
-                  mt: 3,
-                  mb: 5,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
+                size={{ xs: 12, sm: 12 }}
+                sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
               >
                 {this.renderTableMini("Кафе", data_clients_list_cafe, yearly_totals_cafe)}
               </Grid>
             )}
 
-            {data_clients_list_kc.length > 0 && (
+            {this.objectToSortedArray(data_clients_list_kc).length > 0 && (
               <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                sx={{
-                  mt: 3,
-                  mb: 5,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
+                size={{ xs: 12, sm: 12 }}
+                sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
               >
                 {this.renderTableMini("Контакт-центр", data_clients_list_kc, yearly_totals_kc)}
               </Grid>
             )}
 
-            {data_clients_list_site.length > 0 && (
+            {this.objectToSortedArray(data_clients_list_site).length > 0 && (
               <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                sx={{
-                  mt: 3,
-                  mb: 5,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
+                size={{ xs: 12, sm: 12 }}
+                sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
               >
                 {this.renderTableMini("Сайт", data_clients_list_site, yearly_totals_site)}
               </Grid>
@@ -4775,13 +4719,43 @@ const DataTable = ({ tableData, openGraphModal }) => {
     return `${currentLastTwo}/${previousLastTwo}`;
   };
 
+  const getPreviousMonthHeader = (formatted) => {
+    const parts = formatted.split("-");
+    if (parts.length < 2) return formatted;
+
+    const month = parts[0];
+    const year = parts[1];
+
+    let currentMonth = parseInt(month, 10);
+    let currentYear = parseInt(year, 10);
+
+    let previousMonth = currentMonth - 1;
+    let previousYear = currentYear;
+
+    if (previousMonth === 0) {
+      previousMonth = 12;
+      previousYear = currentYear - 1;
+    }
+
+    const previousMonthFormatted = previousMonth.toString().padStart(2, "0");
+
+    const currentLastTwo = currentYear.toString().slice(-2);
+    const previousLastTwo = previousYear.toString().slice(-2);
+
+    if (currentYear === previousYear) {
+      return `${month}/${previousMonthFormatted}`;
+    }
+
+    return `${previousMonthFormatted}-${previousLastTwo}/${month}-${currentLastTwo}`;
+  };
+
   const renderMonthHeader = (formattedMonth) => {
     const parts = formattedMonth.split("-");
     const isoDate = `${parts[1]}-${parts[0]}-01`;
     return (
       <TableCell
         key={formattedMonth}
-        colSpan={4}
+        colSpan={5}
         sx={{
           backgroundColor: "#dcdcdc",
           minWidth: 4 * 80,
@@ -4906,6 +4880,9 @@ const DataTable = ({ tableData, openGraphModal }) => {
                 <TableCell sx={cellStylesHeader}>
                   {getPreviousPeriodHeader(formattedMonth)}
                 </TableCell>
+                <TableCell sx={cellStylesHeader}>
+                  {getPreviousMonthHeader(formattedMonth)}
+                </TableCell>
               </React.Fragment>
             ))}
           </TableRow>
@@ -4997,10 +4974,18 @@ const DataTable = ({ tableData, openGraphModal }) => {
                         sx={{
                           minWidth: "80px",
                           color: Number(cellData.percent_compare_rolls) > 0 ? "green" : "red",
-                          borderRight: thickBorder,
                         }}
                       >
                         {cellData.percent_compare_rolls ?? 0}%
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          minWidth: "80px",
+                          color: Number(cellData.percent_compare_rolls_mom) > 0 ? "green" : "red",
+                          borderRight: thickBorder,
+                        }}
+                      >
+                        {cellData.percent_compare_rolls_mom ?? 0}%
                       </TableCell>
                     </React.Fragment>
                   );
@@ -5053,10 +5038,18 @@ const DataTable = ({ tableData, openGraphModal }) => {
                         sx={{
                           minWidth: "80px",
                           color: Number(cellData.percent_compare_pizza) > 0 ? "green" : "red",
-                          borderRight: thickBorder,
                         }}
                       >
                         {cellData.percent_compare_pizza ?? 0}%
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          minWidth: "80px",
+                          color: Number(cellData.percent_compare_pizza_mom) > 0 ? "green" : "red",
+                          borderRight: thickBorder,
+                        }}
+                      >
+                        {cellData.percent_compare_pizza_mom ?? 0}%
                       </TableCell>
                     </React.Fragment>
                   );
@@ -5333,7 +5326,6 @@ class StatSale_ extends React.Component {
       const result = await api_laravel(this.state.module, method, data);
       return result?.data;
     } catch (error) {
-      console.error(error);
       return { st: false, text: error.message || "Ошибка запроса" };
     } finally {
       setTimeout(() => {

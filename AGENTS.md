@@ -5,14 +5,17 @@
 - This repository uses `Next.js` with the `pages` router, `MUI`, and local Laravel API wrappers.
 - Prefer existing project patterns over introducing new abstractions.
 - When a page already has an established visual language, preserve it instead of redesigning it.
+- Prefer focused changes inside the current module over broad refactors.
 
 ## Workflow
 
 - Read the target page/component before editing.
 - Use `apply_patch` for manual code edits.
+- Read the surrounding module flow before changing behavior that crosses tabs, modals, or shared hooks/stores.
 - Prefer focused changes in existing files over broad refactors.
 - Do not remove existing behavior unless explicitly requested.
 - If replacing a user flow, preserve the old capability elsewhere unless the user asked to remove it.
+- Before using data fields from API responses, confirm they exist in known project docs, stores, or current payload usage.
 
 ## Output And Communication
 
@@ -26,6 +29,23 @@
 - Assume formatting/check hooks are handled by husky or the user's normal workflow.
 - Keep code style consistent with the surrounding file.
 - Avoid adding new dependencies unless required.
+- Prefer fast, local verification such as syntax-aware review or targeted checks.
+- Do not do broad cleanup unrelated to the task.
+
+## Output
+
+- Keep output tokens minimal.
+- The project UI/content may be in Russian, but all assistant/user-facing chat replies must be in English unless the user explicitly asks for another language.
+- Give a brief plan, do the work, then give a minimal close-out.
+- Do not print or summarize diffs/changelogs in responses when the user can inspect files directly.
+- Do not include edit summaries, file change counts, or tool-generated `(+/-)` change stats in responses.
+- Do not list changed lines, touched files, or patch-style inventories in responses unless the user explicitly asks.
+- Do not include file paths, file references, or line numbers in normal responses unless the user explicitly asks for them.
+- Default to outcome-only close-outs: what was changed, whether it was verified, and any blocker or risk that still matters.
+- Preferred final-response formula:
+  - One short sentence for outcome.
+  - One short sentence for verification or blocker if relevant.
+  - Nothing else unless the user asks.
 
 ## UI And Design
 
@@ -34,69 +54,45 @@
 - Keep desktop and mobile behavior aligned when both versions exist.
 - For mobile modal/sheet patterns, prefer `SwipeableDrawer` when the screen is designed as a bottom sheet.
 - For desktop modal patterns, prefer styled `Dialog`.
+- Keep spacing, border radius, typography, and action hierarchy aligned with the surrounding page instead of introducing a new visual system.
+- For tables and dense data UIs, prefer clear hover states, sticky headers when useful, and compact actions.
 
 ## Destructive Actions
 
 - Do not use browser `confirm`.
 - All destructive actions must go through a styled confirmation modal consistent with the page.
 - Keep destructive actions explicit and visually separated from save actions.
+- Do not hide destructive actions behind ambiguous labels.
 
 ## Forms
 
-- Reuse existing form components when possible:
-  - `MyTextInput`
-  - `MyAutocomplite`
-  - `TextEditor`
-- Preserve the `journal` form style where it is already used.
-- Keep placeholders gray and entered values readable.
+Do not commit secrets, private DSNs, or deployment credentials. Review changes to `pages/_document.js`, `pages/_app.js`, and `ecosystem.config.js` carefully because they affect global scripts, monitoring, and runtime configuration across the entire app.
 
-## API Conventions
+- Preserve existing submit/cancel patterns unless the user asks to redesign the flow.
+- Do not invent validation rules or payload fields.
+- When binding forms to backend data, use only known field names and handle null/undefined safely.
 
-- For page modules that already use module-based API calls, prefer:
-  - `api_laravel_local(this.state.module, method, data)`
-- Follow existing page API naming rather than inventing a new client abstraction.
-- After successful create, update, or delete actions, refresh page data from the server.
-- Prefer server-derived truth over local optimistic state when the page already reloads via `get_all`.
+## MUI Grid (v7) Note
 
-## Page Data Pattern
+When using Material UI v7, the `Grid` item sizing props changed. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props. Examples:
 
-- If a page already has a `get_all` endpoint, treat it as the source of truth for:
-  - main lists
-  - permissions/access
-  - histories
-  - derived page state
-- After mutations, prefer `refreshPageData()` rather than hand-editing multiple local arrays.
+- Single size: `<Grid size={12}>` (full width)
+- Responsive sizes: `<Grid size={{ xs: 12, sm: 6, md: 4 }}>`
 
-## History And Audit
+Update existing `Grid` usages when upgrading to v7 to avoid layout regressions.
 
-- If the backend returns history arrays such as `desc_hist` or `news_hist`, normalize them on the frontend into the format expected by `HistoryLog`.
-- Reuse `@/ui/history/HistoryLog` instead of building a second history UI.
-- Reuse `SmartDiff`-compatible `diff_json` structures when possible.
-- Show history near the block it belongs to:
-  - instruction history under instructions
-  - news history under news
+## Engineering Standards
 
-## News And Rich Text
+Always produce senior-level code: avoid inventing field names or making assumptions about API shapes - ask. When consuming external data:
 
-- Reuse the existing `TextEditor` integration.
-- If a design requires a custom editor layout, prefer extending `TextEditor` variants instead of creating one-off editor wrappers in page files.
-- Keep TinyMCE configuration explicit and avoid passing undefined nested config blocks that can break desktop/mobile initialization.
+- Validate for null/undefined before access.
+- Never silently use guessed, renamed, or invented fields. If a required field is not confirmed in the project or provided by the user, ask before implementing behavior that depends on it.
+- Use only documented/known fields; do not add speculative fallbacks without verifying upstream.
+- Prefer clear, minimal, and well-tested transformations over ad-hoc, speculative code.
+- Prefer senior-level solutions: strong structure, clean abstractions, and maintainable logic without overengineering or spaghetti.
+- Keep names aligned with existing domain terminology.
+- Fast syntax checks, no extra formatting.
+- Do not silently change behavior outside the stated task.
+- If an assumption would materially affect behavior, stop and ask instead of guessing.
 
-## Access And Permissions
-
-- Respect page access flags returned by the API.
-- Hide edit/delete controls when access does not allow them.
-- Do not rely only on UI checks; keep server calls aligned with backend permissions.
-
-## Page-Level Guidance For This Repo
-
-- On admin/content pages, actions commonly live inside the section they affect.
-- Lists on desktop can sit in columns; on mobile they should stack naturally into the page flow.
-- Avoid nested internal scroll areas unless the design clearly requires them.
-- Prefer page scroll over small embedded scroll containers on mobile.
-
-## Good Defaults For Codex
-
-- When unsure, extend the current page instead of extracting a new subsystem.
-- When a request sounds like “make it like the existing modal/block,” reuse the current implementation pattern first.
-- If history, confirmation, or edit flows already exist on the page, mirror those patterns for related entities.
+Follow these rules on all PRs to keep the codebase maintainable.

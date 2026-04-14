@@ -1224,7 +1224,7 @@ const billingDropzoneSx = {
     position: "relative",
     padding: "24px",
     background:
-      "linear-gradient(135deg, rgba(255, 247, 237, 1) 0%, rgba(254, 226, 226, 0.92) 100%)",
+      "linear-gradient(135deg, rgba(241, 245, 249, 1) 0%, rgba(226, 232, 240, 0.92) 100%)",
   },
   "&.dropzone .dz-preview.dz-file-preview .dz-image img": {
     display: "none",

@@ -918,7 +918,7 @@ class SkladItemsModule_Modal extends React.Component {
         isEmptyRequiredNumber(max_count_in_m) && this.props.acces?.max_count_in_m_edit,
       mark_name: mark_name === "" && this.props.acces?.mark_name_edit,
       pq: pq === "" && this.props.acces?.pq_edit,
-      percent: percent === 0 && this.props.acces?.percent_edit,
+      percent: isEmptyRequiredNumber(percent) && this.props.acces?.percent_edit,
       vend_percent: vend_percent === 0 && this.props.acces?.vend_percent_edit,
       min_count: min_count === "" && this.props.acces?.min_count_edit,
       honest_sign:
@@ -1182,7 +1182,15 @@ class SkladItemsModule_Modal extends React.Component {
                       ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
                       : {}
                   }
-                  func={this.changeItem.bind(this, "ed_izmer_id")}
+                  func={(event) => {
+                    this.changeItem("ed_izmer_id", event);
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        ed_izmer_id: false,
+                      },
+                    }));
+                  }}
                   disabled={!this.props.acces?.ed_izmer_edit}
                   label="Ед измер"
                   is_none={false}
@@ -1724,7 +1732,15 @@ class SkladItemsModule_Modal extends React.Component {
                                 }
                               : {}
                           }
-                          func={this.changeItem.bind(this, "app_id")}
+                          func={(event) => {
+                            this.changeItem("app_id", event);
+                            this.setState((prevState) => ({
+                              err_valid: {
+                                ...prevState.err_valid,
+                                apps: false,
+                              },
+                            }));
+                          }}
                           is_none={false}
                         />
                       </Grid>

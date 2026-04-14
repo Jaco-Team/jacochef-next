@@ -87,6 +87,7 @@ export function MyDatePickerNew(props) {
           slotProps={{
             textField: {
               fullWidth: true,
+              required: !!props.required,
               size: "small",
               sx: {
                 ...(props.customRI ? customStylesRenderInput[props.customRI] : {}),

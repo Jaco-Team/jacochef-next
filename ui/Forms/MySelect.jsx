@@ -459,11 +459,12 @@ export function MySelect(props) {
         size="small"
         disabled={!!props.disabled}
         style={props.style}
-        sx={{
-          ...(isJournalStyle ? customStylesRenderInput.journal : {}),
-          ...(unifiedControlSx || {}),
-          ...(props.sx || {}),
-        }}
+        // sx={{
+        //   ...(isJournalStyle ? customStylesRenderInput.journal : {}),
+        //   ...(unifiedControlSx || {}),
+        //   ...(props.sx || {}),
+        // }}
+        sx={[isJournalStyle && customStylesRenderInput.journal, unifiedControlSx, props.sx]}
       >
         <InputLabel disabled={!!props.disabled}>{props.label}</InputLabel>
         <Select
