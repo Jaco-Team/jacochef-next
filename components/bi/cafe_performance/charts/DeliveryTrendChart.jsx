@@ -61,7 +61,7 @@ export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTy
     trendOrderTypes.forEach((orderType, index) => {
       const color = getOrderTypeColor(orderType, index);
       const series = chart.series.push(
-        am5xy.LineSeries.new(root, {
+        am5xy.SmoothedXLineSeries.new(root, {
           name: getOrderTypeLabel(orderType, orderTypeNameMap),
           xAxis,
           yAxis,
