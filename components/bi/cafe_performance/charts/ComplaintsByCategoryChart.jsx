@@ -8,15 +8,13 @@ import { Box } from "@mui/material";
 import EmptyState from "../components/EmptyState";
 import { CP_CHART_HEIGHT } from "../layout";
 
-export default function SlaByCategoryChart({ data = [] }) {
+export default function ComplaintsByCategoryChart({ data = [] }) {
   const chartRef = useRef(null);
-  const rootRef = useRef(null);
 
   useEffect(() => {
     if (!chartRef.current || !data.length) return undefined;
 
     const root = am5.Root.new(chartRef.current);
-    rootRef.current = root;
     root.setThemes([am5themes_Animated.new(root)]);
 
     const chart = root.container.children.push(
@@ -25,16 +23,18 @@ export default function SlaByCategoryChart({ data = [] }) {
         panY: false,
         wheelX: "none",
         wheelY: "none",
+        paddingLeft: 0,
       }),
     );
 
     const chartData = [...data]
       .map((item) => ({
         category: item.category_name,
-        sla: Number(item.sla || 0),
-        sample: Number(item.sample_size || 0),
+        value: Number(item.complaints_per_100_items || 0),
+        complaints: Number(item.complaints_count || 0),
+        items: Number(item.item_count || 0),
       }))
-      .sort((a, b) => b.sla - a.sla);
+      .sort((a, b) => b.value - a.value);
 
     const yAxis = chart.yAxes.push(
       am5xy.CategoryAxis.new(root, {
@@ -49,8 +49,6 @@ export default function SlaByCategoryChart({ data = [] }) {
     const xAxis = chart.xAxes.push(
       am5xy.ValueAxis.new(root, {
         min: 0,
-        max: 100,
-        strictMinMax: true,
         renderer: am5xy.AxisRendererX.new(root, {}),
       }),
     );
@@ -59,10 +57,11 @@ export default function SlaByCategoryChart({ data = [] }) {
       am5xy.ColumnSeries.new(root, {
         xAxis,
         yAxis,
-        valueXField: "sla",
+        valueXField: "value",
         categoryYField: "category",
         tooltip: am5.Tooltip.new(root, {
-          labelText: "{category}: {valueX.formatNumber('#.0')}%\nЗаказов: {sample}",
+          labelText:
+            "{category}: {valueX.formatNumber('#.0')} / 100\nЖалоб: {complaints} из {items}",
         }),
       }),
     );
@@ -71,8 +70,8 @@ export default function SlaByCategoryChart({ data = [] }) {
       cornerRadiusTR: 10,
       cornerRadiusBR: 10,
       strokeOpacity: 0,
-      fill: am5.color(0x1565c0),
-      height: am5.percent(70),
+      fill: am5.color(0xef6c00),
+      height: am5.percent(65),
     });
 
     yAxis.data.setAll(chartData);
@@ -80,7 +79,6 @@ export default function SlaByCategoryChart({ data = [] }) {
 
     return () => {
       root.dispose();
-      rootRef.current = null;
     };
   }, [data]);
 
@@ -89,7 +87,7 @@ export default function SlaByCategoryChart({ data = [] }) {
   return (
     <Box
       ref={chartRef}
-      sx={{ width: "100%", height: CP_CHART_HEIGHT.compact }}
+      sx={{ width: "100%", height: CP_CHART_HEIGHT.regular }}
     />
   );
 }

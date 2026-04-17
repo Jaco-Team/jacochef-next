@@ -1,11 +1,18 @@
 "use client";
 
-import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import { Grid, Stack } from "@mui/material";
+import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import ShoppingBasketOutlinedIcon from "@mui/icons-material/ShoppingBasketOutlined";
+import DeliveryDiningRoundedIcon from "@mui/icons-material/DeliveryDiningRounded";
 import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
+import SectionHeading from "../components/SectionHeading";
 import EmptyState from "../components/EmptyState";
+import DeliveryChannelCard from "../components/DeliveryChannelCard";
 import DeliveryTrendChart from "../charts/DeliveryTrendChart";
 import { getOrderTypeLabel, sortByOrderTypes } from "../config";
+import { CP_SPACE } from "../layout";
 
 export default function DeliveryTab({ data, formatters, orderTypes, orderTypeNameMap }) {
   if (!data) return <EmptyState />;
@@ -14,89 +21,81 @@ export default function DeliveryTab({ data, formatters, orderTypes, orderTypeNam
   const channelCards = sortByOrderTypes(data.channel_cards || [], orderTypes);
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={CP_SPACE.section}>
+      <SectionHeading
+        icon={<DeliveryDiningRoundedIcon fontSize="small" />}
+        iconColor="#1565C0"
+        iconBg="#E7EFFD"
+        title="Выдача и доставка"
+        subtitle="Время от готовности до получения клиентом"
+      />
+
       <Grid
         container
         spacing={2}
       >
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <KpiCard
-            label="P50 доставки"
+            label="P50 выдачи (общий)"
             value={formatters.duration(overall.p50)}
+            tone="info"
+            icon={<TimerOutlinedIcon fontSize="small" />}
+            sx={{ height: "auto" }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <KpiCard
-            label="P90 доставки"
-            value={formatters.duration(overall.p90)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <KpiCard
-            label="SLA доставки"
+            label="SLA выдачи"
             value={formatters.percent(overall.sla)}
             tone="success"
+            icon={<TrendingUpRoundedIcon fontSize="small" />}
+            sx={{ height: "auto" }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <KpiCard
-            label="Количество заказов"
+            label="Всего заказов"
             value={formatters.integer(overall.count)}
+            icon={<ShoppingBasketOutlinedIcon fontSize="small" />}
+            sx={{ height: "auto" }}
           />
         </Grid>
       </Grid>
 
-      <Grid
-        container
-        spacing={3}
+      {channelCards.length ? (
+        <Grid
+          container
+          spacing={2}
+        >
+          {channelCards.map((item) => (
+            <Grid
+              key={item.order_type}
+              size={{ xs: 12, sm: 6, md: 4 }}
+            >
+              <DeliveryChannelCard
+                orderType={item.order_type}
+                name={getOrderTypeLabel(item.order_type, orderTypeNameMap)}
+                count={item.count}
+                p50={item.p50}
+                p90={item.p90}
+                sla={item.sla}
+                formatters={formatters}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      ) : null}
+
+      <SectionCard
+        title="Динамика P50 по каналам"
+        subtitle="Минуты ожидания в течение периода"
       >
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <SectionCard title="Каналы">
-            {channelCards.length ? (
-              <Stack spacing={1.5}>
-                {channelCards.map((item) => (
-                  <Card
-                    key={item.order_type}
-                    variant="outlined"
-                  >
-                    <CardContent>
-                      <Stack spacing={0.5}>
-                        <Typography variant="subtitle2">
-                          {getOrderTypeLabel(item.order_type, orderTypeNameMap)}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          P50 {formatters.duration(item.p50)} • P90 {formatters.duration(item.p90)}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          SLA {formatters.percent(item.sla)} • {formatters.integer(item.count)}{" "}
-                          заказов
-                        </Typography>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Stack>
-            ) : (
-              <EmptyState />
-            )}
-          </SectionCard>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <SectionCard title="Тренд P50 по каналам">
-            <DeliveryTrendChart
-              data={data.trend || []}
-              orderTypes={orderTypes}
-              orderTypeNameMap={orderTypeNameMap}
-            />
-          </SectionCard>
-        </Grid>
-      </Grid>
+        <DeliveryTrendChart
+          data={data.trend || []}
+          orderTypes={orderTypes}
+          orderTypeNameMap={orderTypeNameMap}
+        />
+      </SectionCard>
     </Stack>
   );
 }

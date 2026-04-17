@@ -6,6 +6,7 @@ import * as am5percent from "@amcharts/amcharts5/percent";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import { Box } from "@mui/material";
 import EmptyState from "../components/EmptyState";
+import { CP_CHART_HEIGHT } from "../layout";
 
 const normalizeReasonLabel = (reason) => {
   if (reason == null) return "";
@@ -43,6 +44,8 @@ const buildReasonLabel = (item) => {
   return singleLabel || "—";
 };
 
+const PALETTE = ["#1565C0", "#2E7D32", "#EF6C00", "#8E24AA", "#D81B60", "#00838F", "#6D4C41"];
+
 export default function ReasonsBreakdownChart({ data = [] }) {
   const chartRef = useRef(null);
 
@@ -54,7 +57,8 @@ export default function ReasonsBreakdownChart({ data = [] }) {
 
     const chart = root.container.children.push(
       am5percent.PieChart.new(root, {
-        layout: root.verticalLayout,
+        layout: root.horizontalLayout,
+        innerRadius: am5.percent(55),
       }),
     );
 
@@ -63,20 +67,23 @@ export default function ReasonsBreakdownChart({ data = [] }) {
         valueField: "count",
         categoryField: "label",
         legendValueText: "{valuePercentTotal.formatNumber('#.0')}%",
+        legendLabelText: "{category}",
       }),
     );
 
     series.slices.template.setAll({
       tooltipText: "{category}: {value} ({valuePercentTotal.formatNumber('#.0')}%)",
-      strokeWidth: 1,
+      strokeWidth: 2,
       stroke: am5.color(0xffffff),
     });
 
-    series.labels.template.setAll({
-      text: "{category}",
-      oversizedBehavior: "truncate",
-      maxWidth: 140,
-    });
+    series.labels.template.set("forceHidden", true);
+    series.ticks.template.set("forceHidden", true);
+
+    series.get("colors").set(
+      "colors",
+      PALETTE.map((color) => am5.color(color)),
+    );
 
     series.data.setAll(
       data.map((item) => ({
@@ -85,7 +92,31 @@ export default function ReasonsBreakdownChart({ data = [] }) {
       })),
     );
 
-    chart.children.push(am5.Legend.new(root, { centerX: am5.p50, x: am5.p50 }));
+    const legend = chart.children.push(
+      am5.Legend.new(root, {
+        centerY: am5.p50,
+        y: am5.p50,
+        layout: root.verticalLayout,
+        marginLeft: 24,
+        useDefaultMarker: true,
+      }),
+    );
+
+    legend.markers.template.setAll({ width: 10, height: 10 });
+    legend.markerRectangles.template.setAll({
+      cornerRadiusTL: 5,
+      cornerRadiusTR: 5,
+      cornerRadiusBL: 5,
+      cornerRadiusBR: 5,
+    });
+    legend.labels.template.setAll({ fontSize: 13, fill: am5.color(0x1f2937) });
+    legend.valueLabels.template.setAll({
+      fontSize: 13,
+      fontWeight: "600",
+      fill: am5.color(0x1f2937),
+    });
+
+    legend.data.setAll(series.dataItems);
 
     return () => {
       root.dispose();
@@ -97,7 +128,7 @@ export default function ReasonsBreakdownChart({ data = [] }) {
   return (
     <Box
       ref={chartRef}
-      sx={{ width: "100%", height: 360 }}
+      sx={{ width: "100%", height: CP_CHART_HEIGHT.regular }}
     />
   );
 }

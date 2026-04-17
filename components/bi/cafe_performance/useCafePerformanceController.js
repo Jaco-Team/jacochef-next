@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import dayjs from "dayjs";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import useCafePerformanceStore from "./useCafePerformanceStore";
@@ -38,6 +39,42 @@ const buildQueryKey = (tabKey, activeFilters) =>
 
 const getPresetByType = (presets = [], periodType) =>
   presets.find((item) => item.period_type === periodType) || null;
+
+const buildRelativePeriod = (periodType) => {
+  const end = dayjs().startOf("day");
+
+  if (periodType === "week") {
+    return {
+      date_start: end.subtract(6, "day").format("YYYY-MM-DD"),
+      date_end: end.format("YYYY-MM-DD"),
+      period_label: `${end.subtract(6, "day").format("DD.MM.YYYY")} - ${end.format("DD.MM.YYYY")}`,
+    };
+  }
+
+  if (periodType === "month") {
+    return {
+      date_start: end.subtract(29, "day").format("YYYY-MM-DD"),
+      date_end: end.format("YYYY-MM-DD"),
+      period_label: `${end.subtract(29, "day").format("DD.MM.YYYY")} - ${end.format("DD.MM.YYYY")}`,
+    };
+  }
+
+  return {
+    date_start: end.format("YYYY-MM-DD"),
+    date_end: end.format("YYYY-MM-DD"),
+    period_label: end.format("DD.MM.YYYY"),
+  };
+};
+
+const buildPeriodLabel = (dateStart, dateEnd) => {
+  if (!dateStart || !dateEnd) return "";
+
+  const start = dayjs(dateStart);
+  const end = dayjs(dateEnd);
+  if (!start.isValid() || !end.isValid()) return "";
+  if (start.isSame(end, "day")) return start.format("DD.MM.YYYY");
+  return `${start.format("DD.MM.YYYY")} - ${end.format("DD.MM.YYYY")}`;
+};
 
 const buildPeriodFilterState = (defaults = {}, presets = []) => {
   const activePreset = getPresetByType(presets, defaults.period_type) ||
@@ -254,20 +291,31 @@ export default function useCafePerformanceController() {
   const handleFilterChange = useCallback(
     (key, value) => {
       if (key === "period_type") {
-        const nextPreset = getPresetByType(periodPresets, value);
+        const nextRelativePeriod = buildRelativePeriod(value);
 
         setFilters({
           period_type: value,
-          date_start: nextPreset?.date_start || null,
-          date_end: nextPreset?.date_end || null,
-          period_label: nextPreset?.period_label || "",
+          date_start: nextRelativePeriod.date_start,
+          date_end: nextRelativePeriod.date_end,
+          period_label: nextRelativePeriod.period_label,
+        });
+        return;
+      }
+
+      if (key === "date_start" || key === "date_end") {
+        const nextDateStart = key === "date_start" ? value : filters.date_start;
+        const nextDateEnd = key === "date_end" ? value : filters.date_end;
+
+        setFilters({
+          [key]: value,
+          period_label: buildPeriodLabel(nextDateStart, nextDateEnd),
         });
         return;
       }
 
       setFilters({ [key]: value });
     },
-    [periodPresets, setFilters],
+    [filters.date_end, filters.date_start, setFilters],
   );
 
   const handleApply = useCallback(async () => {

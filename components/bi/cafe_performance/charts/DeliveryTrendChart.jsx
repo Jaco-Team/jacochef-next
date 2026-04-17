@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { Box } from "@mui/material";
 import EmptyState from "../components/EmptyState";
 import { getOrderTypeColor, getOrderTypeLabel, sortByOrderTypes } from "../config";
+import { CP_CHART_HEIGHT } from "../layout";
 
 export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTypeNameMap = {} }) {
   const chartRef = useRef(null);
@@ -103,7 +104,7 @@ export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTy
   return (
     <Box
       ref={chartRef}
-      sx={{ width: "100%", height: 360 }}
+      sx={{ width: "100%", height: CP_CHART_HEIGHT.trend }}
     />
   );
 }

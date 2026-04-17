@@ -1,6 +1,6 @@
 "use client";
 
-import { Backdrop, CircularProgress, Grid, Tab, Tabs, Typography } from "@mui/material";
+import { Backdrop, Box, CircularProgress, Stack, Tab, Tabs, Typography } from "@mui/material";
 import MyAlert from "@/ui/MyAlert";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 import TabPanel from "@/ui/TabPanel/TabPanel";
@@ -11,6 +11,7 @@ import KitchenTab from "./tabs/KitchenTab";
 import LeadersTab from "./tabs/LeadersTab";
 import QualityTab from "./tabs/QualityTab";
 import DeliveryTab from "./tabs/DeliveryTab";
+import { CP_SPACE } from "./layout";
 import useCafePerformanceController from "./useCafePerformanceController";
 
 export default function CafePerformance() {
@@ -54,34 +55,56 @@ export default function CafePerformance() {
         text={alert.text}
       />
 
-      <Grid
-        container
-        spacing={3}
-        mb={3}
+      <Stack
+        spacing={CP_SPACE.section}
         className="container_first_child"
+        sx={{ mb: CP_SPACE.section }}
       >
-        <Grid size={12}>
-          <Typography variant="h5">{moduleName || "Эффективность кафе"}</Typography>
-        </Grid>
+        <Stack spacing={CP_SPACE.micro}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 700 }}
+          >
+            {moduleName || "Эффективность кафе"}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+          >
+            Метрики эффективности кухни, выдачи, качества и лидеров сети
+          </Typography>
+        </Stack>
 
-        <Grid size={12}>
-          <PageFilters
-            filters={filters}
-            periodPresets={periodPresets}
-            periodLabel={activePeriodLabel}
-            points={points}
-            generatedAt={currentMeta?.generated_at}
-            onFilterChange={handleFilterChange}
-            onApply={handleApply}
-          />
-        </Grid>
+        <PageFilters
+          filters={filters}
+          periodPresets={periodPresets}
+          periodLabel={activePeriodLabel}
+          points={points}
+          generatedAt={currentMeta?.generated_at}
+          onFilterChange={handleFilterChange}
+          onApply={handleApply}
+        />
 
-        <Grid size={12}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
           <Tabs
             value={tab}
             onChange={(_, value) => setTab(value)}
             variant="scrollable"
             scrollButtons={false}
+            sx={{
+              minHeight: 44,
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                minHeight: 44,
+                py: CP_SPACE.related,
+              },
+            }}
           >
             {tabs.map((item) => (
               <Tab
@@ -91,74 +114,65 @@ export default function CafePerformance() {
               />
             ))}
           </Tabs>
-        </Grid>
+        </Box>
 
-        <Grid size={12}>
-          {tabs.map((item) => (
-            <TabPanel
-              key={item.key}
-              value={tab}
-              index={item.id}
-            >
-              <Grid
-                container
-                spacing={3}
-              >
-                <Grid size={12}>
-                  {item.key === "dashboard" ? (
-                    <DashboardTab
-                      data={screens.dashboard.data}
-                      formatters={formatters}
-                      orderTypes={orderTypes}
-                      orderTypeNameMap={orderTypeNameMap}
-                    />
-                  ) : null}
+        {tabs.map((item) => (
+          <TabPanel
+            key={item.key}
+            value={tab}
+            index={item.id}
+          >
+            <Stack spacing={CP_SPACE.section}>
+              {item.key === "dashboard" ? (
+                <DashboardTab
+                  data={screens.dashboard.data}
+                  formatters={formatters}
+                  orderTypes={orderTypes}
+                  orderTypeNameMap={orderTypeNameMap}
+                />
+              ) : null}
 
-                  {item.key === "kitchen" ? (
-                    <KitchenTab
-                      data={screens.kitchen.data}
-                      formatters={formatters}
-                      stageName={currentStageName}
-                      filters={filters}
-                      categories={categories}
-                      stageTypes={stageTypes}
-                      onFilterChange={handleFilterChange}
-                      onStageChange={handleKitchenStageChange}
-                    />
-                  ) : null}
+              {item.key === "kitchen" ? (
+                <KitchenTab
+                  data={screens.kitchen.data}
+                  formatters={formatters}
+                  stageName={currentStageName}
+                  filters={filters}
+                  categories={categories}
+                  stageTypes={stageTypes}
+                  onFilterChange={handleFilterChange}
+                  onStageChange={handleKitchenStageChange}
+                />
+              ) : null}
 
-                  {item.key === "leaders" ? (
-                    <LeadersTab
-                      data={screens.leaders.data}
-                      formatters={formatters}
-                    />
-                  ) : null}
+              {item.key === "leaders" ? (
+                <LeadersTab
+                  data={screens.leaders.data}
+                  formatters={formatters}
+                />
+              ) : null}
 
-                  {item.key === "quality" ? (
-                    <QualityTab
-                      data={screens.quality.data}
-                      formatters={formatters}
-                    />
-                  ) : null}
+              {item.key === "quality" ? (
+                <QualityTab
+                  data={screens.quality.data}
+                  formatters={formatters}
+                />
+              ) : null}
 
-                  {item.key === "delivery" ? (
-                    <DeliveryTab
-                      data={screens.delivery.data}
-                      formatters={formatters}
-                      orderTypes={orderTypes}
-                      orderTypeNameMap={orderTypeNameMap}
-                    />
-                  ) : null}
-                </Grid>
+              {item.key === "delivery" ? (
+                <DeliveryTab
+                  data={screens.delivery.data}
+                  formatters={formatters}
+                  orderTypes={orderTypes}
+                  orderTypeNameMap={orderTypeNameMap}
+                />
+              ) : null}
 
-                <Grid size={12}>
-                  <WarningList warnings={screens[item.key]?.meta?.warnings || []} />
-                </Grid>
-              </Grid>
-            </TabPanel>
-          ))}
-        </Grid>
-      </Grid>
+              <WarningList warnings={screens[item.key]?.meta?.warnings || []} />
+            </Stack>
+          </TabPanel>
+        ))}
+      </Stack>
     </>
   );
 }
