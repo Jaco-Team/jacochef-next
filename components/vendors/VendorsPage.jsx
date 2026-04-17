@@ -8,9 +8,16 @@ import {
   AccordionSummary,
   Backdrop,
   Button,
+  Chip,
   CircularProgress,
   Grid,
   IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Stack,
   Tooltip,
   Typography,
@@ -18,6 +25,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import { MySelect, MyTextInput } from "@/ui/Forms";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
@@ -25,9 +33,9 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import MyAlert from "@/ui/MyAlert";
 import ModalAddVendor from "./ModalAddVendor";
 import useVendorAccess from "./useVendorAccess";
-import VendorCard from "./VendorCard";
 import useVendorsStore from "./useVendorsStore";
-import { normalizeCatalogItems } from "./vendorFormUtils";
+import { getCityNamesByIds, normalizeCatalogItems } from "./vendorFormUtils";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 
 function VendorsPage() {
   const router = useRouter();
@@ -172,6 +180,123 @@ function VendorsPage() {
     };
   }, [city, isBootstrapped]);
 
+  const renderVendorTable = (list, { canDelete = false } = {}) => (
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Поставщик</TableCell>
+            <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Город</TableCell>
+            <TableCell align="right">Продукты</TableCell>
+            <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Декларации</TableCell>
+            {canDelete ? <TableCell align="right">Действия</TableCell> : null}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {list.map((vendor) => {
+            const cityText = getCityNamesByIds(vendor.cities, cities).join(", ");
+            const itemsCount = Number(vendor.items_count || 0);
+            const expiringDeclarations = Number(vendor.expiring_declarations || 0);
+
+            return (
+              <TableRow
+                key={vendor.id}
+                hover
+                sx={{ cursor: "pointer" }}
+                onClick={() => {
+                  setLoading(true);
+                  router.push(`/vendors/${vendor.id}`);
+                }}
+              >
+                <TableCell>
+                  <Stack spacing={0.25}>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {vendor.name || "Без названия"}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: { xs: "block", sm: "none" } }}
+                    >
+                      {cityText || "—"}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                  {cityText || "—"}
+                </TableCell>
+                <TableCell align="right">
+                  <Stack
+                    direction="column"
+                    alignItems="flex-end"
+                    spacing={0.5}
+                  >
+                    <Typography variant="body2">
+                      {formatPlural(itemsCount, ["продукт", "продукта", "продуктов"])}
+                    </Typography>
+                    {expiringDeclarations > 0 ? (
+                      <Chip
+                        label={formatPlural(expiringDeclarations, [
+                          "истекает",
+                          "истекают",
+                          "истекают",
+                        ])}
+                        color="error"
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          display: { xs: "inline-flex", sm: "none" },
+                          height: 20,
+                          fontSize: 11,
+                        }}
+                      />
+                    ) : null}
+                  </Stack>
+                </TableCell>
+                <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.5}
+                    sx={{ color: expiringDeclarations ? "error.main" : "text.secondary" }}
+                  >
+                    <DescriptionOutlinedIcon sx={{ fontSize: 16 }} />
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "inherit" }}
+                    >
+                      {expiringDeclarations ? `${expiringDeclarations} истекают` : "Нет критичных"}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+                {canDelete ? (
+                  <TableCell align="right">
+                    {canEdit ? (
+                      <Tooltip title="Удалить поставщика">
+                        <IconButton
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            withConfirm(
+                              () => handleDeleteVendor(vendor.id),
+                              "Удалить неактивного поставщика без возможности восстановления?",
+                            )();
+                          }}
+                          sx={{ color: "primary.main" }}
+                        >
+                          <DeleteOutlineIcon />
+                        </IconButton>
+                      </Tooltip>
+                    ) : null}
+                  </TableCell>
+                ) : null}
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+
   return (
     <>
       <Backdrop
@@ -250,28 +375,7 @@ function VendorsPage() {
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography sx={{ fontWeight: 700 }}>Активные ({activeVendors.length})</Typography>
             </AccordionSummary>
-            <AccordionDetails>
-              <Grid
-                container
-                spacing={2}
-              >
-                {activeVendors.map((vendor) => (
-                  <Grid
-                    key={vendor.id}
-                    size={{ xs: 12, sm: 12, xl: 6 }}
-                  >
-                    <VendorCard
-                      vendor={vendor}
-                      cities={cities}
-                      onClick={(item) => {
-                        setLoading(true);
-                        router.push(`/vendors/${item.id}`);
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </AccordionDetails>
+            <AccordionDetails>{renderVendorTable(activeVendors)}</AccordionDetails>
           </Accordion>
         </Grid>
 
@@ -283,41 +387,7 @@ function VendorsPage() {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Grid
-                container
-                spacing={2}
-              >
-                {inactiveVendors.map((vendor) => (
-                  <Grid
-                    key={vendor.id}
-                    size={{ xs: 12, sm: 12, xl: 6 }}
-                  >
-                    <VendorCard
-                      vendor={vendor}
-                      cities={cities}
-                      action={
-                        canEdit ? (
-                          <Tooltip title="Удалить поставщика">
-                            <IconButton
-                              onClick={withConfirm(
-                                () => handleDeleteVendor(vendor.id),
-                                "Удалить неактивного поставщика без возможности восстановления?",
-                              )}
-                              sx={{ color: "primary.main" }}
-                            >
-                              <DeleteOutlineIcon />
-                            </IconButton>
-                          </Tooltip>
-                        ) : null
-                      }
-                      onClick={(item) => {
-                        setLoading(true);
-                        router.push(`/vendors/${item.id}`);
-                      }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
+              {renderVendorTable(inactiveVendors, { canDelete: true })}
             </AccordionDetails>
           </Accordion>
         </Grid>

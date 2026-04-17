@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Collapse,
   Grid,
   IconButton,
@@ -48,7 +49,7 @@ const tableSx = {
 const tableContainerSx = { overflowX: "auto" };
 const expandCellSx = { width: 30, px: 0 };
 const actionCellSx = { width: { xs: 60, sm: 100 } };
-const countCellSx = { width: { xs: 88, sm: 132 }, whiteSpace: "nowrap" };
+const countCellSx = { width: { xs: 96, sm: 156 }, whiteSpace: "nowrap" };
 const collapseCellSx = { py: 0, borderBottom: 0 };
 const textCellSx = {
   minWidth: { xs: 180, sm: "auto" },
@@ -104,6 +105,8 @@ const isExpiringSoon = (decl) => {
   const diff = dayjs(decl.expires_at).startOf("day").diff(dayjs().startOf("day"), "day");
   return diff >= 0 && diff <= 14;
 };
+
+const formatExpiringSoonLabel = (count) => (count === 1 ? "1 истекает" : `${count} истекают`);
 
 export default function TabProducts({
   canEdit,
@@ -261,6 +264,9 @@ export default function TabProducts({
                       const declarations = (item.declarations || [])
                         .filter((decl) => !isExpiredDeclaration(decl))
                         .sort((a, b) => getExpiresSortKey(b).localeCompare(getExpiresSortKey(a)));
+                      const expiringSoonCount = declarations.filter((decl) =>
+                        isExpiringSoon(decl),
+                      ).length;
                       const rowKey = item.id ?? item.item_id;
 
                       return (
@@ -284,7 +290,35 @@ export default function TabProducts({
                               align="center"
                               sx={countCellSx}
                             >
-                              {declarations.length}
+                              <Stack
+                                spacing={0.5}
+                                alignItems="center"
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  {declarations.length}
+                                </Typography>
+                                {expiringSoonCount > 0 ? (
+                                  <Chip
+                                    label={formatExpiringSoonLabel(expiringSoonCount)}
+                                    size="small"
+                                    sx={{
+                                      height: 22,
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      borderRadius: 1,
+                                      backgroundColor: "rgba(211, 47, 47, 0.08)",
+                                      color: "error.main",
+                                      border: "1px solid rgba(211, 47, 47, 0.28)",
+                                      "& .MuiChip-label": {
+                                        px: 1,
+                                      },
+                                    }}
+                                  />
+                                ) : null}
+                              </Stack>
                             </TableCell>
                             {hasProductActions ? (
                               <TableCell
