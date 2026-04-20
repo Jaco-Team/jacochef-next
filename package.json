@@ -36,7 +36,7 @@
     "@sentry/cli": "^3.3.5",
     "@sentry/react": "^10.49.0",
     "@tinymce/tinymce-react": "^6.3.0",
-    "axios": "^1.15.0",
+    "axios": "^1.15.1",
     "childprocess": "^2.0.2",
     "common-es": "^1.1.0",
     "cookie": "^1.1.1",
