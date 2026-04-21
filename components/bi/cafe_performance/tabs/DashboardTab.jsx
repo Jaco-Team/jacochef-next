@@ -9,11 +9,13 @@ import KpiCard from "../components/KpiCard";
 import SectionCard from "../components/SectionCard";
 import EmptyState from "../components/EmptyState";
 import CategoryPerformanceCard from "../components/CategoryPerformanceCard";
+import CategoryPerformanceRow from "../components/CategoryPerformanceRow";
 import ChannelListItem from "../components/ChannelListItem";
 import SectionHeading from "../components/SectionHeading";
 import MetricLegendModal from "../components/MetricLegendModal";
 import SlaByCategoryChart from "../charts/SlaByCategoryChart";
 import { buildDashboardMetricConfigs } from "../dashboardMetricConfig";
+import { buildCategoryLegendMetric } from "../dashboardCategoryConfig";
 import { getOrderTypeLabel, sortByOrderTypes } from "../config";
 import { CP_SPACE } from "../layout";
 
@@ -30,7 +32,7 @@ export default function DashboardTab({
   const categoryCards = data.category_cards || [];
   const channelSummary = sortByOrderTypes(data.channel_summary || [], orderTypes);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [activeMetricId, setActiveMetricId] = useState(null);
+  const [activeLegend, setActiveLegend] = useState(null);
   const generatedLabel = generatedAt
     ? `Обновлено: ${dayjs(generatedAt).format("DD.MM.YYYY HH:mm")}`
     : "";
@@ -58,8 +60,9 @@ export default function DashboardTab({
       })),
     [metricConfigs],
   );
-
-  const activeMetric = activeMetricId ? metricConfigs[activeMetricId] : null;
+  const openMetricLegend = (metricId) => setActiveLegend(metricConfigs[metricId] || null);
+  const openCategoryLegend = (item) =>
+    setActiveLegend(buildCategoryLegendMetric({ item, formatters }));
 
   return (
     <>
@@ -93,7 +96,7 @@ export default function DashboardTab({
                 icon={card.icon}
                 compact
                 delta={card.delta}
-                onClick={() => setActiveMetricId(card.id)}
+                onClick={() => openMetricLegend(card.id)}
                 ariaLabel={`Открыть описание расчёта метрики ${card.label}`}
                 sx={{
                   cursor: "pointer",
@@ -141,6 +144,8 @@ export default function DashboardTab({
                     sampleSize={item.sample_size}
                     formatters={formatters}
                     compact
+                    onClick={() => openCategoryLegend(item)}
+                    ariaLabel={`Открыть описание категории ${item.category_name}`}
                   />
                 ))}
               </Box>
@@ -196,61 +201,15 @@ export default function DashboardTab({
                         <Box
                           key={item.category_id}
                           sx={{
-                            display: "grid",
-                            gridTemplateColumns: {
-                              xs: "1fr",
-                              md: "minmax(0, 2fr) repeat(4, minmax(0, 1fr))",
-                            },
-                            gap: CP_SPACE.component,
-                            px: CP_SPACE.component,
-                            py: CP_SPACE.compact,
                             borderTop: index === 0 ? "none" : "1px solid",
                             borderColor: "divider",
-                            alignItems: "center",
                           }}
                         >
-                          <Stack spacing={CP_SPACE.micro}>
-                            <Typography
-                              variant="subtitle2"
-                              sx={{ fontWeight: 700 }}
-                            >
-                              {item.category_name}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {formatters.integer(item.sample_size)} заказов
-                            </Typography>
-                          </Stack>
-
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            P50 {formatters.duration(item.p50)}
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            P90 {formatters.duration(item.p90)}
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 700 }}
-                          >
-                            SLA {formatters.percent(item.sla)}
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            {formatters.integer(item.sample_size)} заказов
-                          </Typography>
+                          <CategoryPerformanceRow
+                            item={item}
+                            formatters={formatters}
+                            onClick={() => openCategoryLegend(item)}
+                          />
                         </Box>
                       ))}
                     </Box>
@@ -309,9 +268,9 @@ export default function DashboardTab({
       </Stack>
 
       <MetricLegendModal
-        open={Boolean(activeMetric)}
-        onClose={() => setActiveMetricId(null)}
-        metric={activeMetric}
+        open={Boolean(activeLegend)}
+        onClose={() => setActiveLegend(null)}
+        metric={activeLegend}
       />
     </>
   );

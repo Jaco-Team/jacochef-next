@@ -1,8 +1,31 @@
 "use client";
 
-import { Box, DialogContent, Stack, Typography } from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, Stack, Typography } from "@mui/material";
 import MyModal from "@/ui/MyModal";
 import { CP_PADDING, CP_RADIUS, CP_SPACE } from "../layout";
+
+const VALUE_TONE_STYLES = {
+  primary: {
+    backgroundColor: "primary.50",
+    color: "primary.main",
+  },
+  success: {
+    backgroundColor: "success.50",
+    color: "success.main",
+  },
+  warning: {
+    backgroundColor: "warning.50",
+    color: "warning.dark",
+  },
+  error: {
+    backgroundColor: "error.50",
+    color: "error.main",
+  },
+  neutral: {
+    backgroundColor: "grey.100",
+    color: "text.secondary",
+  },
+};
 
 function MetricLegendSection({ title, items }) {
   if (!items?.length) return null;
@@ -55,6 +78,8 @@ function MetricLegendSection({ title, items }) {
 }
 
 export default function MetricLegendModal({ open, onClose, metric }) {
+  const valueToneStyles = VALUE_TONE_STYLES[metric?.valueTone] || VALUE_TONE_STYLES.primary;
+
   return (
     <MyModal
       open={open}
@@ -103,33 +128,66 @@ export default function MetricLegendModal({ open, onClose, metric }) {
                     sx={{
                       minWidth: { xs: "100%", sm: 208 },
                       borderRadius: 2,
-                      backgroundColor: "primary.50",
+                      backgroundColor: valueToneStyles.backgroundColor,
                       px: CP_SPACE.component,
                       py: CP_SPACE.compact,
                     }}
                   >
-                    <Stack spacing={CP_SPACE.micro}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        Текущее значение
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        sx={{ fontWeight: 700, color: "primary.main" }}
-                      >
-                        {metric.value}
-                      </Typography>
-                      {metric.caption ? (
+                    {metric.highlights?.length ? (
+                      <Stack spacing={CP_SPACE.related}>
                         <Typography
                           variant="caption"
                           color="text.secondary"
                         >
-                          {metric.caption}
+                          Ключевые значения
                         </Typography>
-                      ) : null}
-                    </Stack>
+                        {metric.highlights.map((item) => (
+                          <Stack
+                            key={item.label}
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            spacing={CP_SPACE.related}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                            >
+                              {item.label}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 700, color: item.toneColor || "text.primary" }}
+                            >
+                              {item.value}
+                            </Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Stack spacing={CP_SPACE.micro}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          Текущее значение
+                        </Typography>
+                        <Typography
+                          variant="h5"
+                          sx={{ fontWeight: 700, color: valueToneStyles.color }}
+                        >
+                          {metric.value}
+                        </Typography>
+                        {metric.caption ? (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            {metric.caption}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    )}
                   </Box>
                 </Stack>
 
@@ -139,6 +197,15 @@ export default function MetricLegendModal({ open, onClose, metric }) {
                     color="text.secondary"
                   >
                     {metric.summaryNote}
+                  </Typography>
+                ) : null}
+
+                {metric.comparisonSource ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    {metric.comparisonSource}
                   </Typography>
                 ) : null}
               </Stack>
@@ -161,6 +228,14 @@ export default function MetricLegendModal({ open, onClose, metric }) {
           </Stack>
         ) : null}
       </DialogContent>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 3, pt: 0 }}>
+        <Button
+          variant="contained"
+          onClick={onClose}
+        >
+          Закрыть
+        </Button>
+      </DialogActions>
     </MyModal>
   );
 }

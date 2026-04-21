@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Divider, Stack, Typography } from "@mui/material";
+import { Card, CardActionArea, Divider, Stack, Typography } from "@mui/material";
 import SlaProgressBar from "./SlaProgressBar";
 import { CP_PADDING, CP_RADIUS, CP_SPACE } from "../layout";
 import MetricLabel from "./MetricLabel";
@@ -36,18 +36,11 @@ export default function CategoryPerformanceCard({
   sampleSize,
   formatters,
   compact = false,
+  onClick,
+  ariaLabel,
 }) {
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        borderRadius: CP_RADIUS.card,
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        p: compact ? CP_SPACE.compact : CP_PADDING.card,
-      }}
-    >
+  const content = (
+    <>
       <Typography
         variant={compact ? "subtitle2" : "subtitle1"}
         sx={{ fontWeight: 700, mb: compact ? CP_SPACE.related : CP_SPACE.compact }}
@@ -81,11 +74,53 @@ export default function CategoryPerformanceCard({
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ mt: "auto", pt: compact ? CP_SPACE.micro : CP_SPACE.related }}
+          sx={{ display: "block", mt: compact ? CP_SPACE.related : CP_SPACE.compact }}
         >
           {formatters.integer(sampleSize)} заказов
         </Typography>
       ) : null}
+    </>
+  );
+
+  return (
+    <Card
+      sx={{
+        borderRadius: CP_RADIUS.card,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {onClick ? (
+        <CardActionArea
+          onClick={onClick}
+          aria-label={ariaLabel || `Открыть описание категории ${title}`}
+          sx={{
+            display: "block",
+            width: "100%",
+            textAlign: "left",
+          }}
+        >
+          <Stack
+            sx={{
+              p: compact ? CP_SPACE.compact : CP_PADDING.card,
+              minWidth: 0,
+            }}
+          >
+            {content}
+          </Stack>
+        </CardActionArea>
+      ) : (
+        <Stack
+          sx={{
+            p: compact ? CP_SPACE.compact : CP_PADDING.card,
+            minWidth: 0,
+          }}
+        >
+          {content}
+        </Stack>
+      )}
     </Card>
   );
 }

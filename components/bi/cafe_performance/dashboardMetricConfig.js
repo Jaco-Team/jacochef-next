@@ -3,6 +3,7 @@
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import FeedbackOutlinedIcon from "@mui/icons-material/FeedbackOutlined";
+import { getSlaTone } from "./components/SlaProgressBar";
 
 const formatSigned = (value, fractionDigits = 2) => {
   const numeric = Number(value);
@@ -40,6 +41,13 @@ const buildDelta = ({ value, inverse = false, suffix = "", fractionDigits = 2 })
     tone: improving ? "success" : "danger",
     direction: numeric > 0 ? "up" : "down",
   };
+};
+
+const getMetricValueTone = (tone) => {
+  if (tone === "success") return "success";
+  if (tone === "warning") return "warning";
+  if (tone === "danger") return "error";
+  return "primary";
 };
 
 const METRIC_DETAILS = {
@@ -137,6 +145,10 @@ export const buildDashboardMetricConfigs = ({ summary, formatters }) => ({
   sla_position: {
     ...METRIC_DETAILS.sla_position,
     value: formatters.percent(summary.sla_position),
+    comparisonSource:
+      summary.sla_position_diff != null
+        ? "Цвет и динамика опираются на серверное поле `summary.sla_position_diff`."
+        : "Сервис не передал поле сравнения, поэтому динамика для этой метрики недоступна.",
     card: {
       label: "SLA позиции",
       value: formatters.percent(summary.sla_position),
@@ -148,10 +160,15 @@ export const buildDashboardMetricConfigs = ({ summary, formatters }) => ({
         fractionDigits: 1,
       }),
     },
+    valueTone: getMetricValueTone(getSlaTone(summary.sla_position)),
   },
   sla_order: {
     ...METRIC_DETAILS.sla_order,
     value: formatters.percent(summary.sla_order),
+    comparisonSource:
+      summary.sla_order_diff != null
+        ? "Цвет и динамика опираются на серверное поле `summary.sla_order_diff`."
+        : "Сервис не передал поле сравнения, поэтому динамика для этой метрики недоступна.",
     card: {
       label: "SLA заказа",
       value: formatters.percent(summary.sla_order),
@@ -163,6 +180,7 @@ export const buildDashboardMetricConfigs = ({ summary, formatters }) => ({
         fractionDigits: 1,
       }),
     },
+    valueTone: getMetricValueTone(getSlaTone(summary.sla_order)),
   },
   p50_position: {
     ...METRIC_DETAILS.p50_position,
