@@ -205,7 +205,24 @@ const SortableItem = React.memo(
                 overflow: "hidden",
               }}
             >
-              {module.name}
+              {module.key_query ? (
+                <Box
+                  component="a"
+                  href={`/${module.key_query}`}
+                  data-no-nav="true"
+                  onClick={(e) => e.stopPropagation()}
+                  sx={{
+                    color: "inherit",
+                    textDecoration: "none",
+                    userSelect: "none",
+                    "&:hover": { textDecoration: "none", color: "inherit" },
+                  }}
+                >
+                  {module.name}
+                </Box>
+              ) : (
+                module.name
+              )}
             </Typography>
             <Box sx={{ width: 30, display: "flex", justifyContent: "center", flexShrink: 0 }}>
               <IconButton
