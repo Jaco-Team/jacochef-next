@@ -68,28 +68,28 @@ export default function PageFilters({ filters, periodPresets, points, onFilterCh
               onChange={(_, value) => {
                 if (value) onFilterChange("period_type", value);
               }}
-              sx={{
-                backgroundColor: "action.hover",
-                borderRadius: CP_RADIUS.control,
-                p: CP_SPACE.micro,
-                "& .MuiToggleButton-root": {
-                  border: 0,
-                  borderRadius: CP_RADIUS.control,
-                  px: CP_SPACE.compact,
-                  py: CP_SPACE.micro,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  color: "text.secondary",
-                },
-                "& .MuiToggleButton-root.Mui-selected": {
-                  backgroundColor: "background.paper",
-                  color: "text.primary",
-                  boxShadow: "0 1px 2px rgba(16,24,40,0.06)",
-                },
-                "& .MuiToggleButton-root.Mui-selected:hover": {
-                  backgroundColor: "background.paper",
-                },
-              }}
+              // sx={{
+              //   backgroundColor: "action.hover",
+              //   borderRadius: CP_RADIUS.control,
+              //   p: CP_SPACE.micro,
+              //   "& .MuiToggleButton-root": {
+              //     border: 0,
+              //     borderRadius: CP_RADIUS.control,
+              //     px: CP_SPACE.compact,
+              //     py: CP_SPACE.micro,
+              //     textTransform: "none",
+              //     fontWeight: 600,
+              //     color: "text.secondary",
+              //   },
+              //   "& .MuiToggleButton-root.Mui-selected": {
+              //     backgroundColor: "background.paper",
+              //     color: "text.primary",
+              //     boxShadow: "0 1px 2px rgba(16,24,40,0.06)",
+              //   },
+              //   "& .MuiToggleButton-root.Mui-selected:hover": {
+              //     backgroundColor: "background.paper",
+              //   },
+              // }}
             >
               {availablePeriods.map((period) => (
                 <ToggleButton
@@ -102,16 +102,16 @@ export default function PageFilters({ filters, periodPresets, points, onFilterCh
             </ToggleButtonGroup>
 
             <Stack
-              direction="row"
               spacing={CP_SPACE.related}
+              direction={{ xs: "column", sm: "row" }}
               sx={{
                 width: { xs: "100%", sm: "auto" },
-                minWidth: { xs: "100%", md: 320 },
+                minWidth: { xs: "100%", md: 220 },
               }}
             >
               <MyDatePickerNew
                 label="Дата от"
-                customActions
+                // customActions
                 value={dateStartValue}
                 maxDate={dateEndValue || dayjs()}
                 func={(value) =>
@@ -120,7 +120,7 @@ export default function PageFilters({ filters, periodPresets, points, onFilterCh
               />
               <MyDatePickerNew
                 label="Дата до"
-                customActions
+                // customActions
                 value={dateEndValue}
                 minDate={dateStartValue || undefined}
                 maxDate={dayjs()}
@@ -132,25 +132,19 @@ export default function PageFilters({ filters, periodPresets, points, onFilterCh
           </Stack>
         </Stack>
 
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={CP_SPACE.component}
-          sx={{ flexShrink: 0 }}
+        <Button
+          variant="contained"
+          onClick={onApply}
+          sx={{
+            borderRadius: CP_RADIUS.control,
+            fontWeight: 600,
+            px: CP_SPACE.component,
+            width: { xs: "100%", sm: "fit-content" },
+            ml: { xs: 0, sm: "auto" },
+          }}
         >
-          <Button
-            variant="contained"
-            onClick={onApply}
-            sx={{
-              textTransform: "none",
-              borderRadius: CP_RADIUS.control,
-              fontWeight: 600,
-              px: CP_SPACE.component,
-            }}
-          >
-            Показать
-          </Button>
-        </Stack>
+          Показать
+        </Button>
       </Stack>
     </Box>
   );

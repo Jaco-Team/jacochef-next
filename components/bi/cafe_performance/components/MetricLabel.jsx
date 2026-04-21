@@ -68,8 +68,8 @@ export default function MetricLabel({
           }}
         >
           <Box
-            component="button"
-            type="button"
+            component="span"
+            tabIndex={0}
             aria-label={`Описание термина ${text}`}
             sx={{
               display: "inline-flex",

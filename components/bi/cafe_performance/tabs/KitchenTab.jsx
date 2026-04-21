@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
+  Button,
   Stack,
   Table,
   TableBody,
@@ -130,8 +131,8 @@ export default function KitchenTab({
   filters,
   categories,
   stageTypes,
-  onFilterChange,
   onStageChange,
+  onCategoryApply,
 }) {
   if (!data) return <EmptyState />;
 
@@ -140,11 +141,19 @@ export default function KitchenTab({
   const rows = data.employee_table || [];
   const [sortBy, setSortBy] = useState("p50");
   const [sortDirection, setSortDirection] = useState("asc");
+  const [draftCategoryIds, setDraftCategoryIds] = useState(filters.category_ids || []);
 
   const selectedCategories = useMemo(
-    () => categories.filter((category) => filters.category_ids.includes(category.id)),
-    [categories, filters.category_ids],
+    () => categories.filter((category) => draftCategoryIds.includes(category.id)),
+    [categories, draftCategoryIds],
   );
+
+  const hasPendingCategoryChange =
+    JSON.stringify(draftCategoryIds) !== JSON.stringify(filters.category_ids || []);
+
+  useEffect(() => {
+    setDraftCategoryIds(filters.category_ids || []);
+  }, [filters.category_ids]);
 
   const employeeNominationsMap = useMemo(() => {
     const map = new Map();
@@ -201,22 +210,40 @@ export default function KitchenTab({
           title="Производительность этапов"
           subtitle="Анализ эффективности кухни"
           action={
-            <Box sx={{ minWidth: { xs: "100%", sm: 260 } }}>
-              <MyAutocomplite
-                label="Категории"
-                multiple
-                data={categories}
-                value={selectedCategories}
-                func={(_, value) =>
-                  onFilterChange(
-                    "category_ids",
-                    value.map((item) => item.id),
-                  )
-                }
-                getOptionLabel={(option) => option?.name || ""}
-                isOptionEqualToValue={(option, value) => option?.id === value?.id}
-              />
-            </Box>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={CP_SPACE.related}
+              alignItems="center"
+              sx={{
+                width: { xs: "100%", sm: "auto" },
+                alignItems: { xs: "stretch", sm: "center" },
+              }}
+            >
+              <Box sx={{ minWidth: { xs: "100%", sm: 260 } }}>
+                <MyAutocomplite
+                  label="Категории"
+                  multiple
+                  data={categories}
+                  value={selectedCategories}
+                  func={(_, value) => setDraftCategoryIds(value.map((item) => item.id))}
+                  getOptionLabel={(option) => option?.name || ""}
+                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                />
+              </Box>
+              <Button
+                variant="contained"
+                onClick={() => onCategoryApply(draftCategoryIds)}
+                disabled={!hasPendingCategoryChange}
+                sx={{
+                  alignSelf: { xs: "stretch", sm: "center" },
+                  textTransform: "none",
+                  fontWeight: 600,
+                  minWidth: { sm: 120 },
+                }}
+              >
+                Выбрать
+              </Button>
+            </Stack>
           }
         />
 

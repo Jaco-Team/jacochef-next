@@ -37,6 +37,7 @@ export default function CafePerformance() {
     handleFilterChange,
     handleApply,
     handleKitchenStageChange,
+    handleKitchenCategoryChange,
   } = useCafePerformanceController();
 
   return (
@@ -140,8 +141,8 @@ export default function CafePerformance() {
                   filters={filters}
                   categories={categories}
                   stageTypes={stageTypes}
-                  onFilterChange={handleFilterChange}
                   onStageChange={handleKitchenStageChange}
+                  onCategoryApply={handleKitchenCategoryChange}
                 />
               ) : null}
 

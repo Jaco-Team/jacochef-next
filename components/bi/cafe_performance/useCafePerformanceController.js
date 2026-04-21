@@ -388,6 +388,29 @@ export default function useCafePerformanceController() {
     [filters, loadScreen, setAppliedFilters, setFilters, setLoading, showAlert],
   );
 
+  const handleKitchenCategoryChange = useCallback(
+    async (categoryIds) => {
+      const nextCategoryIds = categoryIds || [];
+      const nextFilters = {
+        ...filters,
+        category_ids: nextCategoryIds,
+      };
+
+      setFilters({ category_ids: nextCategoryIds });
+      setAppliedFilters({ category_ids: nextCategoryIds });
+
+      setLoading(true);
+      try {
+        await loadScreen(CAFE_PERFORMANCE_TABS[1], nextFilters);
+      } catch (error) {
+        showAlert(error?.message || "Ошибка загрузки");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters, loadScreen, setAppliedFilters, setFilters, setLoading, showAlert],
+  );
+
   return {
     alert: {
       isOpen: isAlert,
@@ -415,5 +438,6 @@ export default function useCafePerformanceController() {
     handleFilterChange,
     handleApply,
     handleKitchenStageChange,
+    handleKitchenCategoryChange,
   };
 }
