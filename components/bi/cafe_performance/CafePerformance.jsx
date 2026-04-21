@@ -80,7 +80,6 @@ export default function CafePerformance() {
           periodPresets={periodPresets}
           periodLabel={activePeriodLabel}
           points={points}
-          generatedAt={currentMeta?.generated_at}
           onFilterChange={handleFilterChange}
           onApply={handleApply}
         />
@@ -126,6 +125,7 @@ export default function CafePerformance() {
               {item.key === "dashboard" ? (
                 <DashboardTab
                   data={screens.dashboard.data}
+                  generatedAt={currentMeta?.generated_at}
                   formatters={formatters}
                   orderTypes={orderTypes}
                   orderTypeNameMap={orderTypeNameMap}

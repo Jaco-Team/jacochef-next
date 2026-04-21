@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { Box, Button, Collapse, Stack, Typography } from "@mui/material";
 import PercentOutlinedIcon from "@mui/icons-material/PercentOutlined";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
@@ -54,13 +55,22 @@ const buildDelta = ({ value, inverse = false, suffix = "", fractionDigits = 2 })
   };
 };
 
-export default function DashboardTab({ data, formatters, orderTypes, orderTypeNameMap }) {
+export default function DashboardTab({
+  data,
+  generatedAt,
+  formatters,
+  orderTypes,
+  orderTypeNameMap,
+}) {
   if (!data) return <EmptyState />;
 
   const summary = data.summary || {};
   const categoryCards = data.category_cards || [];
   const channelSummary = sortByOrderTypes(data.channel_summary || [], orderTypes);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const generatedLabel = generatedAt
+    ? `Обновлено: ${dayjs(generatedAt).format("DD.MM.YYYY HH:mm")}`
+    : "";
 
   const sortedCategoryCards = useMemo(
     () =>
@@ -75,6 +85,11 @@ export default function DashboardTab({ data, formatters, orderTypes, orderTypeNa
 
   return (
     <Stack spacing={CP_SPACE.section}>
+      <SectionHeading
+        title="Метрики эффективности"
+        subtitle={generatedLabel}
+      />
+
       <Box
         sx={{
           display: "grid",

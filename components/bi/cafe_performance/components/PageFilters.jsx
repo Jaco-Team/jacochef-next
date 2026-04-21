@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Button, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import dayjs from "dayjs";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import { CP_RADIUS, CP_SPACE } from "../layout";
@@ -13,19 +13,11 @@ const PERIOD_NAMES = {
 
 const getPeriodName = (periodType) => PERIOD_NAMES[periodType] || periodType;
 
-export default function PageFilters({
-  filters,
-  periodPresets,
-  points,
-  generatedAt,
-  onFilterChange,
-  onApply,
-}) {
+export default function PageFilters({ filters, periodPresets, points, onFilterChange, onApply }) {
   const availablePeriods = periodPresets?.length
     ? periodPresets
     : [{ period_type: filters.period_type || "day" }];
 
-  const generatedLabel = generatedAt ? dayjs(generatedAt).format("DD.MM.YYYY HH:mm") : null;
   const dateStartValue = filters.date_start ? dayjs(filters.date_start) : null;
   const dateEndValue = filters.date_end ? dayjs(filters.date_end) : null;
 
@@ -146,15 +138,6 @@ export default function PageFilters({
           spacing={CP_SPACE.component}
           sx={{ flexShrink: 0 }}
         >
-          {generatedLabel ? (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              Обновлено: {generatedLabel}
-            </Typography>
-          ) : null}
           <Button
             variant="contained"
             onClick={onApply}
