@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Card, Stack, Typography } from "@mui/material";
+import { Box, Card, CardActionArea, Stack, Typography } from "@mui/material";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
@@ -71,6 +71,8 @@ export default function KpiCard({
   icon,
   delta,
   compact = false,
+  onClick,
+  ariaLabel,
   sx,
 }) {
   const valueColor =
@@ -82,18 +84,8 @@ export default function KpiCard({
           ? "error.main"
           : "text.primary";
 
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        borderRadius: CP_RADIUS.card,
-        height: compact ? "auto" : { xs: "auto", sm: "100%" },
-        display: "flex",
-        flexDirection: "column",
-        p: compact ? CP_SPACE.compact : CP_PADDING.card,
-        ...sx,
-      }}
-    >
+  const content = (
+    <Stack sx={{ p: compact ? CP_SPACE.compact : CP_PADDING.card, height: "100%" }}>
       <Stack
         direction="row"
         alignItems="flex-start"
@@ -146,6 +138,7 @@ export default function KpiCard({
         <Typography
           variant="caption"
           color="text.secondary"
+          className="cp-kpi-caption"
           sx={{
             mt: compact ? CP_SPACE.related : "auto",
             pt: compact ? CP_SPACE.micro : CP_SPACE.related,
@@ -154,6 +147,39 @@ export default function KpiCard({
           {caption}
         </Typography>
       ) : null}
+    </Stack>
+  );
+
+  return (
+    <Card
+      // variant="outlined"
+      sx={{
+        borderRadius: CP_RADIUS.card,
+        height: compact ? "auto" : { xs: "auto", sm: "100%" },
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        ...sx,
+      }}
+    >
+      {onClick ? (
+        <CardActionArea
+          onClick={onClick}
+          aria-label={ariaLabel || `Открыть описание метрики ${label}`}
+          sx={{
+            height: "100%",
+            alignItems: "stretch",
+            textAlign: "left",
+            "&:hover .cp-kpi-caption": {
+              color: "text.primary",
+            },
+          }}
+        >
+          {content}
+        </CardActionArea>
+      ) : (
+        content
+      )}
     </Card>
   );
 }

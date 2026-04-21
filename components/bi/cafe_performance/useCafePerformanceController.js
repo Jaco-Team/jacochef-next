@@ -263,6 +263,10 @@ export default function useCafePerformanceController() {
   }, []);
 
   useEffect(() => {
+    document.title = moduleName || "Эффективность кафе";
+  }, [moduleName]);
+
+  useEffect(() => {
     if (!bootstrapped) return;
 
     const expectedQueryKey = buildQueryKey(currentTab.key, appliedFilters);
