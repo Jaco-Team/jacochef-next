@@ -10,6 +10,16 @@ import EmptyState from "../components/EmptyState";
 import { getOrderTypeColor, getOrderTypeLabel, sortByOrderTypes } from "../config";
 import { CP_CHART_HEIGHT } from "../layout";
 
+const formatDuration = (value) => {
+  if (value == null) return "—";
+  const totalSeconds = Math.round(Number(value));
+  if (!Number.isFinite(totalSeconds)) return "—";
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes <= 0) return `${seconds} сек`;
+  return `${minutes} мин ${seconds} сек`;
+};
+
 export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTypeNameMap = {} }) {
   const chartRef = useRef(null);
 
@@ -59,6 +69,11 @@ export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTy
       }),
     );
 
+    yAxis.get("renderer").labels.template.adapters.add("text", (_, target) => {
+      const value = target.dataItem?.get("value");
+      return formatDuration(value);
+    });
+
     trendOrderTypes.forEach((orderType, index) => {
       const color = getOrderTypeColor(orderType, index);
       const series = chart.series.push(
@@ -70,14 +85,19 @@ export default function DeliveryTrendChart({ data = [], orderTypes = [], orderTy
           valueXField: "date",
           stroke: am5.color(color),
           fill: am5.color(color),
-          tooltip: am5.Tooltip.new(root, {
-            labelText: "{name}\n{valueX.formatDate('dd.MM.yyyy')}: {valueY}",
-          }),
+          tooltip: am5.Tooltip.new(root, {}),
         }),
       );
 
       series.strokes.template.setAll({ strokeWidth: 3 });
       series.data.setAll(rows.filter((item) => item.order_type === orderType));
+      series.get("tooltip")?.label.adapters.add("text", (_, target) => {
+        const dataItem = target?.dataItem;
+        if (!dataItem) return "";
+        const seriesName = dataItem.component?.get("name") || "";
+        const date = dayjs(dataItem.get("valueX")).format("DD.MM.YYYY");
+        return `${seriesName}\n${date}: ${formatDuration(dataItem.get("valueY"))}`;
+      });
       series.bullets.push(() =>
         am5.Bullet.new(root, {
           sprite: am5.Circle.new(root, {

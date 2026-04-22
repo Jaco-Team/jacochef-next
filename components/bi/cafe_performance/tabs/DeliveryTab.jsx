@@ -17,8 +17,15 @@ import { CP_SPACE } from "../layout";
 export default function DeliveryTab({ data, formatters, orderTypes, orderTypeNameMap }) {
   if (!data) return <EmptyState />;
 
-  const overall = data.overall || {};
   const channelCards = sortByOrderTypes(data.channel_cards || [], orderTypes);
+  const deliveryChannel =
+    channelCards.find((item) => String(item?.order_type) === "DELIVERY") || null;
+  const bestSlaChannel = channelCards.reduce((best, item) => {
+    if (item?.sla == null) return best;
+    if (!best || Number(item.sla) > Number(best.sla)) return item;
+    return best;
+  }, null);
+  const totalOrders = channelCards.reduce((sum, item) => sum + Number(item?.count || 0), 0);
 
   return (
     <Stack spacing={CP_SPACE.section}>
@@ -36,27 +43,36 @@ export default function DeliveryTab({ data, formatters, orderTypes, orderTypeNam
       >
         <Grid size={{ xs: 12, md: 4 }}>
           <KpiCard
-            label="P50 выдачи (общий)"
-            value={formatters.duration(overall.p50)}
+            label="P50 (Доставка)"
+            value={formatters.duration(deliveryChannel?.p50)}
             tone="info"
             icon={<TimerOutlinedIcon fontSize="small" />}
+            caption={
+              deliveryChannel
+                ? getOrderTypeLabel(deliveryChannel.order_type, orderTypeNameMap)
+                : null
+            }
             sx={{ height: "auto" }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <KpiCard
-            label="SLA выдачи"
-            value={formatters.percent(overall.sla)}
+            label="Лучший SLA"
+            value={formatters.percent(bestSlaChannel?.sla)}
             tone="success"
             icon={<TrendingUpRoundedIcon fontSize="small" />}
+            caption={
+              bestSlaChannel ? getOrderTypeLabel(bestSlaChannel.order_type, orderTypeNameMap) : null
+            }
             sx={{ height: "auto" }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <KpiCard
             label="Всего заказов"
-            value={formatters.integer(overall.count)}
+            value={formatters.integer(totalOrders)}
             icon={<ShoppingBasketOutlinedIcon fontSize="small" />}
+            caption="Доставка + самовывоз + зал"
             sx={{ height: "auto" }}
           />
         </Grid>
