@@ -86,7 +86,7 @@ export default function DeliveryTab({ data, formatters, orderTypes, orderTypeNam
           {channelCards.map((item) => (
             <Grid
               key={item.order_type}
-              size={{ xs: 12, sm: 6, md: 4 }}
+              size={{ xs: 12, sm: 6, md: 3 }}
             >
               <DeliveryChannelCard
                 orderType={item.order_type}
