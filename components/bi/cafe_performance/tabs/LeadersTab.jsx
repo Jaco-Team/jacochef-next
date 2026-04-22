@@ -48,20 +48,21 @@ const resolveVariant = (item, index) => {
 
 const formatCardValue = (variant, item, formatters) => {
   const stageLabel = item?.stage_type ? getStageTypeLabel(item.stage_type).toLowerCase() : "";
-  const onStage = stageLabel ? ` на ${stageLabel}` : "";
+  const stagePrefix = stageLabel ? `${getStageTypeLabel(item.stage_type)} • ` : "";
 
   if (variant === "sla") {
-    return `${formatters.percent(item.sla)}${onStage}`;
+    return `${stagePrefix}${formatters.percent(item.sla)}`;
   }
   if (variant === "stable") {
-    return `CV: ${formatters.percent(item.stability)}${onStage}`;
+    return `${stagePrefix}CV: ${formatters.percent(item.stability)}`;
   }
-  return `${formatters.duration(item.p50)}${onStage}`;
+  return `${stagePrefix}${formatters.duration(item.p50)}`;
 };
 
-export default function LeadersTab({ data, formatters }) {
+export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }) {
   const topCards = data?.top_employee_cards || [];
   const ranking = data?.cafe_ranking || [];
+  const selectedPointIds = new Set((filters?.point_list || []).map((item) => String(item?.id)));
   const [sortBy, setSortBy] = useState("score");
   const [sortDirection, setSortDirection] = useState("desc");
 
@@ -109,10 +110,15 @@ export default function LeadersTab({ data, formatters }) {
               const variant = resolveVariant(item, index);
               return (
                 <BestEmployeeCard
-                  key={`${item.employee_id}-${item.stage_type || index}`}
+                  key={`${item.point_id}-${item.employee_id}-${item.stage_type || index}`}
                   variant={variant}
                   name={item.employee_name}
+                  description={item.point_name || "—"}
                   caption={formatCardValue(variant, item, formatters)}
+                  onClick={
+                    onEmployeeOpen && item?.point_id ? () => onEmployeeOpen(item) : undefined
+                  }
+                  ariaLabel={`Открыть сотрудника ${item.employee_name}`}
                 />
               );
             })}
@@ -223,7 +229,12 @@ export default function LeadersTab({ data, formatters }) {
                       >
                         <Typography
                           variant="subtitle2"
-                          sx={{ fontWeight: 600 }}
+                          sx={{
+                            fontWeight: 600,
+                            color: selectedPointIds.has(String(item?.point_id))
+                              ? "primary.main"
+                              : "text.primary",
+                          }}
                         >
                           {item.point_name}
                         </Typography>

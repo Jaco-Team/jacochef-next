@@ -40,7 +40,7 @@ export default function CafePerformance() {
     handleApply,
     handleKitchenStageChange,
     handleKitchenCategoryChange,
-    handleOpenKitchenEmployee,
+    handleOpenEmployee,
     handleCloseKitchenEmployee,
   } = useCafePerformanceController();
 
@@ -155,7 +155,7 @@ export default function CafePerformance() {
                   stageTypes={stageTypes}
                   onStageChange={handleKitchenStageChange}
                   onCategoryApply={handleKitchenCategoryChange}
-                  onEmployeeOpen={handleOpenKitchenEmployee}
+                  onEmployeeOpen={handleOpenEmployee}
                 />
               ) : null}
 
@@ -163,6 +163,8 @@ export default function CafePerformance() {
                 <LeadersTab
                   data={screens.leaders.data}
                   formatters={formatters}
+                  filters={filters}
+                  onEmployeeOpen={handleOpenEmployee}
                 />
               ) : null}
 

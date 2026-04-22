@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Box,
   Button,
@@ -18,6 +19,7 @@ import {
 import MyModal from "@/ui/MyModal";
 import EmployeeAvatar from "./EmployeeAvatar";
 import SlaChip from "./SlaChip";
+import useCafePerformanceStore from "../useCafePerformanceStore";
 import { getSlaTone } from "./SlaProgressBar";
 import { CP_PADDING, CP_RADIUS, CP_SPACE } from "../layout";
 
@@ -103,9 +105,17 @@ function StageMetricRow({ stage, formatters }) {
 }
 
 export default function EmployeeDetailsModal({ open, onClose, loading, data, formatters }) {
+  const points = useCafePerformanceStore((s) => s.points);
   const employeeName = data?.employee?.employee_name || data?.summary?.employee_name || "Сотрудник";
   const stages = data?.stages || [];
   const imageUrl = data?.employee?.user_image || "";
+  const pointId = data?.employee?.point_id || null;
+  const point = useMemo(
+    () => points.find((item) => String(item?.id) === String(pointId)) || null,
+    [pointId, points],
+  );
+  const pointName = point?.name || "";
+  const pointAddress = point?.address || "";
 
   return (
     <MyModal
@@ -156,6 +166,22 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
                     >
                       {employeeName}
                     </Typography>
+                    {pointName ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        {pointName}
+                      </Typography>
+                    ) : null}
+                    {pointAddress ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        {pointAddress}
+                      </Typography>
+                    ) : null}
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -168,12 +194,6 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
             </Box>
 
             <Stack spacing={CP_SPACE.related}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700 }}
-              >
-                Все этапы
-              </Typography>
               <Box
                 sx={{
                   borderRadius: CP_RADIUS.card,
@@ -186,7 +206,7 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell align="center">Этап</TableCell>
+                          <TableCell align="left">Этап</TableCell>
                           <TableCell align="center">P50</TableCell>
                           <TableCell align="center">P90</TableCell>
                           <TableCell align="center">SLA</TableCell>

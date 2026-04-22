@@ -34,6 +34,7 @@ export default function BestEmployeeCard({
   variant = "fastest",
   label,
   name,
+  description,
   caption,
   onClick,
   ariaLabel,
@@ -91,6 +92,16 @@ export default function BestEmployeeCard({
       >
         {name || "—"}
       </Typography>
+
+      {description ? (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: CP_SPACE.micro, position: "relative" }}
+        >
+          {description}
+        </Typography>
+      ) : null}
 
       {caption ? (
         <Typography

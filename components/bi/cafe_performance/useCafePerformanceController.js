@@ -417,13 +417,17 @@ export default function useCafePerformanceController() {
     [filters, loadScreen, setAppliedFilters, setFilters, setLoading, showAlert],
   );
 
-  const handleOpenKitchenEmployee = useCallback(
+  const handleOpenEmployee = useCallback(
     async (employee) => {
       if (!employee?.employee_id) return;
 
       const requestId = employeeRequestRef.current + 1;
       employeeRequestRef.current = requestId;
-
+      const pointList =
+        (employee?.point_id ? [{ id: employee.point_id }] : null) ||
+        (appliedFilters.point_list || []).map((item) => ({ id: item.id }));
+      const categoryIds = appliedFilters.category_ids || [];
+      const stageType = employee?.stage_type || appliedFilters.stage_type || "";
       setEmployeeDetails({
         open: true,
         loading: true,
@@ -435,9 +439,9 @@ export default function useCafePerformanceController() {
           period_type: appliedFilters.period_type || "custom",
           date_start: appliedFilters.date_start || null,
           date_end: appliedFilters.date_end || null,
-          point_list: (appliedFilters.point_list || []).map((item) => ({ id: item.id })),
-          category_ids: appliedFilters.category_ids || [],
-          stage_type: appliedFilters.stage_type || "",
+          point_list: pointList,
+          category_ids: categoryIds,
+          stage_type: stageType,
           employee_id: employee.employee_id,
         });
 
@@ -499,7 +503,7 @@ export default function useCafePerformanceController() {
     handleApply,
     handleKitchenStageChange,
     handleKitchenCategoryChange,
-    handleOpenKitchenEmployee,
+    handleOpenEmployee,
     handleCloseKitchenEmployee,
   };
 }
