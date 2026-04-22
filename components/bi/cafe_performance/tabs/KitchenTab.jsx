@@ -133,6 +133,7 @@ export default function KitchenTab({
   stageTypes,
   onStageChange,
   onCategoryApply,
+  onEmployeeOpen,
 }) {
   if (!data) return <EmptyState />;
 
@@ -387,6 +388,8 @@ export default function KitchenTab({
                 label={label}
                 name={item.employee_name}
                 caption={formatCardCaption(item)}
+                onClick={() => onEmployeeOpen(item)}
+                ariaLabel={`Открыть сотрудника ${item.employee_name}`}
               />
             );
           })}
@@ -465,6 +468,8 @@ export default function KitchenTab({
                     <TableRow
                       key={item.employee_id}
                       hover
+                      onClick={() => onEmployeeOpen(item)}
+                      sx={{ cursor: "pointer" }}
                     >
                       <TableCell>
                         <Stack

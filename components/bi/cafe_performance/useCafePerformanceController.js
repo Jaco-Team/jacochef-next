@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
@@ -95,6 +95,11 @@ const buildPeriodFilterState = (defaults = {}, presets = []) => {
 
 export default function useCafePerformanceController() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
+  const [employeeDetails, setEmployeeDetails] = useState({
+    open: false,
+    loading: false,
+    data: null,
+  });
 
   const module = useCafePerformanceStore((s) => s.module);
   const moduleName = useCafePerformanceStore((s) => s.moduleName);
@@ -130,6 +135,7 @@ export default function useCafePerformanceController() {
 
   const { api_laravel } = useApi(module);
   const requestCacheRef = useRef(new Map());
+  const employeeRequestRef = useRef(0);
 
   const currentTab = CAFE_PERFORMANCE_TABS[tab] || CAFE_PERFORMANCE_TABS[0];
   const currentScreen = screens[currentTab.key];
@@ -411,6 +417,59 @@ export default function useCafePerformanceController() {
     [filters, loadScreen, setAppliedFilters, setFilters, setLoading, showAlert],
   );
 
+  const handleOpenKitchenEmployee = useCallback(
+    async (employee) => {
+      if (!employee?.employee_id) return;
+
+      const requestId = employeeRequestRef.current + 1;
+      employeeRequestRef.current = requestId;
+
+      setEmployeeDetails({
+        open: true,
+        loading: true,
+        data: null,
+      });
+
+      try {
+        const res = await api_laravel("get_employee", {
+          period_type: appliedFilters.period_type || "custom",
+          date_start: appliedFilters.date_start || null,
+          date_end: appliedFilters.date_end || null,
+          point_list: (appliedFilters.point_list || []).map((item) => ({ id: item.id })),
+          category_ids: appliedFilters.category_ids || [],
+          stage_type: appliedFilters.stage_type || "",
+          employee_id: employee.employee_id,
+        });
+
+        if (!res?.st) throw new Error(res?.text || "Ошибка загрузки сотрудника");
+        if (employeeRequestRef.current !== requestId) return;
+
+        setEmployeeDetails({
+          open: true,
+          loading: false,
+          data: res,
+        });
+      } catch (error) {
+        if (employeeRequestRef.current !== requestId) return;
+
+        setEmployeeDetails({
+          open: false,
+          loading: false,
+          data: null,
+        });
+        showAlert(error?.message || "Ошибка загрузки сотрудника");
+      }
+    },
+    [api_laravel, appliedFilters, showAlert],
+  );
+
+  const handleCloseKitchenEmployee = useCallback(() => {
+    setEmployeeDetails((current) => ({
+      ...current,
+      open: false,
+    }));
+  }, []);
+
   return {
     alert: {
       isOpen: isAlert,
@@ -435,9 +494,12 @@ export default function useCafePerformanceController() {
     orderTypeNameMap,
     formatters,
     screens,
+    employeeDetails,
     handleFilterChange,
     handleApply,
     handleKitchenStageChange,
     handleKitchenCategoryChange,
+    handleOpenKitchenEmployee,
+    handleCloseKitchenEmployee,
   };
 }

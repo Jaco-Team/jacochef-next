@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Card, Stack, Typography } from "@mui/material";
+import { Box, Card, CardActionArea, Stack, Typography } from "@mui/material";
 import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
@@ -30,22 +30,18 @@ export const BEST_EMPLOYEE_VARIANTS = {
   },
 };
 
-export default function BestEmployeeCard({ variant = "fastest", label, name, caption }) {
+export default function BestEmployeeCard({
+  variant = "fastest",
+  label,
+  name,
+  caption,
+  onClick,
+  ariaLabel,
+}) {
   const decor = BEST_EMPLOYEE_VARIANTS[variant] || BEST_EMPLOYEE_VARIANTS.fastest;
   const Icon = decor.Icon;
-
-  return (
-    <Card
-      variant="outlined"
-      sx={{
-        borderRadius: CP_RADIUS.card,
-        position: "relative",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        p: CP_PADDING.card,
-      }}
-    >
+  const content = (
+    <>
       <Box
         sx={{
           position: "absolute",
@@ -105,6 +101,46 @@ export default function BestEmployeeCard({ variant = "fastest", label, name, cap
           {caption}
         </Typography>
       ) : null}
+    </>
+  );
+
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: CP_RADIUS.card,
+        position: "relative",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {onClick ? (
+        <CardActionArea
+          onClick={onClick}
+          aria-label={ariaLabel || `Открыть карточку сотрудника ${name || ""}`.trim()}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            flex: 1,
+            p: CP_PADDING.card,
+          }}
+        >
+          {content}
+        </CardActionArea>
+      ) : (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            p: CP_PADDING.card,
+          }}
+        >
+          {content}
+        </Box>
+      )}
     </Card>
   );
 }

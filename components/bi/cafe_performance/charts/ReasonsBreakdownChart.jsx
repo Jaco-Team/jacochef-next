@@ -62,6 +62,11 @@ export default function ReasonsBreakdownChart({ data = [] }) {
       }),
     );
 
+    chart.seriesContainer.setAll({
+      width: am5.percent(40),
+      minWidth: 240,
+    });
+
     const series = chart.series.push(
       am5percent.PieSeries.new(root, {
         valueField: "count",
@@ -98,6 +103,7 @@ export default function ReasonsBreakdownChart({ data = [] }) {
         y: am5.p50,
         layout: root.verticalLayout,
         marginLeft: 24,
+        width: am5.percent(60),
         useDefaultMarker: true,
       }),
     );
@@ -109,7 +115,12 @@ export default function ReasonsBreakdownChart({ data = [] }) {
       cornerRadiusBL: 5,
       cornerRadiusBR: 5,
     });
-    legend.labels.template.setAll({ fontSize: 13, fill: am5.color(0x1f2937) });
+    legend.labels.template.setAll({
+      fontSize: 13,
+      fill: am5.color(0x1f2937),
+      oversizedBehavior: "wrap",
+      maxWidth: 280,
+    });
     legend.valueLabels.template.setAll({
       fontSize: 13,
       fontWeight: "600",

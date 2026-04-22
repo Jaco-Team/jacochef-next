@@ -11,6 +11,7 @@ import KitchenTab from "./tabs/KitchenTab";
 import LeadersTab from "./tabs/LeadersTab";
 import QualityTab from "./tabs/QualityTab";
 import DeliveryTab from "./tabs/DeliveryTab";
+import EmployeeDetailsModal from "./components/EmployeeDetailsModal";
 import { CP_SPACE } from "./layout";
 import useCafePerformanceController from "./useCafePerformanceController";
 
@@ -34,10 +35,13 @@ export default function CafePerformance() {
     orderTypeNameMap,
     formatters,
     screens,
+    employeeDetails,
     handleFilterChange,
     handleApply,
     handleKitchenStageChange,
     handleKitchenCategoryChange,
+    handleOpenKitchenEmployee,
+    handleCloseKitchenEmployee,
   } = useCafePerformanceController();
 
   return (
@@ -54,6 +58,14 @@ export default function CafePerformance() {
         onClose={alert.onClose}
         status={alert.status}
         text={alert.text}
+      />
+
+      <EmployeeDetailsModal
+        open={employeeDetails.open}
+        onClose={handleCloseKitchenEmployee}
+        loading={employeeDetails.loading}
+        data={employeeDetails.data}
+        formatters={formatters}
       />
 
       <Stack
@@ -143,6 +155,7 @@ export default function CafePerformance() {
                   stageTypes={stageTypes}
                   onStageChange={handleKitchenStageChange}
                   onCategoryApply={handleKitchenCategoryChange}
+                  onEmployeeOpen={handleOpenKitchenEmployee}
                 />
               ) : null}
 
