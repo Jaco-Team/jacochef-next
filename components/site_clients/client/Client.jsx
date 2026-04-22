@@ -49,34 +49,35 @@ export default function Client({ getData, showAlert, canAccess }) {
   const openModalClient = async (login, type) => {
     try {
       const res = await getData("get_one_client", { login });
+      const payload = res?.data ?? res;
 
-      if (!res?.client_info) {
+      if (!payload?.client_info) {
         return showAlert("Ответ пуст");
       }
 
-      if (res?.client_info.date_bir) {
-        const dateBir = res.client_info.date_bir;
+      if (payload?.client_info.date_bir) {
+        const dateBir = payload.client_info.date_bir;
 
         if (dateBir) {
           const d = dayjs(dateBir);
 
           if (d.isValid()) {
-            res.client_info.day = d.date(); // 1–31
-            res.client_info.month = d.month() + 1; // 1–12
+            payload.client_info.day = d.date(); // 1–31
+            payload.client_info.month = d.month() + 1; // 1–12
           }
         }
       }
 
       update({
         modalDialog: type === "open",
-        client_id: res.client_info.id,
+        client_id: payload.client_info.id,
         client_login: login,
-        client: res.client_info,
-        orders: res.client_orders,
-        err_orders: res.err_orders,
-        comments: res.client_comments,
-        login_sms: res.client_login_sms,
-        login_yandex: res.client_login_yandex,
+        client: payload.client_info,
+        orders: payload.client_orders || payload.orders || [],
+        err_orders: payload.err_orders || [],
+        comments: payload.client_comments || [],
+        login_sms: payload.client_login_sms || [],
+        login_yandex: payload.client_login_yandex || [],
       });
     } catch (e) {}
   };

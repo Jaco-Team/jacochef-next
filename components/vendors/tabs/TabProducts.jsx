@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import {
   Button,
   Card,
@@ -48,25 +49,64 @@ const tableSx = {
 const tableContainerSx = { overflowX: "auto" };
 const expandCellSx = { width: 30, px: 0 };
 const actionCellSx = { width: { xs: 60, sm: 100 } };
-const countCellSx = { width: { xs: 88, sm: 132 }, whiteSpace: "nowrap" };
+const countCellSx = { width: { xs: 96, sm: 156 }, whiteSpace: "nowrap" };
 const collapseCellSx = { py: 0, borderBottom: 0 };
 const textCellSx = {
   minWidth: { xs: 180, sm: "auto" },
 };
-const declarationChipSx = {
-  maxWidth: "100%",
-  width: "auto",
-  display: "inline-flex",
-  flex: "0 0 auto",
-  alignSelf: "flex-start",
-  "& .MuiChip-label": {
-    display: "block",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    maxWidth: 240,
-  },
+const nestedTableContainerSx = { borderRadius: 2, border: "1px solid", borderColor: "divider" };
+
+const formatDeclarationExpiry = (value) =>
+  value && dayjs(value).isValid() ? dayjs(value).format("DD.MM.YYYY") : "Не указана";
+
+const formatDeclarationAdded = (value) =>
+  value && dayjs(value).isValid() ? dayjs(value).format("DD.MM.YYYY") : "Не указана";
+
+const formatDeclarationType = (decl) => {
+  const extension = getFileExtension(decl.filename || decl.url);
+  return extension ? extension.toUpperCase() : "Не указан";
 };
+
+const formatDeclarationSize = (decl) => {
+  if (typeof decl.filesize !== "number" || Number.isNaN(decl.filesize) || decl.filesize <= 0) {
+    return "Не указан";
+  }
+
+  const units = ["Б", "КБ", "МБ", "ГБ"];
+  let value = decl.filesize;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  const fractionDigits = value >= 10 || unitIndex === 0 ? 0 : 1;
+  return `${value.toFixed(fractionDigits)} ${units[unitIndex]}`;
+};
+
+const getExpiresSortKey = (decl) => {
+  const timestamp = Date.parse(decl.expires_at || "");
+  return Number.isNaN(timestamp) ? "2" : `1_${String(timestamp).padStart(13, "0")}`;
+};
+
+const isExpiredDeclaration = (decl) =>
+  Boolean(
+    decl?.expires_at &&
+    dayjs(decl.expires_at).isValid() &&
+    dayjs(decl.expires_at).isBefore(dayjs(), "day"),
+  );
+
+const isExpiringSoon = (decl) => {
+  if (!decl?.expires_at || !dayjs(decl.expires_at).isValid()) {
+    return false;
+  }
+
+  const diff = dayjs(decl.expires_at).startOf("day").diff(dayjs().startOf("day"), "day");
+  return diff >= 0 && diff <= 14;
+};
+
+const formatExpiringSoonLabel = (count) => (count === 1 ? "1 истекает" : `${count} истекают`);
 
 export default function TabProducts({
   canEdit,
@@ -221,7 +261,12 @@ export default function TabProducts({
                   <TableBody>
                     {filteredVendorItems.map((item) => {
                       const isExpanded = Number(expandedProductId) === Number(item.item_id);
-                      const declarations = item.declarations || [];
+                      const declarations = (item.declarations || [])
+                        .filter((decl) => !isExpiredDeclaration(decl))
+                        .sort((a, b) => getExpiresSortKey(b).localeCompare(getExpiresSortKey(a)));
+                      const expiringSoonCount = declarations.filter((decl) =>
+                        isExpiringSoon(decl),
+                      ).length;
                       const rowKey = item.id ?? item.item_id;
 
                       return (
@@ -245,7 +290,35 @@ export default function TabProducts({
                               align="center"
                               sx={countCellSx}
                             >
-                              {declarations.length}
+                              <Stack
+                                spacing={0.5}
+                                alignItems="center"
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  {declarations.length}
+                                </Typography>
+                                {expiringSoonCount > 0 ? (
+                                  <Chip
+                                    label={formatExpiringSoonLabel(expiringSoonCount)}
+                                    size="small"
+                                    sx={{
+                                      height: 22,
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      borderRadius: 1,
+                                      backgroundColor: "rgba(211, 47, 47, 0.08)",
+                                      color: "error.main",
+                                      border: "1px solid rgba(211, 47, 47, 0.28)",
+                                      "& .MuiChip-label": {
+                                        px: 1,
+                                      },
+                                    }}
+                                  />
+                                ) : null}
+                              </Stack>
                             </TableCell>
                             {hasProductActions ? (
                               <TableCell
@@ -306,51 +379,123 @@ export default function TabProducts({
                                   sx={{ py: 2 }}
                                 >
                                   {declarations.length ? (
-                                    <Stack
-                                      direction="row"
-                                      spacing={1}
-                                      useFlexGap
-                                      flexWrap="wrap"
-                                    >
-                                      {declarations.map((decl) => (
-                                        <Tooltip
-                                          key={decl.id}
-                                          title={getDeclarationStoredFilename(decl)}
-                                        >
-                                          <Chip
-                                            clickable
-                                            variant="outlined"
-                                            icon={
-                                              <FileTypeIcon
-                                                extension={getFileExtension(
-                                                  decl.filename || decl.url,
-                                                )}
-                                                sx={{ fontSize: 30 }}
-                                              />
-                                            }
-                                            label={getDeclarationDisplayFilename(decl)}
-                                            onClick={(event) =>
-                                              handleOpenDeclaration(event, decl.url)
-                                            }
-                                            onDelete={
-                                              canEdit
-                                                ? withConfirm(
-                                                    () =>
-                                                      handleUnbindDeclaration(
-                                                        decl.id,
-                                                        item.item_id,
-                                                      ),
-                                                    "Отвязать декларацию от товара?",
-                                                  )
-                                                : undefined
-                                            }
-                                            deleteIcon={<LinkOffIcon fontSize="small" />}
-                                            disabled={isLoading || !decl.url}
-                                            sx={declarationChipSx}
-                                          />
-                                        </Tooltip>
-                                      ))}
-                                    </Stack>
+                                    <TableContainer sx={nestedTableContainerSx}>
+                                      <Table size="small">
+                                        <TableHead>
+                                          <TableRow>
+                                            <TableCell>Файл</TableCell>
+                                            <TableCell sx={{ whiteSpace: "nowrap" }}>Тип</TableCell>
+                                            <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                              Добавлена
+                                            </TableCell>
+                                            <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                              Добавил
+                                            </TableCell>
+                                            <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                              Действует до
+                                            </TableCell>
+                                            <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                              Размер
+                                            </TableCell>
+                                            {canEdit ? (
+                                              <TableCell
+                                                align="right"
+                                                sx={{ whiteSpace: "nowrap", width: 84 }}
+                                              >
+                                                Действия
+                                              </TableCell>
+                                            ) : null}
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                          {declarations.map((decl) => (
+                                            <TableRow key={decl.id}>
+                                              <TableCell sx={{ minWidth: 260 }}>
+                                                <Tooltip title={getDeclarationStoredFilename(decl)}>
+                                                  <Stack
+                                                    direction="row"
+                                                    spacing={1.25}
+                                                    alignItems="center"
+                                                    sx={{
+                                                      cursor: decl.url ? "pointer" : "default",
+                                                      width: "fit-content",
+                                                      maxWidth: "100%",
+                                                    }}
+                                                    onClick={(event) =>
+                                                      handleOpenDeclaration(event, decl.url)
+                                                    }
+                                                  >
+                                                    <FileTypeIcon
+                                                      extension={getFileExtension(
+                                                        decl.filename || decl.url,
+                                                      )}
+                                                      sx={{ fontSize: 30, flexShrink: 0 }}
+                                                    />
+                                                    <Typography
+                                                      variant="body2"
+                                                      sx={{
+                                                        fontWeight: 500,
+                                                        wordBreak: "break-word",
+                                                      }}
+                                                    >
+                                                      {getDeclarationDisplayFilename(decl)}
+                                                    </Typography>
+                                                  </Stack>
+                                                </Tooltip>
+                                              </TableCell>
+                                              <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                                {formatDeclarationType(decl)}
+                                              </TableCell>
+                                              <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                                {formatDeclarationAdded(decl.created_at)}
+                                              </TableCell>
+                                              <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                                {decl.creator_name || "Не указан"}
+                                              </TableCell>
+                                              <TableCell
+                                                sx={{
+                                                  whiteSpace: "nowrap",
+                                                  color: isExpiringSoon(decl)
+                                                    ? "error.main"
+                                                    : "inherit",
+                                                  fontWeight: isExpiringSoon(decl) ? 700 : 400,
+                                                }}
+                                              >
+                                                {formatDeclarationExpiry(decl.expires_at)}
+                                              </TableCell>
+                                              <TableCell sx={{ whiteSpace: "nowrap" }}>
+                                                {formatDeclarationSize(decl)}
+                                              </TableCell>
+                                              {canEdit ? (
+                                                <TableCell
+                                                  align="right"
+                                                  sx={{ whiteSpace: "nowrap" }}
+                                                >
+                                                  <Tooltip title="Отвязать">
+                                                    <span>
+                                                      <IconButton
+                                                        size="small"
+                                                        onClick={withConfirm(
+                                                          () =>
+                                                            handleUnbindDeclaration(
+                                                              decl.id,
+                                                              item.item_id,
+                                                            ),
+                                                          "Отвязать декларацию от товара?",
+                                                        )}
+                                                        disabled={isLoading}
+                                                      >
+                                                        <LinkOffIcon fontSize="small" />
+                                                      </IconButton>
+                                                    </span>
+                                                  </Tooltip>
+                                                </TableCell>
+                                              ) : null}
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </TableContainer>
                                   ) : (
                                     <Typography
                                       variant="body2"

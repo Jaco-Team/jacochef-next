@@ -3,34 +3,33 @@
 import { useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Button, DialogActions, DialogContent, Stack, Typography } from "@mui/material";
-import { MyAutocomplite } from "@/ui/Forms";
+import dayjs from "dayjs";
+import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
 import useVendorDetailsStore from "./useVendorDetailsStore";
 import useVendorDocumentsView from "./useVendorDocumentsView";
 import useVendorsStore from "./useVendorsStore";
 
-function getDeclarationOptionLabel(declaration) {
-  const fileName = declaration?.filename?.split("/")?.pop() || "Декларация";
-  return declaration?.created_at ? `${fileName} · ${declaration.created_at}` : fileName;
-}
-
 export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
   const {
     availableDeclarationsForBind,
     bindDeclarationId,
+    docModalExpiresAt,
     docModalFile,
     docModalItemId,
     vendorItems,
     vendorItemsOptions,
   } = useVendorDocumentsView();
   const isLoading = useVendorsStore((state) => state.isLoading);
-  const { setBindDeclarationId, setDocModalFile, setDocModalItemId } = useVendorDetailsStore(
-    useShallow((state) => ({
-      setBindDeclarationId: state.setBindDeclarationId,
-      setDocModalFile: state.setDocModalFile,
-      setDocModalItemId: state.setDocModalItemId,
-    })),
-  );
+  const { setBindDeclarationId, setDocModalExpiresAt, setDocModalFile, setDocModalItemId } =
+    useVendorDetailsStore(
+      useShallow((state) => ({
+        setBindDeclarationId: state.setBindDeclarationId,
+        setDocModalExpiresAt: state.setDocModalExpiresAt,
+        setDocModalFile: state.setDocModalFile,
+        setDocModalItemId: state.setDocModalItemId,
+      })),
+    );
 
   const selectedVendorItem = useMemo(
     () => vendorItemsOptions.find((item) => String(item.id) === String(docModalItemId)) || null,
@@ -44,7 +43,11 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
     [availableDeclarationsForBind, bindDeclarationId],
   );
 
-  const submitDisabled = !docModalItemId || (!bindDeclarationId && !docModalFile) || isLoading;
+  const submitDisabled =
+    !docModalItemId ||
+    (!bindDeclarationId && !docModalFile) ||
+    (Boolean(docModalFile) && !docModalExpiresAt) ||
+    isLoading;
 
   useEffect(() => {
     if (bindDeclarationId && !selectedDeclaration) {
@@ -70,7 +73,7 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
             disabled={isLoading || !vendorItems.length}
           />
 
-          <MyAutocomplite
+          {/* <MyAutocomplite
             multiple={false}
             label="Существующая декларация"
             data={availableDeclarationsForBind}
@@ -79,6 +82,7 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
               setBindDeclarationId(value?.id || "");
               if (value?.id) {
                 setDocModalFile(null);
+                setDocModalExpiresAt(null);
               }
             }}
             disabled={isLoading || !docModalItemId || !availableDeclarationsForBind.length}
@@ -90,7 +94,7 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
                 {getDeclarationOptionLabel(option)}
               </li>
             )}
-          />
+          /> */}
 
           <Stack spacing={1}>
             <Button
@@ -103,12 +107,15 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
               <input
                 hidden
                 type="file"
+                accept=".jpg,.jpeg,.png,.pdf,.docx,application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   event.target.value = "";
                   setDocModalFile(file || null);
                   if (file) {
                     setBindDeclarationId("");
+                  } else {
+                    setDocModalExpiresAt(null);
                   }
                 }}
               />
@@ -124,6 +131,17 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
                   : "Файл не выбран"}
             </Typography>
           </Stack>
+
+          {docModalFile ? (
+            <MyDatePickerNew
+              size="small"
+              label="Действует до"
+              required
+              minDate={dayjs().add(1, "week")}
+              value={docModalExpiresAt}
+              func={(value) => setDocModalExpiresAt(value || null)}
+            />
+          ) : null}
         </Stack>
       </DialogContent>
 

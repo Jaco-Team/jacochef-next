@@ -229,7 +229,7 @@ class AppPerH_ extends React.Component {
     const { point } = this.state;
 
     const data = {
-      point_id: point,
+      point_id: point.id,
     };
 
     const res = await this.getData("get_one", data);

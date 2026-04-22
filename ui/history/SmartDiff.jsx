@@ -19,6 +19,14 @@ function safeParse(v) {
 }
 
 function normalizeField(key) {
+  if (typeof key !== "string") {
+    return key;
+  }
+
+  if (key.includes(" / ") || /^[A-ZА-ЯЁ].*\s/.test(key)) {
+    return key;
+  }
+
   // banner.link → link
   const last = key.split(".").pop();
 

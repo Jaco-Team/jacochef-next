@@ -53,6 +53,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import HorizontalSplitIcon from "@mui/icons-material/HorizontalSplit";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -104,6 +106,64 @@ const types = [
     id: "4",
   },
 ];
+
+const BILLING_COMPARE_FORM_ANCHOR_ID = "billing-compare-form-anchor";
+
+function scrollToBillingCompareForm(behavior = "smooth") {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    const anchor = document.getElementById(BILLING_COMPARE_FORM_ANCHOR_ID);
+
+    if (!anchor) {
+      return;
+    }
+
+    const top = anchor.getBoundingClientRect().top + window.scrollY - 88;
+
+    window.scrollTo({
+      top: Math.max(top, 0),
+      behavior,
+    });
+  });
+}
+
+function getBillingViewerImageEntries({
+  typeDoc = "",
+  type = "",
+  docBaseId = "",
+  imgsBill = [],
+  imgsFactur = [],
+}) {
+  const mainBucket = typeDoc === "bill" ? "bill/" : "bill-ex-items/";
+  const mainBaseUrl = `https://storage.yandexcloud.net/${mainBucket}`;
+  const facturBaseUrl = "https://storage.yandexcloud.net/bill/";
+
+  const mainEntries = (Array.isArray(imgsBill) ? imgsBill : [])
+    .filter((img) => isImageFileName(img))
+    .map((img) => ({
+      url: `${mainBaseUrl}${img}`,
+      type: "bill",
+    }));
+
+  const shouldIncludeFactur =
+    typeDoc === "bill" && parseInt(type) === 2 && parseInt(docBaseId) === 5;
+
+  if (!shouldIncludeFactur) {
+    return mainEntries;
+  }
+
+  const facturEntries = (Array.isArray(imgsFactur) ? imgsFactur : [])
+    .filter((img) => isImageFileName(img))
+    .map((img) => ({
+      url: `${facturBaseUrl}${img}`,
+      type: "factur",
+    }));
+
+  return [...mainEntries, ...facturEntries];
+}
 
 function getOrientation(file, callback) {
   var reader = new FileReader();
@@ -1382,7 +1442,7 @@ function BillPriceWarningBanner({ count }) {
   );
 }
 
-function BillItemNameContent({ item }) {
+function BillItemNameContent({ item, showPriceWarnings = true }) {
   return (
     <Box>
       <div className="cell_as">
@@ -1396,7 +1456,7 @@ function BillItemNameContent({ item }) {
           </div>
         ))}
       </div>
-      {!item?.price_check?.isError ? null : (
+      {!showPriceWarnings || !item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
           <Box sx={billingPriceWarningChipSx}>Проверить ценник</Box>
           <Typography
@@ -1952,11 +2012,19 @@ const useStore = create((set, get) => ({
 
   openImageBill: (image, type) => {
     get().handleResize();
+    scrollToBillingCompareForm();
 
     console.log("type_type", type);
 
     set({
       modalDialog: true,
+      image,
+      openImgType: type,
+    });
+  },
+
+  setOpenedImage: (image, type) => {
+    set({
       image,
       openImgType: type,
     });
@@ -2871,6 +2939,7 @@ function FormHeader_new({ type_edit }) {
   return (
     <>
       <Grid
+        id={BILLING_COMPARE_FORM_ANCHOR_ID}
         size={{
           xs: 12,
           sm: 4,
@@ -3240,7 +3309,7 @@ function FormVendorItems() {
   );
 }
 
-function VendorItemsTableEdit() {
+function VendorItemsTableEdit({ showPriceWarnings = true }) {
   const [bill, type, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore((state) => [
     state.bill,
     state.type,
@@ -3276,7 +3345,7 @@ function VendorItemsTableEdit() {
           sm: 12,
         }}
       >
-        <BillPriceWarningBanner count={err_items.length} />
+        {!showPriceWarnings ? null : <BillPriceWarningBanner count={err_items.length} />}
         <TableContainer
           component={Paper}
           elevation={0}
@@ -3308,7 +3377,11 @@ function VendorItemsTableEdit() {
                 <React.Fragment key={key}>
                   {!item?.data_bill ? null : (
                     <TableRow
-                      sx={item?.price_check?.isError ? billingPriceWarningRowSx : undefined}
+                      sx={
+                        showPriceWarnings && item?.price_check?.isError
+                          ? billingPriceWarningRowSx
+                          : undefined
+                      }
                       draggable={draggable}
                       onDragStart={handleDrag}
                       onDrop={handleDrop}
@@ -3316,7 +3389,10 @@ function VendorItemsTableEdit() {
                       onDragOver={(ev) => ev.preventDefault()}
                     >
                       <TableCell rowSpan={2}>
-                        <BillItemNameContent item={item} />
+                        <BillItemNameContent
+                          item={item}
+                          showPriceWarnings={showPriceWarnings}
+                        />
                       </TableCell>
                       <TableCell>До</TableCell>
                       <TableCell>
@@ -3364,7 +3440,11 @@ function VendorItemsTableEdit() {
 
                   <TableRow
                     hover
-                    sx={item?.price_check?.isError ? billingPriceWarningRowSx : undefined}
+                    sx={
+                      showPriceWarnings && item?.price_check?.isError
+                        ? billingPriceWarningRowSx
+                        : undefined
+                    }
                     draggable={draggable}
                     onDragStart={handleDrag}
                     onDrop={handleDrop}
@@ -3373,7 +3453,10 @@ function VendorItemsTableEdit() {
                   >
                     {item?.data_bill ? null : (
                       <TableCell>
-                        <BillItemNameContent item={item} />
+                        <BillItemNameContent
+                          item={item}
+                          showPriceWarnings={showPriceWarnings}
+                        />
                       </TableCell>
                     )}
                     {!item?.data_bill ? null : <TableCell>После</TableCell>}
@@ -3554,7 +3637,7 @@ function VendorItemsTableEdit() {
   );
 }
 
-function VendorItemsTableView() {
+function VendorItemsTableView({ showPriceWarnings = true }) {
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3579,7 +3662,7 @@ function VendorItemsTableView() {
         sm: 12,
       }}
     >
-      <BillPriceWarningBanner count={err_items.length} />
+      {!showPriceWarnings ? null : <BillPriceWarningBanner count={err_items.length} />}
       <TableContainer
         component={Paper}
         elevation={0}
@@ -3608,9 +3691,18 @@ function VendorItemsTableView() {
             {bill_items.map((item, key) => (
               <React.Fragment key={key}>
                 {!item?.data_bill ? null : (
-                  <TableRow sx={item?.price_check?.isError ? billingPriceWarningRowSx : undefined}>
+                  <TableRow
+                    sx={
+                      showPriceWarnings && item?.price_check?.isError
+                        ? billingPriceWarningRowSx
+                        : undefined
+                    }
+                  >
                     <TableCell rowSpan={2}>
-                      <BillItemNameContent item={item} />
+                      <BillItemNameContent
+                        item={item}
+                        showPriceWarnings={showPriceWarnings}
+                      />
                     </TableCell>
                     <TableCell>До</TableCell>
                     <TableCell>
@@ -3645,11 +3737,18 @@ function VendorItemsTableView() {
 
                 <TableRow
                   hover
-                  sx={item?.price_check?.isError ? billingPriceWarningRowSx : undefined}
+                  sx={
+                    showPriceWarnings && item?.price_check?.isError
+                      ? billingPriceWarningRowSx
+                      : undefined
+                  }
                 >
                   {item?.data_bill ? null : (
                     <TableCell>
-                      <BillItemNameContent item={item} />
+                      <BillItemNameContent
+                        item={item}
+                        showPriceWarnings={showPriceWarnings}
+                      />
                     </TableCell>
                   )}
                   {!item?.data_bill ? null : <TableCell>После</TableCell>}
@@ -3709,7 +3808,7 @@ function VendorItemsTableView() {
   );
 }
 
-function VendorItemsTableView_min() {
+function VendorItemsTableView_min({ showPriceWarnings = true }) {
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3726,7 +3825,7 @@ function VendorItemsTableView_min() {
 
   return (
     <Box>
-      <BillPriceWarningBanner count={err_items.length} />
+      {!showPriceWarnings ? null : <BillPriceWarningBanner count={err_items.length} />}
       <TableContainer
         component={Paper}
         elevation={0}
@@ -3753,9 +3852,18 @@ function VendorItemsTableView_min() {
             {bill_items.map((item, key) => (
               <React.Fragment key={key}>
                 {!item?.data_bill ? null : (
-                  <TableRow sx={item?.price_check?.isError ? billingPriceWarningRowSx : undefined}>
+                  <TableRow
+                    sx={
+                      showPriceWarnings && item?.price_check?.isError
+                        ? billingPriceWarningRowSx
+                        : undefined
+                    }
+                  >
                     <TableCell rowSpan={2}>
-                      <BillItemNameContent item={item} />
+                      <BillItemNameContent
+                        item={item}
+                        showPriceWarnings={showPriceWarnings}
+                      />
                     </TableCell>
                     <TableCell>До</TableCell>
                     <TableCell>
@@ -3783,11 +3891,18 @@ function VendorItemsTableView_min() {
 
                 <TableRow
                   hover
-                  sx={item?.price_check?.isError ? billingPriceWarningRowSx : undefined}
+                  sx={
+                    showPriceWarnings && item?.price_check?.isError
+                      ? billingPriceWarningRowSx
+                      : undefined
+                  }
                 >
                   {item?.data_bill ? null : (
                     <TableCell>
-                      <BillItemNameContent item={item} />
+                      <BillItemNameContent
+                        item={item}
+                        showPriceWarnings={showPriceWarnings}
+                      />
                     </TableCell>
                   )}
                   {!item?.data_bill ? null : <TableCell>После</TableCell>}
@@ -5100,48 +5215,122 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
 // модалка просмотра фото/картинок документов
 const ZOOM_STEP = 0.2; // 0..1
 class Billing_Modal extends React.Component {
+  static imageStateCache = new Map();
+
+  getDefaultViewerState = () => ({
+    drag: { x: 0, y: 0 },
+    rotate: 0,
+    scaleX: 1,
+    scaleY: 1,
+    vertical: false,
+    horizontal: true,
+    initialScaleSet: false,
+  });
+
+  getImageCacheKey = (src) => String(src ?? "").split("?")[0];
+
+  getInitialViewerState = (imageSrc) => {
+    const cacheKey = this.getImageCacheKey(imageSrc);
+    const cached = Billing_Modal.imageStateCache.get(cacheKey);
+
+    if (!cached) {
+      return this.getDefaultViewerState();
+    }
+
+    return {
+      ...cached,
+      drag: cached?.drag ?? { x: 0, y: 0 },
+    };
+  };
+
   constructor(props) {
     super(props);
 
-    this.state = {
-      drag: { x: 0, y: 0 },
-      rotate: 0,
-      scaleX: 1,
-      scaleY: 1,
-      vertical: false,
-      horizontal: true,
-      initialScaleSet: false,
-    };
+    this.state = this.getInitialViewerState(props.image);
     this.containerRef = React.createRef();
   }
 
+  cacheViewerState = (imageSrc = this.props.image) => {
+    const cacheKey = this.getImageCacheKey(imageSrc);
+
+    if (!cacheKey.length) {
+      return;
+    }
+
+    Billing_Modal.imageStateCache.set(cacheKey, {
+      drag: this.state.drag,
+      rotate: this.state.rotate,
+      scaleX: this.state.scaleX,
+      scaleY: this.state.scaleY,
+      vertical: this.state.vertical,
+      horizontal: this.state.horizontal,
+      initialScaleSet: this.state.initialScaleSet,
+    });
+  };
+
+  getImageEntries = () => (Array.isArray(this.props.imageEntries) ? this.props.imageEntries : []);
+
+  getCurrentImageIndex = () => {
+    const currentImage = String(this.props.image ?? "");
+
+    return this.getImageEntries().findIndex((entry) => String(entry?.url ?? "") === currentImage);
+  };
+
+  goToImageByOffset = (offset) => {
+    const imageEntries = this.getImageEntries();
+
+    if (imageEntries.length <= 1 || !this.props.onNavigateImage) {
+      return;
+    }
+
+    const currentIndex = this.getCurrentImageIndex();
+    const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = safeCurrentIndex + offset;
+
+    if (nextIndex < 0 || nextIndex >= imageEntries.length) {
+      return;
+    }
+
+    const nextEntry = imageEntries[nextIndex];
+
+    if (!nextEntry?.url) {
+      return;
+    }
+
+    this.cacheViewerState();
+    this.props.onNavigateImage(nextEntry, nextIndex);
+  };
+
+  goToPrevImage = () => {
+    this.goToImageByOffset(-1);
+  };
+
+  goToNextImage = () => {
+    this.goToImageByOffset(1);
+  };
+
   componentDidMount() {
     window.addEventListener("keydown", this.handleKeyDown);
-    this.props.store.set_position(true, false);
+    this.props.store.set_position(this.state.horizontal, this.state.vertical);
+    scrollToBillingCompareForm();
     this.loadImageDimensions(this.props.image);
   }
 
   componentWillUnmount() {
     window.removeEventListener("keydown", this.handleKeyDown);
+    this.cacheViewerState();
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevProps.image !== this.props.image) {
-      this.setState(
-        {
-          drag: { x: 0, y: 0 },
-          rotate: 0,
-          scaleX: 1,
-          scaleY: 1,
-          vertical: false,
-          horizontal: true,
-          initialScaleSet: false,
-        },
-        () => {
-          this.props.store.set_position(true, false);
-          this.loadImageDimensions(this.props.image);
-        },
-      );
+    if (this.getImageCacheKey(prevProps.image) !== this.getImageCacheKey(this.props.image)) {
+      this.cacheViewerState(prevProps.image);
+
+      const nextViewerState = this.getInitialViewerState(this.props.image);
+
+      this.setState(nextViewerState, () => {
+        this.props.store.set_position(nextViewerState.horizontal, nextViewerState.vertical);
+        this.loadImageDimensions(this.props.image);
+      });
     }
 
     if (
@@ -5163,8 +5352,32 @@ class Billing_Modal extends React.Component {
   }
 
   handleKeyDown = (event) => {
+    const activeElement = document?.activeElement;
+    const activeTagName = String(activeElement?.tagName ?? "").toLowerCase();
+    const isTextEditing =
+      activeTagName === "input" ||
+      activeTagName === "textarea" ||
+      activeTagName === "select" ||
+      Boolean(activeElement?.isContentEditable);
+
     if (event.key === "Escape") {
       this.props.onClose();
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      if (!isTextEditing) {
+        event.preventDefault();
+        this.goToPrevImage();
+      }
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      if (!isTextEditing) {
+        event.preventDefault();
+        this.goToNextImage();
+      }
       return;
     }
 
@@ -5276,6 +5489,9 @@ class Billing_Modal extends React.Component {
     const nextVertical = !this.state.vertical;
 
     this.props.store.set_position(false, nextVertical);
+    if (nextVertical) {
+      scrollToBillingCompareForm();
+    }
 
     this.setState({
       vertical: nextVertical,
@@ -5287,6 +5503,9 @@ class Billing_Modal extends React.Component {
     const nextHorizontal = !this.state.horizontal;
 
     this.props.store.set_position(nextHorizontal, false);
+    if (nextHorizontal) {
+      scrollToBillingCompareForm();
+    }
 
     this.setState({
       horizontal: nextHorizontal,
@@ -5335,6 +5554,12 @@ class Billing_Modal extends React.Component {
   };
 
   render() {
+    const imageEntries = this.getImageEntries();
+    const currentImageIndex = this.getCurrentImageIndex();
+    const hasImageNavigation = imageEntries.length > 1;
+    const canGoPrev = hasImageNavigation && currentImageIndex > 0;
+    const canGoNext =
+      hasImageNavigation && currentImageIndex >= 0 && currentImageIndex < imageEntries.length - 1;
     const isSplitMode = this.state.vertical || this.state.horizontal;
     const viewerSx = isSplitMode
       ? this.state.vertical
@@ -5424,6 +5649,20 @@ class Billing_Modal extends React.Component {
             icon: <ZoomInIcon />,
             onClick: this.setZoomIn.bind(this),
           })}
+          {!hasImageNavigation
+            ? null
+            : this.renderActionButton({
+                label: "Предыдущее изображение",
+                icon: <ArrowBackIosNewIcon fontSize="small" />,
+                onClick: this.goToPrevImage,
+              })}
+          {!hasImageNavigation
+            ? null
+            : this.renderActionButton({
+                label: "Следующее изображение",
+                icon: <ArrowForwardIosIcon fontSize="small" />,
+                onClick: this.goToNextImage,
+              })}
           {this.renderActionButton({
             label: isSplitMode ? "Развернуть на весь экран" : "Сравнить с формой",
             icon: <HorizontalSplitIcon />,
@@ -5485,6 +5724,66 @@ class Billing_Modal extends React.Component {
                   "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 16%, rgba(255,255,255,0.03) 100%)",
               }}
             />
+            {!hasImageNavigation ? null : (
+              <>
+                <IconButton
+                  onClick={this.goToPrevImage}
+                  disabled={!canGoPrev}
+                  sx={{
+                    position: "absolute",
+                    left: { xs: 8, md: 14 },
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 1002,
+                    width: 44,
+                    height: 78,
+                    borderRadius: "16px",
+                    backgroundColor: "rgba(15, 23, 42, 0.42)",
+                    color: "#fff",
+                    pointerEvents: "auto",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    "&:hover": {
+                      backgroundColor: "rgba(15, 23, 42, 0.62)",
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(255,255,255,0.38)",
+                      backgroundColor: "rgba(15, 23, 42, 0.26)",
+                      borderColor: "rgba(255,255,255,0.08)",
+                    },
+                  }}
+                >
+                  <ArrowBackIosNewIcon />
+                </IconButton>
+                <IconButton
+                  onClick={this.goToNextImage}
+                  disabled={!canGoNext}
+                  sx={{
+                    position: "absolute",
+                    right: { xs: 8, md: 14 },
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    zIndex: 1002,
+                    width: 44,
+                    height: 78,
+                    borderRadius: "16px",
+                    backgroundColor: "rgba(15, 23, 42, 0.42)",
+                    color: "#fff",
+                    pointerEvents: "auto",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    "&:hover": {
+                      backgroundColor: "rgba(15, 23, 42, 0.62)",
+                    },
+                    "&.Mui-disabled": {
+                      color: "rgba(255,255,255,0.38)",
+                      backgroundColor: "rgba(15, 23, 42, 0.26)",
+                      borderColor: "rgba(255,255,255,0.08)",
+                    },
+                  }}
+                >
+                  <ArrowForwardIosIcon />
+                </IconButton>
+              </>
+            )}
             <DraggableImage
               scaleX={this.state.scaleX}
               scaleY={this.state.scaleY}
@@ -6891,12 +7190,15 @@ class Billing_Edit_ extends React.Component {
       bill_list,
       bill_items,
       imgs_bill,
+      imgs_factur,
       comment_bux,
       vendor_itemsCopy,
       point,
       is_horizontal,
       is_vertical,
       type,
+      doc_base_id,
+      setOpenedImage,
     } = this.props.store;
 
     const storedOcrImagesCount = (imgs_bill ?? []).filter((fileName) =>
@@ -6907,6 +7209,14 @@ class Billing_Edit_ extends React.Component {
     const photoMode = getBillingSectionMode(acces, "photo");
     const itemsMode = getBillingSectionMode(acces, "items");
     const footerMode = getBillingSectionMode(acces, "footer");
+    const isImageCompareMode = modalDialog && (is_horizontal || is_vertical);
+    const viewerImageEntries = getBillingViewerImageEntries({
+      typeDoc: this.state.type_doc,
+      type,
+      docBaseId: doc_base_id,
+      imgsBill: imgs_bill,
+      imgsFactur: imgs_factur,
+    });
 
     const actionButtons = [
       hasBillingActionAccess(acces, "only_delete")
@@ -7024,6 +7334,8 @@ class Billing_Edit_ extends React.Component {
             store={this.props.store}
             delImg={this.delImg.bind(this)}
             isDelImg={hasBillingActionAccess(acces, "del_img")}
+            imageEntries={viewerImageEntries}
+            onNavigateImage={(entry) => setOpenedImage(entry?.url, entry?.type)}
           />
         )}
         <MyAlert
@@ -7665,16 +7977,19 @@ class Billing_Edit_ extends React.Component {
             mb: 4,
           }}
         >
-          <BillingPageHero
-            onBack={this.returnFN.bind(this)}
-            title={bill?.number ? `Документ №${bill.number}` : "Редактирование документа"}
-          />
+          {isImageCompareMode ? null : (
+            <BillingPageHero
+              onBack={this.returnFN.bind(this)}
+              title={bill?.number ? `Документ №${bill.number}` : "Редактирование документа"}
+            />
+          )}
 
           {headerMode === "hidden" ? null : (
             <BillingSection
               eyebrow={headerEyebrow}
               title="Реквизиты документа"
               description="Проверь кафе, тип документа, номер, даты и связанные реквизиты перед сохранением."
+              hideHeader={isImageCompareMode}
             >
               <FormHeader_new
                 type_doc={this.state.type_doc}
@@ -7684,7 +7999,7 @@ class Billing_Edit_ extends React.Component {
             </BillingSection>
           )}
 
-          {photoMode === "hidden" ? null : (
+          {isImageCompareMode || photoMode === "hidden" ? null : (
             <BillingSection
               eyebrow={photoEyebrow}
               title="Файлы документа"
@@ -7710,32 +8025,44 @@ class Billing_Edit_ extends React.Component {
 
           {itemsMode === "edit" ? (
             <>
-              <BillingSection
-                eyebrow={itemsFormEyebrow}
-                title="Подбор товара поставщика"
-                description="Найди товар поставщика, выбери упаковку и добавь строку вручную, если нужно скорректировать документ."
-              >
-                <FormVendorItems />
-              </BillingSection>
+              {isImageCompareMode ? null : (
+                <BillingSection
+                  eyebrow={itemsFormEyebrow}
+                  title="Подбор товара поставщика"
+                  description="Найди товар поставщика, выбери упаковку и добавь строку вручную, если нужно скорректировать документ."
+                >
+                  <FormVendorItems />
+                </BillingSection>
+              )}
               <BillingSection
                 eyebrow={itemsTableEyebrow}
                 title="Товары в документе"
-                description="Проверь упаковку, суммы и предупреждения по ценнику. Изменения сравниваются с исходной накладной."
+                description={
+                  isImageCompareMode
+                    ? "Сверь строки документа с изображением и проверь ключевые суммы."
+                    : "Проверь упаковку, суммы и предупреждения по ценнику. Изменения сравниваются с исходной накладной."
+                }
+                hideHeader={isImageCompareMode}
               >
-                <VendorItemsTableEdit />
+                <VendorItemsTableEdit showPriceWarnings={!isImageCompareMode} />
               </BillingSection>
             </>
           ) : itemsMode === "show" ? (
             <BillingSection
               eyebrow={itemsViewEyebrow}
               title="Товары в документе"
-              description="Ниже показан текущий состав накладной и расхождения относительно исходных данных."
+              description={
+                isImageCompareMode
+                  ? "Сверь строки документа с изображением и проверь ключевые суммы."
+                  : "Ниже показан текущий состав накладной и расхождения относительно исходных данных."
+              }
+              hideHeader={isImageCompareMode}
             >
-              <VendorItemsTableView />
+              <VendorItemsTableView showPriceWarnings={!isImageCompareMode} />
             </BillingSection>
           ) : null}
 
-          {footerMode === "hidden" ? null : (
+          {isImageCompareMode || footerMode === "hidden" ? null : (
             <BillingSection
               eyebrow={footerEyebrow}
               title="Комментарии и приёмка"
@@ -7749,24 +8076,27 @@ class Billing_Edit_ extends React.Component {
             </BillingSection>
           )}
 
-          <BillingSection
-            eyebrow="История"
-            title="История документа"
-            description="В этом блоке можно посмотреть предыдущие версии накладной и изменения по товарам."
-          >
-            <Billing_Accordion
-              bill_list={bill_list}
-              bill_items={bill_items}
-              bill_type={type}
-              type="edit"
-            />
-          </BillingSection>
+          {isImageCompareMode ? null : (
+            <BillingSection
+              eyebrow="История"
+              title="История документа"
+              description="В этом блоке можно посмотреть предыдущие версии накладной и изменения по товарам."
+            >
+              <Billing_Accordion
+                bill_list={bill_list}
+                bill_items={bill_items}
+                bill_type={type}
+                type="edit"
+              />
+            </BillingSection>
+          )}
 
           {!actionButtons.length ? null : (
             <BillingSection
               eyebrow="Действия"
               title="Операции с документом"
               description="Выбери действие в зависимости от статуса накладной: сохранить, отправить дальше по процессу или вернуть на корректировку."
+              hideHeader={isImageCompareMode}
             >
               <Grid
                 size={{

@@ -139,7 +139,8 @@ export const buildVendorPayload = (vendor, mode) => {
 export const buildVendorCitiesPayload = (vendorCities) =>
   (vendorCities || [])
     .map((city) => ({ id: Number(city.id) }))
-    .filter((city) => Number(city.id) > 0);
+    .filter((city) => Number(city.id) > 0)
+    .sort((a, b) => Number(a.id) - Number(b.id));
 
 export const buildMailsPayload = (mails) =>
   (mails || [])
@@ -149,7 +150,22 @@ export const buildMailsPayload = (mails) =>
       point_id: Number(mail.point_id.id),
       mail: mail.mail.trim(),
       comment: mail.comment?.trim() || "",
-    }));
+    }))
+    .sort((a, b) => {
+      const pointDifference = Number(a.point_id) - Number(b.point_id);
+
+      if (pointDifference !== 0) {
+        return pointDifference;
+      }
+
+      const mailDifference = a.mail.localeCompare(b.mail, "ru");
+
+      if (mailDifference !== 0) {
+        return mailDifference;
+      }
+
+      return a.comment.localeCompare(b.comment, "ru");
+    });
 
 export const buildVendorItemsPayload = (items) =>
   (items || []).map((item, index) => ({

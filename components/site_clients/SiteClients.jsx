@@ -424,7 +424,7 @@ export default function SiteClients() {
 
   const TAB_CONFIG = [
     {
-      key: "search_clients",
+      key: "find_clients",
       name: "Поиск клиентов",
       component: (
         <Clients
@@ -435,7 +435,7 @@ export default function SiteClients() {
       ),
     },
     {
-      key: "find_clients",
+      key: "search_clients",
       name: "Поиск клиента",
       component: (
         <Client

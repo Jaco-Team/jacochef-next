@@ -212,6 +212,14 @@ export default class SiteClients_Modal_Client extends React.Component {
       login_sms,
       login_yandex,
     } = this.props;
+    const ordersFromProps = Array.isArray(orders) ? orders : [];
+    const ordersFromItem = Array.isArray(item?.client_orders)
+      ? item.client_orders
+      : Array.isArray(item?.orders)
+        ? item.orders
+        : [];
+    const orderRows = ordersFromProps.length ? ordersFromProps : ordersFromItem;
+    const canViewOrders = Boolean(acces?.view_orders_access) || orderRows.length > 0;
 
     return (
       <>
@@ -508,7 +516,7 @@ export default class SiteClients_Modal_Client extends React.Component {
             {/* О клиенте */}
 
             {/* Заказы */}
-            {!!acces?.view_orders_access && (
+            {canViewOrders && (
               <Grid size={12}>
                 <TabPanel
                   value={this.state.activeTab}
@@ -534,25 +542,40 @@ export default class SiteClients_Modal_Client extends React.Component {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {orders?.map((item, key) => (
-                          <TableRow
-                            hover
-                            key={key}
-                            onClick={openClientOrder.bind(this, item.order_id, item.point_id)}
-                            style={{
-                              cursor: "pointer",
-                              backgroundColor: parseInt(item.is_delete) ? "rgb(204, 0, 51)" : null,
-                            }}
-                            sx={{ "& td": { color: parseInt(item.is_delete) ? "#fff" : "#000" } }}
-                          >
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell>{item.point}</TableCell>
-                            <TableCell>{item.new_type_order}</TableCell>
-                            <TableCell>{item.date_time}</TableCell>
-                            <TableCell>{`#${item.order_id}`}</TableCell>
-                            <TableCell>{`${item.summ} р.`}</TableCell>
-                          </TableRow>
-                        ))}
+                        {orderRows?.map((row, key) => {
+                          const orderId = row?.order_id ?? row?.id;
+                          const pointId = row?.point_id ?? row?.pointId;
+                          const pointName = row?.point ?? row?.point_name ?? row?.point_addr ?? "—";
+                          const orderType = row?.new_type_order ?? row?.type_order ?? "—";
+                          const orderDate = row?.date_time ?? row?.order_date_time ?? "—";
+                          const orderSumm = row?.summ ?? row?.sum ?? 0;
+                          const isDelete = parseInt(row?.is_delete);
+                          const canOpenOrder = Boolean(orderId && pointId);
+
+                          return (
+                            <TableRow
+                              hover
+                              key={key}
+                              onClick={
+                                canOpenOrder
+                                  ? openClientOrder.bind(this, orderId, pointId)
+                                  : undefined
+                              }
+                              style={{
+                                cursor: canOpenOrder ? "pointer" : "default",
+                                backgroundColor: isDelete ? "rgb(204, 0, 51)" : null,
+                              }}
+                              sx={{ "& td": { color: isDelete ? "#fff" : "#000" } }}
+                            >
+                              <TableCell>{key + 1}</TableCell>
+                              <TableCell>{pointName}</TableCell>
+                              <TableCell>{orderType}</TableCell>
+                              <TableCell>{orderDate}</TableCell>
+                              <TableCell>{orderId ? `#${orderId}` : "—"}</TableCell>
+                              <TableCell>{`${orderSumm} р.`}</TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </TableContainer>

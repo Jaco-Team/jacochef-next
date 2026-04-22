@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function useSortTable(data, defaultColumn = "id") {
+export default function useSortTable(data, defaultColumn = "id", defaultOrder = "desc") {
   const safeData = Array.isArray(data) ? [...data] : [];
 
   if (!safeData) {
@@ -11,7 +11,7 @@ export default function useSortTable(data, defaultColumn = "id") {
   }
 
   const [orderBy, setOrderBy] = useState(defaultColumn);
-  const [order, setOrder] = useState("desc");
+  const [order, setOrder] = useState(defaultOrder);
 
   const handleSort = (field) => {
     const isAsc = orderBy === field && order === "asc";

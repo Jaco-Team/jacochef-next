@@ -83,7 +83,12 @@ function SettingValueRow({ checked, label }) {
   );
 }
 
-export default function TabInfo({ canEdit, onToggleVendorField, onToggleVendorActive }) {
+export default function TabInfo({
+  canEdit,
+  onToggleVendorField,
+  onToggleVendorActive,
+  withConfirm,
+}) {
   const { overviewCardsMap, vendor } = useVendorOverviewView();
 
   if (!vendor) {
@@ -114,25 +119,34 @@ export default function TabInfo({ canEdit, onToggleVendorField, onToggleVendorAc
                 <SettingRow
                   checked={Boolean(Number(vendor.is_show))}
                   disabled={!canEdit}
-                  onChange={onToggleVendorActive}
+                  onChange={withConfirm(onToggleVendorActive, "Изменить активность поставщика?")}
                   label="Активность"
                 />
                 <SettingRow
                   checked={Boolean(Number(vendor.bill_ex))}
                   disabled={!canEdit}
-                  onChange={() => onToggleVendorField("bill_ex")}
+                  onChange={withConfirm(
+                    () => onToggleVendorField("bill_ex"),
+                    "Изменить работу по счетам?",
+                  )}
                   label="Работа по счетам"
                 />
                 <SettingRow
                   checked={Boolean(Number(vendor.need_img_bill_ex))}
                   disabled={!canEdit}
-                  onChange={() => onToggleVendorField("need_img_bill_ex")}
+                  onChange={withConfirm(
+                    () => onToggleVendorField("need_img_bill_ex"),
+                    "Изменить необходимость картинки накладной?",
+                  )}
                   label="Необходима картинка накладной"
                 />
                 <SettingRow
                   checked={Boolean(Number(vendor.is_priority))}
                   disabled={!canEdit}
-                  onChange={() => onToggleVendorField("is_priority")}
+                  onChange={withConfirm(
+                    () => onToggleVendorField("is_priority"),
+                    "Изменить приоритетность поставщика?",
+                  )}
                   label="Приоритетный поставщик"
                 />
               </FormGroup>
