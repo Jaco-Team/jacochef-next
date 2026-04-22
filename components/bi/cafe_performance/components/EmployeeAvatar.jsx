@@ -28,12 +28,13 @@ const pickColor = (seed) => {
   return COLORS[hash % COLORS.length];
 };
 
-export default function EmployeeAvatar({ name, size = 32 }) {
+export default function EmployeeAvatar({ name, size = 32, src = "" }) {
   const initials = getInitials(name);
   const color = pickColor(name || "");
 
   return (
     <Avatar
+      src={src || undefined}
       sx={{
         width: size,
         height: size,

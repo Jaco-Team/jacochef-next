@@ -3,7 +3,7 @@
 import { Box, Card, Stack, Typography } from "@mui/material";
 import { CP_PADDING, CP_RADIUS, CP_SPACE } from "../layout";
 
-export default function SectionCard({ title, subtitle, action, children, contentSx }) {
+export default function SectionCard({ title, subtitle, action, children }) {
   const hasHeader = Boolean(title || subtitle || action);
 
   return (
@@ -23,7 +23,6 @@ export default function SectionCard({ title, subtitle, action, children, content
           gap: CP_SPACE.group,
           flex: 1,
           p: CP_PADDING.panel,
-          ...contentSx,
         }}
       >
         {hasHeader ? (

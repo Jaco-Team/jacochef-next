@@ -7,6 +7,12 @@ import {
   DialogActions,
   DialogContent,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import MyModal from "@/ui/MyModal";
@@ -30,128 +36,81 @@ const getStabilityTone = (value) => {
   return "danger";
 };
 
-function DetailMetric({ label, value, accent = "text.primary" }) {
-  return (
-    <Stack spacing={CP_SPACE.micro}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 600 }}
-      >
-        {label}
-      </Typography>
-      <Typography
-        variant="subtitle2"
-        sx={{ fontWeight: 700, color: accent }}
-      >
-        {value}
-      </Typography>
-    </Stack>
-  );
-}
-
 function StageMetricRow({ stage, formatters }) {
   const slaTone = getSlaTone(stage?.sla);
   const stabilityTone = getStabilityTone(stage?.stability);
 
   return (
-    <Box
-      sx={{
-        borderRadius: CP_RADIUS.card,
-        backgroundColor: "background.paper",
-        px: CP_PADDING.card,
-        py: CP_PADDING.card,
-      }}
-    >
-      <Stack spacing={CP_SPACE.component}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          spacing={CP_SPACE.component}
+    <TableRow hover>
+      <TableCell align="left">
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 600 }}
         >
-          <Stack spacing={CP_SPACE.micro}>
-            <Typography
-              variant="subtitle2"
-              sx={{ fontWeight: 700 }}
-            >
-              {stage?.stage_name || "—"}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-            >
-              {stage?.stage_type || "—"}
-            </Typography>
-          </Stack>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
-            {formatters.integer(stage?.sample_size)} заказов
-          </Typography>
-        </Stack>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(2, minmax(0, 1fr))",
-              sm: "repeat(5, minmax(0, 1fr))",
-            },
-            gap: CP_SPACE.component,
-          }}
+          {stage?.stage_name || "—"}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 700 }}
         >
-          <DetailMetric
-            label="P50"
-            value={formatters.duration(stage?.p50)}
-          />
-          <DetailMetric
-            label="P90"
-            value={formatters.duration(stage?.p90)}
-          />
-          <Stack spacing={CP_SPACE.micro}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 600 }}
-            >
-              SLA
-            </Typography>
-            <Box>
-              <SlaChip
-                value={stage?.sla}
-                formatter={formatters.percent}
-              />
-            </Box>
-          </Stack>
-          <DetailMetric
-            label="Стабильность"
-            value={formatters.percent(stage?.stability)}
-            accent={TONE_COLOR[stabilityTone]}
-          />
-          <DetailMetric
-            label="Длинные"
-            value={formatters.percent(stage?.share_long_stage_percent)}
-            accent={TONE_COLOR[slaTone]}
+          {formatters.duration(stage?.p50)}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+        >
+          {formatters.duration(stage?.p90)}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <SlaChip
+            value={stage?.sla}
+            formatter={formatters.percent}
           />
         </Box>
-      </Stack>
-    </Box>
+      </TableCell>
+      <TableCell align="center">
+        <Typography
+          variant="body2"
+          sx={{ color: TONE_COLOR[stabilityTone], fontWeight: 700 }}
+        >
+          {formatters.percent(stage?.stability)}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        <Typography
+          variant="body2"
+          sx={{ color: TONE_COLOR[slaTone], fontWeight: 700 }}
+        >
+          {formatters.percent(stage?.share_long_stage_percent)}
+        </Typography>
+      </TableCell>
+      <TableCell align="center">
+        <Typography
+          variant="body2"
+          color="text.secondary"
+        >
+          {formatters.integer(stage?.sample_size)}
+        </Typography>
+      </TableCell>
+    </TableRow>
   );
 }
 
 export default function EmployeeDetailsModal({ open, onClose, loading, data, formatters }) {
   const employeeName = data?.employee?.employee_name || data?.summary?.employee_name || "Сотрудник";
-  const summary = data?.summary || null;
   const stages = data?.stages || [];
-  const stabilityTone = getStabilityTone(summary?.stability);
+  const imageUrl = data?.employee?.user_image || "";
 
   return (
     <MyModal
       open={open}
       onClose={onClose}
-      title={employeeName}
       maxWidth="md"
     >
       <DialogContent
@@ -169,7 +128,7 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
           >
             <CircularProgress size={28} />
           </Stack>
-        ) : summary ? (
+        ) : employeeName ? (
           <Stack spacing={CP_SPACE.group}>
             <Box
               sx={{
@@ -187,7 +146,8 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
                 >
                   <EmployeeAvatar
                     name={employeeName}
-                    size={48}
+                    size={56}
+                    src={imageUrl}
                   />
                   <Stack spacing={CP_SPACE.micro}>
                     <Typography
@@ -200,78 +160,55 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
                       variant="body2"
                       color="text.secondary"
                     >
-                      Этап: {summary?.stage_name || summary?.stage_type || "—"}
+                      Детализация по этапам за выбранный период
                     </Typography>
                   </Stack>
                 </Stack>
-
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: {
-                      xs: "repeat(2, minmax(0, 1fr))",
-                      sm: "repeat(5, minmax(0, 1fr))",
-                    },
-                    gap: CP_SPACE.component,
-                  }}
-                >
-                  <DetailMetric
-                    label="P50"
-                    value={formatters.duration(summary?.p50)}
-                  />
-                  <DetailMetric
-                    label="P90"
-                    value={formatters.duration(summary?.p90)}
-                  />
-                  <Stack spacing={CP_SPACE.micro}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 600 }}
-                    >
-                      SLA
-                    </Typography>
-                    <Box>
-                      <SlaChip
-                        value={summary?.sla}
-                        formatter={formatters.percent}
-                      />
-                    </Box>
-                  </Stack>
-                  <DetailMetric
-                    label="Стабильность"
-                    value={formatters.percent(summary?.stability)}
-                    accent={TONE_COLOR[stabilityTone]}
-                  />
-                  <DetailMetric
-                    label="Заказов"
-                    value={formatters.integer(summary?.sample_size)}
-                  />
-                </Box>
               </Stack>
             </Box>
 
             <Stack spacing={CP_SPACE.related}>
               <Typography
                 variant="subtitle2"
-                sx={{ fontWeight: 700, color: "primary.main" }}
+                sx={{ fontWeight: 700 }}
               >
-                Все этапы сотрудника
+                Все этапы
               </Typography>
-              <Stack spacing={CP_SPACE.component}>
+              <Box
+                sx={{
+                  borderRadius: CP_RADIUS.card,
+                  backgroundColor: "background.paper",
+                  overflow: "hidden",
+                }}
+              >
                 {stages.length ? (
-                  stages.map((stage) => (
-                    <StageMetricRow
-                      key={`${stage.stage_type}-${stage.employee_id}`}
-                      stage={stage}
-                      formatters={formatters}
-                    />
-                  ))
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell align="center">Этап</TableCell>
+                          <TableCell align="center">P50</TableCell>
+                          <TableCell align="center">P90</TableCell>
+                          <TableCell align="center">SLA</TableCell>
+                          <TableCell align="center">Стабильность</TableCell>
+                          <TableCell align="center">Длинные</TableCell>
+                          <TableCell align="center">Заказов</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {stages.map((stage) => (
+                          <StageMetricRow
+                            key={`${stage.stage_type}-${stage.employee_id}`}
+                            stage={stage}
+                            formatters={formatters}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 ) : (
                   <Box
                     sx={{
-                      borderRadius: CP_RADIUS.card,
-                      backgroundColor: "background.paper",
                       px: CP_PADDING.card,
                       py: CP_PADDING.card,
                     }}
@@ -284,7 +221,7 @@ export default function EmployeeDetailsModal({ open, onClose, loading, data, for
                     </Typography>
                   </Box>
                 )}
-              </Stack>
+              </Box>
             </Stack>
           </Stack>
         ) : null}
