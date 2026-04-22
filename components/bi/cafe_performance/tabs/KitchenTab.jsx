@@ -135,11 +135,9 @@ export default function KitchenTab({
   onCategoryApply,
   onEmployeeOpen,
 }) {
-  if (!data) return <EmptyState />;
-
-  const summary = data.stage_summary || {};
-  const cards = data.best_employee_cards || [];
-  const rows = data.employee_table || [];
+  const summary = data?.stage_summary || {};
+  const cards = data?.best_employee_cards || [];
+  const rows = data?.employee_table || [];
   const [sortBy, setSortBy] = useState("p50");
   const [sortDirection, setSortDirection] = useState("asc");
   const [draftCategoryIds, setDraftCategoryIds] = useState(filters.category_ids || []);
@@ -195,6 +193,8 @@ export default function KitchenTab({
     }
     return `P50: ${formatters.duration(item.value)}`;
   };
+
+  if (!data) return <EmptyState />;
 
   return (
     <Box

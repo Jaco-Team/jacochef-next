@@ -60,10 +60,8 @@ const formatCardValue = (variant, item, formatters) => {
 };
 
 export default function LeadersTab({ data, formatters }) {
-  if (!data) return <EmptyState />;
-
-  const topCards = data.top_employee_cards || [];
-  const ranking = data.cafe_ranking || [];
+  const topCards = data?.top_employee_cards || [];
+  const ranking = data?.cafe_ranking || [];
   const [sortBy, setSortBy] = useState("score");
   const [sortDirection, setSortDirection] = useState("desc");
 
@@ -82,6 +80,8 @@ export default function LeadersTab({ data, formatters }) {
     setSortBy(field);
     setSortDirection(field === "point_name" ? "asc" : "desc");
   };
+
+  if (!data) return <EmptyState />;
 
   return (
     <Stack spacing={CP_SPACE.section}>

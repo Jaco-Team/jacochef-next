@@ -298,11 +298,9 @@ function AnomalyBar({ value, max }) {
 }
 
 export default function QualityTab({ data, formatters }) {
-  if (!data) return <EmptyState />;
-
-  const summary = data.summary || {};
-  const complaintsByCategory = data.complaints_by_category || [];
-  const anomalies = data.anomalies_by_stage_category || [];
+  const summary = data?.summary || {};
+  const complaintsByCategory = data?.complaints_by_category || [];
+  const anomalies = data?.anomalies_by_stage_category || [];
 
   const [sortBy, setSortBy] = useState("share_long_stage_percent");
   const [sortDirection, setSortDirection] = useState("desc");
@@ -331,6 +329,8 @@ export default function QualityTab({ data, formatters }) {
     setSortBy(field);
     setSortDirection(field === "stage_type" || field === "category_name" ? "asc" : "desc");
   };
+
+  if (!data) return <EmptyState />;
 
   return (
     <Stack spacing={CP_SPACE.section}>

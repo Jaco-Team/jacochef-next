@@ -26,11 +26,9 @@ export default function DashboardTab({
   orderTypes,
   orderTypeNameMap,
 }) {
-  if (!data) return <EmptyState />;
-
-  const summary = data.summary || {};
-  const categoryCards = data.category_cards || [];
-  const channelSummary = sortByOrderTypes(data.channel_summary || [], orderTypes);
+  const summary = data?.summary || {};
+  const categoryCards = data?.category_cards || [];
+  const channelSummary = sortByOrderTypes(data?.channel_summary || [], orderTypes);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [activeLegend, setActiveLegend] = useState(null);
   const generatedLabel = generatedAt
@@ -63,6 +61,8 @@ export default function DashboardTab({
   const openMetricLegend = (metricId) => setActiveLegend(metricConfigs[metricId] || null);
   const openCategoryLegend = (item) =>
     setActiveLegend(buildCategoryLegendMetric({ item, formatters }));
+
+  if (!data) return <EmptyState />;
 
   return (
     <>
