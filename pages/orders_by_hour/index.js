@@ -85,22 +85,22 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.hour}:00
                 </Typography>
               </Box>
-
-              <Box sx={{ mb: 1.5 }}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Дата:
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 500 }}
-                >
-                  {data.date}
-                </Typography>
-              </Box>
-
+              {data.date != "Invalid Date" ? (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    Дата:
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {data.date}
+                  </Typography>
+                </Box>
+              ) : null}
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -115,7 +115,6 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.metricName}
                 </Typography>
               </Box>
-
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -130,7 +129,6 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.currentValue}
                 </Typography>
               </Box>
-
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -145,7 +143,6 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.prevValue}
                 </Typography>
               </Box>
-
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -167,21 +164,22 @@ const DetailModal = ({ open, onClose, data }) => {
             </>
           ) : (
             <>
-              <Box sx={{ mb: 1.5 }}>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Дата:
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 500 }}
-                >
-                  {data.date}
-                </Typography>
-              </Box>
-
+              {data.date != "Invalid Date" ? (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    Дата:
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {data.date}
+                  </Typography>
+                </Box>
+              ) : null}
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -196,7 +194,6 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.metricName}
                 </Typography>
               </Box>
-
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -211,7 +208,6 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.totalValue}
                 </Typography>
               </Box>
-
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -247,26 +243,20 @@ const DetailModal = ({ open, onClose, data }) => {
   );
 };
 
-const HeatmapCell = ({ value, hourData, metricKey, settings, onClick }) => {
+const HeatmapCell = ({ value, hourData, metricKey, settings, onClick, metrickId, tabValue }) => {
   const settingsObj = settings.reduce((acc, item) => ({ ...acc, [item.percent]: item.color }), {});
 
-  // Функция для получения имени метрики
   const getMetricName = () => {
-    switch (metricKey) {
-      case "count_orders_percent":
-        return "Оформленные заказы";
-      case "count_rolls_percent":
-        return "Роллы";
-      case "count_pizza_percent":
-        return "Пицца";
-      case "ready_orders_percent":
-        return "Завершенные заказы";
-      case "ready_rolls_percent":
-        return "Готовые роллы";
-      case "ready_pizza_percent":
-        return "Готовая пицца";
+    const isReady = metrickId === 2;
+    switch (tabValue) {
+      case 0:
+        return isReady ? "Завершенные заказы" : "Оформленные заказы";
+      case 1:
+        return isReady ? "Готовые роллы" : "Роллы";
+      case 2:
+        return isReady ? "Готовая пицца" : "Пицца";
       default:
-        return "Оформленные заказы";
+        return isReady ? "Завершенные заказы" : "Оформленные заказы";
     }
   };
 
@@ -274,13 +264,10 @@ const HeatmapCell = ({ value, hourData, metricKey, settings, onClick }) => {
     const percentages = Object.keys(settingsObj)
       .map(Number)
       .sort((a, b) => a - b);
-
     if (!percentages.length) return "#81c784";
-
     if (val <= percentages[0]) return settingsObj[percentages[0]];
     if (val >= percentages[percentages.length - 1])
       return settingsObj[percentages[percentages.length - 1]];
-
     if (val < 0) {
       const found = percentages.filter((p) => p <= val).pop();
       return settingsObj[found] ?? "#81c784";
@@ -300,76 +287,36 @@ const HeatmapCell = ({ value, hourData, metricKey, settings, onClick }) => {
 
   let deltaValue = 0;
   if (hourData) {
-    switch (metricKey) {
-      case "count_orders_percent":
-        deltaValue = hourData.count_orders_delta || 0;
-        break;
-      case "count_rolls_percent":
-        deltaValue = hourData.count_rolls_delta || 0;
-        break;
-      case "count_pizza_percent":
-        deltaValue = hourData.count_pizza_delta || 0;
-        break;
-      case "ready_orders_percent":
-        deltaValue = hourData.ready_orders_delta || 0;
-        break;
-      case "ready_rolls_percent":
-        deltaValue = hourData.ready_rolls_delta || 0;
-        break;
-      case "ready_pizza_percent":
-        deltaValue = hourData.ready_pizza_delta || 0;
-        break;
-      default:
-        deltaValue = hourData.count_orders_delta || 0;
-    }
+    const deltaMap = {
+      count_orders_percent: "count_orders_delta",
+      count_rolls_percent: "count_rolls_delta",
+      count_pizza_percent: "count_pizza_delta",
+      ready_orders_percent: "ready_orders_delta",
+      ready_rolls_percent: "ready_rolls_delta",
+      ready_pizza_percent: "ready_pizza_delta",
+    };
+    deltaValue = hourData[deltaMap[metricKey]] || 0;
   }
 
   const displayValue =
     deltaValue !== 0 ? (deltaValue > 0 ? `+${deltaValue}` : `${deltaValue}`) : "0";
 
   const handleClick = (e) => {
-    e.stopPropagation(); // Предотвращаем всплытие события
+    e.stopPropagation();
+    if (!onClick || !hourData) return;
 
-    if (!onClick) return;
+    const valueMap = {
+      count_orders_percent: { cur: "count_orders", prev: "count_orders_prev" },
+      count_rolls_percent: { cur: "count_rolls", prev: "count_rolls_prev" },
+      count_pizza_percent: { cur: "count_pizza", prev: "count_pizza_prev" },
+      ready_orders_percent: { cur: "ready_orders", prev: "ready_orders_prev" },
+      ready_rolls_percent: { cur: "ready_rolls", prev: "ready_rolls_prev" },
+      ready_pizza_percent: { cur: "ready_pizza", prev: "ready_pizza_prev" },
+    };
 
-    // Если нет hourData, не открываем модалку
-    if (!hourData) {
-      console.warn("No hourData available for this cell");
-      return;
-    }
-
-    let currentValue = 0;
-    let prevValue = 0;
-
-    switch (metricKey) {
-      case "count_orders_percent":
-        currentValue = hourData.count_orders || 0;
-        prevValue = hourData.count_orders_prev || 0;
-        break;
-      case "count_rolls_percent":
-        currentValue = hourData.count_rolls || 0;
-        prevValue = hourData.count_rolls_prev || 0;
-        break;
-      case "count_pizza_percent":
-        currentValue = hourData.count_pizza || 0;
-        prevValue = hourData.count_pizza_prev || 0;
-        break;
-      case "ready_orders_percent":
-        currentValue = hourData.ready_orders || 0;
-        prevValue = hourData.ready_orders_prev || 0;
-        break;
-      case "ready_rolls_percent":
-        currentValue = hourData.ready_rolls || 0;
-        prevValue = hourData.ready_rolls_prev || 0;
-        break;
-      case "ready_pizza_percent":
-        currentValue = hourData.ready_pizza || 0;
-        prevValue = hourData.ready_pizza_prev || 0;
-        break;
-      default:
-        currentValue = hourData.count_orders || 0;
-        prevValue = hourData.count_orders_prev || 0;
-    }
+    const fields = valueMap[metricKey] || { cur: "count_orders", prev: "count_orders_prev" };
+    const currentValue = hourData[fields.cur] || 0;
+    const prevValue = hourData[fields.prev] || 0;
 
     onClick({
       type: "hour",
@@ -420,11 +367,9 @@ const TotalCell = ({ value, delta, settings, onClick, date, metricName }) => {
     const percentages = Object.keys(settingsObj)
       .map(Number)
       .sort((a, b) => a - b);
-
     if (val <= percentages[0]) return settingsObj[percentages[0]];
     if (val >= percentages[percentages.length - 1])
       return settingsObj[percentages[percentages.length - 1]];
-
     if (val < 0) {
       const found = percentages.filter((p) => p <= val).pop();
       return settingsObj[found] ?? "#81c784";
@@ -484,14 +429,21 @@ const TotalCell = ({ value, delta, settings, onClick, date, metricName }) => {
   );
 };
 
-const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) => {
+const CafeHeatmapTable = ({
+  cafeName,
+  data,
+  metricKey,
+  settings,
+  dateStart,
+  metrickId,
+  tabValue,
+}) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
 
   const hours = Array.from({ length: 12 }, (_, i) => String(i + 10).padStart(2, "0"));
   const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
-  const weekDates = Object.keys(data).sort();
+  const weekDates = Object.keys(data).sort((a, b) => days.indexOf(a) - days.indexOf(b));
 
   const getDayName = (dateStr) => {
     const dayIndex = dayjs(dateStr).day();
@@ -508,61 +460,49 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
       ready_rolls_percent: "ready_rolls_delta",
       ready_pizza_percent: "ready_pizza_delta",
     };
-    const deltaKey = deltaMap[key];
-    return hourData[deltaKey] ?? 0;
+    return hourData[deltaMap[key]] ?? 0;
   };
 
   const getTotalsDeltaKey = (metricKey) => {
     const map = {
       count_orders_percent: "sv_o_delta",
-      count_rolls_percent: "sv_r_delta",
-      count_pizza_percent: "sv_p_delta",
       ready_orders_percent: "sv_o_delta",
+      count_rolls_percent: "sv_r_delta",
       ready_rolls_percent: "sv_r_delta",
+      count_pizza_percent: "sv_p_delta",
       ready_pizza_percent: "sv_p_delta",
     };
     return map[metricKey] || "sv_o_delta";
   };
 
   const formatDate = (dateStr) => dayjs(dateStr).format("DD.MM");
-
-  const getMetricValue = (hourData, key) => {
-    if (!hourData) return 0;
-    return hourData[key] ?? 0;
-  };
-
-  const findHourData = (hoursArray, hourValue) => {
-    return hoursArray?.find((h) => h.hour === hourValue) || null;
-  };
+  const getMetricValue = (hourData, key) => hourData?.[key] ?? 0;
+  const findHourData = (hoursArray, hourValue) =>
+    hoursArray?.find((h) => h.hour === hourValue) || null;
 
   const getTotalsKey = (metricKey) => {
     const map = {
       count_orders_percent: "sv_o_percent",
-      count_rolls_percent: "sv_r_percent",
-      count_pizza_percent: "sv_p_percent",
       ready_orders_percent: "sv_o_percent",
+      count_rolls_percent: "sv_r_percent",
       ready_rolls_percent: "sv_r_percent",
+      count_pizza_percent: "sv_p_percent",
       ready_pizza_percent: "sv_p_percent",
     };
     return map[metricKey] || "sv_o_percent";
   };
 
   const getMetricName = () => {
-    switch (metricKey) {
-      case "count_orders_percent":
-        return "Оформленные заказы";
-      case "count_rolls_percent":
-        return "Роллы";
-      case "count_pizza_percent":
-        return "Пицца";
-      case "ready_orders_percent":
-        return "Завершенные заказы";
-      case "ready_rolls_percent":
-        return "Готовые роллы";
-      case "ready_pizza_percent":
-        return "Готовая пицца";
+    const isReady = metrickId === 2;
+    switch (tabValue) {
+      case 0:
+        return isReady ? "Завершенные заказы" : "Оформленные заказы";
+      case 1:
+        return isReady ? "Готовые роллы" : "Роллы";
+      case 2:
+        return isReady ? "Готовая пицца" : "Пицца";
       default:
-        return "Оформленные заказы";
+        return isReady ? "Завершенные заказы" : "Оформленные заказы";
     }
   };
 
@@ -606,7 +546,7 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
                 >
                   Час
                 </th>
-                {weekDates.map((date, idx) => (
+                {weekDates.map((date) => (
                   <th
                     key={date}
                     style={{
@@ -617,10 +557,7 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
                       borderBottom: "2px solid #ddd",
                     }}
                   >
-                    <div>{getDayName(date)}</div>
-                    <div style={{ fontSize: "12px", fontWeight: "normal", color: "#666" }}>
-                      {formatDate(date)}
-                    </div>
+                    <div>{getDayName(date) ?? date}</div>
                   </th>
                 ))}
               </tr>
@@ -670,6 +607,8 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
                             metricKey={metricKey}
                             settings={settings}
                             onClick={handleCellClick}
+                            metrickId={metrickId}
+                            tabValue={tabValue}
                           />
                         </td>
                       );
@@ -677,7 +616,6 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
                   </tr>
                 );
               })}
-              {/* Total row */}
               <tr>
                 <td
                   style={{
@@ -696,7 +634,6 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
                   const totalsKey = getTotalsKey(metricKey);
                   const percentTotal = data[dateKey]?.totals?.[totalsKey] ?? 0;
                   const deltaTotal = data[dateKey]?.totals?.[getTotalsDeltaKey(metricKey)] ?? 0;
-
                   return (
                     <td
                       key={`total-${dateKey}`}
@@ -718,7 +655,6 @@ const CafeHeatmapTable = ({ cafeName, data, metricKey, settings, dateStart }) =>
           </table>
         </Box>
       </Paper>
-
       <DetailModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -734,7 +670,9 @@ function OrdersPage() {
   const [point, setPoint] = useState([]);
   const [points, setPoints] = useState([]);
   const [metrick, setMetrick] = useState({ id: 1, name: "Оформленные заказы" });
+  const [type, setType] = useState({ id: 1, name: "По номеру недели" });
   const [dateStart, setDateStart] = useState(null);
+  const [dateEnd, setDateEnd] = useState(null);
   const [tableData, setTableData] = useState({});
   const [tabValue, setTabValue] = useState(0);
   const [tab, setTab] = useState(0);
@@ -754,15 +692,12 @@ function OrdersPage() {
   }, []);
 
   const update = () => {
-    getData("get_all").then((data) => {
-      setSettings(data.settings);
-    });
+    getData("get_all").then((data) => setSettings(data.settings));
   };
 
   const exportExcel = async () => {
     try {
       const url = "https://apichef.jacochef.ru/api/orders_by_hour/exportExcel";
-
       const response = await axios.post(
         url,
         JSON.stringify({
@@ -772,15 +707,18 @@ function OrdersPage() {
           login: localStorage.getItem("token"),
           data: {
             differences: tableData,
-            date_start: dayjs(dateStart).startOf("week").format("YYYY-MM-DD"),
+            date_start:
+              type.id === 1
+                ? dayjs(dateStart).startOf("week").format("YYYY-MM-DD")
+                : dayjs(dateStart).format("YYYY-MM-DD"),
+            date_end:
+              type.id === 1
+                ? dayjs(dateStart).endOf("week").format("YYYY-MM-DD")
+                : dayjs(dateEnd).format("YYYY-MM-DD"),
           },
         }),
-        {
-          responseType: "blob",
-          headers: { "Content-Type": "application/json" },
-        },
+        { responseType: "blob", headers: { "Content-Type": "application/json" } },
       );
-
       const blob = response.data;
       const urlBlob = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -800,18 +738,15 @@ function OrdersPage() {
     setSettings(settings.map((s) => (s.id === id ? { ...s, color } : s)));
     setChanges(true);
   };
-
   const handlePercentChange = (id, percent) => {
     if (percent < -100 || percent > 100) return;
     setSettings(settings.map((s) => (s.id === id ? { ...s, percent } : s)));
     setChanges(true);
   };
-
   const handleDelete = (id) => {
     setSettings(settings.filter((s) => s.id !== id));
     setChanges(true);
   };
-
   const handleAddPoint = () => {
     const newId = settings.length > 0 ? Math.max(...settings.map((s) => s.id)) + 1 : 1;
     setSettings([
@@ -828,6 +763,8 @@ function OrdersPage() {
   const getOrders = () => {
     const data = {
       start_date: dayjs(dateStart).format("YYYY-MM-DD"),
+      end_date: dayjs(dateEnd).format("YYYY-MM-DD"),
+      type,
       metrick,
       point_list: point,
     };
@@ -838,10 +775,7 @@ function OrdersPage() {
   };
 
   const saveSettings = () => {
-    const data = {
-      settings,
-    };
-    getData("save_settings", data).then((data) => {
+    getData("save_settings", { settings }).then(() => {
       setChanges(false);
       update();
     });
@@ -858,13 +792,14 @@ function OrdersPage() {
   };
 
   const getMetricKey = () => {
+    const isReady = metrick.id === 2;
     switch (tabValue) {
       case 0:
         return "count_orders_percent";
       case 1:
-        return "count_rolls_percent";
+        return isReady ? "ready_rolls_percent" : "count_rolls_percent";
       case 2:
-        return "count_pizza_percent";
+        return isReady ? "ready_pizza_percent" : "count_pizza_percent";
       default:
         return "count_orders_percent";
     }
@@ -875,12 +810,7 @@ function OrdersPage() {
       <Grid
         container
         spacing={3}
-        sx={{
-          paddingTop: "86px",
-          paddingLeft: "18px",
-          paddingRight: "18px",
-          mb: 3,
-        }}
+        sx={{ paddingTop: "86px", paddingLeft: "18px", paddingRight: "18px", mb: 3 }}
       >
         <Backdrop
           style={{ zIndex: 99 }}
@@ -888,7 +818,6 @@ function OrdersPage() {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Grid size={{ xs: 12, sm: 12 }}>
           <h1>{module.name}</h1>
         </Grid>
@@ -907,7 +836,7 @@ function OrdersPage() {
               </Tabs>
             </Paper>
           </Grid>
-          {tab === 0 ? (
+          {tab === 0 && (
             <>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <CityCafeAutocomplete2
@@ -919,20 +848,33 @@ function OrdersPage() {
                   withAllSelected
                 />
               </Grid>
-
               <Grid size={{ xs: 12, sm: 2 }}>
                 <MyDatePickerNew
-                  label="Дата"
+                  label="Дата от"
                   value={dateStart}
                   func={(e) => setDateStart(formatDate(e))}
                 />
               </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 3,
-                }}
-              >
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <MyDatePickerNew
+                  label="Дата до"
+                  value={dateEnd}
+                  func={(e) => setDateEnd(formatDate(e))}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <MyAutocomplite
+                  label="Данные"
+                  data={[
+                    { id: 1, name: "По номеру недели" },
+                    { id: 2, name: "Чистые даты" },
+                  ]}
+                  multiple={false}
+                  value={type}
+                  func={(event, data) => setType(data)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
                 <MyAutocomplite
                   label="Метрика"
                   data={[
@@ -941,12 +883,9 @@ function OrdersPage() {
                   ]}
                   multiple={false}
                   value={metrick}
-                  func={(event, data) => {
-                    setMetrick(data);
-                  }}
+                  func={(event, data) => setMetrick(data)}
                 />
               </Grid>
-
               <Grid size={{ xs: 12, sm: 2 }}>
                 <Button
                   onClick={() => getOrders()}
@@ -957,7 +896,7 @@ function OrdersPage() {
                 </Button>
               </Grid>
               <Grid size={{ xs: 12, sm: 1 }}>
-                {acces?.export_excel_access ? (
+                {acces?.export_excel_access && (
                   <Button
                     onClick={() => exportExcel()}
                     variant="contained"
@@ -965,15 +904,16 @@ function OrdersPage() {
                   >
                     <ExcelIcon /> .xlsx
                   </Button>
-                ) : null}
+                )}
               </Grid>
               <Grid size={{ xs: 12, sm: 12 }}>
                 <Typography>{timeDiv}</Typography>
               </Grid>
             </>
-          ) : null}
+          )}
         </Grid>
       </Grid>
+
       <Paper
         style={{
           display: tab === 0 ? "block" : "none",
@@ -1000,7 +940,6 @@ function OrdersPage() {
           </Grid>
         </Grid>
 
-        {/* Tables for each cafe */}
         <Grid
           container
           spacing={3}
@@ -1031,13 +970,14 @@ function OrdersPage() {
                   data={cafeData}
                   settings={settings}
                   metricKey={getMetricKey()}
+                  metrickId={metrick.id}
+                  tabValue={tabValue}
                 />
               </Grid>
             ))
           )}
         </Grid>
 
-        {/* Legend */}
         <Grid
           container
           sx={{ px: 2, mt: 2 }}
@@ -1060,6 +1000,7 @@ function OrdersPage() {
           </Grid>
         </Grid>
       </Paper>
+
       <Paper
         style={{
           display: tab === 1 ? "block" : "none",
@@ -1074,7 +1015,6 @@ function OrdersPage() {
         >
           Градиентная шкала
         </Typography>
-
         <Box sx={{ mb: 3 }}>
           {settings
             .sort((a, b) => a.percent - b.percent)
@@ -1098,25 +1038,15 @@ function OrdersPage() {
                   showGradientPalette={true}
                   value={setting.value || 0}
                 />
-
                 <TextField
                   type="number"
                   value={setting.percent}
                   onChange={(e) => handlePercentChange(setting.id, parseInt(e.target.value) || 0)}
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  }}
+                  InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
                   size="small"
-                  sx={{
-                    width: "120px",
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                    },
-                  }}
+                  sx={{ width: "120px", "& .MuiOutlinedInput-root": { borderRadius: 1 } }}
                 />
-
                 <Box sx={{ flex: 1 }} />
-
                 <IconButton
                   onClick={() => handleDelete(setting.id)}
                   size="small"
@@ -1127,7 +1057,6 @@ function OrdersPage() {
               </Box>
             ))}
         </Box>
-
         <Button
           variant="outlined"
           startIcon={<AddIcon />}
@@ -1137,15 +1066,12 @@ function OrdersPage() {
             textTransform: "none",
             borderColor: "#d1d5db",
             color: "#374151",
-            "&:hover": {
-              borderColor: "#9ca3af",
-              backgroundColor: "#f9fafb",
-            },
+            "&:hover": { borderColor: "#9ca3af", backgroundColor: "#f9fafb" },
           }}
         >
           Добавить точку
         </Button>
-        {changes ? (
+        {changes && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -1157,15 +1083,12 @@ function OrdersPage() {
               color: "#fff",
               backgroundColor: "red",
               ml: 1,
-              "&:hover": {
-                borderColor: "#9ca3af",
-                backgroundColor: "#f9fafb",
-              },
+              "&:hover": { borderColor: "#9ca3af", backgroundColor: "#f9fafb" },
             }}
           >
             Сохранить
           </Button>
-        ) : null}
+        )}
       </Paper>
     </div>
   );
@@ -1184,6 +1107,5 @@ export async function getServerSideProps({ req, res, query }) {
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
-
   return { props: {} };
 }
