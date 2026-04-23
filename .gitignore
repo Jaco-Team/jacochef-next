@@ -43,5 +43,6 @@ next-env.d.ts
 
 .husky/*.cmd
 
-# openai codex
+# AI
 .codex
+./.codex

@@ -17,10 +17,16 @@
 - If replacing a user flow, preserve the old capability elsewhere unless the user asked to remove it.
 - Before using data fields from API responses, confirm they exist in known project docs, stores, or current payload usage.
 
+## Output And Communication
+
+- Do not print file diffs, patch contents, plan contents, or long file summaries into chat unless explicitly requested.
+- When the user asks to write or update a file, prefer doing the work in the file and replying with a minimal status update only.
+- Keep chat responses concise by default and avoid echoing content that already exists in repository files.
+
 ## Formatting And Checks
 
-- Do not run `prettier`, `eslint`, or other lint/format commands manually. Formatting is handled automatically.
-- Do not manually reformat code unless the user explicitly asks for formatting changes.
+- Do not run `prettier`, `eslint`, `lint`, or similar formatting/check commands unless the user explicitly asks.
+- Assume formatting/check hooks are handled by husky or the user's normal workflow.
 - Keep code style consistent with the surrounding file.
 - Avoid adding new dependencies unless required.
 - Prefer fast, local verification such as syntax-aware review or targeted checks.
