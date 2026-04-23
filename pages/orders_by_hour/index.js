@@ -18,6 +18,43 @@ import ColorPickerWithPalette from "@/ui/Forms/ColorPickerWithPalette";
 const DetailModal = ({ open, onClose, data }) => {
   if (!open || !data) return null;
 
+  const getDatesByWeekday = (dateStart, dateEnd, targetWeekday, format = "MM-DD") => {
+    let start = dayjs(dateStart);
+    let end = dayjs(dateEnd);
+
+    const weekdayNumbers = {
+      Вс: 0,
+      Пн: 1,
+      Вт: 2,
+      Ср: 3,
+      Чт: 4,
+      Пт: 5,
+      Сб: 6,
+    };
+
+    const targetWeekdayNumber = weekdayNumbers[targetWeekday];
+    if (targetWeekdayNumber === undefined) return "";
+
+    // Находим первое вхождение нужного дня недели
+    let current =
+      start.day() <= targetWeekdayNumber
+        ? start.add(targetWeekdayNumber - start.day(), "day")
+        : start.add(7 - (start.day() - targetWeekdayNumber), "day");
+
+    // Если первая дата позже конца периода - возвращаем пустую строку
+    if (current.isAfter(end)) {
+      return "";
+    }
+
+    const result = [];
+    while (current.isBefore(end) || current.isSame(end, "day")) {
+      result.push(current.format(format));
+      current = current.add(7, "day");
+    }
+
+    return result.join(", ");
+  };
+
   return (
     <Box
       sx={{
@@ -85,22 +122,6 @@ const DetailModal = ({ open, onClose, data }) => {
                   {data.hour}:00
                 </Typography>
               </Box>
-              {data.date != "Invalid Date" ? (
-                <Box sx={{ mb: 1.5 }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                  >
-                    Дата:
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {data.date}
-                  </Typography>
-                </Box>
-              ) : null}
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -122,6 +143,25 @@ const DetailModal = ({ open, onClose, data }) => {
                 >
                   Текущий период:
                 </Typography>
+                {data.date != "Invalid Date" ? (
+                  <Box>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {data.date}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {getDatesByWeekday(data.dateStart, data.dateEnd, data.dateKey)}
+                    </Typography>
+                  </Box>
+                )}
                 <Typography
                   variant="body1"
                   sx={{ fontWeight: 500, color: "#2e7d32" }}
@@ -136,6 +176,25 @@ const DetailModal = ({ open, onClose, data }) => {
                 >
                   Прошлый период:
                 </Typography>
+                {data.date != "Invalid Date" ? (
+                  <Box>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {data.date}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {getDatesByWeekday(data.startPrev, data.endPrev, data.dateKey)}
+                    </Typography>
+                  </Box>
+                )}
                 <Typography
                   variant="body1"
                   sx={{ fontWeight: 500, color: "#d32f2f" }}
@@ -179,7 +238,22 @@ const DetailModal = ({ open, onClose, data }) => {
                     {data.date}
                   </Typography>
                 </Box>
-              ) : null}
+              ) : (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    Даты:
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {getDatesByWeekday(data.dateStart, data.dateEnd, data.dateKey)}
+                  </Typography>
+                </Box>
+              )}
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
@@ -243,7 +317,20 @@ const DetailModal = ({ open, onClose, data }) => {
   );
 };
 
-const HeatmapCell = ({ value, hourData, metricKey, settings, onClick, metrickId, tabValue }) => {
+const HeatmapCell = ({
+  value,
+  hourData,
+  metricKey,
+  settings,
+  onClick,
+  metrickId,
+  tabValue,
+  dateStart,
+  dateEnd,
+  dateKey,
+  startPrev,
+  endPrev,
+}) => {
   const settingsObj = settings.reduce((acc, item) => ({ ...acc, [item.percent]: item.color }), {});
 
   const getMetricName = () => {
@@ -325,6 +412,11 @@ const HeatmapCell = ({ value, hourData, metricKey, settings, onClick, metrickId,
       metricName,
       currentValue,
       prevValue,
+      dateStart,
+      dateEnd,
+      dateKey,
+      startPrev,
+      endPrev,
       delta: deltaValue,
       percent: percentValue,
     });
@@ -360,7 +452,17 @@ const HeatmapCell = ({ value, hourData, metricKey, settings, onClick, metrickId,
   );
 };
 
-const TotalCell = ({ value, delta, settings, onClick, date, metricName }) => {
+const TotalCell = ({
+  value,
+  delta,
+  settings,
+  onClick,
+  date,
+  metricName,
+  dateStart,
+  dateEnd,
+  dateKey,
+}) => {
   const settingsObj = settings.reduce((acc, item) => ({ ...acc, [item.percent]: item.color }), {});
 
   const getCellColor = (val) => {
@@ -379,6 +481,41 @@ const TotalCell = ({ value, delta, settings, onClick, date, metricName }) => {
     }
   };
 
+  const getDatesByWeekday = (dateStart, dateEnd, targetWeekday, format = "YYYY-MM-DD") => {
+    let start = dayjs(dateStart);
+    let end = dayjs(dateEnd);
+
+    const weekdayNumbers = {
+      Вс: 0,
+      Пн: 1,
+      Вт: 2,
+      Ср: 3,
+      Чт: 4,
+      Пт: 5,
+      Сб: 6,
+    };
+
+    const targetWeekdayNumber = weekdayNumbers[targetWeekday];
+    if (targetWeekdayNumber === undefined) return "";
+
+    let current =
+      start.day() <= targetWeekdayNumber
+        ? start.add(targetWeekdayNumber - start.day(), "day")
+        : start.add(7 - (start.day() - targetWeekdayNumber), "day");
+
+    if (current.isAfter(end)) {
+      return "";
+    }
+
+    const result = [];
+    while (current.isBefore(end) || current.isSame(end, "day")) {
+      result.push(current.format(format));
+      current = current.add(7, "day");
+    }
+
+    return result.join(", ");
+  };
+
   const getTextColor = (val) => {
     if (val === 0 || val === null || val === undefined) return "#666";
     return Math.abs(val) > 20 ? "#fff" : "#000";
@@ -391,6 +528,9 @@ const TotalCell = ({ value, delta, settings, onClick, date, metricName }) => {
       onClick({
         type: "total",
         date,
+        dateStart,
+        dateEnd,
+        dateKey,
         metricName: metricName || "Показатель",
         totalValue: displayValue,
         delta,
@@ -435,8 +575,11 @@ const CafeHeatmapTable = ({
   metricKey,
   settings,
   dateStart,
+  dateEnd,
   metrickId,
   tabValue,
+  startPrev,
+  endPrev,
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
@@ -606,6 +749,11 @@ const CafeHeatmapTable = ({
                             hourData={enhancedHourData}
                             metricKey={metricKey}
                             settings={settings}
+                            dateStart={dateStart}
+                            dateEnd={dateEnd}
+                            dateKey={dateKey}
+                            startPrev={startPrev}
+                            endPrev={endPrev}
                             onClick={handleCellClick}
                             metrickId={metrickId}
                             tabValue={tabValue}
@@ -644,6 +792,9 @@ const CafeHeatmapTable = ({
                         delta={deltaTotal}
                         settings={settings}
                         onClick={handleCellClick}
+                        dateStart={dateStart}
+                        dateEnd={dateEnd}
+                        dateKey={dateKey}
                         date={formatDate(dateKey)}
                         metricName={getMetricName()}
                       />
@@ -673,6 +824,8 @@ function OrdersPage() {
   const [type, setType] = useState({ id: 1, name: "По номеру недели" });
   const [dateStart, setDateStart] = useState(null);
   const [dateEnd, setDateEnd] = useState(null);
+  const [startPrev, setStartPrev] = useState(null);
+  const [endPrev, setEndPrev] = useState(null);
   const [tableData, setTableData] = useState({});
   const [tabValue, setTabValue] = useState(0);
   const [tab, setTab] = useState(0);
@@ -771,6 +924,8 @@ function OrdersPage() {
     getData("get_data", data).then((data) => {
       setTableData(data.differences);
       setTimeDiv(data.timeVs);
+      setStartPrev(data.startPrev);
+      setEndPrev(data.endPrev);
     });
   };
 
@@ -966,6 +1121,9 @@ function OrdersPage() {
               >
                 <CafeHeatmapTable
                   dateStart={dayjs(dateStart).format("YYYY-MM-DD")}
+                  dateEnd={dayjs(dateEnd).format("YYYY-MM-DD")}
+                  startPrev={startPrev}
+                  endPrev={endPrev}
                   cafeName={cafeName}
                   data={cafeData}
                   settings={settings}
