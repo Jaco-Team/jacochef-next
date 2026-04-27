@@ -22,8 +22,9 @@ import {
   MyAutoCompleteWithAll,
 } from "@/ui/Forms";
 import dayjs from "dayjs";
+import useMyAlert from "@/src/hooks/useMyAlert";
+import MyAlert from "@/ui/MyAlert";
 
-// Константы для типов
 const orderTypes = [
   { id: 1, name: "Доставка", type: "delivery" },
   { id: 2, name: "Самовывоз", type: "pickup" },
@@ -48,7 +49,6 @@ const emailConsentOptions = [
   { id: 2, name: "Нет", value: 0 },
 ];
 
-// Секция с заголовком
 const Section = ({ title, icon: Icon, children }) => (
   <Paper
     elevation={0}
@@ -204,14 +204,15 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
 
     return hasAnyFilter;
   };
+  const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const handleSave = () => {
     if (!form.segment_name) {
-      alert("Заполните название сегментации");
+      showAlert("Заполните название сегментации", false);
       return;
     }
     if (!isFormValid()) {
-      alert("Заполните хотя бы одно условие для создания сегмента");
+      showAlert("Заполните хотя бы одно условие для создания сегмента", false);
       return;
     }
     saveSegment(form);
@@ -263,6 +264,12 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       fullWidth
       scroll="paper"
     >
+      <MyAlert
+        isOpen={isAlert}
+        onClose={closeAlert}
+        status={alertStatus}
+        text={alertMessage}
+      />
       <DialogTitle
         sx={{
           m: 0,

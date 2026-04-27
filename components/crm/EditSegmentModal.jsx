@@ -19,8 +19,9 @@ import {
   MyAutoCompleteWithAll,
 } from "@/ui/Forms";
 import dayjs from "dayjs";
+import useMyAlert from "@/src/hooks/useMyAlert";
+import MyAlert from "@/ui/MyAlert";
 
-// Константы для типов
 const orderTypes = [
   { id: 1, name: "Доставка", type: "delivery" },
   { id: 2, name: "Самовывоз", type: "pickup" },
@@ -106,7 +107,6 @@ const RangeInput = ({ label, valueMin, valueMax, onChangeMin, onChangeMax }) => 
   </Grid>
 );
 
-// Функция для преобразования строки с ID в массив объектов
 const parseIdsToArray = (str, dataArray) => {
   if (!str) return [];
   const ids = String(str)
@@ -122,7 +122,7 @@ export const EditSegmentModal = ({
   points,
   cities,
   updateSegment,
-  segmentData, // Данные редактируемого сегмента
+  segmentData,
 }) => {
   const [form, setForm] = useState({
     id: null,
@@ -168,7 +168,6 @@ export const EditSegmentModal = ({
     utm_content: "",
   });
 
-  // Заполняем форму при открытии и изменении segmentData
   useEffect(() => {
     if (segmentData && open) {
       setForm({
@@ -259,18 +258,18 @@ export const EditSegmentModal = ({
 
     return hasAnyFilter;
   };
+  const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const handleSave = () => {
     if (!form.segment_name) {
-      alert("Заполните название сегментации");
+      showAlert("Заполните название сегментации", false);
       return;
     }
     if (!isFormValid()) {
-      alert("Заполните хотя бы одно условие для создания сегмента");
+      showAlert("Заполните хотя бы одно условие для создания сегмента", false);
       return;
     }
 
-    // Преобразуем данные для отправки
     const saveData = {
       ...form,
       categories: form.categories.map((cat) => cat.id).join(","),
@@ -333,6 +332,12 @@ export const EditSegmentModal = ({
       fullWidth
       scroll="paper"
     >
+      <MyAlert
+        isOpen={isAlert}
+        onClose={closeAlert}
+        status={alertStatus}
+        text={alertMessage}
+      />
       <DialogTitle
         sx={{
           m: 0,

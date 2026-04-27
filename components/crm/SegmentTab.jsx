@@ -28,6 +28,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { EditSegmentModal } from "@/components/crm/EditSegmentModal";
 import EditIcon from "@mui/icons-material/Edit";
+import useMyAlert from "@/src/hooks/useMyAlert";
 
 // Маппинг полей на человекочитаемые названия (русские)
 const fieldLabels = {
@@ -264,17 +265,15 @@ export const SegmentTab = ({
   const [filtersModalOpen, setFiltersModalOpen] = useState(false);
   const [currentSegment, setCurrentSegment] = useState(null);
   const [hiddenFilters, setHiddenFilters] = useState([]);
+  const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingSegment, setEditingSegment] = useState(null);
 
   const handleUpdateSegment = (updatedData) => {
-    console.log("Обновленный сегмент:", updatedData);
     updateSegment(updatedData);
   };
 
-  // В карточку добавьте кнопку редактирования
-  // И вызывайте:
   const handleEdit = (segment) => {
     setEditingSegment(segment);
     setEditModalOpen(true);
