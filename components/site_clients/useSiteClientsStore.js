@@ -70,6 +70,9 @@ const defaultState = {
   all_items: [],
   items: [],
   items_recursive: [],
+  gender: {},
+  day_last: 0,
+  categories: [],
 
   date_start: dayjs().format("YYYY-MM-DD"),
   date_end: dayjs().format("YYYY-MM-DD"),

@@ -9,6 +9,8 @@ import {
   CircularProgress,
   Grid,
   IconButton,
+  Tab,
+  Tabs,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -34,6 +36,8 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import HistoryClientModalCrm from "@/components/crm/HistoryClientModalCrm";
 import MyAlert from "@/ui/MyAlert";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
+import { ClientsTab } from "@/components/crm/ClientsTab";
+import { SegmentTab } from "@/components/crm/SegmentTab";
 
 export default function CrmPage() {
   const {
@@ -56,6 +60,12 @@ export default function CrmPage() {
 
   const canAccess = (property) => accessApi?.userCan("access", property);
   const accessApi = useMemo(() => handleUserAccess(access), [access]);
+  const [categories, setCategories] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [segments, setSegments] = useState([]);
+
+  // State для активного таба
+  const [activeTab, setActiveTab] = useState(0);
 
   // localizing form state for speed
   const initialForm = useSiteClientsStore.getState();
@@ -70,6 +80,9 @@ export default function CrmPage() {
     number: initialForm.number,
     date_start: initialForm.date_start,
     date_end: initialForm.date_end,
+    gender: initialForm.gender,
+    day_last: initialForm.day_last,
+    categories: initialForm.categories,
     orders_count: initialForm.orders_count,
     order_utm: initialForm.order_utm,
   }));
@@ -162,13 +175,11 @@ export default function CrmPage() {
 
   const columns = useMemo(
     () => [
-      // { key: "order_id", label: "Заказ" },
       {
         key: "number",
         label: "Клиент",
         format: (v) => (
           <Button
-            // size="small"
             variant="text"
             onClick={() => openClient(v)}
           >
@@ -222,10 +233,21 @@ export default function CrmPage() {
     [getPointAddress, openClient],
   );
 
+  const saveSegment = async (data) => {
+    const res = await getData("save_segment", data);
+  };
+
+  const updateSegment = async (data) => {
+    const res = await getData("update_segment", data);
+    getSegments();
+  };
+
   const initData = async () => {
     const data = await getData("get_all");
 
     if (data) {
+      setCategories(data.category);
+      setCities(data.cities);
       updateMain({
         all_items: data.all_items,
         cities: data.cities,
@@ -265,6 +287,9 @@ export default function CrmPage() {
       orders_count,
       order_utm,
       points_history,
+      gender,
+      day_last,
+      categories,
     } = useSiteClientsStore.getState();
 
     const refreshToken = useClientHistoryStore.getState().refreshToken;
@@ -297,6 +322,9 @@ export default function CrmPage() {
       orders_count,
       order_utm,
       points: points_history,
+      gender,
+      day_last,
+      categories,
     });
 
     if (!resData?.st) {
@@ -311,13 +339,29 @@ export default function CrmPage() {
     }
     updateMain(form);
     refresh();
+    getClientHistory();
   };
 
   const exportXLSX = useXLSExport();
 
-  useEffect(() => {
-    getClientHistory();
-  }, [refreshToken]);
+  // Обработчик смены таба
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    if (newValue === 1) {
+      getSegments();
+    }
+  };
+
+  const getSegments = async () => {
+    const res = await getData("get_segments");
+    setSegments(res.segments);
+  };
+
+  const handleUpdateSegment = (updatedData) => {
+    // Здесь ваш API запрос на обновление
+    console.log("Обновленный сегмент:", updatedData);
+    // Обновите список segments
+  };
 
   return (
     <LoadingProvider
@@ -350,6 +394,7 @@ export default function CrmPage() {
         onClose={() => setIsOrderModalOpen(false)}
         order={order}
       />
+
       <Grid
         container
         className="container_first_child"
@@ -361,216 +406,49 @@ export default function CrmPage() {
         >
           <h1>{module_name}</h1>
         </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 4,
-          }}
-        >
-          <CityCafeAutocomplete2
-            label="Кафе"
-            points={points}
-            value={form.points_history}
-            onChange={(v) => setField("points_history", v)}
-            withAll
-            withAllSelected
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 4,
-          }}
-        >
-          <MyDatePickerNew
-            label="Дата от"
-            customActions={true}
-            value={dayjs(form.date_start)}
-            maxDate={dayjs(form.date_end) ?? dayjs()}
-            func={(e) => setField("date_start", e)}
-          />
-        </Grid>
 
-        <Grid
-          size={{
-            xs: 12,
-            sm: 4,
-          }}
-        >
-          <MyDatePickerNew
-            label="Дата до"
-            customActions={true}
-            value={dayjs(form.date_end)}
-            minDate={dayjs(form.date_start)}
-            maxDate={dayjs()}
-            func={(e) => setField("date_end", e)}
-          />
-        </Grid>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 3,
-          }}
-        >
-          <MyTextInput
-            type="number"
-            label="Заказов за период, от"
-            value={form.orders_count}
-            func={({ target }) => setField("orders_count", target?.value)}
-          />
-        </Grid>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 5,
-          }}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          <MyTextInput
-            type="text"
-            className="input_promo"
-            label="Промокод содержит"
-            value={form.promo}
-            func={({ target }) => setField("promo", target?.value)}
-            inputAdornment={
-              !form.promo ? null : (
-                <IconButton>
-                  <Clear onClick={() => setField("promo", "")} />
-                </IconButton>
-              )
-            }
-            sx={{ width: "55%" }}
-          />
-          <MyCheckBox
-            value={form.promo_dr}
-            func={({ target }) => setField("promo_dr", Number(target?.checked) || 0)}
-            label="Промик на ДР"
-          />
-        </Grid>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 4,
-          }}
-        >
-          <MyTextInput
-            type="text"
-            label="UTM содержит"
-            value={form.order_utm}
-            func={({ target }) => setField("order_utm", target?.value)}
-            inputAdornment={
-              !form.order_utm ? null : (
-                <IconButton>
-                  <Clear onClick={() => setField("order_utm", "")} />
-                </IconButton>
-              )
-            }
-          />
-        </Grid>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 3,
-          }}
-        >
-          <MyAutoCompleteWithAll
-            withAll={true}
-            label="Кто оформил"
-            multiple={true}
-            options={order_types_all}
-            value={form.order_types}
-            onChange={(e) => setField("order_types", e)}
-          />
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 3,
-          }}
-        >
-          <MyAutoCompleteWithAll
-            withAll={true}
-            label="Тип доставки"
-            multiple={true}
-            options={delivery_types}
-            value={form.delivery_type}
-            onChange={(e) => setField("delivery_type", e)}
-          />
-        </Grid>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 4,
-          }}
-        >
-          <MyAutocomplite
-            label="Позиции в заказе"
-            multiple={true}
-            data={all_items}
-            value={form.items}
-            func={(_, v) => setField("items", v)}
-          />
-        </Grid>
-
-        <Grid
-          size={{
-            xs: 12,
-            sm: 2,
-          }}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            justifyContent: { xs: "flex-end", sm: "space-evenly" },
-          }}
-        >
-          <Button
-            onClick={() => applyRequest()}
-            variant="contained"
+        {/* Табы */}
+        <Grid size={12}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{ mb: 2 }}
           >
-            Показать
-          </Button>
+            <Tab label="Клиенты" />
+            {canAccess("segment") ? <Tab label="Сегмент" /> : null}
+          </Tabs>
+        </Grid>
 
-          {canAccess("download_file") && clientHistory?.length > 0 && (
-            <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
-              <span>
-                <Button
-                  variant="contained"
-                  sx={{ backgroundColor: "#3cb623ff" }}
-                  onClick={() =>
-                    exportXLSX(
-                      clientHistory,
-                      columns,
-                      `client_history_${formatYMD(form.date_start)}-${formatYMD(form.date_end)}.xlsx`,
-                    )
-                  }
-                >
-                  <Download />
-                </Button>
-              </span>
-            </Tooltip>
+        {/* Контент табов */}
+        <Grid size={12}>
+          {activeTab === 0 && (
+            <ClientsTab
+              form={form}
+              setField={setField}
+              points={points}
+              categories={categories}
+              all_items={all_items}
+              clientHistory={clientHistory}
+              columns={columns}
+              is_load={is_load}
+              applyRequest={applyRequest}
+              exportXLSX={exportXLSX}
+              canAccess={canAccess}
+            />
+          )}
+          {activeTab === 1 && canAccess("segment") && (
+            <SegmentTab
+              categories={categories}
+              points={points}
+              canAccess={canAccess}
+              segments={segments}
+              updateSegment={updateSegment}
+              saveSegment={saveSegment}
+              cities={cities}
+            />
           )}
         </Grid>
       </Grid>
-      {!!clientHistory.length ? (
-        <div style={{ padding: "24px" }}>
-          <ClientHistoryTable
-            columns={columns}
-            rows={clientHistory}
-          />
-        </div>
-      ) : (
-        <Typography sx={{ mt: 3, mx: "auto" }}>Нет данных</Typography>
-      )}
     </LoadingProvider>
   );
 }
