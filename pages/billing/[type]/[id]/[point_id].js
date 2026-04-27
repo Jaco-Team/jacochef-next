@@ -349,7 +349,7 @@ function BillingRubleAdornment() {
       sx={{
         color: "#94a3b8",
         fontWeight: 700,
-        fontSize: 14,
+        fontSize: 12,
         lineHeight: 1,
       }}
     >
@@ -811,7 +811,7 @@ const billingNumericCellSx = {
 
 const billingNumericHeaderCellSx = {
   ...billingNumericCellSx,
-  minWidth: "130px",
+  minWidth: { xs: "168px", sm: "148px", md: "130px" },
 };
 
 const billingFormFieldPaddingX = 16;
@@ -996,10 +996,19 @@ const billingFormNumericInputSx = {
 };
 
 const billingNumericInputSx = {
-  "& .MuiInputBase-input": {
+  minWidth: { xs: "168px", sm: "148px", md: "130px" },
+  "& .MuiOutlinedInput-input": {
     textAlign: "right",
     fontVariantNumeric: "tabular-nums lining-nums",
     fontFeatureSettings: '"tnum" 1, "lnum" 1',
+    paddingRight: { xs: "10px !important", sm: "12px !important" },
+  },
+  "& .MuiOutlinedInput-root.MuiInputBase-adornedEnd .MuiOutlinedInput-input": {
+    paddingRight: { xs: "3px !important", sm: "4px !important" },
+  },
+  "& .MuiInputAdornment-positionEnd": {
+    marginLeft: { xs: "1px", sm: "2px" },
+    marginRight: { xs: "3px", sm: "4px" },
   },
 };
 
