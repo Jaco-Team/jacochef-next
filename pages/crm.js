@@ -235,6 +235,7 @@ export default function CrmPage() {
 
   const saveSegment = async (data) => {
     const res = await getData("save_segment", data);
+    getSegments();
   };
 
   const updateSegment = async (data) => {
