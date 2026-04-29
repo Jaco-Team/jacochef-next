@@ -238,6 +238,11 @@ export default function CrmPage() {
     getSegments();
   };
 
+  const handleDelete = async (data) => {
+    const res = await getData("delete_segment", data);
+    getSegments();
+  };
+
   const updateSegment = async (data) => {
     const res = await getData("update_segment", data);
     getSegments();
@@ -441,6 +446,7 @@ export default function CrmPage() {
             <SegmentTab
               categories={categories}
               points={points}
+              handleDelete={handleDelete}
               canAccess={canAccess}
               segments={segments}
               updateSegment={updateSegment}

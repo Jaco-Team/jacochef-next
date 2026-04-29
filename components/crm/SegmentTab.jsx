@@ -108,6 +108,7 @@ const SegmentCard = ({ segment, onShowAll, openEdit, edittingSegment, canAccess 
         sx={{
           height: "100%",
           display: "flex",
+          minWidth: "350px",
           flexDirection: "column",
           transition: "transform 0.2s, box-shadow 0.2s",
           "&:hover": {
@@ -158,12 +159,6 @@ const SegmentCard = ({ segment, onShowAll, openEdit, edittingSegment, canAccess 
                   sx={{ color: theme.palette.primary.main, fontWeight: 700 }}
                 >
                   {segment.segment_value}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                >
-                  пользователей
                 </Typography>
               </Box>
               <Typography
@@ -259,6 +254,7 @@ export const SegmentTab = ({
   cities = [],
   saveSegment,
   updateSegment,
+  handleDelete,
   segments = [],
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -307,6 +303,7 @@ export const SegmentTab = ({
           setEditModalOpen(false);
           setEditingSegment(null);
         }}
+        handleDelete={handleDelete}
         categories={categories}
         points={points}
         cities={cities}

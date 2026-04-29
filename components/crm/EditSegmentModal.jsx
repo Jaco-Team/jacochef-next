@@ -4,13 +4,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  DialogContentText,
   Grid,
   IconButton,
   Paper,
   Typography,
 } from "@mui/material";
-import { Close, Tune } from "@mui/icons-material";
-import React, { useState, useEffect } from "react";
+import { Close, Tune, Delete } from "@mui/icons-material";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   MyAutocomplite,
   MyCheckBox,
@@ -43,6 +44,11 @@ const genderOptions = [
 
 const emailConsentOptions = [
   { id: 1, name: "Да", value: 1 },
+  { id: 2, name: "Нет", value: 0 },
+];
+
+const emailOptions = [
+  { id: 1, name: "Указан", value: 1 },
   { id: 2, name: "Нет", value: 0 },
 ];
 
@@ -121,6 +127,7 @@ export const EditSegmentModal = ({
   categories,
   points,
   cities,
+  handleDelete,
   updateSegment,
   segmentData,
 }) => {
@@ -134,8 +141,6 @@ export const EditSegmentModal = ({
     days_before_birthday: "",
     has_email: null,
     consent_email: null,
-    consent_sms: null,
-    consent_push: null,
 
     // Заказы
     orders_count_min: "",
@@ -168,6 +173,9 @@ export const EditSegmentModal = ({
     utm_content: "",
   });
 
+  // State для диалога подтверждения удаления
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   useEffect(() => {
     if (segmentData && open) {
       setForm({
@@ -179,20 +187,9 @@ export const EditSegmentModal = ({
         days_before_birthday: segmentData.days_before_birthday || "",
         has_email:
           segmentData.has_email !== null
-            ? emailConsentOptions.find((val) => val.value === segmentData.has_email)
+            ? emailOptions.find((val) => val.value === segmentData.has_email)
             : null,
-        consent_email:
-          segmentData.consent_email !== null
-            ? emailConsentOptions.find((val) => val.value === segmentData.consent_email)
-            : null,
-        consent_sms:
-          segmentData.consent_sms !== null
-            ? emailConsentOptions.find((val) => val.value === segmentData.consent_sms)
-            : null,
-        consent_push:
-          segmentData.consent_push !== null
-            ? emailConsentOptions.find((val) => val.value === segmentData.consent_push)
-            : null,
+        consent_email: segmentData.consent_email,
         orders_count_min: segmentData.orders_count_min || "",
         orders_count_max: segmentData.orders_count_max || "",
         avg_check_min: segmentData.avg_check_min || "",
@@ -236,8 +233,6 @@ export const EditSegmentModal = ({
       form.days_before_birthday ||
       form.has_email !== null ||
       form.consent_email !== null ||
-      form.consent_sms !== null ||
-      form.consent_push !== null ||
       form.orders_count_min ||
       form.orders_count_max ||
       form.avg_check_min ||
@@ -258,7 +253,19 @@ export const EditSegmentModal = ({
 
     return hasAnyFilter;
   };
+
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
+
+  const filteredPoints = useMemo(() => {
+    if (!form.cities || form.cities.length === 0) {
+      return points;
+    }
+
+    const selectedCityIds = form.cities.map((city) => city.id);
+
+    // Фильтруем точки, у которых city_id входит в выбранные города
+    return points.filter((point) => selectedCityIds.includes(point.city_id));
+  }, [form.cities, points]);
 
   const handleSave = () => {
     if (!form.segment_name) {
@@ -277,10 +284,21 @@ export const EditSegmentModal = ({
       cities: form.cities.map((city) => city.id).join(","),
       points: form.points.map((point) => point.id).join(","),
       sources: form.sources.map((source) => source.id).join(","),
+      birth_date_end:
+        form.birth_date_end !== null ? dayjs(form.birth_date_end).format("YYYY-MM-DD") : null,
+      birth_date_start:
+        form.birth_date_start !== null ? dayjs(form.birth_date_start).format("YYYY-MM-DD") : null,
+      last_order_date_end:
+        form.last_order_date_end !== null
+          ? dayjs(form.last_order_date_end).format("YYYY-MM-DD")
+          : null,
+      last_order_date_start:
+        form.last_order_date_start !== null
+          ? dayjs(form.last_order_date_start).format("YYYY-MM-DD")
+          : null,
     };
 
     updateSegment(saveData);
-    console.log("Update segment data:", saveData);
     onClose();
   };
 
@@ -296,8 +314,6 @@ export const EditSegmentModal = ({
         days_before_birthday: segmentData.days_before_birthday || "",
         has_email: segmentData.has_email !== null ? segmentData.has_email : null,
         consent_email: segmentData.consent_email !== null ? segmentData.consent_email : null,
-        consent_sms: segmentData.consent_sms !== null ? segmentData.consent_sms : null,
-        consent_push: segmentData.consent_push !== null ? segmentData.consent_push : null,
         orders_count_min: segmentData.orders_count_min || "",
         orders_count_max: segmentData.orders_count_max || "",
         avg_check_min: segmentData.avg_check_min || "",
@@ -324,427 +340,491 @@ export const EditSegmentModal = ({
     }
   };
 
+  const handleDeleteClick = () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    handleDelete({ id: segmentData.id });
+    setDeleteConfirmOpen(false);
+    onClose();
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+  };
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-      scroll="paper"
-    >
-      <MyAlert
-        isOpen={isAlert}
-        onClose={closeAlert}
-        status={alertStatus}
-        text={alertMessage}
-      />
-      <DialogTitle
-        sx={{
-          m: 0,
-          p: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          bgcolor: "#cc0033",
-          color: "white",
-        }}
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="lg"
+        fullWidth
+        scroll="paper"
       >
-        <Typography
-          variant="h6"
-          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        <MyAlert
+          isOpen={isAlert}
+          onClose={closeAlert}
+          status={alertStatus}
+          text={alertMessage}
+        />
+        <DialogTitle
+          sx={{
+            m: 0,
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            bgcolor: "#cc0033",
+            color: "white",
+          }}
         >
-          <Tune />
-          Редактирование сегмента клиентов
-        </Typography>
-        <IconButton
-          onClick={onClose}
-          sx={{ color: "white" }}
-        >
-          <Close />
-        </IconButton>
-      </DialogTitle>
+          <Typography
+            variant="h6"
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+          >
+            <Tune />
+            Редактирование сегмента клиентов
+          </Typography>
+          <IconButton
+            onClick={onClose}
+            sx={{ color: "white" }}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
 
-      <DialogContent
-        dividers
-        sx={{ bgcolor: "#f5f5f5", p: 3 }}
+        <DialogContent
+          dividers
+          sx={{ bgcolor: "#f5f5f5", p: 3 }}
+        >
+          <Section title="Название сегментации">
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <MyTextInput
+                type="text"
+                label="Название сегментации"
+                value={form.segment_name}
+                func={({ target }) => setField("segment_name", target?.value)}
+              />
+            </Grid>
+          </Section>
+
+          <Section
+            title="Клиентские данные"
+            icon={null}
+          >
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyAutocomplite
+                  label="Пол"
+                  multiple={false}
+                  data={genderOptions}
+                  value={form.gender}
+                  func={(data, value) => setField("gender", value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyDatePickerNew
+                  label="Дата рождения от"
+                  value={form.birth_date_start ? dayjs(form.birth_date_start) : null}
+                  func={(e) => setField("birth_date_start", e)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyDatePickerNew
+                  label="Дата рождения до"
+                  value={form.birth_date_end ? dayjs(form.birth_date_end) : null}
+                  func={(e) => setField("birth_date_end", e)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="number"
+                  label="Дней до дня рождения"
+                  value={form.days_before_birthday}
+                  func={({ target }) => setField("days_before_birthday", target?.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyAutocomplite
+                  label="Наличие E-mail"
+                  multiple={false}
+                  data={emailOptions}
+                  value={form.has_email}
+                  func={(data, value) => setField("has_email", value)}
+                />
+              </Grid>
+            </Grid>
+
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+                <MyCheckBox
+                  label="Согласие на рассылки"
+                  value={form.consent_email}
+                  func={(e) => setField("consent_email", e.target.checked)}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          {/* Секция 2: Параметры заказов */}
+          <Section
+            title="Параметры заказов"
+            icon={null}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{ mb: 1, color: "#666" }}
+            >
+              Количество заказов
+            </Typography>
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <RangeInput
+                  label="Кол-во заказов"
+                  valueMin={form.orders_count_min}
+                  valueMax={form.orders_count_max}
+                  onChangeMin={({ target }) => setField("orders_count_min", target?.value)}
+                  onChangeMax={({ target }) => setField("orders_count_max", target?.value)}
+                />
+              </Grid>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: "#666" }}
+              >
+                Средний чек
+              </Typography>
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <RangeInput
+                  label="Средний чек"
+                  valueMin={form.avg_check_min}
+                  valueMax={form.avg_check_max}
+                  onChangeMin={({ target }) => setField("avg_check_min", target?.value)}
+                  onChangeMax={({ target }) => setField("avg_check_max", target?.value)}
+                />
+              </Grid>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: "#666" }}
+              >
+                Сумма заказов
+              </Typography>
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <RangeInput
+                  label="Сумма заказов"
+                  valueMin={form.total_sum_min}
+                  valueMax={form.total_sum_max}
+                  onChangeMin={({ target }) => setField("total_sum_min", target?.value)}
+                  onChangeMax={({ target }) => setField("total_sum_max", target?.value)}
+                />
+              </Grid>
+            </Grid>
+
+            <Typography
+              variant="subtitle2"
+              sx={{ mt: 2, mb: 1, color: "#666" }}
+            >
+              Даты последних заказов
+            </Typography>
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <MyDatePickerNew
+                  label="Дата последнего заказа от"
+                  value={form.last_order_date_start ? dayjs(form.last_order_date_start) : null}
+                  func={(e) => setField("last_order_date_start", e)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <MyDatePickerNew
+                  label="Дата последнего заказа до"
+                  value={form.last_order_date_end ? dayjs(form.last_order_date_end) : null}
+                  func={(e) => setField("last_order_date_end", e)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "#666" }}
+                >
+                  Дней с заказов
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <MyTextInput
+                  type="number"
+                  label="Дней с последнего заказа"
+                  value={form.days_from_last}
+                  func={({ target }) => setField("days_from_last", target?.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <MyTextInput
+                  type="number"
+                  label="Дней с первого заказа"
+                  value={form.days_from_first}
+                  func={({ target }) => setField("days_from_first", target?.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="number"
+                  label="Период (за последние N дней)"
+                  value={form.period_days}
+                  func={({ target }) => setField("period_days", target?.value)}
+                />
+              </Grid>
+            </Grid>
+
+            <Typography
+              variant="subtitle2"
+              sx={{ mt: 2, mb: 1, color: "#666" }}
+            >
+              Состав заказа
+            </Typography>
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyAutocomplite
+                  label="Категории в заказе"
+                  multiple={true}
+                  data={categories}
+                  value={form.categories}
+                  func={(data, value) => setField("categories", value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="text"
+                  label="Промокод"
+                  value={form.promo}
+                  func={({ target }) => setField("promo", target?.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyAutocomplite
+                  label="Тип заказа"
+                  multiple={true}
+                  data={orderTypes}
+                  value={form.order_types}
+                  func={(data, value) => setField("order_types", value)}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          {/* Секция 3: География */}
+          <Section
+            title="География"
+            icon={null}
+          >
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyAutocomplite
+                  label="Город"
+                  multiple={true}
+                  data={cities}
+                  value={form.cities}
+                  func={(data, value) => setField("cities", value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyAutocomplite
+                  label="Адрес кафе"
+                  multiple={true}
+                  data={filteredPoints}
+                  value={form.points}
+                  func={(data, value) => setField("points", value)}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          {/* Секция 4: Маркетинг */}
+          <Section
+            title="Маркетинг"
+            icon={null}
+          >
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyAutocomplite
+                  label="Источник"
+                  multiple={true}
+                  data={sources}
+                  value={form.sources}
+                  func={(data, value) => setField("sources", value)}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          {/* Секция 5: UTM метки */}
+          <Section
+            title="UTM метки"
+            icon={null}
+          >
+            <Typography
+              variant="caption"
+              sx={{ mb: 2, display: "block", color: "#999" }}
+            >
+              Минимум одно поле должно быть заполнено
+            </Typography>
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="text"
+                  label="UTM Source"
+                  value={form.utm_source}
+                  func={({ target }) => setField("utm_source", target?.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="text"
+                  label="UTM Medium"
+                  value={form.utm_medium}
+                  func={({ target }) => setField("utm_medium", target?.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="text"
+                  label="UTM Campaign"
+                  value={form.utm_campaign}
+                  func={({ target }) => setField("utm_campaign", target?.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="text"
+                  label="UTM Term"
+                  value={form.utm_term}
+                  func={({ target }) => setField("utm_term", target?.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyTextInput
+                  type="text"
+                  label="UTM Content"
+                  value={form.utm_content}
+                  func={({ target }) => setField("utm_content", target?.value)}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            onClick={handleDeleteClick}
+            variant="contained"
+            startIcon={<Delete />}
+            sx={{
+              backgroundColor: "#dc004e",
+              "&:hover": {
+                backgroundColor: "#b0003a",
+              },
+            }}
+          >
+            Удалить
+          </Button>
+          <Button
+            onClick={handleReset}
+            variant="outlined"
+            color="secondary"
+          >
+            Сбросить
+          </Button>
+          <Button
+            onClick={onClose}
+            variant="outlined"
+          >
+            Отмена
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
+          >
+            Обновить сегмент
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог подтверждения удаления */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
       >
-        <Section title="Название сегментации">
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <MyTextInput
-              type="text"
-              label="Название сегментации"
-              value={form.segment_name}
-              func={({ target }) => setField("segment_name", target?.value)}
-            />
-          </Grid>
-        </Section>
-
-        <Section
-          title="Клиентские данные"
-          icon={null}
+        <DialogTitle
+          id="delete-dialog-title"
+          sx={{ color: "#dc004e" }}
         >
-          <Grid
-            container
-            spacing={2}
+          Подтверждение удаления
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Вы действительно хотите удалить сегмент <strong>"{segmentData?.segment_name}"</strong>?
+            <br />
+            <br />
+            Это действие невозможно отменить. Все данные сегмента будут удалены безвозвратно.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            onClick={handleCancelDelete}
+            variant="outlined"
           >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Пол"
-                multiple={false}
-                data={genderOptions}
-                value={form.gender}
-                func={(data, value) => setField("gender", value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyDatePickerNew
-                label="Дата рождения от"
-                value={form.birth_date_start ? dayjs(form.birth_date_start) : null}
-                func={(e) => setField("birth_date_start", e)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyDatePickerNew
-                label="Дата рождения до"
-                value={form.birth_date_end ? dayjs(form.birth_date_end) : null}
-                func={(e) => setField("birth_date_end", e)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="number"
-                label="Дней до дня рождения"
-                value={form.days_before_birthday}
-                func={({ target }) => setField("days_before_birthday", target?.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Наличие E-mail"
-                multiple={false}
-                data={emailConsentOptions}
-                value={form.has_email}
-                func={(data, value) => setField("has_email", value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 2, mb: 1, color: "#666" }}
+            Отмена
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            sx={{
+              backgroundColor: "#dc004e",
+              "&:hover": {
+                backgroundColor: "#b0003a",
+              },
+            }}
+            autoFocus
           >
-            Согласие на рассылки
-          </Typography>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Email рассылка"
-                multiple={false}
-                data={emailConsentOptions}
-                value={form.consent_email}
-                func={(data, value) => setField("consent_email", value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="SMS рассылка"
-                multiple={false}
-                data={emailConsentOptions}
-                value={form.consent_sms}
-                func={(data, value) => setField("consent_sms", value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Push уведомления"
-                multiple={false}
-                data={emailConsentOptions}
-                value={form.consent_push}
-                func={(data, value) => setField("consent_push", value)}
-              />
-            </Grid>
-          </Grid>
-        </Section>
-
-        {/* Секция 2: Параметры заказов */}
-        <Section
-          title="Параметры заказов"
-          icon={null}
-        >
-          <Typography
-            variant="subtitle2"
-            sx={{ mb: 1, color: "#666" }}
-          >
-            Количество заказов
-          </Typography>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <RangeInput
-                label="Кол-во заказов"
-                valueMin={form.orders_count_min}
-                valueMax={form.orders_count_max}
-                onChangeMin={({ target }) => setField("orders_count_min", target?.value)}
-                onChangeMax={({ target }) => setField("orders_count_max", target?.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <RangeInput
-                label="Средний чек"
-                valueMin={form.avg_check_min}
-                valueMax={form.avg_check_max}
-                onChangeMin={({ target }) => setField("avg_check_min", target?.value)}
-                onChangeMax={({ target }) => setField("avg_check_max", target?.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <RangeInput
-                label="Сумма заказов"
-                valueMin={form.total_sum_min}
-                valueMax={form.total_sum_max}
-                onChangeMin={({ target }) => setField("total_sum_min", target?.value)}
-                onChangeMax={({ target }) => setField("total_sum_max", target?.value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 2, mb: 1, color: "#666" }}
-          >
-            Даты заказов
-          </Typography>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyDatePickerNew
-                label="Дата последнего заказа от"
-                value={form.last_order_date_start ? dayjs(form.last_order_date_start) : null}
-                func={(e) => setField("last_order_date_start", e)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyDatePickerNew
-                label="Дата последнего заказа до"
-                value={form.last_order_date_end ? dayjs(form.last_order_date_end) : null}
-                func={(e) => setField("last_order_date_end", e)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="number"
-                label="Дней с последнего заказа"
-                value={form.days_from_last}
-                func={({ target }) => setField("days_from_last", target?.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="number"
-                label="Дней с первого заказа"
-                value={form.days_from_first}
-                func={({ target }) => setField("days_from_first", target?.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="number"
-                label="Период (за последние N дней)"
-                value={form.period_days}
-                func={({ target }) => setField("period_days", target?.value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 2, mb: 1, color: "#666" }}
-          >
-            Состав заказа
-          </Typography>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Категории в заказе"
-                multiple={true}
-                data={categories}
-                value={form.categories}
-                func={(data, value) => setField("categories", value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="Промокод"
-                value={form.promo}
-                func={({ target }) => setField("promo", target?.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Тип заказа"
-                multiple={true}
-                data={orderTypes}
-                value={form.order_types}
-                func={(data, value) => setField("order_types", value)}
-              />
-            </Grid>
-          </Grid>
-        </Section>
-
-        {/* Секция 3: География */}
-        <Section
-          title="География"
-          icon={null}
-        >
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Город"
-                multiple={true}
-                data={cities}
-                value={form.cities}
-                func={(data, value) => setField("cities", value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Адрес кафе"
-                multiple={true}
-                data={points}
-                value={form.points}
-                func={(data, value) => setField("points", value)}
-              />
-            </Grid>
-          </Grid>
-        </Section>
-
-        {/* Секция 4: Маркетинг */}
-        <Section
-          title="Маркетинг"
-          icon={null}
-        >
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Источник"
-                multiple={true}
-                data={sources}
-                value={form.sources}
-                func={(data, value) => setField("sources", value)}
-              />
-            </Grid>
-          </Grid>
-        </Section>
-
-        {/* Секция 5: UTM метки */}
-        <Section
-          title="UTM метки"
-          icon={null}
-        >
-          <Typography
-            variant="caption"
-            sx={{ mb: 2, display: "block", color: "#999" }}
-          >
-            Минимум одно поле должно быть заполнено
-          </Typography>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="UTM Source"
-                value={form.utm_source}
-                func={({ target }) => setField("utm_source", target?.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="UTM Medium"
-                value={form.utm_medium}
-                func={({ target }) => setField("utm_medium", target?.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="UTM Campaign"
-                value={form.utm_campaign}
-                func={({ target }) => setField("utm_campaign", target?.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="UTM Term"
-                value={form.utm_term}
-                func={({ target }) => setField("utm_term", target?.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="UTM Content"
-                value={form.utm_content}
-                func={({ target }) => setField("utm_content", target?.value)}
-              />
-            </Grid>
-          </Grid>
-        </Section>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button
-          onClick={handleReset}
-          variant="outlined"
-          color="secondary"
-        >
-          Сбросить
-        </Button>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-        >
-          Отмена
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          color="primary"
-        >
-          Обновить сегмент
-        </Button>
-      </DialogActions>
-    </Dialog>
+            Удалить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };

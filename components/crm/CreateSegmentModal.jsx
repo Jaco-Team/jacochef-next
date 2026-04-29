@@ -13,7 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Close, ExpandMore, Tune } from "@mui/icons-material";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   MyAutocomplite,
   MyCheckBox,
@@ -46,6 +46,11 @@ const genderOptions = [
 
 const emailConsentOptions = [
   { id: 1, name: "Да", value: 1 },
+  { id: 2, name: "Нет", value: 0 },
+];
+
+const emailOptions = [
+  { id: 1, name: "Указан", value: 1 },
   { id: 2, name: "Нет", value: 0 },
 ];
 
@@ -127,8 +132,6 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
     days_before_birthday: "",
     has_email: null,
     consent_email: null,
-    consent_sms: null,
-    consent_push: null,
 
     // Заказы
     orders_count_min: "",
@@ -182,8 +185,6 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       form.days_before_birthday ||
       form.has_email !== null ||
       form.consent_email !== null ||
-      form.consent_sms !== null ||
-      form.consent_push !== null ||
       form.orders_count_min ||
       form.orders_count_max ||
       form.avg_check_min ||
@@ -215,10 +216,35 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       showAlert("Заполните хотя бы одно условие для создания сегмента", false);
       return;
     }
-    saveSegment(form);
-    console.log("Segment data:", form);
+    const saveData = {
+      ...form,
+      birth_date_end:
+        form.birth_date_end !== null ? dayjs(form.birth_date_end).format("YYYY-MM-DD") : null,
+      birth_date_start:
+        form.birth_date_start !== null ? dayjs(form.birth_date_start).format("YYYY-MM-DD") : null,
+      last_order_date_end:
+        form.last_order_date_end !== null
+          ? dayjs(form.last_order_date_end).format("YYYY-MM-DD")
+          : null,
+      last_order_date_start:
+        form.last_order_date_start !== null
+          ? dayjs(form.last_order_date_start).format("YYYY-MM-DD")
+          : null,
+    };
+    saveSegment(saveData);
     onClose();
   };
+
+  const filteredPoints = useMemo(() => {
+    if (!form.cities || form.cities.length === 0) {
+      return points;
+    }
+
+    const selectedCityIds = form.cities.map((city) => city.id);
+
+    // Фильтруем точки, у которых city_id входит в выбранные города
+    return points.filter((point) => selectedCityIds.includes(point.city_id));
+  }, [form.cities, points]);
 
   const handleReset = () => {
     setForm({
@@ -229,8 +255,6 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       days_before_birthday: "",
       has_email: null,
       consent_email: null,
-      consent_sms: null,
-      consent_push: null,
       orders_count_min: "",
       orders_count_max: "",
       avg_check_min: "",
@@ -355,48 +379,22 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
               <MyAutocomplite
                 label="Наличие E-mail"
                 multiple={false}
-                data={emailConsentOptions}
+                data={emailOptions}
                 value={form.has_email}
                 func={(data, value) => setField("has_email", value)}
               />
             </Grid>
           </Grid>
 
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 2, mb: 1, color: "#666" }}
-          >
-            Согласие на рассылки
-          </Typography>
           <Grid
             container
             spacing={2}
           >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Email рассылка"
-                multiple={false}
-                data={emailConsentOptions}
+            <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+              <MyCheckBox
+                label="Согласие на рассылки"
                 value={form.consent_email}
-                func={(data, value) => setField("consent_email", value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="SMS рассылка"
-                multiple={false}
-                data={emailConsentOptions}
-                value={form.consent_sms}
-                func={(data, value) => setField("consent_sms", value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Push уведомления"
-                multiple={false}
-                data={emailConsentOptions}
-                value={form.consent_push}
-                func={(data, value) => setField("consent_push", value)}
+                func={(e) => setField("consent_email", e.target.checked)}
               />
             </Grid>
           </Grid>
@@ -417,7 +415,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
             container
             spacing={2}
           >
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <RangeInput
                 label="Кол-во заказов"
                 valueMin={form.orders_count_min}
@@ -426,8 +424,13 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
                 onChangeMax={({ target }) => setField("orders_count_max", target?.value)}
               />
             </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#666" }}
+            >
+              Средний чек
+            </Typography>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <RangeInput
                 label="Средний чек"
                 valueMin={form.avg_check_min}
@@ -436,8 +439,13 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
                 onChangeMax={({ target }) => setField("avg_check_max", target?.value)}
               />
             </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#666" }}
+            >
+              Сумма заказов
+            </Typography>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <RangeInput
                 label="Сумма заказов"
                 valueMin={form.total_sum_min}
@@ -452,28 +460,35 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
             variant="subtitle2"
             sx={{ mt: 2, mb: 1, color: "#666" }}
           >
-            Даты заказов
+            Даты последних заказов
           </Typography>
           <Grid
             container
             spacing={2}
           >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <MyDatePickerNew
                 label="Дата последнего заказа от"
                 value={form.last_order_date_start ? dayjs(form.last_order_date_start) : null}
                 func={(e) => setField("last_order_date_start", e)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <MyDatePickerNew
                 label="Дата последнего заказа до"
                 value={form.last_order_date_end ? dayjs(form.last_order_date_end) : null}
                 func={(e) => setField("last_order_date_end", e)}
               />
             </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: "#666" }}
+              >
+                Дней с заказов
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <MyTextInput
                 type="number"
                 label="Дней с последнего заказа"
@@ -482,7 +497,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <MyTextInput
                 type="number"
                 label="Дней с первого заказа"
@@ -565,7 +580,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
               <MyAutocomplite
                 label="Адрес кафе"
                 multiple={true}
-                data={points}
+                data={filteredPoints}
                 value={form.points}
                 func={(data, value) => setField("points", value)}
               />
