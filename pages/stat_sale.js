@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 
 import Script from "next/script";
 
@@ -49,6 +49,9 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import { Download } from "@mui/icons-material";
 import axios from "axios";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
+import CityCafeAutocomplete from "@/ui/CityCafeAutocomplete";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 dayjs.locale("ru");
 
 var am5locales_ru_RU = {
@@ -1049,10 +1052,27 @@ class StatSale_Tab_Sett_Modal_Input extends React.Component {
   }
 }
 
-const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
+function ArrowForwardIcon() {
+  return null;
+}
+
+const StatSale_Tab_Sett_Dynamics = ({
+  dynamics,
+  saveDynamics,
+  openAlert,
+  points,
+  getDataSetOne,
+}) => {
   const [editingValue, setEditingValue] = React.useState(null);
   const [editData, setEditData] = React.useState({});
-  const [filterType, setFilterType] = React.useState("all");
+  const [filterType, setFilterType] = React.useState([]);
+
+  // Новые стейты для навигации
+  const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
+  const [currentSource, setCurrentSource] = React.useState("1");
+
+  // Отладка - выводим что приходит
+  React.useEffect(() => {}, [dynamics, currentYear, currentSource]);
 
   const months = [
     "Январь",
@@ -1077,11 +1097,52 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
     { value: "register", label: "Аккаунты (план)" },
   ];
 
-  // Группируем данные по типу и месяцу
+  // Получаем доступные годы из данных
+  const availableYears = React.useMemo(() => {
+    const years = Object.keys(dynamics || {})
+      .map(Number)
+      .sort((a, b) => a - b);
+    return years;
+  }, [dynamics]);
+
+  // Получаем доступные источники для текущего года
+  const availableSources = React.useMemo(() => {
+    const yearData = dynamics?.[currentYear];
+    const sources = yearData ? Object.keys(yearData).sort() : [];
+    return sources;
+  }, [dynamics, currentYear]);
+
+  // Парсим вложенную структуру в плоский массив для таблицы
+  const flatDynamics = React.useMemo(() => {
+    const result = [];
+    const yearData = dynamics?.[currentYear]?.[currentSource];
+
+    if (!yearData) {
+      return result;
+    }
+
+    Object.entries(yearData).forEach(([monthStr, typesData]) => {
+      const month = parseInt(monthStr, 10);
+
+      Object.entries(typesData).forEach(([type, value]) => {
+        result.push({
+          id: `${currentYear}_${currentSource}_${month}_${type}`,
+          type,
+          mounth: month,
+          value: value || 0,
+          year: currentYear,
+          source: currentSource,
+        });
+      });
+    });
+
+    return result;
+  }, [dynamics, currentYear, currentSource]);
+
   const groupedData = React.useMemo(() => {
     const grouped = {};
 
-    dynamics.forEach((item) => {
+    flatDynamics.forEach((item) => {
       if (!grouped[item.type]) {
         grouped[item.type] = {};
       }
@@ -1092,97 +1153,92 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
     });
 
     return grouped;
-  }, [dynamics]);
+  }, [flatDynamics]);
 
-  // Фильтруем данные для отображения
+  // Фильтруем типы для отображения
   const filteredData = React.useMemo(() => {
-    let filtered = types;
+    return types;
+  }, []);
 
-    if (filterType !== "all") {
-      filtered = filtered.filter((t) => t.value === filterType);
+  // Обработчики навигации по годам
+  const handlePrevYear = () => {
+    const prevYear = currentYear - 1;
+    if (availableYears.includes(prevYear)) {
+      setCurrentYear(prevYear);
+      setEditData({});
+      setEditingValue(null);
     }
+  };
 
-    return filtered;
-  }, [filterType]);
+  const handleNextYear = () => {
+    const nextYear = currentYear + 1;
+    if (availableYears.includes(nextYear)) {
+      setCurrentYear(nextYear);
+      setEditData({});
+      setEditingValue(null);
+    }
+  };
 
-  // Сохраняем значение перед переключением ячейки
+  const handleSourceChange = (source) => {
+    setCurrentSource(source);
+    setEditData({});
+    setEditingValue(null);
+  };
+
   const handleEdit = (type, month, currentValue, id) => {
-    // Если уже есть редактируемая ячейка, сохраняем её значение перед переключением
     if (editingValue) {
       const { type: oldType, month: oldMonth } = editingValue;
       const oldValue = editData[oldType]?.[oldMonth];
-
       if (oldValue !== undefined) {
-        // Сохраняем текущее редактируемое значение
         setEditData((prev) => ({
           ...prev,
-          [oldType]: {
-            ...prev[oldType],
-            [oldMonth]: oldValue,
-          },
+          [oldType]: { ...prev[oldType], [oldMonth]: oldValue },
         }));
       }
     }
-
-    // Устанавливаем новую редактируемую ячейку
     setEditingValue({ type, month, id });
-
-    // Загружаем существующее значение из editData или исходное
     const existingValue = editData[type]?.[month];
     if (existingValue === undefined) {
       setEditData((prev) => ({
         ...prev,
-        [type]: {
-          ...prev[type],
-          [month]: currentValue,
-        },
+        [type]: { ...prev[type], [month]: currentValue },
       }));
     }
   };
 
   const handleValueChange = (type, month, value) => {
-    // Обновляем значение в editData
     setEditData((prev) => ({
       ...prev,
-      [type]: {
-        ...prev[type],
-        [month]: parseInt(value) || 0,
-      },
+      [type]: { ...prev[type], [month]: parseInt(value) || 0 },
     }));
   };
 
   const handleSave = async () => {
     try {
-      // Сохраняем последнее редактируемое значение
       if (editingValue) {
         const { type, month } = editingValue;
         const value = editData[type]?.[month];
         if (value !== undefined) {
           setEditData((prev) => ({
             ...prev,
-            [type]: {
-              ...prev[type],
-              [month]: value,
-            },
+            [type]: { ...prev[type], [month]: value },
           }));
         }
       }
 
-      // Формируем данные для сохранения
       const saveData = [];
-      const savedItems = new Set(); // Чтобы не дублировать
+      const savedItems = new Set();
 
       Object.keys(editData).forEach((type) => {
         Object.keys(editData[type]).forEach((month) => {
           const monthNum = parseInt(month);
-          const originalItem = dynamics.find(
+          const originalItem = flatDynamics.find(
             (item) => item.type === type && item.mounth === monthNum,
           );
 
           const newValue = editData[type][month];
           const originalValue = originalItem?.value || 0;
 
-          // Сохраняем только если значение изменилось
           if (newValue !== originalValue) {
             const key = `${type}_${month}`;
             if (!savedItems.has(key)) {
@@ -1192,6 +1248,8 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
                 type: type,
                 mounth: monthNum,
                 value: newValue,
+                year: currentYear,
+                source: currentSource,
               });
             }
           }
@@ -1203,7 +1261,7 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
         return;
       }
 
-      await saveDynamics(saveData);
+      await saveDynamics(saveData, filterType);
       setEditingValue(null);
       setEditData({});
       openAlert(true, "Данные успешно сохранены");
@@ -1217,15 +1275,17 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
     setEditData({});
   };
 
-  // Получаем значение для отображения
   const getDisplayValue = (type, monthNum) => {
-    // Если есть измененное значение в editData
     if (editData[type]?.[monthNum] !== undefined) {
       return editData[type][monthNum];
     }
-    // Иначе исходное значение
-    return groupedData[type]?.[monthNum]?.value || 0;
+    const value = groupedData[type]?.[monthNum]?.value || 0;
+    return value;
   };
+
+  useEffect(() => {
+    getDataSetOne(filterType);
+  }, [filterType]);
 
   return (
     <Grid
@@ -1238,27 +1298,65 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
           <Grid
             container
             spacing={2}
-            sx={{ mb: 3 }}
+            sx={{ mb: 2, alignItems: "center" }}
           >
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>Фильтр по типу</InputLabel>
-                <Select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  label="Фильтр по типу"
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <IconButton
+                  onClick={handlePrevYear}
+                  disabled={!availableYears.includes(currentYear - 1)}
+                  size="small"
                 >
-                  <MenuItem value="all">Все типы</MenuItem>
-                  {types.map((type) => (
+                  <ArrowBackIcon />
+                </IconButton>
+                <Typography
+                  variant="h6"
+                  sx={{ minWidth: 80, textAlign: "center" }}
+                >
+                  {currentYear}
+                </Typography>
+                <IconButton
+                  onClick={handleNextYear}
+                  disabled={!availableYears.includes(currentYear + 1)}
+                  size="small"
+                >
+                  <ArrowBackIcon style={{ rotate: "180deg" }} />
+                </IconButton>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <FormControl
+                fullWidth
+                size="small"
+              >
+                <InputLabel>Источник</InputLabel>
+                <Select
+                  value={currentSource}
+                  label="Источник"
+                  onChange={(e) => handleSourceChange(e.target.value)}
+                >
+                  {availableSources.map((src) => (
                     <MenuItem
-                      key={type.value}
-                      value={type.value}
+                      key={src}
+                      value={src}
                     >
-                      {type.label}
+                      {src == 1 ? "Кафе" : src == 2 ? "КЦ" : "Сайт"}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <CityCafeAutocomplete2
+                label="Кафе"
+                points={points}
+                value={filterType}
+                onChange={(v) => setFilterType(v)}
+                withAll
+                withAllSelected
+              />
             </Grid>
           </Grid>
 
@@ -1295,7 +1393,6 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
                           ? editData[type.value][monthNum]
                           : currentValue;
 
-                      // Проверяем, есть ли изменения
                       const originalValue = groupedData[type.value]?.[monthNum]?.value || 0;
                       const hasChanges =
                         editData[type.value]?.[monthNum] !== undefined &&
@@ -1315,18 +1412,11 @@ const StatSale_Tab_Sett_Dynamics = ({ dynamics, saveDynamics, openAlert }) => {
                                 handleValueChange(type.value, monthNum, e.target.value)
                               }
                               autoFocus
-                              onBlur={() => {
-                                // Сохраняем значение при потере фокуса и выходим из режима редактирования
-                                setEditingValue(null);
-                              }}
+                              onBlur={() => setEditingValue(null)}
                               onKeyPress={(e) => {
-                                if (e.key === "Enter") {
-                                  setEditingValue(null);
-                                }
+                                if (e.key === "Enter") setEditingValue(null);
                               }}
-                              InputProps={{
-                                inputProps: { min: 0, step: 1000 },
-                              }}
+                              InputProps={{ inputProps: { min: 0, step: 1000 } }}
                               sx={{ width: "100px" }}
                             />
                           ) : (
@@ -1931,8 +2021,8 @@ class StatSale_Tab_Sett extends React.Component {
   }
 
   // Добавьте метод для сохранения динамики
-  save_dynamics = async (data) => {
-    const res = await this.props.getData("save_dynamics", { data });
+  save_dynamics = async (data, points) => {
+    const res = await this.props.getData("save_dynamics", { data, points });
     this.props.openAlert(res.st, res.text);
 
     if (res.st) {
@@ -2414,6 +2504,8 @@ class StatSale_Tab_Sett extends React.Component {
                 >
                   <StatSale_Tab_Sett_Dynamics
                     dynamics={dynamics || []}
+                    points={this.props.pointsCurrent}
+                    getDataSetOne={this.props.getDataSetOne}
                     saveDynamics={this.save_dynamics}
                     openAlert={openAlert}
                   />
@@ -5352,13 +5444,21 @@ class StatSale_ extends React.Component {
     this.setState({ activeTab: val });
   };
 
-  getDataSet = async () => {
-    const res = await this.getData("get_data_sett");
+  getDataSet = async (req = {}) => {
+    const res = await this.getData("get_data_sett", req);
 
     this.setState({
       data_sett_rate: res.data_sett_rate,
       data_sett_points: res.data_sett_points,
       data_sett_rate_clients: res.data_sett_rate_clients,
+      data_sett_limit_dynamic: res.data_sett_limit_dynamic,
+    });
+  };
+
+  getDataSetOne = async (req = {}) => {
+    const res = await this.getData("get_data_sett", { points: req });
+
+    this.setState({
       data_sett_limit_dynamic: res.data_sett_limit_dynamic,
     });
   };
@@ -5716,6 +5816,8 @@ class StatSale_ extends React.Component {
               dynamics={this.state.data_sett_limit_dynamic}
               rows_clietns={this.state.data_sett_rate_clients}
               getDataSet={this.getDataSet}
+              pointsCurrent={this.state.points}
+              getDataSetOne={this.getDataSetOne}
               getData={this.getData}
               points={this.state.data_sett_points}
               openAlert={this.openAlert}
