@@ -24,7 +24,7 @@ export default function useVendorDetailsPage(vendorId) {
   const router = useRouter();
   const { api_laravel, api_upload } = useApi("vendors");
   const { isAlert, closeAlert, showAlert, alertMessage, alertStatus } = useMyAlert();
-  const { canEdit, canUpload } = useVendorAccess();
+  const { canDeleteDeclaration, canEdit, canEditDeclaration, canUpload } = useVendorAccess();
   const isLoading = useVendorsStore((state) => state.isLoading);
   const bootstrapAllPoints = useVendorsStore((state) => state.allPoints);
   const bootstrapAllDeclarations = useVendorsStore((state) => state.allDeclarations);
@@ -481,7 +481,7 @@ export default function useVendorDetailsPage(vendorId) {
   };
 
   const handleDeleteDeclaration = async (declId) => {
-    if (!canEdit) {
+    if (!canDeleteDeclaration) {
       showAlert("Недостаточно прав для удаления деклараций", false);
       return;
     }
@@ -505,6 +505,39 @@ export default function useVendorDetailsPage(vendorId) {
       showAlert("Декларация удалена", true);
     } catch (error) {
       showAlert(error?.message || "Не удалось удалить декларацию", false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveDeclaration = async (declId, expiresAt) => {
+    if (!canEditDeclaration) {
+      showAlert("Недостаточно прав для редактирования деклараций", false);
+      return false;
+    }
+
+    if (!declId || !expiresAt || !dayjs(expiresAt).isValid()) {
+      return false;
+    }
+
+    try {
+      setLoading(true);
+      const response = await api_laravel("declaration-save", {
+        id: Number(declId),
+        expires_at: dayjs(expiresAt).format("YYYY-MM-DD"),
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось сохранить декларацию");
+      }
+
+      handleDeclarationResponse(response);
+      await loadVendor();
+      showAlert("Декларация сохранена", true);
+      return true;
+    } catch (error) {
+      showAlert(error?.message || "Не удалось сохранить декларацию", false);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -667,6 +700,7 @@ export default function useVendorDetailsPage(vendorId) {
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
+    handleSaveDeclaration,
     handleVendorInfoSubmit,
     handleVendorMailsSubmit,
     handleQuickToggleVendorField,
