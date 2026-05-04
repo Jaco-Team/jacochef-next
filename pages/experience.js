@@ -233,7 +233,7 @@ class Experience_Modal_User extends React.Component {
     if (data === "list") {
       const listData = this.state.listData;
 
-      listData.forEach((item) => (item.type === type ? (item.start = value) : item));
+      listData.forEach((item) => (item.type === type ? (item[date] = value) : item));
 
       this.setState({
         listData,
@@ -674,7 +674,7 @@ class Experience_Modal_User extends React.Component {
                                 <MyDatePickerNew
                                   label="Дата"
                                   value={dayjs(item?.start ?? "")}
-                                  func={this.changeDateRange.bind(this, "list", item.type, 0)}
+                                  func={this.changeDateRange.bind(this, "list", item.type, "start")}
                                 />
                               </TableCell>
                               <TableCell
@@ -691,7 +691,11 @@ class Experience_Modal_User extends React.Component {
                                     : null,
                                 }}
                               >
-                                {item.end}
+                                <MyDatePickerNew
+                                  label="Дата"
+                                  value={dayjs(item?.end ?? "")}
+                                  func={this.changeDateRange.bind(this, "list", item.type, "end")}
+                                />
                               </TableCell>
                             </TableRow>
                           ))}
