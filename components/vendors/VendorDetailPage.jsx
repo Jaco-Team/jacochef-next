@@ -68,7 +68,7 @@ const TAB_DEFINITIONS = [
 export default function VendorDetailPage() {
   const router = useRouter();
   const vendorId = Number(router.query.id);
-  const { canEdit, canUpload } = useVendorAccess();
+  const { canEdit, canUpload, canDeleteDeclaration, canEditDeclaration } = useVendorAccess();
   const setLoading = useVendorsStore((state) => state.setLoading);
   const [activeTab, setActiveTab] = useState(0);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
@@ -348,6 +348,8 @@ export default function VendorDetailPage() {
                   <TabDocuments
                     canEdit={canEdit}
                     canUpload={canUpload}
+                    canEditDeclaration={canEditDeclaration}
+                    canDeleteDeclaration={canDeleteDeclaration}
                     handleDeleteDeclaration={handleDeleteDeclaration}
                     handleUnbindDeclaration={handleUnbindDeclaration}
                     openDocModal={openDocModal}

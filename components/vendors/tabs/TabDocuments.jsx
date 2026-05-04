@@ -33,6 +33,7 @@ import { MyTextInput } from "@/ui/Forms";
 import { getDeclarationDisplayFilename } from "../declarationFileName";
 import useVendorDocumentsView from "../useVendorDocumentsView";
 import useVendorsStore from "../useVendorsStore";
+import EditIcon from "@mui/icons-material/Edit";
 
 const TABLE_COLUMNS = [
   { id: "filename_sort", label: "Файл" },
@@ -143,6 +144,8 @@ function DocumentsTable({
   rows,
   canEdit,
   handleDeleteDeclaration,
+  canEditDeclaration,
+  canDeleteDeclaration,
   handleOpenFile,
   handleSort,
   handleUnbindDeclaration,
@@ -270,7 +273,24 @@ function DocumentsTable({
                         </span>
                       </Tooltip>
                     ) : null}
-                    {canEdit ? (
+                    {canEditDeclaration ? (
+                      <Tooltip title="Удалить">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={withConfirm(
+                              () => handleDeleteDeclaration(decl.id),
+                              "Удалить декларацию без возможности восстановления?",
+                            )}
+                            disabled={isLoading}
+                            sx={{ color: "primary.main" }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    ) : null}
+                    {canDeleteDeclaration ? (
                       <Tooltip title="Удалить">
                         <span>
                           <IconButton
@@ -310,6 +330,8 @@ function DocumentsTable({
 export default function TabDocuments({
   canEdit,
   canUpload,
+  canDeleteDeclaration,
+  canEditDeclaration,
   handleDeleteDeclaration,
   handleUnbindDeclaration,
   openDocModal,
@@ -424,6 +446,8 @@ export default function TabDocuments({
                 rows={activeRows}
                 canEdit={canEdit}
                 canUpload={canUpload}
+                canEditDeclaration={canEditDeclaration}
+                canDeleteDeclaration={canDeleteDeclaration}
                 handleDeleteDeclaration={handleDeleteDeclaration}
                 handleOpenFile={handleOpenFile}
                 handleSort={handleSort}

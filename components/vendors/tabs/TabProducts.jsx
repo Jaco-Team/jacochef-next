@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import {
+  Box,
   Button,
   Card,
   CardContent,
@@ -36,6 +37,7 @@ import {
 import ModalAddProduct from "../ModalAddProduct";
 import useVendorProductsView from "../useVendorProductsView";
 import useVendorsStore from "../useVendorsStore";
+import InfoIcon from "@mui/icons-material/Info";
 
 const getFileExtension = (value) => {
   const extension = (value || "").split(".").pop()?.toLowerCase();
@@ -191,9 +193,15 @@ export default function TabProducts({
             >
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 700 }}
+                sx={{ fontWeight: 700, display: "flex", alignItems: "center" }}
               >
-                Продукты поставщика
+                <h2>Продукты поставщика</h2>
+                <Tooltip
+                  title="Красная декларация за 2 недели"
+                  arrow
+                >
+                  <InfoIcon sx={{ marginLeft: "10px", color: "grey" }} />
+                </Tooltip>
               </Typography>
               {canEdit ? (
                 <Button

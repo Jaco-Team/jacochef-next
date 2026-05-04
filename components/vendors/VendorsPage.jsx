@@ -21,6 +21,7 @@ import {
   Stack,
   Tooltip,
   Typography,
+  Box,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
@@ -196,6 +197,7 @@ function VendorsPage() {
           {list.map((vendor) => {
             const cityText = getCityNamesByIds(vendor.cities, cities).join(", ");
             const itemsCount = Number(vendor.items_count || 0);
+            const currentDeclarations = Number(vendor.current_declarations || 0);
             const expiringDeclarations = Number(vendor.expiring_declarations || 0);
 
             return (
@@ -261,12 +263,56 @@ function VendorsPage() {
                     sx={{ color: expiringDeclarations ? "error.main" : "text.secondary" }}
                   >
                     <DescriptionOutlinedIcon sx={{ fontSize: 16 }} />
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "inherit" }}
+                    <Tooltip
+                      title="Действующие декларации"
+                      arrow
                     >
-                      {expiringDeclarations ? `${expiringDeclarations} истекают` : "Нет критичных"}
-                    </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            bgcolor: "#e8f5e9",
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 1,
+                            borderLeft: "2px solid #2e7d32",
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "#1b5e20", fontWeight: "medium" }}
+                          >
+                            {currentDeclarations}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Tooltip>
+
+                    <Tooltip
+                      title="Срок действия истекает:"
+                      arrow
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            bgcolor: "#ffebee",
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 1,
+                            borderLeft: "2px solid #d32f2f",
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: expiringDeclarations > 0 ? "#c62828" : "text.secondary",
+                              fontWeight: expiringDeclarations > 0 ? "bold" : "normal",
+                            }}
+                          >
+                            {expiringDeclarations > 0 ? expiringDeclarations : 0}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Tooltip>
                   </Stack>
                 </TableCell>
                 {canDelete ? (
