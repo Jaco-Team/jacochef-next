@@ -116,7 +116,7 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             <Grid>
               <div style={{ height: 400, display: "flex" }}>
                 <img
-                  style={{ width: "100%", height: "auto", alignSelf: "center", borderRadius: 20 }}
+                  style={{ width: "100%", height: "300px", alignSelf: "center", borderRadius: 20 }}
                   src={item.link}
                 />
               </div>
