@@ -94,6 +94,7 @@ export default function VendorDetailPage() {
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
+    handleSaveDeclaration,
     handleQuickToggleVendorField,
     handleToggleCity,
     handleVendorInfoSubmit,
@@ -110,7 +111,7 @@ export default function VendorDetailPage() {
   return (
     <>
       <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 2 }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
         open={isLoading}
       >
         <CircularProgress />
@@ -334,9 +335,11 @@ export default function VendorDetailPage() {
                 >
                   <TabProducts
                     canEdit={canEdit}
+                    canEditDeclaration={canEditDeclaration}
                     canUpload={canUpload}
                     handleAddVendorItem={handleAddVendorItem}
                     handleRemoveVendorItem={handleRemoveVendorItem}
+                    handleSaveDeclaration={handleSaveDeclaration}
                     handleUnbindDeclaration={handleUnbindDeclaration}
                     openDocModal={openDocModal}
                   />
@@ -351,6 +354,7 @@ export default function VendorDetailPage() {
                     canEditDeclaration={canEditDeclaration}
                     canDeleteDeclaration={canDeleteDeclaration}
                     handleDeleteDeclaration={handleDeleteDeclaration}
+                    handleSaveDeclaration={handleSaveDeclaration}
                     handleUnbindDeclaration={handleUnbindDeclaration}
                     openDocModal={openDocModal}
                   />

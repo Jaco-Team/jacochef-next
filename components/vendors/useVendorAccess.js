@@ -12,8 +12,8 @@ export default function useVendorAccess() {
 
     return {
       canEdit: userCan("access", "edit"),
-      canDeleteDeclaration: access?.delete_declaration_access,
-      canEditDeclaration: access?.edit_declaration_access,
+      canDeleteDeclaration: userCan("access", "delete_declaration"),
+      canEditDeclaration: userCan("access", "edit_declaration"),
       canUpload: userCan("access", "upload"),
     };
   }, [access]);

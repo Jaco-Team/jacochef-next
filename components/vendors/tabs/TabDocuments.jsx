@@ -34,6 +34,7 @@ import { getDeclarationDisplayFilename } from "../declarationFileName";
 import useVendorDocumentsView from "../useVendorDocumentsView";
 import useVendorsStore from "../useVendorsStore";
 import EditIcon from "@mui/icons-material/Edit";
+import DeclarationEditDialog from "../DeclarationEditDialog";
 
 const TABLE_COLUMNS = [
   { id: "filename_sort", label: "Файл" },
@@ -144,6 +145,7 @@ function DocumentsTable({
   rows,
   canEdit,
   handleDeleteDeclaration,
+  handleEditDeclaration,
   canEditDeclaration,
   canDeleteDeclaration,
   handleOpenFile,
@@ -274,14 +276,11 @@ function DocumentsTable({
                       </Tooltip>
                     ) : null}
                     {canEditDeclaration ? (
-                      <Tooltip title="Удалить">
+                      <Tooltip title="Редактировать">
                         <span>
                           <IconButton
                             size="small"
-                            onClick={withConfirm(
-                              () => handleDeleteDeclaration(decl.id),
-                              "Удалить декларацию без возможности восстановления?",
-                            )}
+                            onClick={() => handleEditDeclaration(decl)}
                             disabled={isLoading}
                             sx={{ color: "primary.main" }}
                           >
@@ -333,11 +332,13 @@ export default function TabDocuments({
   canDeleteDeclaration,
   canEditDeclaration,
   handleDeleteDeclaration,
+  handleSaveDeclaration,
   handleUnbindDeclaration,
   openDocModal,
 }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
   const [documentsFilter, setDocumentsFilter] = useState("");
+  const [editableDeclaration, setEditableDeclaration] = useState(null);
   const { vendorDeclarations, vendorItems } = useVendorDocumentsView();
   const isLoading = useVendorsStore((state) => state.isLoading);
   const filteredVendorDeclarations = useMemo(() => {
@@ -394,9 +395,20 @@ export default function TabDocuments({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const handleCloseEditDialog = () => {
+    setEditableDeclaration(null);
+  };
+
   return (
     <Stack spacing={2}>
       <ConfirmDialog />
+      <DeclarationEditDialog
+        open={Boolean(editableDeclaration)}
+        declaration={editableDeclaration}
+        isLoading={isLoading}
+        onClose={handleCloseEditDialog}
+        onSubmit={handleSaveDeclaration}
+      />
 
       <Stack
         direction={{ xs: "column", sm: "row" }}
@@ -449,6 +461,7 @@ export default function TabDocuments({
                 canEditDeclaration={canEditDeclaration}
                 canDeleteDeclaration={canDeleteDeclaration}
                 handleDeleteDeclaration={handleDeleteDeclaration}
+                handleEditDeclaration={setEditableDeclaration}
                 handleOpenFile={handleOpenFile}
                 handleSort={handleSort}
                 handleUnbindDeclaration={handleUnbindDeclaration}
@@ -469,7 +482,10 @@ export default function TabDocuments({
                 rows={archiveRows}
                 canEdit={canEdit}
                 canUpload={canUpload}
+                canEditDeclaration={canEditDeclaration}
+                canDeleteDeclaration={canDeleteDeclaration}
                 handleDeleteDeclaration={handleDeleteDeclaration}
+                handleEditDeclaration={setEditableDeclaration}
                 handleOpenFile={handleOpenFile}
                 handleSort={handleSort}
                 handleUnbindDeclaration={handleUnbindDeclaration}
