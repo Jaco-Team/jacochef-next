@@ -335,9 +335,11 @@ export default function VendorDetailPage() {
                 >
                   <TabProducts
                     canEdit={canEdit}
+                    canEditDeclaration={canEditDeclaration}
                     canUpload={canUpload}
                     handleAddVendorItem={handleAddVendorItem}
                     handleRemoveVendorItem={handleRemoveVendorItem}
+                    handleSaveDeclaration={handleSaveDeclaration}
                     handleUnbindDeclaration={handleUnbindDeclaration}
                     openDocModal={openDocModal}
                   />

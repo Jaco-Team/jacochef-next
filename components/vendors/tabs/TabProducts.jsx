@@ -27,6 +27,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddLinkIconOutlined from "@mui/icons-material/AddLinkOutlined";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import EditIcon from "@mui/icons-material/Edit";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import FileTypeIcon from "@/ui/FileTypeIcon";
@@ -34,6 +35,7 @@ import {
   getDeclarationDisplayFilename,
   getDeclarationStoredFilename,
 } from "../declarationFileName";
+import DeclarationEditDialog from "../DeclarationEditDialog";
 import ModalAddProduct from "../ModalAddProduct";
 import useVendorProductsView from "../useVendorProductsView";
 import useVendorsStore from "../useVendorsStore";
@@ -112,9 +114,11 @@ const formatExpiringSoonLabel = (count) => (count === 1 ? "1 истекает" :
 
 export default function TabProducts({
   canEdit,
+  canEditDeclaration,
   canUpload,
   handleAddVendorItem,
   handleRemoveVendorItem,
+  handleSaveDeclaration,
   handleUnbindDeclaration,
   openDocModal,
 }) {
@@ -127,7 +131,9 @@ export default function TabProducts({
   const [productSearch, setProductSearch] = useState("");
   const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState([]);
+  const [editableDeclaration, setEditableDeclaration] = useState(null);
   const hasProductActions = canEdit || canUpload;
+  const hasDeclarationActions = canEdit || canEditDeclaration;
 
   const selectedProductCategories = useMemo(
     () =>
@@ -178,9 +184,20 @@ export default function TabProducts({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const handleCloseEditDialog = () => {
+    setEditableDeclaration(null);
+  };
+
   return (
     <>
       <ConfirmDialog />
+      <DeclarationEditDialog
+        open={Boolean(editableDeclaration)}
+        declaration={editableDeclaration}
+        isLoading={isLoading}
+        onClose={handleCloseEditDialog}
+        onSubmit={handleSaveDeclaration}
+      />
 
       <Card variant="outlined">
         <CardContent>
@@ -405,10 +422,10 @@ export default function TabProducts({
                                             <TableCell sx={{ whiteSpace: "nowrap" }}>
                                               Размер
                                             </TableCell>
-                                            {canEdit ? (
+                                            {hasDeclarationActions ? (
                                               <TableCell
                                                 align="right"
-                                                sx={{ whiteSpace: "nowrap", width: 84 }}
+                                                sx={{ whiteSpace: "nowrap", width: 96 }}
                                               >
                                                 Действия
                                               </TableCell>
@@ -474,29 +491,53 @@ export default function TabProducts({
                                               <TableCell sx={{ whiteSpace: "nowrap" }}>
                                                 {formatDeclarationSize(decl)}
                                               </TableCell>
-                                              {canEdit ? (
+                                              {hasDeclarationActions ? (
                                                 <TableCell
                                                   align="right"
                                                   sx={{ whiteSpace: "nowrap" }}
                                                 >
-                                                  <Tooltip title="Отвязать">
-                                                    <span>
-                                                      <IconButton
-                                                        size="small"
-                                                        onClick={withConfirm(
-                                                          () =>
-                                                            handleUnbindDeclaration(
-                                                              decl.id,
-                                                              item.item_id,
-                                                            ),
-                                                          "Отвязать декларацию от товара?",
-                                                        )}
-                                                        disabled={isLoading}
-                                                      >
-                                                        <LinkOffIcon fontSize="small" />
-                                                      </IconButton>
-                                                    </span>
-                                                  </Tooltip>
+                                                  <Stack
+                                                    direction="row"
+                                                    spacing={0.5}
+                                                    justifyContent="flex-end"
+                                                  >
+                                                    {canEdit ? (
+                                                      <Tooltip title="Отвязать">
+                                                        <span>
+                                                          <IconButton
+                                                            size="small"
+                                                            onClick={withConfirm(
+                                                              () =>
+                                                                handleUnbindDeclaration(
+                                                                  decl.id,
+                                                                  item.item_id,
+                                                                ),
+                                                              "Отвязать декларацию от товара?",
+                                                            )}
+                                                            disabled={isLoading}
+                                                          >
+                                                            <LinkOffIcon fontSize="small" />
+                                                          </IconButton>
+                                                        </span>
+                                                      </Tooltip>
+                                                    ) : null}
+                                                    {canEditDeclaration ? (
+                                                      <Tooltip title="Редактировать">
+                                                        <span>
+                                                          <IconButton
+                                                            size="small"
+                                                            onClick={() =>
+                                                              setEditableDeclaration(decl)
+                                                            }
+                                                            disabled={isLoading}
+                                                            sx={{ color: "primary.main" }}
+                                                          >
+                                                            <EditIcon fontSize="small" />
+                                                          </IconButton>
+                                                        </span>
+                                                      </Tooltip>
+                                                    ) : null}
+                                                  </Stack>
                                                 </TableCell>
                                               ) : null}
                                             </TableRow>
