@@ -48,7 +48,7 @@ import DownloadButton from "@/ui/DownloadButton";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import { Download } from "@mui/icons-material";
 import axios from "axios";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Chip, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import CityCafeAutocomplete from "@/ui/CityCafeAutocomplete";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -2448,7 +2448,7 @@ class StatSale_Tab_Sett extends React.Component {
         >
           <TabPanel
             value={activeTab}
-            index={3}
+            index={4}
             id="clients"
           >
             <Grid
@@ -4795,6 +4795,496 @@ class StatSale_Tab_Dynamic extends React.Component {
   }
 }
 
+class StatSale_Tab_DynamicSale extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      date_start: formatDateMin(new Date()),
+      date_end: formatDateMin(new Date()),
+      data_clients_list: {},
+      res: {},
+      pizzaArr: [],
+      rollyArr: [],
+      orderArr: [],
+      accountArr: [],
+      data_clients_list_cafe: {},
+      data_clients_list_kc: {},
+      data_clients_list_site: {},
+      yearly_totals: null,
+      yearly_totals_cafe: null,
+      yearly_totals_kc: null,
+      yearly_totals_site: null,
+      loading: false,
+    };
+  }
+
+  changeDateRange(type, data) {
+    this.setState({
+      [type]: formatDateMin(data),
+    });
+  }
+
+  /**
+   * Конвертирует объект { "2025-1": {...}, "2026-4": {...} }
+   * в отсортированный массив по дате
+   */
+  objectToSortedArray = (obj) => {
+    if (!obj || typeof obj !== "object") return [];
+
+    return Object.values(obj).sort((a, b) => {
+      if (a.year !== b.year) return parseInt(a.year) - parseInt(b.year);
+      return a.month - b.month;
+    });
+  };
+
+  get_data_clients = async (exp = false) => {
+    const { date_start, date_end, point } = this.state;
+    const data = {
+      date_start: dayjs(date_start).subtract(1, "month").format("YYYY-MM"),
+      date_end: dayjs(date_end).format("YYYY-MM"),
+      points: point,
+    };
+
+    // export
+    if (exp) {
+      try {
+        this.setState({ is_load: true });
+
+        const response = await axios.post(
+          "https://apichef.jacochef.ru/api/stat_sale/export_data_dynamics",
+          {
+            method: "export_data_dynamics",
+            module: "orders_by_hour",
+            version: 2,
+            login: localStorage.getItem("token"),
+            data: this.state.res,
+          },
+          {
+            responseType: "blob",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            },
+            timeout: 30000,
+          },
+        );
+
+        const contentType = response.headers["content-type"];
+
+        if (contentType && contentType.includes("application/json")) {
+          const text = await response.data.text();
+          const errorData = JSON.parse(text);
+          this.props.openAlert(false, errorData.text || "Ошибка экспорта");
+          return;
+        }
+
+        if (response.data.size === 0) {
+          this.props.openAlert(false, "Ошибка: получен пустой файл");
+          return;
+        }
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+
+        let fileName = `stat_dynamics_${new Date().toISOString().split("T")[0]}.xlsx`;
+        const contentDisposition = response.headers["content-disposition"];
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            fileName = match[1].replace(/['"]/g, "");
+          }
+        }
+
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+
+        this.props.openAlert(true, "Экспорт успешно выполнен");
+      } catch (error) {
+        console.error("Export error:", error);
+
+        let errorMessage = "Ошибка при экспорте";
+        if (error.response && error.response.data) {
+          try {
+            const text = await error.response.data.text();
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.text || errorMessage;
+          } catch (e) {
+            errorMessage = error.message || errorMessage;
+          }
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+
+        this.props.openAlert(false, errorMessage);
+      } finally {
+        this.setState({ is_load: false });
+      }
+      return;
+    }
+
+    this.setState({ loading: true });
+    const res = await this.props.getData("get_dynamics", data);
+    this.setState({ loading: false });
+
+    if (res.st) {
+      const pizzaArr = [];
+      const rollyArr = [];
+      const orderArr = [];
+      const accountArr = [];
+      const entries = Object.entries(res.res);
+      entries.map(([key, value], index) => {
+        const prevMonth = entries[index - 1]?.[1];
+        console.log(prevMonth);
+        if (index !== 0 && prevMonth) {
+          pizzaArr.push({
+            month: value.month_name,
+            planQty: value.pizza_plan,
+            planLoad: (parseInt(value.pizza) / parseInt(value.pizza_plan)) * 100,
+            factQty: value.pizza,
+            factDynPct: ((value.pizza - prevMonth.pizza) / prevMonth.pizza) * 100,
+            factDynQty: parseInt(value.pizza) - parseInt(prevMonth.pizza),
+            factLoad: (parseInt(value.pizza) / prevMonth.pizza) * 100,
+          });
+        }
+
+        if (key !== 0 && prevMonth) {
+          rollyArr.push({
+            month: value.month_name,
+            planQty: value.rolly_plan,
+            planLoad: (parseInt(value.rolly) / parseInt(value.rolly_plan)) * 100,
+            factQty: value.rolly,
+            factDynPct: ((value.rolly - prevMonth?.rolly) / prevMonth?.rolly) * 100,
+            factDynQty: parseInt(value.rolly) - parseInt(prevMonth?.rolly),
+            factLoad: (parseInt(value.rolly) / prevMonth.rolly) * 100,
+          });
+        }
+
+        if (key !== 0 && prevMonth) {
+          orderArr.push({
+            month: value.month_name,
+            planQty: value.order_plan,
+            planLoad: (parseInt(value.order) / parseInt(value.order_plan)) * 100,
+            factQty: value.order,
+            factDynPct: ((value.order - prevMonth?.order) / prevMonth?.order) * 100,
+            factDynQty: parseInt(value.order) - parseInt(prevMonth?.order),
+            factLoad: (parseInt(value.order) / prevMonth.order) * 100,
+          });
+        }
+
+        if (key !== 0 && prevMonth) {
+          accountArr.push({
+            month: value.month_name,
+            planQty: value.active_plan,
+            planLoad: (parseInt(value.active) / parseInt(value.active_plan)) * 100,
+            factQty: value.active,
+            factDynPct: ((value.active - prevMonth?.active) / prevMonth?.active) * 100,
+            factDynQty: parseInt(value.active) - parseInt(prevMonth?.active),
+            factLoad: (parseInt(value.active) / prevMonth.active) * 100,
+          });
+        }
+      });
+      this.setState({
+        pizzaArr,
+        rollyArr,
+        orderArr,
+        accountArr,
+      });
+    } else {
+      this.props.openAlert(res.st, res.text);
+    }
+  };
+
+  changePoints(data, event, value) {
+    this.setState({
+      [data]: value,
+    });
+  }
+
+  renderPizzaTable(pizzaArr, title, subTitle) {
+    const cellSx = {
+      border: "1px solid #e0e0e0",
+      textAlign: "center",
+      fontWeight: "bold",
+      fontSize: "0.8rem",
+      backgroundColor: "#fafafa",
+      padding: "12px 8px",
+    };
+
+    const bodyCellSx = {
+      border: "1px solid #e0e0e0",
+      textAlign: "center",
+      fontSize: "0.85rem",
+      padding: "10px 8px",
+      transition: "background-color 0.2s ease",
+    };
+
+    if (!pizzaArr.length) return null;
+
+    return (
+      <Grid
+        size={{ xs: 12, sm: 12 }}
+        sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
+      >
+        <TableContainer
+          component={Paper}
+          sx={{
+            margin: "20px auto",
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            "& .MuiTableCell-root": {
+              borderColor: "#e0e0e0",
+            },
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{ p: 2, fontWeight: "bold", textAlign: "left", borderBottom: "2px solid #f0f0f0" }}
+          >
+            {title}
+          </Typography>
+          <Table
+            sx={{ minWidth: 650 }}
+            aria-label="food table"
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell
+                  rowSpan={3}
+                  sx={cellSx}
+                >
+                  Период
+                </TableCell>
+                <TableCell
+                  colSpan={2}
+                  rowSpan={2}
+                  sx={{ ...cellSx, backgroundColor: "#e8f5e9" }}
+                >
+                  План
+                </TableCell>
+                <TableCell
+                  colSpan={4}
+                  sx={{ ...cellSx, backgroundColor: "#e3f2fd" }}
+                >
+                  {subTitle}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  sx={{ ...cellSx, backgroundColor: "#fff3e0" }}
+                >
+                  Факт
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {pizzaArr.map((row, index) => (
+                <TableRow
+                  key={row.month}
+                  sx={{
+                    "&:hover": {
+                      backgroundColor: "#f5f5f5",
+                      "& .MuiTableCell-root": {
+                        backgroundColor: "#f5f5f5",
+                      },
+                    },
+                  }}
+                >
+                  <TableCell
+                    component="th"
+                    scope="row"
+                    sx={{
+                      ...bodyCellSx,
+                      fontWeight: "bold",
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    {row.month}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...bodyCellSx,
+                      fontWeight: "500",
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    {row.planQty?.toLocaleString()}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...bodyCellSx,
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    {row.planLoad?.toFixed(2)}%
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...bodyCellSx,
+                      fontWeight: "500",
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    {row.factQty?.toLocaleString()}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...bodyCellSx,
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    <Chip
+                      label={`${row.factDynPct?.toFixed(2)}%`}
+                      size="small"
+                      sx={{
+                        backgroundColor: row.factDynPct >= 0 ? "#4caf50" : "#f44336",
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: "0.75rem",
+                        minWidth: "70px",
+                        "& .MuiChip-label": {
+                          padding: "4px 8px",
+                        },
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...bodyCellSx,
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 0.5,
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: row.factDynQty >= 0 ? "#4caf50" : "#f44336",
+                          fontWeight: "bold",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {row.factDynQty > 0 ? "+" : ""}
+                        {row.factDynQty?.toLocaleString()}
+                      </span>
+                      {row.factDynQty !== 0 && (
+                        <span style={{ fontSize: "0.7rem" }}>{row.factDynQty > 0 ? "▲" : "▼"}</span>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      ...bodyCellSx,
+                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                    }}
+                  >
+                    <Chip
+                      label={row.factLoad?.toFixed(2) || "-"}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        borderColor: "#1976d2",
+                        color: "#1976d2",
+                        fontWeight: "500",
+                        fontSize: "0.75rem",
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+    );
+  }
+
+  render() {
+    const { activeTab } = this.props;
+    const { data_clients_list, loading, pizzaArr, rollyArr, orderArr, accountArr } = this.state;
+
+    return (
+      <Grid
+        style={{ paddingTop: 0 }}
+        size={{ xs: 12, sm: 12 }}
+      >
+        <TabPanel
+          value={activeTab}
+          index={3}
+          id="dynamics"
+        >
+          <Grid
+            container
+            spacing={3}
+          >
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <CityCafeAutocomplete2
+                label="Точка"
+                withAll
+                withAllSelected
+                points={this.props.points}
+                value={this.state.point}
+                onChange={(event, value) => this.changePoints("point", event, event)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNewViews
+                label="Дата от"
+                views={["month", "year"]}
+                value={this.state.date_start}
+                func={this.changeDateRange.bind(this, "date_start")}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNewViews
+                label="Дата до"
+                views={["month", "year"]}
+                value={this.state.date_end}
+                func={this.changeDateRange.bind(this, "date_end")}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <Button
+                variant="contained"
+                onClick={() => this.get_data_clients()}
+                disabled={loading}
+              >
+                {loading ? "Загрузка..." : "Показать"}
+              </Button>
+            </Grid>
+
+            {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
+            {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
+            {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во")}
+            {this.renderPizzaTable(accountArr, "Таблица с аккаунтами", "Аккаунты, кол-во")}
+          </Grid>
+        </TabPanel>
+      </Grid>
+    );
+  }
+}
+
 // ---------- Таблица в Таб Продажи ----------
 const DataTable = ({ tableData, openGraphModal }) => {
   const toRawMonth = (formatted) => {
@@ -5439,8 +5929,7 @@ class StatSale_ extends React.Component {
   }
 
   changeTab = (event, val) => {
-    if (parseInt(val) === 3) this.getDataSet();
-
+    if (parseInt(val) === 4) this.getDataSet();
     this.setState({ activeTab: val });
   };
 
@@ -5752,12 +6241,19 @@ class StatSale_ extends React.Component {
                     sx={{ minWidth: "fit-content", flex: 1 }}
                   />
                 ) : null}
+                {this.state.acces.dynamic_edit ? (
+                  <Tab
+                    label="Динамика продаж"
+                    {...a11yProps(3)}
+                    sx={{ minWidth: "fit-content", flex: 1 }}
+                  />
+                ) : null}
                 {this.state.acces.client_edit ||
                 this.state.acces.sale_edit ||
                 this.state.acces.dynamic_edit ? (
                   <Tab
                     label="Настройки"
-                    {...a11yProps(3)}
+                    {...a11yProps(4)}
                     sx={{ minWidth: "fit-content", flex: 1 }}
                   />
                 ) : null}
@@ -5805,9 +6301,21 @@ class StatSale_ extends React.Component {
             />
           )}
           {/* Клиенты */}
+          {this.state.activeTab === 3 && (
+            <StatSale_Tab_DynamicSale
+              activeTab={this.state.activeTab}
+              fullScreen={this.state.fullScreen}
+              points={this.state.points}
+              openAlert={this.openAlert}
+              getData={this.getData}
+              rates={this.state.data_sett_rate_clients}
+              openGraphModal={this.openGraphModal}
+              canExport={this.canAccess("export")}
+            />
+          )}
 
           {/* Настройки */}
-          {this.state.activeTab === 3 && (
+          {this.state.activeTab === 4 && (
             <StatSale_Tab_Sett
               activeTab={this.state.activeTab}
               fullScreen={this.state.fullScreen}
