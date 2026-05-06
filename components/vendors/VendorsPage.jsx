@@ -52,6 +52,7 @@ function VendorsPage() {
   const cities = useVendorsStore((state) => state.cities);
   const city = useVendorsStore((state) => state.city);
   const vendors = useVendorsStore((state) => state.vendors);
+  const vendorsLoadedCity = useVendorsStore((state) => state.vendorsLoadedCity);
   const isLoading = useVendorsStore((state) => state.isLoading);
   const openModal = useVendorsStore((state) => state.openModal);
   const setBootstrap = useVendorsStore((state) => state.setBootstrap);
@@ -145,7 +146,6 @@ function VendorsPage() {
         allPoints: response.all_points || [],
         allDeclarations: response.all_declarations || [],
         allItems: normalizeCatalogItems(response.all_items),
-        vendors: [],
         city: nextCity,
       });
       document.title = response.module_info?.name || "Поставщики";
@@ -164,13 +164,17 @@ function VendorsPage() {
       return;
     }
 
+    if (Number(vendorsLoadedCity) === Number(city)) {
+      return;
+    }
+
     let isMounted = true;
 
     const loadVendors = async () => {
       const response = await callApi("get_vendors", { city: Number(city) });
 
       if (response && isMounted) {
-        setVendors(response.vendors || []);
+        setVendors(response.vendors || [], Number(city));
       }
     };
 
@@ -179,7 +183,7 @@ function VendorsPage() {
     return () => {
       isMounted = false;
     };
-  }, [city, isBootstrapped]);
+  }, [city, isBootstrapped, vendorsLoadedCity]);
 
   const renderVendorTable = (list, { canDelete = false } = {}) => (
     <TableContainer>

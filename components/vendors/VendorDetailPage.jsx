@@ -101,7 +101,6 @@ export default function VendorDetailPage() {
     handleVendorInfoSubmit,
     handleVendorMailsSubmit,
     handleRemoveVendorItem,
-    handleUnbindDeclaration,
     isAlert,
     isLoading,
     loadItemVendors,
@@ -343,7 +342,6 @@ export default function VendorDetailPage() {
                     handleAddVendorItem={handleAddVendorItem}
                     handleRemoveVendorItem={handleRemoveVendorItem}
                     handleSaveDeclaration={handleSaveDeclaration}
-                    handleUnbindDeclaration={handleUnbindDeclaration}
                     loadItemVendors={loadItemVendors}
                     openDocModal={openDocModal}
                   />
@@ -353,14 +351,12 @@ export default function VendorDetailPage() {
                   index={3}
                 >
                   <TabDocuments
-                    canEdit={canEdit}
                     canUpload={canUpload}
                     canEditDeclaration={canEditDeclaration}
                     canDeleteDeclaration={canDeleteDeclaration}
                     handleDeleteDeclaration={handleDeleteDeclaration}
                     getItemVendorOptions={getItemVendorOptions}
                     handleSaveDeclaration={handleSaveDeclaration}
-                    handleUnbindDeclaration={handleUnbindDeclaration}
                     loadItemVendors={loadItemVendors}
                     openDocModal={openDocModal}
                   />

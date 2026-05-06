@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import DownloadIcon from "@mui/icons-material/Download";
-import LinkOffIcon from "@mui/icons-material/LinkOff";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -143,14 +142,12 @@ const fileLinkSx = {
 
 function DocumentsTable({
   rows,
-  canEdit,
   handleDeleteDeclaration,
   handleEditDeclaration,
   canEditDeclaration,
   canDeleteDeclaration,
   handleOpenFile,
   handleSort,
-  handleUnbindDeclaration,
   isLoading,
   order,
   orderBy,
@@ -262,19 +259,6 @@ function DocumentsTable({
                         </IconButton>
                       </span>
                     </Tooltip>
-                    {canEdit ? (
-                      <Tooltip title="Отвязать">
-                        <span>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleUnbindDeclaration(decl.id, decl.item_id)}
-                            disabled={isLoading}
-                          >
-                            <LinkOffIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    ) : null}
                     {canEditDeclaration ? (
                       <Tooltip title="Редактировать">
                         <span>
@@ -327,14 +311,12 @@ function DocumentsTable({
 }
 
 export default function TabDocuments({
-  canEdit,
   canUpload,
   canDeleteDeclaration,
   canEditDeclaration,
   handleDeleteDeclaration,
   getItemVendorOptions,
   handleSaveDeclaration,
-  handleUnbindDeclaration,
   loadItemVendors,
   openDocModal,
 }) {
@@ -460,7 +442,6 @@ export default function TabDocuments({
             <AccordionDetails>
               <DocumentsTable
                 rows={activeRows}
-                canEdit={canEdit}
                 canUpload={canUpload}
                 canEditDeclaration={canEditDeclaration}
                 canDeleteDeclaration={canDeleteDeclaration}
@@ -468,7 +449,6 @@ export default function TabDocuments({
                 handleEditDeclaration={setEditableDeclaration}
                 handleOpenFile={handleOpenFile}
                 handleSort={handleSort}
-                handleUnbindDeclaration={handleUnbindDeclaration}
                 isLoading={isLoading}
                 order={order}
                 orderBy={orderBy}
@@ -484,7 +464,6 @@ export default function TabDocuments({
             <AccordionDetails>
               <DocumentsTable
                 rows={archiveRows}
-                canEdit={canEdit}
                 canUpload={canUpload}
                 canEditDeclaration={canEditDeclaration}
                 canDeleteDeclaration={canDeleteDeclaration}
@@ -492,7 +471,6 @@ export default function TabDocuments({
                 handleEditDeclaration={setEditableDeclaration}
                 handleOpenFile={handleOpenFile}
                 handleSort={handleSort}
-                handleUnbindDeclaration={handleUnbindDeclaration}
                 isLoading={isLoading}
                 order={order}
                 orderBy={orderBy}

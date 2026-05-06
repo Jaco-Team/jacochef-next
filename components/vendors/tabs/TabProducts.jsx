@@ -26,7 +26,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddLinkIconOutlined from "@mui/icons-material/AddLinkOutlined";
-import LinkOffIcon from "@mui/icons-material/LinkOff";
 import EditIcon from "@mui/icons-material/Edit";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
@@ -120,7 +119,6 @@ export default function TabProducts({
   handleAddVendorItem,
   handleRemoveVendorItem,
   handleSaveDeclaration,
-  handleUnbindDeclaration,
   loadItemVendors,
   openDocModal,
 }) {
@@ -135,7 +133,7 @@ export default function TabProducts({
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState([]);
   const [editableDeclaration, setEditableDeclaration] = useState(null);
   const hasProductActions = canEdit || canUpload;
-  const hasDeclarationActions = canEdit || canEditDeclaration;
+  const hasDeclarationActions = canEditDeclaration;
 
   const selectedProductCategories = useMemo(
     () =>
@@ -506,26 +504,6 @@ export default function TabProducts({
                                                     spacing={0.5}
                                                     justifyContent="flex-end"
                                                   >
-                                                    {canEdit ? (
-                                                      <Tooltip title="Отвязать">
-                                                        <span>
-                                                          <IconButton
-                                                            size="small"
-                                                            onClick={withConfirm(
-                                                              () =>
-                                                                handleUnbindDeclaration(
-                                                                  decl.id,
-                                                                  item.item_id,
-                                                                ),
-                                                              "Отвязать декларацию от товара?",
-                                                            )}
-                                                            disabled={isLoading}
-                                                          >
-                                                            <LinkOffIcon fontSize="small" />
-                                                          </IconButton>
-                                                        </span>
-                                                      </Tooltip>
-                                                    ) : null}
                                                     {canEditDeclaration ? (
                                                       <Tooltip title="Редактировать">
                                                         <span>

@@ -36,7 +36,6 @@ export default function useVendorDetailsPage(vendorId) {
   const setVendors = useVendorsStore((state) => state.setVendors);
   const {
     allItems,
-    bindDeclarationId,
     docModalExpiresAt,
     docModalFile,
     docModalItemId,
@@ -45,7 +44,6 @@ export default function useVendorDetailsPage(vendorId) {
     selectedItemId,
     setAllDeclarations,
     setAllItems,
-    setBindDeclarationId,
     setDocModalExpiresAt,
     setDocModalFile,
     setDocModalItemId,
@@ -64,7 +62,6 @@ export default function useVendorDetailsPage(vendorId) {
   } = useVendorDetailsStore(
     useShallow((state) => ({
       allItems: state.allItems || [],
-      bindDeclarationId: state.bindDeclarationId,
       docModalExpiresAt: state.docModalExpiresAt,
       docModalFile: state.docModalFile,
       docModalItemId: state.docModalItemId,
@@ -73,7 +70,6 @@ export default function useVendorDetailsPage(vendorId) {
       selectedItemId: state.selectedItemId,
       setAllDeclarations: state.setAllDeclarations,
       setAllItems: state.setAllItems,
-      setBindDeclarationId: state.setBindDeclarationId,
       setDocModalExpiresAt: state.setDocModalExpiresAt,
       setDocModalFile: state.setDocModalFile,
       setDocModalItemId: state.setDocModalItemId,
@@ -142,7 +138,7 @@ export default function useVendorDetailsPage(vendorId) {
       }
 
       if (vendorsResponse?.vendors) {
-        setVendors(vendorsResponse.vendors || []);
+        setVendors(vendorsResponse.vendors || [], -1);
       }
 
       setState({
@@ -193,10 +189,6 @@ export default function useVendorDetailsPage(vendorId) {
       setSelectedItemId(Number(vendorItems[0].item_id));
     }
   }, [vendorItems, docModalItemId, selectedItemId]);
-
-  useEffect(() => {
-    setBindDeclarationId("");
-  }, [selectedItemId]);
 
   const applyDeclarationUpdates = (entries = []) => {
     if (!Array.isArray(entries) || entries.length === 0) {
@@ -381,7 +373,6 @@ export default function useVendorDetailsPage(vendorId) {
     setIsDocModalOpen(false);
     setDocModalFile(null);
     setDocModalExpiresAt(null);
-    setBindDeclarationId("");
   };
 
   const openDocModal = (itemId = selectedItemId) => {
@@ -395,46 +386,7 @@ export default function useVendorDetailsPage(vendorId) {
     }
     setDocModalFile(null);
     setDocModalExpiresAt(null);
-    setBindDeclarationId("");
     setIsDocModalOpen(true);
-  };
-
-  const handleBindDeclaration = async (
-    itemId = selectedItemId,
-    declarationId = bindDeclarationId,
-  ) => {
-    if (!canUpload) {
-      showAlert("Недостаточно прав для загрузки деклараций", false);
-      return null;
-    }
-
-    if (!itemId || !declarationId) {
-      return null;
-    }
-
-    try {
-      setLoading(true);
-      const response = await api_laravel("bind_declaration_to_item", {
-        item_id: Number(itemId),
-        decl_id: Number(declarationId),
-        vendor_id: Number(vendorId),
-      });
-
-      if (!response?.st) {
-        throw new Error(response?.text || "Не удалось привязать декларацию");
-      }
-
-      handleDeclarationResponse(response);
-      showAlert("Декларация привязана", true);
-      setBindDeclarationId("");
-      setDocModalExpiresAt(null);
-      return response;
-    } catch (error) {
-      showAlert(error?.message || "Не удалось привязать декларацию", false);
-      return null;
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleDocumentModalSubmit = async () => {
@@ -443,53 +395,14 @@ export default function useVendorDetailsPage(vendorId) {
       return;
     }
 
-    if (bindDeclarationId) {
-      const response = await handleBindDeclaration(docModalItemId, bindDeclarationId);
-      if (response?.st) {
-        closeDocModal();
-      }
-      return;
-    }
-
     if (!docModalFile) {
-      showAlert("Выберите существующую декларацию или файл", false);
+      showAlert("Выберите файл", false);
       return;
     }
 
     const response = await handleUploadDeclaration(docModalItemId, docModalFile, docModalExpiresAt);
     if (response?.st) {
       closeDocModal();
-    }
-  };
-
-  const handleUnbindDeclaration = async (declId, itemId = selectedItemId) => {
-    if (!canEdit) {
-      showAlert("Недостаточно прав для редактирования товаров поставщика", false);
-      return;
-    }
-
-    if (!itemId || !declId) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await api_laravel("unbind_declaration_from_item", {
-        item_id: Number(itemId),
-        decl_id: Number(declId),
-        vendor_id: Number(vendorId),
-      });
-
-      if (!response?.st) {
-        throw new Error(response?.text || "Не удалось отвязать декларацию");
-      }
-
-      handleDeclarationResponse(response);
-      showAlert("Декларация отвязана", true);
-    } catch (error) {
-      showAlert(error?.message || "Не удалось отвязать декларацию", false);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -515,6 +428,7 @@ export default function useVendorDetailsPage(vendorId) {
 
       handleDeclarationResponse(response);
       setAllDeclarations((prev) => prev.filter((decl) => Number(decl.id) !== Number(declId)));
+      await loadVendor();
       showAlert("Декларация удалена", true);
     } catch (error) {
       showAlert(error?.message || "Не удалось удалить декларацию", false);
@@ -760,7 +674,6 @@ export default function useVendorDetailsPage(vendorId) {
     closeAlert,
     closeDocModal,
     handleAddVendorItem,
-    handleBindDeclaration,
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
@@ -770,7 +683,6 @@ export default function useVendorDetailsPage(vendorId) {
     handleQuickToggleVendorField,
     handleRemoveVendorItem,
     handleToggleCity,
-    handleUnbindDeclaration,
     handleVendorSubmit,
     isAlert,
     isLoading,
