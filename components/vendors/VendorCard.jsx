@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
 import { Box, Card, CardActionArea, CardContent, Divider, Stack, Typography } from "@mui/material";
@@ -103,10 +104,7 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
             }}
           >
             {rows.map((row) => (
-              <Box
-                key={row.label}
-                sx={{ display: "contents" }}
-              >
+              <Fragment key={row.label}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -131,7 +129,7 @@ export default function VendorCard({ vendor, cities, onClick, action = null }) {
                 >
                   {row.value}
                 </Typography>
-              </Box>
+              </Fragment>
             ))}
             <Typography
               variant="caption"

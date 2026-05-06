@@ -332,8 +332,10 @@ export default function TabDocuments({
   canDeleteDeclaration,
   canEditDeclaration,
   handleDeleteDeclaration,
+  getItemVendorOptions,
   handleSaveDeclaration,
   handleUnbindDeclaration,
+  loadItemVendors,
   openDocModal,
 }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
@@ -406,8 +408,10 @@ export default function TabDocuments({
         open={Boolean(editableDeclaration)}
         declaration={editableDeclaration}
         isLoading={isLoading}
+        loadItemVendors={loadItemVendors}
         onClose={handleCloseEditDialog}
         onSubmit={handleSaveDeclaration}
+        vendorOptions={getItemVendorOptions?.(editableDeclaration?.item_id) || []}
       />
 
       <Stack

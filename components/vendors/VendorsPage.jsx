@@ -267,31 +267,29 @@ function VendorsPage() {
                       title="Действующие декларации"
                       arrow
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <Box
-                          sx={{
-                            bgcolor: "#e8f5e9",
-                            px: 0.75,
-                            py: 0.25,
-                            borderRadius: 1,
-                            borderLeft: "2px solid #2e7d32",
-                          }}
+                      <Box
+                        sx={{
+                          bgcolor: "#e8f5e9",
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 1,
+                          borderLeft: "2px solid #2e7d32",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#1b5e20", fontWeight: "medium" }}
                         >
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "#1b5e20", fontWeight: "medium" }}
-                          >
-                            {currentDeclarations}
-                          </Typography>
-                        </Box>
+                          {currentDeclarations}
+                        </Typography>
                       </Box>
                     </Tooltip>
 
-                    <Tooltip
-                      title="Срок действия истекает:"
-                      arrow
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    {expiringDeclarations > 0 ? (
+                      <Tooltip
+                        title="Срок действия истекает:"
+                        arrow
+                      >
                         <Box
                           sx={{
                             bgcolor: "#ffebee",
@@ -303,16 +301,13 @@ function VendorsPage() {
                         >
                           <Typography
                             variant="body2"
-                            sx={{
-                              color: expiringDeclarations > 0 ? "#c62828" : "text.secondary",
-                              fontWeight: expiringDeclarations > 0 ? "bold" : "normal",
-                            }}
+                            sx={{ color: "#c62828", fontWeight: "bold" }}
                           >
-                            {expiringDeclarations > 0 ? expiringDeclarations : 0}
+                            {expiringDeclarations}
                           </Typography>
                         </Box>
-                      </Box>
-                    </Tooltip>
+                      </Tooltip>
+                    ) : null}
                   </Stack>
                 </TableCell>
                 {canDelete ? (

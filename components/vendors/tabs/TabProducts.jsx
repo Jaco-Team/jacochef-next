@@ -116,10 +116,12 @@ export default function TabProducts({
   canEdit,
   canEditDeclaration,
   canUpload,
+  getItemVendorOptions,
   handleAddVendorItem,
   handleRemoveVendorItem,
   handleSaveDeclaration,
   handleUnbindDeclaration,
+  loadItemVendors,
   openDocModal,
 }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
@@ -195,8 +197,10 @@ export default function TabProducts({
         open={Boolean(editableDeclaration)}
         declaration={editableDeclaration}
         isLoading={isLoading}
+        loadItemVendors={loadItemVendors}
         onClose={handleCloseEditDialog}
         onSubmit={handleSaveDeclaration}
+        vendorOptions={getItemVendorOptions?.(editableDeclaration?.item_id) || []}
       />
 
       <Card variant="outlined">
@@ -210,9 +214,10 @@ export default function TabProducts({
             >
               <Typography
                 variant="h6"
+                component="h2"
                 sx={{ fontWeight: 700, display: "flex", alignItems: "center" }}
               >
-                <h2>Продукты поставщика</h2>
+                Продукты поставщика
                 <Tooltip
                   title="Красная декларация за 2 недели"
                   arrow
@@ -527,7 +532,10 @@ export default function TabProducts({
                                                           <IconButton
                                                             size="small"
                                                             onClick={() =>
-                                                              setEditableDeclaration(decl)
+                                                              setEditableDeclaration({
+                                                                ...decl,
+                                                                item_id: item.item_id,
+                                                              })
                                                             }
                                                             disabled={isLoading}
                                                             sx={{ color: "primary.main" }}

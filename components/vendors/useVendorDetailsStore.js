@@ -18,6 +18,7 @@ const initialState = {
   docModalItemId: "",
   docModalFile: null,
   docModalExpiresAt: null,
+  itemVendorsByItemId: {},
   isEditing: false,
 };
 
@@ -114,6 +115,13 @@ const useVendorDetailsStore = create((set) => ({
   setDocModalItemId: (docModalItemId) => set({ docModalItemId }),
   setDocModalFile: (docModalFile) => set({ docModalFile }),
   setDocModalExpiresAt: (docModalExpiresAt) => set({ docModalExpiresAt }),
+  setItemVendors: (itemId, vendors) =>
+    set((state) => ({
+      itemVendorsByItemId: {
+        ...state.itemVendorsByItemId,
+        [String(itemId)]: vendors,
+      },
+    })),
   setIsEditing: (isEditing) => set({ isEditing }),
 }));
 
