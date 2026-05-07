@@ -14,7 +14,7 @@ import { Clear, Download } from "@mui/icons-material";
 import dayjs from "dayjs";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { formatRUR } from "@/src/helpers/utils/i18n";
-import ModalOrder from "../ModalOrder";
+import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import { LoadingProvider } from "../useClientsLoadingContext";
 import HistoryClientModal from "./HistoryClientModal";
 import { delivery_types, order_types_all } from "../config";
@@ -257,7 +257,7 @@ function ClientHistory({ getData, showAlert, canAccess }) {
           onClose={() => setClientModalOpened(false)}
         />
       )}
-      <ModalOrder
+      <OrderDetailsModal
         open={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
         order={order}
