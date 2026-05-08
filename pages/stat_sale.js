@@ -4943,7 +4943,6 @@ class StatSale_Tab_DynamicSale extends React.Component {
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
-        console.log(prevMonth);
         if (index !== 0 && prevMonth) {
           pizzaArr.push({
             month: value.month_name,
