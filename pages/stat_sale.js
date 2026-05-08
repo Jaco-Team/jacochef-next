@@ -52,6 +52,7 @@ import { Chip, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import CityCafeAutocomplete from "@/ui/CityCafeAutocomplete";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ProgressTimeline from "@/components/stat_sale/ProgressTimeline";
 dayjs.locale("ru");
 
 var am5locales_ru_RU = {
@@ -5273,7 +5274,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-
+            {accountArr ? (
+              <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
+                <ProgressTimeline data={accountArr} />
+              </Box>
+            ) : null}
             {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
             {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во")}
