@@ -5,17 +5,8 @@ import { useShallow } from "zustand/react/shallow";
 import useVendorDetailsStore from "./useVendorDetailsStore";
 
 export default function useVendorDocumentsView() {
-  const {
-    allDeclarations,
-    bindDeclarationId,
-    docModalExpiresAt,
-    docModalFile,
-    docModalItemId,
-    vendorItems,
-  } = useVendorDetailsStore(
+  const { docModalExpiresAt, docModalFile, docModalItemId, vendorItems } = useVendorDetailsStore(
     useShallow((state) => ({
-      allDeclarations: state.allDeclarations || [],
-      bindDeclarationId: state.bindDeclarationId,
       docModalExpiresAt: state.docModalExpiresAt,
       docModalFile: state.docModalFile,
       docModalItemId: state.docModalItemId,
@@ -32,22 +23,6 @@ export default function useVendorDocumentsView() {
     [vendorItems],
   );
 
-  const availableDeclarationsForBind = useMemo(() => {
-    const modalVendorItem = vendorItems.find(
-      (item) => Number(item.item_id) === Number(docModalItemId),
-    );
-    const boundIds = new Set((modalVendorItem?.declarations || []).map((decl) => Number(decl.id)));
-
-    return allDeclarations
-      .filter((decl) => decl?.id && !boundIds.has(Number(decl.id)))
-      .map((decl) => ({
-        ...decl,
-        name: `${decl.filename?.split("/")?.pop() || "Декларация"}${
-          decl.created_at ? ` · ${decl.created_at}` : ""
-        }`,
-      }));
-  }, [allDeclarations, docModalItemId, vendorItems]);
-
   const vendorDeclarations = useMemo(
     () =>
       vendorItems.flatMap((item) =>
@@ -63,8 +38,6 @@ export default function useVendorDocumentsView() {
   );
 
   return {
-    availableDeclarationsForBind,
-    bindDeclarationId,
     docModalExpiresAt,
     docModalFile,
     docModalItemId,

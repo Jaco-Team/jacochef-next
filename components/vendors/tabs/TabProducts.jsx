@@ -26,7 +26,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddLinkIconOutlined from "@mui/icons-material/AddLinkOutlined";
-import LinkOffIcon from "@mui/icons-material/LinkOff";
 import EditIcon from "@mui/icons-material/Edit";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
@@ -116,10 +115,11 @@ export default function TabProducts({
   canEdit,
   canEditDeclaration,
   canUpload,
+  getItemVendorOptions,
   handleAddVendorItem,
   handleRemoveVendorItem,
   handleSaveDeclaration,
-  handleUnbindDeclaration,
+  loadItemVendors,
   openDocModal,
 }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
@@ -133,7 +133,7 @@ export default function TabProducts({
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState([]);
   const [editableDeclaration, setEditableDeclaration] = useState(null);
   const hasProductActions = canEdit || canUpload;
-  const hasDeclarationActions = canEdit || canEditDeclaration;
+  const hasDeclarationActions = canEditDeclaration;
 
   const selectedProductCategories = useMemo(
     () =>
@@ -195,8 +195,10 @@ export default function TabProducts({
         open={Boolean(editableDeclaration)}
         declaration={editableDeclaration}
         isLoading={isLoading}
+        loadItemVendors={loadItemVendors}
         onClose={handleCloseEditDialog}
         onSubmit={handleSaveDeclaration}
+        vendorOptions={getItemVendorOptions?.(editableDeclaration?.item_id) || []}
       />
 
       <Card variant="outlined">
@@ -210,9 +212,10 @@ export default function TabProducts({
             >
               <Typography
                 variant="h6"
+                component="h2"
                 sx={{ fontWeight: 700, display: "flex", alignItems: "center" }}
               >
-                <h2>Продукты поставщика</h2>
+                Продукты поставщика
                 <Tooltip
                   title="Красная декларация за 2 недели"
                   arrow
@@ -501,33 +504,16 @@ export default function TabProducts({
                                                     spacing={0.5}
                                                     justifyContent="flex-end"
                                                   >
-                                                    {canEdit ? (
-                                                      <Tooltip title="Отвязать">
-                                                        <span>
-                                                          <IconButton
-                                                            size="small"
-                                                            onClick={withConfirm(
-                                                              () =>
-                                                                handleUnbindDeclaration(
-                                                                  decl.id,
-                                                                  item.item_id,
-                                                                ),
-                                                              "Отвязать декларацию от товара?",
-                                                            )}
-                                                            disabled={isLoading}
-                                                          >
-                                                            <LinkOffIcon fontSize="small" />
-                                                          </IconButton>
-                                                        </span>
-                                                      </Tooltip>
-                                                    ) : null}
                                                     {canEditDeclaration ? (
                                                       <Tooltip title="Редактировать">
                                                         <span>
                                                           <IconButton
                                                             size="small"
                                                             onClick={() =>
-                                                              setEditableDeclaration(decl)
+                                                              setEditableDeclaration({
+                                                                ...decl,
+                                                                item_id: item.item_id,
+                                                              })
                                                             }
                                                             disabled={isLoading}
                                                             sx={{ color: "primary.main" }}

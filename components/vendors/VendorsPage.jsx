@@ -52,6 +52,7 @@ function VendorsPage() {
   const cities = useVendorsStore((state) => state.cities);
   const city = useVendorsStore((state) => state.city);
   const vendors = useVendorsStore((state) => state.vendors);
+  const vendorsLoadedCity = useVendorsStore((state) => state.vendorsLoadedCity);
   const isLoading = useVendorsStore((state) => state.isLoading);
   const openModal = useVendorsStore((state) => state.openModal);
   const setBootstrap = useVendorsStore((state) => state.setBootstrap);
@@ -145,7 +146,6 @@ function VendorsPage() {
         allPoints: response.all_points || [],
         allDeclarations: response.all_declarations || [],
         allItems: normalizeCatalogItems(response.all_items),
-        vendors: [],
         city: nextCity,
       });
       document.title = response.module_info?.name || "Поставщики";
@@ -164,13 +164,17 @@ function VendorsPage() {
       return;
     }
 
+    if (Number(vendorsLoadedCity) === Number(city)) {
+      return;
+    }
+
     let isMounted = true;
 
     const loadVendors = async () => {
       const response = await callApi("get_vendors", { city: Number(city) });
 
       if (response && isMounted) {
-        setVendors(response.vendors || []);
+        setVendors(response.vendors || [], Number(city));
       }
     };
 
@@ -179,7 +183,7 @@ function VendorsPage() {
     return () => {
       isMounted = false;
     };
-  }, [city, isBootstrapped]);
+  }, [city, isBootstrapped, vendorsLoadedCity]);
 
   const renderVendorTable = (list, { canDelete = false } = {}) => (
     <TableContainer>
@@ -267,31 +271,29 @@ function VendorsPage() {
                       title="Действующие декларации"
                       arrow
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <Box
-                          sx={{
-                            bgcolor: "#e8f5e9",
-                            px: 0.75,
-                            py: 0.25,
-                            borderRadius: 1,
-                            borderLeft: "2px solid #2e7d32",
-                          }}
+                      <Box
+                        sx={{
+                          bgcolor: "#e8f5e9",
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 1,
+                          borderLeft: "2px solid #2e7d32",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#1b5e20", fontWeight: "medium" }}
                         >
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "#1b5e20", fontWeight: "medium" }}
-                          >
-                            {currentDeclarations}
-                          </Typography>
-                        </Box>
+                          {currentDeclarations}
+                        </Typography>
                       </Box>
                     </Tooltip>
 
-                    <Tooltip
-                      title="Срок действия истекает:"
-                      arrow
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    {expiringDeclarations > 0 ? (
+                      <Tooltip
+                        title="Срок действия истекает:"
+                        arrow
+                      >
                         <Box
                           sx={{
                             bgcolor: "#ffebee",
@@ -303,16 +305,13 @@ function VendorsPage() {
                         >
                           <Typography
                             variant="body2"
-                            sx={{
-                              color: expiringDeclarations > 0 ? "#c62828" : "text.secondary",
-                              fontWeight: expiringDeclarations > 0 ? "bold" : "normal",
-                            }}
+                            sx={{ color: "#c62828", fontWeight: "bold" }}
                           >
-                            {expiringDeclarations > 0 ? expiringDeclarations : 0}
+                            {expiringDeclarations}
                           </Typography>
                         </Box>
-                      </Box>
-                    </Tooltip>
+                      </Tooltip>
+                    ) : null}
                   </Stack>
                 </TableCell>
                 {canDelete ? (

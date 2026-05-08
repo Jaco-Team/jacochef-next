@@ -12,6 +12,7 @@ const defaultState = {
   allItems: [],
   city: -1,
   vendors: [],
+  vendorsLoadedCity: null,
   modalOpen: false,
   isLoading: false,
 };
@@ -20,16 +21,17 @@ const useVendorsStore = create((set) => ({
   ...defaultState,
 
   setBootstrap(payload = {}) {
-    set({
+    set((state) => ({
       module_name: payload.module_name ?? "",
       access: payload.access ?? {},
       cities: payload.cities ?? [],
       allPoints: payload.allPoints ?? [],
       allDeclarations: payload.allDeclarations ?? [],
       allItems: payload.allItems ?? [],
-      vendors: payload.vendors ?? [],
+      vendors: payload.vendors ?? state.vendors,
+      vendorsLoadedCity: payload.vendorsLoadedCity ?? state.vendorsLoadedCity,
       city: payload.city ?? -1,
-    });
+    }));
   },
 
   setSharedBootstrap(payload = {}) {
@@ -41,8 +43,11 @@ const useVendorsStore = create((set) => ({
     }));
   },
 
-  setVendors(vendors = []) {
-    set({ vendors });
+  setVendors(vendors = [], city = null) {
+    set((state) => ({
+      vendors,
+      vendorsLoadedCity: city ?? state.vendorsLoadedCity,
+    }));
   },
 
   setCity(city) {

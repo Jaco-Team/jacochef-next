@@ -13,11 +13,11 @@ const initialState = {
   allItems: [],
   history: [],
   selectedItemId: null,
-  bindDeclarationId: "",
   isDocModalOpen: false,
   docModalItemId: "",
   docModalFile: null,
   docModalExpiresAt: null,
+  itemVendorsByItemId: {},
   isEditing: false,
 };
 
@@ -109,11 +109,17 @@ const useVendorDetailsStore = create((set) => ({
       history: typeof history === "function" ? history(state.history) : history,
     })),
   setSelectedItemId: (selectedItemId) => set({ selectedItemId }),
-  setBindDeclarationId: (bindDeclarationId) => set({ bindDeclarationId }),
   setIsDocModalOpen: (isDocModalOpen) => set({ isDocModalOpen }),
   setDocModalItemId: (docModalItemId) => set({ docModalItemId }),
   setDocModalFile: (docModalFile) => set({ docModalFile }),
   setDocModalExpiresAt: (docModalExpiresAt) => set({ docModalExpiresAt }),
+  setItemVendors: (itemId, vendors) =>
+    set((state) => ({
+      itemVendorsByItemId: {
+        ...state.itemVendorsByItemId,
+        [String(itemId)]: vendors,
+      },
+    })),
   setIsEditing: (isEditing) => set({ isEditing }),
 }));
 

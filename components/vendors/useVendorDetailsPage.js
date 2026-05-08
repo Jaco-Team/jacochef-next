@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { useShallow } from "zustand/react/shallow";
 import dayjs from "dayjs";
@@ -23,28 +23,31 @@ import {
 export default function useVendorDetailsPage(vendorId) {
   const router = useRouter();
   const { api_laravel, api_upload } = useApi("vendors");
+  const loadingItemVendorsRef = useRef({});
   const { isAlert, closeAlert, showAlert, alertMessage, alertStatus } = useMyAlert();
   const { canDeleteDeclaration, canEdit, canEditDeclaration, canUpload } = useVendorAccess();
   const isLoading = useVendorsStore((state) => state.isLoading);
   const bootstrapAllPoints = useVendorsStore((state) => state.allPoints);
   const bootstrapAllDeclarations = useVendorsStore((state) => state.allDeclarations);
   const bootstrapAllItems = useVendorsStore((state) => state.allItems);
+  const vendors = useVendorsStore((state) => state.vendors);
   const setSharedBootstrap = useVendorsStore((state) => state.setSharedBootstrap);
   const setLoading = useVendorsStore((state) => state.setLoading);
+  const setVendors = useVendorsStore((state) => state.setVendors);
   const {
     allItems,
-    bindDeclarationId,
     docModalExpiresAt,
     docModalFile,
     docModalItemId,
+    itemVendorsByItemId,
     mails,
     selectedItemId,
     setAllDeclarations,
     setAllItems,
-    setBindDeclarationId,
     setDocModalExpiresAt,
     setDocModalFile,
     setDocModalItemId,
+    setItemVendors,
     setIsDocModalOpen,
     setIsEditing,
     setSelectedItemId,
@@ -59,18 +62,18 @@ export default function useVendorDetailsPage(vendorId) {
   } = useVendorDetailsStore(
     useShallow((state) => ({
       allItems: state.allItems || [],
-      bindDeclarationId: state.bindDeclarationId,
       docModalExpiresAt: state.docModalExpiresAt,
       docModalFile: state.docModalFile,
       docModalItemId: state.docModalItemId,
+      itemVendorsByItemId: state.itemVendorsByItemId || {},
       mails: state.mails || [],
       selectedItemId: state.selectedItemId,
       setAllDeclarations: state.setAllDeclarations,
       setAllItems: state.setAllItems,
-      setBindDeclarationId: state.setBindDeclarationId,
       setDocModalExpiresAt: state.setDocModalExpiresAt,
       setDocModalFile: state.setDocModalFile,
       setDocModalItemId: state.setDocModalItemId,
+      setItemVendors: state.setItemVendors,
       setIsDocModalOpen: state.setIsDocModalOpen,
       setIsEditing: state.setIsEditing,
       setSelectedItemId: state.setSelectedItemId,
@@ -92,21 +95,20 @@ export default function useVendorDetailsPage(vendorId) {
 
     try {
       setLoading(true);
-      const requests = [
-        api_laravel("get_vendor_info", { vendor_id: vendorId }),
-        api_laravel("get_vendor_items", { vendor_id: vendorId }),
-      ];
-
       const shouldLoadBootstrap =
         !Array.isArray(bootstrapAllPoints) ||
         !bootstrapAllPoints.length ||
         !Array.isArray(bootstrapAllDeclarations);
 
-      if (shouldLoadBootstrap) {
-        requests.push(api_laravel("get_all"));
-      }
-
-      const [infoResponse, productsResponse, bootstrapResponse] = await Promise.all(requests);
+      const [infoResponse, productsResponse, bootstrapResponse, vendorsResponse] =
+        await Promise.all([
+          api_laravel("get_vendor_info", { vendor_id: vendorId }),
+          api_laravel("get_vendor_items", { vendor_id: vendorId }),
+          shouldLoadBootstrap ? api_laravel("get_all") : Promise.resolve(null),
+          !Array.isArray(vendors) || !vendors.length
+            ? api_laravel("get_vendors", { city: -1 })
+            : Promise.resolve(null),
+        ]);
 
       if (!infoResponse?.st) {
         throw new Error(infoResponse?.text || "Не удалось загрузить поставщика");
@@ -133,6 +135,10 @@ export default function useVendorDetailsPage(vendorId) {
           allDeclarations: sharedAllDeclarations,
           allItems: sharedAllItems,
         });
+      }
+
+      if (vendorsResponse?.vendors) {
+        setVendors(vendorsResponse.vendors || [], -1);
       }
 
       setState({
@@ -183,10 +189,6 @@ export default function useVendorDetailsPage(vendorId) {
       setSelectedItemId(Number(vendorItems[0].item_id));
     }
   }, [vendorItems, docModalItemId, selectedItemId]);
-
-  useEffect(() => {
-    setBindDeclarationId("");
-  }, [selectedItemId]);
 
   const applyDeclarationUpdates = (entries = []) => {
     if (!Array.isArray(entries) || entries.length === 0) {
@@ -338,6 +340,7 @@ export default function useVendorDetailsPage(vendorId) {
       setLoading(true);
       const response = await api_upload("upload_declaration", file, {
         item_id: Number(itemId),
+        vendor_id: Number(vendorId),
         expires_at:
           expiresAt && dayjs(expiresAt).isValid() ? dayjs(expiresAt).format("YYYY-MM-DD") : "",
       });
@@ -370,7 +373,6 @@ export default function useVendorDetailsPage(vendorId) {
     setIsDocModalOpen(false);
     setDocModalFile(null);
     setDocModalExpiresAt(null);
-    setBindDeclarationId("");
   };
 
   const openDocModal = (itemId = selectedItemId) => {
@@ -384,45 +386,7 @@ export default function useVendorDetailsPage(vendorId) {
     }
     setDocModalFile(null);
     setDocModalExpiresAt(null);
-    setBindDeclarationId("");
     setIsDocModalOpen(true);
-  };
-
-  const handleBindDeclaration = async (
-    itemId = selectedItemId,
-    declarationId = bindDeclarationId,
-  ) => {
-    if (!canUpload) {
-      showAlert("Недостаточно прав для загрузки деклараций", false);
-      return null;
-    }
-
-    if (!itemId || !declarationId) {
-      return null;
-    }
-
-    try {
-      setLoading(true);
-      const response = await api_laravel("bind_declaration_to_item", {
-        item_id: Number(itemId),
-        decl_id: Number(declarationId),
-      });
-
-      if (!response?.st) {
-        throw new Error(response?.text || "Не удалось привязать декларацию");
-      }
-
-      handleDeclarationResponse(response);
-      showAlert("Декларация привязана", true);
-      setBindDeclarationId("");
-      setDocModalExpiresAt(null);
-      return response;
-    } catch (error) {
-      showAlert(error?.message || "Не удалось привязать декларацию", false);
-      return null;
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleDocumentModalSubmit = async () => {
@@ -431,52 +395,14 @@ export default function useVendorDetailsPage(vendorId) {
       return;
     }
 
-    if (bindDeclarationId) {
-      const response = await handleBindDeclaration(docModalItemId, bindDeclarationId);
-      if (response?.st) {
-        closeDocModal();
-      }
-      return;
-    }
-
     if (!docModalFile) {
-      showAlert("Выберите существующую декларацию или файл", false);
+      showAlert("Выберите файл", false);
       return;
     }
 
     const response = await handleUploadDeclaration(docModalItemId, docModalFile, docModalExpiresAt);
     if (response?.st) {
       closeDocModal();
-    }
-  };
-
-  const handleUnbindDeclaration = async (declId, itemId = selectedItemId) => {
-    if (!canEdit) {
-      showAlert("Недостаточно прав для редактирования товаров поставщика", false);
-      return;
-    }
-
-    if (!itemId || !declId) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await api_laravel("unbind_declaration_from_item", {
-        item_id: Number(itemId),
-        decl_id: Number(declId),
-      });
-
-      if (!response?.st) {
-        throw new Error(response?.text || "Не удалось отвязать декларацию");
-      }
-
-      handleDeclarationResponse(response);
-      showAlert("Декларация отвязана", true);
-    } catch (error) {
-      showAlert(error?.message || "Не удалось отвязать декларацию", false);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -502,6 +428,7 @@ export default function useVendorDetailsPage(vendorId) {
 
       handleDeclarationResponse(response);
       setAllDeclarations((prev) => prev.filter((decl) => Number(decl.id) !== Number(declId)));
+      await loadVendor();
       showAlert("Декларация удалена", true);
     } catch (error) {
       showAlert(error?.message || "Не удалось удалить декларацию", false);
@@ -510,7 +437,7 @@ export default function useVendorDetailsPage(vendorId) {
     }
   };
 
-  const handleSaveDeclaration = async (declId, expiresAt) => {
+  const handleSaveDeclaration = async (declId, expiresAt, nextVendorId = null) => {
     if (!canEditDeclaration) {
       showAlert("Недостаточно прав для редактирования деклараций", false);
       return false;
@@ -522,10 +449,16 @@ export default function useVendorDetailsPage(vendorId) {
 
     try {
       setLoading(true);
-      const response = await api_laravel("declaration-save", {
+      const payload = {
         id: Number(declId),
         expires_at: dayjs(expiresAt).format("YYYY-MM-DD"),
-      });
+      };
+
+      if (nextVendorId) {
+        payload.vendor_id = Number(nextVendorId);
+      }
+
+      const response = await api_laravel("declaration-save", payload);
 
       if (!response?.st) {
         throw new Error(response?.text || "Не удалось сохранить декларацию");
@@ -539,6 +472,51 @@ export default function useVendorDetailsPage(vendorId) {
       showAlert(error?.message || "Не удалось сохранить декларацию", false);
       return false;
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadItemVendors = async (itemId) => {
+    if (!itemId) {
+      return [];
+    }
+
+    const cacheKey = String(itemId);
+    if (Array.isArray(itemVendorsByItemId[cacheKey])) {
+      return itemVendorsByItemId[cacheKey];
+    }
+
+    if (loadingItemVendorsRef.current[cacheKey]) {
+      return loadingItemVendorsRef.current[cacheKey];
+    }
+
+    loadingItemVendorsRef.current[cacheKey] = (async () => {
+      setLoading(true);
+      const response = await api_laravel("get_item_vendors", {
+        item_id: Number(itemId),
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось загрузить поставщиков товара");
+      }
+
+      const nextVendors = (response.vendors || []).filter(
+        (itemVendor) =>
+          itemVendor?.id &&
+          Number(itemVendor.id) !== 0 &&
+          Number(itemVendor.id) !== Number(vendorId),
+      );
+      setItemVendors(itemId, nextVendors);
+      return nextVendors;
+    })();
+
+    try {
+      return await loadingItemVendorsRef.current[cacheKey];
+    } catch (error) {
+      showAlert(error?.message || "Не удалось загрузить поставщиков товара", false);
+      return [];
+    } finally {
+      delete loadingItemVendorsRef.current[cacheKey];
       setLoading(false);
     }
   };
@@ -696,7 +674,6 @@ export default function useVendorDetailsPage(vendorId) {
     closeAlert,
     closeDocModal,
     handleAddVendorItem,
-    handleBindDeclaration,
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
@@ -706,12 +683,13 @@ export default function useVendorDetailsPage(vendorId) {
     handleQuickToggleVendorField,
     handleRemoveVendorItem,
     handleToggleCity,
-    handleUnbindDeclaration,
     handleVendorSubmit,
     isAlert,
     isLoading,
     loadVendor,
     openDocModal,
     showAlert,
+    getItemVendorOptions: (itemId) => itemVendorsByItemId[String(itemId)] || [],
+    loadItemVendors,
   };
 }

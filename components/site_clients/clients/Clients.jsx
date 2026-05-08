@@ -12,7 +12,7 @@ import TableCell from "@mui/material/TableCell";
 import TableBody from "@mui/material/TableBody";
 import TablePagination from "@mui/material/TablePagination";
 
-import ModalOrder from "../ModalOrder";
+import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import DialogUser from "../DialogUser";
 import ModalOrderWithFeedback from "../ModalOrderWithFeedback";
@@ -277,7 +277,7 @@ export default function Clients({ getData, showAlert, canAccess }) {
           openOrder={openOrder}
         />
       ) : (
-        <ModalOrder
+        <OrderDetailsModal
           open={openModalOrder}
           onClose={() => setOpenModalOrder(false)}
           order={order}

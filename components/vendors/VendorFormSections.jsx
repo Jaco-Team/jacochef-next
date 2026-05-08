@@ -1,7 +1,7 @@
 "use client";
 
+import { Fragment } from "react";
 import {
-  Box,
   Button,
   Card,
   CardContent,
@@ -230,7 +230,7 @@ export function VendorPointMailsSection({
           ) : null}
 
           {mails.map((mail, index) => (
-            <Box key={`${mail.point_id?.id ?? "new"}-${index}`}>
+            <Fragment key={`${mail.point_id?.id ?? "new"}-${index}`}>
               <Grid
                 container
                 spacing={2}
@@ -269,7 +269,7 @@ export function VendorPointMailsSection({
                 </Grid>
               </Grid>
               {index < mails.length - 1 ? <Divider sx={{ mt: 2 }} /> : null}
-            </Box>
+            </Fragment>
           ))}
         </Stack>
       </CardContent>

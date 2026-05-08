@@ -94,15 +94,16 @@ export default function VendorDetailPage() {
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
+    getItemVendorOptions,
     handleSaveDeclaration,
     handleQuickToggleVendorField,
     handleToggleCity,
     handleVendorInfoSubmit,
     handleVendorMailsSubmit,
     handleRemoveVendorItem,
-    handleUnbindDeclaration,
     isAlert,
     isLoading,
+    loadItemVendors,
     openDocModal,
   } = useVendorDetailsPage(vendorId);
   const activeTabDefinition =
@@ -337,10 +338,11 @@ export default function VendorDetailPage() {
                     canEdit={canEdit}
                     canEditDeclaration={canEditDeclaration}
                     canUpload={canUpload}
+                    getItemVendorOptions={getItemVendorOptions}
                     handleAddVendorItem={handleAddVendorItem}
                     handleRemoveVendorItem={handleRemoveVendorItem}
                     handleSaveDeclaration={handleSaveDeclaration}
-                    handleUnbindDeclaration={handleUnbindDeclaration}
+                    loadItemVendors={loadItemVendors}
                     openDocModal={openDocModal}
                   />
                 </TabPanel>
@@ -349,13 +351,13 @@ export default function VendorDetailPage() {
                   index={3}
                 >
                   <TabDocuments
-                    canEdit={canEdit}
                     canUpload={canUpload}
                     canEditDeclaration={canEditDeclaration}
                     canDeleteDeclaration={canDeleteDeclaration}
                     handleDeleteDeclaration={handleDeleteDeclaration}
+                    getItemVendorOptions={getItemVendorOptions}
                     handleSaveDeclaration={handleSaveDeclaration}
-                    handleUnbindDeclaration={handleUnbindDeclaration}
+                    loadItemVendors={loadItemVendors}
                     openDocModal={openDocModal}
                   />
                 </TabPanel>

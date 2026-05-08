@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Button, DialogActions, DialogContent, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
@@ -11,49 +11,24 @@ import useVendorDocumentsView from "./useVendorDocumentsView";
 import useVendorsStore from "./useVendorsStore";
 
 export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
-  const {
-    availableDeclarationsForBind,
-    bindDeclarationId,
-    docModalExpiresAt,
-    docModalFile,
-    docModalItemId,
-    vendorItems,
-    vendorItemsOptions,
-  } = useVendorDocumentsView();
+  const { docModalExpiresAt, docModalFile, docModalItemId, vendorItems, vendorItemsOptions } =
+    useVendorDocumentsView();
   const isLoading = useVendorsStore((state) => state.isLoading);
-  const { setBindDeclarationId, setDocModalExpiresAt, setDocModalFile, setDocModalItemId } =
-    useVendorDetailsStore(
-      useShallow((state) => ({
-        setBindDeclarationId: state.setBindDeclarationId,
-        setDocModalExpiresAt: state.setDocModalExpiresAt,
-        setDocModalFile: state.setDocModalFile,
-        setDocModalItemId: state.setDocModalItemId,
-      })),
-    );
+  const { setDocModalExpiresAt, setDocModalFile, setDocModalItemId } = useVendorDetailsStore(
+    useShallow((state) => ({
+      setDocModalExpiresAt: state.setDocModalExpiresAt,
+      setDocModalFile: state.setDocModalFile,
+      setDocModalItemId: state.setDocModalItemId,
+    })),
+  );
 
   const selectedVendorItem = useMemo(
     () => vendorItemsOptions.find((item) => String(item.id) === String(docModalItemId)) || null,
     [docModalItemId, vendorItemsOptions],
   );
 
-  const selectedDeclaration = useMemo(
-    () =>
-      availableDeclarationsForBind.find((decl) => String(decl.id) === String(bindDeclarationId)) ||
-      null,
-    [availableDeclarationsForBind, bindDeclarationId],
-  );
-
   const submitDisabled =
-    !docModalItemId ||
-    (!bindDeclarationId && !docModalFile) ||
-    (Boolean(docModalFile) && !docModalExpiresAt) ||
-    isLoading;
-
-  useEffect(() => {
-    if (bindDeclarationId && !selectedDeclaration) {
-      setBindDeclarationId("");
-    }
-  }, [bindDeclarationId, selectedDeclaration, setBindDeclarationId]);
+    !docModalItemId || !docModalFile || (Boolean(docModalFile) && !docModalExpiresAt) || isLoading;
 
   return (
     <MyModal
@@ -73,34 +48,11 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
             disabled={isLoading || !vendorItems.length}
           />
 
-          {/* <MyAutocomplite
-            multiple={false}
-            label="Существующая декларация"
-            data={availableDeclarationsForBind}
-            value={selectedDeclaration}
-            func={(_, value) => {
-              setBindDeclarationId(value?.id || "");
-              if (value?.id) {
-                setDocModalFile(null);
-                setDocModalExpiresAt(null);
-              }
-            }}
-            disabled={isLoading || !docModalItemId || !availableDeclarationsForBind.length}
-            renderOption={(props, option) => (
-              <li
-                {...props}
-                key={option.id}
-              >
-                {getDeclarationOptionLabel(option)}
-              </li>
-            )}
-          /> */}
-
           <Stack spacing={1}>
             <Button
               variant="outlined"
               component="label"
-              disabled={isLoading || Boolean(bindDeclarationId)}
+              disabled={isLoading}
               sx={{ alignSelf: "flex-start" }}
             >
               Выбрать файл
@@ -112,9 +64,7 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
                   const file = event.target.files?.[0];
                   event.target.value = "";
                   setDocModalFile(file || null);
-                  if (file) {
-                    setBindDeclarationId("");
-                  } else {
+                  if (!file) {
                     setDocModalExpiresAt(null);
                   }
                 }}
@@ -124,11 +74,7 @@ export default function ModalAddDeclaration({ open, onClose, onSubmit }) {
               variant="body2"
               color="text.secondary"
             >
-              {docModalFile
-                ? docModalFile.name
-                : bindDeclarationId
-                  ? "Будет привязана выбранная декларация"
-                  : "Файл не выбран"}
+              {docModalFile ? docModalFile.name : "Файл не выбран"}
             </Typography>
           </Stack>
 

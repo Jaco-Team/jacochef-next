@@ -10,11 +10,12 @@ const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// если это включаем, начинаются Preflight запросы, пока что не надо
+// apiClient.interceptors.request.use((config) => {
+//   const token = localStorage.getItem("token");
+//   if (token) config.headers.Authorization = `Bearer ${token}`;
+//   return config;
+// });
 
 apiClient.interceptors.response.use(
   (response) => response.data,

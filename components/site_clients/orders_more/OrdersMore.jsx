@@ -17,7 +17,7 @@ import TableBody from "@mui/material/TableBody";
 import TablePagination from "@mui/material/TablePagination";
 import CheckIcon from "@mui/icons-material/Check";
 import ModalOrderWithFeedback from "../ModalOrderWithFeedback";
-import ModalOrder from "../ModalOrder";
+import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import { useSiteClientsStore } from "../useSiteClientsStore";
 import TestAccess from "@/ui/TestAccess";
 import { IconButton, Stack } from "@mui/material";
@@ -262,7 +262,7 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
           openOrder={openOrder}
         />
       ) : (
-        <ModalOrder
+        <OrderDetailsModal
           open={openModalOrder}
           onClose={() => setOpenModalOrder(false)}
           order={order}
