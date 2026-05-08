@@ -446,6 +446,7 @@ export default function CrmPage() {
             <SegmentTab
               categories={categories}
               points={points}
+              items={all_items}
               handleDelete={handleDelete}
               canAccess={canAccess}
               segments={segments}

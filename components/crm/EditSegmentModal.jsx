@@ -9,6 +9,7 @@ import {
   IconButton,
   Paper,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { Close, Tune, Delete } from "@mui/icons-material";
 import React, { useState, useEffect, useMemo } from "react";
@@ -22,6 +23,7 @@ import {
 import dayjs from "dayjs";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
+import InfoIcon from "@mui/icons-material/Info";
 
 const orderTypes = [
   { id: 1, name: "Доставка", type: "delivery" },
@@ -124,6 +126,7 @@ const parseIdsToArray = (str, dataArray) => {
 export const EditSegmentModal = ({
   open,
   onClose,
+  items,
   categories,
   points,
   cities,
@@ -141,6 +144,7 @@ export const EditSegmentModal = ({
     days_before_birthday: "",
     has_email: null,
     consent_email: null,
+    strict_search: null,
 
     // Заказы
     orders_count_min: "",
@@ -155,6 +159,7 @@ export const EditSegmentModal = ({
     days_from_first: "",
     period_days: "",
     categories: [],
+    items: [],
     promo: "",
     order_types: [],
 
@@ -190,6 +195,7 @@ export const EditSegmentModal = ({
             ? emailOptions.find((val) => val.value === segmentData.has_email)
             : null,
         consent_email: segmentData.consent_email,
+        strict_search: segmentData.strict_search,
         orders_count_min: segmentData.orders_count_min || "",
         orders_count_max: segmentData.orders_count_max || "",
         avg_check_min: segmentData.avg_check_min || "",
@@ -202,6 +208,7 @@ export const EditSegmentModal = ({
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
         categories: parseIdsToArray(segmentData.categories, categories),
+        items: parseIdsToArray(segmentData.items, items),
         promo: segmentData.promo || "",
         order_types: parseIdsToArray(segmentData.order_types, orderTypes),
         cities: parseIdsToArray(segmentData.cities, cities),
@@ -214,7 +221,7 @@ export const EditSegmentModal = ({
         utm_content: segmentData.utm_content || "",
       });
     }
-  }, [segmentData, open, categories, cities, points]);
+  }, [segmentData, open, categories, cities, points, items]);
 
   const setField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -233,6 +240,7 @@ export const EditSegmentModal = ({
       form.days_before_birthday ||
       form.has_email !== null ||
       form.consent_email !== null ||
+      form.strict_search !== null ||
       form.orders_count_min ||
       form.orders_count_max ||
       form.avg_check_min ||
@@ -244,6 +252,7 @@ export const EditSegmentModal = ({
       form.days_from_first ||
       form.period_days ||
       form.categories.length ||
+      form.items.length ||
       form.promo ||
       form.cities.length ||
       form.points.length ||
@@ -280,6 +289,7 @@ export const EditSegmentModal = ({
     const saveData = {
       ...form,
       categories: form.categories.map((cat) => cat.id).join(","),
+      items: form.items.map((cat) => cat.id).join(","),
       order_types: form.order_types.map((type) => type.id).join(","),
       cities: form.cities.map((city) => city.id).join(","),
       points: form.points.map((point) => point.id).join(","),
@@ -309,10 +319,12 @@ export const EditSegmentModal = ({
         id: segmentData.id || null,
         segment_name: segmentData.segment_name || "",
         gender: segmentData.gender || null,
+        items: parseIdsToArray(segmentData.items, items),
         birth_date_start: segmentData.birth_date_start || null,
         birth_date_end: segmentData.birth_date_end || null,
         days_before_birthday: segmentData.days_before_birthday || "",
         has_email: segmentData.has_email !== null ? segmentData.has_email : null,
+        strict_search: segmentData.strict_search !== null ? segmentData.strict_search : null,
         consent_email: segmentData.consent_email !== null ? segmentData.consent_email : null,
         orders_count_min: segmentData.orders_count_min || "",
         orders_count_max: segmentData.orders_count_max || "",
@@ -614,6 +626,16 @@ export const EditSegmentModal = ({
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <MyAutocomplite
+                  label="Позиции в заказе"
+                  multiple={true}
+                  data={items}
+                  value={form.items}
+                  func={(data, value) => setField("items", value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <MyTextInput
                   type="text"
                   label="Промокод"
@@ -630,6 +652,21 @@ export const EditSegmentModal = ({
                   value={form.order_types}
                   func={(data, value) => setField("order_types", value)}
                 />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <MyCheckBox
+                    label="Строгий поиск"
+                    value={form.strict_search}
+                    func={(e) => setField("strict_search", e.target.checked)}
+                  />
+                  <Tooltip
+                    title="Будем искать заказы, где только выбранные позиции / категории"
+                    arrow
+                  >
+                    <InfoIcon />
+                  </Tooltip>
+                </div>
               </Grid>
             </Grid>
           </Section>

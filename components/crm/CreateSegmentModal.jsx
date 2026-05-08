@@ -10,6 +10,7 @@ import {
   Grid,
   IconButton,
   Paper,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Close, ExpandMore, Tune } from "@mui/icons-material";
@@ -24,6 +25,7 @@ import {
 import dayjs from "dayjs";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
+import InfoIcon from "@mui/icons-material/Info";
 
 const orderTypes = [
   { id: 1, name: "Доставка", type: "delivery" },
@@ -114,7 +116,15 @@ const RangeInput = ({ label, valueMin, valueMax, onChangeMin, onChangeMax }) => 
   </Grid>
 );
 
-export const CreateSegmentModal = ({ open, onClose, categories, points, cities, saveSegment }) => {
+export const CreateSegmentModal = ({
+  open,
+  onClose,
+  categories,
+  items,
+  points,
+  cities,
+  saveSegment,
+}) => {
   const [expandedSections, setExpandedSections] = useState({
     client: true,
     orders: true,
@@ -132,6 +142,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
     days_before_birthday: "",
     has_email: null,
     consent_email: null,
+    strict_search: null,
 
     // Заказы
     orders_count_min: "",
@@ -146,6 +157,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
     days_from_first: "",
     period_days: "",
     categories: [],
+    items: [],
     promo: "",
     order_types: [],
 
@@ -165,6 +177,13 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
   });
 
   const setField = (key, value) => {
+    if (key === "items" && form.categories?.length) {
+      setForm((prev) => ({ ...prev, categories: [] }));
+    }
+
+    if (key === "categories" && form.items?.length) {
+      setForm((prev) => ({ ...prev, items: [] }));
+    }
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -185,9 +204,11 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       form.days_before_birthday ||
       form.has_email !== null ||
       form.consent_email !== null ||
+      form.strict_search !== null ||
       form.orders_count_min ||
       form.orders_count_max ||
       form.avg_check_min ||
+      form.items ||
       form.avg_check_max ||
       form.total_sum_min ||
       form.total_sum_max ||
@@ -255,6 +276,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       days_before_birthday: "",
       has_email: null,
       consent_email: null,
+      strict_search: null,
       orders_count_min: "",
       orders_count_max: "",
       avg_check_min: "",
@@ -270,6 +292,7 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
       promo: "",
       cities: [],
       points: [],
+      items: [],
       order_types: [],
       sources: [],
       utm_source: "",
@@ -530,9 +553,20 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
               <MyAutocomplite
                 label="Категории в заказе"
                 multiple={true}
+                disabled={form.items?.length}
                 data={categories}
                 value={form.categories}
                 func={(data, value) => setField("categories", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <MyAutocomplite
+                label="Позиции в заказе"
+                multiple={true}
+                disabled={form.categories?.length}
+                data={items}
+                value={form.items}
+                func={(data, value) => setField("items", value)}
               />
             </Grid>
 
@@ -553,6 +587,21 @@ export const CreateSegmentModal = ({ open, onClose, categories, points, cities, 
                 value={form.order_types}
                 func={(data, value) => setField("order_types", value)}
               />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <MyCheckBox
+                  label="Строгий поиск"
+                  value={form.strict_search}
+                  func={(e) => setField("strict_search", e.target.checked)}
+                />
+                <Tooltip
+                  title="Будем искать заказы, где только выбранные позиции / категории"
+                  arrow
+                >
+                  <InfoIcon />
+                </Tooltip>
+              </div>
             </Grid>
           </Grid>
         </Section>

@@ -251,6 +251,7 @@ export const SegmentTab = ({
   categories = [],
   points = [],
   canAccess,
+  items = [],
   cities = [],
   saveSegment,
   updateSegment,
@@ -299,6 +300,7 @@ export const SegmentTab = ({
     <Box sx={{ p: 3 }}>
       <EditSegmentModal
         open={editModalOpen}
+        items={items}
         onClose={() => {
           setEditModalOpen(false);
           setEditingSegment(null);
@@ -404,6 +406,7 @@ export const SegmentTab = ({
         open={isModalOpen}
         onClose={handleCloseModal}
         categories={categories}
+        items={items}
         points={points}
         saveSegment={saveSegment}
         cities={cities}
