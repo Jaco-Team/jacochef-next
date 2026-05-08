@@ -127,7 +127,7 @@ export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }
                   description={item.point_name || "—"}
                   caption={formatCardValue(variant, item, formatters)}
                   onClick={
-                    onEmployeeOpen && item?.point_id ? () => onEmployeeOpen(item) : undefined
+                    onEmployeeOpen && item?.employee_id ? () => onEmployeeOpen(item) : undefined
                   }
                   ariaLabel={`Открыть сотрудника ${item.employee_name}`}
                 />

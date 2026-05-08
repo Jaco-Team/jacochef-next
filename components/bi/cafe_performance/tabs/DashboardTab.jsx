@@ -18,6 +18,7 @@ import { buildDashboardMetricConfigs } from "../dashboardMetricConfig";
 import { buildCategoryLegendMetric } from "../dashboardCategoryConfig";
 import { getOrderTypeLabel, sortByOrderTypes } from "../config";
 import { CP_SPACE } from "../layout";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 
 export default function DashboardTab({
   data,
@@ -286,7 +287,7 @@ export default function DashboardTab({
                       orderType={item.order_type}
                       name={getOrderTypeLabel(item.order_type, orderTypeNameMap)}
                       rightValue={formatters.duration(item.p50)}
-                      subtitle={`${formatters.integer(item.count)} заказов · SLA ${formatters.percent(item.sla)}`}
+                      subtitle={`${formatPlural(item.count, ["заказ", "заказа", "заказов"])} · SLA ${formatters.percent(item.sla)}`}
                       onClick={() => openOrderTypeDetails(item)}
                       ariaLabel={`Открыть детализацию типа заказа ${getOrderTypeLabel(item.order_type, orderTypeNameMap)}`}
                     />

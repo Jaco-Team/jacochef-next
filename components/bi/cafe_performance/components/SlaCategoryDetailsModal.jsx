@@ -56,7 +56,31 @@ const sumSeconds = (values) => {
   return hasValue ? total : null;
 };
 
-function CategoryDetailsTable({ rows, formatters }) {
+function OrderNumberButton({ row, onClick }) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={onClick}
+      sx={{
+        p: 0,
+        border: 0,
+        background: "transparent",
+        color: "primary.main",
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        font: "inherit",
+        fontWeight: 700,
+        textAlign: "left",
+      }}
+    >
+      {getOrderNumber(row)}
+    </Box>
+  );
+}
+
+function CategoryDetailsTable({ rows, formatters, onOrderOpen }) {
   const stageColumns = useMemo(() => {
     const stageMap = new Map();
 
@@ -113,12 +137,19 @@ function CategoryDetailsTable({ rows, formatters }) {
                 hover
               >
                 <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 700 }}
-                  >
-                    {getOrderNumber(row)}
-                  </Typography>
+                  {onOrderOpen ? (
+                    <OrderNumberButton
+                      row={row}
+                      onClick={() => onOrderOpen(row)}
+                    />
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {getOrderNumber(row)}
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Typography
@@ -196,6 +227,7 @@ export default function SlaCategoryDetailsModal({
   page,
   perPage,
   onPageChange,
+  onOrderOpen,
 }) {
   const [showInfo, setShowInfo] = useState(false);
   const rows = data?.rows || data?.items || [];
@@ -234,6 +266,7 @@ export default function SlaCategoryDetailsModal({
               <CategoryDetailsTable
                 rows={rows}
                 formatters={formatters}
+                onOrderOpen={onOrderOpen}
               />
               {rows.length ? (
                 <TablePagination

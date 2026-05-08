@@ -162,6 +162,7 @@ export default function useCafePerformanceController() {
   const { api_laravel: api_site_clients } = useApi("site_clients");
   const requestCacheRef = useRef(new Map());
   const employeeRequestRef = useRef(0);
+  const employeeRequestKeyRef = useRef("");
   const categoryRequestRef = useRef(0);
   const metricDetailsRequestRef = useRef(0);
 
@@ -273,7 +274,6 @@ export default function useCafePerformanceController() {
           filters: normalizedFilters,
           appliedFilters: normalizedFilters,
         });
-
         setScreenResult(
           firstTab.key,
           firstTabResponse,
@@ -322,7 +322,7 @@ export default function useCafePerformanceController() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapped, currentTab.key, currentScreen?.queryKey]);
+  }, [appliedFilters, bootstrapped, currentScreen?.queryKey, currentTab.key]);
 
   const handleFilterChange = useCallback(
     (key, value) => {
@@ -447,13 +447,30 @@ export default function useCafePerformanceController() {
     async ({ employee, page = 0, perPage = 25 }) => {
       if (!employee?.employee_id) return;
 
-      const requestId = employeeRequestRef.current + 1;
-      employeeRequestRef.current = requestId;
       const pointList =
         (employee?.point_id ? [{ id: employee.point_id }] : null) ||
         (appliedFilters.point_list || []).map((item) => ({ id: item.id }));
       const categoryIds = appliedFilters.category_ids || [];
       const stageType = employee?.stage_type || appliedFilters.stage_type || "";
+      const payload = {
+        period_type: appliedFilters.period_type || "custom",
+        date_start: appliedFilters.date_start || null,
+        date_end: appliedFilters.date_end || null,
+        point_list: pointList,
+        category_ids: categoryIds,
+        stage_type: stageType,
+        employee_id: employee.employee_id,
+        page: page + 1,
+        per_page: perPage,
+      };
+      const requestKey = JSON.stringify(payload);
+
+      if (employeeRequestKeyRef.current === requestKey) return;
+
+      const requestId = employeeRequestRef.current + 1;
+      employeeRequestRef.current = requestId;
+      employeeRequestKeyRef.current = requestKey;
+
       setEmployeeDetails({
         open: true,
         loading: true,
@@ -464,20 +481,11 @@ export default function useCafePerformanceController() {
       });
 
       try {
-        const res = await api_laravel("get_employee", {
-          period_type: appliedFilters.period_type || "custom",
-          date_start: appliedFilters.date_start || null,
-          date_end: appliedFilters.date_end || null,
-          point_list: pointList,
-          category_ids: categoryIds,
-          stage_type: stageType,
-          employee_id: employee.employee_id,
-          page: page + 1,
-          per_page: perPage,
-        });
+        const res = await api_laravel("get_employee", payload);
 
         if (!res?.st) throw new Error(res?.text || "Ошибка загрузки сотрудника");
         if (employeeRequestRef.current !== requestId) return;
+        employeeRequestKeyRef.current = "";
 
         setEmployeeDetails({
           open: true,
@@ -489,6 +497,7 @@ export default function useCafePerformanceController() {
         });
       } catch (error) {
         if (employeeRequestRef.current !== requestId) return;
+        employeeRequestKeyRef.current = "";
 
         setEmployeeDetails({
           open: false,

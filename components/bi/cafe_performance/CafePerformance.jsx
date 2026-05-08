@@ -98,6 +98,7 @@ export default function CafePerformance() {
         page={slaCategoryDetails.page}
         perPage={slaCategoryDetails.perPage}
         onPageChange={handleSlaCategoryPageChange}
+        onOrderOpen={orderDetails.openOrder}
       />
 
       <MetricDetailsModal

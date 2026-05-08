@@ -5,6 +5,7 @@ import SlaProgressBar from "./SlaProgressBar";
 import { resolveChannelIcon } from "./ChannelListItem";
 import { CP_PADDING, CP_RADIUS, CP_SPACE } from "../layout";
 import MetricLabel from "./MetricLabel";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 
 export default function DeliveryChannelCard({
   orderType,
@@ -81,7 +82,7 @@ export default function DeliveryChannelCard({
             variant="caption"
             color="text.secondary"
           >
-            {formatters.integer(count)} заказов
+            {formatPlural(count, ["заказ", "заказа", "заказов"])}
           </Typography>
         </Stack>
       </Stack>
