@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import MyModal from "@/ui/MyModal";
 import EmployeeAvatar from "./EmployeeAvatar";
+import MetricLabel from "./MetricLabel";
 import SlaChip from "./SlaChip";
 import useCafePerformanceStore from "../useCafePerformanceStore";
 import { getSlaTone } from "./SlaProgressBar";
@@ -30,6 +31,9 @@ const TONE_COLOR = {
   danger: "error.dark",
   neutral: "text.secondary",
 };
+
+const LONG_STAGE_TOOLTIP_TEXT =
+  "Длинные — это процент заказов, у которых длительность этапа больше P90 этого этапа * 1.5.";
 
 const getStabilityTone = (value) => {
   if (value == null) return "neutral";
@@ -317,7 +321,17 @@ export default function EmployeeDetailsModal({
                           <TableCell align="center">P90</TableCell>
                           <TableCell align="center">SLA</TableCell>
                           <TableCell align="center">Стабильность</TableCell>
-                          <TableCell align="center">Длинные</TableCell>
+                          <TableCell align="center">
+                            <Box sx={{ display: "flex", justifyContent: "center" }}>
+                              <MetricLabel
+                                text="Длинные"
+                                tooltipText={LONG_STAGE_TOOLTIP_TEXT}
+                                variant="body2"
+                                color="inherit"
+                                sx={{ fontWeight: 500 }}
+                              />
+                            </Box>
+                          </TableCell>
                           <TableCell align="center">Заказов</TableCell>
                         </TableRow>
                       </TableHead>
