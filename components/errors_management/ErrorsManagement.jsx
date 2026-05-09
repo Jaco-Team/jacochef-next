@@ -15,7 +15,6 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  MenuItem,
   Paper,
   Stack,
   styled,
@@ -28,12 +27,13 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
-import { MyCheckBox, MyDatePickerNew } from "@/ui/Forms";
+import { MyCheckBox, MyDatePickerNew, MySelect } from "@/ui/Forms";
 import { ModalProblems } from "@/components/errors_management/ModalProblems";
 import dayjs from "dayjs";
 import Tabs from "@mui/material/Tabs";
@@ -64,10 +64,25 @@ const INITIAL_FILTERS = {
 };
 
 const brandRed = "#DD1A32";
-const blockBackground = "#F3F3F3";
-const blockBorder = "#E5E5E5";
+const blockBackground = "#FFFFFF";
+const blockBorder = "#E3E3E3";
 const textPrimary = "#3C3B3B";
-const textSecondary = "#5E5E5E";
+const textSecondary = "#4F4F4F";
+
+const commonFieldLabelSx = {
+  color: textSecondary,
+  "&.Mui-focused": {
+    color: textSecondary,
+  },
+  "&.MuiInputLabel-shrink": {
+    transform: "translate(12px, -8px) scale(0.75)",
+    transformOrigin: "top left",
+    backgroundColor: "#FFFFFF",
+    paddingInline: "6px",
+    borderRadius: "8px",
+    lineHeight: 1.1,
+  },
+};
 
 const searchFieldSx = {
   "&.MuiFormControl-root": {
@@ -90,7 +105,9 @@ const searchFieldSx = {
     },
   },
   "& .MuiOutlinedInput-input": {
-    padding: "10px 12px",
+    minHeight: 24,
+    lineHeight: "24px",
+    padding: "9px 12px",
     color: textPrimary,
     WebkitTextFillColor: textPrimary,
     "&::placeholder": {
@@ -105,29 +122,176 @@ const searchFieldSx = {
     alignItems: "center",
   },
   "& .MuiInputLabel-root": {
-    color: textSecondary,
-    "&.Mui-focused": {
-      color: textSecondary,
-    },
+    ...commonFieldLabelSx,
   },
   "& .MuiSvgIcon-root": {
     color: "#A6A6A6",
   },
 };
 
+const selectFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    minHeight: 44,
+    border: `1px solid ${blockBorder} !important`,
+    borderColor: `${blockBorder} !important`,
+    boxShadow: "none !important",
+  },
+  "& .MuiOutlinedInput-root.Mui-focused": {
+    borderColor: `${blockBorder} !important`,
+    boxShadow: "none !important",
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    border: "0 !important",
+    display: "none !important",
+  },
+  "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root": {
+    minHeight: "44px !important",
+    paddingTop: "0 !important",
+    paddingBottom: "0 !important",
+    paddingLeft: "12px !important",
+    paddingRight: "38px !important",
+    alignItems: "center",
+  },
+  "& .MuiAutocomplete-input": {
+    minHeight: "24px !important",
+    lineHeight: "24px !important",
+    alignSelf: "center",
+  },
+  "& .MuiAutocomplete-inputRoot.MuiOutlinedInput-root.Mui-focused": {
+    borderColor: `${blockBorder} !important`,
+    boxShadow: "none !important",
+  },
+  "& .MuiInputLabel-root": {
+    ...commonFieldLabelSx,
+    "&.MuiInputLabel-shrink": {
+      ...commonFieldLabelSx["&.MuiInputLabel-shrink"],
+      backgroundColor: "#FFFFFF",
+    },
+  },
+};
+
+const selectAutocompleteSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+  },
+  "&.Mui-expanded .MuiOutlinedInput-root": {
+    borderTopLeftRadius: "12px",
+    borderTopRightRadius: "12px",
+    borderBottomLeftRadius: "0 !important",
+    borderBottomRightRadius: "0 !important",
+  },
+  "&.Mui-expanded .MuiInputLabel-root": {
+    backgroundColor: "#FFFFFF",
+  },
+};
+
+const unifiedSelectSlotProps = {
+  popper: {
+    allowAdaptivePlacement: true,
+    sx: {
+      boxSizing: "border-box",
+      "& .MuiAutocomplete-paper": {
+        boxSizing: "border-box",
+      },
+    },
+  },
+  paper: {
+    sx: {
+      boxSizing: "border-box",
+      width: "100%",
+      borderBottomLeftRadius: "12px",
+      borderBottomRightRadius: "12px",
+    },
+  },
+  listbox: {
+    sx: {
+      maxHeight: 320,
+      "& .MuiAutocomplete-option": {
+        minHeight: 46,
+        padding: "10px 16px",
+      },
+    },
+  },
+};
+
+const dateFieldSx = {
+  "&.MuiFormControl-root": {
+    backgroundColor: "#fff !important",
+    borderRadius: "12px",
+    border: `1px solid ${blockBorder}`,
+  },
+  "& .MuiPickersOutlinedInput-root": {
+    minHeight: "44px !important",
+    borderRadius: "12px !important",
+    boxShadow: "none !important",
+    "& fieldset": {
+      display: "none",
+    },
+  },
+  "& .MuiPickersInputBase-sectionsContainer": {
+    minHeight: 24,
+    lineHeight: "24px",
+    paddingTop: "9px !important",
+    paddingBottom: "9px !important",
+    paddingLeft: "12px !important",
+    alignItems: "center",
+  },
+  "& .MuiPickersInputBase-sectionContent, & .MuiPickersInputBase-sectionSeparator": {
+    color: textPrimary,
+    lineHeight: "24px",
+  },
+  "& .MuiInputLabel-root": {
+    ...commonFieldLabelSx,
+    "&.MuiInputLabel-shrink": {
+      ...commonFieldLabelSx["&.MuiInputLabel-shrink"],
+      backgroundColor: "#FFFFFF",
+    },
+  },
+  "& .MuiIconButton-root": {
+    color: "#A6A6A6",
+  },
+};
+
 const filterPanelSx = {
   backgroundColor: "#FFFFFF",
-  border: `1px solid ${blockBorder}`,
+  border: `1px solid #E3E3E3`,
   borderRadius: "14px",
   p: { xs: 2, md: 2.5 },
 };
 
 const filterSectionTitleSx = {
-  fontSize: 14,
-  lineHeight: "20px",
-  color: textSecondary,
-  fontWeight: 400,
+  fontSize: 16,
+  lineHeight: "22px",
+  color: textPrimary,
+  fontWeight: 600,
 };
+
+const tableHeadCellSx = {
+  whiteSpace: "nowrap",
+  fontWeight: 700,
+  color: textPrimary,
+  backgroundColor: "#FAFAFA",
+  borderBottom: `1px solid ${blockBorder}`,
+};
+
+const stickyHeadCellSx = {
+  ...tableHeadCellSx,
+  position: "sticky",
+  left: 0,
+  zIndex: 4,
+  boxShadow: "2px 0 0 0 #EFEFEF",
+};
+
+const stickyBodyCellSx = {
+  position: "sticky",
+  left: 0,
+  zIndex: 2,
+  backgroundColor: "#FFFFFF",
+  boxShadow: "2px 0 0 0 #F3F3F3",
+  whiteSpace: "nowrap",
+};
+
+const deletedRowBg = "#FFF2F4";
 
 function normalizeSelectOptions(items = []) {
   if (!Array.isArray(items)) {
@@ -209,7 +373,7 @@ const IOSSwitch = styled(Switch)(() => ({
   },
 }));
 
-function OrderDetailsDialog({ detail, onClose, access }) {
+function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog }) {
   const order = detail?.order;
   const orderItems = Array.isArray(detail?.order_items) ? detail.order_items : [];
   const orderItemsFor = Array.isArray(detail?.order_items_for)
@@ -283,28 +447,35 @@ function OrderDetailsDialog({ detail, onClose, access }) {
   }, [checkedKey, orderItemsFor]);
 
   const saveProblems = useCallback(
-    (solutions) => {
+    (problemData) => {
       setProblemArr((prev) => {
         const next = [...prev];
 
         positions.forEach((pos) => {
           const existingIndex = next.findIndex((item) => item.id === pos.id);
+          const mergedFields = {
+            problem_cat_id: problemData?.problem_cat_id ?? null,
+            problem_path: problemData?.problem_path || "",
+            problem_name: problemData?.problem_name || problemData?.value || "",
+            problem_comment: problemData?.problem_comment ?? problemData?.comment ?? "",
+            problem_solution: problemData?.problem_solution ?? problemData?.solution ?? null,
+            previewUrl: problemData?.previewUrl || "",
+            need_img: problemData?.need_img ?? 0,
+            site_cats: problemData?.site_cats || [],
+            stage_1: problemData?.stage_1 || [],
+            stage_2: problemData?.stage_2 || [],
+            stage_3: problemData?.stage_3 || [],
+          };
 
           if (existingIndex !== -1) {
             next[existingIndex] = {
               ...next[existingIndex],
-              problem_name: solutions.value,
-              problem_comment: solutions.comment,
-              problem_solution: solutions.solution,
-              previewUrl: solutions.previewUrl,
+              ...mergedFields,
             };
           } else {
             next.push({
               ...pos,
-              problem_name: solutions.value,
-              problem_comment: solutions.comment,
-              problem_solution: solutions.solution,
-              previewUrl: solutions.previewUrl,
+              ...mergedFields,
             });
           }
         });
@@ -330,6 +501,15 @@ function OrderDetailsDialog({ detail, onClose, access }) {
       onClose={onClose}
       maxWidth="lg"
       fullWidth
+      PaperProps={{
+        sx: {
+          maxHeight: "92vh",
+          height: { xs: "auto", md: "92vh" },
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
     >
       <DialogTitle sx={{ textAlign: "center", position: "relative", py: 2 }}>
         <Box
@@ -429,12 +609,26 @@ function OrderDetailsDialog({ detail, onClose, access }) {
         </Grid>
       ) : null}
 
-      <DialogContent>
+      <DialogContent
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         <Grid
           container
           spacing={3}
+          sx={{ height: "100%", minHeight: 0 }}
         >
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid
+            size={{ xs: 12, md: 5 }}
+            sx={{
+              minHeight: 0,
+              overflowY: { xs: "visible", md: "auto" },
+              pr: { md: 0.5 },
+            }}
+          >
             <Stack spacing={1.5}>
               <Box>
                 <Typography sx={{ fontWeight: 700 }}>{order.type_order}</Typography>
@@ -552,6 +746,8 @@ function OrderDetailsDialog({ detail, onClose, access }) {
           <ModalProblems
             positions={positions}
             problem_arr={problemArr}
+            errCats={errCats}
+            solutionCatalog={solutionsCatalog}
             open={isProblemsOpen}
             current_name={currentName}
             onClose={() => setIsProblemsOpen(false)}
@@ -559,7 +755,14 @@ function OrderDetailsDialog({ detail, onClose, access }) {
             save={saveProblems}
           />
 
-          <Grid size={{ xs: 12, md: 7 }}>
+          <Grid
+            size={{ xs: 12, md: 7 }}
+            sx={{
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -580,137 +783,148 @@ function OrderDetailsDialog({ detail, onClose, access }) {
               ) : null}
             </Box>
 
-            {!checkedError ? (
-              <Table
-                size="small"
-                sx={{
-                  borderSpacing: "0 6px",
-                  borderCollapse: "separate",
-                }}
-              >
-                <TableBody>
-                  {orderItems.map((item, index) => (
-                    <TableRow
-                      key={`${item?.id || item?.name || "item"}-${index}`}
-                      sx={{
-                        backgroundColor: "#f6f6f6",
-                        "& td": {
-                          border: "none",
-                        },
-                      }}
-                    >
-                      <TableCell sx={{ borderRadius: "10px 0 0 10px" }}>
-                        <Typography>{item?.name}</Typography>
-                      </TableCell>
-                      <TableCell>{item?.count}</TableCell>
-                      <TableCell sx={{ borderRadius: "0 10px 10px 0" }}>{item?.price} р</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell
-                      colSpan={2}
-                      sx={{ border: "none", textAlign: "right", fontWeight: 700 }}
-                    >
-                      Сумма заказа
-                    </TableCell>
-                    <TableCell sx={{ border: "none" }}>
-                      {order.sum_order || order.order_price} р
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            ) : (
-              <Table
-                size="small"
-                sx={{
-                  borderSpacing: "0 6px",
-                  borderCollapse: "separate",
-                }}
-              >
-                <TableBody>
-                  {orderItemsFor.map((item, index) => {
-                    const problem = problemArr.find((it) => it?.id === item.id);
-
-                    return (
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                pr: 0.5,
+              }}
+            >
+              {!checkedError ? (
+                <Table
+                  size="small"
+                  sx={{
+                    borderSpacing: "0 6px",
+                    borderCollapse: "separate",
+                  }}
+                >
+                  <TableBody>
+                    {orderItems.map((item, index) => (
                       <TableRow
                         key={`${item?.id || item?.name || "item"}-${index}`}
                         sx={{
                           backgroundColor: "#f6f6f6",
-                          cursor: "pointer",
                           "& td": {
                             border: "none",
                           },
                         }}
-                        onClick={(event) => {
-                          const target = event.target;
-
-                          if (
-                            target?.type === "checkbox" ||
-                            (typeof target?.closest === "function" &&
-                              target.closest('input[type="checkbox"]'))
-                          ) {
-                            return;
-                          }
-
-                          setCheckedKey({ [index]: true });
-                          setCurrentName(item.id);
-                          setPositions([item]);
-                          setIsProblemsOpen(true);
-                        }}
                       >
                         <TableCell sx={{ borderRadius: "10px 0 0 10px" }}>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <span>
-                              <MyCheckBox
-                                value={checkedKey[index] === true}
-                                func={(event) =>
-                                  setCheckedKey((prev) => ({
-                                    ...prev,
-                                    [index]: event.target.checked,
-                                  }))
-                                }
-                              />
-                            </span>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "flex-start",
-                              }}
-                            >
-                              <Typography>{item?.name}</Typography>
-                              {problem?.problem_name ? (
-                                <Box
-                                  component="span"
-                                  className="special-badge"
-                                  sx={{
-                                    color: "#fff",
-                                    border: "1px solid red",
-                                    borderRadius: "12px",
-                                    backgroundColor: "#e12a58",
-                                    px: 1.25,
-                                    py: 0.25,
-                                    width: "max-content",
-                                    fontSize: 13,
-                                  }}
-                                >
-                                  {problem.problem_name}
-                                </Box>
-                              ) : null}
-                            </Box>
-                          </Box>
+                          <Typography>{item?.name}</Typography>
                         </TableCell>
+                        <TableCell>{item?.count}</TableCell>
                         <TableCell sx={{ borderRadius: "0 10px 10px 0" }}>
-                          {item?.price} р.
+                          {item?.price} р
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell
+                        colSpan={2}
+                        sx={{ border: "none", textAlign: "right", fontWeight: 700 }}
+                      >
+                        Сумма заказа
+                      </TableCell>
+                      <TableCell sx={{ border: "none" }}>
+                        {order.sum_order || order.order_price} р
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              ) : (
+                <Table
+                  size="small"
+                  sx={{
+                    borderSpacing: "0 6px",
+                    borderCollapse: "separate",
+                  }}
+                >
+                  <TableBody>
+                    {orderItemsFor.map((item, index) => {
+                      const problem = problemArr.find((it) => it?.id === item.id);
+
+                      return (
+                        <TableRow
+                          key={`${item?.id || item?.name || "item"}-${index}`}
+                          sx={{
+                            backgroundColor: "#f6f6f6",
+                            cursor: "pointer",
+                            "& td": {
+                              border: "none",
+                            },
+                          }}
+                          onClick={(event) => {
+                            const target = event.target;
+
+                            if (
+                              target?.type === "checkbox" ||
+                              (typeof target?.closest === "function" &&
+                                target.closest('input[type="checkbox"]'))
+                            ) {
+                              return;
+                            }
+
+                            setCheckedKey({ [index]: true });
+                            setCurrentName(item.id);
+                            setPositions([item]);
+                            setIsProblemsOpen(true);
+                          }}
+                        >
+                          <TableCell sx={{ borderRadius: "10px 0 0 10px" }}>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <span>
+                                <MyCheckBox
+                                  value={checkedKey[index] === true}
+                                  func={(event) =>
+                                    setCheckedKey((prev) => ({
+                                      ...prev,
+                                      [index]: event.target.checked,
+                                    }))
+                                  }
+                                />
+                              </span>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "flex-start",
+                                }}
+                              >
+                                <Typography>{item?.name}</Typography>
+                                {problem?.problem_name ? (
+                                  <Box
+                                    component="span"
+                                    className="special-badge"
+                                    sx={{
+                                      color: "#fff",
+                                      border: "1px solid red",
+                                      borderRadius: "12px",
+                                      backgroundColor: "#e12a58",
+                                      px: 1.25,
+                                      py: 0.25,
+                                      width: "max-content",
+                                      fontSize: 13,
+                                    }}
+                                  >
+                                    {problem.problem_name}
+                                  </Box>
+                                ) : null}
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ borderRadius: "0 10px 10px 0" }}>
+                            {item?.price} р.
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </Box>
           </Grid>
         </Grid>
       </DialogContent>
@@ -957,6 +1171,11 @@ function ErrorsManagement() {
     [points, draftFilters.cityId],
   );
 
+  const pointSelectOptions = useMemo(
+    () => [{ id: 0, name: "Все точки в городе" }, ...pointOptions],
+    [pointOptions],
+  );
+
   const handleDraftChange = (field) => (event) => {
     const value = event.target.value;
 
@@ -1025,6 +1244,8 @@ function ErrorsManagement() {
         detail={selectedOrder}
         onClose={() => setSelectedOrder(null)}
         access={access}
+        errCats={errCats}
+        solutionsCatalog={solutions}
       />
 
       <CatsModal
@@ -1069,10 +1290,13 @@ function ErrorsManagement() {
         ) : null}
         <Paper
           sx={{
-            marginBottom: "24px",
-            marginTop: "24px",
-            backgroundColor: "#f3f3f3",
-            borderRadius: "16px 16px 0 0",
+            mt: 1,
+            mb: 2,
+            backgroundColor: "#FFFFFF",
+            border: `1px solid ${blockBorder}`,
+            borderRadius: "16px",
+            overflow: "hidden",
+            boxShadow: "none",
           }}
         >
           <Tabs
@@ -1080,14 +1304,44 @@ function ErrorsManagement() {
             onChange={(e, val) => setActiveTab(val)}
             variant="fullWidth"
             scrollButtons={false}
+            sx={{
+              minHeight: 56,
+              "& .MuiTabs-indicator": {
+                backgroundColor: brandRed,
+                height: 3,
+                borderRadius: "3px 3px 0 0",
+              },
+            }}
           >
             <Tab
               label="Ошибки по отзывам"
-              sx={{ minWidth: "fit-content", flex: 1 }}
+              sx={{
+                minWidth: "fit-content",
+                flex: 1,
+                minHeight: 56,
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: 15,
+                color: "#6A6A6A",
+                "&.Mui-selected": {
+                  color: brandRed,
+                },
+              }}
             />
             <Tab
               label="Варианты решения жалоб"
-              sx={{ minWidth: "fit-content", flex: 1 }}
+              sx={{
+                minWidth: "fit-content",
+                flex: 1,
+                minHeight: 56,
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: 15,
+                color: "#6A6A6A",
+                "&.Mui-selected": {
+                  color: brandRed,
+                },
+              }}
             />
           </Tabs>
         </Paper>
@@ -1098,10 +1352,10 @@ function ErrorsManagement() {
             border: `1px solid ${blockBorder}`,
             borderRadius: "16px",
             display: activeTab === 0 ? "block" : "none",
-            p: { xs: 2, md: 3 },
+            p: { xs: 2, md: 2.5 },
           }}
         >
-          <Stack spacing={2}>
+          <Stack spacing={2.25}>
             <Box sx={filterPanelSx}>
               <Stack spacing={1.5}>
                 <Typography sx={filterSectionTitleSx}>Основные параметры</Typography>
@@ -1111,72 +1365,51 @@ function ErrorsManagement() {
                   spacing={2}
                 >
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <TextField
-                      select
-                      fullWidth
-                      size="small"
+                    <MySelect
                       label="Город"
+                      data={cities}
                       value={draftFilters.cityId}
-                      onChange={handleDraftChange("cityId")}
-                      sx={searchFieldSx}
-                    >
-                      {cities.map((city) => (
-                        <MenuItem
-                          key={city.id}
-                          value={city.id}
-                        >
-                          {city.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      multiple={false}
+                      is_none={false}
+                      unifiedPopup
+                      slotProps={unifiedSelectSlotProps}
+                      autocompleteSx={selectAutocompleteSx}
+                      InputLabelProps={{ shrink: true }}
+                      func={handleDraftChange("cityId")}
+                      sx={selectFieldSx}
+                    />
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <TextField
-                      select
-                      fullWidth
-                      size="small"
+                    <MySelect
                       label="Точка"
+                      data={pointSelectOptions}
                       value={draftFilters.pointId}
-                      onChange={handleDraftChange("pointId")}
-                      sx={searchFieldSx}
-                    >
-                      <MenuItem
-                        key={0}
-                        value={0}
-                      >
-                        Все точки в городе
-                      </MenuItem>
-                      {pointOptions.map((point) => (
-                        <MenuItem
-                          key={point.id}
-                          value={point.id}
-                        >
-                          {point.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      multiple={false}
+                      is_none={false}
+                      unifiedPopup
+                      slotProps={unifiedSelectSlotProps}
+                      autocompleteSx={selectAutocompleteSx}
+                      InputLabelProps={{ shrink: true }}
+                      func={handleDraftChange("pointId")}
+                      sx={selectFieldSx}
+                    />
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <TextField
-                      select
-                      fullWidth
-                      size="small"
+                    <MySelect
                       label="Тип заказа"
+                      data={orderTypes}
                       value={draftFilters.orderType}
-                      onChange={handleDraftChange("orderType")}
-                      sx={searchFieldSx}
-                    >
-                      {orderTypes.map((type) => (
-                        <MenuItem
-                          key={type.id}
-                          value={type.id}
-                        >
-                          {type.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      multiple={false}
+                      is_none={false}
+                      unifiedPopup
+                      slotProps={unifiedSelectSlotProps}
+                      autocompleteSx={selectAutocompleteSx}
+                      InputLabelProps={{ shrink: true }}
+                      func={handleDraftChange("orderType")}
+                      sx={selectFieldSx}
+                    />
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 3 }}>
@@ -1186,6 +1419,7 @@ function ErrorsManagement() {
                       label="№ заказа"
                       value={draftFilters.orderNumber}
                       onChange={handleDraftChange("orderNumber")}
+                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
                     />
                   </Grid>
@@ -1197,6 +1431,7 @@ function ErrorsManagement() {
                       label="Номер телефона"
                       value={draftFilters.phone}
                       onChange={handleDraftChange("phone")}
+                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
                     />
                   </Grid>
@@ -1208,6 +1443,7 @@ function ErrorsManagement() {
                       label="Сумма от"
                       value={draftFilters.amountFrom}
                       onChange={handleDraftChange("amountFrom")}
+                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
                     />
                   </Grid>
@@ -1219,6 +1455,7 @@ function ErrorsManagement() {
                       label="Сумма до"
                       value={draftFilters.amountTo}
                       onChange={handleDraftChange("amountTo")}
+                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
                     />
                   </Grid>
@@ -1236,19 +1473,23 @@ function ErrorsManagement() {
                 >
                   <Grid size={{ xs: 12, md: 3 }}>
                     <MyDatePickerNew
-                      label="Дата забития заказа от"
+                      label="Дата оформления заказа от"
                       value={draftFilters.dateFrom}
                       func={handleDateChange("dateFrom")}
                       customRI="journal"
+                      InputLabelProps={{ shrink: true }}
+                      sx={dateFieldSx}
                     />
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 3 }}>
                     <MyDatePickerNew
-                      label="Дата забития заказа до"
+                      label="Дата оформления заказа до"
                       value={draftFilters.dateTo}
                       func={handleDateChange("dateTo")}
                       customRI="journal"
+                      InputLabelProps={{ shrink: true }}
+                      sx={dateFieldSx}
                     />
                   </Grid>
 
@@ -1257,7 +1498,7 @@ function ErrorsManagement() {
                       fullWidth
                       size="small"
                       type="time"
-                      label="Время забития заказа от"
+                      label="Время оформления заказа от"
                       value={draftFilters.timeFrom}
                       onChange={handleDraftChange("timeFrom")}
                       InputLabelProps={{ shrink: true }}
@@ -1270,7 +1511,7 @@ function ErrorsManagement() {
                       fullWidth
                       size="small"
                       type="time"
-                      label="Время забития заказа до"
+                      label="Время оформления заказа до"
                       value={draftFilters.timeTo}
                       onChange={handleDraftChange("timeTo")}
                       InputLabelProps={{ shrink: true }}
@@ -1285,13 +1526,14 @@ function ErrorsManagement() {
               sx={{
                 display: "flex",
                 justifyContent: "flex-end",
+                pt: 0.5,
               }}
             >
               <Button
                 variant="contained"
                 onClick={handleSearch}
                 sx={{
-                  minWidth: { xs: "100%", md: 156 },
+                  minWidth: { xs: "100%", sm: 188, md: 164 },
                   height: 48,
                   borderRadius: "12px",
                   backgroundColor: brandRed,
@@ -1299,6 +1541,7 @@ function ErrorsManagement() {
                   boxShadow: "none",
                   textTransform: "none",
                   fontSize: 16,
+                  fontWeight: 700,
                   "&:hover": {
                     backgroundColor: "#c6152b",
                     boxShadow: "none",
@@ -1312,7 +1555,7 @@ function ErrorsManagement() {
         </Paper>
         <Paper
           sx={{
-            backgroundColor: "transparent",
+            backgroundColor: "#FFFFFF",
             border: `1px solid ${blockBorder}`,
             borderRadius: "16px",
             display: activeTab === 1 ? "block" : "none",
@@ -1341,94 +1584,196 @@ function ErrorsManagement() {
           <Paper
             sx={{ width: "100%", overflow: "hidden", display: activeTab === 0 ? "block" : "none" }}
           >
-            <TableContainer sx={{ maxHeight: "70vh" }}>
+            <Box
+              sx={{
+                px: 2,
+                pt: 1.5,
+                pb: 0.5,
+                borderBottom: `1px solid ${blockBorder}`,
+                backgroundColor: "#FCFCFC",
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ color: textSecondary, fontWeight: 500 }}
+              >
+                Прокрутите таблицу вправо, чтобы увидеть все колонки
+              </Typography>
+            </Box>
+            <TableContainer sx={{ maxHeight: "70vh", overflowX: "auto" }}>
               <Table
                 size="small"
                 stickyHeader
+                sx={{ minWidth: 2200 }}
               >
                 <TableHead>
                   <TableRow>
-                    <TableCell>Заказ</TableCell>
-                    <TableCell>Оформил</TableCell>
-                    <TableCell>Номер клиента</TableCell>
-                    <TableCell>Адрес доставки</TableCell>
-                    <TableCell>Время открытия заказа</TableCell>
-                    <TableCell>Время выхода на стол</TableCell>
-                    <TableCell>Ко времени</TableCell>
-                    <TableCell>Закрыт на кухне</TableCell>
-                    <TableCell>Время на готовку</TableCell>
-                    <TableCell>Получен клиентом</TableCell>
-                    <TableCell>До просрочки</TableCell>
-                    <TableCell>Разница</TableCell>
-                    <TableCell>Готовки</TableCell>
-                    <TableCell>Время обещ</TableCell>
-                    <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>
-                    <TableCell>Тип</TableCell>
-                    <TableCell>Статус</TableCell>
-                    <TableCell>Сумма</TableCell>
-                    <TableCell>Оплата</TableCell>
-                    <TableCell>Водитель</TableCell>
+                    <TableCell sx={stickyHeadCellSx}>Заказ</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Оформил</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Клиент</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Адрес</TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Время открытия заказа"
+                        arrow
+                      >
+                        <Box component="span">Открыт</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Время выхода на стол"
+                        arrow
+                      >
+                        <Box component="span">Выход на стол</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>Ко времени</TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Время закрытия заказа на кухне"
+                        arrow
+                      >
+                        <Box component="span">Закрыт кухней</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Время на готовку"
+                        arrow
+                      >
+                        <Box component="span">На готовку</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Время получения клиентом"
+                        arrow
+                      >
+                        <Box component="span">Получен</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>До просрочки</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Разница</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Готовка</TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Обещанное время"
+                        arrow
+                      >
+                        <Box component="span">Обещ. время</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>
+                      <Tooltip
+                        title="Время по программе / реальное время доставки"
+                        arrow
+                      >
+                        <Box component="span">Доставка: план/факт</Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell sx={tableHeadCellSx}>Тип</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Статус</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Сумма</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Оплата</TableCell>
+                    <TableCell sx={tableHeadCellSx}>Водитель</TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  {orders.map((item, index) => (
-                    <TableRow
-                      key={`${getRowOrderId(item)}-${index}`}
-                      style={
-                        parseInt(item.is_delete) == 1
-                          ? {
-                              backgroundColor: "red",
-                              color: "#fff !important",
-                              fontWeight: "bold",
-                            }
-                          : {}
-                      }
-                      hover
-                    >
-                      <TableCell
-                        onClick={() => openOrder(item)}
+                  {orders.map((item, index) => {
+                    const isDeleted = Number(item?.is_delete) === 1;
+
+                    return (
+                      <TableRow
+                        key={`${getRowOrderId(item)}-${index}`}
+                        hover
                         sx={{
-                          cursor: "pointer",
-                          color: "primary.main",
-                          textDecoration: "underline",
-                          textUnderlineOffset: "3px",
-                          whiteSpace: "nowrap",
+                          backgroundColor: isDeleted ? deletedRowBg : "#FFFFFF",
+                          "&:hover": {
+                            backgroundColor: isDeleted ? "#FFE9EE" : "#FAFAFA",
+                          },
+                          "& td": {
+                            borderBottom: `1px solid ${blockBorder}`,
+                            whiteSpace: "nowrap",
+                            backgroundColor: "inherit",
+                          },
                         }}
                       >
-                        {getRowOrderId(item)}
-                      </TableCell>
-                      <TableCell>{item?.type_user}</TableCell>
-                      <TableCell>{item?.number}</TableCell>
-                      <TableCell>
-                        {parseInt(item?.type_order_) === 1
-                          ? `${item?.street || ""} ${item?.home || ""}`.trim()
-                          : item?.type_order_addr_new}
-                      </TableCell>
-                      <TableCell>{item?.date_time_order}</TableCell>
-                      <TableCell>
-                        {item?.start_stol === "04:00:00" ? "" : item?.start_stol}
-                      </TableCell>
-                      <TableCell>
-                        {parseInt(item?.is_preorder) === 1 ? item?.need_time : ""}
-                      </TableCell>
-                      <TableCell>
-                        {item?.give_data_time === "00:00:00" ? "" : item?.give_data_time}
-                      </TableCell>
-                      <TableCell>{item?.cook_time}</TableCell>
-                      <TableCell>{item?.close_order}</TableCell>
-                      <TableCell>{item?.to_time}</TableCell>
-                      <TableCell>{item?.dif}</TableCell>
-                      <TableCell>{item?.diff2}</TableCell>
-                      <TableCell>{item?.unix_time_to_client}</TableCell>
-                      <TableCell>{item?.time_dev_text}</TableCell>
-                      <TableCell>{item?.type_order}</TableCell>
-                      <TableCell>{item?.status}</TableCell>
-                      <TableCell>{item?.order_price}</TableCell>
-                      <TableCell>{item?.type_pay}</TableCell>
-                      <TableCell>{item?.driver}</TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell
+                          onClick={() => openOrder(item)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              openOrder(item);
+                            }
+                          }}
+                          aria-label={`Открыть заказ ${getRowOrderId(item)}`}
+                          sx={{
+                            ...stickyBodyCellSx,
+                            backgroundColor: isDeleted ? deletedRowBg : "#FFFFFF",
+                            cursor: "pointer",
+                            color: "primary.main",
+                            textDecoration: "underline",
+                            textUnderlineOffset: "3px",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <span>{getRowOrderId(item)}</span>
+                            {isDeleted ? (
+                              <Box
+                                component="span"
+                                sx={{
+                                  px: 1,
+                                  py: 0.25,
+                                  borderRadius: "10px",
+                                  border: "1px solid #F29AA8",
+                                  backgroundColor: "#FCE2E7",
+                                  color: "#A32A3C",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                }}
+                              >
+                                Удален
+                              </Box>
+                            ) : null}
+                          </Box>
+                        </TableCell>
+                        <TableCell>{item?.type_user}</TableCell>
+                        <TableCell>{item?.number}</TableCell>
+                        <TableCell>
+                          {parseInt(item?.type_order_) === 1
+                            ? `${item?.street || ""} ${item?.home || ""}`.trim()
+                            : item?.type_order_addr_new}
+                        </TableCell>
+                        <TableCell>{item?.date_time_order}</TableCell>
+                        <TableCell>
+                          {item?.start_stol === "04:00:00" ? "" : item?.start_stol}
+                        </TableCell>
+                        <TableCell>
+                          {parseInt(item?.is_preorder) === 1 ? item?.need_time : ""}
+                        </TableCell>
+                        <TableCell>
+                          {item?.give_data_time === "00:00:00" ? "" : item?.give_data_time}
+                        </TableCell>
+                        <TableCell>{item?.cook_time}</TableCell>
+                        <TableCell>{item?.close_order}</TableCell>
+                        <TableCell>{item?.to_time}</TableCell>
+                        <TableCell>{item?.dif}</TableCell>
+                        <TableCell>{item?.diff2}</TableCell>
+                        <TableCell>{item?.unix_time_to_client}</TableCell>
+                        <TableCell>{item?.time_dev_text}</TableCell>
+                        <TableCell>{item?.type_order}</TableCell>
+                        <TableCell>{item?.status}</TableCell>
+                        <TableCell>{item?.order_price}</TableCell>
+                        <TableCell>{item?.type_pay}</TableCell>
+                        <TableCell>{item?.driver}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -1439,11 +1784,21 @@ function ErrorsManagement() {
             sx={{
               p: 4,
               display: activeTab === 0 ? "block" : "none",
-              border: "1px solid #E5E5E5",
+              border: `1px solid ${blockBorder}`,
+              borderRadius: "16px",
+              backgroundColor: "#FCFCFC",
               textAlign: "center",
             }}
           >
-            <Typography color="text.secondary">Заказы по выбранным фильтрам не найдены.</Typography>
+            <Typography sx={{ color: textSecondary, fontWeight: 600 }}>
+              Заказы по выбранным фильтрам не найдены
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "#777", mt: 0.75 }}
+            >
+              Измените параметры поиска и повторите попытку
+            </Typography>
           </Paper>
         )}
       </Box>

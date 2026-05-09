@@ -436,6 +436,10 @@ export function MySelect(props) {
               {...params}
               label={props.label}
               placeholder={props.placeholder}
+              InputLabelProps={{
+                ...(params.InputLabelProps || {}),
+                ...(props.InputLabelProps || {}),
+              }}
               sx={{
                 ...(unifiedTextFieldSx || {}),
                 ...(props.sx || {}),
@@ -466,7 +470,12 @@ export function MySelect(props) {
         // }}
         sx={[isJournalStyle && customStylesRenderInput.journal, unifiedControlSx, props.sx]}
       >
-        <InputLabel disabled={!!props.disabled}>{props.label}</InputLabel>
+        <InputLabel
+          disabled={!!props.disabled}
+          {...(props.InputLabelProps || {})}
+        >
+          {props.label}
+        </InputLabel>
         <Select
           value={normalizedValue}
           IconComponent={isJournalStyle ? KeyboardArrowDownIcon : undefined}
