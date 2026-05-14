@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Mandatory Chat Output Rule
+
+- Never print colored diffs, patch-tool diffs, patch contents, or code changes to chat unless the user explicitly asks to see them.
+- Save code changes directly to files and keep chat to short status updates and concise outcomes.
+
 ## Project Scope
 
 - This repository uses `Next.js` with the `pages` router, `MUI`, and local Laravel API wrappers.
