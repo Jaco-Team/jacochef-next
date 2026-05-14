@@ -135,12 +135,6 @@ const ProgressTimeline = ({ data }) => {
             {progressPercentage.toFixed(1)}% · осталось{" "}
             {formatNumber((100 - progressPercentage).toFixed(2))}% до {lastMonthData.month}
           </Typography>
-          <Typography
-            variant="body2"
-            color="success.main"
-          >
-            ↗ +{formatNumber(deviation)} к плану
-          </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "error.main" }} />
             <Typography

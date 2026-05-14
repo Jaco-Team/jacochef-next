@@ -5273,7 +5273,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {accountArr ? (
+            {accountArr.length ? (
               <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
                 <ProgressTimeline data={accountArr} />
               </Box>
