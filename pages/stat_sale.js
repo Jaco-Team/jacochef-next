@@ -4940,6 +4940,15 @@ class StatSale_Tab_DynamicSale extends React.Component {
       const rollyArr = [];
       const orderArr = [];
       const accountArr = [];
+      const toNumber = (value) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+      const calcPercent = (numerator, denominator) => {
+        const safeDenominator = toNumber(denominator);
+        if (!safeDenominator) return 0;
+        return (toNumber(numerator) / safeDenominator) * 100;
+      };
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
@@ -4947,11 +4956,14 @@ class StatSale_Tab_DynamicSale extends React.Component {
           pizzaArr.push({
             month: value.month_name,
             planQty: value.pizza_plan,
-            planLoad: (parseInt(value.pizza) / parseInt(value.pizza_plan)) * 100,
+            planLoad: calcPercent(value.pizza, value.pizza_plan),
             factQty: value.pizza,
-            factDynPct: ((value.pizza - prevMonth.pizza) / prevMonth.pizza) * 100,
-            factDynQty: parseInt(value.pizza) - parseInt(prevMonth.pizza),
-            factLoad: (parseInt(value.pizza) / prevMonth.pizza) * 100,
+            factDynPct: calcPercent(
+              toNumber(value.pizza) - toNumber(prevMonth.pizza),
+              prevMonth.pizza,
+            ),
+            factDynQty: toNumber(value.pizza) - toNumber(prevMonth.pizza),
+            factLoad: calcPercent(value.pizza, prevMonth.pizza),
           });
         }
 
@@ -4959,11 +4971,14 @@ class StatSale_Tab_DynamicSale extends React.Component {
           rollyArr.push({
             month: value.month_name,
             planQty: value.rolly_plan,
-            planLoad: (parseInt(value.rolly) / parseInt(value.rolly_plan)) * 100,
+            planLoad: calcPercent(value.rolly, value.rolly_plan),
             factQty: value.rolly,
-            factDynPct: ((value.rolly - prevMonth?.rolly) / prevMonth?.rolly) * 100,
-            factDynQty: parseInt(value.rolly) - parseInt(prevMonth?.rolly),
-            factLoad: (parseInt(value.rolly) / prevMonth.rolly) * 100,
+            factDynPct: calcPercent(
+              toNumber(value.rolly) - toNumber(prevMonth?.rolly),
+              prevMonth?.rolly,
+            ),
+            factDynQty: toNumber(value.rolly) - toNumber(prevMonth?.rolly),
+            factLoad: calcPercent(value.rolly, prevMonth.rolly),
           });
         }
 
@@ -4971,11 +4986,14 @@ class StatSale_Tab_DynamicSale extends React.Component {
           orderArr.push({
             month: value.month_name,
             planQty: value.order_plan,
-            planLoad: (parseInt(value.order) / parseInt(value.order_plan)) * 100,
+            planLoad: calcPercent(value.order, value.order_plan),
             factQty: value.order,
-            factDynPct: ((value.order - prevMonth?.order) / prevMonth?.order) * 100,
-            factDynQty: parseInt(value.order) - parseInt(prevMonth?.order),
-            factLoad: (parseInt(value.order) / prevMonth.order) * 100,
+            factDynPct: calcPercent(
+              toNumber(value.order) - toNumber(prevMonth?.order),
+              prevMonth?.order,
+            ),
+            factDynQty: toNumber(value.order) - toNumber(prevMonth?.order),
+            factLoad: calcPercent(value.order, prevMonth.order),
           });
         }
 
@@ -4983,11 +5001,14 @@ class StatSale_Tab_DynamicSale extends React.Component {
           accountArr.push({
             month: value.month_name,
             planQty: value.active_plan,
-            planLoad: (parseInt(value.active) / parseInt(value.active_plan)) * 100,
+            planLoad: calcPercent(value.active, value.active_plan),
             factQty: value.active,
-            factDynPct: ((value.active - prevMonth?.active) / prevMonth?.active) * 100,
-            factDynQty: parseInt(value.active) - parseInt(prevMonth?.active),
-            factLoad: (parseInt(value.active) / prevMonth.active) * 100,
+            factDynPct: calcPercent(
+              toNumber(value.active) - toNumber(prevMonth?.active),
+              prevMonth?.active,
+            ),
+            factDynQty: toNumber(value.active) - toNumber(prevMonth?.active),
+            factLoad: calcPercent(value.active, prevMonth.active),
           });
         }
       });
@@ -5009,6 +5030,13 @@ class StatSale_Tab_DynamicSale extends React.Component {
   }
 
   renderPizzaTable(pizzaArr, title, subTitle) {
+    const getSafeNumber = (value) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const formatPercent = (value) => `${getSafeNumber(value).toFixed(2)}%`;
+
     const cellSx = {
       border: "1px solid #e0e0e0",
       textAlign: "center",
@@ -5132,7 +5160,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                       backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
                     }}
                   >
-                    {row.planLoad?.toFixed(2)}%
+                    {formatPercent(row.planLoad)}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -5150,10 +5178,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
                     }}
                   >
                     <Chip
-                      label={`${row.factDynPct?.toFixed(2)}%`}
+                      label={formatPercent(row.factDynPct)}
                       size="small"
                       sx={{
-                        backgroundColor: row.factDynPct >= 0 ? "#4caf50" : "#f44336",
+                        backgroundColor: getSafeNumber(row.factDynPct) >= 0 ? "#4caf50" : "#f44336",
                         color: "white",
                         fontWeight: "bold",
                         fontSize: "0.75rem",
@@ -5180,16 +5208,18 @@ class StatSale_Tab_DynamicSale extends React.Component {
                     >
                       <span
                         style={{
-                          color: row.factDynQty >= 0 ? "#4caf50" : "#f44336",
+                          color: getSafeNumber(row.factDynQty) >= 0 ? "#4caf50" : "#f44336",
                           fontWeight: "bold",
                           fontSize: "0.85rem",
                         }}
                       >
-                        {row.factDynQty > 0 ? "+" : ""}
-                        {row.factDynQty?.toLocaleString()}
+                        {getSafeNumber(row.factDynQty) > 0 ? "+" : ""}
+                        {getSafeNumber(row.factDynQty).toLocaleString()}
                       </span>
-                      {row.factDynQty !== 0 && (
-                        <span style={{ fontSize: "0.7rem" }}>{row.factDynQty > 0 ? "▲" : "▼"}</span>
+                      {getSafeNumber(row.factDynQty) !== 0 && (
+                        <span style={{ fontSize: "0.7rem" }}>
+                          {getSafeNumber(row.factDynQty) > 0 ? "▲" : "▼"}
+                        </span>
                       )}
                     </Box>
                   </TableCell>
@@ -5200,7 +5230,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                     }}
                   >
                     <Chip
-                      label={row.factLoad?.toFixed(2) || "-"}
+                      label={formatPercent(row.factLoad)}
                       size="small"
                       variant="outlined"
                       sx={{
@@ -5273,15 +5303,17 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {accountArr.length ? (
-              <Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
-                <ProgressTimeline data={accountArr} />
-              </Box>
-            ) : null}
             {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
             {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во")}
             {this.renderPizzaTable(accountArr, "Таблица с аккаунтами", "Аккаунты, кол-во")}
+            {accountArr.length ? (
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+                  <ProgressTimeline data={accountArr} />
+                </Box>
+              </Grid>
+            ) : null}
           </Grid>
         </TabPanel>
       </Grid>
