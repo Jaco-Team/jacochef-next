@@ -1,33 +1,31 @@
 import React, { useState, useMemo } from "react";
-import { Box, Typography, Paper, Tooltip, useTheme } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+  ToggleButtonGroup,
+  ToggleButton,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
 
 const TimelineContainer = styled(Box)(({ theme }) => ({
   position: "relative",
   width: "100%",
+  boxSizing: "border-box",
   padding: "40px 20px 60px",
 }));
 
-const ProgressBar = styled(Box)(({ theme, progress }) => ({
+const ProgressBar = styled(Box)(({ theme }) => ({
   position: "absolute",
   top: "20px",
   left: 0,
   height: "4px",
   backgroundColor: theme.palette.grey[200],
   borderRadius: "2px",
-  overflow: "hidden",
   width: "100%",
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    left: 0,
-    top: 0,
-    height: "100%",
-    width: `${progress}%`,
-    backgroundColor: theme.palette.error.main,
-    borderRadius: "2px",
-    transition: "width 0.6s ease",
-  },
 }));
 
 const MonthMarker = styled(Box)(({ theme, isActive, position }) => ({
@@ -42,12 +40,12 @@ const MonthMarker = styled(Box)(({ theme, isActive, position }) => ({
   zIndex: 2,
 }));
 
-const MarkerCircle = styled(Box)(({ theme, isActive }) => ({
+const MarkerCircle = styled(Box)(({ theme, isActive, markerColor }) => ({
   width: isActive ? "24px" : "16px",
   height: isActive ? "24px" : "16px",
   borderRadius: "50%",
-  backgroundColor: isActive ? theme.palette.background.paper : theme.palette.error.main,
-  border: `3px solid ${theme.palette.error.main}`,
+  backgroundColor: isActive ? theme.palette.background.paper : markerColor,
+  border: `3px solid ${markerColor}`,
   transition: "all 0.3s ease",
   "&::after": isActive
     ? {
@@ -56,7 +54,7 @@ const MarkerCircle = styled(Box)(({ theme, isActive }) => ({
         width: "8px",
         height: "8px",
         borderRadius: "50%",
-        backgroundColor: theme.palette.error.main,
+        backgroundColor: markerColor,
       }
     : {},
 }));
@@ -76,6 +74,27 @@ const CustomTooltip = styled(Paper)(({ theme }) => ({
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat("ru-RU").format(num);
+};
+
+const calculateGoalPercent = (plan, fact) => {
+  const safePlan = Number(plan);
+  const safeFact = Number(fact);
+
+  if (!safePlan) return 0;
+
+  return ((safeFact - safePlan) / safePlan) * 100;
+};
+
+const formatSignedPercent = (value) => {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const sign = safeValue > 0 ? "+" : "";
+  return `${sign}${safeValue.toFixed(2)}%`;
+};
+
+const getGoalPercentColor = (value) => {
+  if (value > 0) return "success.main";
+  if (value < 0) return "error.main";
+  return "text.primary";
 };
 
 const getShortMonthName = (monthName) => {
@@ -98,42 +117,114 @@ const getShortMonthName = (monthName) => {
 
 const ProgressTimeline = ({ data }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [activeMonth, setActiveMonth] = useState(null);
+  const [summaryMode, setSummaryMode] = useState("actual");
 
-  const { totalPlan, totalFact, currentMonthIndex, lastMonthData, progressPercentage } =
-    useMemo(() => {
-      const totalPlan = data.reduce((sum, item) => sum + parseFloat(item.planQty), 0);
-      const totalFact = data.reduce((sum, item) => sum + item.factQty, 0);
-      const currentMonthIndex = data.length - 1;
-      const lastMonthData = data[currentMonthIndex];
+  const {
+    totalPlan,
+    totalFact,
+    currentMonthIndex,
+    lastMonthData,
+    actualMonthIndex,
+    actualMonthData,
+  } = useMemo(() => {
+    const toNumber = (value) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+    const totalPlan = data.reduce((sum, item) => sum + toNumber(item.planQty), 0);
+    const totalFact = data.reduce((sum, item) => sum + toNumber(item.factQty), 0);
+    const currentMonthIndex = data.length - 1;
+    const lastMonthData = data[currentMonthIndex];
+    const detectedActualMonthIndex = [...data].reduce((lastIndex, item, index) => {
+      return toNumber(item.factQty) > 0 ? index : lastIndex;
+    }, -1);
+    const actualMonthIndex =
+      detectedActualMonthIndex >= 0 ? detectedActualMonthIndex : currentMonthIndex;
+    const actualMonthData = data[actualMonthIndex];
 
-      const progressPercentage = data.length > 0 ? (totalPlan / totalFact) * 100 : 0;
+    return {
+      totalPlan,
+      totalFact,
+      currentMonthIndex,
+      lastMonthData,
+      actualMonthIndex,
+      actualMonthData,
+    };
+  }, [data]);
 
-      return { totalPlan, totalFact, currentMonthIndex, lastMonthData, progressPercentage };
-    }, [data]);
-
-  const remainingToGoal = Math.max(0, totalPlan - totalFact);
-  const deviation = totalFact - totalPlan;
+  const summaryData =
+    summaryMode === "period"
+      ? {
+          month: `${data[0]?.month ?? ""} - ${lastMonthData?.month ?? ""}`,
+          planQty: totalPlan,
+          factQty: totalFact,
+        }
+      : actualMonthData;
+  const summaryMonthLabel = summaryMode === "period" ? "ПЕРИОД" : "МЕСЯЦ";
+  const summaryTitle =
+    summaryMode === "period"
+      ? "Выполнение цели за период"
+      : `Выполнение цели ${summaryData?.month ?? ""}`;
+  const summaryTargetLabel = summaryMode === "period" ? "периода" : (summaryData?.month ?? "");
+  const summaryProgressPercentage =
+    Number(summaryData?.factQty) > 0
+      ? (Number(summaryData?.planQty) / Number(summaryData?.factQty)) * 100
+      : 0;
+  const summaryGoalPercent = calculateGoalPercent(summaryData?.planQty, summaryData?.factQty);
+  const selectedMonthIndex = summaryMode === "period" ? currentMonthIndex : actualMonthIndex;
 
   return (
     <Paper
       elevation={0}
-      sx={{ p: 3, borderRadius: 2 }}
+      sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, width: "100%" }}
     >
       <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h6"
-          gutterBottom
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 2,
+            flexWrap: "wrap",
+          }}
         >
-          Выполнение цели {lastMonthData.month}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ mb: 0 }}
+          >
+            {summaryTitle}
+          </Typography>
+          <ToggleButtonGroup
+            size="small"
+            color="primary"
+            exclusive
+            value={summaryMode}
+            onChange={(event, nextValue) => {
+              if (nextValue) setSummaryMode(nextValue);
+            }}
+          >
+            <ToggleButton value="actual">Актуальный месяц</ToggleButton>
+            <ToggleButton value="period">Весь период</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: { xs: "flex-start", sm: "center" },
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1.5, sm: 2 },
+            flexWrap: "wrap",
+          }}
+        >
           <Typography
             variant="body2"
             color="text.secondary"
           >
-            {progressPercentage.toFixed(1)}% · осталось{" "}
-            {formatNumber((100 - progressPercentage).toFixed(2))}% до {lastMonthData.month}
+            {summaryProgressPercentage.toFixed(1)}% · осталось{" "}
+            {formatNumber((100 - summaryProgressPercentage).toFixed(2))}% до {summaryTargetLabel}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "error.main" }} />
@@ -154,7 +245,7 @@ const ProgressTimeline = ({ data }) => {
         </Box>
       </Box>
 
-      {lastMonthData && (
+      {summaryData && (
         <Paper
           elevation={0}
           sx={{
@@ -165,20 +256,29 @@ const ProgressTimeline = ({ data }) => {
             border: `1px solid ${theme.palette.divider}`,
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, minmax(0, 1fr))",
+                sm: "repeat(4, minmax(0, 1fr))",
+              },
+              gap: 2,
+            }}
+          >
             <Box>
               <Typography
                 variant="caption"
                 color="text.secondary"
                 display="block"
               >
-                МЕСЯЦ
+                {summaryMonthLabel}
               </Typography>
               <Typography
                 variant="h6"
                 sx={{ textTransform: "capitalize" }}
               >
-                {lastMonthData.month}
+                {summaryData.month}
               </Typography>
             </Box>
             <Box>
@@ -189,7 +289,7 @@ const ProgressTimeline = ({ data }) => {
               >
                 ПЛАН
               </Typography>
-              <Typography variant="h6">{formatNumber(lastMonthData.planQty)}</Typography>
+              <Typography variant="h6">{formatNumber(summaryData.planQty)}</Typography>
             </Box>
             <Box>
               <Typography
@@ -203,7 +303,7 @@ const ProgressTimeline = ({ data }) => {
                 variant="h6"
                 color="error.main"
               >
-                {formatNumber(lastMonthData.factQty)}
+                {formatNumber(summaryData.factQty)}
               </Typography>
             </Box>
             <Box>
@@ -216,131 +316,174 @@ const ProgressTimeline = ({ data }) => {
               </Typography>
               <Typography
                 variant="h6"
-                color="success.main"
+                color={getGoalPercentColor(summaryGoalPercent)}
               >
-                {(
-                  ((lastMonthData.planQty - lastMonthData.factQty) / lastMonthData.planQty) *
-                  100
-                ).toFixed(2)}
-                %
+                {formatSignedPercent(summaryGoalPercent)}
               </Typography>
             </Box>
           </Box>
         </Paper>
       )}
 
-      <TimelineContainer>
-        <ProgressBar progress={progressPercentage} />
-
-        {data.map((item, index) => {
-          const isActive = index === currentMonthIndex;
-          const position = (index / (data.length - 1 || 1)) * 100;
-
-          return (
-            <Tooltip
-              key={item.month}
-              title={
-                <CustomTooltip>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mb: 1, textTransform: "capitalize" }}
-                  >
-                    {item.month}
-                  </Typography>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      План
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                    >
-                      {formatNumber(item.planQty)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Факт
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                    >
-                      {formatNumber(item.factQty)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Отклонение
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color={item.planQty - item.factQty < 0 ? "success.main" : "error.main"}
-                    >
-                      ㅤ{item.planQty - item.factQty < 0 ? " + " : " - "}
-                      {formatNumber(Math.abs(item.planQty - item.factQty))}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      % к цели
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color="error.main"
-                    >
-                      {(((item.planQty - item.factQty) / item.planQty) * 100).toFixed(2)}%
-                    </Typography>
-                  </Box>
-                </CustomTooltip>
-              }
-              placement="top"
-              arrow
-            >
-              <MonthMarker position={position}>
-                <MarkerCircle isActive={isActive} />
-                <MonthLabel>
-                  <Typography
-                    variant="caption"
-                    fontWeight={isActive ? 700 : 400}
-                    sx={{ textTransform: "uppercase" }}
-                  >
-                    {getShortMonthName(item.month)}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    {formatNumber(item.planQty)}
-                  </Typography>
-                </MonthLabel>
-              </MonthMarker>
-            </Tooltip>
-          );
-        })}
-      </TimelineContainer>
-
-      <Typography
-        variant="caption"
-        color="text.secondary"
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "100%",
+          overflowX: { xs: "hidden", sm: "visible" },
+          pb: { xs: 1, sm: 0 },
+        }}
       >
-        Шкала value-based: позиция заполнения зависит от выполнения цели декабря, а не от прошедшего
-        времени.
-      </Typography>
+        <TimelineContainer sx={{ minWidth: 0 }}>
+          <ProgressBar />
+
+          {data.map((item, index) => {
+            const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
+            const edgeOffset = isMobile ? 7 : 4;
+            const segmentColor =
+              itemGoalPercent > 0
+                ? theme.palette.success.main
+                : itemGoalPercent < 0
+                  ? theme.palette.error.main
+                  : theme.palette.grey[500];
+            const prevPosition =
+              index === 0
+                ? 0
+                : edgeOffset + ((index - 1) / (data.length - 1 || 1)) * (100 - edgeOffset * 2);
+            const currentPosition =
+              edgeOffset + (index / (data.length - 1 || 1)) * (100 - edgeOffset * 2);
+
+            return (
+              <Box
+                key={`segment-${item.month}`}
+                sx={{
+                  position: "absolute",
+                  top: "20px",
+                  left: `${prevPosition}%`,
+                  width: `${Math.max(0, currentPosition - prevPosition)}%`,
+                  height: "4px",
+                  borderRadius: "2px",
+                  bgcolor: segmentColor,
+                  zIndex: 1,
+                }}
+              />
+            );
+          })}
+
+          {data.map((item, index) => {
+            const isActive = index === selectedMonthIndex;
+            const edgeOffset = isMobile ? 7 : 4;
+            const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
+            const markerColor =
+              itemGoalPercent > 0
+                ? theme.palette.success.main
+                : itemGoalPercent < 0
+                  ? theme.palette.error.main
+                  : theme.palette.grey[500];
+            const position = edgeOffset + (index / (data.length - 1 || 1)) * (100 - edgeOffset * 2);
+
+            return (
+              <Tooltip
+                key={item.month}
+                title={
+                  <CustomTooltip>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ mb: 1, textTransform: "capitalize" }}
+                    >
+                      {item.month}
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        План
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                      >
+                        {formatNumber(item.planQty)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        Факт
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                      >
+                        {formatNumber(item.factQty)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        Отклонение
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color={item.planQty - item.factQty < 0 ? "success.main" : "error.main"}
+                      >
+                        ㅤ{item.planQty - item.factQty < 0 ? " + " : " - "}
+                        {formatNumber(Math.abs(item.planQty - item.factQty))}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        % к цели
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color={getGoalPercentColor(itemGoalPercent)}
+                      >
+                        {formatSignedPercent(itemGoalPercent)}
+                      </Typography>
+                    </Box>
+                  </CustomTooltip>
+                }
+                placement="top"
+                arrow
+              >
+                <MonthMarker position={position}>
+                  <MarkerCircle
+                    isActive={isActive}
+                    markerColor={markerColor}
+                  />
+                  <MonthLabel>
+                    <Typography
+                      variant="caption"
+                      fontWeight={isActive ? 700 : 400}
+                      sx={{ textTransform: "uppercase" }}
+                    >
+                      {getShortMonthName(item.month)}
+                    </Typography>
+                    {!isMobile ? (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        {formatNumber(item.planQty)}
+                      </Typography>
+                    ) : null}
+                  </MonthLabel>
+                </MonthMarker>
+              </Tooltip>
+            );
+          })}
+        </TimelineContainer>
+      </Box>
     </Paper>
   );
 };
