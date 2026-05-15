@@ -28,6 +28,12 @@ const usePromoItemsStatStore = create((set) => ({
       promoTablePagination: payload.promoTablePagination ?? state.promoTablePagination,
       itemList: payload.itemList ?? [],
       typeOrderList: payload.typeOrderList ?? [],
+      clientSourceList: payload.clientSourceList ?? [],
+      selectedClientSources: state.selectedClientSources.length
+        ? state.selectedClientSources
+        : (payload.clientSourceList ?? []),
+      activationsRange: payload.activationsRange ?? state.activationsRange,
+      activationsFilter: payload.activationsFilter ?? state.activationsFilter,
     }));
   },
 
@@ -54,12 +60,34 @@ const usePromoItemsStatStore = create((set) => ({
     set({ selectedPromos });
   },
 
-  setSelectedItem(selectedItem) {
-    set({ selectedItem });
+  setSelectedItems(selectedItems = []) {
+    set({ selectedItems });
   },
 
   setTypeOrder(typeOrder) {
     set({ typeOrder });
+  },
+
+  setSelectedClientSources(selectedClientSources = []) {
+    set({ selectedClientSources });
+  },
+
+  setActivationsRange(activationsRange = {}) {
+    set((state) => ({
+      activationsRange: {
+        ...state.activationsRange,
+        ...activationsRange,
+      },
+    }));
+  },
+
+  setActivationsFilter(activationsFilter = {}) {
+    set((state) => ({
+      activationsFilter: {
+        ...state.activationsFilter,
+        ...activationsFilter,
+      },
+    }));
   },
 
   setStats(stats = []) {

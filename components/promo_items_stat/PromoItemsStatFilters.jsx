@@ -3,7 +3,7 @@
 import { Button, Grid, Paper, Stack } from "@mui/material";
 import dayjs from "dayjs";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
-import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
+import { MyAutoCompleteWithAll, MyAutocomplite, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import usePromoItemsStatStore from "./usePromoItemsStatStore";
 
 export default function PromoItemsStatFilters({ onRefresh }) {
@@ -13,15 +13,22 @@ export default function PromoItemsStatFilters({ onRefresh }) {
   const date_end = usePromoItemsStatStore((state) => state.date_end);
   const promoList = usePromoItemsStatStore((state) => state.promoList);
   const selectedPromos = usePromoItemsStatStore((state) => state.selectedPromos);
-  const selectedItem = usePromoItemsStatStore((state) => state.selectedItem);
+  const selectedItems = usePromoItemsStatStore((state) => state.selectedItems);
   const itemList = usePromoItemsStatStore((state) => state.itemList);
   const typeOrderList = usePromoItemsStatStore((state) => state.typeOrderList);
   const typeOrder = usePromoItemsStatStore((state) => state.typeOrder);
+  const clientSourceList = usePromoItemsStatStore((state) => state.clientSourceList);
+  const selectedClientSources = usePromoItemsStatStore((state) => state.selectedClientSources);
+  const activationsFilter = usePromoItemsStatStore((state) => state.activationsFilter);
   const setFilters = usePromoItemsStatStore((state) => state.setFilters);
   const setSelectedPoints = usePromoItemsStatStore((state) => state.setSelectedPoints);
   const setSelectedPromos = usePromoItemsStatStore((state) => state.setSelectedPromos);
-  const setSelectedItem = usePromoItemsStatStore((state) => state.setSelectedItem);
+  const setSelectedItems = usePromoItemsStatStore((state) => state.setSelectedItems);
   const setTypeOrder = usePromoItemsStatStore((state) => state.setTypeOrder);
+  const setSelectedClientSources = usePromoItemsStatStore(
+    (state) => state.setSelectedClientSources,
+  );
+  const setActivationsFilter = usePromoItemsStatStore((state) => state.setActivationsFilter);
   const selectedOrderType = typeOrderList.find((item) => `${item?.id}` === `${typeOrder}`) || null;
 
   const handleDateStartChange = (value) => {
@@ -47,6 +54,26 @@ export default function PromoItemsStatFilters({ onRefresh }) {
     setFilters({
       date_start: nextDateStart,
       date_end: nextDateEnd,
+    });
+  };
+
+  const normalizeActivationValue = (value) => {
+    if (value === "") {
+      return null;
+    }
+
+    const numberValue = Number(value);
+
+    if (!Number.isFinite(numberValue)) {
+      return null;
+    }
+
+    return Math.max(0, numberValue);
+  };
+
+  const handleActivationInputChange = (key) => (event) => {
+    setActivationsFilter({
+      [key]: normalizeActivationValue(event.target.value),
     });
   };
 
@@ -100,10 +127,12 @@ export default function PromoItemsStatFilters({ onRefresh }) {
         <Grid size={{ xs: 12, md: 3 }}>
           <MyAutocomplite
             data={itemList}
-            value={selectedItem}
-            func={(_, value) => setSelectedItem(value)}
-            multiple={false}
+            value={selectedItems}
+            func={(_, value) => setSelectedItems(value || [])}
+            multiple={true}
             label="Товар"
+            getOptionKey={(option) => option?.id || option?.name || ""}
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
           />
         </Grid>
 
@@ -123,10 +152,65 @@ export default function PromoItemsStatFilters({ onRefresh }) {
           />
         </Grid>
 
-        <Grid size={12}>
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{ order: { xs: 1, md: 2 } }}
+        >
+          <MyAutoCompleteWithAll
+            withAll={true}
+            options={clientSourceList}
+            value={selectedClientSources}
+            onChange={(value) => setSelectedClientSources(value || [])}
+            label="Источники заказа"
+          />
+        </Grid>
+
+        <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{ order: { xs: 2, md: 1 } }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+          >
+            <MyTextInput
+              type="number"
+              label="Активаций от"
+              value={activationsFilter.from ?? ""}
+              func={handleActivationInputChange("from")}
+              min={0}
+              step={1}
+            />
+            <MyTextInput
+              type="number"
+              label="Активаций до"
+              value={activationsFilter.to ?? ""}
+              func={handleActivationInputChange("to")}
+              min={0}
+              step={1}
+            />
+          </Stack>
+          {/*
+          <MyRangeSlider
+            label={`Активаций: ${activationValue[0]}-${activationValue[1]}`}
+            value={activationValue}
+            func={handleActivationChange}
+            min={activationMin}
+            max={activationMax}
+            step={1}
+            valueLabelDisplay="auto"
+            disabled={activationMin === activationMax}
+          />
+          */}
+        </Grid>
+
+        <Grid
+          size={12}
+          sx={{ order: { xs: 3, md: 3 } }}
+        >
           <Stack
             direction="row"
-            justifyContent="flex-start"
+            justifyContent="flex-end"
           >
             <Button
               variant="contained"

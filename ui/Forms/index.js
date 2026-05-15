@@ -7,6 +7,7 @@ export * from "./MyAutocomplite2";
 export * from "./MyAutoCompleteWithAll";
 export * from "./MySelect";
 export * from "./MyTextInput";
+export * from "./MyRangeSlider";
 export * from "./MyCheckBox";
 export * from "./MyTimePicker";
 export * from "./MyDatePicker";
