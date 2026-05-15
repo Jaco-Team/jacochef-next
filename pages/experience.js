@@ -232,8 +232,11 @@ class Experience_Modal_User extends React.Component {
 
     if (data === "list") {
       const listData = this.state.listData;
-
       listData.forEach((item) => (item.type === type ? (item[date] = value) : item));
+      if (date === "start") {
+        const value2 = val ? dayjs(val).add(1, "years").format("YYYY-MM-DD") : "";
+        listData.forEach((item) => (item.type === type ? (item["end"] = value2) : item));
+      }
 
       this.setState({
         listData,
