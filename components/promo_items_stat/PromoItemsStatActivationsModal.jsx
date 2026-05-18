@@ -67,7 +67,7 @@ function getActivationDetailsRows(details) {
 
 export default function PromoItemsStatActivationsModal({ item, dateRange, onClose }) {
   const rows = getActivationDetailsRows(item?.activations_details);
-  const title = `Промик ${item?.promo_name || "NA"} за ${dateRange}, заказы клиентов с промиком`;
+  const title = `Промик ${item?.promo_name || "NA"} за ${dateRange}, заказы клиентов`;
 
   return (
     <MyModal
@@ -79,18 +79,24 @@ export default function PromoItemsStatActivationsModal({ item, dateRange, onClos
       <DialogContent>
         {rows.length ? (
           <TableContainer>
-            <Table size="small">
+            <Table
+              size="small"
+              stickyHeader
+            >
               <TableHead>
                 <TableRow>
                   <TableCell>Заказов за период</TableCell>
-                  <TableCell>Клиентов</TableCell>
+                  <TableCell sx={{ textAlign: "center" }}>Клиентов</TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
+              <TableBody hover="row">
                 {rows.map((row, index) => (
-                  <TableRow key={String(row.orders) + "-" + index}>
+                  <TableRow
+                    key={String(row.orders) + "-" + index}
+                    hover
+                  >
                     <TableCell>{row.orders}</TableCell>
-                    <TableCell>{row.clients}</TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>{row.clients}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
