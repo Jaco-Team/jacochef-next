@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Box,
+  Chip,
   DialogContent,
   Table,
   TableBody,
@@ -8,9 +10,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import MyModal from "@/ui/MyModal";
+import SmallFont from "@/ui/SmallFont";
 
 function formatActivationOrdersBucket(value, index) {
   const fallback = index === 4 ? "5+" : index + 1;
@@ -44,6 +48,7 @@ function getActivationDetailsRows(details) {
         item?.count ??
         item?.value ??
         0,
+      users_count: item?.users_count,
     }));
   }
 
@@ -59,6 +64,7 @@ function getActivationDetailsRows(details) {
             value.count ??
             0)
           : (value ?? 0),
+      users_count: value && typeof value === "object" ? value.users_count : undefined,
     }));
   }
 
@@ -96,7 +102,38 @@ export default function PromoItemsStatActivationsModal({ item, dateRange, onClos
                     hover
                   >
                     <TableCell>{row.orders}</TableCell>
-                    <TableCell sx={{ textAlign: "center" }}>{row.clients}</TableCell>
+                    <TableCell sx={{ textAlign: "center" }}>
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        <Typography
+                          component="span"
+                          variant="body2"
+                        >
+                          {row.clients}
+                        </Typography>
+                        {row.users_count !== undefined && row.users_count !== null ? (
+                          <Tooltip
+                            arrow
+                            placement="top"
+                            title="Зарегистрированных"
+                          >
+                            <Chip
+                              size="small"
+                              color="info"
+                              variant="outlined"
+                              sx={{ height: 22 }}
+                              label={<SmallFont size="0.6rem">{row.users_count}</SmallFont>}
+                            />
+                          </Tooltip>
+                        ) : null}
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

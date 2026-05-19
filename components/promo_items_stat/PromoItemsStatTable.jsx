@@ -49,6 +49,23 @@ const promoColumns = [
     }),
   },
   {
+    key: "discount_label",
+    label: "Сумма и % скидки",
+    helpTitle: "Сумма и процент скидки",
+    helpText: "Разница между суммой заказов до применения скидки и после применения скидки.",
+    chipHelpText: "В метке ниже показан процент скидки.",
+    render: (item) => {
+      const labelParts =
+        typeof item?.discount_label === "string" ? item.discount_label.split("|") : [];
+
+      return {
+        primary: labelParts[0]?.trim() || formatPromoItemsSum(item?.discount_value),
+        secondary: labelParts[1]?.trim() || formatPromoItemsPercent(item?.discount_percent),
+        direction: "column",
+      };
+    },
+  },
+  {
     key: "avg_check_label",
     label: "Средний чек",
     helpTitle: "Средний чек",
