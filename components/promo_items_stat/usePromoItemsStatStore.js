@@ -25,6 +25,7 @@ const usePromoItemsStatStore = create((set) => ({
         : (payload.pointList ?? []),
       stats: payload.stats ?? [],
       promoTable: payload.promoTable ?? [],
+      promoTableTotals: payload.promoTableTotals ?? {},
       promoTablePagination: payload.promoTablePagination ?? state.promoTablePagination,
       itemList: payload.itemList ?? [],
       typeOrderList: payload.typeOrderList ?? [],
@@ -96,6 +97,10 @@ const usePromoItemsStatStore = create((set) => ({
 
   setPromoTable(promoTable = []) {
     set({ promoTable });
+  },
+
+  setPromoTableTotals(promoTableTotals = {}) {
+    set({ promoTableTotals });
   },
 
   setPromoTablePagination(promoTablePagination = {}) {

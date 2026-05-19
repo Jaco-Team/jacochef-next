@@ -148,7 +148,7 @@ export default function PromoItemsStatFilters({ onRefresh }) {
               )
             }
             multiple={false}
-            label="Тип заказа промика"
+            label="Способ получения заказа"
           />
         </Grid>
 

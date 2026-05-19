@@ -17,6 +17,7 @@ export function getDefaultPromoItemsStatState() {
     date_end: today,
     stats: [],
     promoTable: [],
+    promoTableTotals: {},
     promoTablePagination: {
       page: 0,
       perpage: 50,

@@ -4,6 +4,8 @@ import { Box, Chip, Typography } from "@mui/material";
 import SmallFont from "@/ui/SmallFont";
 
 export default function PromoItemsStatCompoundCell({ primary, secondary, direction = "column" }) {
+  const hasSecondary = secondary !== undefined && secondary !== null && secondary !== "";
+
   return (
     <Box
       sx={{
@@ -20,13 +22,15 @@ export default function PromoItemsStatCompoundCell({ primary, secondary, directi
       >
         {primary}
       </Typography>
-      <Chip
-        size="small"
-        color="info"
-        variant="outlined"
-        sx={{ alignSelf: direction === "row" ? "center" : "flex-start", height: 22 }}
-        label={<SmallFont size="0.6rem">{secondary}</SmallFont>}
-      />
+      {hasSecondary ? (
+        <Chip
+          size="small"
+          color="info"
+          variant="outlined"
+          sx={{ alignSelf: direction === "row" ? "center" : "flex-start", height: 22 }}
+          label={<SmallFont size="0.6rem">{secondary}</SmallFont>}
+        />
+      ) : null}
     </Box>
   );
 }

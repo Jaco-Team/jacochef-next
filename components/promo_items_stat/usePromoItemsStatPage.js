@@ -28,6 +28,7 @@ export default function usePromoItemsStatPage() {
   const setBootstrap = usePromoItemsStatStore((state) => state.setBootstrap);
   const setStats = usePromoItemsStatStore((state) => state.setStats);
   const setPromoTable = usePromoItemsStatStore((state) => state.setPromoTable);
+  const setPromoTableTotals = usePromoItemsStatStore((state) => state.setPromoTableTotals);
   const setPromoTablePagination = usePromoItemsStatStore((state) => state.setPromoTablePagination);
   const setPromoList = usePromoItemsStatStore((state) => state.setPromoList);
   const setPromoListRequestKey = usePromoItemsStatStore((state) => state.setPromoListRequestKey);
@@ -74,6 +75,7 @@ export default function usePromoItemsStatPage() {
         pointList: response.points || [],
         stats: response.stats || [],
         promoTable: response.promo_table || [],
+        promoTableTotals: response.promo_table_totals || {},
         promoTablePagination: response.promo_table_pagination || undefined,
         itemList: response.items || [],
         typeOrderList: response.type_orders || [],
@@ -185,6 +187,7 @@ export default function usePromoItemsStatPage() {
 
     if (tab === 0) {
       setPromoTable(response.promo_table || []);
+      setPromoTableTotals(response.promo_table_totals || {});
       setPromoTablePagination(
         response.promo_table_pagination || {
           page: nextPage,
