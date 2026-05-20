@@ -227,8 +227,8 @@ export default function CityCafeAutocomplete2({
 
     const controlledValue = value;
     const isAlreadyAllSelected =
-      controlledValue.length === points.length &&
-      points.every((point) => controlledValue.some((item) => item.id === point.id));
+      controlledValue?.length === points.length &&
+      points.every((point) => controlledValue?.some((item) => item.id === point.id));
 
     if (!isAlreadyAllSelected) {
       setValueSafe([ALL_OPTION]);

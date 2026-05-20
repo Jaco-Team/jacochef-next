@@ -2469,30 +2469,30 @@ class StatSale_Tab_Sett extends React.Component {
                     centered
                     variant="fullWidth"
                   >
-                    {this.props.acces.sale_view && this.props.acces.sale_edit ? (
+                    {this.props.acces.setting_sale_access && (
                       <Tab
                         label="Коэффициенты (Продажи)"
                         {...a11yProps(0)}
                       />
-                    ) : null}
-                    {this.props.acces.client_view && this.props.acces.client_view ? (
+                    )}
+                    {this.props.acces.setting_clients_access && (
                       <Tab
                         label="Коэффициенты (Клиенты)"
                         {...a11yProps(1)}
                       />
-                    ) : null}
-                    {this.props.acces.client_view && this.props.acces.client_view ? (
+                    )}
+                    {this.props.acces.setting_citizens_access && (
                       <Tab
                         label="Жители (Клиенты)"
                         {...a11yProps(2)}
                       />
-                    ) : null}
-                    {this.props.acces.dynamic_view && this.props.acces.dynamic_view ? (
+                    )}
+                    {this.props.acces.setting_limits_access && (
                       <Tab
                         label="Лимиты (Динамика)"
                         {...a11yProps(3)}
                       />
-                    ) : null}
+                    )}
                   </Tabs>
                 </Paper>
               </Grid>
@@ -6260,39 +6260,44 @@ class StatSale_ extends React.Component {
                 variant={this.state.fullScreen ? "scrollable" : "fullWidth"}
                 scrollButtons={false}
               >
-                <Tab
-                  label="Продажи"
-                  {...a11yProps(0)}
-                  sx={{ minWidth: "fit-content", flex: 1 }}
-                />
-                <Tab
-                  label="Клиенты"
-                  {...a11yProps(1)}
-                  sx={{ minWidth: "fit-content", flex: 1 }}
-                />
-                {this.state.acces.dynamic_edit ? (
+                {this.canAccess("sale") && (
+                  <Tab
+                    label="Продажи"
+                    {...a11yProps(0)}
+                    sx={{ minWidth: "fit-content", flex: 1 }}
+                  />
+                )}
+                {this.canAccess("client") && (
+                  <Tab
+                    label="Клиенты"
+                    {...a11yProps(1)}
+                    sx={{ minWidth: "fit-content", flex: 1 }}
+                  />
+                )}
+                {this.canAccess("dynamic") && (
                   <Tab
                     label="Динамика"
                     {...a11yProps(2)}
                     sx={{ minWidth: "fit-content", flex: 1 }}
                   />
-                ) : null}
-                {this.state.acces.dynamic_edit ? (
+                )}
+                {this.canAccess("sale_dynamic") && (
                   <Tab
                     label="Динамика продаж"
                     {...a11yProps(3)}
                     sx={{ minWidth: "fit-content", flex: 1 }}
                   />
-                ) : null}
-                {this.state.acces.client_edit ||
-                this.state.acces.sale_edit ||
-                this.state.acces.dynamic_edit ? (
+                )}
+                {(this.canAccess("setting_sale") ||
+                  this.canAccess("setting_clients") ||
+                  this.canAccess("setting_citizens") ||
+                  this.canAccess("setting_limits")) && (
                   <Tab
                     label="Настройки"
                     {...a11yProps(4)}
                     sx={{ minWidth: "fit-content", flex: 1 }}
                   />
-                ) : null}
+                )}
               </Tabs>
             </Paper>
           </Grid>
@@ -6309,8 +6314,6 @@ class StatSale_ extends React.Component {
               canExport={this.canAccess("export")}
             />
           )}
-          {/* Продажи */}
-
           {/* Клиенты */}
           {this.state.activeTab === 1 && (
             <StatSale_Tab_Clients
@@ -6324,6 +6327,7 @@ class StatSale_ extends React.Component {
               canExport={this.canAccess("export")}
             />
           )}
+          {/* Динамика */}
           {this.state.activeTab === 2 && (
             <StatSale_Tab_Dynamic
               activeTab={this.state.activeTab}
@@ -6333,10 +6337,10 @@ class StatSale_ extends React.Component {
               getData={this.getData}
               rates={this.state.data_sett_rate_clients}
               openGraphModal={this.openGraphModal}
-              canExport={this.canAccess("export")}
+              canExport={this.canAccess("export_dynamic")}
             />
           )}
-          {/* Клиенты */}
+          {/* Динамика продаж */}
           {this.state.activeTab === 3 && (
             <StatSale_Tab_DynamicSale
               activeTab={this.state.activeTab}
@@ -6349,7 +6353,6 @@ class StatSale_ extends React.Component {
               canExport={this.canAccess("export")}
             />
           )}
-
           {/* Настройки */}
           {this.state.activeTab === 4 && (
             <StatSale_Tab_Sett
@@ -6367,7 +6370,6 @@ class StatSale_ extends React.Component {
               openAlert={this.openAlert}
             />
           )}
-          {/* Настройки */}
         </Grid>
       </>
     );
