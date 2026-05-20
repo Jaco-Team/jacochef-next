@@ -19,17 +19,21 @@ export default function usePromoItemsStatPage() {
   const date_end = usePromoItemsStatStore((state) => state.date_end);
   const promoListRequestKey = usePromoItemsStatStore((state) => state.promoListRequestKey);
   const selectedPromos = usePromoItemsStatStore((state) => state.selectedPromos);
-  const selectedItem = usePromoItemsStatStore((state) => state.selectedItem);
+  const selectedItems = usePromoItemsStatStore((state) => state.selectedItems);
   const typeOrder = usePromoItemsStatStore((state) => state.typeOrder);
+  const selectedClientSources = usePromoItemsStatStore((state) => state.selectedClientSources);
+  const activationsFilter = usePromoItemsStatStore((state) => state.activationsFilter);
   const promoTablePagination = usePromoItemsStatStore((state) => state.promoTablePagination);
   const setIsLoad = usePromoItemsStatStore((state) => state.setIsLoad);
   const setBootstrap = usePromoItemsStatStore((state) => state.setBootstrap);
   const setStats = usePromoItemsStatStore((state) => state.setStats);
   const setPromoTable = usePromoItemsStatStore((state) => state.setPromoTable);
+  const setPromoTableTotals = usePromoItemsStatStore((state) => state.setPromoTableTotals);
   const setPromoTablePagination = usePromoItemsStatStore((state) => state.setPromoTablePagination);
   const setPromoList = usePromoItemsStatStore((state) => state.setPromoList);
   const setPromoListRequestKey = usePromoItemsStatStore((state) => state.setPromoListRequestKey);
   const setSelectedPromos = usePromoItemsStatStore((state) => state.setSelectedPromos);
+  const setActivationsRange = usePromoItemsStatStore((state) => state.setActivationsRange);
 
   const { api_laravel } = useApi(module);
 
@@ -71,9 +75,11 @@ export default function usePromoItemsStatPage() {
         pointList: response.points || [],
         stats: response.stats || [],
         promoTable: response.promo_table || [],
+        promoTableTotals: response.promo_table_totals || {},
         promoTablePagination: response.promo_table_pagination || undefined,
         itemList: response.items || [],
         typeOrderList: response.type_orders || [],
+        clientSourceList: response.sources || [],
       });
 
       document.title = response.module_info?.name || "Статистика промокодов";
@@ -119,7 +125,13 @@ export default function usePromoItemsStatPage() {
       const response = await callApi("get_promos_period", payload, false);
 
       if (response && isActive) {
+        const activations = response.activations || {};
+
         setPromoList(response.promos || []);
+        setActivationsRange({
+          min: activations.min ?? null,
+          max: activations.max ?? null,
+        });
         return;
       }
 
@@ -159,9 +171,10 @@ export default function usePromoItemsStatPage() {
         date_start,
         date_end,
         selectedPromos,
-        selectedItem,
+        selectedItems,
         typeOrder,
-        ...(tab === 0 ? { page: nextPage, perpage: nextPerpage } : {}),
+        selectedClientSources,
+        ...(tab === 0 ? { activationsFilter, page: nextPage, perpage: nextPerpage } : {}),
       },
       { typeOrderKey: tab === 0 ? "promo_type" : "type_order" },
     );
@@ -174,6 +187,7 @@ export default function usePromoItemsStatPage() {
 
     if (tab === 0) {
       setPromoTable(response.promo_table || []);
+      setPromoTableTotals(response.promo_table_totals || {});
       setPromoTablePagination(
         response.promo_table_pagination || {
           page: nextPage,

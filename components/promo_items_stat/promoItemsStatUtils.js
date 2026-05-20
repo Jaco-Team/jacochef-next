@@ -17,19 +17,24 @@ export function getDefaultPromoItemsStatState() {
     date_end: today,
     stats: [],
     promoTable: [],
+    promoTableTotals: {},
     promoTablePagination: {
       page: 0,
       perpage: 50,
       total: 0,
       total_pages: 0,
     },
-    selectedItem: null,
+    selectedItems: [],
     itemList: [],
     promoList: [],
     promoListRequestKey: null,
     selectedPromos: [],
     typeOrderList: [],
     typeOrder: null,
+    clientSourceList: [],
+    selectedClientSources: [],
+    activationsRange: { min: null, max: null },
+    activationsFilter: { from: null, to: null },
   };
 }
 
@@ -44,10 +49,15 @@ export function buildPromoItemsStatPayload(filters, options = {}) {
         .filter((id) => id !== undefined && id !== null)
     : [];
 
-  const item_ids =
-    filters.selectedItem?.id !== undefined && filters.selectedItem?.id !== null
-      ? [filters.selectedItem.id]
-      : [];
+  const item_ids = Array.isArray(filters.selectedItems)
+    ? filters.selectedItems.map((item) => item?.id).filter((id) => id !== undefined && id !== null)
+    : [];
+
+  const client_sources = Array.isArray(filters.selectedClientSources)
+    ? filters.selectedClientSources
+        .map((item) => item?.id)
+        .filter((id) => id !== undefined && id !== null)
+    : [];
 
   const payload = {
     point_ids,
@@ -55,6 +65,7 @@ export function buildPromoItemsStatPayload(filters, options = {}) {
     date_end: filters.date_end ? dayjs(filters.date_end).format("YYYY-MM-DD") : null,
     promo_ids,
     item_ids,
+    client_sources,
   };
 
   payload[options.typeOrderKey || "type_order"] = filters.typeOrder ?? null;
@@ -65,6 +76,36 @@ export function buildPromoItemsStatPayload(filters, options = {}) {
 
   if (filters.perpage !== undefined) {
     payload.perpage = filters.perpage;
+  }
+
+  const activationFrom = filters.activationsFilter?.from;
+  const activationTo = filters.activationsFilter?.to;
+
+  const activationFromValue = Number(activationFrom);
+  const activationToValue = Number(activationTo);
+
+  if (
+    activationFrom !== undefined &&
+    activationFrom !== null &&
+    activationFrom !== "" &&
+    Number.isFinite(activationFromValue)
+  ) {
+    payload.activations = {
+      ...(payload.activations || {}),
+      from: activationFromValue,
+    };
+  }
+
+  if (
+    activationTo !== undefined &&
+    activationTo !== null &&
+    activationTo !== "" &&
+    Number.isFinite(activationToValue)
+  ) {
+    payload.activations = {
+      ...(payload.activations || {}),
+      to: activationToValue,
+    };
   }
 
   return payload;

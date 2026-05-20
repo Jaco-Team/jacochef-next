@@ -1,24 +1,25 @@
 "use client";
 
+import { useState } from "react";
+import dayjs from "dayjs";
 import {
-  Box,
-  IconButton,
-  Chip,
+  Button,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TablePagination,
   TableRow,
-  Tooltip,
-  Typography,
 } from "@mui/material";
-import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import usePromoItemsStatStore from "./usePromoItemsStatStore";
 import { formatPromoItemsPercent, formatPromoItemsSum } from "./promoItemsStatUtils";
-import SmallFont from "@/ui/SmallFont";
+import PromoItemsStatEmptyState from "./PromoItemsStatEmptyState";
+import PromoItemsStatHeaderCell from "./PromoItemsStatHeaderCell";
+import PromoItemsStatCompoundCell from "./PromoItemsStatCompoundCell";
+import PromoItemsStatActivationsModal from "./PromoItemsStatActivationsModal";
 
 const promoColumns = [
   {
@@ -37,63 +38,56 @@ const promoColumns = [
     value: (item) => item?.total_activations ?? 0,
   },
   {
-    key: "repeat_activations",
-    label: "2+ активаций",
-    helpTitle: "Повторные заказы",
-    helpText:
-      "Количество клиентов, которые использовали этот промокод 2 или более раз в текущей выборке.",
-    value: (item) => item?.repeat_activations ?? 0,
-  },
-  {
-    key: "sum_before_discount",
-    label: "До скидки",
-    helpTitle: "Сумма без скидки",
-    helpText: "Агрегированная сумма заказов до применения скидки по этому промокоду.",
-    value: (item) => formatPromoItemsSum(item?.sum_before_discount),
-  },
-  {
-    key: "sum_after_discount",
-    label: "После скидки",
-    helpTitle: "Сумма со скидкой",
-    helpText: "Агрегированная сумма заказов после применения скидки по этому промокоду.",
-    value: (item) => formatPromoItemsSum(item?.sum_after_discount),
+    key: "sum_amount",
+    label: "Сумма",
+    helpTitle: "Сумма заказа",
+    helpText: "Сумма заказов до применения скидки.",
+    chipHelpText: "В метке ниже показана сумма заказов после применения скидки.",
+    render: (item) => ({
+      primary:
+        item?.sum_before_discount !== undefined && item?.sum_before_discount !== null
+          ? formatPromoItemsSum(item?.sum_before_discount)
+          : "",
+      secondary:
+        item?.sum_after_discount !== undefined && item?.sum_after_discount !== null
+          ? formatPromoItemsSum(item?.sum_after_discount)
+          : "",
+      direction: "column",
+    }),
   },
   {
     key: "discount_label",
     label: "Сумма и % скидки",
     helpTitle: "Сумма и процент скидки",
-    helpText: "Разница между суммой без скидки и суммой со скидкой. Формат: 100 ₽ и ниже 1%.",
-    render: (item) => {
-      const primary =
-        item?.discount_label?.split("|")?.[0]?.trim() || formatPromoItemsSum(item?.discount_value);
-      const secondary =
-        item?.discount_label?.split("|")?.[1]?.trim() ||
-        formatPromoItemsPercent(item?.discount_percent);
-
-      return {
-        primary,
-        secondary,
-      };
-    },
+    helpText: "Разница между суммой заказов до применения скидки и после применения скидки.",
+    chipHelpText: "В метке ниже показан процент скидки.",
+    render: (item) => ({
+      primary:
+        item?.discount_value !== undefined && item?.discount_value !== null
+          ? formatPromoItemsSum(item?.discount_value)
+          : "",
+      secondary:
+        item?.discount_percent !== undefined && item?.discount_percent !== null
+          ? formatPromoItemsPercent(item?.discount_percent)
+          : "",
+      direction: "column",
+    }),
   },
   {
     key: "avg_check_label",
     label: "Средний чек",
     helpTitle: "Средний чек",
     helpText: "Средний чек до скидки и после скидки",
-    render: (item) => {
-      const primary =
-        item?.avg_check_label?.split("|")?.[0]?.trim() ||
-        formatPromoItemsSum(item?.avg_check_before_discount);
-      const secondary =
-        item?.avg_check_label?.split("|")?.[1]?.trim() ||
-        formatPromoItemsSum(item?.avg_check_after_discount);
-
-      return {
-        primary,
-        secondary,
-      };
-    },
+    render: (item) => ({
+      primary:
+        item?.avg_check_before_discount !== undefined && item?.avg_check_before_discount !== null
+          ? formatPromoItemsSum(item?.avg_check_before_discount)
+          : "",
+      secondary:
+        item?.avg_check_after_discount !== undefined && item?.avg_check_after_discount !== null
+          ? formatPromoItemsSum(item?.avg_check_after_discount)
+          : "",
+    }),
   },
   {
     key: "active_client_activations",
@@ -103,28 +97,11 @@ const promoColumns = [
     value: (item) => item?.active_client_activations ?? 0,
   },
   {
-    key: "active_client_share",
-    label: "% действ.",
-    helpTitle: "Доля действующих клиентов",
-    helpText:
-      "Доля действующих клиентов, использовавших промокод, из всех действующих. Формула: число действующих клиентов, применивших промокод, деленное на всех действующих клиентов в выборке, умножить на 100%.",
-    value: (item) => formatPromoItemsPercent(item?.active_client_share),
-  },
-  {
     key: "new_client_activations",
     label: "Новые клиенты",
     helpTitle: "Активации новыми клиентами",
-    helpText:
-      "Количество активаций промокода первыми заказами. Новый клиент: клиент с ID клиента больше 0, у которого ID первого заказа совпадает с ID заказа в текущей строке.",
+    helpText: "Количество активаций промокода первыми заказами.",
     value: (item) => item?.new_client_activations ?? 0,
-  },
-  {
-    key: "new_client_share",
-    label: "% новых",
-    helpTitle: "Доля новых клиентов, %",
-    helpText:
-      "Доля новых клиентов, использовавших промокод. Формула: число новых клиентов, применивших промокод, деленное на всех новых клиентов в выборке, умножить на 100.",
-    value: (item) => formatPromoItemsPercent(item?.new_client_share),
   },
   {
     key: "unique_clients_count",
@@ -133,14 +110,6 @@ const promoColumns = [
     helpText:
       "Количество уникальных клиентов, которые хотя бы один раз активировали этот промокод.",
     value: (item) => item?.unique_clients_count ?? 0,
-  },
-  {
-    key: "unique_clients_share",
-    label: "% уникальных",
-    helpTitle: "Доля от всех клиентов",
-    helpText:
-      "Доля уникальных клиентов, активировавших промокод, от всех уникальных клиентов в выборке. Формула: уникальные клиенты с промокодом, деленные на всех активных клиентов выборки, умножить на 100.",
-    value: (item) => formatPromoItemsPercent(item?.unique_clients_share),
   },
   {
     key: "usage_places",
@@ -155,89 +124,30 @@ const promoColumns = [
   },
 ];
 
-function PromoItemsStatHeaderCell({ column }) {
-  const hasCompoundValue = Boolean(column?.render);
+function formatPromoItemsDate(value) {
+  const date = dayjs(value);
 
-  return (
-    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
-      <Typography
-        component="span"
-        variant="inherit"
-      >
-        {column.label}
-      </Typography>
-      <Tooltip
-        arrow
-        placement="top"
-        title={
-          <Box sx={{ maxWidth: 360 }}>
-            <Typography
-              component="div"
-              variant="subtitle2"
-              sx={{ mb: 0.5 }}
-            >
-              {column.helpTitle}
-            </Typography>
-            <Typography
-              component="div"
-              variant="body2"
-            >
-              {column.helpText}
-            </Typography>
-            {hasCompoundValue ? (
-              <Typography
-                component="div"
-                variant="caption"
-                sx={{ mt: 0.75, display: "block" }}
-              >
-                Основное значение сверху, вторичное ниже в отдельной метке.
-              </Typography>
-            ) : null}
-          </Box>
-        }
-      >
-        <IconButton
-          aria-label={column.helpTitle}
-          size="small"
-          sx={{ p: 0, color: "text.secondary" }}
-        >
-          <HelpOutlineOutlinedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  );
-}
-
-function PromoItemsStatCompoundCell({ primary, secondary }) {
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-      <Typography
-        component="span"
-        variant="body2"
-        sx={{ fontWeight: 500, lineHeight: 1.2 }}
-      >
-        {primary}
-      </Typography>
-      <Chip
-        size="small"
-        color="info"
-        variant="outlined"
-        sx={{ alignSelf: "flex-start", height: 22 }}
-        label={<SmallFont size="0.6rem">{secondary}</SmallFont>}
-      />
-    </Box>
-  );
+  return date.isValid() ? date.format("DD.MM.YYYY") : "—";
 }
 
 export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
   const stats = usePromoItemsStatStore((state) => state.stats);
   const promoTable = usePromoItemsStatStore((state) => state.promoTable);
+  const promoTableTotals = usePromoItemsStatStore((state) => state.promoTableTotals);
   const promoTablePagination = usePromoItemsStatStore((state) => state.promoTablePagination);
+  const date_start = usePromoItemsStatStore((state) => state.date_start);
+  const date_end = usePromoItemsStatStore((state) => state.date_end);
+  const [activationDetailsItem, setActivationDetailsItem] = useState(null);
+  const dateRange = `${formatPromoItemsDate(date_start)}-${formatPromoItemsDate(date_end)}`;
 
   if (type === "promo") {
+    if (!promoTable.length) {
+      return <PromoItemsStatEmptyState />;
+    }
+
     return (
       <Paper sx={{ overflow: "hidden" }}>
-        <TableContainer sx={{ maxHeight: { xs: "none", md: "55dvh" } }}>
+        <TableContainer sx={{ maxHeight: { xs: "none", md: "46dvh" } }}>
           <Table
             size="small"
             stickyHeader
@@ -253,40 +163,137 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
             </TableHead>
 
             <TableBody>
-              {!promoTable.length ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={promoColumns.length}
-                    sx={{ py: 6, textAlign: "center" }}
-                  >
-                    <Typography color="text.secondary">Нет данных за выбранный период</Typography>
-                  </TableCell>
+              {promoTable.map((item, index) => (
+                <TableRow
+                  key={`${item?.promo_id || item?.promo_name || "promo"}-${index}`}
+                  hover
+                >
+                  {promoColumns.map((column) => {
+                    if (column.render) {
+                      const compoundValue = column.render(item);
+
+                      return (
+                        <TableCell key={column.key}>
+                          <PromoItemsStatCompoundCell {...compoundValue} />
+                        </TableCell>
+                      );
+                    }
+
+                    if (column.key === "total_activations") {
+                      return (
+                        <TableCell key={column.key}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => setActivationDetailsItem(item)}
+                            sx={{ minWidth: 0, p: 0, fontWeight: 600 }}
+                          >
+                            {column.value(item)}
+                          </Button>
+                        </TableCell>
+                      );
+                    }
+
+                    return <TableCell key={column.key}>{column.value(item)}</TableCell>;
+                  })}
                 </TableRow>
-              ) : (
-                promoTable.map((item, index) => (
-                  <TableRow
-                    key={`${item?.promo_id || item?.promo_name || "promo"}-${index}`}
-                    hover
-                  >
-                    {promoColumns.map((column) => {
-                      if (column.render) {
-                        const compoundValue = column.render(item);
-
-                        return (
-                          <TableCell key={column.key}>
-                            <PromoItemsStatCompoundCell {...compoundValue} />
-                          </TableCell>
-                        );
-                      }
-
-                      return <TableCell key={column.key}>{column.value(item)}</TableCell>;
-                    })}
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
+            <TableFooter
+              sx={{
+                position: "sticky",
+                bottom: 0,
+                zIndex: 2,
+                "& td": {
+                  backgroundColor: "background.paper",
+                  borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+                },
+              }}
+            >
+              <TableRow hover={false}>
+                {promoColumns.map((column) => {
+                  if (column.key === "promo_name") {
+                    return (
+                      <TableCell key={column.key}>
+                        <strong>Итого</strong>
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "total_activations") {
+                    return (
+                      <TableCell key={column.key}>
+                        {promoTableTotals?.total_activations ?? 0}
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "sum_amount") {
+                    return (
+                      <TableCell key={column.key}>
+                        <PromoItemsStatCompoundCell
+                          primary={formatPromoItemsSum(promoTableTotals?.sum_before_discount)}
+                          secondary={formatPromoItemsSum(promoTableTotals?.sum_after_discount)}
+                          direction="column"
+                        />
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "discount_label") {
+                    return (
+                      <TableCell key={column.key}>
+                        <PromoItemsStatCompoundCell
+                          primary={formatPromoItemsSum(promoTableTotals?.discount_value)}
+                          direction="column"
+                        />
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "avg_check_label") {
+                    return <TableCell key={column.key}>—</TableCell>;
+                  }
+
+                  if (column.key === "active_client_activations") {
+                    return (
+                      <TableCell key={column.key}>
+                        {promoTableTotals?.active_client_activations ?? 0}
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "new_client_activations") {
+                    return (
+                      <TableCell key={column.key}>
+                        {promoTableTotals?.new_client_activations ?? 0}
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "unique_clients_count") {
+                    return (
+                      <TableCell key={column.key}>
+                        {promoTableTotals?.unique_clients_count ?? 0}
+                      </TableCell>
+                    );
+                  }
+
+                  if (column.key === "usage_places") {
+                    return <TableCell key={column.key}>—</TableCell>;
+                  }
+
+                  return <TableCell key={column.key}>—</TableCell>;
+                })}
+              </TableRow>
+            </TableFooter>
           </Table>
         </TableContainer>
+        <PromoItemsStatActivationsModal
+          item={activationDetailsItem}
+          dateRange={dateRange}
+          onClose={() => setActivationDetailsItem(null)}
+        />
         <TablePagination
           component="div"
           rowsPerPageOptions={[50, 100, 500]}
@@ -306,6 +313,10 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
 
   const hasSumColumn = stats.some((item) => item?.summ !== undefined);
 
+  if (!stats.length) {
+    return <PromoItemsStatEmptyState />;
+  }
+
   return (
     <Paper sx={{ overflow: "hidden" }}>
       <TableContainer sx={{ maxHeight: { xs: "none", md: "65dvh" } }}>
@@ -322,27 +333,16 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
           </TableHead>
 
           <TableBody>
-            {!stats.length ? (
-              <TableRow>
-                <TableCell
-                  colSpan={hasSumColumn ? 3 : 2}
-                  sx={{ py: 6, textAlign: "center" }}
-                >
-                  <Typography color="text.secondary">Нет данных за выбранный период</Typography>
-                </TableCell>
+            {stats.map((item, index) => (
+              <TableRow
+                key={`${item?.name || "promo"}-${index}`}
+                hover
+              >
+                <TableCell>{item?.name || "—"}</TableCell>
+                <TableCell>{item?.count ?? 0}</TableCell>
+                {hasSumColumn ? <TableCell>{formatPromoItemsSum(item?.summ)}</TableCell> : null}
               </TableRow>
-            ) : (
-              stats.map((item, index) => (
-                <TableRow
-                  key={`${item?.name || "promo"}-${index}`}
-                  hover
-                >
-                  <TableCell>{item?.name || "—"}</TableCell>
-                  <TableCell>{item?.count ?? 0}</TableCell>
-                  {hasSumColumn ? <TableCell>{formatPromoItemsSum(item?.summ)}</TableCell> : null}
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
