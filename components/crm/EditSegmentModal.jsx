@@ -29,7 +29,7 @@ const orderTypes = [
   { id: 1, name: "Доставка", type: "delivery" },
   { id: 2, name: "Самовывоз", type: "pickup" },
   { id: 3, name: "В зале", type: "in_hall" },
-  { id: 4, name: "На вынос", type: "takeaway" },
+  { id: 4, name: "Зал с собой", type: "takeaway" },
 ];
 
 const sources = [

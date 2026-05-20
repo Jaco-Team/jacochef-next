@@ -19,7 +19,7 @@ export const delivery_types = [
   { id: 1, name: "Доставка" },
   { id: 2, name: "Самовывоз" },
   { id: 3, name: "В зале" },
-  { id: 4, name: "На вынос" },
+  { id: 4, name: "Зал с собой" },
 ];
 
 export const order_types_all = [

@@ -225,7 +225,7 @@ export default function CityCafeAutocomplete2({
   useEffect(() => {
     if (!withAll || !withAllSelected || !points.length) return;
 
-    const controlledValue = value ?? innerValue;
+    const controlledValue = value;
     const isAlreadyAllSelected =
       controlledValue.length === points.length &&
       points.every((point) => controlledValue.some((item) => item.id === point.id));
@@ -233,7 +233,7 @@ export default function CityCafeAutocomplete2({
     if (!isAlreadyAllSelected) {
       setValueSafe([ALL_OPTION]);
     }
-  }, [innerValue, points, value, withAll, withAllSelected]);
+  }, [points, withAll, withAllSelected]);
 
   const groupBy = useCallback(
     (opt) => {
