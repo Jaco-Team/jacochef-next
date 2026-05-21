@@ -27,6 +27,8 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingPages() {
   const submodule = "seo";
+  const { module: parentModule } = useSiteSettingStore.getState();
+  const { api_laravel } = useApi(parentModule);
   // Settings state
   const {
     city_id: cityId,
@@ -65,7 +67,6 @@ export function SiteSettingPages() {
     history,
     setHistory,
   } = usePagesStore((s) => ({
-    getData: s.getData,
     setModuleName: s.setModuleName,
     setPages: s.setPages,
     setItem: s.setItem,
@@ -82,8 +83,7 @@ export function SiteSettingPages() {
 
   // fetching data
   const getData = async (method, data = {}) => {
-    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
-    const { api_laravel } = useApi(parentModule);
+    const { setIsLoad } = useSiteSettingStore.getState();
     setIsLoad(true);
     try {
       // inject submodule type

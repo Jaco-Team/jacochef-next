@@ -25,12 +25,13 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export function SiteSettingCategory() {
   const submodule = "category";
+  const { module: parentModule } = useSiteSettingStore.getState();
+  const { api_laravel } = useApi(parentModule);
 
   const getData = async (method, data = {}) => {
-    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
+    const { setIsLoad } = useSiteSettingStore.getState();
     setIsLoad(true);
     try {
-      const { api_laravel } = useApi(parentModule);
       // inject submodule type
       data.submodule = "category";
       const result = await api_laravel(method, data);

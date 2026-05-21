@@ -107,10 +107,13 @@ export const useBannerModalStore = create((set, get) => ({
 
   setBanner: (banner) => {
     if (!banner?.this_ban) return;
+    banner.this_ban.img = banner.this_ban.img || "";
     banner.this_ban.items =
-      banner.this_ban.items?.map((element) =>
-        typeof element === "number" ? banner.items?.find((item) => item.id === element) : element,
-      ) || [];
+      banner.this_ban.items
+        ?.map((element) =>
+          typeof element === "number" ? banner.items?.find((item) => item.id === element) : element,
+        )
+        .filter(Boolean) || [];
     if (!banner?.this_ban?.link && banner?.this_ban?.name) {
       banner.this_ban.link = get().rus2translit(banner?.this_ban?.name);
     }

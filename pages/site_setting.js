@@ -12,6 +12,7 @@ import { SiteSettingCategory } from "@/components/site_setting/category/SiteSett
 import MyAlert from "@/ui/MyAlert";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
+import useApi from "@/src/hooks/useApi";
 
 const subMap = {
   social: SiteSettingSocial,
@@ -21,16 +22,10 @@ const subMap = {
 };
 
 export default function SiteSetting() {
-  const {
-    getData,
-    setCities,
-    setModuleName,
-    setData,
-    setOpenAlert,
-    closeModal,
-    setActiveTab,
-    setAccess,
-  } = useSiteSettingStore.getState();
+  const { module } = useSiteSettingStore.getState();
+  const { api_laravel } = useApi(module);
+  const { setCities, setModuleName, setData, setOpenAlert, closeModal, setActiveTab, setAccess } =
+    useSiteSettingStore.getState();
   const {
     subModules,
     activeTab,
@@ -60,6 +55,16 @@ export default function SiteSetting() {
   }));
 
   const [subList, setSubList] = useState([]);
+
+  const getData = async (method, data = {}) => {
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
+    try {
+      return await api_laravel(method, data);
+    } finally {
+      setIsLoad(false);
+    }
+  };
 
   const loadData = async () => {
     try {

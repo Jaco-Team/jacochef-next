@@ -13,6 +13,8 @@ import dayjs from "dayjs";
 
 export function SiteSettingSocial() {
   const submodule = "social";
+  const { module: parentModule } = useSiteSettingStore.getState();
+  const { api_laravel } = useApi(parentModule);
 
   const { moduleName, dataInfo, history, setDataInfo, setModuleName, setHistory } = useSocialStore(
     (s) => ({
@@ -29,8 +31,7 @@ export function SiteSettingSocial() {
   const { withConfirm, ConfirmDialog } = useConfirm();
 
   const getData = async (method, data = {}) => {
-    const { setIsLoad, module: parentModule } = useSiteSettingStore.getState();
-    const { api_laravel } = useApi(parentModule);
+    const { setIsLoad } = useSiteSettingStore.getState();
     setIsLoad(true);
     try {
       // inject submodule type

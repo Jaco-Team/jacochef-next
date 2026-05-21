@@ -1,8 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { useSiteSettingStore } from "../useSiteSettingStore";
-import { api_laravel } from "@/src/api_new";
 
 export const useCategoryStore = create((set, get) => ({
   moduleName: "",

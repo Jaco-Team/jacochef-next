@@ -1,8 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { useSiteSettingStore } from "../useSiteSettingStore";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 export const useBannersStore = create((set, get) => ({
   moduleName: "",
@@ -33,21 +31,4 @@ export const useBannersStore = create((set, get) => ({
           : item,
       ),
     })),
-
-  // fetching data
-  getData: async (method, data = {}) => {
-    const { setIsLoad } = useSiteSettingStore.getState();
-    setIsLoad(true);
-    try {
-      const parentModule = useSiteSettingStore.getState().module;
-      // inject submodule type
-      data.submodule = "banners";
-      const result = await api_laravel(parentModule, method, data);
-      return result.data;
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsLoad(false);
-    }
-  },
 }));

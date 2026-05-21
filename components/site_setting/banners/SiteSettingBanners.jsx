@@ -23,10 +23,13 @@ import { useBannerModalStore } from "./useBannerModalStore";
 import { BannerModal } from "./BannerModal";
 import useSaveBanner from "../hooks/useSaveBanner";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import useApi from "@/src/hooks/useApi";
 
 export function SiteSettingBanners(props) {
   const {} = props;
   const submodule = "banners";
+  const { module: parentModule } = useSiteSettingStore.getState();
+  const { api_laravel } = useApi(parentModule);
   // site setting store
   const {
     city_id: cityId,
@@ -36,6 +39,7 @@ export function SiteSettingBanners(props) {
     setCityId,
     closeModal,
     setModalTitle,
+    setModalActions,
     showAlert,
   } = useSiteSettingStore((s) => ({
     city_id: s.city_id,
@@ -45,6 +49,7 @@ export function SiteSettingBanners(props) {
     setCityId: s.setCityId,
     closeModal: s.closeModal,
     setModalTitle: s.setModalTitle,
+    setModalActions: s.setModalActions,
     showAlert: s.showAlert,
   }));
 
@@ -52,7 +57,6 @@ export function SiteSettingBanners(props) {
 
   // banners store
   const {
-    getData,
     setActiveBanners,
     setNonActiveBanners,
     setModuleName,
@@ -62,7 +66,6 @@ export function SiteSettingBanners(props) {
     moduleName,
     setSort,
   } = useBannersStore((s) => ({
-    getData: s.getData,
     setActiveBanners: s.setActiveBanners,
     setNonActiveBanners: s.setNonActiveBanners,
     setModuleName: s.setModuleName,
@@ -77,6 +80,17 @@ export function SiteSettingBanners(props) {
   const bannerName = useBannerModalStore((s) => s.bannerName);
 
   const [modalPrefix, setModalPrefix] = useState(useSiteSettingStore.getState().modalTitle);
+
+  const getData = async (method, data = {}) => {
+    const { setIsLoad } = useSiteSettingStore.getState();
+    setIsLoad(true);
+    try {
+      data.submodule = submodule;
+      return await api_laravel(method, data);
+    } finally {
+      setIsLoad(false);
+    }
+  };
 
   const { saveNew, saveEdit } = useSaveBanner(showAlert, getData, closeModal);
 
@@ -132,6 +146,22 @@ export function SiteSettingBanners(props) {
     }
   }, [cityId]);
 
+  const renderModalActions = (action, readonly = false) => (
+    <>
+      {!readonly && canEdit("banners") && (
+        <Button
+          variant="contained"
+          onClick={async () => {
+            action === "bannerNew" ? await saveNew() : await saveEdit();
+            await fetchCoreData();
+          }}
+        >
+          Сохранить
+        </Button>
+      )}
+    </>
+  );
+
   const openModal = async (action, title, id = 0) => {
     setModalPrefix(title);
     createModal(
@@ -142,24 +172,13 @@ export function SiteSettingBanners(props) {
           cityId={cityId}
           action={action}
           id={id}
+          onReadonlyChange={(nextReadonly) =>
+            setModalActions(() => renderModalActions(action, nextReadonly))
+          }
         />
       ),
       modalPrefix,
-      () => (
-        <>
-          {canEdit("banners") && (
-            <Button
-              variant="contained"
-              onClick={async () => {
-                action === "bannerNew" ? await saveNew() : await saveEdit();
-                await fetchCoreData();
-              }}
-            >
-              Сохранить
-            </Button>
-          )}
-        </>
-      ),
+      () => renderModalActions(action),
     );
   };
   // update banner name in modal title

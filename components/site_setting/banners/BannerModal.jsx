@@ -18,7 +18,14 @@ import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingSto
 import HistoryLog from "@/ui/history/HistoryLog";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
-export function BannerModal({ getData, showAlert, id, action }) {
+export function BannerModal({
+  getData,
+  showAlert,
+  id,
+  action,
+  readonly = false,
+  onReadonlyChange,
+}) {
   const banner = useBannerModalStore((state) => state.banner);
   const promos = useBannerModalStore((state) => state.promos);
   const [isLoading, setIsLoading] = useBannerModalStore((state) => [
@@ -34,8 +41,31 @@ export function BannerModal({ getData, showAlert, id, action }) {
   const changeAutoComplete = useBannerModalStore((state) => state.changeAutoComplete);
   const getNewBanner = useBannerModalStore((state) => state.getNewBanner);
   const access = useSiteSettingStore((state) => state.access);
+  const [computedReadonly, setComputedReadonly] = useState(readonly);
 
-  const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
+  const canEdit = (key) => !computedReadonly && handleUserAccess(access).userCan("edit", key);
+  const itemOptions = useMemo(
+    () =>
+      computedReadonly
+        ? banner?.items || []
+        : banner?.items?.filter((item) => item?.is_show === undefined || +item?.is_show === 1) ||
+          [],
+    [banner?.items, computedReadonly],
+  );
+
+  const updateReadonly = (nextReadonly) => {
+    setComputedReadonly(nextReadonly);
+    onReadonlyChange?.(nextReadonly);
+  };
+
+  const hasHiddenSelectedItem = (bannerData) =>
+    bannerData?.this_ban?.items?.some((element) => {
+      const item =
+        typeof element === "number"
+          ? bannerData?.items?.find((currentItem) => currentItem.id === element)
+          : element;
+      return +item?.is_show === 0;
+    }) || false;
 
   // dropZones
   const [dropZonesReady, setDropZonesReady] = useState(false);
@@ -62,6 +92,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
         try {
           const bannerTemplate = await getData("get_all_for_new");
           bannerTemplate.this_ban = getNewBanner();
+          updateReadonly(false);
           setBanner(bannerTemplate);
           setTimeout(async () => {
             await fetchPromos(); // fetch after banner is set
@@ -80,6 +111,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
             banner_id: id,
           };
           const bannerData = await getData("get_one_banner", data);
+          updateReadonly(hasHiddenSelectedItem(bannerData));
           setBanner(bannerData);
           setBannerName(bannerData.this_ban?.name);
           setPromos(bannerData.promos);
@@ -243,7 +275,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
               label="Позиции (вместо промика)"
               multiple={true}
               disabled={!canEdit("banners")}
-              data={banner?.items || []}
+              data={itemOptions}
               value={banner?.this_ban?.items || []}
               func={(...params) => changeAutoComplete("items", ...params)}
             />
@@ -398,7 +430,7 @@ export function BannerModal({ getData, showAlert, id, action }) {
               1080х1920
             </Typography>
 
-            {banner?.this_ban?.img.length > 0 && banner?.this_ban?.type_illustration === "img" ? (
+            {banner?.this_ban?.img?.length > 0 && banner?.this_ban?.type_illustration === "img" ? (
               <div style={{ height: 400, display: "flex" }}>
                 <img
                   style={{ width: "100%", height: "auto", alignSelf: "center", borderRadius: 40 }}
