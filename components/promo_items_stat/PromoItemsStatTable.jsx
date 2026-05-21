@@ -94,14 +94,26 @@ const promoColumns = [
     label: "Действующие клиенты",
     helpTitle: "Активации промокода действующими клиентами",
     helpText: "Количество активаций промокода действующими клиентами.",
-    value: (item) => item?.active_client_activations ?? 0,
+    chipHelpText:
+      "В метке показана доля действующих клиентов, использовавших промокод, из всех действующих клиентов в выборке.",
+    render: (item) => ({
+      primary: item?.active_client_activations ?? 0,
+      secondary: formatPromoItemsPercent(item?.active_client_share),
+      direction: "row",
+    }),
   },
   {
     key: "new_client_activations",
     label: "Новые клиенты",
     helpTitle: "Активации новыми клиентами",
     helpText: "Количество активаций промокода первыми заказами.",
-    value: (item) => item?.new_client_activations ?? 0,
+    chipHelpText:
+      "В метке показана доля новых клиентов, использовавших промокод, из всех новых клиентов в выборке.",
+    render: (item) => ({
+      primary: item?.new_client_activations ?? 0,
+      secondary: formatPromoItemsPercent(item?.new_client_share),
+      direction: "row",
+    }),
   },
   {
     key: "unique_clients_count",
@@ -109,7 +121,13 @@ const promoColumns = [
     helpTitle: "Уникальные клиенты",
     helpText:
       "Количество уникальных клиентов, которые хотя бы один раз активировали этот промокод.",
-    value: (item) => item?.unique_clients_count ?? 0,
+    chipHelpText:
+      "В метке показана доля уникальных клиентов с промокодом от всех активных клиентов выборки.",
+    render: (item) => ({
+      primary: item?.unique_clients_count ?? 0,
+      secondary: formatPromoItemsPercent(item?.unique_clients_share),
+      direction: "row",
+    }),
   },
   {
     key: "usage_places",
@@ -245,6 +263,7 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
                       <TableCell key={column.key}>
                         <PromoItemsStatCompoundCell
                           primary={formatPromoItemsSum(promoTableTotals?.discount_value)}
+                          secondary={formatPromoItemsPercent(promoTableTotals?.discount_percent)}
                           direction="column"
                         />
                       </TableCell>
