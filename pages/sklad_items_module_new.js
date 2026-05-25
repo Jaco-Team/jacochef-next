@@ -2515,80 +2515,84 @@ class SkladItemsModule_ extends React.Component {
                                     </TableHead>
 
                                     <TableBody>
-                                      {category.items.map((it, k) => (
-                                        <TableRow key={k}>
-                                          <TableCell>{k + 1}</TableCell>
-                                          {this.state.acces?.active_edit ||
-                                          this.state.acces?.active_view ? (
-                                            <TableCell>
-                                              <MyCheckBox
-                                                label=""
-                                                disabled={!this.state.acces?.active_edit}
-                                                value={parseInt(it.is_show) == 1 ? true : false}
-                                                func={this.saveCheckItem.bind(
+                                      {category.items?.length
+                                        ? category.items.map((it, k) => (
+                                            <TableRow key={k}>
+                                              <TableCell>{k + 1}</TableCell>
+                                              {this.state.acces?.active_edit ||
+                                              this.state.acces?.active_view ? (
+                                                <TableCell>
+                                                  <MyCheckBox
+                                                    label=""
+                                                    disabled={!this.state.acces?.active_edit}
+                                                    value={parseInt(it.is_show) == 1 ? true : false}
+                                                    func={this.saveCheckItem.bind(
+                                                      this,
+                                                      it.id,
+                                                      "is_show",
+                                                    )}
+                                                  />
+                                                </TableCell>
+                                              ) : null}
+                                              {this.state.acces?.ord_edit ||
+                                              this.state.acces?.ord_view ? (
+                                                <TableCell>
+                                                  <MyCheckBox
+                                                    label=""
+                                                    disabled={!this.state.acces?.ord_edit}
+                                                    value={
+                                                      parseInt(it.show_in_order) == 1 ? true : false
+                                                    }
+                                                    func={this.saveCheckItem.bind(
+                                                      this,
+                                                      it.id,
+                                                      "show_in_order",
+                                                    )}
+                                                  />
+                                                </TableCell>
+                                              ) : null}
+                                              {this.state.acces?.rev_edit ||
+                                              this.state.acces?.rev_view ? (
+                                                <TableCell>
+                                                  <MyCheckBox
+                                                    label=""
+                                                    disabled={!this.state.acces?.rev_edit}
+                                                    value={
+                                                      parseInt(it.show_in_rev) == 1 ? true : false
+                                                    }
+                                                    func={this.saveCheckItem.bind(
+                                                      this,
+                                                      it.id,
+                                                      "show_in_rev",
+                                                    )}
+                                                  />
+                                                </TableCell>
+                                              ) : null}
+                                              <TableCell>{it.name}</TableCell>
+                                              <TableCell>{it.art}</TableCell>
+                                              <TableCell
+                                                style={{ cursor: "pointer" }}
+                                                onClick={this.showEditItem.bind(
                                                   this,
                                                   it.id,
-                                                  "is_show",
+                                                  "Редактирование товара",
                                                 )}
-                                              />
-                                            </TableCell>
-                                          ) : null}
-                                          {this.state.acces?.ord_edit ||
-                                          this.state.acces?.ord_view ? (
-                                            <TableCell>
-                                              <MyCheckBox
-                                                label=""
-                                                disabled={!this.state.acces?.ord_edit}
-                                                value={
-                                                  parseInt(it.show_in_order) == 1 ? true : false
-                                                }
-                                                func={this.saveCheckItem.bind(
+                                              >
+                                                <EditIcon />
+                                              </TableCell>
+                                              <TableCell
+                                                style={{ cursor: "pointer" }}
+                                                onClick={this.openHistoryItem.bind(
                                                   this,
                                                   it.id,
-                                                  "show_in_order",
+                                                  "История изменений",
                                                 )}
-                                              />
-                                            </TableCell>
-                                          ) : null}
-                                          {this.state.acces?.rev_edit ||
-                                          this.state.acces?.rev_view ? (
-                                            <TableCell>
-                                              <MyCheckBox
-                                                label=""
-                                                disabled={!this.state.acces?.rev_edit}
-                                                value={parseInt(it.show_in_rev) == 1 ? true : false}
-                                                func={this.saveCheckItem.bind(
-                                                  this,
-                                                  it.id,
-                                                  "show_in_rev",
-                                                )}
-                                              />
-                                            </TableCell>
-                                          ) : null}
-                                          <TableCell>{it.name}</TableCell>
-                                          <TableCell>{it.art}</TableCell>
-                                          <TableCell
-                                            style={{ cursor: "pointer" }}
-                                            onClick={this.showEditItem.bind(
-                                              this,
-                                              it.id,
-                                              "Редактирование товара",
-                                            )}
-                                          >
-                                            <EditIcon />
-                                          </TableCell>
-                                          <TableCell
-                                            style={{ cursor: "pointer" }}
-                                            onClick={this.openHistoryItem.bind(
-                                              this,
-                                              it.id,
-                                              "История изменений",
-                                            )}
-                                          >
-                                            <EditNoteIcon />
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
+                                              >
+                                                <EditNoteIcon />
+                                              </TableCell>
+                                            </TableRow>
+                                          ))
+                                        : null}
                                     </TableBody>
                                   </Table>
                                 </TableContainer>
