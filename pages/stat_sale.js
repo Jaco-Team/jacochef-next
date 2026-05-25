@@ -2883,7 +2883,7 @@ class StatSale_Tab_Sett extends React.Component {
                         {...a11yProps(3)}
                       />
                     )}
-                    {this.props.acces.setting_limits_access && (
+                    {this.props.acces.setting_limits_pay_access && (
                       <Tab
                         label="Лимиты (Динамика продаж)"
                         {...a11yProps(4)}
