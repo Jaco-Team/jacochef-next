@@ -47,7 +47,7 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 import { evaluate } from "mathjs";
 import queryString from "query-string";
 import MyAlert from "@/ui/MyAlert";
-import { api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 function formatDate(date) {
   var d = new Date(date),
