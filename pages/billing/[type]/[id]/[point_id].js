@@ -6783,7 +6783,12 @@ class Billing_Edit_ extends React.Component {
 
     // return;
 
-    if (check_err === true && items_color.length > 0) {
+    if (
+      parseInt(bill.type) != 7 &&
+      parseInt(bill.type) != 9 &&
+      check_err === true &&
+      items_color.length > 0
+    ) {
       this.setState({
         items_err: items_color,
         modelCheckErrItems: true,
