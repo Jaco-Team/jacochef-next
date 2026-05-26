@@ -345,6 +345,25 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
           </Grid>
 
           <Grid size={6}>
+            <MyTextInput
+              label="Сумма заказа от"
+              type="number"
+              min={0}
+              value={formData.min_summ}
+              func={(e) => handleChange(e, "min_summ")}
+            />
+          </Grid>
+          <Grid size={6}>
+            <MyTextInput
+              label="Сумма заказа до"
+              type="number"
+              min={0}
+              value={formData.max_summ}
+              func={(e) => handleChange(e, "max_summ")}
+            />
+          </Grid>
+
+          <Grid size={6}>
             <MyAutocomplite
               label="Пользователи"
               disableClearable
