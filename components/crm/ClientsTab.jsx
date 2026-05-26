@@ -19,6 +19,7 @@ export const ClientsTab = ({
   setField,
   points,
   categories,
+  segments,
   all_items,
   clientHistory,
   columns,
@@ -140,6 +141,15 @@ export const ClientsTab = ({
             ]}
             value={form.gender}
             func={(data, value) => setField("gender", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyAutocomplite
+            label="Сегмент"
+            multiple={false}
+            data={segments}
+            value={form.segment}
+            func={(data, value) => setField("segment", value)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>

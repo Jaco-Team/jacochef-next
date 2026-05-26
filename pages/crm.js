@@ -1,41 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { useSiteClientsStore } from "@/components/site_clients/useSiteClientsStore";
 import { useClientHistoryStore } from "@/components/site_clients/history/useClientHistoryStore";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
-import {
-  Backdrop,
-  Button,
-  CircularProgress,
-  Grid,
-  IconButton,
-  Tab,
-  Tabs,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Backdrop, Button, CircularProgress, Grid, Tab, Tabs } from "@mui/material";
 import { delivery_types, order_types_all } from "@/components/site_clients/config";
 import { formatRUR } from "@/src/helpers/utils/i18n";
 import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import { LoadingProvider } from "@/components/site_clients/useClientsLoadingContext";
-import HistoryClientModal from "@/components/site_clients/history/HistoryClientModal";
 import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
-import {
-  MyAutoCompleteWithAll,
-  MyAutocomplite,
-  MyCheckBox,
-  MyDatePickerNew,
-  MyTextInput,
-} from "@/ui/Forms";
-import { Clear, Download } from "@mui/icons-material";
-import ClientHistoryTable from "@/components/site_clients/history/ClientHistoryTable";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import HistoryClientModalCrm from "@/components/crm/HistoryClientModalCrm";
 import MyAlert from "@/ui/MyAlert";
-import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import { ClientsTab } from "@/components/crm/ClientsTab";
 import { SegmentTab } from "@/components/crm/SegmentTab";
 
@@ -85,6 +63,7 @@ export default function CrmPage() {
     categories: initialForm.categories,
     orders_count: initialForm.orders_count,
     order_utm: initialForm.order_utm,
+    segment: initialForm.segment,
   }));
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
@@ -253,6 +232,7 @@ export default function CrmPage() {
 
     if (data) {
       setCategories(data.category);
+      setSegments(data.segments);
       setCities(data.cities);
       updateMain({
         all_items: data.all_items,
@@ -296,6 +276,7 @@ export default function CrmPage() {
       gender,
       day_last,
       categories,
+      segment,
     } = useSiteClientsStore.getState();
 
     const refreshToken = useClientHistoryStore.getState().refreshToken;
@@ -331,6 +312,7 @@ export default function CrmPage() {
       gender,
       day_last,
       categories,
+      segment: segment?.id,
     });
 
     if (!resData?.st) {
@@ -433,6 +415,7 @@ export default function CrmPage() {
               setField={setField}
               points={points}
               categories={categories}
+              segments={segments}
               all_items={all_items}
               clientHistory={clientHistory}
               columns={columns}

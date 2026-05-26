@@ -71,6 +71,7 @@ const defaultState = {
   items: [],
   items_recursive: [],
   gender: {},
+  segment: {},
   day_last: 0,
   categories: [],
 
