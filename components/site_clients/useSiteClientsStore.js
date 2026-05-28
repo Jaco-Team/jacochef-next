@@ -117,6 +117,9 @@ const defaultState = {
 
   login_sms: [],
   login_yandex: [],
+  mail: "",
+  phone: "",
+  type_client: {},
 
   address_list: "",
   orders_list: [],

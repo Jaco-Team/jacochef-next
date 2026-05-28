@@ -52,6 +52,9 @@ export default function CrmPage() {
     points_history: initialForm.points_history,
     promo: initialForm.promo,
     promo_dr: initialForm.promo_dr,
+    type_client: initialForm.type_client,
+    phone: initialForm.phone,
+    mail: initialForm.mail,
     order_types: order_types_all,
     delivery_type: delivery_types,
     items: initialForm.items,
@@ -277,6 +280,9 @@ export default function CrmPage() {
       day_last,
       categories,
       segment,
+      mail,
+      phone,
+      type_client,
     } = useSiteClientsStore.getState();
 
     const refreshToken = useClientHistoryStore.getState().refreshToken;
@@ -313,6 +319,9 @@ export default function CrmPage() {
       day_last,
       categories,
       segment: segment?.id,
+      mail,
+      type_client,
+      phone,
     });
 
     if (!resData?.st) {

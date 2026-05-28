@@ -155,6 +155,8 @@ export const EditSegmentModal = ({
     total_sum_max: "",
     last_order_date_start: null,
     last_order_date_end: null,
+    first_order_date_start: null,
+    first_order_date_end: null,
     days_from_last: "",
     days_from_first: "",
     period_days: "",
@@ -204,6 +206,8 @@ export const EditSegmentModal = ({
         total_sum_max: segmentData.total_sum_max || "",
         last_order_date_start: segmentData.last_order_date_start || null,
         last_order_date_end: segmentData.last_order_date_end || null,
+        first_order_date_start: segmentData.first_order_date_start || null,
+        first_order_date_end: segmentData.first_order_date_end || null,
         days_from_last: segmentData.days_from_last || "",
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
@@ -248,6 +252,7 @@ export const EditSegmentModal = ({
       form.total_sum_min ||
       form.total_sum_max ||
       form.last_order_date_start ||
+      form.first_order_date_start ||
       form.days_from_last ||
       form.days_from_first ||
       form.period_days ||
@@ -306,6 +311,14 @@ export const EditSegmentModal = ({
         form.last_order_date_start !== null
           ? dayjs(form.last_order_date_start).format("YYYY-MM-DD")
           : null,
+      first_order_date_end:
+        form.first_order_date_end !== null
+          ? dayjs(form.first_order_date_end).format("YYYY-MM-DD")
+          : null,
+      first_order_date_start:
+        form.first_order_date_start !== null
+          ? dayjs(form.first_order_date_start).format("YYYY-MM-DD")
+          : null,
     };
 
     updateSegment(saveData);
@@ -334,6 +347,8 @@ export const EditSegmentModal = ({
         total_sum_max: segmentData.total_sum_max || "",
         last_order_date_start: segmentData.last_order_date_start || null,
         last_order_date_end: segmentData.last_order_date_end || null,
+        first_order_date_start: segmentData.first_order_date_start || null,
+        first_order_date_end: segmentData.first_order_date_end || null,
         days_from_last: segmentData.days_from_last || "",
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
@@ -567,6 +582,28 @@ export const EditSegmentModal = ({
                   label="Дата последнего заказа до"
                   value={form.last_order_date_end ? dayjs(form.last_order_date_end) : null}
                   func={(e) => setField("last_order_date_end", e)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "#666" }}
+                >
+                  Даты первых заказов
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <MyDatePickerNew
+                  label="Дата последнего заказа от"
+                  value={form.first_order_date_start ? dayjs(form.first_order_date_start) : null}
+                  func={(e) => setField("first_order_date_start", e)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <MyDatePickerNew
+                  label="Дата последнего заказа до"
+                  value={form.first_order_date_end ? dayjs(form.first_order_date_end) : null}
+                  func={(e) => setField("first_order_date_end", e)}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 12, md: 12 }}>

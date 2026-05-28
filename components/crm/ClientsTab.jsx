@@ -74,6 +74,22 @@ export const ClientsTab = ({
           />
         </Grid>
 
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyTextInput
+            label="Номер телефона"
+            value={form.phone}
+            func={({ target }) => setField("phone", target?.value)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyTextInput
+            label="E-mail"
+            value={form.mail}
+            func={({ target }) => setField("mail", target?.value)}
+          />
+        </Grid>
+
         <Grid
           size={{ xs: 12, sm: 5 }}
           sx={{
@@ -141,6 +157,19 @@ export const ClientsTab = ({
             ]}
             value={form.gender}
             func={(data, value) => setField("gender", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyAutocomplite
+            label="Тип клиента"
+            multiple={false}
+            data={[
+              { id: 1, name: "Все", type: "all" },
+              { id: 2, name: "Новый", type: "new" },
+              { id: 3, name: "Действющий", type: "current" },
+            ]}
+            value={form.type_client}
+            func={(data, value) => setField("type_client", value)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
