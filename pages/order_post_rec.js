@@ -45,6 +45,7 @@ import queryString from "query-string";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { IconButton } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { ModalOrderPostRecNotFoundItems } from "@/components/order_post_rec/ModalOrderPostRecNotFoundItems";
 
 class OrderPostRec_Modal extends React.Component {
   constructor(props) {
@@ -874,12 +875,20 @@ class OrderPostRec_TableItemNew extends React.Component {
 
     return (
       <TableRow
-        sx={{ "& td": { border: 0 } }}
+        sx={{
+          "& td": {
+            border: 0,
+            backgroundColor: this.props.itemsNotFound?.some((notFoundItem) =>
+              items.some((item) => item.id === notFoundItem.id),
+            )
+              ? "rgba(204,0,51,0.34)"
+              : "transparent",
+          },
+        }}
         hover={true}
       >
         <TableCell>{it.id}</TableCell>
         <TableCell>{it.name}</TableCell>
-
         <TableCell>
           {items.length == 1 ? (
             item
@@ -929,6 +938,8 @@ class OrderPostRecNew_ extends React.Component {
     this.state = {
       module: "order_post_rec",
       module_name: "",
+      modalNotFound: false,
+      itemsNotFound: [],
       is_load: false,
 
       points: [],
@@ -990,6 +1001,8 @@ class OrderPostRecNew_ extends React.Component {
 
     this.setState({
       point: value,
+      modalNotFound: true,
+      itemsNotFound: res.itemsNotFound,
       mainCats: res.mainCats,
       freePf: res.free_pf,
       vendors: res.vendors,
@@ -1237,6 +1250,13 @@ class OrderPostRecNew_ extends React.Component {
             <Button onClick={this.save.bind(this)}>Сохранить</Button>
           </DialogActions>
         </Dialog>
+        {this.state.modalNotFound ? (
+          <ModalOrderPostRecNotFoundItems
+            open={this.state.modalNotFound}
+            items={this.state.itemsNotFound}
+            onClose={() => this.setState({ modalNotFound: false })}
+          />
+        ) : null}
         <Grid
           container
           spacing={3}
@@ -1313,6 +1333,7 @@ class OrderPostRecNew_ extends React.Component {
                                   {cat.items.map((it, item_k) => (
                                     <OrderPostRec_TableItemNew
                                       key={item_k}
+                                      itemsNotFound={this.state.itemsNotFound}
                                       main_key={key}
                                       dop_key={k}
                                       item_key={item_k}
@@ -1355,6 +1376,7 @@ class OrderPostRecNew_ extends React.Component {
                           <OrderPostRec_TableItemNew
                             key={it.id}
                             main_key={0}
+                            itemsNotFound={this.state.itemsNotFound}
                             dop_key={0}
                             item_key={item_k}
                             item={it}
