@@ -18,6 +18,7 @@ import Paper from "@mui/material/Paper";
 
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
+import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import ErrorIcon from "@mui/icons-material/Error";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
@@ -1525,7 +1526,43 @@ class Billing_ extends React.Component {
                             {formatDateReverse(item.date)}
                           </TableCell>
                           <TableCell onClick={this.getOneBill.bind(this, item)}>
-                            {item.vendor_name}
+                            <Box component="span">{item.vendor_name}</Box>
+                            {Number(item?.err_decl) > 0 ? (
+                              <Tooltip title="У поставщика отсутствуют декларации товаров">
+                                <Link
+                                  href={`/vendors/${item.vendor_id}?tab=documents`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                  }}
+                                  style={{
+                                    display: "inline-flex",
+                                    width: "auto",
+                                    flex: "0 0 auto",
+                                    textDecoration: "none",
+                                    marginLeft: "1rem",
+                                  }}
+                                >
+                                  <Chip
+                                    component="span"
+                                    size="small"
+                                    label={item.err_decl}
+                                    color="error"
+                                    sx={{
+                                      height: 18,
+                                      width: "auto",
+                                      flexShrink: 0,
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      "& .MuiChip-label": {
+                                        px: 0.75,
+                                      },
+                                    }}
+                                  />
+                                </Link>
+                              </Tooltip>
+                            ) : null}
                           </TableCell>
                           <TableCell
                             align="right"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/router";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -44,7 +44,12 @@ import useVendorsStore from "./useVendorsStore";
 
 const TAB_DEFINITIONS = [
   { index: 0, key: "overview", label: "Обзор", icon: <SummarizeOutlinedIcon fontSize="small" /> },
-  { index: 1, key: "locations", label: "Локации", icon: <PlaceOutlinedIcon fontSize="small" /> },
+  {
+    index: 1,
+    key: "locations",
+    label: "Локации",
+    icon: <PlaceOutlinedIcon fontSize="small" />,
+  },
   {
     index: 2,
     key: "products",
@@ -65,12 +70,27 @@ const TAB_DEFINITIONS = [
   },
 ];
 
+function normalizeTabQuery(tab) {
+  return Array.isArray(tab) ? tab[0] : tab;
+}
+
+function getTabIndexFromQuery(tab) {
+  const normalizedTab = normalizeTabQuery(tab);
+  if (!normalizedTab || typeof normalizedTab !== "string") {
+    return 0;
+  }
+  return TAB_DEFINITIONS.find((item) => item.key === normalizedTab)?.index ?? 0;
+}
+
+function getTabQueryFromIndex(index) {
+  return TAB_DEFINITIONS.find((item) => item.index === index)?.key ?? "";
+}
+
 export default function VendorDetailPage() {
   const router = useRouter();
   const vendorId = Number(router.query.id);
   const { canEdit, canUpload, canDeleteDeclaration, canEditDeclaration } = useVendorAccess();
   const setLoading = useVendorsStore((state) => state.setLoading);
-  const [activeTab, setActiveTab] = useState(0);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isPointMailsDialogOpen, setIsPointMailsDialogOpen] = useState(false);
   const { allCities, allPoints, isDocModalOpen, mails, vendor, vendorCities } =
@@ -106,8 +126,30 @@ export default function VendorDetailPage() {
     loadItemVendors,
     openDocModal,
   } = useVendorDetailsPage(vendorId);
+  const activeTab = router.isReady ? getTabIndexFromQuery(router.query.tab) : 0;
   const activeTabDefinition =
     TAB_DEFINITIONS.find((tab) => tab.index === activeTab) ?? TAB_DEFINITIONS[0];
+
+  const handleTabChange = useCallback(
+    (_, value) => {
+      const nextTabQuery = getTabQueryFromIndex(value);
+      const nextQuery = { ...router.query };
+      if (nextTabQuery) {
+        nextQuery.tab = nextTabQuery;
+      } else {
+        delete nextQuery.tab;
+      }
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: nextQuery,
+        },
+        undefined,
+        { shallow: true },
+      );
+    },
+    [router],
+  );
 
   return (
     <>
@@ -194,7 +236,7 @@ export default function VendorDetailPage() {
                 <Tabs
                   orientation="vertical"
                   value={activeTab}
-                  onChange={(_, value) => setActiveTab(value)}
+                  onChange={handleTabChange}
                   aria-label="Vendor tabs"
                   sx={{
                     borderTop: "1px solid",
@@ -388,7 +430,7 @@ export default function VendorDetailPage() {
       >
         <Tabs
           value={activeTab}
-          onChange={(_, value) => setActiveTab(value)}
+          onChange={handleTabChange}
           variant="fullWidth"
           aria-label="Vendor mobile tabs"
           sx={{}}

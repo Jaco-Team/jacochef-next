@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -1451,11 +1452,14 @@ function BillPriceWarningBanner({ count }) {
   );
 }
 
-function BillItemNameContent({ item, showPriceWarnings = true }) {
+function BillItemNameContent({ item, showPriceWarnings = true, vendorId = null }) {
+  const billVendorId = useStore((state) => state.bill?.vendor_id);
+  const resolvedVendorId = vendorId ?? billVendorId;
+
   return (
     <Box>
       <div className="cell_as">
-        {item?.name ?? item?.item_name}
+        <span>{item?.name ?? item?.item_name}</span>
         {item?.accounting_system?.map((as) => (
           <div
             key={as.id}
@@ -1464,6 +1468,44 @@ function BillItemNameContent({ item, showPriceWarnings = true }) {
             {as.name}
           </div>
         ))}
+        {item?.err_decl && resolvedVendorId ? (
+          <Tooltip title="Добавить декларацию товара поставщику">
+            <Link
+              href={`/vendors/${resolvedVendorId}?tab=products`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              style={{
+                display: "inline",
+                marginLeft: "1rem",
+                textDecoration: "none",
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 20,
+                  height: 20,
+                  px: 0.75,
+                  borderRadius: "999px",
+                  backgroundColor: "rgba(220, 38, 38, 0.16)",
+                  color: "#b91c1c",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                !
+              </Box>
+            </Link>
+          </Tooltip>
+        ) : null}
       </div>
       {!showPriceWarnings || !item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
@@ -3319,14 +3361,17 @@ function FormVendorItems() {
 }
 
 function VendorItemsTableEdit({ showPriceWarnings = true }) {
-  const [bill, type, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore((state) => [
-    state.bill,
-    state.type,
-    state.deleteItem,
-    state.changeDataTable,
-    state.handleDrag,
-    state.handleDrop,
-  ]);
+  const [bill, type, vendors, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore(
+    (state) => [
+      state.bill,
+      state.type,
+      state.vendors,
+      state.deleteItem,
+      state.changeDataTable,
+      state.handleDrag,
+      state.handleDrop,
+    ],
+  );
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3334,6 +3379,7 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
     state.allPrice_w_nds,
     state.err_items,
   ]);
+  const vendorId = bill?.vendor_id ?? bill?.vendors?.[0]?.id ?? vendors?.[0]?.id ?? null;
 
   let summ_nds = 0;
 
@@ -3401,6 +3447,7 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
                         <BillItemNameContent
                           item={item}
                           showPriceWarnings={showPriceWarnings}
+                          vendorId={vendorId}
                         />
                       </TableCell>
                       <TableCell>До</TableCell>
@@ -3711,6 +3758,7 @@ function VendorItemsTableView({ showPriceWarnings = true }) {
                       <BillItemNameContent
                         item={item}
                         showPriceWarnings={showPriceWarnings}
+                        vendorId={vendorId}
                       />
                     </TableCell>
                     <TableCell>До</TableCell>
@@ -5830,6 +5878,8 @@ class Billing_Edit_ extends React.Component {
   isClick = false;
   isRedirectingAfterSave = false;
   ocrDropzone = null;
+  vendorItemsRequestKey = null;
+  vendorItemsRequestPromise = null;
 
   constructor(props) {
     super(props);
@@ -5872,6 +5922,27 @@ class Billing_Edit_ extends React.Component {
       delText: "",
     };
   }
+
+  getVendorItemsRequest = ({ point_id, vendor_id }) => {
+    const requestKey = `${point_id ?? ""}_${vendor_id ?? ""}`;
+
+    if (this.vendorItemsRequestPromise && this.vendorItemsRequestKey === requestKey) {
+      return this.vendorItemsRequestPromise;
+    }
+
+    this.vendorItemsRequestKey = requestKey;
+    this.vendorItemsRequestPromise = this.getData("get_vendor_items", {
+      point_id,
+      vendor_id,
+    }).finally(() => {
+      if (this.vendorItemsRequestKey === requestKey) {
+        this.vendorItemsRequestKey = null;
+        this.vendorItemsRequestPromise = null;
+      }
+    });
+
+    return this.vendorItemsRequestPromise;
+  };
 
   startSaveAction = () => {
     this.isClick = true;
@@ -5961,7 +6032,7 @@ class Billing_Edit_ extends React.Component {
 
     const data = {
       point_id: bill["point_id"],
-      vendor_id: res?.vendors[0]?.id,
+      vendor_id: res?.vendors?.[0]?.id ?? res?.bill?.vendor_id,
     };
 
     const nextAcces = res?.upd_access ?? null;
@@ -5971,7 +6042,7 @@ class Billing_Edit_ extends React.Component {
       type_doc: data_bill[2],
     });
 
-    const items = await this.getData("get_vendor_items", data);
+    const items = await this.getVendorItemsRequest(data);
     const docs = await this.getData("get_base_doc", data);
 
     const { getDataBill, setAcces } = this.props.store;
@@ -6288,7 +6359,7 @@ class Billing_Edit_ extends React.Component {
       return [];
     }
 
-    const res = await store.getData("get_vendor_items", {
+    const res = await this.getVendorItemsRequest({
       point_id: storeState.point.id,
       vendor_id: storeState.bill.vendor_id,
     });
