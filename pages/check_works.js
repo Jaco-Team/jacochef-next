@@ -766,7 +766,7 @@ class Checkworks_ extends React.Component {
 
     if (mark === "editItem") {
       this.handleResize();
-      const point_id = this.state.points.find((i) => i.id === this.state.point);
+      const point_id = this.state.points.find((i) => parseInt(i.id) === parseInt(this.state.point));
       const data = {
         point_id,
         id: itemEdit.id,
