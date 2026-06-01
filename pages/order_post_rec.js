@@ -1116,6 +1116,27 @@ class OrderPostRecNew_ extends React.Component {
     });
   }
 
+  async update() {
+    let data = {
+      point_id: this.state.point.id,
+    };
+
+    let res = await this.getData("get_data", data);
+
+    // console.log(data);
+
+    this.setState({
+      modalNotFound: true,
+      itemsNotFound: res.itemsNotFound,
+      mainCats: res.mainCats,
+      freePf: res.free_pf,
+      vendors: res.vendors,
+      items: res.items,
+
+      hist: res.hist,
+    });
+  }
+
   async save() {
     const mainCats = this.state.mainCats;
     const freePf = this.state.freePf;
