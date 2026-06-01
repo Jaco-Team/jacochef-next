@@ -66,6 +66,7 @@ import {
   BillingSection,
   billingConfirmDialogPaperSx,
   billingPageFieldSx,
+  billingNoDeclWarningChipSx,
   billingPriceWarningChipSx,
   billingPriceWarningRowSx,
   billingSectionPaperSx,
@@ -75,6 +76,7 @@ import {
 import DraggableImage from "@/components/billing/DraggableImage";
 import MyAlert from "@/ui/MyAlert";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { Link } from "@mui/material";
 
 const types = [
   {
@@ -674,9 +676,13 @@ function BillPriceWarningBanner({ count }) {
 }
 
 function BillItemNameContent({ item }) {
+  const vendor = useStore((state) => state.vendor);
+  const resolvedVendorId = item?.vendor_id ?? vendor?.id;
+  const noDeclarationChip = <Box sx={billingNoDeclWarningChipSx}>нет декларации!</Box>;
+
   return (
     <Box>
-      <div className="cell_as">
+      <div>
         {item?.name ?? item?.item_name}
         {item?.accounting_system?.map((as) => (
           <div
@@ -687,6 +693,25 @@ function BillItemNameContent({ item }) {
           </div>
         ))}
       </div>
+      {item?.err_decl && resolvedVendorId ? (
+        <Tooltip title="Добавить декларацию товара поставщику">
+          <Link
+            href={`/vendors/${resolvedVendorId}?tab=products`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            sx={{
+              mt: 0.5,
+              display: "inline-flex",
+              textDecoration: "none",
+            }}
+          >
+            {noDeclarationChip}
+          </Link>
+        </Tooltip>
+      ) : null}
       {!item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
           <Box sx={billingPriceWarningChipSx}>Проверить ценник</Box>
@@ -706,6 +731,17 @@ function BillItemNameContent({ item }) {
     </Box>
   );
 }
+
+const billingPackCountInputSx = {
+  minWidth: { xs: 92, sm: 78, md: 66 },
+  maxWidth: { xs: 112, sm: 92, md: 78 },
+  // "& .MuiOutlinedInput-input": {
+  //   textAlign: "right",
+  //   fontVariantNumeric: "tabular-nums lining-nums",
+  //   fontFeatureSettings: '"tnum" 1, "lnum" 1',
+  //   paddingRight: { xs: "10px !important", sm: "12px !important" },
+  // },
+};
 
 function findMatchedVendorItem(vendorItems, ocrItem) {
   const matchedId = ocrItem?.matched_product?.id ?? ocrItem?.matched_id;
@@ -1835,7 +1871,7 @@ const useStore = create((set, get) => ({
   search_doc: async (event, name) => {
     const search = event.target.value ? event.target.value : name ? name : "";
 
-    console.log("search", search);
+    // console.log("search", search);
 
     if (search) {
       const docs = get().docs;
@@ -1874,7 +1910,7 @@ const useStore = create((set, get) => ({
       res.billing_items.map((item) => {
         let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
 
-        console.log("test_item", item, test);
+        // console.log("test_item", item, test);
 
         get().addItem_fast(
           item.count,
@@ -2251,11 +2287,11 @@ const useStore = create((set, get) => ({
   },
 
   addItem: () => {
-    const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
+    const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor, vendor_items } = get();
 
     let bill_items = get().bill_items;
 
-    console.log("bill_items_bill_items", bill_items);
+    // console.log("bill_items_bill_items", bill_items);
 
     if (!count || !fact_unit || !summ || !sum_w_nds || !pq || !all_ed_izmer.length) {
       set({
@@ -2296,6 +2332,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].price_item = summ;
     vendor_items[0].price_w_nds = sum_w_nds;
     vendor_items[0].price = getBillItemUnitPrice(vendor_items[0]);
+    vendor_items[0].vendor_id = vendor?.id;
 
     const bill_items_doc = get().bill_items_doc;
 
@@ -2366,11 +2403,11 @@ const useStore = create((set, get) => ({
 
     let bill_items = JSON.parse(JSON.stringify(get().bill_items));
 
-    console.log("stage1", get().bill_items);
+    // console.log("stage1", get().bill_items);
 
     //const nds = get().check_nds_bill((Number(sum_w_nds) - Number(summ)) / (Number(summ) / 100))
 
-    console.log("accounting_system", accounting_system);
+    // console.log("accounting_system", accounting_system);
 
     vendor_items[0].color = false;
 
@@ -2387,8 +2424,8 @@ const useStore = create((set, get) => ({
 
     const bill_items_doc = get().bill_items_doc;
 
-    console.log("stage1.5", get().bill_items_doc, sum_w_nds);
-    console.log("stage1.7", vendor_items[0].id, sum_w_nds);
+    // console.log("stage1.5", get().bill_items_doc, sum_w_nds);
+    // console.log("stage1.7", vendor_items[0].id, sum_w_nds);
 
     if (bill_items_doc.length) {
       const item = bill_items_doc.find(
@@ -2414,7 +2451,7 @@ const useStore = create((set, get) => ({
       // }
     }
 
-    console.log("stage2", vendor_items[0]);
+    // console.log("stage2", vendor_items[0]);
 
     bill_items.push(vendor_items[0]);
 
@@ -2793,7 +2830,7 @@ function VendorItemsTableEdit({ showHeader = true }) {
     summ_nds += parseFloat(item.summ_nds);
   });
 
-  console.log("bill_items", bill_items);
+  // console.log("bill_items", bill_items);
 
   return (
     <>
@@ -2924,11 +2961,12 @@ function VendorItemsTableEdit({ showHeader = true }) {
                     </TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
-                        type="text"
-                        inputProps={{ inputMode: "decimal" }}
+                        type="number"
+                        inputProps={{ inputMode: "decimal", min: "0", step: "1" }}
                         isDecimalMask
                         decimalScale={BILLING_PACK_COUNT_SCALE}
                         label=""
+                        sx={billingPackCountInputSx}
                         value={item.count}
                         func={(event) =>
                           changeDataTable(
@@ -3390,9 +3428,9 @@ function FormHeader_new({ page, type_edit }) {
 
   //doc
 
-  console.log(kinds);
-  console.log(doc_base_id);
-  console.log(type);
+  // console.log(kinds);
+  // console.log(doc_base_id);
+  // console.log(type);
 
   return (
     <>
