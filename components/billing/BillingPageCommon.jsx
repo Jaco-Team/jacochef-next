@@ -189,6 +189,13 @@ export const billingPriceWarningChipSx = {
   letterSpacing: "0.02em",
 };
 
+export const billingNoDeclWarningChipSx = {
+  ...billingPriceWarningChipSx,
+  backgroundColor: "#dc2626",
+  color: "#fff",
+  fontSize: 12,
+};
+
 export const billingConfirmDialogPaperSx = {
   borderRadius: { xs: "22px", md: "28px" },
   border: "1px solid rgba(148, 163, 184, 0.2)",

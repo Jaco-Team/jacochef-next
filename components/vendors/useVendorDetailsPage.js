@@ -18,6 +18,8 @@ import {
   normalizeCatalogItems,
   normalizeMails,
   normalizeVendor,
+  normalizeVendorItems,
+  normalizeVendorList,
 } from "./vendorFormUtils";
 
 export default function useVendorDetailsPage(vendorId) {
@@ -148,7 +150,7 @@ export default function useVendorDetailsPage(vendorId) {
         mails: normalizeMails(infoResponse.mails, sharedAllPoints),
         allPoints: sharedAllPoints,
         allDeclarations: sharedAllDeclarations,
-        vendorItems: productsResponse.vendor_items || [],
+        vendorItems: normalizeVendorItems(productsResponse.vendor_items),
         allItems: sharedAllItems,
         history: infoResponse.history || [],
       });
@@ -506,8 +508,9 @@ export default function useVendorDetailsPage(vendorId) {
           Number(itemVendor.id) !== 0 &&
           Number(itemVendor.id) !== Number(vendorId),
       );
-      setItemVendors(itemId, nextVendors);
-      return nextVendors;
+      const normalizedVendors = normalizeVendorList(nextVendors);
+      setItemVendors(itemId, normalizedVendors);
+      return normalizedVendors;
     })();
 
     try {
