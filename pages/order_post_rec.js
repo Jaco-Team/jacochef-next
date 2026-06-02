@@ -879,7 +879,7 @@ class OrderPostRec_TableItemNew extends React.Component {
           "& td": {
             border: 0,
             backgroundColor: this.props.itemsNotFound?.some((notFoundItem) =>
-              items.some((item) => item.id === notFoundItem.id),
+              it.name === notFoundItem.name,
             )
               ? "rgba(204,0,51,0.34)"
               : "transparent",
