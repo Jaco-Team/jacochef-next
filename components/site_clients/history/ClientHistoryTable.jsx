@@ -10,7 +10,9 @@ import {
   TablePagination,
   TableRow,
   TableSortLabel,
+  Tooltip,
 } from "@mui/material";
+import InfoIcon from "@mui/icons-material/Info";
 import { memo, useMemo, useState } from "react";
 import { useClientHistoryStore } from "./useClientHistoryStore";
 
@@ -74,13 +76,30 @@ const ClientHistoryTable = ({ columns, rows }) => {
                   key={c.key}
                   align={c.numeric ? "right" : "left"}
                 >
-                  <TableSortLabel
-                    active={orderBy === c.key}
-                    direction={orderBy === c.key ? orderDir : "asc"}
-                    onClick={() => onSort(c.key)}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
                   >
-                    {c.label}
-                  </TableSortLabel>
+                    <TableSortLabel
+                      active={orderBy === c.key}
+                      direction={orderBy === c.key ? orderDir : "asc"}
+                      onClick={() => onSort(c.key)}
+                    >
+                      {c.label}
+                    </TableSortLabel>
+                    {c.hint ? (
+                      <Tooltip
+                        title={c.hint}
+                        arrow
+                        placement="top"
+                      >
+                        <InfoIcon sx={{ fontSize: 16, color: "text.disabled", cursor: "help" }} />
+                      </Tooltip>
+                    ) : null}
+                  </span>
                 </TableCell>
               ))}
             </TableRow>

@@ -191,14 +191,21 @@ export default function CrmPage() {
       {
         key: "total_sum_all_time",
         label: "Сумма заказов за всё время",
+        hint: "Сумма всех заказов клиента за всё время по всем точкам.",
         format: (value) => formatRUR(value),
         numeric: true,
         formatRaw: (value) => value,
       },
-      { key: "total_orders_all_time", label: "Заказов за всё время", numeric: true },
+      {
+        key: "total_orders_all_time",
+        label: "Заказов за всё время",
+        hint: "Количество уникальных заказов клиента за всё время (включая гостевые).",
+        numeric: true,
+      },
       {
         key: "avg_check_all_time",
         label: "Средний чек за всё время",
+        hint: "Сумма всех заказов ÷ количество заказов за всё время.",
         format: (value) => formatRUR(value),
         numeric: true,
         formatRaw: (value) => value,
@@ -206,11 +213,22 @@ export default function CrmPage() {
       {
         key: "date_time_order",
         label: "Дата посл.заказа",
+        hint: "Дата последнего заказа клиента.",
         format: (value) => <div style={{ fontSize: "1rem" }}>{formatYMD(value)}</div>,
         formatRaw: (value) => value,
       },
-      { key: "days_from_first", label: "Дней с первого заказа", numeric: true },
-      { key: "days_from_last", label: "Дней с последнего заказа", numeric: true },
+      {
+        key: "days_from_first",
+        label: "Дней с первого заказа",
+        hint: "Сколько дней прошло с первого заказа клиента (самого раннего за всё время).",
+        numeric: true,
+      },
+      {
+        key: "days_from_last",
+        label: "Дней с последнего заказа",
+        hint: "Сколько дней прошло с последнего заказа клиента.",
+        numeric: true,
+      },
     ],
     [getPointAddress, openClient],
   );
