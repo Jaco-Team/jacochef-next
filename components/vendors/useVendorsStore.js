@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { normalizeVendorList } from "./vendorFormUtils";
 
 const defaultState = {
   module: "vendors",
@@ -28,7 +29,7 @@ const useVendorsStore = create((set) => ({
       allPoints: payload.allPoints ?? [],
       allDeclarations: payload.allDeclarations ?? [],
       allItems: payload.allItems ?? [],
-      vendors: payload.vendors ?? state.vendors,
+      vendors: payload.vendors ? normalizeVendorList(payload.vendors) : state.vendors,
       vendorsLoadedCity: payload.vendorsLoadedCity ?? state.vendorsLoadedCity,
       city: payload.city ?? -1,
     }));
@@ -45,7 +46,7 @@ const useVendorsStore = create((set) => ({
 
   setVendors(vendors = [], city = null) {
     set((state) => ({
-      vendors,
+      vendors: normalizeVendorList(vendors),
       vendorsLoadedCity: city ?? state.vendorsLoadedCity,
     }));
   },

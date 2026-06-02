@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+// import Link from "next/link";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -24,7 +24,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -53,7 +52,6 @@ import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import CloseIcon from "@mui/icons-material/Close";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import HorizontalSplitIcon from "@mui/icons-material/HorizontalSplit";
-import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
@@ -82,12 +80,14 @@ import {
   billingSectionPaperSx,
   billingTableContainerSx,
   billingTableSx,
+  billingNoDeclWarningChipSx,
 } from "@/components/billing/BillingPageCommon";
 import DraggableImage from "@/components/billing/DraggableImage";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import MyAlert from "@/ui/MyAlert";
 import { formatDateReverse } from "@/src/helpers/ui/formatDate";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { Link } from "@mui/material";
 
 const types = [
   {
@@ -1468,45 +1468,28 @@ function BillItemNameContent({ item, showPriceWarnings = true, vendorId = null }
             {as.name}
           </div>
         ))}
-        {item?.err_decl && resolvedVendorId ? (
-          <Tooltip title="Добавить декларацию товара поставщику">
-            <Link
-              href={`/vendors/${resolvedVendorId}?tab=products`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-              style={{
-                display: "inline",
-                marginLeft: "1rem",
-                textDecoration: "none",
-              }}
-            >
-              <Box
-                component="span"
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 20,
-                  height: 20,
-                  px: 0.75,
-                  borderRadius: "999px",
-                  backgroundColor: "rgba(220, 38, 38, 0.16)",
-                  color: "#b91c1c",
-                  fontSize: 12,
-                  fontWeight: 800,
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
-              >
-                !
-              </Box>
-            </Link>
-          </Tooltip>
-        ) : null}
       </div>
+      {item?.err_decl && resolvedVendorId && (
+        <Tooltip title="Добавить декларацию товара поставщику">
+          <Link
+            href={`/vendors/${resolvedVendorId}?tab=products`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+            sx={{
+              mt: 0.5,
+              maxWidth: 340,
+              display: "inline-flex",
+              marginLeft: 0,
+              textDecoration: "none",
+            }}
+          >
+            <Box sx={billingNoDeclWarningChipSx}>нет декларации!</Box>
+          </Link>
+        </Tooltip>
+      )}
       {!showPriceWarnings || !item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
           <Box sx={billingPriceWarningChipSx}>Проверить ценник</Box>
@@ -1524,6 +1507,47 @@ function BillItemNameContent({ item, showPriceWarnings = true, vendorId = null }
         </Box>
       )}
     </Box>
+  );
+}
+
+function renderBillingVendorItemOption(optionProps, option, vendorId = null) {
+  const resolvedVendorId = vendorId ? Number(vendorId) : null;
+
+  return (
+    <li
+      {...optionProps}
+      key={option?.id ?? option?.item_id ?? option?.name}
+    >
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+      >
+        <Box component="span">{option?.name || option?.item_name || ""}</Box>
+        {option?.err_decl && resolvedVendorId ? (
+          <Tooltip title="Добавить декларацию товара поставщику">
+            <Link
+              href={`/vendors/${resolvedVendorId}?tab=products`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              sx={{
+                display: "inline-flex",
+                textDecoration: "none",
+              }}
+            >
+              <Box sx={{ ...billingNoDeclWarningChipSx, mt: 0, px: 1, py: 0.25 }}>
+                нет декларации!
+              </Box>
+            </Link>
+          </Tooltip>
+        ) : null}
+      </Stack>
+    </li>
   );
 }
 
@@ -3176,6 +3200,14 @@ function FormVendorItems() {
     return null;
   }
 
+  const vendorId = bill?.vendor_id ?? bill?.vendors?.[0]?.id ?? null;
+  const selectedVendorItem =
+    vendor_items.length === 1 &&
+    String(vendor_items[0]?.name || "").toLowerCase() ===
+      String(search_item?.name ?? search_item ?? "").toLowerCase()
+      ? vendor_items[0]
+      : null;
+
   return (
     <>
       <Grid
@@ -3197,6 +3229,22 @@ function FormVendorItems() {
           func={(event, name) => search_vendor_items(event, name)}
           onBlur={(event, name) => search_vendor_items(event, name)}
         />
+        {selectedVendorItem?.err_decl && vendorId ? (
+          <Tooltip title="Добавить декларацию товара поставщику">
+            <Link
+              href={`/vendors/${vendorId}?tab=products`}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                mt: 0.75,
+                display: "inline-flex",
+                textDecoration: "none",
+              }}
+            >
+              <Box sx={{ ...billingNoDeclWarningChipSx, mt: 0 }}>нет декларации!</Box>
+            </Link>
+          </Tooltip>
+        ) : null}
       </Grid>
       <Grid
         size={{
@@ -7969,6 +8017,13 @@ class Billing_Edit_ extends React.Component {
                           func={(event, value) => this.changeOcrResolveItem(index, value)}
                           isOptionEqualToValue={(option, value) => option?.id === value?.id}
                           label="Товар поставщика"
+                          renderOption={(optionProps, option) =>
+                            renderBillingVendorItemOption(
+                              optionProps,
+                              option,
+                              this.state.bill?.vendor_id,
+                            )
+                          }
                           slotProps={{
                             popper: {
                               allowAdaptivePlacement: true,

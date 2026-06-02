@@ -649,9 +649,12 @@ a {
   display: flex;
   // flex-direction: row;
   align-items: center;
+  min-width: 300px;
   gap: 12;
   @media (max-width: 600px) {
     flex-direction: column;
+    align-items: flex-start;
+    min-width: 250px;
   }
 
   .box_as {

@@ -1,5 +1,40 @@
 "use client";
 
+let htmlEntityDecoderElement = null;
+
+const FALLBACK_HTML_ENTITY_MAP = {
+  quot: '"',
+  "#34": '"',
+  apos: "'",
+  "#39": "'",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+};
+
+export const decodeHtmlEntities = (value) => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  const stringValue = String(value);
+
+  if (!stringValue.includes("&")) {
+    return stringValue;
+  }
+
+  if (typeof document !== "undefined") {
+    htmlEntityDecoderElement = htmlEntityDecoderElement || document.createElement("textarea");
+    htmlEntityDecoderElement.innerHTML = stringValue;
+    return htmlEntityDecoderElement.value;
+  }
+
+  return stringValue.replace(/&([a-zA-Z]+|#\d+);/g, (entity, key) => {
+    const decoded = FALLBACK_HTML_ENTITY_MAP[key];
+    return decoded === undefined ? entity : decoded;
+  });
+};
+
 export const createEmptyVendor = () => ({
   id: null,
   name: "",
@@ -20,12 +55,25 @@ export const createEmptyVendor = () => ({
 export const normalizeVendor = (vendor) => ({
   ...createEmptyVendor(),
   ...(vendor || {}),
+  name: decodeHtmlEntities(vendor?.name || ""),
+  addr: decodeHtmlEntities(vendor?.addr || ""),
+  text: decodeHtmlEntities(vendor?.text || ""),
   bill_ex: Number(vendor?.bill_ex ?? 0),
   need_img_bill_ex: Number(vendor?.need_img_bill_ex ?? 0),
   is_show: Number(vendor?.is_show ?? 1),
   is_priority: Number(vendor?.is_priority ?? 0),
   phone: vendor?.phone || "",
 });
+
+export const normalizeVendorList = (vendors) =>
+  Array.isArray(vendors)
+    ? vendors.map((vendor) => ({
+        ...(vendor || {}),
+        name: decodeHtmlEntities(vendor?.name || ""),
+        addr: decodeHtmlEntities(vendor?.addr || ""),
+        text: decodeHtmlEntities(vendor?.text || ""),
+      }))
+    : [];
 
 export const normalizeCities = (cities) =>
   Array.isArray(cities)
@@ -45,8 +93,19 @@ export const normalizeCatalogItems = (items) =>
         .map((item) => ({
           ...item,
           id: Number(item.id),
-          name: item.name || "",
+          name: decodeHtmlEntities(item.name || ""),
+          cat_name: decodeHtmlEntities(item.cat_name || ""),
         }))
+    : [];
+
+export const normalizeVendorItems = (items) =>
+  Array.isArray(items)
+    ? items.map((item) => ({
+        ...item,
+        item_name: decodeHtmlEntities(item?.item_name || ""),
+        name: decodeHtmlEntities(item?.name || ""),
+        cat_name: decodeHtmlEntities(item?.cat_name || ""),
+      }))
     : [];
 
 export const normalizeMails = (mails, allPoints = []) =>
