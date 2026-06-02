@@ -255,7 +255,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
     });
   }
 
-  renderPizzaTable(pizzaArr, title, subTitle) {
+  renderPizzaTable(pizzaArr, title, subTitle, options = {}) {
+    const { planFulfillment = false } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(value);
       return Number.isFinite(parsed) ? parsed : 0;
@@ -317,7 +318,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                   Период
                 </TableCell>
                 <TableCell
-                  colSpan={2}
+                  colSpan={planFulfillment ? 1 : 2}
                   rowSpan={2}
                   sx={{ ...cellSx, backgroundColor: "#e8f5e9" }}
                 >
@@ -340,11 +341,15 @@ class StatSale_Tab_DynamicSale extends React.Component {
               </TableRow>
               <TableRow>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
+                {!planFulfillment && (
+                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
+                )}
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
+                  {planFulfillment ? "п/ф" : "Загрузка"}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -380,14 +385,16 @@ class StatSale_Tab_DynamicSale extends React.Component {
                   >
                     {row.planQty?.toLocaleString()}
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      ...bodyCellSx,
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    {formatPercent(row.planLoad)}
-                  </TableCell>
+                  {!planFulfillment && (
+                    <TableCell
+                      sx={{
+                        ...bodyCellSx,
+                        backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                      }}
+                    >
+                      {formatPercent(row.planLoad)}
+                    </TableCell>
+                  )}
                   <TableCell
                     sx={{
                       ...bodyCellSx,
@@ -456,15 +463,29 @@ class StatSale_Tab_DynamicSale extends React.Component {
                     }}
                   >
                     <Chip
-                      label={formatPercent(row.factLoad)}
+                      label={formatPercent(planFulfillment ? row.planLoad : row.factLoad)}
                       size="small"
-                      variant="outlined"
-                      sx={{
-                        borderColor: "#1976d2",
-                        color: "#1976d2",
-                        fontWeight: "500",
-                        fontSize: "0.75rem",
-                      }}
+                      variant={planFulfillment ? "filled" : "outlined"}
+                      sx={
+                        planFulfillment
+                          ? {
+                              backgroundColor:
+                                getSafeNumber(row.planLoad) >= 100 ? "#4caf50" : "#f44336",
+                              color: "white",
+                              fontWeight: "bold",
+                              fontSize: "0.75rem",
+                              minWidth: "70px",
+                              "& .MuiChip-label": {
+                                padding: "4px 8px",
+                              },
+                            }
+                          : {
+                              borderColor: "#1976d2",
+                              color: "#1976d2",
+                              fontWeight: "500",
+                              fontSize: "0.75rem",
+                            }
+                      }
                     />
                   </TableCell>
                 </TableRow>
@@ -531,8 +552,12 @@ class StatSale_Tab_DynamicSale extends React.Component {
             </Grid>
             {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
-            {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во")}
-            {this.renderPizzaTable(accountArr, "Таблица с аккаунтами", "Аккаунты, кол-во")}
+            {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
+              planFulfillment: true,
+            })}
+            {this.renderPizzaTable(accountArr, "Таблица с аккаунтами", "Аккаунты, кол-во", {
+              planFulfillment: true,
+            })}
             {accountArr.length ? (
               <Grid size={{ xs: 12, sm: 12 }}>
                 <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
