@@ -996,13 +996,14 @@ class OrderPostRecNew_ extends React.Component {
     };
 
     let res = await this.getData("get_data", data);
+    const itemsNotFound = Array.isArray(res.itemsNotFound) ? res.itemsNotFound : [];
 
     // console.log( res );
 
     this.setState({
       point: value,
-      modalNotFound: true,
-      itemsNotFound: res.itemsNotFound,
+      modalNotFound: itemsNotFound.length > 0,
+      itemsNotFound,
       mainCats: res.mainCats,
       freePf: res.free_pf,
       vendors: res.vendors,
