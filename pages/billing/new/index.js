@@ -2961,8 +2961,8 @@ function VendorItemsTableEdit({ showHeader = true }) {
                     </TableCell>
                     <TableCell className="ceil_white">
                       <MyTextInput
-                        type="number"
-                        inputProps={{ inputMode: "decimal", min: "0", step: "1" }}
+                        type="text"
+                        inputProps={{ inputMode: "decimal" }}
                         isDecimalMask
                         decimalScale={BILLING_PACK_COUNT_SCALE}
                         label=""
