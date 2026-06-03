@@ -878,8 +878,8 @@ class OrderPostRec_TableItemNew extends React.Component {
         sx={{
           "& td": {
             border: 0,
-            backgroundColor: this.props.itemsNotFound?.some((notFoundItem) =>
-              it.name === notFoundItem.name,
+            backgroundColor: this.props.itemsNotFound?.some(
+              (notFoundItem) => it.name === notFoundItem.name,
             )
               ? "rgba(204,0,51,0.34)"
               : "transparent",
@@ -996,13 +996,14 @@ class OrderPostRecNew_ extends React.Component {
     };
 
     let res = await this.getData("get_data", data);
+    const itemsNotFound = Array.isArray(res.itemsNotFound) ? res.itemsNotFound : [];
 
     // console.log( res );
 
     this.setState({
       point: value,
-      modalNotFound: true,
-      itemsNotFound: res.itemsNotFound,
+      modalNotFound: itemsNotFound.length > 0,
+      itemsNotFound,
       mainCats: res.mainCats,
       freePf: res.free_pf,
       vendors: res.vendors,
@@ -1118,21 +1119,17 @@ class OrderPostRecNew_ extends React.Component {
 
   async update() {
     let data = {
-      point_id: this.state.point.id,
+      point_id: this.state.point,
     };
 
-    let res = await this.getData("get_data", data);
+    let res = await this.getData("get_all", data);
 
     // console.log(data);
 
     this.setState({
-      modalNotFound: true,
-      itemsNotFound: res.itemsNotFound,
-      mainCats: res.mainCats,
-      freePf: res.free_pf,
-      vendors: res.vendors,
       items: res.items,
-
+      cats: res.cats,
+      freeItems: res.items_free,
       hist: res.hist,
     });
   }

@@ -169,10 +169,11 @@ const ProgressTimeline = ({ data }) => {
       : `Выполнение цели ${summaryData?.month ?? ""}`;
   const summaryTargetLabel = summaryMode === "period" ? "периода" : (summaryData?.month ?? "");
   const summaryProgressPercentage =
-    Number(summaryData?.factQty) > 0
-      ? (Number(summaryData?.planQty) / Number(summaryData?.factQty)) * 100
+    Number(summaryData?.planQty) > 0
+      ? (Number(summaryData?.factQty) / Number(summaryData?.planQty)) * 100
       : 0;
   const summaryGoalPercent = calculateGoalPercent(summaryData?.planQty, summaryData?.factQty);
+  const isPlanReached = Number(summaryData?.factQty) >= Number(summaryData?.planQty);
   const selectedMonthIndex = summaryMode === "period" ? currentMonthIndex : actualMonthIndex;
 
   return (
@@ -223,11 +224,20 @@ const ProgressTimeline = ({ data }) => {
             variant="body2"
             color="text.secondary"
           >
-            {summaryProgressPercentage.toFixed(1)}% · осталось{" "}
-            {formatNumber((100 - summaryProgressPercentage).toFixed(2))}% до {summaryTargetLabel}
+            {summaryProgressPercentage.toFixed(1)}%
+            {isPlanReached
+              ? " · план выполнен"
+              : ` · осталось ${formatNumber((100 - summaryProgressPercentage).toFixed(2))}% до ${summaryTargetLabel}`}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "error.main" }} />
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: isPlanReached ? "success.main" : "error.main",
+              }}
+            />
             <Typography
               variant="caption"
               color="text.secondary"
@@ -301,7 +311,7 @@ const ProgressTimeline = ({ data }) => {
               </Typography>
               <Typography
                 variant="h6"
-                color="error.main"
+                color={getGoalPercentColor(summaryGoalPercent)}
               >
                 {formatNumber(summaryData.factQty)}
               </Typography>

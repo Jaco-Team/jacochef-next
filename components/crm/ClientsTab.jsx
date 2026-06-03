@@ -13,6 +13,16 @@ import { delivery_types, order_types_all } from "@/components/site_clients/confi
 import { formatYMD } from "@/src/helpers/ui/formatDate";
 import ClientHistoryTable from "@/components/site_clients/history/ClientHistoryTable";
 import React from "react";
+import { FieldWithHint } from "./segmentHints";
+
+const CLIENTS_TAB_HINTS = {
+  orders_count: "Минимум столько заказов у клиента за выбранный период (даты выше).",
+  order_types: "Канал, через который оформлен заказ.",
+  type_client:
+    "Новый — у клиента единственный заказ за всё время; Действующий — больше одного заказа.",
+  segment: "Берётся вся база выбранного сегмента, остальные фильтры сужают её.",
+  day_last: "Не больше указанного числа дней с последнего заказа клиента.",
+};
 
 export const ClientsTab = ({
   form,
@@ -66,12 +76,14 @@ export const ClientsTab = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 3 }}>
-          <MyTextInput
-            type="number"
-            label="Заказов за период, от"
-            value={form.orders_count}
-            func={({ target }) => setField("orders_count", target?.value)}
-          />
+          <FieldWithHint hint={CLIENTS_TAB_HINTS.orders_count}>
+            <MyTextInput
+              type="number"
+              label="Заказов за период, от"
+              value={form.orders_count}
+              func={({ target }) => setField("orders_count", target?.value)}
+            />
+          </FieldWithHint>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 3 }}>
@@ -137,14 +149,16 @@ export const ClientsTab = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 3 }}>
-          <MyAutoCompleteWithAll
-            withAll={true}
-            label="Кто оформил"
-            multiple={true}
-            options={order_types_all}
-            value={form.order_types}
-            onChange={(e) => setField("order_types", e)}
-          />
+          <FieldWithHint hint={CLIENTS_TAB_HINTS.order_types}>
+            <MyAutoCompleteWithAll
+              withAll={true}
+              label="Кто оформил"
+              multiple={true}
+              options={order_types_all}
+              value={form.order_types}
+              onChange={(e) => setField("order_types", e)}
+            />
+          </FieldWithHint>
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <MyAutocomplite
@@ -160,26 +174,30 @@ export const ClientsTab = ({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <MyAutocomplite
-            label="Тип клиента"
-            multiple={false}
-            data={[
-              { id: 1, name: "Все", type: "all" },
-              { id: 2, name: "Новый", type: "new" },
-              { id: 3, name: "Действющий", type: "current" },
-            ]}
-            value={form.type_client}
-            func={(data, value) => setField("type_client", value)}
-          />
+          <FieldWithHint hint={CLIENTS_TAB_HINTS.type_client}>
+            <MyAutocomplite
+              label="Тип клиента"
+              multiple={false}
+              data={[
+                { id: 1, name: "Все", type: "all" },
+                { id: 2, name: "Новый", type: "new" },
+                { id: 3, name: "Действющий", type: "current" },
+              ]}
+              value={form.type_client}
+              func={(data, value) => setField("type_client", value)}
+            />
+          </FieldWithHint>
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <MyAutocomplite
-            label="Сегмент"
-            multiple={false}
-            data={segments}
-            value={form.segment}
-            func={(data, value) => setField("segment", value)}
-          />
+          <FieldWithHint hint={CLIENTS_TAB_HINTS.segment}>
+            <MyAutocomplite
+              label="Сегмент"
+              multiple={false}
+              data={segments}
+              value={form.segment}
+              func={(data, value) => setField("segment", value)}
+            />
+          </FieldWithHint>
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <MyAutocomplite
@@ -191,12 +209,14 @@ export const ClientsTab = ({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <MyTextInput
-            type="number"
-            label="Дней с последнего заказа"
-            value={form.day_last}
-            func={({ target }) => setField("day_last", target?.value)}
-          />
+          <FieldWithHint hint={CLIENTS_TAB_HINTS.day_last}>
+            <MyTextInput
+              type="number"
+              label="Дней с последнего заказа"
+              value={form.day_last}
+              func={({ target }) => setField("day_last", target?.value)}
+            />
+          </FieldWithHint>
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <MyAutoCompleteWithAll

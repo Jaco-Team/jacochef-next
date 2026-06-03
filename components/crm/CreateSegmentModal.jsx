@@ -10,7 +10,6 @@ import {
   Grid,
   IconButton,
   Paper,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { Close, ExpandMore, Tune } from "@mui/icons-material";
@@ -25,7 +24,7 @@ import {
 import dayjs from "dayjs";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
-import InfoIcon from "@mui/icons-material/Info";
+import { SEGMENT_HINTS, FieldWithHint, LabelWithHint, HintIcon } from "./segmentHints";
 
 const orderTypes = [
   { id: 1, name: "Доставка", type: "delivery" },
@@ -377,21 +376,25 @@ export const CreateSegmentModal = ({
             spacing={2}
           >
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Пол"
-                multiple={false}
-                data={genderOptions}
-                value={form.gender}
-                func={(data, value) => setField("gender", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.gender}>
+                <MyAutocomplite
+                  label="Пол"
+                  multiple={false}
+                  data={genderOptions}
+                  value={form.gender}
+                  func={(data, value) => setField("gender", value)}
+                />
+              </FieldWithHint>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyDatePickerNew
-                label="Дата рождения от"
-                value={form.birth_date_start ? dayjs(form.birth_date_start) : null}
-                func={(e) => setField("birth_date_start", e)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.birth_date}>
+                <MyDatePickerNew
+                  label="Дата рождения от"
+                  value={form.birth_date_start ? dayjs(form.birth_date_start) : null}
+                  func={(e) => setField("birth_date_start", e)}
+                />
+              </FieldWithHint>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <MyDatePickerNew
@@ -402,22 +405,26 @@ export const CreateSegmentModal = ({
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="number"
-                label="Дней до дня рождения"
-                value={form.days_before_birthday}
-                func={({ target }) => setField("days_before_birthday", target?.value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.days_before_birthday}>
+                <MyTextInput
+                  type="number"
+                  label="Дней до дня рождения"
+                  value={form.days_before_birthday}
+                  func={({ target }) => setField("days_before_birthday", target?.value)}
+                />
+              </FieldWithHint>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Наличие E-mail"
-                multiple={false}
-                data={emailOptions}
-                value={form.has_email}
-                func={(data, value) => setField("has_email", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.has_email}>
+                <MyAutocomplite
+                  label="Наличие E-mail"
+                  multiple={false}
+                  data={emailOptions}
+                  value={form.has_email}
+                  func={(data, value) => setField("has_email", value)}
+                />
+              </FieldWithHint>
             </Grid>
           </Grid>
 
@@ -426,11 +433,14 @@ export const CreateSegmentModal = ({
             spacing={2}
           >
             <Grid size={{ xs: 12, sm: 12, md: 12 }}>
-              <MyCheckBox
-                label="Согласие на рассылки"
-                value={form.consent_email}
-                func={(e) => setField("consent_email", e.target.checked)}
-              />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <MyCheckBox
+                  label="Согласие на рассылки"
+                  value={form.consent_email}
+                  func={(e) => setField("consent_email", e.target.checked)}
+                />
+                <HintIcon title={SEGMENT_HINTS.consent_email} />
+              </div>
             </Grid>
           </Grid>
         </Section>
@@ -440,12 +450,11 @@ export const CreateSegmentModal = ({
           title="Параметры заказов"
           icon={null}
         >
-          <Typography
-            variant="subtitle2"
-            sx={{ mb: 1, color: "#666" }}
-          >
-            Количество заказов
-          </Typography>
+          <LabelWithHint
+            text="Количество заказов"
+            hint={SEGMENT_HINTS.orders_count}
+            sx={{ mb: 1 }}
+          />
           <Grid
             container
             spacing={2}
@@ -459,12 +468,10 @@ export const CreateSegmentModal = ({
                 onChangeMax={({ target }) => setField("orders_count_max", target?.value)}
               />
             </Grid>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: "#666" }}
-            >
-              Средний чек
-            </Typography>
+            <LabelWithHint
+              text="Средний чек"
+              hint={SEGMENT_HINTS.avg_check}
+            />
             <Grid size={{ xs: 12, sm: 12 }}>
               <RangeInput
                 label="Средний чек"
@@ -474,12 +481,10 @@ export const CreateSegmentModal = ({
                 onChangeMax={({ target }) => setField("avg_check_max", target?.value)}
               />
             </Grid>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: "#666" }}
-            >
-              Сумма заказов
-            </Typography>
+            <LabelWithHint
+              text="Сумма заказов"
+              hint={SEGMENT_HINTS.total_sum}
+            />
             <Grid size={{ xs: 12, sm: 12 }}>
               <RangeInput
                 label="Сумма заказов"
@@ -491,12 +496,11 @@ export const CreateSegmentModal = ({
             </Grid>
           </Grid>
 
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 2, mb: 1, color: "#666" }}
-          >
-            Даты последних заказов
-          </Typography>
+          <LabelWithHint
+            text="Даты последних заказов"
+            hint={SEGMENT_HINTS.last_order_date}
+            sx={{ mt: 2, mb: 1 }}
+          />
           <Grid
             container
             spacing={2}
@@ -516,12 +520,10 @@ export const CreateSegmentModal = ({
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 12, md: 12 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ color: "#666" }}
-              >
-                Даты первых заказов
-              </Typography>
+              <LabelWithHint
+                text="Даты первых заказов"
+                hint={SEGMENT_HINTS.first_order_date}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <MyDatePickerNew
@@ -546,30 +548,36 @@ export const CreateSegmentModal = ({
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-              <MyTextInput
-                type="number"
-                label="Дней с последнего заказа"
-                value={form.days_from_last}
-                func={({ target }) => setField("days_from_last", target?.value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.days_from_last}>
+                <MyTextInput
+                  type="number"
+                  label="Дней с последнего заказа"
+                  value={form.days_from_last}
+                  func={({ target }) => setField("days_from_last", target?.value)}
+                />
+              </FieldWithHint>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-              <MyTextInput
-                type="number"
-                label="Дней с первого заказа"
-                value={form.days_from_first}
-                func={({ target }) => setField("days_from_first", target?.value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.days_from_first}>
+                <MyTextInput
+                  type="number"
+                  label="Дней с первого заказа"
+                  value={form.days_from_first}
+                  func={({ target }) => setField("days_from_first", target?.value)}
+                />
+              </FieldWithHint>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="number"
-                label="Период (за последние N дней)"
-                value={form.period_days}
-                func={({ target }) => setField("period_days", target?.value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.period_days}>
+                <MyTextInput
+                  type="number"
+                  label="Период (за последние N дней)"
+                  value={form.period_days}
+                  func={({ target }) => setField("period_days", target?.value)}
+                />
+              </FieldWithHint>
             </Grid>
           </Grid>
 
@@ -584,43 +592,51 @@ export const CreateSegmentModal = ({
             spacing={2}
           >
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Категории в заказе"
-                multiple={true}
-                disabled={form.items?.length}
-                data={categories}
-                value={form.categories}
-                func={(data, value) => setField("categories", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.categories}>
+                <MyAutocomplite
+                  label="Категории в заказе"
+                  multiple={true}
+                  disabled={form.items?.length}
+                  data={categories}
+                  value={form.categories}
+                  func={(data, value) => setField("categories", value)}
+                />
+              </FieldWithHint>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Позиции в заказе"
-                multiple={true}
-                disabled={form.categories?.length}
-                data={items}
-                value={form.items}
-                func={(data, value) => setField("items", value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyTextInput
-                type="text"
-                label="Промокод"
-                value={form.promo}
-                func={({ target }) => setField("promo", target?.value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.items}>
+                <MyAutocomplite
+                  label="Позиции в заказе"
+                  multiple={true}
+                  disabled={form.categories?.length}
+                  data={items}
+                  value={form.items}
+                  func={(data, value) => setField("items", value)}
+                />
+              </FieldWithHint>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <MyAutocomplite
-                label="Тип заказа"
-                multiple={true}
-                data={orderTypes}
-                value={form.order_types}
-                func={(data, value) => setField("order_types", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.promo}>
+                <MyTextInput
+                  type="text"
+                  label="Промокод"
+                  value={form.promo}
+                  func={({ target }) => setField("promo", target?.value)}
+                />
+              </FieldWithHint>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <FieldWithHint hint={SEGMENT_HINTS.order_types}>
+                <MyAutocomplite
+                  label="Тип заказа"
+                  multiple={true}
+                  data={orderTypes}
+                  value={form.order_types}
+                  func={(data, value) => setField("order_types", value)}
+                />
+              </FieldWithHint>
             </Grid>
             <Grid size={{ xs: 12, sm: 12, md: 12 }}>
               <div style={{ display: "flex", alignItems: "center" }}>
@@ -629,12 +645,7 @@ export const CreateSegmentModal = ({
                   value={form.strict_search}
                   func={(e) => setField("strict_search", e.target.checked)}
                 />
-                <Tooltip
-                  title="Будем искать заказы, где только выбранные позиции / категории"
-                  arrow
-                >
-                  <InfoIcon />
-                </Tooltip>
+                <HintIcon title={SEGMENT_HINTS.strict_search} />
               </div>
             </Grid>
           </Grid>
@@ -650,23 +661,27 @@ export const CreateSegmentModal = ({
             spacing={2}
           >
             <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Город"
-                multiple={true}
-                data={cities}
-                value={form.cities}
-                func={(data, value) => setField("cities", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.cities}>
+                <MyAutocomplite
+                  label="Город"
+                  multiple={true}
+                  data={cities}
+                  value={form.cities}
+                  func={(data, value) => setField("cities", value)}
+                />
+              </FieldWithHint>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Адрес кафе"
-                multiple={true}
-                data={filteredPoints}
-                value={form.points}
-                func={(data, value) => setField("points", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.points}>
+                <MyAutocomplite
+                  label="Адрес кафе"
+                  multiple={true}
+                  data={filteredPoints}
+                  value={form.points}
+                  func={(data, value) => setField("points", value)}
+                />
+              </FieldWithHint>
             </Grid>
           </Grid>
         </Section>
@@ -681,13 +696,15 @@ export const CreateSegmentModal = ({
             spacing={2}
           >
             <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Источник"
-                multiple={true}
-                data={sources}
-                value={form.sources}
-                func={(data, value) => setField("sources", value)}
-              />
+              <FieldWithHint hint={SEGMENT_HINTS.sources}>
+                <MyAutocomplite
+                  label="Источник"
+                  multiple={true}
+                  data={sources}
+                  value={form.sources}
+                  func={(data, value) => setField("sources", value)}
+                />
+              </FieldWithHint>
             </Grid>
           </Grid>
         </Section>
@@ -699,9 +716,10 @@ export const CreateSegmentModal = ({
         >
           <Typography
             variant="caption"
-            sx={{ mb: 2, display: "block", color: "#999" }}
+            sx={{ mb: 2, display: "flex", alignItems: "center", color: "#999" }}
           >
             Минимум одно поле должно быть заполнено
+            <HintIcon title={SEGMENT_HINTS.utm} />
           </Typography>
           <Grid
             container
