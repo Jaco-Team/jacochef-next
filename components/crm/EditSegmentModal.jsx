@@ -41,6 +41,7 @@ const genderOptions = [
   { id: 1, name: "Все", type: "all", value: "all" },
   { id: 2, name: "Мужчина", type: "male", value: "male" },
   { id: 3, name: "Женщина", type: "female", value: "female" },
+  { id: 4, name: "Не указан", type: "not_specified", value: "not_specified" },
 ];
 
 const emailConsentOptions = [
@@ -156,6 +157,7 @@ export const EditSegmentModal = ({
     last_order_date_end: null,
     first_order_date_start: null,
     first_order_date_end: null,
+    days_from_last_min: "",
     days_from_last: "",
     days_from_first: "",
     period_days: "",
@@ -207,6 +209,7 @@ export const EditSegmentModal = ({
         last_order_date_end: segmentData.last_order_date_end || null,
         first_order_date_start: segmentData.first_order_date_start || null,
         first_order_date_end: segmentData.first_order_date_end || null,
+        days_from_last_min: segmentData.days_from_last_min || "",
         days_from_last: segmentData.days_from_last || "",
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
@@ -252,6 +255,7 @@ export const EditSegmentModal = ({
       form.total_sum_max ||
       form.last_order_date_start ||
       form.first_order_date_start ||
+      form.days_from_last_min ||
       form.days_from_last ||
       form.days_from_first ||
       form.period_days ||
@@ -348,6 +352,7 @@ export const EditSegmentModal = ({
         last_order_date_end: segmentData.last_order_date_end || null,
         first_order_date_start: segmentData.first_order_date_start || null,
         first_order_date_end: segmentData.first_order_date_end || null,
+        days_from_last_min: segmentData.days_from_last_min || "",
         days_from_last: segmentData.days_from_last || "",
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
@@ -620,7 +625,17 @@ export const EditSegmentModal = ({
                 <FieldWithHint hint={SEGMENT_HINTS.days_from_last}>
                   <MyTextInput
                     type="number"
-                    label="Дней с последнего заказа"
+                    label="Дней с последнего заказа от"
+                    value={form.days_from_last_min}
+                    func={({ target }) => setField("days_from_last_min", target?.value)}
+                  />
+                </FieldWithHint>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                <FieldWithHint hint={SEGMENT_HINTS.days_from_last}>
+                  <MyTextInput
+                    type="number"
+                    label="Дней с последнего заказа до"
                     value={form.days_from_last}
                     func={({ target }) => setField("days_from_last", target?.value)}
                   />

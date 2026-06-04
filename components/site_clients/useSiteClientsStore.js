@@ -73,6 +73,7 @@ const defaultState = {
   gender: {},
   segment: {},
   day_last: 0,
+  day_first: 0,
   categories: [],
 
   date_start: dayjs().format("YYYY-MM-DD"),
