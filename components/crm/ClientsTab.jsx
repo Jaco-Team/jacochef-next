@@ -277,10 +277,14 @@ export const ClientsTab = ({
         </Grid>
       </Grid>
       {!!clientHistory.length ? (
-        <div style={{ padding: "24px" }}>
+        <div>
           <ClientHistoryTable
             columns={columns}
             rows={clientHistory}
+            tableContainerSx={{
+              maxHeight: "none",
+              overflowY: "visible",
+            }}
           />
         </div>
       ) : (
