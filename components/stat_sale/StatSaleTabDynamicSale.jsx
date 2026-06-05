@@ -184,6 +184,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             planQty: value.pizza_plan,
             planLoad: calcPercent(value.pizza, value.pizza_plan),
             factQty: value.pizza,
+            planFact: value.pizza_plan_fact,
             factDynPct: calcPercent(
               toNumber(value.pizza) - toNumber(prevMonth.pizza),
               prevMonth.pizza,
@@ -199,6 +200,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             planQty: value.rolly_plan,
             planLoad: calcPercent(value.rolly, value.rolly_plan),
             factQty: value.rolly,
+            planFact: value.rolly_plan_fact,
             factDynPct: calcPercent(
               toNumber(value.rolly) - toNumber(prevMonth?.rolly),
               prevMonth?.rolly,
@@ -258,9 +260,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
   renderPizzaTable(pizzaArr, title, subTitle, options = {}) {
     const { planFulfillment = false } = options;
     const getSafeNumber = (value) => {
-      const parsed = Number(value);
+      const parsed = Number(String(value ?? "").replace(",", "."));
       return Number.isFinite(parsed) ? parsed : 0;
     };
+    const hasPlanFact = pizzaArr.some((row) => row.planFact !== null && row.planFact !== undefined);
 
     const formatPercent = (value) => `${getSafeNumber(value).toFixed(2)}%`;
 
@@ -325,7 +328,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                   План
                 </TableCell>
                 <TableCell
-                  colSpan={4}
+                  colSpan={hasPlanFact ? 5 : 4}
                   sx={{ ...cellSx, backgroundColor: "#e3f2fd" }}
                 >
                   {subTitle}
@@ -333,7 +336,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               </TableRow>
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={hasPlanFact ? 5 : 4}
                   sx={{ ...cellSx, backgroundColor: "#fff3e0" }}
                 >
                   Факт
@@ -350,6 +353,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
                   {planFulfillment ? "п/ф" : "Загрузка"}
                 </TableCell>
+                {hasPlanFact && <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>п/ф</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -488,6 +492,30 @@ class StatSale_Tab_DynamicSale extends React.Component {
                       }
                     />
                   </TableCell>
+                  {hasPlanFact && (
+                    <TableCell
+                      sx={{
+                        ...bodyCellSx,
+                        backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+                      }}
+                    >
+                      <Chip
+                        label={formatPercent(row.planFact)}
+                        size="small"
+                        sx={{
+                          backgroundColor:
+                            getSafeNumber(row.planFact) >= 100 ? "#4caf50" : "#f44336",
+                          color: "white",
+                          fontWeight: "bold",
+                          fontSize: "0.75rem",
+                          minWidth: "70px",
+                          "& .MuiChip-label": {
+                            padding: "4px 8px",
+                          },
+                        }}
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

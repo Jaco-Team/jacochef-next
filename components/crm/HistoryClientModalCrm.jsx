@@ -209,8 +209,8 @@ function HistoryClientModalCrm({ canAccess, showAlert, openOrder, open, onClose 
 
     setForm((f) => ({
       ...f,
-      date_start: f.date_start ?? range.start,
-      date_end: f.date_end ?? range.end,
+      date_start: range.start,
+      date_end: range.end,
     }));
   }, [client?.client_orders]);
 

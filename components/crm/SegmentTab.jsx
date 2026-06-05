@@ -48,7 +48,8 @@ const fieldLabels = {
   total_sum_max: "Сумма покупок (макс)",
   last_order_date_start: "Последний заказ (от)",
   last_order_date_end: "Последний заказ (до)",
-  days_from_last: "Дней с последнего заказа",
+  days_from_last_min: "Дней с последнего заказа (от)",
+  days_from_last: "Дней с последнего заказа (до)",
   days_from_first: "Дней с первого заказа",
   period_days: "Период активности",
   categories: "Категории",
@@ -67,6 +68,16 @@ const fieldLabels = {
 // Функция форматирования значений
 const formatValue = (key, value) => {
   if (value === null || value === undefined) return null;
+
+  if (key === "gender") {
+    const genderLabels = {
+      all: "Все",
+      male: "Мужчина",
+      female: "Женщина",
+      not_specified: "Не указан",
+    };
+    return genderLabels[value] || value;
+  }
 
   // Булевы значения
   if (["has_email", "consent_email", "consent_sms", "consent_push"].includes(key)) {

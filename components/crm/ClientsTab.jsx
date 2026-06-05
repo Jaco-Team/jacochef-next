@@ -1,4 +1,17 @@
-import { Button, Grid, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import {
   MyAutoCompleteWithAll,
@@ -8,21 +21,13 @@ import {
   MyTextInput,
 } from "@/ui/Forms";
 import dayjs from "dayjs";
-import { Clear, Download } from "@mui/icons-material";
+import { Clear, Download, Settings } from "@mui/icons-material";
 import { delivery_types, order_types_all } from "@/components/site_clients/config";
 import { formatYMD } from "@/src/helpers/ui/formatDate";
 import ClientHistoryTable from "@/components/site_clients/history/ClientHistoryTable";
 import React from "react";
-import { FieldWithHint } from "./segmentHints";
 
-const CLIENTS_TAB_HINTS = {
-  orders_count: "Минимум столько заказов у клиента за выбранный период (даты выше).",
-  order_types: "Канал, через который оформлен заказ.",
-  type_client:
-    "Новый — у клиента единственный заказ за всё время; Действующий — больше одного заказа.",
-  segment: "Берётся вся база выбранного сегмента, остальные фильтры сужают её.",
-  day_last: "Не больше указанного числа дней с последнего заказа клиента.",
-};
+const TABLE_COLUMNS_STORAGE_KEY = "crm_clients_table_columns";
 
 export const ClientsTab = ({
   form,
@@ -38,6 +43,55 @@ export const ClientsTab = ({
   exportXLSX,
   canAccess,
 }) => {
+  const defaultColumnKeys = React.useMemo(() => columns.map((column) => column.key), [columns]);
+  const [tableSettingsOpen, setTableSettingsOpen] = React.useState(false);
+  const [visibleColumnKeys, setVisibleColumnKeys] = React.useState(defaultColumnKeys);
+
+  React.useEffect(() => {
+    if (!defaultColumnKeys.length) return;
+
+    const savedColumns = localStorage.getItem(TABLE_COLUMNS_STORAGE_KEY);
+
+    if (!savedColumns) {
+      setVisibleColumnKeys(defaultColumnKeys);
+      return;
+    }
+
+    try {
+      const parsedColumns = JSON.parse(savedColumns);
+      const availableKeys = new Set(defaultColumnKeys);
+      const nextVisibleColumns = parsedColumns.filter((key) => availableKeys.has(key));
+      setVisibleColumnKeys(nextVisibleColumns.length ? nextVisibleColumns : defaultColumnKeys);
+    } catch {
+      setVisibleColumnKeys(defaultColumnKeys);
+    }
+  }, [defaultColumnKeys]);
+
+  React.useEffect(() => {
+    if (visibleColumnKeys.length) {
+      localStorage.setItem(TABLE_COLUMNS_STORAGE_KEY, JSON.stringify(visibleColumnKeys));
+    }
+  }, [visibleColumnKeys]);
+
+  const visibleColumns = React.useMemo(
+    () => columns.filter((column) => visibleColumnKeys.includes(column.key)),
+    [columns, visibleColumnKeys],
+  );
+
+  const toggleColumn = (key) => {
+    setVisibleColumnKeys((prev) => {
+      if (!prev.includes(key)) {
+        return [...prev, key];
+      }
+
+      if (prev.length === 1) {
+        return prev;
+      }
+
+      return prev.filter((columnKey) => columnKey !== key);
+    });
+  };
+
   return (
     <>
       <Grid
@@ -76,14 +130,12 @@ export const ClientsTab = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 3 }}>
-          <FieldWithHint hint={CLIENTS_TAB_HINTS.orders_count}>
-            <MyTextInput
-              type="number"
-              label="Заказов за период, от"
-              value={form.orders_count}
-              func={({ target }) => setField("orders_count", target?.value)}
-            />
-          </FieldWithHint>
+          <MyTextInput
+            type="number"
+            label="Заказов за период, от"
+            value={form.orders_count}
+            func={({ target }) => setField("orders_count", target?.value)}
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 3 }}>
@@ -149,16 +201,14 @@ export const ClientsTab = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 3 }}>
-          <FieldWithHint hint={CLIENTS_TAB_HINTS.order_types}>
-            <MyAutoCompleteWithAll
-              withAll={true}
-              label="Кто оформил"
-              multiple={true}
-              options={order_types_all}
-              value={form.order_types}
-              onChange={(e) => setField("order_types", e)}
-            />
-          </FieldWithHint>
+          <MyAutoCompleteWithAll
+            withAll={true}
+            label="Кто оформил"
+            multiple={true}
+            options={order_types_all}
+            value={form.order_types}
+            onChange={(e) => setField("order_types", e)}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <MyAutocomplite
@@ -168,36 +218,33 @@ export const ClientsTab = ({
               { id: 1, name: "Все", type: "all" },
               { id: 2, name: "Мужчина", type: "male" },
               { id: 3, name: "Женщина", type: "female" },
+              { id: 4, name: "Не указан", type: "not_specified" },
             ]}
             value={form.gender}
             func={(data, value) => setField("gender", value)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <FieldWithHint hint={CLIENTS_TAB_HINTS.type_client}>
-            <MyAutocomplite
-              label="Тип клиента"
-              multiple={false}
-              data={[
-                { id: 1, name: "Все", type: "all" },
-                { id: 2, name: "Новый", type: "new" },
-                { id: 3, name: "Действющий", type: "current" },
-              ]}
-              value={form.type_client}
-              func={(data, value) => setField("type_client", value)}
-            />
-          </FieldWithHint>
+          <MyAutocomplite
+            label="Тип клиента"
+            multiple={false}
+            data={[
+              { id: 1, name: "Все", type: "all" },
+              { id: 2, name: "Новый", type: "new" },
+              { id: 3, name: "Действующий", type: "current" },
+            ]}
+            value={form.type_client}
+            func={(data, value) => setField("type_client", value)}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <FieldWithHint hint={CLIENTS_TAB_HINTS.segment}>
-            <MyAutocomplite
-              label="Сегмент"
-              multiple={false}
-              data={segments}
-              value={form.segment}
-              func={(data, value) => setField("segment", value)}
-            />
-          </FieldWithHint>
+          <MyAutocomplite
+            label="Сегмент"
+            multiple={false}
+            data={segments}
+            value={form.segment}
+            func={(data, value) => setField("segment", value)}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <MyAutocomplite
@@ -209,14 +256,20 @@ export const ClientsTab = ({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <FieldWithHint hint={CLIENTS_TAB_HINTS.day_last}>
-            <MyTextInput
-              type="number"
-              label="Дней с последнего заказа"
-              value={form.day_last}
-              func={({ target }) => setField("day_last", target?.value)}
-            />
-          </FieldWithHint>
+          <MyTextInput
+            type="number"
+            label="Дней с последнего заказа"
+            value={form.day_last}
+            func={({ target }) => setField("day_last", target?.value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyTextInput
+            type="number"
+            label="Дней с первого заказа"
+            value={form.day_first}
+            func={({ target }) => setField("day_first", target?.value)}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <MyAutoCompleteWithAll
@@ -254,6 +307,15 @@ export const ClientsTab = ({
           >
             Показать
           </Button>
+          {!!columns.length && (
+            <Button
+              variant="outlined"
+              onClick={() => setTableSettingsOpen(true)}
+              sx={{ minWidth: 44 }}
+            >
+              <Settings />
+            </Button>
+          )}
 
           {canAccess("download_file") && clientHistory?.length > 0 && (
             <Tooltip title={<Typography>{"Скачать таблицу в Excel"}</Typography>}>
@@ -276,11 +338,48 @@ export const ClientsTab = ({
           )}
         </Grid>
       </Grid>
+      <Dialog
+        open={tableSettingsOpen}
+        onClose={() => setTableSettingsOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Настройка вида таблицы</DialogTitle>
+        <DialogContent dividers>
+          <Stack>
+            {columns.map((column) => (
+              <FormControlLabel
+                key={column.key}
+                control={
+                  <Checkbox
+                    checked={visibleColumnKeys.includes(column.key)}
+                    onChange={() => toggleColumn(column.key)}
+                  />
+                }
+                label={column.label}
+              />
+            ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVisibleColumnKeys(defaultColumnKeys)}>Сбросить</Button>
+          <Button
+            variant="contained"
+            onClick={() => setTableSettingsOpen(false)}
+          >
+            Готово
+          </Button>
+        </DialogActions>
+      </Dialog>
       {!!clientHistory.length ? (
-        <div style={{ padding: "24px" }}>
+        <div>
           <ClientHistoryTable
-            columns={columns}
+            columns={visibleColumns}
             rows={clientHistory}
+            tableContainerSx={{
+              maxHeight: "none",
+              overflowY: "visible",
+            }}
           />
         </div>
       ) : (

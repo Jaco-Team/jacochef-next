@@ -16,7 +16,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import { memo, useMemo, useState } from "react";
 import { useClientHistoryStore } from "./useClientHistoryStore";
 
-const ClientHistoryTable = ({ columns, rows }) => {
+const ClientHistoryTable = ({ columns, rows, tableContainerSx = {} }) => {
   const [orderBy, setOrderBy] = useState("date_time_order"); // one of column keys
   const [orderDir, setOrderDir] = useState("desc");
 
@@ -63,7 +63,7 @@ const ClientHistoryTable = ({ columns, rows }) => {
     <>
       <TableContainer
         component={Paper}
-        sx={{ mt: 3, maxHeight: "45dvh" }}
+        sx={{ mt: 3, maxHeight: "45dvh", ...tableContainerSx }}
       >
         <Table
           size="small"
