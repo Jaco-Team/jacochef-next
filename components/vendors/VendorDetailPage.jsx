@@ -34,6 +34,7 @@ import TabLocations from "./tabs/TabLocations";
 import TabProducts from "./tabs/TabProducts";
 import TabDocuments from "./tabs/TabDocuments";
 import TabHistory from "./tabs/TabHistory";
+import TabVendorPrices from "./tabs/TabVendorPrices";
 import ModalAddDeclaration from "./ModalAddDeclaration";
 import VendorInfoEditorDialog from "./VendorInfoEditorDialog";
 import VendorPointMailsDialog from "./VendorPointMailsDialog";
@@ -41,6 +42,7 @@ import useVendorAccess from "./useVendorAccess";
 import useVendorDetailsPage from "./useVendorDetailsPage";
 import useVendorDetailsStore from "./useVendorDetailsStore";
 import useVendorsStore from "./useVendorsStore";
+import ArchiveIcon from "@mui/icons-material/Archive";
 
 const TAB_DEFINITIONS = [
   { index: 0, key: "overview", label: "Обзор", icon: <SummarizeOutlinedIcon fontSize="small" /> },
@@ -58,12 +60,18 @@ const TAB_DEFINITIONS = [
   },
   {
     index: 3,
+    key: "cost",
+    label: "Цены поставщика",
+    icon: <ArchiveIcon fontSize="small" />,
+  },
+  {
+    index: 4,
     key: "documents",
     label: "Документы",
     icon: <DescriptionOutlinedIcon fontSize="small" />,
   },
   {
-    index: 4,
+    index: 5,
     key: "history",
     label: "История",
     icon: <HistoryOutlinedIcon fontSize="small" />,
@@ -392,6 +400,15 @@ export default function VendorDetailPage() {
                   value={activeTab}
                   index={3}
                 >
+                  <TabVendorPrices
+                    canEdit={canEdit}
+                    vendorId={vendorId}
+                  />
+                </TabPanel>
+                <TabPanel
+                  value={activeTab}
+                  index={4}
+                >
                   <TabDocuments
                     canUpload={canUpload}
                     canEditDeclaration={canEditDeclaration}
@@ -405,7 +422,7 @@ export default function VendorDetailPage() {
                 </TabPanel>
                 <TabPanel
                   value={activeTab}
-                  index={4}
+                  index={5}
                 >
                   <TabHistory />
                 </TabPanel>
