@@ -632,7 +632,7 @@ export const EditSegmentModal = ({
                 </FieldWithHint>
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                <FieldWithHint hint={SEGMENT_HINTS.days_from_last}>
+                <FieldWithHint hint={SEGMENT_HINTS.days_from_last_max}>
                   <MyTextInput
                     type="number"
                     label="Дней с последнего заказа до"
