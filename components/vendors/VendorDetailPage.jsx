@@ -92,7 +92,8 @@ function getTabQueryFromIndex(index) {
 export default function VendorDetailPage() {
   const router = useRouter();
   const vendorId = Number(router.query.id);
-  const { canEdit, canUpload, canDeleteDeclaration, canEditDeclaration } = useVendorAccess();
+  const { canEdit, canUpload, canDeleteDeclaration, canEditDeclaration, canEditСost } =
+    useVendorAccess();
   const setLoading = useVendorsStore((state) => state.setLoading);
   const [isInfoDialogOpen, setIsInfoDialogOpen] = useState(false);
   const [isPointMailsDialogOpen, setIsPointMailsDialogOpen] = useState(false);
@@ -114,6 +115,7 @@ export default function VendorDetailPage() {
     closeAlert,
     closeDocModal,
     handleAddVendorItem,
+    handleUploadDeclaration,
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
@@ -383,8 +385,10 @@ export default function VendorDetailPage() {
                     canEdit={canEdit}
                     canEditDeclaration={canEditDeclaration}
                     canUpload={canUpload}
+                    canEditСost={canEditСost}
                     getItemVendorOptions={getItemVendorOptions}
                     handleAddVendorItem={handleAddVendorItem}
+                    handleUploadDeclaration={handleUploadDeclaration}
                     handleRemoveVendorItem={handleRemoveVendorItem}
                     handleSaveDeclaration={handleSaveDeclaration}
                     loadItemVendors={loadItemVendors}

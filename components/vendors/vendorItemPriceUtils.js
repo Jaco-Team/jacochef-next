@@ -28,7 +28,9 @@ export const formatUnitPriceLabel = (item) => {
   }
 
   const unit = item?.ei_name || "шт";
-  return `${String(unitPrice).replace(".", ",")} ₽/${unit}`;
+  const roundedPrice = Math.round(unitPrice * 100) / 100;
+  const formattedPrice = roundedPrice.toFixed(2).replace(".", ",");
+  return `${formattedPrice} ₽/${unit}`;
 };
 
 export const formatPackPriceLabel = (value) => formatMoney(value);

@@ -25,14 +25,10 @@ const useVendorItemPriceStore = create((set) => ({
 
   setIsLoading: (isLoading) => set({ isLoading: Boolean(isLoading) }),
 
-  setBootstrap: (cities = []) => set({ cities }),
-
   setCity: (city) =>
     set({
       city,
       items: [],
-      vendorCities: [],
-      selectedVendorCities: [],
       expandedItemId: null,
       editingItemId: null,
       editDraft: null,
@@ -41,6 +37,7 @@ const useVendorItemPriceStore = create((set) => ({
   setVendorItems: ({ items = [], vendorCities = [], selectedVendorCities = [] }) =>
     set({
       items,
+      cities: vendorCities,
       vendorCities,
       selectedVendorCities,
       expandedItemId: null,

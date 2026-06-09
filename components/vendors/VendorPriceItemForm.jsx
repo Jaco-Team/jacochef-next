@@ -33,7 +33,7 @@ export default function VendorPriceItemForm({
           variant="subtitle1"
           sx={{ fontWeight: 700, mb: 2 }}
         >
-          Редактирование цены{cityLabel ? ` · ${cityLabel}` : ""}
+          Редактирование цены {cityLabel ? ` · ${cityLabel}` : ""}
         </Typography>
       )}
 

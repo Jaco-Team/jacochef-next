@@ -132,8 +132,10 @@ export default function TabProducts({
   canEdit,
   canEditDeclaration,
   canUpload,
+  canEditСost,
   getItemVendorOptions,
   handleAddVendorItem,
+  handleUploadDeclaration,
   handleRemoveVendorItem,
   handleSaveDeclaration,
   loadItemVendors,
@@ -147,8 +149,8 @@ export default function TabProducts({
   const {
     alertMessage,
     alertStatus,
-    cities,
     city,
+    citySelectOptions,
     closeAlert,
     editDraft,
     enrichedItems,
@@ -177,6 +179,8 @@ export default function TabProducts({
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
+  const [declarationFile, setDeclarationFile] = useState(null);
+  const [declarationExpiresAt, setDeclarationExpiresAt] = useState(null);
   const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState([]);
   const [editableDeclaration, setEditableDeclaration] = useState(null);
   const hasProductActions = canEdit || canUpload;
@@ -224,15 +228,24 @@ export default function TabProducts({
   const handleCloseAddModal = () => {
     setIsAddProductModalOpen(false);
     setSelectedCatalogItemId("");
+    setDeclarationFile(null);
+    setDeclarationExpiresAt(null);
   };
 
   const handleConfirmAdd = async () => {
-    const result = await handleAddVendorItem(selectedCatalogItemId);
+    const catalogItemId = selectedCatalogItemId;
+    const result = await handleAddVendorItem(catalogItemId);
 
-    if (result !== false) {
-      await reloadItems();
-      handleCloseAddModal();
+    if (result === false) {
+      return;
     }
+
+    if (declarationFile && canUpload) {
+      await handleUploadDeclaration(catalogItemId, declarationFile, declarationExpiresAt);
+    }
+
+    await reloadItems();
+    handleCloseAddModal();
   };
 
   const handleOpenDeclaration = (event, url) => {
@@ -385,7 +398,7 @@ export default function TabProducts({
               </Grid>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <MySelect
-                  data={cities}
+                  data={citySelectOptions}
                   value={city}
                   func={handleCityChange}
                   is_none={false}
@@ -611,7 +624,7 @@ export default function TabProducts({
                                 >
                                   {canEdit && city ? (
                                     <VendorPriceItemForm
-                                      canEdit={canEdit}
+                                      canEdit={canEditСost}
                                       cityLabel={selectedCityName}
                                       draft={editDraft}
                                       isLoading={isPriceLoading}
@@ -778,6 +791,11 @@ export default function TabProducts({
         selectedCatalogItemId={selectedCatalogItemId}
         setSelectedCatalogItemId={setSelectedCatalogItemId}
         vendorItemIds={vendorItemIds}
+        canUpload={canUpload}
+        declarationFile={declarationFile}
+        declarationExpiresAt={declarationExpiresAt}
+        onDeclarationFileChange={setDeclarationFile}
+        onDeclarationExpiresAtChange={setDeclarationExpiresAt}
       />
     </>
   );

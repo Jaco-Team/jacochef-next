@@ -22,8 +22,8 @@ export default function useVendorItemPricePage(vendorId) {
   const vendor = useVendorDetailsStore((state) => state.vendor);
   const allItems = useVendorDetailsStore((state) => state.allItems || []);
   const vendorItems = useVendorDetailsStore((state) => state.vendorItems || []);
+  const detailsVendorCities = useVendorDetailsStore((state) => state.vendorCities || []);
   const {
-    cities,
     city,
     items,
     vendorCities,
@@ -52,7 +52,6 @@ export default function useVendorItemPricePage(vendorId) {
     setVendorItems,
   } = useVendorItemPriceStore(
     useShallow((state) => ({
-      cities: state.cities,
       city: state.city,
       items: state.items,
       vendorCities: state.vendorCities,
@@ -124,10 +123,12 @@ export default function useVendorItemPricePage(vendorId) {
     return options.sort((a, b) => a.name.localeCompare(b.name));
   }, [allItems, pricedItemIds, vendorItems]);
 
+  const citySelectOptions = useMemo(() => vendorCities, [vendorCities]);
+
   const selectedCityName = useMemo(() => {
-    const match = cities.find((entry) => String(entry.id) === String(city));
+    const match = citySelectOptions.find((entry) => String(entry.id) === String(city));
     return match?.name || "";
-  }, [cities, city]);
+  }, [city, citySelectOptions]);
 
   const requestPriceApi = useCallback(async (method, data = {}) => {
     const resolvedMethod = resolveVendorPriceApiMethod(method);
@@ -164,13 +165,12 @@ export default function useVendorItemPricePage(vendorId) {
       return false;
     }
 
-    const selectedForCity = useVendorItemPriceStore
-      .getState()
-      .cities.filter((entry) => Number(entry.id) === Number(city));
+    const availableCities = response.vendor_cities || [];
+    const selectedForCity = availableCities.filter((entry) => Number(entry.id) === Number(city));
 
     setVendorItems({
       items: response.items || [],
-      vendorCities: response.vendor_cities || [],
+      vendorCities: availableCities,
       selectedVendorCities: selectedForCity,
     });
 
@@ -184,48 +184,46 @@ export default function useVendorItemPricePage(vendorId) {
   }, []);
 
   useEffect(() => {
-    if (!vendorId) {
+    if (!vendorId || !detailsVendorCities.length) {
       return undefined;
     }
 
-    const { reset, setIsLoading, setBootstrap } = useVendorItemPriceStore.getState();
+    const { reset, setIsLoading } = useVendorItemPriceStore.getState();
     reset();
 
     const requestId = bootstrapRequestRef.current + 1;
     bootstrapRequestRef.current = requestId;
     let isMounted = true;
+    const initialCityId = String(detailsVendorCities[0].id);
 
     const loadBootstrap = async () => {
       setIsLoading(true);
       try {
-        const response = await requestPriceApi(VENDOR_PRICE_API.GET_CONTEXT);
+        const itemsResponse = await requestPriceApi(VENDOR_PRICE_API.LIST_ITEMS, {
+          city: initialCityId,
+          vendor_id: vendorId,
+        });
+
         if (!isMounted || requestId !== bootstrapRequestRef.current) {
           return;
         }
 
-        if (response?.cities?.length) {
-          const firstCityId = String(response.cities[0].id);
-          setBootstrap(response.cities);
+        const availableCities = itemsResponse?.vendor_cities || [];
+        const resolvedCityId = availableCities.some((entry) => String(entry.id) === initialCityId)
+          ? initialCityId
+          : String(availableCities[0]?.id || "");
+        const selectedForCity = availableCities.filter(
+          (entry) => Number(entry.id) === Number(resolvedCityId),
+        );
 
-          const itemsResponse = await requestPriceApi(VENDOR_PRICE_API.LIST_ITEMS, {
-            city: firstCityId,
-            vendor_id: vendorId,
-          });
+        useVendorItemPriceStore.getState().setVendorItems({
+          items: itemsResponse?.items || [],
+          vendorCities: availableCities,
+          selectedVendorCities: selectedForCity,
+        });
 
-          if (!isMounted || requestId !== bootstrapRequestRef.current) {
-            return;
-          }
-
-          const selectedForCity = response.cities.filter(
-            (entry) => Number(entry.id) === Number(firstCityId),
-          );
-
-          useVendorItemPriceStore.setState({
-            city: firstCityId,
-            items: itemsResponse?.items || [],
-            vendorCities: itemsResponse?.vendor_cities || [],
-            selectedVendorCities: selectedForCity,
-          });
+        if (resolvedCityId) {
+          useVendorItemPriceStore.setState({ city: resolvedCityId });
         }
       } catch (error) {
         if (isMounted) {
@@ -243,7 +241,7 @@ export default function useVendorItemPricePage(vendorId) {
     return () => {
       isMounted = false;
     };
-  }, [requestPriceApi, vendorId]);
+  }, [detailsVendorCities, requestPriceApi, vendorId]);
 
   const handleCityChange = useCallback(
     async (event) => {
@@ -263,13 +261,14 @@ export default function useVendorItemPricePage(vendorId) {
         return;
       }
 
-      const selectedForCity = useVendorItemPriceStore
-        .getState()
-        .cities.filter((entry) => Number(entry.id) === Number(nextCity));
+      const availableCities = response.vendor_cities || [];
+      const selectedForCity = availableCities.filter(
+        (entry) => Number(entry.id) === Number(nextCity),
+      );
 
       setVendorItems({
         items: response.items || [],
-        vendorCities: response.vendor_cities || [],
+        vendorCities: availableCities,
         selectedVendorCities: selectedForCity,
       });
     },
@@ -647,8 +646,8 @@ export default function useVendorItemPricePage(vendorId) {
     alertMessage,
     alertStatus,
     catalogSelectOptions,
-    cities,
     city,
+    citySelectOptions,
     closeAlert,
     editDraft,
     editingItem,

@@ -677,6 +677,7 @@ export default function useVendorDetailsPage(vendorId) {
     closeAlert,
     closeDocModal,
     handleAddVendorItem,
+    handleUploadDeclaration,
     handleDeleteDeclaration,
     handleDeleteVendor,
     handleDocumentModalSubmit,
