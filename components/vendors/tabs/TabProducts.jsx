@@ -3,12 +3,18 @@
 import { Fragment, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import {
+  Backdrop,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
   Stack,
@@ -22,13 +28,17 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddLinkIconOutlined from "@mui/icons-material/AddLinkOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import InfoIcon from "@mui/icons-material/Info";
 import { useConfirm } from "@/src/hooks/useConfirm";
-import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
+import MyAlert from "@/ui/MyAlert";
+import { MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
 import FileTypeIcon from "@/ui/FileTypeIcon";
 import {
   getDeclarationDisplayFilename,
@@ -36,9 +46,17 @@ import {
 } from "../declarationFileName";
 import DeclarationEditDialog from "../DeclarationEditDialog";
 import ModalAddProduct from "../ModalAddProduct";
+import VendorPriceEditDialog from "../VendorPriceEditDialog";
+import VendorPriceItemForm from "../VendorPriceItemForm";
+import useVendorItemPricePage from "../useVendorItemPricePage";
 import useVendorProductsView from "../useVendorProductsView";
 import useVendorsStore from "../useVendorsStore";
-import InfoIcon from "@mui/icons-material/Info";
+import {
+  formatPackPriceLabel,
+  formatPackVolume,
+  formatUnitPriceLabel,
+  mergeVendorItemWithPrice,
+} from "../vendorItemPriceUtils";
 
 const getFileExtension = (value) => {
   const extension = (value || "").split(".").pop()?.toLowerCase();
@@ -47,16 +65,15 @@ const getFileExtension = (value) => {
 
 const tableSx = {
   tableLayout: { xs: "auto", sm: "fixed" },
-  minWidth: { xs: 640, sm: "100%" },
+  minWidth: { xs: 720, sm: "100%" },
 };
 const tableContainerSx = { overflowX: "auto" };
-const expandCellSx = { width: 30, px: 0 };
-const actionCellSx = { width: { xs: 60, sm: 100 } };
-const countCellSx = { width: { xs: 96, sm: 156 }, whiteSpace: "nowrap" };
+const expandCellSx = { width: 40, px: 0.5 };
+const actionCellSx = { width: { xs: 72, sm: 100 } };
+const countCellSx = { width: { xs: 96, sm: 120 }, whiteSpace: "nowrap" };
+const priceCellSx = { width: { xs: 120, sm: 140 }, whiteSpace: "nowrap" };
 const collapseCellSx = { py: 0, borderBottom: 0 };
-const textCellSx = {
-  minWidth: { xs: 180, sm: "auto" },
-};
+const productCellSx = { minWidth: { xs: 180, sm: 220 } };
 const nestedTableContainerSx = { borderRadius: 2, border: "1px solid", borderColor: "divider" };
 
 const formatDeclarationExpiry = (value) =>
@@ -121,12 +138,42 @@ export default function TabProducts({
   handleSaveDeclaration,
   loadItemVendors,
   openDocModal,
+  vendorId,
 }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
   const { itemsSelectData, productCategoryOptions, sortedVendorItems, vendorItemIds } =
     useVendorProductsView();
-  const isLoading = useVendorsStore((state) => state.isLoading);
-  const [expandedProductId, setExpandedProductId] = useState(null);
+  const isVendorsLoading = useVendorsStore((state) => state.isLoading);
+  const {
+    alertMessage,
+    alertStatus,
+    cities,
+    city,
+    closeAlert,
+    editDraft,
+    enrichedItems,
+    expandedItemId,
+    handleCancelEdit,
+    handleCityChange,
+    handleCloseCityModal,
+    handleCloseEditModal,
+    handleConfirmCityScopeSave,
+    handleDraftChange,
+    handleOpenEditModal,
+    handleSaveEdit,
+    handleSelectedVendorCitiesChange,
+    handleToggleExpand,
+    reloadItems,
+    editingItemId,
+    isAlert,
+    isCityModalOpen,
+    isLoading: isPriceLoading,
+    selectedCityName,
+    selectedVendorCities,
+    vendorCities,
+  } = useVendorItemPricePage(vendorId);
+
+  const isLoading = isVendorsLoading || isPriceLoading;
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
@@ -134,6 +181,11 @@ export default function TabProducts({
   const [editableDeclaration, setEditableDeclaration] = useState(null);
   const hasProductActions = canEdit || canUpload;
   const hasDeclarationActions = canEditDeclaration;
+
+  const priceByItemId = useMemo(
+    () => new Map(enrichedItems.map((item) => [Number(item.item_id), item])),
+    [enrichedItems],
+  );
 
   const selectedProductCategories = useMemo(
     () =>
@@ -161,6 +213,14 @@ export default function TabProducts({
     });
   }, [productSearch, selectedProductCategoryIds, sortedVendorItems]);
 
+  const mergedItems = useMemo(
+    () =>
+      filteredVendorItems.map((vendorItem) =>
+        mergeVendorItemWithPrice(vendorItem, priceByItemId.get(Number(vendorItem.item_id))),
+      ),
+    [filteredVendorItems, priceByItemId],
+  );
+
   const handleCloseAddModal = () => {
     setIsAddProductModalOpen(false);
     setSelectedCatalogItemId("");
@@ -170,6 +230,7 @@ export default function TabProducts({
     const result = await handleAddVendorItem(selectedCatalogItemId);
 
     if (result !== false) {
+      await reloadItems();
       handleCloseAddModal();
     }
   };
@@ -188,9 +249,75 @@ export default function TabProducts({
     setEditableDeclaration(null);
   };
 
+  const collapseColSpan = hasProductActions ? 8 : 7;
+
   return (
     <>
+      <Backdrop
+        open={isPriceLoading}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
+      >
+        <CircularProgress />
+      </Backdrop>
+
       <ConfirmDialog />
+
+      <MyAlert
+        isOpen={isAlert}
+        onClose={closeAlert}
+        status={alertStatus}
+        text={alertMessage}
+      />
+
+      <VendorPriceEditDialog
+        open={Boolean(editingItemId)}
+        onClose={handleCloseEditModal}
+        canEdit={canEdit}
+        cityLabel={selectedCityName}
+        draft={editDraft}
+        isLoading={isPriceLoading}
+        onCancel={handleCloseEditModal}
+        onSave={handleSaveEdit}
+        onDraftChange={handleDraftChange}
+      />
+
+      <Dialog
+        open={isCityModalOpen}
+        onClose={handleCloseCityModal}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle className="button">
+          <Typography>Где применить</Typography>
+          <IconButton
+            onClick={handleCloseCityModal}
+            style={{ cursor: "pointer" }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
+          <Grid size={{ xs: 12 }}>
+            <MyAutocomplite
+              label="Города"
+              multiple
+              data={vendorCities}
+              value={selectedVendorCities}
+              func={handleSelectedVendorCitiesChange}
+            />
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleConfirmCityScopeSave}
+            variant="contained"
+            disabled={isPriceLoading}
+          >
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <DeclarationEditDialog
         open={Boolean(editableDeclaration)}
         declaration={editableDeclaration}
@@ -239,7 +366,7 @@ export default function TabProducts({
               container
               spacing={2}
             >
-              <Grid size={{ xs: 12, sm: 8 }}>
+              <Grid size={{ xs: 12, sm: 5 }}>
                 <MyTextInput
                   type="search"
                   label="Поиск по названию"
@@ -247,7 +374,6 @@ export default function TabProducts({
                   func={(event) => setProductSearch(event.target.value)}
                 />
               </Grid>
-
               <Grid size={{ xs: 12, sm: 4 }}>
                 <MyAutocomplite
                   multiple
@@ -257,25 +383,37 @@ export default function TabProducts({
                   func={(_, value) => setSelectedProductCategoryIds(value.map((item) => item.id))}
                 />
               </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MySelect
+                  data={cities}
+                  value={city}
+                  func={handleCityChange}
+                  is_none={false}
+                  label="Город"
+                />
+              </Grid>
             </Grid>
 
-            {filteredVendorItems.length ? (
+            {mergedItems.length ? (
               <TableContainer sx={tableContainerSx}>
                 <Table
                   size="small"
                   sx={tableSx}
                 >
                   <TableHead>
-                    <TableRow>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
                       <TableCell sx={expandCellSx} />
-                      <TableCell sx={textCellSx}>Наименование</TableCell>
-                      <TableCell sx={textCellSx}>Категория</TableCell>
+                      <TableCell sx={productCellSx}>Продукт</TableCell>
+                      <TableCell>Категория</TableCell>
                       <TableCell
                         align="center"
                         sx={countCellSx}
                       >
                         Декларации
                       </TableCell>
+                      <TableCell sx={priceCellSx}>Цена за упаковку</TableCell>
+                      <TableCell>Объём упаковки</TableCell>
+                      <TableCell sx={priceCellSx}>Цена за 1 ед.</TableCell>
                       {hasProductActions ? (
                         <TableCell
                           align="right"
@@ -287,47 +425,87 @@ export default function TabProducts({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredVendorItems.map((item) => {
-                      const isExpanded = Number(expandedProductId) === Number(item.item_id);
+                    {mergedItems.map((item) => {
+                      const itemId = Number(item.item_id);
+                      const isExpanded = expandedItemId === itemId;
                       const declarations = (item.declarations || [])
                         .filter((decl) => !isExpiredDeclaration(decl))
                         .sort((a, b) => getExpiresSortKey(b).localeCompare(getExpiresSortKey(a)));
                       const expiringSoonCount = declarations.filter((decl) =>
                         isExpiringSoon(decl),
                       ).length;
+                      const hasDeclarations = declarations.length > 0;
                       const rowKey = item.id ?? item.item_id;
 
                       return (
                         <Fragment key={rowKey}>
-                          <TableRow>
+                          <TableRow hover>
                             <TableCell sx={expandCellSx}>
                               <IconButton
                                 size="small"
-                                onClick={() =>
-                                  setExpandedProductId(isExpanded ? null : Number(item.item_id))
-                                }
+                                onClick={() => handleToggleExpand(item)}
+                                disabled={!city}
                               >
                                 {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                               </IconButton>
                             </TableCell>
-                            <TableCell sx={textCellSx}>{item.item_name || "Товар"}</TableCell>
-                            <TableCell sx={textCellSx}>
-                              {item.cat_name || "Категория не указана"}
+                            <TableCell sx={productCellSx}>
+                              <Stack spacing={0.25}>
+                                <Typography sx={{ fontWeight: 700 }}>{item.name}</Typography>
+                                {item.name_for_vendor ? (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: 1,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    {item.name_for_vendor}
+                                  </Typography>
+                                ) : null}
+                              </Stack>
+                            </TableCell>
+                            <TableCell>
+                              {item.cat_name ? (
+                                <Chip
+                                  label={item.cat_name}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: "rgba(25, 118, 210, 0.08)",
+                                    color: "primary.main",
+                                    fontWeight: 600,
+                                  }}
+                                />
+                              ) : (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Не указана
+                                </Typography>
+                              )}
                             </TableCell>
                             <TableCell
                               align="center"
                               sx={countCellSx}
                             >
                               <Stack
+                                direction="row"
                                 spacing={0.5}
                                 alignItems="center"
+                                justifyContent="center"
                               >
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 600 }}
-                                >
+                                <Typography sx={{ fontWeight: 600 }}>
                                   {declarations.length}
                                 </Typography>
+                                {hasDeclarations ? (
+                                  <DescriptionOutlinedIcon
+                                    sx={{ fontSize: 16, color: "error.main" }}
+                                  />
+                                ) : null}
                                 {expiringSoonCount > 0 ? (
                                   <Chip
                                     label={formatExpiringSoonLabel(expiringSoonCount)}
@@ -340,13 +518,38 @@ export default function TabProducts({
                                       backgroundColor: "rgba(211, 47, 47, 0.08)",
                                       color: "error.main",
                                       border: "1px solid rgba(211, 47, 47, 0.28)",
-                                      "& .MuiChip-label": {
-                                        px: 1,
-                                      },
+                                      "& .MuiChip-label": { px: 1 },
                                     }}
                                   />
                                 ) : null}
                               </Stack>
+                            </TableCell>
+                            <TableCell sx={priceCellSx}>
+                              <Typography
+                                component="button"
+                                type="button"
+                                onClick={() => canEdit && handleOpenEditModal(item)}
+                                sx={{
+                                  fontWeight: 700,
+                                  border: 0,
+                                  bgcolor: "transparent",
+                                  p: 0,
+                                  cursor: canEdit ? "pointer" : "default",
+                                  textAlign: "left",
+                                  color: "text.primary",
+                                }}
+                              >
+                                {formatPackPriceLabel(item.full_price)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>{formatPackVolume(item)}</TableCell>
+                            <TableCell sx={priceCellSx}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {formatUnitPriceLabel(item)}
+                              </Typography>
                             </TableCell>
                             {hasProductActions ? (
                               <TableCell
@@ -394,7 +597,7 @@ export default function TabProducts({
                           </TableRow>
                           <TableRow>
                             <TableCell
-                              colSpan={hasProductActions ? 5 : 4}
+                              colSpan={collapseColSpan}
                               sx={collapseCellSx}
                             >
                               <Collapse
@@ -403,9 +606,21 @@ export default function TabProducts({
                                 unmountOnExit
                               >
                                 <Stack
-                                  spacing={1.5}
+                                  spacing={2}
                                   sx={{ py: 2 }}
                                 >
+                                  {canEdit && city ? (
+                                    <VendorPriceItemForm
+                                      canEdit={canEdit}
+                                      cityLabel={selectedCityName}
+                                      draft={editDraft}
+                                      isLoading={isPriceLoading}
+                                      onCancel={handleCancelEdit}
+                                      onSave={handleSaveEdit}
+                                      onDraftChange={handleDraftChange}
+                                    />
+                                  ) : null}
+
                                   {declarations.length ? (
                                     <TableContainer sx={nestedTableContainerSx}>
                                       <Table size="small">
@@ -499,31 +714,25 @@ export default function TabProducts({
                                                   align="right"
                                                   sx={{ whiteSpace: "nowrap" }}
                                                 >
-                                                  <Stack
-                                                    direction="row"
-                                                    spacing={0.5}
-                                                    justifyContent="flex-end"
-                                                  >
-                                                    {canEditDeclaration ? (
-                                                      <Tooltip title="Редактировать">
-                                                        <span>
-                                                          <IconButton
-                                                            size="small"
-                                                            onClick={() =>
-                                                              setEditableDeclaration({
-                                                                ...decl,
-                                                                item_id: item.item_id,
-                                                              })
-                                                            }
-                                                            disabled={isLoading}
-                                                            sx={{ color: "primary.main" }}
-                                                          >
-                                                            <EditIcon fontSize="small" />
-                                                          </IconButton>
-                                                        </span>
-                                                      </Tooltip>
-                                                    ) : null}
-                                                  </Stack>
+                                                  {canEditDeclaration ? (
+                                                    <Tooltip title="Редактировать">
+                                                      <span>
+                                                        <IconButton
+                                                          size="small"
+                                                          onClick={() =>
+                                                            setEditableDeclaration({
+                                                              ...decl,
+                                                              item_id: item.item_id,
+                                                            })
+                                                          }
+                                                          disabled={isLoading}
+                                                          sx={{ color: "primary.main" }}
+                                                        >
+                                                          <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                      </span>
+                                                    </Tooltip>
+                                                  ) : null}
                                                 </TableCell>
                                               ) : null}
                                             </TableRow>

@@ -70,6 +70,23 @@ export const enrichPriceItems = (priceItems = [], vendorItems = []) => {
   });
 };
 
+export const mergeVendorItemWithPrice = (vendorItem, priceItem) => ({
+  ...vendorItem,
+  item_id: vendorItem?.item_id ?? priceItem?.item_id,
+  name: priceItem?.name || vendorItem?.item_name || vendorItem?.name || "Товар",
+  name_for_vendor: priceItem?.name_for_vendor || "",
+  cat_name: vendorItem?.cat_name || priceItem?.cat_name || "",
+  declarations: vendorItem?.declarations || priceItem?.declarations || [],
+  declarations_count: Array.isArray(vendorItem?.declarations)
+    ? vendorItem.declarations.length
+    : priceItem?.declarations_count || 0,
+  full_price: priceItem?.full_price,
+  rec_pq: priceItem?.rec_pq,
+  price: priceItem?.price,
+  ei_name: priceItem?.ei_name,
+  pqs: priceItem?.pqs || [],
+});
+
 export const buildCatalogSelectOptions = (allItems = [], excludedItemIds = new Set()) =>
   allItems
     .filter((item) => !excludedItemIds.has(Number(item.id)))

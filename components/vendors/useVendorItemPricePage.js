@@ -203,8 +203,29 @@ export default function useVendorItemPricePage(vendorId) {
           return;
         }
 
-        if (response?.cities) {
+        if (response?.cities?.length) {
+          const firstCityId = String(response.cities[0].id);
           setBootstrap(response.cities);
+
+          const itemsResponse = await requestPriceApi(VENDOR_PRICE_API.LIST_ITEMS, {
+            city: firstCityId,
+            vendor_id: vendorId,
+          });
+
+          if (!isMounted || requestId !== bootstrapRequestRef.current) {
+            return;
+          }
+
+          const selectedForCity = response.cities.filter(
+            (entry) => Number(entry.id) === Number(firstCityId),
+          );
+
+          useVendorItemPriceStore.setState({
+            city: firstCityId,
+            items: itemsResponse?.items || [],
+            vendorCities: itemsResponse?.vendor_cities || [],
+            selectedVendorCities: selectedForCity,
+          });
         }
       } catch (error) {
         if (isMounted) {
@@ -255,6 +276,39 @@ export default function useVendorItemPricePage(vendorId) {
     [callApi, setCity, setVendorItems, vendorId],
   );
 
+  const loadPackOptionsForItem = useCallback(
+    async (itemId) => {
+      const existing = items.find((entry) => Number(entry.item_id) === Number(itemId));
+      if (existing?.pqs?.length) {
+        return {
+          pqs: existing.pqs,
+          rec_pq: existing.rec_pq == 0 || existing.rec_pq === "0" ? "" : existing.rec_pq,
+          ei_name: existing.ei_name || "шт",
+        };
+      }
+
+      try {
+        const response = await requestPriceApi(VENDOR_PRICE_API.GET_ITEM_PACK_OPTIONS, {
+          vendor_id: vendorId,
+          item_id: Number(itemId),
+        });
+
+        if (response?.pqs?.length) {
+          return {
+            pqs: response.pqs,
+            rec_pq: response.rec_pq == 0 || response.rec_pq === "0" ? "" : response.rec_pq || "",
+            ei_name: response.ei_name || "шт",
+          };
+        }
+      } catch {
+        // fallback below
+      }
+
+      return { pqs: [], rec_pq: "", ei_name: "шт" };
+    },
+    [items, requestPriceApi, vendorId],
+  );
+
   const beginEditItem = useCallback(
     (item) => {
       if (!item?.item_id) {
@@ -273,8 +327,24 @@ export default function useVendorItemPricePage(vendorId) {
     [setEditDraft],
   );
 
+  const prepareEditItem = useCallback(
+    async (item) => {
+      if (!item?.item_id) {
+        return item;
+      }
+
+      if (item.pqs?.length) {
+        return item;
+      }
+
+      const packOptions = await loadPackOptionsForItem(item.item_id);
+      return { ...item, ...packOptions };
+    },
+    [loadPackOptionsForItem],
+  );
+
   const handleToggleExpand = useCallback(
-    (item) => {
+    async (item) => {
       const itemId = Number(item.item_id);
       if (expandedItemId === itemId) {
         clearEditState();
@@ -283,19 +353,26 @@ export default function useVendorItemPricePage(vendorId) {
 
       setExpandedItemId(itemId);
       setEditingItemId(null);
-      beginEditItem(item);
+      beginEditItem(await prepareEditItem(item));
     },
-    [beginEditItem, clearEditState, expandedItemId, setEditingItemId, setExpandedItemId],
+    [
+      beginEditItem,
+      clearEditState,
+      expandedItemId,
+      prepareEditItem,
+      setEditingItemId,
+      setExpandedItemId,
+    ],
   );
 
   const handleOpenEditModal = useCallback(
-    (item) => {
+    async (item) => {
       const itemId = Number(item.item_id);
       setEditingItemId(itemId);
       setExpandedItemId(null);
-      beginEditItem(item);
+      beginEditItem(await prepareEditItem(item));
     },
-    [beginEditItem, setEditingItemId, setExpandedItemId],
+    [beginEditItem, prepareEditItem, setEditingItemId, setExpandedItemId],
   );
 
   const handleCloseEditModal = useCallback(() => {
@@ -404,39 +481,6 @@ export default function useVendorItemPricePage(vendorId) {
       setSelectedVendorCities(value || []);
     },
     [setSelectedVendorCities],
-  );
-
-  const loadPackOptionsForItem = useCallback(
-    async (itemId) => {
-      const existing = items.find((entry) => Number(entry.item_id) === Number(itemId));
-      if (existing?.pqs?.length) {
-        return {
-          pqs: existing.pqs,
-          rec_pq: existing.rec_pq == 0 || existing.rec_pq === "0" ? "" : existing.rec_pq,
-          ei_name: existing.ei_name || "шт",
-        };
-      }
-
-      try {
-        const response = await requestPriceApi(VENDOR_PRICE_API.GET_ITEM_PACK_OPTIONS, {
-          vendor_id: vendorId,
-          item_id: Number(itemId),
-        });
-
-        if (response?.pqs?.length) {
-          return {
-            pqs: response.pqs,
-            rec_pq: response.rec_pq == 0 || response.rec_pq === "0" ? "" : response.rec_pq || "",
-            ei_name: response.ei_name || "шт",
-          };
-        }
-      } catch {
-        // fallback below
-      }
-
-      return { pqs: [], rec_pq: "", ei_name: "шт" };
-    },
-    [items, requestPriceApi, vendorId],
   );
 
   const handleCatalogItemSelect = useCallback(
@@ -626,6 +670,7 @@ export default function useVendorItemPricePage(vendorId) {
     handleSaveEdit,
     handleSelectedVendorCitiesChange,
     handleToggleExpand,
+    reloadItems,
     isAddModalOpen,
     isAlert,
     isCityModalOpen,
