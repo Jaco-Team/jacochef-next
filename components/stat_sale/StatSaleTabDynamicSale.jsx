@@ -21,6 +21,7 @@ import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import ProgressTimeline from "@/components/stat_sale/ProgressTimeline";
 import axios from "axios";
+import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 
 class StatSale_Tab_DynamicSale extends React.Component {
   constructor(props) {
@@ -35,6 +36,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
       rollyArr: [],
       orderArr: [],
       accountArr: [],
+      pizzaLine: {},
       data_clients_list_cafe: {},
       data_clients_list_kc: {},
       data_clients_list_site: {},
@@ -245,6 +247,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
         rollyArr,
         orderArr,
         accountArr,
+        pizzaLine: res.pizza_line,
       });
     } else {
       this.props.openAlert(res.st, res.text);
@@ -579,6 +582,12 @@ class StatSale_Tab_DynamicSale extends React.Component {
               </Button>
             </Grid>
             {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
+            {Object.entries(this.state.pizzaLine).length ? (
+              <StatSaleYearlyLineChart
+                rawData={this.state.pizzaLine}
+                title="Динамика пиццы по годам"
+              />
+            ) : null}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
             {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
               planFulfillment: true,

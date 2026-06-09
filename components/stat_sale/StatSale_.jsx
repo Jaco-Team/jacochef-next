@@ -9,7 +9,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import MyAlert from "@/ui/MyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
@@ -62,13 +62,13 @@ class StatSale_ extends React.Component {
       data_sett_rate: data.data_sett_rate,
       data_sett_points: data.data_sett_points,
       data_sett_rate_clients: data.data_sett_rate_clients,
-      module_name: data.module_info.name,
+      module_name: data.module_info?.name,
       points: data.points,
       cities: data.cities,
       acces: data.acces ?? {},
     });
 
-    document.title = data.module_info.name;
+    document.title = data.module_info?.name;
 
     this.handleResize();
   }
