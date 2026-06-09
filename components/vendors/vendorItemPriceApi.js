@@ -9,7 +9,7 @@ export const VENDOR_PRICE_API = {
 
 export const VENDOR_PRICE_API_LEGACY = {
   [VENDOR_PRICE_API.GET_CONTEXT]: "get_all",
-  [VENDOR_PRICE_API.LIST_ITEMS]: "get_vendor_items",
+  [VENDOR_PRICE_API.LIST_ITEMS]: "get_vendor_items_price",
 };
 
 export function resolveVendorPriceApiMethod(method) {

@@ -15,7 +15,7 @@ import {
   enrichPriceItems,
 } from "./vendorItemPriceUtils";
 
-const PRICE_MODULE = "vendor_item_price";
+const PRICE_MODULE = "vendors";
 const VENDORS_MODULE = "vendors";
 
 export default function useVendorItemPricePage(vendorId) {
