@@ -51,6 +51,9 @@ export default function ModalUpdateAder({
     in_order: 0,
     items_ids: [],
     category_ids: [],
+    in_not_order: 0,
+    items_not_ids: [],
+    category_not_ids: [],
     name_pack: "",
   });
   const [points, setPoints] = useState([]);
@@ -78,8 +81,10 @@ export default function ModalUpdateAder({
       date_end: dayjs(formData.date_end).format("YYYY-MM-DD"),
       point_ids: formData.point_ids.map((el) => el.id).join(","),
       items_ids: formData.items_ids.map((el) => el.id).join(","),
+      items_not_ids: formData.items_not_ids.map((el) => el.id).join(","),
       city_ids: formData.city_ids.map((el) => el.id).join(","),
       category_ids: formData.category_ids.map((el) => el.id).join(","),
+      category_not_ids: formData.category_not_ids.map((el) => el.id).join(","),
       pay_type: formData.pay_type.join(","),
     };
     getData("update_ader", { formatData, id }).then((data) => {
@@ -106,11 +111,17 @@ export default function ModalUpdateAder({
         items_ids: data.items.filter((el) =>
           data.form_data.items_ids.split(",").map(Number).includes(el.id),
         ),
+        items_not_ids: data.items.filter((el) =>
+          data.form_data.items_not_ids.split(",").map(Number).includes(el.id),
+        ),
         city_ids: data.cities.filter((el) =>
           data.form_data.city_ids.split(",").map(Number).includes(el.id),
         ),
         category_ids: data.categories.filter((el) =>
           data.form_data.category_ids.split(", ").map(Number).includes(el.id),
+        ),
+        category_not_ids: data.categories.filter((el) =>
+          data.form_data.category_not_ids.split(", ").map(Number).includes(el.id),
         ),
       });
       setCities(data.cities);
@@ -427,6 +438,80 @@ export default function ModalUpdateAder({
                 value={formData.category_ids}
                 func={(event, data) => {
                   setFormData((prev) => ({ ...prev, category_ids: data }));
+                }}
+              />
+            </Grid>
+          )}
+        </Grid>
+        <Grid
+          container
+          spacing={2}
+          style={{ marginBottom: 16 }}
+        >
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <Autocomplete
+              size="small"
+              options={[0, 1]}
+              getOptionLabel={(option) => {
+                switch (option) {
+                  case 0:
+                    return "Блюда";
+                  case 1:
+                    return "Категории";
+                  default:
+                    return option;
+                }
+              }}
+              value={formData.in_not_order}
+              onChange={(_, value) => {
+                setFormData((prev) => ({ ...prev, in_not_order: value }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="В заказе нет"
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
+          </Grid>
+          {formData.in_not_order === 0 && (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyAutocomplite
+                label="Блюда"
+                data={items}
+                multiple={true}
+                value={formData.items_not_ids}
+                func={(event, data) => {
+                  setFormData((prev) => ({ ...prev, items_not_ids: data }));
+                }}
+              />
+            </Grid>
+          )}
+          {formData.in_not_order === 1 && (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyAutocomplite
+                label="Категории"
+                data={categories}
+                multiple={true}
+                value={formData.category_not_ids}
+                func={(event, data) => {
+                  setFormData((prev) => ({ ...prev, category_not_ids: data }));
                 }}
               />
             </Grid>
