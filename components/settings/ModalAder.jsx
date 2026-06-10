@@ -46,6 +46,7 @@ export default function ModalAder({
     description: "",
     order_type: 0,
     pay_type: [],
+    order_types: [],
     sum_order: 0,
     in_order: 0,
     items_ids: [],
@@ -85,6 +86,7 @@ export default function ModalAder({
       category_ids: formData.category_ids.map((el) => el.id).join(","),
       category_not_ids: formData.category_not_ids.map((el) => el.id).join(","),
       pay_type: formData.pay_type.join(","),
+      order_types: formData.order_types.join(","),
     };
     getData("save_ader", { formatData }).then((data) => {
       if (!data.st) {
@@ -338,6 +340,30 @@ export default function ModalAder({
                 <TextField
                   {...params}
                   label="Тип оформления"
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
+          </Grid>
+
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <Autocomplete
+              size="small"
+              multiple
+              options={["Доставка", "Самовывоз", "Зал", "Зал с собой"]}
+              value={formData.order_types}
+              onChange={(_, value) => {
+                setFormData((prev) => ({ ...prev, order_types: value }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Тип заказа"
                 />
               )}
               sx={{ mb: 2 }}

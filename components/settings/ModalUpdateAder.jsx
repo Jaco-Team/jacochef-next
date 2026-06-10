@@ -47,6 +47,7 @@ export default function ModalUpdateAder({
     description: "",
     order_type: 0,
     pay_type: [],
+    order_types: [],
     sum_order: 0,
     in_order: 0,
     items_ids: [],
@@ -86,6 +87,7 @@ export default function ModalUpdateAder({
       category_ids: formData.category_ids.map((el) => el.id).join(","),
       category_not_ids: formData.category_not_ids.map((el) => el.id).join(","),
       pay_type: formData.pay_type.join(","),
+      order_types: formData.order_types.join(","),
     };
     getData("update_ader", { formatData, id }).then((data) => {
       if (!data.st) {
@@ -105,6 +107,7 @@ export default function ModalUpdateAder({
         date_start: dayjs(data.form_data.date_start),
         date_end: dayjs(data.form_data.date_end),
         pay_type: data.form_data.pay_type.split(","),
+        order_types: data.form_data.order_types.split(","),
         point_ids: data.points.filter((el) =>
           data.form_data.point_ids.split(",").map(Number).includes(el.id),
         ),
@@ -363,6 +366,29 @@ export default function ModalUpdateAder({
                 <TextField
                   {...params}
                   label="Тип оформления"
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <Autocomplete
+              size="small"
+              multiple
+              options={["Доставка", "Самовывоз", "Зал", "Зал с собой"]}
+              value={formData.order_types}
+              onChange={(_, value) => {
+                setFormData((prev) => ({ ...prev, order_types: value }));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Тип заказа"
                 />
               )}
               sx={{ mb: 2 }}
