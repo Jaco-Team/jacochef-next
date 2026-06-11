@@ -57,6 +57,7 @@ class StatSale_ extends React.Component {
 
   async componentDidMount() {
     const data = await this.getData("get_all");
+    const availableTabs = this.getAvailableTabs(data.acces ?? {});
 
     this.setState({
       data_sett_rate: data.data_sett_rate,
@@ -66,6 +67,9 @@ class StatSale_ extends React.Component {
       points: data.points,
       cities: data.cities,
       acces: data.acces ?? {},
+      activeTab: availableTabs.includes(this.state.activeTab)
+        ? this.state.activeTab
+        : (availableTabs[0] ?? 0),
     });
 
     document.title = data.module_info?.name;
@@ -76,6 +80,28 @@ class StatSale_ extends React.Component {
   canAccess = (key) => {
     const { userCan } = handleUserAccess(this.state.acces);
     return userCan("access", key);
+  };
+
+  getAvailableTabs = (acces = this.state.acces) => {
+    const { userCan } = handleUserAccess(acces);
+    const canAccess = (key) => userCan("access", key);
+    const tabs = [];
+
+    if (canAccess("sale")) tabs.push(0);
+    if (canAccess("client")) tabs.push(1);
+    if (canAccess("dynamic")) tabs.push(2);
+    if (canAccess("sale_dynamic")) tabs.push(3);
+    if (
+      canAccess("setting_sale") ||
+      canAccess("setting_clients") ||
+      canAccess("setting_citizens") ||
+      canAccess("setting_limits") ||
+      canAccess("setting_limits_pay")
+    ) {
+      tabs.push(4);
+    }
+
+    return tabs;
   };
 
   getData = async (method, data = {}) => {

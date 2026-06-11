@@ -17,6 +17,7 @@ export default function StatSaleTabs({ activeTab, fullScreen, onChange, canAcces
       >
         {canAccess("sale") && (
           <Tab
+            value={0}
             label="Продажи"
             {...a11yProps(0)}
             sx={{ minWidth: "fit-content", flex: 1 }}
@@ -24,6 +25,7 @@ export default function StatSaleTabs({ activeTab, fullScreen, onChange, canAcces
         )}
         {canAccess("client") && (
           <Tab
+            value={1}
             label="Клиенты"
             {...a11yProps(1)}
             sx={{ minWidth: "fit-content", flex: 1 }}
@@ -31,6 +33,7 @@ export default function StatSaleTabs({ activeTab, fullScreen, onChange, canAcces
         )}
         {canAccess("dynamic") && (
           <Tab
+            value={2}
             label="Динамика"
             {...a11yProps(2)}
             sx={{ minWidth: "fit-content", flex: 1 }}
@@ -38,6 +41,7 @@ export default function StatSaleTabs({ activeTab, fullScreen, onChange, canAcces
         )}
         {canAccess("sale_dynamic") && (
           <Tab
+            value={3}
             label="Динамика продаж"
             {...a11yProps(3)}
             sx={{ minWidth: "fit-content", flex: 1 }}
@@ -49,6 +53,7 @@ export default function StatSaleTabs({ activeTab, fullScreen, onChange, canAcces
           canAccess("setting_limits") ||
           canAccess("setting_limits_pay")) && (
           <Tab
+            value={4}
             label="Настройки"
             {...a11yProps(4)}
             sx={{ minWidth: "fit-content", flex: 1 }}
