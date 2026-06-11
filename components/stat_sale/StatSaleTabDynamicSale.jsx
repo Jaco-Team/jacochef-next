@@ -217,13 +217,13 @@ class StatSale_Tab_DynamicSale extends React.Component {
             month: value.month_name,
             planQty: value.order_plan,
             planLoad: calcPercent(value.order, value.order_plan),
-            factQty: value.order,
+            factQty: value.orders,
             factDynPct: calcPercent(
-              toNumber(value.order) - toNumber(prevMonth?.order),
-              prevMonth?.order,
+              toNumber(value.orders) - toNumber(prevMonth?.orders),
+              prevMonth?.orders,
             ),
-            factDynQty: toNumber(value.order) - toNumber(prevMonth?.order),
-            factLoad: calcPercent(value.order, prevMonth.order),
+            factDynQty: toNumber(value.orders) - toNumber(prevMonth?.orders),
+            factLoad: calcPercent(value.orders, prevMonth.orders),
           });
         }
 
