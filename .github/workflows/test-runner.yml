@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Show server info
         run: |
-          echo "Runner works"
+          echo "Runner works2"
           hostname
           whoami
           uname -a
