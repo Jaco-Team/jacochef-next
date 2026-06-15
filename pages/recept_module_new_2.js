@@ -39,6 +39,7 @@ import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { ModalAccept } from "@/components/general/ModalAccept";
 import { TableSortLabel } from "@mui/material";
+import { ModalAdd } from "@/components/general/ModalAdd";
 
 const SwapIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -718,8 +719,13 @@ class ReceptModule_Modal extends React.Component {
       date_start: null,
       date_end: null,
       time: "",
+      structure: "",
+      allergens: [],
+      allergens_diff: [],
+      cats: [],
       dop_time: "",
       two_user: "",
+      modalAddCats: false,
       rec_apps: [],
       rec_users: [],
       acces_save: true,
@@ -793,6 +799,10 @@ class ReceptModule_Modal extends React.Component {
         all_w_netto: all_w_netto,
         show_in_rev: this.props.rec?.show_in_rev,
         dop_time: this.props.rec?.time_min_dop,
+        allergens: this.props.rec?.allergens,
+        allergens_diff: this.props.rec?.allergens_diff,
+        cats: this.props.rec?.cats,
+        structure: this.props.rec?.structure,
       });
 
       let objAcces = {
@@ -818,6 +828,14 @@ class ReceptModule_Modal extends React.Component {
         storages_view: this.props.acces?.storages_view,
         items_edit: this.props.acces?.items_edit,
         items_view: this.props.acces?.items_view,
+        structure_edit: this.props.acces?.structure_edit,
+        structure_view: this.props.acces?.structure_view,
+        allergens_edit: this.props.acces?.allergens_edit,
+        allergens_view: this.props.acces?.allergens_view,
+        allergens_diff_edit: this.props.acces?.allergens_diff_edit,
+        allergens_diff_view: this.props.acces?.allergens_diff_view,
+        cats_edit: this.props.acces?.cats_edit,
+        cats_view: this.props.acces?.cats_view,
       };
 
       this.setState({
@@ -997,6 +1015,10 @@ class ReceptModule_Modal extends React.Component {
   }
 
   changeComplite(type, event, value) {
+    if (type === "cats" && value.some((i) => i.id === -1)) {
+      this.setState({ modalAddCats: true });
+      return;
+    }
     this.setState({
       [type]: value,
     });
@@ -1022,6 +1044,10 @@ class ReceptModule_Modal extends React.Component {
       two_user: this.state.two_user,
       rec_apps: this.state.rec_apps,
       all_w: this.state.all_w,
+      structure: this.state.structure,
+      allergens: this.state.allergens,
+      allergens_diff: this.state.allergens_diff,
+      cats: this.state.cats,
       all_w_brutto: this.state.all_w_brutto,
       all_w_netto: this.state.all_w_netto,
     };
@@ -1065,6 +1091,10 @@ class ReceptModule_Modal extends React.Component {
       all_w_brutto: 0,
       all_w_netto: 0,
       show_in_rev: 0,
+      structure: "",
+      allergens: [],
+      allergens_diff: [],
+      cats: [],
       openAlert: false,
       err_status: false,
       err_text: "",
@@ -1083,6 +1113,15 @@ class ReceptModule_Modal extends React.Component {
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
           text={this.state.err_text}
+        />
+        <ModalAdd
+          open={this.state.modalAddCats}
+          onClose={() => this.setState({ modalAddCats: false })}
+          title="Добавить новою категорию"
+          save={(value) => {
+            this.props.saveCats(value);
+            this.setState({ modalAddCats: false });
+          }}
         />
         <Dialog
           open={open}
@@ -1366,6 +1405,32 @@ class ReceptModule_Modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
+                  sm: 12,
+                }}
+              >
+                <MyTextInput
+                  label="Состав"
+                  value={this.state.structure}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.structure,
+                        structure: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.structure
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
+                  disabled={!this.state.acces?.structure_edit}
+                  func={this.changeItem.bind(this, "structure")}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
                   sm: 6,
                 }}
                 style={
@@ -1427,6 +1492,106 @@ class ReceptModule_Modal extends React.Component {
                   }
                   disabled={!this.state.acces?.storages_edit}
                   func={this.changeComplite.bind(this, "storages")}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+                style={
+                  !this.state.acces?.storages_edit && !this.state.acces?.storages_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyAutocomplite
+                  label="Аллергены"
+                  multiple={true}
+                  data={this.props.allergens}
+                  value={this.state.allergens}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        allergens: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.allergens
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
+                  disabled={!this.state.acces?.allergens_edit}
+                  func={this.changeComplite.bind(this, "allergens")}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+                style={
+                  !this.state.acces?.storages_edit && !this.state.acces?.storages_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyAutocomplite
+                  label="Возможные аллергены"
+                  multiple={true}
+                  data={this.props.allergens}
+                  value={this.state.allergens_diff}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        allergens_diff: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.allergens_diff
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
+                  disabled={!this.state.acces?.allergens_diff_edit}
+                  func={this.changeComplite.bind(this, "allergens_diff")}
+                />
+              </Grid>
+
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 6,
+                }}
+                style={
+                  !this.state.acces?.storages_edit && !this.state.acces?.storages_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MyAutocomplite
+                  label="Категории"
+                  multiple={true}
+                  data={this.props.cats}
+                  value={this.state.cats}
+                  onFocus={() => {
+                    this.setState((prevState) => ({
+                      err_valid: {
+                        ...prevState.err_valid,
+                        cats: false,
+                      },
+                    }));
+                  }}
+                  style={
+                    this.state.err_valid?.cats
+                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
+                      : {}
+                  }
+                  disabled={!this.state.acces?.cats_edit}
+                  func={this.changeComplite.bind(this, "cats")}
                 />
               </Grid>
 
@@ -1914,6 +2079,8 @@ class ReceptModule_ extends React.Component {
 
       rec_list: [],
       pf_list: [],
+      allergens: [],
+      cats: [],
 
       modalDialog: false,
       modalDialogHist: false,
@@ -2007,6 +2174,8 @@ class ReceptModule_ extends React.Component {
           apps: res.apps,
           all_pf_list: res.all_pf_list,
           rec: res.rec,
+          cats: res.cats,
+          allergens: res.allergens,
           rec_pf_list: res.pf_list,
         });
       } else {
@@ -2042,6 +2211,8 @@ class ReceptModule_ extends React.Component {
           method,
           storages: res.all_storages,
           apps: res.apps,
+          allergens: res.allergens,
+          cats: res.cats,
           all_pf_list: res.all_items_list,
           rec_pf_list: res.items_list,
         });
@@ -2082,6 +2253,8 @@ class ReceptModule_ extends React.Component {
         all_pf_list: res.all_pf_list,
         rec: res.rec,
         rec_pf_list: res.pf_list,
+        cats: res.cats,
+        allergens: res.allergens,
         type,
         typeMethod: "edit_rec",
       });
@@ -2104,6 +2277,8 @@ class ReceptModule_ extends React.Component {
         method,
         storages: res.all_storages,
         apps: res.apps,
+        cats: res.cats,
+        allergens: res.allergens,
         all_pf_list: res.all_items_list,
         rec: res.pf,
         rec_pf_list: res.items_list,
@@ -2300,6 +2475,25 @@ class ReceptModule_ extends React.Component {
     }
   }
 
+  async saveCats(value) {
+    let res = await this.getData("save_cats", { name: value });
+
+    if (res.st) {
+      this.setState({
+        cats: res.cats,
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  }
+
   async saveEdit(rec) {
     const type = this.state.type;
 
@@ -2400,9 +2594,12 @@ class ReceptModule_ extends React.Component {
           apps={this.state.apps}
           rec={this.state.rec}
           acces={this.state.acces}
+          allergens={this.state.allergens}
+          cats={this.state.cats}
           getData={this.getData.bind(this)}
           saveNew={this.saveNew.bind(this)}
           saveEdit={this.saveEdit.bind(this)}
+          saveCats={this.saveCats.bind(this)}
           fullScreen={this.state.fullScreen}
           list={this.state.rec_pf_list}
           type={this.state.type}
