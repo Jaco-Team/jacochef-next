@@ -7,14 +7,7 @@ import React, { useState, useEffect } from "react";
 import Grid from "@mui/material/Grid";
 import { MyTextInput } from "@/ui/Forms";
 
-export const ModalAdd = ({
-  open,
-  onClose,
-  save,
-  title = "Подтвердить действие",
-  content = "",
-  defaultValue,
-}) => {
+export const ModalAdd = ({ open, onClose, save, title = "Подтвердить действие", defaultValue }) => {
   const [value, setValue] = useState(defaultValue);
 
   useEffect(() => {
