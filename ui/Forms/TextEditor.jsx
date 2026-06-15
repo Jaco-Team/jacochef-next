@@ -92,7 +92,7 @@ const TextEditorInner = dynamic(
                 "removeformat | link image | code fullscreen help"),
         toolbar_mode: isNewsEditorVariant ? "wrap" : "sliding",
         statusbar: true,
-        resize: isNewsDialogMobile ? false : isNewsDialog ? "vertical" : true,
+        resize: isNewsDialogMobile ? false : "both",
         content_style:
           contentStyle ??
           "body { font-family:Roboto, Helvetica, Arial, sans-serif; font-size:16px; line-height:20px; color:#3C3B3B; margin:12px; }",

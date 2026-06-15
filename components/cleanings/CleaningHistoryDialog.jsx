@@ -1,21 +1,33 @@
-import { useMemo } from "react";
-import { Box, Dialog, DialogContent, DialogTitle, IconButton, Typography } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import HistoryLog from "@/ui/history/HistoryLog";
-import { buildCleaningHistory } from "./helpers";
 
-export default function CleaningHistoryDialog({ open, item, categories, onClose }) {
-  const history = useMemo(() => buildCleaningHistory(item, categories), [categories, item]);
-
+export default function CleaningHistoryDialog({
+  open,
+  item,
+  history = [],
+  loading = false,
+  onClose,
+}) {
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{
-        sx: {
-          borderRadius: "12px",
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "12px",
+          },
         },
       }}
     >
@@ -35,10 +47,16 @@ export default function CleaningHistoryDialog({ open, item, categories, onClose 
       </DialogTitle>
 
       <DialogContent sx={{ pt: 0, pb: 2 }}>
-        <HistoryLog
-          history={history}
-          defaultExpanded
-        />
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <HistoryLog
+            history={history}
+            defaultExpanded
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -2,6 +2,7 @@ import {
   Box,
   Chip,
   Grid,
+  IconButton,
   InputAdornment,
   Paper,
   Table,
@@ -17,6 +18,7 @@ import {
 } from "@mui/material";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import { getCategoryName, getScheduleText, tableHeaderSx, tableRowSx } from "./helpers";
 import { CleaningActions } from "./shared";
 
@@ -28,9 +30,12 @@ export default function CleaningsListPage({
   filteredTemplates,
   templates,
   categories,
+  scheduleTypeOptions,
   openEdit,
   toggleArchive,
-  setHistoryItem,
+  removeTemplate,
+  onHistory,
+  canEdit,
 }) {
   return (
     <Grid size={12}>
@@ -64,12 +69,25 @@ export default function CleaningsListPage({
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Поиск по названию или роли"
               sx={{ width: { xs: "100%", sm: 420 } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: query ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setQuery("")}
+                        edge="end"
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                },
               }}
             />
 
@@ -177,7 +195,9 @@ export default function CleaningsListPage({
                       }}
                     >
                       <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
-                      <Typography sx={{ fontSize: 14 }}>{getScheduleText(item)}</Typography>
+                      <Typography sx={{ fontSize: 14 }}>
+                        {getScheduleText(item, scheduleTypeOptions)}
+                      </Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="center">
@@ -200,7 +220,9 @@ export default function CleaningsListPage({
                       item={item}
                       onEdit={openEdit}
                       onArchiveToggle={toggleArchive}
-                      onHistory={setHistoryItem}
+                      onRemove={removeTemplate}
+                      onHistory={onHistory}
+                      canEdit={canEdit}
                     />
                   </TableCell>
                 </TableRow>
@@ -261,7 +283,7 @@ export default function CleaningsListPage({
               >
                 <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
                 <Typography sx={{ fontSize: 14 }}>
-                  {item.duration} мин · {getScheduleText(item)}
+                  {item.duration} мин · {getScheduleText(item, scheduleTypeOptions)}
                 </Typography>
               </Box>
               <Typography sx={{ color: "text.secondary", mb: 1, fontSize: 14 }}>
@@ -271,7 +293,9 @@ export default function CleaningsListPage({
                 item={item}
                 onEdit={openEdit}
                 onArchiveToggle={toggleArchive}
-                onHistory={setHistoryItem}
+                onRemove={removeTemplate}
+                onHistory={onHistory}
+                canEdit={canEdit}
               />
             </Paper>
           ))}

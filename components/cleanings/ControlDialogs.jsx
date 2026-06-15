@@ -65,7 +65,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
       onClose={onClose}
       fullWidth
       maxWidth="xs"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
       <DialogContent>
@@ -126,7 +126,7 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
       onClose={onClose}
       fullWidth
       maxWidth="xs"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
       <DialogContent>

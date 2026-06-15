@@ -1,37 +1,24 @@
 import React, { useEffect, useState } from "react";
 import {
-  Autocomplete,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   Grid,
   IconButton,
-  MenuItem,
-  Select,
-  TextField,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
-import CityCafeAutocomplete from "@/ui/CityCafeAutocomplete";
-import {
-  additionTypeOptions,
-  defaultForm,
-  locationCities,
-  locationOptions,
-  roles,
-  scheduleTypeOptions,
-} from "./constants";
+import { MyAutoCompleteWithAll, MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
+import { days, defaultForm } from "./constants";
 import { getDaysFromScheduleType, getScheduleTypeFromDays } from "./helpers";
 import { FormLabel, FormSection } from "./shared";
 
@@ -50,8 +37,13 @@ export default function CleaningTemplateDialog({
   item,
   categories,
   templates = [],
+  locations = [],
+  roles = [],
+  scheduleTypeOptions = [],
+  additionTypeOptions = [],
   onClose,
   onSave,
+  canEdit,
 }) {
   const [form, setForm] = useState(defaultForm);
 
@@ -78,9 +70,43 @@ export default function CleaningTemplateDialog({
   const selectedCategory = categories.find((category) => category.id === form.categoryId) ?? null;
   const selectedTriggerCleaning =
     templates.find((template) => template.id === form.triggerCleaningId) ?? null;
-  const selectedLocations = locationOptions.filter((location) =>
-    form.locationIds.includes(location.id),
-  );
+  const selectedLocations = locations.filter((location) => form.locationIds.includes(location.id));
+  const resolvedRoles = roles
+    .map((role) =>
+      role && typeof role === "object"
+        ? { id: role.id ?? null, name: role.name ? String(role.name) : "" }
+        : { id: null, name: role == null ? "" : String(role) },
+    )
+    .filter((role) => role.name);
+  const hasCurrentRole = resolvedRoles.some((role) => role.id === form.roleId);
+  const resolvedRoleValues =
+    form.role && form.roleId != null && !hasCurrentRole
+      ? [...resolvedRoles, { id: form.roleId, name: form.role }]
+      : resolvedRoles;
+  const roleOptions = [
+    { id: "", name: "Выберите роль" },
+    ...resolvedRoleValues.map((role) => ({ id: role.id, name: role.name })),
+  ];
+  const additionTypeSelectOptions = [
+    { id: "", name: "Выберите тип" },
+    ...additionTypeOptions.map((option) => ({ id: option.value, name: option.label })),
+  ];
+  const resolvedScheduleTypeOptions = (() => {
+    const hasWeekly = scheduleTypeOptions.some((option) => option?.value === "weekly");
+
+    if (!hasWeekly) {
+      return scheduleTypeOptions;
+    }
+
+    return [
+      ...days,
+      ...scheduleTypeOptions.filter((option) => option?.value && option.value !== "weekly"),
+    ];
+  })();
+  const scheduleTypeSelectOptions = [
+    { id: "", name: "Выберите день или режим" },
+    ...resolvedScheduleTypeOptions.map((option) => ({ id: option.value, name: option.label })),
+  ];
 
   const changeField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -144,6 +170,10 @@ export default function CleaningTemplateDialog({
     form.scheduleType !== "manual" && form.scheduleType !== "after_cleaning";
 
   const save = () => {
+    if (!canEdit) {
+      return;
+    }
+
     onSave({
       ...form,
       name: form.name.trim() || "Новая уборка",
@@ -163,12 +193,14 @@ export default function CleaningTemplateDialog({
       fullWidth
       maxWidth="md"
       scroll="paper"
-      PaperProps={{
-        sx: {
-          width: { xs: "calc(100% - 24px)", md: 760 },
-          borderRadius: "12px",
-          maxHeight: "92vh",
-          overflow: "hidden",
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: "calc(100% - 24px)", md: 760 },
+            borderRadius: "12px",
+            maxHeight: "92vh",
+            overflow: "hidden",
+          },
         },
       }}
     >
@@ -224,29 +256,21 @@ export default function CleaningTemplateDialog({
             >
               <Grid size={12}>
                 <FormLabel>Название</FormLabel>
-                <TextField
-                  size="small"
-                  fullWidth
+                <MyTextInput
                   value={form.name}
-                  onChange={(event) => changeField("name", event.target.value)}
+                  disabled={!canEdit}
+                  func={(event) => changeField("name", event.target.value)}
                 />
               </Grid>
               <Grid size={12}>
                 <FormLabel>Категория</FormLabel>
-                <Autocomplete
-                  size="small"
-                  options={categories}
+                <MyAutocomplite
+                  multiple={false}
+                  data={categories}
                   value={selectedCategory}
-                  onChange={(_, value) => changeField("categoryId", value?.id ?? null)}
-                  getOptionLabel={(option) => option?.name || ""}
-                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
-                  noOptionsText="Категория не найдена"
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Начните вводить категорию"
-                    />
-                  )}
+                  disabled={!canEdit}
+                  func={(_, value) => changeField("categoryId", value?.id ?? null)}
+                  placeholder="Начните вводить категорию"
                 />
               </Grid>
             </Grid>
@@ -262,72 +286,53 @@ export default function CleaningTemplateDialog({
             >
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormLabel>Роль</FormLabel>
-                <FormControl fullWidth>
-                  <Select
-                    size="small"
-                    value={form.role}
-                    displayEmpty
-                    onChange={(event) => changeField("role", event.target.value)}
-                    IconComponent={ExpandMoreIcon}
-                  >
-                    <MenuItem value="">
-                      <Typography sx={{ color: "text.secondary" }}>Выберите роль</Typography>
-                    </MenuItem>
-                    {roles.map((role) => (
-                      <MenuItem
-                        key={role}
-                        value={role}
-                      >
-                        {role}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <MySelect
+                  data={roleOptions}
+                  value={form.roleId ?? ""}
+                  disabled={!canEdit}
+                  func={(event) => {
+                    const value = event.target.value;
+                    const selectedRole = resolvedRoleValues.find(
+                      (role) => String(role.id) === String(value),
+                    );
+
+                    setForm((prev) => ({
+                      ...prev,
+                      roleId: value === "" ? null : Number(value),
+                      role: selectedRole?.name || "",
+                    }));
+                  }}
+                  is_none={false}
+                />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormLabel>Длительность (мин)</FormLabel>
-                <TextField
-                  size="small"
-                  fullWidth
+                <MyTextInput
                   type="number"
                   value={form.duration}
-                  onChange={(event) => changeField("duration", event.target.value)}
+                  disabled={!canEdit}
+                  func={(event) => changeField("duration", event.target.value)}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormLabel>Количество активаций</FormLabel>
-                <TextField
-                  size="small"
-                  fullWidth
+                <MyTextInput
                   type="number"
                   value={form.activationCount}
-                  onChange={(event) => changeActivationCount(event.target.value)}
+                  disabled={!canEdit}
+                  func={(event) => changeActivationCount(event.target.value)}
                   inputProps={{ min: 0, step: 1 }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormLabel>Тип добавления</FormLabel>
-                <FormControl fullWidth>
-                  <Select
-                    size="small"
-                    value={form.additionType}
-                    displayEmpty
-                    onChange={(event) => changeField("additionType", event.target.value)}
-                    IconComponent={ExpandMoreIcon}
-                  >
-                    <MenuItem value="">
-                      <Typography sx={{ color: "text.secondary" }}>Выберите тип</Typography>
-                    </MenuItem>
-                    {additionTypeOptions.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <MySelect
+                  data={additionTypeSelectOptions}
+                  value={form.additionType}
+                  disabled={!canEdit}
+                  func={(event) => changeField("additionType", event.target.value)}
+                  is_none={false}
+                />
               </Grid>
             </Grid>
           </FormSection>
@@ -343,47 +348,24 @@ export default function CleaningTemplateDialog({
             >
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormLabel>День недели</FormLabel>
-                <FormControl fullWidth>
-                  <Select
-                    size="small"
-                    value={form.scheduleType}
-                    displayEmpty
-                    onChange={(event) => changeScheduleType(event.target.value)}
-                    IconComponent={ExpandMoreIcon}
-                  >
-                    <MenuItem value="">
-                      <Typography sx={{ color: "text.secondary" }}>
-                        Выберите день или режим
-                      </Typography>
-                    </MenuItem>
-                    {scheduleTypeOptions.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <MySelect
+                  data={scheduleTypeSelectOptions}
+                  value={form.scheduleType}
+                  disabled={!canEdit}
+                  func={(event) => changeScheduleType(event.target.value)}
+                  is_none={false}
+                />
               </Grid>
               {form.scheduleType === "after_cleaning" ? (
                 <Grid size={{ xs: 12, md: 6 }}>
                   <FormLabel>После выполнения уборки</FormLabel>
-                  <Autocomplete
-                    size="small"
-                    options={templates}
+                  <MyAutocomplite
+                    multiple={false}
+                    data={templates}
                     value={selectedTriggerCleaning}
-                    onChange={(_, value) => changeField("triggerCleaningId", value?.id ?? null)}
-                    getOptionLabel={(option) => option?.name || ""}
-                    isOptionEqualToValue={(option, value) => option?.id === value?.id}
-                    noOptionsText="Уборка не найдена"
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        placeholder="Выберите уборку"
-                      />
-                    )}
+                    disabled={!canEdit}
+                    func={(_, value) => changeField("triggerCleaningId", value?.id ?? null)}
+                    placeholder="Выберите уборку"
                   />
                 </Grid>
               ) : null}
@@ -398,40 +380,41 @@ export default function CleaningTemplateDialog({
                       key={`time_${index}`}
                       sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                     >
-                      <TextField
-                        size="small"
+                      <MyTextInput
                         type="time"
                         value={time}
-                        onChange={(event) => changeTime(index, event.target.value)}
+                        disabled={!canEdit}
+                        func={(event) => changeTime(index, event.target.value)}
                         sx={{ width: 132 }}
-                        InputProps={{
-                          sx: { fontSize: 16 },
-                        }}
                       />
-                      <IconButton
-                        size="small"
-                        onClick={() => removeTime(index)}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
+                      {canEdit ? (
+                        <IconButton
+                          size="small"
+                          onClick={() => removeTime(index)}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      ) : null}
                     </Box>
                   ))}
 
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={addTime}
-                    sx={{
-                      borderStyle: "dashed",
-                      px: 2,
-                      py: 0.75,
-                      borderRadius: "8px",
-                      color: "text.secondary",
-                    }}
-                  >
-                    Добавить время
-                  </Button>
+                  {canEdit ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      onClick={addTime}
+                      sx={{
+                        borderStyle: "dashed",
+                        px: 2,
+                        py: 0.75,
+                        borderRadius: "8px",
+                        color: "text.secondary",
+                      }}
+                    >
+                      Добавить время
+                    </Button>
+                  ) : null}
                 </Box>
               </>
             ) : null}
@@ -444,40 +427,41 @@ export default function CleaningTemplateDialog({
                     key={`delete_time_${index}`}
                     sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                   >
-                    <TextField
-                      size="small"
+                    <MyTextInput
                       type="time"
                       value={time}
-                      onChange={(event) => changeDeleteTime(index, event.target.value)}
+                      disabled={!canEdit}
+                      func={(event) => changeDeleteTime(index, event.target.value)}
                       sx={{ width: 132 }}
-                      InputProps={{
-                        sx: { fontSize: 16 },
-                      }}
                     />
-                    <IconButton
-                      size="small"
-                      onClick={() => removeDeleteTime(index)}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
+                    {canEdit ? (
+                      <IconButton
+                        size="small"
+                        onClick={() => removeDeleteTime(index)}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    ) : null}
                   </Box>
                 ))}
 
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addDeleteTime}
-                  sx={{
-                    borderStyle: "dashed",
-                    px: 2,
-                    py: 0.75,
-                    borderRadius: "8px",
-                    color: "text.secondary",
-                  }}
-                >
-                  Добавить время
-                </Button>
+                {canEdit ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={addDeleteTime}
+                    sx={{
+                      borderStyle: "dashed",
+                      px: 2,
+                      py: 0.75,
+                      borderRadius: "8px",
+                      color: "text.secondary",
+                    }}
+                  >
+                    Добавить время
+                  </Button>
+                ) : null}
               </Box>
             </Box>
           </FormSection>
@@ -486,18 +470,20 @@ export default function CleaningTemplateDialog({
             icon={<PlaceOutlinedIcon />}
             title="Локации"
           >
-            <CityCafeAutocomplete
-              cities={locationCities}
+            <MyAutoCompleteWithAll
+              label="Локации"
+              placeholder="Выберите локации"
+              options={locations}
               value={selectedLocations}
+              disabled={!canEdit}
               onChange={(value) =>
                 changeField(
                   "locationIds",
                   value.map((location) => location.id),
                 )
               }
-              label="Локации"
-              placeholder="Выберите локации"
-              stickyGroupLabels={false}
+              withAll
+              withAllLabel="Все"
             />
           </FormSection>
         </Box>
@@ -517,6 +503,7 @@ export default function CleaningTemplateDialog({
           variant="contained"
           fullWidth
           onClick={save}
+          disabled={!canEdit}
           sx={actionButtonSx}
         >
           Сохранить

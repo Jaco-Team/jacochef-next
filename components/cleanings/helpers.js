@@ -1,7 +1,7 @@
-import { days, locations, scheduleTypeOptions } from "./constants";
+import { days } from "./constants";
 
 export function getScheduleTypeFromDays(item = {}) {
-  if (item.scheduleType) {
+  if (item.scheduleType && item.scheduleType !== "weekly") {
     return item.scheduleType;
   }
 
@@ -28,7 +28,7 @@ export function getDaysFromScheduleType(scheduleType) {
   return [];
 }
 
-export function getScheduleText(item) {
+export function getScheduleText(item, scheduleTypeOptions = []) {
   const scheduleType = getScheduleTypeFromDays(item);
   const scheduleTypeLabel = scheduleTypeOptions.find(
     (option) => option.value === scheduleType,
@@ -45,81 +45,43 @@ export function getCategoryName(categories, categoryId) {
   return categories.find((category) => category.id === categoryId)?.name || "Без категории";
 }
 
-export function getTemplateLocationNames(locationIds = []) {
+export function getTemplateLocationNames(locationIds = [], locations = []) {
   return locations
     .filter((location) => locationIds.includes(location.id))
     .map(getLocationName)
     .join(", ");
 }
 
-export function buildCleaningHistory(item, categories) {
-  if (!item) {
-    return [];
+export function getTemplateLocationCount(locationIds = [], locations = []) {
+  const uniqueLocationIds = [
+    ...new Set((locationIds || []).map((locationId) => String(locationId))),
+  ];
+
+  if (!locations.length) {
+    return uniqueLocationIds.length;
   }
 
-  const categoryName = getCategoryName(categories, item.categoryId);
-  const locationsText = getTemplateLocationNames(item.locationIds) || "Не выбраны";
+  const availableLocationIds = new Set(locations.map((location) => String(location.id)));
 
-  return [
-    {
-      id: `${item.id}-schedule`,
-      created_at: "2026-06-12T14:20:00",
-      actor_name: "Винокуров М. Ю.",
-      event_type: "update",
-      diff_json: JSON.stringify({
-        Расписание: {
-          from: "Черновик",
-          to: getScheduleText(item),
-        },
-        Длительность: {
-          from: "",
-          to: `${item.duration} мин`,
-        },
-      }),
-    },
-    {
-      id: `${item.id}-locations`,
-      created_at: "2026-06-12T13:40:00",
-      actor_name: "Беседина Г. М.",
-      event_type: "update",
-      diff_json: JSON.stringify({
-        Локации: {
-          from: "Не выбраны",
-          to: locationsText,
-        },
-      }),
-    },
-    {
-      id: `${item.id}-created`,
-      created_at: "2026-06-12T12:55:00",
-      actor_name: "Система",
-      event_type: "create",
-      diff_json: JSON.stringify({
-        Название: {
-          from: "",
-          to: item.name,
-        },
-        Категория: {
-          from: "",
-          to: categoryName,
-        },
-        Роль: {
-          from: "",
-          to: item.role,
-        },
-      }),
-    },
-  ];
+  return uniqueLocationIds.filter((locationId) => availableLocationIds.has(locationId)).length;
 }
 
 export function getLocationName(location) {
-  return `${location.name} — ${location.city}`;
+  return location?.name || "";
 }
 
-export function getLocationNameById(locationId) {
-  const location = locations.find((item) => item.id === locationId);
+export function getLocationNameById(locationId, locations = []) {
+  const location = locations.find((item) => String(item.id) === String(locationId));
 
   return location ? getLocationName(location) : "Кафе не выбрано";
+}
+
+export function isSameId(left, right) {
+  if (left == null || right == null || left === "" || right === "") {
+    return false;
+  }
+
+  return String(left) === String(right);
 }
 
 export function getDatePart(value) {
@@ -130,7 +92,7 @@ export function isDateInRange(value, from, to) {
   const date = getDatePart(value);
 
   if (!date) {
-    return false;
+    return !from && !to;
   }
 
   return (!from || date >= from) && (!to || date <= to);

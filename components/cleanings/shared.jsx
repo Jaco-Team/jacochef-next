@@ -1,5 +1,6 @@
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import RestoreFromTrashOutlinedIcon from "@mui/icons-material/RestoreFromTrashOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 
@@ -41,17 +42,19 @@ export function FormSection({ icon, title, children }) {
   );
 }
 
-export function CleaningActions({ item, onEdit, onArchiveToggle, onHistory }) {
+export function CleaningActions({ item, onEdit, onArchiveToggle, onHistory, onRemove, canEdit }) {
   return (
     <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-      <Tooltip title="Редактировать">
-        <IconButton
-          size="small"
-          onClick={() => onEdit(item)}
-        >
-          <EditOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+      {canEdit ? (
+        <Tooltip title="Редактировать">
+          <IconButton
+            size="small"
+            onClick={() => onEdit(item)}
+          >
+            <EditOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ) : null}
       <Tooltip title="История изменений">
         <IconButton
           size="small"
@@ -60,14 +63,30 @@ export function CleaningActions({ item, onEdit, onArchiveToggle, onHistory }) {
           <HistoryIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <Tooltip title={item.status === "archive" ? "Вернуть из архива" : "В архив"}>
-        <IconButton
-          size="small"
-          onClick={() => onArchiveToggle(item.id)}
-        >
-          <DeleteOutlineIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+      {canEdit ? (
+        <Tooltip title={item.status === "archive" ? "Вернуть из архива" : "В архив"}>
+          <IconButton
+            size="small"
+            onClick={() => onArchiveToggle(item.id)}
+          >
+            {item.status === "archive" ? (
+              <RestoreFromTrashOutlinedIcon fontSize="small" />
+            ) : (
+              <DeleteOutlineIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
+      ) : null}
+      {canEdit && item.status === "archive" ? (
+        <Tooltip title="Удалить полностью">
+          <IconButton
+            size="small"
+            onClick={() => onRemove?.(item.id)}
+          >
+            <DeleteOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ) : null}
     </Box>
   );
 }
