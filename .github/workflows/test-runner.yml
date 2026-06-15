@@ -1,0 +1,17 @@
+name: Test self-hosted runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Show server info
+        run: |
+          echo "Runner works2"
+          hostname
+          whoami
+          uname -a
+          docker --version || true

@@ -21,6 +21,7 @@ export default function CityCafeAutocomplete({
   placeholder = "Выбери кафе…",
   disabled,
   autoFocus,
+  stickyGroupLabels = true,
 }) {
   const allCafes = useMemo(() => {
     return cities.flatMap((c) =>
@@ -156,9 +157,9 @@ export default function CityCafeAutocomplete({
             component="li"
             sx={{
               [`& .${autocompleteClasses.groupLabel}`]: {
-                position: "sticky",
-                top: 0,
-                zIndex: 1,
+                position: stickyGroupLabels ? "sticky" : "static",
+                top: stickyGroupLabels ? 0 : "auto",
+                zIndex: stickyGroupLabels ? 1 : "auto",
                 background: "var(--mui-palette-background-paper)",
                 display: "flex",
                 alignItems: "center",
