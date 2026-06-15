@@ -2,37 +2,81 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
   Grid,
+  InputAdornment,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { getControlStatusMeta, tableHeaderSx, tableRowSx } from "./helpers";
+import SearchIcon from "@mui/icons-material/Search";
+import { locations } from "./constants";
+import {
+  getCategoryName,
+  getControlStatusMeta,
+  getLocationName,
+  getLocationNameById,
+  isDateInRange,
+  tableHeaderSx,
+  tableRowSx,
+} from "./helpers";
+
+const actionButtonSx = {
+  borderRadius: "8px",
+  fontWeight: 700,
+  minHeight: 36,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+};
 
 export default function ControlView({
   items,
   templates,
   filter,
+  selectedCafeId,
+  dateFrom,
+  dateTo,
   onFilterChange,
+  onCafeChange,
+  onDateFromChange,
+  onDateToChange,
+  onAddManualOpen,
   onApprove,
   onReturn,
+  onDetach,
   onDelete,
 }) {
-  const visibleItems = items.filter((item) => filter === "all" || item.status === filter);
-  const pendingCount = items.filter((item) => item.status === "pending").length;
-  const activeCount = items.filter((item) => item.status === "active").length;
-  const inProgressCount = items.filter((item) => item.status === "in_progress").length;
-  const approvedCount = items.filter((item) => item.status === "approved").length;
+  const filteredByContext = items.filter(
+    (item) => item.locationId === selectedCafeId && isDateInRange(item.date, dateFrom, dateTo),
+  );
+  const visibleItems = filteredByContext.filter(
+    (item) => filter === "all" || item.status === filter,
+  );
+  const pendingCount = filteredByContext.filter((item) => item.status === "pending").length;
+  const activeCount = filteredByContext.filter((item) => item.status === "active").length;
+  const inProgressCount = filteredByContext.filter((item) => item.status === "in_progress").length;
+  const approvedCount = filteredByContext.filter((item) => item.status === "approved").length;
   const filterItems = [
     { value: "all", label: "Все" },
     { value: "active", label: "Активно", count: activeCount },
@@ -48,6 +92,65 @@ export default function ControlView({
       container
       spacing={2.5}
     >
+      <Grid size={12}>
+        <Paper
+          variant="outlined"
+          sx={{ borderRadius: "8px", overflow: "hidden" }}
+        >
+          <Box
+            sx={{
+              p: 1.5,
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "260px 170px 170px auto" },
+              gap: 1.5,
+              alignItems: "center",
+            }}
+          >
+            <FormControl size="small">
+              <Select
+                value={selectedCafeId}
+                onChange={(event) => onCafeChange(event.target.value)}
+                IconComponent={ExpandMoreIcon}
+              >
+                {locations.map((location) => (
+                  <MenuItem
+                    key={location.id}
+                    value={location.id}
+                  >
+                    {getLocationName(location)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              type="date"
+              label="Дата от"
+              value={dateFrom}
+              onChange={(event) => onDateFromChange(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              size="small"
+              type="date"
+              label="Дата до"
+              value={dateTo}
+              onChange={(event) => onDateToChange(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAddManualOpen}
+              sx={{ ...actionButtonSx, justifySelf: { xs: "stretch", md: "end" } }}
+            >
+              Добавить уборку
+            </Button>
+          </Box>
+        </Paper>
+      </Grid>
+
       <Grid size={12}>
         <Paper
           variant="outlined"
@@ -110,13 +213,19 @@ export default function ControlView({
           </Box>
 
           <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-            <Table size="small">
+            <Table
+              size="small"
+              sx={{ minWidth: 1180 }}
+            >
               <TableHead>
                 <TableRow sx={tableHeaderSx}>
-                  <TableCell sx={{ width: "30%" }}>Уборка</TableCell>
+                  <TableCell sx={{ width: "20%" }}>Уборка</TableCell>
+                  <TableCell>Кафе</TableCell>
                   <TableCell>Сотрудник</TableCell>
                   <TableCell>Начало</TableCell>
                   <TableCell>Завершение</TableCell>
+                  <TableCell>Подтвердили</TableCell>
+                  <TableCell>Подтвердивший</TableCell>
                   <TableCell>Статус</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
@@ -141,13 +250,22 @@ export default function ControlView({
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {item.employee}
+                        {getLocationNameById(item.locationId)}
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                        {item.employee || "—"}
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                         {item.startedAt || "—"}
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                         {item.finishedAt || "—"}
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                        {item.confirmedAt || "—"}
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                        {item.confirmer || "—"}
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -164,65 +282,27 @@ export default function ControlView({
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                          {item.status === "pending" ? (
-                            <>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                startIcon={<ReplayIcon />}
-                                onClick={() => onReturn(item.id)}
-                                sx={{
-                                  borderRadius: "8px",
-                                  fontWeight: 700,
-                                  bgcolor: "#f59e0b",
-                                  color: "#fff",
-                                  "&:hover": { bgcolor: "#d97706" },
-                                }}
-                              >
-                                Вернуть
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                startIcon={<CheckCircleOutlineIcon />}
-                                onClick={() => onApprove(item.id)}
-                                sx={{
-                                  borderRadius: "8px",
-                                  fontWeight: 700,
-                                  bgcolor: "#16a34a",
-                                  color: "#fff",
-                                  "&:hover": { bgcolor: "#15803d" },
-                                }}
-                              >
-                                Подтвердить
-                              </Button>
-                            </>
-                          ) : null}
-                          {item.status !== "approved" ? (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              startIcon={<DeleteOutlineIcon />}
-                              onClick={() => onDelete(item.id)}
-                              sx={{
-                                borderRadius: "8px",
-                                fontWeight: 700,
-                                bgcolor: "primary.main",
-                                color: "#fff",
-                                "&:hover": { bgcolor: "primary.dark" },
-                              }}
-                            >
-                              Удалить
-                            </Button>
-                          ) : (
-                            <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>
-                          )}
-                        </Box>
+                        <ControlRowActions
+                          item={item}
+                          onApprove={onApprove}
+                          onReturn={onReturn}
+                          onDetach={onDetach}
+                          onDelete={onDelete}
+                        />
                       </TableCell>
                     </TableRow>
                   );
                 })}
+                {visibleItems.length ? null : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      sx={{ py: 4, textAlign: "center", color: "text.secondary" }}
+                    >
+                      Нет уборок по выбранным фильтрам
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -249,7 +329,13 @@ export default function ControlView({
                         {cleaning?.name || "Уборка"}
                       </Typography>
                       <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {item.employee} · {item.startedAt || "—"} — {item.finishedAt || "—"}
+                        {getLocationNameById(item.locationId)}
+                      </Typography>
+                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                        {item.employee || "—"} · {item.startedAt || "—"} — {item.finishedAt || "—"}
+                      </Typography>
+                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                        Подтвердили: {item.confirmedAt || "—"} · {item.confirmer || "—"}
                       </Typography>
                     </Box>
                     <Chip
@@ -273,75 +359,14 @@ export default function ControlView({
                       }}
                     />
                   </Box>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "repeat(2, minmax(0, 1fr))",
-                        sm: "repeat(3, auto)",
-                      },
-                      gap: 1,
-                      alignItems: "center",
-                    }}
-                  >
-                    {item.status === "pending" ? (
-                      <>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          startIcon={<ReplayIcon />}
-                          onClick={() => onReturn(item.id)}
-                          sx={{
-                            borderRadius: "8px",
-                            fontWeight: 700,
-                            minHeight: 44,
-                            width: "100%",
-                            bgcolor: "#f59e0b",
-                            color: "#fff",
-                            "&:hover": { bgcolor: "#d97706" },
-                          }}
-                        >
-                          Вернуть
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          startIcon={<CheckCircleOutlineIcon />}
-                          onClick={() => onApprove(item.id)}
-                          sx={{
-                            borderRadius: "8px",
-                            fontWeight: 700,
-                            minHeight: 44,
-                            width: "100%",
-                            bgcolor: "#16a34a",
-                            color: "#fff",
-                            "&:hover": { bgcolor: "#15803d" },
-                          }}
-                        >
-                          Подтвердить
-                        </Button>
-                      </>
-                    ) : null}
-                    {item.status !== "approved" ? (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        startIcon={<DeleteOutlineIcon />}
-                        onClick={() => onDelete(item.id)}
-                        sx={{
-                          borderRadius: "8px",
-                          fontWeight: 700,
-                          minHeight: 44,
-                          width: "100%",
-                          bgcolor: "primary.main",
-                          color: "#fff",
-                          "&:hover": { bgcolor: "primary.dark" },
-                        }}
-                      >
-                        Удалить
-                      </Button>
-                    ) : null}
-                  </Box>
+                  <ControlRowActions
+                    item={item}
+                    onApprove={onApprove}
+                    onReturn={onReturn}
+                    onDetach={onDetach}
+                    onDelete={onDelete}
+                    mobile
+                  />
                 </Paper>
               );
             })}
@@ -349,5 +374,204 @@ export default function ControlView({
         </Paper>
       </Grid>
     </Grid>
+  );
+}
+
+function ControlRowActions({ item, onApprove, onReturn, onDetach, onDelete, mobile = false }) {
+  const gridSx = mobile
+    ? {
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, auto)" },
+        gap: 1,
+      }
+    : { display: "flex", justifyContent: "flex-end", gap: 1 };
+  const buttonSx = mobile ? { ...actionButtonSx, minHeight: 44, width: "100%" } : actionButtonSx;
+
+  if (item.status === "approved") {
+    return <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>;
+  }
+
+  return (
+    <Box sx={gridSx}>
+      {item.status === "pending" ? (
+        <>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<ReplayIcon />}
+            onClick={() => onReturn(item.id)}
+            sx={{
+              ...buttonSx,
+              bgcolor: "#f59e0b",
+              color: "#fff",
+              "&:hover": { bgcolor: "#d97706" },
+            }}
+          >
+            Вернуть
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<CheckCircleOutlineIcon />}
+            onClick={() => onApprove(item.id)}
+            sx={{
+              ...buttonSx,
+              bgcolor: "#16a34a",
+              color: "#fff",
+              "&:hover": { bgcolor: "#15803d" },
+            }}
+          >
+            Подтвердить
+          </Button>
+        </>
+      ) : null}
+      {item.status === "in_progress" ? (
+        <Button
+          size="small"
+          variant="contained"
+          startIcon={<ReplayIcon />}
+          onClick={() => onDetach(item.id)}
+          sx={{ ...buttonSx, bgcolor: "#f59e0b", color: "#fff", "&:hover": { bgcolor: "#d97706" } }}
+        >
+          Снять
+        </Button>
+      ) : null}
+      <Button
+        size="small"
+        variant="contained"
+        startIcon={<DeleteOutlineIcon />}
+        onClick={() => onDelete(item.id)}
+        sx={{
+          ...buttonSx,
+          bgcolor: "primary.main",
+          color: "#fff",
+          "&:hover": { bgcolor: "primary.dark" },
+        }}
+      >
+        Удалить
+      </Button>
+    </Box>
+  );
+}
+
+export function AddManualCleaningDialog({
+  open,
+  items,
+  categories,
+  cafeId,
+  query,
+  onQueryChange,
+  onClose,
+  onAdd,
+}) {
+  const filteredItems = items.filter((item) => {
+    const search = query.trim().toLowerCase();
+    const byCafe = item.locationIds.includes(cafeId);
+    const bySearch =
+      !search ||
+      item.name.toLowerCase().includes(search) ||
+      item.role.toLowerCase().includes(search) ||
+      getCategoryName(categories, item.categoryId).toLowerCase().includes(search);
+
+    return byCafe && bySearch;
+  });
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: "12px" } }}
+    >
+      <DialogTitle sx={{ fontWeight: 700 }}>
+        Добавить уборку
+        <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
+          {getLocationNameById(cafeId)}
+        </Typography>
+      </DialogTitle>
+      <DialogContent sx={{ display: "grid", gap: 1.5 }}>
+        <TextField
+          size="small"
+          value={query}
+          placeholder="Поиск по названию, роли или категории"
+          onChange={(event) => onQueryChange(event.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Box sx={{ display: "grid", gap: 1, maxHeight: 420, overflow: "auto" }}>
+          {filteredItems.length ? (
+            filteredItems.map((item) => (
+              <Paper
+                key={item.id}
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  display: "grid",
+                  gridTemplateColumns: { xs: "minmax(0, 1fr) 40px", sm: "minmax(0, 1fr) auto" },
+                  alignItems: "center",
+                  gap: { xs: 1.25, sm: 2 },
+                  borderRadius: "8px",
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
+                    {item.name}
+                  </Typography>
+                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                    {getCategoryName(categories, item.categoryId)} · {item.role} · {item.duration}{" "}
+                    мин
+                  </Typography>
+                </Box>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => onAdd(item.id)}
+                  sx={{
+                    minWidth: { xs: 40, sm: 96 },
+                    width: { xs: 40, sm: "auto" },
+                    height: 40,
+                    px: { xs: 0, sm: 1.5 },
+                    borderRadius: "8px",
+                    whiteSpace: "nowrap",
+                    "& .MuiButton-startIcon": {
+                      m: { xs: 0, sm: "0 8px 0 -4px" },
+                    },
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{ display: { xs: "none", sm: "inline" } }}
+                  >
+                    Добавить
+                  </Box>
+                </Button>
+              </Paper>
+            ))
+          ) : (
+            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+              Нет ручных уборок для выбранного кафе
+            </Typography>
+          )}
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={onClose}
+          sx={actionButtonSx}
+        >
+          Закрыть
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

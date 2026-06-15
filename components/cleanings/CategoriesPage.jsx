@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Chip,
@@ -15,9 +18,118 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchIcon from "@mui/icons-material/Search";
 import { TextEditor } from "@/ui/Forms";
+import HistoryLog from "@/ui/history/HistoryLog";
 import { FormLabel } from "./shared";
+
+const centeredButtonSx = {
+  alignItems: "center",
+  justifyContent: "center",
+  lineHeight: "20px",
+};
+
+const actionButtonSx = {
+  ...centeredButtonSx,
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+  borderRadius: "8px",
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+};
+
+function buildCategoryHistory(category, templates) {
+  if (!category) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${category.id || "new"}-instruction`,
+      created_at: "2026-06-12T14:20:00",
+      actor_name: "Винокуров М. Ю.",
+      event_type: "update",
+      diff_json: JSON.stringify({
+        "Подробная инструкция": {
+          from: "Черновик инструкции",
+          to: "Обновлена инструкция для сотрудника",
+        },
+      }),
+    },
+    {
+      id: `${category.id || "new"}-templates`,
+      created_at: "2026-06-12T13:40:00",
+      actor_name: "Беседина Г. М.",
+      event_type: "update",
+      diff_json: JSON.stringify({
+        "Уборки категории": {
+          from: "Не назначены",
+          to: templates.length
+            ? templates.map((template) => template.name).join(", ")
+            : "Нет уборок",
+        },
+      }),
+    },
+    {
+      id: `${category.id || "new"}-created`,
+      created_at: "2026-06-12T12:55:00",
+      actor_name: "Система",
+      event_type: "create",
+      diff_json: JSON.stringify({
+        Название: {
+          from: "",
+          to: category.name,
+        },
+      }),
+    },
+  ];
+}
+
+function CategoryTemplatesAccordion({ templates }) {
+  return (
+    <Accordion
+      variant="outlined"
+      disableGutters
+      sx={{
+        borderRadius: "8px",
+        overflow: "hidden",
+        "&:before": { display: "none" },
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Уборки этой категории</Typography>
+          <Chip
+            label={templates.length}
+            size="small"
+            sx={{ height: 22, minWidth: 28, fontWeight: 700 }}
+          />
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ pt: 0 }}>
+        {templates.length ? (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {templates.map((template) => (
+              <Chip
+                key={template.id}
+                label={`${template.name} · ${template.role}`}
+                size="small"
+                variant="outlined"
+                sx={{ height: 28, fontWeight: 600 }}
+              />
+            ))}
+          </Box>
+        ) : (
+          <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+            В этой категории пока нет уборок
+          </Typography>
+        )}
+      </AccordionDetails>
+    </Accordion>
+  );
+}
 
 export default function CleaningCategoriesView({
   categories,
@@ -42,9 +154,11 @@ export default function CleaningCategoriesView({
     draftCategory ||
     categories.find((category) => category.id === selectedCategoryId) ||
     categories[0];
-  const selectedTemplatesCount = selectedCategory?.id
-    ? templates.filter((template) => template.categoryId === selectedCategory.id).length
-    : 0;
+  const selectedTemplates = selectedCategory?.id
+    ? templates.filter((template) => template.categoryId === selectedCategory.id)
+    : [];
+  const selectedTemplatesCount = selectedTemplates.length;
+  const selectedCategoryHistory = buildCategoryHistory(selectedCategory, selectedTemplates);
 
   const updateSelectedCategory = (field, value) => {
     if (!selectedCategory) {
@@ -182,7 +296,7 @@ export default function CleaningCategoriesView({
               startIcon={<DeleteOutlineIcon />}
               onClick={() => onDeleteCategory(selectedCategory.id)}
               disabled={!selectedCategory.id || categories.length <= 1}
-              sx={{ borderRadius: "8px" }}
+              sx={actionButtonSx}
             >
               Удалить
             </Button>
@@ -193,7 +307,7 @@ export default function CleaningCategoriesView({
               size="small"
               variant="contained"
               onClick={onSaveCategory}
-              sx={{ minHeight: 40, px: 2.5, borderRadius: "8px", fontWeight: 700 }}
+              sx={actionButtonSx}
             >
               Сохранить
             </Button>
@@ -226,6 +340,13 @@ export default function CleaningCategoriesView({
                 toolbar="undo redo | blocks | bold italic forecolor | bullist numlist | alignleft aligncenter alignright | removeformat"
               />
             </Box>
+
+            <CategoryTemplatesAccordion templates={selectedTemplates} />
+
+            <HistoryLog
+              history={selectedCategoryHistory}
+              defaultExpanded={false}
+            />
           </Box>
         </Paper>
       </Grid>
@@ -233,6 +354,8 @@ export default function CleaningCategoriesView({
       <CategoryMobileEditDialog
         open={mobileEditorOpen}
         category={selectedCategory}
+        templates={selectedTemplates}
+        history={selectedCategoryHistory}
         templatesCount={selectedTemplatesCount}
         onClose={() => setMobileEditorOpen(false)}
         onChange={updateSelectedCategory}
@@ -245,7 +368,16 @@ export default function CleaningCategoriesView({
   );
 }
 
-function CategoryMobileEditDialog({ open, category, templatesCount, onClose, onChange, onSave }) {
+function CategoryMobileEditDialog({
+  open,
+  category,
+  templates,
+  history,
+  templatesCount,
+  onClose,
+  onChange,
+  onSave,
+}) {
   if (!category) {
     return null;
   }
@@ -286,13 +418,20 @@ function CategoryMobileEditDialog({ open, category, templatesCount, onClose, onC
             toolbar="undo redo | blocks | bold italic forecolor | bullist numlist | alignleft aligncenter alignright | removeformat"
           />
         </Box>
+
+        <CategoryTemplatesAccordion templates={templates} />
+
+        <HistoryLog
+          history={history}
+          defaultExpanded={false}
+        />
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <Button
           size="small"
           variant="contained"
           onClick={onSave}
-          sx={{ borderRadius: "8px", fontWeight: 700 }}
+          sx={actionButtonSx}
         >
           Сохранить
         </Button>
@@ -300,7 +439,7 @@ function CategoryMobileEditDialog({ open, category, templatesCount, onClose, onC
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Закрыть
         </Button>
@@ -309,7 +448,9 @@ function CategoryMobileEditDialog({ open, category, templatesCount, onClose, onC
   );
 }
 
-export function DeleteCategoryDialog({ open, category, onClose, onConfirm }) {
+export function DeleteCategoryDialog({ open, category, templates = [], onClose, onConfirm }) {
+  const hasLinkedTemplates = templates.length > 0;
+
   return (
     <Dialog
       open={open}
@@ -321,28 +462,45 @@ export function DeleteCategoryDialog({ open, category, onClose, onConfirm }) {
       <DialogTitle sx={{ fontWeight: 700 }}>Удалить категорию?</DialogTitle>
       <DialogContent>
         <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
-          Категория «{category?.name || ""}» будет удалена. Уборки из неё перейдут в первую
-          доступную категорию.
+          {hasLinkedTemplates
+            ? `Категорию «${category?.name || ""}» нельзя удалить, пока она связана с уборками. Сначала перенесите или удалите связанные уборки.`
+            : `Категория «${category?.name || ""}» будет удалена.`}
         </Typography>
+
+        {hasLinkedTemplates ? (
+          <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {templates.map((template) => (
+              <Chip
+                key={template.id}
+                label={template.name}
+                size="small"
+                variant="outlined"
+                sx={{ height: 28, fontWeight: 600 }}
+              />
+            ))}
+          </Box>
+        ) : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <Button
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Отмена
         </Button>
-        <Button
-          size="small"
-          variant="contained"
-          color="primary"
-          onClick={onConfirm}
-          sx={{ borderRadius: "8px" }}
-        >
-          Удалить
-        </Button>
+        {!hasLinkedTemplates ? (
+          <Button
+            size="small"
+            variant="contained"
+            color="primary"
+            onClick={onConfirm}
+            sx={actionButtonSx}
+          >
+            Удалить
+          </Button>
+        ) : null}
       </DialogActions>
     </Dialog>
   );

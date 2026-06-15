@@ -6,8 +6,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   Grid,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -19,89 +22,295 @@ import {
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import { formatControlTime, tableHeaderSx, tableRowSx } from "./helpers";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { locations } from "./constants";
+import {
+  formatControlTime,
+  getLocationName,
+  getLocationNameById,
+  isDateInRange,
+  tableHeaderSx,
+  tableRowSx,
+} from "./helpers";
 
-export default function PreparationControlView({ items, onEdit, onApprove, onDelete }) {
+const actionButtonSx = {
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+  borderRadius: "8px",
+  fontWeight: 700,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+};
+
+export default function PreparationControlView({
+  items,
+  selectedCafeId,
+  dateFrom,
+  dateTo,
+  onCafeChange,
+  onDateFromChange,
+  onDateToChange,
+  onEdit,
+  onApprove,
+  onDelete,
+}) {
+  const visibleItems = items.filter(
+    (item) =>
+      item.locationId === selectedCafeId && isDateInRange(item.preparedAt, dateFrom, dateTo),
+  );
+
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        borderRadius: { xs: 0, md: "12px" },
-        overflow: "hidden",
-        border: { xs: 0, md: "1px solid #e0e0e0" },
-        bgcolor: { xs: "transparent", md: "background.paper" },
-      }}
+    <Grid
+      container
+      spacing={2.5}
     >
-      <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-        <Table
-          size="small"
-          sx={{ minWidth: 980 }}
+      <Grid size={12}>
+        <Paper
+          variant="outlined"
+          sx={{ borderRadius: "8px", overflow: "hidden" }}
         >
-          <TableHead>
-            <TableRow sx={tableHeaderSx}>
-              <TableCell sx={{ width: "22%" }}>Позиция</TableCell>
-              <TableCell>Время</TableCell>
-              <TableCell>Заготовка</TableCell>
-              <TableCell>Отходы</TableCell>
-              <TableCell>Сотрудник</TableCell>
-              <TableCell>Помощник</TableCell>
-              <TableCell>Подтвердили</TableCell>
-              <TableCell>Подтвердивший</TableCell>
-              <TableCell align="right">Действия</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {items.map((item) => (
-              <TableRow
-                key={item.id}
-                hover
-                sx={tableRowSx}
+          <Box
+            sx={{
+              p: 1.5,
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "260px 170px 170px" },
+              gap: 1.5,
+              alignItems: "center",
+            }}
+          >
+            <FormControl size="small">
+              <Select
+                value={selectedCafeId}
+                onChange={(event) => onCafeChange(event.target.value)}
+                IconComponent={ExpandMoreIcon}
               >
-                <TableCell
-                  className="cleaning-name-cell"
-                  sx={{ borderLeft: "3px solid transparent" }}
-                >
-                  <Typography
-                    component="button"
-                    type="button"
-                    onClick={() => onEdit(item.id)}
-                    sx={{
-                      p: 0,
-                      border: 0,
-                      bgcolor: "transparent",
-                      color: "primary.main",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      fontSize: 14,
-                      fontWeight: 800,
-                      textAlign: "left",
-                      textTransform: "uppercase",
-                      "&:hover": { textDecoration: "underline" },
-                    }}
+                {locations.map((location) => (
+                  <MenuItem
+                    key={location.id}
+                    value={location.id}
                   >
-                    {item.name}
+                    {getLocationName(location)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              type="date"
+              label="Дата от"
+              value={dateFrom}
+              onChange={(event) => onDateFromChange(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              size="small"
+              type="date"
+              label="Дата до"
+              value={dateTo}
+              onChange={(event) => onDateToChange(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+        </Paper>
+      </Grid>
+
+      <Grid size={12}>
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: { xs: 0, md: "12px" },
+            overflow: "hidden",
+            border: { xs: 0, md: "1px solid #e0e0e0" },
+            bgcolor: { xs: "transparent", md: "background.paper" },
+          }}
+        >
+          <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+            <Table
+              size="small"
+              sx={{ minWidth: 1060 }}
+            >
+              <TableHead>
+                <TableRow sx={tableHeaderSx}>
+                  <TableCell sx={{ width: "20%" }}>Позиция</TableCell>
+                  <TableCell>Кафе</TableCell>
+                  <TableCell>Время</TableCell>
+                  <TableCell>Заготовка</TableCell>
+                  <TableCell>Отходы</TableCell>
+                  <TableCell>Сотрудник</TableCell>
+                  <TableCell>Помощник</TableCell>
+                  <TableCell>Подтвердили</TableCell>
+                  <TableCell>Подтвердивший</TableCell>
+                  <TableCell align="right">Действия</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {visibleItems.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    hover
+                    sx={tableRowSx}
+                  >
+                    <TableCell
+                      className="cleaning-name-cell"
+                      sx={{ borderLeft: "3px solid transparent" }}
+                    >
+                      <Typography
+                        component="button"
+                        type="button"
+                        onClick={() => onEdit(item.id)}
+                        sx={{
+                          p: 0,
+                          border: 0,
+                          bgcolor: "transparent",
+                          color: "primary.main",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          fontSize: 14,
+                          fontWeight: 800,
+                          textAlign: "left",
+                          textTransform: "uppercase",
+                          "&:hover": { textDecoration: "underline" },
+                        }}
+                      >
+                        {item.name}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {getLocationNameById(item.locationId)}
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {formatControlTime(item.preparedAt)}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 14 }}>{item.volume}</TableCell>
+                    <TableCell sx={{ fontSize: 14 }}>{item.waste}</TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {item.employee}
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {item.helper || "—"}
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {formatControlTime(item.confirmedAt)}
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {item.confirmer || "—"}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                        {item.status === "pending" ? (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            startIcon={<CheckCircleOutlineIcon />}
+                            onClick={() => onApprove(item.id)}
+                            sx={{
+                              borderRadius: "8px",
+                              fontWeight: 700,
+                              bgcolor: "#16a34a",
+                              color: "#fff",
+                              "&:hover": { bgcolor: "#15803d" },
+                            }}
+                          >
+                            Подтвердить
+                          </Button>
+                        ) : null}
+                        {item.status === "pending" ? (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            startIcon={<DeleteOutlineIcon />}
+                            onClick={() => onDelete(item.id)}
+                            sx={{
+                              borderRadius: "8px",
+                              fontWeight: 700,
+                              bgcolor: "primary.main",
+                              color: "#fff",
+                              "&:hover": { bgcolor: "primary.dark" },
+                            }}
+                          >
+                            Удалить
+                          </Button>
+                        ) : (
+                          <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
+            {visibleItems.map((item) => (
+              <Paper
+                key={item.id}
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  borderRadius: "10px",
+                  borderLeft: "3px solid",
+                  borderLeftColor: "primary.main",
+                }}
+              >
+                <Box sx={{ display: "grid", gap: 0.75, mb: 1 }}>
+                  <Box>
+                    <Typography
+                      component="button"
+                      type="button"
+                      onClick={() => onEdit(item.id)}
+                      sx={{
+                        p: 0,
+                        border: 0,
+                        bgcolor: "transparent",
+                        color: "primary.main",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        fontSize: 16,
+                        fontWeight: 800,
+                        lineHeight: 1.25,
+                        textAlign: "left",
+                        textTransform: "uppercase",
+                        "&:hover": { textDecoration: "underline" },
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
+                    <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {getLocationNameById(item.locationId)}
+                    </Typography>
+                    <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                      {formatControlTime(item.preparedAt)} · {item.volume} / {item.waste}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "grid", gap: 0.25, mb: 1 }}>
+                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                    Сотрудник: {item.employee}
                   </Typography>
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                  {formatControlTime(item.preparedAt)}
-                </TableCell>
-                <TableCell sx={{ fontSize: 14 }}>{item.volume}</TableCell>
-                <TableCell sx={{ fontSize: 14 }}>{item.waste}</TableCell>
-                <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                  {item.employee}
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                  {item.helper || "—"}
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                  {formatControlTime(item.confirmedAt)}
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                  {item.confirmer || "—"}
-                </TableCell>
-                <TableCell align="right">
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                    {item.status === "pending" ? (
+                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                    Подтвердили: {formatControlTime(item.confirmedAt)}
+                  </Typography>
+                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                    Подтвердивший: {item.confirmer || "—"}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "repeat(2, minmax(0, 1fr))",
+                      sm: "repeat(2, auto)",
+                    },
+                    gap: 1,
+                    alignItems: "center",
+                  }}
+                >
+                  {item.status === "pending" ? (
+                    <>
                       <Button
                         size="small"
                         variant="contained"
@@ -110,6 +319,7 @@ export default function PreparationControlView({ items, onEdit, onApprove, onDel
                         sx={{
                           borderRadius: "8px",
                           fontWeight: 700,
+                          width: "100%",
                           bgcolor: "#16a34a",
                           color: "#fff",
                           "&:hover": { bgcolor: "#15803d" },
@@ -117,8 +327,6 @@ export default function PreparationControlView({ items, onEdit, onApprove, onDel
                       >
                         Подтвердить
                       </Button>
-                    ) : null}
-                    {item.status === "pending" ? (
                       <Button
                         size="small"
                         variant="contained"
@@ -127,6 +335,7 @@ export default function PreparationControlView({ items, onEdit, onApprove, onDel
                         sx={{
                           borderRadius: "8px",
                           fontWeight: 700,
+                          width: "100%",
                           bgcolor: "primary.main",
                           color: "#fff",
                           "&:hover": { bgcolor: "primary.dark" },
@@ -134,114 +343,15 @@ export default function PreparationControlView({ items, onEdit, onApprove, onDel
                       >
                         Удалить
                       </Button>
-                    ) : (
-                      <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>
-                    )}
-                  </Box>
-                </TableCell>
-              </TableRow>
+                    </>
+                  ) : null}
+                </Box>
+              </Paper>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
-        {items.map((item) => (
-          <Paper
-            key={item.id}
-            variant="outlined"
-            sx={{
-              p: 1.5,
-              borderRadius: "10px",
-              borderLeft: "3px solid",
-              borderLeftColor: "primary.main",
-            }}
-          >
-            <Box sx={{ display: "grid", gap: 0.75, mb: 1 }}>
-              <Box>
-                <Typography
-                  component="button"
-                  type="button"
-                  onClick={() => onEdit(item.id)}
-                  sx={{
-                    p: 0,
-                    border: 0,
-                    bgcolor: "transparent",
-                    color: "primary.main",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    fontSize: 16,
-                    fontWeight: 800,
-                    lineHeight: 1.25,
-                    textAlign: "left",
-                    textTransform: "uppercase",
-                    "&:hover": { textDecoration: "underline" },
-                  }}
-                >
-                  {item.name}
-                </Typography>
-                <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                  {formatControlTime(item.preparedAt)} · {item.volume} / {item.waste}
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "grid", gap: 0.25, mb: 1 }}>
-              <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                Сотрудник: {item.employee}
-              </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                Подтвердили: {formatControlTime(item.confirmedAt)}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(2, auto)" },
-                gap: 1,
-                alignItems: "center",
-              }}
-            >
-              {item.status === "pending" ? (
-                <>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<CheckCircleOutlineIcon />}
-                    onClick={() => onApprove(item.id)}
-                    sx={{
-                      borderRadius: "8px",
-                      fontWeight: 700,
-                      width: "100%",
-                      bgcolor: "#16a34a",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "#15803d" },
-                    }}
-                  >
-                    Подтвердить
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<DeleteOutlineIcon />}
-                    onClick={() => onDelete(item.id)}
-                    sx={{
-                      borderRadius: "8px",
-                      fontWeight: 700,
-                      width: "100%",
-                      bgcolor: "primary.main",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "primary.dark" },
-                    }}
-                  >
-                    Удалить
-                  </Button>
-                </>
-              ) : null}
-            </Box>
-          </Paper>
-        ))}
-      </Box>
-    </Paper>
+          </Box>
+        </Paper>
+      </Grid>
+    </Grid>
   );
 }
 
@@ -306,8 +416,7 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
           variant="contained"
           onClick={handleSave}
           sx={{
-            borderRadius: "8px",
-            fontWeight: 700,
+            ...actionButtonSx,
             bgcolor: "#16a34a",
             color: "#fff",
             "&:hover": { bgcolor: "#15803d" },
@@ -319,7 +428,7 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Отмена
         </Button>
