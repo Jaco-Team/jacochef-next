@@ -1,17 +1,54 @@
-name: Test self-hosted runner
+name: CD Production
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  deploy:
     runs-on: [self-hosted, linux, x64]
 
+    env:
+      IMAGE_NAME: jacochef-next
+      CONTAINER_NAME: jacochef-next
+      APP_PORT: 3000
+      HOST_PORT: 3000
+
     steps:
-      - name: Show server info
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show system info
         run: |
-          echo "Runner works2"
-          hostname
-          whoami
           uname -a
-          docker --version || true
+          whoami
+          docker --version
+
+      - name: Create rollback tag from current image
+        run: |
+          if docker image inspect $IMAGE_NAME:latest >/dev/null 2>&1; then
+            docker tag $IMAGE_NAME:latest $IMAGE_NAME:rollback-$(date +%Y%m%d-%H%M%S)
+          else
+            echo "No previous image found, skip rollback tag"
+          fi
+
+      - name: Build new Docker image
+        run: |
+          docker build -t $IMAGE_NAME:latest .
+
+      - name: Stop old container
+        run: |
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
+
+      - name: Run new container
+        run: |
+          docker run -d \
+            --name $CONTAINER_NAME \
+            --restart unless-stopped \
+            -p $HOST_PORT:$APP_PORT \
+            $IMAGE_NAME:latest
+
+      - name: Check container status
+        run: |
+          docker ps
+          docker logs --tail=50 $CONTAINER_NAME
