@@ -381,58 +381,6 @@ class SkladItemsModule_Modal_History_View extends React.Component {
                 sm: 12,
               }}
             >
-              <MyTextInput
-                label="Аллергены"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.my_allergens?.color
-                      ? this.state.itemView.my_allergens.key
-                      : this.state.itemView.my_allergens
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.my_allergens?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Возможные аллергены"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.my_allergens_other?.color
-                      ? this.state.itemView.my_allergens_other.key
-                      : this.state.itemView.my_allergens_other
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.my_allergens_other?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
               <h4>Места хранения</h4>
               <Divider />
             </Grid>
@@ -801,8 +749,6 @@ class SkladItemsModule_Modal extends React.Component {
         this.props.acces?.vend_percent_edit === 0 &&
         this.props.acces?.art_edit === 0 &&
         this.props.acces?.min_count_edit === 0 &&
-        this.props.acces?.allergens_edit === 0 &&
-        this.props.acces?.my_allergens_other_edit === 0 &&
         this.props.acces?.is_show_edit === 0 &&
         this.props.acces?.show_in_order_edit === 0 &&
         this.props.acces?.show_in_rev_edit === 0 &&
@@ -838,8 +784,6 @@ class SkladItemsModule_Modal extends React.Component {
       name_for_vendor,
       art,
       pf_id,
-      my_allergens,
-      my_allergens_other,
       app_id,
       acc_sys,
       mark_name,
@@ -910,9 +854,6 @@ class SkladItemsModule_Modal extends React.Component {
       apps: app_id === null && this.props.acces?.apps_edit,
       time_min_other: isInvalidTimeMmSs(time_min_other) && this.props.acces?.time_min_other_edit,
       art: art === "" && this.props.acces?.art_edit,
-      my_allergens: my_allergens.length === 0 && this.props.acces?.allergens_edit,
-      my_allergens_other:
-        my_allergens_other.length === 0 && this.props.acces?.my_allergens_other_edit,
       this_storages: this_storages.length === 0 && this.props.acces?.this_storages_edit,
       max_count_in_m:
         isEmptyRequiredNumber(max_count_in_m) && this.props.acces?.max_count_in_m_edit,
@@ -958,14 +899,6 @@ class SkladItemsModule_Modal extends React.Component {
       {
         label: "Артикул",
         missing: !art && this.props.acces?.art_edit,
-      },
-      {
-        label: "Аллергены",
-        missing: !my_allergens.length && this.props.acces?.allergens_edit,
-      },
-      {
-        label: "Аллергены (прочие)",
-        missing: !my_allergens_other.length && this.props.acces?.my_allergens_other_edit,
       },
       {
         label: "Места хранения",
@@ -1458,82 +1391,6 @@ class SkladItemsModule_Modal extends React.Component {
               <Grid
                 size={{
                   xs: 12,
-                  sm: 12,
-                }}
-                style={
-                  !this.props.acces?.allergens_edit && !this.props.acces?.allergens_view
-                    ? { display: "none" }
-                    : {}
-                }
-              >
-                <MyAutocomplite
-                  label="Аллергены"
-                  multiple={true}
-                  data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
-                  value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens : ""}
-                  disabled={!this.props.acces?.allergens_edit}
-                  onFocus={() => {
-                    this.setState((prevState) => ({
-                      err_valid: {
-                        ...prevState.err_valid,
-                        my_allergens: false,
-                      },
-                    }));
-                  }}
-                  style={
-                    this.state.err_valid?.my_allergens
-                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
-                      : {}
-                  }
-                  func={(event, value) => {
-                    let this_storages = this.state.itemEdit;
-                    this_storages.item.my_allergens = value;
-                    this.setState({ itemEdit: this_storages });
-                  }}
-                />
-              </Grid>
-
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                style={
-                  !this.props.acces?.my_allergens_other_edit &&
-                  !this.props.acces?.my_allergens_other_view
-                    ? { display: "none" }
-                    : {}
-                }
-              >
-                <MyAutocomplite
-                  label="Возможные аллергены"
-                  multiple={true}
-                  data={this.state.itemEdit ? this.state.itemEdit.allergens : []}
-                  value={this.state.itemEdit ? this.state.itemEdit.item.my_allergens_other : ""}
-                  disabled={!this.props.acces?.my_allergens_other_edit}
-                  onFocus={() => {
-                    this.setState((prevState) => ({
-                      err_valid: {
-                        ...prevState.err_valid,
-                        my_allergens_other: false,
-                      },
-                    }));
-                  }}
-                  style={
-                    this.state.err_valid?.my_allergens_other
-                      ? { border: "2px solid red", borderRadius: "6px", backgroundColor: "#f5f5f5" }
-                      : {}
-                  }
-                  func={(event, value) => {
-                    let this_storages = this.state.itemEdit;
-                    this_storages.item.my_allergens_other = value;
-                    this.setState({ itemEdit: this_storages });
-                  }}
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
                   sm: 4,
                 }}
                 style={
@@ -1917,8 +1774,6 @@ class SkladItemsModule_ extends React.Component {
       err_status: false,
       err_text: "",
 
-      allergens: [],
-
       modalDialogView: false,
       itemView: null,
     };
@@ -2018,7 +1873,6 @@ class SkladItemsModule_ extends React.Component {
       method,
       itemEdit: res,
       itemName: res.item.name,
-      allergens: res.allergens,
     });
   }
 
@@ -2055,20 +1909,6 @@ class SkladItemsModule_ extends React.Component {
       res.item.apps = res.apps;
       res.item.ed_izmer = res.ed_izmer;
 
-      res.item.my_allergens = res.item.my_allergens
-        .map((allergen) => {
-          allergen = allergen.name;
-          return allergen;
-        })
-        .join(", ");
-
-      res.item.my_allergens_other = res.item.my_allergens_other
-        .map((allergen) => {
-          allergen = allergen.name;
-          return allergen;
-        })
-        .join(", ");
-
       res.item.this_storages = res.item.this_storages
         .map((storage) => {
           storage = storage.name;
@@ -2095,8 +1935,6 @@ class SkladItemsModule_ extends React.Component {
       id: itemEdit.item.id,
       item: itemEdit.item,
       storages: itemEdit.this_storages,
-      my_allergens: itemEdit.item.my_allergens,
-      my_allergens_other: itemEdit.item.my_allergens_other,
       main_item_id: parseInt(main_item_id) == 0 ? itemEdit.item.id : parseInt(main_item_id),
     };
 
@@ -2131,8 +1969,6 @@ class SkladItemsModule_ extends React.Component {
       id: itemEdit.item.id,
       item: itemEdit.item,
       storages: itemEdit.this_storages,
-      my_allergens: itemEdit.item.my_allergens,
-      my_allergens_other: itemEdit.item.my_allergens_other,
       main_item_id: parseInt(main_item_id) == 0 ? itemEdit.item.id : parseInt(main_item_id),
     };
 
