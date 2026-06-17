@@ -10,6 +10,18 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ReplayIcon from "@mui/icons-material/Replay";
 
+const actionButtonSx = {
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+  borderRadius: "8px",
+  fontWeight: 700,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+};
+
 export function ControlActionConfirmDialog({ open, action, item, cleaning, onClose, onConfirm }) {
   const actionMeta = {
     approve: {
@@ -24,6 +36,14 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
       title: "Вернуть уборку?",
       text: `Уборка «${cleaning?.name || "Уборка"}» сотрудника ${item?.employee || ""} будет возвращена в процесс.`,
       button: "Вернуть",
+      icon: <ReplayIcon />,
+      bgcolor: "#f59e0b",
+      hoverBgcolor: "#d97706",
+    },
+    detach: {
+      title: "Снять уборку?",
+      text: `Уборка «${cleaning?.name || "Уборка"}» будет переведена в активные. Сотрудник и время начала будут очищены.`,
+      button: "Снять",
       icon: <ReplayIcon />,
       bgcolor: "#f59e0b",
       hoverBgcolor: "#d97706",
@@ -56,7 +76,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Отмена
         </Button>
@@ -66,8 +86,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
           startIcon={meta.icon}
           onClick={onConfirm}
           sx={{
-            borderRadius: "8px",
-            fontWeight: 700,
+            ...actionButtonSx,
             bgcolor: meta.bgcolor,
             color: "#fff",
             "&:hover": { bgcolor: meta.hoverBgcolor },
@@ -118,7 +137,7 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Отмена
         </Button>
@@ -128,8 +147,7 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
           startIcon={meta.icon}
           onClick={onConfirm}
           sx={{
-            borderRadius: "8px",
-            fontWeight: 700,
+            ...actionButtonSx,
             bgcolor: meta.bgcolor,
             color: "#fff",
             "&:hover": { bgcolor: meta.hoverBgcolor },

@@ -24,27 +24,60 @@ import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import CityCafeAutocomplete from "@/ui/CityCafeAutocomplete";
-import { days, defaultForm, locationCities, locationOptions, roles } from "./constants";
+import {
+  additionTypeOptions,
+  defaultForm,
+  locationCities,
+  locationOptions,
+  roles,
+  scheduleTypeOptions,
+} from "./constants";
+import { getDaysFromScheduleType, getScheduleTypeFromDays } from "./helpers";
 import { FormLabel, FormSection } from "./shared";
 
-export default function CleaningTemplateDialog({ open, item, categories, onClose, onSave }) {
+const actionButtonSx = {
+  minHeight: 44,
+  borderRadius: "8px",
+  fontSize: 16,
+  fontWeight: 700,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+export default function CleaningTemplateDialog({
+  open,
+  item,
+  categories,
+  templates = [],
+  onClose,
+  onSave,
+}) {
   const [form, setForm] = useState(defaultForm);
 
   useEffect(() => {
     setForm(
       item
         ? {
+            ...defaultForm,
             ...item,
-            times: [...item.times],
-            days: [...item.days],
-            locationIds: [...item.locationIds],
+            scheduleType: getScheduleTypeFromDays(item),
+            activationCount: item.activationCount ?? "",
+            additionType: item.additionType ?? "",
+            triggerCleaningId: item.triggerCleaningId ?? null,
+            deleteTimes: [...(item.deleteTimes || [])],
+            times: [...(item.times || [])],
+            days: [...(item.days || [])],
+            locationIds: [...(item.locationIds || [])],
           }
-        : defaultForm,
+        : { ...defaultForm },
     );
   }, [item, open]);
 
   const isEdit = Boolean(item?.id);
   const selectedCategory = categories.find((category) => category.id === form.categoryId) ?? null;
+  const selectedTriggerCleaning =
+    templates.find((template) => template.id === form.triggerCleaningId) ?? null;
   const selectedLocations = locationOptions.filter((location) =>
     form.locationIds.includes(location.id),
   );
@@ -53,14 +86,8 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleDay = (value) => {
-    setForm((prev) => {
-      const nextDays = prev.days.includes(value)
-        ? prev.days.filter((day) => day !== value)
-        : [...prev.days, value];
-
-      return { ...prev, days: nextDays };
-    });
+  const changeActivationCount = (value) => {
+    changeField("activationCount", value.replace(/\D/g, ""));
   };
 
   const changeTime = (index, value) => {
@@ -81,12 +108,51 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
     }));
   };
 
+  const changeDeleteTime = (index, value) => {
+    setForm((prev) => ({
+      ...prev,
+      deleteTimes: prev.deleteTimes.map((time, timeIndex) => (timeIndex === index ? value : time)),
+    }));
+  };
+
+  const addDeleteTime = () => {
+    setForm((prev) => ({ ...prev, deleteTimes: [...prev.deleteTimes, "10:00"] }));
+  };
+
+  const removeDeleteTime = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      deleteTimes: prev.deleteTimes.filter((_, timeIndex) => timeIndex !== index),
+    }));
+  };
+
+  const changeScheduleType = (value) => {
+    setForm((prev) => {
+      const shouldHideAddTime = value === "manual" || value === "after_cleaning";
+
+      return {
+        ...prev,
+        scheduleType: value,
+        days: getDaysFromScheduleType(value),
+        times: value === "every_day_shift_end" ? ["19:00"] : shouldHideAddTime ? [] : prev.times,
+        triggerCleaningId: value === "after_cleaning" ? prev.triggerCleaningId : null,
+      };
+    });
+  };
+
+  const shouldShowAddTime =
+    form.scheduleType !== "manual" && form.scheduleType !== "after_cleaning";
+
   const save = () => {
     onSave({
       ...form,
       name: form.name.trim() || "Новая уборка",
-      duration: Number(form.duration) || 15,
-      times: form.times.filter(Boolean),
+      duration: form.duration === "" ? "" : Number(form.duration),
+      activationCount: form.activationCount === "" ? "" : parseInt(form.activationCount, 10),
+      days: getDaysFromScheduleType(form.scheduleType),
+      triggerCleaningId: form.scheduleType === "after_cleaning" ? form.triggerCleaningId : null,
+      times: shouldShowAddTime ? form.times.filter(Boolean) : [],
+      deleteTimes: form.deleteTimes.filter(Boolean),
     });
   };
 
@@ -171,7 +237,7 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
                   size="small"
                   options={categories}
                   value={selectedCategory}
-                  onChange={(_, value) => value && changeField("categoryId", value.id)}
+                  onChange={(_, value) => changeField("categoryId", value?.id ?? null)}
                   getOptionLabel={(option) => option?.name || ""}
                   isOptionEqualToValue={(option, value) => option?.id === value?.id}
                   noOptionsText="Категория не найдена"
@@ -200,9 +266,13 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
                   <Select
                     size="small"
                     value={form.role}
+                    displayEmpty
                     onChange={(event) => changeField("role", event.target.value)}
                     IconComponent={ExpandMoreIcon}
                   >
+                    <MenuItem value="">
+                      <Typography sx={{ color: "text.secondary" }}>Выберите роль</Typography>
+                    </MenuItem>
                     {roles.map((role) => (
                       <MenuItem
                         key={role}
@@ -224,6 +294,41 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
                   onChange={(event) => changeField("duration", event.target.value)}
                 />
               </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormLabel>Количество активаций</FormLabel>
+                <TextField
+                  size="small"
+                  fullWidth
+                  type="number"
+                  value={form.activationCount}
+                  onChange={(event) => changeActivationCount(event.target.value)}
+                  inputProps={{ min: 0, step: 1 }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormLabel>Тип добавления</FormLabel>
+                <FormControl fullWidth>
+                  <Select
+                    size="small"
+                    value={form.additionType}
+                    displayEmpty
+                    onChange={(event) => changeField("additionType", event.target.value)}
+                    IconComponent={ExpandMoreIcon}
+                  >
+                    <MenuItem value="">
+                      <Typography sx={{ color: "text.secondary" }}>Выберите тип</Typography>
+                    </MenuItem>
+                    {additionTypeOptions.map((option) => (
+                      <MenuItem
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
           </FormSection>
 
@@ -231,86 +336,149 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
             icon={<ScheduleOutlinedIcon />}
             title="Расписание"
           >
-            <FormLabel>Дни недели</FormLabel>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "nowrap",
-                gap: { xs: 0.75, md: 1 },
-                mb: 2.25,
-                overflowX: "auto",
-                pb: 0.25,
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": { display: "none" },
-              }}
+            <Grid
+              container
+              spacing={2}
+              sx={{ mb: 2.25 }}
             >
-              {days.map((day) => {
-                const selected = form.days.includes(day.value);
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormLabel>День недели</FormLabel>
+                <FormControl fullWidth>
+                  <Select
+                    size="small"
+                    value={form.scheduleType}
+                    displayEmpty
+                    onChange={(event) => changeScheduleType(event.target.value)}
+                    IconComponent={ExpandMoreIcon}
+                  >
+                    <MenuItem value="">
+                      <Typography sx={{ color: "text.secondary" }}>
+                        Выберите день или режим
+                      </Typography>
+                    </MenuItem>
+                    {scheduleTypeOptions.map((option) => (
+                      <MenuItem
+                        key={option.value}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              {form.scheduleType === "after_cleaning" ? (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormLabel>После выполнения уборки</FormLabel>
+                  <Autocomplete
+                    size="small"
+                    options={templates}
+                    value={selectedTriggerCleaning}
+                    onChange={(_, value) => changeField("triggerCleaningId", value?.id ?? null)}
+                    getOptionLabel={(option) => option?.name || ""}
+                    isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                    noOptionsText="Уборка не найдена"
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        placeholder="Выберите уборку"
+                      />
+                    )}
+                  />
+                </Grid>
+              ) : null}
+            </Grid>
 
-                return (
+            {shouldShowAddTime ? (
+              <>
+                <FormLabel>Время появления задачи</FormLabel>
+                <Box sx={{ display: "grid", gap: 1.5, justifyItems: "start" }}>
+                  {form.times.map((time, index) => (
+                    <Box
+                      key={`time_${index}`}
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <TextField
+                        size="small"
+                        type="time"
+                        value={time}
+                        onChange={(event) => changeTime(index, event.target.value)}
+                        sx={{ width: 132 }}
+                        InputProps={{
+                          sx: { fontSize: 16 },
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => removeTime(index)}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+
                   <Button
                     size="small"
-                    key={day.value}
-                    variant={selected ? "contained" : "outlined"}
-                    color={selected ? "primary" : "inherit"}
-                    onClick={() => toggleDay(day.value)}
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={addTime}
                     sx={{
-                      minWidth: { xs: 42, md: 46 },
-                      minHeight: 40,
-                      flexShrink: 0,
+                      borderStyle: "dashed",
+                      px: 2,
+                      py: 0.75,
                       borderRadius: "8px",
-                      fontSize: 16,
-                      fontWeight: 500,
+                      color: "text.secondary",
                     }}
                   >
-                    {day.label}
+                    Добавить время
                   </Button>
-                );
-              })}
-            </Box>
-
-            <FormLabel>Время появления задачи</FormLabel>
-            <Box sx={{ display: "grid", gap: 1.5, justifyItems: "start" }}>
-              {form.times.map((time, index) => (
-                <Box
-                  key={`time_${index}`}
-                  sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                >
-                  <TextField
-                    size="small"
-                    type="time"
-                    value={time}
-                    onChange={(event) => changeTime(index, event.target.value)}
-                    sx={{ width: 132 }}
-                    InputProps={{
-                      sx: { fontSize: 16 },
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => removeTime(index)}
-                    disabled={form.times.length === 1}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
                 </Box>
-              ))}
+              </>
+            ) : null}
 
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={addTime}
-                sx={{
-                  borderStyle: "dashed",
-                  px: 2,
-                  py: 0.75,
-                  borderRadius: "8px",
-                  color: "text.secondary",
-                }}
-              >
-                Добавить время
-              </Button>
+            <Box sx={{ mt: 2.25 }}>
+              <FormLabel>Время автоматического удаления</FormLabel>
+              <Box sx={{ display: "grid", gap: 1.5, justifyItems: "start" }}>
+                {form.deleteTimes.map((time, index) => (
+                  <Box
+                    key={`delete_time_${index}`}
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                  >
+                    <TextField
+                      size="small"
+                      type="time"
+                      value={time}
+                      onChange={(event) => changeDeleteTime(index, event.target.value)}
+                      sx={{ width: 132 }}
+                      InputProps={{
+                        sx: { fontSize: 16 },
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => removeDeleteTime(index)}
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
+
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={addDeleteTime}
+                  sx={{
+                    borderStyle: "dashed",
+                    px: 2,
+                    py: 0.75,
+                    borderRadius: "8px",
+                    color: "text.secondary",
+                  }}
+                >
+                  Добавить время
+                </Button>
+              </Box>
             </Box>
           </FormSection>
 
@@ -349,7 +517,7 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
           variant="contained"
           fullWidth
           onClick={save}
-          sx={{ minHeight: 44, borderRadius: "8px", fontSize: 16, fontWeight: 700 }}
+          sx={actionButtonSx}
         >
           Сохранить
         </Button>
@@ -357,7 +525,7 @@ export default function CleaningTemplateDialog({ open, item, categories, onClose
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ minHeight: 44, minWidth: 112, borderRadius: "8px", fontSize: 16 }}
+          sx={{ ...actionButtonSx, minWidth: 112, fontWeight: 500 }}
         >
           Отмена
         </Button>

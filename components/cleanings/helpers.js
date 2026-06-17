@@ -1,8 +1,41 @@
-import { days, locations } from "./constants";
+import { days, locations, scheduleTypeOptions } from "./constants";
+
+export function getScheduleTypeFromDays(item = {}) {
+  if (item.scheduleType) {
+    return item.scheduleType;
+  }
+
+  if (item.days?.length === days.length) {
+    return "every_day";
+  }
+
+  if (item.days?.length === 1) {
+    return item.days[0];
+  }
+
+  return item.days?.length ? "other" : "";
+}
+
+export function getDaysFromScheduleType(scheduleType) {
+  if (scheduleType === "every_day" || scheduleType === "every_day_shift_end") {
+    return days.map((day) => day.value);
+  }
+
+  if (days.some((day) => day.value === scheduleType)) {
+    return [scheduleType];
+  }
+
+  return [];
+}
 
 export function getScheduleText(item) {
-  const dayLabels =
-    item.days?.length === days.length
+  const scheduleType = getScheduleTypeFromDays(item);
+  const scheduleTypeLabel = scheduleTypeOptions.find(
+    (option) => option.value === scheduleType,
+  )?.label;
+  const dayLabels = scheduleTypeLabel
+    ? scheduleTypeLabel
+    : item.days?.length === days.length
       ? "Ежедневно"
       : item.days?.map((day) => days.find((d) => d.value === day)?.label).join(", ");
   return `${dayLabels || "Без дней"} · ${(item.times || []).join(", ") || "Без времени"}`;
@@ -81,6 +114,26 @@ export function buildCleaningHistory(item, categories) {
 
 export function getLocationName(location) {
   return `${location.name} — ${location.city}`;
+}
+
+export function getLocationNameById(locationId) {
+  const location = locations.find((item) => item.id === locationId);
+
+  return location ? getLocationName(location) : "Кафе не выбрано";
+}
+
+export function getDatePart(value) {
+  return value ? String(value).split(" ")[0] : "";
+}
+
+export function isDateInRange(value, from, to) {
+  const date = getDatePart(value);
+
+  if (!date) {
+    return false;
+  }
+
+  return (!from || date >= from) && (!to || date <= to);
 }
 
 export function formatControlTime(value) {

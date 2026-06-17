@@ -10,6 +10,7 @@ import {
   initialPreparationItems,
   initialTemplates,
   locations,
+  mockToday,
 } from "./constants";
 import { getCategoryName } from "./helpers";
 import CleaningTemplateDialog from "./CleaningTemplateDialog";
@@ -17,7 +18,7 @@ import CleaningHistoryDialog from "./CleaningHistoryDialog";
 import CleaningsListPage from "./CleaningsListPage";
 import CleaningCategoriesView, { DeleteCategoryDialog } from "./CategoriesPage";
 import CafesView, { AddCafeCleaningDialog, RemoveCafeCleaningDialog } from "./CafesPage";
-import ControlView from "./ControlCleaningsPage";
+import ControlView, { AddManualCleaningDialog } from "./ControlCleaningsPage";
 import PreparationControlView, { PreparationEditDialog } from "./ControlPreparationsPage";
 import { ControlActionConfirmDialog, PreparationActionConfirmDialog } from "./ControlDialogs";
 
@@ -34,6 +35,12 @@ export default function CleaningsPage({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("active");
   const [controlFilter, setControlFilter] = useState("all");
+  const [controlCafeId, setControlCafeId] = useState(locations[0].id);
+  const [controlDateFrom, setControlDateFrom] = useState(mockToday);
+  const [controlDateTo, setControlDateTo] = useState(mockToday);
+  const [preparationCafeId, setPreparationCafeId] = useState(locations[0].id);
+  const [preparationDateFrom, setPreparationDateFrom] = useState(mockToday);
+  const [preparationDateTo, setPreparationDateTo] = useState(mockToday);
   const [section, setSection] = useState(initialSection);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -44,6 +51,9 @@ export default function CleaningsPage({
   const [cafeRoleFilter, setCafeRoleFilter] = useState("all");
   const [addCafeDialogOpen, setAddCafeDialogOpen] = useState(false);
   const [addCafeQuery, setAddCafeQuery] = useState("");
+  const [addCafeRoleFilter, setAddCafeRoleFilter] = useState("all");
+  const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
+  const [addManualQuery, setAddManualQuery] = useState("");
   const [removeCafeCleaningId, setRemoveCafeCleaningId] = useState(null);
   const [controlAction, setControlAction] = useState(null);
   const [preparationAction, setPreparationAction] = useState(null);
@@ -113,8 +123,8 @@ export default function CleaningsPage({
   const createCategory = () => {
     setCategoryDraft({
       id: null,
-      name: "Новая категория",
-      instruction: "<p>Добавьте подробную инструкцию для сотрудника.</p>",
+      name: "",
+      instruction: "",
     });
     setSection("categories");
   };
@@ -149,6 +159,10 @@ export default function CleaningsPage({
   };
 
   const deleteCategory = (id) => {
+    if (templates.some((template) => template.categoryId === id)) {
+      return;
+    }
+
     const nextCategory = categories.find((category) => category.id !== id);
 
     if (!nextCategory) {
@@ -156,11 +170,6 @@ export default function CleaningsPage({
     }
 
     setCategories((prev) => prev.filter((category) => category.id !== id));
-    setTemplates((prev) =>
-      prev.map((template) =>
-        template.categoryId === id ? { ...template, categoryId: nextCategory.id } : template,
-      ),
-    );
     setSelectedCategoryId(nextCategory.id);
     setCategoryDraft(nextCategory);
     setDeleteCategoryId(null);
@@ -168,12 +177,21 @@ export default function CleaningsPage({
 
   const deleteCategoryCandidate =
     categories.find((category) => category.id === deleteCategoryId) || null;
+  const deleteCategoryTemplates = deleteCategoryCandidate
+    ? templates.filter((template) => template.categoryId === deleteCategoryCandidate.id)
+    : [];
   const selectedCafe = locations.find((location) => location.id === selectedCafeId) || locations[0];
   const addableCafeCleanings = templates.filter(
     (template) => template.status === "active" && !template.locationIds.includes(selectedCafeId),
   );
+  const manualCleanings = templates.filter(
+    (template) => template.status === "active" && template.scheduleType === "manual",
+  );
   const removeCafeCleaningCandidate =
     templates.find((template) => template.id === removeCafeCleaningId) || null;
+
+  const getCurrentTime = () =>
+    new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
   const addCleaningToCafe = (id) => {
     setTemplates((prev) =>
@@ -210,6 +228,26 @@ export default function CleaningsPage({
               status,
               finishedAt:
                 status === "active" || status === "in_progress" ? "" : item.finishedAt || "—",
+              confirmedAt: status === "approved" ? getCurrentTime() : item.confirmedAt,
+              confirmer: status === "approved" ? "Винокуров М. Ю." : item.confirmer,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const detachControlItem = (id) => {
+    setControlItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "active",
+              employee: "",
+              startedAt: "",
+              finishedAt: "",
+              confirmedAt: "",
+              confirmer: "",
             }
           : item,
       ),
@@ -218,6 +256,28 @@ export default function CleaningsPage({
 
   const deleteControlItem = (id) => {
     setControlItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const addManualCleaning = (cleaningId) => {
+    setControlItems((prev) => {
+      const nextId = Math.max(...prev.map((item) => item.id), 0) + 1;
+
+      return [
+        {
+          id: nextId,
+          cleaningId,
+          locationId: controlCafeId,
+          date: controlDateFrom || mockToday,
+          employee: "",
+          startedAt: "",
+          finishedAt: "",
+          confirmedAt: "",
+          confirmer: "",
+          status: "active",
+        },
+        ...prev,
+      ];
+    });
   };
 
   const confirmControlAction = () => {
@@ -231,6 +291,10 @@ export default function CleaningsPage({
 
     if (controlAction.type === "return") {
       updateControlStatus(controlAction.id, "in_progress");
+    }
+
+    if (controlAction.type === "detach") {
+      detachControlItem(controlAction.id);
     }
 
     if (controlAction.type === "delete") {
@@ -256,7 +320,7 @@ export default function CleaningsPage({
             ? {
                 ...item,
                 status: "approved",
-                confirmedAt: "2026-06-12 14:30:00",
+                confirmedAt: `${mockToday} ${getCurrentTime()}:00`,
                 confirmer: "Винокуров М. Ю.",
               }
             : item,
@@ -306,7 +370,18 @@ export default function CleaningsPage({
   }, [pageTitle]);
 
   return (
-    <>
+    <Box
+      sx={{
+        "& .MuiButton-root": {
+          alignItems: "center",
+          justifyContent: "center",
+          lineHeight: "20px",
+        },
+        "& .MuiButton-startIcon, & .MuiButton-endIcon": {
+          alignItems: "center",
+        },
+      }}
+    >
       <Grid
         container
         spacing={2.5}
@@ -490,14 +565,28 @@ export default function CleaningsPage({
                 items={controlItems}
                 templates={templates}
                 filter={controlFilter}
+                selectedCafeId={controlCafeId}
+                dateFrom={controlDateFrom}
+                dateTo={controlDateTo}
                 onFilterChange={setControlFilter}
+                onCafeChange={setControlCafeId}
+                onDateFromChange={setControlDateFrom}
+                onDateToChange={setControlDateTo}
+                onAddManualOpen={() => setAddManualDialogOpen(true)}
                 onApprove={(id) => setControlAction({ type: "approve", id })}
                 onReturn={(id) => setControlAction({ type: "return", id })}
+                onDetach={(id) => setControlAction({ type: "detach", id })}
                 onDelete={(id) => setControlAction({ type: "delete", id })}
               />
             ) : (
               <PreparationControlView
                 items={preparationItems}
+                selectedCafeId={preparationCafeId}
+                dateFrom={preparationDateFrom}
+                dateTo={preparationDateTo}
+                onCafeChange={setPreparationCafeId}
+                onDateFromChange={setPreparationDateFrom}
+                onDateToChange={setPreparationDateTo}
                 onEdit={setEditingPreparationId}
                 onApprove={(id) => setPreparationAction({ type: "approve", id })}
                 onDelete={(id) => setPreparationAction({ type: "delete", id })}
@@ -526,6 +615,7 @@ export default function CleaningsPage({
         open={dialogOpen}
         item={editingItem}
         categories={categories}
+        templates={templates}
         onClose={closeDialog}
         onSave={saveTemplate}
       />
@@ -540,6 +630,7 @@ export default function CleaningsPage({
       <DeleteCategoryDialog
         open={Boolean(deleteCategoryCandidate)}
         category={deleteCategoryCandidate}
+        templates={deleteCategoryTemplates}
         onClose={() => setDeleteCategoryId(null)}
         onConfirm={() => deleteCategory(deleteCategoryId)}
       />
@@ -550,9 +641,22 @@ export default function CleaningsPage({
         items={addableCafeCleanings}
         categories={categories}
         query={addCafeQuery}
+        roleFilter={addCafeRoleFilter}
         onQueryChange={setAddCafeQuery}
+        onRoleFilterChange={setAddCafeRoleFilter}
         onClose={() => setAddCafeDialogOpen(false)}
         onAdd={addCleaningToCafe}
+      />
+
+      <AddManualCleaningDialog
+        open={addManualDialogOpen}
+        items={manualCleanings}
+        categories={categories}
+        cafeId={controlCafeId}
+        query={addManualQuery}
+        onQueryChange={setAddManualQuery}
+        onClose={() => setAddManualDialogOpen(false)}
+        onAdd={addManualCleaning}
       />
 
       <RemoveCafeCleaningDialog
@@ -586,6 +690,6 @@ export default function CleaningsPage({
         onClose={() => setEditingPreparationId(null)}
         onSave={savePreparation}
       />
-    </>
+    </Box>
   );
 }

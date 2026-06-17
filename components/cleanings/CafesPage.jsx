@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -24,6 +25,7 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
@@ -38,6 +40,22 @@ import {
   tableRowSx,
 } from "./helpers";
 
+const actionButtonSx = {
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+  borderRadius: "8px",
+  fontWeight: 700,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+};
+
+function getCategory(categories, categoryId) {
+  return categories.find((category) => category.id === categoryId) || null;
+}
+
 export default function CafesView({
   templates,
   categories,
@@ -47,6 +65,7 @@ export default function CafesView({
   onRoleFilterChange,
   onRemoveCleaning,
 }) {
+  const [infoCleaningId, setInfoCleaningId] = useState(null);
   const selectedCafe = locations.find((location) => location.id === selectedCafeId) || locations[0];
   const assignedCleanings = templates.filter((template) =>
     template.locationIds.includes(selectedCafeId),
@@ -54,6 +73,8 @@ export default function CafesView({
   const visibleCleanings = assignedCleanings.filter(
     (template) => roleFilter === "all" || template.role === roleFilter,
   );
+  const infoCleaning = templates.find((template) => template.id === infoCleaningId) || null;
+  const infoCategory = infoCleaning ? getCategory(categories, infoCleaning.categoryId) : null;
 
   return (
     <Grid
@@ -196,9 +217,23 @@ export default function CafesView({
                       sx={{ borderLeft: "3px solid transparent" }}
                     >
                       <Box>
-                        <Typography sx={{ fontSize: 15, fontWeight: 800 }}>{item.name}</Typography>
-                        <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-                          {item.confirmation ? "С подтверждением менеджера" : "Без подтверждения"}
+                        <Typography
+                          component="button"
+                          type="button"
+                          onClick={() => setInfoCleaningId(item.id)}
+                          sx={{
+                            p: 0,
+                            border: 0,
+                            bgcolor: "transparent",
+                            cursor: "pointer",
+                            color: "text.primary",
+                            fontSize: 15,
+                            fontWeight: 800,
+                            textAlign: "left",
+                            "&:hover": { color: "primary.main" },
+                          }}
+                        >
+                          {item.name}
                         </Typography>
                       </Box>
                     </TableCell>
@@ -291,7 +326,23 @@ export default function CafesView({
               >
                 <Box sx={{ display: "grid", gap: 1, mb: 1 }}>
                   <Box>
-                    <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.25 }}>
+                    <Typography
+                      component="button"
+                      type="button"
+                      onClick={() => setInfoCleaningId(item.id)}
+                      sx={{
+                        p: 0,
+                        border: 0,
+                        bgcolor: "transparent",
+                        cursor: "pointer",
+                        color: "text.primary",
+                        fontSize: 16,
+                        fontWeight: 800,
+                        lineHeight: 1.25,
+                        textAlign: "left",
+                        "&:hover": { color: "primary.main" },
+                      }}
+                    >
                       {item.name}
                     </Typography>
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.75 }}>
@@ -347,7 +398,71 @@ export default function CafesView({
           </Box>
         </Paper>
       </Grid>
+
+      <CafeCleaningInfoDialog
+        open={Boolean(infoCleaning)}
+        cleaning={infoCleaning}
+        category={infoCategory}
+        onClose={() => setInfoCleaningId(null)}
+      />
     </Grid>
+  );
+}
+
+function CafeCleaningInfoDialog({ open, cleaning, category, onClose }) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{ sx: { borderRadius: "8px" } }}
+    >
+      <DialogTitle sx={{ p: 2.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography sx={{ fontSize: 18, fontWeight: 800, lineHeight: 1.3 }}>
+              {cleaning?.name || ""}
+            </Typography>
+            <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.75 }}>
+              {category?.name || "Без категории"} · {cleaning?.role || "Без роли"} ·{" "}
+              {cleaning?.duration || "—"} мин
+            </Typography>
+          </Box>
+          <IconButton
+            size="small"
+            onClick={onClose}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ px: 2.5, pb: 2.5 }}>
+        <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}>
+          Описание процесса уборки:
+        </Typography>
+        <Box
+          sx={{
+            color: "text.primary",
+            fontSize: 15,
+            lineHeight: 1.55,
+            "& p": { m: 0, mb: 1.5 },
+            "& ol, & ul": { mt: 0, mb: 1.5, pl: 2.5 },
+            "& li": { mb: 0.5 },
+          }}
+          dangerouslySetInnerHTML={{
+            __html: category?.instruction || "<p>Описание не заполнено</p>",
+          }}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -357,19 +472,23 @@ export function AddCafeCleaningDialog({
   items,
   categories,
   query,
+  roleFilter,
   onQueryChange,
+  onRoleFilterChange,
   onClose,
   onAdd,
 }) {
   const filteredItems = items.filter((item) => {
     const search = query.trim().toLowerCase();
 
-    return (
+    const bySearch =
       !search ||
       item.name.toLowerCase().includes(search) ||
       item.role.toLowerCase().includes(search) ||
-      getCategoryName(categories, item.categoryId).toLowerCase().includes(search)
-    );
+      getCategoryName(categories, item.categoryId).toLowerCase().includes(search);
+    const byRole = roleFilter === "all" || item.role === roleFilter;
+
+    return bySearch && byRole;
   });
 
   return (
@@ -387,19 +506,44 @@ export function AddCafeCleaningDialog({
         </Typography>
       </DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 1.5 }}>
-        <TextField
-          size="small"
-          value={query}
-          placeholder="Поиск по названию, роли или категории"
-          onChange={(event) => onQueryChange(event.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) 180px" },
+            gap: 1,
           }}
-        />
+        >
+          <TextField
+            size="small"
+            value={query}
+            placeholder="Поиск по названию, роли или категории"
+            onChange={(event) => onQueryChange(event.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <FormControl size="small">
+            <Select
+              value={roleFilter}
+              onChange={(event) => onRoleFilterChange(event.target.value)}
+              IconComponent={ExpandMoreIcon}
+            >
+              <MenuItem value="all">Все роли</MenuItem>
+              {roles.map((role) => (
+                <MenuItem
+                  key={role}
+                  value={role}
+                >
+                  {role}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
 
         <Box sx={{ display: "grid", gap: 1, maxHeight: 420, overflow: "auto" }}>
           {filteredItems.length ? (
@@ -463,7 +607,7 @@ export function AddCafeCleaningDialog({
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Закрыть
         </Button>
@@ -492,7 +636,7 @@ export function RemoveCafeCleaningDialog({ open, cleaning, cafe, onClose, onConf
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Отмена
         </Button>
@@ -500,7 +644,7 @@ export function RemoveCafeCleaningDialog({ open, cleaning, cafe, onClose, onConf
           size="small"
           variant="contained"
           onClick={onConfirm}
-          sx={{ borderRadius: "8px" }}
+          sx={actionButtonSx}
         >
           Убрать
         </Button>
