@@ -6,12 +6,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   Grid,
   InputAdornment,
-  MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -26,15 +23,16 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ReplayIcon from "@mui/icons-material/Replay";
 import SearchIcon from "@mui/icons-material/Search";
-import { locations } from "./constants";
+import dayjs from "dayjs";
+import { MyDatePickerNew, MySelect } from "@/ui/Forms";
 import {
   getCategoryName,
   getControlStatusMeta,
   getLocationName,
   getLocationNameById,
+  isSameId,
   isDateInRange,
   tableHeaderSx,
   tableRowSx,
@@ -53,6 +51,7 @@ const actionButtonSx = {
 export default function ControlView({
   items,
   templates,
+  locations = [],
   filter,
   selectedCafeId,
   dateFrom,
@@ -66,9 +65,15 @@ export default function ControlView({
   onReturn,
   onDetach,
   onDelete,
+  canEdit,
 }) {
+  const locationOptions = locations.map((location) => ({
+    id: location.id,
+    name: getLocationName(location),
+  }));
   const filteredByContext = items.filter(
-    (item) => item.locationId === selectedCafeId && isDateInRange(item.date, dateFrom, dateTo),
+    (item) =>
+      isSameId(item.locationId, selectedCafeId) && isDateInRange(item.date, dateFrom, dateTo),
   );
   const visibleItems = filteredByContext.filter(
     (item) => filter === "all" || item.status === filter,
@@ -106,43 +111,32 @@ export default function ControlView({
               alignItems: "center",
             }}
           >
-            <FormControl size="small">
-              <Select
-                value={selectedCafeId}
-                onChange={(event) => onCafeChange(event.target.value)}
-                IconComponent={ExpandMoreIcon}
-              >
-                {locations.map((location) => (
-                  <MenuItem
-                    key={location.id}
-                    value={location.id}
-                  >
-                    {getLocationName(location)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              size="small"
-              type="date"
+            <MySelect
+              label="Кафе"
+              data={locationOptions}
+              value={selectedCafeId}
+              func={(event) => onCafeChange(event.target.value)}
+              is_none={false}
+              disabled={locationOptions.length <= 1}
+            />
+            <MyDatePickerNew
               label="Дата от"
               value={dateFrom}
-              onChange={(event) => onDateFromChange(event.target.value)}
-              InputLabelProps={{ shrink: true }}
+              maxDate={dateTo ? dayjs(dateTo) : null}
+              func={(value) => onDateFromChange(value ? value.format("YYYY-MM-DD") : "")}
             />
-            <TextField
-              size="small"
-              type="date"
+            <MyDatePickerNew
               label="Дата до"
               value={dateTo}
-              onChange={(event) => onDateToChange(event.target.value)}
-              InputLabelProps={{ shrink: true }}
+              minDate={dateFrom ? dayjs(dateFrom) : null}
+              func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
             />
             <Button
               size="small"
               variant="contained"
               startIcon={<AddIcon />}
               onClick={onAddManualOpen}
+              disabled={!canEdit}
               sx={{ ...actionButtonSx, justifySelf: { xs: "stretch", md: "end" } }}
             >
               Добавить уборку
@@ -233,6 +227,7 @@ export default function ControlView({
               <TableBody>
                 {visibleItems.map((item) => {
                   const cleaning = getCleaning(item.cleaningId);
+                  const cleaningName = cleaning?.name || item.name || "Уборка";
                   const statusMeta = getControlStatusMeta(item.status);
 
                   return (
@@ -246,11 +241,11 @@ export default function ControlView({
                         sx={{ borderLeft: "3px solid transparent" }}
                       >
                         <Typography sx={{ fontSize: 15, fontWeight: 800 }}>
-                          {cleaning?.name || "Уборка"}
+                          {cleaningName}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {getLocationNameById(item.locationId)}
+                        {getLocationNameById(item.locationId, locations)}
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                         {item.employee || "—"}
@@ -288,6 +283,7 @@ export default function ControlView({
                           onReturn={onReturn}
                           onDetach={onDetach}
                           onDelete={onDelete}
+                          canEdit={canEdit}
                         />
                       </TableCell>
                     </TableRow>
@@ -310,6 +306,7 @@ export default function ControlView({
           <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
             {visibleItems.map((item) => {
               const cleaning = getCleaning(item.cleaningId);
+              const cleaningName = cleaning?.name || item.name || "Уборка";
               const statusMeta = getControlStatusMeta(item.status);
 
               return (
@@ -326,10 +323,10 @@ export default function ControlView({
                   <Box sx={{ display: "grid", gap: 0.75, mb: 1 }}>
                     <Box>
                       <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.25 }}>
-                        {cleaning?.name || "Уборка"}
+                        {cleaningName}
                       </Typography>
                       <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {getLocationNameById(item.locationId)}
+                        {getLocationNameById(item.locationId, locations)}
                       </Typography>
                       <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
                         {item.employee || "—"} · {item.startedAt || "—"} — {item.finishedAt || "—"}
@@ -365,6 +362,7 @@ export default function ControlView({
                     onReturn={onReturn}
                     onDetach={onDetach}
                     onDelete={onDelete}
+                    canEdit={canEdit}
                     mobile
                   />
                 </Paper>
@@ -377,7 +375,15 @@ export default function ControlView({
   );
 }
 
-function ControlRowActions({ item, onApprove, onReturn, onDetach, onDelete, mobile = false }) {
+function ControlRowActions({
+  item,
+  onApprove,
+  onReturn,
+  onDetach,
+  onDelete,
+  canEdit,
+  mobile = false,
+}) {
   const gridSx = mobile
     ? {
         display: "grid",
@@ -388,6 +394,10 @@ function ControlRowActions({ item, onApprove, onReturn, onDetach, onDelete, mobi
   const buttonSx = mobile ? { ...actionButtonSx, minHeight: 44, width: "100%" } : actionButtonSx;
 
   if (item.status === "approved") {
+    return <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>;
+  }
+
+  if (!canEdit) {
     return <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>;
   }
 
@@ -458,6 +468,7 @@ export function AddManualCleaningDialog({
   open,
   items,
   categories,
+  locations = [],
   cafeId,
   query,
   onQueryChange,
@@ -466,7 +477,7 @@ export function AddManualCleaningDialog({
 }) {
   const filteredItems = items.filter((item) => {
     const search = query.trim().toLowerCase();
-    const byCafe = item.locationIds.includes(cafeId);
+    const byCafe = !item.locationIds?.length || item.locationIds.includes(cafeId);
     const bySearch =
       !search ||
       item.name.toLowerCase().includes(search) ||
@@ -482,12 +493,12 @@ export function AddManualCleaningDialog({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>
         Добавить уборку
         <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
-          {getLocationNameById(cafeId)}
+          {getLocationNameById(cafeId, locations)}
         </Typography>
       </DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 1.5 }}>

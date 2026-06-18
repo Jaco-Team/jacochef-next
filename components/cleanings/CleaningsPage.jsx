@@ -1,18 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { Box, Button, Grid, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import {
-  cleaningSectionTabs,
-  controlKindTabs,
-  initialCategories,
-  initialControlItems,
-  initialPreparationItems,
-  initialTemplates,
-  locations,
-  mockToday,
-} from "./constants";
-import { getCategoryName } from "./helpers";
+  Backdrop,
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import MyAlert from "@/ui/MyAlert";
+import { useConfirm } from "@/src/hooks/useConfirm";
+import { cleaningSectionTabs, controlKindTabs } from "./constants";
 import CleaningTemplateDialog from "./CleaningTemplateDialog";
 import CleaningHistoryDialog from "./CleaningHistoryDialog";
 import CleaningsListPage from "./CleaningsListPage";
@@ -21,353 +22,18 @@ import CafesView, { AddCafeCleaningDialog, RemoveCafeCleaningDialog } from "./Ca
 import ControlView, { AddManualCleaningDialog } from "./ControlCleaningsPage";
 import PreparationControlView, { PreparationEditDialog } from "./ControlPreparationsPage";
 import { ControlActionConfirmDialog, PreparationActionConfirmDialog } from "./ControlDialogs";
+import useCleaningsPage from "./useCleaningsPage";
 
 export default function CleaningsPage({
   initialSection = "templates",
   initialControlKind = "cleanings",
 } = {}) {
-  const [templates, setTemplates] = useState(initialTemplates);
-  const [categories, setCategories] = useState(initialCategories);
-  const [controlItems, setControlItems] = useState(initialControlItems);
-  const [preparationItems, setPreparationItems] = useState(initialPreparationItems);
-  const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategories[0].id);
-  const [categoryQuery, setCategoryQuery] = useState("");
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("active");
-  const [controlFilter, setControlFilter] = useState("all");
-  const [controlCafeId, setControlCafeId] = useState(locations[0].id);
-  const [controlDateFrom, setControlDateFrom] = useState(mockToday);
-  const [controlDateTo, setControlDateTo] = useState(mockToday);
-  const [preparationCafeId, setPreparationCafeId] = useState(locations[0].id);
-  const [preparationDateFrom, setPreparationDateFrom] = useState(mockToday);
-  const [preparationDateTo, setPreparationDateTo] = useState(mockToday);
-  const [section, setSection] = useState(initialSection);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [historyItem, setHistoryItem] = useState(null);
-  const [deleteCategoryId, setDeleteCategoryId] = useState(null);
-  const [categoryDraft, setCategoryDraft] = useState(null);
-  const [selectedCafeId, setSelectedCafeId] = useState(locations[0].id);
-  const [cafeRoleFilter, setCafeRoleFilter] = useState("all");
-  const [addCafeDialogOpen, setAddCafeDialogOpen] = useState(false);
-  const [addCafeQuery, setAddCafeQuery] = useState("");
-  const [addCafeRoleFilter, setAddCafeRoleFilter] = useState("all");
-  const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
-  const [addManualQuery, setAddManualQuery] = useState("");
-  const [removeCafeCleaningId, setRemoveCafeCleaningId] = useState(null);
-  const [controlAction, setControlAction] = useState(null);
-  const [preparationAction, setPreparationAction] = useState(null);
-  const [editingPreparationId, setEditingPreparationId] = useState(null);
-  const [controlKind, setControlKind] = useState(initialControlKind);
+  const page = useCleaningsPage({ initialSection, initialControlKind });
+  const { withConfirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
-    setSection(initialSection);
-  }, [initialSection]);
-
-  useEffect(() => {
-    setControlKind(initialControlKind);
-  }, [initialControlKind]);
-
-  const filteredTemplates = useMemo(() => {
-    const search = query.trim().toLowerCase();
-
-    return templates.filter((item) => {
-      const byFilter = filter === "all" || item.status === filter;
-      const bySearch =
-        !search ||
-        item.name.toLowerCase().includes(search) ||
-        item.role.toLowerCase().includes(search) ||
-        getCategoryName(categories, item.categoryId).toLowerCase().includes(search);
-
-      return byFilter && bySearch;
-    });
-  }, [categories, filter, query, templates]);
-
-  const openCreate = () => {
-    setEditingItem(null);
-    setDialogOpen(true);
-  };
-
-  const openEdit = (item) => {
-    setEditingItem(item);
-    setDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingItem(null);
-  };
-
-  const saveTemplate = (template) => {
-    setTemplates((prev) => {
-      if (template.id) {
-        return prev.map((item) => (item.id === template.id ? template : item));
-      }
-
-      const nextId = Math.max(...prev.map((item) => item.id), 0) + 1;
-      return [{ ...template, id: nextId }, ...prev];
-    });
-    closeDialog();
-  };
-
-  const toggleArchive = (id) => {
-    setTemplates((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, status: item.status === "archive" ? "active" : "archive" }
-          : item,
-      ),
-    );
-  };
-
-  const createCategory = () => {
-    setCategoryDraft({
-      id: null,
-      name: "",
-      instruction: "",
-    });
-    setSection("categories");
-  };
-
-  const saveCategory = () => {
-    if (!categoryDraft) {
-      return;
-    }
-
-    if (categoryDraft.id) {
-      setCategories((prev) =>
-        prev.map((item) => (item.id === categoryDraft.id ? categoryDraft : item)),
-      );
-      return;
-    }
-
-    const nextId = Math.max(...categories.map((category) => category.id), 0) + 1;
-    const nextCategory = { ...categoryDraft, id: nextId };
-
-    setCategories((prev) => [...prev, nextCategory]);
-    setSelectedCategoryId(nextId);
-    setCategoryDraft(nextCategory);
-  };
-
-  const updateCategory = (category) => {
-    setCategoryDraft(category);
-  };
-
-  const selectCategory = (id) => {
-    setSelectedCategoryId(id);
-    setCategoryDraft(categories.find((category) => category.id === id) || null);
-  };
-
-  const deleteCategory = (id) => {
-    if (templates.some((template) => template.categoryId === id)) {
-      return;
-    }
-
-    const nextCategory = categories.find((category) => category.id !== id);
-
-    if (!nextCategory) {
-      return;
-    }
-
-    setCategories((prev) => prev.filter((category) => category.id !== id));
-    setSelectedCategoryId(nextCategory.id);
-    setCategoryDraft(nextCategory);
-    setDeleteCategoryId(null);
-  };
-
-  const deleteCategoryCandidate =
-    categories.find((category) => category.id === deleteCategoryId) || null;
-  const deleteCategoryTemplates = deleteCategoryCandidate
-    ? templates.filter((template) => template.categoryId === deleteCategoryCandidate.id)
-    : [];
-  const selectedCafe = locations.find((location) => location.id === selectedCafeId) || locations[0];
-  const addableCafeCleanings = templates.filter(
-    (template) => template.status === "active" && !template.locationIds.includes(selectedCafeId),
-  );
-  const manualCleanings = templates.filter(
-    (template) => template.status === "active" && template.scheduleType === "manual",
-  );
-  const removeCafeCleaningCandidate =
-    templates.find((template) => template.id === removeCafeCleaningId) || null;
-
-  const getCurrentTime = () =>
-    new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-
-  const addCleaningToCafe = (id) => {
-    setTemplates((prev) =>
-      prev.map((template) =>
-        template.id === id
-          ? { ...template, locationIds: [...template.locationIds, selectedCafeId] }
-          : template,
-      ),
-    );
-  };
-
-  const removeCleaningFromCafe = (id) => {
-    setTemplates((prev) =>
-      prev.map((template) =>
-        template.id === id
-          ? {
-              ...template,
-              locationIds: template.locationIds.filter(
-                (locationId) => locationId !== selectedCafeId,
-              ),
-            }
-          : template,
-      ),
-    );
-    setRemoveCafeCleaningId(null);
-  };
-
-  const updateControlStatus = (id, status) => {
-    setControlItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status,
-              finishedAt:
-                status === "active" || status === "in_progress" ? "" : item.finishedAt || "—",
-              confirmedAt: status === "approved" ? getCurrentTime() : item.confirmedAt,
-              confirmer: status === "approved" ? "Винокуров М. Ю." : item.confirmer,
-            }
-          : item,
-      ),
-    );
-  };
-
-  const detachControlItem = (id) => {
-    setControlItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "active",
-              employee: "",
-              startedAt: "",
-              finishedAt: "",
-              confirmedAt: "",
-              confirmer: "",
-            }
-          : item,
-      ),
-    );
-  };
-
-  const deleteControlItem = (id) => {
-    setControlItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const addManualCleaning = (cleaningId) => {
-    setControlItems((prev) => {
-      const nextId = Math.max(...prev.map((item) => item.id), 0) + 1;
-
-      return [
-        {
-          id: nextId,
-          cleaningId,
-          locationId: controlCafeId,
-          date: controlDateFrom || mockToday,
-          employee: "",
-          startedAt: "",
-          finishedAt: "",
-          confirmedAt: "",
-          confirmer: "",
-          status: "active",
-        },
-        ...prev,
-      ];
-    });
-  };
-
-  const confirmControlAction = () => {
-    if (!controlAction) {
-      return;
-    }
-
-    if (controlAction.type === "approve") {
-      updateControlStatus(controlAction.id, "approved");
-    }
-
-    if (controlAction.type === "return") {
-      updateControlStatus(controlAction.id, "in_progress");
-    }
-
-    if (controlAction.type === "detach") {
-      detachControlItem(controlAction.id);
-    }
-
-    if (controlAction.type === "delete") {
-      deleteControlItem(controlAction.id);
-    }
-
-    setControlAction(null);
-  };
-
-  const controlActionCandidate = controlItems.find((item) => item.id === controlAction?.id) || null;
-  const controlActionCleaningCandidate = controlActionCandidate
-    ? templates.find((template) => template.id === controlActionCandidate.cleaningId)
-    : null;
-  const confirmPreparationAction = () => {
-    if (!preparationAction) {
-      return;
-    }
-
-    if (preparationAction.type === "approve") {
-      setPreparationItems((prev) =>
-        prev.map((item) =>
-          item.id === preparationAction.id
-            ? {
-                ...item,
-                status: "approved",
-                confirmedAt: `${mockToday} ${getCurrentTime()}:00`,
-                confirmer: "Винокуров М. Ю.",
-              }
-            : item,
-        ),
-      );
-    }
-
-    if (preparationAction.type === "delete") {
-      setPreparationItems((prev) => prev.filter((item) => item.id !== preparationAction.id));
-    }
-
-    setPreparationAction(null);
-  };
-  const preparationActionCandidate =
-    preparationItems.find((item) => item.id === preparationAction?.id) || null;
-  const editingPreparationCandidate =
-    preparationItems.find((item) => item.id === editingPreparationId) || null;
-
-  const savePreparation = (preparation) => {
-    setPreparationItems((prev) =>
-      prev.map((item) => (item.id === preparation.id ? preparation : item)),
-    );
-    setEditingPreparationId(null);
-  };
-
-  const pageTitle =
-    section === "categories"
-      ? "Категории уборок"
-      : section === "cafes"
-        ? "Кафе"
-        : section === "control"
-          ? controlKind === "preparations"
-            ? "Контроль - заготовки"
-            : "Контроль - уборки"
-          : "Уборки";
-  const pageSubtitle =
-    section === "categories"
-      ? "Группируйте уборки по типу работ. В каждой категории — инструкция для сотрудника."
-      : section === "cafes"
-        ? "Просматривайте уборки, назначенные на выбранное кафе."
-        : section === "control"
-          ? "Подтверждайте выполненные уборки и заготовки."
-          : "Создавайте и настраивайте уборки. Назначьте их на локации во вкладке «Кафе».";
-
-  useEffect(() => {
-    document.title = pageTitle;
-  }, [pageTitle]);
+    document.title = page.pageTitle;
+  }, [page.pageTitle]);
 
   return (
     <Box
@@ -382,6 +48,20 @@ export default function CleaningsPage({
         },
       }}
     >
+      <Backdrop
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
+        open={page.bootstrapLoading || page.controlLoading || page.mutationLoading}
+      >
+        <CircularProgress />
+      </Backdrop>
+
+      <MyAlert
+        isOpen={page.isAlert}
+        onClose={page.closeAlert}
+        status={page.alertStatus}
+        text={page.alertMessage}
+      />
+
       <Grid
         container
         spacing={2.5}
@@ -403,16 +83,18 @@ export default function CleaningsPage({
                 component="h1"
                 sx={{ fontWeight: 700, mb: 0.5, fontSize: { xs: 28, md: 32 } }}
               >
-                {pageTitle}
+                {page.pageTitle}
               </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{pageSubtitle}</Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
+                {page.pageSubtitle}
+              </Typography>
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
               <ToggleButtonGroup
                 size="small"
                 exclusive
-                value={section}
+                value={page.section}
                 sx={{
                   "& .MuiToggleButton-root": {
                     width: 92,
@@ -427,24 +109,34 @@ export default function CleaningsPage({
                   },
                 }}
               >
-                {cleaningSectionTabs.map((tab) => (
-                  <ToggleButton
-                    key={tab.value}
-                    component={Link}
-                    href={tab.href}
-                    value={tab.value}
-                    onClick={() => setSection(tab.value)}
-                  >
-                    {tab.label}
-                  </ToggleButton>
-                ))}
+                {cleaningSectionTabs
+                  .filter((tab) => {
+                    if (tab.value === "templates") return page.canView("cleanings");
+                    if (tab.value === "categories") return page.canView("categories");
+                    if (tab.value === "cafes") return page.canView("cafes");
+                    if (tab.value === "control") {
+                      return page.canView("control_cleanings") || page.canView("control_pf");
+                    }
+                    return true;
+                  })
+                  .map((tab) => (
+                    <ToggleButton
+                      key={tab.value}
+                      component={Link}
+                      href={tab.href}
+                      value={tab.value}
+                      onClick={() => page.setSection(tab.value)}
+                    >
+                      {tab.label}
+                    </ToggleButton>
+                  ))}
               </ToggleButtonGroup>
 
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={openCreate}
+                onClick={page.openCreate}
                 sx={{
                   minHeight: 40,
                   px: 2.25,
@@ -452,7 +144,10 @@ export default function CleaningsPage({
                   fontSize: 14,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
-                  display: section === "templates" ? "inline-flex" : "none",
+                  display:
+                    page.section === "templates" && page.canAccess("create_cleaning")
+                      ? "inline-flex"
+                      : "none",
                 }}
               >
                 Новая уборка
@@ -462,7 +157,7 @@ export default function CleaningsPage({
                 size="small"
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={createCategory}
+                onClick={page.createCategory}
                 sx={{
                   minHeight: 40,
                   px: 2.25,
@@ -470,7 +165,10 @@ export default function CleaningsPage({
                   fontSize: 14,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
-                  display: section === "categories" ? "inline-flex" : "none",
+                  display:
+                    page.section === "categories" && page.canEdit("categories")
+                      ? "inline-flex"
+                      : "none",
                 }}
               >
                 Новая категория
@@ -480,7 +178,7 @@ export default function CleaningsPage({
                 size="small"
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => setAddCafeDialogOpen(true)}
+                onClick={() => page.setAddCafeDialogOpen(true)}
                 sx={{
                   minHeight: 40,
                   px: 2.25,
@@ -488,53 +186,84 @@ export default function CleaningsPage({
                   fontSize: 14,
                   fontWeight: 700,
                   whiteSpace: "nowrap",
-                  display: section === "cafes" ? "inline-flex" : "none",
+                  display:
+                    page.section === "cafes" && page.canEdit("cafes") ? "inline-flex" : "none",
                 }}
               >
                 Добавить уборку
+              </Button>
+
+              <Button
+                size="small"
+                variant="contained"
+                color="success"
+                onClick={withConfirm(page.saveCafeDopTimes, "Сохранить изменения доп. времени?")}
+                disabled={!Object.keys(page.cafeDopTimeDrafts).length}
+                sx={{
+                  minHeight: 40,
+                  px: 2.25,
+                  borderRadius: "8px",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  whiteSpace: "nowrap",
+                  display:
+                    page.section === "cafes" && page.canEdit("cafes") ? "inline-flex" : "none",
+                }}
+              >
+                Сохранить изменения
               </Button>
             </Box>
           </Box>
         </Grid>
 
-        {section === "categories" ? (
+        {page.section === "categories" && page.canView("categories") ? (
           <Grid size={12}>
             <CleaningCategoriesView
-              categories={categories}
-              templates={templates}
-              selectedCategoryId={selectedCategoryId}
-              categoryQuery={categoryQuery}
-              onCategoryQueryChange={setCategoryQuery}
-              onSelectCategory={selectCategory}
-              draftCategory={categoryDraft}
-              onDraftCategoryChange={updateCategory}
-              onSaveCategory={saveCategory}
-              onDeleteCategory={setDeleteCategoryId}
+              categories={page.categories}
+              templates={page.templates}
+              selectedCategoryId={page.selectedCategoryId}
+              categoryQuery={page.categoryQuery}
+              onCategoryQueryChange={page.setCategoryQuery}
+              onSelectCategory={page.selectCategory}
+              draftCategory={page.categoryDraft}
+              onDraftCategoryChange={page.setCategoryDraft}
+              onSaveCategory={page.saveCategory}
+              onDeleteCategory={page.setDeleteCategoryId}
+              history={page.categoryHistoryRows}
+              historyLoading={page.categoryHistoryLoading}
+              canEdit={page.canEdit("categories")}
             />
           </Grid>
         ) : null}
 
-        {section === "cafes" ? (
+        {page.section === "cafes" && page.canView("cafes") ? (
           <Grid size={12}>
             <CafesView
-              templates={templates}
-              categories={categories}
-              selectedCafeId={selectedCafeId}
-              roleFilter={cafeRoleFilter}
-              onCafeChange={setSelectedCafeId}
-              onRoleFilterChange={setCafeRoleFilter}
-              onRemoveCleaning={setRemoveCafeCleaningId}
+              templates={page.cafeAssignedTemplates}
+              categories={page.categories}
+              locations={page.locations}
+              roles={page.roles}
+              scheduleTypeOptions={page.scheduleTypeOptions}
+              selectedCafeId={page.selectedCafeId}
+              roleFilter={page.cafeRoleFilter}
+              onCafeChange={page.setSelectedCafeId}
+              onRoleFilterChange={page.setCafeRoleFilter}
+              onRemoveCleaning={page.setRemoveCafeCleaningId}
+              dopTimeDrafts={page.cafeDopTimeDrafts}
+              onDopTimeChange={page.setCafeDopTimeDraft}
+              canEdit={page.canEdit("cafes")}
             />
           </Grid>
         ) : null}
 
-        {section === "control" ? (
+        {page.section === "control" &&
+        (page.canView("control_cleanings") || page.canView("control_pf")) ? (
           <Grid size={12}>
             <Box sx={{ display: "flex", mb: 1.5 }}>
               <ToggleButtonGroup
                 size="small"
                 exclusive
-                value={controlKind}
+                value={page.controlKind}
                 sx={{
                   "& .MuiToggleButton-root": {
                     minHeight: 38,
@@ -546,150 +275,173 @@ export default function CleaningsPage({
                   },
                 }}
               >
-                {controlKindTabs.map((tab) => (
-                  <ToggleButton
-                    key={tab.value}
-                    component={Link}
-                    href={tab.href}
-                    value={tab.value}
-                    onClick={() => setControlKind(tab.value)}
-                  >
-                    {tab.label}
-                  </ToggleButton>
-                ))}
+                {controlKindTabs
+                  .filter((tab) => {
+                    if (tab.value === "cleanings") return page.canView("control_cleanings");
+                    if (tab.value === "preparations") return page.canView("control_pf");
+                    return true;
+                  })
+                  .map((tab) => (
+                    <ToggleButton
+                      key={tab.value}
+                      component={Link}
+                      href={tab.href}
+                      value={tab.value}
+                      onClick={() => page.setControlKind(tab.value)}
+                    >
+                      {tab.label}
+                    </ToggleButton>
+                  ))}
               </ToggleButtonGroup>
             </Box>
 
-            {controlKind === "cleanings" ? (
+            {page.controlKind === "cleanings" && page.canView("control_cleanings") ? (
               <ControlView
-                items={controlItems}
-                templates={templates}
-                filter={controlFilter}
-                selectedCafeId={controlCafeId}
-                dateFrom={controlDateFrom}
-                dateTo={controlDateTo}
-                onFilterChange={setControlFilter}
-                onCafeChange={setControlCafeId}
-                onDateFromChange={setControlDateFrom}
-                onDateToChange={setControlDateTo}
-                onAddManualOpen={() => setAddManualDialogOpen(true)}
-                onApprove={(id) => setControlAction({ type: "approve", id })}
-                onReturn={(id) => setControlAction({ type: "return", id })}
-                onDetach={(id) => setControlAction({ type: "detach", id })}
-                onDelete={(id) => setControlAction({ type: "delete", id })}
+                items={page.controlItems}
+                templates={page.templates}
+                locations={page.locations}
+                filter={page.controlFilter}
+                selectedCafeId={page.controlCafeId}
+                dateFrom={page.controlDateFrom}
+                dateTo={page.controlDateTo}
+                onFilterChange={page.setControlFilter}
+                onCafeChange={page.setControlCafeId}
+                onDateFromChange={page.setControlDateFrom}
+                onDateToChange={page.setControlDateTo}
+                onAddManualOpen={() => page.setAddManualDialogOpen(true)}
+                onApprove={(id) => page.setControlAction({ type: "approve", id })}
+                onReturn={(id) => page.setControlAction({ type: "return", id })}
+                onDetach={(id) => page.setControlAction({ type: "detach", id })}
+                onDelete={(id) => page.setControlAction({ type: "delete", id })}
+                canEdit={page.canEdit("control_cleanings")}
               />
-            ) : (
+            ) : page.canView("control_pf") ? (
               <PreparationControlView
-                items={preparationItems}
-                selectedCafeId={preparationCafeId}
-                dateFrom={preparationDateFrom}
-                dateTo={preparationDateTo}
-                onCafeChange={setPreparationCafeId}
-                onDateFromChange={setPreparationDateFrom}
-                onDateToChange={setPreparationDateTo}
-                onEdit={setEditingPreparationId}
-                onApprove={(id) => setPreparationAction({ type: "approve", id })}
-                onDelete={(id) => setPreparationAction({ type: "delete", id })}
+                items={page.preparationItems}
+                locations={page.locations}
+                selectedCafeId={page.preparationCafeId}
+                dateFrom={page.preparationDateFrom}
+                dateTo={page.preparationDateTo}
+                onCafeChange={page.setPreparationCafeId}
+                onDateFromChange={page.setPreparationDateFrom}
+                onDateToChange={page.setPreparationDateTo}
+                onEdit={page.openPreparationEdit}
+                onApprove={(id) => page.setPreparationAction({ type: "approve", id })}
+                onDelete={(id) => page.setPreparationAction({ type: "delete", id })}
+                canEdit={page.canEdit("control_pf")}
               />
-            )}
+            ) : null}
           </Grid>
         ) : null}
 
-        {section === "templates" ? (
+        {page.section === "templates" && page.canView("cleanings") ? (
           <CleaningsListPage
-            query={query}
-            setQuery={setQuery}
-            filter={filter}
-            setFilter={setFilter}
-            filteredTemplates={filteredTemplates}
-            templates={templates}
-            categories={categories}
-            openEdit={openEdit}
-            toggleArchive={toggleArchive}
-            setHistoryItem={setHistoryItem}
+            query={page.query}
+            setQuery={page.setQuery}
+            filter={page.filter}
+            setFilter={page.setFilter}
+            filteredTemplates={page.filteredTemplates}
+            templates={page.templates}
+            categories={page.categories}
+            scheduleTypeOptions={page.scheduleTypeOptions}
+            openEdit={page.openEdit}
+            toggleArchive={page.toggleArchive}
+            removeTemplate={withConfirm(page.removeTemplate, "Удалить уборку полностью?", 3)}
+            onHistory={page.openTemplateHistory}
+            canEdit={page.canEdit("cleanings")}
           />
         ) : null}
       </Grid>
 
       <CleaningTemplateDialog
-        open={dialogOpen}
-        item={editingItem}
-        categories={categories}
-        templates={templates}
-        onClose={closeDialog}
-        onSave={saveTemplate}
+        open={page.dialogOpen}
+        item={page.editingItem}
+        categories={page.categories}
+        templates={page.templates}
+        locations={page.locations}
+        roles={page.roles}
+        scheduleTypeOptions={page.scheduleTypeOptions}
+        additionTypeOptions={page.additionTypeOptions}
+        onClose={page.closeDialog}
+        onSave={page.saveTemplate}
+        canEdit={page.canEdit("cleanings")}
       />
 
       <CleaningHistoryDialog
-        open={Boolean(historyItem)}
-        item={historyItem}
-        categories={categories}
-        onClose={() => setHistoryItem(null)}
+        open={Boolean(page.historyItem)}
+        item={page.historyItem}
+        history={page.historyRows}
+        loading={page.historyLoading}
+        onClose={page.closeTemplateHistory}
       />
 
       <DeleteCategoryDialog
-        open={Boolean(deleteCategoryCandidate)}
-        category={deleteCategoryCandidate}
-        templates={deleteCategoryTemplates}
-        onClose={() => setDeleteCategoryId(null)}
-        onConfirm={() => deleteCategory(deleteCategoryId)}
+        open={Boolean(page.deleteCategoryCandidate)}
+        category={page.deleteCategoryCandidate}
+        templates={page.deleteCategoryTemplates}
+        onClose={() => page.setDeleteCategoryId(null)}
+        onConfirm={page.deleteCategory}
       />
 
       <AddCafeCleaningDialog
-        open={addCafeDialogOpen}
-        cafe={selectedCafe}
-        items={addableCafeCleanings}
-        categories={categories}
-        query={addCafeQuery}
-        roleFilter={addCafeRoleFilter}
-        onQueryChange={setAddCafeQuery}
-        onRoleFilterChange={setAddCafeRoleFilter}
-        onClose={() => setAddCafeDialogOpen(false)}
-        onAdd={addCleaningToCafe}
+        open={page.addCafeDialogOpen}
+        cafe={page.selectedCafe}
+        items={page.addableCafeCleanings}
+        categories={page.categories}
+        query={page.addCafeQuery}
+        roleFilter={page.addCafeRoleFilter}
+        roles={page.roles}
+        onQueryChange={page.setAddCafeQuery}
+        onRoleFilterChange={page.setAddCafeRoleFilter}
+        onClose={() => page.setAddCafeDialogOpen(false)}
+        onAdd={page.addCleaningToCafe}
       />
 
       <AddManualCleaningDialog
-        open={addManualDialogOpen}
-        items={manualCleanings}
-        categories={categories}
-        cafeId={controlCafeId}
-        query={addManualQuery}
-        onQueryChange={setAddManualQuery}
-        onClose={() => setAddManualDialogOpen(false)}
-        onAdd={addManualCleaning}
+        open={page.addManualDialogOpen}
+        items={page.manualTemplates}
+        categories={page.categories}
+        locations={page.locations}
+        cafeId={page.controlCafeId}
+        query={page.addManualQuery}
+        onQueryChange={page.setAddManualQuery}
+        onClose={() => page.setAddManualDialogOpen(false)}
+        onAdd={page.addManualCleaning}
       />
 
       <RemoveCafeCleaningDialog
-        open={Boolean(removeCafeCleaningCandidate)}
-        cleaning={removeCafeCleaningCandidate}
-        cafe={selectedCafe}
-        onClose={() => setRemoveCafeCleaningId(null)}
-        onConfirm={() => removeCleaningFromCafe(removeCafeCleaningId)}
+        open={Boolean(page.removeCafeCleaningCandidate)}
+        cleaning={page.removeCafeCleaningCandidate}
+        cafe={page.selectedCafe}
+        onClose={() => page.setRemoveCafeCleaningId(null)}
+        onConfirm={page.removeCleaningFromCafe}
       />
 
       <ControlActionConfirmDialog
-        open={Boolean(controlActionCandidate)}
-        action={controlAction}
-        item={controlActionCandidate}
-        cleaning={controlActionCleaningCandidate}
-        onClose={() => setControlAction(null)}
-        onConfirm={confirmControlAction}
+        open={Boolean(page.controlActionCandidate)}
+        action={page.controlAction}
+        item={page.controlActionCandidate}
+        cleaning={page.controlActionCleaningCandidate}
+        onClose={() => page.setControlAction(null)}
+        onConfirm={page.confirmControlAction}
       />
 
       <PreparationActionConfirmDialog
-        open={Boolean(preparationActionCandidate)}
-        action={preparationAction}
-        item={preparationActionCandidate}
-        onClose={() => setPreparationAction(null)}
-        onConfirm={confirmPreparationAction}
+        open={Boolean(page.preparationActionCandidate)}
+        action={page.preparationAction}
+        item={page.preparationActionCandidate}
+        onClose={() => page.setPreparationAction(null)}
+        onConfirm={page.confirmPreparationAction}
       />
 
       <PreparationEditDialog
-        open={Boolean(editingPreparationCandidate)}
-        item={editingPreparationCandidate}
-        onClose={() => setEditingPreparationId(null)}
-        onSave={savePreparation}
+        open={Boolean(page.editingPreparation)}
+        item={page.editingPreparation}
+        onClose={() => page.setEditingPreparation(null)}
+        onSave={page.savePreparation}
       />
+
+      <ConfirmDialog />
     </Box>
   );
 }

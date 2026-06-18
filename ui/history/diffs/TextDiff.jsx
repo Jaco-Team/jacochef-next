@@ -5,13 +5,15 @@ import { Card, Stack, Typography } from "@mui/material";
 export default function TextDiff({ items }) {
   return (
     <Stack spacing={1}>
-      {items.map(({ field, from, to }) => {
+      {items.map(({ field, from, to }, index) => {
         const hasFromValue = from !== null && from !== undefined && from !== "";
 
         return (
-          <Card variant="outlined">
+          <Card
+            key={`${field}-${index}`}
+            variant="outlined"
+          >
             <Stack
-              key={field}
               direction="row"
               alignItems="baseline"
               spacing={2}
