@@ -137,6 +137,7 @@ function EndPage() {
     points: [],
     dateStart: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
     dateEnd: dayjs(new Date()).format("YYYY-MM-DD"),
+    cities: {},
     src_source: "",
     src_medium: "",
     src_campaign: "",
@@ -152,7 +153,7 @@ function EndPage() {
   };
   const [isLoad, setIsLoad] = useState(false);
   const [module, setModule] = useState({});
-  const [points, setPoints] = useState([]);
+  const [cities, setCities] = useState([]);
   const [form, setForm] = useState(standardForm);
   const [tableData, setTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -165,7 +166,7 @@ function EndPage() {
     getData("get_all").then((data) => {
       document.title = data.module_info.name;
       setModule(data.module_info);
-      setPoints(data.points);
+      setCities(data.cities);
       setLastUpdate(dayjs().format("HH:mm"));
     });
   }, []);
@@ -187,8 +188,8 @@ function EndPage() {
     }));
   };
 
-  const handleCafeChange = (value) => {
-    setField("points", value);
+  const handleCitiesChange = (value) => {
+    setField("cities", value);
   };
 
   const handleTypeOrderChange = (event, newValue) => {
@@ -244,39 +245,423 @@ function EndPage() {
     applyRequest();
   };
 
+  // Новая функция группировки по типам источников трафика
+  const regroupByTrafficSource = (utmData) => {
+    if (!utmData || typeof utmData !== "object") return [];
+
+    // Группировка источников по типам
+    const trafficGroups = {
+      "Поисковые системы": [
+        "yandex",
+        "google",
+        "bing",
+        "yahoo",
+        "mail.ru",
+        "rambler",
+        "ya.ru",
+        "duckduckgo.com",
+      ],
+      "Социальные сети": [
+        "vk",
+        "facebook",
+        "instagram",
+        "ok",
+        "telegram",
+        "tiktok",
+        "away.vk.ru",
+        "m.vk.ru",
+        "away.vk.com",
+      ],
+      Рефералы: ["promokodi.net", "jacofood.ru", "link.2gis.ru", "suggest.sso.dzen.ru"],
+      "Рекламные системы": ["direct", "vk_ads", "yandex_direct"],
+      "Прямые заходы": ["none", "(direct)"],
+      Другое: [],
+    };
+
+    const result = {};
+
+    // Проходим по всем source
+    for (const [sourceName, sourceData] of Object.entries(utmData)) {
+      if (sourceData.level !== "src_source") continue;
+
+      // Определяем группу для source
+      let groupName = "Другое";
+      for (const [group, sources] of Object.entries(trafficGroups)) {
+        if (sources.includes(sourceName) || sources.some((s) => sourceName.includes(s))) {
+          groupName = group;
+          break;
+        }
+      }
+
+      // Создаем группу если её нет
+      if (!result[groupName]) {
+        result[groupName] = {
+          id: `group_${groupName}`,
+          name: groupName,
+          level: "src_source_group",
+          visits: 0,
+          cost: 0,
+          orders: 0,
+          revenue: 0,
+          newClients: 0,
+          existingClients: 0,
+          primaryOrders: 0,
+          repeatOrders: 0,
+          children: [],
+        };
+      }
+
+      // Суммируем данные для группы
+      const group = result[groupName];
+      group.visits += sourceData.visits || 0;
+      group.cost += sourceData.cost || 0;
+      group.orders += parseInt(sourceData.orders) || 0;
+      group.revenue += sourceData.revenue || 0;
+      group.newClients += sourceData.newClients || 0;
+      group.existingClients += sourceData.existingClients || 0;
+      group.primaryOrders += parseInt(sourceData.primaryOrders) || 0;
+      group.repeatOrders += parseInt(sourceData.repeatOrders) || 0;
+
+      // Создаем детальный источник (конкретный источник трафика)
+      const detailedSource = {
+        id: `${sourceData.level}_${sourceName}`,
+        name: sourceData.name || sourceName,
+        sourceType: "site",
+        level: "src_source_detailed",
+        visits: sourceData.visits || 0,
+        cost: sourceData.cost || 0,
+        orders: parseInt(sourceData.orders) || 0,
+        revenue: sourceData.revenue || 0,
+        newClients: sourceData.newClients || 0,
+        existingClients: sourceData.existingClients || 0,
+        primaryOrders: parseInt(sourceData.primaryOrders) || 0,
+        repeatOrders: parseInt(sourceData.repeatOrders) || 0,
+        children: [],
+      };
+
+      // Обрабатываем children (medium) и группируем по типу площадки
+      if (sourceData.children && sourceData.children.length > 0) {
+        const platformGroups = {};
+
+        sourceData.children.forEach((medium) => {
+          if (medium.level === "src_medium") {
+            // Определяем тип площадки
+            let platformType = medium.name;
+            if (medium.name === "organic") platformType = "Органика";
+            else if (medium.name === "cpc") platformType = "Контекстная реклама";
+            else if (medium.name === "referral") platformType = "Рефералы";
+            else if (medium.name === "social") platformType = "Социальные сети";
+            else if (medium.name === "email") platformType = "E-mail рассылки";
+            else if (medium.name === "none" || medium.name === "(utm)")
+              platformType = "Прямые заходы";
+            else if (medium.name === "cpm") platformType = "Медийная реклама";
+
+            if (!platformGroups[platformType]) {
+              platformGroups[platformType] = {
+                id: `${sourceName}_platform_${platformType}`,
+                name: platformType,
+                originalName: medium.name,
+                level: "src_platform",
+                visits: 0,
+                cost: 0,
+                orders: 0,
+                revenue: 0,
+                newClients: 0,
+                existingClients: 0,
+                primaryOrders: 0,
+                repeatOrders: 0,
+                children: [],
+              };
+            }
+
+            // Суммируем данные для типа площадки
+            const platform = platformGroups[platformType];
+            platform.visits += medium.visits || 0;
+            platform.cost += medium.cost || 0;
+            platform.orders += parseInt(medium.orders) || 0;
+            platform.revenue += medium.revenue || 0;
+            platform.newClients += medium.newClients || 0;
+            platform.existingClients += medium.existingClients || 0;
+            platform.primaryOrders += parseInt(medium.primaryOrders) || 0;
+            platform.repeatOrders += parseInt(medium.repeatOrders) || 0;
+
+            // Добавляем кампании как children к типу площадки
+            if (medium.children && medium.children.length > 0) {
+              medium.children.forEach((campaign) => {
+                const transformedCampaign = {
+                  id: `${sourceName}_${campaign.level}_${campaign.name}`,
+                  name: campaign.name,
+                  level: campaign.level,
+                  visits: campaign.visits || 0,
+                  cost: campaign.cost || 0,
+                  orders: parseInt(campaign.orders) || 0,
+                  revenue: campaign.revenue || 0,
+                  newClients: campaign.newClients || 0,
+                  existingClients: campaign.existingClients || 0,
+                  primaryOrders: parseInt(campaign.primaryOrders) || 0,
+                  repeatOrders: parseInt(campaign.repeatOrders) || 0,
+                  children: [],
+                };
+
+                // Добавляем term и content если есть
+                if (campaign.children && campaign.children.length > 0) {
+                  transformedCampaign.children = transformUtmChildrenSimple(
+                    campaign.children,
+                    sourceName,
+                  );
+                }
+
+                platform.children.push(transformedCampaign);
+              });
+            }
+          }
+        });
+
+        detailedSource.children = Object.values(platformGroups);
+      }
+
+      group.children.push(detailedSource);
+    }
+
+    // Преобразуем объект в массив и добавляем расчетные поля
+    return calculateMetricsForGroupedData(Object.values(result));
+  };
+
+  // Простая трансформация детей без перегруппировки
+  const transformUtmChildrenSimple = (children, sourceName) => {
+    if (!children || !Array.isArray(children)) return [];
+
+    return children.map((child) => ({
+      id: `${sourceName}_${child.level}_${child.name}`,
+      name: child.name,
+      level: child.level,
+      visits: child.visits || 0,
+      cost: child.cost || 0,
+      orders: parseInt(child.orders) || 0,
+      revenue: child.revenue || 0,
+      newClients: child.newClients || 0,
+      existingClients: child.existingClients || 0,
+      primaryOrders: parseInt(child.primaryOrders) || 0,
+      repeatOrders: parseInt(child.repeatOrders) || 0,
+      children: child.children ? transformUtmChildrenSimple(child.children, sourceName) : [],
+    }));
+  };
+
+  // Расчет метрик для сгруппированных данных
+  const calculateMetricsForGroupedData = (items) => {
+    return items.map((item) => {
+      // Расчет для текущего уровня
+      item.conversion = item.visits > 0 ? (item.orders / item.visits) * 100 : 0;
+      item.costPerOrder = item.orders > 0 ? item.cost / item.orders : 0;
+      item.averageCheck = item.orders > 0 ? item.revenue / item.orders : 0;
+      item.roi =
+        item.cost > 0
+          ? ((item.revenue - item.cost) / item.cost) * 100
+          : item.revenue > 0
+            ? Infinity
+            : 0;
+      item.drr = item.revenue > 0 ? (item.cost / item.revenue) * 100 : 0;
+      item.ltv = item.orders > 0 ? item.revenue / item.orders : 0;
+
+      // Рекурсивно для детей
+      if (item.children && item.children.length > 0) {
+        item.children = calculateMetricsForGroupedData(item.children);
+      }
+
+      return item;
+    });
+  };
+
   const formatApiData = (apiData) => {
     const result = [];
 
     if (apiData.site_data && typeof apiData.site_data === "object") {
-      const siteUtmTree = transformUtmTree(apiData.site_data, "site");
-      if (siteUtmTree.length > 0) {
-        const siteTotal = calculateTotalForRootNodes(siteUtmTree, "site", "ИТОГО по Сайту");
+      // Используем новую функцию группировки
+      const groupedData = regroupByTrafficSource(apiData.site_data);
+
+      if (groupedData.length > 0) {
+        // Создаем итоговую строку для сайта
+        const siteTotal = {
+          id: `total_site`,
+          name: "ИТОГО по Сайту",
+          isTotal: true,
+          sourceType: "site",
+          visits: 0,
+          cost: 0,
+          orders: 0,
+          revenue: 0,
+          newClients: 0,
+          existingClients: 0,
+          primaryOrders: 0,
+          repeatOrders: 0,
+          details: groupedData, // Детали - это сгруппированные данные
+        };
+
+        // Суммируем данные из groupedData
+        groupedData.forEach((group) => {
+          siteTotal.visits += group.visits || 0;
+          siteTotal.cost += group.cost || 0;
+          siteTotal.orders += group.orders || 0;
+          siteTotal.revenue += group.revenue || 0;
+          siteTotal.newClients += group.newClients || 0;
+          siteTotal.existingClients += group.existingClients || 0;
+          siteTotal.primaryOrders += group.primaryOrders || 0;
+          siteTotal.repeatOrders += group.repeatOrders || 0;
+        });
+
+        // Рассчитываем метрики для итоговой строки
+        siteTotal.conversion =
+          siteTotal.visits > 0 ? (siteTotal.orders / siteTotal.visits) * 100 : 0;
+        siteTotal.costPerOrder = siteTotal.orders > 0 ? siteTotal.cost / siteTotal.orders : 0;
+        siteTotal.averageCheck = siteTotal.orders > 0 ? siteTotal.revenue / siteTotal.orders : 0;
+        siteTotal.roi =
+          siteTotal.cost > 0
+            ? ((siteTotal.revenue - siteTotal.cost) / siteTotal.cost) * 100
+            : siteTotal.revenue > 0
+              ? Infinity
+              : 0;
+        siteTotal.drr = siteTotal.revenue > 0 ? (siteTotal.cost / siteTotal.revenue) * 100 : 0;
+        siteTotal.ltv = siteTotal.orders > 0 ? siteTotal.revenue / siteTotal.orders : 0;
+
         result.push(siteTotal);
-        siteTotal.details = siteUtmTree;
       }
     }
 
     if (apiData.cafe_data && Array.isArray(apiData.cafe_data)) {
       const cafeItems = apiData.cafe_data.map((item) => transformItem(item, "cafe"));
       if (cafeItems.length > 0) {
-        const cafeTotal = calculateTotalForRootNodes(cafeItems, "cafe", "ИТОГО по Кафе");
+        const cafeTotal = {
+          id: `total_cafe`,
+          name: "ИТОГО по Кафе",
+          isTotal: true,
+          sourceType: "cafe",
+          visits: 0,
+          cost: 0,
+          orders: 0,
+          revenue: 0,
+          newClients: 0,
+          existingClients: 0,
+          primaryOrders: 0,
+          repeatOrders: 0,
+          details: cafeItems,
+        };
+
+        cafeItems.forEach((item) => {
+          cafeTotal.visits += item.visits || 0;
+          cafeTotal.cost += item.cost || 0;
+          cafeTotal.orders += item.orders || 0;
+          cafeTotal.revenue += item.revenue || 0;
+          cafeTotal.newClients += item.newClients || 0;
+          cafeTotal.existingClients += item.existingClients || 0;
+          cafeTotal.primaryOrders += item.primaryOrders || 0;
+          cafeTotal.repeatOrders += item.repeatOrders || 0;
+        });
+
+        cafeTotal.conversion =
+          cafeTotal.visits > 0 ? (cafeTotal.orders / cafeTotal.visits) * 100 : 0;
+        cafeTotal.costPerOrder = cafeTotal.orders > 0 ? cafeTotal.cost / cafeTotal.orders : 0;
+        cafeTotal.averageCheck = cafeTotal.orders > 0 ? cafeTotal.revenue / cafeTotal.orders : 0;
+        cafeTotal.roi =
+          cafeTotal.cost > 0
+            ? ((cafeTotal.revenue - cafeTotal.cost) / cafeTotal.cost) * 100
+            : cafeTotal.revenue > 0
+              ? Infinity
+              : 0;
+        cafeTotal.drr = cafeTotal.revenue > 0 ? (cafeTotal.cost / cafeTotal.revenue) * 100 : 0;
+        cafeTotal.ltv = cafeTotal.orders > 0 ? cafeTotal.revenue / cafeTotal.orders : 0;
+
         result.push(cafeTotal);
-        cafeTotal.details = cafeItems;
       }
     }
 
     if (apiData.kc_data && Array.isArray(apiData.kc_data)) {
       const kcItems = apiData.kc_data.map((item) => transformItem(item, "kc"));
       if (kcItems.length > 0) {
-        const kcTotal = calculateTotalForRootNodes(kcItems, "kc", "ИТОГО по КЦ");
+        const kcTotal = {
+          id: `total_kc`,
+          name: "ИТОГО по КЦ",
+          isTotal: true,
+          sourceType: "kc",
+          visits: 0,
+          cost: 0,
+          orders: 0,
+          revenue: 0,
+          newClients: 0,
+          existingClients: 0,
+          primaryOrders: 0,
+          repeatOrders: 0,
+          details: kcItems,
+        };
+
+        kcItems.forEach((item) => {
+          kcTotal.visits += item.visits || 0;
+          kcTotal.cost += item.cost || 0;
+          kcTotal.orders += item.orders || 0;
+          kcTotal.revenue += item.revenue || 0;
+          kcTotal.newClients += item.newClients || 0;
+          kcTotal.existingClients += item.existingClients || 0;
+          kcTotal.primaryOrders += item.primaryOrders || 0;
+          kcTotal.repeatOrders += item.repeatOrders || 0;
+        });
+
+        kcTotal.conversion = kcTotal.visits > 0 ? (kcTotal.orders / kcTotal.visits) * 100 : 0;
+        kcTotal.costPerOrder = kcTotal.orders > 0 ? kcTotal.cost / kcTotal.orders : 0;
+        kcTotal.averageCheck = kcTotal.orders > 0 ? kcTotal.revenue / kcTotal.orders : 0;
+        kcTotal.roi =
+          kcTotal.cost > 0
+            ? ((kcTotal.revenue - kcTotal.cost) / kcTotal.cost) * 100
+            : kcTotal.revenue > 0
+              ? Infinity
+              : 0;
+        kcTotal.drr = kcTotal.revenue > 0 ? (kcTotal.cost / kcTotal.revenue) * 100 : 0;
+        kcTotal.ltv = kcTotal.orders > 0 ? kcTotal.revenue / kcTotal.orders : 0;
+
         result.push(kcTotal);
-        kcTotal.details = kcItems;
       }
     }
 
     if (result.length > 0) {
-      const grandTotal = calculateTotalForGrandTotal(result, "grand", "ВСЕГО");
-      grandTotal.isGrandTotal = true;
+      const grandTotal = {
+        id: `total_grand`,
+        name: "ВСЕГО",
+        isTotal: true,
+        isGrandTotal: true,
+        sourceType: "grand",
+        visits: 0,
+        cost: 0,
+        orders: 0,
+        revenue: 0,
+        newClients: 0,
+        existingClients: 0,
+        primaryOrders: 0,
+        repeatOrders: 0,
+        details: result.slice(), // Копия всех итоговых строк
+      };
+
+      result.forEach((row) => {
+        grandTotal.visits += row.visits || 0;
+        grandTotal.cost += row.cost || 0;
+        grandTotal.orders += row.orders || 0;
+        grandTotal.revenue += row.revenue || 0;
+        grandTotal.newClients += row.newClients || 0;
+        grandTotal.existingClients += row.existingClients || 0;
+        grandTotal.primaryOrders += row.primaryOrders || 0;
+        grandTotal.repeatOrders += row.repeatOrders || 0;
+      });
+
+      grandTotal.conversion =
+        grandTotal.visits > 0 ? (grandTotal.orders / grandTotal.visits) * 100 : 0;
+      grandTotal.costPerOrder = grandTotal.orders > 0 ? grandTotal.cost / grandTotal.orders : 0;
+      grandTotal.averageCheck = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
+      grandTotal.roi =
+        grandTotal.cost > 0
+          ? ((grandTotal.revenue - grandTotal.cost) / grandTotal.cost) * 100
+          : grandTotal.revenue > 0
+            ? Infinity
+            : 0;
+      grandTotal.drr = grandTotal.revenue > 0 ? (grandTotal.cost / grandTotal.revenue) * 100 : 0;
+      grandTotal.ltv = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
+
       result.unshift(grandTotal);
     }
 
@@ -369,11 +754,10 @@ function EndPage() {
     return grandTotal;
   };
 
+  // Оставляем старые функции для обратной совместимости с cafe и kc
   const transformUtmTree = (utmData, sourceType) => {
     if (!utmData || typeof utmData !== "object") return [];
-
     const result = [];
-
     for (const [key, value] of Object.entries(utmData)) {
       const transformedItem = {
         id: `${sourceType}_${value.level}_${key}`,
@@ -389,7 +773,6 @@ function EndPage() {
         primaryOrders: parseInt(value.primaryOrders) || 0,
         repeatOrders: parseInt(value.repeatOrders) || 0,
       };
-
       transformedItem.conversion =
         transformedItem.visits > 0 ? (transformedItem.orders / transformedItem.visits) * 100 : 0;
       transformedItem.costPerOrder =
@@ -406,22 +789,17 @@ function EndPage() {
         transformedItem.revenue > 0 ? (transformedItem.cost / transformedItem.revenue) * 100 : 0;
       transformedItem.ltv =
         transformedItem.orders > 0 ? transformedItem.revenue / transformedItem.orders : 0;
-
       if (value.children && Array.isArray(value.children) && value.children.length > 0) {
         transformedItem.details = transformUtmChildren(value.children, sourceType, key);
       }
-
       result.push(transformedItem);
     }
-
     return result;
   };
 
   const transformUtmChildren = (children, sourceType, parentKey) => {
     if (!children || !Array.isArray(children)) return [];
-
     const result = [];
-
     for (const child of children) {
       const transformedChild = {
         id: `${sourceType}_${child.level}_${parentKey}_${child.name}`,
@@ -437,7 +815,6 @@ function EndPage() {
         primaryOrders: parseInt(child.primaryOrders) || 0,
         repeatOrders: parseInt(child.repeatOrders) || 0,
       };
-
       transformedChild.conversion =
         transformedChild.visits > 0 ? (transformedChild.orders / transformedChild.visits) * 100 : 0;
       transformedChild.costPerOrder =
@@ -454,7 +831,6 @@ function EndPage() {
         transformedChild.revenue > 0 ? (transformedChild.cost / transformedChild.revenue) * 100 : 0;
       transformedChild.ltv =
         transformedChild.orders > 0 ? transformedChild.revenue / transformedChild.orders : 0;
-
       if (child.children && Array.isArray(child.children) && child.children.length > 0) {
         transformedChild.details = transformUtmChildren(
           child.children,
@@ -462,10 +838,8 @@ function EndPage() {
           transformedChild.name,
         );
       }
-
       result.push(transformedChild);
     }
-
     return result;
   };
 
@@ -545,9 +919,11 @@ function EndPage() {
 
   const getLevelIcon = (level) => {
     switch (level) {
-      case "src_source":
+      case "src_source_group":
+        return "📁 ";
+      case "src_source_detailed":
         return "🌐 ";
-      case "src_medium":
+      case "src_platform":
         return "📱 ";
       case "src_campaign":
         return "📢 ";
@@ -561,8 +937,12 @@ function EndPage() {
   };
 
   const RenderTableRow = ({ row, level = 0 }) => {
+    // Проверяем оба варианта - и children, и details
+    const hasChildren =
+      (row.children && row.children.length > 0) || (row.details && row.details.length > 0);
+    const childrenArray = row.children || row.details || [];
+
     const isExpanded = expandedRows.has(row.id);
-    const hasChildren = row.details && row.details.length > 0;
     const isTotalRow = row.isTotal;
     const isGrandTotal = row.isGrandTotal;
 
@@ -603,15 +983,18 @@ function EndPage() {
                   {row.level && getLevelIcon(row.level)}
                   {row.name}
                 </Typography>
-                {row.level && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontStyle: "italic" }}
-                  >
-                    ({row.level.replace("src_", "")})
-                  </Typography>
-                )}
+                {row.level &&
+                  row.level !== "src_source_group" &&
+                  row.level !== "src_source_detailed" &&
+                  row.level !== "src_platform" && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontStyle: "italic" }}
+                    >
+                      ({row.level.replace("src_", "")})
+                    </Typography>
+                  )}
               </Box>
             </Box>
           </StyledTableCell>
@@ -730,7 +1113,7 @@ function EndPage() {
         </StyledTableRow>
         {hasChildren &&
           isExpanded &&
-          row.details.map((detail) => (
+          childrenArray.map((detail) => (
             <RenderTableRow
               key={detail.id}
               row={detail}
@@ -783,14 +1166,12 @@ function EndPage() {
             spacing={3}
           >
             <Grid size={{ xs: 12, sm: 4 }}>
-              <CityCafeAutocomplete2
-                label=""
-                points={points}
-                value={form.points}
-                onChange={handleCafeChange}
-                withAll
-                withAllSelected
-                sx={{ display: "none" }}
+              <MyAutocomplite
+                label="Группы"
+                data={cities}
+                multiple={false}
+                value={form.cities}
+                func={(event, data) => handleCitiesChange(data)}
               />
             </Grid>
 
@@ -801,11 +1182,7 @@ function EndPage() {
                 value={dayjs(form.dateStart)}
                 maxDate={dayjs(form.dateEnd) ?? dayjs()}
                 func={(e) => setField("dateStart", e)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -816,11 +1193,7 @@ function EndPage() {
                 value={dayjs(form.dateEnd)}
                 minDate={dayjs(form.dateStart) ?? dayjs()}
                 func={(e) => setField("dateEnd", e)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -830,11 +1203,7 @@ function EndPage() {
                 value={form.src_source}
                 func={({ target }) => setField("src_source", target?.value)}
                 placeholder="yandex, vk..."
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -844,11 +1213,7 @@ function EndPage() {
                 value={form.src_medium}
                 func={({ target }) => setField("src_medium", target?.value)}
                 placeholder="cpc, organic..."
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -858,11 +1223,7 @@ function EndPage() {
                 value={form.src_campaign}
                 func={({ target }) => setField("src_campaign", target?.value)}
                 placeholder="brand, retarget..."
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -872,11 +1233,7 @@ function EndPage() {
                 value={form.src_content}
                 func={({ target }) => setField("src_content", target?.value)}
                 placeholder="banner_top..."
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -886,11 +1243,7 @@ function EndPage() {
                 value={form.src_term}
                 func={({ target }) => setField("src_term", target?.value)}
                 placeholder="доставка..."
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -900,11 +1253,7 @@ function EndPage() {
                 label="Заказов от"
                 value={form.orderStart}
                 func={({ target }) => setField("orderStart", target?.value)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -914,25 +1263,7 @@ function EndPage() {
                 label="Заказов до"
                 value={form.orderEnd}
                 func={({ target }) => setField("orderEnd", target?.value)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Заказов до"
-                value={form.orderEnd}
-                func={({ target }) => setField("orderEnd", target?.value)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -942,11 +1273,7 @@ function EndPage() {
                 label="Стоимость заказа от"
                 value={form.payOrderStart}
                 func={({ target }) => setField("payOrderStart", target?.value)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -956,11 +1283,7 @@ function EndPage() {
                 label="Стоимость заказа до"
                 value={form.payOrderEnd}
                 func={({ target }) => setField("payOrderEnd", target?.value)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
@@ -970,15 +1293,11 @@ function EndPage() {
                 label="ROI"
                 value={form.roi}
                 func={({ target }) => setField("roi", target?.value)}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "6px",
-                  },
-                }}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 3 }}>
+            <Grid size={{ xs: 12, sm: 2 }}>
               <MyAutocomplite
                 label="Тип клиентов"
                 data={[
@@ -1015,11 +1334,7 @@ function EndPage() {
                 }
                 onChange={handleTypeOrderChange}
                 aria-label="order type"
-                sx={{
-                  "& .MuiToggleButton-root": {
-                    border: "none",
-                  },
-                }}
+                sx={{ "& .MuiToggleButton-root": { border: "none" } }}
               >
                 <StyledToggleButton value="site">Сайт</StyledToggleButton>
                 <StyledToggleButton value="cafe">Кафе</StyledToggleButton>
@@ -1063,7 +1378,7 @@ function EndPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <StyledTableCell isHeader={true}>ИСТОЧНИК</StyledTableCell>
+                  <StyledTableCell isHeader={true}>ИСТОЧНИК ТРАФИКА</StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
