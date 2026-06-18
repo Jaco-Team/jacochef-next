@@ -37,6 +37,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
       orderArr: [],
       accountArr: [],
       pizzaLine: {},
+      rollyLine: {},
+      ordersLine: {},
       data_clients_list_cafe: {},
       data_clients_list_kc: {},
       data_clients_list_site: {},
@@ -247,7 +249,9 @@ class StatSale_Tab_DynamicSale extends React.Component {
         rollyArr,
         orderArr,
         accountArr,
-        pizzaLine: res.pizza_line,
+        pizzaLine: res.pizza_line ?? {},
+        rollyLine: res.rolly_line ?? {},
+        ordersLine: res.orders_line ?? {},
       });
     } else {
       this.props.openAlert(res.st, res.text);
@@ -589,12 +593,29 @@ class StatSale_Tab_DynamicSale extends React.Component {
               />
             ) : null}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
+            {Object.entries(this.state.rollyLine).length ? (
+              <StatSaleYearlyLineChart
+                rawData={this.state.rollyLine}
+                title="Динамика роллов по годам"
+              />
+            ) : null}
             {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
               planFulfillment: true,
             })}
-            {this.renderPizzaTable(accountArr, "Таблица с аккаунтами", "Аккаунты, кол-во", {
-              planFulfillment: true,
-            })}
+            {Object.entries(this.state.ordersLine).length ? (
+              <StatSaleYearlyLineChart
+                rawData={this.state.ordersLine}
+                title="Динамика заказов по годам"
+              />
+            ) : null}
+            {this.renderPizzaTable(
+              accountArr,
+              "Таблица с аккаунтами (данные по всем кафе)",
+              "Аккаунты, кол-во",
+              {
+                planFulfillment: true,
+              },
+            )}
             {accountArr.length ? (
               <Grid size={{ xs: 12, sm: 12 }}>
                 <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
