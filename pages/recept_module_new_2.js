@@ -1641,15 +1641,6 @@ class ReceptModule_Modal extends React.Component {
                                 },
                               }));
                             }}
-                            style={
-                              this.state.err_valid?.items
-                                ? {
-                                    border: "2px solid red",
-                                    borderRadius: "6px",
-                                    backgroundColor: "#f5f5f5",
-                                  }
-                                : {}
-                            }
                             isOptionEqualToValue={(option, value) => {
                               const isEqual = option?.name === value?.name;
                               return isEqual;
@@ -1729,15 +1720,6 @@ class ReceptModule_Modal extends React.Component {
                               },
                             }));
                           }}
-                          style={
-                            this.state.err_valid?.items
-                              ? {
-                                  border: "2px solid red",
-                                  borderRadius: "6px",
-                                  backgroundColor: "#f5f5f5",
-                                }
-                              : {}
-                          }
                           blurOnSelect={true}
                           autoFocus={false}
                           func={this.chooseItem.bind(this)}
@@ -1852,6 +1834,71 @@ class ReceptModule_Modal extends React.Component {
   }
 }
 
+const RECEPT_NO_CATEGORY_ID = "none";
+
+function parseReceptItemCategoryIds(item) {
+  const { cats } = item;
+  if (cats === null || cats === undefined || cats === "") {
+    return [];
+  }
+  if (Array.isArray(cats)) {
+    return cats
+      .map((cat) => (typeof cat === "object" && cat !== null ? Number(cat.id) : Number(cat)))
+      .filter((id) => !Number.isNaN(id) && id > 0);
+  }
+  if (typeof cats === "string") {
+    return cats
+      .split(",")
+      .map((part) => Number(part.trim()))
+      .filter((id) => !Number.isNaN(id) && id > 0);
+  }
+  const singleId = Number(cats);
+  return !Number.isNaN(singleId) && singleId > 0 ? [singleId] : [];
+}
+
+function groupReceptItemsByCategory(items, allCategories) {
+  const groups = new Map();
+  const uncategorized = [];
+
+  (allCategories || []).forEach((cat) => {
+    groups.set(Number(cat.id), []);
+  });
+
+  (items || []).forEach((item) => {
+    const categoryIds = parseReceptItemCategoryIds(item);
+    if (!categoryIds.length) {
+      uncategorized.push(item);
+      return;
+    }
+
+    let assigned = false;
+    categoryIds.forEach((categoryId) => {
+      if (groups.has(categoryId)) {
+        groups.get(categoryId).push(item);
+        assigned = true;
+      }
+    });
+
+    if (!assigned) {
+      uncategorized.push(item);
+    }
+  });
+
+  const sections = [];
+  (allCategories || []).forEach((cat) => {
+    const categoryItems = groups.get(Number(cat.id)) || [];
+    if (categoryItems.length) {
+      sections.push({ id: cat.id, name: cat.name, items: categoryItems });
+    }
+  });
+
+  if (uncategorized.length) {
+    sections.push({ id: RECEPT_NO_CATEGORY_ID, name: "Без категории", items: uncategorized });
+  }
+
+  return sections;
+}
+
 class ReceptModule_Table extends React.Component {
   constructor(props) {
     super(props);
@@ -1945,10 +1992,102 @@ class ReceptModule_Table extends React.Component {
     onClick: () => this.handleSort(field),
   });
 
+  renderTableHead = () => {
+    const { acces } = this.props;
+
+    return (
+      <TableHead sx={{ "& th": { fontWeight: "bold" } }}>
+        <TableRow>
+          {acces?.rev_table_view && acces?.rev_table_edit ? (
+            <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+          ) : null}
+          <TableCell style={{ width: "18%" }}>
+            <TableSortLabel {...this.getSortProps("name")}>Наименование</TableSortLabel>
+          </TableCell>
+          <TableCell style={{ width: "12%" }}>
+            <TableSortLabel {...this.getSortProps("date_start")}>Дата создания</TableSortLabel>
+          </TableCell>
+          <TableCell style={{ width: "18%" }}>Обновление</TableCell>
+          <TableCell style={{ width: "18%" }}>Редактирование</TableCell>
+          <TableCell style={{ width: "18%" }}>История изменений</TableCell>
+          <TableCell style={{ width: "18%" }}></TableCell>
+        </TableRow>
+      </TableHead>
+    );
+  };
+
+  renderTableRow = (item, rowKey) => {
+    const { openItemEdit, checkTable, openHistoryItem, type, acces } = this.props;
+
+    return (
+      <TableRow key={rowKey}>
+        {acces?.rev_table_view && acces?.rev_table_edit ? (
+          <TableCell>
+            <MyCheckBox
+              label=""
+              value={parseInt(item.show_in_rev) == 1 ? true : false}
+              func={checkTable.bind(this, item.id, "show_in_rev", type)}
+            />
+          </TableCell>
+        ) : null}
+        <TableCell>{item.name}</TableCell>
+        <TableCell>{item.date_start}</TableCell>
+        <TableCell>{item.date_update}</TableCell>
+        <TableCell
+          style={{ cursor: "pointer" }}
+          onClick={openItemEdit.bind(
+            this,
+            item.id,
+            `Редактирование ${type === "rec" ? "Рецепта" : "Полуфабриката"}: ${item.name}`,
+            type,
+          )}
+        >
+          <EditIcon />
+        </TableCell>
+        <TableCell
+          onClick={openHistoryItem.bind(this, item.id, "История изменений", type)}
+          style={{ cursor: "pointer" }}
+        >
+          <EditNoteIcon />
+        </TableCell>
+        <TableCell>
+          {acces?.change_rec_pf_access ? (
+            <IconButton
+              title={`Смена на ${type === "rec" ? "полуфабрикат" : "рецепт"}`}
+              onClick={() => this.setState({ type, itemId: item.id, openChange: true })}
+              style={{ cursor: "pointer" }}
+            >
+              <SwapIcon />
+            </IconButton>
+          ) : null}
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  renderCategoryTable = (section) => {
+    return (
+      <TableContainer
+        component={Paper}
+        sx={{ maxHeight: { xs: "none", sm: 600 } }}
+      >
+        <Table
+          stickyHeader
+          aria-label="sticky table"
+        >
+          {this.renderTableHead()}
+          <TableBody>
+            {section.items.map((item) => this.renderTableRow(item, `${section.id}-${item.id}`))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
   render() {
-    const { data, method, openItemEdit, checkTable, openHistoryItem, type, acces, getData } =
-      this.props;
-    const { openChange, sortField, sortOrder } = this.state;
+    const { data, method, type, cats } = this.props;
+    const { openChange } = this.state;
+    const categorySections = groupReceptItemsByCategory(this.state.data, cats);
 
     return (
       <>
@@ -1979,86 +2118,22 @@ class ReceptModule_Table extends React.Component {
                 <Typography style={{ fontWeight: "bold" }}>{method}</Typography>
               </AccordionSummary>
               <AccordionDetails className="accordion_details">
-                <TableContainer
-                  component={Paper}
-                  sx={{ maxHeight: { xs: "none", sm: 600 } }}
-                >
-                  <Table
-                    stickyHeader
-                    aria-label="sticky table"
+                {categorySections.map((section) => (
+                  <Accordion
+                    key={section.id}
+                    disableGutters
+                    sx={{ boxShadow: "none", "&:before": { display: "none" } }}
                   >
-                    <TableHead sx={{ "& th": { fontWeight: "bold" } }}>
-                      <TableRow>
-                        {acces?.rev_table_view && acces?.rev_table_edit ? (
-                          <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
-                        ) : null}
-                        <TableCell style={{ width: "18%" }}>
-                          <TableSortLabel {...this.getSortProps("name")}>
-                            Наименование
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell style={{ width: "12%" }}>
-                          <TableSortLabel {...this.getSortProps("date_start")}>
-                            Дата создания
-                          </TableSortLabel>
-                        </TableCell>
-                        <TableCell style={{ width: "18%" }}>Обновление</TableCell>
-                        <TableCell style={{ width: "18%" }}>Редактирование</TableCell>
-                        <TableCell style={{ width: "18%" }}>История изменений</TableCell>
-                        <TableCell style={{ width: "18%" }}></TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {this.state.data.map((item, key) => (
-                        <TableRow key={key}>
-                          {acces?.rev_table_view && acces?.rev_table_edit ? (
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(item.show_in_rev) == 1 ? true : false}
-                                func={checkTable.bind(this, item.id, "show_in_rev", type)}
-                              />
-                            </TableCell>
-                          ) : null}
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell>{item.date_start}</TableCell>
-                          <TableCell>{item.date_update}</TableCell>
-                          <TableCell
-                            style={{ cursor: "pointer" }}
-                            onClick={openItemEdit.bind(
-                              this,
-                              item.id,
-                              `Редактирование ${type === "rec" ? "Рецепта" : "Полуфабриката"}: ${item.name}`,
-                              type,
-                            )}
-                          >
-                            <EditIcon />
-                          </TableCell>
-                          <TableCell
-                            onClick={openHistoryItem.bind(this, item.id, "История изменений", type)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <EditNoteIcon />
-                          </TableCell>
-                          <TableCell>
-                            {acces?.change_rec_pf_access ? (
-                              <IconButton
-                                title={`Смена на ${type === "rec" ? "полуфабрикат" : "рецепт"}`}
-                                onClick={() =>
-                                  this.setState({ type, itemId: item.id, openChange: true })
-                                }
-                                style={{ cursor: "pointer" }}
-                              >
-                                <SwapIcon />
-                              </IconButton>
-                            ) : null}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography style={{ fontWeight: "bold" }}>
+                        {section.name} ({section.items.length})
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails className="accordion_details">
+                      {this.renderCategoryTable(section)}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
               </AccordionDetails>
             </Accordion>
           </Grid>
@@ -2117,6 +2192,7 @@ class ReceptModule_ extends React.Component {
       rec_list: data.rec,
       pf_list: data.pf,
       acces: data.acces,
+      cats: data.cats,
     });
 
     document.title = data.module_info.name;
@@ -2564,6 +2640,7 @@ class ReceptModule_ extends React.Component {
     this.setState({
       rec_list: data.rec,
       pf_list: data.pf,
+      cats: data.cats,
     });
   }
 
@@ -2655,6 +2732,7 @@ class ReceptModule_ extends React.Component {
           <ReceptModule_Table
             data={this.state.pf_list}
             method="Полуфабрикаты"
+            cats={this.state.cats}
             getData={this.getData.bind(this)}
             openItemEdit={this.openItemEdit.bind(this)}
             checkTable={this.checkTable.bind(this)}
@@ -2667,6 +2745,7 @@ class ReceptModule_ extends React.Component {
           <ReceptModule_Table
             data={this.state.rec_list}
             method="Рецепты"
+            cats={this.state.cats}
             update={this.update.bind(this)}
             getData={this.getData.bind(this)}
             openItemEdit={this.openItemEdit.bind(this)}
