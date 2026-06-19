@@ -13,7 +13,10 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import { Chip } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 
 import { MyDatePickerNewViews } from "@/ui/Forms";
 import TabPanel from "@/ui/TabPanel/TabPanel";
@@ -46,6 +49,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
       yearly_totals_cafe: null,
       yearly_totals_kc: null,
       yearly_totals_site: null,
+      expandedTableYears: {},
       loading: false,
     };
   }
@@ -179,14 +183,25 @@ class StatSale_Tab_DynamicSale extends React.Component {
         if (!safeDenominator) return 0;
         return (toNumber(numerator) / safeDenominator) * 100;
       };
+      const getPlanLoad = (value, plan, capacity) => {
+        if (value !== null && value !== undefined) return toNumber(value);
+        return calcPercent(plan, capacity);
+      };
+      const getFirstDefinedPercent = (...values) => {
+        const value = values.find((item) => item !== null && item !== undefined);
+        return value !== undefined ? toNumber(value) : null;
+      };
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
+        const [year] = key.split("-");
         if (index !== 0 && prevMonth) {
           pizzaArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.pizza_plan,
-            planLoad: calcPercent(value.pizza, value.pizza_plan),
+            planLoad: getPlanLoad(value.pizza_plan_load, value.pizza_plan, 24000),
             factQty: value.pizza,
             planFact: value.pizza_plan_fact,
             factDynPct: calcPercent(
@@ -200,9 +215,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
         if (key !== 0 && prevMonth) {
           rollyArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.rolly_plan,
-            planLoad: calcPercent(value.rolly, value.rolly_plan),
+            planLoad: getPlanLoad(value.rolly_plan_load, value.rolly_plan, 200000),
             factQty: value.rolly,
             planFact: value.rolly_plan_fact,
             factDynPct: calcPercent(
@@ -216,9 +233,17 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
         if (key !== 0 && prevMonth) {
           orderArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
-            planQty: value.order_plan,
-            planLoad: calcPercent(value.order, value.order_plan),
+            planQty: value.orders_plan ?? value.order_plan,
+            planLoad:
+              getFirstDefinedPercent(
+                value.orders_plan_fact,
+                value.order_plan_fact,
+                value.orders_fact_plan,
+                value.order_fact_plan,
+              ) ?? calcPercent(value.orders, value.orders_plan ?? value.order_plan),
             factQty: value.orders,
             factDynPct: calcPercent(
               toNumber(value.orders) - toNumber(prevMonth?.orders),
@@ -231,6 +256,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
         if (key !== 0 && prevMonth) {
           accountArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.active_plan,
             planLoad: calcPercent(value.active, value.active_plan),
@@ -264,13 +291,72 @@ class StatSale_Tab_DynamicSale extends React.Component {
     });
   }
 
+  getYearGroups(rows) {
+    const groups = rows.reduce((acc, row) => {
+      const fallbackYear = String(row.periodKey ?? "").split("-")[0];
+      const year = row.year || fallbackYear || "Без года";
+      if (!acc[year]) acc[year] = [];
+      acc[year].push(row);
+      return acc;
+    }, {});
+
+    return Object.entries(groups)
+      .map(([year, items]) => ({ year, items }))
+      .sort((a, b) => {
+        const yearA = Number(a.year);
+        const yearB = Number(b.year);
+        if (!Number.isFinite(yearA) || !Number.isFinite(yearB))
+          return String(a.year).localeCompare(String(b.year));
+        return yearA - yearB;
+      });
+  }
+
+  getDefaultExpandedYear(groups) {
+    if (!groups.length) return null;
+
+    return groups.reduce((maxYear, group) => {
+      const current = Number(group.year);
+      const max = Number(maxYear);
+      if (!Number.isFinite(current) || !Number.isFinite(max)) return maxYear;
+      return current > max ? group.year : maxYear;
+    }, groups[0].year);
+  }
+
+  isYearExpanded(tableKey, year, groups) {
+    if (groups.length === 1) return true;
+
+    const tableYears = this.state.expandedTableYears?.[tableKey] ?? {};
+    if (Object.prototype.hasOwnProperty.call(tableYears, year)) return tableYears[year];
+
+    return year === this.getDefaultExpandedYear(groups);
+  }
+
+  toggleYear(tableKey, year, groups) {
+    if (groups.length === 1) return;
+
+    this.setState((prevState) => {
+      const tableYears = prevState.expandedTableYears?.[tableKey] ?? {};
+      return {
+        expandedTableYears: {
+          ...prevState.expandedTableYears,
+          [tableKey]: {
+            ...tableYears,
+            [year]: !this.isYearExpanded(tableKey, year, groups),
+          },
+        },
+      };
+    });
+  }
+
   renderPizzaTable(pizzaArr, title, subTitle, options = {}) {
-    const { planFulfillment = false } = options;
+    const { planFulfillment = false, tableKey = title } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(String(value ?? "").replace(",", "."));
       return Number.isFinite(parsed) ? parsed : 0;
     };
     const hasPlanFact = pizzaArr.some((row) => row.planFact !== null && row.planFact !== undefined);
+    const yearGroups = this.getYearGroups(pizzaArr);
+    const columnCount = 1 + (planFulfillment ? 1 : 2) + 4 + (hasPlanFact ? 1 : 0);
 
     const formatPercent = (value) => `${getSafeNumber(value).toFixed(2)}%`;
 
@@ -292,6 +378,166 @@ class StatSale_Tab_DynamicSale extends React.Component {
     };
 
     if (!pizzaArr.length) return null;
+
+    const renderDataRow = (row, index) => (
+      <TableRow
+        key={row.periodKey ?? `${row.month}-${index}`}
+        sx={{
+          "&:hover": {
+            backgroundColor: "#f5f5f5",
+            "& .MuiTableCell-root": {
+              backgroundColor: "#f5f5f5",
+            },
+          },
+        }}
+      >
+        <TableCell
+          component="th"
+          scope="row"
+          sx={{
+            ...bodyCellSx,
+            fontWeight: "bold",
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+          }}
+        >
+          {row.month}
+        </TableCell>
+        <TableCell
+          sx={{
+            ...bodyCellSx,
+            fontWeight: "500",
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+          }}
+        >
+          {row.planQty?.toLocaleString()}
+        </TableCell>
+        {!planFulfillment && (
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+            }}
+          >
+            {formatPercent(row.planLoad)}
+          </TableCell>
+        )}
+        <TableCell
+          sx={{
+            ...bodyCellSx,
+            fontWeight: "500",
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+          }}
+        >
+          {row.factQty?.toLocaleString()}
+        </TableCell>
+        <TableCell
+          sx={{
+            ...bodyCellSx,
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+          }}
+        >
+          <Chip
+            label={formatPercent(row.factDynPct)}
+            size="small"
+            sx={{
+              backgroundColor: getSafeNumber(row.factDynPct) >= 0 ? "#4caf50" : "#f44336",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "0.75rem",
+              minWidth: "70px",
+              "& .MuiChip-label": {
+                padding: "4px 8px",
+              },
+            }}
+          />
+        </TableCell>
+        <TableCell
+          sx={{
+            ...bodyCellSx,
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0.5,
+            }}
+          >
+            <span
+              style={{
+                color: getSafeNumber(row.factDynQty) >= 0 ? "#4caf50" : "#f44336",
+                fontWeight: "bold",
+                fontSize: "0.85rem",
+              }}
+            >
+              {getSafeNumber(row.factDynQty) > 0 ? "+" : ""}
+              {getSafeNumber(row.factDynQty).toLocaleString()}
+            </span>
+            {getSafeNumber(row.factDynQty) !== 0 && (
+              <span style={{ fontSize: "0.7rem" }}>
+                {getSafeNumber(row.factDynQty) > 0 ? "▲" : "▼"}
+              </span>
+            )}
+          </Box>
+        </TableCell>
+        <TableCell
+          sx={{
+            ...bodyCellSx,
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+          }}
+        >
+          <Chip
+            label={formatPercent(planFulfillment ? row.planLoad : row.factLoad)}
+            size="small"
+            variant={planFulfillment ? "filled" : "outlined"}
+            sx={
+              planFulfillment
+                ? {
+                    backgroundColor: getSafeNumber(row.planLoad) >= 100 ? "#4caf50" : "#f44336",
+                    color: "white",
+                    fontWeight: "bold",
+                    fontSize: "0.75rem",
+                    minWidth: "70px",
+                    "& .MuiChip-label": {
+                      padding: "4px 8px",
+                    },
+                  }
+                : {
+                    borderColor: "#1976d2",
+                    color: "#1976d2",
+                    fontWeight: "500",
+                    fontSize: "0.75rem",
+                  }
+            }
+          />
+        </TableCell>
+        {hasPlanFact && (
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+            }}
+          >
+            <Chip
+              label={formatPercent(row.planFact)}
+              size="small"
+              sx={{
+                backgroundColor: getSafeNumber(row.planFact) >= 100 ? "#4caf50" : "#f44336",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: "0.75rem",
+                minWidth: "70px",
+                "& .MuiChip-label": {
+                  padding: "4px 8px",
+                },
+              }}
+            />
+          </TableCell>
+        )}
+      </TableRow>
+    );
 
     return (
       <Grid
@@ -364,167 +610,51 @@ class StatSale_Tab_DynamicSale extends React.Component {
               </TableRow>
             </TableHead>
             <TableBody>
-              {pizzaArr.map((row, index) => (
-                <TableRow
-                  key={row.month}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: "#f5f5f5",
-                      "& .MuiTableCell-root": {
-                        backgroundColor: "#f5f5f5",
-                      },
-                    },
-                  }}
-                >
-                  <TableCell
-                    component="th"
-                    scope="row"
-                    sx={{
-                      ...bodyCellSx,
-                      fontWeight: "bold",
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    {row.month}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      ...bodyCellSx,
-                      fontWeight: "500",
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    {row.planQty?.toLocaleString()}
-                  </TableCell>
-                  {!planFulfillment && (
-                    <TableCell
+              {yearGroups.map((group) => {
+                const expanded = this.isYearExpanded(tableKey, group.year, yearGroups);
+
+                return (
+                  <React.Fragment key={`${tableKey}-${group.year}`}>
+                    <TableRow
+                      hover={yearGroups.length > 1}
+                      onClick={() => this.toggleYear(tableKey, group.year, yearGroups)}
                       sx={{
-                        ...bodyCellSx,
-                        backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                      }}
-                    >
-                      {formatPercent(row.planLoad)}
-                    </TableCell>
-                  )}
-                  <TableCell
-                    sx={{
-                      ...bodyCellSx,
-                      fontWeight: "500",
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    {row.factQty?.toLocaleString()}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      ...bodyCellSx,
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    <Chip
-                      label={formatPercent(row.factDynPct)}
-                      size="small"
-                      sx={{
-                        backgroundColor: getSafeNumber(row.factDynPct) >= 0 ? "#4caf50" : "#f44336",
-                        color: "white",
-                        fontWeight: "bold",
-                        fontSize: "0.75rem",
-                        minWidth: "70px",
-                        "& .MuiChip-label": {
-                          padding: "4px 8px",
+                        cursor: yearGroups.length > 1 ? "pointer" : "default",
+                        "& .MuiTableCell-root": {
+                          backgroundColor: "#f5f5f5",
                         },
                       }}
-                    />
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      ...bodyCellSx,
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 0.5,
-                      }}
                     >
-                      <span
-                        style={{
-                          color: getSafeNumber(row.factDynQty) >= 0 ? "#4caf50" : "#f44336",
-                          fontWeight: "bold",
-                          fontSize: "0.85rem",
+                      <TableCell
+                        colSpan={columnCount}
+                        sx={{
+                          ...bodyCellSx,
+                          padding: "8px 12px",
+                          textAlign: "left",
                         }}
                       >
-                        {getSafeNumber(row.factDynQty) > 0 ? "+" : ""}
-                        {getSafeNumber(row.factDynQty).toLocaleString()}
-                      </span>
-                      {getSafeNumber(row.factDynQty) !== 0 && (
-                        <span style={{ fontSize: "0.7rem" }}>
-                          {getSafeNumber(row.factDynQty) > 0 ? "▲" : "▼"}
-                        </span>
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      ...bodyCellSx,
-                      backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                    }}
-                  >
-                    <Chip
-                      label={formatPercent(planFulfillment ? row.planLoad : row.factLoad)}
-                      size="small"
-                      variant={planFulfillment ? "filled" : "outlined"}
-                      sx={
-                        planFulfillment
-                          ? {
-                              backgroundColor:
-                                getSafeNumber(row.planLoad) >= 100 ? "#4caf50" : "#f44336",
-                              color: "white",
-                              fontWeight: "bold",
-                              fontSize: "0.75rem",
-                              minWidth: "70px",
-                              "& .MuiChip-label": {
-                                padding: "4px 8px",
-                              },
-                            }
-                          : {
-                              borderColor: "#1976d2",
-                              color: "#1976d2",
-                              fontWeight: "500",
-                              fontSize: "0.75rem",
-                            }
-                      }
-                    />
-                  </TableCell>
-                  {hasPlanFact && (
-                    <TableCell
-                      sx={{
-                        ...bodyCellSx,
-                        backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-                      }}
-                    >
-                      <Chip
-                        label={formatPercent(row.planFact)}
-                        size="small"
-                        sx={{
-                          backgroundColor:
-                            getSafeNumber(row.planFact) >= 100 ? "#4caf50" : "#f44336",
-                          color: "white",
-                          fontWeight: "bold",
-                          fontSize: "0.75rem",
-                          minWidth: "70px",
-                          "& .MuiChip-label": {
-                            padding: "4px 8px",
-                          },
-                        }}
-                      />
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            disabled={yearGroups.length === 1}
+                            sx={{ p: 0.25 }}
+                          >
+                            {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+                          </IconButton>
+                          <Typography sx={{ fontWeight: 700 }}>{group.year} год</Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {group.items.length} мес.
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                    {expanded ? group.items.map((row, index) => renderDataRow(row, index)) : null}
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -590,6 +720,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <StatSaleYearlyLineChart
                 rawData={this.state.pizzaLine}
                 title="Динамика пиццы по годам"
+                dateStart={this.state.date_start}
+                dateEnd={this.state.date_end}
               />
             ) : null}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
@@ -597,6 +729,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <StatSaleYearlyLineChart
                 rawData={this.state.rollyLine}
                 title="Динамика роллов по годам"
+                dateStart={this.state.date_start}
+                dateEnd={this.state.date_end}
               />
             ) : null}
             {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
@@ -606,6 +740,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <StatSaleYearlyLineChart
                 rawData={this.state.ordersLine}
                 title="Динамика заказов по годам"
+                dateStart={this.state.date_start}
+                dateEnd={this.state.date_end}
               />
             ) : null}
             {this.renderPizzaTable(
