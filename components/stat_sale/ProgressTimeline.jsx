@@ -28,7 +28,9 @@ const ProgressBar = styled(Box)(({ theme }) => ({
   width: "100%",
 }));
 
-const MonthMarker = styled(Box)(({ theme, isActive, position }) => ({
+const MonthMarker = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "position",
+})(({ theme, position }) => ({
   position: "absolute",
   top: "10px",
   left: `${position}%`,
@@ -40,7 +42,9 @@ const MonthMarker = styled(Box)(({ theme, isActive, position }) => ({
   zIndex: 2,
 }));
 
-const MarkerCircle = styled(Box)(({ theme, isActive, markerColor }) => ({
+const MarkerCircle = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "isActive" && prop !== "markerColor",
+})(({ theme, isActive, markerColor }) => ({
   width: isActive ? "24px" : "16px",
   height: isActive ? "24px" : "16px",
   borderRadius: "50%",
@@ -59,7 +63,9 @@ const MarkerCircle = styled(Box)(({ theme, isActive, markerColor }) => ({
     : {},
 }));
 
-const MonthLabel = styled(Box)(({ theme, isActive }) => ({
+const MonthLabel = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "isActive",
+})(({ theme }) => ({
   marginTop: "8px",
   textAlign: "center",
 }));

@@ -24,8 +24,8 @@ const formatValue = (value) =>
     .toFixed(0)
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-const buildSharedTooltip = ({ month, series, valueSuffix }) => {
-  const rows = series
+const buildSharedTooltip = ({ month, seriesItems, valueSuffix }) => {
+  const rows = seriesItems
     .map((item) => ({
       ...item,
       value: item.values[month.index],
@@ -194,6 +194,20 @@ export default function StatSaleMonthlyLineChart({
         return tooltip;
       };
 
+      const buildSeriesData = (item, tooltipSeriesItems) =>
+        months.map((month, index) => ({
+          month,
+          value: item.values[index],
+          tooltipText: buildSharedTooltip({
+            month: { name: month, fullName: monthNames[index], index },
+            seriesItems: tooltipSeriesItems,
+            valueSuffix,
+          }),
+        }));
+
+      const createdSeries = [];
+      const isEntryVisible = (entry) => entry.series.get("visible") !== false;
+
       const createSeries = (item) => {
         const itemSeries = chart.series.push(
           am5xy.LineSeries.new(root, {
@@ -226,18 +240,9 @@ export default function StatSaleMonthlyLineChart({
           }),
         );
 
-        itemSeries.data.setAll(
-          months.map((month, index) => ({
-            month,
-            value: item.values[index],
-            tooltipText: buildSharedTooltip({
-              month: { name: month, fullName: monthNames[index], index },
-              series: chartSeries,
-              valueSuffix,
-            }),
-          })),
-        );
+        itemSeries.data.setAll(buildSeriesData(item, chartSeries));
         itemSeries.appear(500);
+        createdSeries.push({ item, series: itemSeries });
         return itemSeries;
       };
 
@@ -255,6 +260,49 @@ export default function StatSaleMonthlyLineChart({
         (item) => item.get("name") === mainSeries?.name,
       );
       createdMainSeries?.toFront();
+
+      const updateAverageSeries = () => {
+        const mainEntry = createdSeries.find((entry) => entry.item.isMain);
+        const yearEntries = createdSeries.filter((entry) => !entry.item.isMain);
+        if (!mainEntry) return;
+
+        const visibleYearEntries = yearEntries.filter(isEntryVisible);
+        const averageEntries = visibleYearEntries.filter(
+          (entry) => entry.item.includedInAverage !== false,
+        );
+        const averageValues = months.map((_, index) => {
+          let sum = 0;
+          let count = 0;
+
+          averageEntries.forEach((entry) => {
+            const value = entry.item.values[index];
+            if (value !== null && value !== undefined) {
+              sum += Number(value);
+              count += 1;
+            }
+          });
+
+          return count > 0 ? sum / count : null;
+        });
+        const averageItem = {
+          ...mainEntry.item,
+          values: averageValues,
+        };
+        const tooltipSeriesItems = [
+          ...(isEntryVisible(mainEntry) ? [averageItem] : []),
+          ...visibleYearEntries.map((entry) => entry.item),
+        ];
+
+        mainEntry.series.data.setAll(buildSeriesData(averageItem, tooltipSeriesItems));
+        yearEntries.forEach((entry) => {
+          entry.series.data.setAll(buildSeriesData(entry.item, tooltipSeriesItems));
+        });
+      };
+      createdSeries.forEach((entry) => {
+        entry.series.on("visible", () => {
+          root.events.once("frameended", updateAverageSeries);
+        });
+      });
 
       cursor.set("snapToSeries", chart.series.values);
 

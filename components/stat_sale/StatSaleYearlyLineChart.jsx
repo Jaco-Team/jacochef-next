@@ -68,7 +68,8 @@ export default function StatSaleYearlyLineChart({ rawData, title, dateStart, dat
   const years = Object.keys(groupedData)
     .map(Number)
     .sort((a, b) => b - a);
-  const averageValues = calculateMonthlyAverage(groupedData, getYearsFromRange(dateStart, dateEnd));
+  const averageYears = getYearsFromRange(dateStart, dateEnd);
+  const averageValues = calculateMonthlyAverage(groupedData, averageYears);
   const series = [
     ...(averageValues.some((value) => value !== null)
       ? [
@@ -83,6 +84,7 @@ export default function StatSaleYearlyLineChart({ rawData, title, dateStart, dat
     ...years.map((year, index) => ({
       name: year.toString(),
       color: yearColorPalette[index % yearColorPalette.length],
+      includedInAverage: !averageYears?.length || averageYears.includes(year),
       values: months.map((_, index) => groupedData[year]?.[index + 1] ?? null),
     })),
   ];
