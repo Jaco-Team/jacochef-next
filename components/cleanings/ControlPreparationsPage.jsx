@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   Grid,
-  MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -23,11 +23,13 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { locations } from "./constants";
+import dayjs from "dayjs";
+import { MyDatePickerNew, MySelect } from "@/ui/Forms";
 import {
   formatControlTime,
   getLocationName,
   getLocationNameById,
+  isSameId,
   isDateInRange,
   tableHeaderSx,
   tableRowSx,
@@ -47,6 +49,7 @@ const actionButtonSx = {
 
 export default function PreparationControlView({
   items,
+  locations = [],
   selectedCafeId,
   dateFrom,
   dateTo,
@@ -56,10 +59,15 @@ export default function PreparationControlView({
   onEdit,
   onApprove,
   onDelete,
+  canEdit,
 }) {
+  const locationOptions = locations.map((location) => ({
+    id: location.id,
+    name: getLocationName(location),
+  }));
   const visibleItems = items.filter(
     (item) =>
-      item.locationId === selectedCafeId && isDateInRange(item.preparedAt, dateFrom, dateTo),
+      isSameId(item.locationId, selectedCafeId) && isDateInRange(item.preparedAt, dateFrom, dateTo),
   );
 
   return (
@@ -81,37 +89,25 @@ export default function PreparationControlView({
               alignItems: "center",
             }}
           >
-            <FormControl size="small">
-              <Select
-                value={selectedCafeId}
-                onChange={(event) => onCafeChange(event.target.value)}
-                IconComponent={ExpandMoreIcon}
-              >
-                {locations.map((location) => (
-                  <MenuItem
-                    key={location.id}
-                    value={location.id}
-                  >
-                    {getLocationName(location)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              size="small"
-              type="date"
+            <MySelect
+              label="Кафе"
+              data={locationOptions}
+              value={selectedCafeId}
+              func={(event) => onCafeChange(event.target.value)}
+              is_none={false}
+              disabled={locationOptions.length <= 1}
+            />
+            <MyDatePickerNew
               label="Дата от"
               value={dateFrom}
-              onChange={(event) => onDateFromChange(event.target.value)}
-              InputLabelProps={{ shrink: true }}
+              maxDate={dateTo ? dayjs(dateTo) : null}
+              func={(value) => onDateFromChange(value ? value.format("YYYY-MM-DD") : "")}
             />
-            <TextField
-              size="small"
-              type="date"
+            <MyDatePickerNew
               label="Дата до"
               value={dateTo}
-              onChange={(event) => onDateToChange(event.target.value)}
-              InputLabelProps={{ shrink: true }}
+              minDate={dateFrom ? dayjs(dateFrom) : null}
+              func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
             />
           </Box>
         </Paper>
@@ -160,26 +156,26 @@ export default function PreparationControlView({
                       <Typography
                         component="button"
                         type="button"
-                        onClick={() => onEdit(item.id)}
+                        onClick={() => canEdit && onEdit(item.id)}
                         sx={{
                           p: 0,
                           border: 0,
                           bgcolor: "transparent",
-                          color: "primary.main",
-                          cursor: "pointer",
+                          color: canEdit ? "primary.main" : "text.primary",
+                          cursor: canEdit ? "pointer" : "default",
                           fontFamily: "inherit",
                           fontSize: 14,
                           fontWeight: 800,
                           textAlign: "left",
                           textTransform: "uppercase",
-                          "&:hover": { textDecoration: "underline" },
+                          "&:hover": canEdit ? { textDecoration: "underline" } : {},
                         }}
                       >
                         {item.name}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {getLocationNameById(item.locationId)}
+                      {getLocationNameById(item.locationId, locations)}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                       {formatControlTime(item.preparedAt)}
@@ -200,7 +196,7 @@ export default function PreparationControlView({
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                        {item.status === "pending" ? (
+                        {canEdit && item.status === "pending" ? (
                           <Button
                             size="small"
                             variant="contained"
@@ -217,7 +213,7 @@ export default function PreparationControlView({
                             Подтвердить
                           </Button>
                         ) : null}
-                        {item.status === "pending" ? (
+                        {canEdit && item.status === "pending" ? (
                           <Button
                             size="small"
                             variant="contained"
@@ -261,26 +257,26 @@ export default function PreparationControlView({
                     <Typography
                       component="button"
                       type="button"
-                      onClick={() => onEdit(item.id)}
+                      onClick={() => canEdit && onEdit(item.id)}
                       sx={{
                         p: 0,
                         border: 0,
                         bgcolor: "transparent",
-                        color: "primary.main",
-                        cursor: "pointer",
+                        color: canEdit ? "primary.main" : "text.primary",
+                        cursor: canEdit ? "pointer" : "default",
                         fontFamily: "inherit",
                         fontSize: 16,
                         fontWeight: 800,
                         lineHeight: 1.25,
                         textAlign: "left",
                         textTransform: "uppercase",
-                        "&:hover": { textDecoration: "underline" },
+                        "&:hover": canEdit ? { textDecoration: "underline" } : {},
                       }}
                     >
                       {item.name}
                     </Typography>
                     <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {getLocationNameById(item.locationId)}
+                      {getLocationNameById(item.locationId, locations)}
                     </Typography>
                     <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
                       {formatControlTime(item.preparedAt)} · {item.volume} / {item.waste}
@@ -309,7 +305,7 @@ export default function PreparationControlView({
                     alignItems: "center",
                   }}
                 >
-                  {item.status === "pending" ? (
+                  {canEdit && item.status === "pending" ? (
                     <>
                       <Button
                         size="small"
@@ -379,7 +375,7 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>
         Редактирование заготовки: {item?.name || ""}
@@ -390,6 +386,16 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
           spacing={2}
           sx={{ pt: 1 }}
         >
+          {/* <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Уборку начал</Typography>
+            <Typography sx={{ color: "text.secondary" }}>{item?.employee || "Не указано"}</Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Уборку подтвердил</Typography>
+            <Typography sx={{ color: "text.secondary" }}>
+              {item?.confirmer || "Не указано"}
+            </Typography>
+          </Grid> */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
@@ -408,6 +414,43 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
               onChange={(event) => setForm((prev) => ({ ...prev, waste: event.target.value }))}
             />
           </Grid>
+          {item?.history?.length ? (
+            <Grid size={12}>
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>История изменений</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Сотрудник</TableCell>
+                          <TableCell>Время обновления</TableCell>
+                          <TableCell>Заготовки ДО</TableCell>
+                          <TableCell>Отходов ДО</TableCell>
+                          <TableCell>Заготовки ПОСЛЕ</TableCell>
+                          <TableCell>Отходов ПОСЛЕ</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {item.history.map((historyItem) => (
+                          <TableRow key={historyItem.id}>
+                            <TableCell>{historyItem.userName}</TableCell>
+                            <TableCell>{historyItem.dateTime}</TableCell>
+                            <TableCell>{historyItem.oldVolume}</TableCell>
+                            <TableCell>{historyItem.oldWaste}</TableCell>
+                            <TableCell>{historyItem.newVolume}</TableCell>
+                            <TableCell>{historyItem.newWaste}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
+          ) : null}
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>

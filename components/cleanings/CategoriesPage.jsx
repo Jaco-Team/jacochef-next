@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -39,53 +40,6 @@ const actionButtonSx = {
   fontWeight: 700,
   whiteSpace: "nowrap",
 };
-
-function buildCategoryHistory(category, templates) {
-  if (!category) {
-    return [];
-  }
-
-  return [
-    {
-      id: `${category.id || "new"}-instruction`,
-      created_at: "2026-06-12T14:20:00",
-      actor_name: "Винокуров М. Ю.",
-      event_type: "update",
-      diff_json: JSON.stringify({
-        "Подробная инструкция": {
-          from: "Черновик инструкции",
-          to: "Обновлена инструкция для сотрудника",
-        },
-      }),
-    },
-    {
-      id: `${category.id || "new"}-templates`,
-      created_at: "2026-06-12T13:40:00",
-      actor_name: "Беседина Г. М.",
-      event_type: "update",
-      diff_json: JSON.stringify({
-        "Уборки категории": {
-          from: "Не назначены",
-          to: templates.length
-            ? templates.map((template) => template.name).join(", ")
-            : "Нет уборок",
-        },
-      }),
-    },
-    {
-      id: `${category.id || "new"}-created`,
-      created_at: "2026-06-12T12:55:00",
-      actor_name: "Система",
-      event_type: "create",
-      diff_json: JSON.stringify({
-        Название: {
-          from: "",
-          to: category.name,
-        },
-      }),
-    },
-  ];
-}
 
 function CategoryTemplatesAccordion({ templates }) {
   return (
@@ -142,6 +96,9 @@ export default function CleaningCategoriesView({
   onDraftCategoryChange,
   onSaveCategory,
   onDeleteCategory,
+  history = [],
+  historyLoading = false,
+  canEdit,
 }) {
   const isMobile = useMediaQuery("(max-width:899.95px)");
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
@@ -158,8 +115,6 @@ export default function CleaningCategoriesView({
     ? templates.filter((template) => template.categoryId === selectedCategory.id)
     : [];
   const selectedTemplatesCount = selectedTemplates.length;
-  const selectedCategoryHistory = buildCategoryHistory(selectedCategory, selectedTemplates);
-
   const updateSelectedCategory = (field, value) => {
     if (!selectedCategory) {
       return;
@@ -295,7 +250,12 @@ export default function CleaningCategoriesView({
               variant="outlined"
               startIcon={<DeleteOutlineIcon />}
               onClick={() => onDeleteCategory(selectedCategory.id)}
-              disabled={!selectedCategory.id || categories.length <= 1}
+              disabled={
+                !canEdit ||
+                !selectedCategory.id ||
+                categories.length <= 1 ||
+                selectedCategory.deletable === false
+              }
               sx={actionButtonSx}
             >
               Удалить
@@ -307,6 +267,7 @@ export default function CleaningCategoriesView({
               size="small"
               variant="contained"
               onClick={onSaveCategory}
+              disabled={!canEdit}
               sx={actionButtonSx}
             >
               Сохранить
@@ -324,6 +285,7 @@ export default function CleaningCategoriesView({
                   size="small"
                   fullWidth
                   value={selectedCategory.name}
+                  disabled={!canEdit}
                   onChange={(event) => updateSelectedCategory("name", event.target.value)}
                 />
               </Grid>
@@ -334,6 +296,7 @@ export default function CleaningCategoriesView({
               <TextEditor
                 value={selectedCategory.instruction}
                 func={(value) => updateSelectedCategory("instruction", value)}
+                disabled={!canEdit}
                 height={300}
                 variant="newsDialog"
                 menubar="file edit view insert format tools table"
@@ -343,10 +306,16 @@ export default function CleaningCategoriesView({
 
             <CategoryTemplatesAccordion templates={selectedTemplates} />
 
-            <HistoryLog
-              history={selectedCategoryHistory}
-              defaultExpanded={false}
-            />
+            {historyLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <HistoryLog
+                history={history}
+                defaultExpanded={false}
+              />
+            )}
           </Box>
         </Paper>
       </Grid>
@@ -355,14 +324,18 @@ export default function CleaningCategoriesView({
         open={mobileEditorOpen}
         category={selectedCategory}
         templates={selectedTemplates}
-        history={selectedCategoryHistory}
+        history={history}
         templatesCount={selectedTemplatesCount}
+        historyLoading={historyLoading}
         onClose={() => setMobileEditorOpen(false)}
         onChange={updateSelectedCategory}
         onSave={() => {
-          onSaveCategory();
-          setMobileEditorOpen(false);
+          if (canEdit) {
+            onSaveCategory();
+            setMobileEditorOpen(false);
+          }
         }}
+        canEdit={canEdit}
       />
     </Grid>
   );
@@ -374,9 +347,11 @@ function CategoryMobileEditDialog({
   templates,
   history,
   templatesCount,
+  historyLoading,
   onClose,
   onChange,
   onSave,
+  canEdit,
 }) {
   if (!category) {
     return null;
@@ -388,7 +363,7 @@ function CategoryMobileEditDialog({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: "12px", maxHeight: "calc(100dvh - 32px)" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px", maxHeight: "calc(100dvh - 32px)" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>
         {category.name}
@@ -403,6 +378,7 @@ function CategoryMobileEditDialog({
             size="small"
             fullWidth
             value={category.name}
+            disabled={!canEdit}
             onChange={(event) => onChange("name", event.target.value)}
           />
         </Box>
@@ -412,6 +388,7 @@ function CategoryMobileEditDialog({
           <TextEditor
             value={category.instruction}
             func={(value) => onChange("instruction", value)}
+            disabled={!canEdit}
             height={420}
             variant="newsDialog"
             menubar="file edit view insert format tools table"
@@ -421,16 +398,23 @@ function CategoryMobileEditDialog({
 
         <CategoryTemplatesAccordion templates={templates} />
 
-        <HistoryLog
-          history={history}
-          defaultExpanded={false}
-        />
+        {historyLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (
+          <HistoryLog
+            history={history}
+            defaultExpanded={false}
+          />
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <Button
           size="small"
           variant="contained"
           onClick={onSave}
+          disabled={!canEdit}
           sx={actionButtonSx}
         >
           Сохранить
@@ -449,7 +433,7 @@ function CategoryMobileEditDialog({
 }
 
 export function DeleteCategoryDialog({ open, category, templates = [], onClose, onConfirm }) {
-  const hasLinkedTemplates = templates.length > 0;
+  const hasLinkedTemplates = templates.length > 0 || category?.deletable === false;
 
   return (
     <Dialog
@@ -457,7 +441,7 @@ export function DeleteCategoryDialog({ open, category, templates = [], onClose, 
       onClose={onClose}
       fullWidth
       maxWidth="xs"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>Удалить категорию?</DialogTitle>
       <DialogContent>

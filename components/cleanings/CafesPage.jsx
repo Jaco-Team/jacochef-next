@@ -7,13 +7,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   Grid,
   IconButton,
   InputAdornment,
-  MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -27,15 +24,15 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
-import { locations, roles } from "./constants";
+import { MySelect, MyTextInput } from "@/ui/Forms";
 import {
   getCategoryName,
   getLocationName,
   getScheduleText,
+  isSameId,
   tableHeaderSx,
   tableRowSx,
 } from "./helpers";
@@ -59,22 +56,48 @@ function getCategory(categories, categoryId) {
 export default function CafesView({
   templates,
   categories,
+  locations = [],
+  roles = [],
+  scheduleTypeOptions = [],
   selectedCafeId,
   roleFilter,
   onCafeChange,
   onRoleFilterChange,
   onRemoveCleaning,
+  dopTimeDrafts = {},
+  onDopTimeChange,
+  canEdit,
 }) {
   const [infoCleaningId, setInfoCleaningId] = useState(null);
-  const selectedCafe = locations.find((location) => location.id === selectedCafeId) || locations[0];
+  const locationOptions = locations.map((location) => ({
+    id: location.id,
+    name: getLocationName(location),
+  }));
+  const roleOptions = [
+    { id: "all", name: "Все роли" },
+    ...roles.map((role) => ({
+      id: role?.name || "",
+      name: role?.name || "",
+    })),
+  ];
+  const selectedCafe =
+    locations.find((location) => isSameId(location.id, selectedCafeId)) || locations[0];
   const assignedCleanings = templates.filter((template) =>
-    template.locationIds.includes(selectedCafeId),
+    template.locationIds.some((locationId) => isSameId(locationId, selectedCafeId)),
   );
   const visibleCleanings = assignedCleanings.filter(
     (template) => roleFilter === "all" || template.role === roleFilter,
   );
   const infoCleaning = templates.find((template) => template.id === infoCleaningId) || null;
   const infoCategory = infoCleaning ? getCategory(categories, infoCleaning.categoryId) : null;
+
+  const getDopTimeValue = (item) => {
+    if (Object.prototype.hasOwnProperty.call(dopTimeDrafts, item.id)) {
+      return dopTimeDrafts[item.id];
+    }
+
+    return item.dopTime ?? item.extraTime ?? 0;
+  };
 
   return (
     <Grid
@@ -112,61 +135,31 @@ export default function CafesView({
                   display: { xs: "none", md: "block" },
                 }}
               />
-              <FormControl
-                size="small"
-                sx={{ flex: { xs: 1, md: "initial" }, minWidth: 0, width: { xs: "auto", md: 320 } }}
-              >
-                <Select
-                  value={selectedCafeId}
-                  onChange={(event) => onCafeChange(event.target.value)}
-                  IconComponent={ExpandMoreIcon}
-                  sx={{
-                    "& .MuiSelect-select": {
-                      py: { xs: 1, md: 1.25 },
-                      fontSize: { xs: 14, md: 14 },
-                    },
-                  }}
-                >
-                  {locations.map((location) => (
-                    <MenuItem
-                      key={location.id}
-                      value={location.id}
-                    >
-                      {getLocationName(location)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl
-                size="small"
+              <MySelect
+                label="Кафе"
+                data={locationOptions}
+                value={selectedCafeId}
+                func={(event) => onCafeChange(event.target.value)}
+                is_none={false}
+                disabled={locationOptions.length <= 1}
                 sx={{
-                  flex: { xs: "1 1 100%", md: "initial" },
-                  minWidth: { xs: 0, md: 180 },
+                  flex: { xs: 1, md: "0 1 360px" },
+                  minWidth: 0,
+                  width: { xs: "auto", md: 360 },
                 }}
-              >
-                <Select
-                  value={roleFilter}
-                  onChange={(event) => onRoleFilterChange(event.target.value)}
-                  IconComponent={ExpandMoreIcon}
-                  sx={{
-                    "& .MuiSelect-select": {
-                      py: { xs: 1, md: 1.25 },
-                      fontSize: { xs: 14, md: 14 },
-                    },
-                  }}
-                >
-                  <MenuItem value="all">Все роли</MenuItem>
-                  {roles.map((role) => (
-                    <MenuItem
-                      key={role}
-                      value={role}
-                    >
-                      {role}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              />
+
+              <MySelect
+                label="Роль"
+                data={roleOptions}
+                value={roleFilter}
+                func={(event) => onRoleFilterChange(event.target.value)}
+                is_none={false}
+                sx={{
+                  flex: { xs: "1 1 100%", md: "0 1 240px" },
+                  minWidth: { xs: 0, md: 240 },
+                }}
+              />
             </Box>
 
             <Typography
@@ -177,7 +170,7 @@ export default function CafesView({
                 width: { xs: "100%", md: "auto" },
               }}
             >
-              <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe.name}»
+              <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe?.name || "—"}»
             </Typography>
           </Box>
         </Paper>
@@ -201,6 +194,7 @@ export default function CafesView({
                   <TableCell>Категория</TableCell>
                   <TableCell>Роль</TableCell>
                   <TableCell>Длительность</TableCell>
+                  <TableCell sx={{ width: 132 }}>Доп. время</TableCell>
                   <TableCell sx={{ width: "24%" }}>Расписание</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
@@ -273,6 +267,17 @@ export default function CafesView({
                       </Box>
                     </TableCell>
                     <TableCell>
+                      <MyTextInput
+                        value={getDopTimeValue(item)}
+                        func={(event) => onDopTimeChange(item.id, event.target.value ?? "")}
+                        type="number"
+                        min={0}
+                        step={1}
+                        disabled={!canEdit}
+                        sx={{ minWidth: 96 }}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Box
                         sx={{
                           display: "flex",
@@ -282,26 +287,30 @@ export default function CafesView({
                         }}
                       >
                         <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
-                        <Typography sx={{ fontSize: 14 }}>{getScheduleText(item)}</Typography>
+                        <Typography sx={{ fontSize: 14 }}>
+                          {getScheduleText(item, scheduleTypeOptions)}
+                        </Typography>
                       </Box>
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Убрать из кафе">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => onRemoveCleaning(item.id)}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      {canEdit ? (
+                        <Tooltip title="Убрать из кафе">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => onRemoveCleaning(item.id)}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
                 {visibleCleanings.length ? null : (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       sx={{ py: 4, textAlign: "center", color: "text.secondary" }}
                     >
                       Нет уборок по выбранным фильтрам
@@ -359,31 +368,47 @@ export default function CafesView({
                       />
                     </Box>
                   </Box>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<DeleteOutlineIcon />}
-                    onClick={() => onRemoveCleaning(item.id)}
+                  {canEdit ? (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<DeleteOutlineIcon />}
+                      onClick={() => onRemoveCleaning(item.id)}
+                      sx={{
+                        justifySelf: "start",
+                        minHeight: 36,
+                        px: 1.75,
+                        borderRadius: "8px",
+                        fontWeight: 700,
+                        bgcolor: "primary.main",
+                        color: "#fff",
+                        "&:hover": { bgcolor: "primary.dark" },
+                      }}
+                    >
+                      Убрать
+                    </Button>
+                  ) : null}
+                  <Box
                     sx={{
-                      justifySelf: "start",
-                      minHeight: 36,
-                      px: 1.75,
-                      borderRadius: "8px",
-                      fontWeight: 700,
-                      bgcolor: "primary.main",
-                      color: "#fff",
-                      "&:hover": { bgcolor: "primary.dark" },
+                      width: 100,
                     }}
                   >
-                    Убрать
-                  </Button>
+                    <MyTextInput
+                      value={getDopTimeValue(item)}
+                      func={(event) => onDopTimeChange(item.id, event.target.value ?? "")}
+                      type="number"
+                      min={0}
+                      step={1}
+                      disabled={!canEdit}
+                    />
+                  </Box>
                 </Box>
                 <Box
                   sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary" }}
                 >
                   <ScheduleOutlinedIcon sx={{ fontSize: 18 }} />
                   <Typography sx={{ fontSize: 14 }}>
-                    {item.duration} мин · {getScheduleText(item)}
+                    {item.duration} мин · {getScheduleText(item, scheduleTypeOptions)}
                   </Typography>
                 </Box>
               </Paper>
@@ -416,7 +441,7 @@ function CafeCleaningInfoDialog({ open, cleaning, category, onClose }) {
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{ sx: { borderRadius: "8px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "8px" } } }}
     >
       <DialogTitle sx={{ p: 2.5 }}>
         <Box
@@ -473,11 +498,19 @@ export function AddCafeCleaningDialog({
   categories,
   query,
   roleFilter,
+  roles = [],
   onQueryChange,
   onRoleFilterChange,
   onClose,
   onAdd,
 }) {
+  const roleOptions = [
+    { id: "all", name: "Все роли" },
+    ...roles.map((role) => ({
+      id: role?.name || "",
+      name: role?.name || "",
+    })),
+  ];
   const filteredItems = items.filter((item) => {
     const search = query.trim().toLowerCase();
 
@@ -497,7 +530,7 @@ export function AddCafeCleaningDialog({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>
         Добавить уборку
@@ -526,23 +559,13 @@ export function AddCafeCleaningDialog({
               ),
             }}
           />
-          <FormControl size="small">
-            <Select
-              value={roleFilter}
-              onChange={(event) => onRoleFilterChange(event.target.value)}
-              IconComponent={ExpandMoreIcon}
-            >
-              <MenuItem value="all">Все роли</MenuItem>
-              {roles.map((role) => (
-                <MenuItem
-                  key={role}
-                  value={role}
-                >
-                  {role}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <MySelect
+            label="Роль"
+            data={roleOptions}
+            value={roleFilter}
+            func={(event) => onRoleFilterChange(event.target.value)}
+            is_none={false}
+          />
         </Box>
 
         <Box sx={{ display: "grid", gap: 1, maxHeight: 420, overflow: "auto" }}>
@@ -623,7 +646,7 @@ export function RemoveCafeCleaningDialog({ open, cleaning, cafe, onClose, onConf
       onClose={onClose}
       fullWidth
       maxWidth="xs"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>Убрать уборку?</DialogTitle>
       <DialogContent>
