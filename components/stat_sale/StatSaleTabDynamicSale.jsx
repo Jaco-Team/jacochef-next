@@ -183,6 +183,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
         if (value !== null && value !== undefined) return toNumber(value);
         return calcPercent(plan, capacity);
       };
+      const getFirstDefinedPercent = (...values) => {
+        const value = values.find((item) => item !== null && item !== undefined);
+        return value !== undefined ? toNumber(value) : null;
+      };
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
@@ -228,8 +232,14 @@ class StatSale_Tab_DynamicSale extends React.Component {
             periodKey: key,
             year,
             month: value.month_name,
-            planQty: value.order_plan,
-            planLoad: calcPercent(value.order, value.order_plan),
+            planQty: value.orders_plan ?? value.order_plan,
+            planLoad:
+              getFirstDefinedPercent(
+                value.orders_plan_fact,
+                value.order_plan_fact,
+                value.orders_fact_plan,
+                value.order_fact_plan,
+              ) ?? calcPercent(value.orders, value.orders_plan ?? value.order_plan),
             factQty: value.orders,
             factDynPct: calcPercent(
               toNumber(value.orders) - toNumber(prevMonth?.orders),
