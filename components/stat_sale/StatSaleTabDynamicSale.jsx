@@ -179,6 +179,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
         if (!safeDenominator) return 0;
         return (toNumber(numerator) / safeDenominator) * 100;
       };
+      const getPlanLoad = (value, plan, capacity) => {
+        if (value !== null && value !== undefined) return toNumber(value);
+        return calcPercent(plan, capacity);
+      };
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
@@ -189,7 +193,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             year,
             month: value.month_name,
             planQty: value.pizza_plan,
-            planLoad: calcPercent(value.pizza, value.pizza_plan),
+            planLoad: getPlanLoad(value.pizza_plan_load, value.pizza_plan, 24000),
             factQty: value.pizza,
             planFact: value.pizza_plan_fact,
             factDynPct: calcPercent(
@@ -207,7 +211,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             year,
             month: value.month_name,
             planQty: value.rolly_plan,
-            planLoad: calcPercent(value.rolly, value.rolly_plan),
+            planLoad: getPlanLoad(value.rolly_plan_load, value.rolly_plan, 200000),
             factQty: value.rolly,
             planFact: value.rolly_plan_fact,
             factDynPct: calcPercent(
