@@ -347,6 +347,7 @@ const ProgressTimeline = ({ data }) => {
           <ProgressBar />
 
           {data.map((item, index) => {
+            const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
             const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
             const edgeOffset = isMobile ? 7 : 4;
             const segmentColor =
@@ -364,7 +365,7 @@ const ProgressTimeline = ({ data }) => {
 
             return (
               <Box
-                key={`segment-${item.month}`}
+                key={`segment-${itemKey}`}
                 sx={{
                   position: "absolute",
                   top: "20px",
@@ -380,6 +381,7 @@ const ProgressTimeline = ({ data }) => {
           })}
 
           {data.map((item, index) => {
+            const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
             const isActive = index === selectedMonthIndex;
             const edgeOffset = isMobile ? 7 : 4;
             const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
@@ -393,7 +395,7 @@ const ProgressTimeline = ({ data }) => {
 
             return (
               <Tooltip
-                key={item.month}
+                key={itemKey}
                 title={
                   <CustomTooltip>
                     <Typography

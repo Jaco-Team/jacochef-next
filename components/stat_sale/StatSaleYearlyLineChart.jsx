@@ -29,10 +29,29 @@ const groupByYear = (data) => {
   return grouped;
 };
 
-const calculateMonthlyAverage = (groupedData) => {
+const getYearsFromRange = (dateStart, dateEnd) => {
+  const startYear = Number(String(dateStart ?? "").slice(0, 4));
+  const endYear = Number(String(dateEnd ?? "").slice(0, 4));
+
+  if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) return null;
+
+  const from = Math.min(startYear, endYear);
+  const to = Math.max(startYear, endYear);
+  const years = [];
+
+  for (let year = from; year <= to; year++) {
+    years.push(year);
+  }
+
+  return years;
+};
+
+const calculateMonthlyAverage = (groupedData, averageYears) => {
   const monthlySums = new Array(12).fill(0);
   const monthlyCounts = new Array(12).fill(0);
-  Object.values(groupedData).forEach((yearData) => {
+  Object.entries(groupedData).forEach(([year, yearData]) => {
+    if (averageYears?.length && !averageYears.includes(Number(year))) return;
+
     for (let month = 1; month <= 12; month++) {
       const value = yearData[month];
       if (value !== null && value !== undefined) {
@@ -44,12 +63,12 @@ const calculateMonthlyAverage = (groupedData) => {
   return monthlySums.map((sum, idx) => (monthlyCounts[idx] > 0 ? sum / monthlyCounts[idx] : null));
 };
 
-export default function StatSaleYearlyLineChart({ rawData, title }) {
+export default function StatSaleYearlyLineChart({ rawData, title, dateStart, dateEnd }) {
   const groupedData = groupByYear(rawData);
   const years = Object.keys(groupedData)
     .map(Number)
     .sort((a, b) => b - a);
-  const averageValues = calculateMonthlyAverage(groupedData);
+  const averageValues = calculateMonthlyAverage(groupedData, getYearsFromRange(dateStart, dateEnd));
   const series = [
     ...(averageValues.some((value) => value !== null)
       ? [

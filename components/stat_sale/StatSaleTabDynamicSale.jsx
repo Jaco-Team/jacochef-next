@@ -182,8 +182,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
+        const [year] = key.split("-");
         if (index !== 0 && prevMonth) {
           pizzaArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.pizza_plan,
             planLoad: calcPercent(value.pizza, value.pizza_plan),
@@ -200,6 +203,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
         if (key !== 0 && prevMonth) {
           rollyArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.rolly_plan,
             planLoad: calcPercent(value.rolly, value.rolly_plan),
@@ -216,6 +221,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
         if (key !== 0 && prevMonth) {
           orderArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.order_plan,
             planLoad: calcPercent(value.order, value.order_plan),
@@ -231,6 +238,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
         if (key !== 0 && prevMonth) {
           accountArr.push({
+            periodKey: key,
+            year,
             month: value.month_name,
             planQty: value.active_plan,
             planLoad: calcPercent(value.active, value.active_plan),
@@ -366,7 +375,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             <TableBody>
               {pizzaArr.map((row, index) => (
                 <TableRow
-                  key={row.month}
+                  key={row.periodKey ?? `${row.month}-${index}`}
                   sx={{
                     "&:hover": {
                       backgroundColor: "#f5f5f5",
@@ -590,6 +599,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <StatSaleYearlyLineChart
                 rawData={this.state.pizzaLine}
                 title="Динамика пиццы по годам"
+                dateStart={this.state.date_start}
+                dateEnd={this.state.date_end}
               />
             ) : null}
             {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
@@ -597,6 +608,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <StatSaleYearlyLineChart
                 rawData={this.state.rollyLine}
                 title="Динамика роллов по годам"
+                dateStart={this.state.date_start}
+                dateEnd={this.state.date_end}
               />
             ) : null}
             {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
@@ -606,6 +619,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <StatSaleYearlyLineChart
                 rawData={this.state.ordersLine}
                 title="Динамика заказов по годам"
+                dateStart={this.state.date_start}
+                dateEnd={this.state.date_end}
               />
             ) : null}
             {this.renderPizzaTable(
