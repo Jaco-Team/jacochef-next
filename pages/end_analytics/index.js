@@ -145,6 +145,7 @@ const ADDITIVE_METRIC_FIELDS = [
   "primaryOrders",
   "repeatOrders",
 ];
+const DERIVED_METRIC_FIELDS = ["conversion", "costPerOrder", "averageCheck", "roi", "drr", "ltv"];
 
 const parseMetric = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -160,31 +161,24 @@ const calculateRoi = (revenue, cost) => {
   return totalCost > 0 ? ((totalRevenue - totalCost) / totalCost) * 100 : 0;
 };
 
-const isRowIncludedInRoi = (row) => {
-  const cost = parseMetric(row.roiCost ?? row.cost);
-  if (cost <= 0) {
-    return false;
-  }
+const hasMetricValue = (item, field) =>
+  item[field] !== null && item[field] !== undefined && item[field] !== "";
 
-  const roi = row.roi;
-  if (roi === Infinity || roi === -Infinity || !Number.isFinite(roi) || roi === 0) {
-    return false;
-  }
-
-  return true;
-};
+const pickDerivedMetrics = (item) =>
+  DERIVED_METRIC_FIELDS.reduce((acc, field) => {
+    if (hasMetricValue(item, field)) {
+      acc[field] = parseMetric(item[field]);
+    }
+    return acc;
+  }, {});
 
 const applyAggregatedRoi = (item, rows) => {
   let roiRevenue = 0;
   let roiCost = 0;
 
   (rows || []).forEach((row) => {
-    if (!isRowIncludedInRoi(row)) {
-      return;
-    }
-
-    roiRevenue += parseMetric(row.roiRevenue ?? row.revenue);
-    roiCost += parseMetric(row.roiCost ?? row.cost);
+    roiRevenue += parseMetric(row.revenue);
+    roiCost += parseMetric(row.cost);
   });
 
   item.roiRevenue = roiRevenue;
@@ -209,14 +203,34 @@ const applyDerivedMetrics = (item) => {
   item.primaryOrders = parseMetric(item.primaryOrders);
   item.repeatOrders = parseMetric(item.repeatOrders);
 
-  item.conversion = visits > 0 ? (orders / visits) * 100 : 0;
-  item.costPerOrder = orders > 0 ? cost / orders : 0;
-  item.averageCheck = orders > 0 ? revenue / orders : 0;
-  item.roi = calculateRoi(revenue, cost);
+  item.conversion = hasMetricValue(item, "conversion")
+    ? parseMetric(item.conversion)
+    : visits > 0
+      ? (orders / visits) * 100
+      : 0;
+  item.costPerOrder = hasMetricValue(item, "costPerOrder")
+    ? parseMetric(item.costPerOrder)
+    : orders > 0
+      ? cost / orders
+      : 0;
+  item.averageCheck = hasMetricValue(item, "averageCheck")
+    ? parseMetric(item.averageCheck)
+    : orders > 0
+      ? revenue / orders
+      : 0;
+  item.roi = hasMetricValue(item, "roi") ? parseMetric(item.roi) : calculateRoi(revenue, cost);
   item.roiRevenue = cost > 0 ? revenue : 0;
   item.roiCost = cost > 0 ? cost : 0;
-  item.drr = revenue > 0 ? (cost / revenue) * 100 : 0;
-  item.ltv = orders > 0 ? revenue / orders : 0;
+  item.drr = hasMetricValue(item, "drr")
+    ? parseMetric(item.drr)
+    : revenue > 0
+      ? (cost / revenue) * 100
+      : 0;
+  item.ltv = hasMetricValue(item, "ltv")
+    ? parseMetric(item.ltv)
+    : orders > 0
+      ? revenue / orders
+      : 0;
 
   return item;
 };
@@ -244,18 +258,24 @@ const rollupMetricsFromChildren = (item) => {
   if (childKey) {
     item[childKey] = item[childKey].map(rollupMetricsFromChildren);
 
-    ADDITIVE_METRIC_FIELDS.forEach((field) => {
-      item[field] = 0;
-    });
-
-    item[childKey].forEach((child) => {
+    if (!item.useServerMetrics) {
       ADDITIVE_METRIC_FIELDS.forEach((field) => {
-        item[field] += parseMetric(child[field]);
+        item[field] = 0;
       });
-    });
+
+      item[childKey].forEach((child) => {
+        ADDITIVE_METRIC_FIELDS.forEach((field) => {
+          item[field] += parseMetric(child[field]);
+        });
+      });
+    } else {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        item[field] = parseMetric(item[field]);
+      });
+    }
 
     applyDerivedMetrics(item);
-    return applyAggregatedRoi(item, item[childKey]);
+    return item.useServerMetrics ? item : applyAggregatedRoi(item, item[childKey]);
   }
 
   ADDITIVE_METRIC_FIELDS.forEach((field) => {
@@ -465,10 +485,12 @@ function EndPage() {
         cost: parseMetric(sourceData.cost),
         orders: parseMetric(sourceData.orders),
         revenue: parseMetric(sourceData.revenue),
+        ...pickDerivedMetrics(sourceData),
         newClients: parseMetric(sourceData.newClients),
         existingClients: parseMetric(sourceData.existingClients),
         primaryOrders: parseMetric(sourceData.primaryOrders),
         repeatOrders: parseMetric(sourceData.repeatOrders),
+        useServerMetrics: true,
         children: [],
       };
 
@@ -529,10 +551,12 @@ function EndPage() {
                   cost: parseMetric(campaign.cost),
                   orders: parseMetric(campaign.orders),
                   revenue: parseMetric(campaign.revenue),
+                  ...pickDerivedMetrics(campaign),
                   newClients: parseMetric(campaign.newClients),
                   existingClients: parseMetric(campaign.existingClients),
                   primaryOrders: parseMetric(campaign.primaryOrders),
                   repeatOrders: parseMetric(campaign.repeatOrders),
+                  useServerMetrics: true,
                   children: [],
                 };
 
@@ -572,10 +596,12 @@ function EndPage() {
       cost: parseMetric(child.cost),
       orders: parseMetric(child.orders),
       revenue: parseMetric(child.revenue),
+      ...pickDerivedMetrics(child),
       newClients: parseMetric(child.newClients),
       existingClients: parseMetric(child.existingClients),
       primaryOrders: parseMetric(child.primaryOrders),
       repeatOrders: parseMetric(child.repeatOrders),
+      useServerMetrics: true,
       children: child.children ? transformUtmChildrenSimple(child.children, sourceName) : [],
     }));
   };
@@ -843,6 +869,7 @@ function EndPage() {
       cost: parseMetric(item.cost),
       orders: parseMetric(item.orders),
       revenue: parseMetric(item.revenue),
+      ...pickDerivedMetrics(item),
       newClients: parseMetric(item.newClients),
       existingClients: parseMetric(item.existingClients),
       primaryOrders: parseMetric(item.primaryOrders),
