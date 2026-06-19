@@ -82,12 +82,15 @@ const StyledToggleButton = styled(ToggleButton)(({ theme, selected }) => ({
   },
 }));
 
-const StyledTableCell = styled(TableCell)(({ theme, isHeader, isTotal }) => ({
+const StyledTableCell = styled(TableCell)(({ theme, isHeader, isTotal, noWrap }) => ({
   fontWeight: isHeader ? 600 : isTotal ? 700 : 400,
   backgroundColor: isHeader ? PRIMARY_COLOR : isTotal ? "#fafafa" : "transparent",
   color: isHeader ? "white" : "inherit",
   borderBottom: isTotal ? "2px solid #e0e0e0" : "1px solid #f0f0f0",
   padding: "12px 16px",
+  ...(noWrap && {
+    whiteSpace: "nowrap",
+  }),
   ...(!isHeader && {
     "&:first-of-type": {
       position: "sticky",
@@ -128,9 +131,139 @@ const StickyTableContainer = styled(Box)(({ theme }) => ({
   overflowX: "auto",
   width: "100%",
   "& .MuiTable-root": {
-    minWidth: 1600,
+    minWidth: 1800,
   },
 }));
+
+const ADDITIVE_METRIC_FIELDS = [
+  "visits",
+  "cost",
+  "orders",
+  "revenue",
+  "newClients",
+  "existingClients",
+  "primaryOrders",
+  "repeatOrders",
+];
+
+const parseMetric = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const calculateRoi = (revenue, cost) => {
+  const totalRevenue = parseMetric(revenue);
+  const totalCost = parseMetric(cost);
+  return totalCost > 0 ? ((totalRevenue - totalCost) / totalCost) * 100 : 0;
+};
+
+const isRowIncludedInRoi = (row) => {
+  const cost = parseMetric(row.roiCost ?? row.cost);
+  if (cost <= 0) {
+    return false;
+  }
+
+  const roi = row.roi;
+  if (roi === Infinity || roi === -Infinity || !Number.isFinite(roi) || roi === 0) {
+    return false;
+  }
+
+  return true;
+};
+
+const applyAggregatedRoi = (item, rows) => {
+  let roiRevenue = 0;
+  let roiCost = 0;
+
+  (rows || []).forEach((row) => {
+    if (!isRowIncludedInRoi(row)) {
+      return;
+    }
+
+    roiRevenue += parseMetric(row.roiRevenue ?? row.revenue);
+    roiCost += parseMetric(row.roiCost ?? row.cost);
+  });
+
+  item.roiRevenue = roiRevenue;
+  item.roiCost = roiCost;
+  item.roi = calculateRoi(roiRevenue, roiCost);
+
+  return item;
+};
+
+const applyDerivedMetrics = (item) => {
+  const visits = parseMetric(item.visits);
+  const cost = parseMetric(item.cost);
+  const orders = parseMetric(item.orders);
+  const revenue = parseMetric(item.revenue);
+
+  item.visits = visits;
+  item.cost = cost;
+  item.orders = orders;
+  item.revenue = revenue;
+  item.newClients = parseMetric(item.newClients);
+  item.existingClients = parseMetric(item.existingClients);
+  item.primaryOrders = parseMetric(item.primaryOrders);
+  item.repeatOrders = parseMetric(item.repeatOrders);
+
+  item.conversion = visits > 0 ? (orders / visits) * 100 : 0;
+  item.costPerOrder = orders > 0 ? cost / orders : 0;
+  item.averageCheck = orders > 0 ? revenue / orders : 0;
+  item.roi = calculateRoi(revenue, cost);
+  item.roiRevenue = cost > 0 ? revenue : 0;
+  item.roiCost = cost > 0 ? cost : 0;
+  item.drr = revenue > 0 ? (cost / revenue) * 100 : 0;
+  item.ltv = orders > 0 ? revenue / orders : 0;
+
+  return item;
+};
+
+const aggregateTotalRow = (item, rows) => {
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    item[field] = 0;
+  });
+
+  (rows || []).forEach((row) => {
+    ADDITIVE_METRIC_FIELDS.forEach((field) => {
+      item[field] += parseMetric(row[field]);
+    });
+  });
+
+  item.details = rows || [];
+  applyDerivedMetrics(item);
+  return applyAggregatedRoi(item, rows);
+};
+
+const rollupMetricsFromChildren = (item) => {
+  const childKey =
+    item.children?.length > 0 ? "children" : item.details?.length > 0 ? "details" : null;
+
+  if (childKey) {
+    item[childKey] = item[childKey].map(rollupMetricsFromChildren);
+
+    ADDITIVE_METRIC_FIELDS.forEach((field) => {
+      item[field] = 0;
+    });
+
+    item[childKey].forEach((child) => {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        item[field] += parseMetric(child[field]);
+      });
+    });
+
+    applyDerivedMetrics(item);
+    return applyAggregatedRoi(item, item[childKey]);
+  }
+
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    item[field] = parseMetric(item[field]);
+  });
+
+  return applyDerivedMetrics(item);
+};
 
 function EndPage() {
   const standardForm = {
@@ -313,14 +446,14 @@ function EndPage() {
 
       // Суммируем данные для группы
       const group = result[groupName];
-      group.visits += sourceData.visits || 0;
-      group.cost += sourceData.cost || 0;
-      group.orders += parseInt(sourceData.orders) || 0;
-      group.revenue += sourceData.revenue || 0;
-      group.newClients += sourceData.newClients || 0;
-      group.existingClients += sourceData.existingClients || 0;
-      group.primaryOrders += parseInt(sourceData.primaryOrders) || 0;
-      group.repeatOrders += parseInt(sourceData.repeatOrders) || 0;
+      group.visits += parseMetric(sourceData.visits);
+      group.cost += parseMetric(sourceData.cost);
+      group.orders += parseMetric(sourceData.orders);
+      group.revenue += parseMetric(sourceData.revenue);
+      group.newClients += parseMetric(sourceData.newClients);
+      group.existingClients += parseMetric(sourceData.existingClients);
+      group.primaryOrders += parseMetric(sourceData.primaryOrders);
+      group.repeatOrders += parseMetric(sourceData.repeatOrders);
 
       // Создаем детальный источник (конкретный источник трафика)
       const detailedSource = {
@@ -328,14 +461,14 @@ function EndPage() {
         name: sourceData.name || sourceName,
         sourceType: "site",
         level: "src_source_detailed",
-        visits: sourceData.visits || 0,
-        cost: sourceData.cost || 0,
-        orders: parseInt(sourceData.orders) || 0,
-        revenue: sourceData.revenue || 0,
-        newClients: sourceData.newClients || 0,
-        existingClients: sourceData.existingClients || 0,
-        primaryOrders: parseInt(sourceData.primaryOrders) || 0,
-        repeatOrders: parseInt(sourceData.repeatOrders) || 0,
+        visits: parseMetric(sourceData.visits),
+        cost: parseMetric(sourceData.cost),
+        orders: parseMetric(sourceData.orders),
+        revenue: parseMetric(sourceData.revenue),
+        newClients: parseMetric(sourceData.newClients),
+        existingClients: parseMetric(sourceData.existingClients),
+        primaryOrders: parseMetric(sourceData.primaryOrders),
+        repeatOrders: parseMetric(sourceData.repeatOrders),
         children: [],
       };
 
@@ -376,14 +509,14 @@ function EndPage() {
 
             // Суммируем данные для типа площадки
             const platform = platformGroups[platformType];
-            platform.visits += medium.visits || 0;
-            platform.cost += medium.cost || 0;
-            platform.orders += parseInt(medium.orders) || 0;
-            platform.revenue += medium.revenue || 0;
-            platform.newClients += medium.newClients || 0;
-            platform.existingClients += medium.existingClients || 0;
-            platform.primaryOrders += parseInt(medium.primaryOrders) || 0;
-            platform.repeatOrders += parseInt(medium.repeatOrders) || 0;
+            platform.visits += parseMetric(medium.visits);
+            platform.cost += parseMetric(medium.cost);
+            platform.orders += parseMetric(medium.orders);
+            platform.revenue += parseMetric(medium.revenue);
+            platform.newClients += parseMetric(medium.newClients);
+            platform.existingClients += parseMetric(medium.existingClients);
+            platform.primaryOrders += parseMetric(medium.primaryOrders);
+            platform.repeatOrders += parseMetric(medium.repeatOrders);
 
             // Добавляем кампании как children к типу площадки
             if (medium.children && medium.children.length > 0) {
@@ -392,14 +525,14 @@ function EndPage() {
                   id: `${sourceName}_${campaign.level}_${campaign.name}`,
                   name: campaign.name,
                   level: campaign.level,
-                  visits: campaign.visits || 0,
-                  cost: campaign.cost || 0,
-                  orders: parseInt(campaign.orders) || 0,
-                  revenue: campaign.revenue || 0,
-                  newClients: campaign.newClients || 0,
-                  existingClients: campaign.existingClients || 0,
-                  primaryOrders: parseInt(campaign.primaryOrders) || 0,
-                  repeatOrders: parseInt(campaign.repeatOrders) || 0,
+                  visits: parseMetric(campaign.visits),
+                  cost: parseMetric(campaign.cost),
+                  orders: parseMetric(campaign.orders),
+                  revenue: parseMetric(campaign.revenue),
+                  newClients: parseMetric(campaign.newClients),
+                  existingClients: parseMetric(campaign.existingClients),
+                  primaryOrders: parseMetric(campaign.primaryOrders),
+                  repeatOrders: parseMetric(campaign.repeatOrders),
                   children: [],
                 };
 
@@ -435,41 +568,21 @@ function EndPage() {
       id: `${sourceName}_${child.level}_${child.name}`,
       name: child.name,
       level: child.level,
-      visits: child.visits || 0,
-      cost: child.cost || 0,
-      orders: parseInt(child.orders) || 0,
-      revenue: child.revenue || 0,
-      newClients: child.newClients || 0,
-      existingClients: child.existingClients || 0,
-      primaryOrders: parseInt(child.primaryOrders) || 0,
-      repeatOrders: parseInt(child.repeatOrders) || 0,
+      visits: parseMetric(child.visits),
+      cost: parseMetric(child.cost),
+      orders: parseMetric(child.orders),
+      revenue: parseMetric(child.revenue),
+      newClients: parseMetric(child.newClients),
+      existingClients: parseMetric(child.existingClients),
+      primaryOrders: parseMetric(child.primaryOrders),
+      repeatOrders: parseMetric(child.repeatOrders),
       children: child.children ? transformUtmChildrenSimple(child.children, sourceName) : [],
     }));
   };
 
   // Расчет метрик для сгруппированных данных
   const calculateMetricsForGroupedData = (items) => {
-    return items.map((item) => {
-      // Расчет для текущего уровня
-      item.conversion = item.visits > 0 ? (item.orders / item.visits) * 100 : 0;
-      item.costPerOrder = item.orders > 0 ? item.cost / item.orders : 0;
-      item.averageCheck = item.orders > 0 ? item.revenue / item.orders : 0;
-      item.roi =
-        item.cost > 0
-          ? ((item.revenue - item.cost) / item.cost) * 100
-          : item.revenue > 0
-            ? Infinity
-            : 0;
-      item.drr = item.revenue > 0 ? (item.cost / item.revenue) * 100 : 0;
-      item.ltv = item.orders > 0 ? item.revenue / item.orders : 0;
-
-      // Рекурсивно для детей
-      if (item.children && item.children.length > 0) {
-        item.children = calculateMetricsForGroupedData(item.children);
-      }
-
-      return item;
-    });
+    return items.map((item) => rollupMetricsFromChildren({ ...item }));
   };
 
   const formatApiData = (apiData) => {
@@ -480,189 +593,67 @@ function EndPage() {
       const groupedData = regroupByTrafficSource(apiData.site_data);
 
       if (groupedData.length > 0) {
-        // Создаем итоговую строку для сайта
-        const siteTotal = {
-          id: `total_site`,
-          name: "ИТОГО по Сайту",
-          isTotal: true,
-          sourceType: "site",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          details: groupedData, // Детали - это сгруппированные данные
-        };
-
-        // Суммируем данные из groupedData
-        groupedData.forEach((group) => {
-          siteTotal.visits += group.visits || 0;
-          siteTotal.cost += group.cost || 0;
-          siteTotal.orders += group.orders || 0;
-          siteTotal.revenue += group.revenue || 0;
-          siteTotal.newClients += group.newClients || 0;
-          siteTotal.existingClients += group.existingClients || 0;
-          siteTotal.primaryOrders += group.primaryOrders || 0;
-          siteTotal.repeatOrders += group.repeatOrders || 0;
-        });
-
-        // Рассчитываем метрики для итоговой строки
-        siteTotal.conversion =
-          siteTotal.visits > 0 ? (siteTotal.orders / siteTotal.visits) * 100 : 0;
-        siteTotal.costPerOrder = siteTotal.orders > 0 ? siteTotal.cost / siteTotal.orders : 0;
-        siteTotal.averageCheck = siteTotal.orders > 0 ? siteTotal.revenue / siteTotal.orders : 0;
-        siteTotal.roi =
-          siteTotal.cost > 0
-            ? ((siteTotal.revenue - siteTotal.cost) / siteTotal.cost) * 100
-            : siteTotal.revenue > 0
-              ? Infinity
-              : 0;
-        siteTotal.drr = siteTotal.revenue > 0 ? (siteTotal.cost / siteTotal.revenue) * 100 : 0;
-        siteTotal.ltv = siteTotal.orders > 0 ? siteTotal.revenue / siteTotal.orders : 0;
-
-        result.push(siteTotal);
+        result.push(
+          aggregateTotalRow(
+            {
+              id: `total_site`,
+              name: "ИТОГО по Сайту",
+              isTotal: true,
+              sourceType: "site",
+            },
+            groupedData,
+          ),
+        );
       }
     }
 
     if (apiData.cafe_data && Array.isArray(apiData.cafe_data)) {
       const cafeItems = apiData.cafe_data.map((item) => transformItem(item, "cafe"));
       if (cafeItems.length > 0) {
-        const cafeTotal = {
-          id: `total_cafe`,
-          name: "ИТОГО по Кафе",
-          isTotal: true,
-          sourceType: "cafe",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          details: cafeItems,
-        };
-
-        cafeItems.forEach((item) => {
-          cafeTotal.visits += item.visits || 0;
-          cafeTotal.cost += item.cost || 0;
-          cafeTotal.orders += item.orders || 0;
-          cafeTotal.revenue += item.revenue || 0;
-          cafeTotal.newClients += item.newClients || 0;
-          cafeTotal.existingClients += item.existingClients || 0;
-          cafeTotal.primaryOrders += item.primaryOrders || 0;
-          cafeTotal.repeatOrders += item.repeatOrders || 0;
-        });
-
-        cafeTotal.conversion =
-          cafeTotal.visits > 0 ? (cafeTotal.orders / cafeTotal.visits) * 100 : 0;
-        cafeTotal.costPerOrder = cafeTotal.orders > 0 ? cafeTotal.cost / cafeTotal.orders : 0;
-        cafeTotal.averageCheck = cafeTotal.orders > 0 ? cafeTotal.revenue / cafeTotal.orders : 0;
-        cafeTotal.roi =
-          cafeTotal.cost > 0
-            ? ((cafeTotal.revenue - cafeTotal.cost) / cafeTotal.cost) * 100
-            : cafeTotal.revenue > 0
-              ? Infinity
-              : 0;
-        cafeTotal.drr = cafeTotal.revenue > 0 ? (cafeTotal.cost / cafeTotal.revenue) * 100 : 0;
-        cafeTotal.ltv = cafeTotal.orders > 0 ? cafeTotal.revenue / cafeTotal.orders : 0;
-
-        result.push(cafeTotal);
+        result.push(
+          aggregateTotalRow(
+            {
+              id: `total_cafe`,
+              name: "ИТОГО по Кафе",
+              isTotal: true,
+              sourceType: "cafe",
+            },
+            cafeItems,
+          ),
+        );
       }
     }
 
     if (apiData.kc_data && Array.isArray(apiData.kc_data)) {
       const kcItems = apiData.kc_data.map((item) => transformItem(item, "kc"));
       if (kcItems.length > 0) {
-        const kcTotal = {
-          id: `total_kc`,
-          name: "ИТОГО по КЦ",
-          isTotal: true,
-          sourceType: "kc",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          details: kcItems,
-        };
-
-        kcItems.forEach((item) => {
-          kcTotal.visits += item.visits || 0;
-          kcTotal.cost += item.cost || 0;
-          kcTotal.orders += item.orders || 0;
-          kcTotal.revenue += item.revenue || 0;
-          kcTotal.newClients += item.newClients || 0;
-          kcTotal.existingClients += item.existingClients || 0;
-          kcTotal.primaryOrders += item.primaryOrders || 0;
-          kcTotal.repeatOrders += item.repeatOrders || 0;
-        });
-
-        kcTotal.conversion = kcTotal.visits > 0 ? (kcTotal.orders / kcTotal.visits) * 100 : 0;
-        kcTotal.costPerOrder = kcTotal.orders > 0 ? kcTotal.cost / kcTotal.orders : 0;
-        kcTotal.averageCheck = kcTotal.orders > 0 ? kcTotal.revenue / kcTotal.orders : 0;
-        kcTotal.roi =
-          kcTotal.cost > 0
-            ? ((kcTotal.revenue - kcTotal.cost) / kcTotal.cost) * 100
-            : kcTotal.revenue > 0
-              ? Infinity
-              : 0;
-        kcTotal.drr = kcTotal.revenue > 0 ? (kcTotal.cost / kcTotal.revenue) * 100 : 0;
-        kcTotal.ltv = kcTotal.orders > 0 ? kcTotal.revenue / kcTotal.orders : 0;
-
-        result.push(kcTotal);
+        result.push(
+          aggregateTotalRow(
+            {
+              id: `total_kc`,
+              name: "ИТОГО по КЦ",
+              isTotal: true,
+              sourceType: "kc",
+            },
+            kcItems,
+          ),
+        );
       }
     }
 
     if (result.length > 0) {
-      const grandTotal = {
-        id: `total_grand`,
-        name: "ВСЕГО",
-        isTotal: true,
-        isGrandTotal: true,
-        sourceType: "grand",
-        visits: 0,
-        cost: 0,
-        orders: 0,
-        revenue: 0,
-        newClients: 0,
-        existingClients: 0,
-        primaryOrders: 0,
-        repeatOrders: 0,
-        details: result.slice(), // Копия всех итоговых строк
-      };
-
-      result.forEach((row) => {
-        grandTotal.visits += row.visits || 0;
-        grandTotal.cost += row.cost || 0;
-        grandTotal.orders += row.orders || 0;
-        grandTotal.revenue += row.revenue || 0;
-        grandTotal.newClients += row.newClients || 0;
-        grandTotal.existingClients += row.existingClients || 0;
-        grandTotal.primaryOrders += row.primaryOrders || 0;
-        grandTotal.repeatOrders += row.repeatOrders || 0;
-      });
-
-      grandTotal.conversion =
-        grandTotal.visits > 0 ? (grandTotal.orders / grandTotal.visits) * 100 : 0;
-      grandTotal.costPerOrder = grandTotal.orders > 0 ? grandTotal.cost / grandTotal.orders : 0;
-      grandTotal.averageCheck = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
-      grandTotal.roi =
-        grandTotal.cost > 0
-          ? ((grandTotal.revenue - grandTotal.cost) / grandTotal.cost) * 100
-          : grandTotal.revenue > 0
-            ? Infinity
-            : 0;
-      grandTotal.drr = grandTotal.revenue > 0 ? (grandTotal.cost / grandTotal.revenue) * 100 : 0;
-      grandTotal.ltv = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
-
-      result.unshift(grandTotal);
+      result.unshift(
+        aggregateTotalRow(
+          {
+            id: `total_grand`,
+            name: "ВСЕГО",
+            isTotal: true,
+            isGrandTotal: true,
+            sourceType: "grand",
+          },
+          result.slice(),
+        ),
+      );
     }
 
     return result;
@@ -844,41 +835,19 @@ function EndPage() {
   };
 
   const transformItem = (item, sourceType) => {
-    const visits = item.visits || 0;
-    const cost = item.cost || 0;
-    const orders = parseInt(item.orders) || 0;
-    const revenue = item.revenue || 0;
-    const newClients = item.newClients || 0;
-    const existingClients = item.existingClients || 0;
-    const primaryOrders = parseInt(item.primaryOrders) || 0;
-    const repeatOrders = parseInt(item.repeatOrders) || 0;
-
-    const conversion = visits > 0 ? (orders / visits) * 100 : 0;
-    const costPerOrder = orders > 0 ? cost / orders : 0;
-    const averageCheck = orders > 0 ? revenue / orders : 0;
-    const roi = cost > 0 ? ((revenue - cost) / cost) * 100 : revenue > 0 ? Infinity : 0;
-    const drr = revenue > 0 ? (cost / revenue) * 100 : 0;
-    const ltv = orders > 0 ? revenue / orders : 0;
-
-    return {
+    return applyDerivedMetrics({
       id: `${sourceType}_${item.id}`,
       name: item.name,
       sourceType: sourceType,
-      visits: visits,
-      cost: cost,
-      orders: orders,
-      conversion: conversion,
-      costPerOrder: costPerOrder,
-      revenue: revenue,
-      averageCheck: averageCheck,
-      roi: roi,
-      newClients: newClients,
-      existingClients: existingClients,
-      primaryOrders: primaryOrders,
-      repeatOrders: repeatOrders,
-      drr: drr,
-      ltv: ltv,
-    };
+      visits: parseMetric(item.visits),
+      cost: parseMetric(item.cost),
+      orders: parseMetric(item.orders),
+      revenue: parseMetric(item.revenue),
+      newClients: parseMetric(item.newClients),
+      existingClients: parseMetric(item.existingClients),
+      primaryOrders: parseMetric(item.primaryOrders),
+      repeatOrders: parseMetric(item.repeatOrders),
+    });
   };
 
   const toggleRow = (rowId) => {
@@ -894,27 +863,32 @@ function EndPage() {
   };
 
   const formatNumber = (value) => {
-    if (value === Infinity) return "∞";
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toLocaleString();
+      return value.toLocaleString("ru-RU");
     }
     return "0";
   };
 
   const formatPercent = (value) => {
-    if (value === Infinity) return "∞";
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toFixed(2) + "%";
+      return (
+        value.toLocaleString("ru-RU", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) + "%"
+      );
     }
     return "0%";
   };
 
   const formatCurrency = (value) => {
-    if (value === Infinity) return "∞";
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toFixed(2);
+      return value.toLocaleString("ru-RU", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     }
-    return "0";
+    return "0,00";
   };
 
   const getLevelIcon = (level) => {
@@ -1002,6 +976,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.visits)}
           </StyledTableCell>
@@ -1009,6 +984,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.cost)}
           </StyledTableCell>
@@ -1016,6 +992,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.orders)}
           </StyledTableCell>
@@ -1023,11 +1000,13 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             <Typography
               variant="body2"
               color={row.conversion > 5 ? "success.main" : "inherit"}
               fontWeight={isTotalRow ? 700 : 400}
+              sx={{ whiteSpace: "nowrap" }}
             >
               {formatPercent(row.conversion)}
             </Typography>
@@ -1036,6 +1015,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatCurrency(row.costPerOrder)} ₽
           </StyledTableCell>
@@ -1043,7 +1023,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
-            sx={{ width: "120px" }}
+            noWrap
           >
             {formatNumber(row.revenue)} ₽
           </StyledTableCell>
@@ -1051,6 +1031,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatCurrency(row.averageCheck)} ₽
           </StyledTableCell>
@@ -1058,19 +1039,22 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             <Typography
               variant="body2"
               color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
               fontWeight={isTotalRow ? 700 : 400}
+              sx={{ whiteSpace: "nowrap" }}
             >
-              {row.roi === Infinity ? "∞" : row.roi.toFixed(2) + "%"}
+              {formatPercent(row.roi)}
             </Typography>
           </StyledTableCell>
           <StyledTableCell
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.newClients)}
           </StyledTableCell>
@@ -1078,6 +1062,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.existingClients)}
           </StyledTableCell>
@@ -1085,6 +1070,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.primaryOrders)}
           </StyledTableCell>
@@ -1092,6 +1078,7 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatNumber(row.repeatOrders)}
           </StyledTableCell>
@@ -1099,14 +1086,15 @@ function EndPage() {
             isHeader={false}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatPercent(row.drr)}
           </StyledTableCell>
           <StyledTableCell
             isHeader={false}
-            sx={{ width: "100px" }}
             isTotal={isTotalRow}
             align="right"
+            noWrap
           >
             {formatCurrency(row.ltv)} ₽
           </StyledTableCell>
@@ -1382,84 +1370,98 @@ function EndPage() {
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ВИЗИТЫ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     РАСХОД
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ЗАКАЗЫ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     КОНВЕРСИЯ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     СТОИМОСТЬ ЗАКАЗА
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     СУММА ЗАКАЗОВ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     СРЕДНИЙ ЧЕК
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ROI
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     НОВЫЕ КЛИЕНТЫ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ДЕЙСТВУЮЩИЕ КЛИЕНТЫ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ПЕРВИЧНЫЕ ЗАКАЗЫ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ПОВТОРНЫЕ ЗАКАЗЫ
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     ДРР
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
+                    noWrap
                   >
                     LTV
                   </StyledTableCell>
