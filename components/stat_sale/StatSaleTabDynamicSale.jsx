@@ -174,6 +174,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
       const rollyArr = [];
       const orderArr = [];
       const accountArr = [];
+      const pizzaCapacity = 24000;
+      const rollyCapacity = 200000;
       const toNumber = (value) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : 0;
@@ -201,15 +203,19 @@ class StatSale_Tab_DynamicSale extends React.Component {
             year,
             month: value.month_name,
             planQty: value.pizza_plan,
-            planLoad: getPlanLoad(value.pizza_plan_load, value.pizza_plan, 24000),
+            planLoad: getPlanLoad(value.pizza_plan_load, value.pizza_plan, pizzaCapacity),
             factQty: value.pizza,
-            planFact: value.pizza_plan_fact,
+            planFact:
+              getFirstDefinedPercent(value.pizza_plan_fact) ??
+              calcPercent(value.pizza, value.pizza_plan),
             factDynPct: calcPercent(
               toNumber(value.pizza) - toNumber(prevMonth.pizza),
               prevMonth.pizza,
             ),
             factDynQty: toNumber(value.pizza) - toNumber(prevMonth.pizza),
-            factLoad: calcPercent(value.pizza, prevMonth.pizza),
+            factLoad:
+              getFirstDefinedPercent(value.pizza_fact_load) ??
+              calcPercent(value.pizza, pizzaCapacity),
           });
         }
 
@@ -219,15 +225,19 @@ class StatSale_Tab_DynamicSale extends React.Component {
             year,
             month: value.month_name,
             planQty: value.rolly_plan,
-            planLoad: getPlanLoad(value.rolly_plan_load, value.rolly_plan, 200000),
+            planLoad: getPlanLoad(value.rolly_plan_load, value.rolly_plan, rollyCapacity),
             factQty: value.rolly,
-            planFact: value.rolly_plan_fact,
+            planFact:
+              getFirstDefinedPercent(value.rolly_plan_fact) ??
+              calcPercent(value.rolly, value.rolly_plan),
             factDynPct: calcPercent(
               toNumber(value.rolly) - toNumber(prevMonth?.rolly),
               prevMonth?.rolly,
             ),
             factDynQty: toNumber(value.rolly) - toNumber(prevMonth?.rolly),
-            factLoad: calcPercent(value.rolly, prevMonth.rolly),
+            factLoad:
+              getFirstDefinedPercent(value.rolly_fact_load) ??
+              calcPercent(value.rolly, rollyCapacity),
           });
         }
 

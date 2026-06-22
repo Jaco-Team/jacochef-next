@@ -16,6 +16,10 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { styled } from "@mui/material/styles";
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
@@ -27,6 +31,19 @@ import MyAlert from "@/ui/MyAlert";
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
+
+const createEmptyCustomCostForm = () => ({
+  id: null,
+  city_id: 0,
+  date: dayjs().format("YYYY-MM-DD"),
+  src_source: "",
+  src_medium: "",
+  src_campaign: "",
+  src_term: "",
+  src_content: "",
+  cost: "",
+  comment: "",
+});
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -82,7 +99,9 @@ const StyledToggleButton = styled(ToggleButton)(({ theme, selected }) => ({
   },
 }));
 
-const StyledTableCell = styled(TableCell)(({ theme, isHeader, isTotal, noWrap }) => ({
+const StyledTableCell = styled(TableCell, {
+  shouldForwardProp: (prop) => !["isHeader", "isTotal", "noWrap"].includes(prop),
+})(({ theme, isHeader, isTotal, noWrap }) => ({
   fontWeight: isHeader ? 600 : isTotal ? 700 : 400,
   backgroundColor: isHeader ? PRIMARY_COLOR : isTotal ? "#fafafa" : "transparent",
   color: isHeader ? "white" : "inherit",
@@ -116,7 +135,9 @@ const StyledTableCell = styled(TableCell)(({ theme, isHeader, isTotal, noWrap })
   }),
 }));
 
-const StyledTableRow = styled(TableRow)(({ theme, isTotal, isGrandTotal }) => ({
+const StyledTableRow = styled(TableRow, {
+  shouldForwardProp: (prop) => !["isTotal", "isGrandTotal"].includes(prop),
+})(({ theme, isTotal, isGrandTotal }) => ({
   backgroundColor: isGrandTotal ? "#f5f5f5" : isTotal ? "#fafafa" : "transparent",
   "&:hover": {
     backgroundColor: isTotal || isGrandTotal ? "inherit" : "#f9f9f9",
@@ -145,6 +166,7 @@ const ADDITIVE_METRIC_FIELDS = [
   "primaryOrders",
   "repeatOrders",
 ];
+const DERIVED_METRIC_FIELDS = ["conversion", "costPerOrder", "averageCheck", "roi", "drr", "ltv"];
 
 const parseMetric = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -160,31 +182,24 @@ const calculateRoi = (revenue, cost) => {
   return totalCost > 0 ? ((totalRevenue - totalCost) / totalCost) * 100 : 0;
 };
 
-const isRowIncludedInRoi = (row) => {
-  const cost = parseMetric(row.roiCost ?? row.cost);
-  if (cost <= 0) {
-    return false;
-  }
+const hasMetricValue = (item, field) =>
+  item[field] !== null && item[field] !== undefined && item[field] !== "";
 
-  const roi = row.roi;
-  if (roi === Infinity || roi === -Infinity || !Number.isFinite(roi) || roi === 0) {
-    return false;
-  }
-
-  return true;
-};
+const pickDerivedMetrics = (item) =>
+  DERIVED_METRIC_FIELDS.reduce((acc, field) => {
+    if (hasMetricValue(item, field)) {
+      acc[field] = parseMetric(item[field]);
+    }
+    return acc;
+  }, {});
 
 const applyAggregatedRoi = (item, rows) => {
   let roiRevenue = 0;
   let roiCost = 0;
 
   (rows || []).forEach((row) => {
-    if (!isRowIncludedInRoi(row)) {
-      return;
-    }
-
-    roiRevenue += parseMetric(row.roiRevenue ?? row.revenue);
-    roiCost += parseMetric(row.roiCost ?? row.cost);
+    roiRevenue += parseMetric(row.revenue);
+    roiCost += parseMetric(row.cost);
   });
 
   item.roiRevenue = roiRevenue;
@@ -209,14 +224,34 @@ const applyDerivedMetrics = (item) => {
   item.primaryOrders = parseMetric(item.primaryOrders);
   item.repeatOrders = parseMetric(item.repeatOrders);
 
-  item.conversion = visits > 0 ? (orders / visits) * 100 : 0;
-  item.costPerOrder = orders > 0 ? cost / orders : 0;
-  item.averageCheck = orders > 0 ? revenue / orders : 0;
-  item.roi = calculateRoi(revenue, cost);
+  item.conversion = hasMetricValue(item, "conversion")
+    ? parseMetric(item.conversion)
+    : visits > 0
+      ? (orders / visits) * 100
+      : 0;
+  item.costPerOrder = hasMetricValue(item, "costPerOrder")
+    ? parseMetric(item.costPerOrder)
+    : orders > 0
+      ? cost / orders
+      : 0;
+  item.averageCheck = hasMetricValue(item, "averageCheck")
+    ? parseMetric(item.averageCheck)
+    : orders > 0
+      ? revenue / orders
+      : 0;
+  item.roi = hasMetricValue(item, "roi") ? parseMetric(item.roi) : calculateRoi(revenue, cost);
   item.roiRevenue = cost > 0 ? revenue : 0;
   item.roiCost = cost > 0 ? cost : 0;
-  item.drr = revenue > 0 ? (cost / revenue) * 100 : 0;
-  item.ltv = orders > 0 ? revenue / orders : 0;
+  item.drr = hasMetricValue(item, "drr")
+    ? parseMetric(item.drr)
+    : revenue > 0
+      ? (cost / revenue) * 100
+      : 0;
+  item.ltv = hasMetricValue(item, "ltv")
+    ? parseMetric(item.ltv)
+    : orders > 0
+      ? revenue / orders
+      : 0;
 
   return item;
 };
@@ -244,18 +279,24 @@ const rollupMetricsFromChildren = (item) => {
   if (childKey) {
     item[childKey] = item[childKey].map(rollupMetricsFromChildren);
 
-    ADDITIVE_METRIC_FIELDS.forEach((field) => {
-      item[field] = 0;
-    });
-
-    item[childKey].forEach((child) => {
+    if (!item.useServerMetrics) {
       ADDITIVE_METRIC_FIELDS.forEach((field) => {
-        item[field] += parseMetric(child[field]);
+        item[field] = 0;
       });
-    });
+
+      item[childKey].forEach((child) => {
+        ADDITIVE_METRIC_FIELDS.forEach((field) => {
+          item[field] += parseMetric(child[field]);
+        });
+      });
+    } else {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        item[field] = parseMetric(item[field]);
+      });
+    }
 
     applyDerivedMetrics(item);
-    return applyAggregatedRoi(item, item[childKey]);
+    return item.useServerMetrics ? item : applyAggregatedRoi(item, item[childKey]);
   }
 
   ADDITIVE_METRIC_FIELDS.forEach((field) => {
@@ -294,6 +335,9 @@ function EndPage() {
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState("");
+  const [customCostDialogOpen, setCustomCostDialogOpen] = useState(false);
+  const [customCosts, setCustomCosts] = useState([]);
+  const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -376,6 +420,124 @@ function EndPage() {
 
   const refreshData = () => {
     applyRequest();
+  };
+
+  const showError = (text) => {
+    setErrStatus(false);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
+  const getSelectedCityId = () => {
+    const id = form.cities?.id;
+    return id === 0 || id ? Number(id) : null;
+  };
+
+  const loadCustomCosts = async (cityId = getSelectedCityId()) => {
+    if (cityId === null) return;
+
+    const data = await getData("get_custom_costs", {
+      city_id: cityId,
+      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+    });
+
+    if (data?.st) {
+      setCustomCosts(data.items || []);
+    } else {
+      showError(data?.text || "Не удалось загрузить ручные расходы");
+    }
+  };
+
+  const openCustomCostsDialog = async () => {
+    const cityId = getSelectedCityId();
+    if (cityId === null) {
+      showError("Сначала выберите город");
+      return;
+    }
+
+    setCustomCostForm({
+      ...createEmptyCustomCostForm(),
+      city_id: cityId,
+      date: dayjs(form.dateStart).format("YYYY-MM-DD"),
+    });
+    setCustomCostDialogOpen(true);
+    await loadCustomCosts(cityId);
+  };
+
+  const setCustomCostField = (field, value) => {
+    setCustomCostForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const normalizeCustomCostField = (value) => (value === "not_set" ? "" : value || "");
+
+  const editCustomCost = (item) => {
+    setCustomCostForm({
+      id: item.id,
+      city_id: item.city_id,
+      date: item.date,
+      src_source: normalizeCustomCostField(item.src_source),
+      src_medium: normalizeCustomCostField(item.src_medium),
+      src_campaign: normalizeCustomCostField(item.src_campaign),
+      src_term: normalizeCustomCostField(item.src_term),
+      src_content: normalizeCustomCostField(item.src_content),
+      cost: item.cost,
+      comment: item.comment || "",
+    });
+  };
+
+  const saveCustomCost = async () => {
+    const cityId = getSelectedCityId();
+    if (cityId === null) {
+      showError("Сначала выберите город");
+      return;
+    }
+
+    const cost = Number(customCostForm.cost);
+    if (!Number.isFinite(cost) || cost <= 0) {
+      showError("Укажите расход больше 0");
+      return;
+    }
+
+    const data = await getData("save_custom_cost", {
+      ...customCostForm,
+      city_id: cityId,
+      date: dayjs(customCostForm.date).format("YYYY-MM-DD"),
+      cost,
+    });
+
+    if (!data?.st) {
+      showError(data?.text || "Не удалось сохранить ручной расход");
+      return;
+    }
+
+    setCustomCostForm({
+      ...createEmptyCustomCostForm(),
+      city_id: cityId,
+      date: dayjs(form.dateStart).format("YYYY-MM-DD"),
+    });
+    await loadCustomCosts(cityId);
+    if (tableData.length > 0) {
+      applyRequest();
+    }
+  };
+
+  const deleteCustomCost = async (id) => {
+    const cityId = getSelectedCityId();
+    const data = await getData("delete_custom_cost", { id });
+
+    if (!data?.st) {
+      showError(data?.text || "Не удалось удалить ручной расход");
+      return;
+    }
+
+    await loadCustomCosts(cityId);
+    if (tableData.length > 0) {
+      applyRequest();
+    }
   };
 
   // Новая функция группировки по типам источников трафика
@@ -465,10 +627,12 @@ function EndPage() {
         cost: parseMetric(sourceData.cost),
         orders: parseMetric(sourceData.orders),
         revenue: parseMetric(sourceData.revenue),
+        ...pickDerivedMetrics(sourceData),
         newClients: parseMetric(sourceData.newClients),
         existingClients: parseMetric(sourceData.existingClients),
         primaryOrders: parseMetric(sourceData.primaryOrders),
         repeatOrders: parseMetric(sourceData.repeatOrders),
+        useServerMetrics: true,
         children: [],
       };
 
@@ -529,10 +693,12 @@ function EndPage() {
                   cost: parseMetric(campaign.cost),
                   orders: parseMetric(campaign.orders),
                   revenue: parseMetric(campaign.revenue),
+                  ...pickDerivedMetrics(campaign),
                   newClients: parseMetric(campaign.newClients),
                   existingClients: parseMetric(campaign.existingClients),
                   primaryOrders: parseMetric(campaign.primaryOrders),
                   repeatOrders: parseMetric(campaign.repeatOrders),
+                  useServerMetrics: true,
                   children: [],
                 };
 
@@ -572,10 +738,12 @@ function EndPage() {
       cost: parseMetric(child.cost),
       orders: parseMetric(child.orders),
       revenue: parseMetric(child.revenue),
+      ...pickDerivedMetrics(child),
       newClients: parseMetric(child.newClients),
       existingClients: parseMetric(child.existingClients),
       primaryOrders: parseMetric(child.primaryOrders),
       repeatOrders: parseMetric(child.repeatOrders),
+      useServerMetrics: true,
       children: child.children ? transformUtmChildrenSimple(child.children, sourceName) : [],
     }));
   };
@@ -837,12 +1005,17 @@ function EndPage() {
   const transformItem = (item, sourceType) => {
     return applyDerivedMetrics({
       id: `${sourceType}_${item.id}`,
-      name: item.name,
+      name: item.name || `${sourceType === "kc" ? "КЦ" : "Кафе"} #${item.id}`,
+      pointName: item.pointName,
+      city: item.city,
+      address: item.address,
+      fullAddress: item.fullAddress,
       sourceType: sourceType,
       visits: parseMetric(item.visits),
       cost: parseMetric(item.cost),
       orders: parseMetric(item.orders),
       revenue: parseMetric(item.revenue),
+      ...pickDerivedMetrics(item),
       newClients: parseMetric(item.newClients),
       existingClients: parseMetric(item.existingClients),
       primaryOrders: parseMetric(item.primaryOrders),
@@ -1132,6 +1305,175 @@ function EndPage() {
         status={errStatus}
         text={errText}
       />
+      <Dialog
+        open={customCostDialogOpen}
+        onClose={() => setCustomCostDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Ручные расходы</DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
+            Расход добавляется к выбранному UTM-ключу в отчёте. Пустые UTM-поля будут сохранены как
+            not_set.
+          </Typography>
+
+          <Grid
+            container
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNew
+                label="Дата расхода"
+                customActions={true}
+                value={dayjs(customCostForm.date)}
+                minDate={dayjs(form.dateStart)}
+                maxDate={dayjs(form.dateEnd)}
+                func={(value) => setCustomCostField("date", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                type="number"
+                label="Расход"
+                value={customCostForm.cost}
+                func={({ target }) => setCustomCostField("cost", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="UTM Source"
+                value={customCostForm.src_source}
+                func={({ target }) => setCustomCostField("src_source", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="UTM Medium"
+                value={customCostForm.src_medium}
+                func={({ target }) => setCustomCostField("src_medium", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="UTM Campaign"
+                value={customCostForm.src_campaign}
+                func={({ target }) => setCustomCostField("src_campaign", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="UTM Term"
+                value={customCostForm.src_term}
+                func={({ target }) => setCustomCostField("src_term", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="UTM Content"
+                value={customCostForm.src_content}
+                func={({ target }) => setCustomCostField("src_content", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="Комментарий"
+                value={customCostForm.comment}
+                func={({ target }) => setCustomCostField("comment", target?.value)}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Дата</TableCell>
+                  <TableCell align="right">Расход</TableCell>
+                  <TableCell>Source</TableCell>
+                  <TableCell>Medium</TableCell>
+                  <TableCell>Campaign</TableCell>
+                  <TableCell>Term</TableCell>
+                  <TableCell>Content</TableCell>
+                  <TableCell>Комментарий</TableCell>
+                  <TableCell align="right">Действия</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {customCosts.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{dayjs(item.date).format("DD.MM.YYYY")}</TableCell>
+                    <TableCell align="right">{formatCurrency(item.cost)} ₽</TableCell>
+                    <TableCell>{item.src_source}</TableCell>
+                    <TableCell>{item.src_medium}</TableCell>
+                    <TableCell>{item.src_campaign}</TableCell>
+                    <TableCell>{item.src_term}</TableCell>
+                    <TableCell>{item.src_content}</TableCell>
+                    <TableCell>{item.comment}</TableCell>
+                    <TableCell align="right">
+                      <StyledButton
+                        variant="outlined"
+                        onClick={() => editCustomCost(item)}
+                        sx={{ mr: 1 }}
+                      >
+                        Изменить
+                      </StyledButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => deleteCustomCost(item.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {customCosts.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      Ручных расходов за выбранный период нет
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <StyledButton
+            variant="outlined"
+            onClick={() => setCustomCostDialogOpen(false)}
+          >
+            Закрыть
+          </StyledButton>
+          <StyledButton
+            variant="outlined"
+            onClick={() =>
+              setCustomCostForm({
+                ...createEmptyCustomCostForm(),
+                city_id: getSelectedCityId() ?? 0,
+                date: dayjs(form.dateStart).format("YYYY-MM-DD"),
+              })
+            }
+          >
+            Очистить
+          </StyledButton>
+          <StyledButton
+            variant="primary"
+            onClick={saveCustomCost}
+          >
+            Сохранить расход
+          </StyledButton>
+        </DialogActions>
+      </Dialog>
       <Grid size={{ xs: 12 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Box>
@@ -1334,6 +1676,12 @@ function EndPage() {
               size={{ xs: 12 }}
               sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
             >
+              <StyledButton
+                variant="outlined"
+                onClick={openCustomCostsDialog}
+              >
+                Ручные расходы
+              </StyledButton>
               <StyledButton
                 variant="outlined"
                 onClick={resetFilters}
