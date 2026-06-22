@@ -1,36 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useStaffScheduleApi from "./useStaffScheduleApi";
-import { getActiveMonthId, getVisibleSummaryColumns, toArray } from "./staffScheduleHelpers";
-
-const EMPTY_PERIOD = {
-  days: [],
-  bonus: [],
-  other_summ: {},
-  order_stat: [],
-  bonus_other: 0,
-};
-
-const hasBootstrapPayload = (response) =>
-  Boolean(response?.module_info || response?.point_list || response?.months);
-
-const hasGraphPayload = (response) =>
-  Boolean(
-    response?.date?.one ||
-    response?.date?.two ||
-    Array.isArray(response?.one) ||
-    Array.isArray(response?.two),
-  );
-
-const getModuleTitle = (response) => {
-  const source = response?.__source ?? "staff_schedule";
-  const responseName = response?.module_info?.name;
-
-  if (source !== "staff_schedule" && responseName === "Модуль работы") {
-    return "График работы";
-  }
-
-  return responseName || "График работы";
-};
+import { EMPTY_PERIOD, STAFF_SCHEDULE_SOURCE_MODES } from "./staffScheduleConstants";
+import { getActiveMonthId, toArray } from "./staffScheduleHelpers";
+import {
+  buildGraphState,
+  buildPageViewModel,
+  getModuleTitle,
+  hasBootstrapPayload,
+  hasGraphPayload,
+} from "./staffScheduleViewModel";
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
@@ -44,7 +22,7 @@ export default function useStaffSchedulePage() {
   const [pointId, setPointId] = useState("");
   const [monthId, setMonthId] = useState("");
   const [access, setAccess] = useState({});
-  const [dataSource, setDataSource] = useState("staff_schedule");
+  const [dataSource, setDataSource] = useState(STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE);
   const [graph, setGraph] = useState({
     oneMeta: EMPTY_PERIOD,
     twoMeta: EMPTY_PERIOD,
@@ -80,28 +58,9 @@ export default function useStaffSchedulePage() {
           throw new Error(response?.text || "Не удалось загрузить график");
         }
 
-        setGraph({
-          oneMeta: response?.date?.one ?? EMPTY_PERIOD,
-          twoMeta: response?.date?.two ?? EMPTY_PERIOD,
-          oneRows: toArray(response?.one),
-          twoRows: toArray(response?.two),
-          part: Number(response?.part || 1),
-          kind: response?.kind ?? "",
-          show_zp_one: response?.show_zp_one ?? 0,
-          show_zp_two: response?.show_zp_two ?? 0,
-          errors: {
-            one: {
-              orders: toArray(response?.err?.one?.orders),
-              cam: toArray(response?.err?.one?.cam),
-            },
-            two: {
-              orders: toArray(response?.err?.two?.orders),
-              cam: toArray(response?.err?.two?.cam),
-            },
-          },
-        });
+        setGraph(buildGraphState(response));
         setAccess(response?.access ?? {});
-        setDataSource(response?.__source ?? "staff_schedule");
+        setDataSource(response?.__source ?? STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE);
         setSelectedPart(Math.max(Number(response?.part || 1) - 1, 0));
       } catch (requestError) {
         setError(requestError?.message || "Не удалось загрузить график");
@@ -141,7 +100,7 @@ export default function useStaffSchedulePage() {
         setPointId(nextPointId);
         setMonthId(nextMonthId);
         setAccess(response?.access ?? {});
-        setDataSource(response?.__source ?? "staff_schedule");
+        setDataSource(response?.__source ?? STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE);
 
         if (nextPointId && nextMonthId) {
           await loadGraph(nextPointId, nextMonthId);
@@ -168,31 +127,16 @@ export default function useStaffSchedulePage() {
     document.title = moduleName;
   }, [moduleName]);
 
-  const periodTabs = useMemo(
-    () => [
-      {
-        id: "part-1",
-        label: "1-15",
-        rows: graph.oneRows,
-        meta: graph.oneMeta,
-        showZp: graph.show_zp_one,
-        errors: graph.errors.one,
-      },
-      {
-        id: "part-2",
-        label: "16-конец",
-        rows: graph.twoRows,
-        meta: graph.twoMeta,
-        showZp: graph.show_zp_two,
-        errors: graph.errors.two,
-      },
-    ],
-    [graph],
+  const view = useMemo(
+    () =>
+      buildPageViewModel({
+        moduleName,
+        access,
+        graph,
+        selectedPart,
+      }),
+    [access, graph, moduleName, selectedPart],
   );
-
-  const activePeriod = periodTabs[selectedPart] ?? periodTabs[0];
-
-  const summaryColumns = useMemo(() => getVisibleSummaryColumns(access), [access]);
 
   const handlePointChange = useCallback(
     async (event) => {
@@ -217,7 +161,6 @@ export default function useStaffSchedulePage() {
   }, [loadGraph, monthId, pointId]);
 
   return {
-    moduleName,
     isBootstrapping,
     isGraphLoading,
     error,
@@ -227,13 +170,8 @@ export default function useStaffSchedulePage() {
     monthId,
     access,
     dataSource,
-    periodTabs,
-    activePeriod,
     selectedPart,
-    summaryColumns,
-    graphKind: graph.kind,
-    activeDaysCount: activePeriod?.meta?.days?.length ?? 0,
-    activeRowsCount: activePeriod?.rows?.length ?? 0,
+    view,
     setSelectedPart,
     handlePointChange,
     handleMonthChange,
