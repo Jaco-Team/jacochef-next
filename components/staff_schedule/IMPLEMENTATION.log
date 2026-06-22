@@ -1,0 +1,26 @@
+2026-06-19
+- Reviewed current staff_schedule frontend API draft against legacy work_schedule.
+- Confirmed the draft is a compatibility contract, not yet a final frontend-facing schema.
+- Saved concrete cleanup/add/drop recommendations in API_SUGGESTIONS.md.
+- Next planned step: start desktop UI shell on isolated route with mock-first data source and adapter boundary for the new API.
+- Switched plan: no mock stage, live staff_schedule API only.
+- Trimmed API_SUGGESTIONS.md down to first-render BE needs only.
+- Added the first desktop slice: route, live API wrapper, page hook, and read-only schedule table shell wired to get_all/get_graph.
+
+- Switched plan: no mock stage, live staff_schedule API only.
+- Next: verify authenticated payloads from localhost and start desktop route/page implementation.
+- Found runtime blocker: useApi hits http://localhost:8000/api/staff_schedule/get_all and gets 403; app redirects to /.
+- Next: switch staff_schedule wrapper to 127.0.0.1 transport used by legacy pages so desktop render can proceed.
+- Switched the module to a local non-redirecting transport so the route stays mounted on API errors.
+- Verified `/staff_schedule` renders the desktop shell, filters, period tabs, and error/empty states.
+- Current blocker: `POST http://127.0.0.1:8000/api/staff_schedule/get_all` returns `403 Forbidden` for the authenticated localhost session.
+- Verified new `staff_schedule/get_all` is live, but backend wraps the payload under top-level `data`; adjusted FE transport to unwrap it.
+- Verified `staff_schedule/get_graph` still returns `500`, so read-only graph/detail requests now fall back in isolation to legacy `work_schedule`.
+- Desktop table now renders real data with point/month filters, period tabs, summary columns, and footer metrics.
+- Fixed duplicate React row keys and corrected footer mapping for rolls/pizza/order metrics.
+- Fixed local staff_schedule transport unwrap: backend returns response under top-level data.
+2026-06-22 10:04 +0300
+- reviewed staff_schedule against ads/vendors/cleanings module style
+- switched primary API path to shared useApi("staff_schedule"), kept isolated legacy fallback only for broken read methods
+- removed temporary window debug globals from page state/api loading flow
+- cleaned minor page drift: memoized handlers remain, unused ScheduleRow prop removed
