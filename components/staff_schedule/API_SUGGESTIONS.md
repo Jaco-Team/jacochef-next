@@ -12,7 +12,7 @@ Current old-module shape is fine:
 
 - `module_info`
 - `point_list`
-- `mounths`
+- `months`
 - `access`
 
 That matches how old modules bootstrap and is enough for the first screen.
@@ -34,13 +34,13 @@ Need:
 
 - `module_info.name`
 - `point_list[]`
-- `mounths[]`
+- `months[]`
 - `access`
 
 Assumptions FE will rely on:
 
 - `point_list` is an array of `{ id, name }`
-- `mounths` is an array of `{ id, name, is_active }`
+- `months` is an array of `{ id, name, is_active }`
 - at least one point exists, or empty state is returned cleanly
 
 ### `get_graph`
@@ -83,6 +83,14 @@ And row payloads in `one[]` / `two[]` need to keep the legacy structure:
 ## Not Enough / Need Clarification
 
 The existing FE API note is too shallow in one place only:
+
+### `get_all` must stop erroring on bootstrap
+
+Current backend failure on localhost:
+
+- `Cannot use object of type stdClass as array`
+
+Until that is fixed, FE has to bootstrap from isolated legacy fallback instead of the new module.
 
 ### `get_graph` needs exact documented shape
 

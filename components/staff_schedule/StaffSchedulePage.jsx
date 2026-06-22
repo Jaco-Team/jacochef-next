@@ -20,10 +20,14 @@ import {
   Typography,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { MySelect } from "@/ui/Forms";
 import useStaffSchedulePage from "./useStaffSchedulePage";
 import { getRowBaseColor, getSummaryCellValue, isEnabled, toArray } from "./staffScheduleHelpers";
+
+const EMPLOYEE_COLUMN_WIDTH = 170;
+const POSITION_COLUMN_WIDTH = 150;
+const DAY_COLUMN_WIDTH = 42;
+const SUMMARY_COLUMN_WIDTH = 76;
 
 function ScheduleRow({ row, summaryColumns }) {
   const data = row?.data ?? {};
@@ -36,11 +40,13 @@ function ScheduleRow({ row, summaryColumns }) {
           position: "sticky",
           left: 0,
           zIndex: 2,
-          minWidth: 220,
+          minWidth: EMPLOYEE_COLUMN_WIDTH,
           backgroundColor: baseColors.backgroundColor,
           color: baseColors.color,
           fontWeight: 700,
           borderRight: "1px solid #E5E7EB",
+          py: 1,
+          px: 2,
         }}
       >
         {data?.user_name || "Без имени"}
@@ -48,11 +54,13 @@ function ScheduleRow({ row, summaryColumns }) {
       <TableCell
         sx={{
           position: "sticky",
-          left: 220,
+          left: EMPLOYEE_COLUMN_WIDTH,
           zIndex: 2,
-          minWidth: 190,
+          minWidth: POSITION_COLUMN_WIDTH,
           backgroundColor: "#ffffff",
           borderRight: "1px solid #E5E7EB",
+          py: 1,
+          px: 2,
         }}
       >
         {data?.app_name || "—"}
@@ -69,10 +77,10 @@ function ScheduleRow({ row, summaryColumns }) {
             key={`${day?.date || index}-${data?.id || data?.user_name || index}`}
             align="center"
             sx={{
-              minWidth: 52,
-              px: 0.5,
-              py: 0.75,
-              fontSize: 12,
+              minWidth: DAY_COLUMN_WIDTH,
+              px: 0.25,
+              py: 0.5,
+              fontSize: 11,
               fontWeight: 600,
               background: isHoliday
                 ? `repeating-linear-gradient(-45deg, ${backgroundColor}, ${backgroundColor} 8px, rgba(255, 0, 0, 0.2) 8px, rgba(255, 0, 0, 0.2) 12px)`
@@ -89,7 +97,7 @@ function ScheduleRow({ row, summaryColumns }) {
         <TableCell
           key={`${data?.id || data?.user_name}-${column.key}`}
           align="center"
-          sx={{ minWidth: 92, fontSize: 12.5 }}
+          sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontSize: 11.5, px: 0.75 }}
         >
           {getSummaryCellValue(column, data)}
         </TableCell>
@@ -126,15 +134,17 @@ function FooterMetricRow({ label, values, summaryColumns, highlightCurrent = fal
           zIndex: 1,
           backgroundColor: "#ffffff",
           fontWeight: 600,
+          py: 0.75,
         }}
       />
       <TableCell
         sx={{
           position: "sticky",
-          left: 220,
+          left: EMPLOYEE_COLUMN_WIDTH,
           zIndex: 1,
           backgroundColor: "#ffffff",
           fontWeight: 600,
+          py: 0.75,
         }}
       >
         {label}
@@ -145,11 +155,11 @@ function FooterMetricRow({ label, values, summaryColumns, highlightCurrent = fal
           key={`${label}-${index}`}
           align="center"
           sx={{
-            minWidth: 52,
-            px: 0.5,
-            py: 0.75,
+            minWidth: DAY_COLUMN_WIDTH,
+            px: 0.25,
+            py: 0.5,
             backgroundColor: highlightCurrent && item?.type === "cur" ? "#CFF4C8" : "#ffffff",
-            fontSize: 12,
+            fontSize: 11,
           }}
         >
           {getValue
@@ -191,7 +201,7 @@ function SummaryTotalsRow({ values, summaryColumns }) {
       <TableCell
         sx={{
           position: "sticky",
-          left: 220,
+          left: EMPLOYEE_COLUMN_WIDTH,
           zIndex: 1,
           backgroundColor: "#ffffff",
           fontWeight: 700,
@@ -215,7 +225,7 @@ function SummaryTotalsRow({ values, summaryColumns }) {
   );
 }
 
-function ScheduleTable({ period, summaryColumns, access }) {
+function ScheduleTable({ period, summaryColumns, access, loading = false }) {
   const days = toArray(period?.meta?.days);
   const rows = toArray(period?.rows);
   const colSpan = 2 + days.length + summaryColumns.length;
@@ -223,6 +233,21 @@ function ScheduleTable({ period, summaryColumns, access }) {
   const canShowPizza = isEnabled(access?.pizza_view);
   const canShowSlowOrders = isEnabled(access?.over_40_min_view);
   const canShowTotals = isEnabled(access?.sums_all_view);
+
+  if (loading && !days.length && !rows.length) {
+    return (
+      <Paper
+        variant="outlined"
+        sx={{ borderRadius: 3, p: 5, textAlign: "center", color: "text.secondary" }}
+      >
+        <CircularProgress
+          size={28}
+          sx={{ mb: 1.5 }}
+        />
+        <Typography sx={{ fontSize: 14 }}>Загрузка графика...</Typography>
+      </Paper>
+    );
+  }
 
   if (!days.length && !rows.length) {
     return (
@@ -248,7 +273,7 @@ function ScheduleTable({ period, summaryColumns, access }) {
       <Table
         size="small"
         sx={{
-          minWidth: 1180,
+          minWidth: 980,
           "& .MuiTableCell-root": {
             borderColor: "#E5E7EB",
           },
@@ -261,9 +286,11 @@ function ScheduleTable({ period, summaryColumns, access }) {
                 position: "sticky",
                 left: 0,
                 zIndex: 3,
-                minWidth: 220,
+                minWidth: EMPLOYEE_COLUMN_WIDTH,
                 backgroundColor: "#F8FAFC",
                 fontWeight: 700,
+                py: 1,
+                px: 2,
               }}
             >
               Сотрудник
@@ -271,11 +298,13 @@ function ScheduleTable({ period, summaryColumns, access }) {
             <TableCell
               sx={{
                 position: "sticky",
-                left: 220,
+                left: EMPLOYEE_COLUMN_WIDTH,
                 zIndex: 3,
-                minWidth: 190,
+                minWidth: POSITION_COLUMN_WIDTH,
                 backgroundColor: "#F8FAFC",
                 fontWeight: 700,
+                py: 1,
+                px: 2,
               }}
             >
               Должность
@@ -286,12 +315,14 @@ function ScheduleTable({ period, summaryColumns, access }) {
                 key={`${day?.date || index}-day-num`}
                 align="center"
                 sx={{
-                  minWidth: 52,
+                  minWidth: DAY_COLUMN_WIDTH,
                   backgroundColor:
                     day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
                       ? "#FBE7B6"
                       : "#F8FAFC",
                   fontWeight: 700,
+                  py: 1,
+                  px: 0.25,
                 }}
               >
                 {day?.date ?? ""}
@@ -302,7 +333,7 @@ function ScheduleTable({ period, summaryColumns, access }) {
               <TableCell
                 key={`head-top-${column.key}`}
                 align="center"
-                sx={{ minWidth: 92, fontWeight: 700 }}
+                sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontWeight: 700, px: 0.5 }}
               />
             ))}
           </TableRow>
@@ -314,14 +345,16 @@ function ScheduleTable({ period, summaryColumns, access }) {
                 left: 0,
                 zIndex: 3,
                 backgroundColor: "#F8FAFC",
+                py: 0.75,
               }}
             />
             <TableCell
               sx={{
                 position: "sticky",
-                left: 220,
+                left: EMPLOYEE_COLUMN_WIDTH,
                 zIndex: 3,
                 backgroundColor: "#F8FAFC",
+                py: 0.75,
               }}
             />
 
@@ -330,13 +363,15 @@ function ScheduleTable({ period, summaryColumns, access }) {
                 key={`${day?.date || index}-weekday`}
                 align="center"
                 sx={{
-                  minWidth: 52,
+                  minWidth: DAY_COLUMN_WIDTH,
                   backgroundColor:
                     day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
                       ? "#FBE7B6"
                       : "#F8FAFC",
                   color: "#6B7280",
-                  fontSize: 12,
+                  fontSize: 11,
+                  px: 0.25,
+                  py: 0.75,
                 }}
               >
                 {day?.day ?? ""}
@@ -347,7 +382,7 @@ function ScheduleTable({ period, summaryColumns, access }) {
               <TableCell
                 key={`head-bottom-${column.key}`}
                 align="center"
-                sx={{ minWidth: 92, fontWeight: 700 }}
+                sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontWeight: 700, fontSize: 11, px: 0.5 }}
               >
                 {column.label}
               </TableCell>
@@ -436,7 +471,7 @@ export default function StaffSchedulePage() {
     <Box sx={{ pb: 4 }}>
       <Backdrop
         sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
-        open={page.isBootstrapping || page.isGraphLoading}
+        open={page.isBootstrapping}
       >
         <CircularProgress />
       </Backdrop>
@@ -449,71 +484,80 @@ export default function StaffSchedulePage() {
         <Grid size={12}>
           <Paper
             variant="outlined"
-            sx={{
-              borderRadius: 3,
-              overflow: "hidden",
-              borderColor: "#E5E7EB",
-              boxShadow: "0 12px 32px rgba(15, 23, 42, 0.06)",
-            }}
+            sx={{ borderRadius: "8px", overflow: "hidden" }}
           >
-            <Box
-              sx={{
-                px: 3,
-                py: 2,
-                color: "#ffffff",
-                background: "linear-gradient(90deg, #D61F33 0%, #F03D48 100%)",
-              }}
-            >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                spacing={2}
+            <Box sx={{ p: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: { xs: "flex-start", md: "center" },
+                  justifyContent: "space-between",
+                  gap: 2,
+                  flexDirection: { xs: "column", md: "row" },
+                  mb: 1.5,
+                }}
               >
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700 }}
-                  >
-                    {page.moduleName}
-                  </Typography>
-                  <Typography sx={{ opacity: 0.9, fontSize: 14 }}>
-                    Desktop first. Read-only render on live `staff_schedule` API.
-                  </Typography>
-                </Box>
+                <Typography
+                  variant="h5"
+                  component="h1"
+                  sx={{ fontWeight: 700, fontSize: { xs: 24, md: 28 } }}
+                >
+                  {page.moduleName}
+                </Typography>
 
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<RefreshIcon />}
                   onClick={page.handleReload}
+                  disabled={page.isGraphLoading}
                   sx={{
-                    bgcolor: "#ffffff",
-                    color: "#D61F33",
+                    minHeight: 36,
+                    px: 2,
+                    borderRadius: "8px",
+                    fontSize: 13,
                     fontWeight: 700,
-                    boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: "#FFF5F5",
-                      boxShadow: "none",
-                    },
+                    whiteSpace: "nowrap",
                   }}
                 >
                   Обновить
                 </Button>
-              </Stack>
-            </Box>
+              </Box>
 
-            <Box sx={{ p: 3 }}>
+              <Tabs
+                value={page.selectedPart}
+                onChange={(_, nextValue) => page.setSelectedPart(nextValue)}
+                sx={{
+                  minHeight: 36,
+                  mb: 2,
+                  borderBottom: "1px solid #E5E7EB",
+                  "& .MuiTabs-indicator": {
+                    backgroundColor: "#df1f26",
+                  },
+                  "& .MuiTab-root": {
+                    minHeight: 36,
+                    minWidth: 0,
+                    px: 2,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                  },
+                }}
+              >
+                {page.periodTabs.map((tab) => (
+                  <Tab
+                    key={tab.id}
+                    label={tab.label}
+                  />
+                ))}
+              </Tabs>
+
               <Grid
                 container
                 spacing={2}
                 alignItems="center"
               >
-                <Grid
-                  size={{
-                    xs: 12,
-                    md: 3,
-                  }}
-                >
+                <Grid size={{ xs: 12, md: 3 }}>
                   <MySelect
                     is_none={false}
                     data={page.points}
@@ -523,12 +567,7 @@ export default function StaffSchedulePage() {
                   />
                 </Grid>
 
-                <Grid
-                  size={{
-                    xs: 12,
-                    md: 3,
-                  }}
-                >
+                <Grid size={{ xs: 12, md: 3 }}>
                   <MySelect
                     is_none={false}
                     data={page.months}
@@ -538,126 +577,52 @@ export default function StaffSchedulePage() {
                   />
                 </Grid>
 
-                <Grid
-                  size={{
-                    xs: 12,
-                    md: 6,
-                  }}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Stack
-                    direction="row"
-                    spacing={1.5}
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={{ xs: 0.25, md: 1.5 }}
                     justifyContent="flex-end"
+                    alignItems={{ xs: "flex-start", md: "center" }}
                   >
-                    <Paper
-                      variant="outlined"
-                      sx={{ px: 1.5, py: 1, borderRadius: 2, minWidth: 176 }}
-                    >
-                      <Stack
-                        direction="row"
-                        spacing={0.75}
-                        alignItems="center"
+                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                      Режим:{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: "text.primary", fontWeight: 700 }}
                       >
-                        <InfoOutlinedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                          >
-                            Источник графика
-                          </Typography>
-                          <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
-                            {page.dataSource === "staff_schedule"
-                              ? "staff_schedule"
-                              : "legacy fallback"}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-
-                    <Paper
-                      variant="outlined"
-                      sx={{ px: 1.5, py: 1, borderRadius: 2, minWidth: 124 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        {page.graphKind || "—"}
+                      </Box>
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                      Ошибки кухни:{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: "text.primary", fontWeight: 700 }}
                       >
-                        Ошибки кухни
-                      </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>{errorSummary.orders}</Typography>
-                    </Paper>
-
-                    <Paper
-                      variant="outlined"
-                      sx={{ px: 1.5, py: 1, borderRadius: 2, minWidth: 124 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        {errorSummary.orders}
+                      </Box>
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                      Ошибки камер:{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: "text.primary", fontWeight: 700 }}
                       >
-                        Ошибки камер
-                      </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>{errorSummary.cam}</Typography>
-                    </Paper>
-
-                    <Paper
-                      variant="outlined"
-                      sx={{ px: 1.5, py: 1, borderRadius: 2, minWidth: 124 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        {errorSummary.cam}
+                      </Box>
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                      Дни / строки:{" "}
+                      <Box
+                        component="span"
+                        sx={{ color: "text.primary", fontWeight: 700 }}
                       >
-                        Режим
-                      </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>{page.graphKind || "—"}</Typography>
-                    </Paper>
-
-                    <Paper
-                      variant="outlined"
-                      sx={{ px: 1.5, py: 1, borderRadius: 2, minWidth: 124 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        Дни / строки
-                      </Typography>
-                      <Typography sx={{ fontWeight: 700 }}>
                         {page.activeDaysCount} / {page.activeRowsCount}
-                      </Typography>
-                    </Paper>
+                      </Box>
+                    </Typography>
                   </Stack>
                 </Grid>
               </Grid>
-
-              <Divider sx={{ my: 2.5 }} />
-
-              <Tabs
-                value={page.selectedPart}
-                onChange={(_, nextValue) => page.setSelectedPart(nextValue)}
-                sx={{
-                  minHeight: 40,
-                  "& .MuiTabs-indicator": {
-                    height: 3,
-                    borderRadius: 999,
-                    backgroundColor: "#D61F33",
-                  },
-                }}
-              >
-                {page.periodTabs.map((tab) => (
-                  <Tab
-                    key={tab.id}
-                    label={tab.label}
-                    sx={{
-                      minHeight: 40,
-                      textTransform: "none",
-                      fontWeight: 700,
-                    }}
-                  />
-                ))}
-              </Tabs>
             </Box>
           </Paper>
         </Grid>
@@ -673,6 +638,7 @@ export default function StaffSchedulePage() {
             period={page.activePeriod}
             summaryColumns={page.summaryColumns}
             access={page.access}
+            loading={page.isGraphLoading}
           />
         </Grid>
       </Grid>

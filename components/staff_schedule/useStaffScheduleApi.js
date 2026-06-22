@@ -27,30 +27,35 @@ export default function useStaffScheduleApi() {
       });
 
     const parseErrorText = (error) =>
-      error?.response?.data?.text ||
-      error?.response?.data?.message ||
-      `HTTP ${error?.response?.status || 500}`;
+      error?.code === "ECONNABORTED"
+        ? "Request timeout"
+        : error?.response?.data?.text ||
+          error?.response?.data?.message ||
+          `HTTP ${error?.response?.status || 500}`;
 
     const shouldUseLegacyFallback = (response) => {
       const text = String(response?.text || "").toLowerCase();
 
       return (
+        response?.status === 408 ||
+        response?.status === 504 ||
         response?.status === 403 ||
         response?.status === 500 ||
+        text.includes("timeout") ||
         text.includes("forbidden") ||
         text.includes("http 403") ||
         text.includes("http 500")
       );
     };
 
-    const requestCurrent = async (method, payload = {}) => {
+    const requestCurrent = async (method, payload = {}, options = {}) => {
       try {
-        const response = await apiRef.current(method, payload);
+        const response = await apiRef.current(method, payload, options);
         return { ...unwrapPayload(response), __source: "staff_schedule" };
       } catch (error) {
         return {
           st: false,
-          status: error?.response?.status || 500,
+          status: error?.code === "ECONNABORTED" ? 504 : error?.response?.status || 500,
           text: parseErrorText(error),
         };
       }
@@ -83,7 +88,7 @@ export default function useStaffScheduleApi() {
     };
 
     const request = async (method, payload = {}, options = {}) => {
-      const response = await requestCurrent(method, payload);
+      const response = await requestCurrent(method, payload, options.requestOptions);
 
       if (response?.st || !options.allowLegacyFallback || !shouldUseLegacyFallback(response)) {
         return response;
@@ -93,13 +98,40 @@ export default function useStaffScheduleApi() {
     };
 
     return {
-      getAll: () => requestCurrent("get_all"),
-      getGraph: (payload) => request("get_graph", payload, { allowLegacyFallback: true }),
-      getUserDay: (payload) => request("get_user_day", payload, { allowLegacyFallback: true }),
-      getUserMonth: (payload) => request("get_user_month", payload, { allowLegacyFallback: true }),
+      getAll: () =>
+        request(
+          "get_all",
+          {},
+          {
+            allowLegacyFallback: true,
+            requestOptions: { timeout: 4000 },
+          },
+        ),
+      getGraph: (payload) =>
+        request("get_graph", payload, {
+          allowLegacyFallback: true,
+          requestOptions: { timeout: 4000 },
+        }),
+      getUserDay: (payload) =>
+        request("get_user_day", payload, {
+          allowLegacyFallback: true,
+          requestOptions: { timeout: 4000 },
+        }),
+      getUserMonth: (payload) =>
+        request("get_user_month", payload, {
+          allowLegacyFallback: true,
+          requestOptions: { timeout: 4000 },
+        }),
       getAllForNewSmena: (payload) =>
-        request("get_all_for_new_smena", payload, { allowLegacyFallback: true }),
-      getOneSmena: (payload) => request("get_one_smena", payload, { allowLegacyFallback: true }),
+        request("get_all_for_new_smena", payload, {
+          allowLegacyFallback: true,
+          requestOptions: { timeout: 4000 },
+        }),
+      getOneSmena: (payload) =>
+        request("get_one_smena", payload, {
+          allowLegacyFallback: true,
+          requestOptions: { timeout: 4000 },
+        }),
     };
   }, []);
 }

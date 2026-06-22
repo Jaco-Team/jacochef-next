@@ -28,7 +28,7 @@
 
 - `module_info`
 - `point_list`
-- `mounths`
+- `months`
 - `access`
 
 ### `POST|ANY /api/staff_schedule/get_graph`
@@ -40,7 +40,7 @@
 Вход:
 
 - `data.point_id` `int`
-- `data.mounth` `string` в формате `YYYY-MM`
+- `data.month` `string` в формате `YYYY-MM`
 
 Выход:
 
@@ -102,7 +102,7 @@
 
 - `h_info`
 - `my`
-- `hourse_days`
+- `hours_days`
 
 ### `POST|ANY /api/staff_schedule/get_all_for_new_smena`
 
@@ -136,6 +136,6 @@
 
 ## Замечания для FE
 
-- Поле `mounth` в API осталось с legacy-опечаткой, не переименовывать.
-- Поле `hourse_days` также оставлено без переименования.
+- Поле `month` используется без legacy-опечатки.
+- Поле `hours_days` используется без legacy-опечатки.
 - Цвета, блокировки ЗП, доступы и прочие странные legacy-поля пока не нормализуются.

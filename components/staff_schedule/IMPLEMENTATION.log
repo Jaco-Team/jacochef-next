@@ -24,3 +24,13 @@
 - switched primary API path to shared useApi("staff_schedule"), kept isolated legacy fallback only for broken read methods
 - removed temporary window debug globals from page state/api loading flow
 - cleaned minor page drift: memoized handlers remain, unused ScheduleRow prop removed
+2026-06-22 10:31 +0300
+- switched hanging graph reads to timeout-based legacy fallback on shared useApi path
+- flattened main screen shell toward legacy/Figma base: removed extra subtitle framing, tightened title/tabs/filter layout
+- tightened main table proportions toward legacy base (sticky cols, day cells, summary cols, row spacing)
+- removed visible source/debug meta from main toolbar area
+- normalized fallback module title to keep Graph title stable during legacy bootstrap
+- removed full-page graph-loading blocker; table area now owns the loading state
+- renamed bootstrap contract/docs to `months`
+- renamed graph request field/docs to `month`
+- fixed `hours_days` naming in local staff_schedule contract docs

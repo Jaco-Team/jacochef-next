@@ -11,7 +11,7 @@ const EMPTY_PERIOD = {
 };
 
 const hasBootstrapPayload = (response) =>
-  Boolean(response?.module_info || response?.point_list || response?.mounths);
+  Boolean(response?.module_info || response?.point_list || response?.months);
 
 const hasGraphPayload = (response) =>
   Boolean(
@@ -20,6 +20,17 @@ const hasGraphPayload = (response) =>
     Array.isArray(response?.one) ||
     Array.isArray(response?.two),
   );
+
+const getModuleTitle = (response) => {
+  const source = response?.__source ?? "staff_schedule";
+  const responseName = response?.module_info?.name;
+
+  if (source !== "staff_schedule" && responseName === "Модуль работы") {
+    return "График работы";
+  }
+
+  return responseName || "График работы";
+};
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
@@ -62,7 +73,7 @@ export default function useStaffSchedulePage() {
       try {
         const response = await api.getGraph({
           point_id: nextPointId,
-          mounth: nextMonthId,
+          month: nextMonthId,
         });
 
         if (response?.st === false || !hasGraphPayload(response)) {
@@ -120,11 +131,11 @@ export default function useStaffSchedulePage() {
         }
 
         const nextPoints = toArray(response?.point_list);
-        const nextMonths = toArray(response?.mounths);
+        const nextMonths = toArray(response?.months);
         const nextPointId = nextPoints[0]?.id ?? "";
         const nextMonthId = getActiveMonthId(nextMonths);
 
-        setModuleName(response?.module_info?.name || "График работы");
+        setModuleName(getModuleTitle(response));
         setPoints(nextPoints);
         setMonths(nextMonths);
         setPointId(nextPointId);
