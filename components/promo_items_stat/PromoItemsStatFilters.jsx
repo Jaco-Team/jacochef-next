@@ -20,6 +20,9 @@ export default function PromoItemsStatFilters({ onRefresh }) {
   const clientSourceList = usePromoItemsStatStore((state) => state.clientSourceList);
   const selectedClientSources = usePromoItemsStatStore((state) => state.selectedClientSources);
   const activationsFilter = usePromoItemsStatStore((state) => state.activationsFilter);
+  const orderSumAfterDiscountFilter = usePromoItemsStatStore(
+    (state) => state.orderSumAfterDiscountFilter,
+  );
   const setFilters = usePromoItemsStatStore((state) => state.setFilters);
   const setSelectedPoints = usePromoItemsStatStore((state) => state.setSelectedPoints);
   const setSelectedPromos = usePromoItemsStatStore((state) => state.setSelectedPromos);
@@ -29,6 +32,9 @@ export default function PromoItemsStatFilters({ onRefresh }) {
     (state) => state.setSelectedClientSources,
   );
   const setActivationsFilter = usePromoItemsStatStore((state) => state.setActivationsFilter);
+  const setOrderSumAfterDiscountFilter = usePromoItemsStatStore(
+    (state) => state.setOrderSumAfterDiscountFilter,
+  );
   const selectedOrderType = typeOrderList.find((item) => `${item?.id}` === `${typeOrder}`) || null;
 
   const handleDateStartChange = (value) => {
@@ -57,7 +63,7 @@ export default function PromoItemsStatFilters({ onRefresh }) {
     });
   };
 
-  const normalizeActivationValue = (value) => {
+  const normalizeNumericFilterValue = (value) => {
     if (value === "") {
       return null;
     }
@@ -73,7 +79,13 @@ export default function PromoItemsStatFilters({ onRefresh }) {
 
   const handleActivationInputChange = (key) => (event) => {
     setActivationsFilter({
-      [key]: normalizeActivationValue(event.target.value),
+      [key]: normalizeNumericFilterValue(event.target.value),
+    });
+  };
+
+  const handleOrderSumAfterDiscountInputChange = (key) => (event) => {
+    setOrderSumAfterDiscountFilter({
+      [key]: normalizeNumericFilterValue(event.target.value),
     });
   };
 
@@ -205,8 +217,35 @@ export default function PromoItemsStatFilters({ onRefresh }) {
         </Grid>
 
         <Grid
+          size={{ xs: 12, md: 6 }}
+          sx={{ order: { xs: 4, md: 4 } }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+          >
+            <MyTextInput
+              type="number"
+              label="Сумма заказа с учетом скидки от"
+              value={orderSumAfterDiscountFilter.from ?? ""}
+              func={handleOrderSumAfterDiscountInputChange("from")}
+              min={0}
+              step={1}
+            />
+            <MyTextInput
+              type="number"
+              label="Сумма заказа с учетом скидки до"
+              value={orderSumAfterDiscountFilter.to ?? ""}
+              func={handleOrderSumAfterDiscountInputChange("to")}
+              min={0}
+              step={1}
+            />
+          </Stack>
+        </Grid>
+
+        <Grid
           size={12}
-          sx={{ order: { xs: 3, md: 3 } }}
+          sx={{ order: { xs: 5, md: 5 } }}
         >
           <Stack
             direction="row"

@@ -23,6 +23,9 @@ export default function usePromoItemsStatPage() {
   const typeOrder = usePromoItemsStatStore((state) => state.typeOrder);
   const selectedClientSources = usePromoItemsStatStore((state) => state.selectedClientSources);
   const activationsFilter = usePromoItemsStatStore((state) => state.activationsFilter);
+  const orderSumAfterDiscountFilter = usePromoItemsStatStore(
+    (state) => state.orderSumAfterDiscountFilter,
+  );
   const promoTablePagination = usePromoItemsStatStore((state) => state.promoTablePagination);
   const setIsLoad = usePromoItemsStatStore((state) => state.setIsLoad);
   const setBootstrap = usePromoItemsStatStore((state) => state.setBootstrap);
@@ -174,6 +177,7 @@ export default function usePromoItemsStatPage() {
         selectedItems,
         typeOrder,
         selectedClientSources,
+        orderSumAfterDiscountFilter,
         ...(tab === 0 ? { activationsFilter, page: nextPage, perpage: nextPerpage } : {}),
       },
       { typeOrderKey: tab === 0 ? "promo_type" : "type_order" },

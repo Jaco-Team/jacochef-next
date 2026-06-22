@@ -91,6 +91,15 @@ const usePromoItemsStatStore = create((set) => ({
     }));
   },
 
+  setOrderSumAfterDiscountFilter(orderSumAfterDiscountFilter = {}) {
+    set((state) => ({
+      orderSumAfterDiscountFilter: {
+        ...state.orderSumAfterDiscountFilter,
+        ...orderSumAfterDiscountFilter,
+      },
+    }));
+  },
+
   setStats(stats = []) {
     set({ stats });
   },
