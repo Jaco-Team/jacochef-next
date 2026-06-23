@@ -74,7 +74,10 @@ const defaultState = {
   segment: {},
   day_last: 0,
   day_first: 0,
+  sum_from: 0,
+  sum_to: 0,
   categories: [],
+  promo_check: false,
 
   date_start: dayjs().format("YYYY-MM-DD"),
   date_end: dayjs().format("YYYY-MM-DD"),

@@ -155,7 +155,7 @@ export const ClientsTab = ({
         </Grid>
 
         <Grid
-          size={{ xs: 12, sm: 5 }}
+          size={{ xs: 12, sm: 6 }}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -175,16 +175,21 @@ export const ClientsTab = ({
                 </IconButton>
               )
             }
-            sx={{ width: "55%" }}
+            sx={{ width: "50%" }}
           />
           <MyCheckBox
             value={form.promo_dr}
             func={({ target }) => setField("promo_dr", Number(target?.checked) || 0)}
             label="Промик на ДР"
           />
+          <MyCheckBox
+            value={form.promo_check}
+            func={({ target }) => setField("promo_check", Number(target?.checked) || 0)}
+            label="Применение промокода"
+          />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <MyTextInput
             type="text"
             label="UTM содержит"
@@ -269,6 +274,22 @@ export const ClientsTab = ({
             label="Дней с первого заказа"
             value={form.day_first}
             func={({ target }) => setField("day_first", target?.value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyTextInput
+            type="number"
+            label="Сумма заказа от"
+            value={form.sum_from}
+            func={({ target }) => setField("sum_from", target?.value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <MyTextInput
+            type="number"
+            label="Сумма заказа до"
+            value={form.sum_to}
+            func={({ target }) => setField("sum_to", target?.value)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>

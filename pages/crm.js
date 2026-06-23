@@ -52,6 +52,7 @@ export default function CrmPage() {
     points_history: initialForm.points_history,
     promo: initialForm.promo,
     promo_dr: initialForm.promo_dr,
+    promo_check: initialForm.promo_check,
     type_client: initialForm.type_client,
     phone: initialForm.phone,
     mail: initialForm.mail,
@@ -68,6 +69,8 @@ export default function CrmPage() {
     orders_count: initialForm.orders_count,
     order_utm: initialForm.order_utm,
     segment: initialForm.segment,
+    sum_from: initialForm.sum_from,
+    sum_to: initialForm.sum_to,
   }));
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
@@ -285,6 +288,7 @@ export default function CrmPage() {
       promo_dr,
       order_types,
       delivery_type,
+      promo_check,
       items,
       orders_count,
       order_utm,
@@ -297,6 +301,8 @@ export default function CrmPage() {
       mail,
       phone,
       type_client,
+      sum_from,
+      sum_to,
     } = useSiteClientsStore.getState();
 
     const refreshToken = useClientHistoryStore.getState().refreshToken;
@@ -324,6 +330,7 @@ export default function CrmPage() {
       promo,
       promo_dr,
       order_types,
+      promo_check,
       delivery_type,
       items,
       orders_count,
@@ -337,6 +344,8 @@ export default function CrmPage() {
       mail,
       type_client,
       phone,
+      sum_from,
+      sum_to,
     });
 
     if (!resData?.st) {

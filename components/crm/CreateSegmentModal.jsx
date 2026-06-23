@@ -143,6 +143,8 @@ export const CreateSegmentModal = ({
     has_email: null,
     consent_email: null,
     strict_search: null,
+    promo_check: false,
+    count_pos: null,
 
     // Заказы
     orders_count_min: "",
@@ -208,6 +210,7 @@ export const CreateSegmentModal = ({
       form.has_email !== null ||
       form.consent_email !== null ||
       form.strict_search !== null ||
+      form.count_pos !== null ||
       form.orders_count_min ||
       form.orders_count_max ||
       form.avg_check_min ||
@@ -289,6 +292,8 @@ export const CreateSegmentModal = ({
       has_email: null,
       consent_email: null,
       strict_search: null,
+      promo_check: false,
+      count_pos: null,
       orders_count_min: "",
       orders_count_max: "",
       avg_check_min: "",
@@ -436,7 +441,7 @@ export const CreateSegmentModal = ({
             container
             spacing={2}
           >
-            <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <MyCheckBox
                   label="Согласие на рассылки"
@@ -444,6 +449,16 @@ export const CreateSegmentModal = ({
                   func={(e) => setField("consent_email", e.target.checked)}
                 />
                 <HintIcon title={SEGMENT_HINTS.consent_email} />
+              </div>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 6, md: 6 }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <MyCheckBox
+                  label="Применение промокода"
+                  value={form.promo_check}
+                  func={(e) => setField("promo_check", e.target.checked)}
+                />
+                <HintIcon title={SEGMENT_HINTS.promo_check} />
               </div>
             </Grid>
           </Grid>
@@ -626,6 +641,17 @@ export const CreateSegmentModal = ({
                   data={items}
                   value={form.items}
                   func={(data, value) => setField("items", value)}
+                />
+              </FieldWithHint>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <FieldWithHint hint={SEGMENT_HINTS.count_pos}>
+                <MyTextInput
+                  type="number"
+                  label="Количество позиций в заказе"
+                  value={form.count_pos}
+                  func={({ target }) => setField("count_pos", target?.value)}
                 />
               </FieldWithHint>
             </Grid>
