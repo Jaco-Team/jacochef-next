@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import {
   Backdrop,
@@ -26,6 +26,8 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
@@ -37,6 +39,7 @@ import AddLinkIconOutlined from "@mui/icons-material/AddLinkOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import { useConfirm } from "@/src/hooks/useConfirm";
+import useApi from "@/src/hooks/useApi";
 import MyAlert from "@/ui/MyAlert";
 import { MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
 import FileTypeIcon from "@/ui/FileTypeIcon";
@@ -49,7 +52,7 @@ import ModalAddProduct from "../ModalAddProduct";
 import VendorPriceEditDialog from "../VendorPriceEditDialog";
 import VendorPriceItemForm from "../VendorPriceItemForm";
 import useVendorItemPricePage from "../useVendorItemPricePage";
-import useVendorProductsView from "../useVendorProductsView";
+import useVendorProductsView, { buildItemsSelectData } from "../useVendorProductsView";
 import useVendorsStore from "../useVendorsStore";
 import {
   formatPackPriceLabel,
@@ -143,8 +146,9 @@ export default function TabProducts({
   vendorId,
 }) {
   const { ConfirmDialog, withConfirm } = useConfirm();
-  const { itemsSelectData, productCategoryOptions, sortedVendorItems, vendorItemIds } =
-    useVendorProductsView();
+  const { api_laravel } = useApi("vendors");
+  const apiLaravelRef = useRef(api_laravel);
+  const { productCategoryOptions, sortedVendorItems, vendorItemIds } = useVendorProductsView();
   const isVendorsLoading = useVendorsStore((state) => state.isLoading);
   const {
     alertMessage,
@@ -177,6 +181,8 @@ export default function TabProducts({
 
   const isLoading = isVendorsLoading || isPriceLoading;
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [modalCatalogItems, setModalCatalogItems] = useState([]);
+  const [isModalCatalogLoading, setIsModalCatalogLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [selectedCatalogItemId, setSelectedCatalogItemId] = useState("");
   const [declarationFile, setDeclarationFile] = useState(null);
@@ -185,6 +191,8 @@ export default function TabProducts({
   const [editableDeclaration, setEditableDeclaration] = useState(null);
   const hasProductActions = canEdit || canUpload;
   const hasDeclarationActions = canEditDeclaration;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const priceByItemId = useMemo(
     () => new Map(enrichedItems.map((item) => [Number(item.item_id), item])),
@@ -225,8 +233,60 @@ export default function TabProducts({
     [filteredVendorItems, priceByItemId],
   );
 
+  const modalItemsSelectData = useMemo(
+    () => buildItemsSelectData(modalCatalogItems, vendorItemIds),
+    [modalCatalogItems, vendorItemIds],
+  );
+
+  useEffect(() => {
+    apiLaravelRef.current = api_laravel;
+  }, [api_laravel]);
+
+  useEffect(() => {
+    if (!isAddProductModalOpen || !vendorId) {
+      return undefined;
+    }
+
+    let isActive = true;
+
+    const loadModalCatalogItems = async () => {
+      setIsModalCatalogLoading(true);
+
+      try {
+        const response = await apiLaravelRef.current("get_items_for_vendors_new", {
+          vendor_id: vendorId,
+        });
+
+        if (!isActive) {
+          return;
+        }
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Не удалось загрузить товары");
+        }
+
+        setModalCatalogItems(response.items ?? response.all_items ?? []);
+      } catch {
+        if (isActive) {
+          setModalCatalogItems([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsModalCatalogLoading(false);
+        }
+      }
+    };
+
+    loadModalCatalogItems();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isAddProductModalOpen, vendorId]);
+
   const handleCloseAddModal = () => {
     setIsAddProductModalOpen(false);
+    setModalCatalogItems([]);
     setSelectedCatalogItemId("");
     setDeclarationFile(null);
     setDeclarationExpiresAt(null);
@@ -285,7 +345,7 @@ export default function TabProducts({
       <VendorPriceEditDialog
         open={Boolean(editingItemId)}
         onClose={handleCloseEditModal}
-        canEdit={canEdit}
+        canEdit={canEditСost}
         cityLabel={selectedCityName}
         draft={editDraft}
         isLoading={isPriceLoading}
@@ -368,7 +428,7 @@ export default function TabProducts({
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setIsAddProductModalOpen(true)}
-                  disabled={isLoading || !itemsSelectData.length}
+                  disabled={isLoading}
                 >
                   Добавить
                 </Button>
@@ -550,6 +610,7 @@ export default function TabProducts({
                                   cursor: canEdit ? "pointer" : "default",
                                   textAlign: "left",
                                   color: "text.primary",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
                                 {formatPackPriceLabel(item.full_price)}
@@ -620,9 +681,13 @@ export default function TabProducts({
                               >
                                 <Stack
                                   spacing={2}
-                                  sx={{ py: 2 }}
+                                  sx={{
+                                    py: 2,
+                                    width: "100%",
+                                    maxWidth: "100%",
+                                  }}
                                 >
-                                  {canEdit && city ? (
+                                  {canEdit && city && !isMobile ? (
                                     <VendorPriceItemForm
                                       canEdit={canEditСost}
                                       cityLabel={selectedCityName}
@@ -632,6 +697,28 @@ export default function TabProducts({
                                       onSave={handleSaveEdit}
                                       onDraftChange={handleDraftChange}
                                     />
+                                  ) : null}
+
+                                  {isMobile && canEdit && city && isExpanded ? (
+                                    <Box
+                                      sx={{
+                                        position: "sticky",
+                                        left: 0,
+                                        zIndex: 1,
+                                        width: { xs: "min(100%, calc(100vw - 48px))", sm: "auto" },
+                                        bgcolor: "background.paper",
+                                        py: 0.5,
+                                      }}
+                                    >
+                                      <Button
+                                        variant="outlined"
+                                        fullWidth
+                                        onClick={() => handleOpenEditModal(item)}
+                                        disabled={isPriceLoading}
+                                      >
+                                        Редактировать цену
+                                      </Button>
+                                    </Box>
                                   ) : null}
 
                                   {declarations.length ? (
@@ -786,8 +873,8 @@ export default function TabProducts({
         open={isAddProductModalOpen}
         onClose={handleCloseAddModal}
         onSubmit={handleConfirmAdd}
-        isLoading={isLoading}
-        itemsSelectData={itemsSelectData}
+        isLoading={isLoading || isModalCatalogLoading}
+        itemsSelectData={modalItemsSelectData}
         selectedCatalogItemId={selectedCatalogItemId}
         setSelectedCatalogItemId={setSelectedCatalogItemId}
         vendorItemIds={vendorItemIds}
