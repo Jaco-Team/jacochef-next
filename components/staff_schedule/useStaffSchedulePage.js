@@ -44,6 +44,11 @@ export default function useStaffSchedulePage() {
     },
   });
   const [selectedPart, setSelectedPart] = useState(0);
+  const [selectedShiftId, setSelectedShiftId] = useState("all");
+  const [isCalendarHidden, setIsCalendarHidden] = useState(false);
+  const [colorMode, setColorMode] = useState("default");
+  const [collapsedShiftIds, setCollapsedShiftIds] = useState([]);
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [dayModal, setDayModal] = useState({
     open: false,
     loading: false,
@@ -154,9 +159,17 @@ export default function useStaffSchedulePage() {
         access,
         graph,
         selectedPart,
+        selectedShiftId,
+        collapsedShiftIds,
       }),
-    [access, graph, moduleName, selectedPart],
+    [access, collapsedShiftIds, graph, moduleName, selectedPart, selectedShiftId],
   );
+
+  useEffect(() => {
+    setSelectedShiftId("all");
+    setCollapsedShiftIds([]);
+    setSelectedRowIds([]);
+  }, [selectedPart, pointId, monthId]);
 
   const handlePointChange = useCallback(
     async (event) => {
@@ -179,6 +192,35 @@ export default function useStaffSchedulePage() {
   const handleReload = useCallback(async () => {
     await loadGraph(pointId, monthId);
   }, [loadGraph, monthId, pointId]);
+
+  const handleShiftChange = useCallback((event) => {
+    setSelectedShiftId(event.target.value);
+    setSelectedRowIds([]);
+  }, []);
+
+  const handleCalendarVisibilityChange = useCallback((event) => {
+    setIsCalendarHidden(event.target.checked);
+  }, []);
+
+  const handleColorModeChange = useCallback((event) => {
+    setColorMode(event.target.value);
+  }, []);
+
+  const handleToggleShiftCollapse = useCallback((shiftId) => {
+    setCollapsedShiftIds((prev) =>
+      prev.includes(shiftId) ? prev.filter((item) => item !== shiftId) : [...prev, shiftId],
+    );
+  }, []);
+
+  const handleToggleRowSelection = useCallback((rowId) => {
+    if (!rowId) {
+      return;
+    }
+
+    setSelectedRowIds((prev) =>
+      prev.includes(rowId) ? prev.filter((item) => item !== rowId) : [...prev, rowId],
+    );
+  }, []);
 
   const handleOpenDayModal = useCallback(
     async (row, date) => {
@@ -324,6 +366,11 @@ export default function useStaffSchedulePage() {
     access,
     dataSource,
     selectedPart,
+    selectedShiftId,
+    isCalendarHidden,
+    colorMode,
+    collapsedShiftIds,
+    selectedRowIds,
     view,
     dayModal,
     monthModal,
@@ -331,6 +378,11 @@ export default function useStaffSchedulePage() {
     handlePointChange,
     handleMonthChange,
     handleReload,
+    handleShiftChange,
+    handleCalendarVisibilityChange,
+    handleColorModeChange,
+    handleToggleShiftCollapse,
+    handleToggleRowSelection,
     handleOpenDayModal,
     handleCloseDayModal,
     handleSaveDayModal,

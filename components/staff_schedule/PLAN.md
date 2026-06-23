@@ -1,5 +1,60 @@
 # План модуля Staff Schedule
 
+## Update 2026-06-23: Desktop Control Layer
+
+Этот блок фиксирует назначение desktop controls по текущему Figma screen и current API scope.
+
+### Control Purpose Map
+
+- `Кафе`
+  - live filter по `point_id`
+  - сразу рефетчит graph
+- `Месяц`
+  - live filter по `month`
+  - сразу рефетчит graph
+- period switch
+  - переключает half-month view внутри уже загруженного graph
+- `Смена`
+  - client-side filter по header groups, без нового backend call
+- `Журнал здоровья`
+  - desktop control shell обязателен уже сейчас
+  - behavior можно оставить disabled/stubbed до отдельного flow
+- `Скрыть календарь`
+  - presentation toggle
+  - скрывает day grid, но оставляет summary/data shell usable
+- `Цветовые обозначения`
+  - presentation mode toggle
+  - first step: `default` / `plain`, без новых API полей
+- row checkboxes
+  - local selection shell for future bulk actions
+  - без CRUD semantics на этом этапе
+- shift collapse button
+  - client-side collapse per shift group
+  - не должен менять payload or active filters
+
+### Desktop Chunk Order
+
+1. top filter bar
+2. period segmented switch
+3. second control row with shift filter and journal button
+4. table toolbar with shown-shifts counter, calendar toggle, color-mode selector
+5. grouped table behavior: collapse + row selection
+
+### Scope Limit For This Chunk
+
+- only `staff_schedule`
+- desktop first
+- no new backend contracts
+- no hidden fallback semantics in these controls
+- stubbed controls must stay visibly stubbed, not fake-working
+
+### Layout Corrections Applied
+
+- header top row should not squeeze the refresh action cluster through equal grid fractions
+- action cluster should size to content; primary filters should own the flexible width
+- `Цветовые обозначения` should render as a single field shell, not a field inside another outlined shell
+- modal title rows in `staff_schedule` should use a module-local header layout with a right-anchored close action instead of relying on generic shared title positioning
+
 ## Update 2026-06-23: Modal Track
 
 Этот блок заменяет старые mock-first допущения для modal layer.

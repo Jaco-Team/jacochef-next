@@ -92,3 +92,35 @@ export function getRowBaseColor(type, isDimmed) {
     color: "#000000",
   };
 }
+
+export function buildShiftGroups(rows = []) {
+  const result = [];
+  let currentGroup = null;
+
+  rows.forEach((row, index) => {
+    if (row?.row === "header") {
+      currentGroup = {
+        id: `shift-${index}`,
+        label: row?.data || "Смена",
+        rows: [],
+        header: row,
+      };
+      result.push(currentGroup);
+      return;
+    }
+
+    if (!currentGroup) {
+      currentGroup = {
+        id: "shift-default",
+        label: "Смена",
+        rows: [],
+        header: { row: "header", data: "Смена" },
+      };
+      result.push(currentGroup);
+    }
+
+    currentGroup.rows.push(row);
+  });
+
+  return result;
+}

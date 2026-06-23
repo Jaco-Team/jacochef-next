@@ -1,5 +1,5 @@
 import { EMPTY_PERIOD, STAFF_SCHEDULE_SOURCE_MODES } from "./staffScheduleConstants";
-import { getVisibleSummaryColumns, toArray } from "./staffScheduleHelpers";
+import { buildShiftGroups, getVisibleSummaryColumns, toArray } from "./staffScheduleHelpers";
 
 export function hasBootstrapPayload(response) {
   return Boolean(response?.module_info || response?.point_list || response?.months);
@@ -80,14 +80,56 @@ export function buildPageStats(activePeriod) {
   };
 }
 
-export function buildPageViewModel({ moduleName, access, graph, selectedPart }) {
+function buildShiftOptions(rows) {
+  return [
+    { id: "all", name: "Все смены" },
+    ...buildShiftGroups(rows).map((group) => ({
+      id: group.id,
+      name: group.label,
+    })),
+  ];
+}
+
+function buildVisibleRows(rows, selectedShiftId, collapsedShiftIds = []) {
+  const groups = buildShiftGroups(rows);
+  const filteredGroups =
+    selectedShiftId && selectedShiftId !== "all"
+      ? groups.filter((group) => group.id === selectedShiftId)
+      : groups;
+
+  return {
+    shiftCount: filteredGroups.length,
+    rows: filteredGroups.flatMap((group) =>
+      collapsedShiftIds.includes(group.id)
+        ? [{ ...group.header, __shiftId: group.id }]
+        : [{ ...group.header, __shiftId: group.id }, ...group.rows],
+    ),
+  };
+}
+
+export function buildPageViewModel({
+  moduleName,
+  access,
+  graph,
+  selectedPart,
+  selectedShiftId = "all",
+  collapsedShiftIds = [],
+}) {
   const periodTabs = buildPeriodTabs(graph);
   const activePeriod = periodTabs[selectedPart] ?? periodTabs[0];
+  const visibleRows = buildVisibleRows(
+    activePeriod?.rows ?? [],
+    selectedShiftId,
+    collapsedShiftIds,
+  );
 
   return {
     moduleName,
     periodTabs,
     activePeriod,
+    visibleRows: visibleRows.rows,
+    shiftOptions: buildShiftOptions(activePeriod?.rows ?? []),
+    shownShiftCount: visibleRows.shiftCount,
     summaryColumns: getVisibleSummaryColumns(access),
     graphKind: graph.kind,
     stats: buildPageStats(activePeriod),

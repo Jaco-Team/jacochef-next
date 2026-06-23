@@ -16,3 +16,4 @@ export const EMPLOYEE_COLUMN_WIDTH = 170;
 export const POSITION_COLUMN_WIDTH = 150;
 export const DAY_COLUMN_WIDTH = 42;
 export const SUMMARY_COLUMN_WIDTH = 76;
+export const SELECTION_COLUMN_WIDTH = 42;

@@ -35,11 +35,21 @@ export default function StaffSchedulePage() {
         <Grid size={12}>
           <StaffScheduleTableSection
             period={page.view.activePeriod}
+            rows={page.view.visibleRows}
+            shownShiftCount={page.view.shownShiftCount}
             summaryColumns={page.view.summaryColumns}
             access={page.access}
             loading={page.isGraphLoading}
             onOpenDay={page.handleOpenDayModal}
             onOpenMonth={page.handleOpenMonthModal}
+            selectedRowIds={page.selectedRowIds}
+            onToggleRowSelection={page.handleToggleRowSelection}
+            collapsedShiftIds={page.collapsedShiftIds}
+            onToggleShiftCollapse={page.handleToggleShiftCollapse}
+            isCalendarHidden={page.isCalendarHidden}
+            onCalendarVisibilityChange={page.handleCalendarVisibilityChange}
+            colorMode={page.colorMode}
+            onColorModeChange={page.handleColorModeChange}
           />
         </Grid>
       </Grid>

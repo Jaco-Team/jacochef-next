@@ -1,6 +1,16 @@
-import { DialogActions, DialogContent, useMediaQuery, useTheme } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import {
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import MyDrawer from "@/ui/MyDrawer";
-import MyModal from "@/ui/MyModal";
 
 export default function StaffScheduleResponsiveModal({
   open,
@@ -27,14 +37,60 @@ export default function StaffScheduleResponsiveModal({
   }
 
   return (
-    <MyModal
+    <Dialog
       open={open}
       onClose={onClose}
-      title={title}
+      fullWidth
       maxWidth={maxWidth}
+      scroll="body"
     >
-      <DialogContent sx={{ pt: 1.5, pb: 2 }}>{children}</DialogContent>
+      <DialogTitle
+        sx={{
+          px: 3,
+          py: 2,
+          borderBottom: "1px solid #ECECEC",
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 2,
+            minWidth: 0,
+          }}
+        >
+          <Typography
+            component="span"
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              fontSize: 28,
+              lineHeight: 1.25,
+              fontWeight: 700,
+              color: "#1F2937",
+              wordBreak: "break-word",
+            }}
+          >
+            {title}
+          </Typography>
+          <IconButton
+            aria-label="закрыть"
+            onClick={onClose}
+            size="small"
+            sx={{
+              mt: 0.25,
+              flexShrink: 0,
+              alignSelf: "flex-start",
+              color: "#6B7280",
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 2, pb: 2 }}>{children}</DialogContent>
       {actions ? <DialogActions sx={{ px: 3, pb: 3 }}>{actions}</DialogActions> : null}
-    </MyModal>
+    </Dialog>
   );
 }
