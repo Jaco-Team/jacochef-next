@@ -47,6 +47,7 @@ export default function StaffSchedulePage() {
       <StaffScheduleDayModal
         modal={page.dayModal}
         onClose={page.handleCloseDayModal}
+        onSave={page.handleSaveDayModal}
       />
       <StaffScheduleMonthModal
         modal={page.monthModal}

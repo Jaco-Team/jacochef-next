@@ -42,6 +42,10 @@
 - removed the explicit mobile drawer close button; mobile modal dismissal is now swipe/backdrop-driven
 - switched the month modal toward legacy/Figma behavior by reusing the shared calendar picker instead of a custom-only list view
 - synced the local staff_schedule API wrapper to the expanded FE contract method set from `fe-api.md`
+- re-reviewed legacy `work_schedule` modal flow and confirmed the current read-only day/month modals are insufficient
+- updated PLAN.md to replace the read-only modal assumption with an edit-first staged modal track based on legacy behavior and the current Figma direction
+- rebuilt the day modal into an editable shell with shared controls, optional app/mentor fields, health block, hours editor, history block, and responsive save/cancel footer
+- wired day modal submit to live `save_user_day` with graph refresh on success and kept all changes isolated to `staff_schedule`
 2026-06-22 18:00 +0300
 - authenticated Figma MCP and located the target design page `График работы`, but further design inspection is blocked by the current Figma MCP seat rate limit
 - adjusted near-term execution plan: keep the module read-only and UI-focused, avoid inventing mutation behavior until backend routes land

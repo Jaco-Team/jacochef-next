@@ -190,6 +190,7 @@ export default function useStaffSchedulePage() {
         user_id: row.id,
         smena_id: row.smena_id,
         app_id: row.app_id,
+        point_id: pointId,
         date,
         date_start: row.date,
       };
@@ -226,7 +227,7 @@ export default function useStaffSchedulePage() {
         });
       }
     },
-    [api],
+    [api, pointId],
   );
 
   const handleCloseDayModal = useCallback(() => {
@@ -238,6 +239,20 @@ export default function useStaffSchedulePage() {
       data: null,
     });
   }, []);
+
+  const handleSaveDayModal = useCallback(
+    async (payload) => {
+      const response = await api.saveUserDay(payload);
+
+      if (response?.st === false) {
+        throw new Error(response?.text || "Не удалось сохранить день");
+      }
+
+      handleCloseDayModal();
+      await handleReload();
+    },
+    [api, handleCloseDayModal, handleReload],
+  );
 
   const handleOpenMonthModal = useCallback(
     async (row) => {
@@ -318,6 +333,7 @@ export default function useStaffSchedulePage() {
     handleReload,
     handleOpenDayModal,
     handleCloseDayModal,
+    handleSaveDayModal,
     handleOpenMonthModal,
     handleCloseMonthModal,
   };

@@ -53,15 +53,113 @@
 1. day details modal
    - открытие из day cell
    - источник: `get_user_day`
-   - first pass: read-only layout
+   - first pass: editable shell, потому что legacy и Figma оба указывают на edit-first flow
 2. month details modal
    - открытие из user row summary/month trigger
    - источник: `get_user_month`
-   - first pass: read-only layout
+   - first pass: staged month editor, а не просто read-only calendar preview
 3. smena details/edit shell
    - открытие из shift-related trigger, только если это подтверждено Figma/legacy scope
    - источники: `get_one_smena`, `get_all_for_new_smena`
    - first pass: shell/state map, без финального CRUD
+
+### Legacy Modal Behavior To Preserve
+
+`work_schedule` показывает, что modal layer здесь не informational, а action-heavy:
+
+- day modal:
+  - editable `hours[]`
+  - add-time accordion
+  - remove/edit existing time rows
+  - temperature + health state
+  - optional `new_app`
+  - optional `mentor_id`
+  - history accordion
+  - save / cancel footer
+- month modal:
+  - preset shift type chooser
+  - custom/day-by-day month calendar marking
+  - save / cancel footer
+- secondary compact day modal exists in legacy, но пока не обязателен, если Figma не требует отдельного read-only variant
+
+Из этого следует:
+
+- текущие read-only modal scaffolds не являются конечной архитектурой
+- modal UI нужно перестроить как staged form flow
+- history остается read-only subsection внутри edit modal
+- mobile sheet должен повторять те же шаги, а не отдельный урезанный сценарий
+
+### Modal Step Model
+
+#### Day Modal
+
+Нужны как минимум такие logical sections:
+
+1. header summary
+   - user
+   - date
+   - load / average load
+   - bonus
+2. health block
+   - `user_temp`
+   - `type_healf`
+   - optional `mentor_id`
+   - optional `new_app`
+3. hours editor
+   - existing rows
+   - add row action
+   - inline edit of `time_start` / `time_end`
+   - remove row action
+4. history block
+   - collapsible list
+5. footer actions
+   - save
+   - cancel
+
+#### Month Modal
+
+Нужны как минимум такие logical sections:
+
+1. header summary
+   - user
+   - active month
+2. shift template chooser
+   - full
+   - first half
+   - second half
+   - custom
+3. monthly calendar editor
+   - reusable `MyDatePickerGraph`
+   - selectable day markers
+   - color legend
+4. footer actions
+   - save
+   - cancel
+
+### Modal Delivery Revision
+
+Новый порядок реализации:
+
+#### Stage M2. Day modal editable foundation
+
+- заменить read-only body на editable stateful form shell
+- вынести mapper request/response -> draft state отдельно от page graph state
+- использовать shared form controls (`MySelect`, `MyTimePicker`, `MyAutocomplite2` или актуальные shared аналоги), если они уже есть и подходят
+- держать history как read-only block внутри того же modal
+
+#### Stage M3. Month modal editor foundation
+
+- заменить list-first month modal на editor layout
+- собрать preset selector + month calendar editing shell
+- не додумывать отсутствующие API поля: использовать только документированные `hours_days` и известные legacy semantics
+
+#### Stage M4. Persist wiring
+
+- только после того как editable UI states собраны и визуально проверены
+- day modal -> `save_user_day`
+- month modal -> `save_user_month`
+- success path должен закрывать modal и рефетчить graph
+- error path остается внутри modal/form layer
 
 ### Modal Architecture
 

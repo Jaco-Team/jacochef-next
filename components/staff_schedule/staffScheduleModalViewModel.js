@@ -1,6 +1,12 @@
 import dayjs from "dayjs";
 import { toArray } from "./staffScheduleHelpers";
 
+export const STAFF_SCHEDULE_HEALTH_OPTIONS = [
+  { id: 1, name: "Выходной" },
+  { id: 2, name: "Здоров" },
+  { id: 3, name: "Больничный лист" },
+];
+
 function formatDateLabel(value) {
   if (!value) {
     return "—";
@@ -41,8 +47,23 @@ export function buildDayModalViewModel(response) {
         ? `${user?.my_load_h ?? "—"} / ${user?.all_load_h ?? "—"}`
         : "",
     bonusLabel: response?.show_bonus ? (user?.bonus ?? "") : "",
+    newApp: info?.new_app ?? "",
+    mentorId: info?.mentor_id ?? "",
+    userTemp: info?.user_temp ?? "",
+    typeHealf: info?.type_healf ?? 2,
+    otherApps: toArray(response?.other_app).map((item) => ({
+      id: item?.id ?? "",
+      name: item?.name ?? "",
+    })),
+    mentorList: toArray(info?.mentor_list).map((item) => ({
+      id: item?.id ?? "",
+      name: item?.name ?? "",
+    })),
+    healthOptions: STAFF_SCHEDULE_HEALTH_OPTIONS,
     hours: toArray(info?.hours).map((item, index) => ({
       id: `${item?.time_start || "start"}-${item?.time_end || "end"}-${index}`,
+      time_start: item?.time_start ?? "",
+      time_end: item?.time_end ?? "",
       label: [item?.time_start, item?.time_end].filter(Boolean).join(" - ") || "—",
       appName: item?.app_name ?? "",
     })),
