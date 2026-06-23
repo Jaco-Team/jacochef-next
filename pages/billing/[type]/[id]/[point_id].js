@@ -2169,69 +2169,41 @@ const useStore = create((set, get) => ({
       console.log("res.items", res.items);
       console.log("bill_items", bill_items);
 
-      let check_this_bill = false;
-
-      res.billing_items.map((item) => {
-        let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
-
-        let this_bill = bill_items.find(
-          (b) =>
-            parseInt(b.item_id) === parseInt(item.item_id) &&
-            parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
-        );
-
-        if (this_bill) {
-          check_this_bill = true;
-        } else {
-          let this_bill_test = bill_items.find(
-            (b) => parseInt(b.item_id) === parseInt(item.item_id),
-          );
-
-          if (this_bill_test) {
-            check_this_bill = true;
-          }
-        }
-      });
-
       const normalizePrice = (v) => Number(parseFloat(v).toFixed(2));
 
-      const notFoundBillingItems = res.billing_items.filter(
-        (item) =>
-          !bill_items.some(
-            (bill) =>
-              Number(bill.item_id) === Number(item.item_id) &&
-              normalizePrice(bill.price_w_nds) === normalizePrice(item.price_w_nds),
-          ),
-      );
+      // Рабочая копия текущих позиций счёта. Каждую сопоставляем со строкой
+      // базового документа не более одного раза, чтобы дубли (одинаковый item_id
+      // с разными ценой/кол-вом) не схлопывались в первое совпадение.
+      const remainingBillItems = bill_items.slice();
 
-      console.log("notFoundBillingItems", notFoundBillingItems);
-
-      res.billing_items.forEach((item) => {
-        const found = bill_items.some(
-          (bill) =>
-            Number(bill.item_id) === Number(item.item_id) &&
-            normalizePrice(bill.price_w_nds) === normalizePrice(item.price_w_nds),
-        );
-
-        console.log(item, found ? "FOUND" : "NOT FOUND");
-      });
-
-      res.billing_items.map((item) => {
-        let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
-
-        let this_bill = bill_items.find(
+      const takeBillItem = (item) => {
+        let idx = remainingBillItems.findIndex(
           (b) =>
             parseInt(b.item_id) === parseInt(item.item_id) &&
-            parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
+            normalizePrice(b.price_w_nds) === normalizePrice(item.price_w_nds),
         );
 
-        if (!this_bill) {
-          this_bill = bill_items.find((b) => parseInt(b.item_id) === parseInt(item.item_id));
+        if (idx === -1) {
+          idx = remainingBillItems.findIndex((b) => parseInt(b.item_id) === parseInt(item.item_id));
         }
 
-        console.log("test123", check_this_bill, this_bill, item);
+        if (idx === -1) {
+          return null;
+        }
+
+        return remainingBillItems.splice(idx, 1)[0];
+      };
+
+      const check_this_bill = res.billing_items.some((item) =>
+        bill_items.some((b) => parseInt(b.item_id) === parseInt(item.item_id)),
+      );
+
+      res.billing_items.forEach((item) => {
+        const test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
 
         if (check_this_bill) {
+          const this_bill = takeBillItem(item);
+
           if (this_bill) {
             get().addItem_fast(
               this_bill.count,
@@ -2251,12 +2223,12 @@ const useStore = create((set, get) => ({
               0,
               0,
               item.price_w_nds,
-              notFoundBillingItems[0].ed_izmer_name,
-              notFoundBillingItems[0].pq,
-              notFoundBillingItems[0].item_id,
+              item.ed_izmer_name,
+              item.pq,
+              item.item_id,
               test,
               1,
-              this_bill.accounting_system,
+              test[0]?.accounting_system ?? [],
             );
           }
         } else {
@@ -2270,7 +2242,7 @@ const useStore = create((set, get) => ({
             item.item_id,
             test,
             0,
-            this_bill.accounting_system,
+            test[0]?.accounting_system ?? [],
           );
         }
       });
@@ -2645,28 +2617,36 @@ const useStore = create((set, get) => ({
     const bill_items_doc = get().bill_items_doc;
 
     if (bill_items_doc.length) {
-      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
-      const item = bill_items_doc.find(
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
-
-      const nds = get().check_nds_bill(
-        Number(item.price) == 0
-          ? 0
-          : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
-
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+      if (!item) {
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      vendor_items[0].data_bill = item;
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+        const nds = get().check_nds_bill(
+          Number(item.price) == 0
+            ? 0
+            : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
+
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
+      }
     }
 
     bill_items.push(vendor_items[0]);
@@ -2744,33 +2724,39 @@ const useStore = create((set, get) => ({
     console.log("bill_items_doc", bill_items_doc, sum_w_nds);
 
     if (bill_items_doc.length) {
-      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      // Сначала точное совпадение по товару и цене с НДС — чтобы у дублей
+      // (одинаковый item_id, разные цены) подтянулась своя строка-основание.
       let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
       if (!item) {
-        item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      // item.price_w_nds = Number(count) == 0 ? 0 : item.price_w_nds;
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        // item.price_w_nds = Number(count) == 0 ? 0 : item.price_w_nds;
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
-      const nds = get().check_nds_bill(
-        Number(item.price) == 0
-          ? 0
-          : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
+        const nds = get().check_nds_bill(
+          Number(item.price) == 0
+            ? 0
+            : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
 
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
       }
-
-      vendor_items[0].data_bill = item;
     }
 
     bill_items.push(vendor_items[0]);

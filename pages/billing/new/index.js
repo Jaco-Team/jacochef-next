@@ -2339,25 +2339,34 @@ const useStore = create((set, get) => ({
 
     if (bill_items_doc.length) {
       // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
-      const item = bill_items_doc.find(
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
-
-      const nds = get().check_nds_bill(
-        (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
-
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+      if (!item) {
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      vendor_items[0].data_bill = item;
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+        const nds = get().check_nds_bill(
+          (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
+
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
+      }
     }
 
     bill_items.push(vendor_items[0]);
@@ -2429,27 +2438,34 @@ const useStore = create((set, get) => ({
     // console.log("stage1.7", vendor_items[0].id, sum_w_nds);
 
     if (bill_items_doc.length) {
-      const item = bill_items_doc.find(
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
-      // if(item){
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
-
-      const nds = get().check_nds_bill(
-        (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
-
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+      if (!item) {
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      vendor_items[0].data_bill = item;
-      // }
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+        const nds = get().check_nds_bill(
+          (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
+
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
+      }
     }
 
     // console.log("stage2", vendor_items[0]);
