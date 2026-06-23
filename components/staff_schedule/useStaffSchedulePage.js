@@ -9,6 +9,12 @@ import {
   hasBootstrapPayload,
   hasGraphPayload,
 } from "./staffScheduleViewModel";
+import {
+  buildDayModalViewModel,
+  buildMonthModalViewModel,
+  hasDayModalPayload,
+  hasMonthModalPayload,
+} from "./staffScheduleModalViewModel";
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
@@ -38,6 +44,20 @@ export default function useStaffSchedulePage() {
     },
   });
   const [selectedPart, setSelectedPart] = useState(0);
+  const [dayModal, setDayModal] = useState({
+    open: false,
+    loading: false,
+    error: "",
+    request: null,
+    data: null,
+  });
+  const [monthModal, setMonthModal] = useState({
+    open: false,
+    loading: false,
+    error: "",
+    request: null,
+    data: null,
+  });
 
   const loadGraph = useCallback(
     async (nextPointId, nextMonthId) => {
@@ -160,6 +180,124 @@ export default function useStaffSchedulePage() {
     await loadGraph(pointId, monthId);
   }, [loadGraph, monthId, pointId]);
 
+  const handleOpenDayModal = useCallback(
+    async (row, date) => {
+      if (!row?.id || !row?.smena_id || !row?.app_id || !date || !row?.date) {
+        return;
+      }
+
+      const request = {
+        user_id: row.id,
+        smena_id: row.smena_id,
+        app_id: row.app_id,
+        date,
+        date_start: row.date,
+      };
+
+      setDayModal({
+        open: true,
+        loading: true,
+        error: "",
+        request,
+        data: null,
+      });
+
+      try {
+        const response = await api.getUserDay(request);
+
+        if (response?.st === false || !hasDayModalPayload(response)) {
+          throw new Error(response?.text || "Не удалось загрузить данные сотрудника");
+        }
+
+        setDayModal({
+          open: true,
+          loading: false,
+          error: "",
+          request,
+          data: buildDayModalViewModel(response),
+        });
+      } catch (requestError) {
+        setDayModal({
+          open: true,
+          loading: false,
+          error: requestError?.message || "Не удалось загрузить данные сотрудника",
+          request,
+          data: null,
+        });
+      }
+    },
+    [api],
+  );
+
+  const handleCloseDayModal = useCallback(() => {
+    setDayModal({
+      open: false,
+      loading: false,
+      error: "",
+      request: null,
+      data: null,
+    });
+  }, []);
+
+  const handleOpenMonthModal = useCallback(
+    async (row) => {
+      if (!row?.id || !row?.smena_id || !row?.app_id || !monthId || !row?.date) {
+        return;
+      }
+
+      const request = {
+        user_id: row.id,
+        smena_id: row.smena_id,
+        app_id: row.app_id,
+        date: monthId,
+        date_start: row.date,
+      };
+
+      setMonthModal({
+        open: true,
+        loading: true,
+        error: "",
+        request,
+        data: null,
+      });
+
+      try {
+        const response = await api.getUserMonth(request);
+
+        if (response?.st === false || !hasMonthModalPayload(response)) {
+          throw new Error(response?.text || "Не удалось загрузить месячные часы");
+        }
+
+        setMonthModal({
+          open: true,
+          loading: false,
+          error: "",
+          request,
+          data: buildMonthModalViewModel(response),
+        });
+      } catch (requestError) {
+        setMonthModal({
+          open: true,
+          loading: false,
+          error: requestError?.message || "Не удалось загрузить месячные часы",
+          request,
+          data: null,
+        });
+      }
+    },
+    [api, monthId],
+  );
+
+  const handleCloseMonthModal = useCallback(() => {
+    setMonthModal({
+      open: false,
+      loading: false,
+      error: "",
+      request: null,
+      data: null,
+    });
+  }, []);
+
   return {
     isBootstrapping,
     isGraphLoading,
@@ -172,9 +310,15 @@ export default function useStaffSchedulePage() {
     dataSource,
     selectedPart,
     view,
+    dayModal,
+    monthModal,
     setSelectedPart,
     handlePointChange,
     handleMonthChange,
     handleReload,
+    handleOpenDayModal,
+    handleCloseDayModal,
+    handleOpenMonthModal,
+    handleCloseMonthModal,
   };
 }

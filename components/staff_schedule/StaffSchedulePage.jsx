@@ -1,4 +1,6 @@
 import { Alert, Backdrop, Box, CircularProgress, Grid } from "@mui/material";
+import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
+import StaffScheduleMonthModal from "./modals/StaffScheduleMonthModal";
 import useStaffSchedulePage from "./useStaffSchedulePage";
 import StaffScheduleHeaderSection from "./sections/StaffScheduleHeaderSection";
 import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
@@ -36,9 +38,20 @@ export default function StaffSchedulePage() {
             summaryColumns={page.view.summaryColumns}
             access={page.access}
             loading={page.isGraphLoading}
+            onOpenDay={page.handleOpenDayModal}
+            onOpenMonth={page.handleOpenMonthModal}
           />
         </Grid>
       </Grid>
+
+      <StaffScheduleDayModal
+        modal={page.dayModal}
+        onClose={page.handleCloseDayModal}
+      />
+      <StaffScheduleMonthModal
+        modal={page.monthModal}
+        onClose={page.handleCloseMonthModal}
+      />
     </Box>
   );
 }

@@ -10,12 +10,12 @@ export function MyDatePickerGraph(props) {
   const [activeValue, setActiveValue] = useState(formatDate(`${props.year}-01`));
   const [minDate, setMinDate] = useState(new Date(data[0], parseInt(data[1]) - 1, 1));
   const [maxDate, setMaxDate] = useState(new Date(data[0], parseInt(data[1]), 0));
-  const [arr, setArr] = useState([]);
 
   useEffect(() => {
+    setActiveValue(formatDate(`${props.year}-01`));
     setMinDate(new Date(data[0], parseInt(data[1]) - 1, 1));
     setMaxDate(new Date(data[0], parseInt(data[1]), 0));
-  }, []);
+  }, [props.year]);
 
   // const renderWeekPickerDay = (date, selectedDates, pickersDayProps) => {
   //   pickersDayProps["selected"] = false;

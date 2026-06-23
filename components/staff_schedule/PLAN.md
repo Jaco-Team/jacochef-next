@@ -1,5 +1,152 @@
 # План модуля Staff Schedule
 
+## Update 2026-06-23: Modal Track
+
+Этот блок заменяет старые mock-first допущения для modal layer.
+
+Текущий курс:
+
+- новый `staff_schedule` работает от live API
+- shared/base компоненты не трогаем
+- визуальный source of truth для modal layer: Figma + старый `work_schedule` как behavioral reference
+- desktop и mobile проектируются сразу
+- пока делаем read-first modal architecture; CRUD flow планируется отдельно
+
+### Modal Design Rules
+
+- desktop modal: compact centered `Dialog`
+- mobile modal: bottom-sheet на `SwipeableDrawer`
+- использовать shared компоненты и existing MUI7 patterns
+- не тащить debug/meta-блоки в UI
+- loading/error/empty держать внутри modal body
+- destructive actions только через styled confirm modal
+- никакого browser `confirm`
+
+### Shared Building Blocks
+
+- desktop base: существующий `MyModal`, если его размеров и хедера хватает под Figma
+- mobile base: новый reusable wrapper `MyDrawer`
+- modal body sections: отдельные presentational blocks внутри `components/staff_schedule`
+- actions/footer: единый dense pattern под old module UI
+
+### `MyDrawer` Wrapper Plan
+
+Нужен новый shared wrapper уровня `ui/MyDrawer.jsx` или эквивалентного shared места, если в проекте уже есть подходящий mobile sheet primitive.
+
+Требования к wrapper:
+
+- обертка над `SwipeableDrawer`
+- anchor снизу
+- единый paper style под Figma mobile
+- optional title row
+- close action
+- safe-area bottom padding
+- body scroll внутри sheet
+- override-friendly API без лишней логики
+
+`staff_schedule` должен использовать этот wrapper, а не писать локальный drawer каждый раз.
+
+### Modal Scope Order
+
+Планировать и собирать модалки по приоритету:
+
+1. day details modal
+   - открытие из day cell
+   - источник: `get_user_day`
+   - first pass: read-only layout
+2. month details modal
+   - открытие из user row summary/month trigger
+   - источник: `get_user_month`
+   - first pass: read-only layout
+3. smena details/edit shell
+   - открытие из shift-related trigger, только если это подтверждено Figma/legacy scope
+   - источники: `get_one_smena`, `get_all_for_new_smena`
+   - first pass: shell/state map, без финального CRUD
+
+### Modal Architecture
+
+Для `staff_schedule`:
+
+- `useStaffSchedulePage` хранит только open/close trigger state и selected ids
+- каждая modal имеет свой data hook / loader boundary
+- table page не хранит modal payload внутри main graph state
+- response mapping идет через module helpers, не в JSX
+- desktop/mobile контейнер выбирается через shared responsive wrapper strategy
+
+Рекомендуемое разбиение:
+
+- `components/staff_schedule/modals/`
+- `components/staff_schedule/modals/StaffScheduleDayModal.jsx`
+- `components/staff_schedule/modals/StaffScheduleMonthModal.jsx`
+- `components/staff_schedule/modals/StaffScheduleSmenaModal.jsx`
+- `components/staff_schedule/modals/useStaffScheduleDayModal.js`
+- `components/staff_schedule/modals/useStaffScheduleMonthModal.js`
+- `components/staff_schedule/modals/useStaffScheduleSmenaModal.js`
+
+### Modal States Per Screen
+
+Для каждой modal нужны состояния:
+
+- closed
+- initial loading
+- loaded
+- empty
+- request error
+- blocked/no access если API так отвечает
+
+UI должен оставаться usable при повторном открытии:
+
+- close всегда доступен
+- stale payload не показывать как актуальный без явного состояния
+- reopen после ошибки должен делать clean refetch
+
+### Delivery Stages For Modals
+
+#### Stage M1. Modal foundation
+
+- проверить, хватает ли `MyModal` для desktop без правок shared behavior
+- создать reusable `MyDrawer` wrapper для mobile sheet pattern
+- определить единый modal header/footer pattern для `staff_schedule`
+
+#### Stage M2. Day modal
+
+- зафиксировать trigger map из table/day cell
+- подключить `get_user_day`
+- собрать read-only desktop/mobile layout по Figma/legacy
+
+#### Stage M3. Month modal
+
+- зафиксировать trigger map из summary/user context
+- подключить `get_user_month`
+- собрать read-only desktop/mobile layout
+
+#### Stage M4. Smena modal shell
+
+- только если подтверждено в scope
+- описать shell, loader, state transitions
+- без финальной CRUD-логики на этом проходе
+
+#### Stage M5. Polish and parity pass
+
+- сверить desktop/mobile against Figma
+- сверить behavior against old module where Figma does not specify transitions
+- вычистить лишние wrappers, spacing drift, and non-shared controls
+
+### Current Unknowns To Confirm Before Build
+
+Нельзя безопасно додумывать без подтверждения:
+
+- точный список modal screens для первого прохода
+- какие из них должны быть read-only сейчас
+- где именно в Figma есть mobile states для каждой modal
+- нужен ли `smena` modal уже сейчас или только `day` / `month`
+
+Пока это не подтверждено, безопасный первый scope для реализации:
+
+- foundation
+- `day` modal
+- `month` modal
+
 ## Кратко
 
 Цель первого запуска: собрать полный UI нового `staff_schedule` по Figma для desktop и mobile, но без зависимости от нового backend-контракта.

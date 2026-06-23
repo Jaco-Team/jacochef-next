@@ -17,9 +17,10 @@ import {
 } from "../staffScheduleConstants";
 import { getRowBaseColor, getSummaryCellValue, isEnabled, toArray } from "../staffScheduleHelpers";
 
-function ScheduleRow({ row, summaryColumns }) {
+function ScheduleRow({ row, summaryColumns, onOpenDay, onOpenMonth, canOpenMonth }) {
   const data = row?.data ?? {};
   const baseColors = getRowBaseColor(data?.type, Boolean(row?.color));
+  const canOpenDay = Boolean(onOpenDay) && String(data?.smena_id ?? "") !== "-1";
 
   return (
     <TableRow hover>
@@ -35,7 +36,9 @@ function ScheduleRow({ row, summaryColumns }) {
           borderRight: "1px solid #E5E7EB",
           py: 1,
           px: 2,
+          cursor: canOpenMonth ? "pointer" : "default",
         }}
+        onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
       >
         {data?.user_name || "Без имени"}
       </TableCell>
@@ -74,7 +77,9 @@ function ScheduleRow({ row, summaryColumns }) {
                 ? `repeating-linear-gradient(-45deg, ${backgroundColor}, ${backgroundColor} 8px, rgba(255, 0, 0, 0.2) 8px, rgba(255, 0, 0, 0.2) 12px)`
                 : backgroundColor,
               color: textColor,
+              cursor: canOpenDay ? "pointer" : "default",
             }}
+            onClick={canOpenDay ? () => onOpenDay(data, day?.date) : undefined}
           >
             {info?.hours || ""}
           </TableCell>
@@ -218,6 +223,8 @@ export default function StaffScheduleTableSection({
   summaryColumns,
   access,
   loading = false,
+  onOpenDay,
+  onOpenMonth,
 }) {
   const days = toArray(period?.meta?.days);
   const rows = toArray(period?.rows);
@@ -226,6 +233,7 @@ export default function StaffScheduleTableSection({
   const canShowPizza = isEnabled(access?.pizza_view);
   const canShowSlowOrders = isEnabled(access?.over_40_min_view);
   const canShowTotals = isEnabled(access?.sums_all_view);
+  const canOpenMonth = isEnabled(access?.full_month_access);
 
   if (loading && !days.length && !rows.length) {
     return (
@@ -396,6 +404,9 @@ export default function StaffScheduleTableSection({
                 key={`row-${row?.data?.id || row?.data?.smena_id || row?.data?.user_name || "x"}-${index}`}
                 row={row}
                 summaryColumns={summaryColumns}
+                onOpenDay={onOpenDay}
+                onOpenMonth={onOpenMonth}
+                canOpenMonth={canOpenMonth}
               />
             ),
           )}

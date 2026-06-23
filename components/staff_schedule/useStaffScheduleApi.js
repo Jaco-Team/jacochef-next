@@ -132,6 +132,14 @@ export default function useStaffScheduleApi() {
           allowLegacyFallback: true,
           requestOptions: { timeout: 4000 },
         }),
+      saveFastSmena: (payload) => requestCurrent("save_fastSmena", payload),
+      saveUserDay: (payload) => requestCurrent("save_user_day", payload),
+      saveUserMonth: (payload) => requestCurrent("save_user_month", payload),
+      saveNewSmena: (payload) => requestCurrent("saveNewSmena", payload),
+      saveEditSmena: (payload) => requestCurrent("saveEditSmena", payload),
+      deleteSmena: (payload) => requestCurrent("deleteSmena", payload),
+      saveFastPoint: (payload) => requestCurrent("save_fastPoint", payload),
+      saveFastTimeWeekOne: (payload) => requestCurrent("save_fastTimeWeekOne", payload),
     };
   }, []);
 }

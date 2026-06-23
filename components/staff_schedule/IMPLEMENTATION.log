@@ -34,6 +34,14 @@
 - renamed bootstrap contract/docs to `months`
 - renamed graph request field/docs to `month`
 - fixed `hours_days` naming in local staff_schedule contract docs
+2026-06-23
+- updated PLAN.md with the modal track: Figma/legacy modal rules, shared component usage, reusable mobile `MyDrawer` wrapper, and staged day/month/smena modal plan
+- removed the non-Figma stats/meta strip from the main staff_schedule header
+- added shared mobile `MyDrawer` and responsive modal scaffolding for staff_schedule
+- wired first read-only modal slice: day modal from day cells and month modal from employee name
+- removed the explicit mobile drawer close button; mobile modal dismissal is now swipe/backdrop-driven
+- switched the month modal toward legacy/Figma behavior by reusing the shared calendar picker instead of a custom-only list view
+- synced the local staff_schedule API wrapper to the expanded FE contract method set from `fe-api.md`
 2026-06-22 18:00 +0300
 - authenticated Figma MCP and located the target design page `График работы`, but further design inspection is blocked by the current Figma MCP seat rate limit
 - adjusted near-term execution plan: keep the module read-only and UI-focused, avoid inventing mutation behavior until backend routes land

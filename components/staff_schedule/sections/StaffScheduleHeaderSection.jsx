@@ -1,4 +1,4 @@
-import { Box, Button, Grid, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Button, Grid, Paper, Tab, Tabs, Typography } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { MySelect } from "@/ui/Forms";
 
@@ -99,51 +99,7 @@ export default function StaffScheduleHeaderSection({ page }) {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={{ xs: 0.25, md: 1.5 }}
-              justifyContent="flex-end"
-              alignItems={{ xs: "flex-start", md: "center" }}
-            >
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                Режим:{" "}
-                <Box
-                  component="span"
-                  sx={{ color: "text.primary", fontWeight: 700 }}
-                >
-                  {page.view.graphKind || "—"}
-                </Box>
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                Ошибки кухни:{" "}
-                <Box
-                  component="span"
-                  sx={{ color: "text.primary", fontWeight: 700 }}
-                >
-                  {page.view.stats.ordersErrorCount}
-                </Box>
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                Ошибки камер:{" "}
-                <Box
-                  component="span"
-                  sx={{ color: "text.primary", fontWeight: 700 }}
-                >
-                  {page.view.stats.camErrorCount}
-                </Box>
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                Дни / строки:{" "}
-                <Box
-                  component="span"
-                  sx={{ color: "text.primary", fontWeight: 700 }}
-                >
-                  {page.view.stats.daysCount} / {page.view.stats.rowsCount}
-                </Box>
-              </Typography>
-            </Stack>
-          </Grid>
+          <Grid size={{ xs: 12, md: 6 }} />
         </Grid>
       </Box>
     </Paper>
