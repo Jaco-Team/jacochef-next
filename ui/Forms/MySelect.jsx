@@ -190,8 +190,13 @@ export function MySelect(props) {
   const unifiedAutocompleteSx = isUnifiedPopup
     ? {
         "&.Mui-expanded .MuiOutlinedInput-root": {
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
+          borderBottomLeftRadius: "0 !important",
+          borderBottomRightRadius: "0 !important",
+          backgroundColor: "#FFFFFF",
+          boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08)",
+        },
+        "&.Mui-expanded .MuiOutlinedInput-notchedOutline": {
+          borderBottomColor: "transparent !important",
         },
       }
     : {};
@@ -291,7 +296,7 @@ export function MySelect(props) {
 
   const unifiedPopperSx = isUnifiedPopup
     ? {
-        marginTop: "-1px !important",
+        marginTop: "-2px !important",
         zIndex: 1400,
         "& .MuiAutocomplete-paper": {
           margin: 0,
@@ -308,7 +313,7 @@ export function MySelect(props) {
         borderTopRightRadius: 0,
         borderBottomLeftRadius: unifiedRadius,
         borderBottomRightRadius: unifiedRadius,
-        boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.08)",
+        boxShadow: "0 18px 36px rgba(15, 23, 42, 0.1)",
         overflow: "hidden",
         backgroundColor: "#FFFFFF",
         width: "100%",

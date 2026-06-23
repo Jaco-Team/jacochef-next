@@ -27,6 +27,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
 
 import Dropzone from "dropzone";
@@ -2966,6 +2967,48 @@ const useStore = create((set, get) => ({
 
     get().check_price_item_new();
   },
+
+  copyDataBillToItem: (id, key) => {
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    bill_items = bill_items.map((item, index) => {
+      if (item.id === id && key === index && item?.data_bill) {
+        const dataBill = item.data_bill;
+        const priceItem = dataBill.price ?? "";
+        const priceWithNds = dataBill.price_w_nds ?? "";
+
+        item.pq = dataBill.pq ?? "";
+        item.count = dataBill.count ?? "";
+        item.fact_unit =
+          dataBill.fact_unit ?? getBillingFactUnitText(dataBill.count, dataBill.pq) ?? "";
+        item.price_item = priceItem;
+        item.price_w_nds = priceWithNds;
+        item.summ_nds =
+          dataBill.summ_nds ??
+          (priceItem !== "" && priceWithNds !== ""
+            ? (Number(priceWithNds) - Number(priceItem)).toFixed(2)
+            : "");
+        item.nds = dataBill.nds ?? "";
+        item.price = getBillItemUnitPrice(item);
+        item.one_price_bill = item.price;
+      }
+
+      return item;
+    });
+
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds,
+    });
+
+    get().check_price_item_new();
+  },
 }));
 
 function FormHeader_new({ type_edit }) {
@@ -3409,17 +3452,25 @@ function FormVendorItems() {
 }
 
 function VendorItemsTableEdit({ showPriceWarnings = true }) {
-  const [bill, type, vendors, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore(
-    (state) => [
-      state.bill,
-      state.type,
-      state.vendors,
-      state.deleteItem,
-      state.changeDataTable,
-      state.handleDrag,
-      state.handleDrop,
-    ],
-  );
+  const [
+    bill,
+    type,
+    vendors,
+    deleteItem,
+    changeDataTable,
+    copyDataBillToItem,
+    handleDrag,
+    handleDrop,
+  ] = useStore((state) => [
+    state.bill,
+    state.type,
+    state.vendors,
+    state.deleteItem,
+    state.changeDataTable,
+    state.copyDataBillToItem,
+    state.handleDrag,
+    state.handleDrop,
+  ]);
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3563,7 +3614,29 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
                         />
                       </TableCell>
                     )}
-                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    {!item?.data_bill ? null : (
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <span>После</span>
+                          <Tooltip title="Скопировать без изменений">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              aria-label="Скопировать без изменений"
+                              onClick={() => copyDataBillToItem(item.id, key)}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                border: "1px solid",
+                                borderColor: "primary.main",
+                              }}
+                            >
+                              <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    )}
                     <TableCell className="ceil_white">
                       {parseInt(bill?.type) == 5 || parseInt(bill?.type) == 2 ? (
                         <MySelect
