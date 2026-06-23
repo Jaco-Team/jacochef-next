@@ -1497,7 +1497,7 @@ function EndPage() {
           >
             <Grid size={{ xs: 12, sm: 4 }}>
               <MyAutocomplite
-                label="Группы"
+                label="Города"
                 data={cities}
                 multiple={false}
                 value={form.cities}
