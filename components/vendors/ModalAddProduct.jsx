@@ -51,12 +51,20 @@ export default function ModalAddProduct({
             func={(_, value) => setSelectedCatalogItemId(value?.id || "")}
             disabled={isLoading || !itemsSelectData.length}
           />
-          {!itemsSelectData.length ? (
+          {!isLoading && !itemsSelectData.length ? (
             <Typography
               variant="body2"
               color="text.secondary"
             >
               Нет доступных товаров для добавления.
+            </Typography>
+          ) : null}
+          {isLoading && !itemsSelectData.length ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              Загрузка товаров...
             </Typography>
           ) : null}
 

@@ -8,6 +8,7 @@ export default function VendorPriceItemForm({
   canEdit,
   cityLabel,
   hideTitle = false,
+  hideActions = false,
   draft,
   onCancel,
   onSave,
@@ -73,9 +74,9 @@ export default function VendorPriceItemForm({
         </Grid>
       </Grid>
 
-      {canEdit ? (
+      {canEdit && !hideActions ? (
         <Stack
-          direction="row"
+          direction={{ xs: "column-reverse", sm: "row" }}
           spacing={1}
           justifyContent="flex-end"
           sx={{ mt: 2 }}
@@ -83,6 +84,8 @@ export default function VendorPriceItemForm({
           <Button
             onClick={onCancel}
             disabled={isLoading}
+            fullWidth
+            sx={{ width: { sm: "auto" } }}
           >
             Отмена
           </Button>
@@ -90,6 +93,8 @@ export default function VendorPriceItemForm({
             variant="contained"
             onClick={onSave}
             disabled={isLoading}
+            fullWidth
+            sx={{ width: { sm: "auto" } }}
           >
             Сохранить
           </Button>
