@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useStaffScheduleApi from "./useStaffScheduleApi";
-import { EMPTY_PERIOD, STAFF_SCHEDULE_SOURCE_MODES } from "./staffScheduleConstants";
+import { EMPTY_PERIOD } from "./staffScheduleConstants";
 import { getActiveMonthId, toArray } from "./staffScheduleHelpers";
 import {
   buildGraphState,
@@ -28,7 +28,6 @@ export default function useStaffSchedulePage() {
   const [pointId, setPointId] = useState("");
   const [monthId, setMonthId] = useState("");
   const [access, setAccess] = useState({});
-  const [dataSource, setDataSource] = useState(STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE);
   const [graph, setGraph] = useState({
     oneMeta: EMPTY_PERIOD,
     twoMeta: EMPTY_PERIOD,
@@ -63,6 +62,26 @@ export default function useStaffSchedulePage() {
     request: null,
     data: null,
   });
+  const [smenaModal, setSmenaModal] = useState({
+    open: false,
+    loading: false,
+    error: "",
+    mode: "create",
+    request: null,
+    data: null,
+  });
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    message: "",
+    confirmLabel: "Подтвердить",
+    onConfirm: null,
+  });
+  const [fastActions, setFastActions] = useState({
+    open: false,
+    screen: "root",
+    user: null,
+  });
 
   const loadGraph = useCallback(
     async (nextPointId, nextMonthId) => {
@@ -85,7 +104,6 @@ export default function useStaffSchedulePage() {
 
         setGraph(buildGraphState(response));
         setAccess(response?.access ?? {});
-        setDataSource(response?.__source ?? STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE);
         setSelectedPart(Math.max(Number(response?.part || 1) - 1, 0));
       } catch (requestError) {
         setError(requestError?.message || "Не удалось загрузить график");
@@ -125,7 +143,6 @@ export default function useStaffSchedulePage() {
         setPointId(nextPointId);
         setMonthId(nextMonthId);
         setAccess(response?.access ?? {});
-        setDataSource(response?.__source ?? STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE);
 
         if (nextPointId && nextMonthId) {
           await loadGraph(nextPointId, nextMonthId);
@@ -199,11 +216,11 @@ export default function useStaffSchedulePage() {
   }, []);
 
   const handleCalendarVisibilityChange = useCallback((event) => {
-    setIsCalendarHidden(event.target.checked);
+    setIsCalendarHidden(!event.target.checked);
   }, []);
 
   const handleColorModeChange = useCallback((event) => {
-    setColorMode(event.target.value);
+    setColorMode(event.target.checked ? "default" : "plain");
   }, []);
 
   const handleToggleShiftCollapse = useCallback((shiftId) => {
@@ -355,6 +372,347 @@ export default function useStaffSchedulePage() {
     });
   }, []);
 
+  const handleSaveMonthModal = useCallback(
+    async (payload) => {
+      const response = await api.saveUserMonth(payload);
+
+      if (response?.st === false) {
+        throw new Error(response?.text || "Не удалось сохранить месяц");
+      }
+
+      handleCloseMonthModal();
+      await handleReload();
+    },
+    [api, handleCloseMonthModal, handleReload],
+  );
+
+  const handleOpenCreateSmena = useCallback(async () => {
+    setSmenaModal({
+      open: true,
+      loading: true,
+      error: "",
+      mode: "create",
+      request: { point_id: pointId },
+      data: null,
+    });
+
+    try {
+      const response = await api.getAllForNewSmena({ point_id: pointId });
+
+      if (response?.st === false) {
+        throw new Error(response?.text || "Не удалось загрузить список сотрудников");
+      }
+
+      setSmenaModal({
+        open: true,
+        loading: false,
+        error: "",
+        mode: "create",
+        request: { point_id: pointId },
+        data: {
+          name: "",
+          users: toArray(response?.free_users),
+        },
+      });
+    } catch (requestError) {
+      setSmenaModal({
+        open: true,
+        loading: false,
+        error: requestError?.message || "Не удалось загрузить список сотрудников",
+        mode: "create",
+        request: { point_id: pointId },
+        data: null,
+      });
+    }
+  }, [api, pointId]);
+
+  const handleOpenEditSmena = useCallback(
+    async (smenaId) => {
+      if (!smenaId) {
+        return;
+      }
+
+      setSmenaModal({
+        open: true,
+        loading: true,
+        error: "",
+        mode: "edit",
+        request: { id: smenaId, point_id: pointId },
+        data: null,
+      });
+
+      try {
+        const response = await api.getOneSmena({ id: smenaId, point_id: pointId });
+
+        if (response?.st === false || !response?.smena) {
+          throw new Error(response?.text || "Не удалось загрузить смену");
+        }
+
+        setSmenaModal({
+          open: true,
+          loading: false,
+          error: "",
+          mode: "edit",
+          request: { id: smenaId, point_id: pointId },
+          data: {
+            name: response?.smena?.name ?? "",
+            users: toArray(response?.free_users),
+          },
+        });
+      } catch (requestError) {
+        setSmenaModal({
+          open: true,
+          loading: false,
+          error: requestError?.message || "Не удалось загрузить смену",
+          mode: "edit",
+          request: { id: smenaId, point_id: pointId },
+          data: null,
+        });
+      }
+    },
+    [api, pointId],
+  );
+
+  const handleCloseSmenaModal = useCallback(() => {
+    setSmenaModal({
+      open: false,
+      loading: false,
+      error: "",
+      mode: "create",
+      request: null,
+      data: null,
+    });
+  }, []);
+
+  const handleSaveSmenaModal = useCallback(
+    async ({ id, name, users }) => {
+      const payload = {
+        name,
+        point_id: pointId,
+        users: users.map((item) => ({
+          id: item.id,
+          app_id: item.app_id,
+          is_my: item.is_my,
+        })),
+      };
+
+      const response =
+        smenaModal.mode === "create"
+          ? await api.saveNewSmena(payload)
+          : await api.saveEditSmena({ ...payload, id });
+
+      if (response?.st === false) {
+        throw new Error(response?.text || "Не удалось сохранить смену");
+      }
+
+      handleCloseSmenaModal();
+      await handleReload();
+    },
+    [api, handleCloseSmenaModal, handleReload, pointId, smenaModal.mode],
+  );
+
+  const handleRequestDeleteSmena = useCallback(() => {
+    setConfirmDialog({
+      open: true,
+      title: "Удалить смену?",
+      message: "Смена будет удалена, если в ней нет сотрудников.",
+      confirmLabel: "Удалить",
+      onConfirm: async () => {
+        const response = await api.deleteSmena({
+          id: smenaModal.request?.id,
+          point_id: pointId,
+          users: smenaModal.data?.users ?? [],
+        });
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось удалить смену");
+        }
+
+        handleCloseSmenaModal();
+        await handleReload();
+      },
+    });
+  }, [api, handleCloseSmenaModal, handleReload, pointId, smenaModal]);
+
+  const handleCloseConfirmDialog = useCallback(() => {
+    setConfirmDialog({
+      open: false,
+      title: "",
+      message: "",
+      confirmLabel: "Подтвердить",
+      onConfirm: null,
+    });
+  }, []);
+
+  const handleConfirmDialog = useCallback(async () => {
+    const action = confirmDialog.onConfirm;
+
+    handleCloseConfirmDialog();
+
+    if (!action) {
+      return;
+    }
+
+    try {
+      await action();
+    } catch (requestError) {
+      setError(requestError?.message || "Не удалось выполнить действие");
+    }
+  }, [confirmDialog.onConfirm, handleCloseConfirmDialog]);
+
+  const handleOpenFastActions = useCallback((row) => {
+    if (!row?.id || String(row?.smena_id ?? "") === "-1") {
+      return;
+    }
+
+    setFastActions({
+      open: true,
+      screen: "root",
+      user: row,
+    });
+  }, []);
+
+  const handleCloseFastActions = useCallback(() => {
+    setFastActions({
+      open: false,
+      screen: "root",
+      user: null,
+    });
+  }, []);
+
+  const handleOpenBulkFastActions = useCallback(() => {
+    const selectedRows = view.visibleRows
+      .filter((row) => row?.row !== "header")
+      .map((row) => row?.data)
+      .filter((row) => row?.id && selectedRowIds.includes(String(row.id)));
+
+    if (!selectedRows.length) {
+      return;
+    }
+
+    handleOpenFastActions(selectedRows[0]);
+  }, [handleOpenFastActions, selectedRowIds, view.visibleRows]);
+
+  const runFastMutation = useCallback(
+    async (request) => {
+      try {
+        const response = await request();
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось выполнить действие");
+        }
+
+        handleCloseFastActions();
+        await handleReload();
+      } catch (requestError) {
+        setError(requestError?.message || "Не удалось выполнить действие");
+      }
+    },
+    [handleCloseFastActions, handleReload],
+  );
+
+  const handleSelectFastSmena = useCallback(
+    (newSmenaId) => {
+      const user = fastActions.user;
+
+      if (!user) {
+        return;
+      }
+
+      runFastMutation(() =>
+        api.saveFastSmena({
+          new_smena_id: newSmenaId,
+          user_id: user.id,
+          app_id: user.app_id,
+          smena_id: user.smena_id,
+          date: monthId,
+          part: selectedPart + 1,
+        }),
+      );
+    },
+    [api, fastActions.user, monthId, runFastMutation, selectedPart],
+  );
+
+  const handleSelectFastPoint = useCallback(
+    (pointItem) => {
+      const user = fastActions.user;
+
+      if (!user || !pointItem) {
+        return;
+      }
+
+      handleCloseFastActions();
+
+      setConfirmDialog({
+        open: true,
+        title: "Сменить точку?",
+        message: "Точно сменить точку с сегодняшнего дня?",
+        confirmLabel: "Сменить",
+        onConfirm: async () => {
+          const response = await api.saveFastPoint({
+            new_point_id: pointItem.point_id,
+            new_smena_id: pointItem.smena_id,
+            user_id: user.id,
+            app_id: user.app_id,
+            smena_id: user.smena_id,
+          });
+
+          if (response?.st === false) {
+            throw new Error(response?.text || "Не удалось сменить точку");
+          }
+
+          await handleReload();
+        },
+      });
+    },
+    [api, fastActions.user, handleCloseFastActions, handleReload],
+  );
+
+  const handleOpenFastActionsTimeWeek = useCallback(() => {
+    setFastActions((prev) => ({
+      ...prev,
+      open: true,
+      screen: "time-week",
+    }));
+  }, []);
+
+  const handleOpenFastActionsSmenaList = useCallback(() => {
+    setFastActions((prev) => ({
+      ...prev,
+      open: true,
+      screen: "smena-list",
+    }));
+  }, []);
+
+  const handleOpenFastActionsPointList = useCallback(() => {
+    setFastActions((prev) => ({
+      ...prev,
+      open: true,
+      screen: "point-list",
+    }));
+  }, []);
+
+  const handleSelectFastTimeWeekType = useCallback(
+    (type) => {
+      const user = fastActions.user;
+
+      if (!user) {
+        return;
+      }
+
+      runFastMutation(() =>
+        api.saveFastTimeWeekOne({
+          type,
+          user_id: user.id,
+          app_id: user.app_id,
+          smena_id: user.smena_id,
+          date: monthId,
+        }),
+      );
+    },
+    [api, fastActions.user, monthId, runFastMutation],
+  );
+
   return {
     isBootstrapping,
     isGraphLoading,
@@ -364,7 +722,6 @@ export default function useStaffSchedulePage() {
     pointId,
     monthId,
     access,
-    dataSource,
     selectedPart,
     selectedShiftId,
     isCalendarHidden,
@@ -374,6 +731,9 @@ export default function useStaffSchedulePage() {
     view,
     dayModal,
     monthModal,
+    smenaModal,
+    confirmDialog,
+    fastActions,
     setSelectedPart,
     handlePointChange,
     handleMonthChange,
@@ -388,5 +748,22 @@ export default function useStaffSchedulePage() {
     handleSaveDayModal,
     handleOpenMonthModal,
     handleCloseMonthModal,
+    handleSaveMonthModal,
+    handleOpenCreateSmena,
+    handleOpenEditSmena,
+    handleCloseSmenaModal,
+    handleSaveSmenaModal,
+    handleRequestDeleteSmena,
+    handleCloseConfirmDialog,
+    handleConfirmDialog,
+    handleOpenFastActions,
+    handleCloseFastActions,
+    handleOpenBulkFastActions,
+    handleOpenFastActionsTimeWeek,
+    handleOpenFastActionsSmenaList,
+    handleOpenFastActionsPointList,
+    handleSelectFastSmena,
+    handleSelectFastPoint,
+    handleSelectFastTimeWeekType,
   };
 }

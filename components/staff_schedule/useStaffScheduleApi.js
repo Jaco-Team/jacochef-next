@@ -1,6 +1,4 @@
 import { useMemo, useRef } from "react";
-import axios from "axios";
-import queryString from "query-string";
 import useApi from "@/src/hooks/useApi";
 
 export default function useStaffScheduleApi() {
@@ -17,15 +15,6 @@ export default function useStaffScheduleApi() {
       return payload;
     };
 
-    const buildLegacyBody = (method, payload = {}) =>
-      queryString.stringify({
-        method,
-        module: "work_schedule",
-        version: 2,
-        login: localStorage.getItem("token"),
-        data: JSON.stringify(payload),
-      });
-
     const parseErrorText = (error) =>
       error?.code === "ECONNABORTED"
         ? "Request timeout"
@@ -33,22 +22,7 @@ export default function useStaffScheduleApi() {
           error?.response?.data?.message ||
           `HTTP ${error?.response?.status || 500}`;
 
-    const shouldUseLegacyFallback = (response) => {
-      const text = String(response?.text || "").toLowerCase();
-
-      return (
-        response?.status === 408 ||
-        response?.status === 504 ||
-        response?.status === 403 ||
-        response?.status === 500 ||
-        text.includes("timeout") ||
-        text.includes("forbidden") ||
-        text.includes("http 403") ||
-        text.includes("http 500")
-      );
-    };
-
-    const requestCurrent = async (method, payload = {}, options = {}) => {
+    const request = async (method, payload = {}, options = {}) => {
       try {
         const response = await apiRef.current(method, payload, options);
         return { ...unwrapPayload(response), __source: "staff_schedule" };
@@ -61,85 +35,21 @@ export default function useStaffScheduleApi() {
       }
     };
 
-    const requestLegacy = async (method, payload = {}) => {
-      try {
-        const response = await axios.post(
-          "https://jacochef.ru/api/index_new.php",
-          buildLegacyBody(method, payload),
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-          },
-        );
-
-        if (typeof response?.data === "string") {
-          return { st: false, text: response.data, status: response?.status || 200 };
-        }
-
-        return { ...unwrapPayload(response?.data), __source: "work_schedule_fallback" };
-      } catch (error) {
-        return {
-          st: false,
-          status: error?.response?.status || 500,
-          text: parseErrorText(error),
-        };
-      }
-    };
-
-    const request = async (method, payload = {}, options = {}) => {
-      const response = await requestCurrent(method, payload, options.requestOptions);
-
-      if (response?.st || !options.allowLegacyFallback || !shouldUseLegacyFallback(response)) {
-        return response;
-      }
-
-      return requestLegacy(method, payload);
-    };
-
     return {
-      getAll: () =>
-        request(
-          "get_all",
-          {},
-          {
-            allowLegacyFallback: true,
-            requestOptions: { timeout: 4000 },
-          },
-        ),
-      getGraph: (payload) =>
-        request("get_graph", payload, {
-          allowLegacyFallback: true,
-          requestOptions: { timeout: 4000 },
-        }),
-      getUserDay: (payload) =>
-        request("get_user_day", payload, {
-          allowLegacyFallback: true,
-          requestOptions: { timeout: 4000 },
-        }),
-      getUserMonth: (payload) =>
-        request("get_user_month", payload, {
-          allowLegacyFallback: true,
-          requestOptions: { timeout: 4000 },
-        }),
-      getAllForNewSmena: (payload) =>
-        request("get_all_for_new_smena", payload, {
-          allowLegacyFallback: true,
-          requestOptions: { timeout: 4000 },
-        }),
-      getOneSmena: (payload) =>
-        request("get_one_smena", payload, {
-          allowLegacyFallback: true,
-          requestOptions: { timeout: 4000 },
-        }),
-      saveFastSmena: (payload) => requestCurrent("save_fastSmena", payload),
-      saveUserDay: (payload) => requestCurrent("save_user_day", payload),
-      saveUserMonth: (payload) => requestCurrent("save_user_month", payload),
-      saveNewSmena: (payload) => requestCurrent("saveNewSmena", payload),
-      saveEditSmena: (payload) => requestCurrent("saveEditSmena", payload),
-      deleteSmena: (payload) => requestCurrent("deleteSmena", payload),
-      saveFastPoint: (payload) => requestCurrent("save_fastPoint", payload),
-      saveFastTimeWeekOne: (payload) => requestCurrent("save_fastTimeWeekOne", payload),
+      getAll: () => request("get_all", {}, { timeout: 4000 }),
+      getGraph: (payload) => request("get_graph", payload, { timeout: 4000 }),
+      getUserDay: (payload) => request("get_user_day", payload, { timeout: 4000 }),
+      getUserMonth: (payload) => request("get_user_month", payload, { timeout: 4000 }),
+      getAllForNewSmena: (payload) => request("get_all_for_new_smena", payload, { timeout: 4000 }),
+      getOneSmena: (payload) => request("get_one_smena", payload, { timeout: 4000 }),
+      saveFastSmena: (payload) => request("save_fastSmena", payload),
+      saveUserDay: (payload) => request("save_user_day", payload),
+      saveUserMonth: (payload) => request("save_user_month", payload),
+      saveNewSmena: (payload) => request("saveNewSmena", payload),
+      saveEditSmena: (payload) => request("saveEditSmena", payload),
+      deleteSmena: (payload) => request("deleteSmena", payload),
+      saveFastPoint: (payload) => request("save_fastPoint", payload),
+      saveFastTimeWeekOne: (payload) => request("save_fastTimeWeekOne", payload),
     };
   }, []);
 }

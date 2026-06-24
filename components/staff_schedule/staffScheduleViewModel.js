@@ -1,4 +1,4 @@
-import { EMPTY_PERIOD, STAFF_SCHEDULE_SOURCE_MODES } from "./staffScheduleConstants";
+import { EMPTY_PERIOD } from "./staffScheduleConstants";
 import { buildShiftGroups, getVisibleSummaryColumns, toArray } from "./staffScheduleHelpers";
 
 export function hasBootstrapPayload(response) {
@@ -15,14 +15,7 @@ export function hasGraphPayload(response) {
 }
 
 export function getModuleTitle(response) {
-  const source = response?.__source ?? STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE;
-  const responseName = response?.module_info?.name;
-
-  if (source !== STAFF_SCHEDULE_SOURCE_MODES.STAFF_SCHEDULE && responseName === "Модуль работы") {
-    return "График работы";
-  }
-
-  return responseName || "График работы";
+  return response?.module_info?.name || "График работы";
 }
 
 export function buildGraphState(response) {
@@ -99,11 +92,16 @@ function buildVisibleRows(rows, selectedShiftId, collapsedShiftIds = []) {
 
   return {
     shiftCount: filteredGroups.length,
-    rows: filteredGroups.flatMap((group) =>
-      collapsedShiftIds.includes(group.id)
-        ? [{ ...group.header, __shiftId: group.id }]
-        : [{ ...group.header, __shiftId: group.id }, ...group.rows],
-    ),
+    rows: filteredGroups.flatMap((group, groupIndex) => {
+      const headerRow = {
+        ...group.header,
+        __shiftId: group.id,
+        __smenaId: group.smenaId || group.header?.smena_id,
+        __isFirstShift: groupIndex === 0,
+      };
+
+      return collapsedShiftIds.includes(group.id) ? [headerRow] : [headerRow, ...group.rows];
+    }),
   };
 }
 

@@ -1,23 +1,73 @@
-import { Alert, Box, CircularProgress, Paper, Stack, Typography } from "@mui/material";
-import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import { useEffect, useMemo, useState } from "react";
+import SendIcon from "@mui/icons-material/Send";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  List,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import dayjs from "dayjs";
-import { MyDatePickerGraph } from "@/ui/Forms";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import { MyDatePickerGraph, MySelect } from "@/ui/Forms";
+import {
+  buildMonthModalDraft,
+  buildMonthSavePayload,
+  MONTH_TYPE_PRESETS,
+  toggleMonthDay,
+} from "../staffScheduleModalViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
-const TYPE_META = {
-  0: { label: "Полная смена", color: "#98e38d" },
-  1: { label: "Первая половина", color: "#3dcef2" },
-  2: { label: "Вторая половина", color: "#1560bd" },
-  3: { label: "Другое", color: "#926eae" },
-};
-
 function getTypeMeta(type) {
-  return TYPE_META[type] || { label: "Смена", color: "#CBD5E1" };
+  return MONTH_TYPE_PRESETS.find((item) => item.type === Number(type)) || MONTH_TYPE_PRESETS[0];
 }
 
-export default function StaffScheduleMonthModal({ modal, onClose }) {
+export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
+  const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   const monthValue = modal.request?.date || "";
-  const daysMap = new Map((modal.data?.days || []).map((item) => [item.date, item]));
+  const daysMap = useMemo(
+    () => new Map(draft.dates.map((item) => [item.date, item])),
+    [draft.dates],
+  );
+
+  useEffect(() => {
+    if (!modal.open) {
+      return;
+    }
+
+    setDraft(buildMonthModalDraft(modal.data));
+    setSaveError("");
+    setIsSaving(false);
+  }, [modal.open, modal.data]);
+
+  const handleDayClick = (date) => {
+    setDraft((prev) => toggleMonthDay(prev, date, prev.selectedType));
+  };
+
+  const handleSave = async () => {
+    if (!onSave || !modal.request) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      await onSave(buildMonthSavePayload(modal.request, draft));
+    } catch (error) {
+      setSaveError(error?.message || "Не удалось сохранить месяц");
+      setIsSaving(false);
+    }
+  };
 
   const renderWeekPickerDay = (pickerDay) => {
     const date = dayjs(pickerDay.day).format("YYYY-MM-DD");
@@ -28,19 +78,45 @@ export default function StaffScheduleMonthModal({ modal, onClose }) {
       <PickersDay
         {...pickerDay}
         day={pickerDay.day}
-        disabled
+        onClick={() => handleDayClick(date)}
         sx={{
           backgroundColor: dayItem ? typeMeta.color : "#ffffff",
           color: dayItem ? "#ffffff" : "rgba(0, 0, 0, 0.87)",
           fontWeight: dayItem ? 700 : 400,
-          "&.Mui-disabled": {
-            color: dayItem ? "#ffffff" : "rgba(0, 0, 0, 0.38)",
-            backgroundColor: dayItem ? typeMeta.color : "#ffffff",
-          },
+          cursor: "pointer",
         }}
       />
     );
   };
+
+  const actions =
+    modal.loading || !modal.data ? null : (
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ pt: 1, width: "100%" }}
+      >
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleSave}
+          disabled={isSaving}
+          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
+        >
+          {isSaving ? "Сохранение..." : "Сохранить"}
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={onClose}
+          disabled={isSaving}
+          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
+        >
+          Отмена
+        </Button>
+      </Stack>
+    );
 
   return (
     <StaffScheduleResponsiveModal
@@ -48,9 +124,11 @@ export default function StaffScheduleMonthModal({ modal, onClose }) {
       onClose={onClose}
       title={modal.data?.title || "Месячные часы"}
       maxWidth="md"
+      actions={actions}
     >
       <Stack spacing={2}>
         {modal.error ? <Alert severity="error">{modal.error}</Alert> : null}
+        {saveError ? <Alert severity="error">{saveError}</Alert> : null}
 
         {modal.loading ? (
           <Box sx={{ py: 5, textAlign: "center" }}>
@@ -65,120 +143,128 @@ export default function StaffScheduleMonthModal({ modal, onClose }) {
         ) : null}
 
         {!modal.loading && modal.data ? (
-          <>
-            {modal.data.subtitle ? (
-              <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                {modal.data.subtitle}
-              </Typography>
+          <Grid
+            container
+            spacing={2}
+          >
+            {modal.data.otherApps?.length ? (
+              <Grid size={12}>
+                <MySelect
+                  data={modal.data.otherApps}
+                  value={draft.newApp}
+                  func={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      newApp: event.target.value,
+                    }))
+                  }
+                  label="Кем работает"
+                  unifiedPopup
+                />
+              </Grid>
             ) : null}
 
-            {!modal.data.days.length ? (
-              <Paper
-                variant="outlined"
-                sx={{ borderRadius: 2, p: 2.5 }}
+            {modal.data.mentorList?.length ? (
+              <Grid size={12}>
+                <MySelect
+                  data={modal.data.mentorList}
+                  value={draft.mentorId}
+                  func={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      mentorId: event.target.value,
+                    }))
+                  }
+                  label="Наставник"
+                  unifiedPopup
+                />
+              </Grid>
+            ) : null}
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <List
+                dense
+                sx={{ borderRadius: "12px", overflow: "hidden" }}
               >
-                <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                  Нет отмеченных смен за выбранный месяц.
-                </Typography>
-              </Paper>
-            ) : (
-              <Stack spacing={1.25}>
-                {monthValue ? (
-                  <Paper
-                    variant="outlined"
+                {MONTH_TYPE_PRESETS.map((preset) => (
+                  <ListItemButton
+                    key={preset.type}
+                    onClick={() =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        selectedType: preset.type,
+                      }))
+                    }
                     sx={{
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      "& .MuiPickersLayout-root": { minWidth: 0 },
-                      "& .MuiDayCalendar-header": { px: 1 },
-                      "& .MuiPickersDay-root": { borderRadius: 1.5 },
+                      backgroundColor: preset.color,
+                      color: "#ffffff",
+                      mb: 0.5,
+                      borderRadius: "8px",
                     }}
                   >
-                    <MyDatePickerGraph
-                      year={monthValue}
-                      renderWeekPickerDay={renderWeekPickerDay}
-                    />
-                  </Paper>
-                ) : null}
+                    <ListItemText primary={preset.label} />
+                    {draft.selectedType === preset.type ? <SendIcon fontSize="small" /> : null}
+                  </ListItemButton>
+                ))}
+              </List>
+            </Grid>
 
+            <Grid size={{ xs: 12, sm: 6 }}>
+              {monthValue ? (
                 <Paper
                   variant="outlined"
-                  sx={{ borderRadius: 2, p: 2 }}
+                  sx={{
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    "& .MuiPickersLayout-root": { minWidth: 0 },
+                    "& .MuiDayCalendar-header": { px: 1 },
+                    "& .MuiPickersDay-root": { borderRadius: 1.5 },
+                  }}
                 >
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={1.5}
-                    useFlexGap
-                    flexWrap="wrap"
-                  >
-                    {Object.entries(TYPE_META).map(([key, value]) => (
-                      <Stack
-                        key={key}
-                        direction="row"
-                        spacing={1}
-                        alignItems="center"
-                      >
-                        <Box
-                          sx={{
-                            width: 14,
-                            height: 14,
-                            borderRadius: 1,
-                            backgroundColor: value.color,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                          {value.label}
-                        </Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
+                  <MyDatePickerGraph
+                    year={monthValue}
+                    renderWeekPickerDay={renderWeekPickerDay}
+                  />
                 </Paper>
+              ) : null}
+            </Grid>
 
-                {modal.data.days.map((item) => {
-                  const typeMeta = getTypeMeta(item.type);
-
-                  return (
-                    <Paper
-                      key={item.id}
-                      variant="outlined"
-                      sx={{
-                        borderRadius: 2,
-                        p: 2,
-                        borderLeft: "6px solid",
-                        borderLeftColor: typeMeta.color,
-                      }}
+            <Grid size={12}>
+              <Paper
+                variant="outlined"
+                sx={{ borderRadius: 2, p: 2 }}
+              >
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  useFlexGap
+                  flexWrap="wrap"
+                >
+                  {MONTH_TYPE_PRESETS.map((preset) => (
+                    <Stack
+                      key={preset.type}
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
                     >
-                      <Stack
-                        direction={{ xs: "column", sm: "row" }}
-                        spacing={1}
-                        justifyContent="space-between"
-                      >
-                        <Box>
-                          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                            {item.dateLabel}
-                          </Typography>
-                          <Typography sx={{ color: "text.secondary", fontSize: 13, mt: 0.5 }}>
-                            {item.timeLabel}
-                          </Typography>
-                        </Box>
-                        <Typography
-                          sx={{
-                            alignSelf: { xs: "flex-start", sm: "center" },
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: "text.secondary",
-                          }}
-                        >
-                          {typeMeta.label}
-                        </Typography>
-                      </Stack>
-                    </Paper>
-                  );
-                })}
-              </Stack>
-            )}
-          </>
+                      <Box
+                        sx={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: 1,
+                          backgroundColor: preset.color,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                        {preset.label}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              </Paper>
+            </Grid>
+          </Grid>
         ) : null}
       </Stack>
     </StaffScheduleResponsiveModal>

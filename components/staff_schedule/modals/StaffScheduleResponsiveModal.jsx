@@ -11,6 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import MyDrawer from "@/ui/MyDrawer";
+import { CONTROL_RADIUS } from "../staffScheduleConstants";
 
 export default function StaffScheduleResponsiveModal({
   open,
@@ -43,6 +44,7 @@ export default function StaffScheduleResponsiveModal({
       fullWidth
       maxWidth={maxWidth}
       scroll="body"
+      slotProps={{ paper: { sx: { borderRadius: CONTROL_RADIUS } } }}
     >
       <DialogTitle
         sx={{
@@ -65,7 +67,7 @@ export default function StaffScheduleResponsiveModal({
             sx={{
               flex: 1,
               minWidth: 0,
-              fontSize: 28,
+              fontSize: { xs: 20, sm: 24, md: 28 },
               lineHeight: 1.25,
               fontWeight: 700,
               color: "#1F2937",
@@ -90,7 +92,7 @@ export default function StaffScheduleResponsiveModal({
         </Box>
       </DialogTitle>
       <DialogContent sx={{ pt: 2, pb: 2 }}>{children}</DialogContent>
-      {actions ? <DialogActions sx={{ px: 3, pb: 3 }}>{actions}</DialogActions> : null}
+      {actions ? <DialogActions sx={{ px: 3, pb: 3, pt: 0 }}>{actions}</DialogActions> : null}
     </Dialog>
   );
 }

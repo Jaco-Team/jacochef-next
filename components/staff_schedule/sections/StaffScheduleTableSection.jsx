@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUncheckedRounded";
@@ -6,10 +7,10 @@ import {
   Box,
   Checkbox,
   CircularProgress,
-  FormControlLabel,
   IconButton,
   Paper,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -18,21 +19,29 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { MySelect } from "@/ui/Forms";
 import {
+  ACTION_COLUMN_WIDTH,
+  CONTROL_RADIUS,
   DAY_COLUMN_WIDTH,
   EMPLOYEE_COLUMN_WIDTH,
   POSITION_COLUMN_WIDTH,
   SELECTION_COLUMN_WIDTH,
   SUMMARY_COLUMN_WIDTH,
 } from "../staffScheduleConstants";
-import { getRowBaseColor, getSummaryCellValue, isEnabled, toArray } from "../staffScheduleHelpers";
+import {
+  getRowBaseColor,
+  getSummaryCellValue,
+  hasFastActionsAccess,
+  isEnabled,
+  toArray,
+} from "../staffScheduleHelpers";
 
-function StaffScheduleCheckbox({ checked, onChange }) {
+function StaffScheduleCheckbox({ checked, onChange, disabled = false }) {
   return (
     <Checkbox
       checked={checked}
       onChange={onChange}
+      disabled={disabled}
       icon={
         <Box
           sx={{
@@ -77,7 +86,10 @@ function ScheduleRow({
   summaryColumns,
   onOpenDay,
   onOpenMonth,
+  onOpenFastActions,
   canOpenMonth,
+  canOpenDayEdit,
+  showFastActions,
   isCalendarHidden,
   useColors,
   selectedRowIds,
@@ -89,7 +101,10 @@ function ScheduleRow({
   const baseColors = useColors
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
-  const canOpenDay = Boolean(onOpenDay) && String(data?.smena_id ?? "") !== "-1";
+  const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
+  const canUseFastActions =
+    showFastActions && Boolean(onOpenFastActions) && String(data?.smena_id ?? "") !== "-1";
+  const positionStickyLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
 
   return (
     <TableRow hover>
@@ -110,6 +125,7 @@ function ScheduleRow({
           <StaffScheduleCheckbox
             checked={isSelected}
             onChange={() => onToggleRowSelection(rowId)}
+            disabled={!rowId || String(data?.smena_id ?? "") === "-1"}
           />
         </Box>
       </TableCell>
@@ -138,7 +154,7 @@ function ScheduleRow({
       <TableCell
         sx={{
           position: "sticky",
-          left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH,
+          left: positionStickyLeft,
           zIndex: 2,
           minWidth: POSITION_COLUMN_WIDTH,
           backgroundColor: "#ffffff",
@@ -151,6 +167,31 @@ function ScheduleRow({
           {data?.app_name || "—"}
         </Typography>
       </TableCell>
+
+      {showFastActions ? (
+        <TableCell
+          align="center"
+          sx={{
+            position: "sticky",
+            left: positionStickyLeft + POSITION_COLUMN_WIDTH,
+            zIndex: 2,
+            minWidth: ACTION_COLUMN_WIDTH,
+            width: ACTION_COLUMN_WIDTH,
+            backgroundColor: "#ffffff",
+            borderRight: "1px solid #E5E7EB",
+          }}
+        >
+          {canUseFastActions ? (
+            <IconButton
+              size="small"
+              onClick={() => onOpenFastActions(data)}
+              sx={{ color: "#666666" }}
+            >
+              <SwapHorizRoundedIcon fontSize="small" />
+            </IconButton>
+          ) : null}
+        </TableCell>
+      ) : null}
 
       {!isCalendarHidden
         ? toArray(data?.dates).map((day, index) => {
@@ -182,6 +223,12 @@ function ScheduleRow({
                     : baseBackground,
                   color: textColor,
                   cursor: canOpenDay ? "pointer" : "default",
+                  transition: "filter 0.15s ease",
+                  "&:hover": canOpenDay
+                    ? {
+                        filter: "brightness(0.95)",
+                      }
+                    : undefined,
                 }}
                 onClick={canOpenDay ? () => onOpenDay(data, day?.date) : undefined}
               >
@@ -204,7 +251,16 @@ function ScheduleRow({
   );
 }
 
-function ShiftHeaderRow({ shiftId, label, colSpan, collapsed, onToggle }) {
+function ShiftHeaderRow({
+  shiftId,
+  smenaId,
+  label,
+  colSpan,
+  collapsed,
+  onToggle,
+  onEdit,
+  canEditSmena,
+}) {
   return (
     <TableRow>
       <TableCell
@@ -226,6 +282,8 @@ function ShiftHeaderRow({ shiftId, label, colSpan, collapsed, onToggle }) {
             direction="row"
             alignItems="center"
             spacing={1}
+            onClick={canEditSmena && smenaId ? () => onEdit(smenaId) : undefined}
+            sx={{ cursor: canEditSmena && smenaId ? "pointer" : "default", minWidth: 0 }}
           >
             <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18 }} />
             <Typography sx={{ fontSize: 15, fontWeight: 500 }}>{label || "Смена"}</Typography>
@@ -244,10 +302,38 @@ function ShiftHeaderRow({ shiftId, label, colSpan, collapsed, onToggle }) {
   );
 }
 
+function AddShiftRow({ colSpan, onAdd, canCreateSmena }) {
+  if (!canCreateSmena) {
+    return null;
+  }
+
+  return (
+    <TableRow>
+      <TableCell
+        colSpan={colSpan}
+        onClick={onAdd}
+        sx={{
+          py: 1.25,
+          px: 1.5,
+          cursor: "pointer",
+          color: "#666666",
+          fontSize: 14,
+          fontWeight: 500,
+          backgroundColor: "#FAFAFA",
+          "&:hover": { backgroundColor: "#F3F4F6" },
+        }}
+      >
+        Добавить смену
+      </TableCell>
+    </TableRow>
+  );
+}
+
 function FooterMetricRow({
   label,
   values,
   summaryColumns,
+  showFastActions,
   highlightCurrent = false,
   compactValues = false,
   getValue,
@@ -282,6 +368,16 @@ function FooterMetricRow({
       >
         {label}
       </TableCell>
+      {showFastActions ? (
+        <TableCell
+          sx={{
+            position: "sticky",
+            left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
+            zIndex: 1,
+            backgroundColor: "#ffffff",
+          }}
+        />
+      ) : null}
 
       {values.map((item, index) => (
         <TableCell
@@ -315,7 +411,7 @@ function FooterMetricRow({
   );
 }
 
-function SummaryTotalsRow({ values, summaryColumns, dayCount }) {
+function SummaryTotalsRow({ values, summaryColumns, dayCount, showFastActions }) {
   const keyMap = {
     dop_bonus: "sum_dop_bonus_price",
     h_price: "sum_h_price",
@@ -347,6 +443,16 @@ function SummaryTotalsRow({ values, summaryColumns, dayCount }) {
       >
         Итоги
       </TableCell>
+      {showFastActions ? (
+        <TableCell
+          sx={{
+            position: "sticky",
+            left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
+            zIndex: 1,
+            backgroundColor: "#ffffff",
+          }}
+        />
+      ) : null}
 
       {dayCount > 0 ? <TableCell colSpan={dayCount} /> : null}
 
@@ -372,6 +478,10 @@ export default function StaffScheduleTableSection({
   loading = false,
   onOpenDay,
   onOpenMonth,
+  onOpenFastActions,
+  onOpenBulkFastActions,
+  onOpenCreateSmena,
+  onOpenEditSmena,
   selectedRowIds,
   onToggleRowSelection,
   collapsedShiftIds,
@@ -384,23 +494,40 @@ export default function StaffScheduleTableSection({
   const days = toArray(period?.meta?.days);
   const visibleRows = toArray(rows);
   const renderedDayCount = isCalendarHidden ? 0 : days.length;
-  const colSpan = 3 + renderedDayCount + summaryColumns.length;
+  const showFastActions = hasFastActionsAccess(access);
+  const stickyColumnCount = 3 + (showFastActions ? 1 : 0);
+  const colSpan = stickyColumnCount + renderedDayCount + summaryColumns.length;
   const canShowRolls = isEnabled(access?.rolls_view);
   const canShowPizza = isEnabled(access?.pizza_view);
   const canShowSlowOrders = isEnabled(access?.over_40_min_view);
   const canShowTotals = isEnabled(access?.sums_all_view);
   const canOpenMonth = isEnabled(access?.full_month_access);
+  const canOpenDayEdit =
+    access?.day_edit_access == null && access?.full_day_access == null
+      ? true
+      : isEnabled(access?.day_edit_access) || isEnabled(access?.full_day_access);
+  const canEditSmena = isEnabled(access?.create_edit_smena_access);
+  const canCreateSmena = isEnabled(access?.create_edit_smena_access);
+  const hasBulkSelection = selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
-  const colorModeOptions = [
-    { id: "default", name: "Цветовые обозначения" },
-    { id: "plain", name: "Без цветовых обозначений" },
-  ];
+  const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
+  const toolbarControlMinWidth = { xs: "100%", md: 240 };
+  const toolbarFieldSx = {
+    minHeight: 44,
+    borderRadius: "18px",
+    border: "1px solid #E5E5E5",
+    backgroundColor: "#FFFFFF",
+    px: 2,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  };
 
   if (loading && !days.length && !visibleRows.length) {
     return (
       <Paper
         variant="outlined"
-        sx={{ borderRadius: 3, p: 5, textAlign: "center", color: "text.secondary" }}
+        sx={{ borderRadius: CONTROL_RADIUS, p: 5, textAlign: "center", color: "text.secondary" }}
       >
         <CircularProgress
           size={28}
@@ -415,7 +542,7 @@ export default function StaffScheduleTableSection({
     return (
       <Paper
         variant="outlined"
-        sx={{ borderRadius: 3, p: 4, textAlign: "center", color: "text.secondary" }}
+        sx={{ borderRadius: CONTROL_RADIUS, p: 4, textAlign: "center", color: "text.secondary" }}
       >
         Нет данных за выбранный период
       </Paper>
@@ -425,7 +552,12 @@ export default function StaffScheduleTableSection({
   return (
     <Paper
       variant="outlined"
-      sx={{ borderRadius: "12px", borderColor: "#E5E5E5", overflow: "hidden", boxShadow: "none" }}
+      sx={{
+        borderRadius: CONTROL_RADIUS,
+        borderColor: "#E5E5E5",
+        overflow: "hidden",
+        boxShadow: "none",
+      }}
     >
       <Stack
         direction={{ xs: "column", md: "row" }}
@@ -447,40 +579,34 @@ export default function StaffScheduleTableSection({
           direction={{ xs: "column", md: "row" }}
           spacing={1}
           alignItems={{ xs: "stretch", md: "center" }}
+          sx={{ width: { xs: "100%", md: "auto" } }}
         >
-          <Paper
-            variant="outlined"
-            sx={{
-              px: 1.5,
-              minHeight: 44,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: "12px",
-              borderColor: "#E5E5E5",
-              backgroundColor: "#F6F6F6",
-            }}
-          >
-            <FormControlLabel
-              control={
-                <StaffScheduleCheckbox
-                  checked={isCalendarHidden}
-                  onChange={onCalendarVisibilityChange}
-                />
-              }
-              label="Скрыть календарь"
-              sx={{ m: 0, "& .MuiFormControlLabel-label": { fontSize: 14, color: "#666666" } }}
-            />
-          </Paper>
+          <Box sx={{ minWidth: toolbarControlMinWidth }}>
+            <Box sx={toolbarFieldSx}>
+              <Typography sx={{ fontSize: 14, color: "#666666", fontWeight: 500 }}>
+                Календарь
+              </Typography>
+              <Switch
+                checked={!isCalendarHidden}
+                onChange={onCalendarVisibilityChange}
+                size="small"
+                color="error"
+              />
+            </Box>
+          </Box>
 
-          <Box sx={{ minWidth: 240 }}>
-            <MySelect
-              is_none={false}
-              data={colorModeOptions}
-              value={colorMode}
-              func={onColorModeChange}
-              label=""
-              unifiedPopup
-            />
+          <Box sx={{ minWidth: toolbarControlMinWidth }}>
+            <Box sx={toolbarFieldSx}>
+              <Typography sx={{ fontSize: 14, color: "#666666", fontWeight: 500 }}>
+                Цветовые обозначения
+              </Typography>
+              <Switch
+                checked={useColors}
+                onChange={onColorModeChange}
+                size="small"
+                color="error"
+              />
+            </Box>
           </Box>
         </Stack>
       </Stack>
@@ -489,6 +615,7 @@ export default function StaffScheduleTableSection({
         sx={{
           overflowX: "auto",
           borderTop: "1px solid #ECECEC",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         <Table
@@ -513,6 +640,7 @@ export default function StaffScheduleTableSection({
                 }}
               >
                 <Box
+                  onClick={hasBulkSelection ? onOpenBulkFastActions : undefined}
                   sx={{
                     width: 24,
                     height: 24,
@@ -521,9 +649,16 @@ export default function StaffScheduleTableSection({
                     justifyContent: "center",
                     border: "1px solid #E4E7EC",
                     borderRadius: "4px",
+                    cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
+                    backgroundColor: hasBulkSelection ? "#FFF5F5" : "#FFFFFF",
                   }}
                 >
-                  <SwapHorizRoundedIcon sx={{ color: "#666666", fontSize: 18 }} />
+                  <SwapHorizRoundedIcon
+                    sx={{
+                      color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
+                      fontSize: 18,
+                    }}
+                  />
                 </Box>
               </TableCell>
               <TableCell
@@ -541,7 +676,7 @@ export default function StaffScheduleTableSection({
               <TableCell
                 sx={{
                   position: "sticky",
-                  left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH,
+                  left: positionHeaderLeft,
                   zIndex: 3,
                   minWidth: POSITION_COLUMN_WIDTH,
                   backgroundColor: "#ffffff",
@@ -550,6 +685,19 @@ export default function StaffScheduleTableSection({
               >
                 Должность
               </TableCell>
+
+              {showFastActions ? (
+                <TableCell
+                  sx={{
+                    position: "sticky",
+                    left: positionHeaderLeft + POSITION_COLUMN_WIDTH,
+                    zIndex: 3,
+                    minWidth: ACTION_COLUMN_WIDTH,
+                    width: ACTION_COLUMN_WIDTH,
+                    backgroundColor: "#ffffff",
+                  }}
+                />
+              ) : null}
 
               {!isCalendarHidden
                 ? days.map((day, index) => (
@@ -593,37 +741,58 @@ export default function StaffScheduleTableSection({
           </TableHead>
 
           <TableBody>
-            {visibleRows.map((row, index) =>
-              row?.row === "header" ? (
-                <ShiftHeaderRow
-                  key={`shift-${index}`}
-                  shiftId={row?.__shiftId || `shift-${index}`}
-                  label={row?.data}
-                  colSpan={colSpan}
-                  collapsed={collapsedShiftIds.includes(row?.__shiftId || `shift-${index}`)}
-                  onToggle={onToggleShiftCollapse}
-                />
-              ) : (
+            {visibleRows.map((row, index) => {
+              if (row?.row === "header") {
+                const shiftId = row?.__shiftId || `shift-${index}`;
+
+                return (
+                  <Fragment key={`shift-${index}`}>
+                    <ShiftHeaderRow
+                      shiftId={shiftId}
+                      smenaId={row?.__smenaId || row?.smena_id}
+                      label={row?.data}
+                      colSpan={colSpan}
+                      collapsed={collapsedShiftIds.includes(shiftId)}
+                      onToggle={onToggleShiftCollapse}
+                      onEdit={onOpenEditSmena}
+                      canEditSmena={canEditSmena}
+                    />
+                    {row?.__isFirstShift ? (
+                      <AddShiftRow
+                        colSpan={colSpan}
+                        onAdd={onOpenCreateSmena}
+                        canCreateSmena={canCreateSmena}
+                      />
+                    ) : null}
+                  </Fragment>
+                );
+              }
+
+              return (
                 <ScheduleRow
                   key={`row-${row?.data?.id || row?.data?.smena_id || row?.data?.user_name || "x"}-${index}`}
                   row={row}
                   summaryColumns={summaryColumns}
                   onOpenDay={onOpenDay}
                   onOpenMonth={onOpenMonth}
+                  onOpenFastActions={onOpenFastActions}
                   canOpenMonth={canOpenMonth}
+                  canOpenDayEdit={canOpenDayEdit}
+                  showFastActions={showFastActions}
                   isCalendarHidden={isCalendarHidden}
                   useColors={useColors}
                   selectedRowIds={selectedRowIds}
                   onToggleRowSelection={onToggleRowSelection}
                 />
-              ),
-            )}
+              );
+            })}
 
             {!isCalendarHidden && toArray(period?.meta?.bonus).length ? (
               <FooterMetricRow
                 label="Бонус дня"
                 values={toArray(period?.meta?.bonus)}
                 summaryColumns={summaryColumns}
+                showFastActions={showFastActions}
                 highlightCurrent
                 compactValues
                 getValue={(item) => item?.res ?? ""}
@@ -635,6 +804,7 @@ export default function StaffScheduleTableSection({
                 values={period?.meta?.other_summ ?? {}}
                 summaryColumns={summaryColumns}
                 dayCount={renderedDayCount}
+                showFastActions={showFastActions}
               />
             ) : null}
 
@@ -643,6 +813,7 @@ export default function StaffScheduleTableSection({
                 label="Роллов"
                 values={toArray(period?.meta?.bonus)}
                 summaryColumns={summaryColumns}
+                showFastActions={showFastActions}
                 getValue={(item) => item?.count_rolls ?? ""}
               />
             ) : null}
@@ -652,6 +823,7 @@ export default function StaffScheduleTableSection({
                 label="Пиццы"
                 values={toArray(period?.meta?.bonus)}
                 summaryColumns={summaryColumns}
+                showFastActions={showFastActions}
                 getValue={(item) => item?.count_pizza ?? ""}
               />
             ) : null}
@@ -661,6 +833,7 @@ export default function StaffScheduleTableSection({
                 label="Заказы больше 40 мин"
                 values={toArray(period?.meta?.order_stat)}
                 summaryColumns={summaryColumns}
+                showFastActions={showFastActions}
                 getValue={(item) => item?.count_false ?? ""}
               />
             ) : null}

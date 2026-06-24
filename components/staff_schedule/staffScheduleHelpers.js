@@ -93,6 +93,15 @@ export function getRowBaseColor(type, isDimmed) {
   };
 }
 
+export function hasFastActionsAccess(access = {}) {
+  return (
+    isEnabled(access?.fast_2_week_access) ||
+    isEnabled(access?.fast_month_access) ||
+    isEnabled(access?.fast_smena_access) ||
+    isEnabled(access?.fast_point_access)
+  );
+}
+
 export function buildShiftGroups(rows = []) {
   const result = [];
   let currentGroup = null;
@@ -100,7 +109,8 @@ export function buildShiftGroups(rows = []) {
   rows.forEach((row, index) => {
     if (row?.row === "header") {
       currentGroup = {
-        id: `shift-${index}`,
+        id: row?.smena_id ? String(row.smena_id) : `shift-${index}`,
+        smenaId: row?.smena_id ?? "",
         label: row?.data || "Смена",
         rows: [],
         header: row,
@@ -112,11 +122,17 @@ export function buildShiftGroups(rows = []) {
     if (!currentGroup) {
       currentGroup = {
         id: "shift-default",
+        smenaId: "",
         label: "Смена",
         rows: [],
         header: { row: "header", data: "Смена" },
       };
       result.push(currentGroup);
+    }
+
+    if (!currentGroup.smenaId && row?.data?.smena_id) {
+      currentGroup.smenaId = row.data.smena_id;
+      currentGroup.id = String(row.data.smena_id);
     }
 
     currentGroup.rows.push(row);

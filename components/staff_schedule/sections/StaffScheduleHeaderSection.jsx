@@ -5,7 +5,9 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { Box, Button, IconButton, Stack, Tab, Tabs, useMediaQuery, useTheme } from "@mui/material";
 import { MySelect } from "@/ui/Forms";
 
-const controlRadius = "12px";
+import { CONTROL_RADIUS } from "../staffScheduleConstants";
+
+const controlRadius = CONTROL_RADIUS;
 
 export default function StaffScheduleHeaderSection({ page }) {
   const theme = useTheme();
@@ -13,7 +15,7 @@ export default function StaffScheduleHeaderSection({ page }) {
 
   return (
     <Box>
-      <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ mb: 2.5, "& h1": { m: 0, fontSize: { xs: 24, sm: 28, md: 32 } } }}>
         <h1>{page.view.moduleName}</h1>
       </Box>
 
