@@ -1,3 +1,5 @@
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+
 export function toArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -17,6 +19,8 @@ export function getActiveMonthId(months = []) {
 }
 
 export function getVisibleSummaryColumns(access = {}) {
+  const { userCan } = handleUserAccess(access);
+
   return [
     { key: "price_p_h", label: "За 1ч", accessKey: "1h_view" },
     { key: "price_p_h_dop", label: "За 1ч + доп.", accessKey: "1h_plus_view" },
@@ -30,7 +34,7 @@ export function getVisibleSummaryColumns(access = {}) {
     { key: "given", label: "Выдано", accessKey: "given_view" },
     { key: "given_cart", label: "На карты", accessKey: "given_cart_view" },
     { key: "test_all_price", label: "Премия по ведомости", accessKey: "premia_view" },
-  ].filter((item) => isEnabled(access[item.accessKey]));
+  ].filter((item) => userCan("view", item.accessKey));
 }
 
 export function computeTotalSum(row = {}) {
@@ -94,12 +98,39 @@ export function getRowBaseColor(type, isDimmed) {
 }
 
 export function hasFastActionsAccess(access = {}) {
+  const { userCan } = handleUserAccess(access);
+
   return (
-    isEnabled(access?.fast_2_week_access) ||
-    isEnabled(access?.fast_month_access) ||
-    isEnabled(access?.fast_smena_access) ||
-    isEnabled(access?.fast_point_access)
+    userCan("access", "fast_2_week") ||
+    userCan("access", "fast_month") ||
+    userCan("access", "fast_smena") ||
+    userCan("access", "fast_point")
   );
+}
+
+export function canExportExcel(access = {}) {
+  return handleUserAccess(access).userCan("access", "export_excel");
+}
+
+export function canAccess(access = {}, key) {
+  return handleUserAccess(access).userCan("access", key);
+}
+
+export function canView(access = {}, key) {
+  return handleUserAccess(access).userCan("view", key);
+}
+
+export function openExportDownloadUrl(response) {
+  const url = response?.url || response?.data?.url;
+
+  if (!url) {
+    return false;
+  }
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.click();
+  return true;
 }
 
 export function buildShiftGroups(rows = []) {

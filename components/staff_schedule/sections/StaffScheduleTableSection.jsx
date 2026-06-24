@@ -29,10 +29,11 @@ import {
   SUMMARY_COLUMN_WIDTH,
 } from "../staffScheduleConstants";
 import {
+  canAccess,
+  canView,
   getRowBaseColor,
   getSummaryCellValue,
   hasFastActionsAccess,
-  isEnabled,
   toArray,
 } from "../staffScheduleHelpers";
 
@@ -521,17 +522,17 @@ export default function StaffScheduleTableSection({
   const stickyColumnCount = 3 + (showFastActions ? 1 : 0);
   const colSpan = stickyColumnCount + renderedDayCount + summaryColumns.length;
   const shiftHeaderMiddleColSpan = Math.max(colSpan - stickyColumnCount - 1, 0);
-  const canShowRolls = isEnabled(access?.rolls_view);
-  const canShowPizza = isEnabled(access?.pizza_view);
-  const canShowSlowOrders = isEnabled(access?.over_40_min_view);
-  const canShowTotals = isEnabled(access?.sums_all_view);
-  const canOpenMonth = isEnabled(access?.full_month_access);
+  const canShowRolls = canView(access, "rolls");
+  const canShowPizza = canView(access, "pizza");
+  const canShowSlowOrders = canView(access, "over_40_min");
+  const canShowTotals = canView(access, "sums_all");
+  const canOpenMonth = canAccess(access, "full_month");
   const canOpenDayEdit =
     access?.day_edit_access == null && access?.full_day_access == null
       ? true
-      : isEnabled(access?.day_edit_access) || isEnabled(access?.full_day_access);
-  const canEditSmena = isEnabled(access?.create_edit_smena_access);
-  const canCreateSmena = isEnabled(access?.create_edit_smena_access);
+      : canAccess(access, "day_edit") || canAccess(access, "full_day");
+  const canEditSmena = canAccess(access, "create_edit_smena");
+  const canCreateSmena = canAccess(access, "create_edit_smena");
   const hasBulkSelection = selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;

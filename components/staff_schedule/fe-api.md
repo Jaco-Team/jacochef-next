@@ -297,6 +297,56 @@
   - `st = true`
   - либо `st = false`, `text`
 
+### `POST|ANY /api/staff_schedule/downloadWS`
+
+Назначение:
+
+- выгрузить график работы в `.xls`
+
+Вход:
+
+- `data.point_id`
+- `data.date_start` дата начала диапазона `YYYY-MM-DD`
+- `data.date_end` дата конца диапазона `YYYY-MM-DD`
+
+Права:
+
+- backend дополнительно проверяет доступ `export_excel`
+
+Выход:
+
+- `$arrayOfDates`
+- `url`
+
+Примечание:
+
+- FE-flow: после выбора диапазона вызвать метод и открыть `response.data.url` / `response.url`
+
+### `POST|ANY /api/staff_schedule/downloadHJ`
+
+Назначение:
+
+- выгрузить журнал здоровья в `.xls`
+
+Вход:
+
+- `data.point_id`
+- `data.date_start` дата начала диапазона `YYYY-MM-DD`
+- `data.date_end` дата конца диапазона `YYYY-MM-DD`
+
+Права:
+
+- backend дополнительно проверяет доступ `export_excel`
+
+Выход:
+
+- `$arrayOfDates`
+- `url`
+
+Примечание:
+
+- FE-flow: после выбора диапазона вызвать метод и открыть `response.data.url` / `response.url`
+
 ## Замечания для FE
 
 - Для `get_graph` использовать `data.month`.

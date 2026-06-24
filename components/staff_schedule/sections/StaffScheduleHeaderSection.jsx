@@ -12,6 +12,16 @@ const controlRadius = CONTROL_RADIUS;
 export default function StaffScheduleHeaderSection({ page }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const canExport = page.canExport;
+  const iconButtonSx = {
+    width: 44,
+    height: 44,
+    borderRadius: controlRadius,
+    flexShrink: 0,
+    backgroundColor: canExport ? "#FFFFFF" : "#E5E5E5",
+    border: canExport ? "1px solid #E0E0E0" : "none",
+    color: canExport ? "#1F2937" : "#999999",
+  };
 
   return (
     <Box>
@@ -83,26 +93,18 @@ export default function StaffScheduleHeaderSection({ page }) {
             {isDesktop ? (
               <>
                 <IconButton
-                  disabled
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: controlRadius,
-                    backgroundColor: "#E5E5E5",
-                    flexShrink: 0,
-                  }}
+                  disabled={!canExport}
+                  onClick={() => page.handleOpenExportDialog("ws")}
+                  aria-label="Распечатать график работ"
+                  sx={iconButtonSx}
                 >
                   <PrintOutlinedIcon fontSize="small" />
                 </IconButton>
                 <IconButton
-                  disabled
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: controlRadius,
-                    backgroundColor: "#E5E5E5",
-                    flexShrink: 0,
-                  }}
+                  disabled={!canExport}
+                  onClick={() => page.handleOpenExportDialog("ws")}
+                  aria-label="Скачать график работ"
+                  sx={iconButtonSx}
                 >
                   <FileDownloadOutlinedIcon fontSize="small" />
                 </IconButton>
@@ -173,16 +175,21 @@ export default function StaffScheduleHeaderSection({ page }) {
           <Button
             fullWidth
             variant="contained"
-            disabled
+            disabled={!canExport}
+            onClick={() => page.handleOpenExportDialog("hj")}
             startIcon={<HealthAndSafetyOutlinedIcon />}
             sx={{
               minHeight: 44,
               borderRadius: controlRadius,
-              color: "#666666",
-              backgroundColor: "#E5E5E5",
+              color: canExport ? "#FFFFFF" : "#666666",
+              backgroundColor: canExport ? "#EE2737" : "#E5E5E5",
               boxShadow: "none",
               textTransform: "none",
               fontWeight: 500,
+              "&:hover": {
+                backgroundColor: canExport ? "#D91E2D" : "#E5E5E5",
+                boxShadow: "none",
+              },
             }}
           >
             Журнал здоровья

@@ -1,6 +1,7 @@
 import { Alert, Backdrop, Box, CircularProgress, Grid } from "@mui/material";
 import StaffScheduleConfirmDialog from "./modals/StaffScheduleConfirmDialog";
 import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
+import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
 import StaffScheduleFastActionsDialog from "./modals/StaffScheduleFastActionsDialog";
 import StaffScheduleMonthModal from "./modals/StaffScheduleMonthModal";
 import StaffScheduleSmenaModal from "./modals/StaffScheduleSmenaModal";
@@ -97,6 +98,13 @@ export default function StaffSchedulePage() {
         onSelectSmena={page.handleSelectFastSmena}
         onSelectPoint={page.handleSelectFastPoint}
         onSelectTimeWeekType={page.handleSelectFastTimeWeekType}
+      />
+      <StaffScheduleExportDialog
+        dialog={page.exportDialog}
+        onClose={page.handleCloseExportDialog}
+        onDateStartChange={page.handleExportDateStartChange}
+        onDateEndChange={page.handleExportDateEndChange}
+        onDownload={page.handleExportDownload}
       />
     </Box>
   );

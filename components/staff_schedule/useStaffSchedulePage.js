@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import useStaffScheduleApi from "./useStaffScheduleApi";
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
-import { getActiveMonthId, toArray } from "./staffScheduleHelpers";
+import {
+  canExportExcel,
+  getActiveMonthId,
+  openExportDownloadUrl,
+  toArray,
+} from "./staffScheduleHelpers";
 import {
   buildGraphState,
   buildPageViewModel,
@@ -81,6 +87,14 @@ export default function useStaffSchedulePage() {
     open: false,
     screen: "root",
     user: null,
+  });
+  const [exportDialog, setExportDialog] = useState({
+    open: false,
+    mode: "ws",
+    dateStart: "",
+    dateEnd: "",
+    loading: false,
+    error: "",
   });
 
   const loadGraph = useCallback(
@@ -713,6 +727,93 @@ export default function useStaffSchedulePage() {
     [api, fastActions.user, monthId, runFastMutation],
   );
 
+  const handleOpenExportDialog = useCallback((mode) => {
+    const today = dayjs().format("YYYY-MM-DD");
+
+    setExportDialog({
+      open: true,
+      mode,
+      dateStart: today,
+      dateEnd: today,
+      loading: false,
+      error: "",
+    });
+  }, []);
+
+  const handleCloseExportDialog = useCallback(() => {
+    setExportDialog({
+      open: false,
+      mode: "ws",
+      dateStart: "",
+      dateEnd: "",
+      loading: false,
+      error: "",
+    });
+  }, []);
+
+  const handleExportDateStartChange = useCallback((dateStart) => {
+    setExportDialog((prev) => ({
+      ...prev,
+      dateStart,
+      error: "",
+    }));
+  }, []);
+
+  const handleExportDateEndChange = useCallback((dateEnd) => {
+    setExportDialog((prev) => ({
+      ...prev,
+      dateEnd,
+      error: "",
+    }));
+  }, []);
+
+  const handleExportDownload = useCallback(async () => {
+    if (!pointId || !exportDialog.dateStart || !exportDialog.dateEnd) {
+      return;
+    }
+
+    setExportDialog((prev) => ({
+      ...prev,
+      loading: true,
+      error: "",
+    }));
+
+    try {
+      const payload = {
+        point_id: pointId,
+        date_start: exportDialog.dateStart,
+        date_end: exportDialog.dateEnd,
+      };
+      const response =
+        exportDialog.mode === "hj" ? await api.downloadHJ(payload) : await api.downloadWS(payload);
+
+      if (response?.st === false) {
+        throw new Error(response?.text || "Не удалось выгрузить файл");
+      }
+
+      if (!openExportDownloadUrl(response)) {
+        throw new Error("Не удалось получить ссылку на файл");
+      }
+
+      handleCloseExportDialog();
+    } catch (requestError) {
+      setExportDialog((prev) => ({
+        ...prev,
+        loading: false,
+        error: requestError?.message || "Не удалось выгрузить файл",
+      }));
+    }
+  }, [
+    api,
+    exportDialog.dateEnd,
+    exportDialog.dateStart,
+    exportDialog.mode,
+    handleCloseExportDialog,
+    pointId,
+  ]);
+
+  const canExport = canExportExcel(access);
+
   return {
     isBootstrapping,
     isGraphLoading,
@@ -734,6 +835,8 @@ export default function useStaffSchedulePage() {
     smenaModal,
     confirmDialog,
     fastActions,
+    exportDialog,
+    canExport,
     setSelectedPart,
     handlePointChange,
     handleMonthChange,
@@ -765,5 +868,10 @@ export default function useStaffSchedulePage() {
     handleSelectFastSmena,
     handleSelectFastPoint,
     handleSelectFastTimeWeekType,
+    handleOpenExportDialog,
+    handleCloseExportDialog,
+    handleExportDateStartChange,
+    handleExportDateEndChange,
+    handleExportDownload,
   };
 }

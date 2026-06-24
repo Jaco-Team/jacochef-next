@@ -16,7 +16,7 @@ import {
   ListItemText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { isEnabled } from "../staffScheduleHelpers";
+import { canAccess } from "../staffScheduleHelpers";
 
 const FAST_TIME_WEEK_OPTIONS = [
   { type: 1, altType: 16, icon: LooksOneIcon, labelPart1: "С 1 числа", labelPart2: "С 16 числа" },
@@ -171,7 +171,7 @@ export default function StaffScheduleFastActionsDialog({
       title={title}
     >
       <List sx={{ pt: 0 }}>
-        {isEnabled(access?.fast_2_week_access) ? (
+        {canAccess(access, "fast_2_week") ? (
           <ListItemButton onClick={onOpenTimeWeek}>
             <ListItemAvatar>
               <Avatar>
@@ -182,7 +182,7 @@ export default function StaffScheduleFastActionsDialog({
           </ListItemButton>
         ) : null}
 
-        {isEnabled(access?.fast_smena_access) ? (
+        {canAccess(access, "fast_smena") ? (
           <ListItemButton onClick={onOpenSmenaList}>
             <ListItemAvatar>
               <Avatar>
@@ -193,7 +193,7 @@ export default function StaffScheduleFastActionsDialog({
           </ListItemButton>
         ) : null}
 
-        {isEnabled(access?.fast_point_access) ? (
+        {canAccess(access, "fast_point") ? (
           <ListItemButton onClick={onOpenPointList}>
             <ListItemAvatar>
               <Avatar>
