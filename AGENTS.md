@@ -30,11 +30,13 @@
 
 ## Formatting And Checks
 
-- Do not run `prettier`, `eslint`, `lint`, or similar formatting/check commands unless the user explicitly asks.
-- Assume formatting/check hooks are handled by husky or the user's normal workflow.
+- Pre-commit runs JS/JSX syntax check (`scripts/check-js-syntax.js`) before prettier.
+- After editing any `.js`, `.jsx`, `.mjs`, or `.cjs` file, run `npm run check:syntax -- <file>` on touched files before finishing.
+- Do not run full-repo `prettier`, `eslint`, or `lint` unless the user explicitly asks.
+- Assume formatting hooks are handled by husky for committed files.
 - Keep code style consistent with the surrounding file.
 - Avoid adding new dependencies unless required.
-- Prefer fast, local verification such as syntax-aware review or targeted checks.
+- Prefer fast, local verification such as syntax check on touched files.
 - Do not do broad cleanup unrelated to the task.
 
 ## Output
@@ -97,7 +99,7 @@ Always produce senior-level code: avoid inventing field names or making assumpti
 - Prefer clear, minimal, and well-tested transformations over ad-hoc, speculative code.
 - Prefer senior-level solutions: strong structure, clean abstractions, and maintainable logic without overengineering or spaghetti.
 - Keep names aligned with existing domain terminology.
-- Fast syntax checks, no extra formatting.
+- Fast syntax checks on touched JS/JSX files are mandatory; no extra formatting.
 - Do not silently change behavior outside the stated task.
 - If an assumption would materially affect behavior, stop and ask instead of guessing.
 

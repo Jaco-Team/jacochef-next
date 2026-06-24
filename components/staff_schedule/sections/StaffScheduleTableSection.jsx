@@ -255,48 +255,98 @@ function ShiftHeaderRow({
   shiftId,
   smenaId,
   label,
-  colSpan,
+  stickyColumnCount,
+  middleColSpan,
   collapsed,
   onToggle,
   onEdit,
   canEditSmena,
 }) {
+  const handleToggle = () => onToggle(shiftId);
+  const headerBg = "#E5E5E5";
+
   return (
     <TableRow>
       <TableCell
-        colSpan={colSpan}
+        colSpan={stickyColumnCount}
+        onClick={handleToggle}
         sx={{
-          backgroundColor: "#E5E5E5",
+          backgroundColor: headerBg,
           color: "#4B5563",
           py: 0.75,
           px: 1,
+          cursor: "pointer",
         }}
       >
         <Stack
           direction="row"
           alignItems="center"
-          justifyContent="space-between"
-          spacing={2}
+          spacing={1}
+          sx={{ minWidth: 0 }}
         >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            onClick={canEditSmena && smenaId ? () => onEdit(smenaId) : undefined}
-            sx={{ cursor: canEditSmena && smenaId ? "pointer" : "default", minWidth: 0 }}
+          <Box
+            component="span"
+            onClick={(event) => {
+              if (!canEditSmena || !smenaId) {
+                return;
+              }
+
+              event.stopPropagation();
+              onEdit(smenaId);
+            }}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              flexShrink: 0,
+              cursor: canEditSmena && smenaId ? "pointer" : "inherit",
+            }}
           >
             <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18 }} />
-            <Typography sx={{ fontSize: 15, fontWeight: 500 }}>{label || "Смена"}</Typography>
-          </Stack>
-
-          <IconButton
-            size="small"
-            onClick={() => onToggle(shiftId)}
-            sx={{ borderRadius: "8px", backgroundColor: "#FFFFFF" }}
+          </Box>
+          <Typography
+            sx={{ fontSize: 15, fontWeight: 500, minWidth: 0 }}
+            noWrap
           >
-            {collapsed ? <KeyboardArrowRightRoundedIcon /> : <KeyboardArrowDownRoundedIcon />}
-          </IconButton>
+            {label || "Смена"}
+          </Typography>
         </Stack>
+      </TableCell>
+
+      {middleColSpan > 0 ? (
+        <TableCell
+          colSpan={middleColSpan}
+          onClick={handleToggle}
+          sx={{
+            backgroundColor: headerBg,
+            py: 0.75,
+            px: 0,
+            cursor: "pointer",
+          }}
+        />
+      ) : null}
+
+      <TableCell
+        align="center"
+        sx={{
+          position: "sticky",
+          right: 0,
+          textAlign: "right",
+          zIndex: 4,
+          backgroundColor: headerBg,
+          py: 0.75,
+          px: 0.5,
+          minWidth: SUMMARY_COLUMN_WIDTH,
+          width: SUMMARY_COLUMN_WIDTH,
+        }}
+      >
+        <IconButton
+          size="small"
+          onClick={handleToggle}
+          aria-label={collapsed ? "Развернуть смену" : "Свернуть смену"}
+          sx={{ borderRadius: "8px", backgroundColor: "#FFFFFF" }}
+        >
+          {collapsed ? <KeyboardArrowRightRoundedIcon /> : <KeyboardArrowDownRoundedIcon />}
+        </IconButton>
       </TableCell>
     </TableRow>
   );
@@ -497,6 +547,7 @@ export default function StaffScheduleTableSection({
   const showFastActions = hasFastActionsAccess(access);
   const stickyColumnCount = 3 + (showFastActions ? 1 : 0);
   const colSpan = stickyColumnCount + renderedDayCount + summaryColumns.length;
+  const shiftHeaderMiddleColSpan = Math.max(colSpan - stickyColumnCount - 1, 0);
   const canShowRolls = isEnabled(access?.rolls_view);
   const canShowPizza = isEnabled(access?.pizza_view);
   const canShowSlowOrders = isEnabled(access?.over_40_min_view);
@@ -751,7 +802,8 @@ export default function StaffScheduleTableSection({
                       shiftId={shiftId}
                       smenaId={row?.__smenaId || row?.smena_id}
                       label={row?.data}
-                      colSpan={colSpan}
+                      stickyColumnCount={stickyColumnCount}
+                      middleColSpan={shiftHeaderMiddleColSpan}
                       collapsed={collapsedShiftIds.includes(shiftId)}
                       onToggle={onToggleShiftCollapse}
                       onEdit={onOpenEditSmena}
