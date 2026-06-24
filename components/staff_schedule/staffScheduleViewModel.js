@@ -52,7 +52,7 @@ export function buildPeriodTabs(graph) {
   return [
     {
       id: "part-1",
-      label: "1-15",
+      label: "с 1 по 15 число",
       rows: graph.oneRows,
       meta: graph.oneMeta,
       showZp: graph.show_zp_one,
@@ -60,7 +60,7 @@ export function buildPeriodTabs(graph) {
     },
     {
       id: "part-2",
-      label: "16-конец",
+      label: "с 16 по конец месяца",
       rows: graph.twoRows,
       meta: graph.twoMeta,
       showZp: graph.show_zp_two,

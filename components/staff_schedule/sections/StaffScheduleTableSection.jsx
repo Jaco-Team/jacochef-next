@@ -28,6 +28,50 @@ import {
 } from "../staffScheduleConstants";
 import { getRowBaseColor, getSummaryCellValue, isEnabled, toArray } from "../staffScheduleHelpers";
 
+function StaffScheduleCheckbox({ checked, onChange }) {
+  return (
+    <Checkbox
+      checked={checked}
+      onChange={onChange}
+      icon={
+        <Box
+          sx={{
+            width: 24,
+            height: 24,
+            border: "1px solid #E4E7EC",
+            borderRadius: "4px",
+            backgroundColor: "#FFFFFF",
+          }}
+        />
+      }
+      checkedIcon={
+        <Box
+          sx={{
+            width: 24,
+            height: 24,
+            border: "1px solid #EE2737",
+            borderRadius: "4px",
+            backgroundColor: "#EE2737",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            "&::after": {
+              content: '""',
+              width: 10,
+              height: 6,
+              borderLeft: "2px solid #FFFFFF",
+              borderBottom: "2px solid #FFFFFF",
+              transform: "rotate(-45deg)",
+              mt: "-2px",
+            },
+          }}
+        />
+      }
+      sx={{ width: 24, height: 24, p: 0 }}
+    />
+  );
+}
+
 function ScheduleRow({
   row,
   summaryColumns,
@@ -51,6 +95,7 @@ function ScheduleRow({
     <TableRow hover>
       <TableCell
         padding="checkbox"
+        className="checkBox"
         sx={{
           position: "sticky",
           left: 0,
@@ -58,14 +103,15 @@ function ScheduleRow({
           minWidth: SELECTION_COLUMN_WIDTH,
           width: SELECTION_COLUMN_WIDTH,
           backgroundColor: "#ffffff",
-          borderRight: "1px solid #E5E7EB",
+          borderRight: "1px solid #E5E5E5",
         }}
       >
-        <Checkbox
-          checked={isSelected}
-          onChange={() => onToggleRowSelection(rowId)}
-          size="small"
-        />
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <StaffScheduleCheckbox
+            checked={isSelected}
+            onChange={() => onToggleRowSelection(rowId)}
+          />
+        </Box>
       </TableCell>
 
       <TableCell
@@ -132,7 +178,7 @@ function ScheduleRow({
                   fontSize: 11,
                   fontWeight: 500,
                   background: isHoliday
-                    ? `repeating-linear-gradient(-45deg, ${baseBackground}, ${baseBackground} 8px, rgba(255, 0, 0, 0.14) 8px, rgba(255, 0, 0, 0.14) 12px)`
+                    ? `repeating-linear-gradient(-45deg, ${baseBackground}, ${baseBackground} 8px, rgba(255, 0, 0, 0.3) 8px, rgba(255, 0, 0, 0.3) 12px)`
                     : baseBackground,
                   color: textColor,
                   cursor: canOpenDay ? "pointer" : "default",
@@ -198,7 +244,14 @@ function ShiftHeaderRow({ shiftId, label, colSpan, collapsed, onToggle }) {
   );
 }
 
-function FooterMetricRow({ label, values, summaryColumns, highlightCurrent = false, getValue }) {
+function FooterMetricRow({
+  label,
+  values,
+  summaryColumns,
+  highlightCurrent = false,
+  compactValues = false,
+  getValue,
+}) {
   return (
     <TableRow>
       <TableCell
@@ -234,12 +287,16 @@ function FooterMetricRow({ label, values, summaryColumns, highlightCurrent = fal
         <TableCell
           key={`${label}-${index}`}
           align="center"
+          className={compactValues ? "min_block min_size" : "min_block"}
           sx={{
             minWidth: DAY_COLUMN_WIDTH,
             px: 0.25,
             py: 0.5,
             backgroundColor: highlightCurrent && item?.type === "cur" ? "#CFF4C8" : "#ffffff",
-            fontSize: 11,
+            fontSize: compactValues ? undefined : 11,
+            whiteSpace: compactValues ? "nowrap" : undefined,
+            overflow: compactValues ? "hidden" : undefined,
+            textOverflow: compactValues ? "ellipsis" : undefined,
           }}
         >
           {getValue
@@ -368,21 +425,21 @@ export default function StaffScheduleTableSection({
   return (
     <Paper
       variant="outlined"
-      sx={{ borderRadius: 3, borderColor: "#ECECEC", overflow: "hidden", boxShadow: "none" }}
+      sx={{ borderRadius: "12px", borderColor: "#E5E5E5", overflow: "hidden", boxShadow: "none" }}
     >
       <Stack
         direction={{ xs: "column", md: "row" }}
         justifyContent="space-between"
         alignItems={{ xs: "stretch", md: "flex-start" }}
         spacing={2}
-        sx={{ p: 2.5, pb: 1.5 }}
+        sx={{ p: 2, pb: 1.5 }}
       >
         <Stack spacing={0.5}>
-          <Typography sx={{ fontSize: 20, fontWeight: 700, textTransform: "uppercase" }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 500, textTransform: "uppercase" }}>
             График смен
           </Typography>
           <Typography sx={{ fontSize: 14, color: "#666666" }}>
-            Показано - {shownShiftCount} смен
+            Показано • {shownShiftCount} смен
           </Typography>
         </Stack>
 
@@ -399,11 +456,13 @@ export default function StaffScheduleTableSection({
               display: "flex",
               alignItems: "center",
               borderRadius: "12px",
+              borderColor: "#E5E5E5",
+              backgroundColor: "#F6F6F6",
             }}
           >
             <FormControlLabel
               control={
-                <Checkbox
+                <StaffScheduleCheckbox
                   checked={isCalendarHidden}
                   onChange={onCalendarVisibilityChange}
                 />
@@ -453,7 +512,19 @@ export default function StaffScheduleTableSection({
                   backgroundColor: "#ffffff",
                 }}
               >
-                <SwapHorizRoundedIcon sx={{ color: "#666666", fontSize: 18 }} />
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #E4E7EC",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <SwapHorizRoundedIcon sx={{ color: "#666666", fontSize: 18 }} />
+                </Box>
               </TableCell>
               <TableCell
                 sx={{
@@ -489,7 +560,7 @@ export default function StaffScheduleTableSection({
                         minWidth: DAY_COLUMN_WIDTH,
                         backgroundColor:
                           day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                            ? "#FBE7B6"
+                            ? "#ffe9bd"
                             : "#ffffff",
                         fontWeight: 500,
                         color: "#666666",
@@ -554,6 +625,7 @@ export default function StaffScheduleTableSection({
                 values={toArray(period?.meta?.bonus)}
                 summaryColumns={summaryColumns}
                 highlightCurrent
+                compactValues
                 getValue={(item) => item?.res ?? ""}
               />
             ) : null}
