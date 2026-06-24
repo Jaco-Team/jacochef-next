@@ -352,33 +352,6 @@ function ShiftHeaderRow({
   );
 }
 
-function AddShiftRow({ colSpan, onAdd, canCreateSmena }) {
-  if (!canCreateSmena) {
-    return null;
-  }
-
-  return (
-    <TableRow>
-      <TableCell
-        colSpan={colSpan}
-        onClick={onAdd}
-        sx={{
-          py: 1.25,
-          px: 1.5,
-          cursor: "pointer",
-          color: "#666666",
-          fontSize: 14,
-          fontWeight: 500,
-          backgroundColor: "#FAFAFA",
-          "&:hover": { backgroundColor: "#F3F4F6" },
-        }}
-      >
-        Добавить смену
-      </TableCell>
-    </TableRow>
-  );
-}
-
 function FooterMetricRow({
   label,
   values,
@@ -563,6 +536,7 @@ export default function StaffScheduleTableSection({
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
   const toolbarControlMinWidth = { xs: "100%", md: 240 };
+  const toolbarLabelSx = { fontSize: 14, lineHeight: 1.25, color: "#666666", fontWeight: 500 };
   const toolbarFieldSx = {
     minHeight: 44,
     borderRadius: "18px",
@@ -632,11 +606,29 @@ export default function StaffScheduleTableSection({
           alignItems={{ xs: "stretch", md: "center" }}
           sx={{ width: { xs: "100%", md: "auto" } }}
         >
+          {canCreateSmena ? (
+            <Box sx={{ minWidth: toolbarControlMinWidth }}>
+              <Box
+                component="button"
+                type="button"
+                onClick={onOpenCreateSmena}
+                sx={{
+                  ...toolbarFieldSx,
+                  width: "100%",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  font: "inherit",
+                  "&:hover": { backgroundColor: "#FAFAFA" },
+                }}
+              >
+                <Typography sx={toolbarLabelSx}>Новая смена</Typography>
+              </Box>
+            </Box>
+          ) : null}
+
           <Box sx={{ minWidth: toolbarControlMinWidth }}>
             <Box sx={toolbarFieldSx}>
-              <Typography sx={{ fontSize: 14, color: "#666666", fontWeight: 500 }}>
-                Календарь
-              </Typography>
+              <Typography sx={toolbarLabelSx}>Календарь</Typography>
               <Switch
                 checked={!isCalendarHidden}
                 onChange={onCalendarVisibilityChange}
@@ -648,9 +640,7 @@ export default function StaffScheduleTableSection({
 
           <Box sx={{ minWidth: toolbarControlMinWidth }}>
             <Box sx={toolbarFieldSx}>
-              <Typography sx={{ fontSize: 14, color: "#666666", fontWeight: 500 }}>
-                Цветовые обозначения
-              </Typography>
+              <Typography sx={toolbarLabelSx}>Цветовые обозначения</Typography>
               <Switch
                 checked={useColors}
                 onChange={onColorModeChange}
@@ -809,13 +799,6 @@ export default function StaffScheduleTableSection({
                       onEdit={onOpenEditSmena}
                       canEditSmena={canEditSmena}
                     />
-                    {row?.__isFirstShift ? (
-                      <AddShiftRow
-                        colSpan={colSpan}
-                        onAdd={onOpenCreateSmena}
-                        canCreateSmena={canCreateSmena}
-                      />
-                    ) : null}
                   </Fragment>
                 );
               }

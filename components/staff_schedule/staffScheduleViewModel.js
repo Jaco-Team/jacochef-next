@@ -92,12 +92,11 @@ function buildVisibleRows(rows, selectedShiftId, collapsedShiftIds = []) {
 
   return {
     shiftCount: filteredGroups.length,
-    rows: filteredGroups.flatMap((group, groupIndex) => {
+    rows: filteredGroups.flatMap((group) => {
       const headerRow = {
         ...group.header,
         __shiftId: group.id,
         __smenaId: group.smenaId || group.header?.smena_id,
-        __isFirstShift: groupIndex === 0,
       };
 
       return collapsedShiftIds.includes(group.id) ? [headerRow] : [headerRow, ...group.rows];

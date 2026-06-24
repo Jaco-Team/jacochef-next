@@ -56,6 +56,7 @@
 
 ## UI And Design
 
+- Before reporting a UI task done, sanity-check against sibling controls: typography, height, radius, border, spacing. See `.cursor/rules/ui-sanity-check.mdc`.
 - If the user provides a Figma URL, match Figma closely.
 - Use existing MUI patterns already present in the repo.
 - Keep desktop and mobile behavior aligned when both versions exist.
