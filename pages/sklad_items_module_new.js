@@ -40,8 +40,15 @@ import { MySelect, MyCheckBox, MyAutocomplite, MyTextInput } from "@/ui/Forms";
 
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import Box from "@mui/material/Box";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import AddIcon from "@mui/icons-material/Add";
 import MyAlert from "@/ui/MyAlert";
 import { ModalAccept } from "@/components/general/ModalAccept";
+import SkladItemsCategoriesTab, {
+  flattenSkladCategories,
+  getSkladCategoryUsageCount,
+} from "@/components/sklad/SkladItemsCategoriesTab";
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {
@@ -1776,6 +1783,12 @@ class SkladItemsModule_ extends React.Component {
 
       modalDialogView: false,
       itemView: null,
+
+      activeTab: "items",
+      categoryQuery: "",
+      selectedCategoryId: null,
+      categoryDraft: null,
+      deleteCategoryId: null,
     };
   }
 
@@ -1826,7 +1839,7 @@ class SkladItemsModule_ extends React.Component {
         freeItems: res.items_free,
         unusedItems: res.unused_items,
       });
-      return;
+      return res;
     }
 
     const data = await this.getData("get_all");
@@ -1840,7 +1853,194 @@ class SkladItemsModule_ extends React.Component {
     });
 
     document.title = data.module_info.name;
+    return data;
   }
+
+  syncCategoryStateAfterReload = (cats) => {
+    const flatCategories = flattenSkladCategories(cats);
+    const currentId = this.state.categoryDraft?.id ?? this.state.selectedCategoryId;
+    const nextCategory =
+      flatCategories.find((category) => String(category.id) === String(currentId)) ||
+      flatCategories[0] ||
+      null;
+
+    this.setState({
+      selectedCategoryId: nextCategory?.id ?? null,
+      categoryDraft: nextCategory
+        ? {
+            id: nextCategory.id,
+            name: nextCategory.name,
+            parent_id: nextCategory.parent_id,
+            level: nextCategory.level,
+            childrenCount: nextCategory.childrenCount,
+            itemsCount: nextCategory.itemsCount,
+          }
+        : null,
+    });
+  };
+
+  createCategory = () => {
+    this.setState({
+      activeTab: "categories",
+      categoryDraft: { id: null, name: "", parent_id: -1, level: 1 },
+      selectedCategoryId: null,
+    });
+  };
+
+  handleCategoryQueryChange = (value) => {
+    this.setState({ categoryQuery: value });
+  };
+
+  handleSelectCategory = (id) => {
+    const flatCategories = flattenSkladCategories(this.state.cats);
+    const category = flatCategories.find((item) => String(item.id) === String(id)) || null;
+
+    this.setState({
+      selectedCategoryId: id,
+      categoryDraft: category
+        ? {
+            id: category.id,
+            name: category.name,
+            parent_id: category.parent_id,
+            level: category.level,
+            childrenCount: category.childrenCount,
+            itemsCount: category.itemsCount,
+          }
+        : null,
+    });
+  };
+
+  handleDraftCategoryChange = (field, value) => {
+    this.setState((prevState) => {
+      const draft = {
+        ...(prevState.categoryDraft || {}),
+        [field]: value,
+      };
+
+      if (field === "parent_id") {
+        draft.level = parseInt(value, 10) === -1 ? 1 : 2;
+      }
+
+      return { categoryDraft: draft };
+    });
+  };
+
+  saveCategoryFromTab = async () => {
+    const category = this.state.categoryDraft;
+
+    if (!category || !(category.name || "").trim()) {
+      return;
+    }
+
+    const parentId =
+      parseInt(category.parent_id, 10) === -1 ||
+      category.parent_id === null ||
+      category.parent_id === ""
+        ? -1
+        : category.parent_id;
+
+    if (!category.id) {
+      const res = await this.getData("save_cat", {
+        name: category.name.trim(),
+        cat_id: parentId,
+      });
+
+      if (res.st) {
+        const data = await this.reloadItems();
+        const flatCategories = flattenSkladCategories(data?.cats || res.cats || []);
+        const createdCategory =
+          flatCategories.find(
+            (item) =>
+              item.name === category.name.trim() && String(item.parent_id) === String(parentId),
+          ) ||
+          flatCategories[0] ||
+          null;
+
+        this.setState({
+          selectedCategoryId: createdCategory?.id ?? null,
+          categoryDraft: createdCategory
+            ? {
+                id: createdCategory.id,
+                name: createdCategory.name,
+                parent_id: createdCategory.parent_id,
+                level: createdCategory.level,
+                childrenCount: createdCategory.childrenCount,
+                itemsCount: createdCategory.itemsCount,
+              }
+            : null,
+          operAlert: true,
+          err_status: res.st,
+          err_text: res.text,
+        });
+      } else {
+        this.setState({
+          operAlert: true,
+          err_status: res.st,
+          err_text: res.text,
+        });
+      }
+
+      return;
+    }
+
+    const res = await this.getData("edit_cat", {
+      id: category.id,
+      name: category.name.trim(),
+      cat_id: parentId,
+    });
+
+    if (res.st) {
+      const data = await this.reloadItems();
+      this.syncCategoryStateAfterReload(data?.cats || res.cats || []);
+      this.setState({
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      this.setState({
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  };
+
+  handleDeleteCategoryRequest = (id) => {
+    this.setState({ deleteCategoryId: id });
+  };
+
+  handleCloseDeleteCategory = () => {
+    this.setState({ deleteCategoryId: null });
+  };
+
+  confirmDeleteCategory = async () => {
+    const { deleteCategoryId } = this.state;
+
+    if (!deleteCategoryId) {
+      return;
+    }
+
+    const res = await this.getData("delete_cat", { id: deleteCategoryId });
+
+    if (res.st) {
+      const data = await this.reloadItems();
+      this.setState({
+        deleteCategoryId: null,
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+      this.syncCategoryStateAfterReload(data?.cats || res.cats || []);
+    } else {
+      this.setState({
+        deleteCategoryId: null,
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  };
 
   handleResize() {
     if (window.innerWidth < 601) {
@@ -2190,6 +2390,17 @@ class SkladItemsModule_ extends React.Component {
   }
 
   render() {
+    const { acces, activeTab, cats, categoryDraft, categoryQuery, deleteCategoryId } = this.state;
+    const canViewCats = acces?.cats_view || acces?.cats_edit;
+    const canEditCats = Boolean(acces?.cats_edit);
+    const flatCategories = flattenSkladCategories(cats);
+    const deleteCategoryCandidate =
+      flatCategories.find((category) => String(category.id) === String(deleteCategoryId)) || null;
+    const deleteCategoryUsageCount = deleteCategoryCandidate
+      ? getSkladCategoryUsageCount(deleteCategoryCandidate)
+      : 0;
+    const deleteCategoryChildrenCount = deleteCategoryCandidate?.childrenCount || 0;
+
     return (
       <>
         <Backdrop
@@ -2267,342 +2478,435 @@ class SkladItemsModule_ extends React.Component {
               sm: 12,
             }}
           >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
-          {this.state.acces?.create_new_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: { xs: "stretch", sm: "center" },
+                justifyContent: "space-between",
+                gap: 2,
+                flexWrap: "wrap",
+                mb: 2,
               }}
             >
-              <Button
-                onClick={this.openModalItemNew.bind(this, "Новый товар")}
-                variant="contained"
+              <h1 style={{ margin: 0 }}>{this.state.module_name}</h1>
+              {activeTab === "categories" && canEditCats ? (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={this.createCategory}
+                >
+                  Новая категория
+                </Button>
+              ) : null}
+            </Box>
+            {canViewCats ? (
+              <Tabs
+                value={activeTab}
+                onChange={(_, value) => this.setState({ activeTab: value })}
+                sx={{ mb: 2 }}
               >
-                Добавить товар
-              </Button>
-            </Grid>
-          ) : null}
+                <Tab
+                  value="items"
+                  label="Товары"
+                />
+                {this.state.acces?.cats_tab_access ? (
+                  <Tab
+                    value="categories"
+                    label="Категории"
+                  />
+                ) : null}
+              </Tabs>
+            ) : null}
+          </Grid>
 
-          <SkladItemsModule_input_search
-            data={this.state.searchItem}
-            search={this.search.bind(this)}
-            label="Поиск"
-          />
+          {activeTab === "items" ? (
+            <>
+              {this.state.acces?.create_new_access ? (
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 3,
+                  }}
+                >
+                  <Button
+                    onClick={this.openModalItemNew.bind(this, "Новый товар")}
+                    variant="contained"
+                  >
+                    Добавить товар
+                  </Button>
+                </Grid>
+              ) : null}
 
-          <Grid
-            style={{ paddingBottom: "50px" }}
-            size={{
-              xs: 12,
-            }}
-          >
-            {this.state.cats?.length > 0 && (
-              <>
-                {this.state.cats.map((item, key) => (
-                  <Accordion key={key}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>{item.name}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      {item.cats?.length > 0 && (
-                        <>
-                          {item.cats.map((category, key_cat) => (
-                            <Accordion key={key_cat}>
-                              <AccordionSummary
-                                style={{ backgroundColor: "#ffff" }}
-                                expandIcon={<ExpandMoreIcon />}
-                              >
-                                <Typography>{category.name}</Typography>
-                              </AccordionSummary>
-                              <AccordionDetails className="accordion_details">
-                                <TableContainer
-                                  component={Paper}
-                                  sx={{ maxHeight: { xs: "none", sm: 500 } }}
-                                >
-                                  <Table
-                                    stickyHeader
-                                    aria-label="sticky table"
+              <SkladItemsModule_input_search
+                data={this.state.searchItem}
+                search={this.search.bind(this)}
+                label="Поиск"
+              />
+
+              <Grid
+                style={{ paddingBottom: "50px" }}
+                size={{
+                  xs: 12,
+                }}
+              >
+                {this.state.cats?.length > 0 && (
+                  <>
+                    {this.state.cats.map((item, key) => (
+                      <Accordion key={key}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography>{item.name}</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          {item.cats?.length > 0 && (
+                            <>
+                              {item.cats.map((category, key_cat) => (
+                                <Accordion key={key_cat}>
+                                  <AccordionSummary
+                                    style={{ backgroundColor: "#ffff" }}
+                                    expandIcon={<ExpandMoreIcon />}
                                   >
-                                    <TableHead>
-                                      <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                                        <TableCell style={{ width: "5%" }}>№</TableCell>
-                                        {this.state.acces?.active_edit ||
-                                        this.state.acces?.active_view ? (
-                                          <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                                        ) : null}
-                                        {this.state.acces?.ord_edit ||
-                                        this.state.acces?.ord_view ? (
-                                          <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                                        ) : null}
-                                        {this.state.acces?.rev_edit ||
-                                        this.state.acces?.rev_view ? (
-                                          <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
-                                        ) : null}
-                                        <TableCell style={{ width: "20%" }}>Товар</TableCell>
-                                        <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
-                                        <TableCell style={{ width: "15%" }}>
-                                          Редактирование
-                                        </TableCell>
-                                        <TableCell style={{ width: "15%" }}>
-                                          История изменений
-                                        </TableCell>
-                                      </TableRow>
-                                    </TableHead>
+                                    <Typography>{category.name}</Typography>
+                                  </AccordionSummary>
+                                  <AccordionDetails className="accordion_details">
+                                    <TableContainer
+                                      component={Paper}
+                                      sx={{ maxHeight: { xs: "none", sm: 500 } }}
+                                    >
+                                      <Table
+                                        stickyHeader
+                                        aria-label="sticky table"
+                                      >
+                                        <TableHead>
+                                          <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                                            <TableCell style={{ width: "5%" }}>№</TableCell>
+                                            {this.state.acces?.active_edit ||
+                                            this.state.acces?.active_view ? (
+                                              <TableCell style={{ width: "10%" }}>
+                                                Активность
+                                              </TableCell>
+                                            ) : null}
+                                            {this.state.acces?.ord_edit ||
+                                            this.state.acces?.ord_view ? (
+                                              <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                                            ) : null}
+                                            {this.state.acces?.rev_edit ||
+                                            this.state.acces?.rev_view ? (
+                                              <TableCell style={{ width: "10%" }}>
+                                                Ревизия
+                                              </TableCell>
+                                            ) : null}
+                                            <TableCell style={{ width: "20%" }}>Товар</TableCell>
+                                            <TableCell style={{ width: "15%" }}>
+                                              Код для 1С
+                                            </TableCell>
+                                            <TableCell style={{ width: "15%" }}>
+                                              Редактирование
+                                            </TableCell>
+                                            <TableCell style={{ width: "15%" }}>
+                                              История изменений
+                                            </TableCell>
+                                          </TableRow>
+                                        </TableHead>
 
-                                    <TableBody>
-                                      {category.items?.length
-                                        ? category.items.map((it, k) => (
-                                            <TableRow key={k}>
-                                              <TableCell>{k + 1}</TableCell>
-                                              {this.state.acces?.active_edit ||
-                                              this.state.acces?.active_view ? (
-                                                <TableCell>
-                                                  <MyCheckBox
-                                                    label=""
-                                                    disabled={!this.state.acces?.active_edit}
-                                                    value={parseInt(it.is_show) == 1 ? true : false}
-                                                    func={this.saveCheckItem.bind(
+                                        <TableBody>
+                                          {category.items?.length
+                                            ? category.items.map((it, k) => (
+                                                <TableRow key={k}>
+                                                  <TableCell>{k + 1}</TableCell>
+                                                  {this.state.acces?.active_edit ||
+                                                  this.state.acces?.active_view ? (
+                                                    <TableCell>
+                                                      <MyCheckBox
+                                                        label=""
+                                                        disabled={!this.state.acces?.active_edit}
+                                                        value={
+                                                          parseInt(it.is_show) == 1 ? true : false
+                                                        }
+                                                        func={this.saveCheckItem.bind(
+                                                          this,
+                                                          it.id,
+                                                          "is_show",
+                                                        )}
+                                                      />
+                                                    </TableCell>
+                                                  ) : null}
+                                                  {this.state.acces?.ord_edit ||
+                                                  this.state.acces?.ord_view ? (
+                                                    <TableCell>
+                                                      <MyCheckBox
+                                                        label=""
+                                                        disabled={!this.state.acces?.ord_edit}
+                                                        value={
+                                                          parseInt(it.show_in_order) == 1
+                                                            ? true
+                                                            : false
+                                                        }
+                                                        func={this.saveCheckItem.bind(
+                                                          this,
+                                                          it.id,
+                                                          "show_in_order",
+                                                        )}
+                                                      />
+                                                    </TableCell>
+                                                  ) : null}
+                                                  {this.state.acces?.rev_edit ||
+                                                  this.state.acces?.rev_view ? (
+                                                    <TableCell>
+                                                      <MyCheckBox
+                                                        label=""
+                                                        disabled={!this.state.acces?.rev_edit}
+                                                        value={
+                                                          parseInt(it.show_in_rev) == 1
+                                                            ? true
+                                                            : false
+                                                        }
+                                                        func={this.saveCheckItem.bind(
+                                                          this,
+                                                          it.id,
+                                                          "show_in_rev",
+                                                        )}
+                                                      />
+                                                    </TableCell>
+                                                  ) : null}
+                                                  <TableCell>{it.name}</TableCell>
+                                                  <TableCell>{it.art}</TableCell>
+                                                  <TableCell
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={this.showEditItem.bind(
                                                       this,
                                                       it.id,
-                                                      "is_show",
+                                                      "Редактирование товара",
                                                     )}
-                                                  />
-                                                </TableCell>
-                                              ) : null}
-                                              {this.state.acces?.ord_edit ||
-                                              this.state.acces?.ord_view ? (
-                                                <TableCell>
-                                                  <MyCheckBox
-                                                    label=""
-                                                    disabled={!this.state.acces?.ord_edit}
-                                                    value={
-                                                      parseInt(it.show_in_order) == 1 ? true : false
-                                                    }
-                                                    func={this.saveCheckItem.bind(
+                                                  >
+                                                    <EditIcon />
+                                                  </TableCell>
+                                                  <TableCell
+                                                    style={{ cursor: "pointer" }}
+                                                    onClick={this.openHistoryItem.bind(
                                                       this,
                                                       it.id,
-                                                      "show_in_order",
+                                                      "История изменений",
                                                     )}
-                                                  />
-                                                </TableCell>
-                                              ) : null}
-                                              {this.state.acces?.rev_edit ||
-                                              this.state.acces?.rev_view ? (
-                                                <TableCell>
-                                                  <MyCheckBox
-                                                    label=""
-                                                    disabled={!this.state.acces?.rev_edit}
-                                                    value={
-                                                      parseInt(it.show_in_rev) == 1 ? true : false
-                                                    }
-                                                    func={this.saveCheckItem.bind(
-                                                      this,
-                                                      it.id,
-                                                      "show_in_rev",
-                                                    )}
-                                                  />
-                                                </TableCell>
-                                              ) : null}
-                                              <TableCell>{it.name}</TableCell>
-                                              <TableCell>{it.art}</TableCell>
-                                              <TableCell
-                                                style={{ cursor: "pointer" }}
-                                                onClick={this.showEditItem.bind(
-                                                  this,
-                                                  it.id,
-                                                  "Редактирование товара",
-                                                )}
-                                              >
-                                                <EditIcon />
-                                              </TableCell>
-                                              <TableCell
-                                                style={{ cursor: "pointer" }}
-                                                onClick={this.openHistoryItem.bind(
-                                                  this,
-                                                  it.id,
-                                                  "История изменений",
-                                                )}
-                                              >
-                                                <EditNoteIcon />
-                                              </TableCell>
-                                            </TableRow>
-                                          ))
-                                        : null}
-                                    </TableBody>
-                                  </Table>
-                                </TableContainer>
-                              </AccordionDetails>
-                            </Accordion>
-                          ))}
-                        </>
-                      )}
+                                                  >
+                                                    <EditNoteIcon />
+                                                  </TableCell>
+                                                </TableRow>
+                                              ))
+                                            : null}
+                                        </TableBody>
+                                      </Table>
+                                    </TableContainer>
+                                  </AccordionDetails>
+                                </Accordion>
+                              ))}
+                            </>
+                          )}
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </>
+                )}
+                {this.state.freeItems.length == 0 ? null : (
+                  <Accordion>
+                    <AccordionSummary
+                      style={{ backgroundColor: "#ffff" }}
+                      expandIcon={<ExpandMoreIcon />}
+                    >
+                      <Typography>Без категории</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails className="accordion_details">
+                      <TableContainer component={Paper}>
+                        <Table
+                          stickyHeader
+                          aria-label="sticky table"
+                        >
+                          <TableHead>
+                            <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                              <TableCell style={{ width: "5%" }}>№</TableCell>
+                              {this.state.acces?.active_access ? (
+                                <TableCell style={{ width: "10%" }}>Активность</TableCell>
+                              ) : null}
+                              {this.state.acces?.ord_access ? (
+                                <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                              ) : null}
+                              {this.state.acces?.rev_access ? (
+                                <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                              ) : null}
+                              <TableCell style={{ width: "20%" }}>Товар</TableCell>
+                              <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
+                              <TableCell style={{ width: "15%" }}>Редактирование</TableCell>
+                              <TableCell style={{ width: "15%" }}>История изменений</TableCell>
+                            </TableRow>
+                          </TableHead>
+
+                          <TableBody>
+                            {this.state.freeItems.map((it, key) => (
+                              <TableRow key={key}>
+                                <TableCell>{key + 1}</TableCell>
+                                {this.state.acces?.active_access ? (
+                                  <TableCell>
+                                    <MyCheckBox
+                                      label=""
+                                      value={parseInt(it.is_show) == 1 ? true : false}
+                                      func={this.saveCheckItem.bind(this, it.id, "is_show")}
+                                    />
+                                  </TableCell>
+                                ) : null}
+                                {this.state.acces?.ord_access ? (
+                                  <TableCell>
+                                    <MyCheckBox
+                                      label=""
+                                      value={parseInt(it.show_in_order) == 1 ? true : false}
+                                      func={this.saveCheckItem.bind(this, it.id, "show_in_order")}
+                                    />
+                                  </TableCell>
+                                ) : null}
+                                {this.state.acces?.rev_access ? (
+                                  <TableCell>
+                                    <MyCheckBox
+                                      label=""
+                                      value={parseInt(it.show_in_rev) == 1 ? true : false}
+                                      func={this.saveCheckItem.bind(this, it.id, "show_in_rev")}
+                                    />
+                                  </TableCell>
+                                ) : null}
+                                <TableCell>{it.name}</TableCell>
+                                <TableCell>{it.art}</TableCell>
+                                <TableCell
+                                  style={{ cursor: "pointer" }}
+                                  onClick={this.showEditItem.bind(
+                                    this,
+                                    it.id,
+                                    "Редактирование товара",
+                                  )}
+                                >
+                                  <EditIcon />
+                                </TableCell>
+                                <TableCell
+                                  style={{ cursor: "pointer" }}
+                                  onClick={this.openHistoryItem.bind(
+                                    this,
+                                    it.id,
+                                    "История изменений",
+                                  )}
+                                >
+                                  <EditNoteIcon />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
                     </AccordionDetails>
                   </Accordion>
-                ))}
-              </>
-            )}
-            {this.state.freeItems.length == 0 ? null : (
-              <Accordion>
-                <AccordionSummary
-                  style={{ backgroundColor: "#ffff" }}
-                  expandIcon={<ExpandMoreIcon />}
-                >
-                  <Typography>Без категории</Typography>
-                </AccordionSummary>
-                <AccordionDetails className="accordion_details">
-                  <TableContainer component={Paper}>
-                    <Table
-                      stickyHeader
-                      aria-label="sticky table"
+                )}
+                {this.state.unusedItems.length == 0 ? null : (
+                  <Accordion>
+                    <AccordionSummary
+                      style={{ backgroundColor: "#ffff" }}
+                      expandIcon={<ExpandMoreIcon />}
                     >
-                      <TableHead>
-                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                          <TableCell style={{ width: "5%" }}>№</TableCell>
-                          {this.state.acces?.active_access ? (
-                            <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                          ) : null}
-                          {this.state.acces?.ord_access ? (
-                            <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                          ) : null}
-                          {this.state.acces?.rev_access ? (
-                            <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
-                          ) : null}
-                          <TableCell style={{ width: "20%" }}>Товар</TableCell>
-                          <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
-                          <TableCell style={{ width: "15%" }}>Редактирование</TableCell>
-                          <TableCell style={{ width: "15%" }}>История изменений</TableCell>
-                        </TableRow>
-                      </TableHead>
+                      <Typography>Неиспользуемое</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails className="accordion_details">
+                      <TableContainer component={Paper}>
+                        <Table
+                          stickyHeader
+                          aria-label="sticky table"
+                        >
+                          <TableHead>
+                            <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
+                              <TableCell style={{ width: "5%" }}>№</TableCell>
+                              <TableCell style={{ width: "10%" }}>Активность</TableCell>
+                              <TableCell style={{ width: "10%" }}>Заявка</TableCell>
+                              <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
+                              <TableCell style={{ width: "20%" }}>Товар</TableCell>
+                              <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
+                              <TableCell style={{ width: "15%" }}>Редактирование</TableCell>
+                              <TableCell style={{ width: "15%" }}>История изменений</TableCell>
+                            </TableRow>
+                          </TableHead>
 
-                      <TableBody>
-                        {this.state.freeItems.map((it, key) => (
-                          <TableRow key={key}>
-                            <TableCell>{key + 1}</TableCell>
-                            {this.state.acces?.active_access ? (
-                              <TableCell>
-                                <MyCheckBox
-                                  label=""
-                                  value={parseInt(it.is_show) == 1 ? true : false}
-                                  func={this.saveCheckItem.bind(this, it.id, "is_show")}
-                                />
-                              </TableCell>
-                            ) : null}
-                            {this.state.acces?.ord_access ? (
-                              <TableCell>
-                                <MyCheckBox
-                                  label=""
-                                  value={parseInt(it.show_in_order) == 1 ? true : false}
-                                  func={this.saveCheckItem.bind(this, it.id, "show_in_order")}
-                                />
-                              </TableCell>
-                            ) : null}
-                            {this.state.acces?.rev_access ? (
-                              <TableCell>
-                                <MyCheckBox
-                                  label=""
-                                  value={parseInt(it.show_in_rev) == 1 ? true : false}
-                                  func={this.saveCheckItem.bind(this, it.id, "show_in_rev")}
-                                />
-                              </TableCell>
-                            ) : null}
-                            <TableCell>{it.name}</TableCell>
-                            <TableCell>{it.art}</TableCell>
-                            <TableCell
-                              style={{ cursor: "pointer" }}
-                              onClick={this.showEditItem.bind(this, it.id, "Редактирование товара")}
-                            >
-                              <EditIcon />
-                            </TableCell>
-                            <TableCell
-                              style={{ cursor: "pointer" }}
-                              onClick={this.openHistoryItem.bind(this, it.id, "История изменений")}
-                            >
-                              <EditNoteIcon />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
-            )}
-            {this.state.unusedItems.length == 0 ? null : (
-              <Accordion>
-                <AccordionSummary
-                  style={{ backgroundColor: "#ffff" }}
-                  expandIcon={<ExpandMoreIcon />}
-                >
-                  <Typography>Неиспользуемое</Typography>
-                </AccordionSummary>
-                <AccordionDetails className="accordion_details">
-                  <TableContainer component={Paper}>
-                    <Table
-                      stickyHeader
-                      aria-label="sticky table"
-                    >
-                      <TableHead>
-                        <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                          <TableCell style={{ width: "5%" }}>№</TableCell>
-                          <TableCell style={{ width: "10%" }}>Активность</TableCell>
-                          <TableCell style={{ width: "10%" }}>Заявка</TableCell>
-                          <TableCell style={{ width: "10%" }}>Ревизия</TableCell>
-                          <TableCell style={{ width: "20%" }}>Товар</TableCell>
-                          <TableCell style={{ width: "15%" }}>Код для 1С</TableCell>
-                          <TableCell style={{ width: "15%" }}>Редактирование</TableCell>
-                          <TableCell style={{ width: "15%" }}>История изменений</TableCell>
-                        </TableRow>
-                      </TableHead>
+                          <TableBody>
+                            {this.state.unusedItems.map((it, key) => (
+                              <TableRow key={key}>
+                                <TableCell>{key + 1}</TableCell>
+                                <TableCell>
+                                  <MyCheckBox
+                                    label=""
+                                    value={parseInt(it.is_show) == 1 ? true : false}
+                                    func={this.saveCheckItem.bind(this, it.id, "is_show")}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyCheckBox
+                                    label=""
+                                    value={parseInt(it.show_in_order) == 1 ? true : false}
+                                    func={this.saveCheckItem.bind(this, it.id, "show_in_order")}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyCheckBox
+                                    label=""
+                                    value={parseInt(it.show_in_rev) == 1 ? true : false}
+                                    func={this.saveCheckItem.bind(this, it.id, "show_in_rev")}
+                                  />
+                                </TableCell>
+                                <TableCell>{it.name}</TableCell>
+                                <TableCell>{it.art}</TableCell>
+                                <TableCell
+                                  style={{ cursor: "pointer" }}
+                                  onClick={this.showEditItem.bind(
+                                    this,
+                                    it.id,
+                                    "Редактирование товара",
+                                  )}
+                                >
+                                  <EditIcon />
+                                </TableCell>
+                                <TableCell
+                                  style={{ cursor: "pointer" }}
+                                  onClick={this.openHistoryItem.bind(
+                                    this,
+                                    it.id,
+                                    "История изменений",
+                                  )}
+                                >
+                                  <EditNoteIcon />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </AccordionDetails>
+                  </Accordion>
+                )}
+              </Grid>
+            </>
+          ) : null}
 
-                      <TableBody>
-                        {this.state.unusedItems.map((it, key) => (
-                          <TableRow key={key}>
-                            <TableCell>{key + 1}</TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.is_show) == 1 ? true : false}
-                                func={this.saveCheckItem.bind(this, it.id, "is_show")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.show_in_order) == 1 ? true : false}
-                                func={this.saveCheckItem.bind(this, it.id, "show_in_order")}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <MyCheckBox
-                                label=""
-                                value={parseInt(it.show_in_rev) == 1 ? true : false}
-                                func={this.saveCheckItem.bind(this, it.id, "show_in_rev")}
-                              />
-                            </TableCell>
-                            <TableCell>{it.name}</TableCell>
-                            <TableCell>{it.art}</TableCell>
-                            <TableCell
-                              style={{ cursor: "pointer" }}
-                              onClick={this.showEditItem.bind(this, it.id, "Редактирование товара")}
-                            >
-                              <EditIcon />
-                            </TableCell>
-                            <TableCell
-                              style={{ cursor: "pointer" }}
-                              onClick={this.openHistoryItem.bind(this, it.id, "История изменений")}
-                            >
-                              <EditNoteIcon />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
-            )}
-          </Grid>
+          {activeTab === "categories" && canViewCats ? (
+            <Grid size={12}>
+              <SkladItemsCategoriesTab
+                catsTree={cats}
+                canEdit={canEditCats}
+                categoryQuery={categoryQuery}
+                onCategoryQueryChange={this.handleCategoryQueryChange}
+                selectedCategoryId={this.state.selectedCategoryId}
+                onSelectCategory={this.handleSelectCategory}
+                draftCategory={categoryDraft}
+                onDraftCategoryChange={this.handleDraftCategoryChange}
+                onSaveCategory={this.saveCategoryFromTab}
+                onDeleteCategory={this.handleDeleteCategoryRequest}
+                deleteCategoryCandidate={deleteCategoryCandidate}
+                deleteCategoryUsageCount={deleteCategoryUsageCount}
+                deleteCategoryChildrenCount={deleteCategoryChildrenCount}
+                onCloseDeleteCategory={this.handleCloseDeleteCategory}
+                onConfirmDeleteCategory={this.confirmDeleteCategory}
+              />
+            </Grid>
+          ) : null}
         </Grid>
       </>
     );

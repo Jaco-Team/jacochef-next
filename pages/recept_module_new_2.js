@@ -3,6 +3,10 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import AddIcon from "@mui/icons-material/Add";
 
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -40,6 +44,9 @@ import MyAlert from "@/ui/MyAlert";
 import { ModalAccept } from "@/components/general/ModalAccept";
 import { TableSortLabel } from "@mui/material";
 import { ModalAdd } from "@/components/general/ModalAdd";
+import ReceptModuleCategoriesTab, {
+  getCategoryUsageCount,
+} from "@/components/recept/ReceptModuleCategoriesTab";
 
 const SwapIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -2181,6 +2188,12 @@ class ReceptModule_ extends React.Component {
       itemName: "",
 
       type: "",
+
+      activeTab: "items",
+      categoryQuery: "",
+      selectedCategoryId: null,
+      categoryDraft: null,
+      deleteCategoryId: null,
     };
   }
 
@@ -2193,6 +2206,8 @@ class ReceptModule_ extends React.Component {
       pf_list: data.pf,
       acces: data.acces,
       cats: data.cats,
+      selectedCategoryId: data.cats?.[0]?.id ?? null,
+      categoryDraft: data.cats?.[0] || null,
     });
 
     document.title = data.module_info.name;
@@ -2555,8 +2570,13 @@ class ReceptModule_ extends React.Component {
     let res = await this.getData("save_cats", { name: value });
 
     if (res.st) {
+      const nextSelected =
+        res.cats?.find((cat) => cat.name === value)?.id ?? res.cats?.[0]?.id ?? null;
+
       this.setState({
         cats: res.cats,
+        selectedCategoryId: nextSelected,
+        categoryDraft: res.cats?.find((cat) => String(cat.id) === String(nextSelected)) || null,
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
@@ -2568,7 +2588,115 @@ class ReceptModule_ extends React.Component {
         err_text: res.text,
       });
     }
+
+    return res;
   }
+
+  createCategory = () => {
+    this.setState({
+      activeTab: "categories",
+      categoryDraft: { id: null, name: "" },
+      selectedCategoryId: null,
+    });
+  };
+
+  handleCategoryQueryChange = (value) => {
+    this.setState({ categoryQuery: value });
+  };
+
+  handleSelectCategory = (id) => {
+    const category = (this.state.cats || []).find((item) => String(item.id) === String(id)) || null;
+
+    this.setState({
+      selectedCategoryId: id,
+      categoryDraft: category,
+    });
+  };
+
+  handleDraftCategoryChange = (field, value) => {
+    this.setState((prevState) => ({
+      categoryDraft: {
+        ...(prevState.categoryDraft || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  saveCategoryFromTab = async () => {
+    const category = this.state.categoryDraft;
+
+    if (!category || !(category.name || "").trim()) {
+      return;
+    }
+
+    if (!category.id) {
+      await this.saveCats(category.name.trim());
+      return;
+    }
+
+    const res = await this.getData("save_edit_cats", {
+      id: category.id,
+      name: category.name.trim(),
+    });
+
+    if (res.st) {
+      this.setState({
+        cats: res.cats,
+        selectedCategoryId: category.id,
+        categoryDraft: (res.cats || []).find((item) => String(item.id) === String(category.id)) || {
+          ...category,
+        },
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  };
+
+  handleDeleteCategoryRequest = (id) => {
+    this.setState({ deleteCategoryId: id });
+  };
+
+  handleCloseDeleteCategory = () => {
+    this.setState({ deleteCategoryId: null });
+  };
+
+  confirmDeleteCategory = async () => {
+    const { deleteCategoryId } = this.state;
+
+    if (!deleteCategoryId) {
+      return;
+    }
+
+    const res = await this.getData("delete_cats", { id: deleteCategoryId });
+
+    if (res.st) {
+      const cats = res.cats || [];
+      this.setState({
+        cats,
+        deleteCategoryId: null,
+        selectedCategoryId: cats[0]?.id ?? null,
+        categoryDraft: cats[0] || null,
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+      await this.update();
+    } else {
+      this.setState({
+        deleteCategoryId: null,
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  };
 
   async saveEdit(rec) {
     const type = this.state.type;
@@ -2645,6 +2773,24 @@ class ReceptModule_ extends React.Component {
   }
 
   render() {
+    const {
+      acces,
+      activeTab,
+      cats,
+      categoryDraft,
+      categoryQuery,
+      deleteCategoryId,
+      pf_list,
+      rec_list,
+    } = this.state;
+    const canViewCats = acces?.cats_view || acces?.cats_edit;
+    const canEditCats = Boolean(acces?.cats_edit);
+    const deleteCategoryCandidate =
+      (cats || []).find((category) => String(category.id) === String(deleteCategoryId)) || null;
+    const deleteCategoryUsageCount = deleteCategoryCandidate
+      ? getCategoryUsageCount(deleteCategoryCandidate.id, rec_list, pf_list)
+      : 0;
+
     return (
       <>
         <Backdrop
@@ -2708,52 +2854,115 @@ class ReceptModule_ extends React.Component {
               sm: 12,
             }}
           >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
-
-          {this.state.acces?.create_rec_access || this.state.acces?.create_pol_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
+            <Box
               sx={{
-                mb: 3,
+                display: "flex",
+                alignItems: { xs: "stretch", sm: "center" },
+                justifyContent: "space-between",
+                gap: 2,
+                flexWrap: "wrap",
+                mb: 2,
               }}
             >
-              <Button
-                onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
-                variant="contained"
-              >
-                Добавить рецепт или полуфабрикат
-              </Button>
+              <h1 style={{ margin: 0 }}>{this.state.module_name}</h1>
+              {activeTab === "categories" && canEditCats ? (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={this.createCategory}
+                >
+                  Новая категория
+                </Button>
+              ) : null}
+            </Box>
+            <Tabs
+              value={activeTab}
+              onChange={(_, value) => this.setState({ activeTab: value })}
+              sx={{ mb: 2 }}
+            >
+              <Tab
+                value="items"
+                label="Рецепты и полуфабрикаты"
+              />
+              {this.state.acces?.cats_tab_access ? (
+                <Tab
+                  value="categories"
+                  label="Категории"
+                />
+              ) : null}
+            </Tabs>
+          </Grid>
+
+          {activeTab === "items" ? (
+            <>
+              {this.state.acces?.create_rec_access || this.state.acces?.create_pol_access ? (
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4,
+                  }}
+                  sx={{
+                    mb: 3,
+                  }}
+                >
+                  <Button
+                    onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
+                    variant="contained"
+                  >
+                    Добавить рецепт или полуфабрикат
+                  </Button>
+                </Grid>
+              ) : null}
+              <ReceptModule_Table
+                data={this.state.pf_list}
+                method="Полуфабрикаты"
+                cats={this.state.cats}
+                getData={this.getData.bind(this)}
+                openItemEdit={this.openItemEdit.bind(this)}
+                checkTable={this.checkTable.bind(this)}
+                update={this.update.bind(this)}
+                openHistoryItem={this.openHistoryItem.bind(this)}
+                type={"pf"}
+                acces={this.state.acces}
+              />
+
+              <ReceptModule_Table
+                data={this.state.rec_list}
+                method="Рецепты"
+                cats={this.state.cats}
+                update={this.update.bind(this)}
+                getData={this.getData.bind(this)}
+                openItemEdit={this.openItemEdit.bind(this)}
+                checkTable={this.checkTable.bind(this)}
+                openHistoryItem={this.openHistoryItem.bind(this)}
+                type={"rec"}
+                acces={this.state.acces}
+              />
+            </>
+          ) : null}
+
+          {activeTab === "categories" && canViewCats ? (
+            <Grid size={12}>
+              <ReceptModuleCategoriesTab
+                categories={cats.filter((i) => i.id !== -1)}
+                recList={rec_list}
+                pfList={pf_list}
+                canEdit={canEditCats}
+                categoryQuery={categoryQuery}
+                onCategoryQueryChange={this.handleCategoryQueryChange}
+                selectedCategoryId={this.state.selectedCategoryId}
+                onSelectCategory={this.handleSelectCategory}
+                draftCategory={categoryDraft}
+                onDraftCategoryChange={this.handleDraftCategoryChange}
+                onSaveCategory={this.saveCategoryFromTab}
+                onDeleteCategory={this.handleDeleteCategoryRequest}
+                deleteCategoryCandidate={deleteCategoryCandidate}
+                deleteCategoryUsageCount={deleteCategoryUsageCount}
+                onCloseDeleteCategory={this.handleCloseDeleteCategory}
+                onConfirmDeleteCategory={this.confirmDeleteCategory}
+              />
             </Grid>
           ) : null}
-          <ReceptModule_Table
-            data={this.state.pf_list}
-            method="Полуфабрикаты"
-            cats={this.state.cats}
-            getData={this.getData.bind(this)}
-            openItemEdit={this.openItemEdit.bind(this)}
-            checkTable={this.checkTable.bind(this)}
-            update={this.update.bind(this)}
-            openHistoryItem={this.openHistoryItem.bind(this)}
-            type={"pf"}
-            acces={this.state.acces}
-          />
-
-          <ReceptModule_Table
-            data={this.state.rec_list}
-            method="Рецепты"
-            cats={this.state.cats}
-            update={this.update.bind(this)}
-            getData={this.getData.bind(this)}
-            openItemEdit={this.openItemEdit.bind(this)}
-            checkTable={this.checkTable.bind(this)}
-            openHistoryItem={this.openHistoryItem.bind(this)}
-            type={"rec"}
-            acces={this.state.acces}
-          />
         </Grid>
       </>
     );
