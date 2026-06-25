@@ -32,7 +32,7 @@ export function hasDayModalPayload(response) {
 }
 
 export function hasMonthModalPayload(response) {
-  return Boolean(response?.h_info);
+  return Boolean(response?.h_info) && Array.isArray(response?.hours_days);
 }
 
 export function buildDayModalViewModel(response) {

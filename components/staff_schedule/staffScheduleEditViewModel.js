@@ -1,5 +1,6 @@
 const WEEK_SUFFIX = " 2/2 с 10:00 до 22:00";
 const MONTH_SUFFIX = " 2/2 с 10:00 до 22:00";
+const SCHEDULE_TIME_SUFFIX = " с 10:00 до 22:00";
 
 const SCHEDULE_DAY_OPTIONS = [
   { type: 1, altType: 16, labelPart1: "С 1 числа", labelPart2: "С 16 числа" },
@@ -39,6 +40,69 @@ export function buildScheduleOptions(scope, selectedPart) {
   });
 }
 
+export function getCurrentScheduleDisplay(user) {
+  const text = user?.current_schedule_text ?? user?.current_schedule?.text ?? "";
+
+  if (!text) {
+    return null;
+  }
+
+  if (text.includes("2/2") && !text.includes("10:00")) {
+    return `${text}${SCHEDULE_TIME_SUFFIX}`;
+  }
+
+  return text;
+}
+
+export function mapStartDayToScheduleType(startDay, scope, selectedPart) {
+  const day = Number(startDay);
+
+  if (!Number.isFinite(day) || day <= 0) {
+    return null;
+  }
+
+  if (scope === EDIT_SCHEDULE_SCOPE.month) {
+    return day >= 1 && day <= 4 ? day : null;
+  }
+
+  if (selectedPart === 0) {
+    return day >= 1 && day <= 4 ? day : null;
+  }
+
+  return day >= 16 && day <= 19 ? day : null;
+}
+
+export function getCurrentScheduleType(user, selectedPart, scope = null) {
+  const startDay = user?.current_schedule?.start_day;
+
+  if (!startDay) {
+    return null;
+  }
+
+  if (scope) {
+    return mapStartDayToScheduleType(startDay, scope, selectedPart);
+  }
+
+  return (
+    mapStartDayToScheduleType(startDay, EDIT_SCHEDULE_SCOPE.month, selectedPart) ??
+    mapStartDayToScheduleType(startDay, EDIT_SCHEDULE_SCOPE.week, selectedPart)
+  );
+}
+
+export function inferScheduleScopeFromUser(user, selectedPart) {
+  const startDay = Number(user?.current_schedule?.start_day);
+
+  if (startDay >= 16 && startDay <= 19) {
+    return EDIT_SCHEDULE_SCOPE.week;
+  }
+
+  if (startDay >= 1 && startDay <= 4) {
+    return null;
+  }
+
+  return null;
+}
+
 export function buildEditDialogContext({ user, monthId, pointLabel, shiftLabel }) {
   return {
     userName: user?.user_name ?? "",
@@ -46,7 +110,7 @@ export function buildEditDialogContext({ user, monthId, pointLabel, shiftLabel }
     periodLabel: monthId ?? "",
     shiftLabel: shiftLabel || "—",
     pointLabel: pointLabel || "—",
-    scheduleLabel: "—",
+    scheduleLabel: getCurrentScheduleDisplay(user) || "—",
   };
 }
 
@@ -75,13 +139,13 @@ export function buildPointOptions(user) {
   }));
 }
 
-export function getScheduleLabel(draft, selectedPart) {
-  if (!draft?.scheduleType || !draft?.scheduleScope) {
-    return null;
+export function getScheduleLabel(draft, selectedPart, user) {
+  if (draft?.scheduleType && draft?.scheduleScope) {
+    const options = buildScheduleOptions(draft.scheduleScope, selectedPart);
+    return options.find((item) => Number(item.type) === Number(draft.scheduleType))?.name ?? null;
   }
 
-  const options = buildScheduleOptions(draft.scheduleScope, selectedPart);
-  return options.find((item) => Number(item.type) === Number(draft.scheduleType))?.name ?? null;
+  return getCurrentScheduleDisplay(user);
 }
 
 export function getSmenaLabel(draft, user, context) {
@@ -103,8 +167,17 @@ export function getPointLabel(draft, context) {
   return context.pointLabel;
 }
 
-export function hasEditDraftChanges(draft, user) {
-  const hasScheduleChange = Boolean(draft?.scheduleType && draft?.scheduleScope);
+export function hasEditDraftChanges(draft, user, selectedPart = 0) {
+  const currentScheduleType = getCurrentScheduleType(
+    user,
+    selectedPart,
+    draft?.scheduleScope ?? null,
+  );
+  const hasScheduleChange = Boolean(
+    draft?.scheduleType &&
+    draft?.scheduleScope &&
+    (currentScheduleType === null || Number(draft.scheduleType) !== Number(currentScheduleType)),
+  );
   const hasSmenaChange = Boolean(
     draft?.smenaId && String(draft.smenaId) !== String(user?.smena_id ?? ""),
   );

@@ -62,6 +62,11 @@
 - `access`
 - `asd`
 
+В строках пользователей внутри `date.one.users.users` и `date.two.users.users` дополнительно есть:
+
+- `current_schedule` объект с текущим распознанным шаблоном графика
+- `current_schedule_text` строка для хаба редактирования, например `С 15 числа 2/2`
+
 ### `POST|ANY /api/staff_schedule/get_user_day`
 
 Назначение:
@@ -290,6 +295,26 @@
 - `data.app_id`
 - `data.date` месяц `YYYY-MM`
 - `data.type`
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+
+### `POST|ANY /api/staff_schedule/save_fastTime`
+
+Назначение:
+
+- быстро проставить сотруднику шаблон часов на весь месяц
+
+Вход:
+
+- `data.user_id`
+- `data.smena_id`
+- `data.app_id`
+- `data.date` месяц `YYYY-MM`
+- `data.type` старт шаблона, `1..4`
+- `data.new_app` опционально
 
 Выход:
 

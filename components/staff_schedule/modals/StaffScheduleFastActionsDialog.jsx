@@ -8,11 +8,13 @@ import {
   buildScheduleOptions,
   buildSmenaOptions,
   EDIT_SCHEDULE_SCOPE,
+  getCurrentScheduleType,
   getDefaultScheduleScope,
   getPointLabel,
   getScheduleLabel,
   getSmenaLabel,
   hasEditDraftChanges,
+  inferScheduleScopeFromUser,
 } from "../staffScheduleEditViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
@@ -102,11 +104,20 @@ export default function StaffScheduleFastActionsDialog({
       return;
     }
 
-    setScheduleScope(draft?.scheduleScope || getDefaultScheduleScope(access, canAccess));
-    setPendingScheduleType(draft?.scheduleType ? String(draft.scheduleType) : "");
+    const nextScope =
+      draft?.scheduleScope ||
+      inferScheduleScopeFromUser(user, selectedPart) ||
+      getDefaultScheduleScope(access, canAccess);
+
+    setScheduleScope(nextScope);
+    setPendingScheduleType(
+      draft?.scheduleType
+        ? String(draft.scheduleType)
+        : String(getCurrentScheduleType(user, selectedPart, nextScope) ?? ""),
+    );
     setPendingSmenaId(draft?.smenaId ? String(draft.smenaId) : String(user?.smena_id ?? ""));
     setPendingPointId(draft?.point ? `${draft.point.point_id}-${draft.point.smena_id}` : "");
-  }, [access, draft, state?.open, user?.smena_id]);
+  }, [access, draft, selectedPart, state?.open, user]);
 
   const scheduleOptions = useMemo(
     () => buildScheduleOptions(scheduleScope, selectedPart),
@@ -115,15 +126,20 @@ export default function StaffScheduleFastActionsDialog({
   const smenaOptions = useMemo(() => buildSmenaOptions(user), [user]);
   const pointOptions = useMemo(() => buildPointOptions(user), [user]);
 
-  const scheduleLabel = getScheduleLabel(draft, selectedPart) || context.scheduleLabel;
+  const scheduleLabel = getScheduleLabel(draft, selectedPart, user) || context.scheduleLabel;
   const smenaLabel = getSmenaLabel(draft, user, context);
   const currentPointLabel = getPointLabel(draft, context);
-  const hasChanges = hasEditDraftChanges(draft, user);
+  const hasChanges = hasEditDraftChanges(draft, user, selectedPart);
+
+  const scheduleBaselineType = draft?.scheduleType
+    ? String(draft.scheduleType)
+    : String(getCurrentScheduleType(user, selectedPart, scheduleScope) ?? "");
+  const scheduleBaselineScope = draft?.scheduleScope || scheduleScope;
 
   const scheduleDoneDisabled =
     !pendingScheduleType ||
-    (String(pendingScheduleType) === String(draft?.scheduleType ?? "") &&
-      scheduleScope === (draft?.scheduleScope || scheduleScope));
+    (String(pendingScheduleType) === scheduleBaselineType &&
+      scheduleScope === scheduleBaselineScope);
   const shiftDoneDisabled =
     !pendingSmenaId || String(pendingSmenaId) === String(user?.smena_id ?? "");
   const pointDoneDisabled = !pendingPointId;
@@ -238,7 +254,9 @@ export default function StaffScheduleFastActionsDialog({
             value={scheduleScope}
             onChange={(_, value) => {
               setScheduleScope(value);
-              setPendingScheduleType("");
+              setPendingScheduleType(
+                String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
+              );
             }}
             items={[
               { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },

@@ -508,11 +508,18 @@ export default function useStaffSchedulePage() {
       const payload = {
         name,
         point_id: pointId,
-        users: users.map((item) => ({
-          id: item.id,
-          app_id: item.app_id,
-          is_my: item.is_my,
-        })),
+        users: users.map((item) =>
+          smenaModal.mode === "create"
+            ? {
+                id: item.id,
+                is_my: item.is_my,
+              }
+            : {
+                id: item.id,
+                app_id: item.app_id,
+                is_my: item.is_my,
+              },
+        ),
       };
 
       const response =
@@ -539,7 +546,6 @@ export default function useStaffSchedulePage() {
       onConfirm: async () => {
         const response = await api.deleteSmena({
           id: smenaModal.request?.id,
-          point_id: pointId,
           users: smenaModal.data?.users ?? [],
         });
 
