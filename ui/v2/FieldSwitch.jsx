@@ -1,7 +1,7 @@
-import { Box, Switch, Typography } from "@mui/material";
+import { Box, Stack, Switch, Typography } from "@mui/material";
 import { v2Colors, v2Control, v2Radii } from "./tokens";
 
-export default function V2FieldSwitch({ label, checked, onChange, sx, ...props }) {
+export default function V2FieldSwitch({ label, checked, onChange, action = null, sx, ...props }) {
   return (
     <Box
       sx={{
@@ -22,13 +22,21 @@ export default function V2FieldSwitch({ label, checked, onChange, sx, ...props }
       >
         {label}
       </Typography>
-      <Switch
-        checked={checked}
-        onChange={onChange}
-        size="small"
-        color="error"
-        {...props}
-      />
+      <Stack
+        direction="row"
+        spacing={0.5}
+        alignItems="center"
+        sx={{ flexShrink: 0 }}
+      >
+        <Switch
+          checked={checked}
+          onChange={onChange}
+          size="small"
+          color="error"
+          {...props}
+        />
+        {action}
+      </Stack>
     </Box>
   );
 }

@@ -70,7 +70,10 @@ export function MyDatePickerGraph(props) {
         //inputFormat="yyyy-MM-dd"
         //onChange={ () => {} }
 
-        slotProps={{ textField: { size: "small", multiple: true } }}
+        slotProps={{
+          actionBar: { actions: [] },
+          textField: { size: "small", multiple: true },
+        }}
         value={activeValue}
         slots={{ day: (day) => props.renderWeekPickerDay(day) }}
       />

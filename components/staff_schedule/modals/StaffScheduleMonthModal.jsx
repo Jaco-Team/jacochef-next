@@ -48,6 +48,11 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     setDraft((prev) => toggleMonthDay(prev, date, prev.selectedType));
   };
 
+  const handleReset = () => {
+    setDraft(buildMonthModalDraft(modal.data));
+    setSaveError("");
+  };
+
   const handleSave = async () => {
     if (!onSave || !modal.request) {
       return;
@@ -73,12 +78,20 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       <PickersDay
         {...pickerDay}
         day={pickerDay.day}
+        selected={false}
+        aria-selected={false}
         onClick={() => handleDayClick(date)}
         sx={{
           backgroundColor: dayItem ? typeMeta.color : "#ffffff",
           color: dayItem ? "#ffffff" : "rgba(0, 0, 0, 0.87)",
           fontWeight: dayItem ? 700 : 400,
           cursor: "pointer",
+          "&.Mui-selected, &.Mui-focusVisible, &:focus": {
+            backgroundColor: dayItem ? typeMeta.color : "#ffffff",
+          },
+          "&.Mui-selected:hover, &:hover": {
+            backgroundColor: dayItem ? typeMeta.color : "rgba(0, 0, 0, 0.04)",
+          },
         }}
       />
     );
@@ -202,6 +215,16 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                     year={monthValue}
                     renderWeekPickerDay={renderWeekPickerDay}
                   />
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1.5, pt: 0 }}>
+                    <V2Button
+                      compact
+                      tone="secondary"
+                      onClick={handleReset}
+                      disabled={isSaving}
+                    >
+                      Сбросить
+                    </V2Button>
+                  </Box>
                 </Box>
               ) : null}
             </Grid>
