@@ -12,6 +12,7 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const UnifiedSelectPopper = forwardRef(function UnifiedSelectPopper(popperProps, ref) {
@@ -419,16 +420,26 @@ export function MySelect(props) {
 
             props.func?.({ target: { value: nextValue } }, value);
           }}
-          renderOption={(optionProps, option) => (
+          renderOption={(optionProps, option, state) => (
             <li
               {...optionProps}
               key={option.id}
               style={{
                 ...optionProps.style,
                 color: option?.color || optionProps.style?.color,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
               }}
             >
-              {option.name}
+              <span>{option.name}</span>
+              {state.selected ? (
+                <CheckRoundedIcon
+                  fontSize="small"
+                  style={{ color: "#EE2737", flexShrink: 0 }}
+                />
+              ) : null}
             </li>
           )}
           renderInput={(params) => (

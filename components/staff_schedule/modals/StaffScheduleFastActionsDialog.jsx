@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Divider, Stack, Typography } from "@mui/material";
+import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import { Box, Stack, Typography } from "@mui/material";
 import { V2Alert, V2Button, V2CompactTabs, V2Select } from "@/ui/v2";
 import { canAccess } from "../staffScheduleHelpers";
 import {
@@ -23,16 +25,26 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
     <Box
       sx={{
         display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        gap: 2,
-        py: 1.5,
+        alignItems: "stretch",
+        gap: 1,
+        py: 0,
       }}
     >
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Typography sx={{ fontSize: 13, color: "#666666", mb: 0.5 }}>{label}</Typography>
+      <Box
+        sx={{
+          minWidth: 0,
+          flex: 1,
+          minHeight: 52,
+          border: "1px solid #E5E5E5",
+          borderRadius: "12px",
+          px: 1.5,
+          py: 0.75,
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <Typography sx={{ fontSize: 13, color: "#A6A6A6", lineHeight: 1.15 }}>{label}</Typography>
         <Typography
-          sx={{ fontSize: 15, color: "#111827", lineHeight: 1.35, wordBreak: "break-word" }}
+          sx={{ fontSize: 16, color: "#666666", lineHeight: 1.3, wordBreak: "break-word" }}
         >
           {value || "—"}
         </Typography>
@@ -40,17 +52,209 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
       {onAction ? (
         <V2Button
           compact
-          tone="outlinePrimary"
+          tone="secondary"
           size="small"
           onClick={onAction}
           disabled={disabled}
-          sx={{ minHeight: 36, px: 1.5, borderRadius: "8px", fontWeight: 600 }}
+          sx={{
+            minWidth: 122,
+            minHeight: 52,
+            border: "none",
+            borderRadius: "12px",
+            color: "#666666",
+            backgroundColor: "#E5E5E5",
+            fontWeight: 500,
+            "&:hover": { backgroundColor: "#DCDCDC" },
+          }}
         >
           {actionLabel}
         </V2Button>
       ) : null}
     </Box>
   );
+}
+
+function PersonHeader({ context }) {
+  return (
+    <Box sx={{ pb: 2, borderBottom: "1px solid #E5E5E5" }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        spacing={2}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#666666", lineHeight: 1.25 }}>
+            {context.userName || "—"}
+          </Typography>
+          <Typography sx={{ fontSize: 22, color: "#666666", lineHeight: 1.25 }}>
+            {context.roleName || "—"}
+          </Typography>
+        </Box>
+        <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#666666", lineHeight: 1.25 }}>
+          {context.periodLabel}
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
+
+function InlineActions({
+  cancelLabel = "Отмена",
+  onCancel,
+  doneLabel,
+  onDone,
+  doneDisabled,
+  saving,
+}) {
+  return (
+    <Stack
+      direction="row"
+      justifyContent="flex-end"
+      spacing={1.5}
+      sx={{ pt: 2 }}
+    >
+      <V2Button
+        compact
+        tone="secondary"
+        onClick={onCancel}
+        disabled={saving}
+        sx={{
+          minWidth: 120,
+          borderRadius: "12px",
+          color: "#666666",
+          fontWeight: 500,
+        }}
+      >
+        {cancelLabel}
+      </V2Button>
+      <V2Button
+        compact
+        onClick={onDone}
+        disabled={doneDisabled}
+        loading={saving}
+        startIcon={!saving ? <CheckRoundedIcon /> : null}
+        sx={{
+          minWidth: 122,
+          borderRadius: "12px",
+          fontWeight: 500,
+          "&.Mui-disabled": {
+            backgroundColor: "#CFCFCF",
+            color: "#666666",
+          },
+        }}
+      >
+        {doneLabel}
+      </V2Button>
+    </Stack>
+  );
+}
+
+function SubScreenPanel({ title, onBack, children, actions }) {
+  return (
+    <Box
+      sx={{
+        backgroundColor: "#F2F2F2",
+        borderRadius: "12px",
+        p: 1.5,
+        minHeight: 500,
+      }}
+    >
+      <Stack spacing={1.5}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+        >
+          <V2Button
+            aria-label="Назад"
+            tone="secondary"
+            onClick={onBack}
+            sx={{
+              minWidth: 58,
+              width: 58,
+              height: 58,
+              p: 0,
+              border: "none",
+              borderRadius: "10px",
+              color: "#A6A6A6",
+              backgroundColor: "#FFFFFF",
+              "&:hover": { backgroundColor: "#FFFFFF" },
+            }}
+          >
+            <ArrowBackIosNewRoundedIcon />
+          </V2Button>
+          <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#666666" }}>{title}</Typography>
+        </Stack>
+        {children}
+        {actions}
+      </Stack>
+    </Box>
+  );
+}
+
+function withCurrentSmenaOption(smenaOptions, currentLabel, pendingSmenaId) {
+  if (pendingSmenaId || !currentLabel || currentLabel === "—") {
+    return smenaOptions;
+  }
+
+  if (smenaOptions.some((item) => item.name === currentLabel)) {
+    return smenaOptions;
+  }
+
+  return [
+    {
+      id: "current",
+      name: currentLabel,
+    },
+    ...smenaOptions,
+  ];
+}
+
+function getPointCity(name = "") {
+  const [city] = String(name).split(",");
+
+  return city.trim();
+}
+
+function buildCityOptions(pointOptions, currentPointLabel) {
+  const cityNames = new Set();
+  const currentCity = getPointCity(currentPointLabel);
+
+  if (currentCity) {
+    cityNames.add(currentCity);
+  }
+
+  pointOptions.forEach((item) => {
+    const city = getPointCity(item.name);
+
+    if (city) {
+      cityNames.add(city);
+    }
+  });
+
+  return Array.from(cityNames).map((city) => ({
+    id: city,
+    name: city,
+  }));
+}
+
+function withCurrentPointOption(pointOptions, currentPointLabel, pendingPointId) {
+  if (pendingPointId || !currentPointLabel || currentPointLabel === "—") {
+    return pointOptions;
+  }
+
+  if (pointOptions.some((item) => item.name === currentPointLabel)) {
+    return pointOptions;
+  }
+
+  return [
+    {
+      id: "current",
+      name: currentPointLabel,
+    },
+    ...pointOptions,
+  ];
 }
 
 export default function StaffScheduleFastActionsDialog({
@@ -98,6 +302,7 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingScheduleType, setPendingScheduleType] = useState("");
   const [pendingSmenaId, setPendingSmenaId] = useState("");
   const [pendingPointId, setPendingPointId] = useState("");
+  const [pendingPointCity, setPendingPointCity] = useState("");
 
   useEffect(() => {
     if (!state?.open) {
@@ -116,8 +321,12 @@ export default function StaffScheduleFastActionsDialog({
         : String(getCurrentScheduleType(user, selectedPart, nextScope) ?? ""),
     );
     setPendingSmenaId(draft?.smenaId ? String(draft.smenaId) : String(user?.smena_id ?? ""));
-    setPendingPointId(draft?.point ? `${draft.point.point_id}-${draft.point.smena_id}` : "");
-  }, [access, draft, selectedPart, state?.open, user]);
+    const nextPointId = draft?.point ? `${draft.point.point_id}-${draft.point.smena_id}` : "";
+    const nextPoint = buildPointOptions(user).find((item) => String(item.id) === nextPointId);
+
+    setPendingPointId(nextPointId);
+    setPendingPointCity(getPointCity(nextPoint?.name || context.pointLabel));
+  }, [access, context.pointLabel, draft, selectedPart, state?.open, user]);
 
   const scheduleOptions = useMemo(
     () => buildScheduleOptions(scheduleScope, selectedPart),
@@ -125,10 +334,27 @@ export default function StaffScheduleFastActionsDialog({
   );
   const smenaOptions = useMemo(() => buildSmenaOptions(user), [user]);
   const pointOptions = useMemo(() => buildPointOptions(user), [user]);
+  const cityOptions = useMemo(
+    () => buildCityOptions(pointOptions, context.pointLabel),
+    [context.pointLabel, pointOptions],
+  );
+  const filteredPointOptions = useMemo(() => {
+    if (!pendingPointCity) {
+      return withCurrentPointOption(pointOptions, context.pointLabel, pendingPointId);
+    }
+
+    const nextOptions = pointOptions.filter((item) => getPointCity(item.name) === pendingPointCity);
+
+    return withCurrentPointOption(nextOptions, context.pointLabel, pendingPointId);
+  }, [context.pointLabel, pendingPointCity, pendingPointId, pointOptions]);
 
   const scheduleLabel = getScheduleLabel(draft, selectedPart, user) || context.scheduleLabel;
   const smenaLabel = getSmenaLabel(draft, user, context);
   const currentPointLabel = getPointLabel(draft, context);
+  const displayedSmenaOptions = useMemo(
+    () => withCurrentSmenaOption(smenaOptions, smenaLabel, pendingSmenaId),
+    [pendingSmenaId, smenaLabel, smenaOptions],
+  );
   const hasChanges = hasEditDraftChanges(draft, user, selectedPart);
 
   const scheduleBaselineType = draft?.scheduleType
@@ -145,23 +371,15 @@ export default function StaffScheduleFastActionsDialog({
   const pointDoneDisabled = !pendingPointId;
 
   let modalTitle = "Редактирование";
-  let onBack = null;
   let content = null;
   let actions = null;
 
   if (screen === "hub") {
     content = (
-      <Stack spacing={0}>
-        <Box sx={{ pb: 1.5 }}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#111827", mb: 0.5 }}>
-            {context.userName || "—"}
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: "#666666" }}>
-            {[context.roleName, context.periodLabel].filter(Boolean).join(" · ")}
-          </Typography>
-        </Box>
+      <Stack spacing={2.5}>
+        <PersonHeader context={context} />
 
-        <Typography sx={{ fontSize: 15, fontWeight: 700, color: "#111827", mb: 0.5 }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#666666", mb: -1 }}>
           Что изменить?
         </Typography>
 
@@ -185,215 +403,195 @@ export default function StaffScheduleFastActionsDialog({
         ) : null}
 
         {canShift ? (
-          <>
-            {canMonth || canWeek ? <Divider /> : null}
-            <EditSummaryRow
-              label="Смена"
-              value={smenaLabel}
-              actionLabel="Изменить"
-              onAction={onOpenShift}
-              disabled={isSaving}
-            />
-          </>
+          <EditSummaryRow
+            label="Смена"
+            value={smenaLabel}
+            actionLabel="Изменить"
+            onAction={onOpenShift}
+            disabled={isSaving}
+          />
         ) : null}
 
         {canPoint ? (
-          <>
-            {canMonth || canWeek || canShift ? <Divider /> : null}
-            <EditSummaryRow
-              label="Точка"
-              value={currentPointLabel}
-              actionLabel="Изменить"
-              onAction={onOpenPoint}
-              disabled={isSaving}
-            />
-          </>
+          <EditSummaryRow
+            label="Кафе"
+            value={currentPointLabel}
+            actionLabel="Изменить"
+            onAction={onOpenPoint}
+            disabled={isSaving}
+          />
         ) : null}
-      </Stack>
-    );
 
-    actions = (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 1,
-          width: "100%",
-        }}
-      >
-        <V2Button
-          compact
-          tone="secondary"
-          onClick={onClose}
-          disabled={isSaving}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Отменить
-        </V2Button>
-        <V2Button
-          compact
-          onClick={onSaveChanges}
-          disabled={!hasChanges}
-          loading={isSaving}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Сохранить изменения
-        </V2Button>
-      </Box>
+        <InlineActions
+          cancelLabel="Отменить"
+          onCancel={onClose}
+          doneLabel="Сохранить изменения"
+          onDone={onSaveChanges}
+          doneDisabled={!hasChanges}
+          saving={isSaving}
+        />
+      </Stack>
     );
   }
 
   if (screen === "schedule") {
-    modalTitle = "СМЕНА ЧАСОВ";
-    onBack = onBackToHub;
-
     content = (
       <Stack spacing={2}>
-        {canMonth && canWeek ? (
-          <V2CompactTabs
-            value={scheduleScope}
-            onChange={(_, value) => {
-              setScheduleScope(value);
-              setPendingScheduleType(
-                String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
-              );
-            }}
-            items={[
-              { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
-              { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
-            ]}
-          />
-        ) : null}
-
-        <V2Select
-          options={scheduleOptions}
-          value={pendingScheduleType}
-          onChange={(event) => setPendingScheduleType(String(event.target.value))}
-          label="Выберите часовой график"
-        />
-      </Stack>
-    );
-
-    actions = (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 1,
-          width: "100%",
-        }}
-      >
-        <V2Button
-          compact
-          tone="secondary"
-          onClick={onBackToHub}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Отмена
-        </V2Button>
-        <V2Button
-          compact
-          disabled={scheduleDoneDisabled}
-          onClick={() =>
-            onApplyScheduleDraft({
-              scheduleScope,
-              scheduleType: Number(pendingScheduleType),
-            })
+        <PersonHeader context={context} />
+        <SubScreenPanel
+          title="СМЕНА ЧАСОВ"
+          onBack={onBackToHub}
+          actions={
+            <InlineActions
+              onCancel={onBackToHub}
+              doneLabel="Готово"
+              doneDisabled={scheduleDoneDisabled}
+              onDone={() =>
+                onApplyScheduleDraft({
+                  scheduleScope,
+                  scheduleType: Number(pendingScheduleType),
+                })
+              }
+            />
           }
-          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
-          Готово
-        </V2Button>
-      </Box>
+          {canMonth && canWeek ? (
+            <V2CompactTabs
+              value={scheduleScope}
+              onChange={(_, value) => {
+                setScheduleScope(value);
+                setPendingScheduleType(
+                  String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
+                );
+              }}
+              items={[
+                { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
+                { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
+              ]}
+              sx={{
+                backgroundColor: "#E5E5E5",
+                borderRadius: "12px",
+                p: 0.5,
+                "& .MuiTabs-indicator": { display: "none" },
+                "& .MuiTab-root": {
+                  minHeight: 46,
+                  borderRadius: "8px",
+                  fontSize: 18,
+                  fontWeight: 500,
+                  textTransform: "none",
+                  color: "#666666",
+                },
+                "& .Mui-selected": {
+                  backgroundColor: "#FFFFFF",
+                  color: "#EE2737",
+                },
+              }}
+            />
+          ) : null}
+
+          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>
+              Выбери часовой график
+            </Typography>
+            <V2Select
+              options={scheduleOptions}
+              value={pendingScheduleType}
+              onChange={(event) => setPendingScheduleType(String(event.target.value))}
+              label="Часы"
+            />
+          </Box>
+        </SubScreenPanel>
+      </Stack>
     );
   }
 
   if (screen === "shift") {
-    modalTitle = "ИЗМЕНЕНИЕ СМЕНЫ";
-    onBack = onBackToHub;
-
     content = (
-      <V2Select
-        options={smenaOptions}
-        value={pendingSmenaId}
-        onChange={(event) => setPendingSmenaId(String(event.target.value))}
-        label="Выбери смену"
-      />
-    );
+      <Stack spacing={2}>
+        <PersonHeader context={context} />
+        <SubScreenPanel
+          title="ИЗМЕНЕНИЕ СМЕНЫ"
+          onBack={onBackToHub}
+          actions={
+            <InlineActions
+              onCancel={onBackToHub}
+              doneLabel="Готово"
+              doneDisabled={shiftDoneDisabled}
+              onDone={() => onApplyShiftDraft(pendingSmenaId)}
+            />
+          }
+        >
+          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>Выбери смену</Typography>
+            <V2Select
+              options={displayedSmenaOptions}
+              value={pendingSmenaId || "current"}
+              onChange={(event) => {
+                const nextValue = String(event.target.value);
 
-    actions = (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 1,
-          width: "100%",
-        }}
-      >
-        <V2Button
-          compact
-          tone="secondary"
-          onClick={onBackToHub}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Отмена
-        </V2Button>
-        <V2Button
-          compact
-          disabled={shiftDoneDisabled}
-          onClick={() => onApplyShiftDraft(pendingSmenaId)}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Готово
-        </V2Button>
-      </Box>
+                setPendingSmenaId(nextValue === "current" ? "" : nextValue);
+              }}
+              label="Смена"
+              allowNone={false}
+            />
+          </Box>
+        </SubScreenPanel>
+      </Stack>
     );
   }
 
   if (screen === "point") {
-    modalTitle = "СМЕНА ТОЧКИ";
-    onBack = onBackToHub;
-
     content = (
-      <V2Select
-        options={pointOptions}
-        value={pendingPointId}
-        onChange={(event) => setPendingPointId(String(event.target.value))}
-        label="Выберите точку"
-      />
-    );
+      <Stack spacing={2}>
+        <PersonHeader context={context} />
+        <SubScreenPanel
+          title="ИЗМЕНЕНИЕ КАФЕ"
+          onBack={onBackToHub}
+          actions={
+            <InlineActions
+              onCancel={onBackToHub}
+              doneLabel="Готово"
+              doneDisabled={pointDoneDisabled}
+              onDone={() => {
+                const selected = pointOptions.find(
+                  (item) => String(item.id) === String(pendingPointId),
+                );
+                onApplyPointDraft(selected || null);
+              }}
+            />
+          }
+        >
+          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>Выбери город</Typography>
+            <V2Select
+              options={cityOptions}
+              value={pendingPointCity}
+              onChange={(event) => {
+                const nextCity = String(event.target.value);
 
-    actions = (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 1,
-          width: "100%",
-        }}
-      >
-        <V2Button
-          compact
-          tone="secondary"
-          onClick={onBackToHub}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Отмена
-        </V2Button>
-        <V2Button
-          compact
-          disabled={pointDoneDisabled}
-          onClick={() => {
-            const selected = pointOptions.find(
-              (item) => String(item.id) === String(pendingPointId),
-            );
-            onApplyPointDraft(selected || null);
-          }}
-          sx={{ minWidth: 112, borderRadius: "8px" }}
-        >
-          Готово
-        </V2Button>
-      </Box>
+                setPendingPointCity(nextCity);
+                setPendingPointId("");
+              }}
+              label="Смена"
+              allowNone={false}
+            />
+          </Box>
+          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>Выбери кафе</Typography>
+            <V2Select
+              options={filteredPointOptions}
+              value={pendingPointId || "current"}
+              onChange={(event) => {
+                const nextValue = String(event.target.value);
+
+                setPendingPointId(nextValue === "current" ? "" : nextValue);
+              }}
+              label="Смена"
+              allowNone={false}
+            />
+          </Box>
+        </SubScreenPanel>
+      </Stack>
     );
   }
 
@@ -402,9 +600,10 @@ export default function StaffScheduleFastActionsDialog({
       open={Boolean(state?.open)}
       onClose={onClose}
       title={modalTitle}
-      onBack={onBack}
-      maxWidth="sm"
+      maxWidth="md"
       actions={actions}
+      titleSx={{ fontSize: 18, fontWeight: 400, color: "#666666" }}
+      contentSx={{ px: 3, pt: 3.5 }}
     >
       {content}
     </StaffScheduleResponsiveModal>

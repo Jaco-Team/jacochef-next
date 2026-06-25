@@ -53,6 +53,8 @@ export default function V2Modal({
   maxWidth = "md",
   children,
   actions = null,
+  titleSx,
+  contentSx,
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -95,7 +97,7 @@ export default function V2Modal({
       <DialogTitle
         sx={{
           px: 3,
-          py: 2,
+          py: 1.5,
           borderBottom: `1px solid ${v2Colors.borderLight}`,
           backgroundColor: v2Colors.surface,
         }}
@@ -121,6 +123,7 @@ export default function V2Modal({
               fontWeight: 700,
               color: "#1F2937",
               wordBreak: "break-word",
+              ...titleSx,
             }}
           >
             {title}
@@ -135,7 +138,7 @@ export default function V2Modal({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ pt: 2, pb: 2 }}>{children}</DialogContent>
+      <DialogContent sx={{ pt: 2, pb: 2, ...contentSx }}>{children}</DialogContent>
       {actions ? (
         <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${v2Colors.borderLight}` }}>
           {actions}
