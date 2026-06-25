@@ -105,7 +105,7 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
             <V2TextInput
               label="Название смены"
               value={draft.name}
-              func={(event) =>
+              onChange={(event) =>
                 setDraft((prev) => ({
                   ...prev,
                   name: event.target.value,

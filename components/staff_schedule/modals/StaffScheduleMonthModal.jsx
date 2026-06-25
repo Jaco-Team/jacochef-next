@@ -144,9 +144,9 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
             {modal.data.otherApps?.length ? (
               <Grid size={12}>
                 <V2Select
-                  data={modal.data.otherApps}
+                  options={modal.data.otherApps}
                   value={draft.newApp}
-                  func={(event) =>
+                  onChange={(event) =>
                     setDraft((prev) => ({
                       ...prev,
                       newApp: event.target.value,
@@ -160,9 +160,9 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
             {modal.data.mentorList?.length ? (
               <Grid size={12}>
                 <V2Select
-                  data={modal.data.mentorList}
+                  options={modal.data.mentorList}
                   value={draft.mentorId}
-                  func={(event) =>
+                  onChange={(event) =>
                     setDraft((prev) => ({
                       ...prev,
                       mentorId: event.target.value,

@@ -16,15 +16,8 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import {
-  V2Button,
-  V2Checkbox,
-  V2FieldSwitch,
-  V2IconButton,
-  V2Modal,
-  V2Surface,
-  v2Colors,
-} from "@/ui/v2";
+import { V2Button, V2Checkbox, V2FieldSwitch, V2IconButton, V2Surface, v2Colors } from "@/ui/v2";
+import StaffScheduleColorLegendModal from "./StaffScheduleColorLegendModal";
 import {
   ACTION_COLUMN_WIDTH,
   CONTROL_RADIUS,
@@ -43,141 +36,22 @@ import {
   toArray,
 } from "../staffScheduleHelpers";
 
-const stickyCellSize = (width) => ({
-  width,
-  minWidth: width,
-  maxWidth: width,
-  boxSizing: "border-box",
-});
-
-const stickyCellBase = {
+const stickyBaseSx = {
+  position: "sticky",
   backgroundClip: "padding-box",
   overflow: "hidden",
 };
 
-const colorLegendItems = [
-  {
-    label: "Обычный сотрудник",
-    description: "Белый фон в колонке сотрудника.",
-    color: "#FFFFFF",
-    textColor: "#111827",
-    border: true,
-  },
-  {
-    label: "Особый тип сотрудника",
-    description: "Желтый фон имени для типа 2.",
-    color: "#ffcc00",
-    textColor: "#111827",
-  },
-  {
-    label: "Критический тип сотрудника",
-    description: "Красный фон имени для типа 3.",
-    color: "#cc0033",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Приглушенная строка",
-    description: "Серый фон, когда строка отмечена как выключенная/без цветов.",
-    color: "#D3D3D3",
-    textColor: "#111827",
-  },
-  {
-    label: "Смена 10:00 - 22:00",
-    description: "Основной дневной интервал в календаре.",
-    color: "#98e38d",
-    textColor: "#111827",
-  },
-  {
-    label: "Смена 10:00 - 16:00",
-    description: "Первая половина дня.",
-    color: "#3dcef2",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Смена 16:00 - 22:00",
-    description: "Вторая половина дня.",
-    color: "#1560bd",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Другое время",
-    description: "Нестандартный интервал смены.",
-    color: "#926eae",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Выходной/праздник",
-    description: "Красная диагональная штриховка поверх цвета смены.",
-    gradient:
-      "repeating-linear-gradient(-45deg, #98e38d, #98e38d 8px, rgba(255, 0, 0, 0.3) 8px, rgba(255, 0, 0, 0.3) 12px)",
-    textColor: "#111827",
-  },
-  {
-    label: "Бонус дня",
-    description: "Зеленая подсветка текущего бонусного дня в нижних строках.",
-    color: "#CFF4C8",
-    textColor: "#111827",
-  },
-];
-
-function ColorLegendModal({ open, onClose }) {
-  return (
-    <V2Modal
-      open={open}
-      onClose={onClose}
-      title="Цветовые обозначения"
-      maxWidth="sm"
-      actions={
-        <Box sx={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
-          <V2Button
-            compact
-            onClick={onClose}
-          >
-            Понятно
-          </V2Button>
-        </Box>
-      }
-    >
-      <Stack spacing={1.25}>
-        {colorLegendItems.map((item) => (
-          <Stack
-            key={item.label}
-            direction="row"
-            spacing={1.5}
-            alignItems="flex-start"
-          >
-            <Box
-              sx={{
-                width: 42,
-                height: 28,
-                flexShrink: 0,
-                borderRadius: "6px",
-                border: item.border ? "1px solid #E5E5E5" : "none",
-                background: item.gradient || item.color,
-                color: item.textColor,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            >
-              12
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
-                {item.label}
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "#666666", lineHeight: 1.35 }}>
-                {item.description}
-              </Typography>
-            </Box>
-          </Stack>
-        ))}
-      </Stack>
-    </V2Modal>
-  );
-}
+const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
+  ...stickyBaseSx,
+  left,
+  zIndex,
+  width,
+  minWidth: width,
+  maxWidth: width,
+  boxSizing: "border-box",
+  backgroundColor,
+});
 
 function ScheduleRow({
   row,
@@ -210,12 +84,7 @@ function ScheduleRow({
         padding="checkbox"
         className="checkBox"
         sx={{
-          position: "sticky",
-          left: 0,
-          zIndex: 5,
-          ...stickyCellSize(SELECTION_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 5),
           borderRight: "1px solid #E5E5E5",
           p: 0,
         }}
@@ -231,12 +100,12 @@ function ScheduleRow({
 
       <TableCell
         sx={{
-          position: "sticky",
-          left: SELECTION_COLUMN_WIDTH,
-          zIndex: 5,
-          ...stickyCellSize(EMPLOYEE_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: baseColors.backgroundColor,
+          ...stickyCellSx(
+            EMPLOYEE_COLUMN_WIDTH,
+            SELECTION_COLUMN_WIDTH,
+            5,
+            baseColors.backgroundColor,
+          ),
           color: baseColors.color,
           fontWeight: 500,
           borderRight: "1px solid #E5E7EB",
@@ -253,12 +122,7 @@ function ScheduleRow({
 
       <TableCell
         sx={{
-          position: "sticky",
-          left: positionStickyLeft,
-          zIndex: 5,
-          ...stickyCellSize(POSITION_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(POSITION_COLUMN_WIDTH, positionStickyLeft, 5),
           borderRight: "1px solid #E5E7EB",
           py: 0.9,
           px: 1.5,
@@ -273,12 +137,7 @@ function ScheduleRow({
         <TableCell
           align="center"
           sx={{
-            position: "sticky",
-            left: positionStickyLeft + POSITION_COLUMN_WIDTH,
-            zIndex: 5,
-            ...stickyCellSize(ACTION_COLUMN_WIDTH),
-            ...stickyCellBase,
-            backgroundColor: "#ffffff",
+            ...stickyCellSx(ACTION_COLUMN_WIDTH, positionStickyLeft + POSITION_COLUMN_WIDTH, 5),
             borderRight: "1px solid #E5E7EB",
             p: 0,
           }}
@@ -467,33 +326,18 @@ function FooterMetricRow({
     <TableRow>
       <TableCell
         sx={{
-          position: "sticky",
-          left: 0,
-          zIndex: 4,
-          ...stickyCellSize(SELECTION_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 4),
           p: 0,
         }}
       />
       <TableCell
         sx={{
-          position: "sticky",
-          left: SELECTION_COLUMN_WIDTH,
-          zIndex: 4,
-          ...stickyCellSize(EMPLOYEE_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 4),
         }}
       />
       <TableCell
         sx={{
-          position: "sticky",
-          left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH,
-          zIndex: 4,
-          ...stickyCellSize(POSITION_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(POSITION_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH, 4),
           fontWeight: 600,
           py: 0.75,
         }}
@@ -503,12 +347,11 @@ function FooterMetricRow({
       {showFastActions ? (
         <TableCell
           sx={{
-            position: "sticky",
-            left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
-            zIndex: 4,
-            ...stickyCellSize(ACTION_COLUMN_WIDTH),
-            ...stickyCellBase,
-            backgroundColor: "#ffffff",
+            ...stickyCellSx(
+              ACTION_COLUMN_WIDTH,
+              SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
+              4,
+            ),
             p: 0,
           }}
         />
@@ -560,33 +403,18 @@ function SummaryTotalsRow({ values, summaryColumns, dayCount, showFastActions })
     <TableRow>
       <TableCell
         sx={{
-          position: "sticky",
-          left: 0,
-          zIndex: 4,
-          ...stickyCellSize(SELECTION_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 4),
           p: 0,
         }}
       />
       <TableCell
         sx={{
-          position: "sticky",
-          left: SELECTION_COLUMN_WIDTH,
-          zIndex: 4,
-          ...stickyCellSize(EMPLOYEE_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 4),
         }}
       />
       <TableCell
         sx={{
-          position: "sticky",
-          left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH,
-          zIndex: 4,
-          ...stickyCellSize(POSITION_COLUMN_WIDTH),
-          ...stickyCellBase,
-          backgroundColor: "#ffffff",
+          ...stickyCellSx(POSITION_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH, 4),
           fontWeight: 700,
         }}
       >
@@ -595,12 +423,11 @@ function SummaryTotalsRow({ values, summaryColumns, dayCount, showFastActions })
       {showFastActions ? (
         <TableCell
           sx={{
-            position: "sticky",
-            left: SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
-            zIndex: 4,
-            ...stickyCellSize(ACTION_COLUMN_WIDTH),
-            ...stickyCellBase,
-            backgroundColor: "#ffffff",
+            ...stickyCellSx(
+              ACTION_COLUMN_WIDTH,
+              SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
+              4,
+            ),
             p: 0,
           }}
         />
@@ -785,12 +612,7 @@ export default function StaffScheduleTableSection({
             <TableRow sx={{ backgroundColor: "#ffffff" }}>
               <TableCell
                 sx={{
-                  position: "sticky",
-                  left: 0,
-                  zIndex: 6,
-                  ...stickyCellSize(SELECTION_COLUMN_WIDTH),
-                  ...stickyCellBase,
-                  backgroundColor: "#ffffff",
+                  ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 6),
                   p: 0,
                 }}
               >
@@ -818,12 +640,7 @@ export default function StaffScheduleTableSection({
               </TableCell>
               <TableCell
                 sx={{
-                  position: "sticky",
-                  left: SELECTION_COLUMN_WIDTH,
-                  zIndex: 6,
-                  ...stickyCellSize(EMPLOYEE_COLUMN_WIDTH),
-                  ...stickyCellBase,
-                  backgroundColor: "#ffffff",
+                  ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 6),
                   fontWeight: 500,
                 }}
               >
@@ -831,12 +648,7 @@ export default function StaffScheduleTableSection({
               </TableCell>
               <TableCell
                 sx={{
-                  position: "sticky",
-                  left: positionHeaderLeft,
-                  zIndex: 6,
-                  ...stickyCellSize(POSITION_COLUMN_WIDTH),
-                  ...stickyCellBase,
-                  backgroundColor: "#ffffff",
+                  ...stickyCellSx(POSITION_COLUMN_WIDTH, positionHeaderLeft, 6),
                   fontWeight: 500,
                 }}
               >
@@ -846,12 +658,11 @@ export default function StaffScheduleTableSection({
               {showFastActions ? (
                 <TableCell
                   sx={{
-                    position: "sticky",
-                    left: positionHeaderLeft + POSITION_COLUMN_WIDTH,
-                    zIndex: 6,
-                    ...stickyCellSize(ACTION_COLUMN_WIDTH),
-                    ...stickyCellBase,
-                    backgroundColor: "#ffffff",
+                    ...stickyCellSx(
+                      ACTION_COLUMN_WIDTH,
+                      positionHeaderLeft + POSITION_COLUMN_WIDTH,
+                      6,
+                    ),
                     p: 0,
                   }}
                 />
@@ -992,7 +803,7 @@ export default function StaffScheduleTableSection({
           </TableBody>
         </Table>
       </TableContainer>
-      <ColorLegendModal
+      <StaffScheduleColorLegendModal
         open={isColorLegendOpen}
         onClose={() => setIsColorLegendOpen(false)}
       />

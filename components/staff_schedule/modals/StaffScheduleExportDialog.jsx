@@ -75,7 +75,7 @@ export default function StaffScheduleExportDialog({
             value={dialog?.dateStart ? dayjs(dialog.dateStart) : null}
             minDate={dayjs("2023-05-01")}
             maxDate={dialog?.dateEnd ? dayjs(dialog.dateEnd) : null}
-            func={(value) => onDateStartChange(value ? value.format("YYYY-MM-DD") : "")}
+            onChange={(value) => onDateStartChange(value ? value.format("YYYY-MM-DD") : "")}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
@@ -83,7 +83,7 @@ export default function StaffScheduleExportDialog({
             label="Дата до"
             value={dialog?.dateEnd ? dayjs(dialog.dateEnd) : null}
             minDate={dialog?.dateStart ? dayjs(dialog.dateStart) : dayjs("2023-05-01")}
-            func={(value) => onDateEndChange(value ? value.format("YYYY-MM-DD") : "")}
+            onChange={(value) => onDateEndChange(value ? value.format("YYYY-MM-DD") : "")}
           />
         </Grid>
       </Grid>

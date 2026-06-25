@@ -24,20 +24,20 @@ export default function StaffScheduleHeaderSection({ page }) {
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <V2Select
-            is_none={false}
-            data={page.points}
+            allowNone={false}
+            options={page.points}
             value={page.pointId}
-            func={page.handlePointChange}
+            onChange={page.handlePointChange}
             label="Кафе"
           />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <V2Select
-            is_none={false}
-            data={page.months}
+            allowNone={false}
+            options={page.months}
             value={page.monthId}
-            func={page.handleMonthChange}
+            onChange={page.handleMonthChange}
             label="Месяц"
           />
         </Box>
@@ -99,10 +99,10 @@ export default function StaffScheduleHeaderSection({ page }) {
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <V2Select
-            is_none={false}
-            data={page.view.shiftOptions}
+            allowNone={false}
+            options={page.view.shiftOptions}
             value={page.selectedShiftId}
-            func={page.handleShiftChange}
+            onChange={page.handleShiftChange}
             label="Смена"
           />
         </Box>

@@ -235,9 +235,9 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
               {modal.data.otherApps.length ? (
                 <Grid size={12}>
                   <V2Select
-                    data={modal.data.otherApps}
+                    options={modal.data.otherApps}
                     value={draft.newApp}
-                    func={(event) =>
+                    onChange={(event) =>
                       setDraft((prev) => ({
                         ...prev,
                         newApp: event.target.value,
@@ -251,9 +251,9 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
               {modal.data.mentorList.length ? (
                 <Grid size={12}>
                   <V2Select
-                    data={modal.data.mentorList}
+                    options={modal.data.mentorList}
                     value={draft.mentorId}
-                    func={(event) =>
+                    onChange={(event) =>
                       setDraft((prev) => ({
                         ...prev,
                         mentorId: event.target.value,
@@ -266,10 +266,10 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <V2Autocomplete
-                  data={temperatureOptions}
+                  options={temperatureOptions}
                   value={draft.userTemp}
                   freeSolo
-                  func={(_, value) =>
+                  onChange={(_, value) =>
                     setDraft((prev) => ({
                       ...prev,
                       userTemp: typeof value === "string" ? value : value?.name || "",
@@ -287,16 +287,16 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <V2Select
-                  data={modal.data.healthOptions}
+                  options={modal.data.healthOptions}
                   value={draft.typeHealf}
-                  func={(event) =>
+                  onChange={(event) =>
                     setDraft((prev) => ({
                       ...prev,
                       typeHealf: event.target.value,
                     }))
                   }
                   label="Здоровье"
-                  is_none={false}
+                  allowNone={false}
                 />
               </Grid>
 
@@ -323,14 +323,14 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       <Grid size={{ xs: 12, sm: 5 }}>
                         <V2TimePicker
                           value={newTimeStart}
-                          func={(event) => setNewTimeStart(event.target.value)}
+                          onChange={(event) => setNewTimeStart(event.target.value)}
                           label="Время начала работы"
                         />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 5 }}>
                         <V2TimePicker
                           value={newTimeEnd}
-                          func={(event) => setNewTimeEnd(event.target.value)}
+                          onChange={(event) => setNewTimeEnd(event.target.value)}
                           label="Время окончания работы"
                         />
                       </Grid>
@@ -379,14 +379,16 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <V2TimePicker
                             value={item.time_start}
-                            func={(event) => changeHour(index, "time_start", event.target.value)}
+                            onChange={(event) =>
+                              changeHour(index, "time_start", event.target.value)
+                            }
                             label="Время начала работы"
                           />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <V2TimePicker
                             value={item.time_end}
-                            func={(event) => changeHour(index, "time_end", event.target.value)}
+                            onChange={(event) => changeHour(index, "time_end", event.target.value)}
                             label="Время окончания работы"
                           />
                         </Grid>

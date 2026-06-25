@@ -266,9 +266,9 @@ export default function StaffScheduleFastActionsDialog({
         ) : null}
 
         <V2Select
-          data={scheduleOptions}
+          options={scheduleOptions}
           value={pendingScheduleType}
-          func={(event) => setPendingScheduleType(String(event.target.value))}
+          onChange={(event) => setPendingScheduleType(String(event.target.value))}
           label="Выберите часовой график"
         />
       </Stack>
@@ -314,9 +314,9 @@ export default function StaffScheduleFastActionsDialog({
 
     content = (
       <V2Select
-        data={smenaOptions}
+        options={smenaOptions}
         value={pendingSmenaId}
-        func={(event) => setPendingSmenaId(String(event.target.value))}
+        onChange={(event) => setPendingSmenaId(String(event.target.value))}
         label="Выбери смену"
       />
     );
@@ -356,9 +356,9 @@ export default function StaffScheduleFastActionsDialog({
 
     content = (
       <V2Select
-        data={pointOptions}
+        options={pointOptions}
         value={pendingPointId}
-        func={(event) => setPendingPointId(String(event.target.value))}
+        onChange={(event) => setPendingPointId(String(event.target.value))}
         label="Выберите точку"
       />
     );
