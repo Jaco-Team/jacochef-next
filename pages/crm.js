@@ -10,6 +10,8 @@ import useXLSExport from "@/src/hooks/useXLSXExport";
 import { LoadingProvider } from "@/components/site_clients/useClientsLoadingContext";
 import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
+import axios from "axios";
+import queryString from "query-string";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import HistoryClientModalCrm from "@/components/crm/HistoryClientModalCrm";
@@ -84,10 +86,93 @@ export default function CrmPage() {
 
       const res = await api_laravel("crm", method, data, dop_type);
       if (!res) throw new Error("Пустой ответ сервера");
-      const result = method === "export_file_xls" ? res : res.data;
-      return result;
+      if (dop_type.responseType === "blob" || method === "export_file_xls") {
+        return res;
+      }
+      return res.data;
     } catch (e) {
       showAlert(e.message || "Ошибка");
+    } finally {
+      updateMain({ is_load: false });
+    }
+  };
+
+  const parseBlobError = async (blob) => {
+    if (!(blob instanceof Blob)) {
+      return null;
+    }
+
+    try {
+      const text = await blob.text();
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  };
+
+  const downloadBlobFile = (blob, fileName) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exportSegment = async (segment) => {
+    if (!segment?.id) {
+      return;
+    }
+
+    const payload = queryString.stringify({
+      method: "export_segment",
+      module: "crm",
+      version: 2,
+      login: localStorage.getItem("token"),
+      data: JSON.stringify({ id: segment.id }),
+    });
+
+    try {
+      updateMain({ is_load: true });
+
+      const response = await axios.post("http://127.0.0.1:8000/api/crm/export_segment", payload, {
+        responseType: "blob",
+        validateStatus: (status) => status < 500,
+      });
+
+      const contentType = response.headers["content-type"] || "";
+
+      if (response.status >= 400 || contentType.includes("application/json")) {
+        const errorData = await parseBlobError(response.data);
+        showAlert(errorData?.message || errorData?.text || "Ошибка выгрузки", false);
+        return;
+      }
+
+      if (!response.data?.size) {
+        showAlert("Ошибка: получен пустой файл", false);
+        return;
+      }
+
+      let fileName = `clients_export_${segment.id}.zip`;
+      const contentDisposition = response.headers["content-disposition"];
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+
+        if (match?.[1]) {
+          fileName = decodeURIComponent(match[1].replace(/['"]/g, ""));
+        }
+      }
+
+      downloadBlobFile(new Blob([response.data]), fileName);
+    } catch (error) {
+      const errorData = await parseBlobError(error?.response?.data);
+      showAlert(
+        errorData?.message || errorData?.text || error?.message || "Ошибка выгрузки",
+        false,
+      );
     } finally {
       updateMain({ is_load: false });
     }
@@ -468,6 +553,7 @@ export default function CrmPage() {
               segments={segments}
               updateSegment={updateSegment}
               saveSegment={saveSegment}
+              exportSegment={exportSegment}
               cities={cities}
             />
           )}

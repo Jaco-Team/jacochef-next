@@ -267,6 +267,7 @@ export const SegmentTab = ({
   saveSegment,
   updateSegment,
   handleDelete,
+  exportSegment,
   segments = [],
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -322,6 +323,8 @@ export const SegmentTab = ({
         cities={cities}
         updateSegment={handleUpdateSegment}
         segmentData={editingSegment}
+        canAccess={canAccess}
+        onExportSegment={exportSegment}
       />
       <Box
         sx={{

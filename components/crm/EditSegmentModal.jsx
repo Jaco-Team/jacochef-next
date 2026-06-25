@@ -10,7 +10,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { Close, Tune, Delete } from "@mui/icons-material";
+import { Close, Tune, Delete, Download } from "@mui/icons-material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   MyAutocomplite,
@@ -133,6 +133,8 @@ export const EditSegmentModal = ({
   handleDelete,
   updateSegment,
   segmentData,
+  canAccess,
+  onExportSegment,
 }) => {
   const [form, setForm] = useState({
     id: null,
@@ -882,7 +884,23 @@ export const EditSegmentModal = ({
           </Section>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+        <DialogActions sx={{ p: 2, gap: 1, flexWrap: "wrap" }}>
+          {canAccess?.("export_segment") && segmentData?.id ? (
+            <Button
+              onClick={() => onExportSegment?.(segmentData)}
+              variant="contained"
+              startIcon={<Download />}
+              sx={{
+                mr: "auto",
+                backgroundColor: "#3cb623",
+                "&:hover": {
+                  backgroundColor: "#2f941c",
+                },
+              }}
+            >
+              Выгрузить
+            </Button>
+          ) : null}
           <Button
             onClick={handleDeleteClick}
             variant="contained"
