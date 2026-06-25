@@ -127,6 +127,12 @@ const ProgressTimeline = ({ data }) => {
   const [activeMonth, setActiveMonth] = useState(null);
   const [summaryMode, setSummaryMode] = useState("actual");
 
+  // Фильтруем данные только за текущий год
+  const currentYear = new Date().getFullYear();
+  const currentYearData = useMemo(() => {
+    return data.filter((item) => Number(item.year) === currentYear);
+  }, [data, currentYear]);
+
   const {
     totalPlan,
     totalFact,
@@ -139,16 +145,16 @@ const ProgressTimeline = ({ data }) => {
       const parsed = Number(value);
       return Number.isFinite(parsed) ? parsed : 0;
     };
-    const totalPlan = data.reduce((sum, item) => sum + toNumber(item.planQty), 0);
-    const totalFact = data.reduce((sum, item) => sum + toNumber(item.factQty), 0);
-    const currentMonthIndex = data.length - 1;
-    const lastMonthData = data[currentMonthIndex];
-    const detectedActualMonthIndex = [...data].reduce((lastIndex, item, index) => {
+    const totalPlan = currentYearData.reduce((sum, item) => sum + toNumber(item.planQty), 0);
+    const totalFact = currentYearData.reduce((sum, item) => sum + toNumber(item.factQty), 0);
+    const currentMonthIndex = currentYearData.length - 1;
+    const lastMonthData = currentYearData[currentMonthIndex];
+    const detectedActualMonthIndex = [...currentYearData].reduce((lastIndex, item, index) => {
       return toNumber(item.factQty) > 0 ? index : lastIndex;
     }, -1);
     const actualMonthIndex =
       detectedActualMonthIndex >= 0 ? detectedActualMonthIndex : currentMonthIndex;
-    const actualMonthData = data[actualMonthIndex];
+    const actualMonthData = currentYearData[actualMonthIndex];
 
     return {
       totalPlan,
@@ -158,12 +164,12 @@ const ProgressTimeline = ({ data }) => {
       actualMonthIndex,
       actualMonthData,
     };
-  }, [data]);
+  }, [currentYearData]);
 
   const summaryData =
     summaryMode === "period"
       ? {
-          month: `${data[0]?.month ?? ""} - ${lastMonthData?.month ?? ""}`,
+          month: `${currentYearData[0]?.month ?? ""} - ${lastMonthData?.month ?? ""}`,
           planQty: totalPlan,
           factQty: totalFact,
         }
@@ -171,8 +177,8 @@ const ProgressTimeline = ({ data }) => {
   const summaryMonthLabel = summaryMode === "period" ? "ПЕРИОД" : "МЕСЯЦ";
   const summaryTitle =
     summaryMode === "period"
-      ? "Выполнение цели за период"
-      : `Выполнение цели ${summaryData?.month ?? ""}`;
+      ? `Выполнение цели за период (${currentYear})`
+      : `Выполнение цели ${summaryData?.month ?? ""} (${currentYear})`;
   const summaryTargetLabel = summaryMode === "period" ? "периода" : (summaryData?.month ?? "");
   const summaryProgressPercentage =
     Number(summaryData?.planQty) > 0
@@ -181,6 +187,24 @@ const ProgressTimeline = ({ data }) => {
   const summaryGoalPercent = calculateGoalPercent(summaryData?.planQty, summaryData?.factQty);
   const isPlanReached = Number(summaryData?.factQty) >= Number(summaryData?.planQty);
   const selectedMonthIndex = summaryMode === "period" ? currentMonthIndex : actualMonthIndex;
+
+  // Если нет данных за текущий год, показываем сообщение
+  if (currentYearData.length === 0) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, width: "100%" }}
+      >
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          align="center"
+        >
+          Нет данных за {currentYear} год
+        </Typography>
+      </Paper>
+    );
+  }
 
   return (
     <Paper
@@ -352,7 +376,7 @@ const ProgressTimeline = ({ data }) => {
         <TimelineContainer sx={{ minWidth: 0 }}>
           <ProgressBar />
 
-          {data.map((item, index) => {
+          {currentYearData.map((item, index) => {
             const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
             const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
             const edgeOffset = isMobile ? 7 : 4;
@@ -365,9 +389,10 @@ const ProgressTimeline = ({ data }) => {
             const prevPosition =
               index === 0
                 ? 0
-                : edgeOffset + ((index - 1) / (data.length - 1 || 1)) * (100 - edgeOffset * 2);
+                : edgeOffset +
+                  ((index - 1) / (currentYearData.length - 1 || 1)) * (100 - edgeOffset * 2);
             const currentPosition =
-              edgeOffset + (index / (data.length - 1 || 1)) * (100 - edgeOffset * 2);
+              edgeOffset + (index / (currentYearData.length - 1 || 1)) * (100 - edgeOffset * 2);
 
             return (
               <Box
@@ -386,7 +411,7 @@ const ProgressTimeline = ({ data }) => {
             );
           })}
 
-          {data.map((item, index) => {
+          {currentYearData.map((item, index) => {
             const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
             const isActive = index === selectedMonthIndex;
             const edgeOffset = isMobile ? 7 : 4;
@@ -397,7 +422,8 @@ const ProgressTimeline = ({ data }) => {
                 : itemGoalPercent < 0
                   ? theme.palette.error.main
                   : theme.palette.grey[500];
-            const position = edgeOffset + (index / (data.length - 1 || 1)) * (100 - edgeOffset * 2);
+            const position =
+              edgeOffset + (index / (currentYearData.length - 1 || 1)) * (100 - edgeOffset * 2);
 
             return (
               <Tooltip
@@ -408,7 +434,7 @@ const ProgressTimeline = ({ data }) => {
                       variant="subtitle2"
                       sx={{ mb: 1, textTransform: "capitalize" }}
                     >
-                      {item.month}
+                      {item.month} ({item.year})
                     </Typography>
                     <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
                       <Typography
