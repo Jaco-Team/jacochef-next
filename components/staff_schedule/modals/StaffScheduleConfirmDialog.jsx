@@ -1,14 +1,6 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { V2Button } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
-
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  textTransform: "none",
-};
 
 export default function StaffScheduleConfirmDialog({
   open,
@@ -33,20 +25,21 @@ export default function StaffScheduleConfirmDialog({
             width: "100%",
           }}
         >
-          <Button
-            variant="outlined"
+          <V2Button
+            tone="secondary"
+            compact
             onClick={onClose}
-            sx={actionButtonSx}
+            sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             Отмена
-          </Button>
-          <Button
-            variant="contained"
+          </V2Button>
+          <V2Button
+            compact
             onClick={onConfirm}
-            sx={actionButtonSx}
+            sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             {confirmLabel}
-          </Button>
+          </V2Button>
         </Box>
       }
     >

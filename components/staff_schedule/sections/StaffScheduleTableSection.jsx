@@ -5,12 +5,9 @@ import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUnch
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
 import {
   Box,
-  Checkbox,
   CircularProgress,
   IconButton,
-  Paper,
   Stack,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -19,6 +16,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { V2Button, V2Checkbox, V2FieldSwitch, V2Surface, v2Colors } from "@/ui/v2";
 import {
   ACTION_COLUMN_WIDTH,
   CONTROL_RADIUS,
@@ -36,51 +34,6 @@ import {
   hasFastActionsAccess,
   toArray,
 } from "../staffScheduleHelpers";
-
-function StaffScheduleCheckbox({ checked, onChange, disabled = false }) {
-  return (
-    <Checkbox
-      checked={checked}
-      onChange={onChange}
-      disabled={disabled}
-      icon={
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            border: "1px solid #E4E7EC",
-            borderRadius: "4px",
-            backgroundColor: "#FFFFFF",
-          }}
-        />
-      }
-      checkedIcon={
-        <Box
-          sx={{
-            width: 24,
-            height: 24,
-            border: "1px solid #EE2737",
-            borderRadius: "4px",
-            backgroundColor: "#EE2737",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            "&::after": {
-              content: '""',
-              width: 10,
-              height: 6,
-              borderLeft: "2px solid #FFFFFF",
-              borderBottom: "2px solid #FFFFFF",
-              transform: "rotate(-45deg)",
-              mt: "-2px",
-            },
-          }}
-        />
-      }
-      sx={{ width: 24, height: 24, p: 0 }}
-    />
-  );
-}
 
 function ScheduleRow({
   row,
@@ -123,7 +76,7 @@ function ScheduleRow({
         }}
       >
         <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <StaffScheduleCheckbox
+          <V2Checkbox
             checked={isSelected}
             onChange={() => onToggleRowSelection(rowId)}
             disabled={!rowId || String(data?.smena_id ?? "") === "-1"}
@@ -537,22 +490,10 @@ export default function StaffScheduleTableSection({
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
   const toolbarControlMinWidth = { xs: "100%", md: 240 };
-  const toolbarLabelSx = { fontSize: 14, lineHeight: 1.25, color: "#666666", fontWeight: 500 };
-  const toolbarFieldSx = {
-    minHeight: 44,
-    borderRadius: "18px",
-    border: "1px solid #E5E5E5",
-    backgroundColor: "#FFFFFF",
-    px: 2,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  };
 
   if (loading && !days.length && !visibleRows.length) {
     return (
-      <Paper
-        variant="outlined"
+      <V2Surface
         sx={{ borderRadius: CONTROL_RADIUS, p: 5, textAlign: "center", color: "text.secondary" }}
       >
         <CircularProgress
@@ -560,29 +501,25 @@ export default function StaffScheduleTableSection({
           sx={{ mb: 1.5 }}
         />
         <Typography sx={{ fontSize: 14 }}>Загрузка графика...</Typography>
-      </Paper>
+      </V2Surface>
     );
   }
 
   if (!days.length && !visibleRows.length) {
     return (
-      <Paper
-        variant="outlined"
+      <V2Surface
         sx={{ borderRadius: CONTROL_RADIUS, p: 4, textAlign: "center", color: "text.secondary" }}
       >
         Нет данных за выбранный период
-      </Paper>
+      </V2Surface>
     );
   }
 
   return (
-    <Paper
-      variant="outlined"
+    <V2Surface
       sx={{
         borderRadius: CONTROL_RADIUS,
-        borderColor: "#E5E5E5",
         overflow: "hidden",
-        boxShadow: "none",
       }}
     >
       <Stack
@@ -609,46 +546,35 @@ export default function StaffScheduleTableSection({
         >
           {canCreateSmena ? (
             <Box sx={{ minWidth: toolbarControlMinWidth }}>
-              <Box
-                component="button"
-                type="button"
+              <V2Button
+                fullWidth
+                tone="secondary"
                 onClick={onOpenCreateSmena}
                 sx={{
-                  ...toolbarFieldSx,
-                  width: "100%",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  font: "inherit",
-                  "&:hover": { backgroundColor: "#FAFAFA" },
+                  borderRadius: "18px",
+                  color: v2Colors.textMuted,
+                  fontWeight: 500,
                 }}
               >
-                <Typography sx={toolbarLabelSx}>Новая смена</Typography>
-              </Box>
+                Новая смена
+              </V2Button>
             </Box>
           ) : null}
 
           <Box sx={{ minWidth: toolbarControlMinWidth }}>
-            <Box sx={toolbarFieldSx}>
-              <Typography sx={toolbarLabelSx}>Календарь</Typography>
-              <Switch
-                checked={!isCalendarHidden}
-                onChange={onCalendarVisibilityChange}
-                size="small"
-                color="error"
-              />
-            </Box>
+            <V2FieldSwitch
+              label="Календарь"
+              checked={!isCalendarHidden}
+              onChange={onCalendarVisibilityChange}
+            />
           </Box>
 
           <Box sx={{ minWidth: toolbarControlMinWidth }}>
-            <Box sx={toolbarFieldSx}>
-              <Typography sx={toolbarLabelSx}>Цветовые обозначения</Typography>
-              <Switch
-                checked={useColors}
-                onChange={onColorModeChange}
-                size="small"
-                color="error"
-              />
-            </Box>
+            <V2FieldSwitch
+              label="Цветовые обозначения"
+              checked={useColors}
+              onChange={onColorModeChange}
+            />
           </Box>
         </Stack>
       </Stack>
@@ -876,6 +802,6 @@ export default function StaffScheduleTableSection({
           </TableBody>
         </Table>
       </TableContainer>
-    </Paper>
+    </V2Surface>
   );
 }

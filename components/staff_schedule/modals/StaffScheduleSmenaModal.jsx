@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
   Divider,
   List,
@@ -11,7 +10,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { MyTextInput } from "@/ui/Forms";
+import { V2Button, V2TextInput } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 function buildDraft(data) {
@@ -80,24 +79,22 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
         spacing={1.5}
         sx={{ width: "100%", pt: 1 }}
       >
-        <Button
-          variant="contained"
-          color="success"
+        <V2Button
+          compact
+          tone="success"
           onClick={handleSave}
           disabled={isSaving}
-          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
         >
           {isSaving ? "Сохранение..." : "Сохранить"}
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
+        </V2Button>
+        <V2Button
+          compact
+          tone="danger"
           onClick={onClose}
           disabled={isSaving}
-          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
         >
           Отмена
-        </Button>
+        </V2Button>
       </Stack>
     );
 
@@ -127,7 +124,7 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
 
         {!modal.loading && modal.data ? (
           <>
-            <MyTextInput
+            <V2TextInput
               label="Название смены"
               value={draft.name}
               func={(event) =>

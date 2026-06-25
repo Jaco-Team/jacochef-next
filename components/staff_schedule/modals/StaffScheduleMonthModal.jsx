@@ -3,7 +3,6 @@ import SendIcon from "@mui/icons-material/Send";
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
   Grid,
   List,
@@ -15,7 +14,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
-import { MyDatePickerGraph, MySelect } from "@/ui/Forms";
+import { V2Button, V2DatePickerGraph, V2Select } from "@/ui/v2";
 import {
   buildMonthModalDraft,
   buildMonthSavePayload,
@@ -97,24 +96,22 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         spacing={2}
         sx={{ pt: 1, width: "100%" }}
       >
-        <Button
-          variant="contained"
-          color="success"
+        <V2Button
+          compact
+          tone="success"
           onClick={handleSave}
           disabled={isSaving}
-          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
         >
           {isSaving ? "Сохранение..." : "Сохранить"}
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
+        </V2Button>
+        <V2Button
+          compact
+          tone="danger"
           onClick={onClose}
           disabled={isSaving}
-          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
         >
           Отмена
-        </Button>
+        </V2Button>
       </Stack>
     );
 
@@ -149,7 +146,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
           >
             {modal.data.otherApps?.length ? (
               <Grid size={12}>
-                <MySelect
+                <V2Select
                   data={modal.data.otherApps}
                   value={draft.newApp}
                   func={(event) =>
@@ -159,14 +156,13 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                     }))
                   }
                   label="Кем работает"
-                  unifiedPopup
                 />
               </Grid>
             ) : null}
 
             {modal.data.mentorList?.length ? (
               <Grid size={12}>
-                <MySelect
+                <V2Select
                   data={modal.data.mentorList}
                   value={draft.mentorId}
                   func={(event) =>
@@ -176,7 +172,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                     }))
                   }
                   label="Наставник"
-                  unifiedPopup
                 />
               </Grid>
             ) : null}
@@ -221,7 +216,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                     "& .MuiPickersDay-root": { borderRadius: 1.5 },
                   }}
                 >
-                  <MyDatePickerGraph
+                  <V2DatePickerGraph
                     year={monthValue}
                     renderWeekPickerDay={renderWeekPickerDay}
                   />

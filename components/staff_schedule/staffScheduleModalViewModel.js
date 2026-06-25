@@ -16,17 +16,6 @@ function formatDateLabel(value) {
   return parsed.isValid() ? parsed.format("DD.MM.YYYY") : value;
 }
 
-function formatDateTimeLabel(date, timeStart, timeEnd) {
-  const timeRange = [timeStart, timeEnd].filter(Boolean).join(" - ");
-  const dateLabel = formatDateLabel(date);
-
-  if (!timeRange) {
-    return dateLabel;
-  }
-
-  return `${dateLabel} · ${timeRange}`;
-}
-
 export const MONTH_TYPE_PRESETS = [
   { type: 0, label: "10:00 - 22:00", time_start: "10:00", time_end: "22:00", color: "#98e38d" },
   { type: 1, label: "10:00 - 16:00", time_start: "10:00", time_end: "16:00", color: "#3dcef2" },
@@ -114,7 +103,6 @@ export function buildMonthModalViewModel(response) {
       type: Number(item?.type ?? 0),
       time_start: item?.time_start ?? "",
       time_end: item?.time_end ?? "",
-      timeLabel: formatDateTimeLabel(item?.date, item?.time_start, item?.time_end),
     })),
   };
 }

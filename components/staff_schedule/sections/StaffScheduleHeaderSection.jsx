@@ -2,26 +2,13 @@ import HealthAndSafetyOutlinedIcon from "@mui/icons-material/HealthAndSafetyOutl
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, Button, IconButton, Stack, Tab, Tabs, useMediaQuery, useTheme } from "@mui/material";
-import { MySelect } from "@/ui/Forms";
-
-import { CONTROL_RADIUS } from "../staffScheduleConstants";
-
-const controlRadius = CONTROL_RADIUS;
+import { Box, Stack, useMediaQuery, useTheme } from "@mui/material";
+import { V2Button, V2IconButton, V2SegmentedTabs, V2Select } from "@/ui/v2";
 
 export default function StaffScheduleHeaderSection({ page }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const canExport = page.canExport;
-  const iconButtonSx = {
-    width: 44,
-    height: 44,
-    borderRadius: controlRadius,
-    flexShrink: 0,
-    backgroundColor: canExport ? "#FFFFFF" : "#E5E5E5",
-    border: canExport ? "1px solid #E0E0E0" : "none",
-    color: canExport ? "#1F2937" : "#999999",
-  };
 
   return (
     <Box>
@@ -36,24 +23,22 @@ export default function StaffScheduleHeaderSection({ page }) {
         sx={{ mb: 2 }}
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <MySelect
+          <V2Select
             is_none={false}
             data={page.points}
             value={page.pointId}
             func={page.handlePointChange}
             label="Кафе"
-            unifiedPopup
           />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <MySelect
+          <V2Select
             is_none={false}
             data={page.months}
             value={page.monthId}
             func={page.handleMonthChange}
             label="Месяц"
-            unifiedPopup
           />
         </Box>
 
@@ -66,94 +51,46 @@ export default function StaffScheduleHeaderSection({ page }) {
               flexWrap: "nowrap",
             }}
           >
-            <Button
-              variant="contained"
+            <V2Button
               startIcon={<RefreshIcon />}
               onClick={page.handleReload}
               disabled={page.isGraphLoading}
-              sx={{
-                minHeight: 44,
-                px: 2.25,
-                borderRadius: controlRadius,
-                fontSize: 14,
-                fontWeight: 700,
-                textTransform: "none",
-                backgroundColor: "#EE2737",
-                boxShadow: "none",
-                whiteSpace: "nowrap",
-                "&:hover": {
-                  backgroundColor: "#D91E2D",
-                  boxShadow: "none",
-                },
-              }}
             >
               Обновить
-            </Button>
+            </V2Button>
 
             {isDesktop ? (
               <>
-                <IconButton
+                <V2IconButton
                   disabled={!canExport}
                   onClick={() => page.handleOpenExportDialog("ws")}
                   aria-label="Распечатать график работ"
-                  sx={iconButtonSx}
                 >
                   <PrintOutlinedIcon fontSize="small" />
-                </IconButton>
-                <IconButton
+                </V2IconButton>
+                <V2IconButton
                   disabled={!canExport}
                   onClick={() => page.handleOpenExportDialog("ws")}
                   aria-label="Скачать график работ"
-                  sx={iconButtonSx}
                 >
                   <FileDownloadOutlinedIcon fontSize="small" />
-                </IconButton>
+                </V2IconButton>
               </>
             ) : null}
           </Box>
         </Box>
       </Stack>
 
-      <Box
-        sx={{
-          p: 0.5,
-          mb: 2,
-          borderRadius: controlRadius,
-          backgroundColor: "#F2F2F2",
-        }}
-      >
-        <Tabs
-          value={page.selectedPart}
-          onChange={(_, nextValue) => page.setSelectedPart(nextValue)}
-          variant="fullWidth"
-          sx={{
-            minHeight: 48,
-            "& .MuiTabs-indicator": {
-              display: "none",
-            },
-            "& .MuiTab-root": {
-              minHeight: 48,
-              textTransform: "none",
-              borderRadius: controlRadius,
-              color: "#666666",
-              fontSize: 16,
-              fontWeight: 500,
-            },
-            "& .Mui-selected": {
-              backgroundColor: "#FFFFFF",
-              color: "#EE2737 !important",
-              boxShadow: "0 1px 2px rgba(16, 24, 40, 0.08)",
-            },
-          }}
-        >
-          {page.view.periodTabs.map((tab) => (
-            <Tab
-              key={tab.id}
-              label={tab.label}
-            />
-          ))}
-        </Tabs>
-      </Box>
+      <V2SegmentedTabs
+        value={page.selectedPart}
+        onChange={(_, nextValue) => page.setSelectedPart(nextValue)}
+        items={page.view.periodTabs.map((tab, index) => ({
+          id: tab.id,
+          value: index,
+          label: tab.label,
+        }))}
+        sx={{ mb: 2 }}
+      />
 
       <Stack
         direction={{ xs: "column", md: "row" }}
@@ -161,39 +98,28 @@ export default function StaffScheduleHeaderSection({ page }) {
         alignItems={{ xs: "stretch", md: "flex-end" }}
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <MySelect
+          <V2Select
             is_none={false}
             data={page.view.shiftOptions}
             value={page.selectedShiftId}
             func={page.handleShiftChange}
             label="Смена"
-            unifiedPopup
           />
         </Box>
 
         <Box sx={{ width: { xs: "100%", md: 382 }, flexShrink: 0 }}>
-          <Button
+          <V2Button
             fullWidth
-            variant="contained"
             disabled={!canExport}
             onClick={() => page.handleOpenExportDialog("hj")}
             startIcon={<HealthAndSafetyOutlinedIcon />}
             sx={{
-              minHeight: 44,
-              borderRadius: controlRadius,
               color: canExport ? "#FFFFFF" : "#666666",
-              backgroundColor: canExport ? "#EE2737" : "#E5E5E5",
-              boxShadow: "none",
-              textTransform: "none",
               fontWeight: 500,
-              "&:hover": {
-                backgroundColor: canExport ? "#D91E2D" : "#E5E5E5",
-                boxShadow: "none",
-              },
             }}
           >
             Журнал здоровья
-          </Button>
+          </V2Button>
         </Box>
       </Stack>
     </Box>

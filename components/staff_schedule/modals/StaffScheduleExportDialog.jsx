@@ -1,20 +1,11 @@
 import dayjs from "dayjs";
-import { Alert, Box, Button, CircularProgress, Grid } from "@mui/material";
-import { MyDatePickerNew } from "@/ui/Forms";
+import { Alert, Box, CircularProgress, Grid } from "@mui/material";
+import { V2Button, V2DatePicker } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const EXPORT_TITLES = {
   ws: "График работ",
   hj: "Журнал здоровья",
-};
-
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  textTransform: "none",
 };
 
 export default function StaffScheduleExportDialog({
@@ -43,19 +34,12 @@ export default function StaffScheduleExportDialog({
             pb: { xs: 0, sm: 0.5 },
           }}
         >
-          <Button
-            variant="contained"
+          <V2Button
+            compact
+            tone="success"
             onClick={onDownload}
             disabled={dialog?.loading}
-            sx={{
-              ...actionButtonSx,
-              backgroundColor: "#16A34A",
-              boxShadow: "none",
-              "&:hover": {
-                backgroundColor: "#15803D",
-                boxShadow: "none",
-              },
-            }}
+            sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             {dialog?.loading ? (
               <CircularProgress
@@ -65,15 +49,16 @@ export default function StaffScheduleExportDialog({
             ) : (
               "Скачать"
             )}
-          </Button>
-          <Button
-            variant="outlined"
+          </V2Button>
+          <V2Button
+            compact
+            tone="secondary"
             onClick={onClose}
             disabled={dialog?.loading}
-            sx={actionButtonSx}
+            sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             Отмена
-          </Button>
+          </V2Button>
         </Box>
       }
     >
@@ -92,7 +77,7 @@ export default function StaffScheduleExportDialog({
         sx={{ pt: 0.5 }}
       >
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MyDatePickerNew
+          <V2DatePicker
             label="Дата от"
             value={dialog?.dateStart ? dayjs(dialog.dateStart) : null}
             minDate={dayjs("2023-05-01")}
@@ -101,7 +86,7 @@ export default function StaffScheduleExportDialog({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <MyDatePickerNew
+          <V2DatePicker
             label="Дата до"
             value={dialog?.dateEnd ? dayjs(dialog.dateEnd) : null}
             minDate={dialog?.dateStart ? dayjs(dialog.dateStart) : dayjs("2023-05-01")}

@@ -9,10 +9,6 @@ export function toNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function isEnabled(value) {
-  return Number(value) === 1;
-}
-
 export function getActiveMonthId(months = []) {
   const active = months.find((item) => Number(item?.is_active) === 1);
   return active?.id ?? months[0]?.id ?? "";

@@ -9,14 +9,13 @@ import {
   AccordionSummary,
   Alert,
   Box,
-  Button,
   CircularProgress,
   Grid,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
-import { MyAutocomplite2, MySelect, MyTimePicker } from "@/ui/Forms";
+import { V2Autocomplete, V2Button, V2Select, V2TimePicker } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 function buildDraft(data) {
@@ -188,22 +187,22 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         spacing={2}
         sx={{ pt: 2 }}
       >
-        <Button
-          variant="contained"
-          color="success"
+        <V2Button
+          compact
+          tone="success"
           onClick={handleSave}
           disabled={isSaving}
         >
           {isSaving ? "Сохранение..." : "Сохранить"}
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
+        </V2Button>
+        <V2Button
+          compact
+          tone="danger"
           onClick={onClose}
           disabled={isSaving}
         >
           Отмена
-        </Button>
+        </V2Button>
       </Stack>
     );
 
@@ -247,7 +246,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
             >
               {modal.data.otherApps.length ? (
                 <Grid size={12}>
-                  <MySelect
+                  <V2Select
                     data={modal.data.otherApps}
                     value={draft.newApp}
                     func={(event) =>
@@ -257,14 +256,13 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       }))
                     }
                     label="Кем работает"
-                    unifiedPopup
                   />
                 </Grid>
               ) : null}
 
               {modal.data.mentorList.length ? (
                 <Grid size={12}>
-                  <MySelect
+                  <V2Select
                     data={modal.data.mentorList}
                     value={draft.mentorId}
                     func={(event) =>
@@ -274,13 +272,12 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       }))
                     }
                     label="Наставник"
-                    unifiedPopup
                   />
                 </Grid>
               ) : null}
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <MyAutocomplite2
+                <V2Autocomplete
                   data={temperatureOptions}
                   value={draft.userTemp}
                   freeSolo
@@ -297,12 +294,11 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                     }))
                   }
                   label="Температура"
-                  unifiedPopup
                 />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <MySelect
+                <V2Select
                   data={modal.data.healthOptions}
                   value={draft.typeHealf}
                   func={(event) =>
@@ -313,7 +309,6 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   }
                   label="Здоровье"
                   is_none={false}
-                  unifiedPopup
                 />
               </Grid>
 
@@ -338,29 +333,28 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       spacing={1.5}
                     >
                       <Grid size={{ xs: 12, sm: 5 }}>
-                        <MyTimePicker
+                        <V2TimePicker
                           value={newTimeStart}
                           func={(event) => setNewTimeStart(event.target.value)}
                           label="Время начала работы"
                         />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 5 }}>
-                        <MyTimePicker
+                        <V2TimePicker
                           value={newTimeEnd}
                           func={(event) => setNewTimeEnd(event.target.value)}
                           label="Время окончания работы"
                         />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 2 }}>
-                        <Button
+                        <V2Button
                           fullWidth
-                          variant="contained"
-                          color="error"
+                          tone="danger"
                           onClick={addHour}
                           sx={{ height: "100%" }}
                         >
                           Добавить
-                        </Button>
+                        </V2Button>
                       </Grid>
                     </Grid>
                   </AccordionDetails>
@@ -395,14 +389,14 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                         spacing={1.5}
                       >
                         <Grid size={{ xs: 12, sm: 6 }}>
-                          <MyTimePicker
+                          <V2TimePicker
                             value={item.time_start}
                             func={(event) => changeHour(index, "time_start", event.target.value)}
                             label="Время начала работы"
                           />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
-                          <MyTimePicker
+                          <V2TimePicker
                             value={item.time_end}
                             func={(event) => changeHour(index, "time_end", event.target.value)}
                             label="Время окончания работы"

@@ -62,17 +62,6 @@ export function buildPeriodTabs(graph) {
   ];
 }
 
-export function buildPageStats(activePeriod) {
-  const activeErrors = activePeriod?.errors ?? { orders: [], cam: [] };
-
-  return {
-    ordersErrorCount: toArray(activeErrors.orders).length,
-    camErrorCount: toArray(activeErrors.cam).length,
-    daysCount: toArray(activePeriod?.meta?.days).length,
-    rowsCount: toArray(activePeriod?.rows).length,
-  };
-}
-
 function buildShiftOptions(rows) {
   return [
     { id: "all", name: "Все смены" },
@@ -128,7 +117,5 @@ export function buildPageViewModel({
     shiftOptions: buildShiftOptions(activePeriod?.rows ?? []),
     shownShiftCount: visibleRows.shiftCount,
     summaryColumns: getVisibleSummaryColumns(access),
-    graphKind: graph.kind,
-    stats: buildPageStats(activePeriod),
   };
 }

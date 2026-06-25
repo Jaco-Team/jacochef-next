@@ -1,16 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-} from "@mui/material";
-import { MySelect } from "@/ui/Forms";
+import { Alert, Box, CircularProgress, Divider, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { V2Button, V2Select, v2Colors } from "@/ui/v2";
 import { canAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -25,29 +15,6 @@ import {
   hasEditDraftChanges,
 } from "../staffScheduleEditViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
-
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  textTransform: "none",
-};
-
-const editRowButtonSx = {
-  minHeight: 36,
-  px: 1.5,
-  borderRadius: "8px",
-  fontWeight: 600,
-  textTransform: "none",
-  color: "#EE2737",
-  borderColor: "#EE2737",
-  "&:hover": {
-    borderColor: "#D91E2D",
-    backgroundColor: "rgba(238, 39, 55, 0.04)",
-  },
-};
 
 function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
   return (
@@ -69,15 +36,16 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
         </Typography>
       </Box>
       {onAction ? (
-        <Button
-          variant="outlined"
+        <V2Button
+          compact
+          tone="outlinePrimary"
           size="small"
           onClick={onAction}
           disabled={disabled}
-          sx={editRowButtonSx}
+          sx={{ minHeight: 36, px: 1.5, borderRadius: "8px", fontWeight: 600 }}
         >
           {actionLabel}
-        </Button>
+        </V2Button>
       ) : null}
     </Box>
   );
@@ -237,31 +205,20 @@ export default function StaffScheduleFastActionsDialog({
           width: "100%",
         }}
       >
-        <Button
-          variant="outlined"
+        <V2Button
+          compact
+          tone="secondary"
           onClick={onClose}
           disabled={isSaving}
-          sx={actionButtonSx}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Отменить
-        </Button>
-        <Button
-          variant="contained"
+        </V2Button>
+        <V2Button
+          compact
           onClick={onSaveChanges}
           disabled={!hasChanges || isSaving}
-          sx={{
-            ...actionButtonSx,
-            backgroundColor: "#EE2737",
-            boxShadow: "none",
-            "&:hover": {
-              backgroundColor: "#D91E2D",
-              boxShadow: "none",
-            },
-            "&.Mui-disabled": {
-              backgroundColor: "#E5E7EB",
-              color: "#9CA3AF",
-            },
-          }}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           {isSaving ? (
             <CircularProgress
@@ -271,7 +228,7 @@ export default function StaffScheduleFastActionsDialog({
           ) : (
             "Сохранить изменения"
           )}
-        </Button>
+        </V2Button>
       </Box>
     );
   }
@@ -293,7 +250,7 @@ export default function StaffScheduleFastActionsDialog({
             sx={{
               minHeight: 40,
               "& .MuiTabs-indicator": {
-                backgroundColor: "#EE2737",
+                backgroundColor: v2Colors.primary,
                 height: 2,
               },
               "& .MuiTab-root": {
@@ -301,10 +258,10 @@ export default function StaffScheduleFastActionsDialog({
                 textTransform: "none",
                 fontWeight: 600,
                 fontSize: 14,
-                color: "#666666",
+                color: v2Colors.textMuted,
               },
               "& .Mui-selected": {
-                color: "#EE2737",
+                color: v2Colors.primary,
               },
             }}
           >
@@ -319,12 +276,11 @@ export default function StaffScheduleFastActionsDialog({
           </Tabs>
         ) : null}
 
-        <MySelect
+        <V2Select
           data={scheduleOptions}
           value={pendingScheduleType}
           func={(event) => setPendingScheduleType(String(event.target.value))}
           label="Выберите часовой график"
-          unifiedPopup
         />
       </Stack>
     );
@@ -338,15 +294,16 @@ export default function StaffScheduleFastActionsDialog({
           width: "100%",
         }}
       >
-        <Button
-          variant="outlined"
+        <V2Button
+          compact
+          tone="secondary"
           onClick={onBackToHub}
-          sx={actionButtonSx}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Отмена
-        </Button>
-        <Button
-          variant="contained"
+        </V2Button>
+        <V2Button
+          compact
           disabled={scheduleDoneDisabled}
           onClick={() =>
             onApplyScheduleDraft({
@@ -354,19 +311,10 @@ export default function StaffScheduleFastActionsDialog({
               scheduleType: Number(pendingScheduleType),
             })
           }
-          sx={{
-            ...actionButtonSx,
-            backgroundColor: scheduleDoneDisabled ? "#E5E7EB" : "#EE2737",
-            color: scheduleDoneDisabled ? "#9CA3AF" : "#FFFFFF",
-            boxShadow: "none",
-            "&:hover": {
-              backgroundColor: scheduleDoneDisabled ? "#E5E7EB" : "#D91E2D",
-              boxShadow: "none",
-            },
-          }}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Готово
-        </Button>
+        </V2Button>
       </Box>
     );
   }
@@ -376,12 +324,11 @@ export default function StaffScheduleFastActionsDialog({
     onBack = onBackToHub;
 
     content = (
-      <MySelect
+      <V2Select
         data={smenaOptions}
         value={pendingSmenaId}
         func={(event) => setPendingSmenaId(String(event.target.value))}
         label="Выбери смену"
-        unifiedPopup
       />
     );
 
@@ -394,30 +341,22 @@ export default function StaffScheduleFastActionsDialog({
           width: "100%",
         }}
       >
-        <Button
-          variant="outlined"
+        <V2Button
+          compact
+          tone="secondary"
           onClick={onBackToHub}
-          sx={actionButtonSx}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Отмена
-        </Button>
-        <Button
-          variant="contained"
+        </V2Button>
+        <V2Button
+          compact
           disabled={shiftDoneDisabled}
           onClick={() => onApplyShiftDraft(pendingSmenaId)}
-          sx={{
-            ...actionButtonSx,
-            backgroundColor: shiftDoneDisabled ? "#E5E7EB" : "#EE2737",
-            color: shiftDoneDisabled ? "#9CA3AF" : "#FFFFFF",
-            boxShadow: "none",
-            "&:hover": {
-              backgroundColor: shiftDoneDisabled ? "#E5E7EB" : "#D91E2D",
-              boxShadow: "none",
-            },
-          }}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Готово
-        </Button>
+        </V2Button>
       </Box>
     );
   }
@@ -427,12 +366,11 @@ export default function StaffScheduleFastActionsDialog({
     onBack = onBackToHub;
 
     content = (
-      <MySelect
+      <V2Select
         data={pointOptions}
         value={pendingPointId}
         func={(event) => setPendingPointId(String(event.target.value))}
         label="Выберите точку"
-        unifiedPopup
       />
     );
 
@@ -445,15 +383,16 @@ export default function StaffScheduleFastActionsDialog({
           width: "100%",
         }}
       >
-        <Button
-          variant="outlined"
+        <V2Button
+          compact
+          tone="secondary"
           onClick={onBackToHub}
-          sx={actionButtonSx}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Отмена
-        </Button>
-        <Button
-          variant="contained"
+        </V2Button>
+        <V2Button
+          compact
           disabled={pointDoneDisabled}
           onClick={() => {
             const selected = pointOptions.find(
@@ -461,19 +400,10 @@ export default function StaffScheduleFastActionsDialog({
             );
             onApplyPointDraft(selected || null);
           }}
-          sx={{
-            ...actionButtonSx,
-            backgroundColor: pointDoneDisabled ? "#E5E7EB" : "#EE2737",
-            color: pointDoneDisabled ? "#9CA3AF" : "#FFFFFF",
-            boxShadow: "none",
-            "&:hover": {
-              backgroundColor: pointDoneDisabled ? "#E5E7EB" : "#D91E2D",
-              boxShadow: "none",
-            },
-          }}
+          sx={{ minWidth: 112, borderRadius: "8px" }}
         >
           Готово
-        </Button>
+        </V2Button>
       </Box>
     );
   }
