@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, CircularProgress, Divider, Stack, Tab, Tabs, Typography } from "@mui/material";
-import { V2Button, V2Select, v2Colors } from "@/ui/v2";
+import { Box, Divider, Stack, Typography } from "@mui/material";
+import { V2Alert, V2Button, V2CompactTabs, V2Select } from "@/ui/v2";
 import { canAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -150,12 +150,12 @@ export default function StaffScheduleFastActionsDialog({
         </Typography>
 
         {saveError ? (
-          <Alert
+          <V2Alert
             severity="error"
             sx={{ mb: 1.5 }}
           >
             {saveError}
-          </Alert>
+          </V2Alert>
         ) : null}
 
         {canMonth || canWeek ? (
@@ -217,17 +217,11 @@ export default function StaffScheduleFastActionsDialog({
         <V2Button
           compact
           onClick={onSaveChanges}
-          disabled={!hasChanges || isSaving}
+          disabled={!hasChanges}
+          loading={isSaving}
           sx={{ minWidth: 112, borderRadius: "8px" }}
         >
-          {isSaving ? (
-            <CircularProgress
-              size={18}
-              color="inherit"
-            />
-          ) : (
-            "Сохранить изменения"
-          )}
+          Сохранить изменения
         </V2Button>
       </Box>
     );
@@ -240,40 +234,17 @@ export default function StaffScheduleFastActionsDialog({
     content = (
       <Stack spacing={2}>
         {canMonth && canWeek ? (
-          <Tabs
+          <V2CompactTabs
             value={scheduleScope}
             onChange={(_, value) => {
               setScheduleScope(value);
               setPendingScheduleType("");
             }}
-            variant="fullWidth"
-            sx={{
-              minHeight: 40,
-              "& .MuiTabs-indicator": {
-                backgroundColor: v2Colors.primary,
-                height: 2,
-              },
-              "& .MuiTab-root": {
-                minHeight: 40,
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: 14,
-                color: v2Colors.textMuted,
-              },
-              "& .Mui-selected": {
-                color: v2Colors.primary,
-              },
-            }}
-          >
-            <Tab
-              value={EDIT_SCHEDULE_SCOPE.month}
-              label="На месяц"
-            />
-            <Tab
-              value={EDIT_SCHEDULE_SCOPE.week}
-              label="На 2 недели"
-            />
-          </Tabs>
+            items={[
+              { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
+              { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
+            ]}
+          />
         ) : null}
 
         <V2Select

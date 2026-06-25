@@ -1,31 +1,6 @@
-import {
-  MyAutocomplite2,
-  MyDatePickerGraph,
-  MyDatePickerNew,
-  MySelect,
-  MyTextInput,
-  MyTimePicker,
-} from "@/ui/Forms";
-
-export function V2Select(props) {
-  return (
-    <MySelect
-      unifiedPopup
-      {...props}
-    />
-  );
-}
-
-export function V2Autocomplete(props) {
-  return (
-    <MyAutocomplite2
-      unifiedPopup
-      {...props}
-    />
-  );
-}
-
-export const V2TextInput = MyTextInput;
-export const V2TimePicker = MyTimePicker;
-export const V2DatePicker = MyDatePickerNew;
-export const V2DatePickerGraph = MyDatePickerGraph;
+export { default as V2Autocomplete } from "./Autocomplete";
+export { default as V2DatePicker } from "./DatePicker";
+export { default as V2DatePickerGraph } from "./DatePickerGraph";
+export { default as V2Select } from "./Select";
+export { default as V2TextInput } from "./TextInput";
+export { default as V2TimePicker } from "./TimePicker";

@@ -7,15 +7,12 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
-  CircularProgress,
   Grid,
-  Paper,
   Stack,
   Typography,
 } from "@mui/material";
-import { V2Autocomplete, V2Button, V2Select, V2TimePicker } from "@/ui/v2";
+import { V2Alert, V2Autocomplete, V2Button, V2Select, V2TimePicker } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 function buildDraft(data) {
@@ -59,9 +56,12 @@ function SummaryCard({ modal }) {
   }
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{ borderRadius: 2, p: 2 }}
+    <Box
+      sx={{
+        border: "1px solid #E5E5E5",
+        borderRadius: 2,
+        p: 2,
+      }}
     >
       <Stack
         direction={{ xs: "column", sm: "row" }}
@@ -82,7 +82,7 @@ function SummaryCard({ modal }) {
           </Box>
         ) : null}
       </Stack>
-    </Paper>
+    </Box>
   );
 }
 
@@ -215,20 +215,8 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       actions={actions}
     >
       <Stack spacing={2}>
-        {modal.error ? <Alert severity="error">{modal.error}</Alert> : null}
-        {saveError ? <Alert severity="error">{saveError}</Alert> : null}
-
-        {modal.loading ? (
-          <Box sx={{ py: 5, textAlign: "center" }}>
-            <CircularProgress
-              size={28}
-              sx={{ mb: 1.5 }}
-            />
-            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-              Загрузка данных сотрудника...
-            </Typography>
-          </Box>
-        ) : null}
+        {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
+        {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
 
         {!modal.loading && modal.data ? (
           <>

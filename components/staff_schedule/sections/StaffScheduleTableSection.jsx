@@ -5,7 +5,6 @@ import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUnch
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
 import {
   Box,
-  CircularProgress,
   IconButton,
   Stack,
   Table,
@@ -452,7 +451,6 @@ export default function StaffScheduleTableSection({
   shownShiftCount,
   summaryColumns,
   access,
-  loading = false,
   onOpenDay,
   onOpenMonth,
   onOpenFastActions,
@@ -491,27 +489,19 @@ export default function StaffScheduleTableSection({
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
   const toolbarControlMinWidth = { xs: "100%", md: 240 };
 
-  if (loading && !days.length && !visibleRows.length) {
-    return (
-      <V2Surface
-        sx={{ borderRadius: CONTROL_RADIUS, p: 5, textAlign: "center", color: "text.secondary" }}
-      >
-        <CircularProgress
-          size={28}
-          sx={{ mb: 1.5 }}
-        />
-        <Typography sx={{ fontSize: 14 }}>Загрузка графика...</Typography>
-      </V2Surface>
-    );
-  }
-
   if (!days.length && !visibleRows.length) {
     return (
-      <V2Surface
-        sx={{ borderRadius: CONTROL_RADIUS, p: 4, textAlign: "center", color: "text.secondary" }}
+      <Box
+        sx={{
+          border: "1px solid #E5E5E5",
+          borderRadius: CONTROL_RADIUS,
+          p: 4,
+          textAlign: "center",
+          color: "text.secondary",
+        }}
       >
         Нет данных за выбранный период
-      </V2Surface>
+      </Box>
     );
   }
 

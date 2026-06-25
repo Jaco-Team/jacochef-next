@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
-import { Alert, Box, CircularProgress, Grid } from "@mui/material";
-import { V2Button, V2DatePicker } from "@/ui/v2";
+import { Box, Grid } from "@mui/material";
+import { V2Alert, V2Button, V2DatePicker } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const EXPORT_TITLES = {
@@ -38,17 +38,10 @@ export default function StaffScheduleExportDialog({
             compact
             tone="success"
             onClick={onDownload}
-            disabled={dialog?.loading}
+            loading={dialog?.loading}
             sx={{ minWidth: 112, borderRadius: "8px" }}
           >
-            {dialog?.loading ? (
-              <CircularProgress
-                size={18}
-                color="inherit"
-              />
-            ) : (
-              "Скачать"
-            )}
+            Скачать
           </V2Button>
           <V2Button
             compact
@@ -63,12 +56,12 @@ export default function StaffScheduleExportDialog({
       }
     >
       {dialog?.error ? (
-        <Alert
+        <V2Alert
           severity="error"
           sx={{ mb: 2 }}
         >
           {dialog.error}
-        </Alert>
+        </V2Alert>
       ) : null}
 
       <Grid

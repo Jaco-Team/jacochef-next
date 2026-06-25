@@ -1,20 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import SendIcon from "@mui/icons-material/Send";
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Grid,
-  List,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Grid, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
-import { V2Button, V2DatePickerGraph, V2Select } from "@/ui/v2";
+import {
+  V2Alert,
+  V2Button,
+  V2DatePickerGraph,
+  V2Select,
+  V2SelectableList,
+  V2SelectableListItem,
+} from "@/ui/v2";
 import {
   buildMonthModalDraft,
   buildMonthSavePayload,
@@ -124,20 +120,8 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       actions={actions}
     >
       <Stack spacing={2}>
-        {modal.error ? <Alert severity="error">{modal.error}</Alert> : null}
-        {saveError ? <Alert severity="error">{saveError}</Alert> : null}
-
-        {modal.loading ? (
-          <Box sx={{ py: 5, textAlign: "center" }}>
-            <CircularProgress
-              size={28}
-              sx={{ mb: 1.5 }}
-            />
-            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-              Загрузка месячных часов...
-            </Typography>
-          </Box>
-        ) : null}
+        {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
+        {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
 
         {!modal.loading && modal.data ? (
           <Grid
@@ -177,12 +161,9 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
             ) : null}
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <List
-                dense
-                sx={{ borderRadius: "12px", overflow: "hidden" }}
-              >
+              <V2SelectableList sx={{ borderRadius: "12px", overflow: "hidden" }}>
                 {MONTH_TYPE_PRESETS.map((preset) => (
-                  <ListItemButton
+                  <V2SelectableListItem
                     key={preset.type}
                     onClick={() =>
                       setDraft((prev) => ({
@@ -195,20 +176,21 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                       color: "#ffffff",
                       mb: 0.5,
                       borderRadius: "8px",
+                      justifyContent: "space-between",
                     }}
                   >
-                    <ListItemText primary={preset.label} />
+                    <Typography>{preset.label}</Typography>
                     {draft.selectedType === preset.type ? <SendIcon fontSize="small" /> : null}
-                  </ListItemButton>
+                  </V2SelectableListItem>
                 ))}
-              </List>
+              </V2SelectableList>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
               {monthValue ? (
-                <Paper
-                  variant="outlined"
+                <Box
                   sx={{
+                    border: "1px solid #E5E5E5",
                     borderRadius: 2,
                     overflow: "hidden",
                     "& .MuiPickersLayout-root": { minWidth: 0 },
@@ -220,7 +202,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                     year={monthValue}
                     renderWeekPickerDay={renderWeekPickerDay}
                   />
-                </Paper>
+                </Box>
               ) : null}
             </Grid>
           </Grid>

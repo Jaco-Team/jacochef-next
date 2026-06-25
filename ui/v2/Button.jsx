@@ -1,4 +1,4 @@
-import { Button as MuiButton } from "@mui/material";
+import { Button as MuiButton, CircularProgress } from "@mui/material";
 import { v2Colors, v2Control, v2Radii } from "./tokens";
 
 const variantStyles = {
@@ -40,13 +40,23 @@ const variantStyles = {
   },
 };
 
-export default function V2Button({ tone = "primary", compact = false, sx, variant, ...props }) {
+export default function V2Button({
+  tone = "primary",
+  compact = false,
+  loading = false,
+  disabled = false,
+  sx,
+  variant,
+  children,
+  ...props
+}) {
   const resolvedVariant =
     variant || (tone === "secondary" || tone === "outlinePrimary" ? "outlined" : "contained");
 
   return (
     <MuiButton
       variant={resolvedVariant}
+      disabled={loading || disabled}
       sx={{
         minHeight: compact ? v2Control.compactHeight : v2Control.height,
         px: compact ? 2 : 2.25,
@@ -66,6 +76,15 @@ export default function V2Button({ tone = "primary", compact = false, sx, varian
         ...sx,
       }}
       {...props}
-    />
+    >
+      {loading ? (
+        <CircularProgress
+          size={18}
+          color="inherit"
+        />
+      ) : (
+        children
+      )}
+    </MuiButton>
   );
 }

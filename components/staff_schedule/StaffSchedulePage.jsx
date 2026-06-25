@@ -1,4 +1,5 @@
-import { Alert, Backdrop, Box, CircularProgress, Grid } from "@mui/material";
+import { Box, Grid } from "@mui/material";
+import { V2Alert, V2BackdropLoader } from "@/ui/v2";
 import StaffScheduleConfirmDialog from "./modals/StaffScheduleConfirmDialog";
 import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
 import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
@@ -12,15 +13,16 @@ import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
 
 export default function StaffSchedulePage() {
   const page = useStaffSchedulePage();
+  const isLoading =
+    page.isBootstrapping ||
+    page.isGraphLoading ||
+    page.dayModal.loading ||
+    page.monthModal.loading ||
+    page.smenaModal.loading;
 
   return (
     <Box sx={{ pb: PAGE_BOTTOM_PADDING }}>
-      <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
-        open={page.isBootstrapping}
-      >
-        <CircularProgress />
-      </Backdrop>
+      <V2BackdropLoader open={isLoading} />
 
       <Grid
         container
@@ -33,7 +35,7 @@ export default function StaffSchedulePage() {
 
         {page.error ? (
           <Grid size={12}>
-            <Alert severity="error">{page.error}</Alert>
+            <V2Alert severity="error">{page.error}</V2Alert>
           </Grid>
         ) : null}
 
@@ -44,7 +46,6 @@ export default function StaffSchedulePage() {
             shownShiftCount={page.view.shownShiftCount}
             summaryColumns={page.view.summaryColumns}
             access={page.access}
-            loading={page.isGraphLoading}
             onOpenDay={page.handleOpenDayModal}
             onOpenMonth={page.handleOpenMonthModal}
             onOpenFastActions={page.handleOpenFastActions}

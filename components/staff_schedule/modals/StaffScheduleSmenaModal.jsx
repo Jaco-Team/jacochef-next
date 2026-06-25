@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Divider,
-  List,
-  ListItemButton,
-  ListItemText,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { V2Button, V2TextInput } from "@/ui/v2";
+import { Divider, Stack } from "@mui/material";
+import { V2Alert, V2Button, V2SelectableList, V2SelectableListItem, V2TextInput } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 function buildDraft(data) {
@@ -107,20 +97,8 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
       actions={actions}
     >
       <Stack spacing={2}>
-        {modal.error ? <Alert severity="error">{modal.error}</Alert> : null}
-        {saveError ? <Alert severity="error">{saveError}</Alert> : null}
-
-        {modal.loading ? (
-          <Box sx={{ py: 5, textAlign: "center" }}>
-            <CircularProgress
-              size={28}
-              sx={{ mb: 1.5 }}
-            />
-            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-              Загрузка смены...
-            </Typography>
-          </Box>
-        ) : null}
+        {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
+        {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
 
         {!modal.loading && modal.data ? (
           <>
@@ -135,45 +113,28 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
               }
             />
 
-            <List
-              dense
-              sx={{
-                border: "1px solid #E5E5E5",
-                borderRadius: "12px",
-                overflow: "hidden",
-              }}
-            >
+            <V2SelectableList>
               {draft.users.map((item) => (
-                <ListItemButton
+                <V2SelectableListItem
                   key={item.id}
+                  label={item.name || "Без имени"}
                   selected={item.is_my === 1}
                   onClick={() => toggleUser(item.id)}
-                >
-                  <ListItemText primary={item.name || "Без имени"} />
-                </ListItemButton>
+                />
               ))}
               {modal.mode === "edit" && onRequestDelete ? (
                 <>
                   <Divider />
-                  <ListItemButton
+                  <V2SelectableListItem
+                    label="Удалить смену"
+                    destructive
                     selected
                     onClick={onRequestDelete}
                     disabled={isSaving}
-                    sx={{
-                      color: "error.main",
-                      "&.Mui-selected": {
-                        backgroundColor: "rgba(211, 47, 47, 0.08)",
-                      },
-                      "&.Mui-selected:hover": {
-                        backgroundColor: "rgba(211, 47, 47, 0.14)",
-                      },
-                    }}
-                  >
-                    <ListItemText primary="Удалить смену" />
-                  </ListItemButton>
+                  />
                 </>
               ) : null}
-            </List>
+            </V2SelectableList>
           </>
         ) : null}
       </Stack>
