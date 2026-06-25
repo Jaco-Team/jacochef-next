@@ -49,6 +49,7 @@ export default function useStaffScheduleApi() {
       saveEditSmena: (payload) => request("saveEditSmena", payload),
       deleteSmena: (payload) => request("deleteSmena", payload),
       saveFastPoint: (payload) => request("save_fastPoint", payload),
+      saveFastTime: (payload) => request("save_fastTime", payload),
       saveFastTimeWeekOne: (payload) => request("save_fastTimeWeekOne", payload),
       downloadWS: (payload) => request("downloadWS", payload, { timeout: 15000 }),
       downloadHJ: (payload) => request("downloadHJ", payload, { timeout: 15000 }),

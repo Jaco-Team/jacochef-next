@@ -228,42 +228,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                 </Paper>
               ) : null}
             </Grid>
-
-            <Grid size={12}>
-              <Paper
-                variant="outlined"
-                sx={{ borderRadius: 2, p: 2 }}
-              >
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1.5}
-                  useFlexGap
-                  flexWrap="wrap"
-                >
-                  {MONTH_TYPE_PRESETS.map((preset) => (
-                    <Stack
-                      key={preset.type}
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                    >
-                      <Box
-                        sx={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: 1,
-                          backgroundColor: preset.color,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                        {preset.label}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              </Paper>
-            </Grid>
           </Grid>
         ) : null}
       </Stack>

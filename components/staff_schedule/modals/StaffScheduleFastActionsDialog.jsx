@@ -1,59 +1,85 @@
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import HomeWorkIcon from "@mui/icons-material/HomeWork";
-import Looks3Icon from "@mui/icons-material/Looks3";
-import Looks4Icon from "@mui/icons-material/Looks4";
-import LooksOneIcon from "@mui/icons-material/LooksOne";
-import LooksTwoIcon from "@mui/icons-material/LooksTwo";
-import SyncAltIcon from "@mui/icons-material/SyncAlt";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Avatar,
-  Dialog,
-  DialogTitle,
-  IconButton,
-  List,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { MySelect } from "@/ui/Forms";
 import { canAccess } from "../staffScheduleHelpers";
+import {
+  buildEditDialogContext,
+  buildPointOptions,
+  buildScheduleOptions,
+  buildSmenaOptions,
+  EDIT_SCHEDULE_SCOPE,
+  getDefaultScheduleScope,
+  getPointLabel,
+  getScheduleLabel,
+  getSmenaLabel,
+  hasEditDraftChanges,
+} from "../staffScheduleEditViewModel";
+import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
-const FAST_TIME_WEEK_OPTIONS = [
-  { type: 1, altType: 16, icon: LooksOneIcon, labelPart1: "С 1 числа", labelPart2: "С 16 числа" },
-  { type: 2, altType: 17, icon: LooksTwoIcon, labelPart1: "С 2 числа", labelPart2: "С 17 числа" },
-  { type: 3, altType: 18, icon: Looks3Icon, labelPart1: "С 3 числа", labelPart2: "С 18 числа" },
-  { type: 4, altType: 19, icon: Looks4Icon, labelPart1: "С 4 числа", labelPart2: "С 19 числа" },
-];
+const actionButtonSx = {
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+  borderRadius: "8px",
+  fontWeight: 700,
+  textTransform: "none",
+};
 
-function ActionDialog({ open, onClose, title, children }) {
+const editRowButtonSx = {
+  minHeight: 36,
+  px: 1.5,
+  borderRadius: "8px",
+  fontWeight: 600,
+  textTransform: "none",
+  color: "#EE2737",
+  borderColor: "#EE2737",
+  "&:hover": {
+    borderColor: "#D91E2D",
+    backgroundColor: "rgba(238, 39, 55, 0.04)",
+  },
+};
+
+function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 2,
+        py: 1.5,
+      }}
     >
-      <DialogTitle
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontWeight: 700,
-          fontSize: 18,
-        }}
-      >
-        {title}
-        <IconButton
-          aria-label="закрыть"
-          onClick={onClose}
-          size="small"
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography sx={{ fontSize: 13, color: "#666666", mb: 0.5 }}>{label}</Typography>
+        <Typography
+          sx={{ fontSize: 15, color: "#111827", lineHeight: 1.35, wordBreak: "break-word" }}
         >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-      {children}
-    </Dialog>
+          {value || "—"}
+        </Typography>
+      </Box>
+      {onAction ? (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onAction}
+          disabled={disabled}
+          sx={editRowButtonSx}
+        >
+          {actionLabel}
+        </Button>
+      ) : null}
+    </Box>
   );
 }
 
@@ -61,149 +87,407 @@ export default function StaffScheduleFastActionsDialog({
   state,
   access,
   selectedPart,
+  monthId,
+  pointLabel,
+  shiftLabel,
   onClose,
-  onOpenTimeWeek,
-  onOpenSmenaList,
-  onOpenPointList,
-  onSelectSmena,
-  onSelectPoint,
-  onSelectTimeWeekType,
+  onBackToHub,
+  onOpenSchedule,
+  onOpenShift,
+  onOpenPoint,
+  onApplyScheduleDraft,
+  onApplyShiftDraft,
+  onApplyPointDraft,
+  onSaveChanges,
 }) {
   const user = state?.user;
-  const title = user
-    ? [user.full_app_name || user.app_name, user.user_name].filter(Boolean).join(" ")
-    : "";
+  const screen = state?.screen || "hub";
+  const draft = state?.draft;
+  const isSaving = Boolean(state?.saving);
+  const saveError = state?.error || "";
 
-  if (state?.screen === "smena-list" && state?.open) {
-    return (
-      <ActionDialog
-        open
-        onClose={onClose}
-        title={`Смена ${user?.user_name || ""}`}
+  const context = useMemo(
+    () =>
+      buildEditDialogContext({
+        user,
+        monthId,
+        pointLabel,
+        shiftLabel,
+      }),
+    [monthId, pointLabel, shiftLabel, user],
+  );
+
+  const canMonth = canAccess(access, "fast_month");
+  const canWeek = canAccess(access, "fast_2_week");
+  const canShift = canAccess(access, "fast_smena");
+  const canPoint = canAccess(access, "fast_point");
+
+  const [scheduleScope, setScheduleScope] = useState(() =>
+    getDefaultScheduleScope(access, canAccess),
+  );
+  const [pendingScheduleType, setPendingScheduleType] = useState("");
+  const [pendingSmenaId, setPendingSmenaId] = useState("");
+  const [pendingPointId, setPendingPointId] = useState("");
+
+  useEffect(() => {
+    if (!state?.open) {
+      return;
+    }
+
+    setScheduleScope(draft?.scheduleScope || getDefaultScheduleScope(access, canAccess));
+    setPendingScheduleType(draft?.scheduleType ? String(draft.scheduleType) : "");
+    setPendingSmenaId(draft?.smenaId ? String(draft.smenaId) : String(user?.smena_id ?? ""));
+    setPendingPointId(draft?.point ? `${draft.point.point_id}-${draft.point.smena_id}` : "");
+  }, [access, draft, state?.open, user?.smena_id]);
+
+  const scheduleOptions = useMemo(
+    () => buildScheduleOptions(scheduleScope, selectedPart),
+    [scheduleScope, selectedPart],
+  );
+  const smenaOptions = useMemo(() => buildSmenaOptions(user), [user]);
+  const pointOptions = useMemo(() => buildPointOptions(user), [user]);
+
+  const scheduleLabel = getScheduleLabel(draft, selectedPart) || context.scheduleLabel;
+  const smenaLabel = getSmenaLabel(draft, user, context);
+  const currentPointLabel = getPointLabel(draft, context);
+  const hasChanges = hasEditDraftChanges(draft, user);
+
+  const scheduleDoneDisabled =
+    !pendingScheduleType ||
+    (String(pendingScheduleType) === String(draft?.scheduleType ?? "") &&
+      scheduleScope === (draft?.scheduleScope || scheduleScope));
+  const shiftDoneDisabled =
+    !pendingSmenaId || String(pendingSmenaId) === String(user?.smena_id ?? "");
+  const pointDoneDisabled = !pendingPointId;
+
+  let modalTitle = "Редактирование";
+  let onBack = null;
+  let content = null;
+  let actions = null;
+
+  if (screen === "hub") {
+    content = (
+      <Stack spacing={0}>
+        <Box sx={{ pb: 1.5 }}>
+          <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#111827", mb: 0.5 }}>
+            {context.userName || "—"}
+          </Typography>
+          <Typography sx={{ fontSize: 14, color: "#666666" }}>
+            {[context.roleName, context.periodLabel].filter(Boolean).join(" · ")}
+          </Typography>
+        </Box>
+
+        <Typography sx={{ fontSize: 15, fontWeight: 700, color: "#111827", mb: 0.5 }}>
+          Что изменить?
+        </Typography>
+
+        {saveError ? (
+          <Alert
+            severity="error"
+            sx={{ mb: 1.5 }}
+          >
+            {saveError}
+          </Alert>
+        ) : null}
+
+        {canMonth || canWeek ? (
+          <EditSummaryRow
+            label="График"
+            value={scheduleLabel}
+            actionLabel="Изменить"
+            onAction={onOpenSchedule}
+            disabled={isSaving}
+          />
+        ) : null}
+
+        {canShift ? (
+          <>
+            {canMonth || canWeek ? <Divider /> : null}
+            <EditSummaryRow
+              label="Смена"
+              value={smenaLabel}
+              actionLabel="Изменить"
+              onAction={onOpenShift}
+              disabled={isSaving}
+            />
+          </>
+        ) : null}
+
+        {canPoint ? (
+          <>
+            {canMonth || canWeek || canShift ? <Divider /> : null}
+            <EditSummaryRow
+              label="Точка"
+              value={currentPointLabel}
+              actionLabel="Изменить"
+              onAction={onOpenPoint}
+              disabled={isSaving}
+            />
+          </>
+        ) : null}
+      </Stack>
+    );
+
+    actions = (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 1,
+          width: "100%",
+        }}
       >
-        <List sx={{ pt: 0 }}>
-          {(user?.other_smens || []).map((item) => (
-            <ListItemButton
-              key={item.id}
-              onClick={() => onSelectSmena(item.id)}
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <SyncAltIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={item.name} />
-            </ListItemButton>
-          ))}
-        </List>
-      </ActionDialog>
+        <Button
+          variant="outlined"
+          onClick={onClose}
+          disabled={isSaving}
+          sx={actionButtonSx}
+        >
+          Отменить
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onSaveChanges}
+          disabled={!hasChanges || isSaving}
+          sx={{
+            ...actionButtonSx,
+            backgroundColor: "#EE2737",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#D91E2D",
+              boxShadow: "none",
+            },
+            "&.Mui-disabled": {
+              backgroundColor: "#E5E7EB",
+              color: "#9CA3AF",
+            },
+          }}
+        >
+          {isSaving ? (
+            <CircularProgress
+              size={18}
+              color="inherit"
+            />
+          ) : (
+            "Сохранить изменения"
+          )}
+        </Button>
+      </Box>
     );
   }
 
-  if (state?.screen === "point-list" && state?.open) {
-    return (
-      <ActionDialog
-        open
-        onClose={onClose}
-        title={`Смена точка ${user?.user_name || ""}`}
+  if (screen === "schedule") {
+    modalTitle = "СМЕНА ЧАСОВ";
+    onBack = onBackToHub;
+
+    content = (
+      <Stack spacing={2}>
+        {canMonth && canWeek ? (
+          <Tabs
+            value={scheduleScope}
+            onChange={(_, value) => {
+              setScheduleScope(value);
+              setPendingScheduleType("");
+            }}
+            variant="fullWidth"
+            sx={{
+              minHeight: 40,
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#EE2737",
+                height: 2,
+              },
+              "& .MuiTab-root": {
+                minHeight: 40,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 14,
+                color: "#666666",
+              },
+              "& .Mui-selected": {
+                color: "#EE2737",
+              },
+            }}
+          >
+            <Tab
+              value={EDIT_SCHEDULE_SCOPE.month}
+              label="На месяц"
+            />
+            <Tab
+              value={EDIT_SCHEDULE_SCOPE.week}
+              label="На 2 недели"
+            />
+          </Tabs>
+        ) : null}
+
+        <MySelect
+          data={scheduleOptions}
+          value={pendingScheduleType}
+          func={(event) => setPendingScheduleType(String(event.target.value))}
+          label="Выберите часовой график"
+          unifiedPopup
+        />
+      </Stack>
+    );
+
+    actions = (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 1,
+          width: "100%",
+        }}
       >
-        <List sx={{ pt: 0 }}>
-          {(user?.other_points || []).map((item) => (
-            <ListItemButton
-              key={`${item.point_id}-${item.smena_id}`}
-              onClick={() => onSelectPoint(item)}
-            >
-              <ListItemAvatar>
-                <Avatar>
-                  <HomeWorkIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={item.name} />
-            </ListItemButton>
-          ))}
-        </List>
-      </ActionDialog>
+        <Button
+          variant="outlined"
+          onClick={onBackToHub}
+          sx={actionButtonSx}
+        >
+          Отмена
+        </Button>
+        <Button
+          variant="contained"
+          disabled={scheduleDoneDisabled}
+          onClick={() =>
+            onApplyScheduleDraft({
+              scheduleScope,
+              scheduleType: Number(pendingScheduleType),
+            })
+          }
+          sx={{
+            ...actionButtonSx,
+            backgroundColor: scheduleDoneDisabled ? "#E5E7EB" : "#EE2737",
+            color: scheduleDoneDisabled ? "#9CA3AF" : "#FFFFFF",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: scheduleDoneDisabled ? "#E5E7EB" : "#D91E2D",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Готово
+        </Button>
+      </Box>
     );
   }
 
-  if (state?.screen === "time-week" && state?.open) {
-    const suffix = " 2/2 с 10 до 22 на две недели";
+  if (screen === "shift") {
+    modalTitle = "ИЗМЕНЕНИЕ СМЕНЫ";
+    onBack = onBackToHub;
 
-    return (
-      <ActionDialog
-        open
-        onClose={onClose}
-        title={title}
+    content = (
+      <MySelect
+        data={smenaOptions}
+        value={pendingSmenaId}
+        func={(event) => setPendingSmenaId(String(event.target.value))}
+        label="Выбери смену"
+        unifiedPopup
+      />
+    );
+
+    actions = (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 1,
+          width: "100%",
+        }}
       >
-        <List sx={{ pt: 0 }}>
-          {FAST_TIME_WEEK_OPTIONS.map((item) => {
-            const Icon = item.icon;
-            const type = selectedPart === 0 ? item.type : item.altType;
-            const label = `${selectedPart === 0 ? item.labelPart1 : item.labelPart2}${suffix}`;
+        <Button
+          variant="outlined"
+          onClick={onBackToHub}
+          sx={actionButtonSx}
+        >
+          Отмена
+        </Button>
+        <Button
+          variant="contained"
+          disabled={shiftDoneDisabled}
+          onClick={() => onApplyShiftDraft(pendingSmenaId)}
+          sx={{
+            ...actionButtonSx,
+            backgroundColor: shiftDoneDisabled ? "#E5E7EB" : "#EE2737",
+            color: shiftDoneDisabled ? "#9CA3AF" : "#FFFFFF",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: shiftDoneDisabled ? "#E5E7EB" : "#D91E2D",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Готово
+        </Button>
+      </Box>
+    );
+  }
 
-            return (
-              <ListItemButton
-                key={type}
-                onClick={() => onSelectTimeWeekType(type)}
-              >
-                <ListItemAvatar>
-                  <Avatar>
-                    <Icon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText primary={label} />
-              </ListItemButton>
+  if (screen === "point") {
+    modalTitle = "СМЕНА ТОЧКИ";
+    onBack = onBackToHub;
+
+    content = (
+      <MySelect
+        data={pointOptions}
+        value={pendingPointId}
+        func={(event) => setPendingPointId(String(event.target.value))}
+        label="Выберите точку"
+        unifiedPopup
+      />
+    );
+
+    actions = (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 1,
+          width: "100%",
+        }}
+      >
+        <Button
+          variant="outlined"
+          onClick={onBackToHub}
+          sx={actionButtonSx}
+        >
+          Отмена
+        </Button>
+        <Button
+          variant="contained"
+          disabled={pointDoneDisabled}
+          onClick={() => {
+            const selected = pointOptions.find(
+              (item) => String(item.id) === String(pendingPointId),
             );
-          })}
-        </List>
-      </ActionDialog>
+            onApplyPointDraft(selected || null);
+          }}
+          sx={{
+            ...actionButtonSx,
+            backgroundColor: pointDoneDisabled ? "#E5E7EB" : "#EE2737",
+            color: pointDoneDisabled ? "#9CA3AF" : "#FFFFFF",
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: pointDoneDisabled ? "#E5E7EB" : "#D91E2D",
+              boxShadow: "none",
+            },
+          }}
+        >
+          Готово
+        </Button>
+      </Box>
     );
-  }
-
-  if (!state?.open) {
-    return null;
   }
 
   return (
-    <ActionDialog
-      open
+    <StaffScheduleResponsiveModal
+      open={Boolean(state?.open)}
       onClose={onClose}
-      title={title}
+      title={modalTitle}
+      onBack={onBack}
+      maxWidth="sm"
+      actions={actions}
     >
-      <List sx={{ pt: 0 }}>
-        {canAccess(access, "fast_2_week") ? (
-          <ListItemButton onClick={onOpenTimeWeek}>
-            <ListItemAvatar>
-              <Avatar>
-                <AccessTimeIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Сменить часы на 2 недели" />
-          </ListItemButton>
-        ) : null}
-
-        {canAccess(access, "fast_smena") ? (
-          <ListItemButton onClick={onOpenSmenaList}>
-            <ListItemAvatar>
-              <Avatar>
-                <SyncAltIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Сменить смену" />
-          </ListItemButton>
-        ) : null}
-
-        {canAccess(access, "fast_point") ? (
-          <ListItemButton onClick={onOpenPointList}>
-            <ListItemAvatar>
-              <Avatar>
-                <HomeWorkIcon />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Сменить точку" />
-          </ListItemButton>
-        ) : null}
-      </List>
-    </ActionDialog>
+      {content}
+    </StaffScheduleResponsiveModal>
   );
 }

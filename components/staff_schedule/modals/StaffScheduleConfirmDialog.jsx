@@ -1,11 +1,5 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
+import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const actionButtonSx = {
   minHeight: 40,
@@ -25,33 +19,38 @@ export default function StaffScheduleConfirmDialog({
   onConfirm,
 }) {
   return (
-    <Dialog
+    <StaffScheduleResponsiveModal
       open={open}
       onClose={onClose}
-      fullWidth
+      title={title}
       maxWidth="xs"
-      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+      actions={
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1,
+            width: "100%",
+          }}
+        >
+          <Button
+            variant="outlined"
+            onClick={onClose}
+            sx={actionButtonSx}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onConfirm}
+            sx={actionButtonSx}
+          >
+            {confirmLabel}
+          </Button>
+        </Box>
+      }
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>{title}</DialogTitle>
-      <DialogContent>
-        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{message}</Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button
-          variant="outlined"
-          onClick={onClose}
-          sx={actionButtonSx}
-        >
-          Отмена
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onConfirm}
-          sx={actionButtonSx}
-        >
-          {confirmLabel}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{message}</Typography>
+    </StaffScheduleResponsiveModal>
   );
 }

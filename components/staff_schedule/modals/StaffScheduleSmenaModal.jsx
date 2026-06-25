@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   List,
   ListItemButton,
   ListItemText,
@@ -74,46 +75,29 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
   const actions =
     modal.loading || !modal.data ? null : (
       <Stack
-        direction={{ xs: "column", sm: "row" }}
+        direction="row"
         justifyContent="space-between"
         spacing={1.5}
         sx={{ width: "100%", pt: 1 }}
       >
-        <Stack
-          direction="row"
-          spacing={1.5}
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleSave}
+          disabled={isSaving}
+          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
         >
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleSave}
-            disabled={isSaving}
-            sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
-          >
-            {isSaving ? "Сохранение..." : "Сохранить"}
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={onClose}
-            disabled={isSaving}
-            sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
-          >
-            Отмена
-          </Button>
-        </Stack>
-
-        {modal.mode === "edit" && onRequestDelete ? (
-          <Button
-            variant="outlined"
-            color="error"
-            onClick={onRequestDelete}
-            disabled={isSaving}
-            sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
-          >
-            Удалить смену
-          </Button>
-        ) : null}
+          {isSaving ? "Сохранение..." : "Сохранить"}
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={onClose}
+          disabled={isSaving}
+          sx={{ minHeight: 40, textTransform: "none", fontWeight: 700 }}
+        >
+          Отмена
+        </Button>
       </Stack>
     );
 
@@ -171,6 +155,27 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
                   <ListItemText primary={item.name || "Без имени"} />
                 </ListItemButton>
               ))}
+              {modal.mode === "edit" && onRequestDelete ? (
+                <>
+                  <Divider />
+                  <ListItemButton
+                    selected
+                    onClick={onRequestDelete}
+                    disabled={isSaving}
+                    sx={{
+                      color: "error.main",
+                      "&.Mui-selected": {
+                        backgroundColor: "rgba(211, 47, 47, 0.08)",
+                      },
+                      "&.Mui-selected:hover": {
+                        backgroundColor: "rgba(211, 47, 47, 0.14)",
+                      },
+                    }}
+                  >
+                    <ListItemText primary="Удалить смену" />
+                  </ListItemButton>
+                </>
+              ) : null}
             </List>
           </>
         ) : null}

@@ -91,13 +91,18 @@ export default function StaffSchedulePage() {
         state={page.fastActions}
         access={page.access}
         selectedPart={page.selectedPart}
+        monthId={page.monthId}
+        pointLabel={page.pointLabel}
+        shiftLabel={page.fastActions.shiftLabel}
         onClose={page.handleCloseFastActions}
-        onOpenTimeWeek={page.handleOpenFastActionsTimeWeek}
-        onOpenSmenaList={page.handleOpenFastActionsSmenaList}
-        onOpenPointList={page.handleOpenFastActionsPointList}
-        onSelectSmena={page.handleSelectFastSmena}
-        onSelectPoint={page.handleSelectFastPoint}
-        onSelectTimeWeekType={page.handleSelectFastTimeWeekType}
+        onBackToHub={page.handleEditDialogBackToHub}
+        onOpenSchedule={page.handleEditDialogOpenSchedule}
+        onOpenShift={page.handleEditDialogOpenShift}
+        onOpenPoint={page.handleEditDialogOpenPoint}
+        onApplyScheduleDraft={page.handleEditDialogApplyScheduleDraft}
+        onApplyShiftDraft={page.handleEditDialogApplyShiftDraft}
+        onApplyPointDraft={page.handleEditDialogApplyPointDraft}
+        onSaveChanges={page.handleEditDialogSaveChanges}
       />
       <StaffScheduleExportDialog
         dialog={page.exportDialog}

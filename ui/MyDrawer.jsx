@@ -2,7 +2,15 @@
 
 import { Box, SwipeableDrawer, Typography } from "@mui/material";
 
-export default function MyDrawer({ open = false, onClose, title, children, paperSx, ...rest }) {
+export default function MyDrawer({
+  open = false,
+  onClose,
+  title,
+  children,
+  actions = null,
+  paperSx,
+  ...rest
+}) {
   return (
     <SwipeableDrawer
       anchor="bottom"
@@ -22,7 +30,13 @@ export default function MyDrawer({ open = false, onClose, title, children, paper
       }}
       {...rest}
     >
-      <Box sx={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", maxHeight: "88vh" }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateRows: actions ? "auto minmax(0, 1fr) auto" : "auto minmax(0, 1fr)",
+          maxHeight: "88vh",
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -31,14 +45,19 @@ export default function MyDrawer({ open = false, onClose, title, children, paper
             py: 1.5,
             borderBottom: "1px solid",
             borderColor: "divider",
+            gap: 1,
           }}
         >
-          <Typography
-            variant="h6"
-            sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1.3 }}
-          >
-            {title || ""}
-          </Typography>
+          {typeof title === "string" ? (
+            <Typography
+              variant="h6"
+              sx={{ fontSize: 18, fontWeight: 700, lineHeight: 1.3 }}
+            >
+              {title || ""}
+            </Typography>
+          ) : (
+            title
+          )}
         </Box>
         <Box
           sx={{
@@ -50,6 +69,20 @@ export default function MyDrawer({ open = false, onClose, title, children, paper
         >
           {children}
         </Box>
+        {actions ? (
+          <Box
+            sx={{
+              px: 2,
+              pt: 1.5,
+              pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+              borderTop: "1px solid",
+              borderColor: "divider",
+              backgroundColor: "background.paper",
+            }}
+          >
+            {actions}
+          </Box>
+        ) : null}
       </Box>
     </SwipeableDrawer>
   );

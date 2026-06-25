@@ -1,3 +1,4 @@
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
@@ -17,6 +18,7 @@ export default function StaffScheduleResponsiveModal({
   open,
   onClose,
   title,
+  onBack = null,
   maxWidth = "md",
   children,
   actions = null,
@@ -24,15 +26,49 @@ export default function StaffScheduleResponsiveModal({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  const titleNode = onBack ? (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        minWidth: 0,
+      }}
+    >
+      <IconButton
+        aria-label="назад"
+        onClick={onBack}
+        size="small"
+        sx={{ color: "#6B7280", flexShrink: 0 }}
+      >
+        <ArrowBackIcon fontSize="small" />
+      </IconButton>
+      <Typography
+        component="span"
+        sx={{
+          fontSize: 18,
+          lineHeight: 1.25,
+          fontWeight: 700,
+          color: "#1F2937",
+          wordBreak: "break-word",
+        }}
+      >
+        {title}
+      </Typography>
+    </Box>
+  ) : (
+    title
+  );
+
   if (isMobile) {
     return (
       <MyDrawer
         open={open}
         onClose={onClose}
-        title={title}
+        title={titleNode}
+        actions={actions}
       >
         {children}
-        {actions}
       </MyDrawer>
     );
   }
@@ -43,8 +79,15 @@ export default function StaffScheduleResponsiveModal({
       onClose={onClose}
       fullWidth
       maxWidth={maxWidth}
-      scroll="body"
-      slotProps={{ paper: { sx: { borderRadius: CONTROL_RADIUS } } }}
+      scroll="paper"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: CONTROL_RADIUS,
+            maxHeight: "calc(100% - 48px)",
+          },
+        },
+      }}
     >
       <DialogTitle
         sx={{
@@ -62,12 +105,22 @@ export default function StaffScheduleResponsiveModal({
             minWidth: 0,
           }}
         >
+          {onBack ? (
+            <IconButton
+              aria-label="назад"
+              onClick={onBack}
+              size="small"
+              sx={{ mt: 0.25, flexShrink: 0, color: "#6B7280" }}
+            >
+              <ArrowBackIcon fontSize="small" />
+            </IconButton>
+          ) : null}
           <Typography
             component="span"
             sx={{
               flex: 1,
               minWidth: 0,
-              fontSize: { xs: 20, sm: 24, md: 28 },
+              fontSize: { xs: 20, sm: 22 },
               lineHeight: 1.25,
               fontWeight: 700,
               color: "#1F2937",
@@ -92,7 +145,17 @@ export default function StaffScheduleResponsiveModal({
         </Box>
       </DialogTitle>
       <DialogContent sx={{ pt: 2, pb: 2 }}>{children}</DialogContent>
-      {actions ? <DialogActions sx={{ px: 3, pb: 3, pt: 0 }}>{actions}</DialogActions> : null}
+      {actions ? (
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            borderTop: "1px solid #ECECEC",
+          }}
+        >
+          {actions}
+        </DialogActions>
+      ) : null}
     </Dialog>
   );
 }
