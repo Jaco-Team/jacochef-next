@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import dayjs from "dayjs";
 
 import ModalAder from "@/components/settings/ModalAder";
@@ -28,6 +28,8 @@ import {
 import { TabContext, TabPanel } from "@mui/lab";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
+import { get } from "axios";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 function SettingsPage() {
   const tabsData = {
@@ -59,6 +61,7 @@ function SettingsPage() {
       document.title = data.module_info.name;
       setModule(data.module_info);
       setPoints(data.points);
+      setPoint(data.points);
       setMockItems(data.items);
       const tabsCheck = Object.entries(tabsData).filter(
         ([key]) => parseInt(data.acces[key + "_access"]) === 1,
@@ -69,13 +72,19 @@ function SettingsPage() {
   }, []);
 
   const handleChange = (_, newValue) => {
+    console.log(newValue);
+    if (newValue === "order_adver") {
+      getAders();
+    }
     setValue(newValue);
   };
 
   const getAders = () => {
     const data = {
-      dateStart: dayjs(dateStart).format("YYYY-MM-DD"),
-      dateEnd: dayjs(dateEnd).format("YYYY-MM-DD"),
+      dateStart: dateStart
+        ? dayjs(dateStart).format("YYYY-MM-DD")
+        : dayjs().subtract(30, "day").format("YYYY-MM-DD"),
+      dateEnd: dateEnd ? dayjs(dateEnd).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
       points: point,
     };
 
@@ -207,14 +216,13 @@ function SettingsPage() {
                       sm: 3,
                     }}
                   >
-                    <MyAutocomplite
-                      label="Точки"
-                      data={points}
-                      multiple={true}
+                    <CityCafeAutocomplete2
+                      label="Кафе"
+                      points={points}
                       value={point}
-                      func={(event, data) => {
-                        setPoint(data);
-                      }}
+                      onChange={(v) => setPoint(v)}
+                      withAll
+                      withAllSelected
                     />
                   </Grid>
                   <Grid
@@ -252,7 +260,7 @@ function SettingsPage() {
                       color="primary"
                       onClick={() => getAders()}
                     >
-                      Показать отчет
+                      Показать
                     </Button>
                   </Grid>
                   <Grid
@@ -302,6 +310,9 @@ function SettingsPage() {
                               <TableCell align="center">
                                 <b>Где активно</b>
                               </TableCell>
+                              <TableCell align="center">
+                                <b>Сколько раз добавлена в заказы</b>
+                              </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -318,7 +329,8 @@ function SettingsPage() {
                                 <TableCell align="left">{row.name}</TableCell>
                                 <TableCell align="center">{row.date_start}</TableCell>
                                 <TableCell align="center">{row.date_end}</TableCell>
-                                <TableCell align="center">{row.where_active}</TableCell>
+                                <TableCell align="center">{row.where_actives}</TableCell>
+                                <TableCell align="center">{row.stat_val}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
