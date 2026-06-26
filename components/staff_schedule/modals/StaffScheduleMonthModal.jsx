@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SendIcon from "@mui/icons-material/Send";
 import { Box, Grid, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
@@ -10,6 +10,7 @@ import {
   V2Select,
   V2SelectableList,
   V2SelectableListItem,
+  useV2Confirm,
 } from "@/ui/v2";
 import {
   buildMonthModalDraft,
@@ -25,8 +26,10 @@ function getTypeMeta(type) {
 
 export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
+  const initialDraftRef = useRef(buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { confirm, ConfirmDialog } = useV2Confirm();
 
   const monthValue = modal.request?.date || "";
   const daysMap = useMemo(
@@ -39,10 +42,18 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       return;
     }
 
-    setDraft(buildMonthModalDraft(modal.data));
+    const nextDraft = buildMonthModalDraft(modal.data);
+
+    initialDraftRef.current = nextDraft;
+    setDraft(nextDraft);
     setSaveError("");
     setIsSaving(false);
   }, [modal.open, modal.data]);
+
+  const hasChanges = useMemo(
+    () => JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current),
+    [draft],
+  );
 
   const handleDayClick = (date) => {
     setDraft((prev) => toggleMonthDay(prev, date, prev.selectedType));
@@ -67,6 +78,35 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       setSaveError(error?.message || "Не удалось сохранить месяц");
       setIsSaving(false);
     }
+  };
+
+  const handleRequestClose = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    if (!hasChanges) {
+      onClose?.();
+      return;
+    }
+
+    const shouldSave = await confirm({
+      message: (
+        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
+          Данные были изменены.
+          <br />
+          Сохранить изменения?
+        </Typography>
+      ),
+      confirmLabel: "Да, сохранить",
+    });
+
+    if (shouldSave) {
+      await handleSave();
+      return;
+    }
+
+    onClose?.();
   };
 
   const renderWeekPickerDay = (pickerDay) => {
@@ -116,7 +156,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         <V2Button
           compact
           tone="danger"
-          onClick={onClose}
+          onClick={handleRequestClose}
           disabled={isSaving}
         >
           Отмена
@@ -125,112 +165,115 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     );
 
   return (
-    <StaffScheduleResponsiveModal
-      open={modal.open}
-      onClose={onClose}
-      title={modal.data?.title || "Месячные часы"}
-      maxWidth="md"
-      actions={actions}
-    >
-      <Stack spacing={2}>
-        {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
-        {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
+    <>
+      <StaffScheduleResponsiveModal
+        open={modal.open}
+        onClose={handleRequestClose}
+        title={modal.data?.title || "Месячные часы"}
+        maxWidth="md"
+        actions={actions}
+      >
+        <Stack spacing={2}>
+          {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
+          {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
 
-        {!modal.loading && modal.data ? (
-          <Grid
-            container
-            spacing={2}
-          >
-            {modal.data.otherApps?.length ? (
-              <Grid size={12}>
-                <V2Select
-                  options={modal.data.otherApps}
-                  value={draft.newApp}
-                  onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      newApp: event.target.value,
-                    }))
-                  }
-                  label="Кем работает"
-                />
-              </Grid>
-            ) : null}
-
-            {modal.data.mentorList?.length ? (
-              <Grid size={12}>
-                <V2Select
-                  options={modal.data.mentorList}
-                  value={draft.mentorId}
-                  onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      mentorId: event.target.value,
-                    }))
-                  }
-                  label="Наставник"
-                />
-              </Grid>
-            ) : null}
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <V2SelectableList sx={{ borderRadius: "12px", overflow: "hidden" }}>
-                {MONTH_TYPE_PRESETS.map((preset) => (
-                  <V2SelectableListItem
-                    key={preset.type}
-                    onClick={() =>
+          {!modal.loading && modal.data ? (
+            <Grid
+              container
+              spacing={2}
+            >
+              {modal.data.otherApps?.length ? (
+                <Grid size={12}>
+                  <V2Select
+                    options={modal.data.otherApps}
+                    value={draft.newApp}
+                    onChange={(event) =>
                       setDraft((prev) => ({
                         ...prev,
-                        selectedType: preset.type,
+                        newApp: event.target.value,
                       }))
                     }
+                    label="Кем работает"
+                  />
+                </Grid>
+              ) : null}
+
+              {modal.data.mentorList?.length ? (
+                <Grid size={12}>
+                  <V2Select
+                    options={modal.data.mentorList}
+                    value={draft.mentorId}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        mentorId: event.target.value,
+                      }))
+                    }
+                    label="Наставник"
+                  />
+                </Grid>
+              ) : null}
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <V2SelectableList sx={{ borderRadius: "12px", overflow: "hidden" }}>
+                  {MONTH_TYPE_PRESETS.map((preset) => (
+                    <V2SelectableListItem
+                      key={preset.type}
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          selectedType: preset.type,
+                        }))
+                      }
+                      sx={{
+                        backgroundColor: preset.color,
+                        color: "#ffffff",
+                        mb: 0.5,
+                        borderRadius: "8px",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography>{preset.label}</Typography>
+                      {draft.selectedType === preset.type ? <SendIcon fontSize="small" /> : null}
+                    </V2SelectableListItem>
+                  ))}
+                </V2SelectableList>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                {monthValue ? (
+                  <Box
                     sx={{
-                      backgroundColor: preset.color,
-                      color: "#ffffff",
-                      mb: 0.5,
-                      borderRadius: "8px",
-                      justifyContent: "space-between",
+                      border: "1px solid #E5E5E5",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      "& .MuiPickersLayout-root": { minWidth: 0 },
+                      "& .MuiDayCalendar-header": { px: 1 },
+                      "& .MuiPickersDay-root": { borderRadius: 1.5 },
                     }}
                   >
-                    <Typography>{preset.label}</Typography>
-                    {draft.selectedType === preset.type ? <SendIcon fontSize="small" /> : null}
-                  </V2SelectableListItem>
-                ))}
-              </V2SelectableList>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              {monthValue ? (
-                <Box
-                  sx={{
-                    border: "1px solid #E5E5E5",
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    "& .MuiPickersLayout-root": { minWidth: 0 },
-                    "& .MuiDayCalendar-header": { px: 1 },
-                    "& .MuiPickersDay-root": { borderRadius: 1.5 },
-                  }}
-                >
-                  <V2DatePickerGraph
-                    year={monthValue}
-                    renderWeekPickerDay={renderWeekPickerDay}
-                  />
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1.5, pt: 0 }}>
-                    <V2Button
-                      compact
-                      tone="secondary"
-                      onClick={handleReset}
-                      disabled={isSaving}
-                    >
-                      Сбросить
-                    </V2Button>
+                    <V2DatePickerGraph
+                      year={monthValue}
+                      renderWeekPickerDay={renderWeekPickerDay}
+                    />
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1.5, pt: 0 }}>
+                      <V2Button
+                        compact
+                        tone="secondary"
+                        onClick={handleReset}
+                        disabled={isSaving}
+                      >
+                        Сбросить
+                      </V2Button>
+                    </Box>
                   </Box>
-                </Box>
-              ) : null}
+                ) : null}
+              </Grid>
             </Grid>
-          </Grid>
-        ) : null}
-      </Stack>
-    </StaffScheduleResponsiveModal>
+          ) : null}
+        </Stack>
+      </StaffScheduleResponsiveModal>
+      <ConfirmDialog />
+    </>
   );
 }

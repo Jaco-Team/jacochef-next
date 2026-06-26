@@ -186,9 +186,9 @@ export function hasEditDraftChanges(draft, user, selectedPart = 0) {
   return hasScheduleChange || hasSmenaChange || hasPointChange;
 }
 
-export function getDefaultScheduleScope(access, canAccess) {
-  const canMonth = canAccess(access, "fast_month");
-  const canWeek = canAccess(access, "fast_2_week");
+export function getDefaultScheduleScope(canUse) {
+  const canMonth = canUse("fast_month");
+  const canWeek = canUse("fast_2_week");
 
   if (canWeek) {
     return EDIT_SCHEDULE_SCOPE.week;

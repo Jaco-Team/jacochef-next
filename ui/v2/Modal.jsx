@@ -94,6 +94,7 @@ export default function V2Modal({
           sx: {
             borderRadius: v2Radii.md,
             maxHeight: "calc(100% - 48px)",
+            outline: "none",
             ...paperSx,
           },
         },

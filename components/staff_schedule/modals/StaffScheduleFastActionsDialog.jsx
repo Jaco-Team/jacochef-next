@@ -3,7 +3,7 @@ import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRound
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import { Box, Stack, Typography } from "@mui/material";
 import { V2Alert, V2Button, V2CompactTabs, V2Select, useV2Confirm } from "@/ui/v2";
-import { canAccess } from "../staffScheduleHelpers";
+import { createStaffScheduleAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
   buildPointOptions,
@@ -290,6 +290,7 @@ export default function StaffScheduleFastActionsDialog({
   const draft = state?.draft;
   const isSaving = Boolean(state?.saving);
   const saveError = state?.error || "";
+  const { canAccess } = useMemo(() => createStaffScheduleAccess(access), [access]);
 
   const context = useMemo(
     () =>
@@ -302,14 +303,12 @@ export default function StaffScheduleFastActionsDialog({
     [monthId, pointLabel, shiftLabel, user],
   );
 
-  const canMonth = canAccess(access, "fast_month");
-  const canWeek = canAccess(access, "fast_2_week");
-  const canShift = canAccess(access, "fast_smena");
-  const canPoint = canAccess(access, "fast_point");
+  const canMonth = canAccess("fast_month");
+  const canWeek = canAccess("fast_2_week");
+  const canShift = canAccess("fast_smena");
+  const canPoint = canAccess("fast_point");
 
-  const [scheduleScope, setScheduleScope] = useState(() =>
-    getDefaultScheduleScope(access, canAccess),
-  );
+  const [scheduleScope, setScheduleScope] = useState(() => getDefaultScheduleScope(canAccess));
   const [pendingScheduleType, setPendingScheduleType] = useState("");
   const [pendingSmenaId, setPendingSmenaId] = useState("");
   const [pendingPointId, setPendingPointId] = useState("");
@@ -324,7 +323,7 @@ export default function StaffScheduleFastActionsDialog({
     const nextScope =
       draft?.scheduleScope ||
       inferScheduleScopeFromUser(user, selectedPart) ||
-      getDefaultScheduleScope(access, canAccess);
+      getDefaultScheduleScope(canAccess);
 
     setScheduleScope(nextScope);
     setPendingScheduleType(
@@ -338,7 +337,7 @@ export default function StaffScheduleFastActionsDialog({
 
     setPendingPointId(nextPointId);
     setPendingPointCity(getPointCity(nextPoint?.name || context.pointLabel));
-  }, [access, context.pointLabel, draft, selectedPart, state?.open, user]);
+  }, [canAccess, context.pointLabel, draft, selectedPart, state?.open, user]);
 
   const scheduleOptions = useMemo(
     () => buildScheduleOptions(scheduleScope, selectedPart),

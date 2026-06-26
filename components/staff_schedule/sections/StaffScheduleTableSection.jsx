@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
@@ -28,8 +28,7 @@ import {
   SUMMARY_COLUMN_WIDTH,
 } from "../staffScheduleConstants";
 import {
-  canAccess,
-  canView,
+  createStaffScheduleAccess,
   getRowBaseColor,
   getSummaryCellValue,
   hasFastActionsAccess,
@@ -472,22 +471,23 @@ export default function StaffScheduleTableSection({
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
   const days = toArray(period?.meta?.days);
   const visibleRows = toArray(rows);
+  const { canAccess, canView, canEdit } = useMemo(
+    () => createStaffScheduleAccess(access),
+    [access],
+  );
   const renderedDayCount = isCalendarHidden ? 0 : days.length;
   const showFastActions = hasFastActionsAccess(access);
   const stickyColumnCount = 3 + (showFastActions ? 1 : 0);
   const colSpan = stickyColumnCount + renderedDayCount + summaryColumns.length;
   const shiftHeaderMiddleColSpan = Math.max(colSpan - stickyColumnCount - 1, 0);
-  const canShowRolls = canView(access, "rolls");
-  const canShowPizza = canView(access, "pizza");
-  const canShowSlowOrders = canView(access, "over_40_min");
-  const canShowTotals = canView(access, "sums_all");
-  const canOpenMonth = canAccess(access, "full_month");
-  const canOpenDayEdit =
-    access?.day_edit_access == null && access?.full_day_access == null
-      ? true
-      : canAccess(access, "day_edit") || canAccess(access, "full_day");
-  const canEditSmena = canAccess(access, "create_edit_smena");
-  const canCreateSmena = canAccess(access, "create_edit_smena");
+  const canShowRolls = canView("rolls");
+  const canShowPizza = canView("pizza");
+  const canShowSlowOrders = canView("over_40_min");
+  const canShowTotals = canView("sums_all");
+  const canOpenMonth = canAccess("full_month");
+  const canOpenDayEdit = canEdit("day_edit") || canAccess("full_day");
+  const canEditSmena = canAccess("create_edit_smena");
+  const canCreateSmena = canAccess("create_edit_smena");
   const hasBulkSelection = selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
@@ -621,25 +621,38 @@ export default function StaffScheduleTableSection({
                 }}
               >
                 <Box
-                  onClick={hasBulkSelection ? onOpenBulkFastActions : undefined}
                   sx={{
-                    width: 24,
-                    height: 24,
+                    width: "100%",
                     display: "flex",
-                    alignItems: "center",
                     justifyContent: "center",
-                    border: "1px solid #E4E7EC",
-                    borderRadius: "4px",
-                    cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
-                    backgroundColor: hasBulkSelection ? "#FFF5F5" : "#FFFFFF",
+                    alignItems: "center",
                   }}
                 >
-                  <SwapHorizRoundedIcon
+                  <Box
+                    onClick={
+                      hasBulkSelection && showFastActions ? onOpenBulkFastActions : undefined
+                    }
                     sx={{
-                      color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
-                      fontSize: 18,
+                      width: 24,
+                      height: 24,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid #E4E7EC",
+                      borderRadius: "4px",
+                      cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
+                      pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
+                      opacity: hasBulkSelection && showFastActions ? 1 : 0.35,
+                      backgroundColor: hasBulkSelection && showFastActions ? "#FFF5F5" : "#FFFFFF",
                     }}
-                  />
+                  >
+                    <SwapHorizRoundedIcon
+                      sx={{
+                        color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
+                        fontSize: 18,
+                      }}
+                    />
+                  </Box>
                 </Box>
               </TableCell>
               <TableCell
