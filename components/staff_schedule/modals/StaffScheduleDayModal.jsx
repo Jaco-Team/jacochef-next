@@ -19,7 +19,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { V2Alert, V2Button, V2IconButton, V2Select, V2TimePicker } from "@/ui/v2";
+import { V2Alert, V2Button, V2IconButton, V2Select, V2TimePicker, useV2Confirm } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
@@ -380,19 +380,24 @@ function HistoryDialog({ open, history, onClose }) {
 
 export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const [draft, setDraft] = useState(() => buildDraft(modal.data));
+  const initialDraftRef = useRef(buildDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isAddTimeOpen, setIsAddTimeOpen] = useState(false);
   const [newTimeStart, setNewTimeStart] = useState("");
   const [newTimeEnd, setNewTimeEnd] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const { confirm, withConfirm, ConfirmDialog } = useV2Confirm();
 
   useEffect(() => {
     if (!modal.open) {
       return;
     }
 
-    setDraft(buildDraft(modal.data));
+    const nextDraft = buildDraft(modal.data);
+
+    initialDraftRef.current = nextDraft;
+    setDraft(nextDraft);
     setSaveError("");
     setIsSaving(false);
     setIsAddTimeOpen(false);
@@ -402,6 +407,10 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   }, [modal.open, modal.data]);
 
   const hasData = !modal.loading && modal.data;
+  const hasChanges = useMemo(
+    () => JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current),
+    [draft],
+  );
   const appOptions = useMemo(() => modal.data?.otherApps ?? [], [modal.data?.otherApps]);
   const healthOptions = useMemo(() => modal.data?.healthOptions ?? [], [modal.data?.healthOptions]);
 
@@ -411,6 +420,25 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       hours: prev.hours.filter((_, itemIndex) => itemIndex !== index),
     }));
   };
+
+  const requestRemoveHour = (item, index) =>
+    withConfirm(() => removeHour(index), {
+      message: (
+        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
+          Вы действительно хотите удалить
+          <br />
+          время работы{" "}
+          <Box
+            component="span"
+            sx={{ fontWeight: 700 }}
+          >
+            {[item.time_start, item.time_end].filter(Boolean).join("-") || "—"}
+          </Box>
+          ?
+        </Typography>
+      ),
+      confirmLabel: "Да, удалить",
+    });
 
   const addHour = () => {
     if (!newTimeStart || !newTimeEnd) {
@@ -451,6 +479,35 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
     }
   };
 
+  const handleRequestClose = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    if (!hasChanges) {
+      onClose?.();
+      return;
+    }
+
+    const shouldSave = await confirm({
+      message: (
+        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
+          Данные были изменены.
+          <br />
+          Сохранить изменения?
+        </Typography>
+      ),
+      confirmLabel: "Да, сохранить",
+    });
+
+    if (shouldSave) {
+      await handleSave();
+      return;
+    }
+
+    onClose?.();
+  };
+
   const actions =
     modal.loading || !modal.data ? null : (
       <Stack
@@ -462,7 +519,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         <V2Button
           compact
           tone="secondary"
-          onClick={onClose}
+          onClick={handleRequestClose}
           disabled={isSaving}
           sx={{
             minWidth: 108,
@@ -490,7 +547,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
     <>
       <StaffScheduleResponsiveModal
         open={modal.open}
-        onClose={onClose}
+        onClose={handleRequestClose}
         title="Сведения о сотруднике"
         maxWidth="md"
         actions={actions}
@@ -567,7 +624,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                         <TimeRow
                           key={item.id}
                           item={item}
-                          onRemove={() => removeHour(index)}
+                          onRemove={requestRemoveHour(item, index)}
                         />
                       ))}
                     </Stack>
@@ -626,6 +683,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         history={modal.data?.history ?? []}
         onClose={() => setIsHistoryOpen(false)}
       />
+      <ConfirmDialog />
     </>
   );
 }

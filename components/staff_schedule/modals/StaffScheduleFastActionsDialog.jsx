@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Alert, V2Button, V2CompactTabs, V2Select } from "@/ui/v2";
+import { V2Alert, V2Button, V2CompactTabs, V2Select, useV2Confirm } from "@/ui/v2";
 import { canAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -314,6 +314,7 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingSmenaId, setPendingSmenaId] = useState("");
   const [pendingPointId, setPendingPointId] = useState("");
   const [pendingPointCity, setPendingPointCity] = useState("");
+  const { confirm, ConfirmDialog } = useV2Confirm();
 
   useEffect(() => {
     if (!state?.open) {
@@ -381,6 +382,35 @@ export default function StaffScheduleFastActionsDialog({
     !pendingSmenaId || String(pendingSmenaId) === String(user?.smena_id ?? "");
   const pointDoneDisabled = !pendingPointId;
 
+  const handleRequestClose = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    if (!hasChanges) {
+      onClose?.();
+      return;
+    }
+
+    const shouldSave = await confirm({
+      message: (
+        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
+          Данные были изменены.
+          <br />
+          Сохранить изменения?
+        </Typography>
+      ),
+      confirmLabel: "Да, сохранить",
+    });
+
+    if (shouldSave) {
+      await onSaveChanges?.();
+      return;
+    }
+
+    onClose?.();
+  };
+
   let modalTitle = "Редактирование";
   let content = null;
   let actions = null;
@@ -435,7 +465,7 @@ export default function StaffScheduleFastActionsDialog({
 
         <InlineActions
           cancelLabel="Отменить"
-          onCancel={onClose}
+          onCancel={handleRequestClose}
           doneLabel="Сохранить изменения"
           onDone={onSaveChanges}
           doneDisabled={!hasChanges}
@@ -607,32 +637,35 @@ export default function StaffScheduleFastActionsDialog({
   }
 
   return (
-    <StaffScheduleResponsiveModal
-      open={Boolean(state?.open)}
-      onClose={onClose}
-      title={modalTitle}
-      maxWidth="md"
-      actions={actions}
-      titleSx={{ fontSize: 16, fontWeight: 400, color: "#666666", lineHeight: 1.25 }}
-      titleContainerSx={{
-        height: 48,
-        px: 2.5,
-        py: 0,
-        backgroundColor: "#F7F7F7",
-        borderBottom: "1px solid #E5E5E5",
-        display: "flex",
-        alignItems: "center",
-      }}
-      closeButtonSx={{ color: "#A6A6A6" }}
-      contentSx={{
-        "&&": {
+    <>
+      <StaffScheduleResponsiveModal
+        open={Boolean(state?.open)}
+        onClose={handleRequestClose}
+        title={modalTitle}
+        maxWidth="md"
+        actions={actions}
+        titleSx={{ fontSize: 16, fontWeight: 400, color: "#666666", lineHeight: 1.25 }}
+        titleContainerSx={{
+          height: 48,
           px: 2.5,
-          pt: 3.25,
-          pb: 2,
-        },
-      }}
-    >
-      {content}
-    </StaffScheduleResponsiveModal>
+          py: 0,
+          backgroundColor: "#F7F7F7",
+          borderBottom: "1px solid #E5E5E5",
+          display: "flex",
+          alignItems: "center",
+        }}
+        closeButtonSx={{ color: "#A6A6A6" }}
+        contentSx={{
+          "&&": {
+            px: 2.5,
+            pt: 3.25,
+            pb: 2,
+          },
+        }}
+      >
+        {content}
+      </StaffScheduleResponsiveModal>
+      <ConfirmDialog />
+    </>
   );
 }
