@@ -34,17 +34,17 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
         sx={{
           minWidth: 0,
           flex: 1,
-          minHeight: 52,
+          minHeight: 44,
           border: "1px solid #E5E5E5",
           borderRadius: "12px",
-          px: 1.5,
-          py: 0.75,
+          px: 1.25,
+          py: 0.5,
           backgroundColor: "#FFFFFF",
         }}
       >
-        <Typography sx={{ fontSize: 13, color: "#A6A6A6", lineHeight: 1.15 }}>{label}</Typography>
+        <Typography sx={{ fontSize: 14, color: "#A6A6A6", lineHeight: 1.05 }}>{label}</Typography>
         <Typography
-          sx={{ fontSize: 16, color: "#666666", lineHeight: 1.3, wordBreak: "break-word" }}
+          sx={{ fontSize: 16, color: "#666666", lineHeight: 1.2, wordBreak: "break-word" }}
         >
           {value || "—"}
         </Typography>
@@ -56,13 +56,15 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
           size="small"
           onClick={onAction}
           disabled={disabled}
+          style={{ fontSize: 16 }}
           sx={{
-            minWidth: 122,
-            minHeight: 52,
+            minWidth: 106,
+            minHeight: 44,
             border: "none",
             borderRadius: "12px",
             color: "#666666",
             backgroundColor: "#E5E5E5",
+            fontSize: 16,
             fontWeight: 500,
             "&:hover": { backgroundColor: "#DCDCDC" },
           }}
@@ -76,22 +78,31 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
 
 function PersonHeader({ context }) {
   return (
-    <Box sx={{ pb: 2, borderBottom: "1px solid #E5E5E5" }}>
+    <Box sx={{ pb: 2.25, borderBottom: "1px solid #E5E5E5" }}>
       <Stack
         direction="row"
         justifyContent="space-between"
-        alignItems="flex-start"
+        alignItems="center"
         spacing={2}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#666666", lineHeight: 1.25 }}>
+          <Typography
+            style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.25 }}
+            sx={{ color: "#666666" }}
+          >
             {context.userName || "—"}
           </Typography>
-          <Typography sx={{ fontSize: 22, color: "#666666", lineHeight: 1.25 }}>
+          <Typography
+            style={{ fontSize: 20, lineHeight: 1.25 }}
+            sx={{ color: "#666666" }}
+          >
             {context.roleName || "—"}
           </Typography>
         </Box>
-        <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#666666", lineHeight: 1.25 }}>
+        <Typography
+          style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.25 }}
+          sx={{ color: "#666666" }}
+        >
           {context.periodLabel}
         </Typography>
       </Stack>
@@ -157,7 +168,7 @@ function SubScreenPanel({ title, onBack, children, actions }) {
         backgroundColor: "#F2F2F2",
         borderRadius: "12px",
         p: 1.5,
-        minHeight: 500,
+        minHeight: 288,
       }}
     >
       <Stack spacing={1.5}>
@@ -171,9 +182,9 @@ function SubScreenPanel({ title, onBack, children, actions }) {
             tone="secondary"
             onClick={onBack}
             sx={{
-              minWidth: 58,
-              width: 58,
-              height: 58,
+              minWidth: 44,
+              width: 44,
+              height: 44,
               p: 0,
               border: "none",
               borderRadius: "10px",
@@ -184,7 +195,7 @@ function SubScreenPanel({ title, onBack, children, actions }) {
           >
             <ArrowBackIosNewRoundedIcon />
           </V2Button>
-          <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#666666" }}>{title}</Typography>
+          <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#666666" }}>{title}</Typography>
         </Stack>
         {children}
         {actions}
@@ -320,7 +331,7 @@ export default function StaffScheduleFastActionsDialog({
         ? String(draft.scheduleType)
         : String(getCurrentScheduleType(user, selectedPart, nextScope) ?? ""),
     );
-    setPendingSmenaId(draft?.smenaId ? String(draft.smenaId) : String(user?.smena_id ?? ""));
+    setPendingSmenaId(draft?.smenaId ? String(draft.smenaId) : "");
     const nextPointId = draft?.point ? `${draft.point.point_id}-${draft.point.smena_id}` : "";
     const nextPoint = buildPointOptions(user).find((item) => String(item.id) === nextPointId);
 
@@ -376,7 +387,7 @@ export default function StaffScheduleFastActionsDialog({
 
   if (screen === "hub") {
     content = (
-      <Stack spacing={2.5}>
+      <Stack spacing={3.25}>
         <PersonHeader context={context} />
 
         <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#666666", mb: -1 }}>
@@ -394,7 +405,7 @@ export default function StaffScheduleFastActionsDialog({
 
         {canMonth || canWeek ? (
           <EditSummaryRow
-            label="График"
+            label="Часы"
             value={scheduleLabel}
             actionLabel="Изменить"
             onAction={onOpenSchedule}
@@ -602,8 +613,24 @@ export default function StaffScheduleFastActionsDialog({
       title={modalTitle}
       maxWidth="md"
       actions={actions}
-      titleSx={{ fontSize: 18, fontWeight: 400, color: "#666666" }}
-      contentSx={{ px: 3, pt: 3.5 }}
+      titleSx={{ fontSize: 16, fontWeight: 400, color: "#666666", lineHeight: 1.25 }}
+      titleContainerSx={{
+        height: 48,
+        px: 2.5,
+        py: 0,
+        backgroundColor: "#F7F7F7",
+        borderBottom: "1px solid #E5E5E5",
+        display: "flex",
+        alignItems: "center",
+      }}
+      closeButtonSx={{ color: "#A6A6A6" }}
+      contentSx={{
+        "&&": {
+          px: 2.5,
+          pt: 3.25,
+          pb: 2,
+        },
+      }}
     >
       {content}
     </StaffScheduleResponsiveModal>

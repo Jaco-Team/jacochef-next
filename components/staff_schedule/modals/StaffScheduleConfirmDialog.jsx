@@ -16,11 +16,20 @@ export default function StaffScheduleConfirmDialog({
       onClose={onClose}
       title={title}
       maxWidth="xs"
+      titleContainerSx={{
+        py: 1.25,
+        backgroundColor: "#FF3333",
+        borderBottom: "none",
+      }}
+      titleSx={{ color: "#FFFFFF", fontWeight: 700 }}
+      closeButtonSx={{ color: "#FFFFFF" }}
+      contentSx={{ py: 2.5 }}
+      actionsSx={{ justifyContent: "center", pt: 0, pb: 2.5 }}
       actions={
         <Box
           sx={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "center",
             gap: 1,
             width: "100%",
           }}
@@ -29,21 +38,32 @@ export default function StaffScheduleConfirmDialog({
             tone="secondary"
             compact
             onClick={onClose}
-            sx={{ minWidth: 112, borderRadius: "8px" }}
+            sx={{ minWidth: 86, borderRadius: "8px", fontWeight: 500 }}
           >
-            Отмена
+            Нет
           </V2Button>
           <V2Button
             compact
             onClick={onConfirm}
-            sx={{ minWidth: 112, borderRadius: "8px" }}
+            tone="secondary"
+            sx={{
+              minWidth: 112,
+              borderRadius: "8px",
+              border: "none",
+              backgroundColor: "#E5E5E5",
+              color: "#666666",
+              fontWeight: 500,
+              "&:hover": { backgroundColor: "#DCDCDC" },
+            }}
           >
             {confirmLabel}
           </V2Button>
         </Box>
       }
     >
-      <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{message}</Typography>
+      <Typography sx={{ color: "#666666", fontSize: 16, textAlign: "center", lineHeight: 1.25 }}>
+        {message}
+      </Typography>
     </StaffScheduleResponsiveModal>
   );
 }

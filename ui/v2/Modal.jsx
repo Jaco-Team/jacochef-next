@@ -54,7 +54,11 @@ export default function V2Modal({
   children,
   actions = null,
   titleSx,
+  titleContainerSx,
   contentSx,
+  paperSx,
+  actionsSx,
+  closeButtonSx,
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -90,6 +94,7 @@ export default function V2Modal({
           sx: {
             borderRadius: v2Radii.md,
             maxHeight: "calc(100% - 48px)",
+            ...paperSx,
           },
         },
       }}
@@ -100,9 +105,19 @@ export default function V2Modal({
           py: 1.5,
           borderBottom: `1px solid ${v2Colors.borderLight}`,
           backgroundColor: v2Colors.surface,
+          ...titleContainerSx,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, minWidth: 0 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            minWidth: 0,
+            width: "100%",
+          }}
+        >
           {onBack ? (
             <IconButton
               aria-label="назад"
@@ -116,7 +131,7 @@ export default function V2Modal({
           <Typography
             component="span"
             sx={{
-              flex: 1,
+              flex: "1 1 auto",
               minWidth: 0,
               fontSize: { xs: 20, sm: 22 },
               lineHeight: 1.25,
@@ -132,7 +147,13 @@ export default function V2Modal({
             aria-label="закрыть"
             onClick={onClose}
             size="small"
-            sx={{ mt: 0.25, flexShrink: 0, alignSelf: "flex-start", color: "#6B7280" }}
+            sx={{
+              mt: 0.25,
+              flexShrink: 0,
+              alignSelf: "center",
+              color: "#6B7280",
+              ...closeButtonSx,
+            }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -140,7 +161,9 @@ export default function V2Modal({
       </DialogTitle>
       <DialogContent sx={{ pt: 2, pb: 2, ...contentSx }}>{children}</DialogContent>
       {actions ? (
-        <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${v2Colors.borderLight}` }}>
+        <DialogActions
+          sx={{ px: 3, py: 2, borderTop: `1px solid ${v2Colors.borderLight}`, ...actionsSx }}
+        >
           {actions}
         </DialogActions>
       ) : null}

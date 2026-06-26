@@ -9,20 +9,32 @@ export default function StaffScheduleHeaderSection({ page }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const canExport = page.canExport;
+  const fieldBoxSx = { flex: 1, minWidth: 0 };
 
   return (
     <Box>
-      <Box sx={{ mb: 2.5, "& h1": { m: 0, fontSize: { xs: 24, sm: 28, md: 32 } } }}>
+      <Box
+        sx={{
+          mb: 1.25,
+          "& h1": {
+            m: 0,
+            fontSize: { xs: 18, md: 20 },
+            lineHeight: 1.2,
+            fontWeight: 700,
+            color: "#111827",
+          },
+        }}
+      >
         <h1>{page.view.moduleName}</h1>
       </Box>
 
       <Stack
         direction={{ xs: "column", md: "row" }}
-        spacing={1.5}
+        spacing={1.25}
         alignItems={{ xs: "stretch", md: "flex-end" }}
-        sx={{ mb: 2 }}
+        sx={{ mb: 1.5 }}
       >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={fieldBoxSx}>
           <V2Select
             allowNone={false}
             options={page.points}
@@ -32,7 +44,7 @@ export default function StaffScheduleHeaderSection({ page }) {
           />
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={fieldBoxSx}>
           <V2Select
             allowNone={false}
             options={page.months}
@@ -55,6 +67,7 @@ export default function StaffScheduleHeaderSection({ page }) {
               startIcon={<RefreshIcon />}
               onClick={page.handleReload}
               disabled={page.isGraphLoading}
+              sx={{ minWidth: 126, fontWeight: 500 }}
             >
               Обновить
             </V2Button>
@@ -89,15 +102,20 @@ export default function StaffScheduleHeaderSection({ page }) {
           value: index,
           label: tab.label,
         }))}
-        sx={{ mb: 2 }}
+        sx={{ mb: 1.5, borderRadius: "10px", "& .MuiTabs-root": { minHeight: 40 } }}
+        tabSx={{
+          minHeight: 40,
+          fontSize: 16,
+          borderRadius: "8px",
+        }}
       />
 
       <Stack
         direction={{ xs: "column", md: "row" }}
-        spacing={1.5}
+        spacing={1.25}
         alignItems={{ xs: "stretch", md: "flex-end" }}
       >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={fieldBoxSx}>
           <V2Select
             allowNone={false}
             options={page.view.shiftOptions}
