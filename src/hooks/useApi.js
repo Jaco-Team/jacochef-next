@@ -65,10 +65,11 @@ export default function useApi(module) {
       if (options.responseType === "blob") {
         return response;
       }
-      if (typeof response.data === "string") {
-        return { st: false, text: response.data };
+      const responseData = response?.data === undefined ? response : response.data;
+      if (typeof responseData === "string") {
+        return { st: false, text: responseData };
       }
-      return response.data;
+      return responseData;
     } catch (error) {
       // console.error(error);
       throw error;

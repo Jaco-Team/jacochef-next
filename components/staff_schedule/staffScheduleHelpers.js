@@ -105,7 +105,10 @@ export function hasFastActionsAccess(access = {}) {
 }
 
 export function canExportExcel(access = {}) {
-  return handleUserAccess(access).userCan("access", "export_excel");
+  return (
+    Number(access?.export_excel_access) === 1 ||
+    handleUserAccess(access).userCan("access", "export_excel")
+  );
 }
 
 export function canAccess(access = {}, key) {

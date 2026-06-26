@@ -16,6 +16,10 @@ function formatDateLabel(value) {
   return parsed.isValid() ? parsed.format("DD.MM.YYYY") : value;
 }
 
+function formatHistoryDateLabel(value) {
+  return value || "—";
+}
+
 export const MONTH_TYPE_PRESETS = [
   { type: 0, label: "10:00 - 22:00", time_start: "10:00", time_end: "22:00", color: "#98e38d" },
   { type: 1, label: "10:00 - 16:00", time_start: "10:00", time_end: "16:00", color: "#3dcef2" },
@@ -40,8 +44,14 @@ export function buildDayModalViewModel(response) {
   const user = info?.user ?? {};
 
   return {
-    title: [user?.app_name, user?.user_name].filter(Boolean).join(" "),
-    subtitle: formatDateLabel(info?.date),
+    title: user?.user_name || "Сведения о сотруднике",
+    subtitle: user?.app_name || "",
+    personName: user?.user_name || "",
+    positionName: user?.app_name || "",
+    dateLabel: info?.date || formatDateLabel(info?.date),
+    loadTime: user?.my_load_h ?? "",
+    averageLoadTime: user?.all_load_h ?? "",
+    bonusValue: response?.show_bonus ? (user?.bonus ?? "") : "",
     loadLabel:
       user?.my_load_h || user?.all_load_h
         ? `${user?.my_load_h ?? "—"} / ${user?.all_load_h ?? "—"}`
@@ -69,7 +79,7 @@ export function buildDayModalViewModel(response) {
     })),
     history: toArray(info?.hist).map((item, index) => ({
       id: `${item?.date || "date"}-${item?.user_name || index}`,
-      title: [formatDateLabel(item?.date), item?.user_name].filter(Boolean).join(" · "),
+      title: [formatHistoryDateLabel(item?.date), item?.user_name].filter(Boolean).join(" - "),
       items: toArray(item?.items).map((historyItem, historyIndex) => ({
         id: `${historyItem?.time_start || "start"}-${historyItem?.time_end || "end"}-${historyIndex}`,
         label: [historyItem?.time_start, historyItem?.time_end].filter(Boolean).join(" - ") || "—",

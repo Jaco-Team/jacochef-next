@@ -547,7 +547,11 @@ export default function StaffScheduleTableSection({
                 sx={{
                   borderRadius: "18px",
                   color: v2Colors.textMuted,
-                  fontWeight: 500,
+                  "&.MuiButton-root": {
+                    fontSize: 16,
+                    lineHeight: 1.25,
+                    fontWeight: 500,
+                  },
                 }}
               >
                 Новая смена

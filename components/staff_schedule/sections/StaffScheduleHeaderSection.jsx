@@ -8,8 +8,19 @@ import { V2Button, V2IconButton, V2SegmentedTabs, V2Select } from "@/ui/v2";
 export default function StaffScheduleHeaderSection({ page }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-  const canExport = page.canExport;
   const fieldBoxSx = { flex: 1, minWidth: 0 };
+  const softActionSx = {
+    backgroundColor: "#E5E5E5",
+    border: "none",
+    color: "#666666",
+    "&:hover": {
+      backgroundColor: "#DCDCDC",
+    },
+    "&.Mui-disabled": {
+      backgroundColor: "#E5E5E5",
+      color: "#A6A6A6",
+    },
+  };
 
   return (
     <Box>
@@ -75,16 +86,16 @@ export default function StaffScheduleHeaderSection({ page }) {
             {isDesktop ? (
               <>
                 <V2IconButton
-                  disabled={!canExport}
                   onClick={() => page.handleOpenExportDialog("ws")}
                   aria-label="Распечатать график работ"
+                  sx={softActionSx}
                 >
                   <PrintOutlinedIcon fontSize="small" />
                 </V2IconButton>
                 <V2IconButton
-                  disabled={!canExport}
                   onClick={() => page.handleOpenExportDialog("ws")}
                   aria-label="Скачать график работ"
+                  sx={softActionSx}
                 >
                   <FileDownloadOutlinedIcon fontSize="small" />
                 </V2IconButton>
@@ -128,12 +139,23 @@ export default function StaffScheduleHeaderSection({ page }) {
         <Box sx={{ width: { xs: "100%", md: 382 }, flexShrink: 0 }}>
           <V2Button
             fullWidth
-            disabled={!canExport}
+            tone="secondary"
             onClick={() => page.handleOpenExportDialog("hj")}
             startIcon={<HealthAndSafetyOutlinedIcon />}
             sx={{
-              color: canExport ? "#FFFFFF" : "#666666",
+              minHeight: 44,
+              backgroundColor: "#E5E5E5",
+              border: "none",
+              color: "#666666",
               fontWeight: 500,
+              "&:hover": {
+                backgroundColor: "#DCDCDC",
+                border: "none",
+              },
+              "&.Mui-disabled": {
+                backgroundColor: "#E5E5E5",
+                color: "#A6A6A6",
+              },
             }}
           >
             Журнал здоровья
