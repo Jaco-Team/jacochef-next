@@ -272,6 +272,21 @@ const aggregateTotalRow = (item, rows) => {
   return applyAggregatedRoi(item, rows);
 };
 
+const applyTotalMetricsFromRows = (item, rows) => {
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    item[field] = 0;
+  });
+
+  (rows || []).forEach((row) => {
+    ADDITIVE_METRIC_FIELDS.forEach((field) => {
+      item[field] += parseMetric(row[field]);
+    });
+  });
+
+  applyDerivedMetrics(item);
+  return applyAggregatedRoi(item, rows);
+};
+
 const rollupMetricsFromChildren = (item) => {
   const childKey =
     item.children?.length > 0 ? "children" : item.details?.length > 0 ? "details" : null;
@@ -544,7 +559,6 @@ function EndPage() {
   const regroupByTrafficSource = (utmData) => {
     if (!utmData || typeof utmData !== "object") return [];
 
-    // Группировка источников по типам
     const trafficGroups = {
       "Поисковые системы": [
         "yandex",
@@ -573,88 +587,167 @@ function EndPage() {
       Другое: [],
     };
 
+    const adMediumPatterns = [
+      "cpc",
+      "ppc",
+      "display",
+      "maps",
+      "epk",
+      "poisk",
+      "rsya",
+      "kampan",
+      "campaign",
+      "tovarn",
+      "context",
+      "promo",
+      "retarget",
+      "remarketing",
+    ];
+
     const result = {};
+
+    const normalizeTrafficValue = (value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase();
+    const matchesKnownValue = (value, list) => {
+      const normalized = normalizeTrafficValue(value);
+      return list.some((item) => {
+        const normalizedItem = normalizeTrafficValue(item);
+        return normalized === normalizedItem || normalized.includes(normalizedItem);
+      });
+    };
+
+    const isSearchSource = (value) => matchesKnownValue(value, trafficGroups["Поисковые системы"]);
+    const isSocialSource = (value) => matchesKnownValue(value, trafficGroups["Социальные сети"]);
+    const isReferralSource = (value) => matchesKnownValue(value, trafficGroups["Рефералы"]);
+    const isAdSource = (value) => matchesKnownValue(value, trafficGroups["Рекламные системы"]);
+    const isDirectVisitSource = (value) => matchesKnownValue(value, trafficGroups["Прямые заходы"]);
+    const isAdMedium = (value) => {
+      const normalized = normalizeTrafficValue(value);
+      return adMediumPatterns.some((pattern) => normalized.includes(pattern));
+    };
+    const looksLikeReferralDomain = (value) => {
+      const normalized = normalizeTrafficValue(value);
+      return normalized.includes(".") && !isSearchSource(normalized) && !isSocialSource(normalized);
+    };
+
+    const getGroupName = (sourceName, mediumName = "") => {
+      const medium = normalizeTrafficValue(mediumName);
+
+      if (isDirectVisitSource(sourceName)) return "Прямые заходы";
+      if (isAdSource(sourceName) || isAdMedium(medium)) return "Рекламные системы";
+      if (
+        medium === "referral" ||
+        isReferralSource(sourceName) ||
+        looksLikeReferralDomain(sourceName)
+      )
+        return "Рефералы";
+      if (medium === "social" || isSocialSource(sourceName)) return "Социальные сети";
+      if (isSearchSource(sourceName))
+        return medium === "organic" ? "Поисковые системы" : "Рекламные системы";
+
+      return "Другое";
+    };
+
+    const getPlatformType = (sourceName, mediumName) => {
+      const source = normalizeTrafficValue(sourceName);
+      const medium = normalizeTrafficValue(mediumName);
+
+      if (medium === "organic") return "Органика";
+      if (medium === "referral") return "Рефералы";
+      if (medium === "social") return "Социальные сети";
+      if (medium === "email") return "E-mail рассылки";
+      if (isAdSource(source) || isAdMedium(medium)) return "Контекстная реклама";
+      if (
+        isDirectVisitSource(source) ||
+        medium === "none" ||
+        medium === "(direct)" ||
+        medium === "(utm)"
+      )
+        return "Прямые заходы";
+
+      return mediumName || "not_set";
+    };
+
+    const addMetrics = (target, source) => {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        target[field] += parseMetric(source[field]);
+      });
+    };
+
+    const ensureGroup = (groupName) => {
+      if (result[groupName]) return result[groupName];
+
+      result[groupName] = {
+        id: `group_${groupName}`,
+        name: groupName,
+        level: "src_source_group",
+        visits: 0,
+        cost: 0,
+        orders: 0,
+        revenue: 0,
+        newClients: 0,
+        existingClients: 0,
+        primaryOrders: 0,
+        repeatOrders: 0,
+        children: [],
+      };
+
+      return result[groupName];
+    };
+
+    const createDetailedSource = (sourceName, sourceData, groupName) => ({
+      id: `${sourceData.level}_${sourceName}_${groupName}`,
+      name: sourceData.name || sourceName,
+      sourceType: "site",
+      level: "src_source_detailed",
+      visits: 0,
+      cost: 0,
+      orders: 0,
+      revenue: 0,
+      newClients: 0,
+      existingClients: 0,
+      primaryOrders: 0,
+      repeatOrders: 0,
+      useServerMetrics: true,
+      children: [],
+    });
 
     // Проходим по всем source
     for (const [sourceName, sourceData] of Object.entries(utmData)) {
       if (sourceData.level !== "src_source") continue;
 
-      // Определяем группу для source
-      let groupName = "Другое";
-      for (const [group, sources] of Object.entries(trafficGroups)) {
-        if (sources.includes(sourceName) || sources.some((s) => sourceName.includes(s))) {
-          groupName = group;
-          break;
-        }
-      }
+      const sourceNodesByGroup = {};
 
-      // Создаем группу если её нет
-      if (!result[groupName]) {
-        result[groupName] = {
-          id: `group_${groupName}`,
-          name: groupName,
-          level: "src_source_group",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          children: [],
-        };
-      }
+      const getSourceNode = (groupName) => {
+        if (sourceNodesByGroup[groupName]) return sourceNodesByGroup[groupName];
 
-      // Суммируем данные для группы
-      const group = result[groupName];
-      group.visits += parseMetric(sourceData.visits);
-      group.cost += parseMetric(sourceData.cost);
-      group.orders += parseMetric(sourceData.orders);
-      group.revenue += parseMetric(sourceData.revenue);
-      group.newClients += parseMetric(sourceData.newClients);
-      group.existingClients += parseMetric(sourceData.existingClients);
-      group.primaryOrders += parseMetric(sourceData.primaryOrders);
-      group.repeatOrders += parseMetric(sourceData.repeatOrders);
+        const group = ensureGroup(groupName);
+        const detailedSource = createDetailedSource(sourceName, sourceData, groupName);
 
-      // Создаем детальный источник (конкретный источник трафика)
-      const detailedSource = {
-        id: `${sourceData.level}_${sourceName}`,
-        name: sourceData.name || sourceName,
-        sourceType: "site",
-        level: "src_source_detailed",
-        visits: parseMetric(sourceData.visits),
-        cost: parseMetric(sourceData.cost),
-        orders: parseMetric(sourceData.orders),
-        revenue: parseMetric(sourceData.revenue),
-        ...pickDerivedMetrics(sourceData),
-        newClients: parseMetric(sourceData.newClients),
-        existingClients: parseMetric(sourceData.existingClients),
-        primaryOrders: parseMetric(sourceData.primaryOrders),
-        repeatOrders: parseMetric(sourceData.repeatOrders),
-        useServerMetrics: true,
-        children: [],
+        sourceNodesByGroup[groupName] = detailedSource;
+        group.children.push(detailedSource);
+
+        return detailedSource;
       };
 
       // Обрабатываем children (medium) и группируем по типу площадки
       if (sourceData.children && sourceData.children.length > 0) {
-        const platformGroups = {};
-
         sourceData.children.forEach((medium) => {
           if (medium.level === "src_medium") {
-            // Определяем тип площадки
-            let platformType = medium.name;
-            if (medium.name === "organic") platformType = "Органика";
-            else if (medium.name === "cpc") platformType = "Контекстная реклама";
-            else if (medium.name === "referral") platformType = "Рефералы";
-            else if (medium.name === "social") platformType = "Социальные сети";
-            else if (medium.name === "email") platformType = "E-mail рассылки";
-            else if (medium.name === "none" || medium.name === "(utm)")
-              platformType = "Прямые заходы";
-            else if (medium.name === "cpm") platformType = "Медийная реклама";
+            const groupName = getGroupName(sourceName, medium.name);
+            const group = ensureGroup(groupName);
+            const detailedSource = getSourceNode(groupName);
 
-            if (!platformGroups[platformType]) {
-              platformGroups[platformType] = {
+            addMetrics(group, medium);
+            addMetrics(detailedSource, medium);
+
+            const platformType = getPlatformType(sourceName, medium.name);
+            let platform = detailedSource.children.find((child) => child.name === platformType);
+
+            if (!platform) {
+              platform = {
                 id: `${sourceName}_platform_${platformType}`,
                 name: platformType,
                 originalName: medium.name,
@@ -669,18 +762,10 @@ function EndPage() {
                 repeatOrders: 0,
                 children: [],
               };
+              detailedSource.children.push(platform);
             }
 
-            // Суммируем данные для типа площадки
-            const platform = platformGroups[platformType];
-            platform.visits += parseMetric(medium.visits);
-            platform.cost += parseMetric(medium.cost);
-            platform.orders += parseMetric(medium.orders);
-            platform.revenue += parseMetric(medium.revenue);
-            platform.newClients += parseMetric(medium.newClients);
-            platform.existingClients += parseMetric(medium.existingClients);
-            platform.primaryOrders += parseMetric(medium.primaryOrders);
-            platform.repeatOrders += parseMetric(medium.repeatOrders);
+            addMetrics(platform, medium);
 
             // Добавляем кампании как children к типу площадки
             if (medium.children && medium.children.length > 0) {
@@ -715,11 +800,15 @@ function EndPage() {
             }
           }
         });
+      } else {
+        const groupName = getGroupName(sourceName);
+        const group = ensureGroup(groupName);
+        const detailedSource = getSourceNode(groupName);
 
-        detailedSource.children = Object.values(platformGroups);
+        addMetrics(group, sourceData);
+        addMetrics(detailedSource, sourceData);
+        Object.assign(detailedSource, pickDerivedMetrics(sourceData));
       }
-
-      group.children.push(detailedSource);
     }
 
     // Преобразуем объект в массив и добавляем расчетные поля
@@ -761,17 +850,19 @@ function EndPage() {
       const groupedData = regroupByTrafficSource(apiData.site_data);
 
       if (groupedData.length > 0) {
-        result.push(
-          aggregateTotalRow(
-            {
-              id: `total_site`,
-              name: "ИТОГО по Сайту",
-              isTotal: true,
-              sourceType: "site",
-            },
-            groupedData,
-          ),
+        const siteTotal = aggregateTotalRow(
+          {
+            id: `total_site`,
+            name: "ИТОГО по Сайту",
+            isTotal: true,
+            sourceType: "site",
+          },
+          groupedData,
         );
+
+        applyTotalMetricsFromRows(siteTotal, Object.values(apiData.site_data));
+
+        result.push(siteTotal);
       }
     }
 
