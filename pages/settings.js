@@ -388,7 +388,7 @@ function SettingsPage() {
                                 <TableCell align="left">{row.name}</TableCell>
                                 <TableCell align="center">{row.date_start}</TableCell>
                                 <TableCell align="center">{row.date_end}</TableCell>
-                                <TableCell align="center">{row.where_active}</TableCell>
+                                <TableCell align="center">{row.where_actives}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
