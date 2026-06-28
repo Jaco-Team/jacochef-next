@@ -811,7 +811,8 @@ const API_URL = "https://apichef.jacochef.ru/api";
 // const API_URL = "http://127.0.0.1:8000/api";
 const url_bill = `${API_URL}/bill-items/upload`;
 const url_bill_ex = `${API_URL}/bill-ex-items/upload`;
-const url_ocr = `${API_URL}/ocr/files/pipeline`;
+// const url_ocr = `${API_URL}/ocr/files/pipeline`;
+const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 
 function BillingUploadBackdropContent({ mainFiles = 0, facturFiles = 0 }) {
   const totalFiles = mainFiles + facturFiles;

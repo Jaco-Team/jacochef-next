@@ -215,7 +215,8 @@ const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
 const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
 // const API_URL = "http://127.0.0.1:8000/api";
 const API_URL = "https://apichef.jacochef.ru/api";
-const url_ocr = `${API_URL}/ocr/files/pipeline`;
+// const url_ocr = `${API_URL}/ocr/files/pipeline`;
+const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 
 function isImageFileName(fileName) {
   return /\.(jpe?g|png|gif|bmp|webp|heic|heif)$/i.test(String(fileName ?? ""));
