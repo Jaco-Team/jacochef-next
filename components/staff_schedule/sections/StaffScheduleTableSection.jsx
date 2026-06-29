@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from "react";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
-import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUncheckedRounded";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
 import {
   Box,
@@ -16,6 +16,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { SummarySectionIcon } from "@/ui/icons";
 import { V2Button, V2Checkbox, V2FieldSwitch, V2IconButton, V2Surface, v2Colors } from "@/ui/v2";
 import StaffScheduleColorLegendModal from "./StaffScheduleColorLegendModal";
 import {
@@ -261,7 +262,7 @@ function ShiftHeaderRow({
               cursor: canEditSmena && smenaId ? "pointer" : "inherit",
             }}
           >
-            <RadioButtonUncheckedRoundedIcon sx={{ fontSize: 18 }} />
+            <ScheduleRoundedIcon sx={{ fontSize: 20, color: "#3C3B3B" }} />
           </Box>
           <Typography
             sx={{ fontSize: 15, fontWeight: 500, minWidth: 0 }}
@@ -312,49 +313,34 @@ function ShiftHeaderRow({
   );
 }
 
-function FooterMetricRow({
+function SummaryMetricRow({
   label,
   values,
   summaryColumns,
-  showFastActions,
-  highlightCurrent = false,
+  stickyColumnCount,
+  labelWidth,
   compactValues = false,
+  fillColor = "#ffffff",
+  textColor = "#5E5E5E",
   getValue,
+  getSummaryValue,
 }) {
   return (
     <TableRow>
       <TableCell
+        colSpan={stickyColumnCount}
         sx={{
-          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 4),
-          p: 0,
-        }}
-      />
-      <TableCell
-        sx={{
-          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 4),
-        }}
-      />
-      <TableCell
-        sx={{
-          ...stickyCellSx(POSITION_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH, 4),
-          fontWeight: 600,
-          py: 0.75,
+          minWidth: labelWidth,
+          fontSize: 14,
+          lineHeight: 1.3,
+          color: "#3C3B3B",
+          py: 1.25,
+          px: 1.25,
+          whiteSpace: "normal",
         }}
       >
         {label}
       </TableCell>
-      {showFastActions ? (
-        <TableCell
-          sx={{
-            ...stickyCellSx(
-              ACTION_COLUMN_WIDTH,
-              SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
-              4,
-            ),
-            p: 0,
-          }}
-        />
-      ) : null}
 
       {values.map((item, index) => (
         <TableCell
@@ -364,17 +350,14 @@ function FooterMetricRow({
           sx={{
             minWidth: DAY_COLUMN_WIDTH,
             px: 0.25,
-            py: 0.5,
-            backgroundColor: highlightCurrent && item?.type === "cur" ? "#CFF4C8" : "#ffffff",
-            fontSize: compactValues ? undefined : 11,
+            py: 0.75,
+            backgroundColor: fillColor,
+            color: textColor,
+            fontSize: compactValues ? 13.2 : 12,
             whiteSpace: compactValues ? "nowrap" : undefined,
-            overflow: compactValues ? "hidden" : undefined,
-            textOverflow: compactValues ? "ellipsis" : undefined,
           }}
         >
-          {getValue
-            ? getValue(item)
-            : (item?.res ?? item?.count_rolls ?? item?.count_pizza ?? item?.count_false ?? "")}
+          {getValue ? getValue(item) : ""}
         </TableCell>
       ))}
 
@@ -382,65 +365,15 @@ function FooterMetricRow({
         <TableCell
           key={`${label}-${column.key}`}
           align="center"
-        />
-      ))}
-    </TableRow>
-  );
-}
-
-function SummaryTotalsRow({ values, summaryColumns, dayCount, showFastActions }) {
-  const keyMap = {
-    dop_bonus: "sum_dop_bonus_price",
-    h_price: "sum_h_price",
-    err_price: "sum_err_price",
-    my_bonus: "sum_bonus_price",
-    total_sum: "sum_to_given_price",
-    given: "sum_given_price",
-  };
-
-  return (
-    <TableRow>
-      <TableCell
-        sx={{
-          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 4),
-          p: 0,
-        }}
-      />
-      <TableCell
-        sx={{
-          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 4),
-        }}
-      />
-      <TableCell
-        sx={{
-          ...stickyCellSx(POSITION_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH, 4),
-          fontWeight: 700,
-        }}
-      >
-        Итоги
-      </TableCell>
-      {showFastActions ? (
-        <TableCell
           sx={{
-            ...stickyCellSx(
-              ACTION_COLUMN_WIDTH,
-              SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH + POSITION_COLUMN_WIDTH,
-              4,
-            ),
-            p: 0,
+            minWidth: SUMMARY_COLUMN_WIDTH,
+            px: 0.5,
+            fontSize: compactValues ? 13.2 : 12,
+            color: "#5E5E5E",
+            whiteSpace: compactValues ? "nowrap" : undefined,
           }}
-        />
-      ) : null}
-
-      {dayCount > 0 ? <TableCell colSpan={dayCount} /> : null}
-
-      {summaryColumns.map((column) => (
-        <TableCell
-          key={`summary-${column.key}`}
-          align="center"
-          sx={{ fontWeight: 700 }}
         >
-          {values?.[keyMap[column.key]] ?? ""}
+          {getSummaryValue ? getSummaryValue(column) : ""}
         </TableCell>
       ))}
     </TableRow>
@@ -484,6 +417,7 @@ export default function StaffScheduleTableSection({
   const canShowPizza = canView("pizza");
   const canShowSlowOrders = canView("over_40_min");
   const canShowTotals = canView("sums_all");
+  const canShowPeriodSum = canView("bonus_of_day");
   const canOpenMonth = canAccess("full_month");
   const canOpenDayEdit = canEdit("day_edit") || canAccess("full_day");
   const canEditSmena = canAccess("create_edit_smena");
@@ -491,7 +425,32 @@ export default function StaffScheduleTableSection({
   const hasBulkSelection = selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
+  const summaryLabelWidth =
+    SELECTION_COLUMN_WIDTH +
+    EMPLOYEE_COLUMN_WIDTH +
+    POSITION_COLUMN_WIDTH +
+    (showFastActions ? ACTION_COLUMN_WIDTH : 0);
   const toolbarControlMinWidth = { xs: "100%", md: 240 };
+  const bonusDayValues = toArray(period?.meta?.bonus);
+  const slowOrderValues = toArray(period?.meta?.order_stat);
+  const summaryTotals = period?.meta?.other_summ ?? {};
+  const totalsSummaryKeyMap = {
+    dop_bonus: "sum_dop_bonus_price",
+    h_price: "sum_h_price",
+    err_price: "sum_err_price",
+    my_bonus: "sum_bonus_price",
+    total_sum: "sum_to_given_price",
+    given: "sum_given_price",
+  };
+  const periodBonusSummaryKeyMap = {
+    my_bonus: "sum_bonus_price",
+  };
+  const hasSummaryRows =
+    (canShowPeriodSum && bonusDayValues.length > 0) ||
+    canShowTotals ||
+    (!isCalendarHidden && canShowRolls) ||
+    (!isCalendarHidden && canShowPizza) ||
+    (!isCalendarHidden && canShowSlowOrders);
 
   if (!days.length && !visibleRows.length) {
     return (
@@ -767,59 +726,92 @@ export default function StaffScheduleTableSection({
               );
             })}
 
-            {!isCalendarHidden && toArray(period?.meta?.bonus).length ? (
-              <FooterMetricRow
-                label="Бонус дня"
-                values={toArray(period?.meta?.bonus)}
-                summaryColumns={summaryColumns}
-                showFastActions={showFastActions}
-                highlightCurrent
-                compactValues
-                getValue={(item) => item?.res ?? ""}
-              />
+            {hasSummaryRows ? (
+              <TableRow>
+                <TableCell
+                  colSpan={colSpan}
+                  sx={{
+                    backgroundColor: "#A9A9A9",
+                    height: 60,
+                    py: 0.75,
+                    px: 1.5,
+                    borderTop: "1px solid #EDEDED",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.75}
+                  >
+                    <SummarySectionIcon sx={{ fontSize: 16 }} />
+                    <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>
+                      Сводные данные
+                    </Typography>
+                  </Stack>
+                </TableCell>
+              </TableRow>
             ) : null}
 
-            {canShowTotals ? (
-              <SummaryTotalsRow
-                values={period?.meta?.other_summ ?? {}}
+            {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length) ? (
+              <SummaryMetricRow
+                label="Сумма за период"
+                values={!isCalendarHidden ? bonusDayValues : []}
                 summaryColumns={summaryColumns}
-                dayCount={renderedDayCount}
-                showFastActions={showFastActions}
+                stickyColumnCount={stickyColumnCount}
+                labelWidth={summaryLabelWidth}
+                compactValues
+                fillColor="#9BDD7C"
+                textColor="#5E5E5E"
+                getValue={(item) => item?.res ?? ""}
+                getSummaryValue={(column) => {
+                  const summaryKey = totalsSummaryKeyMap[column.key];
+                  if (summaryKey) {
+                    return summaryTotals?.[summaryKey] ?? "";
+                  }
+
+                  const periodBonusKey = periodBonusSummaryKeyMap[column.key];
+                  return periodBonusKey ? (summaryTotals?.[periodBonusKey] ?? "") : "";
+                }}
               />
             ) : null}
 
             {!isCalendarHidden && canShowRolls ? (
-              <FooterMetricRow
-                label="Роллов"
-                values={toArray(period?.meta?.bonus)}
+              <SummaryMetricRow
+                label="Роллы"
+                values={bonusDayValues}
                 summaryColumns={summaryColumns}
-                showFastActions={showFastActions}
+                stickyColumnCount={stickyColumnCount}
+                labelWidth={summaryLabelWidth}
                 getValue={(item) => item?.count_rolls ?? ""}
               />
             ) : null}
 
             {!isCalendarHidden && canShowPizza ? (
-              <FooterMetricRow
-                label="Пиццы"
-                values={toArray(period?.meta?.bonus)}
+              <SummaryMetricRow
+                label="Пицца"
+                values={bonusDayValues}
                 summaryColumns={summaryColumns}
-                showFastActions={showFastActions}
+                stickyColumnCount={stickyColumnCount}
+                labelWidth={summaryLabelWidth}
                 getValue={(item) => item?.count_pizza ?? ""}
               />
             ) : null}
 
             {!isCalendarHidden && canShowSlowOrders ? (
-              <FooterMetricRow
-                label="Заказы больше 40 мин"
-                values={toArray(period?.meta?.order_stat)}
+              <SummaryMetricRow
+                label="Заказы готовились более 40 минут"
+                values={slowOrderValues}
                 summaryColumns={summaryColumns}
-                showFastActions={showFastActions}
+                stickyColumnCount={stickyColumnCount}
+                labelWidth={summaryLabelWidth}
                 getValue={(item) => item?.count_false ?? ""}
               />
             ) : null}
           </TableBody>
         </Table>
       </TableContainer>
+
       <StaffScheduleColorLegendModal
         open={isColorLegendOpen}
         onClose={() => setIsColorLegendOpen(false)}

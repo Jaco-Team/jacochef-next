@@ -322,6 +322,185 @@
   - `st = true`
   - либо `st = false`, `text`
 
+### `POST|ANY /api/staff_schedule/save_userPriceH`
+
+Назначение:
+
+- сохранить часовую ставку за половину месяца
+
+Вход:
+
+- `data.user_id`
+- `data.app_id`
+- `data.smena_id`
+- `data.date` месяц `YYYY-MM`
+- `data.part` `0 | 1`
+- `data.price`
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
+### `POST|ANY /api/staff_schedule/save_dir_lv`
+
+Назначение:
+
+- сохранить добавочный уровень директора для точки и месяца
+
+Вход:
+
+- `data.point_id`
+- `data.date` месяц `YYYY-MM`
+- `data.dir_lv`
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
+### `POST|ANY /api/staff_schedule/save_dop_bonus`
+
+Назначение:
+
+- включить или отменить командный бонус за половину месяца
+
+Вход:
+
+- `data.point_id`
+- `data.date` месяц `YYYY-MM`
+- `data.part` `0 | 1`
+- `data.type`:
+  - `1` включить
+  - `2` отменить
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
+### `POST|ANY /api/staff_schedule/del_dop_bonus_user`
+
+Назначение:
+
+- снять командный бонус у конкретного сотрудника за период
+
+Вход:
+
+- `data.point_id`
+- `data.user_id`
+- `data.data` месяц `YYYY-MM`
+- `data.part` `0 | 1`
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
+### `POST|ANY /api/staff_schedule/save_user_give_price`
+
+Назначение:
+
+- сохранить выдачу наличными
+
+Вход:
+
+- `data.date` дата строки `YYYY-MM-DD`
+- `data.user_id`
+- `data.app_id`
+- `data.smena_id`
+- `data.give_price`
+
+Выход:
+
+- при успехе:
+  - `text`
+- при ошибке лимита:
+  - `text`
+  - `my_price`
+  - `this_date`
+  - `price_data`
+  - `post_data`
+  - `test`
+  - `test__`
+  - `check`
+
+### `POST|ANY /api/staff_schedule/save_user_give_cart_price`
+
+Назначение:
+
+- сохранить выдачу на карту
+
+Вход:
+
+- `data.date` дата строки `YYYY-MM-DD`
+- `data.user_id`
+- `data.app_id`
+- `data.smena_id`
+- `data.give_price`
+
+Выход:
+
+- при успехе:
+  - `text`
+- при ошибке лимита:
+  - `text`
+  - `my_price`
+  - `this_date`
+  - `price_data`
+  - `post_data`
+  - `test`
+  - `test__`
+  - `check`
+
+### `POST|ANY /api/staff_schedule/save_user_withheld`
+
+Назначение:
+
+- сохранить удержание
+
+Вход:
+
+- `data.date` дата строки `YYYY-MM-DD`
+- `data.user_id`
+- `data.app_id`
+- `data.smena_id`
+- `data.withheld`
+
+Выход:
+
+- при успехе:
+  - `text`
+- при ошибке лимита:
+  - `text`
+  - `my_price`
+  - `this_date`
+  - `price_data`
+  - `post_data`
+  - `test`
+  - `test__`
+  - `check`
+
+### `POST|ANY /api/staff_schedule/save_dirBonus`
+
+Назначение:
+
+- сохранить директорский бонус на вторую половину месяца
+
+Вход:
+
+- `data.user_id`
+- `data.date` месяц `YYYY-MM`
+- `data.bonus`
+
+Выход:
+
+- `text`
+
 ### `POST|ANY /api/staff_schedule/downloadWS`
 
 Назначение:
@@ -491,6 +670,57 @@
 Пока не нормализуется:
 
 - success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `save_userPriceH`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `save_dir_lv`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `save_dop_bonus`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `del_dop_bonus_user`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `save_user_give_price`
+
+Пока не нормализуются:
+
+- `text`
+- лимитный error-ответ с полями `my_price`, `this_date`, `price_data`, `post_data`, `test`, `test__`, `check`
+
+#### `save_user_give_cart_price`
+
+Пока не нормализуются:
+
+- `text`
+- лимитный error-ответ с полями `my_price`, `this_date`, `price_data`, `post_data`, `test`, `test__`, `check`
+
+#### `save_user_withheld`
+
+Пока не нормализуются:
+
+- `text`
+- лимитный error-ответ с полями `my_price`, `this_date`, `price_data`, `post_data`, `test`, `test__`, `check`
+
+#### `save_dirBonus`
+
+Пока не нормализуется:
+
+- `text` остаётся в ответе для совместимости
 
 #### `downloadWS`
 

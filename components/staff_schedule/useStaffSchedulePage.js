@@ -1,14 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import dayjs from "dayjs";
 import { useConfirm } from "@/ui/v2";
 import useStaffScheduleApi from "./useStaffScheduleApi";
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
-import {
-  canExportExcel,
-  getActiveMonthId,
-  openExportDownloadUrl,
-  toArray,
-} from "./staffScheduleHelpers";
+import { getActiveMonthId, toArray } from "./staffScheduleHelpers";
 import {
   buildGraphState,
   buildPageViewModel,
@@ -22,20 +16,9 @@ import {
   hasDayModalPayload,
   hasMonthModalPayload,
 } from "./staffScheduleModalViewModel";
+import useStaffScheduleExport from "./useStaffScheduleExport";
 import useStaffScheduleFastActions from "./useStaffScheduleFastActions";
 import useResourceModalState from "./useResourceModalState";
-
-function createExportDialogState(overrides = {}) {
-  return {
-    open: false,
-    mode: "ws",
-    dateStart: "",
-    dateEnd: "",
-    loading: false,
-    error: "",
-    ...overrides,
-  };
-}
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
@@ -92,7 +75,6 @@ export default function useStaffSchedulePage() {
     request: null,
     data: null,
   });
-  const [exportDialog, setExportDialog] = useState(() => createExportDialogState());
   const dayModal = dayModalState.state;
   const monthModal = monthModalState.state;
   const smenaModal = smenaModalState.state;
@@ -519,85 +501,11 @@ export default function useStaffSchedulePage() {
     onReload: handleReload,
   });
 
-  const handleOpenExportDialog = useCallback((mode) => {
-    const today = dayjs().format("YYYY-MM-DD");
-
-    setExportDialog(
-      createExportDialogState({
-        open: true,
-        mode,
-        dateStart: today,
-        dateEnd: today,
-      }),
-    );
-  }, []);
-
-  const handleCloseExportDialog = useCallback(() => {
-    setExportDialog(createExportDialogState());
-  }, []);
-
-  const handleExportDateStartChange = useCallback((dateStart) => {
-    setExportDialog((prev) => ({
-      ...prev,
-      dateStart,
-      error: "",
-    }));
-  }, []);
-
-  const handleExportDateEndChange = useCallback((dateEnd) => {
-    setExportDialog((prev) => ({
-      ...prev,
-      dateEnd,
-      error: "",
-    }));
-  }, []);
-
-  const handleExportDownload = useCallback(async () => {
-    if (!pointId || !exportDialog.dateStart || !exportDialog.dateEnd) {
-      return;
-    }
-
-    setExportDialog((prev) => ({
-      ...prev,
-      loading: true,
-      error: "",
-    }));
-
-    try {
-      const payload = {
-        point_id: pointId,
-        date_start: exportDialog.dateStart,
-        date_end: exportDialog.dateEnd,
-      };
-      const response =
-        exportDialog.mode === "hj" ? await api.downloadHJ(payload) : await api.downloadWS(payload);
-
-      if (response?.st === false) {
-        throw new Error(response?.text || "Не удалось выгрузить файл");
-      }
-
-      if (!openExportDownloadUrl(response)) {
-        throw new Error("Не удалось получить ссылку на файл");
-      }
-
-      handleCloseExportDialog();
-    } catch (requestError) {
-      setExportDialog((prev) => ({
-        ...prev,
-        loading: false,
-        error: requestError?.message || "Не удалось выгрузить файл",
-      }));
-    }
-  }, [
+  const exportActions = useStaffScheduleExport({
     api,
-    exportDialog.dateEnd,
-    exportDialog.dateStart,
-    exportDialog.mode,
-    handleCloseExportDialog,
+    access,
     pointId,
-  ]);
-
-  const canExport = canExportExcel(access);
+  });
 
   return {
     isBootstrapping,
@@ -620,8 +528,8 @@ export default function useStaffSchedulePage() {
     smenaModal,
     fastActions: fastActions.state,
     pointLabel,
-    exportDialog,
-    canExport,
+    exportDialog: exportActions.dialog,
+    canExport: exportActions.canExport,
     ConfirmDialog,
     setSelectedPart,
     handlePointChange,
@@ -654,10 +562,10 @@ export default function useStaffSchedulePage() {
     handleEditDialogApplyShiftDraft: fastActions.applyShiftDraft,
     handleEditDialogApplyPointDraft: fastActions.applyPointDraft,
     handleEditDialogSaveChanges: fastActions.saveChanges,
-    handleOpenExportDialog,
-    handleCloseExportDialog,
-    handleExportDateStartChange,
-    handleExportDateEndChange,
-    handleExportDownload,
+    handleOpenExportDialog: exportActions.open,
+    handleCloseExportDialog: exportActions.close,
+    handleExportDateStartChange: exportActions.setDateStart,
+    handleExportDateEndChange: exportActions.setDateEnd,
+    handleExportDownload: exportActions.download,
   };
 }
