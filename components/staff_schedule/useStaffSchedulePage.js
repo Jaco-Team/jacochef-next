@@ -25,6 +25,31 @@ import {
 import { buildEditDraft, EDIT_SCHEDULE_SCOPE } from "./staffScheduleEditViewModel";
 import useResourceModalState from "./useResourceModalState";
 
+function createFastActionsState(overrides = {}) {
+  return {
+    open: false,
+    screen: "hub",
+    user: null,
+    draft: null,
+    shiftLabel: "",
+    saving: false,
+    error: "",
+    ...overrides,
+  };
+}
+
+function createExportDialogState(overrides = {}) {
+  return {
+    open: false,
+    mode: "ws",
+    dateStart: "",
+    dateEnd: "",
+    loading: false,
+    error: "",
+    ...overrides,
+  };
+}
+
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -80,23 +105,8 @@ export default function useStaffSchedulePage() {
     request: null,
     data: null,
   });
-  const [fastActions, setFastActions] = useState({
-    open: false,
-    screen: "hub",
-    user: null,
-    draft: null,
-    shiftLabel: "",
-    saving: false,
-    error: "",
-  });
-  const [exportDialog, setExportDialog] = useState({
-    open: false,
-    mode: "ws",
-    dateStart: "",
-    dateEnd: "",
-    loading: false,
-    error: "",
-  });
+  const [fastActions, setFastActions] = useState(() => createFastActionsState());
+  const [exportDialog, setExportDialog] = useState(() => createExportDialogState());
   const dayModal = dayModalState.state;
   const monthModal = monthModalState.state;
   const smenaModal = smenaModalState.state;
@@ -517,28 +527,18 @@ export default function useStaffSchedulePage() {
         view.shiftOptions.find((item) => String(item.id) === String(row.smena_id))?.name || "—";
 
       setFastActions({
+        ...createFastActionsState(),
         open: true,
-        screen: "hub",
         user: row,
         draft: buildEditDraft(row),
         shiftLabel,
-        saving: false,
-        error: "",
       });
     },
     [view.shiftOptions],
   );
 
   const handleCloseFastActions = useCallback(() => {
-    setFastActions({
-      open: false,
-      screen: "hub",
-      user: null,
-      draft: null,
-      shiftLabel: "",
-      saving: false,
-      error: "",
-    });
+    setFastActions(createFastActionsState());
   }, []);
 
   const handleOpenBulkFastActions = useCallback(() => {
@@ -743,25 +743,18 @@ export default function useStaffSchedulePage() {
   const handleOpenExportDialog = useCallback((mode) => {
     const today = dayjs().format("YYYY-MM-DD");
 
-    setExportDialog({
-      open: true,
-      mode,
-      dateStart: today,
-      dateEnd: today,
-      loading: false,
-      error: "",
-    });
+    setExportDialog(
+      createExportDialogState({
+        open: true,
+        mode,
+        dateStart: today,
+        dateEnd: today,
+      }),
+    );
   }, []);
 
   const handleCloseExportDialog = useCallback(() => {
-    setExportDialog({
-      open: false,
-      mode: "ws",
-      dateStart: "",
-      dateEnd: "",
-      loading: false,
-      error: "",
-    });
+    setExportDialog(createExportDialogState());
   }, []);
 
   const handleExportDateStartChange = useCallback((dateStart) => {

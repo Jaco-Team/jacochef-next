@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Button, V2Modal } from "@/ui/v2";
+import { V2Button } from "@/ui/v2";
+import StaffScheduleResponsiveModal from "../modals/StaffScheduleResponsiveModal";
 
 const colorLegendItems = [
   {
@@ -104,7 +105,7 @@ const colorLegendItems = [
 
 export default function StaffScheduleColorLegendModal({ open, onClose }) {
   return (
-    <V2Modal
+    <StaffScheduleResponsiveModal
       open={open}
       onClose={onClose}
       title="Цветовые обозначения"
@@ -157,6 +158,6 @@ export default function StaffScheduleColorLegendModal({ open, onClose }) {
           </Stack>
         ))}
       </Stack>
-    </V2Modal>
+    </StaffScheduleResponsiveModal>
   );
 }

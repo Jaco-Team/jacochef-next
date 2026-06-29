@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import V2Button from "./Button";
 import V2Modal from "./Modal";
@@ -11,22 +11,24 @@ const DEFAULT_OPTIONS = {
 };
 
 export function useConfirm() {
-  const [resolver, setResolver] = useState(null);
+  const resolverRef = useRef(null);
   const [state, setState] = useState({
     open: false,
     ...DEFAULT_OPTIONS,
   });
 
-  const close = useCallback(
-    (result) => {
-      setState((prev) => ({ ...prev, open: false }));
-      resolver?.(result);
-      setResolver(null);
-    },
-    [resolver],
-  );
+  const close = useCallback((result) => {
+    setState((prev) => ({ ...prev, open: false }));
+    resolverRef.current?.(result);
+    resolverRef.current = null;
+  }, []);
 
   const confirm = useCallback((options = {}) => {
+    if (resolverRef.current) {
+      resolverRef.current(false);
+      resolverRef.current = null;
+    }
+
     setState({
       open: true,
       ...DEFAULT_OPTIONS,
@@ -34,7 +36,7 @@ export function useConfirm() {
     });
 
     return new Promise((resolve) => {
-      setResolver(() => resolve);
+      resolverRef.current = resolve;
     });
   }, []);
 
@@ -119,7 +121,7 @@ export function useConfirm() {
         )}
       </V2Modal>
     ),
-    [state, handleCancel],
+    [state, handleCancel, handleConfirm],
   );
 
   return { confirm, withConfirm, ConfirmDialog };

@@ -643,17 +643,6 @@ export default function StaffScheduleFastActionsDialog({
         title={modalTitle}
         maxWidth="md"
         actions={actions}
-        titleSx={{ fontSize: 16, fontWeight: 400, color: "#666666", lineHeight: 1.25 }}
-        titleContainerSx={{
-          height: 48,
-          px: 2.5,
-          py: 0,
-          backgroundColor: "#F7F7F7",
-          borderBottom: "1px solid #E5E5E5",
-          display: "flex",
-          alignItems: "center",
-        }}
-        closeButtonSx={{ color: "#A6A6A6" }}
         contentSx={{
           "&&": {
             px: 2.5,

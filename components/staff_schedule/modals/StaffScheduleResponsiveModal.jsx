@@ -1,4 +1,5 @@
 import { V2Modal } from "@/ui/v2";
+import { buildStaffScheduleModalProps } from "./staffScheduleModalPresets";
 
 export default function StaffScheduleResponsiveModal({
   titleSx,
@@ -9,37 +10,23 @@ export default function StaffScheduleResponsiveModal({
   closeButtonSx,
   ...props
 }) {
+  const modalProps = buildStaffScheduleModalProps({
+    titleSx,
+    titleContainerSx,
+    contentSx,
+    paperSx,
+    actionsSx,
+    closeButtonSx,
+  });
+
   return (
     <V2Modal
-      titleSx={{
-        fontSize: 16,
-        lineHeight: 1.25,
-        fontWeight: 400,
-        color: "#666666",
-        ...titleSx,
-      }}
-      contentSx={{
-        px: 3,
-        pt: 2.5,
-        pb: 2,
-        backgroundColor: "#FFFFFF",
-        ...contentSx,
-      }}
-      paperSx={{
-        borderRadius: "10px",
-        backgroundColor: "#FFFFFF",
-        boxShadow: "0 10px 28px rgba(17, 24, 39, 0.18)",
-        ...paperSx,
-      }}
-      actionsSx={{
-        px: 3,
-        py: 1.75,
-        borderTop: "none",
-        backgroundColor: "#FFFFFF",
-        ...actionsSx,
-      }}
-      titleContainerSx={titleContainerSx}
-      closeButtonSx={closeButtonSx}
+      titleSx={modalProps.titleSx}
+      titleContainerSx={modalProps.titleContainerSx}
+      contentSx={modalProps.contentSx}
+      paperSx={modalProps.paperSx}
+      actionsSx={modalProps.actionsSx}
+      closeButtonSx={modalProps.closeButtonSx}
       {...props}
     />
   );
