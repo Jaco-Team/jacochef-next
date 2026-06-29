@@ -22,21 +22,8 @@ import {
   hasDayModalPayload,
   hasMonthModalPayload,
 } from "./staffScheduleModalViewModel";
-import { buildEditDraft, EDIT_SCHEDULE_SCOPE } from "./staffScheduleEditViewModel";
+import useStaffScheduleFastActions from "./useStaffScheduleFastActions";
 import useResourceModalState from "./useResourceModalState";
-
-function createFastActionsState(overrides = {}) {
-  return {
-    open: false,
-    screen: "hub",
-    user: null,
-    draft: null,
-    shiftLabel: "",
-    saving: false,
-    error: "",
-    ...overrides,
-  };
-}
 
 function createExportDialogState(overrides = {}) {
   return {
@@ -105,7 +92,6 @@ export default function useStaffSchedulePage() {
     request: null,
     data: null,
   });
-  const [fastActions, setFastActions] = useState(() => createFastActionsState());
   const [exportDialog, setExportDialog] = useState(() => createExportDialogState());
   const dayModal = dayModalState.state;
   const monthModal = monthModalState.state;
@@ -517,228 +503,21 @@ export default function useStaffSchedulePage() {
     smenaModal.request?.id,
   ]);
 
-  const handleOpenFastActions = useCallback(
-    (row) => {
-      if (!row?.id || String(row?.smena_id ?? "") === "-1") {
-        return;
-      }
-
-      const shiftLabel =
-        view.shiftOptions.find((item) => String(item.id) === String(row.smena_id))?.name || "—";
-
-      setFastActions({
-        ...createFastActionsState(),
-        open: true,
-        user: row,
-        draft: buildEditDraft(row),
-        shiftLabel,
-      });
-    },
-    [view.shiftOptions],
-  );
-
-  const handleCloseFastActions = useCallback(() => {
-    setFastActions(createFastActionsState());
-  }, []);
-
-  const handleOpenBulkFastActions = useCallback(() => {
-    const selectedRows = view.visibleRows
-      .filter((row) => row?.row !== "header")
-      .map((row) => row?.data)
-      .filter((row) => row?.id && selectedRowIds.includes(String(row.id)));
-
-    if (!selectedRows.length) {
-      return;
-    }
-
-    handleOpenFastActions(selectedRows[0]);
-  }, [handleOpenFastActions, selectedRowIds, view.visibleRows]);
-
-  const handleEditDialogBackToHub = useCallback(() => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "hub",
-      error: "",
-    }));
-  }, []);
-
-  const handleEditDialogOpenSchedule = useCallback(() => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "schedule",
-      error: "",
-    }));
-  }, []);
-
-  const handleEditDialogOpenShift = useCallback(() => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "shift",
-      error: "",
-    }));
-  }, []);
-
-  const handleEditDialogOpenPoint = useCallback(() => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "point",
-      error: "",
-    }));
-  }, []);
-
-  const handleEditDialogApplyScheduleDraft = useCallback((nextScheduleDraft) => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "hub",
-      error: "",
-      draft: {
-        ...prev.draft,
-        scheduleScope: nextScheduleDraft?.scheduleScope ?? null,
-        scheduleType: nextScheduleDraft?.scheduleType ?? null,
-      },
-    }));
-  }, []);
-
-  const handleEditDialogApplyShiftDraft = useCallback((nextSmenaId) => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "hub",
-      error: "",
-      draft: {
-        ...prev.draft,
-        smenaId: nextSmenaId,
-      },
-    }));
-  }, []);
-
-  const handleEditDialogApplyPointDraft = useCallback((pointItem) => {
-    setFastActions((prev) => ({
-      ...prev,
-      screen: "hub",
-      error: "",
-      draft: {
-        ...prev.draft,
-        point: pointItem
-          ? {
-              point_id: pointItem.point_id,
-              smena_id: pointItem.smena_id,
-              name: pointItem.name,
-            }
-          : null,
-      },
-    }));
-  }, []);
-
-  const persistEditDraft = useCallback(
-    async (draft, user) => {
-      if (draft?.scheduleType && draft?.scheduleScope) {
-        const schedulePayload = {
-          type: draft.scheduleType,
-          user_id: user.id,
-          app_id: user.app_id,
-          smena_id: user.smena_id,
-          date: monthId,
-        };
-
-        const scheduleResponse =
-          draft.scheduleScope === EDIT_SCHEDULE_SCOPE.month
-            ? await api.saveFastTime(schedulePayload)
-            : await api.saveFastTimeWeekOne(schedulePayload);
-
-        if (scheduleResponse?.st === false) {
-          throw new Error(scheduleResponse?.text || "Не удалось сохранить график");
-        }
-      }
-
-      if (draft?.smenaId && String(draft.smenaId) !== String(user?.smena_id ?? "")) {
-        const smenaResponse = await api.saveFastSmena({
-          new_smena_id: draft.smenaId,
-          user_id: user.id,
-          app_id: user.app_id,
-          smena_id: user.smena_id,
-          date: monthId,
-          part: selectedPart + 1,
-        });
-
-        if (smenaResponse?.st === false) {
-          throw new Error(smenaResponse?.text || "Не удалось сменить смену");
-        }
-      }
-
-      if (draft?.point?.point_id) {
-        const pointResponse = await api.saveFastPoint({
-          new_point_id: draft.point.point_id,
-          new_smena_id: draft.point.smena_id,
-          user_id: user.id,
-          app_id: user.app_id,
-          smena_id: user.smena_id,
-        });
-
-        if (pointResponse?.st === false) {
-          throw new Error(pointResponse?.text || "Не удалось сменить точку");
-        }
-      }
-    },
-    [api, monthId, selectedPart],
-  );
-
-  const handleEditDialogSaveChanges = useCallback(async () => {
-    const user = fastActions.user;
-    const draft = fastActions.draft;
-
-    if (!user || !draft) {
-      return;
-    }
-
-    const needsPointConfirm = Boolean(draft?.point?.point_id);
-
-    const runSave = async () => {
-      setFastActions((prev) => ({
-        ...prev,
-        saving: true,
-        error: "",
-      }));
-
-      try {
-        await persistEditDraft(draft, user);
-        handleCloseFastActions();
-        await handleReload();
-      } catch (requestError) {
-        setFastActions((prev) => ({
-          ...prev,
-          saving: false,
-          error: requestError?.message || "Не удалось сохранить изменения",
-        }));
-      }
-    };
-
-    if (!needsPointConfirm) {
-      await runSave();
-      return;
-    }
-
-    const accepted = await confirm({
-      title: "Предупреждение",
-      message: "Точно сменить точку с сегодняшнего дня?",
-      confirmLabel: "Сменить",
-    });
-
-    if (accepted) {
-      await runSave();
-    }
-  }, [
-    confirm,
-    fastActions.draft,
-    fastActions.user,
-    handleCloseFastActions,
-    handleReload,
-    persistEditDraft,
-  ]);
-
   const pointLabel = useMemo(
     () => points.find((item) => String(item.id) === String(pointId))?.name || "—",
     [pointId, points],
   );
+
+  const fastActions = useStaffScheduleFastActions({
+    api,
+    confirm,
+    monthId,
+    selectedPart,
+    visibleRows: view.visibleRows,
+    selectedRowIds,
+    shiftOptions: view.shiftOptions,
+    onReload: handleReload,
+  });
 
   const handleOpenExportDialog = useCallback((mode) => {
     const today = dayjs().format("YYYY-MM-DD");
@@ -839,7 +618,7 @@ export default function useStaffSchedulePage() {
     dayModal,
     monthModal,
     smenaModal,
-    fastActions,
+    fastActions: fastActions.state,
     pointLabel,
     exportDialog,
     canExport,
@@ -864,17 +643,17 @@ export default function useStaffSchedulePage() {
     handleCloseSmenaModal,
     handleSaveSmenaModal,
     handleRequestDeleteSmena,
-    handleOpenFastActions,
-    handleCloseFastActions,
-    handleOpenBulkFastActions,
-    handleEditDialogBackToHub,
-    handleEditDialogOpenSchedule,
-    handleEditDialogOpenShift,
-    handleEditDialogOpenPoint,
-    handleEditDialogApplyScheduleDraft,
-    handleEditDialogApplyShiftDraft,
-    handleEditDialogApplyPointDraft,
-    handleEditDialogSaveChanges,
+    handleOpenFastActions: fastActions.open,
+    handleCloseFastActions: fastActions.close,
+    handleOpenBulkFastActions: fastActions.openBulk,
+    handleEditDialogBackToHub: fastActions.backToHub,
+    handleEditDialogOpenSchedule: fastActions.openSchedule,
+    handleEditDialogOpenShift: fastActions.openShift,
+    handleEditDialogOpenPoint: fastActions.openPoint,
+    handleEditDialogApplyScheduleDraft: fastActions.applyScheduleDraft,
+    handleEditDialogApplyShiftDraft: fastActions.applyShiftDraft,
+    handleEditDialogApplyPointDraft: fastActions.applyPointDraft,
+    handleEditDialogSaveChanges: fastActions.saveChanges,
     handleOpenExportDialog,
     handleCloseExportDialog,
     handleExportDateStartChange,
