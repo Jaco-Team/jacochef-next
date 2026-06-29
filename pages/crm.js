@@ -136,11 +136,16 @@ export default function CrmPage() {
 
     try {
       updateMain({ is_load: true });
+      //"http://127.0.0.1:8000/api/crm/export_segment"
 
-      const response = await axios.post("http://127.0.0.1:8000/api/crm/export_segment", payload, {
-        responseType: "blob",
-        validateStatus: (status) => status < 500,
-      });
+      const response = await axios.post(
+        "https://apichef.jacochef.ru/api/crm/export_segment",
+        payload,
+        {
+          responseType: "blob",
+          validateStatus: (status) => status < 500,
+        },
+      );
 
       const contentType = response.headers["content-type"] || "";
 

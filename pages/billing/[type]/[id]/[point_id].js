@@ -222,14 +222,25 @@ function isImageFileName(fileName) {
   return /\.(jpe?g|png|gif|bmp|webp|heic|heif)$/i.test(String(fileName ?? ""));
 }
 
+function isOcrFileName(fileName) {
+  return /\.(jpe?g|png|pdf)$/i.test(String(fileName ?? ""));
+}
+
 function isImageDropzoneFile(file) {
   const fileName = file?.name?.toLowerCase() ?? "";
+  const fileType = file?.type?.toLowerCase() ?? "";
 
-  return file?.type?.startsWith("image/") || isImageFileName(fileName);
+  return (
+    ["image/jpeg", "image/png", "application/pdf"].includes(fileType) || isOcrFileName(fileName)
+  );
 }
 
 function getFileMimeType(fileName = "") {
   const normalized = String(fileName).toLowerCase();
+
+  if (normalized.endsWith(".pdf")) {
+    return "application/pdf";
+  }
 
   if (normalized.endsWith(".png")) {
     return "image/png";
@@ -618,27 +629,135 @@ function getResolvedVendorPackOption(vendorItem, ocrItem, selectedPackOption = n
   return findVendorPackOption(pqItems, "1") ?? (pqItems.length === 1 ? pqItems[0] : null);
 }
 
+const OCR_MATH_FLAG_FIELDS = [
+  "math_qty_price_total_wo_vat_ok",
+  "math_vat_amount_ok",
+  "math_total_with_vat_ok",
+];
+
+const OCR_REVIEW_REASON_TEXT = {
+  unmatched_product: "Товар не найден в справочнике, выбери вручную",
+  low_match_score: "Низкая уверенность сопоставления, проверь товар",
+  missing_numeric_fields: "Не хватает количества или сумм",
+  math_qty_price_total_wo_vat_ok: "не сошлась формула количество x цена = сумма без НДС",
+  math_vat_amount_ok: "не сошлась сумма НДС",
+  math_total_with_vat_ok: "не сошлась сумма с НДС",
+  lilt_numeric_weak_match: "Числа требуют проверки",
+  lilt_numeric_unconfirmed: "OCR не подтвердил числовую строку",
+};
+
+function getOcrMatchedId(ocrItem) {
+  return ocrItem?.matched_id ?? ocrItem?.matched_product?.id;
+}
+
+function hasOcrMathIssues(ocrItem) {
+  return OCR_MATH_FLAG_FIELDS.some((field) => ocrItem?.[field] === false);
+}
+
+function hasOcrRequiredNumericFields(ocrItem) {
+  return (
+    normalizeBillingText(ocrItem?.quantity).length > 0 &&
+    (normalizeBillingText(ocrItem?.total_with_vat).length > 0 ||
+      normalizeBillingText(ocrItem?.total_wo_vat).length > 0)
+  );
+}
+
+function isOcrItemReadyForAutofill(ocrItem) {
+  return (
+    Boolean(getOcrMatchedId(ocrItem)) &&
+    !hasOcrMathIssues(ocrItem) &&
+    hasOcrRequiredNumericFields(ocrItem)
+  );
+}
+
+function getOcrItemReviewMessages(ocrItem) {
+  const messages = [];
+  const reviewReasons = Array.isArray(ocrItem?.__ocr_review?.review_reasons)
+    ? ocrItem.__ocr_review.review_reasons
+    : [];
+
+  reviewReasons.forEach((reason) => {
+    if (reason === "unmatched_product" && getOcrMatchedId(ocrItem)) {
+      return;
+    }
+
+    messages.push(OCR_REVIEW_REASON_TEXT[reason] ?? reason);
+  });
+
+  if (!getOcrMatchedId(ocrItem)) {
+    messages.push(OCR_REVIEW_REASON_TEXT.unmatched_product);
+  }
+
+  if (ocrItem?.__ocr_review?.needs_review === true && !reviewReasons.length) {
+    messages.push("строка требует ручной проверки");
+  }
+
+  OCR_MATH_FLAG_FIELDS.forEach((field) => {
+    if (ocrItem?.[field] === false) {
+      messages.push(OCR_REVIEW_REASON_TEXT[field]);
+    }
+  });
+
+  if (!hasOcrRequiredNumericFields(ocrItem)) {
+    messages.push("не хватает количества или суммы");
+  }
+
+  return [...new Set(messages.filter(Boolean))];
+}
+
+function getOcrAutofillNotice(ocrItem) {
+  const reviewReasons = Array.isArray(ocrItem?.__ocr_review?.review_reasons)
+    ? ocrItem.__ocr_review.review_reasons
+    : [];
+
+  if (ocrItem?.ocr_repair) {
+    return "Числа исправлены OCR";
+  }
+
+  if (reviewReasons.includes("low_match_score")) {
+    return OCR_REVIEW_REASON_TEXT.low_match_score;
+  }
+
+  if (
+    reviewReasons.includes("lilt_numeric_weak_match") ||
+    reviewReasons.includes("lilt_numeric_unconfirmed")
+  ) {
+    return "Числа требуют проверки";
+  }
+
+  return "";
+}
+
 function getOcrResolveIssue(ocrItem, vendorItem, selectedPackOption) {
+  const issues = [];
+
   if (!vendorItem) {
-    return "OCR не смог уверенно определить товар";
+    issues.push(OCR_REVIEW_REASON_TEXT.unmatched_product);
+    return issues.join("; ");
   }
 
   if (!normalizeBillingText(ocrItem?.quantity).length) {
-    return "OCR не распознал количество товара, проверь строку вручную";
+    issues.push("OCR не распознал количество товара, проверь строку вручную");
   }
 
   const ocrPq = normalizeBillingText(ocrItem?.pq);
   const pqItems = Array.isArray(vendorItem?.pq_item) ? vendorItem.pq_item : [];
 
   if (ocrPq.length && !selectedPackOption) {
-    return `OCR распознал упаковку ${ocrPq}, но такого значения нет у товара поставщика`;
+    issues.push(`OCR распознал упаковку ${ocrPq}, но такого значения нет у товара поставщика`);
   }
 
   if (!ocrPq.length && pqItems.length > 1 && !selectedPackOption) {
-    return "OCR не распознал объем упаковки, выбери его вручную";
+    issues.push("OCR не распознал объем упаковки, выбери его вручную");
   }
 
-  return "";
+  getOcrItemReviewMessages(ocrItem).forEach((message) => {
+    if (message !== OCR_REVIEW_REASON_TEXT.unmatched_product) {
+      issues.push(message);
+    }
+  });
+
+  return [...new Set(issues.filter(Boolean))].join("; ");
 }
 
 function getOcrQuantityData(ocrItem, pqValue = "") {
@@ -685,11 +804,13 @@ function formatOcrVatRate(value) {
 
 function getParsedOcrDocuments(data) {
   const documents = Array.isArray(data?.merged?.documents) ? data.merged.documents : [];
+  const smartDocuments = Array.isArray(data?.smart?.documents) ? data.smart.documents : [];
 
   return documents
     .map((document, documentIndex) => ({
       ...document,
       documentIndex,
+      __ocr_smart_document: smartDocuments[documentIndex] ?? {},
     }))
     .filter((document) => document?.parsed);
 }
@@ -708,16 +829,23 @@ function getFirstOcrInvoice(parsedDocuments) {
 
 function getMergedOcrItems(parsedDocuments) {
   return parsedDocuments
-    .flatMap((document, documentIndex) =>
-      (Array.isArray(document?.parsed?.items) ? document.parsed.items : []).map(
+    .flatMap((document, documentIndex) => {
+      const itemsReview = Array.isArray(document?.__ocr_smart_document?.items_review)
+        ? document.__ocr_smart_document.items_review
+        : [];
+
+      return (Array.isArray(document?.parsed?.items) ? document.parsed.items : []).map(
         (item, itemIndex) => ({
           ...item,
           __ocr_document_index: documentIndex,
           __ocr_item_index: itemIndex,
           __ocr_file_name: document?.file_name ?? document?.file_names?.[0] ?? "",
+          __ocr_review: itemsReview[itemIndex] ?? {},
+          __ocr_quality: document?.__ocr_smart_document?.quality ?? {},
+          __ocr_auto_repair: document?.__ocr_smart_document?.auto_repair ?? {},
         }),
-      ),
-    )
+      );
+    })
     .sort((a, b) => {
       const lineA = Number.isFinite(Number(a?.line)) ? Number(a.line) : Number.MAX_SAFE_INTEGER;
       const lineB = Number.isFinite(Number(b?.line)) ? Number(b.line) : Number.MAX_SAFE_INTEGER;
@@ -732,6 +860,14 @@ function getMergedOcrItems(parsedDocuments) {
 
       return a.__ocr_item_index - b.__ocr_item_index;
     });
+}
+
+function getOcrAutoRepairCount(parsedDocuments) {
+  return parsedDocuments.reduce((sum, document) => {
+    const count = Number(document?.__ocr_smart_document?.auto_repair?.applied_count);
+
+    return Number.isFinite(count) ? sum + count : sum;
+  }, 0);
 }
 
 function findMatchedVendorItem(vendorItems, ocrItem) {
@@ -1491,6 +1627,11 @@ function BillItemNameContent({ item, showPriceWarnings = true, vendorId = null }
             <Box sx={billingNoDeclWarningChipSx}>нет декларации!</Box>
           </Link>
         </Tooltip>
+      )}
+      {!item?.ocr_notice ? null : (
+        <Box sx={{ mt: 0.5, maxWidth: 340 }}>
+          <Box sx={billingPriceWarningChipSx}>{item.ocr_notice}</Box>
+        </Box>
       )}
       {!showPriceWarnings || !item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
@@ -6329,7 +6470,7 @@ class Billing_Edit_ extends React.Component {
   getStoredOcrImageNames = () => {
     const { imgs_bill = [] } = this.props.store;
 
-    return imgs_bill.filter((fileName) => isImageFileName(fileName));
+    return imgs_bill.filter((fileName) => isOcrFileName(fileName));
   };
 
   getStoredOcrImageFiles = async () => {
@@ -6568,6 +6709,7 @@ class Billing_Edit_ extends React.Component {
     nextBillItems[addedIndex].nds = nds || nextBillItems[addedIndex].nds;
     nextBillItems[addedIndex].price = getBillItemUnitPrice(nextBillItems[addedIndex]);
     nextBillItems[addedIndex].one_price_bill = nextBillItems[addedIndex].price;
+    nextBillItems[addedIndex].ocr_notice = getOcrAutofillNotice(ocrItem);
 
     store.setData({
       bill_items: nextBillItems,
@@ -6618,7 +6760,7 @@ class Billing_Edit_ extends React.Component {
     let skippedItems = 0;
 
     this.state.ocrResolveItems.forEach((item) => {
-      if (!item.selectedProduct) {
+      if (!item.selectedProduct || !hasOcrRequiredNumericFields(item.ocrItem)) {
         skippedItems += 1;
         return;
       }
@@ -6635,7 +6777,7 @@ class Billing_Edit_ extends React.Component {
     this.closeOcrResolveDialog();
 
     if (!addedItems) {
-      showAlert(false, "Для OCR-строк не выбраны товар и упаковка");
+      showAlert(false, "Для OCR-строк не выбраны товар, упаковка или не хватает числовых полей");
       return;
     }
 
@@ -6658,6 +6800,7 @@ class Billing_Edit_ extends React.Component {
 
     const invoice = getFirstOcrInvoice(parsedDocuments);
     const ocrItems = getMergedOcrItems(parsedDocuments);
+    const autoRepairCount = getOcrAutoRepairCount(parsedDocuments);
     const invoiceDate = parseOcrDate(invoice?.date);
     const nextOcrState = {};
 
@@ -6683,6 +6826,7 @@ class Billing_Edit_ extends React.Component {
     }
 
     let addedItems = 0;
+    let skippedItems = 0;
     const unresolvedItems = [];
 
     ocrItems.forEach((ocrItem, index) => {
@@ -6690,17 +6834,13 @@ class Billing_Edit_ extends React.Component {
       const suggestedVendorItem =
         matchedVendorItem ?? findSuggestedVendorItem(vendorItems, ocrItem);
       const resolvedPackOption = getResolvedVendorPackOption(suggestedVendorItem, ocrItem);
-      const quantityData = getOcrQuantityData(
-        ocrItem,
-        normalizeBillingText(resolvedPackOption?.name ?? resolvedPackOption?.id),
-      );
 
-      if (
-        !matchedVendorItem ||
-        !resolvedPackOption ||
-        !normalizeBillingText(quantityData.count).length ||
-        !normalizeBillingText(quantityData.factUnit).length
-      ) {
+      if (!hasOcrRequiredNumericFields(ocrItem) || hasOcrMathIssues(ocrItem)) {
+        skippedItems += 1;
+        return;
+      }
+
+      if (!matchedVendorItem || !resolvedPackOption) {
         unresolvedItems.push({
           key: `${ocrItem?.__ocr_file_name ?? ocrItem?.line ?? index}-${ocrItem?.line ?? index}-${index}`,
           ocrItem,
@@ -6709,8 +6849,13 @@ class Billing_Edit_ extends React.Component {
         return;
       }
 
-      if (this.addOcrItemToBill(ocrItem, matchedVendorItem, resolvedPackOption)) {
+      if (
+        isOcrItemReadyForAutofill(ocrItem) &&
+        this.addOcrItemToBill(ocrItem, matchedVendorItem, resolvedPackOption)
+      ) {
         addedItems += 1;
+      } else {
+        skippedItems += 1;
       }
     });
 
@@ -6731,13 +6876,17 @@ class Billing_Edit_ extends React.Component {
 
       return {
         status: true,
-        message: `OCR обновил документ: добавлено ${addedItems} поз. Для ${unresolvedItems.length} поз. нужна ручная модерация.`,
+        message: `OCR обновил документ: добавлено ${addedItems} поз. Для ${unresolvedItems.length} поз. нужна ручная модерация.${skippedItems ? ` Пропущено ${skippedItems} поз. без чисел или с ошибкой расчета.` : ""}${
+          autoRepairCount > 0 ? ` Система исправила числовые поля: ${autoRepairCount}.` : ""
+        }`,
       };
     }
 
     return {
       status: true,
-      message: `OCR обновил документ: добавлено ${addedItems} поз.`,
+      message: `OCR обновил документ: добавлено ${addedItems} поз.${skippedItems ? ` Пропущено ${skippedItems} поз. без чисел или с ошибкой расчета.` : ""}${
+        autoRepairCount > 0 ? ` Система исправила числовые поля: ${autoRepairCount}.` : ""
+      }`,
     };
   };
 
@@ -6796,9 +6945,10 @@ class Billing_Edit_ extends React.Component {
 
       formData.append("point_id", String(point.id));
       formData.append("debug", "0");
+      formData.append("use_gpt", "0");
       formData.append("use_lock", "1");
       formData.append("upload_to_cloud", "0");
-      formData.append("overwrite_cloud", "0");
+      formData.append("overwrite_cloud", "1");
 
       const response = await fetch(url_ocr, {
         method: "POST",
@@ -7395,7 +7545,7 @@ class Billing_Edit_ extends React.Component {
     } = this.props.store;
 
     const storedOcrImagesCount = (imgs_bill ?? []).filter((fileName) =>
-      isImageFileName(fileName),
+      isOcrFileName(fileName),
     ).length;
     const canUseOcr = [2, 5].includes(parseInt(bill?.type));
     const headerMode = getBillingSectionMode(acces, "header");
