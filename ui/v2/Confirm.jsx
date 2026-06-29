@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import V2Button from "./Button";
 import V2Modal from "./Modal";
@@ -10,22 +10,21 @@ const DEFAULT_OPTIONS = {
   confirmLabel: "ОК",
 };
 
-export function useV2Confirm() {
-  const resolverRef = useRef(null);
-  const callbackRef = useRef(null);
-  const argsRef = useRef([]);
+export function useConfirm() {
+  const [resolver, setResolver] = useState(null);
   const [state, setState] = useState({
     open: false,
     ...DEFAULT_OPTIONS,
   });
 
-  const close = useCallback((result) => {
-    setState((prev) => ({ ...prev, open: false }));
-    resolverRef.current?.(result);
-    resolverRef.current = null;
-    callbackRef.current = null;
-    argsRef.current = [];
-  }, []);
+  const close = useCallback(
+    (result) => {
+      setState((prev) => ({ ...prev, open: false }));
+      resolver?.(result);
+      setResolver(null);
+    },
+    [resolver],
+  );
 
   const confirm = useCallback((options = {}) => {
     setState({
@@ -35,7 +34,7 @@ export function useV2Confirm() {
     });
 
     return new Promise((resolve) => {
-      resolverRef.current = resolve;
+      setResolver(() => resolve);
     });
   }, []);
 
@@ -49,15 +48,9 @@ export function useV2Confirm() {
           event.preventDefault?.();
         }
 
-        const savedCallback = callback;
-        const savedArgs = args;
-
-        callbackRef.current = savedCallback;
-        argsRef.current = savedArgs;
-
         confirm(options).then((accepted) => {
           if (accepted) {
-            savedCallback?.(...savedArgs);
+            callback?.(...args);
           }
         });
       };
@@ -84,7 +77,7 @@ export function useV2Confirm() {
         closeButtonSx={{ color: "#FFFFFF" }}
         paperSx={{ borderRadius: "12px" }}
         contentSx={{ py: 3 }}
-        actionsSx={{ justifyContent: "center", pt: 0, pb: 3 }}
+        actionsSx={{ justifyContent: "center", pt: 0, pb: 3, borderTop: "none" }}
         actions={
           <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, width: "100%" }}>
             <V2Button

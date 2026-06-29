@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Alert, V2Button, V2CompactTabs, V2Select, useV2Confirm } from "@/ui/v2";
+import { V2Alert, V2Button, V2CompactTabs, V2Select, useConfirm } from "@/ui/v2";
 import { createStaffScheduleAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -313,7 +313,7 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingSmenaId, setPendingSmenaId] = useState("");
   const [pendingPointId, setPendingPointId] = useState("");
   const [pendingPointCity, setPendingPointCity] = useState("");
-  const { confirm, ConfirmDialog } = useV2Confirm();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     if (!state?.open) {

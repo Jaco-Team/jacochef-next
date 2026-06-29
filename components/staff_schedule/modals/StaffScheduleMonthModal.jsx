@@ -10,7 +10,7 @@ import {
   V2Select,
   V2SelectableList,
   V2SelectableListItem,
-  useV2Confirm,
+  useConfirm,
 } from "@/ui/v2";
 import {
   buildMonthModalDraft,
@@ -29,7 +29,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   const initialDraftRef = useRef(buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const { confirm, ConfirmDialog } = useV2Confirm();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const monthValue = modal.request?.date || "";
   const daysMap = useMemo(

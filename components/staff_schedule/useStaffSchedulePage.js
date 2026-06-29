@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
+import { useConfirm } from "@/ui/v2";
 import useStaffScheduleApi from "./useStaffScheduleApi";
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
 import {
@@ -22,9 +23,11 @@ import {
   hasMonthModalPayload,
 } from "./staffScheduleModalViewModel";
 import { buildEditDraft, EDIT_SCHEDULE_SCOPE } from "./staffScheduleEditViewModel";
+import useResourceModalState from "./useResourceModalState";
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isGraphLoading, setIsGraphLoading] = useState(false);
@@ -55,34 +58,27 @@ export default function useStaffSchedulePage() {
   const [colorMode, setColorMode] = useState("default");
   const [collapsedShiftIds, setCollapsedShiftIds] = useState([]);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [dayModal, setDayModal] = useState({
+  const dayModalState = useResourceModalState({
     open: false,
     loading: false,
     error: "",
     request: null,
     data: null,
   });
-  const [monthModal, setMonthModal] = useState({
+  const monthModalState = useResourceModalState({
     open: false,
     loading: false,
     error: "",
     request: null,
     data: null,
   });
-  const [smenaModal, setSmenaModal] = useState({
+  const smenaModalState = useResourceModalState({
     open: false,
     loading: false,
     error: "",
     mode: "create",
     request: null,
     data: null,
-  });
-  const [confirmDialog, setConfirmDialog] = useState({
-    open: false,
-    title: "",
-    message: "",
-    confirmLabel: "Подтвердить",
-    onConfirm: null,
   });
   const [fastActions, setFastActions] = useState({
     open: false,
@@ -101,6 +97,9 @@ export default function useStaffSchedulePage() {
     loading: false,
     error: "",
   });
+  const dayModal = dayModalState.state;
+  const monthModal = monthModalState.state;
+  const smenaModal = smenaModalState.state;
 
   const loadGraph = useCallback(
     async (nextPointId, nextMonthId) => {
@@ -273,13 +272,7 @@ export default function useStaffSchedulePage() {
         date_start: row.date,
       };
 
-      setDayModal({
-        open: true,
-        loading: true,
-        error: "",
-        request,
-        data: null,
-      });
+      dayModalState.openLoading({ request, data: null });
 
       try {
         const response = await api.getUserDay(request);
@@ -288,35 +281,20 @@ export default function useStaffSchedulePage() {
           throw new Error(response?.text || "Не удалось загрузить данные сотрудника");
         }
 
-        setDayModal({
-          open: true,
-          loading: false,
-          error: "",
-          request,
-          data: buildDayModalViewModel(response),
-        });
+        dayModalState.openReady({ request, data: buildDayModalViewModel(response) });
       } catch (requestError) {
-        setDayModal({
-          open: true,
-          loading: false,
-          error: requestError?.message || "Не удалось загрузить данные сотрудника",
+        dayModalState.openError(requestError?.message || "Не удалось загрузить данные сотрудника", {
           request,
           data: null,
         });
       }
     },
-    [api, pointId],
+    [api, dayModalState, pointId],
   );
 
   const handleCloseDayModal = useCallback(() => {
-    setDayModal({
-      open: false,
-      loading: false,
-      error: "",
-      request: null,
-      data: null,
-    });
-  }, []);
+    dayModalState.close();
+  }, [dayModalState]);
 
   const handleSaveDayModal = useCallback(
     async (payload) => {
@@ -346,13 +324,7 @@ export default function useStaffSchedulePage() {
         date_start: row.date,
       };
 
-      setMonthModal({
-        open: true,
-        loading: true,
-        error: "",
-        request,
-        data: null,
-      });
+      monthModalState.openLoading({ request, data: null });
 
       try {
         const response = await api.getUserMonth(request);
@@ -361,35 +333,20 @@ export default function useStaffSchedulePage() {
           throw new Error(response?.text || "Не удалось загрузить месячные часы");
         }
 
-        setMonthModal({
-          open: true,
-          loading: false,
-          error: "",
-          request,
-          data: buildMonthModalViewModel(response),
-        });
+        monthModalState.openReady({ request, data: buildMonthModalViewModel(response) });
       } catch (requestError) {
-        setMonthModal({
-          open: true,
-          loading: false,
-          error: requestError?.message || "Не удалось загрузить месячные часы",
+        monthModalState.openError(requestError?.message || "Не удалось загрузить месячные часы", {
           request,
           data: null,
         });
       }
     },
-    [api, monthId],
+    [api, monthId, monthModalState],
   );
 
   const handleCloseMonthModal = useCallback(() => {
-    setMonthModal({
-      open: false,
-      loading: false,
-      error: "",
-      request: null,
-      data: null,
-    });
-  }, []);
+    monthModalState.close();
+  }, [monthModalState]);
 
   const handleSaveMonthModal = useCallback(
     async (payload) => {
@@ -406,10 +363,7 @@ export default function useStaffSchedulePage() {
   );
 
   const handleOpenCreateSmena = useCallback(async () => {
-    setSmenaModal({
-      open: true,
-      loading: true,
-      error: "",
+    smenaModalState.openLoading({
       mode: "create",
       request: { point_id: pointId },
       data: null,
@@ -422,10 +376,7 @@ export default function useStaffSchedulePage() {
         throw new Error(response?.text || "Не удалось загрузить список сотрудников");
       }
 
-      setSmenaModal({
-        open: true,
-        loading: false,
-        error: "",
+      smenaModalState.openReady({
         mode: "create",
         request: { point_id: pointId },
         data: {
@@ -434,16 +385,16 @@ export default function useStaffSchedulePage() {
         },
       });
     } catch (requestError) {
-      setSmenaModal({
-        open: true,
-        loading: false,
-        error: requestError?.message || "Не удалось загрузить список сотрудников",
-        mode: "create",
-        request: { point_id: pointId },
-        data: null,
-      });
+      smenaModalState.openError(
+        requestError?.message || "Не удалось загрузить список сотрудников",
+        {
+          mode: "create",
+          request: { point_id: pointId },
+          data: null,
+        },
+      );
     }
-  }, [api, pointId]);
+  }, [api, pointId, smenaModalState]);
 
   const handleOpenEditSmena = useCallback(
     async (smenaId) => {
@@ -451,10 +402,7 @@ export default function useStaffSchedulePage() {
         return;
       }
 
-      setSmenaModal({
-        open: true,
-        loading: true,
-        error: "",
+      smenaModalState.openLoading({
         mode: "edit",
         request: { id: smenaId, point_id: pointId },
         data: null,
@@ -467,10 +415,7 @@ export default function useStaffSchedulePage() {
           throw new Error(response?.text || "Не удалось загрузить смену");
         }
 
-        setSmenaModal({
-          open: true,
-          loading: false,
-          error: "",
+        smenaModalState.openReady({
           mode: "edit",
           request: { id: smenaId, point_id: pointId },
           data: {
@@ -479,29 +424,19 @@ export default function useStaffSchedulePage() {
           },
         });
       } catch (requestError) {
-        setSmenaModal({
-          open: true,
-          loading: false,
-          error: requestError?.message || "Не удалось загрузить смену",
+        smenaModalState.openError(requestError?.message || "Не удалось загрузить смену", {
           mode: "edit",
           request: { id: smenaId, point_id: pointId },
           data: null,
         });
       }
     },
-    [api, pointId],
+    [api, pointId, smenaModalState],
   );
 
   const handleCloseSmenaModal = useCallback(() => {
-    setSmenaModal({
-      open: false,
-      loading: false,
-      error: "",
-      mode: "create",
-      request: null,
-      data: null,
-    });
-  }, []);
+    smenaModalState.close();
+  }, [smenaModalState]);
 
   const handleSaveSmenaModal = useCallback(
     async ({ id, name, users }) => {
@@ -537,53 +472,40 @@ export default function useStaffSchedulePage() {
     [api, handleCloseSmenaModal, handleReload, pointId, smenaModal.mode],
   );
 
-  const handleRequestDeleteSmena = useCallback(() => {
-    setConfirmDialog({
-      open: true,
-      title: "Удалить смену?",
+  const handleRequestDeleteSmena = useCallback(async () => {
+    const accepted = await confirm({
+      title: "Предупреждение",
       message: "Смена будет удалена, если в ней нет сотрудников.",
       confirmLabel: "Удалить",
-      onConfirm: async () => {
-        const response = await api.deleteSmena({
-          id: smenaModal.request?.id,
-          users: smenaModal.data?.users ?? [],
-        });
-
-        if (response?.st === false) {
-          throw new Error(response?.text || "Не удалось удалить смену");
-        }
-
-        handleCloseSmenaModal();
-        await handleReload();
-      },
     });
-  }, [api, handleCloseSmenaModal, handleReload, pointId, smenaModal]);
 
-  const handleCloseConfirmDialog = useCallback(() => {
-    setConfirmDialog({
-      open: false,
-      title: "",
-      message: "",
-      confirmLabel: "Подтвердить",
-      onConfirm: null,
-    });
-  }, []);
-
-  const handleConfirmDialog = useCallback(async () => {
-    const action = confirmDialog.onConfirm;
-
-    handleCloseConfirmDialog();
-
-    if (!action) {
+    if (!accepted) {
       return;
     }
 
     try {
-      await action();
+      const response = await api.deleteSmena({
+        id: smenaModal.request?.id,
+        users: smenaModal.data?.users ?? [],
+      });
+
+      if (response?.st === false) {
+        throw new Error(response?.text || "Не удалось удалить смену");
+      }
+
+      handleCloseSmenaModal();
+      await handleReload();
     } catch (requestError) {
       setError(requestError?.message || "Не удалось выполнить действие");
     }
-  }, [confirmDialog.onConfirm, handleCloseConfirmDialog]);
+  }, [
+    api,
+    confirm,
+    handleCloseSmenaModal,
+    handleReload,
+    smenaModal.data?.users,
+    smenaModal.request?.id,
+  ]);
 
   const handleOpenFastActions = useCallback(
     (row) => {
@@ -790,19 +712,28 @@ export default function useStaffSchedulePage() {
       }
     };
 
-    if (needsPointConfirm) {
-      setConfirmDialog({
-        open: true,
-        title: "Сменить точку?",
-        message: "Точно сменить точку с сегодняшнего дня?",
-        confirmLabel: "Сменить",
-        onConfirm: runSave,
-      });
+    if (!needsPointConfirm) {
+      await runSave();
       return;
     }
 
-    await runSave();
-  }, [fastActions.draft, fastActions.user, handleCloseFastActions, handleReload, persistEditDraft]);
+    const accepted = await confirm({
+      title: "Предупреждение",
+      message: "Точно сменить точку с сегодняшнего дня?",
+      confirmLabel: "Сменить",
+    });
+
+    if (accepted) {
+      await runSave();
+    }
+  }, [
+    confirm,
+    fastActions.draft,
+    fastActions.user,
+    handleCloseFastActions,
+    handleReload,
+    persistEditDraft,
+  ]);
 
   const pointLabel = useMemo(
     () => points.find((item) => String(item.id) === String(pointId))?.name || "—",
@@ -915,11 +846,11 @@ export default function useStaffSchedulePage() {
     dayModal,
     monthModal,
     smenaModal,
-    confirmDialog,
     fastActions,
     pointLabel,
     exportDialog,
     canExport,
+    ConfirmDialog,
     setSelectedPart,
     handlePointChange,
     handleMonthChange,
@@ -940,8 +871,6 @@ export default function useStaffSchedulePage() {
     handleCloseSmenaModal,
     handleSaveSmenaModal,
     handleRequestDeleteSmena,
-    handleCloseConfirmDialog,
-    handleConfirmDialog,
     handleOpenFastActions,
     handleCloseFastActions,
     handleOpenBulkFastActions,

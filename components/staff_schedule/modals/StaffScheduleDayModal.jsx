@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import AddAlarmOutlinedIcon from "@mui/icons-material/AddAlarmOutlined";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseIcon from "@mui/icons-material/Close";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import {
@@ -19,7 +16,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { V2Alert, V2Button, V2IconButton, V2Select, V2TimePicker, useV2Confirm } from "@/ui/v2";
+import { AddTimeIcon, HistoryFileIcon } from "@/ui/icons";
+import { V2Alert, V2Button, V2IconButton, V2Select, V2TimePicker, useConfirm } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
@@ -65,65 +63,105 @@ function buildSavePayload(request, draft) {
 
 function DayPersonHeader({ data, onHistoryOpen }) {
   return (
-    <Box sx={{ position: "relative", pb: 2.75 }}>
+    <Stack
+      spacing={2}
+      sx={{
+        pb: 2.5,
+        borderBottom: "1px solid #E5E5E5",
+      }}
+    >
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="flex-start"
         spacing={2}
       >
-        <Box>
-          <Typography sx={{ fontSize: 20, lineHeight: 1.2, fontWeight: 700, color: "#666666" }}>
+        <Box sx={{ minWidth: 0, pt: 0.125 }}>
+          <Typography
+            sx={{
+              fontSize: "18px !important",
+              lineHeight: 1.2,
+              fontWeight: 700,
+              color: "#666666",
+            }}
+          >
             {data?.personName || data?.title || "—"}
           </Typography>
-          <Typography sx={{ fontSize: 20, lineHeight: 1.25, color: "#666666", mt: 0.25 }}>
+          <Typography
+            sx={{
+              mt: 0.125,
+              fontSize: "17px !important",
+              lineHeight: 1.2,
+              fontWeight: 400,
+              color: "#666666",
+            }}
+          >
             {data?.positionName || data?.subtitle || "—"}
           </Typography>
-          <Stack
-            spacing={0.5}
-            sx={{ mt: 1.5 }}
-          >
-            <Typography sx={{ fontSize: 16, lineHeight: 1.25, color: "#666666" }}>
-              Нагрузка: {data?.loadTime || "—"}
-            </Typography>
-            <Typography sx={{ fontSize: 16, lineHeight: 1.25, color: "#666666" }}>
-              Средняя нагрузка: {data?.averageLoadTime || "—"}
-            </Typography>
-            <Typography sx={{ fontSize: 16, lineHeight: 1.25, color: "#666666" }}>
-              Бонус: {data?.bonusValue || 0}
-            </Typography>
-          </Stack>
         </Box>
-        <Typography sx={{ fontSize: 20, lineHeight: 1.2, fontWeight: 700, color: "#666666" }}>
+        <Typography
+          sx={{
+            pt: 0.125,
+            flexShrink: 0,
+            fontSize: "18px !important",
+            lineHeight: 1.2,
+            fontWeight: 700,
+            color: "#666666",
+            textAlign: "right",
+          }}
+        >
           {data?.dateLabel || "—"}
         </Typography>
       </Stack>
 
-      <V2Button
-        compact
-        tone="secondary"
-        startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 17 }} />}
-        onClick={onHistoryOpen}
-        disabled={!data?.history?.length}
-        sx={{
-          position: "absolute",
-          right: 0,
-          bottom: 5,
-          minWidth: 120,
-          minHeight: 44,
-          border: "none",
-          borderRadius: "12px",
-          backgroundColor: "#E5E5E5",
-          color: "#666666",
-          fontSize: 16,
-          fontWeight: 500,
-          "&:hover": { border: "none", backgroundColor: "#DCDCDC" },
-          "&.Mui-disabled": { backgroundColor: "#E5E5E5", color: "#A6A6A6" },
-        }}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        spacing={2}
       >
-        История
-      </V2Button>
-    </Box>
+        <Stack
+          spacing={0.5}
+          sx={{ minWidth: 0, flex: "1 1 auto" }}
+        >
+          <Typography sx={{ fontSize: "16px !important", lineHeight: 1.25, color: "#666666" }}>
+            Нагрузка: {data?.loadTime || "—"}
+          </Typography>
+          <Typography sx={{ fontSize: "16px !important", lineHeight: 1.25, color: "#666666" }}>
+            Средняя нагрузка: {data?.averageLoadTime || "—"}
+          </Typography>
+          <Typography sx={{ fontSize: "16px !important", lineHeight: 1.25, color: "#666666" }}>
+            Бонус: {data?.bonusValue || 0}
+          </Typography>
+        </Stack>
+        <V2Button
+          compact
+          tone="secondary"
+          startIcon={<HistoryFileIcon sx={{ fontSize: "16px !important" }} />}
+          onClick={onHistoryOpen}
+          disabled={!data?.history?.length}
+          sx={{
+            mt: 0.25,
+            minWidth: 120,
+            minHeight: 44,
+            px: 2,
+            border: "none",
+            borderRadius: "12px",
+            backgroundColor: "#E5E5E5",
+            color: "#666666",
+            fontSize: "16px !important",
+            fontWeight: 500,
+            "&:hover": { border: "none", backgroundColor: "#DCDCDC" },
+            "&.Mui-disabled": {
+              backgroundColor: "#E5E5E5",
+              color: "#A6A6A6",
+            },
+          }}
+        >
+          История
+        </V2Button>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -281,7 +319,7 @@ function TimeRow({ item, onRemove }) {
         alignItems="center"
         sx={{ minWidth: 0 }}
       >
-        <AccessTimeIcon sx={{ fontSize: 22, color: "#A6A6A6" }} />
+        <AddTimeIcon sx={{ fontSize: 22, color: "#A6A6A6", transform: "rotate(180deg)" }} />
         <Typography sx={{ fontSize: 16, color: "#666666", lineHeight: 1.25 }}>
           {[item.time_start, item.time_end].filter(Boolean).join("-") || "—"}
         </Typography>
@@ -387,7 +425,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const [newTimeStart, setNewTimeStart] = useState("");
   const [newTimeEnd, setNewTimeEnd] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const { confirm, withConfirm, ConfirmDialog } = useV2Confirm();
+  const { confirm, withConfirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     if (!modal.open) {
@@ -551,7 +589,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         title="Сведения о сотруднике"
         maxWidth="md"
         actions={actions}
-        contentSx={{ px: 2.5, pt: 3.25, pb: 1.5 }}
+        contentSx={{ px: 2.5, pt: 5, pb: 1.5 }}
         actionsSx={{ px: 2.5, pt: 1, pb: 3 }}
         paperSx={{ maxWidth: 800 }}
       >
@@ -633,7 +671,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                     <V2Button
                       fullWidth
                       tone="secondary"
-                      startIcon={<AddAlarmOutlinedIcon />}
+                      startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
                       onClick={addHour}
                       sx={{
                         minHeight: 44,

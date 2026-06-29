@@ -12,7 +12,7 @@ export default function StaffScheduleResponsiveModal({
   return (
     <V2Modal
       titleSx={{
-        fontSize: 14,
+        fontSize: 16,
         lineHeight: 1.25,
         fontWeight: 400,
         color: "#666666",

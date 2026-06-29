@@ -102,10 +102,10 @@ export default function V2Modal({
     >
       <DialogTitle
         sx={{
-          px: 3,
+          px: 2.5,
           py: 1.5,
           borderBottom: `1px solid ${v2Colors.borderLight}`,
-          backgroundColor: v2Colors.surface,
+          backgroundColor: "#F7F7F7",
           ...titleContainerSx,
         }}
       >
@@ -134,10 +134,10 @@ export default function V2Modal({
             sx={{
               flex: "1 1 auto",
               minWidth: 0,
-              fontSize: { xs: 20, sm: 22 },
+              fontSize: { xs: 16, sm: 16 },
               lineHeight: 1.25,
-              fontWeight: 700,
-              color: "#1F2937",
+              fontWeight: 400,
+              color: "#666666",
               wordBreak: "break-word",
               ...titleSx,
             }}
@@ -149,10 +149,11 @@ export default function V2Modal({
             onClick={onClose}
             size="small"
             sx={{
-              mt: 0.25,
               flexShrink: 0,
               alignSelf: "center",
-              color: "#6B7280",
+              color: "#A6A6A6",
+              p: 0,
+              mr: -0.25,
               ...closeButtonSx,
             }}
           >
@@ -160,7 +161,24 @@ export default function V2Modal({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ pt: 2, pb: 2, ...contentSx }}>{children}</DialogContent>
+      <DialogContent
+        sx={{
+          p: 0,
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            pb: 2,
+            backgroundColor: "#FFFFFF",
+            ...contentSx,
+          }}
+        >
+          {children}
+        </Box>
+      </DialogContent>
       {actions ? (
         <DialogActions
           sx={{ px: 3, py: 2, borderTop: `1px solid ${v2Colors.borderLight}`, ...actionsSx }}

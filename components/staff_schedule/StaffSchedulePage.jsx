@@ -1,6 +1,5 @@
 import { Box, Grid } from "@mui/material";
 import { V2Alert, V2BackdropLoader } from "@/ui/v2";
-import StaffScheduleConfirmDialog from "./modals/StaffScheduleConfirmDialog";
 import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
 import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
 import StaffScheduleFastActionsDialog from "./modals/StaffScheduleFastActionsDialog";
@@ -80,14 +79,7 @@ export default function StaffSchedulePage() {
         onSave={page.handleSaveSmenaModal}
         onRequestDelete={page.handleRequestDeleteSmena}
       />
-      <StaffScheduleConfirmDialog
-        open={page.confirmDialog.open}
-        title={page.confirmDialog.title}
-        message={page.confirmDialog.message}
-        confirmLabel={page.confirmDialog.confirmLabel}
-        onClose={page.handleCloseConfirmDialog}
-        onConfirm={page.handleConfirmDialog}
-      />
+      <page.ConfirmDialog />
       <StaffScheduleFastActionsDialog
         state={page.fastActions}
         access={page.access}

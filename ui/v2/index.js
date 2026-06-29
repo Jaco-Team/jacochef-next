@@ -3,7 +3,7 @@ export { default as V2BackdropLoader } from "./BackdropLoader";
 export { default as V2Button } from "./Button";
 export { default as V2Checkbox } from "./Checkbox";
 export { default as V2CompactTabs } from "./CompactTabs";
-export { useV2Confirm } from "./Confirm";
+export { useConfirm } from "./Confirm";
 export { default as V2FieldSwitch } from "./FieldSwitch";
 export { default as V2IconButton } from "./IconButton";
 export { default as V2Modal } from "./Modal";
