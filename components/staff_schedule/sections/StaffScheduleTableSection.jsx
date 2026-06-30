@@ -59,8 +59,12 @@ function ScheduleRow({
   onOpenDay,
   onOpenMonth,
   onOpenFastActions,
+  onOpenSummaryAction,
+  onRemoveTeamBonusFromUser,
   canOpenMonth,
   canOpenDayEdit,
+  canEdit,
+  selectedPart,
   showFastActions,
   isCalendarHidden,
   useColors,
@@ -199,15 +203,67 @@ function ScheduleRow({
           })
         : null}
 
-      {summaryColumns.map((column) => (
-        <TableCell
-          key={`${data?.id || data?.user_name}-${column.key}`}
-          align="center"
-          sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontSize: 11.5, px: 0.75 }}
-        >
-          {getSummaryCellValue(column, data)}
-        </TableCell>
-      ))}
+      {summaryColumns.map((column) =>
+        (() => {
+          const isDriver = data?.app_type === "driver";
+          const canEditPrice =
+            column.key === "price_p_h" && canEdit("1h") && toArray(data?.price_arr).length;
+          const canEditGiven = column.key === "given" && canEdit("given") && !isDriver;
+          const canEditGivenCart =
+            column.key === "given_cart" && canEdit("given_cart") && !isDriver;
+          const canEditWithheld = column.key === "withheld" && canEdit("withheld");
+          const canEditDirBonus =
+            column.key === "my_bonus" &&
+            canEdit("bonus") &&
+            Number(selectedPart) === 1 &&
+            data?.app_type === "dir";
+          const canEditDopBonus =
+            column.key === "dop_bonus" &&
+            canEdit("com_bonus") &&
+            Number(data?.check_period) === 1 &&
+            String(data?.smena_id ?? "") !== "-1";
+          const isClickable =
+            canEditPrice ||
+            canEditGiven ||
+            canEditGivenCart ||
+            canEditWithheld ||
+            canEditDirBonus ||
+            canEditDopBonus;
+
+          const handleClick = () => {
+            if (canEditDopBonus) {
+              onRemoveTeamBonusFromUser?.(data);
+              return;
+            }
+
+            if (isClickable) {
+              onOpenSummaryAction?.(data, column.key);
+            }
+          };
+
+          return (
+            <TableCell
+              key={`${data?.id || data?.user_name}-${column.key}`}
+              align="center"
+              onClick={isClickable ? handleClick : undefined}
+              sx={{
+                minWidth: SUMMARY_COLUMN_WIDTH,
+                fontSize: 11.5,
+                px: 0.75,
+                cursor: isClickable ? "pointer" : "default",
+                backgroundColor: canEditDirBonus ? "#E5E5E5" : "#FFFFFF",
+                "&:hover": isClickable
+                  ? {
+                      backgroundColor: canEditDirBonus ? "#DCDCDC" : "#F7F7F7",
+                    }
+                  : undefined,
+              }}
+            >
+              {getSummaryCellValue(column, data)}
+            </TableCell>
+          );
+        })(),
+      )}
     </TableRow>
   );
 }
@@ -324,6 +380,7 @@ function SummaryMetricRow({
   textColor = "#5E5E5E",
   getValue,
   getSummaryValue,
+  onSummaryCellClick,
 }) {
   return (
     <TableRow>
@@ -365,12 +422,19 @@ function SummaryMetricRow({
         <TableCell
           key={`${label}-${column.key}`}
           align="center"
+          onClick={onSummaryCellClick ? () => onSummaryCellClick(column) : undefined}
           sx={{
             minWidth: SUMMARY_COLUMN_WIDTH,
             px: 0.5,
             fontSize: compactValues ? 13.2 : 12,
             color: "#5E5E5E",
             whiteSpace: compactValues ? "nowrap" : undefined,
+            cursor: onSummaryCellClick ? "pointer" : "default",
+            "&:hover": onSummaryCellClick
+              ? {
+                  backgroundColor: "#F7F7F7",
+                }
+              : undefined,
           }}
         >
           {getSummaryValue ? getSummaryValue(column) : ""}
@@ -386,9 +450,15 @@ export default function StaffScheduleTableSection({
   shownShiftCount,
   summaryColumns,
   access,
+  graphKind,
+  directorLevel,
+  periodBonusState,
+  selectedPart,
   onOpenDay,
   onOpenMonth,
   onOpenFastActions,
+  onOpenSummaryAction,
+  onRemoveTeamBonusFromUser,
   onOpenBulkFastActions,
   onOpenCreateSmena,
   onOpenEditSmena,
@@ -422,6 +492,8 @@ export default function StaffScheduleTableSection({
   const canOpenDayEdit = canEdit("day_edit") || canAccess("full_day");
   const canEditSmena = canAccess("create_edit_smena");
   const canCreateSmena = canAccess("create_edit_smena");
+  const canEditTeamBonus = canEdit("com_bonus");
+  const canOpenDirectorLevel = graphKind !== "other";
   const hasBulkSelection = selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
@@ -715,8 +787,12 @@ export default function StaffScheduleTableSection({
                   onOpenDay={onOpenDay}
                   onOpenMonth={onOpenMonth}
                   onOpenFastActions={onOpenFastActions}
+                  onOpenSummaryAction={onOpenSummaryAction}
+                  onRemoveTeamBonusFromUser={onRemoveTeamBonusFromUser}
                   canOpenMonth={canOpenMonth}
                   canOpenDayEdit={canOpenDayEdit}
+                  canEdit={canEdit}
+                  selectedPart={selectedPart}
                   showFastActions={showFastActions}
                   isCalendarHidden={isCalendarHidden}
                   useColors={useColors}
@@ -742,12 +818,44 @@ export default function StaffScheduleTableSection({
                   <Stack
                     direction="row"
                     alignItems="center"
-                    spacing={0.75}
+                    justifyContent="space-between"
+                    spacing={1}
                   >
-                    <SummarySectionIcon sx={{ fontSize: 16 }} />
-                    <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>
-                      Сводные данные
-                    </Typography>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={0.75}
+                    >
+                      <SummarySectionIcon sx={{ fontSize: 16 }} />
+                      <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>
+                        Сводные данные
+                      </Typography>
+                    </Stack>
+
+                    {canOpenDirectorLevel ? (
+                      <V2Button
+                        compact
+                        tone="secondary"
+                        onClick={() => onOpenSummaryAction?.(null, "dir_lv")}
+                        sx={{
+                          minHeight: 32,
+                          px: 1.5,
+                          border: "none",
+                          borderRadius: "10px",
+                          backgroundColor: "#FFFFFF",
+                          color: "#666666",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                          "&:hover": {
+                            border: "none",
+                            backgroundColor: "#F7F7F7",
+                          },
+                        }}
+                      >
+                        {`Уровень директора: ${directorLevel ?? 0}`}
+                      </V2Button>
+                    ) : null}
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -765,6 +873,14 @@ export default function StaffScheduleTableSection({
                 textColor="#5E5E5E"
                 getValue={(item) => item?.res ?? ""}
                 getSummaryValue={(column) => {
+                  if (column.key === "dop_bonus" && canEditTeamBonus) {
+                    if (!periodBonusState) {
+                      return "+ / -";
+                    }
+
+                    return Number(periodBonusState) === 1 ? "+" : "−";
+                  }
+
                   const summaryKey = totalsSummaryKeyMap[column.key];
                   if (summaryKey) {
                     return summaryTotals?.[summaryKey] ?? "";
@@ -773,6 +889,15 @@ export default function StaffScheduleTableSection({
                   const periodBonusKey = periodBonusSummaryKeyMap[column.key];
                   return periodBonusKey ? (summaryTotals?.[periodBonusKey] ?? "") : "";
                 }}
+                onSummaryCellClick={
+                  canEditTeamBonus
+                    ? (column) => {
+                        if (column.key === "dop_bonus") {
+                          onOpenSummaryAction?.(null, "dop_bonus_toggle");
+                        }
+                      }
+                    : undefined
+                }
               />
             ) : null}
 

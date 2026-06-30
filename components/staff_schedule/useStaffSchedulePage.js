@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConfirm } from "@/ui/v2";
 import useStaffScheduleApi from "./useStaffScheduleApi";
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
-import { getActiveMonthId, toArray } from "./staffScheduleHelpers";
+import {
+  computeTotalSum,
+  getActiveMonthId,
+  getPartStartDate,
+  toArray,
+} from "./staffScheduleHelpers";
 import {
   buildGraphState,
   buildPageViewModel,
@@ -75,9 +80,29 @@ export default function useStaffSchedulePage() {
     request: null,
     data: null,
   });
+  const summaryActionState = useResourceModalState({
+    open: false,
+    loading: false,
+    error: "",
+    mode: "",
+    request: null,
+    data: null,
+  });
   const dayModal = dayModalState.state;
   const monthModal = monthModalState.state;
   const smenaModal = smenaModalState.state;
+  const summaryActionModal = summaryActionState.state;
+  const directorLevelOptions = useMemo(
+    () =>
+      Array.from({ length: 41 }, (_, index) => {
+        const value = index - 20;
+        return {
+          id: value,
+          name: `${value} уровень`,
+        };
+      }),
+    [],
+  );
 
   const loadGraph = useCallback(
     async (nextPointId, nextMonthId) => {
@@ -176,6 +201,10 @@ export default function useStaffSchedulePage() {
         collapsedShiftIds,
       }),
     [access, collapsedShiftIds, graph, moduleName, selectedPart, selectedShiftId],
+  );
+  const periodBonusState = useMemo(
+    () => view.activePeriod?.meta?.bonus_other ?? 0,
+    [view.activePeriod],
   );
 
   useEffect(() => {
@@ -416,6 +445,255 @@ export default function useStaffSchedulePage() {
     smenaModalState.close();
   }, [smenaModalState]);
 
+  const handleOpenSummaryAction = useCallback(
+    (row, key) => {
+      if (key === "dir_lv") {
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: monthId,
+            point_id: pointId,
+          },
+          data: {
+            title: `Изменение уровня директора ${monthId}`,
+            value: graph?.add_lv ?? 0,
+            options: directorLevelOptions,
+          },
+        });
+        return;
+      }
+
+      if (key === "dop_bonus_toggle") {
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: monthId,
+            part: selectedPart,
+            point_id: pointId,
+          },
+          data: {
+            title: `Командный бонус ${getPartStartDate(monthId, selectedPart)}`,
+            value: periodBonusState,
+            options: [
+              { id: 1, name: "Выдать" },
+              { id: 2, name: "Отказать" },
+            ],
+          },
+        });
+        return;
+      }
+
+      if (!row?.id) {
+        return;
+      }
+
+      const periodStartDate = getPartStartDate(monthId, selectedPart);
+
+      if (key === "price_p_h") {
+        const options = toArray(row?.price_arr).map((item) => ({
+          id: item,
+          name: String(item),
+        }));
+
+        if (!options.length) {
+          return;
+        }
+
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: monthId,
+            part: selectedPart,
+            user_id: row.id,
+            app_id: row.app_id,
+            smena_id: row.smena_id,
+          },
+          data: {
+            title: `Часовая ставка ${row?.user_name || ""} ${monthId}`,
+            value: row?.price_p_h ?? "",
+            options,
+          },
+        });
+        return;
+      }
+
+      if (key === "given") {
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: periodStartDate,
+            user_id: row.id,
+            app_id: row.app_id,
+            smena_id: row.smena_id,
+          },
+          data: {
+            title: [row?.full_app_name || row?.app_name, row?.user_name, periodStartDate]
+              .filter(Boolean)
+              .join(" "),
+            label: "Выданная сумма",
+            value: row?.given ?? "",
+            fullAmount:
+              computeTotalSum(row) - Number(row?.given_cart || 0) - Number(row?.withheld || 0),
+          },
+        });
+        return;
+      }
+
+      if (key === "given_cart") {
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: periodStartDate,
+            user_id: row.id,
+            app_id: row.app_id,
+            smena_id: row.smena_id,
+          },
+          data: {
+            title: `Перечислено на карту ${[
+              row?.full_app_name || row?.app_name,
+              row?.user_name,
+              periodStartDate,
+            ]
+              .filter(Boolean)
+              .join(" ")}`,
+            label: "Выданная сумма",
+            value: row?.given_cart ?? "",
+            fullAmount: computeTotalSum(row) - Number(row?.withheld || 0),
+          },
+        });
+        return;
+      }
+
+      if (key === "withheld") {
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: periodStartDate,
+            user_id: row.id,
+            app_id: row.app_id,
+            smena_id: row.smena_id,
+          },
+          data: {
+            title: `Удержано по исполнительному листу ${[
+              row?.full_app_name || row?.app_name,
+              row?.user_name,
+              periodStartDate,
+            ]
+              .filter(Boolean)
+              .join(" ")}`,
+            label: "Удержанная сумма",
+            value: row?.withheld ?? "",
+          },
+        });
+        return;
+      }
+
+      if (key === "my_bonus") {
+        summaryActionState.openReady({
+          mode: key,
+          request: {
+            date: monthId,
+            user_id: row.id,
+          },
+          data: {
+            title: `Бонус директора ${row?.user_name || ""} ${monthId}`,
+            label: "Сумма",
+            value: row?.dir_bonus ?? "",
+          },
+        });
+      }
+    },
+    [
+      directorLevelOptions,
+      graph?.add_lv,
+      monthId,
+      periodBonusState,
+      pointId,
+      selectedPart,
+      summaryActionState,
+    ],
+  );
+
+  const handleCloseSummaryAction = useCallback(() => {
+    summaryActionState.close();
+  }, [summaryActionState]);
+
+  const handleSaveSummaryAction = useCallback(
+    async ({ mode, request, value }) => {
+      let response = null;
+
+      if (mode === "price_p_h") {
+        response = await api.saveUserPriceH({ ...request, price: value });
+      }
+
+      if (mode === "given") {
+        response = await api.saveUserGivePrice({ ...request, give_price: value });
+      }
+
+      if (mode === "given_cart") {
+        response = await api.saveUserGiveCartPrice({ ...request, give_price: value });
+      }
+
+      if (mode === "withheld") {
+        response = await api.saveUserWithheld({ ...request, withheld: value });
+      }
+
+      if (mode === "my_bonus") {
+        response = await api.saveDirBonus({ ...request, bonus: value });
+      }
+
+      if (mode === "dir_lv") {
+        response = await api.saveDirLv({ ...request, dir_lv: value });
+      }
+
+      if (mode === "dop_bonus_toggle") {
+        response = await api.saveDopBonus({ ...request, type: value });
+      }
+
+      if (response?.st === false || !response) {
+        throw new Error(response?.text || "Не удалось сохранить значение");
+      }
+
+      handleCloseSummaryAction();
+      await handleReload();
+    },
+    [api, handleCloseSummaryAction, handleReload],
+  );
+
+  const handleRemoveTeamBonusFromUser = useCallback(
+    async (row) => {
+      const accepted = await confirm({
+        title: "Предупреждение",
+        message: `Лишить командного бонуса ${row?.user_name || "сотрудника"}?`,
+        confirmLabel: "Лишить",
+      });
+
+      if (!accepted) {
+        return;
+      }
+
+      try {
+        const response = await api.deleteDopBonusUser({
+          point_id: pointId,
+          user_id: row?.id,
+          smena_id: row?.smena_id,
+          app_id: row?.app_id,
+          part: selectedPart,
+          data: monthId,
+        });
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось изменить командный бонус");
+        }
+
+        await handleReload();
+      } catch (requestError) {
+        setError(requestError?.message || "Не удалось изменить командный бонус");
+      }
+    },
+    [api, confirm, handleReload, monthId, pointId, selectedPart],
+  );
+
   const handleSaveSmenaModal = useCallback(
     async ({ id, name, users }) => {
       const payload = {
@@ -526,8 +804,12 @@ export default function useStaffSchedulePage() {
     dayModal,
     monthModal,
     smenaModal,
+    summaryActionModal,
     fastActions: fastActions.state,
     pointLabel,
+    graphKind: graph.kind,
+    directorLevel: graph.add_lv,
+    periodBonusState: view.activePeriod?.meta?.bonus_other ?? 0,
     exportDialog: exportActions.dialog,
     canExport: exportActions.canExport,
     ConfirmDialog,
@@ -551,6 +833,10 @@ export default function useStaffSchedulePage() {
     handleCloseSmenaModal,
     handleSaveSmenaModal,
     handleRequestDeleteSmena,
+    handleOpenSummaryAction,
+    handleCloseSummaryAction,
+    handleSaveSummaryAction,
+    handleRemoveTeamBonusFromUser,
     handleOpenFastActions: fastActions.open,
     handleCloseFastActions: fastActions.close,
     handleOpenBulkFastActions: fastActions.openBulk,

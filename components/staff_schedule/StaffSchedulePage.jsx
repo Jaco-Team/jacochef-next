@@ -5,6 +5,7 @@ import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
 import StaffScheduleFastActionsDialog from "./modals/StaffScheduleFastActionsDialog";
 import StaffScheduleMonthModal from "./modals/StaffScheduleMonthModal";
 import StaffScheduleSmenaModal from "./modals/StaffScheduleSmenaModal";
+import StaffScheduleSummaryActionDialog from "./modals/StaffScheduleSummaryActionDialog";
 import useStaffSchedulePage from "./useStaffSchedulePage";
 import { PAGE_BOTTOM_PADDING } from "./staffScheduleConstants";
 import StaffScheduleHeaderSection from "./sections/StaffScheduleHeaderSection";
@@ -45,6 +46,9 @@ export default function StaffSchedulePage() {
             shownShiftCount={page.view.shownShiftCount}
             summaryColumns={page.view.summaryColumns}
             access={page.access}
+            graphKind={page.graphKind}
+            directorLevel={page.directorLevel}
+            periodBonusState={page.periodBonusState}
             onOpenDay={page.handleOpenDayModal}
             onOpenMonth={page.handleOpenMonthModal}
             onOpenFastActions={page.handleOpenFastActions}
@@ -59,6 +63,9 @@ export default function StaffSchedulePage() {
             onCalendarVisibilityChange={page.handleCalendarVisibilityChange}
             colorMode={page.colorMode}
             onColorModeChange={page.handleColorModeChange}
+            selectedPart={page.selectedPart}
+            onOpenSummaryAction={page.handleOpenSummaryAction}
+            onRemoveTeamBonusFromUser={page.handleRemoveTeamBonusFromUser}
           />
         </Grid>
       </Grid>
@@ -78,6 +85,11 @@ export default function StaffSchedulePage() {
         onClose={page.handleCloseSmenaModal}
         onSave={page.handleSaveSmenaModal}
         onRequestDelete={page.handleRequestDeleteSmena}
+      />
+      <StaffScheduleSummaryActionDialog
+        modal={page.summaryActionModal}
+        onClose={page.handleCloseSummaryAction}
+        onSave={page.handleSaveSummaryAction}
       />
       <page.ConfirmDialog />
       <StaffScheduleFastActionsDialog

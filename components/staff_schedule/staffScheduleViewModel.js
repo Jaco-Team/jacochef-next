@@ -26,6 +26,7 @@ export function buildGraphState(response) {
     twoRows: toArray(response?.two),
     part: Number(response?.part || 1),
     kind: response?.kind ?? "",
+    add_lv: response?.add_lv ?? 0,
     show_zp_one: response?.show_zp_one ?? 0,
     show_zp_two: response?.show_zp_two ?? 0,
     errors: {

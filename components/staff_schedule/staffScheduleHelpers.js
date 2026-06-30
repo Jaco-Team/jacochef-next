@@ -14,6 +14,14 @@ export function getActiveMonthId(months = []) {
   return active?.id ?? months[0]?.id ?? "";
 }
 
+export function getPartStartDate(monthId, selectedPart = 0) {
+  if (!monthId) {
+    return "";
+  }
+
+  return `${monthId}-${Number(selectedPart) === 0 ? "01" : "16"}`;
+}
+
 export function getVisibleSummaryColumns(access = {}) {
   const { canView } = createStaffScheduleAccess(access);
 

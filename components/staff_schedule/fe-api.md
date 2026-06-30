@@ -301,6 +301,52 @@
 - только стандартный success/error:
   - `st = true`
 
+### `POST|ANY /api/staff_schedule/save_fastTime_arr_mounth`
+
+Назначение:
+
+- массово проставить шаблон часов на весь месяц для выбранных сотрудников
+
+Вход:
+
+- `data.date` месяц `YYYY-MM`
+- `data.type` старт шаблона, `1..4`
+- `data.users[]`:
+  - `user_id`
+  - `smena_id`
+  - `app_id`
+  - `new_app` опционально
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
+### `POST|ANY /api/staff_schedule/save_fastTime_arr_two_week`
+
+Назначение:
+
+- массово проставить шаблон часов на половину месяца для выбранных сотрудников
+
+Вход:
+
+- `data.date` месяц `YYYY-MM`
+- `data.type` старт шаблона:
+  - `1..4` для первой половины
+  - `16..19` для второй половины
+- `data.users[]`:
+  - `user_id`
+  - `smena_id`
+  - `app_id`
+  - `new_app` опционально
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
 ### `POST|ANY /api/staff_schedule/save_fastTime`
 
 Назначение:
@@ -501,6 +547,98 @@
 
 - `text`
 
+### `POST|ANY /api/staff_schedule/get_my_err_order`
+
+Назначение:
+
+- получить карточку обжалования ошибки заказа
+
+Вход:
+
+- `data.id` id ошибки
+- `data.row_id` id строки ошибки
+
+Выход:
+
+- legacy-совместимая карточка ошибки заказа:
+  - поля строки `err_order_price_users`
+  - `full_user_name`
+  - `order_id`
+  - `new_order_id`
+  - `date_time_order`
+  - `new_status`
+  - `new_text_1`
+  - `new_text_2`
+  - `date_time_close`
+  - `order_desc`
+  - `need_row`
+  - `order_items`
+  - `imgs`
+  - `is_edit`
+  - отладочные legacy-поля `is_edit_test`, `is_edit_test_check`, `is_edit_test_check_2`
+
+### `POST|ANY /api/staff_schedule/get_my_err_cam`
+
+Назначение:
+
+- получить карточку обжалования ошибки камеры
+
+Вход:
+
+- `data.id` id ошибки
+
+Выход:
+
+- legacy-совместимая карточка ошибки камеры:
+  - `id`
+  - `point_id`
+  - `status`
+  - `comment`
+  - `fine_name`
+  - `price`
+  - `date_time_fine`
+  - `text_one`
+  - `text_two`
+  - `date_time_close`
+  - `is_delete`
+  - `imgs`
+  - `is_edit`
+
+### `POST|ANY /api/staff_schedule/save_fake_orders`
+
+Назначение:
+
+- отправить обжалование по ошибке заказа
+
+Вход:
+
+- `data.err_id`
+- `data.row_id`
+- `data.text`
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
+### `POST|ANY /api/staff_schedule/save_fake_cam`
+
+Назначение:
+
+- отправить обжалование по ошибке камеры
+
+Вход:
+
+- `data.id`
+- `data.text`
+
+Выход:
+
+- только стандартный success/error:
+  - `st = true`
+  - либо `st = false`, `text`
+
 ### `POST|ANY /api/staff_schedule/downloadWS`
 
 Назначение:
@@ -555,6 +693,40 @@
 
 - Для `get_graph` использовать `data.month`.
 - Поле `hours_days` использовать в новом API.
+
+## Статус для FE
+
+Готово и можно подключать:
+
+- payroll/admin write endpoints:
+  - `save_userPriceH`
+  - `save_dir_lv`
+  - `save_dop_bonus`
+  - `del_dop_bonus_user`
+  - `save_user_give_price`
+  - `save_user_give_cart_price`
+  - `save_user_withheld`
+  - `save_dirBonus`
+- single-user schedule write endpoints:
+  - `save_user_day`
+  - `save_user_month`
+  - `save_fastSmena`
+  - `save_fastPoint`
+  - `save_fastTime`
+  - `save_fastTimeWeekOne`
+- bulk schedule endpoints:
+  - `save_fastTime_arr_mounth`
+  - `save_fastTime_arr_two_week`
+- err appeal flow:
+  - `get_my_err_order`
+  - `get_my_err_cam`
+  - `save_fake_orders`
+  - `save_fake_cam`
+
+Вне backend `staff_schedule` и все еще требует FE-подключения/отдельной проверки:
+
+- переход меню/роута со старого экрана на `/staff_schedule`
+- фактический UX print/download в интерфейсе
 
 ### Legacy-поля по endpoints
 
@@ -665,6 +837,18 @@
 
 - success-ответ остаётся пустым legacy success: только `st = true`
 
+#### `save_fastTime_arr_mounth`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `save_fastTime_arr_two_week`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
 #### `save_fastTime`
 
 Пока не нормализуется:
@@ -721,6 +905,31 @@
 Пока не нормализуется:
 
 - `text` остаётся в ответе для совместимости
+
+#### `get_my_err_order`
+
+Пока не нормализуются:
+
+- карточка возвращается в legacy-формате с полями `order_items`, `imgs`, `is_edit`
+- отладочные legacy-поля `is_edit_test`, `is_edit_test_check`, `is_edit_test_check_2` сохранены
+
+#### `get_my_err_cam`
+
+Пока не нормализуются:
+
+- карточка возвращается в legacy-формате с полями `imgs`, `is_edit`
+
+#### `save_fake_orders`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
+
+#### `save_fake_cam`
+
+Пока не нормализуется:
+
+- success-ответ остаётся пустым legacy success: только `st = true`
 
 #### `downloadWS`
 
