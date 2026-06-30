@@ -193,6 +193,31 @@ class ReceptModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
+                label="Ед. измерения"
+                value={
+                  this.state.itemView
+                    ? this.state.itemView.ed_izmer_id?.color
+                      ? this.state.itemView.ed_izmer_id.key
+                      : this.state.itemView.ed_izmer_id
+                    : ""
+                }
+                disabled={true}
+                className={
+                  this.state.itemView
+                    ? this.state.itemView.ed_izmer_id?.color
+                      ? "disabled_input disabled_input_color"
+                      : "disabled_input"
+                    : "disabled_input"
+                }
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyTextInput
                 label="Срок годности"
                 value={
                   this.state.itemView
@@ -730,6 +755,7 @@ class ReceptModule_Modal extends React.Component {
       allergens: [],
       allergens_diff: [],
       cats: [],
+      ed_izmer_id: "",
       dop_time: "",
       two_user: "",
       modalAddCats: false,
@@ -809,6 +835,7 @@ class ReceptModule_Modal extends React.Component {
         allergens: this.props.rec?.allergens,
         allergens_diff: this.props.rec?.allergens_diff,
         cats: this.props.rec?.cats,
+        ed_izmer_id: this.normalizeEdIzmerValue(this.props.rec?.ed_izmer_id),
         structure: this.props.rec?.structure,
       });
 
@@ -843,6 +870,8 @@ class ReceptModule_Modal extends React.Component {
         allergens_diff_view: this.props.acces?.allergens_diff_view,
         cats_edit: this.props.acces?.cats_edit,
         cats_view: this.props.acces?.cats_view,
+        ed_izmer_edit: this.props.acces?.ed_izmer_edit,
+        ed_izmer_view: this.props.acces?.ed_izmer_view,
       };
 
       this.setState({
@@ -954,6 +983,12 @@ class ReceptModule_Modal extends React.Component {
     });
   }
 
+  normalizeEdIzmerValue(value) {
+    const hasOption = (this.props.ed_izmer || []).some((item) => String(item.id) === String(value));
+
+    return hasOption ? value : "";
+  }
+
   changeItemList(type, key, event) {
     let list = [...this.state.list];
 
@@ -1055,6 +1090,7 @@ class ReceptModule_Modal extends React.Component {
       allergens: this.state.allergens,
       allergens_diff: this.state.allergens_diff,
       cats: this.state.cats,
+      ed_izmer_id: this.normalizeEdIzmerValue(this.state.ed_izmer_id),
       all_w_brutto: this.state.all_w_brutto,
       all_w_netto: this.state.all_w_netto,
     };
@@ -1102,6 +1138,7 @@ class ReceptModule_Modal extends React.Component {
       allergens: [],
       allergens_diff: [],
       cats: [],
+      ed_izmer_id: "",
       openAlert: false,
       err_status: false,
       err_text: "",
@@ -1111,7 +1148,7 @@ class ReceptModule_Modal extends React.Component {
   }
 
   render() {
-    const { open, method, apps, storages, all_pf_list } = this.props;
+    const { open, method, apps, storages, all_pf_list, ed_izmer } = this.props;
 
     return (
       <>
@@ -1216,6 +1253,26 @@ class ReceptModule_Modal extends React.Component {
                       : {}
                   }
                   func={this.changeItem.bind(this, "name")}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3,
+                }}
+                style={
+                  !this.state.acces?.ed_izmer_edit && !this.state.acces?.ed_izmer_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MySelect
+                  label="Ед. измерения"
+                  data={ed_izmer || []}
+                  value={this.normalizeEdIzmerValue(this.state.ed_izmer_id)}
+                  func={this.changeItem.bind(this, "ed_izmer_id")}
+                  disabled={!this.state.acces?.ed_izmer_edit}
+                  is_none={false}
                 />
               </Grid>
               <Grid
@@ -1667,7 +1724,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.brutto}
-                            type={"number"}
+                            // type={"number"}
                             isDecimalMask
                             func={this.changeItemList.bind(this, "brutto", key)}
                           />
@@ -1675,7 +1732,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.pr_1}
-                            type={"number"}
+                            // type={"number"}
                             func={this.changeItemList.bind(this, "pr_1", key)}
                           />
                         </TableCell>
@@ -1690,7 +1747,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.pr_2}
-                            type={"number"}
+                            // type={"number"}
                             isDecimalMask
                             func={this.changeItemList.bind(this, "pr_2", key)}
                           />
@@ -2161,6 +2218,7 @@ class ReceptModule_ extends React.Component {
 
       rec_list: [],
       pf_list: [],
+      ed_izmer: [],
       allergens: [],
       cats: [],
 
@@ -2204,6 +2262,7 @@ class ReceptModule_ extends React.Component {
       module_name: data.module_info.name,
       rec_list: data.rec,
       pf_list: data.pf,
+      ed_izmer: data.ed_izmer || [],
       acces: data.acces,
       cats: data.cats,
       selectedCategoryId: data.cats?.[0]?.id ?? null,
@@ -2264,6 +2323,7 @@ class ReceptModule_ extends React.Component {
           storages: res.all_storages,
           apps: res.apps,
           all_pf_list: res.all_pf_list,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
           rec: res.rec,
           cats: res.cats,
           allergens: res.allergens,
@@ -2276,6 +2336,7 @@ class ReceptModule_ extends React.Component {
           storages: res.all_storages,
           apps: res.apps,
           all_pf_list: res.all_pf_list,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
           rec_pf_list: res.pf_list,
         });
       }
@@ -2295,6 +2356,7 @@ class ReceptModule_ extends React.Component {
       if (change) {
         this.setState({
           rec: res.pf,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
         });
       } else {
         this.setState({
@@ -2304,6 +2366,7 @@ class ReceptModule_ extends React.Component {
           apps: res.apps,
           allergens: res.allergens,
           cats: res.cats,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
           all_pf_list: res.all_items_list,
           rec_pf_list: res.items_list,
         });
@@ -2342,6 +2405,7 @@ class ReceptModule_ extends React.Component {
         storages: res.all_storages,
         apps: res.apps,
         all_pf_list: res.all_pf_list,
+        ed_izmer: res.ed_izmer || this.state.ed_izmer,
         rec: res.rec,
         rec_pf_list: res.pf_list,
         cats: res.cats,
@@ -2371,6 +2435,7 @@ class ReceptModule_ extends React.Component {
         cats: res.cats,
         allergens: res.allergens,
         all_pf_list: res.all_items_list,
+        ed_izmer: res.ed_izmer || this.state.ed_izmer,
         rec: res.pf,
         rec_pf_list: res.items_list,
         type,
@@ -2467,6 +2532,23 @@ class ReceptModule_ extends React.Component {
     }
   }
 
+  getEdIzmerName(value) {
+    const unit = (this.state.ed_izmer || []).find((item) => String(item.id) === String(value));
+
+    return unit?.name ?? value ?? "";
+  }
+
+  formatHistoryEdIzmerField(value) {
+    if (value?.color) {
+      return {
+        ...value,
+        key: this.getEdIzmerName(value.key),
+      };
+    }
+
+    return this.getEdIzmerName(value);
+  }
+
   openModalHistoryView(index) {
     const item = this.state.item;
 
@@ -2522,6 +2604,8 @@ class ReceptModule_ extends React.Component {
         }
       }
     }
+
+    itemView.ed_izmer_id = this.formatHistoryEdIzmerField(itemView.ed_izmer_id);
 
     this.setState({
       modalDialogView: true,
@@ -2768,6 +2852,7 @@ class ReceptModule_ extends React.Component {
     this.setState({
       rec_list: data.rec,
       pf_list: data.pf,
+      ed_izmer: data.ed_izmer || this.state.ed_izmer,
       cats: data.cats,
     });
   }
@@ -2819,6 +2904,7 @@ class ReceptModule_ extends React.Component {
           acces={this.state.acces}
           allergens={this.state.allergens}
           cats={this.state.cats}
+          ed_izmer={this.state.ed_izmer}
           getData={this.getData.bind(this)}
           saveNew={this.saveNew.bind(this)}
           saveEdit={this.saveEdit.bind(this)}
