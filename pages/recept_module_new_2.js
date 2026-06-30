@@ -2218,6 +2218,7 @@ class ReceptModule_ extends React.Component {
 
       rec_list: [],
       pf_list: [],
+      itemSearch: "",
       ed_izmer: [],
       allergens: [],
       cats: [],
@@ -2270,6 +2271,10 @@ class ReceptModule_ extends React.Component {
     });
 
     document.title = data.module_info.name;
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.itemSearchTimeout);
   }
 
   getData = (method, data = {}) => {
@@ -2688,6 +2693,27 @@ class ReceptModule_ extends React.Component {
     this.setState({ categoryQuery: value });
   };
 
+  handleItemSearchChange = (event) => {
+    const itemSearch = event.target.value;
+
+    this.setState({ itemSearch });
+    clearTimeout(this.itemSearchTimeout);
+    this.itemSearchTimeout = setTimeout(() => {
+      this.update(itemSearch);
+    }, 350);
+  };
+
+  handleTabChange = (_, value) => {
+    if (value === "categories" && this.state.itemSearch.trim()) {
+      this.setState({ activeTab: value, itemSearch: "" }, () => {
+        this.update("");
+      });
+      return;
+    }
+
+    this.setState({ activeTab: value });
+  };
+
   handleSelectCategory = (id) => {
     const category = (this.state.cats || []).find((item) => String(item.id) === String(id)) || null;
 
@@ -2846,8 +2872,9 @@ class ReceptModule_ extends React.Component {
     }
   }
 
-  async update() {
-    const data = await this.getData("get_all");
+  async update(search = this.state.itemSearch) {
+    const searchText = (search || "").trim();
+    const data = await this.getData("get_all", searchText ? { search: searchText } : {});
 
     this.setState({
       rec_list: data.rec,
@@ -2865,6 +2892,7 @@ class ReceptModule_ extends React.Component {
       categoryDraft,
       categoryQuery,
       deleteCategoryId,
+      itemSearch,
       pf_list,
       rec_list,
     } = this.state;
@@ -2963,7 +2991,7 @@ class ReceptModule_ extends React.Component {
             </Box>
             <Tabs
               value={activeTab}
-              onChange={(_, value) => this.setState({ activeTab: value })}
+              onChange={this.handleTabChange}
               sx={{ mb: 2 }}
             >
               <Tab
@@ -2981,6 +3009,22 @@ class ReceptModule_ extends React.Component {
 
           {activeTab === "items" ? (
             <>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                sx={{
+                  mb: 3,
+                }}
+              >
+                <MyTextInput
+                  label="Поиск"
+                  placeholder="Название рецепта или полуфабриката"
+                  value={itemSearch}
+                  func={this.handleItemSearchChange}
+                />
+              </Grid>
               {this.state.acces?.create_rec_access || this.state.acces?.create_pol_access ? (
                 <Grid
                   size={{
@@ -2997,6 +3041,11 @@ class ReceptModule_ extends React.Component {
                   >
                     Добавить рецепт или полуфабрикат
                   </Button>
+                </Grid>
+              ) : null}
+              {itemSearch.trim() && !pf_list.length && !rec_list.length ? (
+                <Grid size={12}>
+                  <Typography>Ничего не найдено</Typography>
                 </Grid>
               ) : null}
               <ReceptModule_Table
