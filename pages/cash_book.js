@@ -67,6 +67,208 @@ const text = {
     "Необходимо в случае, если в одном кафе накопились наличные, а в другом их не хватает (например на выплату заработной платы)",
 };
 
+const fizCashRows = [
+  {
+    type: "virycka",
+    label: "Выручка",
+    column: "plus",
+    tooltip: text.virycka_fiz,
+    isDelete: false,
+    forceShow: true,
+  },
+  {
+    type: "cash_from_bank",
+    label: "Снятие наличных в банке",
+    column: "plus",
+    tooltip: text.cash_from_bank_fiz,
+  },
+  {
+    type: "transfer_cash",
+    label: "Перемещение денежных средств между кафе",
+    column: "both",
+    plusKey: "transfer_cash_plus",
+    minusKey: "transfer_cash_minus",
+    tooltip: text.transfer_cash,
+  },
+  {
+    type: "zaim",
+    label: "Заемные средства",
+    column: "plus",
+    tooltip: text.zaim_fiz,
+  },
+  {
+    type: "vedomosm_zp",
+    label: "Платежная ведомость на выплату заработной платы",
+    column: "minus",
+    tooltip: text.zp_fiz,
+  },
+  {
+    type: "incasacia",
+    label: "Инкассация",
+    column: "minus",
+    tooltip: text.incasacia,
+  },
+  {
+    type: "vozvrat_zaim",
+    label: "Возврат займа",
+    column: "minus",
+    tooltip: text.vozvrat_fiz,
+  },
+  {
+    type: "vidacha_otchet",
+    label: "Выдача в подотчет",
+    column: "minus",
+    tooltip: text.otchet_fiz,
+  },
+];
+
+const driverCashRows = [
+  {
+    type: "virycka",
+    label: "Выручка",
+    column: "plus",
+    tooltip: text.virycka_driver,
+    isDelete: false,
+    forceShow: true,
+  },
+  {
+    type: "payroll_from_fiz",
+    label: "Платежные ведомости из физической кассы",
+    column: "plus",
+  },
+  {
+    type: "zaim",
+    label: "Займы полученные",
+    column: "plus",
+    tooltip: text.zaim_driver,
+  },
+  {
+    type: "salary_refund",
+    label: "Возмещение сотрудником расходов на зарплату",
+    column: "plus",
+  },
+  {
+    type: "driver_errors",
+    label: "Ошибки курьеров",
+    column: "plus",
+  },
+  {
+    type: "ip_courier",
+    label: "ИП (организ.) курьеры",
+    column: "plus",
+  },
+  {
+    type: "ip_cleaning",
+    label: "ИП (организ.) клининг",
+    column: "plus",
+  },
+  {
+    type: "property_sale",
+    label: "Реализация прочего имущества",
+    column: "plus",
+  },
+  {
+    type: "other_income",
+    label: "Прочий приход",
+    column: "plus",
+  },
+  {
+    type: "vedomosm_zp",
+    label: "Выплата за услуги курьера",
+    column: "minus",
+    tooltip: text.zp_driver,
+    isDelete: false,
+    forceShow: true,
+  },
+  {
+    type: "cafe_salary",
+    label: "Заработная плата сотрудников кафе",
+    column: "minus",
+  },
+  {
+    type: "aup_salary",
+    label: "Заработная плата АУП",
+    column: "minus",
+  },
+  {
+    type: "loans_issued",
+    label: "Займы выданные",
+    column: "minus",
+  },
+  {
+    type: "fuel_couriers",
+    label: "Бензин (курьеры)",
+    column: "minus",
+  },
+  {
+    type: "household_expenses",
+    label: "Хозяйственные расходы",
+    column: "minus",
+  },
+  {
+    type: "inventory_purchase",
+    label: "Покупка инвентаря",
+    column: "minus",
+  },
+  {
+    type: "building_materials",
+    label: "Строительные материалы, строит. инвентарь",
+    column: "minus",
+  },
+  {
+    type: "corporate_events",
+    label: "Расходы на корпоративные мероприятия",
+    column: "minus",
+  },
+  {
+    type: "taxi_services",
+    label: "Услуги такси",
+    column: "minus",
+  },
+  {
+    type: "ip_courier_commission",
+    label: "Комиссия ИП Курьер",
+    column: "minus",
+  },
+  {
+    type: "ip_cleaning_commission",
+    label: "Комиссия ИП Клининг",
+    column: "minus",
+  },
+  {
+    type: "vidacha_otchet",
+    label: "Прочие расходы (разные)",
+    column: "minus",
+    tooltip: text.otchet_driver,
+  },
+  {
+    type: "uk_contribution",
+    label: "Взнос в УК (расход)",
+    column: "minus",
+  },
+  {
+    type: "dividends_payment",
+    label: "Выплата дивидендам учредителям",
+    column: "minus",
+  },
+];
+
+const driverCashLegacyRows = [
+  {
+    type: "dengi_iz_drygoy_kassy",
+    label: "Деньги из другой кассы",
+    column: "plus",
+    legacy: true,
+  },
+  {
+    type: "vozvrat_zaim",
+    label: "Сдано",
+    column: "minus",
+    tooltip: text.vozvrat_driver,
+    legacy: true,
+  },
+];
+
 class MainTableRow extends React.Component {
   //label
   //is_edit
@@ -132,7 +334,7 @@ class MainTableRow extends React.Component {
    */
 
   render() {
-    const kassa_text = this.props.table == "fiz" ? "Физические кассы" : "Курьерская наличка";
+    const kassa_text = this.props.table == "fiz" ? "Физические кассы" : "Курьерская касса";
 
     //console.log( this.props.table, this.props.type, this.props?.is_delete, this.props?.is_edit, this.props?.is_delete == false && this.props?.is_edit === false )
 
@@ -328,10 +530,77 @@ class MainTableRow extends React.Component {
 }
 
 class MainTable extends React.Component {
-  render() {
-    const kassa_text = this.props.table == "fiz" ? "Физические кассы" : "Курьерская наличка";
+  getCashValue(field) {
+    return this.props.cashData?.[field] ?? this.props?.[field];
+  }
 
-    // console.log("vidacha_otchet_arr", this.props?.vidacha_otchet, this.props?.vidacha_otchet_arr);
+  hasRowData(row) {
+    const plusKey = row.plusKey || (row.column === "plus" ? row.type : null);
+    const minusKey = row.minusKey || (row.column === "minus" ? row.type : null);
+    const plusValue = plusKey ? Number(this.getCashValue(plusKey) || 0) : 0;
+    const minusValue = minusKey ? Number(this.getCashValue(minusKey) || 0) : 0;
+    const history = this.getCashValue(`${row.type}_arr`) || [];
+
+    return plusValue !== 0 || minusValue !== 0 || history.length > 0;
+  }
+
+  shouldRenderRow(row) {
+    if (row.legacy && !this.hasRowData(row)) {
+      return false;
+    }
+
+    if (row.forceShow) {
+      return true;
+    }
+
+    return this.getCashValue(`${row.type}_is_edit`) !== false;
+  }
+
+  renderConfiguredRow(row) {
+    if (!this.shouldRenderRow(row)) {
+      return false;
+    }
+
+    const isEdit = row.forceShow ? "show" : this.getCashValue(`${row.type}_is_edit`);
+    const plusKey =
+      row.plusKey || (row.column === "plus" || row.column === "both" ? row.type : null);
+    const minusKey =
+      row.minusKey || (row.column === "minus" || row.column === "both" ? row.type : null);
+
+    return (
+      <MainTableRow
+        key={row.type}
+        label={row.label}
+        is_edit={isEdit}
+        is_open={this.getCashValue(`${row.type}_is_open`)}
+        type={row.type}
+        table={this.props.table}
+        data_plus={plusKey ? this.getCashValue(plusKey) : undefined}
+        data_minus={minusKey ? this.getCashValue(minusKey) : undefined}
+        data_hist={this.getCashValue(`${row.type}_arr`)}
+        tooltip={row.tooltip || row.label}
+        toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
+        toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
+        addData={this.props.addData.bind(this)}
+        is_delete={row.isDelete === false ? false : isEdit === "edit"}
+        deleteData={this.props.deleteData.bind(this)}
+        updateData={this.props.updateData.bind(this)}
+      />
+    );
+  }
+
+  renderRows() {
+    if (this.props.table == "driver_cash") {
+      return [...driverCashRows, ...driverCashLegacyRows].map((row) =>
+        this.renderConfiguredRow(row),
+      );
+    }
+
+    return fizCashRows.map((row) => this.renderConfiguredRow(row));
+  }
+
+  render() {
+    const kassa_text = this.props.table == "fiz" ? "Физические кассы" : "Курьерская касса";
 
     return (
       <TableContainer component={Paper}>
@@ -370,7 +639,7 @@ class MainTable extends React.Component {
           <TableBody>
             <TableRow>
               <TableCell>
-                {this.props?.ostatok_nachalo_dnya_is_edit === false ? (
+                {this.getCashValue("ostatok_nachalo_dnya_is_edit") === false ? (
                   <Typography component="span">Остаток на начало дня</Typography>
                 ) : (
                   <Typography
@@ -379,7 +648,7 @@ class MainTable extends React.Component {
                       this,
                       "ostatok_nachalo_dnya",
                       this.props.table,
-                      this.props?.ostatok_nachalo_dnya_arr,
+                      this.getCashValue("ostatok_nachalo_dnya_arr"),
                       kassa_text + ": Остаток на начало дня",
                     )}
                     style={{ cursor: "pointer", color: "#c03", padding: "15px 15px 15px 0px" }}
@@ -390,7 +659,7 @@ class MainTable extends React.Component {
               </TableCell>
               <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
                 {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.props?.ostatok_nachalo_dnya,
+                  this.getCashValue("ostatok_nachalo_dnya") || 0,
                 )}
               </TableCell>
               <TableCell
@@ -398,234 +667,18 @@ class MainTable extends React.Component {
               ></TableCell>
             </TableRow>
 
-            <MainTableRow
-              label={"Выручка"}
-              is_edit={"show"}
-              is_open={this.props?.virycka_is_open}
-              type={"virycka"}
-              table={this.props.table}
-              data_plus={this.props?.virycka}
-              //data_minus
-              data_hist={this.props?.virycka_arr}
-              tooltip={this.props.table == "fiz" ? text.virycka_fiz : text.virycka_driver}
-              toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-              toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-              addData={this.props.addData.bind(this)}
-              is_delete={false}
-            />
-
-            {this.props.table == "fiz" ? (
-              this.props?.cash_from_bank_is_edit === false ? (
-                false
-              ) : (
-                <MainTableRow
-                  label={"Снятие наличных в банке"}
-                  is_edit={this.props?.cash_from_bank_is_edit}
-                  is_open={this.props?.cash_from_bank_is_open}
-                  type={"cash_from_bank"}
-                  table={this.props.table}
-                  data_plus={this.props?.cash_from_bank}
-                  //data_minus
-                  data_hist={this.props?.cash_from_bank_arr}
-                  tooltip={
-                    this.props.table == "fiz" ? text.cash_from_bank_fiz : text.cash_from_bank_driver
-                  }
-                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                  addData={this.props.addData.bind(this)}
-                  is_delete={this.props?.cash_from_bank_is_edit}
-                  deleteData={this.props.deleteData.bind(this)}
-                  updateData={this.props.updateData.bind(this)}
-                />
-              )
-            ) : (
-              false
-            )}
-
-            {this.props.table == "fiz" ? (
-              this.props?.transfer_cash_is_edit === false ? (
-                false
-              ) : (
-                <MainTableRow
-                  label={"Перемещение денежных средств между кафе"}
-                  is_edit={this.props?.transfer_cash_is_edit}
-                  is_open={this.props?.transfer_cash_is_open}
-                  type={"transfer_cash"}
-                  table={this.props.table}
-                  data_plus={this.props?.transfer_cash_plus}
-                  data_minus={this.props?.transfer_cash_minus}
-                  data_hist={this.props?.transfer_cash_arr}
-                  tooltip={text.transfer_cash}
-                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                  addData={this.props.addData.bind(this)}
-                  is_delete={this.props?.transfer_cash_is_edit}
-                  deleteData={this.props.deleteData.bind(this)}
-                  updateData={this.props.updateData.bind(this)}
-                />
-              )
-            ) : (
-              false
-            )}
-
-            {this.props?.zaim_is_edit === false ? (
-              false
-            ) : (
-              <MainTableRow
-                label={this.props.table == "fiz" ? "Заемные средства" : "Выдано"}
-                is_edit={this.props?.zaim_is_edit}
-                is_open={this.props?.zaim_is_open}
-                type={"zaim"}
-                table={this.props.table}
-                data_plus={this.props?.zaim}
-                //data_minus
-                data_hist={this.props?.zaim_arr}
-                tooltip={this.props.table == "fiz" ? text.zaim_fiz : text.zaim_driver}
-                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                addData={this.props.addData.bind(this)}
-                is_delete={this.props?.zaim_is_edit}
-                deleteData={this.props.deleteData.bind(this)}
-                updateData={this.props.updateData.bind(this)}
-              />
-            )}
-
-            {this.props?.vedomosm_zp_is_edit === false ? (
-              false
-            ) : (
-              <MainTableRow
-                label={
-                  this.props.table == "fiz"
-                    ? "Платежная ведомость на выплату заработной платы"
-                    : "Выплата за услуги курьера"
-                }
-                is_edit={this.props?.vedomosm_zp_is_edit}
-                is_open={this.props?.vedomosm_zp_is_open}
-                type={"vedomosm_zp"}
-                table={this.props.table}
-                //data_plus={this.props?.vedomosm_zp}
-                data_minus={this.props?.vedomosm_zp}
-                data_hist={this.props?.vedomosm_zp_arr}
-                tooltip={this.props.table == "fiz" ? text.zp_fiz : text.zp_driver}
-                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                addData={this.props.addData.bind(this)}
-                is_delete={this.props?.vedomosm_zp_is_edit}
-                deleteData={this.props.deleteData.bind(this)}
-                updateData={this.props.updateData.bind(this)}
-              />
-            )}
-
-            {this.props.table == "fiz" ? (
-              this.props?.incasacia_is_edit === false ? (
-                false
-              ) : (
-                <MainTableRow
-                  label={"Инкассация"}
-                  is_edit={this.props?.incasacia_is_edit}
-                  is_open={this.props?.incasacia_is_open}
-                  type={"incasacia"}
-                  table={this.props.table}
-                  //data_plus={this.props?.vedomosm_zp}
-                  data_minus={this.props?.incasacia}
-                  data_hist={this.props?.incasacia_arr}
-                  tooltip={text.incasacia}
-                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                  addData={this.props.addData.bind(this)}
-                  is_delete={this.props?.incasacia_is_edit}
-                  deleteData={this.props.deleteData.bind(this)}
-                  updateData={this.props.updateData.bind(this)}
-                />
-              )
-            ) : (
-              false
-            )}
-
-            {this.props?.vozvrat_zaim_is_edit === false ? (
-              false
-            ) : (
-              <MainTableRow
-                label={this.props.table == "fiz" ? "Возврат займа" : "Сдано"}
-                is_edit={this.props?.vozvrat_zaim_is_edit}
-                is_open={this.props?.vozvrat_zaim_is_open}
-                type={"vozvrat_zaim"}
-                table={this.props.table}
-                //data_plus={this.props?.vedomosm_zp}
-                data_minus={this.props?.vozvrat_zaim}
-                data_hist={this.props?.vozvrat_zaim_arr}
-                tooltip={this.props.table == "fiz" ? text.vozvrat_fiz : text.vozvrat_driver}
-                toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                addData={this.props.addData.bind(this)}
-                is_delete={this.props?.vozvrat_zaim_is_edit}
-                deleteData={this.props.deleteData.bind(this)}
-                updateData={this.props.updateData.bind(this)}
-              />
-            )}
-
-            {this.props.table == "fiz" ? (
-              this.props?.vidacha_otchet_is_edit === false ? (
-                false
-              ) : (
-                <MainTableRow
-                  label={"Выдача в подотчет"}
-                  is_edit={this.props?.vidacha_otchet_is_edit}
-                  is_open={this.props?.vidacha_otchet_is_open}
-                  type={"vidacha_otchet"}
-                  table={this.props.table}
-                  //data_plus={this.props?.vedomosm_zp}
-                  data_minus={this.props?.vidacha_otchet}
-                  data_hist={this.props?.vidacha_otchet_arr}
-                  tooltip={this.props.table == "fiz" ? text.otchet_fiz : text.otchet_driver}
-                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                  addData={this.props.addData.bind(this)}
-                  is_delete={this.props?.vidacha_otchet_is_edit}
-                  deleteData={this.props.deleteData.bind(this)}
-                  updateData={this.props.updateData.bind(this)}
-                />
-              )
-            ) : (
-              false
-            )}
-
-            {this.props.table == "driver_cash" ? (
-              this.props?.vidacha_otchet_is_edit === false ? (
-                false
-              ) : (
-                <MainTableRow
-                  label={"Расходы управляющего"}
-                  is_edit={this.props?.vidacha_otchet_is_edit}
-                  is_open={this.props?.vidacha_otchet_is_open}
-                  type={"vidacha_otchet"}
-                  table={this.props.table}
-                  //data_plus={this.props?.vedomosm_zp}
-                  data_minus={this.props?.vidacha_otchet}
-                  data_hist={this.props?.vidacha_otchet_arr}
-                  tooltip={this.props.table == "fiz" ? text.otchet_fiz : text.otchet_driver}
-                  toogleCollapseTable={this.props.toogleCollapseTable.bind(this)}
-                  toogleCollapseTableRow={this.props.toogleCollapseTableRow.bind(this)}
-                  addData={this.props.addData.bind(this)}
-                  is_delete={this.props?.vidacha_otchet_is_edit}
-                  deleteData={this.props.deleteData.bind(this)}
-                  updateData={this.props.updateData.bind(this)}
-                />
-              )
-            ) : (
-              false
-            )}
+            {this.renderRows()}
 
             <TableRow>
               <TableCell>Итого</TableCell>
               <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
                 {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.props?.itog_plus,
+                  this.getCashValue("itog_plus") || 0,
                 )}
               </TableCell>
               <TableCell style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}>
                 {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.props?.itog_minus,
+                  this.getCashValue("itog_minus") || 0,
                 )}
               </TableCell>
             </TableRow>
@@ -633,7 +686,7 @@ class MainTable extends React.Component {
               <TableCell>Остаток на конец дня</TableCell>
               <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
                 {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.props?.ostatok_konec_dnya,
+                  this.getCashValue("ostatok_konec_dnya") || 0,
                 )}
               </TableCell>
               <TableCell
@@ -767,7 +820,7 @@ class CashBook_ extends React.Component {
     });
 
     if (data == "date") {
-      this.getHist(this.state.openModalType, event);
+      this.getHist(this.state.openModalType, event, this.state.openModalKassa);
     }
   }
 
@@ -921,7 +974,7 @@ class CashBook_ extends React.Component {
       });
     }
 
-    this.getHist(type, this.state.date);
+    this.getHist(type, this.state.date, kassa);
   }
 
   deleteData(item, type) {
@@ -1010,11 +1063,12 @@ class CashBook_ extends React.Component {
     }
   }
 
-  async getHist(type, date) {
+  async getHist(type, date, kassa = this.state.openModalKassa) {
     let data = {
       point_id: this.state.point?.id,
       date: dayjs(date).format("YYYY-MM-DD"),
       type: type,
+      kassa: kassa,
     };
 
     let res = await this.getData("get_hist", data);
@@ -1438,6 +1492,7 @@ class CashBook_ extends React.Component {
           >
             <MainTable
               table={"fiz"}
+              cashData={this.state.fiz_kassa}
               addData={this.addData.bind(this)}
               deleteData={this.deleteData.bind(this)}
               updateData={this.updateItem.bind(this)}
@@ -1495,6 +1550,7 @@ class CashBook_ extends React.Component {
           >
             <MainTable
               table={"driver_cash"}
+              cashData={this.state.driver_kassa}
               addData={this.addData.bind(this)}
               deleteData={this.deleteData.bind(this)}
               updateData={this.updateItem.bind(this)}

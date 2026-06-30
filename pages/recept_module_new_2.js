@@ -805,17 +805,7 @@ class ReceptModule_Modal extends React.Component {
       this.setState({
         err_valid: {},
       });
-      let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-      all_w_brutto = roundTo(all_w_brutto, 3);
-
-      let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-
-      all_w_netto = roundTo(all_w_netto, 3);
-
-      let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-      all_w = roundTo(all_w, 3);
+      const { all_w_brutto, all_w_netto, all_w } = this.getWeightTotals(list);
       this.setState({
         name: this.props.rec?.name,
         shelf_life: this.props.rec?.shelf_life,
@@ -930,19 +920,7 @@ class ReceptModule_Modal extends React.Component {
 
     list.splice(key, 1);
 
-    let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-    all_w_brutto = roundTo(all_w_brutto, 3);
-
-    let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-
-    all_w_netto = roundTo(all_w_netto, 3);
-
-    let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-    all_w = roundTo(all_w, 3);
-
-    this.setState({ list, all_w_brutto, all_w_netto, all_w });
+    this.setState({ list, ...this.getWeightTotals(list) });
   }
 
   changeItemData(key, event, value) {
@@ -989,6 +967,29 @@ class ReceptModule_Modal extends React.Component {
     return hasOption ? value : "";
   }
 
+  parseDecimalValue(value) {
+    const parsedValue = parseFloat(
+      String(value ?? "")
+        .replace(/\s/g, "")
+        .replace(",", "."),
+    );
+
+    return Number.isNaN(parsedValue) ? 0 : parsedValue;
+  }
+
+  getWeightTotals(list) {
+    let all_w_brutto = list.reduce((sum, item) => sum + this.parseDecimalValue(item.brutto), 0);
+    all_w_brutto = roundTo(all_w_brutto, 3);
+
+    let all_w_netto = list.reduce((sum, item) => sum + this.parseDecimalValue(item.netto), 0);
+    all_w_netto = roundTo(all_w_netto, 3);
+
+    let all_w = list.reduce((sum, item) => sum + this.parseDecimalValue(item.res), 0);
+    all_w = roundTo(all_w, 3);
+
+    return { all_w_brutto, all_w_netto, all_w };
+  }
+
   changeItemList(type, key, event) {
     let list = [...this.state.list];
 
@@ -1001,53 +1002,44 @@ class ReceptModule_Modal extends React.Component {
     }
 
     if (type === "brutto") {
-      let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-      all_w_brutto = roundTo(all_w_brutto, 3);
       list[key].netto = roundTo(
-        (parseFloat(list[key].brutto) * (100 - parseFloat(list[key].pr_1))) / 100,
+        (this.parseDecimalValue(list[key].brutto) *
+          (100 - this.parseDecimalValue(list[key].pr_1))) /
+          100,
         3,
       );
 
       list[key].res = roundTo(
-        (parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100,
+        (this.parseDecimalValue(list[key].netto) * (100 - this.parseDecimalValue(list[key].pr_2))) /
+          100,
         3,
       );
-
-      this.setState({ all_w_brutto });
     }
 
     if (type === "pr_1") {
       list[key].netto = roundTo(
-        (parseFloat(list[key].brutto) * (100 - parseFloat(list[key].pr_1))) / 100,
+        (this.parseDecimalValue(list[key].brutto) *
+          (100 - this.parseDecimalValue(list[key].pr_1))) /
+          100,
         3,
       );
 
       list[key].res = roundTo(
-        (parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100,
+        (this.parseDecimalValue(list[key].netto) * (100 - this.parseDecimalValue(list[key].pr_2))) /
+          100,
         3,
       );
     }
 
     if (type === "pr_2") {
       list[key].res = roundTo(
-        (parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100,
+        (this.parseDecimalValue(list[key].netto) * (100 - this.parseDecimalValue(list[key].pr_2))) /
+          100,
         3,
       );
     }
 
-    if (type === "brutto" || type === "pr_1") {
-      let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-      all_w_netto = roundTo(all_w_netto, 3);
-
-      this.setState({ all_w_netto });
-    }
-
-    let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-    all_w = roundTo(all_w, 3);
-
-    this.setState({ list, all_w });
+    this.setState({ list, ...this.getWeightTotals(list) });
   }
 
   changeDateRange(data, event) {
