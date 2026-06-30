@@ -286,22 +286,33 @@ export default function StaffScheduleFastActionsDialog({
   onSaveChanges,
 }) {
   const user = state?.user;
+  const users = state?.users ?? [];
+  const isBulk = state?.mode === "bulk";
   const screen = state?.screen || "hub";
   const draft = state?.draft;
   const isSaving = Boolean(state?.saving);
   const saveError = state?.error || "";
   const { canAccess } = useMemo(() => createStaffScheduleAccess(access), [access]);
 
-  const context = useMemo(
-    () =>
-      buildEditDialogContext({
-        user,
-        monthId,
-        pointLabel,
-        shiftLabel,
-      }),
-    [monthId, pointLabel, shiftLabel, user],
-  );
+  const context = useMemo(() => {
+    if (isBulk) {
+      return {
+        userName: `${users.length} сотрудников`,
+        roleName: "Массовое изменение графика",
+        periodLabel: monthId ?? "",
+        shiftLabel: "—",
+        pointLabel: pointLabel || "—",
+        scheduleLabel: "—",
+      };
+    }
+
+    return buildEditDialogContext({
+      user,
+      monthId,
+      pointLabel,
+      shiftLabel,
+    });
+  }, [isBulk, monthId, pointLabel, shiftLabel, user, users.length]);
 
   const canMonth = canAccess("fast_month");
   const canWeek = canAccess("fast_2_week");
@@ -366,17 +377,20 @@ export default function StaffScheduleFastActionsDialog({
     () => withCurrentSmenaOption(smenaOptions, smenaLabel, pendingSmenaId),
     [pendingSmenaId, smenaLabel, smenaOptions],
   );
-  const hasChanges = hasEditDraftChanges(draft, user, selectedPart);
+  const hasChanges = isBulk
+    ? Boolean(draft?.scheduleType && draft?.scheduleScope)
+    : hasEditDraftChanges(draft, user, selectedPart);
 
   const scheduleBaselineType = draft?.scheduleType
     ? String(draft.scheduleType)
     : String(getCurrentScheduleType(user, selectedPart, scheduleScope) ?? "");
   const scheduleBaselineScope = draft?.scheduleScope || scheduleScope;
 
-  const scheduleDoneDisabled =
-    !pendingScheduleType ||
-    (String(pendingScheduleType) === scheduleBaselineType &&
-      scheduleScope === scheduleBaselineScope);
+  const scheduleDoneDisabled = isBulk
+    ? !pendingScheduleType
+    : !pendingScheduleType ||
+      (String(pendingScheduleType) === scheduleBaselineType &&
+        scheduleScope === scheduleBaselineScope);
   const shiftDoneDisabled =
     !pendingSmenaId || String(pendingSmenaId) === String(user?.smena_id ?? "");
   const pointDoneDisabled = !pendingPointId;
@@ -435,14 +449,14 @@ export default function StaffScheduleFastActionsDialog({
         {canMonth || canWeek ? (
           <EditSummaryRow
             label="Часы"
-            value={scheduleLabel}
+            value={isBulk ? "Изменить для выбранных сотрудников" : scheduleLabel}
             actionLabel="Изменить"
             onAction={onOpenSchedule}
             disabled={isSaving}
           />
         ) : null}
 
-        {canShift ? (
+        {!isBulk && canShift ? (
           <EditSummaryRow
             label="Смена"
             value={smenaLabel}
@@ -452,7 +466,7 @@ export default function StaffScheduleFastActionsDialog({
           />
         ) : null}
 
-        {canPoint ? (
+        {!isBulk && canPoint ? (
           <EditSummaryRow
             label="Кафе"
             value={currentPointLabel}

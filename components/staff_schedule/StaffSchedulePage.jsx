@@ -4,10 +4,12 @@ import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
 import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
 import StaffScheduleFastActionsDialog from "./modals/StaffScheduleFastActionsDialog";
 import StaffScheduleMonthModal from "./modals/StaffScheduleMonthModal";
+import StaffScheduleErrorAppealDialog from "./modals/StaffScheduleErrorAppealDialog";
 import StaffScheduleSmenaModal from "./modals/StaffScheduleSmenaModal";
 import StaffScheduleSummaryActionDialog from "./modals/StaffScheduleSummaryActionDialog";
 import useStaffSchedulePage from "./useStaffSchedulePage";
 import { PAGE_BOTTOM_PADDING } from "./staffScheduleConstants";
+import StaffScheduleErrorsSection from "./sections/StaffScheduleErrorsSection";
 import StaffScheduleHeaderSection from "./sections/StaffScheduleHeaderSection";
 import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
 
@@ -68,6 +70,14 @@ export default function StaffSchedulePage() {
             onRemoveTeamBonusFromUser={page.handleRemoveTeamBonusFromUser}
           />
         </Grid>
+
+        <Grid size={12}>
+          <StaffScheduleErrorsSection
+            errors={page.view.activePeriod?.errors}
+            onOpenOrderError={page.handleOpenOrderError}
+            onOpenCamError={page.handleOpenCamError}
+          />
+        </Grid>
       </Grid>
 
       <StaffScheduleDayModal
@@ -90,6 +100,11 @@ export default function StaffSchedulePage() {
         modal={page.summaryActionModal}
         onClose={page.handleCloseSummaryAction}
         onSave={page.handleSaveSummaryAction}
+      />
+      <StaffScheduleErrorAppealDialog
+        modal={page.errorAppealModal}
+        onClose={page.handleCloseErrorAppeal}
+        onSubmit={page.handleSaveErrorAppeal}
       />
       <page.ConfirmDialog />
       <StaffScheduleFastActionsDialog

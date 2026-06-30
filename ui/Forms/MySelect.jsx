@@ -96,9 +96,8 @@ export function MySelect(props) {
 
   // add None option at the top if needed
   // TODO: this behavior is counterintuitive, swap
-  if (props.is_none !== false) {
-    normalizedData.unshift({ id: "none", name: "None" });
-  }
+  const dataWithNone =
+    props.is_none !== false ? [{ id: "none", name: "None" }, ...normalizedData] : normalizedData;
 
   // normalize value
   const normalizedValue = props.multiple
@@ -118,7 +117,7 @@ export function MySelect(props) {
         .map((item) => item.name)
         .join(", ");
     } else {
-      const sel = normalizedData.find((i) => i.id === normalizedValue);
+      const sel = dataWithNone.find((i) => i.id === normalizedValue);
       return sel ? sel.name : "None";
     }
   };
@@ -374,8 +373,8 @@ export function MySelect(props) {
   };
 
   const unifiedValue = props.multiple
-    ? normalizedData.filter((item) => normalizedValue.includes(item.id))
-    : (normalizedData.find((item) => item.id === normalizedValue) ?? null);
+    ? dataWithNone.filter((item) => normalizedValue.includes(item.id))
+    : (dataWithNone.find((item) => item.id === normalizedValue) ?? null);
 
   if (isUnifiedPopup) {
     return (
@@ -385,7 +384,7 @@ export function MySelect(props) {
           style={props.style}
           disablePortal={props.disablePortal ?? false}
           selectOnFocus={false}
-          options={normalizedData}
+          options={dataWithNone}
           value={unifiedValue}
           disabled={!!props.disabled}
           multiple={!!props.multiple}

@@ -24,6 +24,7 @@ import {
 import useStaffScheduleExport from "./useStaffScheduleExport";
 import useStaffScheduleFastActions from "./useStaffScheduleFastActions";
 import useResourceModalState from "./useResourceModalState";
+import { buildCamErrorModalData, buildOrderErrorModalData } from "./staffScheduleErrorViewModel";
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
@@ -88,10 +89,18 @@ export default function useStaffSchedulePage() {
     request: null,
     data: null,
   });
+  const errorAppealState = useResourceModalState({
+    open: false,
+    loading: false,
+    error: "",
+    request: null,
+    data: null,
+  });
   const dayModal = dayModalState.state;
   const monthModal = monthModalState.state;
   const smenaModal = smenaModalState.state;
   const summaryActionModal = summaryActionState.state;
+  const errorAppealModal = errorAppealState.state;
   const directorLevelOptions = useMemo(
     () =>
       Array.from({ length: 41 }, (_, index) => {
@@ -618,6 +627,113 @@ export default function useStaffSchedulePage() {
     summaryActionState.close();
   }, [summaryActionState]);
 
+  const handleOpenOrderError = useCallback(
+    async (item) => {
+      const request = {
+        id: item?.id,
+        row_id: item?.row_id,
+      };
+
+      errorAppealState.openLoading({ request, data: null });
+
+      try {
+        const response = await api.getMyErrOrder(request);
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось загрузить ошибку заказа");
+        }
+
+        errorAppealState.openReady({
+          request,
+          data: buildOrderErrorModalData(response),
+        });
+      } catch (requestError) {
+        errorAppealState.openError(requestError?.message || "Не удалось загрузить ошибку заказа", {
+          request,
+          data: null,
+        });
+      }
+    },
+    [api, errorAppealState],
+  );
+
+  const handleOpenCamError = useCallback(
+    async (item) => {
+      const request = {
+        id: item?.id,
+      };
+
+      errorAppealState.openLoading({ request, data: null });
+
+      try {
+        const response = await api.getMyErrCam(request);
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось загрузить ошибку камеры");
+        }
+
+        errorAppealState.openReady({
+          request,
+          data: buildCamErrorModalData(response),
+        });
+      } catch (requestError) {
+        errorAppealState.openError(requestError?.message || "Не удалось загрузить ошибку камеры", {
+          request,
+          data: null,
+        });
+      }
+    },
+    [api, errorAppealState],
+  );
+
+  const handleCloseErrorAppeal = useCallback(() => {
+    errorAppealState.close();
+  }, [errorAppealState]);
+
+  const handleSaveErrorAppeal = useCallback(
+    async ({ type, appealText }) => {
+      const accepted = await confirm({
+        title: "Предупреждение",
+        message: "Точно обжаловать ?",
+        confirmLabel: "Обжаловать",
+      });
+
+      if (!accepted) {
+        return;
+      }
+
+      errorAppealState.patch({ loading: true, error: "" });
+
+      try {
+        const response =
+          type === "order"
+            ? await api.saveFakeOrders({
+                err_id: errorAppealModal.data?.errId,
+                row_id: errorAppealModal.data?.rowId,
+                order_id: errorAppealModal.data?.orderId,
+                text: appealText,
+              })
+            : await api.saveFakeCam({
+                id: errorAppealModal.data?.id,
+                text: appealText,
+              });
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось отправить обжалование");
+        }
+
+        handleCloseErrorAppeal();
+        await handleReload();
+      } catch (requestError) {
+        errorAppealState.patch({
+          loading: false,
+          error: requestError?.message || "Не удалось отправить обжалование",
+        });
+      }
+    },
+    [api, confirm, errorAppealModal.data, errorAppealState, handleCloseErrorAppeal, handleReload],
+  );
+
   const handleSaveSummaryAction = useCallback(
     async ({ mode, request, value }) => {
       let response = null;
@@ -805,6 +921,7 @@ export default function useStaffSchedulePage() {
     monthModal,
     smenaModal,
     summaryActionModal,
+    errorAppealModal,
     fastActions: fastActions.state,
     pointLabel,
     graphKind: graph.kind,
@@ -836,6 +953,10 @@ export default function useStaffSchedulePage() {
     handleOpenSummaryAction,
     handleCloseSummaryAction,
     handleSaveSummaryAction,
+    handleOpenOrderError,
+    handleOpenCamError,
+    handleCloseErrorAppeal,
+    handleSaveErrorAppeal,
     handleRemoveTeamBonusFromUser,
     handleOpenFastActions: fastActions.open,
     handleCloseFastActions: fastActions.close,

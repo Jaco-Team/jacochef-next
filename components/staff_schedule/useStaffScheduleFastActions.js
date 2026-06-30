@@ -4,8 +4,10 @@ import { buildEditDraft, EDIT_SCHEDULE_SCOPE } from "./staffScheduleEditViewMode
 function createFastActionsState(overrides = {}) {
   return {
     open: false,
+    mode: "single",
     screen: "hub",
     user: null,
+    users: [],
     draft: null,
     shiftLabel: "",
     saving: false,
@@ -42,7 +44,9 @@ export default function useStaffScheduleFastActions({
       setState({
         ...createFastActionsState(),
         open: true,
+        mode: "single",
         user: row,
+        users: [row],
         draft: buildEditDraft(row),
         shiftLabel,
       });
@@ -60,8 +64,22 @@ export default function useStaffScheduleFastActions({
       return;
     }
 
-    open(selectedRows[0]);
-  }, [open, selectedRowIds, visibleRows]);
+    setState({
+      ...createFastActionsState(),
+      open: true,
+      mode: "bulk",
+      screen: "hub",
+      user: selectedRows[0],
+      users: selectedRows,
+      draft: {
+        scheduleScope: null,
+        scheduleType: null,
+        smenaId: "",
+        point: null,
+      },
+      shiftLabel: "",
+    });
+  }, [selectedRowIds, visibleRows]);
 
   const backToHub = useCallback(() => {
     setState((prev) => ({
@@ -139,7 +157,32 @@ export default function useStaffScheduleFastActions({
   }, []);
 
   const persistDraft = useCallback(
-    async (draft, user) => {
+    async (draft, user, users, mode) => {
+      if (mode === "bulk") {
+        if (draft?.scheduleType && draft?.scheduleScope) {
+          const payload = {
+            date: monthId,
+            type: draft.scheduleType,
+            users: users.map((item) => ({
+              user_id: item.id,
+              smena_id: item.smena_id,
+              app_id: item.app_id,
+            })),
+          };
+
+          const response =
+            draft.scheduleScope === EDIT_SCHEDULE_SCOPE.month
+              ? await api.saveFastTimeArrMounth(payload)
+              : await api.saveFastTimeArrTwoWeek(payload);
+
+          if (response?.st === false) {
+            throw new Error(response?.text || "Не удалось сохранить график");
+          }
+        }
+
+        return;
+      }
+
       if (draft?.scheduleType && draft?.scheduleScope) {
         const schedulePayload = {
           type: draft.scheduleType,
@@ -193,9 +236,11 @@ export default function useStaffScheduleFastActions({
 
   const saveChanges = useCallback(async () => {
     const user = state.user;
+    const users = state.users;
     const draft = state.draft;
+    const mode = state.mode;
 
-    if (!user || !draft) {
+    if ((!user && mode !== "bulk") || !draft) {
       return;
     }
 
@@ -209,7 +254,7 @@ export default function useStaffScheduleFastActions({
       }));
 
       try {
-        await persistDraft(draft, user);
+        await persistDraft(draft, user, users, mode);
         close();
         await onReload();
       } catch (requestError) {
@@ -235,7 +280,7 @@ export default function useStaffScheduleFastActions({
     if (accepted) {
       await runSave();
     }
-  }, [close, confirm, onReload, persistDraft, state.draft, state.user]);
+  }, [close, confirm, onReload, persistDraft, state.draft, state.mode, state.user, state.users]);
 
   return {
     state,
