@@ -835,9 +835,9 @@ function EndPage() {
     }
   };
 
-  const transformBackendTrafficCategoryNode = (node, parentId = "site_category") => {
+  const transformBackendTrafficCategoryNode = (node, parentId = "site_category", nodeIndex = 0) => {
     const level = normalizeBackendCategoryLevel(node.level);
-    const id = `${parentId}_${node.traffic_category || node.value || node.name}_${level}`;
+    const id = `${parentId}_${nodeIndex}_${node.traffic_category || node.value || node.name}_${level}`;
 
     return rollupMetricsFromChildren({
       id,
@@ -860,7 +860,9 @@ function EndPage() {
       normalized_medium: node.normalized_medium,
       useServerMetrics: true,
       children: Array.isArray(node.children)
-        ? node.children.map((child) => transformBackendTrafficCategoryNode(child, id))
+        ? node.children.map((child, childIndex) =>
+            transformBackendTrafficCategoryNode(child, id, childIndex),
+          )
         : [],
     });
   };
@@ -905,7 +907,9 @@ function EndPage() {
         ? Object.values(apiData.site_data_by_category)
         : Object.values(apiData.site_data);
       const groupedData = hasCategorySiteData
-        ? siteSourceRows.map((item) => transformBackendTrafficCategoryNode(item))
+        ? siteSourceRows.map((item, itemIndex) =>
+            transformBackendTrafficCategoryNode(item, "site_category", itemIndex),
+          )
         : regroupByTrafficSource(apiData.site_data);
 
       if (groupedData.length > 0) {
