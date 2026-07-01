@@ -591,7 +591,6 @@ function EndPage() {
       "cpc",
       "ppc",
       "display",
-      "maps",
       "epk",
       "poisk",
       "rsya",
@@ -644,7 +643,7 @@ function EndPage() {
       )
         return "Рефералы";
       if (medium === "social" || isSocialSource(sourceName)) return "Социальные сети";
-      if (isSearchSource(sourceName)) return "Поисковые системы";
+      if (medium === "organic") return "Поисковые системы";
 
       return "Другое";
     };
