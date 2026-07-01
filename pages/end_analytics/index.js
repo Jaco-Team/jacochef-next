@@ -644,8 +644,7 @@ function EndPage() {
       )
         return "Рефералы";
       if (medium === "social" || isSocialSource(sourceName)) return "Социальные сети";
-      if (isSearchSource(sourceName))
-        return medium === "organic" ? "Поисковые системы" : "Рекламные системы";
+      if (isSearchSource(sourceName)) return "Поисковые системы";
 
       return "Другое";
     };
