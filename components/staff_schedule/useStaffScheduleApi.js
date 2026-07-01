@@ -36,12 +36,12 @@ export default function useStaffScheduleApi() {
     };
 
     return {
-      getAll: () => request("get_all", {}, { timeout: 4000 }),
-      getGraph: (payload) => request("get_graph", payload, { timeout: 4000 }),
-      getUserDay: (payload) => request("get_user_day", payload, { timeout: 4000 }),
-      getUserMonth: (payload) => request("get_user_month", payload, { timeout: 4000 }),
-      getAllForNewSmena: (payload) => request("get_all_for_new_smena", payload, { timeout: 4000 }),
-      getOneSmena: (payload) => request("get_one_smena", payload, { timeout: 4000 }),
+      getAll: () => request("get_all"),
+      getGraph: (payload) => request("get_graph", payload),
+      getUserDay: (payload) => request("get_user_day", payload),
+      getUserMonth: (payload) => request("get_user_month", payload),
+      getAllForNewSmena: (payload) => request("get_all_for_new_smena", payload),
+      getOneSmena: (payload) => request("get_one_smena", payload),
       saveFastSmena: (payload) => request("save_fastSmena", payload),
       saveUserDay: (payload) => request("save_user_day", payload),
       saveUserMonth: (payload) => request("save_user_month", payload),
@@ -61,12 +61,12 @@ export default function useStaffScheduleApi() {
       saveUserGiveCartPrice: (payload) => request("save_user_give_cart_price", payload),
       saveUserWithheld: (payload) => request("save_user_withheld", payload),
       saveDirBonus: (payload) => request("save_dirBonus", payload),
-      getMyErrOrder: (payload) => request("get_my_err_order", payload, { timeout: 4000 }),
-      getMyErrCam: (payload) => request("get_my_err_cam", payload, { timeout: 4000 }),
+      getMyErrOrder: (payload) => request("get_my_err_order", payload),
+      getMyErrCam: (payload) => request("get_my_err_cam", payload),
       saveFakeOrders: (payload) => request("save_fake_orders", payload),
       saveFakeCam: (payload) => request("save_fake_cam", payload),
-      downloadWS: (payload) => request("downloadWS", payload, { timeout: 15000 }),
-      downloadHJ: (payload) => request("downloadHJ", payload, { timeout: 15000 }),
+      downloadWS: (payload) => request("downloadWS", payload),
+      downloadHJ: (payload) => request("downloadHJ", payload),
     };
   }, []);
 }

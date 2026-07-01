@@ -17,7 +17,15 @@ import {
   Typography,
 } from "@mui/material";
 import { SummarySectionIcon } from "@/ui/icons";
-import { V2Button, V2Checkbox, V2FieldSwitch, V2IconButton, V2Surface, v2Colors } from "@/ui/v2";
+import {
+  V2Button,
+  V2Checkbox,
+  V2FieldSwitch,
+  V2IconButton,
+  V2Surface,
+  v2Colors,
+  v2TableColors,
+} from "@/ui/v2";
 import StaffScheduleColorLegendModal from "./StaffScheduleColorLegendModal";
 import {
   ACTION_COLUMN_WIDTH,
@@ -38,8 +46,6 @@ import {
 
 const stickyBaseSx = {
   position: "sticky",
-  backgroundClip: "padding-box",
-  overflow: "hidden",
 };
 
 const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
@@ -51,6 +57,7 @@ const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
   maxWidth: width,
   boxSizing: "border-box",
   backgroundColor,
+  borderBottom: "1px solid #EDEDED",
 });
 
 function ScheduleRow({
@@ -71,27 +78,41 @@ function ScheduleRow({
   selectedRowIds,
   onToggleRowSelection,
 }) {
+  const [hoverMode, setHoverMode] = useState(null);
   const data = row?.data ?? {};
   const rowId = data?.id ? String(data.id) : "";
   const isSelected = selectedRowIds.includes(rowId);
   const baseColors = useColors
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
+  const isFullRowHighlighted = isSelected || hoverMode === "row";
+  const rowSurfaceColor = isFullRowHighlighted
+    ? v2TableColors.rowSelected
+    : row?.color
+      ? v2TableColors.rowMuted
+      : v2Colors.surface;
+  const employeeCellColor = isFullRowHighlighted
+    ? v2TableColors.rowSelected
+    : hoverMode === "name"
+      ? v2TableColors.nameHover
+      : baseColors.backgroundColor;
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
   const canUseFastActions =
     showFastActions && Boolean(onOpenFastActions) && String(data?.smena_id ?? "") !== "-1";
   const positionStickyLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
 
   return (
-    <TableRow hover>
+    <TableRow>
       <TableCell
         padding="checkbox"
         className="checkBox"
         sx={{
-          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 5),
+          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 5, rowSurfaceColor),
           borderRight: "1px solid #E5E5E5",
           p: 0,
         }}
+        onMouseEnter={() => setHoverMode("row")}
+        onMouseLeave={() => setHoverMode(null)}
       >
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <V2Checkbox
@@ -104,12 +125,7 @@ function ScheduleRow({
 
       <TableCell
         sx={{
-          ...stickyCellSx(
-            EMPLOYEE_COLUMN_WIDTH,
-            SELECTION_COLUMN_WIDTH,
-            5,
-            baseColors.backgroundColor,
-          ),
+          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 5, employeeCellColor),
           color: baseColors.color,
           fontWeight: 500,
           borderRight: "1px solid #E5E7EB",
@@ -117,6 +133,8 @@ function ScheduleRow({
           px: 1.5,
           cursor: canOpenMonth ? "pointer" : "default",
         }}
+        onMouseEnter={() => setHoverMode("name")}
+        onMouseLeave={() => setHoverMode(null)}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
       >
         <Typography sx={{ fontSize: 14, lineHeight: 1.25 }}>
@@ -126,7 +144,7 @@ function ScheduleRow({
 
       <TableCell
         sx={{
-          ...stickyCellSx(POSITION_COLUMN_WIDTH, positionStickyLeft, 5),
+          ...stickyCellSx(POSITION_COLUMN_WIDTH, positionStickyLeft, 5, rowSurfaceColor),
           borderRight: "1px solid #E5E7EB",
           py: 0.9,
           px: 1.5,
@@ -141,7 +159,12 @@ function ScheduleRow({
         <TableCell
           align="center"
           sx={{
-            ...stickyCellSx(ACTION_COLUMN_WIDTH, positionStickyLeft + POSITION_COLUMN_WIDTH, 5),
+            ...stickyCellSx(
+              ACTION_COLUMN_WIDTH,
+              positionStickyLeft + POSITION_COLUMN_WIDTH,
+              5,
+              rowSurfaceColor,
+            ),
             borderRight: "1px solid #E5E7EB",
             p: 0,
           }}
@@ -162,11 +185,8 @@ function ScheduleRow({
         ? toArray(data?.dates).map((day, index) => {
             const info = day?.info ?? {};
             const isHoliday = Boolean(data?.holydays?.[day?.date]);
-            const baseBackground = useColors
-              ? row?.color
-                ? "#D3D3D3"
-                : info?.color || "#ffffff"
-              : "#ffffff";
+            const hasExplicitDayColor = useColors && Boolean(info?.color) && !row?.color;
+            const baseBackground = hasExplicitDayColor ? info.color : rowSurfaceColor;
             const textColor = useColors
               ? row?.color
                 ? "#000000"
@@ -251,10 +271,17 @@ function ScheduleRow({
                 fontSize: 11.5,
                 px: 0.75,
                 cursor: isClickable ? "pointer" : "default",
-                backgroundColor: canEditDirBonus ? "#E5E5E5" : "#FFFFFF",
+                backgroundColor:
+                  isFullRowHighlighted || !canEditDirBonus
+                    ? rowSurfaceColor
+                    : v2TableColors.rowHover,
                 "&:hover": isClickable
                   ? {
-                      backgroundColor: canEditDirBonus ? "#DCDCDC" : "#F7F7F7",
+                      backgroundColor: isFullRowHighlighted
+                        ? rowSurfaceColor
+                        : canEditDirBonus
+                          ? "#DCDCDC"
+                          : "#F7F7F7",
                     }
                   : undefined,
               }}
@@ -280,7 +307,7 @@ function ShiftHeaderRow({
   canEditSmena,
 }) {
   const handleToggle = () => onToggle(shiftId);
-  const headerBg = "#E5E5E5";
+  const headerBg = v2TableColors.shiftHeader;
 
   return (
     <TableRow>
@@ -669,12 +696,15 @@ export default function StaffScheduleTableSection({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      border: "1px solid #E4E7EC",
+                      border: `1px solid ${v2TableColors.bulkActionBorder}`,
                       borderRadius: "4px",
                       cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
                       pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
-                      opacity: hasBulkSelection && showFastActions ? 1 : 0.35,
-                      backgroundColor: hasBulkSelection && showFastActions ? "#FFF5F5" : "#FFFFFF",
+                      opacity: hasBulkSelection && showFastActions ? 1 : 0.3,
+                      backgroundColor:
+                        hasBulkSelection && showFastActions
+                          ? v2TableColors.bulkActionActive
+                          : v2TableColors.bulkActionInactive,
                     }}
                   >
                     <SwapHorizRoundedIcon
@@ -725,7 +755,7 @@ export default function StaffScheduleTableSection({
                         minWidth: DAY_COLUMN_WIDTH,
                         backgroundColor:
                           day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                            ? "#ffe9bd"
+                            ? v2TableColors.weekend
                             : "#ffffff",
                         fontWeight: 500,
                         color: "#666666",
@@ -807,7 +837,7 @@ export default function StaffScheduleTableSection({
                 <TableCell
                   colSpan={colSpan}
                   sx={{
-                    backgroundColor: "#A9A9A9",
+                    backgroundColor: v2TableColors.sectionHeader,
                     height: 60,
                     py: 0.75,
                     px: 1.5,

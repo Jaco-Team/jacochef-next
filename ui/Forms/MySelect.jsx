@@ -520,9 +520,9 @@ export function MySelect(props) {
             ...(props.MenuProps || {}),
           }}
         >
-          {normalizedData?.map((item, key) => (
+          {dataWithNone?.map((item) => (
             <MenuItem
-              key={key}
+              key={item.id}
               value={item.id}
               sx={{ color: item?.color ? item.color : null }}
             >

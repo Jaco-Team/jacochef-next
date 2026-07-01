@@ -17,4 +17,4 @@ export { default as V2DatePickerGraph } from "./DatePickerGraph";
 export { default as V2Select } from "./Select";
 export { default as V2TextInput } from "./TextInput";
 export { default as V2TimePicker } from "./TimePicker";
-export { v2Colors, v2Control, v2Radii } from "./tokens";
+export { v2Colors, v2Control, v2Radii, v2TableColors } from "./tokens";

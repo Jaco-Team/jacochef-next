@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { AddTimeIcon, HistoryFileIcon } from "@/ui/icons";
-import { V2Alert, V2Button, V2IconButton, V2Select, V2TimePicker, useConfirm } from "@/ui/v2";
+import { V2Alert, V2Button, V2IconButton, V2Select, useConfirm } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
@@ -44,21 +44,32 @@ function buildDraft(data) {
 }
 
 function buildSavePayload(request, draft) {
-  return {
+  const payload = {
     date: request?.date,
     user_id: request?.user_id,
     app_id: request?.app_id,
     smena_id: request?.smena_id,
     point_id: request?.point_id,
-    new_app: normalizeNullableValue(draft.newApp),
-    mentor_id: normalizeNullableValue(draft.mentorId),
-    user_temp: draft.userTemp || "",
-    type_healf: draft.typeHealf || "",
-    hours: draft.hours.map((item) => ({
+  };
+
+  if (request?.canEditAssignment) {
+    payload.new_app = normalizeNullableValue(draft.newApp);
+    payload.mentor_id = normalizeNullableValue(draft.mentorId);
+  }
+
+  if (request?.canEditHours) {
+    payload.hours = draft.hours.map((item) => ({
       time_start: item?.time_start ?? "",
       time_end: item?.time_end ?? "",
-    })),
-  };
+    }));
+  }
+
+  if (request?.canEditHealth) {
+    payload.user_temp = draft.userTemp || "";
+    payload.type_healf = draft.typeHealf || "";
+  }
+
+  return payload;
 }
 
 function DayPersonHeader({ data, onHistoryOpen }) {
@@ -181,7 +192,7 @@ function SectionTitle({ children }) {
   );
 }
 
-function TemperatureField({ value, onChange }) {
+function TemperatureField({ value, onChange, disabled = false }) {
   const anchorRef = useRef(null);
   const [open, setOpen] = useState(false);
 
@@ -209,7 +220,12 @@ function TemperatureField({ value, onChange }) {
         value={value ?? ""}
         placeholder="Введите данные или выберите из списка"
         onChange={handleInputChange}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (!disabled) {
+            setOpen(true);
+          }
+        }}
+        disabled={disabled}
         sx={{
           "& .MuiOutlinedInput-root": {
             minHeight: 44,
@@ -233,6 +249,7 @@ function TemperatureField({ value, onChange }) {
             <IconButton
               size="small"
               onClick={() => onChange("")}
+              disabled={disabled}
               sx={{ color: "#BABABA" }}
             >
               <CloseIcon />
@@ -241,6 +258,7 @@ function TemperatureField({ value, onChange }) {
             <IconButton
               size="small"
               onClick={() => setOpen((prev) => !prev)}
+              disabled={disabled}
               sx={{ color: "#A6A6A6" }}
             >
               <KeyboardArrowDownRoundedIcon />
@@ -249,7 +267,7 @@ function TemperatureField({ value, onChange }) {
         }}
       />
       <Popper
-        open={open}
+        open={open && !disabled}
         anchorEl={anchorRef.current}
         placement="bottom-start"
         sx={{ zIndex: 1500, width: anchorRef.current?.offsetWidth }}
@@ -327,6 +345,7 @@ function TimeRow({ item, onRemove }) {
       <V2IconButton
         aria-label="Удалить время"
         onClick={onRemove}
+        disabled={!onRemove}
         sx={{
           width: 32,
           height: 32,
@@ -334,6 +353,10 @@ function TimeRow({ item, onRemove }) {
           backgroundColor: "transparent",
           color: "#BABABA",
           "&:hover": { backgroundColor: "#F2F2F2" },
+          "&.Mui-disabled": {
+            opacity: 0.38,
+            pointerEvents: "none",
+          },
         }}
       >
         <CloseIcon />
@@ -416,6 +439,119 @@ function HistoryDialog({ open, history, onClose }) {
   );
 }
 
+function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, onSubmit }) {
+  const canSubmit = Boolean(start && end);
+
+  return (
+    <StaffScheduleResponsiveModal
+      open={open}
+      onClose={onClose}
+      title="Добавление нового времени"
+      maxWidth="sm"
+      paperSx={{ maxWidth: 600 }}
+      contentSx={{ px: 2.5, pt: 2.5, pb: 2.5, minHeight: 232 }}
+      actionsSx={{ px: 2.5, pt: 0, pb: 2.5, borderTop: "none" }}
+      actions={
+        <Stack
+          direction="row"
+          justifyContent="flex-end"
+          spacing={1.5}
+          sx={{ width: "100%" }}
+        >
+          <V2Button
+            compact
+            tone="secondary"
+            onClick={onClose}
+            sx={{
+              minWidth: 108,
+              minHeight: 44,
+              borderRadius: "12px",
+              fontSize: 16,
+              fontWeight: 500,
+            }}
+          >
+            Отменить
+          </V2Button>
+          <V2Button
+            compact
+            tone="primary"
+            onClick={onSubmit}
+            disabled={!canSubmit}
+            startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
+            sx={{
+              minWidth: 130,
+              minHeight: 44,
+              borderRadius: "12px",
+              fontSize: 16,
+            }}
+          >
+            Добавить
+          </V2Button>
+        </Stack>
+      }
+    >
+      <Stack spacing={2.5}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Время начала работы"
+          type="time"
+          value={start}
+          onChange={onChangeStart}
+          slotProps={{
+            inputLabel: { shrink: true },
+            input: { step: 600 },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              minHeight: 44,
+              borderRadius: "16px",
+              backgroundColor: "#FFFFFF",
+            },
+            "& .MuiInputBase-input": {
+              fontSize: "16px !important",
+              color: "#666666",
+            },
+            "& .MuiInputLabel-root": {
+              color: "#A6A6A6",
+              backgroundColor: "#FFFFFF",
+              px: 0.75,
+            },
+          }}
+        />
+        <TextField
+          fullWidth
+          size="small"
+          label="Время окончания работы"
+          type="time"
+          value={end}
+          onChange={onChangeEnd}
+          slotProps={{
+            inputLabel: { shrink: true },
+            input: { step: 600 },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              minHeight: 44,
+              borderRadius: "16px",
+              backgroundColor: "#FFFFFF",
+            },
+            "& .MuiInputBase-input": {
+              fontSize: "16px !important",
+              color: "#666666",
+            },
+            "& .MuiInputLabel-root": {
+              color: "#A6A6A6",
+              backgroundColor: "#FFFFFF",
+              px: 0.75,
+            },
+          }}
+        />
+      </Stack>
+    </StaffScheduleResponsiveModal>
+  );
+}
+
 export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const [draft, setDraft] = useState(() => buildDraft(modal.data));
   const initialDraftRef = useRef(buildDraft(modal.data));
@@ -451,6 +587,11 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   );
   const appOptions = useMemo(() => modal.data?.otherApps ?? [], [modal.data?.otherApps]);
   const healthOptions = useMemo(() => modal.data?.healthOptions ?? [], [modal.data?.healthOptions]);
+  const mentorOptions = useMemo(() => modal.data?.mentorList ?? [], [modal.data?.mentorList]);
+  const canEditHours = Boolean(modal.data?.canEditHours);
+  const canEditAssignment = Boolean(modal.data?.canEditAssignment);
+  const canEditHealth = Boolean(modal.data?.canEditHealth);
+  const canSave = canEditHours || canEditAssignment || canEditHealth;
 
   const removeHour = (index) => {
     setDraft((prev) => ({
@@ -478,9 +619,20 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       confirmLabel: "Да, удалить",
     });
 
+  const openAddTimeDialog = () => {
+    setNewTimeStart("10:00");
+    setNewTimeEnd("22:00");
+    setIsAddTimeOpen(true);
+  };
+
+  const closeAddTimeDialog = () => {
+    setIsAddTimeOpen(false);
+    setNewTimeStart("");
+    setNewTimeEnd("");
+  };
+
   const addHour = () => {
     if (!newTimeStart || !newTimeEnd) {
-      setIsAddTimeOpen((prev) => !prev);
       return;
     }
 
@@ -496,9 +648,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         },
       ],
     }));
-    setIsAddTimeOpen(false);
-    setNewTimeStart("");
-    setNewTimeEnd("");
+    closeAddTimeDialog();
   };
 
   const handleSave = async () => {
@@ -510,7 +660,17 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
     setSaveError("");
 
     try {
-      await onSave(buildSavePayload(modal.request, draft));
+      await onSave(
+        buildSavePayload(
+          {
+            ...modal.request,
+            canEditAssignment,
+            canEditHours,
+            canEditHealth,
+          },
+          draft,
+        ),
+      );
     } catch (error) {
       setSaveError(error?.message || "Не удалось сохранить день");
       setIsSaving(false);
@@ -573,7 +733,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
           compact
           tone="primary"
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !canSave}
           sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
         >
           {isSaving ? "Сохранение..." : "Сохранить"}
@@ -614,7 +774,23 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   }))
                 }
                 label="Кем работает"
+                disabled={!canEditAssignment}
               />
+
+              {mentorOptions.length ? (
+                <V2Select
+                  options={mentorOptions}
+                  value={draft.mentorId}
+                  onChange={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      mentorId: event.target.value,
+                    }))
+                  }
+                  label="Наставник"
+                  disabled={!canEditAssignment}
+                />
+              ) : null}
 
               <Stack spacing={1}>
                 <SectionTitle>Дневник здоровья</SectionTitle>
@@ -631,6 +807,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                           userTemp: nextValue,
                         }))
                       }
+                      disabled={!canEditHealth}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -645,6 +822,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       }
                       label="Здоровье"
                       allowNone={false}
+                      disabled={!canEditHealth}
                     />
                   </Grid>
                 </Grid>
@@ -662,7 +840,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                         <TimeRow
                           key={item.id}
                           item={item}
-                          onRemove={requestRemoveHour(item, index)}
+                          onRemove={canEditHours ? requestRemoveHour(item, index) : undefined}
                         />
                       ))}
                     </Stack>
@@ -672,7 +850,8 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       fullWidth
                       tone="secondary"
                       startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
-                      onClick={addHour}
+                      onClick={openAddTimeDialog}
+                      disabled={!canEditHours}
                       sx={{
                         minHeight: 44,
                         border: "none",
@@ -686,28 +865,6 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                     >
                       Добавить время
                     </V2Button>
-                    {isAddTimeOpen ? (
-                      <Grid
-                        container
-                        spacing={1}
-                        sx={{ mt: 1 }}
-                      >
-                        <Grid size={6}>
-                          <V2TimePicker
-                            value={newTimeStart}
-                            onChange={(event) => setNewTimeStart(event.target.value)}
-                            label="Начало"
-                          />
-                        </Grid>
-                        <Grid size={6}>
-                          <V2TimePicker
-                            value={newTimeEnd}
-                            onChange={(event) => setNewTimeEnd(event.target.value)}
-                            label="Конец"
-                          />
-                        </Grid>
-                      </Grid>
-                    ) : null}
                   </Grid>
                 </Grid>
               </Stack>
@@ -720,6 +877,15 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         open={isHistoryOpen}
         history={modal.data?.history ?? []}
         onClose={() => setIsHistoryOpen(false)}
+      />
+      <AddTimeDialog
+        open={isAddTimeOpen}
+        start={newTimeStart}
+        end={newTimeEnd}
+        onChangeStart={(event) => setNewTimeStart(event.target.value)}
+        onChangeEnd={(event) => setNewTimeEnd(event.target.value)}
+        onClose={closeAddTimeDialog}
+        onSubmit={addHour}
       />
       <ConfirmDialog />
     </>

@@ -297,7 +297,13 @@ export default function useStaffSchedulePage() {
           throw new Error(response?.text || "Не удалось загрузить данные сотрудника");
         }
 
-        dayModalState.openReady({ request, data: buildDayModalViewModel(response) });
+        dayModalState.openReady({
+          request,
+          data: buildDayModalViewModel(response, {
+            roleKind: graph.kind,
+            checkPeriod: row?.check_period,
+          }),
+        });
       } catch (requestError) {
         dayModalState.openError(requestError?.message || "Не удалось загрузить данные сотрудника", {
           request,
@@ -349,7 +355,18 @@ export default function useStaffSchedulePage() {
           throw new Error(response?.text || "Не удалось загрузить месячные часы");
         }
 
-        monthModalState.openReady({ request, data: buildMonthModalViewModel(response) });
+        const data = buildMonthModalViewModel(response, {
+          roleKind: graph.kind,
+          monthId,
+        });
+
+        monthModalState.openReady({
+          request: {
+            ...request,
+            canEditMonth: data.canEditMonth,
+          },
+          data,
+        });
       } catch (requestError) {
         monthModalState.openError(requestError?.message || "Не удалось загрузить месячные часы", {
           request,

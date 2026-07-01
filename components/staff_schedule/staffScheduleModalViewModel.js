@@ -20,6 +20,68 @@ function formatHistoryDateLabel(value) {
   return value || "—";
 }
 
+function normalizeRole(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function isMegaRole(value) {
+  const role = normalizeRole(value);
+  return role === "mega" || role === "mega_dir";
+}
+
+function isMegaOnlyRole(value) {
+  return normalizeRole(value) === "mega";
+}
+
+function isToday(value) {
+  if (!value) {
+    return false;
+  }
+
+  const parsed = dayjs(value);
+  return parsed.isValid() && parsed.isSame(dayjs(), "day");
+}
+
+function isFutureDay(value) {
+  if (!value) {
+    return false;
+  }
+
+  const parsed = dayjs(value);
+  return parsed.isValid() && parsed.isAfter(dayjs(), "day");
+}
+
+function isPastMonth(value) {
+  if (!value) {
+    return false;
+  }
+
+  const parsed = dayjs(value, "YYYY-MM", true);
+  return parsed.isValid() && parsed.isBefore(dayjs(), "month");
+}
+
+function canEditDayPeriod({ date, roleKind, checkPeriod }) {
+  if (!date) {
+    return false;
+  }
+
+  if (isMegaRole(roleKind)) {
+    return true;
+  }
+
+  if (isToday(date) || isFutureDay(date)) {
+    return true;
+  }
+
+  return Number(checkPeriod) === 1;
+}
+
+function canEditDayHealth({ date, hours }) {
+  return isToday(date) && toArray(hours).length > 0;
+}
+
 export const MONTH_TYPE_PRESETS = [
   { type: 0, label: "10:00 - 22:00", time_start: "10:00", time_end: "22:00", color: "#98e38d" },
   { type: 1, label: "10:00 - 16:00", time_start: "10:00", time_end: "16:00", color: "#3dcef2" },
@@ -39,9 +101,19 @@ export function hasMonthModalPayload(response) {
   return Boolean(response?.h_info) && Array.isArray(response?.hours_days);
 }
 
-export function buildDayModalViewModel(response) {
+export function buildDayModalViewModel(response, context = {}) {
   const info = response?.h_info ?? {};
   const user = info?.user ?? {};
+  const hours = toArray(info?.hours);
+  const canEditPeriodFields = canEditDayPeriod({
+    date: info?.date,
+    roleKind: context?.roleKind,
+    checkPeriod: context?.checkPeriod,
+  });
+  const canEditHealthFields = canEditDayHealth({
+    date: info?.date,
+    hours,
+  });
 
   return {
     title: user?.user_name || "Сведения о сотруднике",
@@ -70,7 +142,10 @@ export function buildDayModalViewModel(response) {
       name: item?.name ?? "",
     })),
     healthOptions: STAFF_SCHEDULE_HEALTH_OPTIONS,
-    hours: toArray(info?.hours).map((item, index) => ({
+    canEditHours: canEditPeriodFields,
+    canEditAssignment: canEditPeriodFields,
+    canEditHealth: canEditHealthFields,
+    hours: hours.map((item, index) => ({
       id: `${item?.time_start || "start"}-${item?.time_end || "end"}-${index}`,
       time_start: item?.time_start ?? "",
       time_end: item?.time_end ?? "",
@@ -89,9 +164,10 @@ export function buildDayModalViewModel(response) {
   };
 }
 
-export function buildMonthModalViewModel(response) {
+export function buildMonthModalViewModel(response, context = {}) {
   const info = response?.h_info ?? {};
   const user = info?.user ?? {};
+  const canEditMonth = isMegaOnlyRole(context?.roleKind) || !isPastMonth(context?.monthId);
 
   return {
     title: [user?.app_name, user?.user_name].filter(Boolean).join(" "),
@@ -106,6 +182,7 @@ export function buildMonthModalViewModel(response) {
       id: item?.id ?? "",
       name: item?.name ?? "",
     })),
+    canEditMonth,
     days: toArray(response?.hours_days).map((item, index) => ({
       id: `${item?.date || "date"}-${index}`,
       date: item?.date ?? "",
@@ -175,17 +252,22 @@ export function toggleMonthDay(draft, date, selectedType) {
 }
 
 export function buildMonthSavePayload(request, draft) {
-  return {
+  const payload = {
     date: request?.date,
     user_id: request?.user_id,
     app_id: request?.app_id,
     smena_id: request?.smena_id,
-    new_app: draft.newApp || "",
-    mentor_id: draft.mentorId || "",
     dates: draft.dates.map((item) => ({
       date: item.date,
       time_start: item.time_start ?? "",
       time_end: item.time_end ?? "",
     })),
   };
+
+  if (request?.canEditMonth) {
+    payload.new_app = draft.newApp || "";
+    payload.mentor_id = draft.mentorId || "";
+  }
+
+  return payload;
 }

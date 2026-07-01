@@ -15,6 +15,19 @@ export const v2Colors = {
   disabled: "#E5E7EB",
 };
 
+export const v2TableColors = {
+  rowHover: "#E5E5E5",
+  rowSelected: "#E5E5E5",
+  rowMuted: "#D3D3D3",
+  nameHover: "#E5E5E5",
+  weekend: "#FFE9BD",
+  sectionHeader: "#A9A9A9",
+  shiftHeader: "#E5E5E5",
+  bulkActionActive: "#FFF5F5",
+  bulkActionInactive: "#FFFFFF",
+  bulkActionBorder: "#E4E7EC",
+};
+
 export const v2Radii = {
   xs: "4px",
   sm: "8px",

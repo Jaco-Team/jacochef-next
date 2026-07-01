@@ -54,8 +54,13 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     () => JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current),
     [draft],
   );
+  const canEditMonth = Boolean(modal.data?.canEditMonth);
 
   const handleDayClick = (date) => {
+    if (!canEditMonth) {
+      return;
+    }
+
     setDraft((prev) => toggleMonthDay(prev, date, prev.selectedType));
   };
 
@@ -120,12 +125,12 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         day={pickerDay.day}
         selected={false}
         aria-selected={false}
-        onClick={() => handleDayClick(date)}
+        onClick={canEditMonth ? () => handleDayClick(date) : undefined}
         sx={{
           backgroundColor: dayItem ? typeMeta.color : "#ffffff",
           color: dayItem ? "#ffffff" : "rgba(0, 0, 0, 0.87)",
           fontWeight: dayItem ? 700 : 400,
-          cursor: "pointer",
+          cursor: canEditMonth ? "pointer" : "default",
           "&.Mui-selected, &.Mui-focusVisible, &:focus": {
             backgroundColor: dayItem ? typeMeta.color : "#ffffff",
           },
@@ -149,7 +154,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
           compact
           tone="success"
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !canEditMonth}
         >
           {isSaving ? "Сохранение..." : "Сохранить"}
         </V2Button>
@@ -194,6 +199,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                       }))
                     }
                     label="Кем работает"
+                    disabled={!canEditMonth}
                   />
                 </Grid>
               ) : null}
@@ -210,6 +216,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                       }))
                     }
                     label="Наставник"
+                    disabled={!canEditMonth}
                   />
                 </Grid>
               ) : null}
@@ -219,11 +226,14 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                   {MONTH_TYPE_PRESETS.map((preset) => (
                     <V2SelectableListItem
                       key={preset.type}
-                      onClick={() =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          selectedType: preset.type,
-                        }))
+                      onClick={
+                        canEditMonth
+                          ? () =>
+                              setDraft((prev) => ({
+                                ...prev,
+                                selectedType: preset.type,
+                              }))
+                          : undefined
                       }
                       sx={{
                         backgroundColor: preset.color,
@@ -231,6 +241,8 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                         mb: 0.5,
                         borderRadius: "8px",
                         justifyContent: "space-between",
+                        cursor: canEditMonth ? "pointer" : "default",
+                        opacity: canEditMonth ? 1 : 0.65,
                       }}
                     >
                       <Typography>{preset.label}</Typography>
@@ -261,7 +273,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                         compact
                         tone="secondary"
                         onClick={handleReset}
-                        disabled={isSaving}
+                        disabled={isSaving || !canEditMonth}
                       >
                         Сбросить
                       </V2Button>
