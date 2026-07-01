@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
@@ -59,6 +59,151 @@ const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
   backgroundColor,
   borderBottom: "1px solid #EDEDED",
 });
+
+function ScheduleTableHeaderRow({
+  days,
+  summaryColumns,
+  hasBulkSelection,
+  showFastActions,
+  isCalendarHidden,
+  positionHeaderLeft,
+  onOpenBulkFastActions,
+  stickyZIndex = 6,
+}) {
+  return (
+    <TableRow sx={{ backgroundColor: "#ffffff" }}>
+      <TableCell
+        sx={{
+          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, stickyZIndex),
+          p: 0,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Box
+            onClick={hasBulkSelection && showFastActions ? onOpenBulkFastActions : undefined}
+            sx={{
+              width: 24,
+              height: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: `1px solid ${v2TableColors.bulkActionBorder}`,
+              borderRadius: "4px",
+              cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
+              pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
+              opacity: hasBulkSelection && showFastActions ? 1 : 0.3,
+              backgroundColor:
+                hasBulkSelection && showFastActions
+                  ? v2TableColors.bulkActionActive
+                  : v2TableColors.bulkActionInactive,
+            }}
+          >
+            <SwapHorizRoundedIcon
+              sx={{
+                color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
+                fontSize: 18,
+              }}
+            />
+          </Box>
+        </Box>
+      </TableCell>
+      <TableCell
+        sx={{
+          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, stickyZIndex),
+          fontWeight: 500,
+        }}
+      >
+        Сотрудник
+      </TableCell>
+      <TableCell
+        sx={{
+          ...stickyCellSx(POSITION_COLUMN_WIDTH, positionHeaderLeft, stickyZIndex),
+          fontWeight: 500,
+        }}
+      >
+        Должность
+      </TableCell>
+
+      {showFastActions ? (
+        <TableCell
+          sx={{
+            ...stickyCellSx(
+              ACTION_COLUMN_WIDTH,
+              positionHeaderLeft + POSITION_COLUMN_WIDTH,
+              stickyZIndex,
+            ),
+            p: 0,
+          }}
+        />
+      ) : null}
+
+      {!isCalendarHidden
+        ? days.map((day, index) => (
+            <TableCell
+              key={`${day?.date || index}-day-num`}
+              align="center"
+              sx={{
+                minWidth: DAY_COLUMN_WIDTH,
+                backgroundColor:
+                  day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
+                    ? v2TableColors.weekend
+                    : "#ffffff",
+                fontWeight: 500,
+                color: "#666666",
+                py: 1,
+                px: 0.25,
+              }}
+            >
+              <Stack spacing={0.25}>
+                <Typography sx={{ fontSize: 12, lineHeight: 1 }}>{day?.day ?? ""}</Typography>
+                <Typography sx={{ fontSize: 13, lineHeight: 1.1 }}>{day?.date ?? ""}</Typography>
+              </Stack>
+            </TableCell>
+          ))
+        : null}
+
+      {summaryColumns.map((column) => (
+        <TableCell
+          key={`head-bottom-${column.key}`}
+          align="center"
+          sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontWeight: 700, fontSize: 11, px: 0.5 }}
+        >
+          {column.label}
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+}
+
+function ScheduleTableColGroup({ dayCount, summaryColumnCount, showFastActions }) {
+  return (
+    <colgroup>
+      <col style={{ width: SELECTION_COLUMN_WIDTH }} />
+      <col style={{ width: EMPLOYEE_COLUMN_WIDTH }} />
+      <col style={{ width: POSITION_COLUMN_WIDTH }} />
+      {showFastActions ? <col style={{ width: ACTION_COLUMN_WIDTH }} /> : null}
+      {Array.from({ length: dayCount }).map((_, index) => (
+        <col
+          key={`day-col-${index}`}
+          style={{ width: DAY_COLUMN_WIDTH }}
+        />
+      ))}
+      {Array.from({ length: summaryColumnCount }).map((_, index) => (
+        <col
+          key={`summary-col-${index}`}
+          style={{ width: SUMMARY_COLUMN_WIDTH }}
+        />
+      ))}
+    </colgroup>
+  );
+}
 
 function ScheduleRow({
   row,
@@ -499,6 +644,17 @@ export default function StaffScheduleTableSection({
   onColorModeChange,
 }) {
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
+  const [stickyHeader, setStickyHeader] = useState({
+    visible: false,
+    left: 0,
+    top: 0,
+    width: 0,
+  });
+  const tableRef = useRef(null);
+  const tableHeadRef = useRef(null);
+  const tableContainerRef = useRef(null);
+  const stickyHeaderContainerRef = useRef(null);
+  const isSyncingScrollRef = useRef(false);
   const days = toArray(period?.meta?.days);
   const visibleRows = toArray(rows);
   const { canAccess, canView, canEdit } = useMemo(
@@ -529,6 +685,13 @@ export default function StaffScheduleTableSection({
     EMPLOYEE_COLUMN_WIDTH +
     POSITION_COLUMN_WIDTH +
     (showFastActions ? ACTION_COLUMN_WIDTH : 0);
+  const tableWidth =
+    SELECTION_COLUMN_WIDTH +
+    EMPLOYEE_COLUMN_WIDTH +
+    POSITION_COLUMN_WIDTH +
+    (showFastActions ? ACTION_COLUMN_WIDTH : 0) +
+    renderedDayCount * DAY_COLUMN_WIDTH +
+    summaryColumns.length * SUMMARY_COLUMN_WIDTH;
   const toolbarControlMinWidth = { xs: "100%", md: 240 };
   const bonusDayValues = toArray(period?.meta?.bonus);
   const slowOrderValues = toArray(period?.meta?.order_stat);
@@ -550,6 +713,119 @@ export default function StaffScheduleTableSection({
     (!isCalendarHidden && canShowRolls) ||
     (!isCalendarHidden && canShowPizza) ||
     (!isCalendarHidden && canShowSlowOrders);
+
+  const syncScrollPosition = useCallback((source, target) => {
+    if (!source || !target || target.scrollLeft === source.scrollLeft) {
+      return;
+    }
+
+    isSyncingScrollRef.current = true;
+    target.scrollLeft = source.scrollLeft;
+    requestAnimationFrame(() => {
+      isSyncingScrollRef.current = false;
+    });
+  }, []);
+
+  const syncStickyHeaderPosition = useCallback(() => {
+    const currentTable = tableRef.current;
+    const currentHead = tableHeadRef.current;
+    const currentContainer = tableContainerRef.current;
+
+    if (!currentTable || !currentHead || !currentContainer) {
+      return;
+    }
+
+    const appToolbar = document.querySelector(".MuiAppBar-root .MuiToolbar-root");
+    const appBar = document.querySelector(".MuiAppBar-root");
+    const stickyTop = Math.round(
+      appToolbar?.getBoundingClientRect().height || appBar?.getBoundingClientRect().height || 0,
+    );
+    const tableRect = currentTable.getBoundingClientRect();
+    const headRect = currentHead.getBoundingClientRect();
+    const containerRect = currentContainer.getBoundingClientRect();
+    const shouldShow = headRect.top <= stickyTop && tableRect.bottom > stickyTop + headRect.height;
+
+    setStickyHeader((prev) => {
+      const nextState = {
+        visible: shouldShow,
+        left: Math.round(containerRect.left),
+        top: stickyTop,
+        width: Math.round(containerRect.width),
+      };
+
+      return prev.visible === nextState.visible &&
+        prev.left === nextState.left &&
+        prev.top === nextState.top &&
+        prev.width === nextState.width
+        ? prev
+        : nextState;
+    });
+
+    if (stickyHeaderContainerRef.current) {
+      syncScrollPosition(currentContainer, stickyHeaderContainerRef.current);
+    }
+  }, [syncScrollPosition]);
+
+  useEffect(() => {
+    syncStickyHeaderPosition();
+
+    const handleWindowChange = () => {
+      syncStickyHeaderPosition();
+    };
+    const handleTableScroll = () => {
+      if (isSyncingScrollRef.current) {
+        return;
+      }
+
+      if (stickyHeaderContainerRef.current && tableContainerRef.current) {
+        syncScrollPosition(tableContainerRef.current, stickyHeaderContainerRef.current);
+      }
+    };
+    const handleStickyHeaderScroll = () => {
+      if (isSyncingScrollRef.current) {
+        return;
+      }
+
+      if (stickyHeaderContainerRef.current && tableContainerRef.current) {
+        syncScrollPosition(stickyHeaderContainerRef.current, tableContainerRef.current);
+      }
+    };
+    const currentContainer = tableContainerRef.current;
+    const currentStickyHeaderContainer = stickyHeaderContainerRef.current;
+
+    window.addEventListener("scroll", handleWindowChange, { passive: true });
+    window.addEventListener("resize", handleWindowChange);
+    currentContainer?.addEventListener("scroll", handleTableScroll, { passive: true });
+    currentStickyHeaderContainer?.addEventListener("scroll", handleStickyHeaderScroll, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleWindowChange);
+      window.removeEventListener("resize", handleWindowChange);
+      currentContainer?.removeEventListener("scroll", handleTableScroll);
+      currentStickyHeaderContainer?.removeEventListener("scroll", handleStickyHeaderScroll);
+    };
+  }, [stickyHeader.visible, syncScrollPosition, syncStickyHeaderPosition]);
+
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      syncStickyHeaderPosition();
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [
+    collapsedShiftIds,
+    days.length,
+    hasBulkSelection,
+    isCalendarHidden,
+    rows,
+    showFastActions,
+    summaryColumns,
+    syncStickyHeaderPosition,
+  ]);
 
   if (!days.length && !visibleRows.length) {
     return (
@@ -652,7 +928,68 @@ export default function StaffScheduleTableSection({
         </Stack>
       </Stack>
 
+      {stickyHeader.visible ? (
+        <Box
+          sx={{
+            position: "fixed",
+            left: stickyHeader.left,
+            top: stickyHeader.top,
+            width: stickyHeader.width,
+            zIndex: 1200,
+            boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
+            borderTop: "1px solid #ECECEC",
+            borderBottom: "1px solid #ECECEC",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <TableContainer
+            ref={stickyHeaderContainerRef}
+            sx={{
+              overflowX: "auto",
+              overflowY: "hidden",
+              scrollbarWidth: "none",
+              "&::-webkit-scrollbar": {
+                display: "none",
+              },
+            }}
+          >
+            <Table
+              size="small"
+              sx={{
+                width: tableWidth,
+                minWidth: tableWidth,
+                tableLayout: "fixed",
+                borderCollapse: "separate",
+                borderSpacing: 0,
+                "& .MuiTableCell-root": {
+                  borderColor: "#EDEDED",
+                },
+              }}
+            >
+              <ScheduleTableColGroup
+                dayCount={renderedDayCount}
+                summaryColumnCount={summaryColumns.length}
+                showFastActions={showFastActions}
+              />
+              <TableHead>
+                <ScheduleTableHeaderRow
+                  days={days}
+                  summaryColumns={summaryColumns}
+                  hasBulkSelection={hasBulkSelection}
+                  showFastActions={showFastActions}
+                  isCalendarHidden={isCalendarHidden}
+                  positionHeaderLeft={positionHeaderLeft}
+                  onOpenBulkFastActions={onOpenBulkFastActions}
+                  stickyZIndex={8}
+                />
+              </TableHead>
+            </Table>
+          </TableContainer>
+        </Box>
+      ) : null}
+
       <TableContainer
+        ref={tableContainerRef}
         sx={{
           overflowX: "auto",
           borderTop: "1px solid #ECECEC",
@@ -660,9 +997,12 @@ export default function StaffScheduleTableSection({
         }}
       >
         <Table
+          ref={tableRef}
           size="small"
           sx={{
-            minWidth: 980,
+            width: tableWidth,
+            minWidth: tableWidth,
+            tableLayout: "fixed",
             borderCollapse: "separate",
             borderSpacing: 0,
             "& .MuiTableCell-root": {
@@ -670,121 +1010,21 @@ export default function StaffScheduleTableSection({
             },
           }}
         >
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#ffffff" }}>
-              <TableCell
-                sx={{
-                  ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 6),
-                  p: 0,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box
-                    onClick={
-                      hasBulkSelection && showFastActions ? onOpenBulkFastActions : undefined
-                    }
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: `1px solid ${v2TableColors.bulkActionBorder}`,
-                      borderRadius: "4px",
-                      cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
-                      pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
-                      opacity: hasBulkSelection && showFastActions ? 1 : 0.3,
-                      backgroundColor:
-                        hasBulkSelection && showFastActions
-                          ? v2TableColors.bulkActionActive
-                          : v2TableColors.bulkActionInactive,
-                    }}
-                  >
-                    <SwapHorizRoundedIcon
-                      sx={{
-                        color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
-                        fontSize: 18,
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </TableCell>
-              <TableCell
-                sx={{
-                  ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 6),
-                  fontWeight: 500,
-                }}
-              >
-                Сотрудник
-              </TableCell>
-              <TableCell
-                sx={{
-                  ...stickyCellSx(POSITION_COLUMN_WIDTH, positionHeaderLeft, 6),
-                  fontWeight: 500,
-                }}
-              >
-                Должность
-              </TableCell>
-
-              {showFastActions ? (
-                <TableCell
-                  sx={{
-                    ...stickyCellSx(
-                      ACTION_COLUMN_WIDTH,
-                      positionHeaderLeft + POSITION_COLUMN_WIDTH,
-                      6,
-                    ),
-                    p: 0,
-                  }}
-                />
-              ) : null}
-
-              {!isCalendarHidden
-                ? days.map((day, index) => (
-                    <TableCell
-                      key={`${day?.date || index}-day-num`}
-                      align="center"
-                      sx={{
-                        minWidth: DAY_COLUMN_WIDTH,
-                        backgroundColor:
-                          day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                            ? v2TableColors.weekend
-                            : "#ffffff",
-                        fontWeight: 500,
-                        color: "#666666",
-                        py: 1,
-                        px: 0.25,
-                      }}
-                    >
-                      <Stack spacing={0.25}>
-                        <Typography sx={{ fontSize: 12, lineHeight: 1 }}>
-                          {day?.day ?? ""}
-                        </Typography>
-                        <Typography sx={{ fontSize: 13, lineHeight: 1.1 }}>
-                          {day?.date ?? ""}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                  ))
-                : null}
-
-              {summaryColumns.map((column) => (
-                <TableCell
-                  key={`head-bottom-${column.key}`}
-                  align="center"
-                  sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontWeight: 700, fontSize: 11, px: 0.5 }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
+          <ScheduleTableColGroup
+            dayCount={renderedDayCount}
+            summaryColumnCount={summaryColumns.length}
+            showFastActions={showFastActions}
+          />
+          <TableHead ref={tableHeadRef}>
+            <ScheduleTableHeaderRow
+              days={days}
+              summaryColumns={summaryColumns}
+              hasBulkSelection={hasBulkSelection}
+              showFastActions={showFastActions}
+              isCalendarHidden={isCalendarHidden}
+              positionHeaderLeft={positionHeaderLeft}
+              onOpenBulkFastActions={onOpenBulkFastActions}
+            />
           </TableHead>
 
           <TableBody>

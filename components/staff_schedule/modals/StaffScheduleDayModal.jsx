@@ -3,6 +3,7 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import {
   Box,
   ClickAwayListener,
@@ -337,7 +338,7 @@ function TimeRow({ item, onRemove }) {
         alignItems="center"
         sx={{ minWidth: 0 }}
       >
-        <AddTimeIcon sx={{ fontSize: 22, color: "#A6A6A6", transform: "rotate(180deg)" }} />
+        <ScheduleIcon sx={{ fontSize: 20, color: "#A6A6A6" }} />
         <Typography sx={{ fontSize: 16, color: "#666666", lineHeight: 1.25 }}>
           {[item.time_start, item.time_end].filter(Boolean).join("-") || "—"}
         </Typography>
