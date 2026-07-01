@@ -581,9 +581,9 @@ function EndPage() {
         "m.vk.ru",
         "away.vk.com",
       ],
-      Рефералы: ["promokodi.net", "jacofood.ru", "link.2gis.ru", "suggest.sso.dzen.ru"],
-      "Рекламные системы": ["direct", "vk_ads", "yandex_direct"],
-      "Прямые заходы": ["none", "(direct)"],
+      Рефералы: ["referral", "promokodi.net", "jacofood.ru", "link.2gis.ru", "suggest.sso.dzen.ru"],
+      "Рекламные системы": ["vk_ads", "yandex_direct"],
+      "Прямой трафик": ["direct", "none", "(direct)"],
       Другое: [],
     };
 
@@ -622,7 +622,7 @@ function EndPage() {
     const isSocialSource = (value) => matchesKnownValue(value, trafficGroups["Социальные сети"]);
     const isReferralSource = (value) => matchesKnownValue(value, trafficGroups["Рефералы"]);
     const isAdSource = (value) => matchesKnownValue(value, trafficGroups["Рекламные системы"]);
-    const isDirectVisitSource = (value) => matchesKnownValue(value, trafficGroups["Прямые заходы"]);
+    const isDirectVisitSource = (value) => matchesKnownValue(value, trafficGroups["Прямой трафик"]);
     const isAdMedium = (value) => {
       const normalized = normalizeTrafficValue(value);
       return adMediumPatterns.some((pattern) => normalized.includes(pattern));
@@ -635,7 +635,7 @@ function EndPage() {
     const getGroupName = (sourceName, mediumName = "") => {
       const medium = normalizeTrafficValue(mediumName);
 
-      if (isDirectVisitSource(sourceName)) return "Прямые заходы";
+      if (isDirectVisitSource(sourceName)) return "Прямой трафик";
       if (isAdSource(sourceName) || isAdMedium(medium)) return "Рекламные системы";
       if (
         medium === "referral" ||
@@ -654,8 +654,9 @@ function EndPage() {
       const source = normalizeTrafficValue(sourceName);
       const medium = normalizeTrafficValue(mediumName);
 
+      if (isDirectVisitSource(source)) return "Прямой трафик";
       if (medium === "organic") return "Органика";
-      if (medium === "referral") return "Рефералы";
+      if (medium === "referral" || isReferralSource(source)) return "Рефералы";
       if (medium === "social") return "Социальные сети";
       if (medium === "email") return "E-mail рассылки";
       if (isAdSource(source) || isAdMedium(medium)) return "Контекстная реклама";
@@ -665,7 +666,7 @@ function EndPage() {
         medium === "(direct)" ||
         medium === "(utm)"
       )
-        return "Прямые заходы";
+        return "Прямой трафик";
 
       return mediumName || "not_set";
     };
@@ -815,6 +816,55 @@ function EndPage() {
     return calculateMetricsForGroupedData(Object.values(result));
   };
 
+  const normalizeBackendCategoryLevel = (level) => {
+    switch (level) {
+      case "traffic_category":
+        return "src_source_group";
+      case "normalized_source":
+        return "src_source_detailed";
+      case "normalized_medium":
+        return "src_platform";
+      case "normalized_campaign":
+        return "src_campaign";
+      case "normalized_term":
+        return "src_term";
+      case "normalized_content":
+        return "src_content";
+      default:
+        return level;
+    }
+  };
+
+  const transformBackendTrafficCategoryNode = (node, parentId = "site_category") => {
+    const level = normalizeBackendCategoryLevel(node.level);
+    const id = `${parentId}_${node.traffic_category || node.value || node.name}_${level}`;
+
+    return rollupMetricsFromChildren({
+      id,
+      name: node.name,
+      value: node.value,
+      sourceType: "site",
+      level,
+      visits: parseMetric(node.visits),
+      cost: parseMetric(node.cost),
+      orders: parseMetric(node.orders),
+      revenue: parseMetric(node.revenue),
+      ...pickDerivedMetrics(node),
+      newClients: parseMetric(node.newClients),
+      existingClients: parseMetric(node.existingClients),
+      primaryOrders: parseMetric(node.primaryOrders),
+      repeatOrders: parseMetric(node.repeatOrders),
+      traffic_category: node.traffic_category,
+      traffic_category_label: node.traffic_category_label,
+      normalized_source: node.normalized_source,
+      normalized_medium: node.normalized_medium,
+      useServerMetrics: true,
+      children: Array.isArray(node.children)
+        ? node.children.map((child) => transformBackendTrafficCategoryNode(child, id))
+        : [],
+    });
+  };
+
   // Простая трансформация детей без перегруппировки
   const transformUtmChildrenSimple = (children, sourceName) => {
     if (!children || !Array.isArray(children)) return [];
@@ -845,9 +895,18 @@ function EndPage() {
   const formatApiData = (apiData) => {
     const result = [];
 
-    if (apiData.site_data && typeof apiData.site_data === "object") {
-      // Используем новую функцию группировки
-      const groupedData = regroupByTrafficSource(apiData.site_data);
+    const hasCategorySiteData =
+      apiData.site_data_by_category &&
+      typeof apiData.site_data_by_category === "object" &&
+      Object.keys(apiData.site_data_by_category).length > 0;
+
+    if (hasCategorySiteData || (apiData.site_data && typeof apiData.site_data === "object")) {
+      const siteSourceRows = hasCategorySiteData
+        ? Object.values(apiData.site_data_by_category)
+        : Object.values(apiData.site_data);
+      const groupedData = hasCategorySiteData
+        ? siteSourceRows.map((item) => transformBackendTrafficCategoryNode(item))
+        : regroupByTrafficSource(apiData.site_data);
 
       if (groupedData.length > 0) {
         const siteTotal = aggregateTotalRow(
@@ -860,7 +919,7 @@ function EndPage() {
           groupedData,
         );
 
-        applyTotalMetricsFromRows(siteTotal, Object.values(apiData.site_data));
+        applyTotalMetricsFromRows(siteTotal, siteSourceRows);
 
         result.push(siteTotal);
       }
