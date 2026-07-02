@@ -799,11 +799,13 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
-            {Object.entries(this.state.pizzaLine).length ? (
+            {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
+              planFulfillment: true,
+            })}
+            {Object.entries(this.state.ordersLine).length ? (
               <StatSaleYearlyLineChart
-                rawData={this.state.pizzaLine}
-                title="Динамика пиццы по годам"
+                rawData={this.state.ordersLine}
+                title="Динамика заказов по годам"
                 dateStart={this.state.date_start}
                 dateEnd={this.state.date_end}
               />
@@ -817,13 +819,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 dateEnd={this.state.date_end}
               />
             ) : null}
-            {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
-              planFulfillment: true,
-            })}
-            {Object.entries(this.state.ordersLine).length ? (
+            {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
+            {Object.entries(this.state.pizzaLine).length ? (
               <StatSaleYearlyLineChart
-                rawData={this.state.ordersLine}
-                title="Динамика заказов по годам"
+                rawData={this.state.pizzaLine}
+                title="Динамика пиццы по годам"
                 dateStart={this.state.date_start}
                 dateEnd={this.state.date_end}
               />
