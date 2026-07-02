@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Alert, V2Button, V2CompactTabs, V2Select, useConfirm } from "@/ui/v2";
+import { V2Alert, V2Button, V2SegmentedTabs, V2Select, useConfirm } from "@/ui/v2";
 import { createStaffScheduleAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -132,6 +132,7 @@ function InlineActions({
         disabled={saving}
         sx={{
           minWidth: 120,
+          minHeight: 44,
           borderRadius: "12px",
           color: "#666666",
           fontWeight: 500,
@@ -147,6 +148,7 @@ function InlineActions({
         startIcon={!saving ? <CheckRoundedIcon /> : null}
         sx={{
           minWidth: 122,
+          minHeight: 44,
           borderRadius: "12px",
           fontWeight: 500,
           "&.Mui-disabled": {
@@ -167,11 +169,11 @@ function SubScreenPanel({ title, onBack, children, actions }) {
       sx={{
         backgroundColor: "#F2F2F2",
         borderRadius: "12px",
-        p: 1.5,
+        p: 2,
         minHeight: 288,
       }}
     >
-      <Stack spacing={1.5}>
+      <Stack spacing={2}>
         <Stack
           direction="row"
           spacing={1.5}
@@ -182,12 +184,12 @@ function SubScreenPanel({ title, onBack, children, actions }) {
             tone="secondary"
             onClick={onBack}
             sx={{
-              minWidth: 44,
-              width: 44,
-              height: 44,
+              minWidth: 52,
+              width: 52,
+              height: 52,
               p: 0,
               border: "none",
-              borderRadius: "10px",
+              borderRadius: "12px",
               color: "#A6A6A6",
               backgroundColor: "#FFFFFF",
               "&:hover": { backgroundColor: "#FFFFFF" },
@@ -201,6 +203,30 @@ function SubScreenPanel({ title, onBack, children, actions }) {
         {actions}
       </Stack>
     </Box>
+  );
+}
+
+function EditStepSegmentedTabs(props) {
+  return (
+    <V2SegmentedTabs
+      sx={{
+        backgroundColor: "#E5E5E5",
+        borderRadius: "12px",
+        p: 0.25,
+        "& .Mui-selected": {
+          backgroundColor: "#FFFFFF",
+          color: "#EE2737 !important",
+          boxShadow: "none",
+        },
+      }}
+      tabSx={{
+        minHeight: 50,
+        borderRadius: "8px",
+        fontSize: 18,
+        fontWeight: 500,
+      }}
+      {...props}
+    />
   );
 }
 
@@ -510,7 +536,7 @@ export default function StaffScheduleFastActionsDialog({
           }
         >
           {canMonth && canWeek ? (
-            <V2CompactTabs
+            <EditStepSegmentedTabs
               value={scheduleScope}
               onChange={(_, value) => {
                 setScheduleScope(value);
@@ -522,24 +548,6 @@ export default function StaffScheduleFastActionsDialog({
                 { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
                 { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
               ]}
-              sx={{
-                backgroundColor: "#E5E5E5",
-                borderRadius: "12px",
-                p: 0.5,
-                "& .MuiTabs-indicator": { display: "none" },
-                "& .MuiTab-root": {
-                  minHeight: 46,
-                  borderRadius: "8px",
-                  fontSize: 18,
-                  fontWeight: 500,
-                  textTransform: "none",
-                  color: "#666666",
-                },
-                "& .Mui-selected": {
-                  backgroundColor: "#FFFFFF",
-                  color: "#EE2737",
-                },
-              }}
             />
           ) : null}
 
@@ -615,23 +623,24 @@ export default function StaffScheduleFastActionsDialog({
             />
           }
         >
-          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
-            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>Выбери город</Typography>
-            <V2Select
-              options={cityOptions}
-              value={pendingPointCity}
-              onChange={(event) => {
-                const nextCity = String(event.target.value);
+          <EditStepSegmentedTabs
+            value={pendingPointCity}
+            onChange={(_, value) => {
+              const nextCity = String(value);
 
-                setPendingPointCity(nextCity);
-                setPendingPointId("");
-              }}
-              label="Смена"
-              allowNone={false}
-            />
-          </Box>
-          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
-            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>Выбери кафе</Typography>
+              setPendingPointCity(nextCity);
+              setPendingPointId("");
+            }}
+            items={cityOptions}
+            tabSx={{
+              minHeight: 46,
+              borderRadius: "8px",
+              fontSize: 16,
+              fontWeight: 500,
+            }}
+          />
+          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 2 }}>
+            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1.25 }}>Выбери кафе</Typography>
             <V2Select
               options={filteredPointOptions}
               value={pendingPointId || "current"}

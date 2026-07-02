@@ -42,16 +42,24 @@ export function buildScheduleOptions(scope, selectedPart) {
 
 export function getCurrentScheduleDisplay(user) {
   const text = user?.current_schedule_text ?? user?.current_schedule?.text ?? "";
+  const pattern = user?.current_schedule?.pattern ?? "";
+  const workDays = Array.isArray(user?.current_schedule?.work_days)
+    ? user.current_schedule.work_days
+    : [];
 
-  if (!text) {
+  if (!text && workDays.length === 0) {
     return null;
+  }
+
+  if (!pattern && workDays.length > 1) {
+    return "Персональные";
   }
 
   if (text.includes("2/2") && !text.includes("10:00")) {
     return `${text}${SCHEDULE_TIME_SUFFIX}`;
   }
 
-  return text;
+  return text || "Персональные";
 }
 
 export function mapStartDayToScheduleType(startDay, scope, selectedPart) {
