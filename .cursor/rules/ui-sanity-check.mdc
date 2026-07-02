@@ -1,0 +1,34 @@
+---
+description: Mandatory UI sanity check before reporting UI tasks done
+alwaysApply: true
+---
+
+# UI Sanity Check Before Done
+
+Do not mark a UI task complete until sibling controls on the same row/section look consistent.
+
+## Required Before Close-Out
+
+When adding or changing buttons, toggles, fields, or toolbar items on a page that already has a visual language:
+
+1. Read the nearest existing control in the same toolbar/row/modal.
+2. Reuse the same shell: height, border radius, border color, padding, label typography, min-width.
+3. Prefer the page's existing `sx` preset/box shell over raw MUI `Button`/`TextField` defaults.
+4. Verify in browser or screenshot at desktop width before reporting done.
+
+## Staff Schedule Table Toolbar Preset
+
+Controls in the table toolbar row must match:
+
+- Shell: 44px min-height, 18px radius, `#E5E5E5` border, white background, 240px min-width on desktop
+- Label: 14px, weight 500, `#666666`, line-height 1.25
+- Layout: same outlined field shell as `Календарь` / `Цветовые обозначения`
+
+Do not use MUI `Button` defaults in that row unless typography and height visibly match the switch fields.
+
+## Fail Conditions
+
+- Label font clearly larger/smaller than siblings
+- Different control height or corner radius in the same toolbar
+- New control uses theme defaults while neighbors use custom shells
+- Reporting "done" without checking parity against adjacent UI

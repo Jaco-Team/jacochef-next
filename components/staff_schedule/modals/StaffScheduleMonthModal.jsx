@@ -1,0 +1,291 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import SendIcon from "@mui/icons-material/Send";
+import { Box, Grid, Stack, Typography } from "@mui/material";
+import dayjs from "dayjs";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import {
+  V2Alert,
+  V2Button,
+  V2DatePickerGraph,
+  V2Select,
+  V2SelectableList,
+  V2SelectableListItem,
+  useConfirm,
+} from "@/ui/v2";
+import {
+  buildMonthModalDraft,
+  buildMonthSavePayload,
+  MONTH_TYPE_PRESETS,
+  toggleMonthDay,
+} from "../staffScheduleModalViewModel";
+import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+
+function getTypeMeta(type) {
+  return MONTH_TYPE_PRESETS.find((item) => item.type === Number(type)) || MONTH_TYPE_PRESETS[0];
+}
+
+export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
+  const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
+  const initialDraftRef = useRef(buildMonthModalDraft(modal.data));
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  const monthValue = modal.request?.date || "";
+  const daysMap = useMemo(
+    () => new Map(draft.dates.map((item) => [item.date, item])),
+    [draft.dates],
+  );
+
+  useEffect(() => {
+    if (!modal.open) {
+      return;
+    }
+
+    const nextDraft = buildMonthModalDraft(modal.data);
+
+    initialDraftRef.current = nextDraft;
+    setDraft(nextDraft);
+    setSaveError("");
+    setIsSaving(false);
+  }, [modal.open, modal.data]);
+
+  const hasChanges = useMemo(
+    () => JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current),
+    [draft],
+  );
+  const canEditMonth = Boolean(modal.data?.canEditMonth);
+
+  const handleDayClick = (date) => {
+    if (!canEditMonth) {
+      return;
+    }
+
+    setDraft((prev) => toggleMonthDay(prev, date, prev.selectedType));
+  };
+
+  const handleReset = () => {
+    setDraft(buildMonthModalDraft(modal.data));
+    setSaveError("");
+  };
+
+  const handleSave = async () => {
+    if (!onSave || !modal.request) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      await onSave(buildMonthSavePayload(modal.request, draft));
+    } catch (error) {
+      setSaveError(error?.message || "Не удалось сохранить месяц");
+      setIsSaving(false);
+    }
+  };
+
+  const handleRequestClose = async () => {
+    if (isSaving) {
+      return;
+    }
+
+    if (!hasChanges) {
+      onClose?.();
+      return;
+    }
+
+    const shouldSave = await confirm({
+      message: (
+        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
+          Данные были изменены.
+          <br />
+          Сохранить изменения?
+        </Typography>
+      ),
+      confirmLabel: "Да, сохранить",
+    });
+
+    if (shouldSave) {
+      await handleSave();
+      return;
+    }
+
+    onClose?.();
+  };
+
+  const renderWeekPickerDay = (pickerDay) => {
+    const date = dayjs(pickerDay.day).format("YYYY-MM-DD");
+    const dayItem = daysMap.get(date);
+    const typeMeta = getTypeMeta(dayItem?.type);
+
+    return (
+      <PickersDay
+        {...pickerDay}
+        day={pickerDay.day}
+        selected={false}
+        aria-selected={false}
+        onClick={canEditMonth ? () => handleDayClick(date) : undefined}
+        sx={{
+          backgroundColor: dayItem ? typeMeta.color : "#ffffff",
+          color: dayItem ? "#ffffff" : "rgba(0, 0, 0, 0.87)",
+          fontWeight: dayItem ? 700 : 400,
+          cursor: canEditMonth ? "pointer" : "default",
+          "&.Mui-selected, &.Mui-focusVisible, &:focus": {
+            backgroundColor: dayItem ? typeMeta.color : "#ffffff",
+          },
+          "&.Mui-selected:hover, &:hover": {
+            backgroundColor: dayItem ? typeMeta.color : "rgba(0, 0, 0, 0.04)",
+          },
+        }}
+      />
+    );
+  };
+
+  const actions =
+    modal.loading || !modal.data ? null : (
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ pt: 1, width: "100%" }}
+      >
+        <V2Button
+          compact
+          tone="success"
+          onClick={handleSave}
+          disabled={isSaving || !canEditMonth}
+        >
+          {isSaving ? "Сохранение..." : "Сохранить"}
+        </V2Button>
+        <V2Button
+          compact
+          tone="danger"
+          onClick={handleRequestClose}
+          disabled={isSaving}
+        >
+          Отмена
+        </V2Button>
+      </Stack>
+    );
+
+  return (
+    <>
+      <StaffScheduleResponsiveModal
+        open={modal.open}
+        onClose={handleRequestClose}
+        title={modal.data?.title || "Месячные часы"}
+        maxWidth="md"
+        actions={actions}
+      >
+        <Stack spacing={2}>
+          {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
+          {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
+
+          {!modal.loading && modal.data ? (
+            <Grid
+              container
+              spacing={2}
+            >
+              {modal.data.otherApps?.length ? (
+                <Grid size={12}>
+                  <V2Select
+                    options={modal.data.otherApps}
+                    value={draft.newApp}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        newApp: event.target.value,
+                      }))
+                    }
+                    label="Кем работает"
+                    disabled={!canEditMonth}
+                  />
+                </Grid>
+              ) : null}
+
+              {modal.data.mentorList?.length ? (
+                <Grid size={12}>
+                  <V2Select
+                    options={modal.data.mentorList}
+                    value={draft.mentorId}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        mentorId: event.target.value,
+                      }))
+                    }
+                    label="Наставник"
+                    disabled={!canEditMonth}
+                  />
+                </Grid>
+              ) : null}
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <V2SelectableList sx={{ borderRadius: "12px", overflow: "hidden" }}>
+                  {MONTH_TYPE_PRESETS.map((preset) => (
+                    <V2SelectableListItem
+                      key={preset.type}
+                      onClick={
+                        canEditMonth
+                          ? () =>
+                              setDraft((prev) => ({
+                                ...prev,
+                                selectedType: preset.type,
+                              }))
+                          : undefined
+                      }
+                      sx={{
+                        backgroundColor: preset.color,
+                        color: "#ffffff",
+                        mb: 0.5,
+                        borderRadius: "8px",
+                        justifyContent: "space-between",
+                        cursor: canEditMonth ? "pointer" : "default",
+                        opacity: canEditMonth ? 1 : 0.65,
+                      }}
+                    >
+                      <Typography>{preset.label}</Typography>
+                      {draft.selectedType === preset.type ? <SendIcon fontSize="small" /> : null}
+                    </V2SelectableListItem>
+                  ))}
+                </V2SelectableList>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                {monthValue ? (
+                  <Box
+                    sx={{
+                      border: "1px solid #E5E5E5",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      "& .MuiPickersLayout-root": { minWidth: 0 },
+                      "& .MuiDayCalendar-header": { px: 1 },
+                      "& .MuiPickersDay-root": { borderRadius: 1.5 },
+                    }}
+                  >
+                    <V2DatePickerGraph
+                      year={monthValue}
+                      renderWeekPickerDay={renderWeekPickerDay}
+                    />
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1.5, pt: 0 }}>
+                      <V2Button
+                        compact
+                        tone="secondary"
+                        onClick={handleReset}
+                        disabled={isSaving || !canEditMonth}
+                      >
+                        Сбросить
+                      </V2Button>
+                    </Box>
+                  </Box>
+                ) : null}
+              </Grid>
+            </Grid>
+          ) : null}
+        </Stack>
+      </StaffScheduleResponsiveModal>
+      <ConfirmDialog />
+    </>
+  );
+}
