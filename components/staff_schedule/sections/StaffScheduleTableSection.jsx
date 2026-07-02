@@ -16,6 +16,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import SmallFont from "@/ui/SmallFont";
 import { SummarySectionIcon } from "@/ui/icons";
 import {
   V2Button,
@@ -48,8 +49,19 @@ const stickyBaseSx = {
   position: "sticky",
 };
 
+const tableCellDividerSx = {
+  boxShadow: "inset -1px 0 0 #ECECEC, inset 0 -1px 0 #ECECEC",
+  backgroundClip: "padding-box",
+};
+
+const stickyBoundarySx = {
+  boxShadow:
+    "inset -1px 0 0 #E2E8F0, inset 0 -1px 0 #ECECEC, 10px 0 14px -14px rgba(15, 23, 42, 0.45)",
+};
+
 const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
   ...stickyBaseSx,
+  ...tableCellDividerSx,
   left,
   zIndex,
   width,
@@ -57,7 +69,7 @@ const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
   maxWidth: width,
   boxSizing: "border-box",
   backgroundColor,
-  borderBottom: "1px solid #EDEDED",
+  overflow: "hidden",
 });
 
 function ScheduleTableHeaderRow({
@@ -118,6 +130,7 @@ function ScheduleTableHeaderRow({
         sx={{
           ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, stickyZIndex),
           fontWeight: 500,
+          whiteSpace: "nowrap",
         }}
       >
         Сотрудник
@@ -126,6 +139,7 @@ function ScheduleTableHeaderRow({
         sx={{
           ...stickyCellSx(POSITION_COLUMN_WIDTH, positionHeaderLeft, stickyZIndex),
           fontWeight: 500,
+          ...(showFastActions ? null : stickyBoundarySx),
         }}
       >
         Должность
@@ -139,6 +153,7 @@ function ScheduleTableHeaderRow({
               positionHeaderLeft + POSITION_COLUMN_WIDTH,
               stickyZIndex,
             ),
+            ...stickyBoundarySx,
             p: 0,
           }}
         />
@@ -150,6 +165,7 @@ function ScheduleTableHeaderRow({
               key={`${day?.date || index}-day-num`}
               align="center"
               sx={{
+                ...tableCellDividerSx,
                 minWidth: DAY_COLUMN_WIDTH,
                 backgroundColor:
                   day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
@@ -173,9 +189,30 @@ function ScheduleTableHeaderRow({
         <TableCell
           key={`head-bottom-${column.key}`}
           align="center"
-          sx={{ minWidth: SUMMARY_COLUMN_WIDTH, fontWeight: 700, fontSize: 11, px: 0.5 }}
+          sx={{
+            ...tableCellDividerSx,
+            minWidth: SUMMARY_COLUMN_WIDTH,
+            fontWeight: 700,
+            fontSize: 10.5,
+            lineHeight: 1.15,
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            verticalAlign: "middle",
+            py: 0.75,
+            px: 0.5,
+          }}
         >
-          {column.label}
+          <SmallFont
+            style={{
+              display: "block",
+              fontSize: "10.5px",
+              lineHeight: "1.15",
+              textAlign: "center",
+            }}
+          >
+            {column.label}
+          </SmallFont>
         </TableCell>
       ))}
     </TableRow>
@@ -253,7 +290,6 @@ function ScheduleRow({
         className="checkBox"
         sx={{
           ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 5, rowSurfaceColor),
-          borderRight: "1px solid #E5E5E5",
           p: 0,
         }}
         onMouseEnter={() => setHoverMode("row")}
@@ -273,7 +309,6 @@ function ScheduleRow({
           ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 5, employeeCellColor),
           color: baseColors.color,
           fontWeight: 500,
-          borderRight: "1px solid #E5E7EB",
           py: 0.9,
           px: 1.5,
           cursor: canOpenMonth ? "pointer" : "default",
@@ -282,7 +317,10 @@ function ScheduleRow({
         onMouseLeave={() => setHoverMode(null)}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
       >
-        <Typography sx={{ fontSize: 14, lineHeight: 1.25 }}>
+        <Typography
+          sx={{ fontSize: 14, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden" }}
+          noWrap
+        >
           {data?.user_name || "Без имени"}
         </Typography>
       </TableCell>
@@ -290,7 +328,7 @@ function ScheduleRow({
       <TableCell
         sx={{
           ...stickyCellSx(POSITION_COLUMN_WIDTH, positionStickyLeft, 5, rowSurfaceColor),
-          borderRight: "1px solid #E5E7EB",
+          ...(showFastActions ? null : stickyBoundarySx),
           py: 0.9,
           px: 1.5,
         }}
@@ -310,7 +348,7 @@ function ScheduleRow({
               5,
               rowSurfaceColor,
             ),
-            borderRight: "1px solid #E5E7EB",
+            ...stickyBoundarySx,
             p: 0,
           }}
         >
@@ -343,6 +381,7 @@ function ScheduleRow({
                 key={`${day?.date || index}-${data?.id || data?.user_name || index}`}
                 align="center"
                 sx={{
+                  ...tableCellDividerSx,
                   minWidth: DAY_COLUMN_WIDTH,
                   px: 0.25,
                   py: 0.5,
@@ -412,6 +451,7 @@ function ScheduleRow({
               align="center"
               onClick={isClickable ? handleClick : undefined}
               sx={{
+                ...tableCellDividerSx,
                 minWidth: SUMMARY_COLUMN_WIDTH,
                 fontSize: 11.5,
                 px: 0.75,
@@ -506,6 +546,7 @@ function ShiftHeaderRow({
           colSpan={middleColSpan}
           onClick={handleToggle}
           sx={{
+            ...tableCellDividerSx,
             backgroundColor: headerBg,
             py: 0.75,
             px: 0,
@@ -517,6 +558,7 @@ function ShiftHeaderRow({
       <TableCell
         align="center"
         sx={{
+          ...tableCellDividerSx,
           position: "sticky",
           right: 0,
           textAlign: "right",
@@ -559,6 +601,7 @@ function SummaryMetricRow({
       <TableCell
         colSpan={stickyColumnCount}
         sx={{
+          ...tableCellDividerSx,
           minWidth: labelWidth,
           fontSize: 14,
           lineHeight: 1.3,
@@ -577,6 +620,7 @@ function SummaryMetricRow({
           align="center"
           className={compactValues ? "min_block min_size" : "min_block"}
           sx={{
+            ...tableCellDividerSx,
             minWidth: DAY_COLUMN_WIDTH,
             px: 0.25,
             py: 0.75,
@@ -596,6 +640,7 @@ function SummaryMetricRow({
           align="center"
           onClick={onSummaryCellClick ? () => onSummaryCellClick(column) : undefined}
           sx={{
+            ...tableCellDividerSx,
             minWidth: SUMMARY_COLUMN_WIDTH,
             px: 0.5,
             fontSize: compactValues ? 13.2 : 12,
