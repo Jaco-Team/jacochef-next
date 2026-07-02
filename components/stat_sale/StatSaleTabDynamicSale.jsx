@@ -193,6 +193,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
         const value = values.find((item) => item !== null && item !== undefined);
         return value !== undefined ? toNumber(value) : null;
       };
+      const getFactYoYPercent = (current, previousYear, backendValue) => {
+        const value = getFirstDefinedPercent(backendValue);
+        if (value !== null) return value;
+        return calcPercent(toNumber(current) - toNumber(previousYear), previousYear);
+      };
       const entries = Object.entries(res.res);
       entries.map(([key, value], index) => {
         const prevMonth = entries[index - 1]?.[1];
@@ -208,6 +213,15 @@ class StatSale_Tab_DynamicSale extends React.Component {
             planFact:
               getFirstDefinedPercent(value.pizza_plan_fact) ??
               calcPercent(value.pizza, value.pizza_plan),
+            factYoYPct: getFactYoYPercent(
+              value.pizza,
+              value.pizza_fact_prev_year,
+              value.pizza_fact_yoy,
+            ),
+            factYoYQty:
+              value.pizza_fact_yoy_delta !== null && value.pizza_fact_yoy_delta !== undefined
+                ? toNumber(value.pizza_fact_yoy_delta)
+                : toNumber(value.pizza) - toNumber(value.pizza_fact_prev_year),
             factDynPct: calcPercent(
               toNumber(value.pizza) - toNumber(prevMonth.pizza),
               prevMonth.pizza,
@@ -230,6 +244,15 @@ class StatSale_Tab_DynamicSale extends React.Component {
             planFact:
               getFirstDefinedPercent(value.rolly_plan_fact) ??
               calcPercent(value.rolly, value.rolly_plan),
+            factYoYPct: getFactYoYPercent(
+              value.rolly,
+              value.rolly_fact_prev_year,
+              value.rolly_fact_yoy,
+            ),
+            factYoYQty:
+              value.rolly_fact_yoy_delta !== null && value.rolly_fact_yoy_delta !== undefined
+                ? toNumber(value.rolly_fact_yoy_delta)
+                : toNumber(value.rolly) - toNumber(value.rolly_fact_prev_year),
             factDynPct: calcPercent(
               toNumber(value.rolly) - toNumber(prevMonth?.rolly),
               prevMonth?.rolly,
@@ -255,6 +278,17 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 value.order_fact_plan,
               ) ?? calcPercent(value.orders, value.orders_plan ?? value.order_plan),
             factQty: value.orders,
+            factYoYPct: getFactYoYPercent(
+              value.orders,
+              value.orders_fact_prev_year ?? value.order_fact_prev_year,
+              value.orders_fact_yoy ?? value.order_fact_yoy,
+            ),
+            factYoYQty:
+              value.orders_fact_yoy_delta !== null && value.orders_fact_yoy_delta !== undefined
+                ? toNumber(value.orders_fact_yoy_delta)
+                : toNumber(value.order_fact_yoy_delta) ||
+                  toNumber(value.orders) -
+                    toNumber(value.orders_fact_prev_year ?? value.order_fact_prev_year),
             factDynPct: calcPercent(
               toNumber(value.orders) - toNumber(prevMonth?.orders),
               prevMonth?.orders,
@@ -359,16 +393,43 @@ class StatSale_Tab_DynamicSale extends React.Component {
   }
 
   renderPizzaTable(pizzaArr, title, subTitle, options = {}) {
-    const { planFulfillment = false, tableKey = title } = options;
+    const { planFulfillment = false, tableKey = title, showFactYoY = true } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(String(value ?? "").replace(",", "."));
       return Number.isFinite(parsed) ? parsed : 0;
     };
     const hasPlanFact = pizzaArr.some((row) => row.planFact !== null && row.planFact !== undefined);
     const yearGroups = this.getYearGroups(pizzaArr);
-    const columnCount = 1 + (planFulfillment ? 1 : 2) + 4 + (hasPlanFact ? 1 : 0);
+    const factColumnCount = 4 + (showFactYoY ? 1 : 0) + (hasPlanFact ? 1 : 0);
+    const columnCount = 1 + (planFulfillment ? 1 : 2) + factColumnCount;
 
     const formatPercent = (value) => `${getSafeNumber(value).toFixed(2)}%`;
+    const renderPercentChip = (value, variant = "filled") => (
+      <Chip
+        label={formatPercent(value)}
+        size="small"
+        variant={variant}
+        sx={
+          variant === "outlined"
+            ? {
+                borderColor: "#1976d2",
+                color: "#1976d2",
+                fontWeight: "500",
+                fontSize: "0.75rem",
+              }
+            : {
+                backgroundColor: getSafeNumber(value) >= 0 ? "#4caf50" : "#f44336",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: "0.75rem",
+                minWidth: "70px",
+                "& .MuiChip-label": {
+                  padding: "4px 8px",
+                },
+              }
+        }
+      />
+    );
 
     const cellSx = {
       border: "1px solid #e0e0e0",
@@ -440,6 +501,16 @@ class StatSale_Tab_DynamicSale extends React.Component {
         >
           {row.factQty?.toLocaleString()}
         </TableCell>
+        {showFactYoY && (
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+            }}
+          >
+            {renderPercentChip(row.factYoYPct)}
+          </TableCell>
+        )}
         <TableCell
           sx={{
             ...bodyCellSx,
@@ -591,7 +662,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                   План
                 </TableCell>
                 <TableCell
-                  colSpan={hasPlanFact ? 5 : 4}
+                  colSpan={factColumnCount}
                   sx={{ ...cellSx, backgroundColor: "#e3f2fd" }}
                 >
                   {subTitle}
@@ -599,7 +670,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               </TableRow>
               <TableRow>
                 <TableCell
-                  colSpan={hasPlanFact ? 5 : 4}
+                  colSpan={factColumnCount}
                   sx={{ ...cellSx, backgroundColor: "#fff3e0" }}
                 >
                   Факт
@@ -611,6 +682,9 @@ class StatSale_Tab_DynamicSale extends React.Component {
                   <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
                 )}
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
+                {showFactYoY && (
+                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика г/г</TableCell>
+                )}
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
@@ -760,6 +834,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               "Аккаунты, кол-во",
               {
                 planFulfillment: true,
+                showFactYoY: false,
               },
             )}
             {accountArr.length ? (
