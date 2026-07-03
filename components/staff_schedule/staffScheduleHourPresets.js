@@ -14,7 +14,7 @@ export const STAFF_SCHEDULE_HOUR_PRESETS = [
     label: "10:00-16:00",
     time_start: "10:00",
     time_end: "16:00",
-    color: "#62B0FF",
+    color: "#9A78BC",
     textColor: "#FFFFFF",
   },
   {
@@ -23,8 +23,8 @@ export const STAFF_SCHEDULE_HOUR_PRESETS = [
     label: "16:00-22:00",
     time_start: "16:00",
     time_end: "22:00",
-    color: "#FFBA00",
-    textColor: "#1F2937",
+    color: "#2567C1",
+    textColor: "#FFFFFF",
   },
   {
     type: 3,
@@ -32,7 +32,7 @@ export const STAFF_SCHEDULE_HOUR_PRESETS = [
     label: "Другое",
     time_start: "",
     time_end: "",
-    color: "#926EAE",
+    color: "#D92D5F",
     textColor: "#FFFFFF",
   },
 ];

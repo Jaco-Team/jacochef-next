@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
-import { Box, Grid, Stack, TextField, Typography } from "@mui/material";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import { Box, Grid, Stack, Typography } from "@mui/material";
+import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-import { V2Alert, V2Button, V2MonthGridCalendar, V2Select, useConfirm } from "@/ui/v2";
+import { V2Alert, V2Button, V2MonthGridCalendar } from "@/ui/v2";
 import { toNumber } from "../staffScheduleHelpers";
 import {
   buildHourSlotId,
@@ -21,6 +24,8 @@ import {
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 dayjs.locale("ru");
+
+const CUSTOM_HOUR_COLORS = ["#D92D5F", "#4CC5EA", "#FFB800"];
 
 function formatCurrency(value) {
   return `${new Intl.NumberFormat("ru-RU").format(toNumber(value))} ₽`;
@@ -212,35 +217,96 @@ function MonthOverviewStrip({ days }) {
   );
 }
 
-function HourSlotCard({ slot, selected, onClick }) {
+function HourSlotCard({ slot, selected, onClick, onRemove = null }) {
   return (
-    <Box
-      onClick={onClick}
-      sx={{
-        minHeight: 36,
-        px: 1,
-        borderRadius: "10px",
-        border: selected ? "1px solid #EE2737" : "1px solid #E5E5E5",
-        backgroundColor: "#FFFFFF",
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
-        cursor: "pointer",
-      }}
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={1}
     >
       <Box
+        onClick={onClick}
         sx={{
-          width: 20,
-          height: 20,
-          borderRadius: "4px",
-          backgroundColor: slot.color,
-          flexShrink: 0,
+          minHeight: 36,
+          flex: 1,
+          minWidth: 0,
+          px: 1,
+          borderRadius: "10px",
+          border: selected ? `1px solid ${slot.color}` : "1px solid #E5E5E5",
+          backgroundColor: "#FFFFFF",
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          cursor: "pointer",
         }}
-      />
-      <Typography sx={{ fontSize: 14, color: "#666666", lineHeight: 1.2 }}>
-        {formatHourRangeLabel(slot.time_start, slot.time_end)}
-      </Typography>
-    </Box>
+      >
+        <Box
+          sx={{
+            width: 20,
+            height: 20,
+            borderRadius: "4px",
+            backgroundColor: slot.color,
+            flexShrink: 0,
+          }}
+        />
+        <Typography sx={{ fontSize: 14, color: "#666666", lineHeight: 1.2 }}>
+          {formatHourRangeLabel(slot.time_start, slot.time_end)}
+        </Typography>
+      </Box>
+      {onRemove ? (
+        <Box
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+          sx={{
+            width: 24,
+            height: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#A6A6A6",
+            cursor: "pointer",
+            flexShrink: 0,
+          }}
+        >
+          <CloseRoundedIcon sx={{ fontSize: 20 }} />
+        </Box>
+      ) : null}
+    </Stack>
+  );
+}
+
+function timeToPickerValue(value) {
+  const parsed = dayjs(`2026-01-01T${value || "00:00"}`);
+  return parsed.isValid() ? parsed : null;
+}
+
+function TimePickerField({ label, value, onChange }) {
+  return (
+    <TimePicker
+      ampm={false}
+      label={label}
+      value={timeToPickerValue(value)}
+      onChange={(nextValue) => {
+        if (nextValue?.isValid?.()) {
+          onChange(nextValue.format("HH:mm"));
+        }
+      }}
+      slotProps={{
+        textField: {
+          fullWidth: true,
+          size: "small",
+          sx: {
+            "& .MuiOutlinedInput-root": {
+              minHeight: 44,
+              borderRadius: "12px",
+              backgroundColor: "#FFFFFF",
+            },
+          },
+        },
+      }}
+    />
   );
 }
 
@@ -284,125 +350,110 @@ function CustomTimeDialog({ open, value, onChange, onClose, onSubmit }) {
         </Stack>
       }
     >
-      <Stack spacing={2}>
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: "12px",
-            border: "1px solid #ECECEC",
-            backgroundColor: "#FFFFFF",
-          }}
-        >
-          <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери цвет</Typography>
-          <Stack
-            direction="row"
-            spacing={0}
-            sx={{ borderRadius: "8px", overflow: "hidden" }}
-          >
-            {MONTH_TYPE_PRESETS.map((preset) => {
-              const selected = Number(value.type) === Number(preset.type);
-
-              return (
-                <Box
-                  key={preset.type}
-                  onClick={() => onChange((prev) => ({ ...prev, type: preset.type }))}
-                  sx={{
-                    flex: 1,
-                    minHeight: 32,
-                    border: selected ? "2px solid #EE2737" : "2px solid transparent",
-                    backgroundColor: preset.color,
-                    cursor: "pointer",
-                    boxSizing: "border-box",
-                  }}
-                />
-              );
-            })}
-          </Stack>
-        </Box>
-
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: "12px",
-            border: "1px solid #ECECEC",
-            backgroundColor: "#FFFFFF",
-          }}
-        >
-          <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери время</Typography>
-          <Grid
-            container
-            spacing={1.25}
-          >
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="time"
-                label="c"
-                value={value.time_start}
-                onChange={(event) =>
-                  onChange((prev) => ({
-                    ...prev,
-                    time_start: event.target.value,
-                  }))
-                }
-                slotProps={{ inputLabel: { shrink: true }, input: { step: 900 } }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    minHeight: 44,
-                    borderRadius: "12px",
-                    backgroundColor: "#FFFFFF",
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="time"
-                label="до"
-                value={value.time_end}
-                onChange={(event) =>
-                  onChange((prev) => ({
-                    ...prev,
-                    time_end: event.target.value,
-                  }))
-                }
-                slotProps={{ inputLabel: { shrink: true }, input: { step: 900 } }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    minHeight: 44,
-                    borderRadius: "12px",
-                    backgroundColor: "#FFFFFF",
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: "12px",
-            border: "1px solid #ECECEC",
-            backgroundColor: "#FFFFFF",
-          }}
-        >
-          <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>
-            Новый временной промежуток
-          </Typography>
-          <HourSlotCard
-            slot={{
-              type: value.type,
-              time_start: value.time_start,
-              time_end: value.time_end,
-              color: getHourPresetByType(value.type).color,
+      <LocalizationProvider
+        dateAdapter={AdapterDayjs}
+        adapterLocale="ru"
+      >
+        <Stack spacing={2}>
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: "12px",
+              border: "1px solid #ECECEC",
+              backgroundColor: "#FFFFFF",
             }}
-            selected
-            onClick={() => {}}
-          />
-        </Box>
-      </Stack>
+          >
+            <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери цвет</Typography>
+            <Stack
+              direction="row"
+              spacing={0}
+              sx={{ borderRadius: "8px", overflow: "hidden" }}
+            >
+              {CUSTOM_HOUR_COLORS.map((color) => {
+                const selected = value.color === color;
+
+                return (
+                  <Box
+                    key={color}
+                    onClick={() => onChange((prev) => ({ ...prev, color }))}
+                    sx={{
+                      flex: 1,
+                      minHeight: 32,
+                      border: selected ? "2px solid #EE2737" : "2px solid transparent",
+                      backgroundColor: color,
+                      cursor: "pointer",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          </Box>
+
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: "12px",
+              border: "1px solid #ECECEC",
+              backgroundColor: "#FFFFFF",
+            }}
+          >
+            <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери время</Typography>
+            <Grid
+              container
+              spacing={1.25}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TimePickerField
+                  label="c"
+                  value={value.time_start}
+                  onChange={(nextValue) =>
+                    onChange((prev) => ({
+                      ...prev,
+                      time_start: nextValue,
+                    }))
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TimePickerField
+                  label="до"
+                  value={value.time_end}
+                  onChange={(nextValue) =>
+                    onChange((prev) => ({
+                      ...prev,
+                      time_end: nextValue,
+                    }))
+                  }
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: "12px",
+              border: "1px solid #ECECEC",
+              backgroundColor: "#FFFFFF",
+            }}
+          >
+            <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>
+              Новый временной промежуток
+            </Typography>
+            <HourSlotCard
+              slot={{
+                type: 3,
+                time_start: value.time_start,
+                time_end: value.time_end,
+                color: value.color,
+              }}
+              selected
+              onClick={() => {}}
+            />
+          </Box>
+        </Stack>
+      </LocalizationProvider>
     </StaffScheduleResponsiveModal>
   );
 }
@@ -418,8 +469,10 @@ function AssignmentDialog({
   onSelectSlot,
   onDayClick,
   onOpenCustomTime,
+  onDeleteCustomSlot,
   onClose,
   onSave,
+  saving,
 }) {
   const allSlots = [...buildPresetSlots(), ...customSlots];
   const daysMap = new Map(draft.dates.map((item) => [item.date, item]));
@@ -430,7 +483,7 @@ function AssignmentDialog({
       onClose={onClose}
       title="Заполнение часов"
       maxWidth="md"
-      paperSx={{ maxWidth: 740 }}
+      paperSx={{ width: "100%", maxWidth: 620 }}
       contentSx={{ px: 2.5, pt: 2.5, pb: 2.5 }}
       actionsSx={{ px: 2.5, pt: 0, pb: 2.5, borderTop: "none" }}
       actions={
@@ -444,6 +497,7 @@ function AssignmentDialog({
             compact
             tone="secondary"
             onClick={onClose}
+            disabled={saving}
             sx={{ minHeight: 44, minWidth: 106 }}
           >
             Отменить
@@ -452,9 +506,10 @@ function AssignmentDialog({
             compact
             tone="primary"
             onClick={onSave}
+            disabled={saving}
             sx={{ minHeight: 44, minWidth: 114 }}
           >
-            Сохранить
+            {saving ? "Сохранение..." : "Сохранить"}
           </V2Button>
         </Stack>
       }
@@ -469,14 +524,15 @@ function AssignmentDialog({
           </Typography>
         </Stack>
 
-        <Grid
-          container
-          spacing={2}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "194px 1fr" },
+            gap: 2,
+            alignItems: "start",
+          }}
         >
-          <Grid
-            size={{ xs: 12, md: 4 }}
-            sx={{ minWidth: 0 }}
-          >
+          <Box sx={{ minWidth: 0 }}>
             <Stack spacing={1.5}>
               <Typography
                 sx={{ fontSize: 16, fontWeight: 700, color: "#B1B1B1", textTransform: "uppercase" }}
@@ -490,6 +546,7 @@ function AssignmentDialog({
                     slot={slot}
                     selected={slot.id === activeSlotId}
                     onClick={() => onSelectSlot(slot.id)}
+                    onRemove={slot.isCustom ? () => onDeleteCustomSlot?.(slot.id) : null}
                   />
                 ))}
               </Stack>
@@ -510,23 +567,17 @@ function AssignmentDialog({
                 Часы
               </V2Button>
             </Stack>
-          </Grid>
+          </Box>
 
-          <Grid
-            size={{ xs: 12, md: 8 }}
-            sx={{ minWidth: 0 }}
-          >
+          <Box sx={{ minWidth: 0 }}>
             <Stack
-              spacing={1}
+              spacing={0}
               sx={{ minWidth: 0 }}
             >
-              <Typography
-                sx={{ fontSize: 16, fontWeight: 700, color: "#B1B1B1", textTransform: "uppercase" }}
-              >
-                Часы в календаре
-              </Typography>
               <V2MonthGridCalendar
                 monthId={monthValue}
+                title="Часы в календаре"
+                size={40}
                 previousDisabled
                 nextDisabled
                 getDayMeta={(date) => {
@@ -536,7 +587,15 @@ function AssignmentDialog({
                     return {};
                   }
 
-                  const preset = getHourPresetByType(item.type);
+                  const customSlot =
+                    Number(item.type) === 3
+                      ? customSlots.find(
+                          (slot) =>
+                            String(slot.time_start ?? "") === String(item.time_start ?? "") &&
+                            String(slot.time_end ?? "") === String(item.time_end ?? ""),
+                        )
+                      : null;
+                  const preset = customSlot || getHourPresetByType(item.type);
 
                   return {
                     selected: true,
@@ -548,8 +607,8 @@ function AssignmentDialog({
                 onDayClick={onDayClick}
               />
             </Stack>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Stack>
     </StaffScheduleResponsiveModal>
   );
@@ -557,7 +616,6 @@ function AssignmentDialog({
 
 export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
-  const initialDraftRef = useRef(buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
@@ -567,10 +625,10 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   const [isCustomTimeOpen, setIsCustomTimeOpen] = useState(false);
   const [customTimeDraft, setCustomTimeDraft] = useState({
     type: 3,
+    color: CUSTOM_HOUR_COLORS[0],
     time_start: "11:00",
     time_end: "17:00",
   });
-  const { confirm, ConfirmDialog } = useConfirm();
 
   const monthValue = modal.request?.date || "";
   const overviewCards = useMemo(
@@ -585,7 +643,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     }
 
     const nextDraft = buildMonthModalDraft(modal.data);
-    initialDraftRef.current = nextDraft;
     setDraft(nextDraft);
     setEditorDraft(nextDraft);
     setEditorCustomSlots(buildCustomSlots(nextDraft.dates));
@@ -596,13 +653,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     setIsCustomTimeOpen(false);
   }, [modal.open, modal.data]);
 
-  const hasChanges = useMemo(
-    () => JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current),
-    [draft],
-  );
   const canEditMonth = Boolean(modal.data?.canEditMonth);
-  const appOptions = modal.data?.otherApps ?? [];
-  const mentorOptions = modal.data?.mentorList ?? [];
   const allEditorSlots = useMemo(
     () => [...buildPresetSlots(), ...editorCustomSlots],
     [editorCustomSlots],
@@ -611,11 +662,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     () => allEditorSlots.find((item) => item.id === activeSlotId) || allEditorSlots[0] || null,
     [activeSlotId, allEditorSlots],
   );
-
-  const handleReset = () => {
-    setDraft(buildMonthModalDraft(modal.data));
-    setSaveError("");
-  };
 
   const handleSave = async (nextDraft = draft, shouldClose = false) => {
     if (!onSave || !modal.request) {
@@ -627,7 +673,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
 
     try {
       await onSave(buildMonthSavePayload(modal.request, nextDraft));
-      initialDraftRef.current = nextDraft;
       setDraft(nextDraft);
 
       if (shouldClose) {
@@ -649,27 +694,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       return;
     }
 
-    if (!hasChanges) {
-      onClose?.();
-      return;
-    }
-
-    const shouldSave = await confirm({
-      message: (
-        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
-          Данные были изменены.
-          <br />
-          Сохранить изменения?
-        </Typography>
-      ),
-      confirmLabel: "Да, сохранить",
-    });
-
-    if (shouldSave) {
-      await handleSave(draft, true);
-      return;
-    }
-
     onClose?.();
   };
 
@@ -679,6 +703,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     setActiveSlotId("preset-0");
     setCustomTimeDraft({
       type: 3,
+      color: CUSTOM_HOUR_COLORS[0],
       time_start: "11:00",
       time_end: "17:00",
     });
@@ -705,8 +730,8 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       label: formatHourRangeLabel(customTimeDraft.time_start, customTimeDraft.time_end),
       time_start: customTimeDraft.time_start,
       time_end: customTimeDraft.time_end,
-      color: getHourPresetByType(customTimeDraft.type).color,
-      textColor: getHourPresetByType(customTimeDraft.type).textColor,
+      color: customTimeDraft.color,
+      textColor: "#FFFFFF",
       isCustom: true,
     };
 
@@ -717,38 +742,34 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     setIsCustomTimeOpen(false);
   };
 
+  const handleDeleteCustomSlot = (slotId) => {
+    const slot = editorCustomSlots.find((item) => item.id === slotId);
+
+    if (!slot) {
+      return;
+    }
+
+    setEditorCustomSlots((prev) => prev.filter((item) => item.id !== slotId));
+    setEditorDraft((prev) => ({
+      ...prev,
+      dates: prev.dates.filter(
+        (item) =>
+          !(
+            Number(item.type) === Number(slot.type) &&
+            String(item.time_start ?? "") === String(slot.time_start ?? "") &&
+            String(item.time_end ?? "") === String(slot.time_end ?? "")
+          ),
+      ),
+    }));
+
+    if (activeSlotId === slotId) {
+      setActiveSlotId("preset-0");
+    }
+  };
+
   const handleSaveAssignment = async () => {
     await handleSave(editorDraft, true);
   };
-
-  const actions =
-    modal.loading || !modal.data ? null : (
-      <Stack
-        direction="row"
-        justifyContent="flex-end"
-        spacing={1.5}
-        sx={{ width: "100%" }}
-      >
-        <V2Button
-          compact
-          tone="secondary"
-          onClick={handleRequestClose}
-          disabled={isSaving}
-          sx={{ minWidth: 108, minHeight: 44, borderRadius: "12px", fontSize: 16, fontWeight: 500 }}
-        >
-          Отменить
-        </V2Button>
-        <V2Button
-          compact
-          tone="primary"
-          onClick={() => handleSave(draft)}
-          disabled={isSaving || !canEditMonth}
-          sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
-        >
-          {isSaving ? "Сохранение..." : "Сохранить"}
-        </V2Button>
-      </Stack>
-    );
 
   return (
     <>
@@ -757,10 +778,8 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         onClose={handleRequestClose}
         title="Данные сотрудника"
         maxWidth="md"
-        actions={actions}
         paperSx={{ maxWidth: 840 }}
         contentSx={{ px: 2.5, pt: 3, pb: 2 }}
-        actionsSx={{ px: 2.5, pt: 0.75, pb: 2.5 }}
       >
         <Stack spacing={2.25}>
           {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
@@ -836,52 +855,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                   Заполнить часы
                 </V2Button>
               </Stack>
-
-              {appOptions.length ? (
-                <V2Select
-                  options={appOptions}
-                  value={draft.newApp}
-                  onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      newApp: event.target.value,
-                    }))
-                  }
-                  label="Кем работает"
-                  disabled={!canEditMonth}
-                />
-              ) : null}
-
-              {mentorOptions.length ? (
-                <V2Select
-                  options={mentorOptions}
-                  value={draft.mentorId}
-                  onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      mentorId: event.target.value,
-                    }))
-                  }
-                  label="Наставник"
-                  disabled={!canEditMonth}
-                />
-              ) : null}
-
-              {hasChanges ? (
-                <Stack
-                  direction="row"
-                  justifyContent="flex-end"
-                >
-                  <V2Button
-                    compact
-                    tone="secondary"
-                    onClick={handleReset}
-                    disabled={isSaving}
-                  >
-                    Сбросить
-                  </V2Button>
-                </Stack>
-              ) : null}
             </>
           ) : null}
         </Stack>
@@ -898,8 +871,10 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         onSelectSlot={setActiveSlotId}
         onDayClick={handleEditorDayClick}
         onOpenCustomTime={() => setIsCustomTimeOpen(true)}
+        onDeleteCustomSlot={handleDeleteCustomSlot}
         onClose={closeAssignmentDialog}
         onSave={handleSaveAssignment}
+        saving={isSaving}
       />
 
       <CustomTimeDialog
@@ -909,7 +884,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         onClose={() => setIsCustomTimeOpen(false)}
         onSubmit={handleSubmitCustomTime}
       />
-      <ConfirmDialog />
     </>
   );
 }
