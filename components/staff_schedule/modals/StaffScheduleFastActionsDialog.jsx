@@ -206,24 +206,21 @@ function SubScreenPanel({ title, onBack, children, actions }) {
   );
 }
 
-function EditStepSegmentedTabs(props) {
+function EditStepSegmentedTabs({ sx, tabSx, ...props }) {
   return (
     <V2SegmentedTabs
       sx={{
         backgroundColor: "#E5E5E5",
         borderRadius: "12px",
-        p: 0.25,
-        "& .Mui-selected": {
-          backgroundColor: "#FFFFFF",
-          color: "#EE2737 !important",
-          boxShadow: "none",
-        },
+        minHeight: 52,
+        ...sx,
       }}
       tabSx={{
-        minHeight: 50,
+        minHeight: 44,
         borderRadius: "8px",
         fontSize: 18,
         fontWeight: 500,
+        ...tabSx,
       }}
       {...props}
     />
@@ -633,10 +630,7 @@ export default function StaffScheduleFastActionsDialog({
             }}
             items={cityOptions}
             tabSx={{
-              minHeight: 46,
-              borderRadius: "8px",
               fontSize: 16,
-              fontWeight: 500,
             }}
           />
           <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 2 }}>

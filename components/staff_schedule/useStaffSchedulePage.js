@@ -358,6 +358,8 @@ export default function useStaffSchedulePage() {
         const data = buildMonthModalViewModel(response, {
           roleKind: graph.kind,
           monthId,
+          rowData: row,
+          periodDays: view.activePeriod?.meta?.days,
         });
 
         monthModalState.openReady({
@@ -374,7 +376,7 @@ export default function useStaffSchedulePage() {
         });
       }
     },
-    [api, monthId, monthModalState],
+    [api, graph.kind, monthId, monthModalState, view.activePeriod?.meta?.days],
   );
 
   const handleCloseMonthModal = useCallback(() => {

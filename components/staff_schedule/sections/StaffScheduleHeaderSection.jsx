@@ -114,9 +114,9 @@ export default function StaffScheduleHeaderSection({ page }) {
           value: index,
           label: tab.label,
         }))}
-        sx={{ mb: 1.5, borderRadius: "10px", "& .MuiTabs-root": { minHeight: 40 } }}
+        sx={{ mb: 1.5, borderRadius: "10px", minHeight: 40 }}
         tabSx={{
-          minHeight: 40,
+          minHeight: 32,
           fontSize: 16,
           borderRadius: "8px",
         }}

@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { toArray } from "./staffScheduleHelpers";
+import { STAFF_SCHEDULE_HOUR_PRESETS, getHourPresetByType } from "./staffScheduleHourPresets";
 
 export const STAFF_SCHEDULE_HEALTH_OPTIONS = [
   { id: 1, name: "Выходной" },
@@ -82,16 +83,10 @@ function canEditDayHealth({ date, hours }) {
   return isToday(date) && toArray(hours).length > 0;
 }
 
-export const MONTH_TYPE_PRESETS = [
-  { type: 0, label: "10:00 - 22:00", time_start: "10:00", time_end: "22:00", color: "#98e38d" },
-  { type: 1, label: "10:00 - 16:00", time_start: "10:00", time_end: "16:00", color: "#3dcef2" },
-  { type: 2, label: "16:00 - 22:00", time_start: "16:00", time_end: "22:00", color: "#1560bd" },
-  { type: 3, label: "Другое", time_start: "", time_end: "", color: "#926eae" },
-];
-
-function getPresetByType(type) {
-  return MONTH_TYPE_PRESETS.find((item) => item.type === Number(type)) || MONTH_TYPE_PRESETS[0];
-}
+export const MONTH_TYPE_PRESETS = STAFF_SCHEDULE_HOUR_PRESETS.map((item) => ({
+  ...item,
+  label: item.label.replace("-", " - "),
+}));
 
 export function hasDayModalPayload(response) {
   return Boolean(response?.h_info);
@@ -167,11 +162,37 @@ export function buildDayModalViewModel(response, context = {}) {
 export function buildMonthModalViewModel(response, context = {}) {
   const info = response?.h_info ?? {};
   const user = info?.user ?? {};
+  const row = context?.rowData ?? {};
+  const periodDays = toArray(context?.periodDays);
   const canEditMonth = isMegaOnlyRole(context?.roleKind) || !isPastMonth(context?.monthId);
+  const source = {
+    ...row,
+    ...user,
+  };
+  const rowTotalSum = row?.total_sum;
+  const rowToPaySum = row?.to_pay_sum;
+  const totalSum =
+    rowTotalSum !== undefined && rowTotalSum !== ""
+      ? Number(rowTotalSum)
+      : Number(source?.dop_bonus ?? 0) +
+        Number(source?.dir_price ?? 0) +
+        Number(source?.register_price ?? 0) +
+        Number(source?.dir_price_dop ?? 0) +
+        Number(source?.h_price ?? 0) +
+        Number(source?.my_bonus ?? 0) -
+        Number(source?.err_price ?? 0);
+  const toPaySum =
+    rowToPaySum !== undefined && rowToPaySum !== ""
+      ? Number(rowToPaySum)
+      : source?.app_type === "driver"
+        ? ""
+        : totalSum - Number(source?.given_cart ?? 0) - Number(source?.withheld ?? 0);
 
   return {
-    title: [user?.app_name, user?.user_name].filter(Boolean).join(" "),
+    title: [source?.app_name, source?.user_name].filter(Boolean).join(" "),
     subtitle: info?.date ? formatDateLabel(info.date) : "",
+    personName: source?.user_name || "",
+    positionName: source?.app_name || "",
     newApp: info?.new_app ?? "",
     mentorId: info?.mentor_id ?? "",
     otherApps: toArray(response?.other_app).map((item) => ({
@@ -182,6 +203,33 @@ export function buildMonthModalViewModel(response, context = {}) {
       id: item?.id ?? "",
       name: item?.name ?? "",
     })),
+    summary: {
+      ratePerHour: source?.price_p_h ?? "",
+      ratePerHourExtra: source?.price_p_h_dop ?? "",
+      hoursTotal: source?.h_price ?? "",
+      errors: source?.err_price ?? "",
+      withheld: source?.withheld ?? "",
+      toPay: toPaySum,
+      bonuses: source?.my_bonus ?? 0,
+      total: totalSum,
+      givenCash: source?.given_cash ?? source?.given ?? "",
+      transferred: source?.given_cart ?? "",
+      premiumSheet: source?.test_all_price ?? "",
+    },
+    overviewDays: toArray(row?.dates).map((item, index) => {
+      const periodDay = periodDays[index] ?? {};
+
+      return {
+        id: `${item?.date || periodDay?.date || "overview"}-${index}`,
+        date: item?.date ?? "",
+        dayNumber: periodDay?.date || formatDateLabel(item?.date).slice(0, 2),
+        weekdayShort: periodDay?.day || "",
+        isWeekend: ["Пт", "Сб", "Вс"].includes(periodDay?.day),
+        hoursLabel: item?.info?.hours || "",
+        backgroundColor: item?.info?.color || "",
+        textColor: item?.info?.colorT || "#111827",
+      };
+    }),
     canEditMonth,
     days: toArray(response?.hours_days).map((item, index) => ({
       id: `${item?.date || "date"}-${index}`,
@@ -211,7 +259,7 @@ export function buildMonthModalDraft(data) {
 }
 
 export function toggleMonthDay(draft, date, selectedType) {
-  const preset = getPresetByType(selectedType);
+  const preset = getHourPresetByType(selectedType);
   const existing = draft.dates.find((item) => item.date === date);
 
   if (!existing) {
@@ -259,6 +307,7 @@ export function buildMonthSavePayload(request, draft) {
     smena_id: request?.smena_id,
     dates: draft.dates.map((item) => ({
       date: item.date,
+      type: Number(item.type ?? 0),
       time_start: item.time_start ?? "",
       time_end: item.time_end ?? "",
     })),

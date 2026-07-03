@@ -1,6 +1,12 @@
 import { Box, Stack, Typography } from "@mui/material";
 import { V2Button } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "../modals/StaffScheduleResponsiveModal";
+import { getHourPresetByType } from "../staffScheduleHourPresets";
+
+const monthFullPreset = getHourPresetByType(0);
+const monthFirstHalfPreset = getHourPresetByType(1);
+const monthSecondHalfPreset = getHourPresetByType(2);
+const monthCustomPreset = getHourPresetByType(3);
 
 const colorLegendItems = [
   {
@@ -31,26 +37,26 @@ const colorLegendItems = [
   {
     label: "Рабочий день 10:00 - 22:00",
     description: "Основная полная смена из backend day.info.color.",
-    color: "#95d26b",
-    textColor: "#111827",
+    color: monthFullPreset.color,
+    textColor: monthFullPreset.textColor,
   },
   {
     label: "Рабочий день 10:00 - 16:00",
     description: "Первая половина смены из backend day.info.color.",
-    color: "#62b0ff",
-    textColor: "#111827",
+    color: monthFirstHalfPreset.color,
+    textColor: monthFirstHalfPreset.textColor,
   },
   {
     label: "Рабочий день 16:00 - 22:00",
     description: "Вторая половина смены или желтая пользовательская отметка.",
-    color: "#ffba00",
-    textColor: "#FFFFFF",
+    color: monthSecondHalfPreset.color,
+    textColor: monthSecondHalfPreset.textColor,
   },
   {
     label: "Нестандартный график",
     description: "Один нестандартный интервал или несколько интервалов в день.",
-    color: "#926eae",
-    textColor: "#111827",
+    color: monthCustomPreset.color,
+    textColor: monthCustomPreset.textColor,
   },
   {
     label: "Нет температуры",
@@ -72,21 +78,21 @@ const colorLegendItems = [
   },
   {
     label: "Календарь 10:00 - 22:00",
-    description: "Пресет месячного календаря при массовом редактировании.",
-    color: "#98e38d",
-    textColor: "#111827",
+    description: "Тот же пресет полной смены в модале заполнения часов.",
+    color: monthFullPreset.color,
+    textColor: monthFullPreset.textColor,
   },
   {
     label: "Календарь 10:00 - 16:00",
-    description: "Пресет месячного календаря для первой половины дня.",
-    color: "#3dcef2",
-    textColor: "#FFFFFF",
+    description: "Тот же пресет первой половины дня в модале заполнения часов.",
+    color: monthFirstHalfPreset.color,
+    textColor: monthFirstHalfPreset.textColor,
   },
   {
     label: "Календарь 16:00 - 22:00",
-    description: "Пресет месячного календаря для второй половины дня.",
-    color: "#1560bd",
-    textColor: "#FFFFFF",
+    description: "Тот же пресет второй половины дня в модале заполнения часов.",
+    color: monthSecondHalfPreset.color,
+    textColor: monthSecondHalfPreset.textColor,
   },
   {
     label: "Выходной/праздник",
