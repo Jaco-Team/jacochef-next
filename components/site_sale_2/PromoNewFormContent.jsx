@@ -39,6 +39,7 @@ import {
   getScheduleSummary,
   getWeekdaysPreview,
 } from "./promoNewSummaries";
+import { PROMO_PRESETS } from "./promoNewPresets";
 
 const WEEKDAYS = [
   { key: "day_1", short: "Пн", full: "Понедельник" },
@@ -54,7 +55,14 @@ function SectionCard({ title, subtitle, children }) {
   return (
     <Paper
       variant="outlined"
-      sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 2, mb: 2.5 }}
+      sx={{
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 2,
+        mb: 2.5,
+        overflow: "hidden",
+        borderLeft: "3px solid",
+        borderLeftColor: "primary.main",
+      }}
     >
       {title ? (
         <Box sx={{ mb: 2 }}>
@@ -90,7 +98,12 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
         borderColor: "divider",
         borderRadius: "8px !important",
         overflow: "visible",
+        transition: "border-color 0.2s, box-shadow 0.2s",
         "&:before": { display: "none" },
+        "&.Mui-expanded": {
+          borderColor: "primary.light",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        },
         "& .MuiCollapse-root": { overflow: "visible" },
         "& .MuiCollapse-wrapper": { overflow: "visible" },
         "& .MuiCollapse-wrapperInner": { overflow: "visible" },
@@ -102,6 +115,14 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
         sx={{
           px: { xs: 1.5, sm: 2 },
           py: 0.5,
+          bgcolor: "grey.50",
+          borderRadius: "8px",
+          "&.Mui-expanded": {
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          },
           "& .MuiAccordionSummary-content": { my: 1.25 },
         }}
       >
@@ -160,6 +181,59 @@ function WeekdaySelector({ state, onToggleDay }) {
   );
 }
 
+function PromoPresetsBar({ activePresetId, onApplyPreset }) {
+  return (
+    <SectionCard
+      title="Быстрые пресеты"
+      subtitle="Заполнят типовые настройки — после применения можно изменить вручную"
+    >
+      <Stack
+        direction="row"
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ gap: 1 }}
+      >
+        {PROMO_PRESETS.map((preset) => {
+          const isActive = activePresetId === preset.id;
+
+          return (
+            <Chip
+              key={preset.id}
+              label={preset.label}
+              title={preset.description}
+              clickable
+              color={isActive ? "primary" : "default"}
+              variant={isActive ? "filled" : "outlined"}
+              onClick={() => onApplyPreset(preset.id)}
+              sx={{
+                height: "auto",
+                py: 0.75,
+                "& .MuiChip-label": {
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  whiteSpace: "normal",
+                  lineHeight: 1.3,
+                  px: 0.5,
+                },
+                fontWeight: 700,
+                borderRadius: 1.5,
+                ...(!isActive && {
+                  borderColor: "divider",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    bgcolor: "primary.50",
+                  },
+                }),
+              }}
+            />
+          );
+        })}
+      </Stack>
+    </SectionCard>
+  );
+}
+
 export default function PromoNewFormContent({
   state,
   moduleName,
@@ -176,6 +250,8 @@ export default function PromoNewFormContent({
   isEdit = false,
   created,
   historySection = null,
+  onApplyPreset = null,
+  activePresetId = "",
 }) {
   const toggleDay = (key) => {
     changeDataCheck(key, { target: { checked: !state[key] } });
@@ -190,27 +266,54 @@ export default function PromoNewFormContent({
         px: { xs: 2, sm: 3 },
         pb: 4,
         width: "100%",
-        maxWidth: "100%",
+        maxWidth: 1400,
+        mx: "auto",
       }}
     >
       <Grid size={12}>
-        <Typography
-          component="h1"
-          variant="h4"
-          sx={{ fontWeight: 700, fontSize: { xs: 24, sm: 32 } }}
+        <Box
+          sx={{
+            pb: 1,
+            borderBottom: "2px solid",
+            borderColor: "primary.main",
+            mb: 0.5,
+          }}
         >
-          {moduleName}
-        </Typography>
-        {isEdit && created ? (
           <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mt: 1 }}
+            component="h1"
+            variant="h4"
+            sx={{ fontWeight: 700, fontSize: { xs: 24, sm: 32 } }}
           >
-            Был создан: {created}
+            {moduleName}
           </Typography>
-        ) : null}
+          {isEdit && created ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              Был создан: {created}
+            </Typography>
+          ) : (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.75 }}
+            >
+              {isEdit ? "Редактирование промокода" : "Создание нового промокода"}
+            </Typography>
+          )}
+        </Box>
       </Grid>
+
+      {!isEdit && onApplyPreset ? (
+        <Grid size={12}>
+          <PromoPresetsBar
+            activePresetId={activePresetId}
+            onApplyPreset={onApplyPreset}
+          />
+        </Grid>
+      ) : null}
 
       <Grid size={12}>
         <SectionCard
@@ -968,13 +1071,17 @@ export default function PromoNewFormContent({
       {historySection ? <Grid size={12}>{historySection}</Grid> : null}
 
       <Grid size={12}>
-        <Box
+        <Paper
+          variant="outlined"
           sx={{
             display: "flex",
             justifyContent: { xs: "stretch", sm: "flex-end" },
             position: { xs: "sticky", sm: "static" },
             bottom: { xs: 12, sm: "auto" },
             zIndex: 1,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: 2,
+            bgcolor: "grey.50",
           }}
         >
           <Button
@@ -985,7 +1092,7 @@ export default function PromoNewFormContent({
           >
             Сохранить
           </Button>
-        </Box>
+        </Paper>
       </Grid>
     </Grid>
   );

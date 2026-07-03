@@ -20,6 +20,7 @@ import { Close } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
 import PromoNewFormContent from "@/components/site_sale_2/PromoNewFormContent";
 import { formatDateName } from "@/components/site_sale_2/promoNewShared";
+import { getPresetPatch } from "@/components/site_sale_2/promoNewPresets";
 
 function formatDateDot(date) {
   var d = new Date(date),
@@ -186,6 +187,8 @@ class SiteSale2_new_ extends React.Component {
 
       for_number: false,
       for_number_text: "",
+
+      activePresetId: "",
     };
   }
 
@@ -891,6 +894,20 @@ class SiteSale2_new_ extends React.Component {
     }, 300);
   }
 
+  applyPreset(presetId) {
+    const patch = getPresetPatch(presetId, this.state);
+    if (!patch) {
+      return;
+    }
+
+    this.setState(patch, () => {
+      setTimeout(() => {
+        this.generateTextDescFalse();
+        this.generateTextDescTrue();
+      }, 300);
+    });
+  }
+
   render() {
     return (
       <>
@@ -964,6 +981,8 @@ class SiteSale2_new_ extends React.Component {
           delItemPrice={this.delItemPrice.bind(this)}
           changeItemPrice={this.changeItemPrice.bind(this)}
           onSave={this.save.bind(this)}
+          onApplyPreset={this.applyPreset.bind(this)}
+          activePresetId={this.state.activePresetId}
         />
       </>
     );
