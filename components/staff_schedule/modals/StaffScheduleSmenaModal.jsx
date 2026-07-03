@@ -20,7 +20,6 @@ function buildDraft(data) {
 export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequestDelete }) {
   const [draft, setDraft] = useState(() => buildDraft(modal.data));
   const [saveError, setSaveError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!modal.open) {
@@ -29,7 +28,6 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
 
     setDraft(buildDraft(modal.data));
     setSaveError("");
-    setIsSaving(false);
   }, [modal.open, modal.data]);
 
   const toggleUser = (userId) => {
@@ -46,7 +44,6 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
       return;
     }
 
-    setIsSaving(true);
     setSaveError("");
 
     try {
@@ -57,7 +54,6 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
       });
     } catch (error) {
       setSaveError(error?.message || "Не удалось сохранить смену");
-      setIsSaving(false);
     }
   };
 
@@ -73,15 +69,13 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
           compact
           tone="success"
           onClick={handleSave}
-          disabled={isSaving}
         >
-          {isSaving ? "Сохранение..." : "Сохранить"}
+          Сохранить
         </V2Button>
         <V2Button
           compact
           tone="danger"
           onClick={onClose}
-          disabled={isSaving}
         >
           Отмена
         </V2Button>
@@ -130,7 +124,6 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
                     destructive
                     selected
                     onClick={onRequestDelete}
-                    disabled={isSaving}
                   />
                 </>
               ) : null}

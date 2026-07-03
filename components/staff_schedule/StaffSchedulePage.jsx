@@ -15,16 +15,10 @@ import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
 
 export default function StaffSchedulePage() {
   const page = useStaffSchedulePage();
-  const isLoading =
-    page.isBootstrapping ||
-    page.isGraphLoading ||
-    page.dayModal.loading ||
-    page.monthModal.loading ||
-    page.smenaModal.loading;
 
   return (
     <Box sx={{ pb: PAGE_BOTTOM_PADDING }}>
-      <V2BackdropLoader open={isLoading} />
+      <V2BackdropLoader open={page.isLoading} />
 
       <Grid
         container

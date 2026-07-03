@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import { AddTimeIcon, HistoryFileIcon } from "@/ui/icons";
 import { V2Alert, V2Button, V2IconButton, V2Select, useConfirm } from "@/ui/v2";
+import { formatHourRangeLabel } from "../staffScheduleHourPresets";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
@@ -340,7 +341,7 @@ function TimeRow({ item, onRemove }) {
       >
         <ScheduleIcon sx={{ fontSize: 20, color: "#A6A6A6" }} />
         <Typography sx={{ fontSize: 16, color: "#666666", lineHeight: 1.25 }}>
-          {[item.time_start, item.time_end].filter(Boolean).join("-") || "—"}
+          {formatHourRangeLabel(item.time_start, item.time_end)}
         </Typography>
       </Stack>
       <V2IconButton
@@ -557,7 +558,6 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const [draft, setDraft] = useState(() => buildDraft(modal.data));
   const initialDraftRef = useRef(buildDraft(modal.data));
   const [saveError, setSaveError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [isAddTimeOpen, setIsAddTimeOpen] = useState(false);
   const [newTimeStart, setNewTimeStart] = useState("");
   const [newTimeEnd, setNewTimeEnd] = useState("");
@@ -574,7 +574,6 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
     initialDraftRef.current = nextDraft;
     setDraft(nextDraft);
     setSaveError("");
-    setIsSaving(false);
     setIsAddTimeOpen(false);
     setNewTimeStart("");
     setNewTimeEnd("");
@@ -612,7 +611,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
             component="span"
             sx={{ fontWeight: 700 }}
           >
-            {[item.time_start, item.time_end].filter(Boolean).join("-") || "—"}
+            {formatHourRangeLabel(item.time_start, item.time_end)}
           </Box>
           ?
         </Typography>
@@ -657,7 +656,6 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       return;
     }
 
-    setIsSaving(true);
     setSaveError("");
 
     try {
@@ -674,15 +672,10 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       );
     } catch (error) {
       setSaveError(error?.message || "Не удалось сохранить день");
-      setIsSaving(false);
     }
   };
 
   const handleRequestClose = async () => {
-    if (isSaving) {
-      return;
-    }
-
     if (!hasChanges) {
       onClose?.();
       return;
@@ -719,7 +712,6 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
           compact
           tone="secondary"
           onClick={handleRequestClose}
-          disabled={isSaving}
           sx={{
             minWidth: 108,
             minHeight: 44,
@@ -734,10 +726,10 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
           compact
           tone="primary"
           onClick={handleSave}
-          disabled={isSaving || !canSave}
+          disabled={!canSave}
           sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
         >
-          {isSaving ? "Сохранение..." : "Сохранить"}
+          Сохранить
         </V2Button>
       </Stack>
     );

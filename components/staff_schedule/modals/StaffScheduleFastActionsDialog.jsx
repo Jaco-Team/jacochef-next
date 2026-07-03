@@ -110,14 +110,7 @@ function PersonHeader({ context }) {
   );
 }
 
-function InlineActions({
-  cancelLabel = "Отмена",
-  onCancel,
-  doneLabel,
-  onDone,
-  doneDisabled,
-  saving,
-}) {
+function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDone, doneDisabled }) {
   return (
     <Stack
       direction="row"
@@ -129,7 +122,6 @@ function InlineActions({
         compact
         tone="secondary"
         onClick={onCancel}
-        disabled={saving}
         sx={{
           minWidth: 120,
           minHeight: 44,
@@ -144,8 +136,7 @@ function InlineActions({
         compact
         onClick={onDone}
         disabled={doneDisabled}
-        loading={saving}
-        startIcon={!saving ? <CheckRoundedIcon /> : null}
+        startIcon={<CheckRoundedIcon />}
         sx={{
           minWidth: 122,
           minHeight: 44,
@@ -313,7 +304,6 @@ export default function StaffScheduleFastActionsDialog({
   const isBulk = state?.mode === "bulk";
   const screen = state?.screen || "hub";
   const draft = state?.draft;
-  const isSaving = Boolean(state?.saving);
   const saveError = state?.error || "";
   const { canAccess } = useMemo(() => createStaffScheduleAccess(access), [access]);
 
@@ -419,10 +409,6 @@ export default function StaffScheduleFastActionsDialog({
   const pointDoneDisabled = !pendingPointId;
 
   const handleRequestClose = async () => {
-    if (isSaving) {
-      return;
-    }
-
     if (!hasChanges) {
       onClose?.();
       return;
@@ -475,7 +461,6 @@ export default function StaffScheduleFastActionsDialog({
             value={isBulk ? "Изменить для выбранных сотрудников" : scheduleLabel}
             actionLabel="Изменить"
             onAction={onOpenSchedule}
-            disabled={isSaving}
           />
         ) : null}
 
@@ -485,7 +470,6 @@ export default function StaffScheduleFastActionsDialog({
             value={smenaLabel}
             actionLabel="Изменить"
             onAction={onOpenShift}
-            disabled={isSaving}
           />
         ) : null}
 
@@ -495,7 +479,6 @@ export default function StaffScheduleFastActionsDialog({
             value={currentPointLabel}
             actionLabel="Изменить"
             onAction={onOpenPoint}
-            disabled={isSaving}
           />
         ) : null}
 
@@ -505,7 +488,6 @@ export default function StaffScheduleFastActionsDialog({
           doneLabel="Сохранить изменения"
           onDone={onSaveChanges}
           doneDisabled={!hasChanges}
-          saving={isSaving}
         />
       </Stack>
     );

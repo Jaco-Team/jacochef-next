@@ -38,7 +38,6 @@ export default function StaffScheduleExportDialog({
             compact
             tone="success"
             onClick={onDownload}
-            loading={dialog?.loading}
             sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             Скачать
@@ -47,7 +46,6 @@ export default function StaffScheduleExportDialog({
             compact
             tone="secondary"
             onClick={onClose}
-            disabled={dialog?.loading}
             sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             Отмена

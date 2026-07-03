@@ -32,6 +32,7 @@ export default function useStaffSchedulePage() {
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isGraphLoading, setIsGraphLoading] = useState(false);
+  const [isMutationLoading, setIsMutationLoading] = useState(false);
   const [error, setError] = useState("");
   const [moduleName, setModuleName] = useState("График работы");
   const [points, setPoints] = useState([]);
@@ -244,6 +245,17 @@ export default function useStaffSchedulePage() {
     await loadGraph(pointId, monthId);
   }, [loadGraph, monthId, pointId]);
 
+  const runMutation = useCallback(async (callback) => {
+    setIsMutationLoading(true);
+    setError("");
+
+    try {
+      return await callback();
+    } finally {
+      setIsMutationLoading(false);
+    }
+  }, []);
+
   const handleShiftChange = useCallback((event) => {
     setSelectedShiftId(event.target.value);
     setSelectedRowIds([]);
@@ -320,16 +332,18 @@ export default function useStaffSchedulePage() {
 
   const handleSaveDayModal = useCallback(
     async (payload) => {
-      const response = await api.saveUserDay(payload);
+      await runMutation(async () => {
+        const response = await api.saveUserDay(payload);
 
-      if (response?.st === false) {
-        throw new Error(response?.text || "Не удалось сохранить день");
-      }
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось сохранить день");
+        }
 
-      handleCloseDayModal();
-      await handleReload();
+        handleCloseDayModal();
+        await handleReload();
+      });
     },
-    [api, handleCloseDayModal, handleReload],
+    [api, handleCloseDayModal, handleReload, runMutation],
   );
 
   const handleOpenMonthModal = useCallback(
@@ -385,16 +399,18 @@ export default function useStaffSchedulePage() {
 
   const handleSaveMonthModal = useCallback(
     async (payload) => {
-      const response = await api.saveUserMonth(payload);
+      await runMutation(async () => {
+        const response = await api.saveUserMonth(payload);
 
-      if (response?.st === false) {
-        throw new Error(response?.text || "Не удалось сохранить месяц");
-      }
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось сохранить месяц");
+        }
 
-      handleCloseMonthModal();
-      await handleReload();
+        handleCloseMonthModal();
+        await handleReload();
+      });
     },
-    [api, handleCloseMonthModal, handleReload],
+    [api, handleCloseMonthModal, handleReload, runMutation],
   );
 
   const handleOpenCreateSmena = useCallback(async () => {
@@ -721,9 +737,7 @@ export default function useStaffSchedulePage() {
         return;
       }
 
-      errorAppealState.patch({ loading: true, error: "" });
-
-      try {
+      await runMutation(async () => {
         const response =
           type === "order"
             ? await api.saveFakeOrders({
@@ -743,56 +757,65 @@ export default function useStaffSchedulePage() {
 
         handleCloseErrorAppeal();
         await handleReload();
-      } catch (requestError) {
+      }).catch((requestError) => {
         errorAppealState.patch({
-          loading: false,
           error: requestError?.message || "Не удалось отправить обжалование",
         });
-      }
+      });
     },
-    [api, confirm, errorAppealModal.data, errorAppealState, handleCloseErrorAppeal, handleReload],
+    [
+      api,
+      confirm,
+      errorAppealModal.data,
+      errorAppealState,
+      handleCloseErrorAppeal,
+      handleReload,
+      runMutation,
+    ],
   );
 
   const handleSaveSummaryAction = useCallback(
     async ({ mode, request, value }) => {
-      let response = null;
+      await runMutation(async () => {
+        let response = null;
 
-      if (mode === "price_p_h") {
-        response = await api.saveUserPriceH({ ...request, price: value });
-      }
+        if (mode === "price_p_h") {
+          response = await api.saveUserPriceH({ ...request, price: value });
+        }
 
-      if (mode === "given") {
-        response = await api.saveUserGivePrice({ ...request, give_price: value });
-      }
+        if (mode === "given") {
+          response = await api.saveUserGivePrice({ ...request, give_price: value });
+        }
 
-      if (mode === "given_cart") {
-        response = await api.saveUserGiveCartPrice({ ...request, give_price: value });
-      }
+        if (mode === "given_cart") {
+          response = await api.saveUserGiveCartPrice({ ...request, give_price: value });
+        }
 
-      if (mode === "withheld") {
-        response = await api.saveUserWithheld({ ...request, withheld: value });
-      }
+        if (mode === "withheld") {
+          response = await api.saveUserWithheld({ ...request, withheld: value });
+        }
 
-      if (mode === "my_bonus") {
-        response = await api.saveDirBonus({ ...request, bonus: value });
-      }
+        if (mode === "my_bonus") {
+          response = await api.saveDirBonus({ ...request, bonus: value });
+        }
 
-      if (mode === "dir_lv") {
-        response = await api.saveDirLv({ ...request, dir_lv: value });
-      }
+        if (mode === "dir_lv") {
+          response = await api.saveDirLv({ ...request, dir_lv: value });
+        }
 
-      if (mode === "dop_bonus_toggle") {
-        response = await api.saveDopBonus({ ...request, type: value });
-      }
+        if (mode === "dop_bonus_toggle") {
+          response = await api.saveDopBonus({ ...request, type: value });
+        }
 
-      if (response?.st === false || !response) {
-        throw new Error(response?.text || "Не удалось сохранить значение");
-      }
+        if (response?.st === false || !response) {
+          throw new Error(response?.text || "Не удалось сохранить значение");
+        }
 
-      handleCloseSummaryAction();
-      await handleReload();
+        handleCloseSummaryAction();
+        await handleReload();
+      });
     },
-    [api, handleCloseSummaryAction, handleReload],
+    [api, handleCloseSummaryAction, handleReload, runMutation],
   );
 
   const handleRemoveTeamBonusFromUser = useCallback(
@@ -808,59 +831,63 @@ export default function useStaffSchedulePage() {
       }
 
       try {
-        const response = await api.deleteDopBonusUser({
-          point_id: pointId,
-          user_id: row?.id,
-          smena_id: row?.smena_id,
-          app_id: row?.app_id,
-          part: selectedPart,
-          data: monthId,
+        await runMutation(async () => {
+          const response = await api.deleteDopBonusUser({
+            point_id: pointId,
+            user_id: row?.id,
+            smena_id: row?.smena_id,
+            app_id: row?.app_id,
+            part: selectedPart,
+            data: monthId,
+          });
+
+          if (response?.st === false) {
+            throw new Error(response?.text || "Не удалось изменить командный бонус");
+          }
+
+          await handleReload();
         });
-
-        if (response?.st === false) {
-          throw new Error(response?.text || "Не удалось изменить командный бонус");
-        }
-
-        await handleReload();
       } catch (requestError) {
         setError(requestError?.message || "Не удалось изменить командный бонус");
       }
     },
-    [api, confirm, handleReload, monthId, pointId, selectedPart],
+    [api, confirm, handleReload, monthId, pointId, runMutation, selectedPart],
   );
 
   const handleSaveSmenaModal = useCallback(
     async ({ id, name, users }) => {
-      const payload = {
-        name,
-        point_id: pointId,
-        users: users.map((item) =>
+      await runMutation(async () => {
+        const payload = {
+          name,
+          point_id: pointId,
+          users: users.map((item) =>
+            smenaModal.mode === "create"
+              ? {
+                  id: item.id,
+                  is_my: item.is_my,
+                }
+              : {
+                  id: item.id,
+                  app_id: item.app_id,
+                  is_my: item.is_my,
+                },
+          ),
+        };
+
+        const response =
           smenaModal.mode === "create"
-            ? {
-                id: item.id,
-                is_my: item.is_my,
-              }
-            : {
-                id: item.id,
-                app_id: item.app_id,
-                is_my: item.is_my,
-              },
-        ),
-      };
+            ? await api.saveNewSmena(payload)
+            : await api.saveEditSmena({ ...payload, id });
 
-      const response =
-        smenaModal.mode === "create"
-          ? await api.saveNewSmena(payload)
-          : await api.saveEditSmena({ ...payload, id });
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось сохранить смену");
+        }
 
-      if (response?.st === false) {
-        throw new Error(response?.text || "Не удалось сохранить смену");
-      }
-
-      handleCloseSmenaModal();
-      await handleReload();
+        handleCloseSmenaModal();
+        await handleReload();
+      });
     },
-    [api, handleCloseSmenaModal, handleReload, pointId, smenaModal.mode],
+    [api, handleCloseSmenaModal, handleReload, pointId, runMutation, smenaModal.mode],
   );
 
   const handleRequestDeleteSmena = useCallback(async () => {
@@ -875,17 +902,19 @@ export default function useStaffSchedulePage() {
     }
 
     try {
-      const response = await api.deleteSmena({
-        id: smenaModal.request?.id,
-        users: smenaModal.data?.users ?? [],
+      await runMutation(async () => {
+        const response = await api.deleteSmena({
+          id: smenaModal.request?.id,
+          users: smenaModal.data?.users ?? [],
+        });
+
+        if (response?.st === false) {
+          throw new Error(response?.text || "Не удалось удалить смену");
+        }
+
+        handleCloseSmenaModal();
+        await handleReload();
       });
-
-      if (response?.st === false) {
-        throw new Error(response?.text || "Не удалось удалить смену");
-      }
-
-      handleCloseSmenaModal();
-      await handleReload();
     } catch (requestError) {
       setError(requestError?.message || "Не удалось выполнить действие");
     }
@@ -894,6 +923,7 @@ export default function useStaffSchedulePage() {
     confirm,
     handleCloseSmenaModal,
     handleReload,
+    runMutation,
     smenaModal.data?.users,
     smenaModal.request?.id,
   ]);
@@ -919,10 +949,23 @@ export default function useStaffSchedulePage() {
     access,
     pointId,
   });
+  const isLoading =
+    isBootstrapping ||
+    isGraphLoading ||
+    isMutationLoading ||
+    dayModal.loading ||
+    monthModal.loading ||
+    smenaModal.loading ||
+    summaryActionModal.loading ||
+    errorAppealModal.loading ||
+    fastActions.state.saving ||
+    exportActions.dialog.loading;
 
   return {
+    isLoading,
     isBootstrapping,
     isGraphLoading,
+    isMutationLoading,
     error,
     points,
     months,

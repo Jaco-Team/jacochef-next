@@ -38,7 +38,6 @@ export default function StaffScheduleErrorAppealDialog({ modal, onClose, onSubmi
               compact
               tone="secondary"
               onClick={onClose}
-              disabled={modal?.loading}
               sx={{ minWidth: 112 }}
             >
               Отмена
@@ -46,7 +45,6 @@ export default function StaffScheduleErrorAppealDialog({ modal, onClose, onSubmi
             <V2Button
               compact
               onClick={() => onSubmit?.({ type: data?.type, appealText })}
-              loading={modal?.loading}
               disabled={!canSubmit}
               sx={{ minWidth: 128 }}
             >

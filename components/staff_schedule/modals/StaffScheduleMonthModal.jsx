@@ -15,6 +15,7 @@ import {
   formatWorkedHours,
   getHourPresetByType,
   isCustomHourRange,
+  normalizeTimeLabel,
 } from "../staffScheduleHourPresets";
 import {
   buildMonthModalDraft,
@@ -68,7 +69,13 @@ function buildCustomSlots(dates = []) {
       return;
     }
 
-    const slotId = `custom-${buildHourSlotId(item)}`;
+    const timeStart = normalizeTimeLabel(item.time_start);
+    const timeEnd = normalizeTimeLabel(item.time_end);
+    const slotId = `custom-${buildHourSlotId({
+      ...item,
+      time_start: timeStart,
+      time_end: timeEnd,
+    })}`;
 
     if (!slotMap.has(slotId)) {
       const preset = getHourPresetByType(item.type);
@@ -76,9 +83,9 @@ function buildCustomSlots(dates = []) {
       slotMap.set(slotId, {
         id: slotId,
         type: Number(item.type ?? 3),
-        label: formatHourRangeLabel(item.time_start, item.time_end),
-        time_start: item.time_start ?? "",
-        time_end: item.time_end ?? "",
+        label: formatHourRangeLabel(timeStart, timeEnd),
+        time_start: timeStart,
+        time_end: timeEnd,
         color: preset.color,
         textColor: preset.textColor,
         isCustom: true,
@@ -472,7 +479,6 @@ function AssignmentDialog({
   onDeleteCustomSlot,
   onClose,
   onSave,
-  saving,
 }) {
   const allSlots = [...buildPresetSlots(), ...customSlots];
   const daysMap = new Map(draft.dates.map((item) => [item.date, item]));
@@ -497,7 +503,6 @@ function AssignmentDialog({
             compact
             tone="secondary"
             onClick={onClose}
-            disabled={saving}
             sx={{ minHeight: 44, minWidth: 106 }}
           >
             Отменить
@@ -506,10 +511,9 @@ function AssignmentDialog({
             compact
             tone="primary"
             onClick={onSave}
-            disabled={saving}
             sx={{ minHeight: 44, minWidth: 114 }}
           >
-            {saving ? "Сохранение..." : "Сохранить"}
+            Сохранить
           </V2Button>
         </Stack>
       }
@@ -617,7 +621,6 @@ function AssignmentDialog({
 export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
   const [editorDraft, setEditorDraft] = useState(() => buildMonthModalDraft(modal.data));
   const [editorCustomSlots, setEditorCustomSlots] = useState([]);
@@ -639,6 +642,8 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
 
   useEffect(() => {
     if (!modal.open) {
+      setIsAssignmentOpen(false);
+      setIsCustomTimeOpen(false);
       return;
     }
 
@@ -648,7 +653,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     setEditorCustomSlots(buildCustomSlots(nextDraft.dates));
     setActiveSlotId("preset-0");
     setSaveError("");
-    setIsSaving(false);
     setIsAssignmentOpen(false);
     setIsCustomTimeOpen(false);
   }, [modal.open, modal.data]);
@@ -668,7 +672,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       return;
     }
 
-    setIsSaving(true);
     setSaveError("");
 
     try {
@@ -680,20 +683,11 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       }
     } catch (error) {
       setSaveError(error?.message || "Не удалось сохранить месяц");
-      setIsSaving(false);
       return;
-    }
-
-    if (!shouldClose) {
-      setIsSaving(false);
     }
   };
 
   const handleRequestClose = async () => {
-    if (isSaving) {
-      return;
-    }
-
     onClose?.();
   };
 
@@ -724,12 +718,18 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   };
 
   const handleSubmitCustomTime = () => {
+    const timeStart = normalizeTimeLabel(customTimeDraft.time_start);
+    const timeEnd = normalizeTimeLabel(customTimeDraft.time_end);
     const nextSlot = {
-      id: `custom-${buildHourSlotId(customTimeDraft)}`,
+      id: `custom-${buildHourSlotId({
+        ...customTimeDraft,
+        time_start: timeStart,
+        time_end: timeEnd,
+      })}`,
       type: Number(customTimeDraft.type ?? 3),
-      label: formatHourRangeLabel(customTimeDraft.time_start, customTimeDraft.time_end),
-      time_start: customTimeDraft.time_start,
-      time_end: customTimeDraft.time_end,
+      label: formatHourRangeLabel(timeStart, timeEnd),
+      time_start: timeStart,
+      time_end: timeEnd,
       color: customTimeDraft.color,
       textColor: "#FFFFFF",
       isCustom: true,
@@ -849,7 +849,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                   tone="primary"
                   startIcon={<CheckRoundedIcon sx={{ fontSize: 18 }} />}
                   onClick={openAssignmentDialog}
-                  disabled={!canEditMonth || isSaving}
+                  disabled={!canEditMonth}
                   sx={{ minHeight: 38, px: 2.5, borderRadius: "14px", fontSize: 16 }}
                 >
                   Заполнить часы
@@ -874,7 +874,6 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         onDeleteCustomSlot={handleDeleteCustomSlot}
         onClose={closeAssignmentDialog}
         onSave={handleSaveAssignment}
-        saving={isSaving}
       />
 
       <CustomTimeDialog

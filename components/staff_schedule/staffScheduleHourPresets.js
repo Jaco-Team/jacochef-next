@@ -44,12 +44,24 @@ export function getHourPresetByType(type) {
   );
 }
 
+export function normalizeTimeLabel(value) {
+  const match = String(value ?? "").match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+
+  if (!match) {
+    return String(value ?? "");
+  }
+
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
 export function formatHourRangeLabel(timeStart, timeEnd) {
-  return [timeStart, timeEnd].filter(Boolean).join("-") || "—";
+  return (
+    [normalizeTimeLabel(timeStart), normalizeTimeLabel(timeEnd)].filter(Boolean).join("-") || "—"
+  );
 }
 
 function parseTimeToMinutes(value) {
-  const match = String(value ?? "").match(/^(\d{1,2}):(\d{2})$/);
+  const match = String(value ?? "").match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
 
   if (!match) {
     return null;

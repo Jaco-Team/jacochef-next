@@ -10,7 +10,6 @@ function buildInitialValue(modal) {
 export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSave }) {
   const [value, setValue] = useState(() => buildInitialValue(modal));
   const [saveError, setSaveError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!modal.open) {
@@ -19,7 +18,6 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
 
     setValue(buildInitialValue(modal));
     setSaveError("");
-    setIsSaving(false);
   }, [modal]);
 
   const options = useMemo(() => modal?.data?.options ?? [], [modal?.data?.options]);
@@ -30,7 +28,6 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
       return;
     }
 
-    setIsSaving(true);
     setSaveError("");
 
     try {
@@ -41,7 +38,6 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
       });
     } catch (error) {
       setSaveError(error?.message || "Не удалось сохранить изменения");
-      setIsSaving(false);
     }
   };
 
@@ -56,7 +52,6 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
         compact
         tone="secondary"
         onClick={onClose}
-        disabled={isSaving}
         sx={{ minWidth: 108, minHeight: 44, borderRadius: "12px", fontSize: 16, fontWeight: 500 }}
       >
         Отмена
@@ -65,10 +60,10 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
         compact
         tone="primary"
         onClick={handleSave}
-        disabled={isSaving || value === ""}
+        disabled={value === ""}
         sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
       >
-        {isSaving ? "Сохранение..." : "Сохранить"}
+        Сохранить
       </V2Button>
     </Stack>
   );
