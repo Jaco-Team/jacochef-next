@@ -1,4 +1,4 @@
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, useMediaQuery, useTheme } from "@mui/material";
 import { V2Alert, V2BackdropLoader } from "@/ui/v2";
 import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
 import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
@@ -15,6 +15,8 @@ import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
 import StaffScheduleAccessTester from "./StaffScheduleAccessTester";
 
 export default function StaffSchedulePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const page = useStaffSchedulePage();
 
   return (
@@ -27,7 +29,10 @@ export default function StaffSchedulePage() {
         className="container_first_child"
       >
         <Grid size={12}>
-          <StaffScheduleHeaderSection page={page} />
+          <StaffScheduleHeaderSection
+            page={page}
+            isMobile={isMobile}
+          />
         </Grid>
 
         {page.error ? (
@@ -63,6 +68,7 @@ export default function StaffSchedulePage() {
             selectedPart={page.selectedPart}
             onOpenSummaryAction={page.handleOpenSummaryAction}
             onRemoveTeamBonusFromUser={page.handleRemoveTeamBonusFromUser}
+            isMobile={isMobile}
           />
         </Grid>
 

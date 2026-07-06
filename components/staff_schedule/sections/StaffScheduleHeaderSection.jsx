@@ -2,15 +2,105 @@ import HealthAndSafetyOutlinedIcon from "@mui/icons-material/HealthAndSafetyOutl
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import Grid from "@mui/material/Grid";
 import { Box, Stack, useMediaQuery, useTheme } from "@mui/material";
 import { V2Button, V2IconButton, V2SegmentedTabs, V2Select } from "@/ui/v2";
 
-export default function StaffScheduleHeaderSection({ page }) {
+function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 1,
+        flexWrap: "nowrap",
+      }}
+    >
+      <V2Button
+        startIcon={<RefreshIcon />}
+        onClick={page.handleReload}
+        disabled={page.isGraphLoading}
+        sx={{ minWidth: 126, fontWeight: 500 }}
+      >
+        Обновить
+      </V2Button>
+
+      {canExportWorkSchedule ? (
+        <>
+          <V2IconButton
+            onClick={() => page.handleOpenExportDialog("ws")}
+            aria-label="Распечатать график работ"
+            sx={softActionSx}
+          >
+            <PrintOutlinedIcon fontSize="small" />
+          </V2IconButton>
+          <V2IconButton
+            onClick={() => page.handleOpenExportDialog("ws")}
+            aria-label="Скачать график работ"
+            sx={softActionSx}
+          >
+            <FileDownloadOutlinedIcon fontSize="small" />
+          </V2IconButton>
+        </>
+      ) : null}
+    </Box>
+  );
+}
+
+function MobileHeaderActions({ page, canExportHealthJournal }) {
+  return (
+    <Grid
+      container
+      spacing={1.25}
+    >
+      {canExportHealthJournal ? (
+        <Grid size={6}>
+          <V2Button
+            fullWidth
+            tone="secondary"
+            onClick={() => page.handleOpenExportDialog("hj")}
+            startIcon={<HealthAndSafetyOutlinedIcon />}
+            sx={{
+              minHeight: 44,
+              backgroundColor: "#E5E5E5",
+              border: "none",
+              color: "#666666",
+              fontWeight: 500,
+              "&:hover": {
+                backgroundColor: "#DCDCDC",
+                border: "none",
+              },
+              "&.Mui-disabled": {
+                backgroundColor: "#E5E5E5",
+                color: "#A6A6A6",
+              },
+            }}
+          >
+            Журнал здоровья
+          </V2Button>
+        </Grid>
+      ) : null}
+
+      <Grid size={canExportHealthJournal ? 6 : 12}>
+        <V2Button
+          fullWidth
+          startIcon={<RefreshIcon />}
+          onClick={page.handleReload}
+          disabled={page.isGraphLoading}
+          sx={{ minHeight: 44, fontWeight: 500 }}
+        >
+          Обновить
+        </V2Button>
+      </Grid>
+    </Grid>
+  );
+}
+
+export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const canExportWorkSchedule = page.canExportWorkSchedule;
   const canExportHealthJournal = page.canExportHealthJournal;
-  const fieldBoxSx = { flex: 1, minWidth: 0 };
   const softActionSx = {
     backgroundColor: "#E5E5E5",
     border: "none",
@@ -41,13 +131,12 @@ export default function StaffScheduleHeaderSection({ page }) {
         <h1>{page.view.moduleName}</h1>
       </Box>
 
-      <Stack
-        direction={{ xs: "column", md: "row" }}
+      <Grid
+        container
         spacing={1.25}
-        alignItems={{ xs: "stretch", md: "flex-end" }}
         sx={{ mb: 1.5 }}
       >
-        <Box sx={fieldBoxSx}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <V2Select
             allowNone={false}
             options={page.points}
@@ -55,9 +144,9 @@ export default function StaffScheduleHeaderSection({ page }) {
             onChange={page.handlePointChange}
             label="Кафе"
           />
-        </Box>
+        </Grid>
 
-        <Box sx={fieldBoxSx}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <V2Select
             allowNone={false}
             options={page.months}
@@ -65,47 +154,23 @@ export default function StaffScheduleHeaderSection({ page }) {
             onChange={page.handleMonthChange}
             label="Месяц"
           />
-        </Box>
+        </Grid>
 
-        <Box sx={{ flexShrink: 0 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: { xs: "flex-start", md: "flex-end" },
-              gap: 1,
-              flexWrap: "nowrap",
-            }}
-          >
-            <V2Button
-              startIcon={<RefreshIcon />}
-              onClick={page.handleReload}
-              disabled={page.isGraphLoading}
-              sx={{ minWidth: 126, fontWeight: 500 }}
-            >
-              Обновить
-            </V2Button>
-
-            {isDesktop && canExportWorkSchedule ? (
-              <>
-                <V2IconButton
-                  onClick={() => page.handleOpenExportDialog("ws")}
-                  aria-label="Распечатать график работ"
-                  sx={softActionSx}
-                >
-                  <PrintOutlinedIcon fontSize="small" />
-                </V2IconButton>
-                <V2IconButton
-                  onClick={() => page.handleOpenExportDialog("ws")}
-                  aria-label="Скачать график работ"
-                  sx={softActionSx}
-                >
-                  <FileDownloadOutlinedIcon fontSize="small" />
-                </V2IconButton>
-              </>
-            ) : null}
-          </Box>
-        </Box>
-      </Stack>
+        <Grid size={{ xs: 12, md: 4 }}>
+          {isMobile ? (
+            <MobileHeaderActions
+              page={page}
+              canExportHealthJournal={canExportHealthJournal}
+            />
+          ) : (
+            <DesktopHeaderActions
+              page={page}
+              canExportWorkSchedule={canExportWorkSchedule}
+              softActionSx={softActionSx}
+            />
+          )}
+        </Grid>
+      </Grid>
 
       <V2SegmentedTabs
         value={page.selectedPart}
@@ -123,12 +188,11 @@ export default function StaffScheduleHeaderSection({ page }) {
         }}
       />
 
-      <Stack
-        direction={{ xs: "column", md: "row" }}
+      <Grid
+        container
         spacing={1.25}
-        alignItems={{ xs: "stretch", md: "flex-end" }}
       >
-        <Box sx={fieldBoxSx}>
+        <Grid size={{ xs: 12, md: canExportHealthJournal ? 8 : 12 }}>
           <V2Select
             allowNone={false}
             options={page.view.shiftOptions}
@@ -136,10 +200,10 @@ export default function StaffScheduleHeaderSection({ page }) {
             onChange={page.handleShiftChange}
             label="Смена"
           />
-        </Box>
+        </Grid>
 
-        {canExportHealthJournal ? (
-          <Box sx={{ width: { xs: "100%", md: 382 }, flexShrink: 0 }}>
+        {!isMobile && canExportHealthJournal ? (
+          <Grid size={{ xs: 12, md: 4 }}>
             <V2Button
               fullWidth
               tone="secondary"
@@ -163,9 +227,9 @@ export default function StaffScheduleHeaderSection({ page }) {
             >
               Журнал здоровья
             </V2Button>
-          </Box>
+          </Grid>
         ) : null}
-      </Stack>
+      </Grid>
     </Box>
   );
 }
