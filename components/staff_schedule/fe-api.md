@@ -12,6 +12,40 @@
 - Тело запроса, как и в старых Chef-модулях, передаётся в `data`.
 - На текущем milestone ответы повторяют legacy `work_schedule`.
 
+## ACCESS map
+
+`access` возвращается один раз в bootstrap `get_all`.
+`get_graph` access map не возвращает и не должен использоваться как источник прав для FE.
+
+Старые детальные ключи остаются без переименования:
+
+- быстрые действия: `fast_month_access`, `fast_2_week_access`, `fast_smena_access`, `fast_point_access`
+- таблица: `full_month_access`, `create_edit_smena_access`
+- финансы: `1h_view`, `1h_edit`, `1h_plus_view`, `com_bonus_view`, `com_bonus_edit`, `full_h_view`, `errors_view`, `bonus_view`, `bonus_edit`, `all_price_view`, `given_view`, `given_edit`, `withheld_view`, `withheld_edit`, `given_cart_view`, `given_cart_edit`, `test_all_price_view`, `premia_view`
+- низ таблицы: `bonus_of_day_view`, `rolls_view`, `pizza_view`, `over_40_min_view`, `sums_all_view`
+
+Новые FE-группы создаются командой `php artisan staff-schedule:ensure-access --apply --sync-values`:
+
+- `salary_block_view` — общий показ блока зарплаты
+- `payroll_actions_access` — общий показ действий с выплатами
+- `schedule_actions_access` — общий показ быстрых/массовых действий графика
+- `smena_actions_access` — общий показ действий со сменами
+- `footer_stats_view` — общий показ статистики внизу таблицы
+
+Правила расчета новых FE-групп:
+
+- `salary_block_view = 1`, если доступен любой salary view из `1h`, `1h_plus`, `full_h`, `bonus`, `all_price`, `given`, `withheld`, `given_cart`, `test_all_price`, `premia`
+- `payroll_actions_access = 1`, если есть любой edit из `given`, `given_cart`, `withheld`
+- `schedule_actions_access = 1`, если есть любой access из `full_month`, `fast_month`, `fast_2_week`, `fast_smena`, `fast_point`
+- `smena_actions_access = 1`, если есть `create_edit_smena_access`
+- `footer_stats_view = 1`, если доступен любой footer view из `bonus_of_day`, `rolls`, `pizza`, `over_40_min`, `sums_all`
+
+Рекомендация для FE:
+
+- использовать новые FE-группы для показа крупных блоков и панелей действий
+- старые детальные ключи оставить для отдельных колонок/кнопок внутри блока
+- не завязывать UX `downloadHJ` на отдельный health/export ключ: отдельного backend/ACCESS-флага для него нет, действует общий доступ к модулю
+
 ## Методы
 
 ### `POST|ANY /api/staff_schedule/get_all`
@@ -30,6 +64,7 @@
 - `point_list`
 - `months`
 - `access`
+- `acces`
 
 ### `POST|ANY /api/staff_schedule/get_graph`
 
@@ -59,7 +94,6 @@
 - `add_lv`
 - `err`
 - `checj`
-- `access`
 - `asd`
 
 В строках пользователей внутри `date.one.users.users` и `date.two.users.users` дополнительно есть:
@@ -204,6 +238,11 @@
   - всегда блокировать изменение `user_temp`, `type_healf`, если дата не равна текущей
 - backend validation остается источником правды, FE нужен только чтобы не слать заведомо запрещенные save-запросы
 
+Правило авторизации:
+
+- backend берет access только из server-side middleware `request->upd_access`
+- payload `data` не участвует в авторизации и не должен содержать access map
+
 Выход:
 
 - `hours`
@@ -237,6 +276,11 @@
 Рекомендация для FE:
 
 - дизейблить month-edit для прошедших месяцев, если пользователь не `MEGA`
+
+Правило авторизации:
+
+- backend берет access только из server-side middleware `request->upd_access`
+- payload `data` не участвует в авторизации и не должен содержать access map
 
 Выход:
 
@@ -772,13 +816,13 @@
 - `point_list` сохраняет legacy-поля точки
 - `months` сохраняет текущий формат списка месяцев
 - `access` сохраняет текущую карту доступов
+- `acces` остается legacy-алиасом того же access map
 
 #### `get_graph`
 
 Пока не нормализуются:
 
 - верхнеуровневые legacy-поля `show_zp_one`, `show_zp_two`, `show_zp`, `kind`, `lv_cafe`, `lv_dir`, `lv_dir_new`, `add_lv`, `err`, `checj`, `asd`
-- `access` сохраняет текущие ключи доступов без переименования
 - `date.one` / `date.two` сохраняют старую структуру половин месяца
 - `date.*.users.smens` и `date.*.users.smens_full` сохраняют текущий формат смен
 - строки сотрудников внутри `date.*.users.users` сохраняют все старые поля расчётов, ЗП, бонусов, удержаний, ошибок, доступа к кассе, роли, смены и списков для быстрых действий

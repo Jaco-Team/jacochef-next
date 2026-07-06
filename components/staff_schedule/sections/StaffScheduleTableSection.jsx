@@ -38,7 +38,7 @@ import {
   SUMMARY_COLUMN_WIDTH,
 } from "../staffScheduleConstants";
 import {
-  createStaffScheduleAccess,
+  createStaffSchedulePolicy,
   getRowBaseColor,
   getSummaryCellValue,
   hasFastActionsAccess,
@@ -702,10 +702,8 @@ export default function StaffScheduleTableSection({
   const isSyncingScrollRef = useRef(false);
   const days = toArray(period?.meta?.days);
   const visibleRows = toArray(rows);
-  const { canAccess, canView, canEdit } = useMemo(
-    () => createStaffScheduleAccess(access),
-    [access],
-  );
+  const { canView, canEdit, canShowFooterStats, canOpenMonthCard, canOpenDayCard, canManageSmena } =
+    useMemo(() => createStaffSchedulePolicy(access), [access]);
   const renderedDayCount = isCalendarHidden ? 0 : days.length;
   const showFastActions = hasFastActionsAccess(access);
   const stickyColumnCount = 3 + (showFastActions ? 1 : 0);
@@ -716,10 +714,10 @@ export default function StaffScheduleTableSection({
   const canShowSlowOrders = canView("over_40_min");
   const canShowTotals = canView("sums_all");
   const canShowPeriodSum = canView("bonus_of_day");
-  const canOpenMonth = canAccess("full_month");
-  const canOpenDayEdit = canEdit("day_edit") || canAccess("full_day");
-  const canEditSmena = canAccess("create_edit_smena");
-  const canCreateSmena = canAccess("create_edit_smena");
+  const canOpenMonth = canOpenMonthCard;
+  const canOpenDayEdit = canOpenDayCard;
+  const canEditSmena = canManageSmena;
+  const canCreateSmena = canManageSmena;
   const canEditTeamBonus = canEdit("com_bonus");
   const canOpenDirectorLevel = graphKind !== "other";
   const hasBulkSelection = selectedRowIds.length > 0;
@@ -753,11 +751,12 @@ export default function StaffScheduleTableSection({
     my_bonus: "sum_bonus_price",
   };
   const hasSummaryRows =
-    (canShowPeriodSum && bonusDayValues.length > 0) ||
-    canShowTotals ||
-    (!isCalendarHidden && canShowRolls) ||
-    (!isCalendarHidden && canShowPizza) ||
-    (!isCalendarHidden && canShowSlowOrders);
+    canShowFooterStats &&
+    ((canShowPeriodSum && bonusDayValues.length > 0) ||
+      canShowTotals ||
+      (!isCalendarHidden && canShowRolls) ||
+      (!isCalendarHidden && canShowPizza) ||
+      (!isCalendarHidden && canShowSlowOrders));
 
   const syncScrollPosition = useCallback((source, target) => {
     if (!source || !target || target.scrollLeft === source.scrollLeft) {

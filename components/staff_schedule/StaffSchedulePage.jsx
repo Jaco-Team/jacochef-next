@@ -12,6 +12,7 @@ import { PAGE_BOTTOM_PADDING } from "./staffScheduleConstants";
 import StaffScheduleErrorsSection from "./sections/StaffScheduleErrorsSection";
 import StaffScheduleHeaderSection from "./sections/StaffScheduleHeaderSection";
 import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
+import StaffScheduleAccessTester from "./StaffScheduleAccessTester";
 
 export default function StaffSchedulePage() {
   const page = useStaffSchedulePage();
@@ -42,7 +43,7 @@ export default function StaffSchedulePage() {
             shownShiftCount={page.view.shownShiftCount}
             summaryColumns={page.view.summaryColumns}
             access={page.access}
-            graphKind={page.graphKind}
+            graphKind={page.effectiveGraphKind}
             directorLevel={page.directorLevel}
             periodBonusState={page.periodBonusState}
             onOpenDay={page.handleOpenDayModal}
@@ -125,6 +126,7 @@ export default function StaffSchedulePage() {
         onDateEndChange={page.handleExportDateEndChange}
         onDownload={page.handleExportDownload}
       />
+      <StaffScheduleAccessTester page={page} />
     </Box>
   );
 }

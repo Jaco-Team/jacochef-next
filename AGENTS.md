@@ -16,6 +16,7 @@
 
 - Read the target page/component before editing.
 - Use `apply_patch` for manual code edits.
+- Save temporary screenshots, browser snapshots, network dumps, and other agent-generated inspection artifacts under `.codex-artifacts/`; never put them in the repo root.
 - Read the surrounding module flow before changing behavior that crosses tabs, modals, or shared hooks/stores.
 - Prefer focused changes in existing files over broad refactors.
 - Do not remove existing behavior unless explicitly requested.

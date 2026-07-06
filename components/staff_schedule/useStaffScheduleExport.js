@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import dayjs from "dayjs";
-import { canExportExcel, openExportDownloadUrl } from "./staffScheduleHelpers";
+import { createStaffSchedulePolicy, openExportDownloadUrl } from "./staffScheduleHelpers";
 
 function createExportDialogState(overrides = {}) {
   return {
@@ -16,6 +16,7 @@ function createExportDialogState(overrides = {}) {
 
 export default function useStaffScheduleExport({ api, access, pointId }) {
   const [dialog, setDialog] = useState(() => createExportDialogState());
+  const policy = createStaffSchedulePolicy(access);
 
   const open = useCallback((mode) => {
     const today = dayjs().format("YYYY-MM-DD");
@@ -90,7 +91,8 @@ export default function useStaffScheduleExport({ api, access, pointId }) {
 
   return {
     dialog,
-    canExport: canExportExcel(access),
+    canExportWorkSchedule: policy.canExportWorkSchedule,
+    canExportHealthJournal: policy.canExportHealthJournal,
     open,
     close,
     setDateStart,

@@ -40,6 +40,7 @@ export default function useStaffSchedulePage() {
   const [pointId, setPointId] = useState("");
   const [monthId, setMonthId] = useState("");
   const [access, setAccess] = useState({});
+  const [devRoleKind, setDevRoleKind] = useState("");
   const [graph, setGraph] = useState({
     oneMeta: EMPTY_PERIOD,
     twoMeta: EMPTY_PERIOD,
@@ -114,6 +115,16 @@ export default function useStaffSchedulePage() {
     [],
   );
 
+  const pickAccessMap = useCallback((payload) => {
+    const nextAccess = payload?.access ?? payload?.acces;
+
+    if (!nextAccess || typeof nextAccess !== "object" || Array.isArray(nextAccess)) {
+      return null;
+    }
+
+    return Object.keys(nextAccess).length > 0 ? nextAccess : null;
+  }, []);
+
   const loadGraph = useCallback(
     async (nextPointId, nextMonthId) => {
       if (!nextPointId || !nextMonthId) {
@@ -134,7 +145,7 @@ export default function useStaffSchedulePage() {
         }
 
         setGraph(buildGraphState(response));
-        setAccess(response?.access ?? {});
+        setAccess((prev) => pickAccessMap(response) ?? prev);
         setSelectedPart(Math.max(Number(response?.part || 1) - 1, 0));
       } catch (requestError) {
         setError(requestError?.message || "Не удалось загрузить график");
@@ -142,7 +153,7 @@ export default function useStaffSchedulePage() {
         setIsGraphLoading(false);
       }
     },
-    [api],
+    [api, pickAccessMap],
   );
 
   useEffect(() => {
@@ -173,7 +184,7 @@ export default function useStaffSchedulePage() {
         setMonths(nextMonths);
         setPointId(nextPointId);
         setMonthId(nextMonthId);
-        setAccess(response?.access ?? {});
+        setAccess(pickAccessMap(response) ?? {});
 
         if (nextPointId && nextMonthId) {
           await loadGraph(nextPointId, nextMonthId);
@@ -194,7 +205,7 @@ export default function useStaffSchedulePage() {
     return () => {
       isMounted = false;
     };
-  }, [api, loadGraph]);
+  }, [api, loadGraph, pickAccessMap]);
 
   useEffect(() => {
     document.title = moduleName;
@@ -216,6 +227,7 @@ export default function useStaffSchedulePage() {
     () => view.activePeriod?.meta?.bonus_other ?? 0,
     [view.activePeriod],
   );
+  const effectiveGraphKind = devRoleKind || graph.kind;
 
   useEffect(() => {
     setSelectedShiftId("all");
@@ -312,7 +324,7 @@ export default function useStaffSchedulePage() {
         dayModalState.openReady({
           request,
           data: buildDayModalViewModel(response, {
-            roleKind: graph.kind,
+            roleKind: effectiveGraphKind,
             checkPeriod: row?.check_period,
           }),
         });
@@ -323,7 +335,7 @@ export default function useStaffSchedulePage() {
         });
       }
     },
-    [api, dayModalState, pointId],
+    [api, dayModalState, effectiveGraphKind, pointId],
   );
 
   const handleCloseDayModal = useCallback(() => {
@@ -370,7 +382,7 @@ export default function useStaffSchedulePage() {
         }
 
         const data = buildMonthModalViewModel(response, {
-          roleKind: graph.kind,
+          roleKind: effectiveGraphKind,
           monthId,
           rowData: row,
           periodDays: view.activePeriod?.meta?.days,
@@ -390,7 +402,7 @@ export default function useStaffSchedulePage() {
         });
       }
     },
-    [api, graph.kind, monthId, monthModalState, view.activePeriod?.meta?.days],
+    [api, effectiveGraphKind, monthId, monthModalState, view.activePeriod?.meta?.days],
   );
 
   const handleCloseMonthModal = useCallback(() => {
@@ -972,6 +984,7 @@ export default function useStaffSchedulePage() {
     pointId,
     monthId,
     access,
+    devRoleKind,
     selectedPart,
     selectedShiftId,
     isCalendarHidden,
@@ -987,11 +1000,15 @@ export default function useStaffSchedulePage() {
     fastActions: fastActions.state,
     pointLabel,
     graphKind: graph.kind,
+    effectiveGraphKind,
     directorLevel: graph.add_lv,
     periodBonusState: view.activePeriod?.meta?.bonus_other ?? 0,
     exportDialog: exportActions.dialog,
-    canExport: exportActions.canExport,
+    canExportWorkSchedule: exportActions.canExportWorkSchedule,
+    canExportHealthJournal: exportActions.canExportHealthJournal,
     ConfirmDialog,
+    setAccess,
+    setDevRoleKind,
     setSelectedPart,
     handlePointChange,
     handleMonthChange,

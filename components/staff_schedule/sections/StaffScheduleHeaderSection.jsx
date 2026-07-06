@@ -8,7 +8,8 @@ import { V2Button, V2IconButton, V2SegmentedTabs, V2Select } from "@/ui/v2";
 export default function StaffScheduleHeaderSection({ page }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-  const canExport = page.canExport;
+  const canExportWorkSchedule = page.canExportWorkSchedule;
+  const canExportHealthJournal = page.canExportHealthJournal;
   const fieldBoxSx = { flex: 1, minWidth: 0 };
   const softActionSx = {
     backgroundColor: "#E5E5E5",
@@ -84,7 +85,7 @@ export default function StaffScheduleHeaderSection({ page }) {
               Обновить
             </V2Button>
 
-            {isDesktop && canExport ? (
+            {isDesktop && canExportWorkSchedule ? (
               <>
                 <V2IconButton
                   onClick={() => page.handleOpenExportDialog("ws")}
@@ -137,7 +138,7 @@ export default function StaffScheduleHeaderSection({ page }) {
           />
         </Box>
 
-        {canExport ? (
+        {canExportHealthJournal ? (
           <Box sx={{ width: { xs: "100%", md: 382 }, flexShrink: 0 }}>
             <V2Button
               fullWidth
