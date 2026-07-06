@@ -11,6 +11,7 @@ import useStaffSchedulePage from "./useStaffSchedulePage";
 import { PAGE_BOTTOM_PADDING } from "./staffScheduleConstants";
 import StaffScheduleErrorsSection from "./sections/StaffScheduleErrorsSection";
 import StaffScheduleHeaderSection from "./sections/StaffScheduleHeaderSection";
+import StaffScheduleMobileScheduleControls from "./sections/StaffScheduleMobileScheduleControls";
 import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
 import StaffScheduleAccessTester from "./StaffScheduleAccessTester";
 
@@ -20,7 +21,10 @@ export default function StaffSchedulePage() {
   const page = useStaffSchedulePage();
 
   return (
-    <Box sx={{ pb: PAGE_BOTTOM_PADDING }}>
+    <Box
+      className="v2-module"
+      sx={{ pb: PAGE_BOTTOM_PADDING, fontSize: 14 }}
+    >
       <V2BackdropLoader open={page.isLoading} />
 
       <Grid
@@ -28,6 +32,13 @@ export default function StaffSchedulePage() {
         spacing={2.5}
         className="container_first_child"
       >
+        <Grid
+          size={12}
+          sx={{ mb: 1 }}
+        >
+          <h1>{page.view.moduleName}</h1>
+        </Grid>
+
         <Grid size={12}>
           <StaffScheduleHeaderSection
             page={page}
@@ -41,6 +52,25 @@ export default function StaffSchedulePage() {
           </Grid>
         ) : null}
 
+        {isMobile ? (
+          <Grid size={12}>
+            <StaffScheduleMobileScheduleControls
+              canCreateSmena={page.canManageSmena}
+              isCalendarHidden={page.isCalendarHidden}
+              onCalendarVisibilityChange={page.handleCalendarVisibilityChange}
+              useColors={page.colorMode !== "plain"}
+              onColorModeChange={page.handleColorModeChange}
+              onOpenCreateSmena={page.handleOpenCreateSmena}
+            />
+          </Grid>
+        ) : null}
+      </Grid>
+
+      <Grid
+        container
+        spacing={2.5}
+        sx={{ pt: 1 }}
+      >
         <Grid size={12}>
           <StaffScheduleTableSection
             period={page.view.activePeriod}

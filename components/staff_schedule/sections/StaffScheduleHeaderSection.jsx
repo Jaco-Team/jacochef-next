@@ -3,8 +3,24 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Grid from "@mui/material/Grid";
-import { Box, Stack, useMediaQuery, useTheme } from "@mui/material";
+import { Box } from "@mui/material";
 import { V2Button, V2IconButton, V2SegmentedTabs, V2Select } from "@/ui/v2";
+
+const secondaryActionButtonSx = {
+  minHeight: 44,
+  backgroundColor: "#E5E5E5",
+  border: "none",
+  color: "#666666",
+  fontWeight: 500,
+  "&:hover": {
+    backgroundColor: "#DCDCDC",
+    border: "none",
+  },
+  "&.Mui-disabled": {
+    backgroundColor: "#E5E5E5",
+    color: "#A6A6A6",
+  },
+};
 
 function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
   return (
@@ -60,21 +76,7 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
             tone="secondary"
             onClick={() => page.handleOpenExportDialog("hj")}
             startIcon={<HealthAndSafetyOutlinedIcon />}
-            sx={{
-              minHeight: 44,
-              backgroundColor: "#E5E5E5",
-              border: "none",
-              color: "#666666",
-              fontWeight: 500,
-              "&:hover": {
-                backgroundColor: "#DCDCDC",
-                border: "none",
-              },
-              "&.Mui-disabled": {
-                backgroundColor: "#E5E5E5",
-                color: "#A6A6A6",
-              },
-            }}
+            sx={secondaryActionButtonSx}
           >
             Журнал здоровья
           </V2Button>
@@ -97,8 +99,6 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
 }
 
 export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const canExportWorkSchedule = page.canExportWorkSchedule;
   const canExportHealthJournal = page.canExportHealthJournal;
   const softActionSx = {
@@ -116,21 +116,6 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
 
   return (
     <Box>
-      <Box
-        sx={{
-          mb: 1.25,
-          "& h1": {
-            m: 0,
-            fontSize: { xs: 18, md: 20 },
-            lineHeight: 1.2,
-            fontWeight: 700,
-            color: "#111827",
-          },
-        }}
-      >
-        <h1>{page.view.moduleName}</h1>
-      </Box>
-
       <Grid
         container
         spacing={1.25}
@@ -209,21 +194,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
               tone="secondary"
               onClick={() => page.handleOpenExportDialog("hj")}
               startIcon={<HealthAndSafetyOutlinedIcon />}
-              sx={{
-                minHeight: 44,
-                backgroundColor: "#E5E5E5",
-                border: "none",
-                color: "#666666",
-                fontWeight: 500,
-                "&:hover": {
-                  backgroundColor: "#DCDCDC",
-                  border: "none",
-                },
-                "&.Mui-disabled": {
-                  backgroundColor: "#E5E5E5",
-                  color: "#A6A6A6",
-                },
-              }}
+              sx={secondaryActionButtonSx}
             >
               Журнал здоровья
             </V2Button>

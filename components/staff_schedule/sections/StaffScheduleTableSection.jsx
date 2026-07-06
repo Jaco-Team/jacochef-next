@@ -44,6 +44,7 @@ import {
   hasFastActionsAccess,
   toArray,
 } from "../staffScheduleHelpers";
+import StaffScheduleMobileTableSection from "./StaffScheduleMobileTableSection";
 
 const stickyBaseSx = {
   position: "sticky",
@@ -630,7 +631,21 @@ function SummaryMetricRow({
             whiteSpace: compactValues ? "nowrap" : undefined,
           }}
         >
-          {getValue ? getValue(item) : ""}
+          {compactValues ? (
+            <SmallFont
+              style={{
+                display: "block",
+                fontSize: "0.65rem",
+                lineHeight: 1.1,
+              }}
+            >
+              {getValue ? getValue(item) : ""}
+            </SmallFont>
+          ) : getValue ? (
+            getValue(item)
+          ) : (
+            ""
+          )}
         </TableCell>
       ))}
 
@@ -654,7 +669,21 @@ function SummaryMetricRow({
               : undefined,
           }}
         >
-          {getSummaryValue ? getSummaryValue(column) : ""}
+          {compactValues ? (
+            <SmallFont
+              style={{
+                display: "block",
+                fontSize: "0.65rem",
+                lineHeight: 1.1,
+              }}
+            >
+              {getSummaryValue ? getSummaryValue(column) : ""}
+            </SmallFont>
+          ) : getSummaryValue ? (
+            getSummaryValue(column)
+          ) : (
+            ""
+          )}
         </TableCell>
       ))}
     </TableRow>
@@ -687,6 +716,7 @@ export default function StaffScheduleTableSection({
   onCalendarVisibilityChange,
   colorMode,
   onColorModeChange,
+  isMobile = false,
 }) {
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
   const [stickyHeader, setStickyHeader] = useState({
@@ -884,6 +914,48 @@ export default function StaffScheduleTableSection({
       >
         Нет данных за выбранный период
       </Box>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <StaffScheduleMobileTableSection
+        shownShiftCount={shownShiftCount}
+        rows={visibleRows}
+        days={days}
+        collapsedShiftIds={collapsedShiftIds}
+        onToggleShiftCollapse={onToggleShiftCollapse}
+        canEditSmena={canEditSmena}
+        onOpenEditSmena={onOpenEditSmena}
+        isCalendarHidden={isCalendarHidden}
+        showFastActions={showFastActions}
+        hasBulkSelection={hasBulkSelection}
+        onOpenBulkFastActions={onOpenBulkFastActions}
+        useColors={useColors}
+        selectedRowIds={selectedRowIds}
+        onToggleRowSelection={onToggleRowSelection}
+        onOpenMonth={onOpenMonth}
+        onOpenDay={onOpenDay}
+        canOpenMonth={canOpenMonth}
+        canOpenDayEdit={canOpenDayEdit}
+        hasSummaryRows={hasSummaryRows}
+        directorLevel={directorLevel}
+        canOpenDirectorLevel={canOpenDirectorLevel}
+        onOpenSummaryAction={onOpenSummaryAction}
+        summaryColumns={summaryColumns}
+        summaryTotals={summaryTotals}
+        totalsSummaryKeyMap={totalsSummaryKeyMap}
+        periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
+        canEditTeamBonus={canEditTeamBonus}
+        periodBonusState={periodBonusState}
+        canShowPeriodSum={canShowPeriodSum}
+        bonusDayValues={bonusDayValues}
+        canShowTotals={canShowTotals}
+        canShowRolls={canShowRolls}
+        canShowPizza={canShowPizza}
+        canShowSlowOrders={canShowSlowOrders}
+        slowOrderValues={slowOrderValues}
+      />
     );
   }
 
