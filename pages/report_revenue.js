@@ -17,6 +17,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 import { MyDatePickerNew, MyAutocomplite } from "@/ui/Forms";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 // import { api_laravel_local as api_laravel } from '@/src/api_new';
 import { api_laravel } from "@/src/api_new";
@@ -36,6 +37,7 @@ class ReportRevenue_Table extends React.Component {
       sort: {
         monthIndex: null,
         field: null,
+        segmentKey: null,
         order: "desc",
       },
     };
@@ -47,7 +49,7 @@ class ReportRevenue_Table extends React.Component {
       JSON.stringify(this.props.cats) !== JSON.stringify(prevProps.cats)
     ) {
       this.setState({
-        sort: { monthIndex: null, field: null, order: "desc" },
+        sort: { monthIndex: null, field: null, segmentKey: null, order: "desc" },
       });
     }
   }
@@ -60,15 +62,19 @@ class ReportRevenue_Table extends React.Component {
     );
   }
 
-  handleSort = (monthIndex, field) => {
+  handleSort = (monthIndex, field, segmentKey = null) => {
     this.setState((prevState) => {
       let newOrder;
-      if (prevState.sort.monthIndex === monthIndex && prevState.sort.field === field) {
+      if (
+        prevState.sort.monthIndex === monthIndex &&
+        prevState.sort.field === field &&
+        prevState.sort.segmentKey === segmentKey
+      ) {
         newOrder = prevState.sort.order === "asc" ? "desc" : "asc";
       } else {
         newOrder = "desc";
       }
-      return { sort: { monthIndex, field, order: newOrder } };
+      return { sort: { monthIndex, field, segmentKey, order: newOrder } };
     });
   };
 
@@ -90,19 +96,95 @@ class ReportRevenue_Table extends React.Component {
       { count: 0, price: 0 },
     );
 
-  calculateGrandTotals(months, cats) {
+  getItemTotal = (item) => item.total || this.getRowTotal(item.data);
+
+  getPricePeriods = (cats) => {
+    const periods = new Map();
+
+    cats.forEach((cat) => {
+      cat.items?.forEach((item) => {
+        item.total?.price_segments?.forEach((segment) => {
+          if (!periods.has(segment.key)) {
+            periods.set(segment.key, {
+              key: segment.key,
+              date_start: segment.date_start,
+            });
+          }
+        });
+      });
+    });
+
+    return Array.from(periods.values()).sort((a, b) =>
+      String(a.date_start || "").localeCompare(String(b.date_start || "")),
+    );
+  };
+
+  getPricePeriodLabel = (period, index, periods) => {
+    if (index === 0 && periods[1]?.date_start) {
+      return `цена по ${dayjs(periods[1].date_start).subtract(1, "day").format("DD.MM.YY")}`;
+    }
+
+    if (period.date_start) {
+      return `цена с ${dayjs(period.date_start).format("DD.MM.YY")}`;
+    }
+
+    return "цена";
+  };
+
+  getItemPriceSegment = (item, key) =>
+    item.total?.price_segments?.find((segment) => segment.key === key) || {};
+
+  getSortValue = (item, sort) => {
+    if (sort.monthIndex === -2) {
+      return this.getItemPriceSegment(item, sort.segmentKey)[sort.field] || 0;
+    }
+
+    if (sort.monthIndex === -1) {
+      return this.getItemTotal(item)[sort.field] || 0;
+    }
+
+    return item.data[sort.monthIndex] ? item.data[sort.monthIndex][sort.field] || 0 : 0;
+  };
+
+  calculateGrandTotals(months, cats, pricePeriods) {
     const grandTotals = {
       months: months.map(() => ({ count: 0, price: 0 })),
       overall: { count: 0, price: 0 },
+      price_segments: {},
+      discount_count: 0,
+      discount_price: 0,
+      lost_price: 0,
     };
 
     cats.forEach((cat) => {
       cat.items?.forEach((item) => {
+        const itemTotal = this.getItemTotal(item);
+
         item.data.forEach((d, i) => {
           grandTotals.months[i].count += d.count;
           grandTotals.months[i].price += d.price;
-          grandTotals.overall.count += d.count;
-          grandTotals.overall.price += d.price;
+        });
+
+        grandTotals.overall.count += itemTotal.count || 0;
+        grandTotals.overall.price += itemTotal.price || 0;
+        grandTotals.discount_count += itemTotal.discount_count || 0;
+        grandTotals.discount_price += itemTotal.discount_price || 0;
+        grandTotals.lost_price += itemTotal.lost_price || 0;
+
+        pricePeriods.forEach((period) => {
+          const segment = this.getItemPriceSegment(item, period.key);
+
+          if (!grandTotals.price_segments[period.key]) {
+            grandTotals.price_segments[period.key] = {
+              no_discount_count: 0,
+              no_discount_price: 0,
+            };
+          }
+
+          grandTotals.price_segments[period.key].no_discount_count +=
+            segment.no_discount_count || 0;
+          grandTotals.price_segments[period.key].no_discount_price +=
+            segment.no_discount_price || 0;
         });
       });
     });
@@ -110,27 +192,132 @@ class ReportRevenue_Table extends React.Component {
     return grandTotals;
   }
 
-  renderArrow = (currentMonthIndex, activeField) => {
+  renderArrow = (currentMonthIndex, activeField, segmentKey = null) => {
     const { sort } = this.state;
 
-    if (sort.monthIndex === currentMonthIndex && sort.field === activeField) {
+    if (
+      sort.monthIndex === currentMonthIndex &&
+      sort.field === activeField &&
+      sort.segmentKey === segmentKey
+    ) {
       return sort.order === "asc" ? (
-        <ArrowDownwardIcon style={{ verticalAlign: "middle", fontSize: "small" }} />
+        <ArrowDownwardIcon style={{ fontSize: "small" }} />
       ) : (
-        <ArrowUpwardIcon style={{ verticalAlign: "middle", fontSize: "small" }} />
+        <ArrowUpwardIcon style={{ fontSize: "small" }} />
       );
     }
 
+    return <ArrowDownwardIcon style={{ fontSize: "small", opacity: 0.5 }} />;
+  };
+
+  renderSortableLabel = (label, monthIndex, field, segmentKey = null) => (
+    <span
+      style={{
+        display: "block",
+        position: "relative",
+        paddingRight: 24,
+        maxWidth: "100%",
+      }}
+    >
+      <span style={{ minWidth: 0, whiteSpace: "inherit" }}>{label}</span>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 18,
+        }}
+      >
+        {this.renderArrow(monthIndex, field, segmentKey)}
+      </span>
+    </span>
+  );
+
+  renderSortableCell = ({ label, monthIndex, field, sx = {}, segmentKey = null }) => {
     return (
-      <ArrowDownwardIcon style={{ verticalAlign: "middle", fontSize: "small", opacity: 0.5 }} />
+      <TableCell
+        onClick={() => this.handleSort(monthIndex, field, segmentKey)}
+        sx={{ cursor: "pointer", ...sx }}
+      >
+        {this.renderSortableLabel(label, monthIndex, field, segmentKey)}
+      </TableCell>
     );
   };
 
   render() {
     const { months, cats } = this.props;
     const { sort } = this.state;
-    const totalCols = 1 + 2 * months.length + 2;
-    const grandTotals = this.calculateGrandTotals(months, cats);
+    const pricePeriods = this.getPricePeriods(cats);
+    const baseTotalCols = 2;
+    const calcTotalCols = pricePeriods.length * 3 + 3;
+    const totalLeafCols = baseTotalCols + calcTotalCols;
+    const totalCols = 1 + 2 * months.length + totalLeafCols;
+    const grandTotals = this.calculateGrandTotals(months, cats, pricePeriods);
+    const calcBlockBorder = "2px solid #bdbdbd";
+    const finalDiscountBlockBorder = "2px solid #d6d6d6";
+    const pricePeriodBorder = "1px solid #e0e0e0";
+    const monthBlockBorder = "1px solid #eeeeee";
+    const idColumnWidth = 112;
+    const nameColumnWidth = 360;
+    const commonColumnWidth = 120;
+    const calcColumnWidth = 130;
+    const lostColumnWidth = 190;
+    const allColumnWidths = [
+      idColumnWidth,
+      nameColumnWidth,
+      ...months.flatMap(() => [commonColumnWidth, commonColumnWidth]),
+      commonColumnWidth,
+      commonColumnWidth,
+      ...pricePeriods.flatMap(() => [calcColumnWidth, calcColumnWidth, calcColumnWidth]),
+      calcColumnWidth,
+      calcColumnWidth,
+      lostColumnWidth,
+    ];
+    const stickyIdSx = {
+      minWidth: idColumnWidth,
+      width: idColumnWidth,
+      maxWidth: idColumnWidth,
+      boxSizing: "border-box",
+      px: 1,
+    };
+    const stickyNameSx = {
+      left: idColumnWidth,
+      minWidth: nameColumnWidth,
+      width: nameColumnWidth,
+      maxWidth: nameColumnWidth,
+      boxSizing: "border-box",
+    };
+    const calcBlockHeadSx = {
+      borderLeft: calcBlockBorder,
+      backgroundColor: "#f7f7f7",
+    };
+    const calcHeaderSx = {
+      backgroundColor: "#f7f7f7",
+      whiteSpace: "normal !important",
+      wordBreak: "normal",
+      overflowWrap: "break-word",
+      lineHeight: 1.15,
+      minWidth: 120,
+      width: 130,
+      maxWidth: 150,
+      px: 1,
+      py: 1,
+    };
+    const calcBlockCellSx = {
+      borderLeft: calcBlockBorder,
+    };
+    const finalDiscountBlockSx = {
+      borderLeft: pricePeriods.length ? finalDiscountBlockBorder : calcBlockBorder,
+    };
+    const getPricePeriodBorderSx = (index) => {
+      if (index === 0) {
+        return calcBlockHeadSx;
+      }
+
+      return {
+        borderLeft: pricePeriodBorder,
+      };
+    };
 
     return (
       <TableContainer
@@ -142,9 +329,19 @@ class ReportRevenue_Table extends React.Component {
           sx={{
             borderCollapse: "separate",
             borderSpacing: 0,
+            tableLayout: "fixed",
+            width: allColumnWidths.reduce((sum, width) => sum + width, 0),
             "& .MuiTableCell-root": { textAlign: "center", whiteSpace: "nowrap" },
           }}
         >
+          <colgroup>
+            {allColumnWidths.map((width, index) => (
+              <col
+                key={index}
+                style={{ width }}
+              />
+            ))}
+          </colgroup>
           <TableHead sx={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "#fff" }}>
             <TableRow sx={{ height: 40 }}>
               <TableCell
@@ -154,8 +351,7 @@ class ReportRevenue_Table extends React.Component {
                   zIndex: 98,
                   backgroundColor: "#fff",
                   borderLeft: "none",
-                  minWidth: 20,
-                  width: 20,
+                  ...stickyIdSx,
                 }}
               >
                 ID Товара
@@ -163,12 +359,10 @@ class ReportRevenue_Table extends React.Component {
               <TableCell
                 sx={{
                   position: "sticky",
-                  left: 104,
                   zIndex: 95,
                   backgroundColor: "#fff",
-                  minWidth: 200,
-                  width: 400,
                   textAlign: "left !important",
+                  ...stickyNameSx,
                 }}
               >
                 Название
@@ -177,7 +371,10 @@ class ReportRevenue_Table extends React.Component {
                 <TableCell
                   key={month}
                   colSpan={2}
-                  sx={{ minWidth: 240 }}
+                  sx={{
+                    minWidth: 240,
+                    ...(idx > 0 ? { borderLeft: monthBlockBorder } : {}),
+                  }}
                 >
                   {dayjs(month + "-01")
                     .format("MMMM YYYY")
@@ -185,10 +382,22 @@ class ReportRevenue_Table extends React.Component {
                 </TableCell>
               ))}
               <TableCell
-                colSpan={2}
-                sx={{ minWidth: 240 }}
+                colSpan={baseTotalCols}
+                sx={{ minWidth: 240, borderLeft: monthBlockBorder }}
               >
                 Итого
+              </TableCell>
+              <TableCell
+                colSpan={calcTotalCols}
+                sx={{
+                  minWidth:
+                    pricePeriods.length * calcColumnWidth * 3 +
+                    calcColumnWidth * 2 +
+                    lostColumnWidth,
+                  ...calcBlockHeadSx,
+                }}
+              >
+                Расчет скидок
               </TableCell>
             </TableRow>
 
@@ -200,38 +409,79 @@ class ReportRevenue_Table extends React.Component {
                   left: 0,
                   zIndex: 11,
                   backgroundColor: "#fff",
-                  minWidth: 200,
+                  minWidth: idColumnWidth + nameColumnWidth,
                 }}
               />
               {months.map((__, idx) => (
                 <React.Fragment key={idx}>
-                  <TableCell
-                    onClick={() => this.handleSort(idx, "count")}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    Кол-во, шт&nbsp;{this.renderArrow(idx, "count")}
-                  </TableCell>
-                  <TableCell
-                    onClick={() => this.handleSort(idx, "price")}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    Выручка, руб&nbsp;{this.renderArrow(idx, "price")}
-                  </TableCell>
+                  {this.renderSortableCell({
+                    label: "Кол-во, шт",
+                    monthIndex: idx,
+                    field: "count",
+                    sx: idx > 0 ? { borderLeft: monthBlockBorder } : {},
+                  })}
+                  {this.renderSortableCell({
+                    label: "Выручка, руб",
+                    monthIndex: idx,
+                    field: "price",
+                  })}
                 </React.Fragment>
               ))}
 
-              <TableCell
-                onClick={() => this.handleSort(-1, "count")}
-                sx={{ cursor: "pointer" }}
-              >
-                Кол-во, шт&nbsp;{this.renderArrow(-1, "count")}
-              </TableCell>
-              <TableCell
-                onClick={() => this.handleSort(-1, "price")}
-                sx={{ cursor: "pointer" }}
-              >
-                Выручка, руб&nbsp;{this.renderArrow(-1, "price")}
-              </TableCell>
+              {this.renderSortableCell({
+                label: "Кол-во, шт",
+                monthIndex: -1,
+                field: "count",
+                sx: { borderLeft: monthBlockBorder },
+              })}
+              {this.renderSortableCell({ label: "Выручка, руб", monthIndex: -1, field: "price" })}
+              {pricePeriods.map((period, index) => {
+                const label = this.getPricePeriodLabel(period, index, pricePeriods);
+
+                return (
+                  <React.Fragment key={period.key}>
+                    {this.renderSortableCell({
+                      label: pricePeriods.length > 1 ? `${label}, руб` : "Цена, руб",
+                      monthIndex: -2,
+                      field: "price",
+                      segmentKey: period.key,
+                      sx: { ...calcHeaderSx, ...getPricePeriodBorderSx(index) },
+                    })}
+                    {this.renderSortableCell({
+                      label: "кол-во без скидок",
+                      monthIndex: -2,
+                      field: "no_discount_count",
+                      segmentKey: period.key,
+                      sx: calcHeaderSx,
+                    })}
+                    {this.renderSortableCell({
+                      label: "Выручка без скидки",
+                      monthIndex: -2,
+                      field: "no_discount_price",
+                      segmentKey: period.key,
+                      sx: calcHeaderSx,
+                    })}
+                  </React.Fragment>
+                );
+              })}
+              {this.renderSortableCell({
+                label: "кол-во со скидками или бесплатно",
+                monthIndex: -1,
+                field: "discount_count",
+                sx: { ...calcHeaderSx, ...finalDiscountBlockSx },
+              })}
+              {this.renderSortableCell({
+                label: "Выручка со скидками",
+                monthIndex: -1,
+                field: "discount_price",
+                sx: calcHeaderSx,
+              })}
+              {this.renderSortableCell({
+                label: "Недополученная выручка по акциям и промокодам",
+                monthIndex: -1,
+                field: "lost_price",
+                sx: { ...calcHeaderSx, minWidth: 160, maxWidth: 190 },
+              })}
             </TableRow>
           </TableHead>
 
@@ -247,6 +497,7 @@ class ReportRevenue_Table extends React.Component {
                         position: "sticky",
                         left: 0,
                         zIndex: 80,
+                        ...stickyIdSx,
                       }}
                     />
                     <TableCell
@@ -254,9 +505,9 @@ class ReportRevenue_Table extends React.Component {
                         fontWeight: "bold",
                         backgroundColor: "#f5f5f5",
                         position: "sticky",
-                        left: 104,
                         textAlign: "left !important",
                         zIndex: 69,
+                        ...stickyNameSx,
                       }}
                     >
                       {cat.name}
@@ -271,24 +522,15 @@ class ReportRevenue_Table extends React.Component {
                     let items = cat.items;
                     if (sort.monthIndex !== null && sort.field !== null) {
                       items = [...items].sort((a, b) => {
-                        let aValue, bValue;
-                        if (sort.monthIndex === -1) {
-                          aValue = this.getRowTotal(a.data)[sort.field] || 0;
-                          bValue = this.getRowTotal(b.data)[sort.field] || 0;
-                        } else {
-                          aValue = a.data[sort.monthIndex]
-                            ? a.data[sort.monthIndex][sort.field]
-                            : 0;
-                          bValue = b.data[sort.monthIndex]
-                            ? b.data[sort.monthIndex][sort.field]
-                            : 0;
-                        }
+                        const aValue = this.getSortValue(a, sort);
+                        const bValue = this.getSortValue(b, sort);
+
                         return sort.order === "asc" ? aValue - bValue : bValue - aValue;
                       });
                     }
 
                     return items.map((item) => {
-                      const rowTotal = this.getRowTotal(item.data);
+                      const rowTotal = this.getItemTotal(item);
                       return (
                         <TableRow key={item.id}>
                           <TableCell
@@ -298,8 +540,7 @@ class ReportRevenue_Table extends React.Component {
                               zIndex: 70,
                               backgroundColor: "#fff",
                               borderLeft: "none",
-                              minWidth: 50,
-                              width: 50,
+                              ...stickyIdSx,
                               textOverflow: "ellipsis",
                               overflow: "hidden",
                             }}
@@ -309,12 +550,11 @@ class ReportRevenue_Table extends React.Component {
                           <TableCell
                             sx={{
                               position: "sticky",
-                              left: 104,
                               zIndex: 69,
                               backgroundColor: "#fff",
                               boxShadow: "2px 0 5px -2px rgba(0,0,0,0.05)",
-                              minWidth: 200,
                               textAlign: "left !important",
+                              ...stickyNameSx,
                             }}
                           >
                             {item.name}
@@ -322,16 +562,58 @@ class ReportRevenue_Table extends React.Component {
 
                           {item.data.map((d, idx) => (
                             <React.Fragment key={idx}>
-                              <TableCell>{d.count ? this.formatNumber(d.count) : 0}</TableCell>
+                              <TableCell sx={idx > 0 ? { borderLeft: monthBlockBorder } : {}}>
+                                {d.count ? this.formatNumber(d.count) : 0}
+                              </TableCell>
                               <TableCell>{d.price ? this.formatCurrency(d.price) : 0}</TableCell>
                             </React.Fragment>
                           ))}
 
-                          <TableCell>
+                          <TableCell sx={{ borderLeft: monthBlockBorder }}>
                             {rowTotal.count ? this.formatNumber(rowTotal.count) : 0}
                           </TableCell>
                           <TableCell>
                             {rowTotal.price ? this.formatCurrency(rowTotal.price) : 0}
+                          </TableCell>
+                          {pricePeriods.map((period, index) => {
+                            const segment = this.getItemPriceSegment(item, period.key);
+
+                            return (
+                              <React.Fragment key={period.key}>
+                                <TableCell
+                                  sx={
+                                    index === 0
+                                      ? calcBlockCellSx
+                                      : { borderLeft: pricePeriodBorder }
+                                  }
+                                >
+                                  {segment.price ? this.formatCurrency(segment.price) : 0}
+                                </TableCell>
+                                <TableCell>
+                                  {segment.no_discount_count
+                                    ? this.formatNumber(segment.no_discount_count)
+                                    : 0}
+                                </TableCell>
+                                <TableCell>
+                                  {segment.no_discount_price
+                                    ? this.formatCurrency(segment.no_discount_price)
+                                    : 0}
+                                </TableCell>
+                              </React.Fragment>
+                            );
+                          })}
+                          <TableCell sx={finalDiscountBlockSx}>
+                            {rowTotal.discount_count
+                              ? this.formatNumber(rowTotal.discount_count)
+                              : 0}
+                          </TableCell>
+                          <TableCell>
+                            {rowTotal.discount_price
+                              ? this.formatCurrency(rowTotal.discount_price)
+                              : 0}
+                          </TableCell>
+                          <TableCell>
+                            {rowTotal.lost_price ? this.formatCurrency(rowTotal.lost_price) : 0}
                           </TableCell>
                         </TableRow>
                       );
@@ -343,7 +625,13 @@ class ReportRevenue_Table extends React.Component {
 
             <TableRow sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
               <TableCell
-                sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0", position: "sticky", left: 0 }}
+                sx={{
+                  fontWeight: "bold",
+                  backgroundColor: "#e0e0e0",
+                  position: "sticky",
+                  left: 0,
+                  ...stickyIdSx,
+                }}
               >
                 Итого
               </TableCell>
@@ -353,15 +641,21 @@ class ReportRevenue_Table extends React.Component {
                   fontWeight: "bold",
                   backgroundColor: "#e0e0e0",
                   position: "sticky",
-                  left: 104,
                   textAlign: "left",
                   zIndex: 69,
+                  ...stickyNameSx,
                 }}
               />
 
               {grandTotals.months.map((total, idx) => (
                 <React.Fragment key={idx}>
-                  <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: "bold",
+                      backgroundColor: "#e0e0e0",
+                      ...(idx > 0 ? { borderLeft: monthBlockBorder } : {}),
+                    }}
+                  >
                     {total.count ? this.formatNumber(total.count) : 0}
                   </TableCell>
                   <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
@@ -370,11 +664,55 @@ class ReportRevenue_Table extends React.Component {
                 </React.Fragment>
               ))}
 
-              <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
+              <TableCell
+                sx={{
+                  fontWeight: "bold",
+                  backgroundColor: "#e0e0e0",
+                  borderLeft: monthBlockBorder,
+                }}
+              >
                 {grandTotals.overall.count ? this.formatNumber(grandTotals.overall.count) : 0}
               </TableCell>
               <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
                 {grandTotals.overall.price ? this.formatCurrency(grandTotals.overall.price) : 0}
+              </TableCell>
+              {pricePeriods.map((period, index) => {
+                const segment = grandTotals.price_segments[period.key] || {};
+
+                return (
+                  <React.Fragment key={period.key}>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        backgroundColor: "#e0e0e0",
+                        ...(index === 0 ? calcBlockCellSx : { borderLeft: pricePeriodBorder }),
+                      }}
+                    />
+                    <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
+                      {segment.no_discount_count ? this.formatNumber(segment.no_discount_count) : 0}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
+                      {segment.no_discount_price
+                        ? this.formatCurrency(segment.no_discount_price)
+                        : 0}
+                    </TableCell>
+                  </React.Fragment>
+                );
+              })}
+              <TableCell
+                sx={{
+                  fontWeight: "bold",
+                  backgroundColor: "#e0e0e0",
+                  ...finalDiscountBlockSx,
+                }}
+              >
+                {grandTotals.discount_count ? this.formatNumber(grandTotals.discount_count) : 0}
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
+                {grandTotals.discount_price ? this.formatCurrency(grandTotals.discount_price) : 0}
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", backgroundColor: "#e0e0e0" }}>
+                {grandTotals.lost_price ? this.formatCurrency(grandTotals.lost_price) : 0}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -487,7 +825,7 @@ class ReportRevenue_ extends React.Component {
     let { point, date_start, date_end, cat } = this.state;
 
     if (!point.length) {
-      this.openAlert(false, "Необходимо выбрать точку");
+      this.openAlert(false, "Необходимо выбрать город или кафе");
       return;
     }
 
@@ -525,7 +863,7 @@ class ReportRevenue_ extends React.Component {
     let { point, date_start, date_end, cat } = this.state;
 
     if (!point.length) {
-      this.openAlert(false, "Необходимо выбрать точку");
+      this.openAlert(false, "Необходимо выбрать город или кафе");
       return;
     }
 
@@ -642,12 +980,13 @@ class ReportRevenue_ extends React.Component {
               sm: 6,
             }}
           >
-            <MyAutocomplite
-              label="Точка"
-              multiple={true}
-              data={points}
+            <CityCafeAutocomplete2
+              label="Кафе"
+              points={points}
               value={point}
-              func={(event, value) => this.changePoints("point", event, value)}
+              onChange={(value) => this.changePoints("point", null, value)}
+              singleCityOnly
+              withOrganizationMode={false}
             />
           </Grid>
 

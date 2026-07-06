@@ -37,6 +37,8 @@ export default function CityCafeAutocomplete2({
   autoFocus,
   withAll = false,
   withAllSelected = false,
+  singleCityOnly = false,
+  withOrganizationMode = true,
 }) {
   // map for fast lookup
   const pointsMap = useMemo(() => {
@@ -96,18 +98,28 @@ export default function CityCafeAutocomplete2({
   }, [cities, withAll]);
 
   const [innerValue, setInnerValue] = useState(defaultValue || []);
+  const normalizeCafeOption = useCallback((option) => {
+    const cityId = option?.cityId ?? option?.city_id;
+
+    return {
+      ...option,
+      cityId,
+      cityName: option?.cityName ?? cityNames[cityId],
+    };
+  }, []);
+
   const actualValue = useMemo(() => {
-    if (withAll && value) {
-      const isAll = value.length === points.length;
-      if (isAll) return [ALL_OPTION];
-      return value.map((v) => ({
-        ...v,
-        cityId: v.city_id,
-        cityName: cityNames[v.city_id],
-      }));
+    if (value) {
+      if (withAll) {
+        const isAll = value.length === points.length;
+        if (isAll) return [ALL_OPTION];
+      }
+
+      return value.map(normalizeCafeOption);
     }
+
     return innerValue;
-  }, [value, points, innerValue]);
+  }, [value, points, innerValue, withAll, normalizeCafeOption]);
 
   const allSelected = withAll && actualValue.some((v) => v.id === ALL_OPTION.id);
   const getOptionKey = useCallback(
@@ -115,11 +127,28 @@ export default function CityCafeAutocomplete2({
     [],
   );
 
-  const setValueSafe = (next) => {
+  const limitToSingleCity = useCallback(
+    (next, preferredCityId) => {
+      const cafes = next.filter((item) => item.id !== ALL_OPTION.id).map(normalizeCafeOption);
+
+      const lastCafe = cafes.length ? cafes[cafes.length - 1] : null;
+      const cityId = preferredCityId ?? lastCafe?.cityId;
+
+      if (!cityId) {
+        return cafes;
+      }
+
+      return cafes.filter((item) => item.cityId === cityId);
+    },
+    [normalizeCafeOption],
+  );
+
+  const setValueSafe = (next, preferredCityId = null) => {
     if (!withAll) {
-      const mapped = next.map((v) => pointsMap.get(v.id)).filter(Boolean);
+      const cleanNext = singleCityOnly ? limitToSingleCity(next, preferredCityId) : next;
+      const mapped = cleanNext.map((v) => pointsMap.get(v.id)).filter(Boolean);
       onChange?.(mapped);
-      if (value === undefined) setInnerValue(next);
+      if (value === undefined) setInnerValue(cleanNext);
       return;
     }
 
@@ -210,9 +239,13 @@ export default function CityCafeAutocomplete2({
       const next = actualValue.filter((c) => (byOrg ? c.organization !== key : c.cityId !== key));
       setValueSafe(next);
     } else {
+      const preferredCityId = byOrg ? (actualValue[0]?.cityId ?? group[0]?.cityId) : key;
+      const base = singleCityOnly
+        ? actualValue.filter((c) => c.cityId === preferredCityId)
+        : actualValue;
       const add = group.filter((c) => !selectedIds.has(c.id));
-      const next = [...actualValue, ...add];
-      setValueSafe(next);
+      const next = [...base, ...add];
+      setValueSafe(next, singleCityOnly ? preferredCityId : null);
     }
   };
 
@@ -235,17 +268,25 @@ export default function CityCafeAutocomplete2({
     }
   }, [points, withAll, withAllSelected]);
 
+  useEffect(() => {
+    if (!withOrganizationMode && groupMode !== "city") {
+      setGroupMode("city");
+    }
+  }, [groupMode, withOrganizationMode]);
+
   const groupBy = useCallback(
     (opt) => {
       if (opt.id === ALL_OPTION.id) return "GALL";
-      return groupMode === "city" ? opt.cityName : opt.organization || "Без организации";
+      return groupMode === "city" || !withOrganizationMode
+        ? opt.cityName
+        : opt.organization || "Без организации";
     },
-    [groupMode],
+    [groupMode, withOrganizationMode],
   );
 
   const CustomPaper = React.forwardRef(function CustomPaper(props, ref) {
     const { children, ...other } = props;
-    const hasOrganizations = cafesByOrganization.size > 0;
+    const hasOrganizations = withOrganizationMode && cafesByOrganization.size > 0;
 
     return (
       <Paper
@@ -318,7 +359,9 @@ export default function CityCafeAutocomplete2({
       options={allCafes}
       disableCloseOnSelect
       value={actualValue}
-      onChange={(_, next) => setValueSafe(next)}
+      onChange={(_, next, reason, details) =>
+        setValueSafe(next, details?.option?.cityId ?? details?.option?.city_id ?? null)
+      }
       getOptionLabel={(opt) => opt.name}
       getOptionKey={getOptionKey}
       groupBy={groupBy}
@@ -383,7 +426,7 @@ export default function CityCafeAutocomplete2({
           );
         }
 
-        const isCityMode = groupMode === "city";
+        const isCityMode = groupMode === "city" || !withOrganizationMode;
         const entityName = groupParams.group;
         const entityKey = isCityMode
           ? (cities.find((c) => c.name === entityName)?.id ?? "")
