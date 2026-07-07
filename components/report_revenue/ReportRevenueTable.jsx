@@ -985,7 +985,7 @@ export default class ReportRevenueTable extends React.Component {
                       nameLabel: cat.name,
                       totals: categoryTotals,
                       backgroundColor: "#f5f5f5",
-                      numberColor: "#d32f2f",
+                      // numberColor: "#d32f2f",
                       expanded: isCategoryExpanded,
                       onClick: () => this.toggleCategory(cat.id),
                     })}
