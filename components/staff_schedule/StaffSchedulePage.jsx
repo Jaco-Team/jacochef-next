@@ -89,6 +89,7 @@ export default function StaffSchedulePage() {
             onOpenEditSmena={page.handleOpenEditSmena}
             selectedRowIds={page.selectedRowIds}
             onToggleRowSelection={page.handleToggleRowSelection}
+            onClearRowSelection={page.handleClearRowSelection}
             collapsedShiftIds={page.collapsedShiftIds}
             onToggleShiftCollapse={page.handleToggleShiftCollapse}
             isCalendarHidden={page.isCalendarHidden}

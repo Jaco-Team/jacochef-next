@@ -108,8 +108,8 @@ Rules recovered from Figma and screenshots:
 
 - [x] make the page shell breakpoint-driven
 - [x] split schedule rendering into desktop and mobile branches
-- [ ] add the mobile bottom action bar
-- [ ] introduce the stricter staff-schedule mobile sheet shell
+- [x] add the mobile bottom action bar
+- [x] introduce the stricter staff-schedule mobile sheet shell
 - [ ] migrate fast actions to the mobile sheet flow
 - [ ] migrate hour-filling to the mobile sheet flow
 - [ ] migrate shift editing and related warnings

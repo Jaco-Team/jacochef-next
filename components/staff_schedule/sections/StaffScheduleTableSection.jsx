@@ -710,6 +710,7 @@ export default function StaffScheduleTableSection({
   onOpenEditSmena,
   selectedRowIds,
   onToggleRowSelection,
+  onClearRowSelection,
   collapsedShiftIds,
   onToggleShiftCollapse,
   isCalendarHidden,
@@ -934,13 +935,12 @@ export default function StaffScheduleTableSection({
         useColors={useColors}
         selectedRowIds={selectedRowIds}
         onToggleRowSelection={onToggleRowSelection}
+        onClearRowSelection={onClearRowSelection}
         onOpenMonth={onOpenMonth}
         onOpenDay={onOpenDay}
         canOpenMonth={canOpenMonth}
         canOpenDayEdit={canOpenDayEdit}
         hasSummaryRows={hasSummaryRows}
-        directorLevel={directorLevel}
-        canOpenDirectorLevel={canOpenDirectorLevel}
         onOpenSummaryAction={onOpenSummaryAction}
         summaryColumns={summaryColumns}
         summaryTotals={summaryTotals}

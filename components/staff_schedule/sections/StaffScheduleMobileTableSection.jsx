@@ -24,9 +24,38 @@ const MOBILE_SELECTION_COLUMN_WIDTH = 34;
 const MOBILE_EMPLOYEE_COLUMN_WIDTH = 150;
 const MOBILE_SUMMARY_LABEL_WIDTH = 140;
 const MOBILE_SUMMARY_COLUMN_WIDTH = 76;
+const MOBILE_CARD_BORDER = "1px solid #ECECEC";
+const MOBILE_CARD_RADIUS = "14px";
 
 const mobileCellDividerSx = {
   boxShadow: "inset -1px 0 0 #ECECEC, inset 0 -1px 0 #ECECEC",
+};
+
+const mobileCardSx = {
+  border: MOBILE_CARD_BORDER,
+  borderRadius: MOBILE_CARD_RADIUS,
+  overflow: "hidden",
+  backgroundColor: "#FFFFFF",
+};
+
+const mobileActionCellSx = {
+  width: 28,
+  height: 28,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: `1px solid ${v2TableColors.bulkActionBorder}`,
+  borderRadius: "8px",
+};
+
+const mobileDayHeaderTextSx = {
+  fontSize: 11,
+  lineHeight: 1,
+};
+
+const mobileDayHeaderDateSx = {
+  fontSize: 12,
+  lineHeight: 1.1,
 };
 
 function buildMobileShiftGroups(rows) {
@@ -229,15 +258,14 @@ function MobileShiftCard({
   canOpenDayEdit,
   summaryColumns,
 }) {
+  const tableMinWidth =
+    MOBILE_SELECTION_COLUMN_WIDTH +
+    MOBILE_EMPLOYEE_COLUMN_WIDTH +
+    (isCalendarHidden ? 0 : days.length * DAY_COLUMN_WIDTH) +
+    summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
+
   return (
-    <Box
-      sx={{
-        border: "1px solid #ECECEC",
-        borderRadius: "14px",
-        overflow: "hidden",
-        backgroundColor: "#FFFFFF",
-      }}
-    >
+    <Box sx={mobileCardSx}>
       <Box
         sx={{
           display: "flex",
@@ -298,11 +326,7 @@ function MobileShiftCard({
           <Table
             size="small"
             sx={{
-              minWidth:
-                MOBILE_SELECTION_COLUMN_WIDTH +
-                MOBILE_EMPLOYEE_COLUMN_WIDTH +
-                (isCalendarHidden ? 0 : days.length * DAY_COLUMN_WIDTH) +
-                summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH,
+              minWidth: tableMinWidth,
               borderCollapse: "separate",
               borderSpacing: 0,
               "& .MuiTableCell-root": {
@@ -311,105 +335,95 @@ function MobileShiftCard({
             }}
           >
             <TableHead>
-              {!isCalendarHidden ? (
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      ...mobileCellDividerSx,
-                      width: MOBILE_SELECTION_COLUMN_WIDTH,
-                      minWidth: MOBILE_SELECTION_COLUMN_WIDTH,
-                      p: 0,
-                      backgroundColor: "#FFFFFF",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
-                      <Box
-                        onClick={
-                          showFastActions && hasBulkSelection ? onOpenBulkFastActions : undefined
-                        }
+              <TableRow>
+                <TableCell
+                  sx={{
+                    ...mobileCellDividerSx,
+                    width: MOBILE_SELECTION_COLUMN_WIDTH,
+                    minWidth: MOBILE_SELECTION_COLUMN_WIDTH,
+                    p: 0,
+                    backgroundColor: "#FFFFFF",
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
+                    <Box
+                      onClick={
+                        showFastActions && hasBulkSelection ? onOpenBulkFastActions : undefined
+                      }
+                      sx={{
+                        ...mobileActionCellSx,
+                        cursor: showFastActions && hasBulkSelection ? "pointer" : "default",
+                        backgroundColor:
+                          showFastActions && hasBulkSelection
+                            ? v2TableColors.bulkActionActive
+                            : v2TableColors.bulkActionInactive,
+                        opacity: showFastActions ? 1 : 0.4,
+                      }}
+                    >
+                      <SwapHorizRoundedIcon
                         sx={{
-                          width: 28,
-                          height: 28,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          border: `1px solid ${v2TableColors.bulkActionBorder}`,
-                          borderRadius: "8px",
-                          cursor: showFastActions && hasBulkSelection ? "pointer" : "default",
+                          color: showFastActions && hasBulkSelection ? "#EE2737" : "#666666",
+                          fontSize: 18,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{
+                    ...mobileCellDividerSx,
+                    minWidth: MOBILE_EMPLOYEE_COLUMN_WIDTH,
+                    py: 0.7,
+                    px: 1,
+                    fontWeight: 500,
+                  }}
+                >
+                  Сотрудник
+                </TableCell>
+                {!isCalendarHidden
+                  ? days.map((day, index) => (
+                      <TableCell
+                        key={`${group.shiftId}-${day?.date || index}`}
+                        align="center"
+                        sx={{
+                          ...mobileCellDividerSx,
+                          width: DAY_COLUMN_WIDTH,
+                          minWidth: DAY_COLUMN_WIDTH,
                           backgroundColor:
-                            showFastActions && hasBulkSelection
-                              ? v2TableColors.bulkActionActive
-                              : v2TableColors.bulkActionInactive,
-                          opacity: showFastActions ? 1 : 0.4,
+                            day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
+                              ? v2TableColors.weekend
+                              : "#FFFFFF",
+                          color: "#666666",
+                          py: 0.7,
+                          px: 0.25,
                         }}
                       >
-                        <SwapHorizRoundedIcon
-                          sx={{
-                            color: showFastActions && hasBulkSelection ? "#EE2737" : "#666666",
-                            fontSize: 18,
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  </TableCell>
+                        <Stack spacing={0.25}>
+                          <Typography sx={mobileDayHeaderTextSx}>{day?.day ?? ""}</Typography>
+                          <Typography sx={mobileDayHeaderDateSx}>{day?.date ?? ""}</Typography>
+                        </Stack>
+                      </TableCell>
+                    ))
+                  : null}
+                {summaryColumns.map((column) => (
                   <TableCell
+                    key={`${group.shiftId}-summary-${column.key}`}
+                    align="center"
                     sx={{
                       ...mobileCellDividerSx,
-                      minWidth: MOBILE_EMPLOYEE_COLUMN_WIDTH,
+                      width: MOBILE_SUMMARY_COLUMN_WIDTH,
+                      minWidth: MOBILE_SUMMARY_COLUMN_WIDTH,
                       py: 0.7,
-                      px: 1,
-                      fontWeight: 500,
+                      px: 0.5,
+                      textAlign: "center",
                     }}
                   >
-                    Сотрудник
+                    <SmallFont style={{ display: "block", fontSize: "10px", lineHeight: "1.1" }}>
+                      {column.label}
+                    </SmallFont>
                   </TableCell>
-                  {days.map((day, index) => (
-                    <TableCell
-                      key={`${group.shiftId}-${day?.date || index}`}
-                      align="center"
-                      sx={{
-                        ...mobileCellDividerSx,
-                        width: DAY_COLUMN_WIDTH,
-                        minWidth: DAY_COLUMN_WIDTH,
-                        backgroundColor:
-                          day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                            ? v2TableColors.weekend
-                            : "#FFFFFF",
-                        color: "#666666",
-                        py: 0.7,
-                        px: 0.25,
-                      }}
-                    >
-                      <Stack spacing={0.25}>
-                        <Typography sx={{ fontSize: 11, lineHeight: 1 }}>
-                          {day?.day ?? ""}
-                        </Typography>
-                        <Typography sx={{ fontSize: 12, lineHeight: 1.1 }}>
-                          {day?.date ?? ""}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                  ))}
-                  {summaryColumns.map((column) => (
-                    <TableCell
-                      key={`${group.shiftId}-summary-${column.key}`}
-                      align="center"
-                      sx={{
-                        ...mobileCellDividerSx,
-                        width: MOBILE_SUMMARY_COLUMN_WIDTH,
-                        minWidth: MOBILE_SUMMARY_COLUMN_WIDTH,
-                        py: 0.7,
-                        px: 0.5,
-                        textAlign: "center",
-                      }}
-                    >
-                      <SmallFont style={{ display: "block", fontSize: "10px", lineHeight: "1.1" }}>
-                        {column.label}
-                      </SmallFont>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ) : null}
+                ))}
+              </TableRow>
             </TableHead>
 
             <TableBody>
@@ -437,8 +451,6 @@ function MobileShiftCard({
 }
 
 function MobileSummaryCard({
-  directorLevel,
-  canOpenDirectorLevel,
   onOpenSummaryAction,
   summaryColumns,
   summaryTotals,
@@ -456,7 +468,8 @@ function MobileSummaryCard({
   slowOrderValues,
 }) {
   const dayCount = isCalendarHidden ? 0 : bonusDayValues.length;
-  const cellTemplate = `minmax(${MOBILE_SUMMARY_LABEL_WIDTH}px, 1.4fr) repeat(${dayCount}, minmax(${DAY_COLUMN_WIDTH}px, ${DAY_COLUMN_WIDTH}px)) repeat(${summaryColumns.length}, minmax(${MOBILE_SUMMARY_COLUMN_WIDTH}px, ${MOBILE_SUMMARY_COLUMN_WIDTH}px))`;
+  const labelColumnWidth = `${MOBILE_SUMMARY_LABEL_WIDTH}px`;
+  const cellTemplate = `${labelColumnWidth} repeat(${dayCount}, ${DAY_COLUMN_WIDTH}px) repeat(${summaryColumns.length}, ${MOBILE_SUMMARY_COLUMN_WIDTH}px)`;
   const gridWidth =
     MOBILE_SUMMARY_LABEL_WIDTH +
     dayCount * DAY_COLUMN_WIDTH +
@@ -524,14 +537,7 @@ function MobileSummaryCard({
   );
 
   return (
-    <Box
-      sx={{
-        border: "1px solid #ECECEC",
-        borderRadius: "14px",
-        overflow: "hidden",
-        backgroundColor: "#FFFFFF",
-      }}
-    >
+    <Box sx={mobileCardSx}>
       <Box
         sx={{
           display: "flex",
@@ -554,27 +560,6 @@ function MobileSummaryCard({
             Сводные данные
           </Typography>
         </Stack>
-
-        {canOpenDirectorLevel ? (
-          <V2Button
-            compact
-            tone="secondary"
-            onClick={() => onOpenSummaryAction?.(null, "dir_lv")}
-            sx={{
-              minHeight: 30,
-              px: 1.25,
-              border: "none",
-              borderRadius: "10px",
-              backgroundColor: "#FFFFFF",
-              color: "#666666",
-              fontSize: 13,
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {`Уровень директора: ${directorLevel ?? 0}`}
-          </V2Button>
-        ) : null}
       </Box>
 
       <Box sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
@@ -606,10 +591,8 @@ function MobileSummaryCard({
                   }}
                 >
                   <Stack spacing={0.25}>
-                    <Typography sx={{ fontSize: 11, lineHeight: 1 }}>{item?.day ?? ""}</Typography>
-                    <Typography sx={{ fontSize: 12, lineHeight: 1.1 }}>
-                      {item?.date ?? ""}
-                    </Typography>
+                    <Typography sx={mobileDayHeaderTextSx}>{item?.day ?? ""}</Typography>
+                    <Typography sx={mobileDayHeaderDateSx}>{item?.date ?? ""}</Typography>
                   </Stack>
                 </Box>
               ))}
@@ -703,6 +686,82 @@ function MobileSummaryCard({
   );
 }
 
+function MobileSelectionBar({ selectedCount, onClearSelection, onOpenBulkFastActions }) {
+  if (!selectedCount) {
+    return null;
+  }
+
+  return (
+    <Box
+      sx={{
+        position: "fixed",
+        left: 12,
+        right: 12,
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
+        zIndex: 1200,
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        p: 0.75,
+        borderRadius: "18px",
+        backgroundColor: "rgba(98, 98, 98, 0.96)",
+        boxShadow: "0 12px 30px rgba(15, 23, 42, 0.18)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      <Typography
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          px: 0.75,
+          color: "#FFFFFF",
+          fontSize: 13,
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {`Выбрано: ${selectedCount}`}
+      </Typography>
+
+      <V2Button
+        tone="secondary"
+        onClick={onClearSelection}
+        sx={{
+          minHeight: 40,
+          px: 1.5,
+          borderRadius: "12px",
+          border: "none",
+          backgroundColor: "#FFFFFF",
+          color: "#666666",
+          fontSize: 13,
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          "&:hover": {
+            backgroundColor: "#F6F6F6",
+            border: "none",
+          },
+        }}
+      >
+        Снять
+      </V2Button>
+
+      <V2Button
+        onClick={onOpenBulkFastActions}
+        sx={{
+          minHeight: 40,
+          px: 2,
+          borderRadius: "12px",
+          fontSize: 13,
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Редактирование
+      </V2Button>
+    </Box>
+  );
+}
+
 export default function StaffScheduleMobileTableSection({
   shownShiftCount,
   rows,
@@ -718,13 +777,12 @@ export default function StaffScheduleMobileTableSection({
   useColors,
   selectedRowIds,
   onToggleRowSelection,
+  onClearRowSelection,
   onOpenMonth,
   onOpenDay,
   canOpenMonth,
   canOpenDayEdit,
   hasSummaryRows,
-  directorLevel,
-  canOpenDirectorLevel,
   onOpenSummaryAction,
   summaryColumns,
   summaryTotals,
@@ -741,75 +799,84 @@ export default function StaffScheduleMobileTableSection({
   slowOrderValues,
 }) {
   const mobileShiftGroups = buildMobileShiftGroups(rows);
+  const selectedCount = selectedRowIds.length;
 
   return (
-    <V2Surface
-      sx={{
-        borderRadius: CONTROL_RADIUS,
-        overflow: "hidden",
-      }}
-    >
-      <Stack
-        spacing={1.5}
-        sx={{ p: 1.5 }}
+    <>
+      <V2Surface
+        sx={{
+          borderRadius: CONTROL_RADIUS,
+          overflow: "hidden",
+        }}
       >
-        <Stack spacing={0.25}>
-          <Typography sx={{ fontSize: 13, fontWeight: 500, textTransform: "uppercase" }}>
-            График смен
-          </Typography>
-          <Typography sx={{ fontSize: 13, color: "#666666" }}>
-            Показано • {shownShiftCount} смен
-          </Typography>
-        </Stack>
+        <Stack
+          spacing={1.5}
+          sx={{ p: 1.5 }}
+        >
+          <Stack spacing={0.25}>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, textTransform: "uppercase" }}>
+              График смен
+            </Typography>
+            <Typography sx={{ fontSize: 13, color: "#666666" }}>
+              Показано • {shownShiftCount} смен
+            </Typography>
+          </Stack>
 
-        <Stack spacing={1.25}>
-          {mobileShiftGroups.map((group) => (
-            <MobileShiftCard
-              key={group.key}
-              group={group}
-              days={days}
-              collapsed={collapsedShiftIds.includes(group.shiftId)}
-              onToggle={onToggleShiftCollapse}
-              canEditSmena={canEditSmena}
-              onOpenEditSmena={onOpenEditSmena}
-              isCalendarHidden={isCalendarHidden}
-              showFastActions={showFastActions}
-              hasBulkSelection={hasBulkSelection}
-              onOpenBulkFastActions={onOpenBulkFastActions}
-              useColors={useColors}
-              selectedRowIds={selectedRowIds}
-              onToggleRowSelection={onToggleRowSelection}
-              onOpenMonth={onOpenMonth}
-              onOpenDay={onOpenDay}
-              canOpenMonth={canOpenMonth}
-              canOpenDayEdit={canOpenDayEdit}
-              summaryColumns={summaryColumns}
-            />
-          ))}
+          <Stack spacing={1.25}>
+            {mobileShiftGroups.map((group) => (
+              <MobileShiftCard
+                key={group.key}
+                group={group}
+                days={days}
+                collapsed={collapsedShiftIds.includes(group.shiftId)}
+                onToggle={onToggleShiftCollapse}
+                canEditSmena={canEditSmena}
+                onOpenEditSmena={onOpenEditSmena}
+                isCalendarHidden={isCalendarHidden}
+                showFastActions={showFastActions}
+                hasBulkSelection={hasBulkSelection}
+                onOpenBulkFastActions={onOpenBulkFastActions}
+                useColors={useColors}
+                selectedRowIds={selectedRowIds}
+                onToggleRowSelection={onToggleRowSelection}
+                onOpenMonth={onOpenMonth}
+                onOpenDay={onOpenDay}
+                canOpenMonth={canOpenMonth}
+                canOpenDayEdit={canOpenDayEdit}
+                summaryColumns={summaryColumns}
+              />
+            ))}
 
-          {hasSummaryRows ? (
-            <MobileSummaryCard
-              directorLevel={directorLevel}
-              canOpenDirectorLevel={canOpenDirectorLevel}
-              onOpenSummaryAction={onOpenSummaryAction}
-              summaryColumns={summaryColumns}
-              summaryTotals={summaryTotals}
-              totalsSummaryKeyMap={totalsSummaryKeyMap}
-              periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
-              canEditTeamBonus={canEditTeamBonus}
-              periodBonusState={periodBonusState}
-              canShowPeriodSum={canShowPeriodSum}
-              bonusDayValues={bonusDayValues}
-              isCalendarHidden={isCalendarHidden}
-              canShowTotals={canShowTotals}
-              canShowRolls={canShowRolls}
-              canShowPizza={canShowPizza}
-              canShowSlowOrders={canShowSlowOrders}
-              slowOrderValues={slowOrderValues}
-            />
-          ) : null}
+            {hasSummaryRows ? (
+              <MobileSummaryCard
+                onOpenSummaryAction={onOpenSummaryAction}
+                summaryColumns={summaryColumns}
+                summaryTotals={summaryTotals}
+                totalsSummaryKeyMap={totalsSummaryKeyMap}
+                periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
+                canEditTeamBonus={canEditTeamBonus}
+                periodBonusState={periodBonusState}
+                canShowPeriodSum={canShowPeriodSum}
+                bonusDayValues={bonusDayValues}
+                isCalendarHidden={isCalendarHidden}
+                canShowTotals={canShowTotals}
+                canShowRolls={canShowRolls}
+                canShowPizza={canShowPizza}
+                canShowSlowOrders={canShowSlowOrders}
+                slowOrderValues={slowOrderValues}
+              />
+            ) : null}
+          </Stack>
         </Stack>
-      </Stack>
-    </V2Surface>
+      </V2Surface>
+
+      {showFastActions ? (
+        <MobileSelectionBar
+          selectedCount={selectedCount}
+          onClearSelection={onClearRowSelection}
+          onOpenBulkFastActions={onOpenBulkFastActions}
+        />
+      ) : null}
+    </>
   );
 }

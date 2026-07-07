@@ -297,6 +297,10 @@ export default function useStaffSchedulePage() {
     );
   }, []);
 
+  const handleClearRowSelection = useCallback(() => {
+    setSelectedRowIds([]);
+  }, []);
+
   const handleOpenDayModal = useCallback(
     async (row, date) => {
       if (!row?.id || !row?.smena_id || !row?.app_id || !date || !row?.date) {
@@ -1018,6 +1022,7 @@ export default function useStaffSchedulePage() {
     handleColorModeChange,
     handleToggleShiftCollapse,
     handleToggleRowSelection,
+    handleClearRowSelection,
     handleOpenDayModal,
     handleCloseDayModal,
     handleSaveDayModal,
