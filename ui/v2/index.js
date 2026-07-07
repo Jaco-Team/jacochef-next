@@ -7,6 +7,7 @@ export { useConfirm } from "./Confirm";
 export { default as V2FieldSwitch } from "./FieldSwitch";
 export { default as V2IconButton } from "./IconButton";
 export { default as V2Modal } from "./Modal";
+export { default as V2ResponsiveModalShell } from "./ResponsiveModalShell";
 export { default as V2SelectableList } from "./SelectableList";
 export { default as V2SelectableListItem } from "./SelectableListItem";
 export { default as V2SegmentedTabs } from "./SegmentedTabs";
