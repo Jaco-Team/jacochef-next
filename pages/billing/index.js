@@ -250,25 +250,27 @@ class Billing_ extends React.Component {
 
   async componentDidMount() {
     const data = await this.getData("get_all");
+    const points = data.points ?? [];
 
     // console.log('componentDidMount data', data)
 
-    this.setState({
-      module_name: "Накладные",
-      points: data.points,
-      bill_list: bill_status,
-      billings: bill_status,
-      status: bill_status[0].id,
-      types: types,
-      acces: data.acces,
-      acces_bux_pay: parseInt(data.acces_bux_pay) == 1 ? true : false,
-    });
+    this.setState(
+      {
+        module_name: "Накладные",
+        points,
+        bill_list: bill_status,
+        billings: bill_status,
+        status: bill_status[0].id,
+        types: types,
+        acces: data.acces,
+        acces_bux_pay: parseInt(data.acces_bux_pay) == 1 ? true : false,
+      },
+      () => {
+        this.getLocalStorage(points);
+      },
+    );
 
     document.title = "Накладные";
-
-    setTimeout(() => {
-      this.getLocalStorage();
-    }, 300);
   }
 
   getData_old = (method, data = {}) => {
@@ -408,7 +410,15 @@ class Billing_ extends React.Component {
     localStorage.setItem("main_page_bill", JSON.stringify(data));
   }
 
-  async getLocalStorage() {
+  getAvailablePointSelection(point, points = this.state.points) {
+    const selectedPoints = Array.isArray(point) ? point : [];
+    const availablePoints = Array.isArray(points) ? points : [];
+    const selectedIds = new Set(selectedPoints.map((item) => parseInt(item?.id)));
+
+    return availablePoints.filter((item) => selectedIds.has(parseInt(item?.id)));
+  }
+
+  async getLocalStorage(points = this.state.points) {
     const res = JSON.parse(localStorage.getItem("main_page_bill"));
 
     if (res) {
@@ -416,15 +426,21 @@ class Billing_ extends React.Component {
 
       const date_start = dateStart ? dayjs(dateStart) : null;
       const date_end = dateEnd ? dayjs(dateEnd) : null;
+      const availablePoint = this.getAvailablePointSelection(point, points);
 
-      this.setState({
-        date_start,
-        date_end,
-        status,
-        type,
-        point,
-        number,
-      });
+      this.setState(
+        {
+          date_start,
+          date_end,
+          status,
+          type,
+          point: availablePoint,
+          number,
+        },
+        () => {
+          this.setLocalStorage();
+        },
+      );
 
       if (type && type.length) {
         const data = {
