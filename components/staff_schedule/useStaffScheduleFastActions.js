@@ -251,9 +251,9 @@ export default function useStaffScheduleFastActions({
   );
 
   const saveChanges = useCallback(
-    async (nextDraftOverride = null) => {
+    async (nextDraftOverride = null, nextUsersOverride = null) => {
       const user = state.user;
-      const users = state.users;
+      const users = nextUsersOverride || state.users;
       const draft = nextDraftOverride || state.draft;
       const mode = state.mode;
 

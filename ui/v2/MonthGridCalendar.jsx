@@ -25,21 +25,35 @@ function buildMonthCells(monthId) {
   });
 }
 
-export default function V2MonthGridCalendar({ monthId, getDayMeta, onDayClick, title = "" }) {
+export default function V2MonthGridCalendar({
+  monthId,
+  getDayMeta,
+  onDayClick,
+  title = "",
+  size = CELL_SIZE,
+  gap = GRID_GAP,
+  containerSx,
+  padding = 20,
+  controlsGap = 12,
+  monthButtonMinWidth = 118,
+  navButtonSize = 44,
+}) {
   const monthStart = dayjs(`${monthId || dayjs().format("YYYY-MM")}-01`);
   const monthCells = buildMonthCells(monthId);
+  const calendarWidth = 7 * size + 6 * gap;
+  const panelWidth = calendarWidth + padding * 2;
 
   return (
     <Box
       sx={{
-        width: 368,
-        height: 392,
+        width: panelWidth,
         minWidth: 0,
         boxSizing: "border-box",
         borderRadius: "12px",
         backgroundColor: "#F3F3F3",
         overflow: "hidden",
-        p: "20px",
+        p: `${padding}px`,
+        ...containerSx,
       }}
     >
       {title ? (
@@ -61,11 +75,12 @@ export default function V2MonthGridCalendar({ monthId, getDayMeta, onDayClick, t
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: `${controlsGap}px`,
         }}
       >
         <Box
           sx={{
-            minWidth: 118,
+            minWidth: monthButtonMinWidth,
             height: 44,
             px: 1.5,
             border: "1px solid #E5E5E5",
@@ -90,7 +105,7 @@ export default function V2MonthGridCalendar({ monthId, getDayMeta, onDayClick, t
           </Typography>
           <Typography sx={{ color: "#A6A6A6", fontSize: 18, lineHeight: 1 }}>⌄</Typography>
         </Box>
-        <Box sx={{ display: "flex", gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: `${controlsGap}px`, flexShrink: 0 }}>
           {["‹", "›"].map((arrow) => (
             <Box
               key={arrow}
@@ -99,8 +114,8 @@ export default function V2MonthGridCalendar({ monthId, getDayMeta, onDayClick, t
               aria-label={arrow === "‹" ? "предыдущий месяц" : "следующий месяц"}
               disabled
               sx={{
-                width: 44,
-                height: 44,
+                width: navButtonSize,
+                height: navButtonSize,
                 p: 0,
                 border: "1px solid #E5E5E5",
                 borderRadius: "8px",
@@ -119,16 +134,16 @@ export default function V2MonthGridCalendar({ monthId, getDayMeta, onDayClick, t
         sx={{
           mt: 1.5,
           display: "grid",
-          gridTemplateColumns: `repeat(7, ${CELL_SIZE}px)`,
-          gap: `${GRID_GAP}px`,
-          width: 7 * CELL_SIZE + 6 * GRID_GAP,
+          gridTemplateColumns: `repeat(7, ${size}px)`,
+          gap: `${gap}px`,
+          width: calendarWidth,
         }}
       >
         {WEEK_DAYS.map((weekday, index) => (
           <Box
             key={`${weekday}-${index}`}
             sx={{
-              width: CELL_SIZE,
+              width: size,
               height: 24,
               backgroundColor: "#FFFFFF",
               display: "flex",
@@ -154,8 +169,8 @@ export default function V2MonthGridCalendar({ monthId, getDayMeta, onDayClick, t
               type={day ? "button" : undefined}
               onClick={day && onDayClick ? () => onDayClick(dateKey) : undefined}
               sx={{
-                width: CELL_SIZE,
-                height: CELL_SIZE,
+                width: size,
+                height: size,
                 p: 0,
                 borderRadius: "999px",
                 border: isEmpty ? "1px solid transparent" : meta.border || "1px solid transparent",

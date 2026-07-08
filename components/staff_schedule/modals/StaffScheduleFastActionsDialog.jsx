@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Alert, V2Button, V2SegmentedTabs, V2Select, useConfirm } from "@/ui/v2";
+import { V2Alert, V2Button, V2SegmentedTabs, useConfirm } from "@/ui/v2";
 import { createStaffScheduleAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -136,6 +137,14 @@ function BulkUsersField({ count, onOpen }) {
       </Box>
     </Box>
   );
+}
+
+function getBulkScheduleDraftValue(draft, scheduleScope, pendingScheduleType) {
+  return {
+    ...draft,
+    scheduleScope,
+    scheduleType: Number(pendingScheduleType),
+  };
 }
 
 function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDone, doneDisabled }) {
@@ -366,6 +375,7 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingPointId, setPendingPointId] = useState("");
   const [pendingPointCity, setPendingPointCity] = useState("");
   const [isBulkUsersOpen, setIsBulkUsersOpen] = useState(false);
+  const [pendingUsers, setPendingUsers] = useState([]);
   const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -395,6 +405,7 @@ export default function StaffScheduleFastActionsDialog({
     setPendingPointId(nextPointId);
     setPendingPointCity(getPointCity(nextPoint?.name || context.pointLabel));
     setIsBulkUsersOpen(false);
+    setPendingUsers(users);
   }, [canAccess, context.pointLabel, draft, isBulk, selectedPart, state?.open, user]);
 
   const scheduleOptions = useMemo(
@@ -424,8 +435,9 @@ export default function StaffScheduleFastActionsDialog({
     () => withCurrentSmenaOption(smenaOptions, smenaLabel, pendingSmenaId),
     [pendingSmenaId, smenaLabel, smenaOptions],
   );
+  const hasBulkUserChanges = isBulk && pendingUsers.length !== users.length;
   const hasChanges = isBulk
-    ? Boolean(draft?.scheduleType && draft?.scheduleScope)
+    ? Boolean(draft?.scheduleType && draft?.scheduleScope) || hasBulkUserChanges
     : hasEditDraftChanges(draft, user, selectedPart);
 
   const scheduleBaselineType = draft?.scheduleType
@@ -441,6 +453,33 @@ export default function StaffScheduleFastActionsDialog({
   const shiftDoneDisabled =
     !pendingSmenaId || String(pendingSmenaId) === String(user?.smena_id ?? "");
   const pointDoneDisabled = !pendingPointId;
+  const bulkSaveDisabled = !pendingUsers.length || (!pendingScheduleType && !hasBulkUserChanges);
+
+  const requestRemoveBulkUser = (targetUser) => async () => {
+    const accepted = await confirm({
+      title: "Предупреждение",
+      message: (
+        <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
+          Вы действительно хотите удалить из списка{" "}
+          <Box
+            component="span"
+            sx={{ fontWeight: 700 }}
+          >
+            {[targetUser?.user_name, targetUser?.app_name].filter(Boolean).join(" ") ||
+              "сотрудника"}
+          </Box>
+          ?
+        </Typography>
+      ),
+      confirmLabel: "Да, удалить",
+    });
+
+    if (!accepted) {
+      return;
+    }
+
+    setPendingUsers((prev) => prev.filter((item) => String(item?.id) !== String(targetUser?.id)));
+  };
 
   const handleRequestClose = async () => {
     if (!hasChanges) {
@@ -537,7 +576,7 @@ export default function StaffScheduleFastActionsDialog({
         <Stack spacing={2.5}>
           <Typography sx={staffScheduleModalTypography.title}>Для выбранных сотрудников</Typography>
           <BulkUsersField
-            count={users.length}
+            count={pendingUsers.length}
             onOpen={() => setIsBulkUsersOpen(true)}
           />
           <Stack spacing={1.25}>
@@ -582,13 +621,12 @@ export default function StaffScheduleFastActionsDialog({
         <InlineActions
           onCancel={handleRequestClose}
           doneLabel="Сохранить"
-          doneDisabled={scheduleDoneDisabled}
+          doneDisabled={bulkSaveDisabled}
           onDone={() =>
-            onSaveChanges({
-              ...draft,
-              scheduleScope,
-              scheduleType: Number(pendingScheduleType),
-            })
+            onSaveChanges(
+              getBulkScheduleDraftValue(draft, scheduleScope, pendingScheduleType),
+              pendingUsers,
+            )
           }
         />
       );
@@ -769,15 +807,36 @@ export default function StaffScheduleFastActionsDialog({
         mobileContentSx={{ px: 0, pt: 1.5, pb: 0 }}
       >
         <Box sx={{ px: 2, pb: 1.5 }}>
-          {users.map((item) => (
-            <Box
+          {pendingUsers.map((item) => (
+            <Stack
               key={String(item?.id)}
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              spacing={1}
               sx={{ py: 1.5, borderBottom: "1px solid #E5E5E5" }}
             >
               <Typography sx={staffScheduleModalTypography.fieldValue}>
                 {[item?.user_name, item?.app_name].filter(Boolean).join(", ") || "—"}
               </Typography>
-            </Box>
+              <Box
+                component="button"
+                type="button"
+                onClick={requestRemoveBulkUser(item)}
+                sx={{
+                  p: 0,
+                  width: 28,
+                  height: 28,
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#BABABA",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </Box>
+            </Stack>
           ))}
         </Box>
       </StaffScheduleResponsiveModal>

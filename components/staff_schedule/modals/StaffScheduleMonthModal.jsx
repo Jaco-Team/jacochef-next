@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import { Box, Grid, Stack, Typography } from "@mui/material";
+import { Box, Grid, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-import { V2Alert, V2Button, V2MonthGridCalendar } from "@/ui/v2";
+import { V2Alert, V2Button, V2MonthGridCalendar, useConfirm } from "@/ui/v2";
 import { toNumber } from "../staffScheduleHelpers";
 import {
   buildHourSlotId,
@@ -23,6 +23,7 @@ import {
   MONTH_TYPE_PRESETS,
 } from "../staffScheduleModalViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
 dayjs.locale("ru");
 
@@ -144,9 +145,9 @@ function SummaryCard({ label, value }) {
   return (
     <Box
       sx={{
-        minHeight: 46,
+        minHeight: 56,
         px: 1.25,
-        py: 0.75,
+        py: 1,
         borderRadius: "10px",
         backgroundColor: "#EAEAEA",
       }}
@@ -157,12 +158,16 @@ function SummaryCard({ label, value }) {
         {label}
       </Typography>
       <Typography
-        sx={{ mt: 0.5, fontSize: 16, lineHeight: 1.2, fontWeight: 700, color: "#5E5E5E" }}
+        sx={{ mt: 0.5, fontSize: 15, lineHeight: 1.2, fontWeight: 700, color: "#5E5E5E" }}
       >
         {value}
       </Typography>
     </Box>
   );
+}
+
+function hasMonthDraftChanges(left, right) {
+  return JSON.stringify(left) !== JSON.stringify(right);
 }
 
 function MonthOverviewStrip({ days }) {
@@ -224,18 +229,18 @@ function MonthOverviewStrip({ days }) {
   );
 }
 
-function HourSlotCard({ slot, selected, onClick, onRemove = null }) {
+function HourSlotCard({ slot, selected, onClick, onRemove = null, maxWidth = "none" }) {
   return (
     <Stack
       direction="row"
       alignItems="center"
       spacing={1}
+      sx={{ width: "fit-content", maxWidth }}
     >
       <Box
         onClick={onClick}
         sx={{
           minHeight: 36,
-          flex: 1,
           minWidth: 0,
           px: 1,
           borderRadius: "10px",
@@ -256,7 +261,7 @@ function HourSlotCard({ slot, selected, onClick, onRemove = null }) {
             flexShrink: 0,
           }}
         />
-        <Typography sx={{ fontSize: 14, color: "#666666", lineHeight: 1.2 }}>
+        <Typography sx={{ fontSize: 14, color: "#666666", lineHeight: 1.2, whiteSpace: "nowrap" }}>
           {formatHourRangeLabel(slot.time_start, slot.time_end)}
         </Typography>
       </Box>
@@ -480,8 +485,16 @@ function AssignmentDialog({
   onClose,
   onSave,
 }) {
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const allSlots = [...buildPresetSlots(), ...customSlots];
   const daysMap = new Map(draft.dates.map((item) => [item.date, item]));
+  const shouldCollapseAddButton = customSlots.length >= 2;
+  const calendarSize = isXs ? 30 : 40;
+  const calendarGap = isXs ? 4 : 8;
+  const customChipMaxWidth = isXs ? 150 : 172;
+  const addButtonCollapsed = shouldCollapseAddButton && (isDesktop || customSlots.length >= 2);
 
   return (
     <StaffScheduleResponsiveModal
@@ -520,10 +533,8 @@ function AssignmentDialog({
     >
       <Stack spacing={2.5}>
         <Stack spacing={0.5}>
-          <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#666666", lineHeight: 1.2 }}>
-            {personName || "—"}
-          </Typography>
-          <Typography sx={{ fontSize: 17, color: "#666666", lineHeight: 1.2 }}>
+          <Typography sx={staffScheduleModalTypography.personName}>{personName || "—"}</Typography>
+          <Typography sx={staffScheduleModalTypography.personMeta}>
             {positionName || "—"}
           </Typography>
         </Stack>
@@ -531,7 +542,7 @@ function AssignmentDialog({
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "194px 1fr" },
+            gridTemplateColumns: { xs: "1fr", md: "194px minmax(0, 1fr)" },
             gap: 2,
             alignItems: "start",
           }}
@@ -543,7 +554,14 @@ function AssignmentDialog({
               >
                 Часовой промежуток
               </Typography>
-              <Stack spacing={0.75}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  alignItems: "center",
+                }}
+              >
                 {allSlots.map((slot) => (
                   <HourSlotCard
                     key={slot.id}
@@ -551,39 +569,99 @@ function AssignmentDialog({
                     selected={slot.id === activeSlotId}
                     onClick={() => onSelectSlot(slot.id)}
                     onRemove={slot.isCustom ? () => onDeleteCustomSlot?.(slot.id) : null}
+                    maxWidth={slot.isCustom ? customChipMaxWidth : "none"}
                   />
                 ))}
-              </Stack>
-              <V2Button
-                tone="secondary"
-                startIcon={<AddRoundedIcon sx={{ fontSize: 18 }} />}
-                onClick={onOpenCustomTime}
-                sx={{
-                  alignSelf: "flex-start",
-                  minHeight: 36,
-                  px: 1.5,
-                  borderRadius: "10px",
-                  backgroundColor: "#E5E5E5",
-                  color: "#8A8A8A",
-                  "&:hover": { backgroundColor: "#DADADA" },
-                }}
-              >
-                Часы
-              </V2Button>
+                <V2Button
+                  tone="secondary"
+                  startIcon={
+                    addButtonCollapsed ? undefined : <AddRoundedIcon sx={{ fontSize: 18 }} />
+                  }
+                  onClick={onOpenCustomTime}
+                  sx={{
+                    alignSelf: "flex-start",
+                    minHeight: 36,
+                    minWidth: addButtonCollapsed ? 48 : "auto",
+                    px: addButtonCollapsed ? 0 : 1.5,
+                    borderRadius: "10px",
+                    backgroundColor: "#E5E5E5",
+                    color: "#8A8A8A",
+                    overflow: "hidden",
+                    "& .MuiButton-startIcon": {
+                      margin: 0,
+                    },
+                    "&:hover": {
+                      backgroundColor: "#DADADA",
+                    },
+                    ...(isDesktop && shouldCollapseAddButton
+                      ? {
+                          width: 48,
+                          "& .add-hours-label": {
+                            maxWidth: 0,
+                            opacity: 0,
+                            marginLeft: 0,
+                            transition:
+                              "max-width 0.18s ease, opacity 0.18s ease, margin 0.18s ease",
+                          },
+                          "& .add-hours-icon": {
+                            transition: "margin 0.18s ease",
+                          },
+                          "&:hover": {
+                            width: "auto",
+                            px: 1.5,
+                            "& .add-hours-label": {
+                              maxWidth: 80,
+                              opacity: 1,
+                              marginLeft: "8px",
+                            },
+                          },
+                        }
+                      : null),
+                  }}
+                >
+                  <Box
+                    component="span"
+                    className="add-hours-icon"
+                    sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    {addButtonCollapsed ? "+" : <AddRoundedIcon sx={{ fontSize: 18 }} />}
+                  </Box>
+                  <Box
+                    component="span"
+                    className="add-hours-label"
+                    sx={{
+                      display: addButtonCollapsed && !isDesktop ? "none" : "inline",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    + Часы
+                  </Box>
+                </V2Button>
+              </Box>
             </Stack>
           </Box>
 
-          <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0, display: "flex", justifyContent: "center" }}>
             <Stack
               spacing={0}
-              sx={{ minWidth: 0 }}
+              sx={{ minWidth: 0, alignItems: "center" }}
             >
               <V2MonthGridCalendar
                 monthId={monthValue}
                 title="Часы в календаре"
-                size={40}
                 previousDisabled
                 nextDisabled
+                size={calendarSize}
+                gap={calendarGap}
+                padding={isXs ? 10 : 20}
+                controlsGap={isXs ? 6 : 12}
+                monthButtonMinWidth={isXs ? 96 : 118}
+                navButtonSize={isXs ? 36 : 44}
+                containerSx={{
+                  width: "fit-content",
+                  maxWidth: "100%",
+                  mx: "auto",
+                }}
                 getDayMeta={(date) => {
                   const item = daysMap.get(date);
 
@@ -619,6 +697,9 @@ function AssignmentDialog({
 }
 
 export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { withConfirm, ConfirmDialog } = useConfirm();
   const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
@@ -666,6 +747,18 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
     () => allEditorSlots.find((item) => item.id === activeSlotId) || allEditorSlots[0] || null,
     [activeSlotId, allEditorSlots],
   );
+  const initialMonthDraft = useMemo(() => buildMonthModalDraft(modal.data), [modal.data]);
+  const baselineCustomSlots = useMemo(() => buildCustomSlots(draft.dates), [draft.dates]);
+  const hasMonthChanges = useMemo(
+    () => hasMonthDraftChanges(draft, initialMonthDraft),
+    [draft, initialMonthDraft],
+  );
+  const hasAssignmentChanges = useMemo(
+    () =>
+      hasMonthDraftChanges(editorDraft, draft) ||
+      JSON.stringify(editorCustomSlots) !== JSON.stringify(baselineCustomSlots),
+    [baselineCustomSlots, draft, editorCustomSlots, editorDraft],
+  );
 
   const handleSave = async (nextDraft = draft, shouldClose = false) => {
     if (!onSave || !modal.request) {
@@ -688,7 +781,21 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   };
 
   const handleRequestClose = async () => {
-    onClose?.();
+    if (!hasMonthChanges) {
+      onClose?.();
+      return;
+    }
+
+    withConfirm(() => onClose?.(), {
+      message: (
+        <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
+          Данные были изменены.
+          <br />
+          Закрыть без сохранения?
+        </Typography>
+      ),
+      confirmLabel: "Да, закрыть",
+    })();
   };
 
   const openAssignmentDialog = () => {
@@ -705,8 +812,28 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   };
 
   const closeAssignmentDialog = () => {
-    setIsAssignmentOpen(false);
-    setIsCustomTimeOpen(false);
+    if (!hasAssignmentChanges) {
+      setIsAssignmentOpen(false);
+      setIsCustomTimeOpen(false);
+      return;
+    }
+
+    withConfirm(
+      () => {
+        setIsAssignmentOpen(false);
+        setIsCustomTimeOpen(false);
+      },
+      {
+        message: (
+          <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
+            Данные были изменены.
+            <br />
+            Закрыть без сохранения?
+          </Typography>
+        ),
+        confirmLabel: "Да, закрыть",
+      },
+    )();
   };
 
   const handleEditorDayClick = (date) => {
@@ -749,22 +876,44 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
       return;
     }
 
-    setEditorCustomSlots((prev) => prev.filter((item) => item.id !== slotId));
-    setEditorDraft((prev) => ({
-      ...prev,
-      dates: prev.dates.filter(
-        (item) =>
-          !(
-            Number(item.type) === Number(slot.type) &&
-            String(item.time_start ?? "") === String(slot.time_start ?? "") &&
-            String(item.time_end ?? "") === String(slot.time_end ?? "")
+    withConfirm(
+      () => {
+        setEditorCustomSlots((prev) => prev.filter((item) => item.id !== slotId));
+        setEditorDraft((prev) => ({
+          ...prev,
+          dates: prev.dates.filter(
+            (item) =>
+              !(
+                Number(item.type) === Number(slot.type) &&
+                String(item.time_start ?? "") === String(slot.time_start ?? "") &&
+                String(item.time_end ?? "") === String(slot.time_end ?? "")
+              ),
           ),
-      ),
-    }));
+        }));
 
-    if (activeSlotId === slotId) {
-      setActiveSlotId("preset-0");
-    }
+        if (activeSlotId === slotId) {
+          setActiveSlotId("preset-0");
+        }
+      },
+      {
+        title: "Предупреждение",
+        message: (
+          <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
+            Вы действительно хотите удалить
+            <br />
+            время работы{" "}
+            <Box
+              component="span"
+              sx={{ fontWeight: 700 }}
+            >
+              {formatHourRangeLabel(slot.time_start, slot.time_end)}
+            </Box>
+            ?
+          </Typography>
+        ),
+        confirmLabel: "Да, удалить",
+      },
+    )();
   };
 
   const handleSaveAssignment = async () => {
@@ -788,10 +937,10 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
           {!modal.loading && modal.data ? (
             <>
               <Stack spacing={1.25}>
-                <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#666666" }}>
+                <Typography sx={staffScheduleModalTypography.personName}>
                   {modal.data.personName || "—"}
                 </Typography>
-                <Typography sx={{ fontSize: 17, color: "#666666" }}>
+                <Typography sx={staffScheduleModalTypography.personMeta}>
                   {modal.data.positionName || "—"}
                 </Typography>
               </Stack>
@@ -825,18 +974,26 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                   sx={{
                     display: "grid",
                     gridTemplateColumns: {
-                      xs: "repeat(1, minmax(0, 1fr))",
+                      xs: "repeat(2, minmax(0, 1fr))",
                       sm: "repeat(4, minmax(0, 1fr))",
                     },
                     gap: 0.5,
                   }}
                 >
                   {overviewCards.map((card) => (
-                    <SummaryCard
+                    <Box
                       key={card.key}
-                      label={card.label}
-                      value={card.value}
-                    />
+                      sx={
+                        card.key === "premium"
+                          ? { gridColumn: { xs: "1 / -1", sm: "span 2" } }
+                          : null
+                      }
+                    >
+                      <SummaryCard
+                        label={card.label}
+                        value={card.value}
+                      />
+                    </Box>
                   ))}
                 </Box>
               </Stack>
@@ -850,7 +1007,13 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                   startIcon={<CheckRoundedIcon sx={{ fontSize: 18 }} />}
                   onClick={openAssignmentDialog}
                   disabled={!canEditMonth}
-                  sx={{ minHeight: 38, px: 2.5, borderRadius: "14px", fontSize: 16 }}
+                  sx={{
+                    minHeight: 38,
+                    px: 2.5,
+                    borderRadius: "14px",
+                    fontSize: 16,
+                    width: isMobile ? "100%" : "auto",
+                  }}
                 >
                   Заполнить часы
                 </V2Button>
@@ -883,6 +1046,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         onClose={() => setIsCustomTimeOpen(false)}
         onSubmit={handleSubmitCustomTime}
       />
+      <ConfirmDialog />
     </>
   );
 }
