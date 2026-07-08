@@ -218,8 +218,14 @@ function MobileScheduleRow({
             px: 0.5,
             py: 0.75,
             fontSize: 11,
-            backgroundColor: rowSurfaceColor,
-            color: "#5E5E5E",
+            backgroundColor:
+              column.key === "test_all_price" && column.accessKey === "premia"
+                ? v2Colors.primary
+                : rowSurfaceColor,
+            color:
+              column.key === "test_all_price" && column.accessKey === "premia"
+                ? "#FFFFFF"
+                : "#5E5E5E",
             whiteSpace: "nowrap",
           }}
         >
@@ -228,6 +234,8 @@ function MobileScheduleRow({
               display: "block",
               fontSize: "10px",
               lineHeight: "1.1",
+              fontWeight:
+                column.key === "test_all_price" && column.accessKey === "premia" ? 700 : undefined,
             }}
           >
             {getSummaryCellValue(column, data)}

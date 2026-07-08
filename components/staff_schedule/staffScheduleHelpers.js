@@ -170,12 +170,7 @@ export function createStaffSchedulePolicy(access = {}) {
       canView("over_40_min") ||
       canView("sums_all");
   const canOpenMonthCard = canAccess("full_month");
-  const canOpenDayCard =
-    canEdit("day_edit") ||
-    canAccess("full_day") ||
-    canOpenMonthCard ||
-    canAccess("fast_month") ||
-    canAccess("fast_2_week");
+  const canOpenDayCard = canEdit("day_edit") || canAccess("full_day") || canOpenMonthCard;
   const canExportWorkSchedule = hasAccessRule(access, "export_excel")
     ? canAccess("export_excel")
     : true;

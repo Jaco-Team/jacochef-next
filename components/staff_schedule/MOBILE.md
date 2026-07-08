@@ -10,7 +10,6 @@
 
 - `doc/layout/mobile/staff_schedule.md`
 - mobile screenshots provided during the current task
-- existing desktop implementation for behavior parity
 - legacy mobile sheet pattern already used in older modules
 
 ## Main Mobile Screen
@@ -110,7 +109,6 @@ Rules recovered from Figma and screenshots:
 - [x] split schedule rendering into desktop and mobile branches
 - [x] add the mobile bottom action bar
 - [x] introduce the stricter staff-schedule mobile sheet shell
-- [ ] migrate fast actions to the mobile sheet flow
-- [ ] migrate hour-filling to the mobile sheet flow
-- [ ] migrate shift editing and related warnings
-- [ ] run a visual alignment pass against the screenshots
+- [x] migrate fast actions to the mobile sheet flow
+- [x] migrate hour-filling to the mobile sheet flow
+- [x] migrate shift editing and related warnings

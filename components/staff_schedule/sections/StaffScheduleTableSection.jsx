@@ -427,6 +427,7 @@ function ScheduleRow({
             canEdit("com_bonus") &&
             Number(data?.check_period) === 1 &&
             String(data?.smena_id ?? "") !== "-1";
+          const isPremiumColumn = column.key === "test_all_price" && column.accessKey === "premia";
           const isClickable =
             canEditPrice ||
             canEditGiven ||
@@ -457,17 +458,22 @@ function ScheduleRow({
                 fontSize: 11.5,
                 px: 0.75,
                 cursor: isClickable ? "pointer" : "default",
-                backgroundColor:
-                  isFullRowHighlighted || !canEditDirBonus
+                backgroundColor: isPremiumColumn
+                  ? v2Colors.primary
+                  : isFullRowHighlighted || !canEditDirBonus
                     ? rowSurfaceColor
                     : v2TableColors.rowHover,
+                color: isPremiumColumn ? "#FFFFFF" : undefined,
+                fontWeight: isPremiumColumn ? 700 : undefined,
                 "&:hover": isClickable
                   ? {
-                      backgroundColor: isFullRowHighlighted
-                        ? rowSurfaceColor
-                        : canEditDirBonus
-                          ? "#DCDCDC"
-                          : "#F7F7F7",
+                      backgroundColor: isPremiumColumn
+                        ? v2Colors.primaryHover
+                        : isFullRowHighlighted
+                          ? rowSurfaceColor
+                          : canEditDirBonus
+                            ? "#DCDCDC"
+                            : "#F7F7F7",
                     }
                   : undefined,
               }}
@@ -966,6 +972,7 @@ export default function StaffScheduleTableSection({
       sx={{
         borderRadius: CONTROL_RADIUS,
         overflow: "hidden",
+        border: "none",
       }}
     >
       <Stack
@@ -1110,8 +1117,9 @@ export default function StaffScheduleTableSection({
         ref={tableContainerRef}
         sx={{
           overflowX: "auto",
-          borderTop: "1px solid #ECECEC",
           WebkitOverflowScrolling: "touch",
+          border: "1px solid #ECECEC",
+          borderRadius: CONTROL_RADIUS,
         }}
       >
         <Table
@@ -1220,6 +1228,7 @@ export default function StaffScheduleTableSection({
                       </Typography>
                     </Stack>
 
+                    {/*
                     {canOpenDirectorLevel ? (
                       <V2Button
                         compact
@@ -1244,6 +1253,7 @@ export default function StaffScheduleTableSection({
                         {`Уровень директора: ${directorLevel ?? 0}`}
                       </V2Button>
                     ) : null}
+                    */}
                   </Stack>
                 </TableCell>
               </TableRow>
