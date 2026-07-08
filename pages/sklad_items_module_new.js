@@ -8,8 +8,10 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Divider from "@mui/material/Divider";
 import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
+import Tooltip from "@mui/material/Tooltip";
 
 import TableContainer from "@mui/material/TableContainer";
 import Table from "@mui/material/Table";
@@ -188,7 +190,7 @@ class SkladItemsModule_Modal_History_View extends React.Component {
               }}
             >
               <MyTextInput
-                label="Максимальное количество заказов в месяц (0 - без ограничений)"
+                label="Максимальное количество веса за последние 30 дней"
                 value={
                   this.state.itemView
                     ? this.state.itemView.max_count_in_m?.color
@@ -781,6 +783,14 @@ class SkladItemsModule_Modal extends React.Component {
     });
   }
 
+  normalizePqSeparators(value) {
+    return String(value ?? "")
+      .trim()
+      .replace(/\s*(?:[#;,/|\r\n]+)\s*/g, "#")
+      .replace(/#+/g, "#")
+      .replace(/^#|#$/g, "");
+  }
+
   save() {
     let item = this.state.itemEdit;
 
@@ -842,6 +852,9 @@ class SkladItemsModule_Modal extends React.Component {
       return Number.isNaN(sec) || sec > 59;
     };
 
+    pq = this.normalizePqSeparators(pq);
+    item.item.pq = pq;
+
     const findOptionById = (value, options = []) => {
       if (typeof value === "object" && value !== null) return value;
       return options.find((opt) => String(opt?.id) === String(value));
@@ -896,7 +909,7 @@ class SkladItemsModule_Modal extends React.Component {
         missing: !name_for_vendor && this.props.acces?.name_for_vendor_edit,
       },
       {
-        label: "Максимальное количество заказов в месяц",
+        label: "Максимальное количество веса за последние 30 дней",
         missing: isEmptyRequiredNumber(max_count_in_m) && this.props.acces?.max_count_in_m_edit,
       },
       {
@@ -1148,7 +1161,15 @@ class SkladItemsModule_Modal extends React.Component {
                 }
               >
                 <MyTextInput
-                  label="Максимальное количество заказов в месяц (0 - без ограничений)"
+                  label="Максимальное количество веса за последние 30 дней"
+                  inputAdornment={
+                    <Tooltip title="0 - без ограничений">
+                      <InfoOutlinedIcon
+                        color="action"
+                        fontSize="small"
+                      />
+                    </Tooltip>
+                  }
                   value={this.state.itemEdit ? this.state.itemEdit.item.max_count_in_m : ""}
                   type="number"
                   onFocus={() => {
@@ -1244,8 +1265,14 @@ class SkladItemsModule_Modal extends React.Component {
               >
                 <MyTextInput
                   label="Количество в упаковке"
-                  type="number"
-                  onWheel={(e) => e.target.blur()}
+                  inputAdornment={
+                    <Tooltip title="Несколько значений можно указать через #, ;, /, | или запятую">
+                      <InfoOutlinedIcon
+                        color="action"
+                        fontSize="small"
+                      />
+                    </Tooltip>
+                  }
                   value={this.state.itemEdit ? this.state.itemEdit.item.pq : ""}
                   disabled={!this.props.acces?.pq_edit}
                   onFocus={() => {
