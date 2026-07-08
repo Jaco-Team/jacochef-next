@@ -1,6 +1,6 @@
 export const staffScheduleModalPresets = {
   titleSx: {
-    fontSize: 16,
+    fontSize: 18,
     lineHeight: 1.25,
     fontWeight: 400,
     color: "#666666",

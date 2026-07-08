@@ -68,7 +68,7 @@ export default function useStaffScheduleFastActions({
       ...createFastActionsState(),
       open: true,
       mode: "bulk",
-      screen: "hub",
+      screen: "schedule",
       user: selectedRows[0],
       users: selectedRows,
       draft: {
@@ -80,6 +80,22 @@ export default function useStaffScheduleFastActions({
       shiftLabel: "",
     });
   }, [selectedRowIds, visibleRows]);
+
+  const openSelected = useCallback(() => {
+    const selectedRows = visibleRows
+      .filter((row) => row?.row !== "header")
+      .map((row) => row?.data)
+      .filter((row) => row?.id && selectedRowIds.includes(String(row.id)));
+
+    if (selectedRows.length === 1) {
+      open(selectedRows[0]);
+      return;
+    }
+
+    if (selectedRows.length > 1) {
+      openBulk();
+    }
+  }, [open, openBulk, selectedRowIds, visibleRows]);
 
   const backToHub = useCallback(() => {
     setState((prev) => ({
@@ -234,57 +250,61 @@ export default function useStaffScheduleFastActions({
     [api, monthId, selectedPart],
   );
 
-  const saveChanges = useCallback(async () => {
-    const user = state.user;
-    const users = state.users;
-    const draft = state.draft;
-    const mode = state.mode;
+  const saveChanges = useCallback(
+    async (nextDraftOverride = null) => {
+      const user = state.user;
+      const users = state.users;
+      const draft = nextDraftOverride || state.draft;
+      const mode = state.mode;
 
-    if ((!user && mode !== "bulk") || !draft) {
-      return;
-    }
+      if ((!user && mode !== "bulk") || !draft) {
+        return;
+      }
 
-    const needsPointConfirm = Boolean(draft?.point?.point_id);
+      const needsPointConfirm = Boolean(draft?.point?.point_id);
 
-    const runSave = async () => {
-      setState((prev) => ({
-        ...prev,
-        saving: true,
-        error: "",
-      }));
-
-      try {
-        await persistDraft(draft, user, users, mode);
-        close();
-        await onReload();
-      } catch (requestError) {
+      const runSave = async () => {
         setState((prev) => ({
           ...prev,
-          saving: false,
-          error: requestError?.message || "Не удалось сохранить изменения",
+          saving: true,
+          error: "",
         }));
+
+        try {
+          await persistDraft(draft, user, users, mode);
+          close();
+          await onReload();
+        } catch (requestError) {
+          setState((prev) => ({
+            ...prev,
+            saving: false,
+            error: requestError?.message || "Не удалось сохранить изменения",
+          }));
+        }
+      };
+
+      if (!needsPointConfirm) {
+        await runSave();
+        return;
       }
-    };
 
-    if (!needsPointConfirm) {
-      await runSave();
-      return;
-    }
+      const accepted = await confirm({
+        title: "Предупреждение",
+        message: "Точно сменить точку с сегодняшнего дня?",
+        confirmLabel: "Сменить",
+      });
 
-    const accepted = await confirm({
-      title: "Предупреждение",
-      message: "Точно сменить точку с сегодняшнего дня?",
-      confirmLabel: "Сменить",
-    });
-
-    if (accepted) {
-      await runSave();
-    }
-  }, [close, confirm, onReload, persistDraft, state.draft, state.mode, state.user, state.users]);
+      if (accepted) {
+        await runSave();
+      }
+    },
+    [close, confirm, onReload, persistDraft, state.draft, state.mode, state.user, state.users],
+  );
 
   return {
     state,
     open,
+    openSelected,
     close,
     openBulk,
     backToHub,

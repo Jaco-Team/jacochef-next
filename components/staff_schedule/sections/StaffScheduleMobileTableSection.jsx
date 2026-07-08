@@ -747,6 +747,7 @@ function MobileSelectionBar({ selectedCount, onClearSelection, onOpenBulkFastAct
 
       <V2Button
         onClick={onOpenBulkFastActions}
+        startIcon={<SwapHorizRoundedIcon sx={{ fontSize: 18 }} />}
         sx={{
           minHeight: 40,
           px: 2,
@@ -774,6 +775,7 @@ export default function StaffScheduleMobileTableSection({
   showFastActions,
   hasBulkSelection,
   onOpenBulkFastActions,
+  onOpenSelectedFastActions,
   useColors,
   selectedRowIds,
   onToggleRowSelection,
@@ -874,7 +876,7 @@ export default function StaffScheduleMobileTableSection({
         <MobileSelectionBar
           selectedCount={selectedCount}
           onClearSelection={onClearRowSelection}
-          onOpenBulkFastActions={onOpenBulkFastActions}
+          onOpenBulkFastActions={onOpenSelectedFastActions}
         />
       ) : null}
     </>

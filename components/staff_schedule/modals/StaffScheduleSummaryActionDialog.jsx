@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import { V2Alert, V2Button, V2SelectableList, V2SelectableListItem, V2TextInput } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
 function buildInitialValue(modal) {
   return modal?.data?.value ?? "";
@@ -105,7 +106,7 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
                     },
                   }}
                 >
-                  <Typography sx={{ fontSize: 16, color: "#666666" }}>
+                  <Typography sx={staffScheduleModalTypography.fieldValue}>
                     {item?.name ?? ""}
                   </Typography>
                 </V2SelectableListItem>
@@ -121,7 +122,7 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
             />
 
             {modal?.data?.fullAmount !== undefined && modal?.data?.fullAmount !== null ? (
-              <Typography sx={{ fontSize: 14, lineHeight: 1.3, color: "#666666" }}>
+              <Typography sx={staffScheduleModalTypography.helperText}>
                 Вся сумма:{" "}
                 <Box
                   component="span"

@@ -1045,6 +1045,7 @@ export default function useStaffSchedulePage() {
     handleOpenFastActions: fastActions.open,
     handleCloseFastActions: fastActions.close,
     handleOpenBulkFastActions: fastActions.openBulk,
+    handleOpenSelectedFastActions: fastActions.openSelected,
     handleEditDialogBackToHub: fastActions.backToHub,
     handleEditDialogOpenSchedule: fastActions.openSchedule,
     handleEditDialogOpenShift: fastActions.openShift,

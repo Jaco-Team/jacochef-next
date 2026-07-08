@@ -18,8 +18,9 @@ import {
   Typography,
 } from "@mui/material";
 import { AddTimeIcon, HistoryFileIcon } from "@/ui/icons";
-import { V2Alert, V2Button, V2IconButton, V2Select, useConfirm } from "@/ui/v2";
+import { V2Alert, V2Button, V2IconButton, useConfirm } from "@/ui/v2";
 import { formatHourRangeLabel } from "../staffScheduleHourPresets";
+import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
@@ -757,7 +758,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                 onHistoryOpen={() => setIsHistoryOpen(true)}
               />
 
-              <V2Select
+              <StaffScheduleMobileSelectField
                 options={appOptions}
                 value={draft.newApp}
                 onChange={(event) =>
@@ -767,11 +768,12 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   }))
                 }
                 label="Кем работает"
+                pickerTitle="Кем работает"
                 disabled={!canEditAssignment}
               />
 
               {mentorOptions.length ? (
-                <V2Select
+                <StaffScheduleMobileSelectField
                   options={mentorOptions}
                   value={draft.mentorId}
                   onChange={(event) =>
@@ -781,6 +783,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                     }))
                   }
                   label="Наставник"
+                  pickerTitle="Наставник"
                   disabled={!canEditAssignment}
                 />
               ) : null}
@@ -804,7 +807,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <V2Select
+                    <StaffScheduleMobileSelectField
                       options={healthOptions}
                       value={draft.typeHealf}
                       onChange={(event) =>
@@ -814,6 +817,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                         }))
                       }
                       label="Здоровье"
+                      pickerTitle="Здоровье"
                       allowNone={false}
                       disabled={!canEditHealth}
                     />

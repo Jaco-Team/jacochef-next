@@ -16,15 +16,10 @@ export default function StaffScheduleMobileScheduleControls({
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
 
   return (
-    <V2Surface
-      sx={{
-        borderRadius: CONTROL_RADIUS,
-        overflow: "hidden",
-      }}
-    >
+    <>
       <Stack
         spacing={1.25}
-        sx={{ p: 1.5 }}
+        sx={{ pb: 1.5 }}
       >
         {canCreateSmena ? (
           <V2Button
@@ -78,6 +73,6 @@ export default function StaffScheduleMobileScheduleControls({
         open={isColorLegendOpen}
         onClose={() => setIsColorLegendOpen(false)}
       />
-    </V2Surface>
+    </>
   );
 }

@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { Box, Grid, Link, Stack, Typography } from "@mui/material";
 import { V2Alert, V2Button, V2TextInput } from "@/ui/v2";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
 function InfoBlock({ label, children }) {
   return (
     <Stack spacing={0.5}>
-      <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#666666" }}>{label}</Typography>
-      <Typography sx={{ fontSize: 15, color: "#666666", lineHeight: 1.35 }}>
-        {children || "—"}
-      </Typography>
+      <Typography sx={staffScheduleModalTypography.fieldLabel}>{label}</Typography>
+      <Typography sx={staffScheduleModalTypography.fieldValue}>{children || "—"}</Typography>
     </Stack>
   );
 }

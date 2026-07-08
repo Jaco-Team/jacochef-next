@@ -85,6 +85,7 @@ export default function StaffSchedulePage() {
             onOpenMonth={page.handleOpenMonthModal}
             onOpenFastActions={page.handleOpenFastActions}
             onOpenBulkFastActions={page.handleOpenBulkFastActions}
+            onOpenSelectedFastActions={page.handleOpenSelectedFastActions}
             onOpenCreateSmena={page.handleOpenCreateSmena}
             onOpenEditSmena={page.handleOpenEditSmena}
             selectedRowIds={page.selectedRowIds}

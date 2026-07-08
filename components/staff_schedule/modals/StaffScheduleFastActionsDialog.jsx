@@ -19,6 +19,8 @@ import {
   inferScheduleScopeFromUser,
 } from "../staffScheduleEditViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
+import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
 function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
   return (
@@ -42,10 +44,8 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
           backgroundColor: "#FFFFFF",
         }}
       >
-        <Typography sx={{ fontSize: 14, color: "#A6A6A6", lineHeight: 1.05 }}>{label}</Typography>
-        <Typography
-          sx={{ fontSize: 16, color: "#666666", lineHeight: 1.2, wordBreak: "break-word" }}
-        >
+        <Typography sx={staffScheduleModalTypography.fieldLabel}>{label}</Typography>
+        <Typography sx={{ ...staffScheduleModalTypography.fieldValue, wordBreak: "break-word" }}>
           {value || "—"}
         </Typography>
       </Box>
@@ -86,26 +86,54 @@ function PersonHeader({ context }) {
         spacing={2}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography
-            style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.25 }}
-            sx={{ color: "#666666" }}
-          >
+          <Typography sx={staffScheduleModalTypography.personName}>
             {context.userName || "—"}
           </Typography>
-          <Typography
-            style={{ fontSize: 20, lineHeight: 1.25 }}
-            sx={{ color: "#666666" }}
-          >
+          <Typography sx={staffScheduleModalTypography.personMeta}>
             {context.roleName || "—"}
           </Typography>
         </Box>
-        <Typography
-          style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.25 }}
-          sx={{ color: "#666666" }}
-        >
-          {context.periodLabel}
-        </Typography>
+        <Typography sx={staffScheduleModalTypography.periodValue}>{context.periodLabel}</Typography>
       </Stack>
+    </Box>
+  );
+}
+
+function BulkUsersField({ count, onOpen }) {
+  return (
+    <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+      <Typography sx={{ ...staffScheduleModalTypography.fieldLabel, mb: 1 }}>
+        Список сотрудников
+      </Typography>
+      <Box
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onOpen?.();
+          }
+        }}
+        sx={{
+          minHeight: 44,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+          px: 2,
+          py: 1,
+          border: "1px solid #E5E5E5",
+          borderRadius: "18px",
+          backgroundColor: "#FFFFFF",
+          cursor: "pointer",
+        }}
+      >
+        <Typography sx={staffScheduleModalTypography.fieldValue}>{`${count} человек`}</Typography>
+        <ArrowBackIosNewRoundedIcon
+          sx={{ color: "#7A7A7A", fontSize: 18, transform: "rotate(180deg)", flexShrink: 0 }}
+        />
+      </Box>
     </Box>
   );
 }
@@ -337,6 +365,7 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingSmenaId, setPendingSmenaId] = useState("");
   const [pendingPointId, setPendingPointId] = useState("");
   const [pendingPointCity, setPendingPointCity] = useState("");
+  const [isBulkUsersOpen, setIsBulkUsersOpen] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -351,9 +380,13 @@ export default function StaffScheduleFastActionsDialog({
 
     setScheduleScope(nextScope);
     setPendingScheduleType(
-      draft?.scheduleType
-        ? String(draft.scheduleType)
-        : String(getCurrentScheduleType(user, selectedPart, nextScope) ?? ""),
+      isBulk
+        ? draft?.scheduleType
+          ? String(draft.scheduleType)
+          : ""
+        : draft?.scheduleType
+          ? String(draft.scheduleType)
+          : String(getCurrentScheduleType(user, selectedPart, nextScope) ?? ""),
     );
     setPendingSmenaId(draft?.smenaId ? String(draft.smenaId) : "");
     const nextPointId = draft?.point ? `${draft.point.point_id}-${draft.point.smena_id}` : "";
@@ -361,7 +394,8 @@ export default function StaffScheduleFastActionsDialog({
 
     setPendingPointId(nextPointId);
     setPendingPointCity(getPointCity(nextPoint?.name || context.pointLabel));
-  }, [canAccess, context.pointLabel, draft, selectedPart, state?.open, user]);
+    setIsBulkUsersOpen(false);
+  }, [canAccess, context.pointLabel, draft, isBulk, selectedPart, state?.open, user]);
 
   const scheduleOptions = useMemo(
     () => buildScheduleOptions(scheduleScope, selectedPart),
@@ -416,7 +450,7 @@ export default function StaffScheduleFastActionsDialog({
 
     const shouldSave = await confirm({
       message: (
-        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
+        <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
           Данные были изменены.
           <br />
           Сохранить изменения?
@@ -437,12 +471,16 @@ export default function StaffScheduleFastActionsDialog({
   let content = null;
   let actions = null;
 
+  if (isBulk && screen === "schedule") {
+    modalTitle = monthId ? `Смена часов ${monthId}` : "Смена часов";
+  }
+
   if (screen === "hub") {
     content = (
       <Stack spacing={3.25}>
         <PersonHeader context={context} />
 
-        <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#666666", mb: -1 }}>
+        <Typography sx={{ ...staffScheduleModalTypography.sectionHeading, mb: -1 }}>
           Что изменить?
         </Typography>
 
@@ -494,56 +532,120 @@ export default function StaffScheduleFastActionsDialog({
   }
 
   if (screen === "schedule") {
-    content = (
-      <Stack spacing={2}>
-        <PersonHeader context={context} />
-        <SubScreenPanel
-          title="СМЕНА ЧАСОВ"
-          onBack={onBackToHub}
-          actions={
-            <InlineActions
-              onCancel={onBackToHub}
-              doneLabel="Готово"
-              doneDisabled={scheduleDoneDisabled}
-              onDone={() =>
-                onApplyScheduleDraft({
-                  scheduleScope,
-                  scheduleType: Number(pendingScheduleType),
-                })
-              }
-            />
-          }
-        >
-          {canMonth && canWeek ? (
-            <EditStepSegmentedTabs
-              value={scheduleScope}
-              onChange={(_, value) => {
-                setScheduleScope(value);
-                setPendingScheduleType(
-                  String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
-                );
+    if (isBulk) {
+      content = (
+        <Stack spacing={2.5}>
+          <Typography sx={staffScheduleModalTypography.title}>Для выбранных сотрудников</Typography>
+          <BulkUsersField
+            count={users.length}
+            onOpen={() => setIsBulkUsersOpen(true)}
+          />
+          <Stack spacing={1.25}>
+            <Typography
+              sx={{
+                fontSize: 16,
+                lineHeight: 1.2,
+                fontWeight: 700,
+                color: "#B1B1B1",
+                textTransform: "uppercase",
               }}
-              items={[
-                { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
-                { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
-              ]}
-            />
-          ) : null}
-
-          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
-            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>
-              Выбери часовой график
+            >
+              Смена часов
             </Typography>
-            <V2Select
+            {canMonth && canWeek ? (
+              <EditStepSegmentedTabs
+                value={scheduleScope}
+                onChange={(_, value) => {
+                  setScheduleScope(value);
+                  setPendingScheduleType(
+                    String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
+                  );
+                }}
+                items={[
+                  { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
+                  { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
+                ]}
+              />
+            ) : null}
+            <StaffScheduleMobileSelectField
               options={scheduleOptions}
               value={pendingScheduleType}
               onChange={(event) => setPendingScheduleType(String(event.target.value))}
               label="Часы"
+              pickerTitle="Выбери часы"
+              allowNone={false}
             />
-          </Box>
-        </SubScreenPanel>
-      </Stack>
-    );
+          </Stack>
+        </Stack>
+      );
+      actions = (
+        <InlineActions
+          onCancel={handleRequestClose}
+          doneLabel="Сохранить"
+          doneDisabled={scheduleDoneDisabled}
+          onDone={() =>
+            onSaveChanges({
+              ...draft,
+              scheduleScope,
+              scheduleType: Number(pendingScheduleType),
+            })
+          }
+        />
+      );
+    } else {
+      content = (
+        <Stack spacing={2}>
+          <PersonHeader context={context} />
+          <SubScreenPanel
+            title="СМЕНА ЧАСОВ"
+            onBack={onBackToHub}
+            actions={
+              <InlineActions
+                onCancel={onBackToHub}
+                doneLabel="Готово"
+                doneDisabled={scheduleDoneDisabled}
+                onDone={() =>
+                  onApplyScheduleDraft({
+                    scheduleScope,
+                    scheduleType: Number(pendingScheduleType),
+                  })
+                }
+              />
+            }
+          >
+            {canMonth && canWeek ? (
+              <EditStepSegmentedTabs
+                value={scheduleScope}
+                onChange={(_, value) => {
+                  setScheduleScope(value);
+                  setPendingScheduleType(
+                    String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
+                  );
+                }}
+                items={[
+                  { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
+                  { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
+                ]}
+              />
+            ) : null}
+
+            <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+              <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1 }}>
+                Выбери часовой график
+              </Typography>
+              <StaffScheduleMobileSelectField
+                options={scheduleOptions}
+                value={pendingScheduleType}
+                onChange={(event) => setPendingScheduleType(String(event.target.value))}
+                label="Часы"
+                pickerTitle="Выбери часовой график"
+                allowNone={false}
+              />
+            </Box>
+          </SubScreenPanel>
+        </Stack>
+      );
+    }
   }
 
   if (screen === "shift") {
@@ -563,8 +665,10 @@ export default function StaffScheduleFastActionsDialog({
           }
         >
           <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
-            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1 }}>Выбери смену</Typography>
-            <V2Select
+            <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1 }}>
+              Выбери смену
+            </Typography>
+            <StaffScheduleMobileSelectField
               options={displayedSmenaOptions}
               value={pendingSmenaId || "current"}
               onChange={(event) => {
@@ -573,6 +677,7 @@ export default function StaffScheduleFastActionsDialog({
                 setPendingSmenaId(nextValue === "current" ? "" : nextValue);
               }}
               label="Смена"
+              pickerTitle="Выбери смену"
               allowNone={false}
             />
           </Box>
@@ -616,8 +721,10 @@ export default function StaffScheduleFastActionsDialog({
             }}
           />
           <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 2 }}>
-            <Typography sx={{ color: "#666666", fontSize: 16, mb: 1.25 }}>Выбери кафе</Typography>
-            <V2Select
+            <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1.25 }}>
+              Выбери кафе
+            </Typography>
+            <StaffScheduleMobileSelectField
               options={filteredPointOptions}
               value={pendingPointId || "current"}
               onChange={(event) => {
@@ -625,7 +732,8 @@ export default function StaffScheduleFastActionsDialog({
 
                 setPendingPointId(nextValue === "current" ? "" : nextValue);
               }}
-              label="Смена"
+              label="Кафе"
+              pickerTitle="Выбери кафе"
               allowNone={false}
             />
           </Box>
@@ -651,6 +759,27 @@ export default function StaffScheduleFastActionsDialog({
         }}
       >
         {content}
+      </StaffScheduleResponsiveModal>
+      <StaffScheduleResponsiveModal
+        open={isBulkUsersOpen}
+        onClose={() => setIsBulkUsersOpen(false)}
+        title="Сотрудники смены"
+        maxWidth="sm"
+        contentSx={{ px: 0, pt: 1.5, pb: 0 }}
+        mobileContentSx={{ px: 0, pt: 1.5, pb: 0 }}
+      >
+        <Box sx={{ px: 2, pb: 1.5 }}>
+          {users.map((item) => (
+            <Box
+              key={String(item?.id)}
+              sx={{ py: 1.5, borderBottom: "1px solid #E5E5E5" }}
+            >
+              <Typography sx={staffScheduleModalTypography.fieldValue}>
+                {[item?.user_name, item?.app_name].filter(Boolean).join(", ") || "—"}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
       </StaffScheduleResponsiveModal>
       <ConfirmDialog />
     </>

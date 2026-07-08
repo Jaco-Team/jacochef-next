@@ -70,7 +70,7 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
       spacing={1.25}
     >
       {canExportHealthJournal ? (
-        <Grid size={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <V2Button
             fullWidth
             tone="secondary"
@@ -83,7 +83,7 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
         </Grid>
       ) : null}
 
-      <Grid size={canExportHealthJournal ? 6 : 12}>
+      <Grid size={canExportHealthJournal ? { xs: 12, sm: 6 } : 12}>
         <V2Button
           fullWidth
           startIcon={<RefreshIcon />}

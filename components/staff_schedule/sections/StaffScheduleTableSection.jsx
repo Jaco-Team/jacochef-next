@@ -706,6 +706,7 @@ export default function StaffScheduleTableSection({
   onOpenSummaryAction,
   onRemoveTeamBonusFromUser,
   onOpenBulkFastActions,
+  onOpenSelectedFastActions,
   onOpenCreateSmena,
   onOpenEditSmena,
   selectedRowIds,
@@ -932,6 +933,7 @@ export default function StaffScheduleTableSection({
         showFastActions={showFastActions}
         hasBulkSelection={hasBulkSelection}
         onOpenBulkFastActions={onOpenBulkFastActions}
+        onOpenSelectedFastActions={onOpenSelectedFastActions}
         useColors={useColors}
         selectedRowIds={selectedRowIds}
         onToggleRowSelection={onToggleRowSelection}
