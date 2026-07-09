@@ -41,6 +41,7 @@ Supporting docs:
 
 - API contract: `fe-api.md`
 - local QA checklist: `TEST-PLAN.md`
+- automated test entrypoint: `tests/README.md`
 
 ## API / Local DB Status
 
@@ -102,6 +103,7 @@ This status is reconstructed from removed docs plus module commits from June 19,
 - [x] Shift reassignment and point reassignment through fast actions.
 - [x] Bulk schedule-template actions.
 - [x] Export actions for WS / HJ.
+- [x] Added a generic automated test entrypoint with scoped `staff_schedule` unit and e2e coverage examples.
 
 ## TODO
 

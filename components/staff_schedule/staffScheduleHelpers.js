@@ -1,13 +1,26 @@
-import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import {
+  createStaffScheduleAccess,
+  createStaffSchedulePolicy,
+  hasAccessRule,
+} from "./staffScheduleAccess.mjs";
+import {
+  computePremiumSheet,
+  computeToPaySum,
+  computeTotalSum,
+  toArray,
+  toNumber,
+} from "./staffSchedulePayroll.mjs";
 
-export function toArray(value) {
-  return Array.isArray(value) ? value : [];
-}
-
-export function toNumber(value, fallback = 0) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
+export {
+  computePremiumSheet,
+  computeToPaySum,
+  computeTotalSum,
+  createStaffScheduleAccess,
+  createStaffSchedulePolicy,
+  hasAccessRule,
+  toArray,
+  toNumber,
+};
 
 export function getActiveMonthId(months = []) {
   const active = months.find((item) => Number(item?.is_active) === 1);
@@ -45,26 +58,6 @@ export function getVisibleSummaryColumns(access = {}) {
   ].filter((item) => canView(item.accessKey));
 }
 
-export function computeTotalSum(row = {}) {
-  return (
-    toNumber(row.dop_bonus) +
-    toNumber(row.dir_price) +
-    toNumber(row.register_price) +
-    toNumber(row.dir_price_dop) +
-    toNumber(row.h_price) +
-    toNumber(row.my_bonus) -
-    toNumber(row.err_price)
-  );
-}
-
-export function computeToPaySum(row = {}) {
-  if (row.app_type === "driver") {
-    return "";
-  }
-
-  return computeTotalSum(row) - toNumber(row.given_cart) - toNumber(row.withheld);
-}
-
 export function getSummaryCellValue(column, row = {}) {
   if (column.key === "total_sum") {
     return computeTotalSum(row);
@@ -72,6 +65,10 @@ export function getSummaryCellValue(column, row = {}) {
 
   if (column.key === "to_pay_sum") {
     return computeToPaySum(row);
+  }
+
+  if (column.key === "test_all_price") {
+    return computePremiumSheet(row);
   }
 
   return row?.[column.key] ?? "";
@@ -111,82 +108,6 @@ export function hasFastActionsAccess(access = {}) {
 
 export function canExportExcel(access = {}) {
   return createStaffSchedulePolicy(access).canExportWorkSchedule;
-}
-
-export function hasAccessRule(access = {}, key) {
-  const keyBase = String(key || "").replace(/_(access|view|edit)$/, "");
-
-  return (
-    Object.prototype.hasOwnProperty.call(access, `${keyBase}_access`) ||
-    Object.prototype.hasOwnProperty.call(access, `${keyBase}_view`) ||
-    Object.prototype.hasOwnProperty.call(access, `${keyBase}_edit`)
-  );
-}
-
-export function createStaffScheduleAccess(access = {}) {
-  const { userCan } = handleUserAccess(access);
-  const check = (action, key) => (hasAccessRule(access, key) ? userCan(action, key) : false);
-
-  return {
-    canAccess: (key) => check("access", key),
-    canView: (key) => check("view", key),
-    canEdit: (key) => check("edit", key),
-  };
-}
-
-export function createStaffSchedulePolicy(access = {}) {
-  const accessCheck = createStaffScheduleAccess(access);
-  const { canAccess, canView, canEdit } = accessCheck;
-  const canShowSalaryBlock = hasAccessRule(access, "salary_block")
-    ? canView("salary_block")
-    : canView("1h") ||
-      canView("1h_plus") ||
-      canView("full_h") ||
-      canView("bonus") ||
-      canView("all_price") ||
-      canView("given") ||
-      canView("withheld") ||
-      canView("given_cart") ||
-      canView("test_all_price") ||
-      canView("premia");
-  const canShowPayrollActions = hasAccessRule(access, "payroll_actions")
-    ? canAccess("payroll_actions")
-    : canEdit("given") || canEdit("given_cart") || canEdit("withheld");
-  const canShowFastActionsPanel = hasAccessRule(access, "schedule_actions")
-    ? canAccess("schedule_actions")
-    : canAccess("full_month") ||
-      canAccess("fast_2_week") ||
-      canAccess("fast_month") ||
-      canAccess("fast_smena") ||
-      canAccess("fast_point");
-  const canManageSmena = hasAccessRule(access, "smena_actions")
-    ? canAccess("smena_actions")
-    : canAccess("create_edit_smena");
-  const canShowFooterStats = hasAccessRule(access, "footer_stats")
-    ? canView("footer_stats")
-    : canView("bonus_of_day") ||
-      canView("rolls") ||
-      canView("pizza") ||
-      canView("over_40_min") ||
-      canView("sums_all");
-  const canOpenMonthCard = canAccess("full_month");
-  const canOpenDayCard = canEdit("day_edit") || canAccess("full_day") || canOpenMonthCard;
-  const canExportWorkSchedule = hasAccessRule(access, "export_excel")
-    ? canAccess("export_excel")
-    : true;
-
-  return {
-    ...accessCheck,
-    canShowSalaryBlock,
-    canShowPayrollActions,
-    canShowFastActionsPanel,
-    canManageSmena,
-    canShowFooterStats,
-    canOpenMonthCard,
-    canOpenDayCard,
-    canExportWorkSchedule,
-    canExportHealthJournal: true,
-  };
 }
 
 export function openExportDownloadUrl(response) {

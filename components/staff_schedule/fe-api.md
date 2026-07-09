@@ -17,6 +17,13 @@
 `access` возвращается один раз в bootstrap `get_all`.
 `get_graph` access map не возвращает и не должен использоваться как источник прав для FE.
 
+Источник point scope для списков точек и городов:
+
+- если у пользователя есть записи в `jaco_main_rolls.user_point_access`, backend использует их как основной набор доступных точек
+- если записей там нет, backend откатывается к legacy `user_privileges.point_id/city_id`
+- это вычисляется server-side в middleware/helper; FE не должен присылать point access map в payload
+- для `staff_schedule` это влияет на `point_list` в `get_all` и на ожидаемый выбор `data.point_id` в последующих запросах
+
 Старые детальные ключи остаются без переименования:
 
 - быстрые действия: `fast_month_access`, `fast_2_week_access`, `fast_smena_access`, `fast_point_access`
@@ -100,6 +107,12 @@
 
 - `current_schedule` объект с текущим распознанным шаблоном графика
 - `current_schedule_text` строка для хаба редактирования, например `С 15 числа 2/2`
+- `test_all_price` служебное расчетное поле; ключ возвращается в обеих половинах месяца, для `date.two.users.users` содержит формулу `первая половина all_price + вторая половина all_price - oklad`, для `date.one.users.users` приходит как `0`
+
+Важно для FE:
+
+- `Премия по ведомости` в новом FE считается как производное значение на клиенте
+- backend не является источником отдельного row-level premium поля для этого столбца
 
 ### `POST|ANY /api/staff_schedule/get_user_day`
 

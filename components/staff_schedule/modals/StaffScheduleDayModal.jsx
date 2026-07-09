@@ -20,14 +20,11 @@ import {
 import { AddTimeIcon, HistoryFileIcon } from "@/ui/icons";
 import { V2Alert, V2Button, V2IconButton, useConfirm } from "@/ui/v2";
 import { formatHourRangeLabel } from "../staffScheduleHourPresets";
+import { buildDaySavePayload } from "../staffScheduleModalCore.mjs";
 import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
-
-function normalizeNullableValue(value) {
-  return value && value !== "none" ? value : "";
-}
 
 function buildDraft(data) {
   return {
@@ -44,35 +41,6 @@ function buildDraft(data) {
         }))
       : [],
   };
-}
-
-function buildSavePayload(request, draft) {
-  const payload = {
-    date: request?.date,
-    user_id: request?.user_id,
-    app_id: request?.app_id,
-    smena_id: request?.smena_id,
-    point_id: request?.point_id,
-  };
-
-  if (request?.canEditAssignment) {
-    payload.new_app = normalizeNullableValue(draft.newApp);
-    payload.mentor_id = normalizeNullableValue(draft.mentorId);
-  }
-
-  if (request?.canEditHours) {
-    payload.hours = draft.hours.map((item) => ({
-      time_start: item?.time_start ?? "",
-      time_end: item?.time_end ?? "",
-    }));
-  }
-
-  if (request?.canEditHealth) {
-    payload.user_temp = draft.userTemp || "";
-    payload.type_healf = draft.typeHealf || "";
-  }
-
-  return payload;
 }
 
 function DayPersonHeader({ data, onHistoryOpen }) {
@@ -661,7 +629,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
     try {
       await onSave(
-        buildSavePayload(
+        buildDaySavePayload(
           {
             ...modal.request,
             canEditAssignment,
