@@ -128,3 +128,42 @@ export function api_laravel_local(module = "", method = "", data = {}, dop_type 
       }
     });
 }
+
+export function api_laravel_local_upload(module = "", method = "", file, data = {}, dop_type = {}) {
+  const urlApi_dev = "http://127.0.0.1:8000/api/" + module + "/" + method;
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("method", method);
+  formData.append("module", module);
+  formData.append("version", 2);
+  formData.append("login", localStorage.getItem("token"));
+  formData.append("data", JSON.stringify(data));
+
+  return axios
+    .post(urlApi_dev, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      ...dop_type,
+    })
+    .then((response) => {
+      if (typeof response.data == "string") {
+        return {
+          st: false,
+          text: response.data,
+        };
+      }
+
+      return response.data;
+    })
+    .catch((error) => {
+      console.log(error?.response?.status);
+
+      if (error?.response?.status == 401) {
+        window.location = "/auth";
+      }
+
+      if (error?.response?.status == 403) {
+        window.location = "/";
+      }
+    });
+}

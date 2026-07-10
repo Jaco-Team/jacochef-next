@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Avatar,
   Backdrop,
   Box,
   Button,
   Chip,
+  CircularProgress,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,7 +14,6 @@ import {
   Divider,
   Grid,
   IconButton,
-  InputAdornment,
   Paper,
   Stack,
   Table,
@@ -31,15 +32,19 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import SearchIcon from "@mui/icons-material/Search";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel_local, api_laravel_local_upload } from "@/src/api_new";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 dayjs.locale("ru");
 
@@ -61,11 +66,11 @@ const emptyEmployee = {
   point_access: [],
   point_access_ids: [],
   acc_to_kas: 1,
-  is_active: 1,
   photo: "",
 };
 
 const emptyAbsence = {
+  id: null,
   type: { id: 1, name: "Отпуск" },
   start: "",
   end: "",
@@ -77,6 +82,23 @@ const absenceTypes = [
   { id: 2, name: "Больничный" },
   { id: 3, name: "Декрет" },
   { id: 4, name: "Другое" },
+];
+
+const getAbsenceType = (value) =>
+  absenceTypes.find((item) => sameId(item, value)) || absenceTypes[0];
+
+const officialFilters = [
+  { id: "all", name: "Все" },
+  { id: "official", name: "Официально" },
+  { id: "unofficial", name: "Неофициально" },
+];
+
+const healthBookFilters = [
+  { id: "all", name: "Все" },
+  { id: "valid", name: "Действующая" },
+  { id: "expiring", name: "Истекает" },
+  { id: "blocked", name: "Блокировка" },
+  { id: "not_required", name: "Не требуется" },
 ];
 
 const tableHeaderSx = {
@@ -144,6 +166,241 @@ const formatDateHuman = (value, fallback = "—") => {
   return date.isValid() ? date.format("D MMMM YYYY") : value;
 };
 
+const getHistoryTimestamp = (item) => {
+  const value = item?.created_at ?? item?.date_time_update ?? item?.date_create ?? item?.date ?? "";
+  const timestamp = dayjs(value).valueOf();
+
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const sortHistoryDesc = (items) =>
+  asArray(items).sort((a, b) => getHistoryTimestamp(b) - getHistoryTimestamp(a));
+
+const employeeHistoryFields = [
+  { key: "name", label: "ФИО" },
+  { key: "short_name", label: "Краткое имя" },
+  { key: "login", label: "Телефон" },
+  { key: "birthday", label: "Дата рождения" },
+  { key: "auth_code", label: "Код авторизации" },
+  { key: "inn", label: "ИНН" },
+  { key: "acc_to_kas", label: "Трудоустройство" },
+  { key: "app_name", label: "Должность" },
+  { key: "city_name", label: "Город" },
+  { key: "point_name", label: "Кафе" },
+  { key: "text_close", label: "Комментарий" },
+  { key: "is_show", label: "Видимость" },
+];
+
+const getVisibleEmployeeHistoryFields = (permissions) => {
+  const fieldPermissions = {
+    name: permissions.fullName,
+    short_name: permissions.fullName,
+    login: permissions.phone,
+    birthday: permissions.birthDate,
+    auth_code: permissions.authCode,
+    inn: permissions.inn,
+    acc_to_kas: permissions.officialEmployment,
+    app_name: permissions.position,
+    city_name: permissions.cafes,
+    point_name: permissions.cafes,
+    text_close: permissions.position,
+  };
+
+  return employeeHistoryFields.filter(({ key }) => fieldPermissions[key]?.view);
+};
+
+const filterEmployeeHistoryByPermissions = (history, permissions) => {
+  const fields = getVisibleEmployeeHistoryFields(permissions);
+  const allowedKeys = new Set(fields.map(({ key }) => key));
+  const activityPermissions = {
+    health_book: permissions.healthBook,
+    absence: permissions.absences,
+    cloth: permissions.clothing,
+  };
+
+  return asArray(history)
+    .filter((item) => {
+      if (item.history_kind !== "activity") return fields.length > 0;
+
+      return activityPermissions[item.entity_type]?.view ?? false;
+    })
+    .map((item) => {
+      if (item.history_kind === "activity") return item;
+
+      return {
+        ...item,
+        changedFields: item.changedFields.filter(({ key }) => allowedKeys.has(key)),
+        diff: Object.fromEntries(Object.entries(item.diff).filter(([key]) => allowedKeys.has(key))),
+        snapshot: Object.fromEntries(
+          Object.entries(item.snapshot).filter(([key]) => allowedKeys.has(key)),
+        ),
+      };
+    });
+};
+
+const formatHistoryValue = (key, value) => {
+  if (value === null || value === undefined || value === "") return "—";
+  if (key === "birthday") return formatDate(value);
+  if (key === "acc_to_kas") return Number(value) === 1 ? "Официально" : "Неофициально";
+  if (key === "is_show") return Number(value) === 1 ? "Показывается" : "Скрыт";
+
+  return String(value);
+};
+
+const normalizeEmployeeHistory = (items) => {
+  const sorted = sortHistoryDesc([...asArray(items)]);
+
+  return sorted.map((item, index) => {
+    const previous = sorted[index + 1] ?? null;
+    const snapshot = {};
+    const diff = {};
+
+    employeeHistoryFields.forEach(({ key, label }) => {
+      const currentValue = item?.[key] ?? "";
+      const previousValue = previous?.[key] ?? "";
+
+      snapshot[key] = formatHistoryValue(key, currentValue);
+
+      if (String(currentValue) !== String(previousValue)) {
+        diff[key] = {
+          field: label,
+          from: formatHistoryValue(key, previousValue),
+          to: formatHistoryValue(key, currentValue),
+        };
+      }
+    });
+
+    const changedFields = employeeHistoryFields.filter(({ key }) => diff[key]);
+    const createdAt =
+      item?.created_at ?? item?.date_time_update ?? item?.date_create ?? item?.date ?? "";
+
+    return {
+      ...item,
+      id: item?.id ?? `${createdAt}-${index}`,
+      created_at: createdAt,
+      actor_name: item?.actor_name ?? item?.update_name ?? item?.user_name ?? "—",
+      event_type: previous ? (changedFields.length ? "update" : "snapshot") : "create",
+      diff_json: JSON.stringify(diff),
+      meta_json: JSON.stringify({ snapshot }),
+      snapshot,
+      diff,
+      changedFields,
+    };
+  });
+};
+
+const activityEventLabels = {
+  health_book_update: "Медкнижка",
+  cloth_issue: "Одежда выдана",
+  cloth_return: "Одежда сдана",
+  absence_create: "Отсутствие добавлено",
+  absence_update: "Отсутствие изменено",
+  absence_delete: "Отсутствие удалено",
+};
+
+const parseHistoryJson = (value) => {
+  if (!value) return {};
+  if (typeof value === "object") return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+};
+
+const formatActivityHistoryValue = (value) =>
+  value === null || value === undefined || value === "" ? "—" : String(value);
+
+const normalizeEmployeeActivityHistory = (items) =>
+  asArray(items).map((item, index) => {
+    const rawDiff = parseHistoryJson(item?.diff_json);
+    const diff = Object.fromEntries(
+      Object.entries(rawDiff).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          from: formatActivityHistoryValue(value?.from),
+          to: formatActivityHistoryValue(value?.to),
+        },
+      ]),
+    );
+    const createdAt = item?.created_at ?? item?.date_time_update ?? "";
+
+    return {
+      ...item,
+      id: ["activity", item?.id ?? createdAt, index].join("-"),
+      created_at: createdAt,
+      actor_name: item?.actor_name ?? item?.update_name ?? "—",
+      event_label: activityEventLabels[item?.event_type] ?? "Событие сотрудника",
+      history_kind: "activity",
+      diff,
+      snapshot: parseHistoryJson(item?.after_json),
+      before_snapshot: parseHistoryJson(item?.before_json),
+      changedFields: Object.entries(diff).map(([key, value]) => ({
+        key,
+        label: value?.field ?? key,
+      })),
+    };
+  });
+
+const formatActivityHistoryDate = (value) => {
+  if (!value || value === "—") return "—";
+  const date = dayjs(value);
+
+  return date.isValid() ? date.format("DD.MM.YYYY") : value;
+};
+
+const getActivitySnapshot = (item) =>
+  Object.keys(item?.snapshot ?? {}).length ? item.snapshot : (item?.before_snapshot ?? {});
+
+const getClothHistoryDetails = (item) => {
+  const snapshot = item?.snapshot ?? {};
+
+  return {
+    name: formatActivityHistoryValue(snapshot.name) === "—" ? "Предмет одежды" : snapshot.name,
+    dateStart: formatActivityHistoryDate(snapshot.date_start),
+    dateEnd: formatActivityHistoryDate(snapshot.date_end),
+  };
+};
+
+const getHealthHistoryGroups = (item) => {
+  const groups = new Map();
+
+  item.changedFields.forEach(({ key, label }) => {
+    const type = key.replace(/_(start|end)$/, "");
+    const group = groups.get(type) ?? {
+      type,
+      name: label.split(":")[0],
+      startKey: `${type}_start`,
+      endKey: `${type}_end`,
+    };
+
+    groups.set(type, group);
+  });
+
+  return Array.from(groups.values());
+};
+
+const formatAbsenceDays = (start, end) => {
+  const startDate = dayjs(start);
+  const endDate = dayjs(end);
+
+  if (!startDate.isValid() || !endDate.isValid()) return "—";
+
+  const count = Math.max(1, endDate.diff(startDate, "day") + 1);
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  const word =
+    mod10 === 1 && mod100 !== 11
+      ? "день"
+      : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+        ? "дня"
+        : "дней";
+
+  return `${count} ${word}`;
+};
+
 const normalizeEmployeeRow = (item) => {
   const name = joinName(item);
 
@@ -174,6 +431,10 @@ const normalizeEmployeeCard = (data) => {
     point_access_ids: asArray(source?.point_access_ids),
     photo: getPhotoUrl(source),
   };
+  const history = sortHistoryDesc([
+    ...normalizeEmployeeHistory(data?.history ?? source?.history),
+    ...normalizeEmployeeActivityHistory(data?.activity_history ?? source?.activity_history),
+  ]);
 
   return {
     user,
@@ -185,7 +446,7 @@ const normalizeEmployeeCard = (data) => {
       active: asArray(data?.cloth?.active ?? data?.cloth_active),
       non_active: asArray(data?.cloth?.non_active ?? data?.cloth_non_active),
     },
-    history: asArray(data?.history ?? source?.history),
+    history,
     absence_history: asArray(data?.absence_history ?? source?.vacation),
     organizations: data?.organizations ?? {},
   };
@@ -202,15 +463,70 @@ const normalizeStats = (data) => {
 };
 
 const getAccess = (data) => {
-  const access = data?.access ?? data?.my ?? {};
+  return data?.access ?? {};
+};
+
+const getEmployeePermissions = (access) => {
+  const { userCan } = handleUserAccess(access);
+  const field = (key) => ({
+    view: userCan("view", key),
+    edit: userCan("edit", key),
+  });
 
   return {
-    can_edit: access?.can_edit !== false && String(access?.edit_access ?? 1) !== "0",
-    can_create: access?.can_create !== false && String(access?.create_access ?? 1) !== "0",
-    can_manage_cloth:
-      access?.can_manage_cloth !== false && String(access?.cloth_access ?? 1) !== "0",
-    show_access: access?.show_access ?? 1,
+    addEmployee: userCan("access", "add_employee"),
+    officialEmployment: field("official_employment"),
+    photo: field("photo"),
+    fullName: field("full_name"),
+    phone: field("phone"),
+    inn: field("inn"),
+    birthDate: field("birth_date"),
+    employmentDate: field("employment_date"),
+    authCode: field("auth_code"),
+    position: field("position"),
+    cafes: field("cafes"),
+    absences: field("absences"),
+    healthBook: field("health_book"),
+    clothing: field("clothing"),
   };
+};
+
+const hasBasicEmployeeView = (permissions) =>
+  [
+    permissions.photo,
+    permissions.fullName,
+    permissions.phone,
+    permissions.inn,
+    permissions.birthDate,
+    permissions.employmentDate,
+    permissions.authCode,
+    permissions.position,
+    permissions.cafes,
+    permissions.officialEmployment,
+  ].some((permission) => permission.view);
+
+const hasBasicEmployeeEdit = (permissions) =>
+  [
+    permissions.fullName,
+    permissions.phone,
+    permissions.inn,
+    permissions.birthDate,
+    permissions.employmentDate,
+    permissions.authCode,
+    permissions.position,
+    permissions.cafes,
+    permissions.officialEmployment,
+  ].some((permission) => permission.edit);
+
+const getDefaultEmployeeTab = (permissions) => {
+  if (hasBasicEmployeeView(permissions)) return "basic";
+  if (permissions.position.view) return "work";
+  if (permissions.absences.view) return "absence";
+  if (permissions.employmentDate.view || permissions.officialEmployment.view) return "experience";
+  if (permissions.healthBook.view) return "health";
+  if (permissions.clothing.view) return "cloth";
+
+  return "history";
 };
 
 const unwrapResponse = (res) => res?.data ?? res;
@@ -269,6 +585,19 @@ const getHealthItems = (employee) => {
   }));
 };
 
+const isSelectableCafe = (point) => parseInt(point?.id) > 0 || sameId(point, -2);
+
+const getSelectableCafes = (points) => asArray(points).filter(isSelectableCafe);
+
+const getRealCafes = (points) => asArray(points).filter((point) => parseInt(point?.id) > 0);
+
+const getCityIdFromPoints = (points) => {
+  const realPoints = getSelectableCafes(points).filter((point) => parseInt(point?.id) > 0);
+  const cityIds = Array.from(new Set(realPoints.map((point) => point.city_id).filter(Boolean)));
+
+  return cityIds.length === 1 ? cityIds[0] : -1;
+};
+
 function EmployeeAvatar({ employee, size = 34 }) {
   const src = employee?.photo || getPhotoUrl(employee);
 
@@ -283,6 +612,108 @@ function EmployeeAvatar({ employee, size = 34 }) {
   );
 }
 
+function EmployeePhotoDropzone({ user, file, disabled, onFileChange }) {
+  const [preview, setPreview] = useState("");
+  const [isDrag, setIsDrag] = useState(false);
+  const src = preview || user?.photo || getPhotoUrl(user);
+
+  useEffect(() => {
+    if (!file) {
+      setPreview("");
+      return undefined;
+    }
+
+    const nextPreview = URL.createObjectURL(file);
+    setPreview(nextPreview);
+
+    return () => URL.revokeObjectURL(nextPreview);
+  }, [file]);
+
+  const selectFile = (nextFile) => {
+    if (!nextFile || disabled) return;
+    if (!["image/jpeg", "image/png"].includes(nextFile.type)) return;
+
+    onFileChange(nextFile);
+  };
+
+  return (
+    <Stack spacing={1.25}>
+      <Box
+        sx={{
+          width: "100%",
+          height: { xs: 300, md: 340 },
+          borderRadius: "8px",
+          bgcolor: "#f8fafc",
+          border: "1px solid #e5e7eb",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {src ? (
+          <Box
+            component="img"
+            src={src}
+            alt={joinName(user)}
+            sx={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
+        ) : (
+          <EmployeeAvatar
+            employee={user}
+            size={120}
+          />
+        )}
+      </Box>
+      <Box
+        component="label"
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (!disabled) setIsDrag(true);
+        }}
+        onDragLeave={() => setIsDrag(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDrag(false);
+          selectFile(event.dataTransfer.files?.[0]);
+        }}
+        sx={{
+          minHeight: 76,
+          border: "1px dashed",
+          borderColor: isDrag ? "primary.main" : "#cbd5e1",
+          borderRadius: "8px",
+          bgcolor: isDrag ? "rgba(211, 0, 51, 0.04)" : "#fff",
+          cursor: disabled ? "default" : "pointer",
+          opacity: disabled ? 0.6 : 1,
+          px: 1.5,
+          py: 1.25,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.25,
+        }}
+      >
+        <input
+          hidden
+          type="file"
+          accept="image/jpeg,image/png"
+          disabled={disabled}
+          onChange={(event) => selectFile(event.target.files?.[0])}
+        />
+        <CloudUploadIcon color={disabled ? "disabled" : "primary"} />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            sx={{ fontWeight: 800 }}
+            noWrap
+          >
+            {file?.name || "Заменить фото"}
+          </Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13 }}>JPG или PNG</Typography>
+        </Box>
+      </Box>
+    </Stack>
+  );
+}
+
 function StatCard({ title, children }) {
   return (
     <Paper
@@ -294,14 +725,6 @@ function StatCard({ title, children }) {
       </Typography>
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>{children}</Box>
     </Paper>
-  );
-}
-
-function FieldLabel({ children }) {
-  return (
-    <Typography sx={{ mb: 0.5, fontSize: 12, fontWeight: 700, color: "text.secondary" }}>
-      {children}
-    </Typography>
   );
 }
 
@@ -322,8 +745,11 @@ export default function EmployeesPage() {
     city: "",
     points: [],
     app: null,
+    official: officialFilters[0],
+    healthBook: healthBookFilters[0],
     search: "",
   });
+  const filtersRef = useRef(filters);
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(normalizeStats({}));
   const [page, setPage] = useState(0);
@@ -331,6 +757,7 @@ export default function EmployeesPage() {
   const [totalRows, setTotalRows] = useState(0);
   const [employeeDialog, setEmployeeDialog] = useState(false);
   const [employee, setEmployee] = useState(null);
+  const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [activeTab, setActiveTab] = useState("basic");
   const [newDialog, setNewDialog] = useState(false);
   const [newEmployee, setNewEmployee] = useState(emptyEmployee);
@@ -342,8 +769,11 @@ export default function EmployeesPage() {
   const [clothDialog, setClothDialog] = useState(false);
   const [clothName, setClothName] = useState("");
   const [confirm, setConfirm] = useState(null);
+  const permissions = useMemo(() => getEmployeePermissions(access), [access]);
 
-  const canEdit = access.can_edit;
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   const showAlert = (status, text) => {
     setAlert({
@@ -367,13 +797,31 @@ export default function EmployeesPage() {
     }
   };
 
+  const uploadData = async (method, file, data = {}) => {
+    setIsLoad(true);
+
+    try {
+      const res = await api_laravel_local_upload(MODULE, method, file, data);
+      return unwrapResponse(res);
+    } catch (e) {
+      showAlert(false, "Не удалось загрузить файл");
+      return null;
+    } finally {
+      setTimeout(() => setIsLoad(false), 300);
+    }
+  };
+
   const refreshEmployees = async (nextFilters = filters, nextPage = page, nextRows = rows) => {
+    const requestPoints = getSelectableCafes(nextFilters.points);
+
     const data = {
-      city_id: nextFilters.city,
-      point_id: nextFilters.points,
-      point_ids: asArray(nextFilters.points).map((point) => point.id),
+      city_id: getCityIdFromPoints(requestPoints),
+      point_id: requestPoints,
+      point_ids: requestPoints.filter((point) => parseInt(point?.id) > 0).map((point) => point.id),
       app: nextFilters.app,
       app_id: nextFilters.app?.id ?? -2,
+      official_status: nextFilters.official?.id ?? "all",
+      health_status: nextFilters.healthBook?.id ?? "all",
       search: nextFilters.search,
       page: nextPage + 1,
       rows: nextRows,
@@ -410,10 +858,7 @@ export default function EmployeesPage() {
     const nextAccess = getAccess(res);
     const defaultCity =
       cities.length === 1 ? cities[0].id : (cities.find((city) => sameId(city, -1))?.id ?? "");
-    const defaultPoint =
-      points.find((point) => sameId(point, -1)) ??
-      points.find((point) => parseInt(point.id) > 0) ??
-      null;
+    const defaultPoints = getSelectableCafes(points);
     const defaultApp =
       apps.find((app) => sameId(app, -2)) ?? apps.find((app) => parseInt(app.id) > 0) ?? null;
 
@@ -427,11 +872,14 @@ export default function EmployeesPage() {
 
     const nextFilters = {
       city: defaultCity,
-      points: defaultPoint ? [defaultPoint] : [],
+      points: defaultPoints,
       app: defaultApp,
+      official: officialFilters[0],
+      healthBook: healthBookFilters[0],
       search: "",
     };
 
+    filtersRef.current = nextFilters;
     setFilters(nextFilters);
     setStats(normalizeStats(res));
     setTotalRows(res.total_rows ?? 0);
@@ -443,13 +891,7 @@ export default function EmployeesPage() {
     loadInitial();
   }, []);
 
-  const filteredPoints = useMemo(() => {
-    if (!filters.city || sameId(filters.city, -1)) return refs.points;
-
-    return refs.points.filter(
-      (point) => sameId(point.city_id, filters.city) || sameId(point.city_id, -1),
-    );
-  }, [filters.city, refs.points]);
+  const cafeFilterPoints = useMemo(() => getSelectableCafes(refs.points), [refs.points]);
 
   const visibleEmployees = useMemo(() => {
     if (totalRows > employees.length) return employees;
@@ -459,7 +901,12 @@ export default function EmployeesPage() {
   }, [employees, page, rows, totalRows]);
 
   const openEmployee = async (employeeId, tab = "basic") => {
-    setActiveTab(tab);
+    setActiveTab(
+      tab === "basic" && !hasBasicEmployeeView(permissions)
+        ? getDefaultEmployeeTab(permissions)
+        : tab,
+    );
+    setEmployeePhotoFile(null);
     const res = await getData("get_employee", { user_id: employeeId, id: employeeId });
 
     if (!res) return;
@@ -487,11 +934,20 @@ export default function EmployeesPage() {
 
   const updateHealthItem = (type, field, value) => {
     setEmployee((prev) => {
-      const nextItems = getHealthItems(prev).map((item) =>
-        item.type === type
-          ? { ...item, [field]: value ? dayjs(value).format("YYYY-MM-DD") : "" }
-          : item,
-      );
+      const formattedValue = value ? dayjs(value).format("YYYY-MM-DD") : "";
+      const nextItems = getHealthItems(prev).map((item) => {
+        if (item.type !== type) return item;
+
+        if (field === "start") {
+          return {
+            ...item,
+            start: formattedValue,
+            end: value ? dayjs(value).add(2, "years").format("YYYY-MM-DD") : "",
+          };
+        }
+
+        return { ...item, [field]: formattedValue };
+      });
 
       return {
         ...prev,
@@ -521,24 +977,46 @@ export default function EmployeesPage() {
   };
 
   const saveBasic = async () => {
-    const ok = await handleMutation(
-      "save_basic",
-      {
-        user_id: employee.user.id,
-        user: employee.user,
-        employee: employee.user,
-      },
-      "Данные сотрудника сохранены",
-    );
+    if (hasBasicEmployeeEdit(permissions)) {
+      const ok = await handleMutation(
+        "save_basic",
+        {
+          user_id: employee.user.id,
+          user: employee.user,
+          employee: employee.user,
+        },
+        "Данные сотрудника сохранены",
+      );
 
-    if (ok) setEmployeeDialog(false);
+      if (!ok) return;
+    }
+
+    if (employeePhotoFile && permissions.photo.edit) {
+      const res = await uploadData("upload_photo", employeePhotoFile, {
+        user_id: employee.user.id,
+      });
+
+      if (!res) return;
+
+      if (res.st === false) {
+        showAlert(false, res.text);
+        return;
+      }
+
+      showAlert(true, res.text || "Фото обновлено");
+      setEmployeePhotoFile(null);
+      await refreshEmployees();
+      await refreshEmployee(employee.user.id);
+    }
+
+    setEmployeeDialog(false);
   };
 
   const applyWorkChange = async () => {
     const user = employee.user;
 
-    if (String(user.is_active) === "0" && !user.textDel) {
-      showAlert(false, "Укажите причину увольнения или перевода в неактивное состояние");
+    if (parseInt(idOf(user.app_id)) === 0 && !user.textDel) {
+      showAlert(false, "Укажите причину увольнения");
       return;
     }
 
@@ -550,7 +1028,6 @@ export default function EmployeesPage() {
         point_id: idOf(user.point_id),
         point_access: user.point_access,
         point_access_ids: asArray(user.point_access).map((point) => point.id),
-        is_active: user.is_active,
         textDel: user.textDel ?? "",
         date_start_day: formatDate(user.date_start_day || dayjs()),
         user,
@@ -570,15 +1047,18 @@ export default function EmployeesPage() {
     );
   };
 
-  const addAbsence = async () => {
+  const saveAbsence = async () => {
     if (!absence.start || !absence.end) {
       showAlert(false, "Укажите даты отсутствия");
       return;
     }
 
+    const method = absence.id ? "save_absence" : "add_absence";
     const ok = await handleMutation(
-      "add_absence",
+      method,
       {
+        id: absence.id,
+        absence_id: absence.id,
         user_id: employee.user.id,
         typeVacation: absence.type,
         type: absence.type,
@@ -589,10 +1069,42 @@ export default function EmployeesPage() {
         commentVacation: absence.comment,
         comment: absence.comment,
       },
-      "Отсутствие добавлено",
+      absence.id ? "Отсутствие сохранено" : "Отсутствие добавлено",
     );
 
     if (ok) setAbsence(emptyAbsence);
+  };
+
+  const editAbsence = (item) => {
+    setAbsence({
+      id: item.id,
+      type: getAbsenceType(item.type),
+      start: item.date_start ?? item.start ?? "",
+      end: item.date_end ?? item.end ?? "",
+      comment: item.comment ?? item.commentVacation ?? "",
+    });
+  };
+
+  const deleteAbsence = (item) => {
+    setConfirm({
+      title: "Удалить отсутствие?",
+      text: `${item.absence_type ?? item.type_name ?? "Запись"} будет удалена из истории отсутствий.`,
+      action: async () => {
+        setConfirm(null);
+        if (sameId(absence.id, item.id)) {
+          setAbsence(emptyAbsence);
+        }
+        await handleMutation(
+          "delete_absence",
+          {
+            id: item.id,
+            absence_id: item.id,
+            user_id: employee.user.id,
+          },
+          "Отсутствие удалено",
+        );
+      },
+    });
   };
 
   const saveHealthBook = async () => {
@@ -632,6 +1144,7 @@ export default function EmployeesPage() {
       title: "Принять сдачу одежды?",
       text: `${item.name || "Предмет"} будет отмечен как сданный сегодняшней датой.`,
       action: async () => {
+        setConfirm(null);
         await handleMutation(
           "return_cloth",
           {
@@ -642,7 +1155,6 @@ export default function EmployeesPage() {
           },
           "Сдача одежды сохранена",
         );
-        setConfirm(null);
       },
     });
   };
@@ -728,20 +1240,28 @@ export default function EmployeesPage() {
 
     setRows(value);
     setPage(0);
-    refreshEmployees(filters, 0, value);
+    refreshEmployees(filtersRef.current, 0, value);
   };
 
   const handlePageChange = (_, value) => {
     setPage(value);
 
     if (totalRows > employees.length) {
-      refreshEmployees(filters, value, rows);
+      refreshEmployees(filtersRef.current, value, rows);
     }
   };
 
-  const handleFilterChange = (patch) => {
-    const nextFilters = { ...filters, ...patch };
+  const handleFilterDraftChange = (patch) => {
+    const nextFilters = { ...filtersRef.current, ...patch };
 
+    filtersRef.current = nextFilters;
+    setFilters(nextFilters);
+    setPage(0);
+    return nextFilters;
+  };
+
+  const applyFilters = (nextFilters = filtersRef.current) => {
+    filtersRef.current = nextFilters;
     setFilters(nextFilters);
     setPage(0);
     refreshEmployees(nextFilters, 0, rows);
@@ -873,7 +1393,7 @@ export default function EmployeesPage() {
         style={{ zIndex: 99999 }}
         open={isLoad}
       >
-        <Typography sx={{ mr: 2, color: "#fff" }}>Загрузка</Typography>
+        <CircularProgress color="inherit" />
       </Backdrop>
       <MyAlert
         isOpen={alert.open}
@@ -911,21 +1431,22 @@ export default function EmployeesPage() {
               alignItems="center"
             >
               <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <MySelect
-                  label="Город"
-                  data={refs.cities}
-                  value={filters.city}
-                  func={(event) => handleFilterChange({ city: event.target.value, points: [] })}
-                  is_none={false}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <MyAutocomplite
-                  label="Точки / кафе"
-                  multiple={true}
-                  data={filteredPoints}
+                <CityCafeAutocomplete2
+                  label="Кафе"
+                  placeholder="Выберите кафе"
+                  withAll
+                  withAllSelected
+                  withOrganizationMode={false}
+                  compact
+                  points={cafeFilterPoints}
                   value={filters.points}
-                  func={(_, value) => handleFilterChange({ points: value || [] })}
+                  onChange={(value) =>
+                    handleFilterDraftChange({
+                      city: getCityIdFromPoints(value),
+                      points: value || [],
+                    })
+                  }
+                  onBlur={() => applyFilters()}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 2 }}>
@@ -934,7 +1455,8 @@ export default function EmployeesPage() {
                   multiple={false}
                   data={refs.apps}
                   value={filters.app}
-                  func={(_, value) => handleFilterChange({ app: value })}
+                  func={(_, value) => handleFilterDraftChange({ app: value })}
+                  onBlur={() => applyFilters()}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -942,13 +1464,46 @@ export default function EmployeesPage() {
                   label="Поиск по ФИО или телефону"
                   placeholder="Иванов или +7911..."
                   value={filters.search}
-                  func={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
-                  inputAdornment={{ startAdornment: <SearchIcon fontSize="small" /> }}
+                  func={(event) => handleFilterDraftChange({ search: event.target.value })}
+                  onBlur={(event) =>
+                    applyFilters({ ...filtersRef.current, search: event.target.value })
+                  }
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") handleFilterChange({ search: filters.search });
+                    if (event.key === "Enter") {
+                      applyFilters({ ...filtersRef.current, search: event.target.value });
+                    }
                   }}
                 />
               </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <MyAutocomplite
+                  label="Оф. статус"
+                  multiple={false}
+                  data={officialFilters}
+                  value={filters.official}
+                  func={(_, value) =>
+                    handleFilterDraftChange({ official: value || officialFilters[0] })
+                  }
+                  onBlur={() => applyFilters()}
+                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                  disableClearable
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <MyAutocomplite
+                  label="Медкнижка"
+                  multiple={false}
+                  data={healthBookFilters}
+                  value={filters.healthBook}
+                  func={(_, value) =>
+                    handleFilterDraftChange({ healthBook: value || healthBookFilters[0] })
+                  }
+                  onBlur={() => applyFilters()}
+                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                  disableClearable
+                />
+              </Grid>
+
               <Grid size={12}>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -969,12 +1524,12 @@ export default function EmployeesPage() {
                   <Button
                     variant="outlined"
                     startIcon={<RefreshIcon />}
-                    onClick={() => refreshEmployees()}
+                    onClick={() => applyFilters()}
                     sx={{ whiteSpace: "nowrap" }}
                   >
                     Обновить
                   </Button>
-                  {access.can_create ? (
+                  {permissions.addEmployee ? (
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
@@ -1022,7 +1577,7 @@ export default function EmployeesPage() {
                     <TableCell>ФИО</TableCell>
                     <TableCell>Телефон</TableCell>
                     <TableCell>Должность</TableCell>
-                    <TableCell>Точка</TableCell>
+                    <TableCell>Кафе</TableCell>
                     <TableCell>Принят</TableCell>
                     <TableCell>Стаж</TableCell>
                     <TableCell align="center">Оф.</TableCell>
@@ -1056,7 +1611,7 @@ export default function EmployeesPage() {
                               </Typography>
                               {String(item.is_active) === "0" ? (
                                 <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                                  неактивен
+                                  уволен
                                 </Typography>
                               ) : null}
                             </Box>
@@ -1071,7 +1626,7 @@ export default function EmployeesPage() {
                           <Chip
                             size="small"
                             label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
-                            color={parseInt(item.acc_to_kas) === 1 ? "primary" : "default"}
+                            color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
                             sx={{ fontWeight: 800 }}
                           />
                         </TableCell>
@@ -1123,23 +1678,27 @@ export default function EmployeesPage() {
         employee={employee}
         activeTab={activeTab}
         refs={refs}
-        access={access}
-        canEdit={canEdit}
+        permissions={permissions}
         absence={absence}
         clothIssue={clothIssue}
         onClose={() => {
           setEmployeeDialog(false);
           setEmployee(null);
+          setEmployeePhotoFile(null);
           setAbsence(emptyAbsence);
         }}
         onTabChange={setActiveTab}
         onUserChange={updateEmployeeUser}
         onHealthChange={updateHealthItem}
+        photoFile={employeePhotoFile}
+        onPhotoFileChange={setEmployeePhotoFile}
         onSaveBasic={saveBasic}
         onApplyWork={applyWorkChange}
         onSaveDateRegistration={saveDateRegistration}
         onAbsenceChange={setAbsence}
-        onAddAbsence={addAbsence}
+        onSaveAbsence={saveAbsence}
+        onEditAbsence={editAbsence}
+        onDeleteAbsence={deleteAbsence}
         onHealthSave={saveHealthBook}
         onClothIssueChange={setClothIssue}
         onIssueCloth={issueCloth}
@@ -1152,7 +1711,6 @@ export default function EmployeesPage() {
         fullScreen={fullScreen}
         employee={newEmployee}
         refs={refs}
-        access={access}
         onClose={() => setNewDialog(false)}
         onChange={updateNewEmployee}
         onCreate={createEmployee}
@@ -1198,19 +1756,22 @@ function EmployeeDialog({
   employee,
   activeTab,
   refs,
-  access,
-  canEdit,
+  permissions,
   absence,
   clothIssue,
   onClose,
   onTabChange,
   onUserChange,
   onHealthChange,
+  photoFile,
+  onPhotoFileChange,
   onSaveBasic,
   onApplyWork,
   onSaveDateRegistration,
   onAbsenceChange,
-  onAddAbsence,
+  onSaveAbsence,
+  onEditAbsence,
+  onDeleteAbsence,
   onHealthSave,
   onClothIssueChange,
   onIssueCloth,
@@ -1220,8 +1781,10 @@ function EmployeeDialog({
   const user = employee?.user;
   const appOptions = employee?.appointment?.length ? employee.appointment : refs.apps;
   const pointOptions = employee?.point_list?.length ? employee.point_list : refs.points;
+  const cafeAccessOptions = getRealCafes(refs.points.length ? refs.points : pointOptions);
   const selectedApp = findOption(appOptions, user?.app_id) ?? user?.app_id;
-  const selectedPoint = findOption(pointOptions, user?.point_id) ?? user?.point_id;
+  const isDismissal = parseInt(idOf(user?.app_id)) === 0;
+  const basicCanEdit = hasBasicEmployeeEdit(permissions);
   const healthItems = employee ? getHealthItems(employee) : [];
   const overallHealth = healthItems.some((item) => getHealthItemStatus(item).color === "error")
     ? "Просрочено"
@@ -1247,22 +1810,26 @@ function EmployeeDialog({
           alignItems="center"
           sx={{ minWidth: 0 }}
         >
-          <EmployeeAvatar
-            employee={user}
-            size={42}
-          />
+          {permissions.photo.view ? (
+            <EmployeeAvatar
+              employee={user}
+              size={42}
+            />
+          ) : null}
           <Box sx={{ minWidth: 0 }}>
             <Typography
               sx={{ fontWeight: 900 }}
               noWrap
             >
-              {joinName(user)}
+              {permissions.fullName.view ? joinName(user) : `Сотрудник #${user.id}`}
             </Typography>
-            <Chip
-              size="small"
-              label={String(user.is_active) === "0" ? "Неактивен" : "Активен"}
-              sx={{ mt: 0.5, fontWeight: 700 }}
-            />
+            {permissions.position.view ? (
+              <Chip
+                size="small"
+                label={isDismissal ? "Уволен" : "Работает"}
+                sx={{ mt: 0.5, fontWeight: 700 }}
+              />
+            ) : null}
           </Box>
         </Stack>
         <IconButton onClick={onClose}>
@@ -1277,30 +1844,42 @@ function EmployeeDialog({
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab
-              label="Основное"
-              value="basic"
-            />
-            <Tab
-              label="Работа"
-              value="work"
-            />
-            <Tab
-              label="Отсутствия"
-              value="absence"
-            />
-            <Tab
-              label="Стаж"
-              value="experience"
-            />
-            <Tab
-              label="Мед книжка"
-              value="health"
-            />
-            <Tab
-              label="Одежда"
-              value="cloth"
-            />
+            {hasBasicEmployeeView(permissions) ? (
+              <Tab
+                label="Основное"
+                value="basic"
+              />
+            ) : null}
+            {permissions.position.view ? (
+              <Tab
+                label="Работа"
+                value="work"
+              />
+            ) : null}
+            {permissions.absences.view ? (
+              <Tab
+                label="Отсутствия"
+                value="absence"
+              />
+            ) : null}
+            {permissions.employmentDate.view || permissions.officialEmployment.view ? (
+              <Tab
+                label="Стаж"
+                value="experience"
+              />
+            ) : null}
+            {permissions.healthBook.view ? (
+              <Tab
+                label="Мед книжка"
+                value="health"
+              />
+            ) : null}
+            {permissions.clothing.view ? (
+              <Tab
+                label="Одежда"
+                value="cloth"
+              />
+            ) : null}
             <Tab
               label="История"
               value="history"
@@ -1316,149 +1895,152 @@ function EmployeeDialog({
             container
             spacing={2}
           >
-            <Grid size={{ xs: 12, md: 2 }}>
-              <Stack
-                spacing={1.5}
-                alignItems="center"
-              >
-                <EmployeeAvatar
-                  employee={user}
-                  size={110}
+            {permissions.photo.view ? (
+              <Grid size={{ xs: 12, md: 3 }}>
+                <EmployeePhotoDropzone
+                  user={user}
+                  file={photoFile}
+                  disabled={!permissions.photo.edit}
+                  onFileChange={onPhotoFileChange}
                 />
-                <MyTextInput
-                  label="URL фото"
-                  value={user.photo}
-                  func={(event) => onUserChange("photo", event.target.value)}
-                  disabled={!canEdit}
-                />
-              </Stack>
-            </Grid>
-            <Grid size={{ xs: 12, md: 10 }}>
+              </Grid>
+            ) : null}
+            <Grid size={{ xs: 12, md: permissions.photo.view ? 9 : 12 }}>
               <Grid
                 container
                 spacing={2}
               >
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyTextInput
-                    label="Фамилия"
-                    value={user.fam}
-                    func={(event) => onUserChange("fam", event.target.value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyTextInput
-                    label="Имя"
-                    value={user.name}
-                    func={(event) => onUserChange("name", event.target.value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyTextInput
-                    label="Отчество"
-                    value={user.otc}
-                    func={(event) => onUserChange("otc", event.target.value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyTextInput
-                    label="Телефон"
-                    value={user.login}
-                    func={(event) => onUserChange("login", event.target.value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyDatePickerNew
-                    label="Дата рождения"
-                    value={user.birthday}
-                    func={(value) =>
-                      onUserChange("birthday", value ? value.format("YYYY-MM-DD") : "")
-                    }
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyTextInput
-                    label="Код авторизации"
-                    value={user.auth_code}
-                    func={(event) => onUserChange("auth_code", event.target.value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyTextInput
-                    label="ИНН"
-                    value={user.inn}
-                    func={(event) => onUserChange("inn", event.target.value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyDatePickerNew
-                    label="Дата трудоустройства"
-                    value={user.date_registration}
-                    func={(value) =>
-                      onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
-                    }
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <MyAutocomplite
-                    label="Должность"
-                    data={appOptions}
-                    value={selectedApp}
-                    multiple={false}
-                    func={(_, value) => onUserChange("app_id", value)}
-                    disabled={!canEdit}
-                  />
-                </Grid>
-                {parseInt(access.show_access) === 1 ? (
+                {permissions.fullName.view ? (
+                  <React.Fragment>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <MyTextInput
+                        label="Фамилия"
+                        value={user.fam}
+                        func={(event) => onUserChange("fam", event.target.value)}
+                        disabled={!permissions.fullName.edit}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <MyTextInput
+                        label="Имя"
+                        value={user.name}
+                        func={(event) => onUserChange("name", event.target.value)}
+                        disabled={!permissions.fullName.edit}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <MyTextInput
+                        label="Отчество"
+                        value={user.otc}
+                        func={(event) => onUserChange("otc", event.target.value)}
+                        disabled={!permissions.fullName.edit}
+                      />
+                    </Grid>
+                  </React.Fragment>
+                ) : null}
+                {permissions.phone.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyTextInput
+                      label="Телефон"
+                      value={user.login}
+                      func={(event) => onUserChange("login", event.target.value)}
+                      disabled={!permissions.phone.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.birthDate.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyDatePickerNew
+                      label="Дата рождения"
+                      value={user.birthday}
+                      func={(value) =>
+                        onUserChange("birthday", value ? value.format("YYYY-MM-DD") : "")
+                      }
+                      disabled={!permissions.birthDate.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.authCode.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyTextInput
+                      label="Код авторизации"
+                      value={user.auth_code}
+                      func={(event) => onUserChange("auth_code", event.target.value)}
+                      disabled={!permissions.authCode.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.inn.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyTextInput
+                      label="ИНН"
+                      value={user.inn}
+                      func={(event) => onUserChange("inn", event.target.value)}
+                      disabled={!permissions.inn.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.employmentDate.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyDatePickerNew
+                      label="Дата трудоустройства"
+                      value={user.date_registration}
+                      func={(value) =>
+                        onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
+                      }
+                      disabled={!permissions.employmentDate.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.position.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyAutocomplite
+                      label="Должность"
+                      data={appOptions}
+                      value={selectedApp}
+                      multiple={false}
+                      func={(_, value) => onUserChange("app_id", value)}
+                      disabled={!permissions.position.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.officialEmployment.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
                     <MyCheckBox
                       label="Официальное трудоустройство"
                       value={parseInt(user.acc_to_kas) === 1}
                       func={(event) => onUserChange("acc_to_kas", event.target.checked ? 1 : 0)}
-                      disabled={!canEdit}
+                      disabled={!permissions.officialEmployment.edit}
                     />
                   </Grid>
                 ) : null}
-                <Grid size={12}>
-                  <FieldLabel>Доступные кафе</FieldLabel>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    useFlexGap
-                    flexWrap="wrap"
-                  >
-                    {pointOptions.map((point) => {
-                      const active = asArray(user.point_access).some((item) => sameId(item, point));
-
-                      return (
-                        <Chip
-                          key={point.id}
-                          label={point.name}
-                          clickable={canEdit}
-                          color={active ? "primary" : "default"}
-                          onClick={
-                            canEdit
-                              ? () => {
-                                  const current = asArray(user.point_access);
-                                  const next = active
-                                    ? current.filter((item) => !sameId(item, point))
-                                    : [...current, point];
-                                  onUserChange("point_access", next);
-                                }
-                              : undefined
-                          }
-                        />
-                      );
-                    })}
-                  </Stack>
-                </Grid>
+                {permissions.position.view && isDismissal ? (
+                  <Grid size={12}>
+                    <MyTextInput
+                      label="Причина увольнения"
+                      value={user.textDel ?? ""}
+                      multiline
+                      minRows={3}
+                      func={(event) => onUserChange("textDel", event.target.value)}
+                      disabled={!permissions.position.edit}
+                    />
+                  </Grid>
+                ) : null}
+                {permissions.cafes.view ? (
+                  <Grid size={12}>
+                    <CityCafeAutocomplete2
+                      label="Доступные кафе"
+                      placeholder="Выберите кафе"
+                      withAll
+                      withOrganizationMode={false}
+                      compact
+                      points={cafeAccessOptions}
+                      value={asArray(user.point_access)}
+                      onChange={(value) => onUserChange("point_access", value || [])}
+                      disabled={!permissions.cafes.edit}
+                    />
+                  </Grid>
+                ) : null}
               </Grid>
             </Grid>
           </Grid>
@@ -1472,27 +2054,17 @@ function EmployeeDialog({
             container
             spacing={2}
           >
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <MyAutocomplite
                 label="Должность"
                 data={appOptions}
                 value={selectedApp}
                 multiple={false}
                 func={(_, value) => onUserChange("app_id", value)}
-                disabled={!canEdit}
+                disabled={!permissions.position.edit}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <MyAutocomplite
-                label="Текущая точка"
-                data={pointOptions}
-                value={selectedPoint}
-                multiple={false}
-                func={(_, value) => onUserChange("point_id", value)}
-                disabled={!canEdit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <MyDatePickerNew
                 label="Дата применения изменений"
                 value={user.date_start_day || dayjs().format("YYYY-MM-DD")}
@@ -1500,26 +2072,18 @@ function EmployeeDialog({
                 func={(value) =>
                   onUserChange("date_start_day", value ? value.format("YYYY-MM-DD") : "")
                 }
-                disabled={!canEdit}
+                disabled={!permissions.position.edit}
               />
             </Grid>
-            <Grid size={12}>
-              <MyCheckBox
-                label="Активен"
-                value={String(user.is_active) !== "0"}
-                func={(event) => onUserChange("is_active", event.target.checked ? 1 : 0)}
-                disabled={!canEdit}
-              />
-            </Grid>
-            {String(user.is_active) === "0" ? (
+            {isDismissal ? (
               <Grid size={12}>
                 <MyTextInput
-                  label="Причина увольнения / перевода в неактивное"
+                  label="Причина увольнения"
                   value={user.textDel ?? ""}
                   multiline
                   minRows={3}
                   func={(event) => onUserChange("textDel", event.target.value)}
-                  disabled={!canEdit}
+                  disabled={!permissions.position.edit}
                 />
               </Grid>
             ) : null}
@@ -1527,7 +2091,7 @@ function EmployeeDialog({
               <Button
                 variant="contained"
                 onClick={onApplyWork}
-                disabled={!canEdit}
+                disabled={!permissions.position.edit}
               >
                 Применить изменения
               </Button>
@@ -1551,7 +2115,7 @@ function EmployeeDialog({
                 value={absence.type}
                 multiple={false}
                 func={(_, value) => onAbsenceChange({ ...absence, type: value || absenceTypes[0] })}
-                disabled={!canEdit}
+                disabled={!permissions.absences.edit}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -1561,7 +2125,7 @@ function EmployeeDialog({
                 func={(value) =>
                   onAbsenceChange({ ...absence, start: value ? value.format("YYYY-MM-DD") : "" })
                 }
-                disabled={!canEdit}
+                disabled={!permissions.absences.edit}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -1572,7 +2136,7 @@ function EmployeeDialog({
                 func={(value) =>
                   onAbsenceChange({ ...absence, end: value ? value.format("YYYY-MM-DD") : "" })
                 }
-                disabled={!canEdit}
+                disabled={!permissions.absences.edit}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -1580,22 +2144,36 @@ function EmployeeDialog({
                 label="Комментарий"
                 value={absence.comment}
                 func={(event) => onAbsenceChange({ ...absence, comment: event.target.value })}
-                disabled={!canEdit}
+                disabled={!permissions.absences.edit}
               />
             </Grid>
             <Grid size={12}>
-              <Button
-                variant="contained"
-                onClick={onAddAbsence}
-                disabled={!canEdit}
+              <Stack
+                direction="row"
+                spacing={1}
               >
-                Добавить
-              </Button>
+                <Button
+                  variant="contained"
+                  onClick={onSaveAbsence}
+                  disabled={!permissions.absences.edit}
+                >
+                  {absence.id ? "Сохранить" : "Добавить"}
+                </Button>
+                {absence.id ? (
+                  <Button
+                    variant="outlined"
+                    onClick={() => onAbsenceChange(emptyAbsence)}
+                    disabled={!permissions.absences.edit}
+                  >
+                    Отмена
+                  </Button>
+                ) : null}
+              </Stack>
             </Grid>
           </Grid>
           <SimpleTable
             sx={{ mt: 2 }}
-            columns={["Тип", "С", "По", "Комментарий", "Создатель", "Дата создания"]}
+            columns={["Тип", "С", "По", "Комментарий", "Создатель", "Дата создания", ""]}
             rows={employee.absence_history}
             renderRow={(item, index) => (
               <TableRow key={item.id ?? index}>
@@ -1605,6 +2183,37 @@ function EmployeeDialog({
                 <TableCell>{item.comment ?? item.commentVacation ?? "—"}</TableCell>
                 <TableCell>{item.user_name ?? item.actor_name ?? "—"}</TableCell>
                 <TableCell>{formatDate(item.date_create ?? item.created_at)}</TableCell>
+                <TableCell align="right">
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    justifyContent="flex-end"
+                  >
+                    <Tooltip title="Редактировать">
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={() => onEditAbsence(item)}
+                          disabled={!permissions.absences.edit}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Удалить">
+                      <span>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => onDeleteAbsence(item)}
+                          disabled={!permissions.absences.edit}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                </TableCell>
               </TableRow>
             )}
           />
@@ -1614,52 +2223,66 @@ function EmployeeDialog({
           active={activeTab}
           value="experience"
         >
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <InfoBox
-                label="Дата трудоустройства"
-                value={formatDateHuman(user.date_registration)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <InfoBox
-                label="Общий стаж"
-                value={user.exp ?? employee.user.experience ?? "—"}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <InfoBox
-                label="Текущая организация"
-                value={user.organization ?? user.org_name ?? "—"}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <InfoBox
+          <Box sx={{ maxWidth: 760 }}>
+            {permissions.employmentDate.view ? (
+              <React.Fragment>
+                <ExperienceRow
+                  label="Дата трудоустройства"
+                  value={
+                    <Box sx={{ maxWidth: 260 }}>
+                      <MyDatePickerNew
+                        label="Дата трудоустройства"
+                        value={user.date_registration}
+                        func={(value) =>
+                          onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
+                        }
+                        disabled={!permissions.employmentDate.edit}
+                      />
+                    </Box>
+                  }
+                />
+                <ExperienceRow
+                  label="Общий стаж"
+                  value={user.exp ?? employee.user.experience ?? "—"}
+                />
+                <ExperienceRow
+                  label="Текущая организация"
+                  value={user.organization ?? user.org_name ?? "—"}
+                />
+              </React.Fragment>
+            ) : null}
+            {permissions.officialEmployment.view ? (
+              <ExperienceRow
                 label="Официальное трудоустройство"
-                value={parseInt(user.acc_to_kas) === 1 ? "Да" : "Нет"}
+                value={
+                  <Chip
+                    size="small"
+                    label={parseInt(user.acc_to_kas) === 1 ? "Да" : "Нет"}
+                    color={parseInt(user.acc_to_kas) === 1 ? "success" : "error"}
+                    sx={{ fontWeight: 800 }}
+                  />
+                }
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <InfoBox
-                label="Текущая точка"
-                value={selectedPoint?.name ?? user.point ?? user.point_name ?? "—"}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={onSaveDateRegistration}
-                disabled={!canEdit}
-                sx={{ mt: { sm: 2.75 } }}
+            ) : null}
+            {permissions.employmentDate.edit ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: { xs: "stretch", sm: "center" },
+                  mt: 3,
+                }}
               >
-                Сохранить дату трудоустройства
-              </Button>
-            </Grid>
-          </Grid>
+                <Button
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={onSaveDateRegistration}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  Сохранить дату трудоустройства
+                </Button>
+              </Box>
+            ) : null}
+          </Box>
         </TabPanel>
 
         <TabPanel
@@ -1687,7 +2310,7 @@ function EmployeeDialog({
             <Button
               variant="contained"
               onClick={onHealthSave}
-              disabled={!canEdit}
+              disabled={!permissions.healthBook.edit}
             >
               Сохранить медкнижку
             </Button>
@@ -1714,7 +2337,7 @@ function EmployeeDialog({
                           label="Дата"
                           value={item.start ?? item.date_start}
                           func={(value) => onHealthChange(item.type, "start", value)}
-                          disabled={!canEdit}
+                          disabled={!permissions.healthBook.edit}
                         />
                       </TableCell>
                       <TableCell>
@@ -1722,7 +2345,7 @@ function EmployeeDialog({
                           label="Дата"
                           value={item.end ?? item.date_end}
                           func={(value) => onHealthChange(item.type, "end", value)}
-                          disabled={!canEdit}
+                          disabled={!permissions.healthBook.edit}
                         />
                       </TableCell>
                       <TableCell>
@@ -1757,7 +2380,7 @@ function EmployeeDialog({
                 value={clothIssue.item}
                 multiple={false}
                 func={(_, value) => onClothIssueChange({ ...clothIssue, item: value })}
-                disabled={!canEdit}
+                disabled={!permissions.clothing.edit}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -1770,7 +2393,7 @@ function EmployeeDialog({
                     date_start: value ? value.format("YYYY-MM-DD") : "",
                   })
                 }
-                disabled={!canEdit}
+                disabled={!permissions.clothing.edit}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -1781,11 +2404,11 @@ function EmployeeDialog({
                 <Button
                   variant="contained"
                   onClick={onIssueCloth}
-                  disabled={!canEdit}
+                  disabled={!permissions.clothing.edit}
                 >
                   Выдать
                 </Button>
-                {access.can_manage_cloth ? (
+                {permissions.clothing.edit ? (
                   <Button
                     variant="outlined"
                     onClick={onManageCloth}
@@ -1810,7 +2433,7 @@ function EmployeeDialog({
                     size="small"
                     variant="outlined"
                     onClick={() => onReturnCloth(item)}
-                    disabled={!canEdit}
+                    disabled={!permissions.clothing.edit}
                   >
                     Принять сдачу
                   </Button>
@@ -1836,24 +2459,9 @@ function EmployeeDialog({
           active={activeTab}
           value="history"
         >
-          <SimpleTable
-            columns={["Когда", "Кто", "Поле / событие", "Было", "Стало"]}
-            rows={employee.history}
-            renderRow={(item, index) => (
-              <TableRow key={item.id ?? index}>
-                <TableCell>
-                  {item.created_at ?? item.date_time_update ?? item.date_create ?? "—"}
-                </TableCell>
-                <TableCell>
-                  {item.actor_name ?? item.update_name ?? item.user_name ?? "—"}
-                </TableCell>
-                <TableCell>{item.event_type ?? item.field ?? item.name ?? "—"}</TableCell>
-                <TableCell>{item.before ?? item.old_value ?? item.from ?? "—"}</TableCell>
-                <TableCell>
-                  {item.after ?? item.new_value ?? item.to ?? item.app_name ?? "—"}
-                </TableCell>
-              </TableRow>
-            )}
+          <EmployeeHistoryTable
+            history={employee.history}
+            permissions={permissions}
           />
         </TabPanel>
       </DialogContent>
@@ -1863,7 +2471,7 @@ function EmployeeDialog({
           <Button
             variant="contained"
             onClick={onSaveBasic}
-            disabled={!canEdit}
+            disabled={!basicCanEdit && !(permissions.photo.edit && photoFile)}
           >
             Сохранить
           </Button>
@@ -1873,16 +2481,7 @@ function EmployeeDialog({
   );
 }
 
-function CreateEmployeeDialog({
-  open,
-  fullScreen,
-  employee,
-  refs,
-  access,
-  onClose,
-  onChange,
-  onCreate,
-}) {
+function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onChange, onCreate }) {
   return (
     <Dialog
       open={open}
@@ -1969,24 +2568,13 @@ function CreateEmployeeDialog({
               func={(_, value) => onChange("app_id", value)}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyAutocomplite
-              label="Текущая точка"
-              data={refs.points}
-              value={employee.point_id}
-              multiple={false}
-              func={(_, value) => onChange("point_id", value)}
+          <Grid size={12}>
+            <MyCheckBox
+              label="Официальное трудоустройство"
+              value={parseInt(employee.acc_to_kas) === 1}
+              func={(event) => onChange("acc_to_kas", event.target.checked ? 1 : 0)}
             />
           </Grid>
-          {parseInt(access.show_access) === 1 ? (
-            <Grid size={12}>
-              <MyCheckBox
-                label="Официальное трудоустройство"
-                value={parseInt(employee.acc_to_kas) === 1}
-                func={(event) => onChange("acc_to_kas", event.target.checked ? 1 : 0)}
-              />
-            </Grid>
-          ) : null}
         </Grid>
       </DialogContent>
       <DialogActions>
@@ -2079,15 +2667,562 @@ function ClothListDialog({
   );
 }
 
-function InfoBox({ label, value }) {
+function ExperienceRow({ label, value }) {
   return (
-    <Paper
-      variant="outlined"
-      sx={{ borderRadius: "8px", p: 1.5, height: "100%" }}
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", sm: "260px 1fr" },
+        gap: { xs: 0.5, sm: 2 },
+        alignItems: "center",
+        py: 1.5,
+        borderBottom: "1px solid #e5e7eb",
+      }}
     >
-      <Typography sx={{ color: "text.secondary", fontSize: 13 }}>{label}</Typography>
-      <Typography sx={{ mt: 0.5, fontWeight: 900 }}>{value}</Typography>
-    </Paper>
+      <Typography sx={{ color: "text.secondary", fontSize: 14, fontWeight: 700 }}>
+        {label}
+      </Typography>
+      <Box sx={{ color: "text.primary", fontSize: 16, fontWeight: 800 }}>{value}</Box>
+    </Box>
+  );
+}
+
+function HistoryDateValue({ value, change }) {
+  const currentValue = formatActivityHistoryDate(change ? change.to : value);
+  const previousValue = formatActivityHistoryDate(change?.from);
+  const showPrevious = Boolean(change && previousValue !== "—" && previousValue !== currentValue);
+
+  return (
+    <Stack spacing={0.25}>
+      {showPrevious ? (
+        <Typography
+          variant="body2"
+          sx={{ color: "error.main", textDecoration: "line-through" }}
+        >
+          {previousValue}
+        </Typography>
+      ) : null}
+      <Typography sx={{ fontWeight: 800, color: change ? "success.dark" : "text.primary" }}>
+        {currentValue}
+      </Typography>
+    </Stack>
+  );
+}
+
+function HealthBookHistoryDetails({ item }) {
+  const groups = getHealthHistoryGroups(item);
+  const snapshot = getActivitySnapshot(item);
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography sx={{ mb: 1.5, fontWeight: 900 }}>Медкнижка</Typography>
+      <Grid
+        container
+        spacing={1.25}
+        alignItems="stretch"
+      >
+        {groups.map((group) => {
+          const end = snapshot[group.endKey];
+          const status = getHealthItemStatus({ end });
+
+          return (
+            <Grid
+              key={group.type}
+              size={{ xs: 12, md: 6 }}
+              sx={{ display: "flex" }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{ flex: 1, minWidth: 0, p: 1.5, borderColor: "divider" }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  spacing={1}
+                  sx={{ mb: 1.5 }}
+                >
+                  <Typography sx={{ fontWeight: 900 }}>{group.name}</Typography>
+                  <Chip
+                    size="small"
+                    label={status.label}
+                    color={status.color}
+                    variant="outlined"
+                  />
+                </Stack>
+                <Grid
+                  container
+                  spacing={2}
+                >
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+                    >
+                      Дата прохождения
+                    </Typography>
+                    <HistoryDateValue
+                      value={snapshot[group.startKey]}
+                      change={item.diff[group.startKey]}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+                    >
+                      Действует до
+                    </Typography>
+                    <HistoryDateValue
+                      value={end}
+                      change={item.diff[group.endKey]}
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
+  );
+}
+
+function AbsenceHistoryDetails({ item }) {
+  const snapshot = getActivitySnapshot(item);
+  const action =
+    item.event_type === "absence_create"
+      ? { label: "Добавлено", color: "success" }
+      : item.event_type === "absence_delete"
+        ? { label: "Удалено", color: "error" }
+        : { label: "Изменено", color: "warning" };
+  const type = formatActivityHistoryValue(snapshot.type);
+  const comment = snapshot.comment ? String(snapshot.comment) : "Без комментария";
+  const isUpdate = item.event_type === "absence_update";
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography sx={{ mb: 1.5, fontWeight: 900 }}>Отсутствие</Typography>
+      <Paper
+        variant="outlined"
+        sx={{ p: 1.5, borderColor: "divider", maxWidth: 920 }}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{ mb: 1.5 }}
+        >
+          <Typography sx={{ fontWeight: 900 }}>{type}</Typography>
+          <Chip
+            size="small"
+            label={action.label}
+            color={action.color}
+            variant="outlined"
+          />
+        </Stack>
+        <Grid
+          container
+          spacing={2}
+        >
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography
+              variant="caption"
+              sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+            >
+              Начало
+            </Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {formatActivityHistoryDate(snapshot.date_start)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography
+              variant="caption"
+              sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+            >
+              Окончание
+            </Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {formatActivityHistoryDate(snapshot.date_end)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Typography
+              variant="caption"
+              sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+            >
+              Продолжительность
+            </Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {formatAbsenceDays(snapshot.date_start, snapshot.date_end)}
+            </Typography>
+          </Grid>
+          <Grid size={12}>
+            <Box sx={{ p: 1.25, borderRadius: 1, bgcolor: "action.hover" }}>
+              <Typography
+                variant="caption"
+                sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+              >
+                Комментарий
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>{comment}</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+        {isUpdate && item.changedFields.length ? (
+          <React.Fragment>
+            <Divider sx={{ my: 1.5 }} />
+            <Typography sx={{ mb: 1, fontWeight: 900 }}>Что изменилось</Typography>
+            <Stack spacing={1}>
+              {item.changedFields.map(({ key, label }) => {
+                const change = item.diff[key];
+                const isDate = key === "date_start" || key === "date_end";
+                const from = isDate
+                  ? formatActivityHistoryDate(change.from)
+                  : formatActivityHistoryValue(change.from);
+                const to = isDate
+                  ? formatActivityHistoryDate(change.to)
+                  : formatActivityHistoryValue(change.to);
+
+                return (
+                  <Box
+                    key={key}
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", sm: "180px 1fr" },
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography sx={{ color: "text.secondary", fontWeight: 800 }}>
+                      {label}
+                    </Typography>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                    >
+                      <Typography sx={{ color: "error.main", textDecoration: "line-through" }}>
+                        {from}
+                      </Typography>
+                      <Typography sx={{ color: "success.dark", fontWeight: 800 }}>{to}</Typography>
+                    </Stack>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </React.Fragment>
+        ) : null}
+      </Paper>
+    </Box>
+  );
+}
+
+function ActivityHistoryDetails({ item }) {
+  if (item.entity_type === "health_book") {
+    return <HealthBookHistoryDetails item={item} />;
+  }
+
+  if (item.entity_type === "absence") {
+    return <AbsenceHistoryDetails item={item} />;
+  }
+
+  const isClothActivity = item.entity_type === "cloth";
+  const cloth = isClothActivity ? getClothHistoryDetails(item) : null;
+
+  if (isClothActivity) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography sx={{ mb: 1.5, fontWeight: 900 }}>{item.event_label}</Typography>
+        <Paper
+          variant="outlined"
+          sx={{ p: 1.5, borderColor: "divider", maxWidth: 560 }}
+        >
+          <Typography sx={{ mb: 1.5, fontWeight: 900 }}>{cloth.name}</Typography>
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Typography
+                variant="caption"
+                sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+              >
+                Получил
+              </Typography>
+              <Typography sx={{ fontWeight: 800 }}>{cloth.dateStart}</Typography>
+            </Grid>
+            {cloth.dateEnd !== "—" ? (
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", color: "text.secondary", fontWeight: 800 }}
+                >
+                  Сдал
+                </Typography>
+                <Typography sx={{ fontWeight: 800 }}>{cloth.dateEnd}</Typography>
+              </Grid>
+            ) : null}
+          </Grid>
+        </Paper>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography sx={{ mb: 1.5, fontWeight: 900 }}>{item.event_label}</Typography>
+      <Grid
+        container
+        spacing={1.25}
+        alignItems="stretch"
+      >
+        {item.changedFields.map(({ key, label }) => {
+          const change = item.diff[key];
+
+          return (
+            <Grid
+              key={key}
+              size={{ xs: 12, sm: 6, md: 4 }}
+              sx={{ display: "flex" }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  p: 1.25,
+                  borderColor: "success.light",
+                  bgcolor: "rgba(46, 125, 50, 0.06)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", mb: 0.5, color: "text.secondary", fontWeight: 800 }}
+                >
+                  {label}
+                </Typography>
+                <Stack spacing={0.25}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "error.main", textDecoration: "line-through" }}
+                  >
+                    {change.from}
+                  </Typography>
+                  <Typography sx={{ color: "success.dark", fontWeight: 800 }}>
+                    {change.to}
+                  </Typography>
+                </Stack>
+              </Paper>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
+  );
+}
+
+function EmployeeHistoryRow({ item, fields }) {
+  const [open, setOpen] = useState(false);
+  const activityLabels = {
+    cloth: "Одежда",
+    health_book: "Медкнижка",
+    absence: "Отсутствие",
+  };
+  const activityLabel = item.history_kind === "activity" ? activityLabels[item.entity_type] : null;
+  const isCompactActivity = Boolean(activityLabel);
+  const createdAt = dayjs(item.created_at);
+  const createdAtLabel = createdAt.isValid()
+    ? createdAt.format("DD.MM.YYYY HH:mm:ss")
+    : item.created_at || "—";
+
+  return (
+    <React.Fragment>
+      <TableRow
+        hover
+        onClick={() => setOpen((value) => !value)}
+        sx={{ cursor: "pointer", "& > *": { borderBottom: open ? "none" : undefined } }}
+      >
+        <TableCell sx={{ width: 48, pr: 0 }}>
+          <IconButton
+            size="small"
+            aria-label={open ? "Свернуть историю" : "Раскрыть историю"}
+            onClick={(event) => {
+              event.stopPropagation();
+              setOpen((value) => !value);
+            }}
+          >
+            {open ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell sx={{ whiteSpace: "nowrap" }}>{createdAtLabel}</TableCell>
+        <TableCell>{item.actor_name}</TableCell>
+        <TableCell>
+          <Stack
+            direction="row"
+            useFlexGap
+            flexWrap="wrap"
+            gap={0.75}
+          >
+            {item.event_label && !isCompactActivity ? (
+              <Chip
+                size="small"
+                label={item.event_label}
+                color="primary"
+                variant="outlined"
+              />
+            ) : null}
+            {item.event_type === "create" ? (
+              <Chip
+                size="small"
+                label="Первичная запись"
+                color="primary"
+                variant="outlined"
+              />
+            ) : null}
+            {isCompactActivity ? (
+              <Chip
+                size="small"
+                label={activityLabel}
+                color="success"
+                variant="outlined"
+              />
+            ) : (
+              item.changedFields.map(({ key, label }) => (
+                <Chip
+                  key={key}
+                  size="small"
+                  label={label}
+                  color="success"
+                  variant="outlined"
+                />
+              ))
+            )}
+            {!isCompactActivity && !item.changedFields.length && item.event_type !== "create" ? (
+              <Chip
+                size="small"
+                label="Данные не изменились"
+                variant="outlined"
+              />
+            ) : null}
+          </Stack>
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell
+          colSpan={4}
+          sx={{ p: 0, borderBottom: open ? undefined : 0, bgcolor: "#fafafa" }}
+        >
+          <Collapse
+            in={open}
+            timeout="auto"
+            unmountOnExit
+          >
+            {item.history_kind === "activity" ? (
+              <ActivityHistoryDetails item={item} />
+            ) : (
+              <Box sx={{ p: 2 }}>
+                <Typography sx={{ mb: 1.5, fontWeight: 900 }}>Полный снимок</Typography>
+                <Grid
+                  container
+                  spacing={1.25}
+                  alignItems="stretch"
+                >
+                  {fields.map(({ key, label }) => {
+                    const change = item.diff[key];
+
+                    return (
+                      <Grid
+                        key={key}
+                        size={{ xs: 12, sm: 6, md: 4 }}
+                        sx={{ display: "flex" }}
+                      >
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            p: 1.25,
+                            borderColor: change ? "success.light" : "divider",
+                            bgcolor: change ? "rgba(46, 125, 50, 0.06)" : "background.paper",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              display: "block",
+                              mb: 0.5,
+                              color: "text.secondary",
+                              fontWeight: 800,
+                            }}
+                          >
+                            {label}
+                          </Typography>
+                          {change ? (
+                            <Stack spacing={0.25}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "error.main", textDecoration: "line-through" }}
+                              >
+                                {change.from}
+                              </Typography>
+                              <Typography sx={{ color: "success.dark", fontWeight: 800 }}>
+                                {change.to}
+                              </Typography>
+                            </Stack>
+                          ) : (
+                            <Typography sx={{ fontWeight: 700 }}>{item.snapshot[key]}</Typography>
+                          )}
+                        </Paper>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Box>
+            )}
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
+
+function EmployeeHistoryTable({ history = [], permissions }) {
+  const fields = getVisibleEmployeeHistoryFields(permissions);
+  const visibleHistory = filterEmployeeHistoryByPermissions(history, permissions);
+
+  return (
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow sx={tableHeaderSx}>
+            <TableCell sx={{ width: 48 }} />
+            <TableCell>Когда</TableCell>
+            <TableCell>Кто</TableCell>
+            <TableCell>Что изменилось</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {visibleHistory.map((item) => (
+            <EmployeeHistoryRow
+              key={item.id}
+              item={item}
+              fields={fields}
+            />
+          ))}
+          {!visibleHistory.length ? (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                align="center"
+                sx={{ py: 3, color: "text.secondary" }}
+              >
+                Нет данных
+              </TableCell>
+            </TableRow>
+          ) : null}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 

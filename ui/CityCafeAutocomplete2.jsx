@@ -19,6 +19,7 @@ import { ExpandMore, ExpandLess } from "@mui/icons-material";
 // поэтому пока так
 
 const cityNames = {
+  "-1": "Офис",
   1: "Тольятти",
   2: "Самара",
   3: "Москва",
@@ -39,6 +40,8 @@ export default function CityCafeAutocomplete2({
   withAllSelected = false,
   singleCityOnly = false,
   withOrganizationMode = true,
+  compact = false,
+  onBlur,
 }) {
   // map for fast lookup
   const pointsMap = useMemo(() => {
@@ -64,7 +67,7 @@ export default function CityCafeAutocomplete2({
     }, {});
     return Object.entries(citiesMap).map(([id, cafes]) => ({
       id: Number(id),
-      name: cityNames[id],
+      name: cityNames[id] ?? cafes[0]?.cityName ?? "Без города",
       cafes,
     }));
   }, [points]);
@@ -368,14 +371,24 @@ export default function CityCafeAutocomplete2({
       isOptionEqualToValue={(a, b) => a.id === b.id}
       disabled={disabled}
       autoFocus={autoFocus}
+      onBlur={onBlur}
       renderInput={(params) => (
         <TextField
           {...params}
           label={label}
           placeholder={placeholder}
+          sx={
+            compact
+              ? {
+                  "& .MuiInputBase-root": { minHeight: 40 },
+                  "& .MuiInputBase-input": { fontSize: 14 },
+                  "& .MuiInputLabel-root": { fontSize: 13 },
+                }
+              : undefined
+          }
         />
       )}
-      limitTags={2}
+      limitTags={compact ? 1 : 2}
       getLimitTagsText={(more) => `+${more}`}
       size="small"
       renderOption={(props, option, { selected }) => {
@@ -388,17 +401,26 @@ export default function CityCafeAutocomplete2({
           >
             <Checkbox
               size="small"
+              sx={compact ? { p: 0.5 } : undefined}
               checked={allSelected || selected}
               onMouseDown={(e) => e.preventDefault()}
             />
             <ListItemText
               sx={{ my: 0 }}
-              primary={<Typography noWrap>{option.name}</Typography>}
+              primary={
+                <Typography
+                  noWrap
+                  sx={{ fontSize: compact ? 14 : undefined }}
+                >
+                  {option.name}
+                </Typography>
+              }
               secondary={
                 !isAll && (
                   <Typography
                     noWrap
                     color="text.secondary"
+                    sx={{ fontSize: compact ? 12 : undefined }}
                   >
                     {option.cityName}
                   </Typography>
@@ -466,6 +488,7 @@ export default function CityCafeAutocomplete2({
             >
               <IconButton
                 size="small"
+                sx={compact ? { p: 0.25 } : undefined}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -486,7 +509,16 @@ export default function CityCafeAutocomplete2({
                   handleToggleGroup(entityKey, !isCityMode);
                 }}
               />
-              <ListItemText primary={<Typography fontWeight={600}>{entityName}</Typography>} />
+              <ListItemText
+                primary={
+                  <Typography
+                    fontWeight={600}
+                    sx={{ fontSize: compact ? 14 : undefined }}
+                  >
+                    {entityName}
+                  </Typography>
+                }
+              />
             </div>
 
             <ul className={autocompleteClasses.groupUl}>{groupParams.children}</ul>
@@ -499,9 +531,9 @@ export default function CityCafeAutocomplete2({
       slotProps={{
         paper: {
           sx: {
-            [`& .${autocompleteClasses.option}`]: { py: 0, px: 1 },
-            [`& .${autocompleteClasses.groupLabel}`]: { py: 1, px: 0 },
-            [`& .${autocompleteClasses.listbox}`]: { maxHeight: 420 },
+            [`& .${autocompleteClasses.option}`]: { py: compact ? 0.25 : 0, px: 1 },
+            [`& .${autocompleteClasses.groupLabel}`]: { py: compact ? 0.5 : 1, px: 0 },
+            [`& .${autocompleteClasses.listbox}`]: { maxHeight: compact ? 280 : 420 },
             position: "relative",
           },
           elevation: 3,
