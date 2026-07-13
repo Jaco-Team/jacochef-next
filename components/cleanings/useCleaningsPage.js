@@ -437,6 +437,8 @@ export default function useCleaningsPage({
     ],
   );
 
+  const refreshControl = useCallback(() => loadControl({ force: true }), [loadControl]);
+
   useEffect(() => {
     loadBootstrap();
   }, [loadBootstrap]);
@@ -1163,5 +1165,6 @@ export default function useCleaningsPage({
     setCafeDopTimeDraft,
     addManualCleaning,
     controlPermissions,
+    refreshControl,
   };
 }

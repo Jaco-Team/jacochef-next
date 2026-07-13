@@ -17,7 +17,7 @@ Expected fields:
 - `module_info.name`
 - `cities[]`: `{ id, name }`
 - `points[]`: `{ id, name, city_id }`
-- `apps[]`: `{ id, name }`
+- `apps[]`: `{ id, name, auth_code_required }`
 - `cloth[]`: `{ id, name }`
 - `access` or `my`: `can_edit`, `can_create`, `can_manage_cloth`, `show_access`
 - optional `stat` / `experience`
@@ -42,6 +42,15 @@ Returns:
 - `total_rows` or `total`
 - `stat` / `experience`
 - `stat_of` / `employment`
+- `analytics` — агрегаты по полной выборке до пагинации:
+  - `headcount`, `hired_30`, `dismissed_30`
+  - `health`: `valid`, `expiring`, `blocked`
+  - `absences`: `today`, `upcoming_7`
+  - `clothing`: `missing`
+  - `cafes[]`: `name`, `headcount`, `official`, `hired_30`, `health_risk`, `health_blocked`, `absent_today`, `absence_upcoming_7`, `positions[]` с теми же полями
+  - для офиса `cafes[].units[]`: `id`, `name`, `positions[]` и те же агрегаты; отделы и должности сортируются по настройкам справочника и численности
+
+Сервер дополнительно ограничивает сотрудников и все агрегаты кафе, доступными текущему пользователю. Параметры фильтра не могут расширить этот набор.
 
 Employee row fields are the existing fields from `site_user_manager` and `experience`: `id`, `fam`, `name`, `otc`, `login`, `app_name`, `point`, `date_registration`, `exp`, `acc_to_kas`, `status`, `type`, `img_name`, `img_update`, `photo`, `is_active`.
 
@@ -65,7 +74,7 @@ Returns a full employee card:
 
 ### Mutations
 
-- `create_employee`: `{ user, employee }`
+- `create_employee`: multipart when a photo is selected, otherwise JSON. Payload: `{ user, employee, health_items, cloth_items, absences }`; optional multipart `file` contains the employee photo
 - `save_basic`: `{ user_id, user, employee }`
 - `apply_work_change`: `{ user_id, app_id, point_id, point_access, point_access_ids, is_active, textDel, date_start_day, user }`
 - `save_date_registration`: `{ user_id, date_registration }`

@@ -336,7 +336,7 @@ function normalizeScheduleTypeForPayload(scheduleType, days = []) {
 }
 
 function normalizeControlStatus(status) {
-  return ["active", "in_progress", "pending", "approved"].includes(status)
+  return ["active", "in_progress", "pending", "approved", "deleted"].includes(status)
     ? status
     : CLEANING_STATUS_FALLBACK;
 }
@@ -346,6 +346,10 @@ function normalizePreparationStatus(status) {
 }
 
 function normalizeLegacyControlStatus(item = {}) {
+  if (item.is_delete === 1 || item.is_delete === "1") {
+    return "deleted";
+  }
+
   if (item.manager_time) {
     return "approved";
   }
@@ -431,6 +435,8 @@ export function normalizeTemplate(item = {}) {
     days: toStringArray(item.days),
     times: toStringArray(item.times),
     deleteTimes: toStringArray(item.deleteTimes ?? item.delete_times),
+    is_not_del: toBoolean(item.is_not_del, false),
+    is_need: toBoolean(item.is_need, false),
     locationIds: normalizeLocationIds(item.locationIds ?? item.location_ids),
     status: normalizeTemplateStatus(item.status),
   };
@@ -447,10 +453,17 @@ export function normalizeCategory(item = {}) {
 }
 
 export function normalizeControlItem(item = {}) {
+  const workNameSource = item.name ?? item.name_work ?? item.legacy?.name_work;
+  const workName = workNameSource ? String(workNameSource) : "";
+
   return {
     id: toNumber(item.id, item.id),
-    name: item.name ? String(item.name) : item.name_work ? String(item.name_work) : "",
-    cleaningId: toNumber(item.cleaningId ?? item.cleaning_id, item.cleaningId ?? item.cleaning_id),
+    name: workName,
+    workName,
+    cleaningId: toNumber(
+      item.cleaningId ?? item.cleaning_id ?? item.id_work,
+      item.cleaningId ?? item.cleaning_id ?? item.id_work,
+    ),
     locationId: toNumber(
       item.locationId ?? item.location_id ?? item.point_id,
       item.locationId ?? item.location_id ?? item.point_id,
@@ -643,6 +656,8 @@ export function normalizeTemplatePayload(template = {}) {
     days: normalizedTemplate.days,
     times: normalizedTemplate.times,
     deleteTimes: normalizedTemplate.deleteTimes,
+    is_not_del: normalizedTemplate.is_not_del,
+    is_need: normalizedTemplate.is_need,
     activationCount:
       normalizedTemplate.activationCount === "" ? null : normalizedTemplate.activationCount,
     additionType: normalizedTemplate.additionType || null,

@@ -17,7 +17,13 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
-import { MyAutoCompleteWithAll, MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
+import {
+  MyAutoCompleteWithAll,
+  MyAutocomplite,
+  MyCheckBox,
+  MySelect,
+  MyTextInput,
+} from "@/ui/Forms";
 import { days, defaultForm } from "./constants";
 import { getDaysFromScheduleType, getScheduleTypeFromDays } from "./helpers";
 import { FormLabel, FormSection } from "./shared";
@@ -57,7 +63,7 @@ export default function CleaningTemplateDialog({
             activationCount: item.activationCount ?? "",
             additionType: item.additionType ?? "",
             triggerCleaningId: item.triggerCleaningId ?? null,
-            deleteTimes: [...(item.deleteTimes || [])],
+            deleteTimes: item.is_not_del ? [] : [...(item.deleteTimes || [])],
             times: [...(item.times || [])],
             days: [...(item.days || [])],
             locationIds: [...(item.locationIds || [])],
@@ -142,13 +148,23 @@ export default function CleaningTemplateDialog({
   };
 
   const addDeleteTime = () => {
-    setForm((prev) => ({ ...prev, deleteTimes: [...prev.deleteTimes, "10:00"] }));
+    setForm((prev) =>
+      prev.is_not_del ? prev : { ...prev, deleteTimes: [...prev.deleteTimes, "10:00"] },
+    );
   };
 
   const removeDeleteTime = (index) => {
     setForm((prev) => ({
       ...prev,
       deleteTimes: prev.deleteTimes.filter((_, timeIndex) => timeIndex !== index),
+    }));
+  };
+
+  const changeDoNotDeleteAtShiftEnd = (checked) => {
+    setForm((prev) => ({
+      ...prev,
+      is_not_del: checked,
+      deleteTimes: checked ? [] : prev.deleteTimes,
     }));
   };
 
@@ -182,7 +198,7 @@ export default function CleaningTemplateDialog({
       days: getDaysFromScheduleType(form.scheduleType),
       triggerCleaningId: form.scheduleType === "after_cleaning" ? form.triggerCleaningId : null,
       times: shouldShowAddTime ? form.times.filter(Boolean) : [],
-      deleteTimes: form.deleteTimes.filter(Boolean),
+      deleteTimes: form.is_not_del ? [] : form.deleteTimes.filter(Boolean),
     });
   };
 
@@ -421,6 +437,10 @@ export default function CleaningTemplateDialog({
 
             <Box sx={{ mt: 2.25 }}>
               <FormLabel>Время автоматического удаления</FormLabel>
+              <Typography sx={{ color: "text.secondary", fontSize: 13, mb: 1.25 }}>
+                Удаляет неназначенную задачу в указанное время. При включённой настройке «Не удалять
+                в конце смены» автоматическое удаление отключается.
+              </Typography>
               <Box sx={{ display: "grid", gap: 1.5, justifyItems: "start" }}>
                 {form.deleteTimes.map((time, index) => (
                   <Box
@@ -430,11 +450,11 @@ export default function CleaningTemplateDialog({
                     <MyTextInput
                       type="time"
                       value={time}
-                      disabled={!canEdit}
+                      disabled={!canEdit || form.is_not_del}
                       func={(event) => changeDeleteTime(index, event.target.value)}
                       sx={{ width: 132 }}
                     />
-                    {canEdit ? (
+                    {canEdit && !form.is_not_del ? (
                       <IconButton
                         size="small"
                         onClick={() => removeDeleteTime(index)}
@@ -451,6 +471,7 @@ export default function CleaningTemplateDialog({
                     variant="outlined"
                     startIcon={<AddIcon />}
                     onClick={addDeleteTime}
+                    disabled={form.is_not_del}
                     sx={{
                       borderStyle: "dashed",
                       px: 2,
@@ -462,6 +483,15 @@ export default function CleaningTemplateDialog({
                     Добавить время
                   </Button>
                 ) : null}
+              </Box>
+
+              <Box sx={{ mt: 2 }}>
+                <MyCheckBox
+                  label="Не удалять в конце смены"
+                  value={form.is_not_del}
+                  disabled={!canEdit}
+                  func={(event) => changeDoNotDeleteAtShiftEnd(event.target.checked)}
+                />
               </Box>
             </Box>
           </FormSection>

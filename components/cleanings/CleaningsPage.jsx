@@ -313,6 +313,8 @@ export default function CleaningsPage({
                 onReturn={(id) => page.setControlAction({ type: "return", id })}
                 onDetach={(id) => page.setControlAction({ type: "detach", id })}
                 onDelete={(id) => page.setControlAction({ type: "delete", id })}
+                onRefresh={page.refreshControl}
+                isLoading={page.controlLoading}
                 canEdit={page.canEdit("control_cleanings")}
               />
             ) : page.canView("control_pf") ? (
@@ -328,6 +330,8 @@ export default function CleaningsPage({
                 onEdit={page.openPreparationEdit}
                 onApprove={(id) => page.setPreparationAction({ type: "approve", id })}
                 onDelete={(id) => page.setPreparationAction({ type: "delete", id })}
+                onRefresh={page.refreshControl}
+                isLoading={page.controlLoading}
                 canEdit={page.canEdit("control_pf")}
               />
             ) : null}

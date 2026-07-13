@@ -60,12 +60,12 @@ const emptyEmployee = {
   birthday: "",
   auth_code: "",
   inn: "",
-  date_registration: dayjs().format("YYYY-MM-DD"),
+  date_registration: "",
   app_id: null,
   point_id: null,
   point_access: [],
   point_access_ids: [],
-  acc_to_kas: 1,
+  acc_to_kas: 0,
   photo: "",
 };
 
@@ -100,6 +100,21 @@ const healthBookFilters = [
   { id: "blocked", name: "Блокировка" },
   { id: "not_required", name: "Не требуется" },
 ];
+
+const healthBookItemDefinitions = [
+  { type: "type_2", name: "Отоларинголог" },
+  { type: "type_3", name: "Патогенный стафилококк" },
+  { type: "type_4", name: "Стоматолог" },
+  { type: "type_5", name: "Терапевт" },
+  { type: "type_6", name: "Мед. осмотр" },
+  { type: "type_7", name: "Флюорография" },
+  { type: "type_8", name: "Бак. анализ" },
+  { type: "type_9", name: "Яйц. глист" },
+  { type: "type_10", name: "Санитарный минимум" },
+];
+
+const getEmptyHealthItems = () =>
+  healthBookItemDefinitions.map((item) => ({ ...item, start: "", end: "" }));
 
 const tableHeaderSx = {
   "& th": {
@@ -139,6 +154,12 @@ const normalizeOptions = (items) =>
 
 const findOption = (items, value) =>
   normalizeOptions(items).find((item) => sameId(item, value)) || null;
+
+const authCodeRequiredForApp = (app, apps = []) => {
+  const selectedApp = app && typeof app === "object" ? app : findOption(apps, app);
+
+  return Boolean(selectedApp?.auth_code_required);
+};
 
 const joinName = (employee) =>
   [employee?.fam, employee?.name, employee?.otc].filter(Boolean).join(" ") ||
@@ -455,10 +476,29 @@ const normalizeEmployeeCard = (data) => {
 const normalizeStats = (data) => {
   const experience = asArray(data?.experience ?? data?.stat);
   const employment = data?.employment ?? data?.stat_of ?? {};
+  const analytics = data?.analytics ?? {};
 
   return {
     experience,
     employment,
+    analytics: {
+      headcount: analytics.headcount ?? 0,
+      hired_30: analytics.hired_30 ?? 0,
+      dismissed_30: analytics.dismissed_30 ?? 0,
+      health: {
+        valid: analytics.health?.valid ?? 0,
+        expiring: analytics.health?.expiring ?? 0,
+        blocked: analytics.health?.blocked ?? 0,
+      },
+      absences: {
+        today: analytics.absences?.today ?? 0,
+        upcoming_7: analytics.absences?.upcoming_7 ?? 0,
+      },
+      clothing: {
+        missing: analytics.clothing?.missing ?? 0,
+      },
+      cafes: asArray(analytics.cafes),
+    },
   };
 };
 
@@ -566,19 +606,7 @@ const getHealthItemStatus = (item) => {
 const getHealthItems = (employee) => {
   if (employee.health_items.length) return employee.health_items;
 
-  const names = [
-    { type: "type_2", name: "Отоларинголог" },
-    { type: "type_3", name: "Патогенный стафилококк" },
-    { type: "type_4", name: "Стоматолог" },
-    { type: "type_5", name: "Терапевт" },
-    { type: "type_6", name: "Мед. осмотр" },
-    { type: "type_7", name: "Флюорография" },
-    { type: "type_8", name: "Бак. анализ" },
-    { type: "type_9", name: "Яйц. глист" },
-    { type: "type_10", name: "Санитарный минимум" },
-  ];
-
-  return names.map((item) => ({
+  return healthBookItemDefinitions.map((item) => ({
     ...item,
     start: employee.health_book?.[`${item.type}_start`] ?? "",
     end: employee.health_book?.[`${item.type}_end`] ?? "",
@@ -665,52 +693,79 @@ function EmployeePhotoDropzone({ user, file, disabled, onFileChange }) {
           />
         )}
       </Box>
-      <Box
-        component="label"
-        onDragOver={(event) => {
-          event.preventDefault();
-          if (!disabled) setIsDrag(true);
-        }}
-        onDragLeave={() => setIsDrag(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDrag(false);
-          selectFile(event.dataTransfer.files?.[0]);
-        }}
-        sx={{
-          minHeight: 76,
-          border: "1px dashed",
-          borderColor: isDrag ? "primary.main" : "#cbd5e1",
-          borderRadius: "8px",
-          bgcolor: isDrag ? "rgba(211, 0, 51, 0.04)" : "#fff",
-          cursor: disabled ? "default" : "pointer",
-          opacity: disabled ? 0.6 : 1,
-          px: 1.5,
-          py: 1.25,
-          display: "flex",
-          alignItems: "center",
-          gap: 1.25,
-        }}
-      >
-        <input
-          hidden
-          type="file"
-          accept="image/jpeg,image/png"
-          disabled={disabled}
-          onChange={(event) => selectFile(event.target.files?.[0])}
-        />
-        <CloudUploadIcon color={disabled ? "disabled" : "primary"} />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography
-            sx={{ fontWeight: 800 }}
-            noWrap
-          >
-            {file?.name || "Заменить фото"}
-          </Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 13 }}>JPG или PNG</Typography>
+      {!disabled ? (
+        <Box
+          component="label"
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDrag(true);
+          }}
+          onDragLeave={() => setIsDrag(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDrag(false);
+            selectFile(event.dataTransfer.files?.[0]);
+          }}
+          sx={{
+            minHeight: 76,
+            border: "1px dashed",
+            borderColor: isDrag ? "primary.main" : "#cbd5e1",
+            borderRadius: "8px",
+            bgcolor: isDrag ? "rgba(211, 0, 51, 0.04)" : "#fff",
+            cursor: "pointer",
+            px: 1.5,
+            py: 1.25,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
+          }}
+        >
+          <input
+            hidden
+            type="file"
+            accept="image/jpeg,image/png"
+            onChange={(event) => selectFile(event.target.files?.[0])}
+          />
+          <CloudUploadIcon color="primary" />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              sx={{ fontWeight: 800 }}
+              noWrap
+            >
+              {file?.name || "Заменить фото"}
+            </Typography>
+            <Typography sx={{ color: "text.secondary", fontSize: 13 }}>JPG или PNG</Typography>
+          </Box>
         </Box>
-      </Box>
+      ) : null}
     </Stack>
+  );
+}
+
+function EmployeeViewField({ label, value, children, sx }) {
+  const displayValue = value === null || value === undefined || value === "" ? "—" : value;
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        minHeight: 56,
+        px: 1.5,
+        py: 1,
+        borderRadius: "8px",
+        borderColor: "#e5e7eb",
+        bgcolor: "background.paper",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        ...sx,
+      }}
+    >
+      <Typography sx={{ mb: 0.25, color: "text.secondary", fontSize: 12, fontWeight: 700 }}>
+        {label}
+      </Typography>
+      {children || <Typography sx={{ fontSize: 15, fontWeight: 800 }}>{displayValue}</Typography>}
+    </Paper>
   );
 }
 
@@ -741,6 +796,7 @@ export default function EmployeesPage() {
   const [alert, setAlert] = useState({ open: false, status: true, text: "" });
   const [refs, setRefs] = useState({ cities: [], points: [], apps: [], cloth: [] });
   const [access, setAccess] = useState(getAccess({}));
+  const [pageTitle, setPageTitle] = useState("Сотрудники");
   const [filters, setFilters] = useState({
     city: "",
     points: [],
@@ -752,6 +808,8 @@ export default function EmployeesPage() {
   const filtersRef = useRef(filters);
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(normalizeStats({}));
+  const [expandedCafes, setExpandedCafes] = useState([]);
+  const [expandedOfficeUnits, setExpandedOfficeUnits] = useState([]);
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState(DEFAULT_ROWS);
   const [totalRows, setTotalRows] = useState(0);
@@ -883,7 +941,9 @@ export default function EmployeesPage() {
     setFilters(nextFilters);
     setStats(normalizeStats(res));
     setTotalRows(res.total_rows ?? 0);
-    document.title = res.module_info?.name ?? "Сотрудники";
+    const title = res.module_info?.name || "Сотрудники";
+    setPageTitle(title);
+    document.title = title;
     await refreshEmployees(nextFilters, 0, rows);
   };
 
@@ -916,20 +976,36 @@ export default function EmployeesPage() {
   };
 
   const updateEmployeeUser = (field, value) => {
-    setEmployee((prev) => ({
-      ...prev,
-      user: {
+    setEmployee((prev) => {
+      const nextUser = {
         ...prev.user,
         [field]: value,
-      },
-    }));
+      };
+
+      if (field === "app_id" && !authCodeRequiredForApp(value, refs.apps)) {
+        nextUser.auth_code = "";
+      }
+
+      return {
+        ...prev,
+        user: nextUser,
+      };
+    });
   };
 
   const updateNewEmployee = (field, value) => {
-    setNewEmployee((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setNewEmployee((prev) => {
+      const nextEmployee = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === "app_id" && !authCodeRequiredForApp(value, refs.apps)) {
+        nextEmployee.auth_code = "";
+      }
+
+      return nextEmployee;
+    });
   };
 
   const updateHealthItem = (type, field, value) => {
@@ -1209,30 +1285,52 @@ export default function EmployeesPage() {
   };
 
   const openCreateDialog = () => {
-    const defaultPoint = refs.points.find((point) => parseInt(point.id) > 0) ?? null;
-
     setNewEmployee({
       ...emptyEmployee,
-      app_id: refs.apps.find((app) => parseInt(app.id) > 0) ?? null,
-      point_id: defaultPoint,
-      point_access: defaultPoint ? [defaultPoint] : [],
-      date_registration: dayjs().format("YYYY-MM-DD"),
+      photo_file: null,
+      health_items: getEmptyHealthItems(),
+      cloth_items: [],
+      absences: [],
     });
     setNewDialog(true);
   };
 
   const createEmployee = async () => {
-    const ok = await handleMutation(
-      "create_employee",
-      {
-        user: newEmployee,
-        employee: newEmployee,
-      },
-      "Сотрудник создан",
-      false,
-    );
+    const user = { ...newEmployee };
+    const photoFile = user.photo_file;
+    const healthItems = asArray(user.health_items);
+    const clothItems = asArray(user.cloth_items);
+    const absences = asArray(user.absences);
 
-    if (ok) setNewDialog(false);
+    delete user.photo_file;
+    delete user.health_items;
+    delete user.cloth_items;
+    delete user.absences;
+    user.point_access_ids = asArray(user.point_access)
+      .map((point) => parseInt(point?.id))
+      .filter((id) => id > 0);
+
+    const payload = {
+      user,
+      employee: user,
+      health_items: healthItems,
+      cloth_items: clothItems,
+      absences,
+    };
+    const res = photoFile
+      ? await uploadData("create_employee", photoFile, payload)
+      : await getData("create_employee", payload);
+
+    if (!res) return;
+
+    if (res.st === false) {
+      showAlert(false, res.text);
+      return;
+    }
+
+    showAlert(true, res.text || "Сотрудник создан");
+    await refreshEmployees();
+    setNewDialog(false);
   };
 
   const handleRowsChange = (event) => {
@@ -1387,6 +1485,235 @@ export default function EmployeesPage() {
     );
   };
 
+  const renderCafeStats = () => {
+    const cafes = stats.analytics.cafes;
+    const toggleCafe = (name) => {
+      setExpandedCafes((prev) =>
+        prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name],
+      );
+    };
+    const toggleOfficeUnit = (key) => {
+      setExpandedOfficeUnits((prev) =>
+        prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
+      );
+    };
+
+    const renderStatCells = (item) => {
+      const officialPercent = item.headcount
+        ? Math.round((100 * item.official) / item.headcount)
+        : 0;
+
+      return (
+        <>
+          <TableCell align="center">{item.headcount}</TableCell>
+          <TableCell align="center">
+            {item.official} ({officialPercent}%)
+          </TableCell>
+          <TableCell align="center">{item.hired_30}</TableCell>
+          <TableCell align="center">
+            <Chip
+              size="small"
+              label={item.health_risk}
+              color={item.health_risk ? "warning" : "default"}
+              sx={{ fontWeight: 800 }}
+            />
+          </TableCell>
+          <TableCell align="center">
+            <Chip
+              size="small"
+              label={item.health_blocked}
+              color={item.health_blocked ? "error" : "default"}
+              sx={{ fontWeight: 800 }}
+            />
+          </TableCell>
+          <TableCell align="center">
+            <Chip
+              size="small"
+              label={item.absent_today}
+              color={item.absent_today ? "info" : "default"}
+              sx={{ fontWeight: 800 }}
+            />
+          </TableCell>
+          <TableCell align="center">
+            <Chip
+              size="small"
+              label={item.absence_upcoming_7}
+              color={item.absence_upcoming_7 ? "secondary" : "default"}
+              sx={{ fontWeight: 800 }}
+            />
+          </TableCell>
+        </>
+      );
+    };
+
+    const renderAnalyticsHeader = (label) => (
+      <TableRow sx={tableHeaderSx}>
+        <TableCell>{label}</TableCell>
+        <TableCell align="center">Работают</TableCell>
+        <TableCell align="center">Официально</TableCell>
+        <TableCell align="center">Принято за 30 дней</TableCell>
+        <TableCell align="center">Медкнижка: риск</TableCell>
+        <TableCell align="center">Медкнижка: блок</TableCell>
+        <TableCell align="center">Отсутствуют</TableCell>
+        <TableCell align="center">Отсутствие в ближайшие 7 дней</TableCell>
+      </TableRow>
+    );
+
+    const renderPositionsTable = (positions) => (
+      <Table
+        size="small"
+        sx={{ bgcolor: "background.paper", border: "1px solid #e5e7eb" }}
+      >
+        <TableHead>{renderAnalyticsHeader("Должность")}</TableHead>
+        <TableBody>
+          {asArray(positions).map((position) => (
+            <TableRow
+              key={position.name}
+              hover
+            >
+              <TableCell sx={{ fontWeight: 700 }}>{position.name}</TableCell>
+              {renderStatCells(position)}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+
+    const renderUnitsTable = (cafe) => (
+      <Table
+        size="small"
+        sx={{ bgcolor: "background.paper", border: "1px solid #e5e7eb" }}
+      >
+        <TableHead>{renderAnalyticsHeader("Отдел")}</TableHead>
+        <TableBody>
+          {asArray(cafe.units).map((unit) => {
+            const unitKey = `${cafe.name}-${unit.id ?? "without_unit"}`;
+            const isUnitExpanded = expandedOfficeUnits.includes(unitKey);
+
+            return (
+              <React.Fragment key={unitKey}>
+                <TableRow
+                  hover
+                  onClick={() => toggleOfficeUnit(unitKey)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      alignItems="center"
+                    >
+                      {isUnitExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+                      <Box component="span">{unit.name}</Box>
+                    </Stack>
+                  </TableCell>
+                  {renderStatCells(unit)}
+                </TableRow>
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    sx={{ p: 0, borderBottom: isUnitExpanded ? undefined : 0 }}
+                  >
+                    <Collapse
+                      in={isUnitExpanded}
+                      timeout="auto"
+                      unmountOnExit
+                    >
+                      <Box sx={{ px: 2, py: 1.25, bgcolor: "#f8fafc" }}>
+                        <Typography
+                          sx={{ mb: 0.75, fontSize: 13, fontWeight: 800, color: "text.secondary" }}
+                        >
+                          Должности отдела
+                        </Typography>
+                        {renderPositionsTable(unit.positions)}
+                      </Box>
+                    </Collapse>
+                  </TableCell>
+                </TableRow>
+              </React.Fragment>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+
+    return (
+      <TableContainer sx={{ overflowX: "auto" }}>
+        <Table
+          size="small"
+          sx={{ minWidth: 1120 }}
+        >
+          <TableHead>{renderAnalyticsHeader("Основное кафе")}</TableHead>
+          <TableBody>
+            {cafes.map((item) => {
+              const isExpanded = expandedCafes.includes(item.name);
+              const hasUnits = item.name === "Офис" && asArray(item.units).length > 0;
+
+              return (
+                <React.Fragment key={item.name}>
+                  <TableRow
+                    hover
+                    onClick={() => toggleCafe(item.name)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <TableCell sx={{ fontWeight: 700 }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        alignItems="center"
+                      >
+                        {isExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+                        <Box component="span">{item.name}</Box>
+                      </Stack>
+                    </TableCell>
+                    {renderStatCells(item)}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      sx={{ p: 0, borderBottom: isExpanded ? undefined : 0 }}
+                    >
+                      <Collapse
+                        in={isExpanded}
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <Box sx={{ px: 2, py: 1.25, bgcolor: "#fafafa" }}>
+                          <Typography
+                            sx={{
+                              mb: 0.75,
+                              fontSize: 13,
+                              fontWeight: 800,
+                              color: "text.secondary",
+                            }}
+                          >
+                            {hasUnits ? "Отделы" : "Должности"}
+                          </Typography>
+                          {hasUnits ? renderUnitsTable(item) : renderPositionsTable(item.positions)}
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              );
+            })}
+            {!cafes.length ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  align="center"
+                  sx={{ py: 3, color: "text.secondary" }}
+                >
+                  Нет данных по кафе
+                </TableCell>
+              </TableRow>
+            ) : null}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
   return (
     <>
       <Backdrop
@@ -1413,7 +1740,7 @@ export default function EmployeesPage() {
             component="h1"
             sx={{ m: 0, fontSize: { xs: 26, md: 32 }, fontWeight: 900 }}
           >
-            Сотрудники
+            {pageTitle}
           </Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
             Кадры, стаж, медкнижки и вещевое довольствие в одном месте
@@ -1557,6 +1884,13 @@ export default function EmployeesPage() {
               <StatCard title="Трудоустройство">{renderEmploymentStats()}</StatCard>
             </Grid>
           </Grid>
+        </Grid>
+
+        <Grid
+          size={12}
+          sx={{ mt: 2 }}
+        >
+          <StatCard title="Ситуация по кафе">{renderCafeStats()}</StatCard>
         </Grid>
 
         <Grid
@@ -1783,8 +2117,20 @@ function EmployeeDialog({
   const pointOptions = employee?.point_list?.length ? employee.point_list : refs.points;
   const cafeAccessOptions = getRealCafes(refs.points.length ? refs.points : pointOptions);
   const selectedApp = findOption(appOptions, user?.app_id) ?? user?.app_id;
+  const isAuthCodeRequired = authCodeRequiredForApp(selectedApp, appOptions);
   const isDismissal = parseInt(idOf(user?.app_id)) === 0;
   const basicCanEdit = hasBasicEmployeeEdit(permissions);
+  const hasPersonalView =
+    permissions.fullName.view ||
+    permissions.phone.view ||
+    permissions.birthDate.view ||
+    permissions.authCode.view ||
+    permissions.inn.view;
+  const hasWorkView =
+    permissions.employmentDate.view ||
+    permissions.position.view ||
+    permissions.officialEmployment.view ||
+    permissions.cafes.view;
   const healthItems = employee ? getHealthItems(employee) : [];
   const overallHealth = healthItems.some((item) => getHealthItemStatus(item).color === "error")
     ? "Просрочено"
@@ -1908,137 +2254,251 @@ function EmployeeDialog({
             <Grid size={{ xs: 12, md: permissions.photo.view ? 9 : 12 }}>
               <Grid
                 container
-                spacing={2}
+                spacing={1.5}
+                alignItems="flex-start"
+                sx={{ alignContent: "flex-start" }}
               >
+                {hasPersonalView ? (
+                  <Grid size={12}>
+                    <Typography sx={{ color: "text.secondary", fontSize: 13, fontWeight: 900 }}>
+                      Личные данные
+                    </Typography>
+                  </Grid>
+                ) : null}
                 {permissions.fullName.view ? (
                   <React.Fragment>
                     <Grid size={{ xs: 12, sm: 4 }}>
-                      <MyTextInput
-                        label="Фамилия"
-                        value={user.fam}
-                        func={(event) => onUserChange("fam", event.target.value)}
-                        disabled={!permissions.fullName.edit}
-                      />
+                      {permissions.fullName.edit ? (
+                        <MyTextInput
+                          label="Фамилия"
+                          value={user.fam}
+                          func={(event) => onUserChange("fam", event.target.value)}
+                        />
+                      ) : (
+                        <EmployeeViewField
+                          label="Фамилия"
+                          value={user.fam}
+                        />
+                      )}
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4 }}>
-                      <MyTextInput
-                        label="Имя"
-                        value={user.name}
-                        func={(event) => onUserChange("name", event.target.value)}
-                        disabled={!permissions.fullName.edit}
-                      />
+                      {permissions.fullName.edit ? (
+                        <MyTextInput
+                          label="Имя"
+                          value={user.name}
+                          func={(event) => onUserChange("name", event.target.value)}
+                        />
+                      ) : (
+                        <EmployeeViewField
+                          label="Имя"
+                          value={user.name}
+                        />
+                      )}
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4 }}>
-                      <MyTextInput
-                        label="Отчество"
-                        value={user.otc}
-                        func={(event) => onUserChange("otc", event.target.value)}
-                        disabled={!permissions.fullName.edit}
-                      />
+                      {permissions.fullName.edit ? (
+                        <MyTextInput
+                          label="Отчество"
+                          value={user.otc}
+                          func={(event) => onUserChange("otc", event.target.value)}
+                        />
+                      ) : (
+                        <EmployeeViewField
+                          label="Отчество"
+                          value={user.otc}
+                        />
+                      )}
                     </Grid>
                   </React.Fragment>
                 ) : null}
                 {permissions.phone.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyTextInput
-                      label="Телефон"
-                      value={user.login}
-                      func={(event) => onUserChange("login", event.target.value)}
-                      disabled={!permissions.phone.edit}
-                    />
+                    {permissions.phone.edit ? (
+                      <MyTextInput
+                        label="Телефон"
+                        value={user.login}
+                        func={(event) => onUserChange("login", event.target.value)}
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Телефон"
+                        value={user.login}
+                      />
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.birthDate.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyDatePickerNew
-                      label="Дата рождения"
-                      value={user.birthday}
-                      func={(value) =>
-                        onUserChange("birthday", value ? value.format("YYYY-MM-DD") : "")
-                      }
-                      disabled={!permissions.birthDate.edit}
-                    />
+                    {permissions.birthDate.edit ? (
+                      <MyDatePickerNew
+                        label="Дата рождения"
+                        value={user.birthday}
+                        func={(value) =>
+                          onUserChange("birthday", value ? value.format("YYYY-MM-DD") : "")
+                        }
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Дата рождения"
+                        value={formatActivityHistoryDate(user.birthday)}
+                      />
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.authCode.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyTextInput
-                      label="Код авторизации"
-                      value={user.auth_code}
-                      func={(event) => onUserChange("auth_code", event.target.value)}
-                      disabled={!permissions.authCode.edit}
-                    />
+                    {permissions.authCode.edit ? (
+                      <MyTextInput
+                        label="Код авторизации"
+                        value={isAuthCodeRequired ? user.auth_code : ""}
+                        disabled={!isAuthCodeRequired}
+                        func={(event) => onUserChange("auth_code", event.target.value)}
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Код авторизации"
+                        value={isAuthCodeRequired ? user.auth_code : "—"}
+                      />
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.inn.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyTextInput
-                      label="ИНН"
-                      value={user.inn}
-                      func={(event) => onUserChange("inn", event.target.value)}
-                      disabled={!permissions.inn.edit}
-                    />
+                    {permissions.inn.edit ? (
+                      <MyTextInput
+                        label="ИНН"
+                        value={user.inn}
+                        func={(event) => onUserChange("inn", event.target.value)}
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="ИНН"
+                        value={user.inn}
+                      />
+                    )}
+                  </Grid>
+                ) : null}
+                {hasWorkView ? (
+                  <Grid
+                    size={12}
+                    sx={{ mt: hasPersonalView ? 0.75 : 0 }}
+                  >
+                    <Typography sx={{ color: "text.secondary", fontSize: 13, fontWeight: 900 }}>
+                      Работа и доступ
+                    </Typography>
                   </Grid>
                 ) : null}
                 {permissions.employmentDate.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyDatePickerNew
-                      label="Дата трудоустройства"
-                      value={user.date_registration}
-                      func={(value) =>
-                        onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
-                      }
-                      disabled={!permissions.employmentDate.edit}
-                    />
+                    {permissions.employmentDate.edit ? (
+                      <MyDatePickerNew
+                        label="Дата трудоустройства"
+                        value={user.date_registration}
+                        func={(value) =>
+                          onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
+                        }
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Дата трудоустройства"
+                        value={formatActivityHistoryDate(user.date_registration)}
+                      />
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.position.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyAutocomplite
-                      label="Должность"
-                      data={appOptions}
-                      value={selectedApp}
-                      multiple={false}
-                      func={(_, value) => onUserChange("app_id", value)}
-                      disabled={!permissions.position.edit}
-                    />
+                    {permissions.position.edit ? (
+                      <MyAutocomplite
+                        label="Должность"
+                        data={appOptions}
+                        value={selectedApp}
+                        multiple={false}
+                        func={(_, value) => onUserChange("app_id", value)}
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Должность"
+                        value={selectedApp?.name ?? user.app_name}
+                      />
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.officialEmployment.view ? (
                   <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyCheckBox
-                      label="Официальное трудоустройство"
-                      value={parseInt(user.acc_to_kas) === 1}
-                      func={(event) => onUserChange("acc_to_kas", event.target.checked ? 1 : 0)}
-                      disabled={!permissions.officialEmployment.edit}
-                    />
+                    {permissions.officialEmployment.edit ? (
+                      <MyCheckBox
+                        label="Официальное трудоустройство"
+                        value={parseInt(user.acc_to_kas) === 1}
+                        func={(event) => onUserChange("acc_to_kas", event.target.checked ? 1 : 0)}
+                      />
+                    ) : (
+                      <EmployeeViewField label="Трудоустройство">
+                        <Chip
+                          size="small"
+                          label={parseInt(user.acc_to_kas) === 1 ? "Официально" : "Неофициально"}
+                          color={parseInt(user.acc_to_kas) === 1 ? "success" : "default"}
+                          sx={{ fontWeight: 800 }}
+                        />
+                      </EmployeeViewField>
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.position.view && isDismissal ? (
                   <Grid size={12}>
-                    <MyTextInput
-                      label="Причина увольнения"
-                      value={user.textDel ?? ""}
-                      multiline
-                      minRows={3}
-                      func={(event) => onUserChange("textDel", event.target.value)}
-                      disabled={!permissions.position.edit}
-                    />
+                    {permissions.position.edit ? (
+                      <MyTextInput
+                        label="Причина увольнения"
+                        value={user.textDel ?? ""}
+                        multiline
+                        minRows={3}
+                        func={(event) => onUserChange("textDel", event.target.value)}
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Причина увольнения"
+                        value={user.textDel}
+                      />
+                    )}
                   </Grid>
                 ) : null}
                 {permissions.cafes.view ? (
                   <Grid size={12}>
-                    <CityCafeAutocomplete2
-                      label="Доступные кафе"
-                      placeholder="Выберите кафе"
-                      withAll
-                      withOrganizationMode={false}
-                      compact
-                      points={cafeAccessOptions}
-                      value={asArray(user.point_access)}
-                      onChange={(value) => onUserChange("point_access", value || [])}
-                      disabled={!permissions.cafes.edit}
-                    />
+                    {permissions.cafes.edit ? (
+                      <CityCafeAutocomplete2
+                        label="Доступные кафе"
+                        placeholder="Выберите кафе"
+                        withAll
+                        withOrganizationMode={false}
+                        compact
+                        points={cafeAccessOptions}
+                        value={asArray(user.point_access)}
+                        onChange={(value) => onUserChange("point_access", value || [])}
+                      />
+                    ) : (
+                      <EmployeeViewField label="Доступные кафе">
+                        <Stack
+                          direction="row"
+                          useFlexGap
+                          flexWrap="wrap"
+                          gap={0.75}
+                        >
+                          {asArray(user.point_access).length ? (
+                            asArray(user.point_access).map((point) => (
+                              <Chip
+                                key={point.id ?? point.name}
+                                size="small"
+                                label={point.name ?? point.addr}
+                                variant="outlined"
+                                sx={{ bgcolor: "background.paper", fontWeight: 700 }}
+                              />
+                            ))
+                          ) : (
+                            <Typography sx={{ fontWeight: 800 }}>—</Typography>
+                          )}
+                        </Stack>
+                      </EmployeeViewField>
+                    )}
                   </Grid>
                 ) : null}
               </Grid>
@@ -2050,170 +2510,202 @@ function EmployeeDialog({
           active={activeTab}
           value="work"
         >
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyAutocomplite
-                label="Должность"
-                data={appOptions}
-                value={selectedApp}
-                multiple={false}
-                func={(_, value) => onUserChange("app_id", value)}
-                disabled={!permissions.position.edit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyDatePickerNew
-                label="Дата применения изменений"
-                value={user.date_start_day || dayjs().format("YYYY-MM-DD")}
-                minDate={dayjs()}
-                func={(value) =>
-                  onUserChange("date_start_day", value ? value.format("YYYY-MM-DD") : "")
-                }
-                disabled={!permissions.position.edit}
-              />
-            </Grid>
-            {isDismissal ? (
-              <Grid size={12}>
-                <MyTextInput
-                  label="Причина увольнения"
-                  value={user.textDel ?? ""}
-                  multiline
-                  minRows={3}
-                  func={(event) => onUserChange("textDel", event.target.value)}
-                  disabled={!permissions.position.edit}
+          {permissions.position.edit ? (
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyAutocomplite
+                  label="Должность"
+                  data={appOptions}
+                  value={selectedApp}
+                  multiple={false}
+                  func={(_, value) => onUserChange("app_id", value)}
                 />
               </Grid>
-            ) : null}
-            <Grid size={12}>
-              <Button
-                variant="contained"
-                onClick={onApplyWork}
-                disabled={!permissions.position.edit}
-              >
-                Применить изменения
-              </Button>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyDatePickerNew
+                  label="Дата применения изменений"
+                  value={user.date_start_day || dayjs().format("YYYY-MM-DD")}
+                  minDate={dayjs()}
+                  func={(value) =>
+                    onUserChange("date_start_day", value ? value.format("YYYY-MM-DD") : "")
+                  }
+                />
+              </Grid>
+              {isDismissal ? (
+                <Grid size={12}>
+                  <MyTextInput
+                    label="Причина увольнения"
+                    value={user.textDel ?? ""}
+                    multiline
+                    minRows={3}
+                    func={(event) => onUserChange("textDel", event.target.value)}
+                  />
+                </Grid>
+              ) : null}
+              <Grid size={12}>
+                <Button
+                  variant="contained"
+                  onClick={onApplyWork}
+                >
+                  Применить изменения
+                </Button>
+              </Grid>
             </Grid>
-          </Grid>
+          ) : (
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <EmployeeViewField
+                  label="Должность"
+                  value={selectedApp?.name ?? user.app_name}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <EmployeeViewField label="Статус">
+                  <Chip
+                    size="small"
+                    label={isDismissal ? "Уволен" : "Работает"}
+                    color={isDismissal ? "default" : "success"}
+                    sx={{ fontWeight: 800 }}
+                  />
+                </EmployeeViewField>
+              </Grid>
+              {isDismissal ? (
+                <Grid size={12}>
+                  <EmployeeViewField
+                    label="Причина увольнения"
+                    value={user.textDel}
+                  />
+                </Grid>
+              ) : null}
+            </Grid>
+          )}
         </TabPanel>
 
         <TabPanel
           active={activeTab}
           value="absence"
         >
-          <Grid
-            container
-            spacing={2}
-            alignItems="center"
-          >
-            <Grid size={{ xs: 12, sm: 3 }}>
-              <MyAutocomplite
-                label="Тип"
-                data={absenceTypes}
-                value={absence.type}
-                multiple={false}
-                func={(_, value) => onAbsenceChange({ ...absence, type: value || absenceTypes[0] })}
-                disabled={!permissions.absences.edit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
-              <MyDatePickerNew
-                label="С"
-                value={absence.start}
-                func={(value) =>
-                  onAbsenceChange({ ...absence, start: value ? value.format("YYYY-MM-DD") : "" })
-                }
-                disabled={!permissions.absences.edit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
-              <MyDatePickerNew
-                label="По"
-                value={absence.end}
-                minDate={absence.start ? dayjs(absence.start) : null}
-                func={(value) =>
-                  onAbsenceChange({ ...absence, end: value ? value.format("YYYY-MM-DD") : "" })
-                }
-                disabled={!permissions.absences.edit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
-                label="Комментарий"
-                value={absence.comment}
-                func={(event) => onAbsenceChange({ ...absence, comment: event.target.value })}
-                disabled={!permissions.absences.edit}
-              />
-            </Grid>
-            <Grid size={12}>
-              <Stack
-                direction="row"
-                spacing={1}
-              >
-                <Button
-                  variant="contained"
-                  onClick={onSaveAbsence}
-                  disabled={!permissions.absences.edit}
+          {permissions.absences.edit ? (
+            <Grid
+              container
+              spacing={2}
+              alignItems="center"
+            >
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyAutocomplite
+                  label="Тип"
+                  data={absenceTypes}
+                  value={absence.type}
+                  multiple={false}
+                  func={(_, value) =>
+                    onAbsenceChange({ ...absence, type: value || absenceTypes[0] })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyDatePickerNew
+                  label="С"
+                  value={absence.start}
+                  func={(value) =>
+                    onAbsenceChange({ ...absence, start: value ? value.format("YYYY-MM-DD") : "" })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyDatePickerNew
+                  label="По"
+                  value={absence.end}
+                  minDate={absence.start ? dayjs(absence.start) : null}
+                  func={(value) =>
+                    onAbsenceChange({ ...absence, end: value ? value.format("YYYY-MM-DD") : "" })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyTextInput
+                  label="Комментарий"
+                  value={absence.comment}
+                  func={(event) => onAbsenceChange({ ...absence, comment: event.target.value })}
+                />
+              </Grid>
+              <Grid size={12}>
+                <Stack
+                  direction="row"
+                  spacing={1}
                 >
-                  {absence.id ? "Сохранить" : "Добавить"}
-                </Button>
-                {absence.id ? (
                   <Button
-                    variant="outlined"
-                    onClick={() => onAbsenceChange(emptyAbsence)}
-                    disabled={!permissions.absences.edit}
+                    variant="contained"
+                    onClick={onSaveAbsence}
                   >
-                    Отмена
+                    {absence.id ? "Сохранить" : "Добавить"}
                   </Button>
-                ) : null}
-              </Stack>
+                  {absence.id ? (
+                    <Button
+                      variant="outlined"
+                      onClick={() => onAbsenceChange(emptyAbsence)}
+                    >
+                      Отмена
+                    </Button>
+                  ) : null}
+                </Stack>
+              </Grid>
             </Grid>
-          </Grid>
+          ) : null}
           <SimpleTable
-            sx={{ mt: 2 }}
-            columns={["Тип", "С", "По", "Комментарий", "Создатель", "Дата создания", ""]}
+            sx={{ mt: permissions.absences.edit ? 2 : 0 }}
+            columns={[
+              "Тип",
+              "С",
+              "По",
+              "Комментарий",
+              "Создатель",
+              "Дата создания",
+              ...(permissions.absences.edit ? [""] : []),
+            ]}
             rows={employee.absence_history}
             renderRow={(item, index) => (
               <TableRow key={item.id ?? index}>
                 <TableCell>{item.absence_type ?? item.type_name ?? item.type ?? "—"}</TableCell>
-                <TableCell>{formatDate(item.date_start ?? item.start)}</TableCell>
-                <TableCell>{formatDate(item.date_end ?? item.end)}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_start ?? item.start)}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_end ?? item.end)}</TableCell>
                 <TableCell>{item.comment ?? item.commentVacation ?? "—"}</TableCell>
                 <TableCell>{item.user_name ?? item.actor_name ?? "—"}</TableCell>
-                <TableCell>{formatDate(item.date_create ?? item.created_at)}</TableCell>
-                <TableCell align="right">
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    justifyContent="flex-end"
-                  >
-                    <Tooltip title="Редактировать">
-                      <span>
+                <TableCell>
+                  {formatActivityHistoryDate(item.date_create ?? item.created_at)}
+                </TableCell>
+                {permissions.absences.edit ? (
+                  <TableCell align="right">
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      justifyContent="flex-end"
+                    >
+                      <Tooltip title="Редактировать">
                         <IconButton
                           size="small"
                           onClick={() => onEditAbsence(item)}
-                          disabled={!permissions.absences.edit}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Удалить">
-                      <span>
+                      </Tooltip>
+                      <Tooltip title="Удалить">
                         <IconButton
                           size="small"
                           color="error"
                           onClick={() => onDeleteAbsence(item)}
-                          disabled={!permissions.absences.edit}
                         >
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
-                      </span>
-                    </Tooltip>
-                  </Stack>
-                </TableCell>
+                      </Tooltip>
+                    </Stack>
+                  </TableCell>
+                ) : null}
               </TableRow>
             )}
           />
@@ -2230,14 +2722,22 @@ function EmployeeDialog({
                   label="Дата трудоустройства"
                   value={
                     <Box sx={{ maxWidth: 260 }}>
-                      <MyDatePickerNew
-                        label="Дата трудоустройства"
-                        value={user.date_registration}
-                        func={(value) =>
-                          onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
-                        }
-                        disabled={!permissions.employmentDate.edit}
-                      />
+                      {permissions.employmentDate.edit ? (
+                        <MyDatePickerNew
+                          label="Дата трудоустройства"
+                          value={user.date_registration}
+                          func={(value) =>
+                            onUserChange(
+                              "date_registration",
+                              value ? value.format("YYYY-MM-DD") : "",
+                            )
+                          }
+                        />
+                      ) : (
+                        <Typography sx={{ fontWeight: 800 }}>
+                          {formatActivityHistoryDate(user.date_registration)}
+                        </Typography>
+                      )}
                     </Box>
                   }
                 />
@@ -2307,13 +2807,14 @@ function EmployeeDialog({
               }
               sx={{ fontWeight: 800 }}
             />
-            <Button
-              variant="contained"
-              onClick={onHealthSave}
-              disabled={!permissions.healthBook.edit}
-            >
-              Сохранить медкнижку
-            </Button>
+            {permissions.healthBook.edit ? (
+              <Button
+                variant="contained"
+                onClick={onHealthSave}
+              >
+                Сохранить медкнижку
+              </Button>
+            ) : null}
           </Stack>
           <TableContainer>
             <Table size="small">
@@ -2333,20 +2834,30 @@ function EmployeeDialog({
                     <TableRow key={item.type ?? item.id}>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>
-                        <MyDatePickerNew
-                          label="Дата"
-                          value={item.start ?? item.date_start}
-                          func={(value) => onHealthChange(item.type, "start", value)}
-                          disabled={!permissions.healthBook.edit}
-                        />
+                        {permissions.healthBook.edit ? (
+                          <MyDatePickerNew
+                            label="Дата"
+                            value={item.start ?? item.date_start}
+                            func={(value) => onHealthChange(item.type, "start", value)}
+                          />
+                        ) : (
+                          <Typography sx={{ fontWeight: 700 }}>
+                            {formatActivityHistoryDate(item.start ?? item.date_start)}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <MyDatePickerNew
-                          label="Дата"
-                          value={item.end ?? item.date_end}
-                          func={(value) => onHealthChange(item.type, "end", value)}
-                          disabled={!permissions.healthBook.edit}
-                        />
+                        {permissions.healthBook.edit ? (
+                          <MyDatePickerNew
+                            label="Дата"
+                            value={item.end ?? item.date_end}
+                            func={(value) => onHealthChange(item.type, "end", value)}
+                          />
+                        ) : (
+                          <Typography sx={{ fontWeight: 700 }}>
+                            {formatActivityHistoryDate(item.end ?? item.date_end)}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -2368,76 +2879,76 @@ function EmployeeDialog({
           active={activeTab}
           value="cloth"
         >
-          <Grid
-            container
-            spacing={2}
-            alignItems="center"
-          >
-            <Grid size={{ xs: 12, sm: 5 }}>
-              <MyAutocomplite
-                label="Предмет"
-                data={refs.cloth}
-                value={clothIssue.item}
-                multiple={false}
-                func={(_, value) => onClothIssueChange({ ...clothIssue, item: value })}
-                disabled={!permissions.clothing.edit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
-              <MyDatePickerNew
-                label="Дата выдачи"
-                value={clothIssue.date_start}
-                func={(value) =>
-                  onClothIssueChange({
-                    ...clothIssue,
-                    date_start: value ? value.format("YYYY-MM-DD") : "",
-                  })
-                }
-                disabled={!permissions.clothing.edit}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <Stack
-                direction="row"
-                spacing={1}
-              >
-                <Button
-                  variant="contained"
-                  onClick={onIssueCloth}
-                  disabled={!permissions.clothing.edit}
+          {permissions.clothing.edit ? (
+            <Grid
+              container
+              spacing={2}
+              alignItems="center"
+            >
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <MyAutocomplite
+                  label="Предмет"
+                  data={refs.cloth}
+                  value={clothIssue.item}
+                  multiple={false}
+                  func={(_, value) => onClothIssueChange({ ...clothIssue, item: value })}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyDatePickerNew
+                  label="Дата выдачи"
+                  value={clothIssue.date_start}
+                  func={(value) =>
+                    onClothIssueChange({
+                      ...clothIssue,
+                      date_start: value ? value.format("YYYY-MM-DD") : "",
+                    })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
                 >
-                  Выдать
-                </Button>
-                {permissions.clothing.edit ? (
+                  <Button
+                    variant="contained"
+                    onClick={onIssueCloth}
+                  >
+                    Выдать
+                  </Button>
                   <Button
                     variant="outlined"
                     onClick={onManageCloth}
                   >
                     Управление списком
                   </Button>
-                ) : null}
-              </Stack>
+                </Stack>
+              </Grid>
             </Grid>
-          </Grid>
-          <Typography sx={{ mt: 3, mb: 1, fontWeight: 900 }}>Активные предметы</Typography>
+          ) : null}
+          <Typography sx={{ mt: permissions.clothing.edit ? 3 : 0, mb: 1, fontWeight: 900 }}>
+            Активные предметы
+          </Typography>
           <SimpleTable
-            columns={["Предмет", "Выдан", "Сдан", ""]}
+            columns={["Предмет", "Выдан", "Сдан", ...(permissions.clothing.edit ? [""] : [])]}
             rows={employee.cloth.active}
             renderRow={(item, index) => (
               <TableRow key={item.id ?? `${item.cloth_id}-${index}`}>
                 <TableCell>{item.name}</TableCell>
-                <TableCell>{formatDate(item.date_start)}</TableCell>
-                <TableCell>{formatDate(item.date_end)}</TableCell>
-                <TableCell align="right">
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => onReturnCloth(item)}
-                    disabled={!permissions.clothing.edit}
-                  >
-                    Принять сдачу
-                  </Button>
-                </TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_start)}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_end)}</TableCell>
+                {permissions.clothing.edit ? (
+                  <TableCell align="right">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => onReturnCloth(item)}
+                    >
+                      Принять сдачу
+                    </Button>
+                  </TableCell>
+                ) : null}
               </TableRow>
             )}
           />
@@ -2448,8 +2959,8 @@ function EmployeeDialog({
             renderRow={(item, index) => (
               <TableRow key={item.id ?? index}>
                 <TableCell>{item.name}</TableCell>
-                <TableCell>{formatDate(item.date_start)}</TableCell>
-                <TableCell>{formatDate(item.date_end)}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_start)}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_end)}</TableCell>
               </TableRow>
             )}
           />
@@ -2465,7 +2976,7 @@ function EmployeeDialog({
           />
         </TabPanel>
       </DialogContent>
-      {activeTab === "basic" ? (
+      {activeTab === "basic" && (basicCanEdit || permissions.photo.edit) ? (
         <DialogActions>
           <Button onClick={onClose}>Отмена</Button>
           <Button
@@ -2482,100 +2993,436 @@ function EmployeeDialog({
 }
 
 function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onChange, onCreate }) {
+  const [activeTab, setActiveTab] = useState("basic");
+  const [clothDraft, setClothDraft] = useState({
+    item: null,
+    date_start: dayjs().format("YYYY-MM-DD"),
+  });
+  const [absenceDraft, setAbsenceDraft] = useState(emptyAbsence);
+  const healthItems = asArray(employee.health_items).length
+    ? asArray(employee.health_items)
+    : getEmptyHealthItems();
+  const cafeOptions = getRealCafes(refs.points);
+  const isAuthCodeRequired = authCodeRequiredForApp(employee.app_id, refs.apps);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setActiveTab("basic");
+    setClothDraft({ item: null, date_start: dayjs().format("YYYY-MM-DD") });
+    setAbsenceDraft(emptyAbsence);
+  }, [open]);
+
+  const updateHealthItem = (type, field, value) => {
+    const formattedValue = value ? dayjs(value).format("YYYY-MM-DD") : "";
+    const nextItems = healthItems.map((item) => {
+      if (item.type !== type) return item;
+      if (field !== "start") return { ...item, [field]: formattedValue };
+
+      return {
+        ...item,
+        start: formattedValue,
+        end: value
+          ? dayjs(value)
+              .add(type === "type_10" ? 2 : 1, "years")
+              .format("YYYY-MM-DD")
+          : "",
+      };
+    });
+
+    onChange("health_items", nextItems);
+  };
+
+  const addCloth = () => {
+    if (!clothDraft.item) return;
+
+    const items = asArray(employee.cloth_items);
+    if (items.some((item) => sameId(item.cloth_id, clothDraft.item.id))) return;
+
+    onChange("cloth_items", [
+      ...items,
+      {
+        cloth_id: clothDraft.item.id,
+        name: clothDraft.item.name,
+        date_start: formatDate(clothDraft.date_start),
+      },
+    ]);
+    setClothDraft({ item: null, date_start: dayjs().format("YYYY-MM-DD") });
+  };
+
+  const addAbsence = () => {
+    if (!absenceDraft.start || !absenceDraft.end) return;
+
+    onChange("absences", [
+      ...asArray(employee.absences),
+      {
+        id: `new-${Date.now()}`,
+        type: absenceDraft.type,
+        date_start: formatDate(absenceDraft.start),
+        date_end: formatDate(absenceDraft.end),
+        comment: absenceDraft.comment,
+      },
+    ]);
+    setAbsenceDraft(emptyAbsence);
+  };
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth="md"
+      maxWidth="lg"
       fullScreen={fullScreen}
+      scroll="paper"
     >
       <DialogTitle className="button">
-        <Typography sx={{ fontWeight: 900 }}>Новый сотрудник</Typography>
+        <Box>
+          <Typography sx={{ fontWeight: 900 }}>Новый сотрудник</Typography>
+          <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
+            Заполните карточку сотрудника до создания
+          </Typography>
+        </Box>
         <IconButton onClick={onClose}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <Grid
-          container
-          spacing={2}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab
+              label="Основное"
+              value="basic"
+            />
+            <Tab
+              label="Мед книжка"
+              value="health"
+            />
+            <Tab
+              label={`Одежда${asArray(employee.cloth_items).length ? ` (${asArray(employee.cloth_items).length})` : ""}`}
+              value="cloth"
+            />
+            <Tab
+              label={`Отсутствия${asArray(employee.absences).length ? ` (${asArray(employee.absences).length})` : ""}`}
+              value="absence"
+            />
+          </Tabs>
+        </Box>
+
+        <TabPanel
+          active={activeTab}
+          value="basic"
         >
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyTextInput
-              label="Фамилия"
-              value={employee.fam}
-              func={(event) => onChange("fam", event.target.value)}
-            />
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={{ xs: 12, md: 3 }}>
+              <EmployeePhotoDropzone
+                user={employee}
+                file={employee.photo_file}
+                disabled={false}
+                onFileChange={(file) => onChange("photo_file", file)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 9 }}>
+              <Grid
+                container
+                spacing={1.5}
+              >
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyTextInput
+                    label="Фамилия"
+                    value={employee.fam}
+                    func={(event) => onChange("fam", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyTextInput
+                    label="Имя"
+                    value={employee.name}
+                    func={(event) => onChange("name", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyTextInput
+                    label="Отчество"
+                    value={employee.otc}
+                    func={(event) => onChange("otc", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyTextInput
+                    label="Телефон"
+                    value={employee.login}
+                    func={(event) => onChange("login", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyDatePickerNew
+                    label="Дата рождения"
+                    value={employee.birthday}
+                    func={(value) => onChange("birthday", value ? value.format("YYYY-MM-DD") : "")}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyTextInput
+                    label="Код авторизации"
+                    value={isAuthCodeRequired ? employee.auth_code : ""}
+                    disabled={!isAuthCodeRequired}
+                    func={(event) => onChange("auth_code", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyTextInput
+                    label="ИНН"
+                    value={employee.inn}
+                    func={(event) => onChange("inn", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyDatePickerNew
+                    label="Дата трудоустройства"
+                    value={employee.date_registration}
+                    func={(value) =>
+                      onChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyAutocomplite
+                    label="Должность"
+                    data={refs.apps}
+                    value={employee.app_id}
+                    multiple={false}
+                    func={(_, value) => onChange("app_id", value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyCheckBox
+                    label="Официальное трудоустройство"
+                    value={parseInt(employee.acc_to_kas) === 1}
+                    func={(event) => onChange("acc_to_kas", event.target.checked ? 1 : 0)}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <CityCafeAutocomplete2
+                    label="Доступные кафе"
+                    placeholder="Выберите кафе"
+                    withAll
+                    withOrganizationMode={false}
+                    compact
+                    points={cafeOptions}
+                    value={asArray(employee.point_access)}
+                    onChange={(value) => onChange("point_access", value || [])}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyTextInput
-              label="Имя"
-              value={employee.name}
-              func={(event) => onChange("name", event.target.value)}
-            />
+        </TabPanel>
+
+        <TabPanel
+          active={activeTab}
+          value="health"
+        >
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={tableHeaderSx}>
+                  <TableCell>Проверка</TableCell>
+                  <TableCell>Дата прохождения</TableCell>
+                  <TableCell>Действует до</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {healthItems.map((item) => (
+                  <TableRow key={item.type}>
+                    <TableCell sx={{ fontWeight: 700 }}>{item.name}</TableCell>
+                    <TableCell>
+                      <MyDatePickerNew
+                        label="Дата"
+                        value={item.start}
+                        func={(value) => updateHealthItem(item.type, "start", value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <MyDatePickerNew
+                        label="Дата"
+                        value={item.end}
+                        func={(value) => updateHealthItem(item.type, "end", value)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
+
+        <TabPanel
+          active={activeTab}
+          value="cloth"
+        >
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+          >
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <MyAutocomplite
+                label="Предмет одежды"
+                data={refs.cloth}
+                value={clothDraft.item}
+                multiple={false}
+                func={(_, value) => setClothDraft((prev) => ({ ...prev, item: value }))}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNew
+                label="Дата выдачи"
+                value={clothDraft.date_start}
+                func={(value) =>
+                  setClothDraft((prev) => ({
+                    ...prev,
+                    date_start: value ? value.format("YYYY-MM-DD") : "",
+                  }))
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <Button
+                variant="contained"
+                onClick={addCloth}
+                disabled={!clothDraft.item}
+              >
+                Добавить
+              </Button>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyTextInput
-              label="Отчество"
-              value={employee.otc}
-              func={(event) => onChange("otc", event.target.value)}
-            />
+          <SimpleTable
+            sx={{ mt: 2 }}
+            columns={["Предмет", "Дата выдачи", ""]}
+            rows={asArray(employee.cloth_items)}
+            renderRow={(item, index) => (
+              <TableRow key={`${item.cloth_id}-${index}`}>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_start)}</TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() =>
+                      onChange(
+                        "cloth_items",
+                        asArray(employee.cloth_items).filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            )}
+          />
+        </TabPanel>
+
+        <TabPanel
+          active={activeTab}
+          value="absence"
+        >
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+          >
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyAutocomplite
+                label="Тип"
+                data={absenceTypes}
+                value={absenceDraft.type}
+                multiple={false}
+                func={(_, value) =>
+                  setAbsenceDraft((prev) => ({ ...prev, type: value || absenceTypes[0] }))
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNew
+                label="С"
+                value={absenceDraft.start}
+                func={(value) =>
+                  setAbsenceDraft((prev) => ({
+                    ...prev,
+                    start: value ? value.format("YYYY-MM-DD") : "",
+                  }))
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNew
+                label="По"
+                value={absenceDraft.end}
+                minDate={absenceDraft.start ? dayjs(absenceDraft.start) : null}
+                func={(value) =>
+                  setAbsenceDraft((prev) => ({
+                    ...prev,
+                    end: value ? value.format("YYYY-MM-DD") : "",
+                  }))
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="Комментарий"
+                value={absenceDraft.comment}
+                func={(event) =>
+                  setAbsenceDraft((prev) => ({ ...prev, comment: event.target.value }))
+                }
+              />
+            </Grid>
+            <Grid size={12}>
+              <Button
+                variant="contained"
+                onClick={addAbsence}
+                disabled={!absenceDraft.start || !absenceDraft.end}
+              >
+                Добавить отсутствие
+              </Button>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyTextInput
-              label="Телефон"
-              value={employee.login}
-              func={(event) => onChange("login", event.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyDatePickerNew
-              label="Дата рождения"
-              value={employee.birthday}
-              func={(value) => onChange("birthday", value ? value.format("YYYY-MM-DD") : "")}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyTextInput
-              label="ИНН"
-              value={employee.inn}
-              func={(event) => onChange("inn", event.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyTextInput
-              label="Код авторизации"
-              value={employee.auth_code}
-              func={(event) => onChange("auth_code", event.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyDatePickerNew
-              label="Дата трудоустройства"
-              value={employee.date_registration}
-              func={(value) =>
-                onChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <MyAutocomplite
-              label="Должность"
-              data={refs.apps}
-              value={employee.app_id}
-              multiple={false}
-              func={(_, value) => onChange("app_id", value)}
-            />
-          </Grid>
-          <Grid size={12}>
-            <MyCheckBox
-              label="Официальное трудоустройство"
-              value={parseInt(employee.acc_to_kas) === 1}
-              func={(event) => onChange("acc_to_kas", event.target.checked ? 1 : 0)}
-            />
-          </Grid>
-        </Grid>
+          <SimpleTable
+            sx={{ mt: 2 }}
+            columns={["Тип", "С", "По", "Комментарий", ""]}
+            rows={asArray(employee.absences)}
+            renderRow={(item, index) => (
+              <TableRow key={item.id ?? index}>
+                <TableCell>{item.type?.name ?? item.type_name ?? "—"}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_start)}</TableCell>
+                <TableCell>{formatActivityHistoryDate(item.date_end)}</TableCell>
+                <TableCell>{item.comment || "—"}</TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() =>
+                      onChange(
+                        "absences",
+                        asArray(employee.absences).filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            )}
+          />
+        </TabPanel>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>

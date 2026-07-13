@@ -24,6 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ReplayIcon from "@mui/icons-material/Replay";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import SearchIcon from "@mui/icons-material/Search";
 import dayjs from "dayjs";
 import { MyDatePickerNew, MySelect } from "@/ui/Forms";
@@ -65,6 +66,8 @@ export default function ControlView({
   onReturn,
   onDetach,
   onDelete,
+  onRefresh,
+  isLoading,
   canEdit,
 }) {
   const locationOptions = locations.map((location) => ({
@@ -82,12 +85,14 @@ export default function ControlView({
   const activeCount = filteredByContext.filter((item) => item.status === "active").length;
   const inProgressCount = filteredByContext.filter((item) => item.status === "in_progress").length;
   const approvedCount = filteredByContext.filter((item) => item.status === "approved").length;
+  const deletedCount = filteredByContext.filter((item) => item.status === "deleted").length;
   const filterItems = [
     { value: "all", label: "Все" },
     { value: "active", label: "Активно", count: activeCount },
     { value: "in_progress", label: "В процессе", count: inProgressCount },
     { value: "pending", label: "Ожидают", count: pendingCount },
     { value: "approved", label: "Подтверждено", count: approvedCount },
+    { value: "deleted", label: "Удалено", count: deletedCount },
   ];
 
   const getCleaning = (id) => templates.find((template) => template.id === id);
@@ -106,7 +111,7 @@ export default function ControlView({
             sx={{
               p: 1.5,
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "260px 170px 170px auto" },
+              gridTemplateColumns: { xs: "1fr", md: "360px 170px 170px auto" },
               gap: 1.5,
               alignItems: "center",
             }}
@@ -131,16 +136,35 @@ export default function ControlView({
               minDate={dateFrom ? dayjs(dateFrom) : null}
               func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
             />
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onAddManualOpen}
-              disabled={!canEdit}
-              sx={{ ...actionButtonSx, justifySelf: { xs: "stretch", md: "end" } }}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                justifySelf: { xs: "stretch", md: "end" },
+                flexDirection: { xs: "column", sm: "row" },
+              }}
             >
-              Добавить уборку
-            </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={onRefresh}
+                disabled={isLoading}
+                sx={actionButtonSx}
+              >
+                Обновить
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={onAddManualOpen}
+                disabled={!canEdit}
+                sx={actionButtonSx}
+              >
+                Добавить уборку
+              </Button>
+            </Box>
           </Box>
         </Paper>
       </Grid>
@@ -209,12 +233,11 @@ export default function ControlView({
           <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
             <Table
               size="small"
-              sx={{ minWidth: 1180 }}
+              sx={{ minWidth: 1040 }}
             >
               <TableHead>
                 <TableRow sx={tableHeaderSx}>
                   <TableCell sx={{ width: "20%" }}>Уборка</TableCell>
-                  <TableCell>Кафе</TableCell>
                   <TableCell>Сотрудник</TableCell>
                   <TableCell>Начало</TableCell>
                   <TableCell>Завершение</TableCell>
@@ -227,7 +250,7 @@ export default function ControlView({
               <TableBody>
                 {visibleItems.map((item) => {
                   const cleaning = getCleaning(item.cleaningId);
-                  const cleaningName = cleaning?.name || item.name || "Уборка";
+                  const cleaningName = item.workName || item.name || cleaning?.name || "Уборка";
                   const statusMeta = getControlStatusMeta(item.status);
 
                   return (
@@ -243,9 +266,6 @@ export default function ControlView({
                         <Typography sx={{ fontSize: 15, fontWeight: 800 }}>
                           {cleaningName}
                         </Typography>
-                      </TableCell>
-                      <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {getLocationNameById(item.locationId, locations)}
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                         {item.employee || "—"}
@@ -292,7 +312,7 @@ export default function ControlView({
                 {visibleItems.length ? null : (
                   <TableRow>
                     <TableCell
-                      colSpan={9}
+                      colSpan={8}
                       sx={{ py: 4, textAlign: "center", color: "text.secondary" }}
                     >
                       Нет уборок по выбранным фильтрам
@@ -306,7 +326,7 @@ export default function ControlView({
           <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
             {visibleItems.map((item) => {
               const cleaning = getCleaning(item.cleaningId);
-              const cleaningName = cleaning?.name || item.name || "Уборка";
+              const cleaningName = item.workName || item.name || cleaning?.name || "Уборка";
               const statusMeta = getControlStatusMeta(item.status);
 
               return (
@@ -324,9 +344,6 @@ export default function ControlView({
                     <Box>
                       <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.25 }}>
                         {cleaningName}
-                      </Typography>
-                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                        {getLocationNameById(item.locationId, locations)}
                       </Typography>
                       <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
                         {item.employee || "—"} · {item.startedAt || "—"} — {item.finishedAt || "—"}
@@ -393,7 +410,7 @@ function ControlRowActions({
     : { display: "flex", justifyContent: "flex-end", gap: 1 };
   const buttonSx = mobile ? { ...actionButtonSx, minHeight: 44, width: "100%" } : actionButtonSx;
 
-  if (item.status === "approved") {
+  if (item.status === "approved" || item.status === "deleted") {
     return <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>;
   }
 
