@@ -796,7 +796,7 @@ export default function EmployeesPage() {
   const [alert, setAlert] = useState({ open: false, status: true, text: "" });
   const [refs, setRefs] = useState({ cities: [], points: [], apps: [], cloth: [] });
   const [access, setAccess] = useState(getAccess({}));
-  const [pageTitle, setPageTitle] = useState("Сотрудники");
+  const [pageTitle, setPageTitle] = useState("");
   const [filters, setFilters] = useState({
     city: "",
     points: [],
@@ -941,7 +941,7 @@ export default function EmployeesPage() {
     setFilters(nextFilters);
     setStats(normalizeStats(res));
     setTotalRows(res.total_rows ?? 0);
-    const title = res.module_info?.name || "Сотрудники";
+    const title = String(res.module_info?.name ?? "");
     setPageTitle(title);
     document.title = title;
     await refreshEmployees(nextFilters, 0, rows);
@@ -1736,15 +1736,14 @@ export default function EmployeesPage() {
         className="container_first_child"
       >
         <Grid size={12}>
-          <Typography
-            component="h1"
-            sx={{ m: 0, fontSize: { xs: 26, md: 32 }, fontWeight: 900 }}
-          >
-            {pageTitle}
-          </Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-            Кадры, стаж, медкнижки и вещевое довольствие в одном месте
-          </Typography>
+          {pageTitle ? (
+            <Typography
+              component="h1"
+              sx={{ m: 0, fontSize: { xs: 26, md: 32 }, fontWeight: 900 }}
+            >
+              {pageTitle}
+            </Typography>
+          ) : null}
         </Grid>
 
         <Grid size={12}>
