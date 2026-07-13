@@ -2,12 +2,19 @@
 
 Статус: целевой API contract нового модуля `sklad`.
 
+Статус текущей итерации:
+
+- implemented now: `get_all`, `bootstrap`, `units/list`, `units/get_one`, `units/options`, `categories/list`, `categories/get_one`, `history/list`, `history/get_one`
+- planned only: `recipes/*`, `semi-finished/*`, `site-items/*`, archive/delete/convert flows
+- `Item` остается shared source entity, но dedicated `/api/sklad/items/*` routes в текущем scope не публикуются
+
 Важно:
 
 - это canonical contract нового модуля
 - старые route-prefix остаются только migration reference
 - новый модуль работает на существующей БД, но не зависит runtime-ом от старых module classes
-- migration map указан в [PLAN.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/PLAN.md)
+- canonical business entities для этого API должны быть shared models, а не module-local wrappers
+- migration map указан в [PLAN.md](/home/ted/JACO/git/jacochef-next/components/sklad/docs/PLAN.md)
 
 Базовый prefix:
 
@@ -38,7 +45,20 @@ Transport:
 
 - compatibility слой не должен определять архитектуру нового модуля
 
-### 1.2. Lightweight shell
+### 1.2. Shared entity rule
+
+Если сущность уже используется в нескольких бизнес-процессах проекта, новый API должен опираться на нее как на shared business entity.
+
+Для текущего scope это в первую очередь:
+
+- `SiteItem`
+- `Item`
+- `Recipe`
+- `SemiFinished`
+- `Unit`
+- `SkladCategory`
+
+### 1.3. Lightweight shell
 
 `get_all` не должен быть giant payload на все сущности.
 
@@ -50,6 +70,21 @@ Transport:
 - вернуть high-level shell
 
 Полные списки сущностей должны грузиться отдельными list endpoint-ами.
+
+### 1.4. Source vs derived contract
+
+Новый модуль должен явно разделять:
+
+- source fields
+- derived fields
+- manual override fields, если они будут оставлены бизнесом
+
+Особенно это касается:
+
+- состава
+- итоговых аллергенов
+- возможных аллергенов
+- `kkal`
 
 ---
 
@@ -83,7 +118,6 @@ Response:
   "access": {
     "units_view": 1,
     "categories_view": 1,
-    "warehouse_items_view": 1,
     "recipes_view": 1,
     "semi_finished_view": 1,
     "site_items_view": 1,
@@ -93,22 +127,18 @@ Response:
   },
   "legacy_access": {},
   "summary": {
-    "warehouse_items_active": 0,
     "recipes_active": 0,
     "semi_finished_active": 0,
     "site_items_active": 0,
     "archive_total": 0
   },
-  "sections": [
-    "units",
-    "categories",
-    "warehouse-items",
-    "recipes",
-    "semi-finished",
-    "site-items",
-    "history",
-    "archive"
-  ]
+  "sections": ["units", "categories", "history"],
+  "planned_sections": ["recipes", "semi-finished", "site-items", "archive"],
+  "business_meta": {
+    "composition_chain": ["item", "semi_finished", "recipe", "site_item"],
+    "site_item_allergens_mode": "derived_from_composition",
+    "site_item_kkal_mode": "derived_from_bju"
+  }
 }
 ```
 
@@ -218,20 +248,43 @@ Response:
   "list": [
     {
       "id": 12,
+      "category_key": "semi_finished:12",
       "name": "Соусы",
-      "source_type": "unified",
-      "warehouse_items_count": 10,
+      "source_type": "semi_finished",
+      "source_model": "legacy_rec_pf_cats_unified_read",
+      "warehouse_items_count": 0,
       "recipes_count": 4,
       "semi_finished_count": 2,
-      "total_usage_count": 16,
+      "total_usage_count": 6,
       "is_archived": 0,
-      "can_delete": false
+      "delete_state": "unknown",
+      "parent_id": null,
+      "parent_name": "Полуфабрикаты"
     }
   ]
 }
 ```
 
 ## `POST|ANY /api/sklad/categories/get_one`
+
+Request:
+
+```json
+{
+  "data": {
+    "category_key": "semi_finished:4"
+  }
+}
+```
+
+Важно:
+
+- `source_type = semi_finished` сейчас означает category space полуфабрикатов
+- usage этой категории включает:
+  - сами полуфабрикаты
+  - рецепты, которые в новом модуле отображаются внутри категорий полуфабрикатов
+- у `recipe` в новом модуле нет собственной category entity
+- это read model поверх legacy `rec_pf_cats` + usage из `recipes_new` / `polufabricat_new`
 
 ## `POST|ANY /api/sklad/categories/save_new`
 
@@ -256,112 +309,28 @@ Blocked delete response:
 
 ---
 
-## 6. Warehouse items
+## 6. Items
 
-## `POST|ANY /api/sklad/warehouse-items/list`
+Текущее уточнение scope:
 
-Request:
+- dedicated CRUD/list screen для `Item` остается в `sklad_items_module_new`
+- текущий `sklad` не должен публиковать отдельные `/api/sklad/items/*` routes в этом scope
+- при этом `Item` остается shared upstream-сущностью для `SemiFinished -> Recipe -> SiteItem`
+- новый `sklad` вправе использовать `Item` как reference/source layer внутри рецептов, полуфабрикатов, категорий и истории
 
-```json
-{
-  "data": {
-    "search": "",
-    "category_id": null,
-    "archive_mode": "active"
-  }
-}
-```
+История:
 
-Response:
-
-```json
-{
-  "st": true,
-  "list": [
-    {
-      "id": 1,
-      "name": "Сыр",
-      "category_id": 10,
-      "category_name": "Молочка",
-      "ed_izmer_id": 1,
-      "ed_izmer_name": "кг",
-      "date_start": "2026-07-10",
-      "date_end": null,
-      "is_active": 1,
-      "is_archived": 0,
-      "can_delete": false
-    }
-  ]
-}
-```
-
-## `POST|ANY /api/sklad/warehouse-items/bootstrap`
-
-Response:
-
-```json
-{
-  "st": true,
-  "item": {
-    "id": null,
-    "name": "",
-    "name_for_vendor": "",
-    "mark_name": "",
-    "category_id": null,
-    "ed_izmer_id": null,
-    "app_id": null,
-    "pq": "",
-    "percent": "",
-    "vend_percent": "",
-    "art": "",
-    "time_min": "00:00",
-    "time_min_other": "00:00",
-    "time_dop_min": "00:00",
-    "min_count": "",
-    "max_count_in_m": "",
-    "show_in_order": 0,
-    "show_in_rev": 0,
-    "is_show": 0,
-    "is_archived": 0,
-    "date_start": "",
-    "date_end": "",
-    "allergens": [],
-    "allergens_possible": [],
-    "accounting_systems": [],
-    "storages": []
-  },
-  "categories": [],
-  "units": [],
-  "allergens": [],
-  "accounting_systems": [],
-  "storages": [],
-  "apps": []
-}
-```
-
-## `POST|ANY /api/sklad/warehouse-items/get_one`
-
-## `POST|ANY /api/sklad/warehouse-items/check_art`
-
-## `POST|ANY /api/sklad/warehouse-items/save_new`
-
-## `POST|ANY /api/sklad/warehouse-items/save_edit`
-
-## `POST|ANY /api/sklad/warehouse-items/save_flag`
-
-Назначение:
-
-- изменение одного флага / одного поля простой операции
-
-## `POST|ANY /api/sklad/warehouse-items/archive`
-
-## `POST|ANY /api/sklad/warehouse-items/delete`
-
-## `POST|ANY /api/sklad/history/warehouse-item`
+- generic `history/list` и `history/get_one` уже поддерживают `entity_type = item`
+- это не означает, что в текущем FE scope есть отдельный экран управления `Item` внутри `sklad`
 
 ---
 
 ## 7. Recipes
+
+Статус:
+
+- planned
+- routes еще не опубликованы в `routes/api.php`
 
 ## `POST|ANY /api/sklad/recipes/list`
 
@@ -394,6 +363,8 @@ Response:
     "ed_izmer_id": null,
     "allergens": [],
     "allergens_possible": [],
+    "allergens_derived": [],
+    "allergens_possible_derived": [],
     "categories": [],
     "structure": "",
     "storages": [],
@@ -411,6 +382,11 @@ Response:
   "apps": []
 }
 ```
+
+Контракт:
+
+- `allergens` и `allergens_possible` — source/manual layer, если бизнес сохраняет ручной ввод
+- `allergens_derived` и `allergens_possible_derived` — расчетный слой от текущего состава
 
 ## `POST|ANY /api/sklad/recipes/save_new`
 
@@ -444,15 +420,31 @@ Response:
 
 ## `POST|ANY /api/sklad/recipes/delete`
 
-## `POST|ANY /api/sklad/history/recipe`
+## `history/list` и `history/get_one` для `recipe`
+
+Статус:
+
+- implemented now
+- используется через generic history routes с `entity_type = recipe`
 
 ---
 
 ## 8. Semi-finished
 
+Статус:
+
+- planned
+- routes еще не опубликованы в `routes/api.php`
+
 ## `POST|ANY /api/sklad/semi-finished/list`
 
 ## `POST|ANY /api/sklad/semi-finished/get_one`
+
+Контракт сущности:
+
+- `composition` строится из `Item`
+- `allergens_derived` и `allergens_possible_derived` считаются по ingredient chain
+- если legacy-ручной ввод аллергенов сохраняется, он должен быть отделен от derived layer
 
 ## `POST|ANY /api/sklad/semi-finished/save_new`
 
@@ -464,7 +456,12 @@ Response:
 
 ## `POST|ANY /api/sklad/semi-finished/delete`
 
-## `POST|ANY /api/sklad/history/semi-finished`
+## `history/list` и `history/get_one` для `semi_finished`
+
+Статус:
+
+- implemented now
+- используется через generic history routes с `entity_type = semi_finished`
 
 Контракт:
 
@@ -504,6 +501,11 @@ Response:
 
 ## 10. Site items
 
+Статус:
+
+- planned
+- routes еще не опубликованы в `routes/api.php`
+
 ## `POST|ANY /api/sklad/site-items/list`
 
 Response:
@@ -541,6 +543,15 @@ Response:
     "tags": [],
     "image": null,
     "marking": {},
+    "composition_source": {
+      "pf": [],
+      "recipes": []
+    },
+    "composition_derived": {
+      "pf_total": []
+    },
+    "allergens_derived": [],
+    "possible_allergens_derived": [],
     "stages": {
       "stage_1": [],
       "stage_2": [],
@@ -560,6 +571,13 @@ Response:
 
 ## `POST|ANY /api/sklad/site-items/get_one`
 
+Контракт:
+
+- `composition_source.pf` = прямые связи `site_item -> pf`
+- `composition_source.recipes` = прямые связи `site_item -> recipe`
+- `composition_derived.pf_total` = развёрнутый состав по всем заготовкам с учетом рецептов
+- `allergens_derived` и `possible_allergens_derived` считаются по итоговой composition chain
+
 ## `POST|ANY /api/sklad/site-items/get_marking`
 
 ## `POST|ANY /api/sklad/site-items/save_new`
@@ -570,6 +588,10 @@ Response:
 
 - `kkal_preview` возвращается как derived-значение от текущих `protein`, `fat`, `carbohydrates`
 - `kkal` сохраняется как persisted field по текущей бизнес-логике
+- staged composition является source layer
+- после сохранения обязателен пересчет flat composition links
+- после сохранения обязателен пересчет агрегата для списаний
+- после сохранения обязателен пересчет derived allergens / possible allergens
 
 ## `POST|ANY /api/sklad/site-items/save_flag`
 
@@ -613,9 +635,23 @@ Response:
 
 ## `POST|ANY /api/sklad/history/site-item-tech`
 
+Временный compatibility alias:
+
+- используется только на переходный период, если FE нужно поэтапное переключение
+- canonical history contract для нового модуля должен идти через unified history endpoints
+
 ## `POST|ANY /api/sklad/history/site-item-marking`
 
+Временный compatibility alias:
+
+- не должен считаться целевой архитектурой
+
 ## `POST|ANY /api/sklad/history/site-item-images`
+
+Временный compatibility alias:
+
+- допускается только как compatibility shell
+- при отсутствии полноценной persistence обязан явно возвращать gap/capability status
 
 ---
 
@@ -698,6 +734,19 @@ Response blocked:
 - history read должен быть unified
 - history storage пока опирается на существующие history tables
 - новый модуль сам строит canonical history response
+- `App\\Services\\History\\HistoryService` используется как общий audit-event layer, но не как единственный источник revision state для складских сущностей
+
+Требование FE:
+
+- history должна позволять не только список событий
+- но и список версий сущности
+- и открытие полного состояния revision для compare flow
+
+Архитектурное правило:
+
+- `history/list` возвращает version list
+- `history/get_one` возвращает canonical revision snapshot
+- event-log из `change_events` может дополнять revision, но не заменяет его
 
 ## `POST|ANY /api/sklad/history/get_one`
 
@@ -706,8 +755,8 @@ Request:
 ```json
 {
   "data": {
-    "entity_type": "site_item",
-    "id": 10,
+    "entity_type": "recipe",
+    "entity_id": 10,
     "history_id": 100
   }
 }
@@ -718,13 +767,31 @@ Response:
 ```json
 {
   "st": true,
-  "entity": {
-    "id": 10,
+  "entity_type": "recipe",
+  "entity_id": 10,
+  "revision": {
+    "entity_type": "recipe",
+    "entity_id": 10,
     "history_id": 100,
-    "state": {}
+    "revision_key": "100",
+    "source": "jaco_main_rolls.recipes_hist_new",
+    "compare_capability": {
+      "supported": false,
+      "reason": "not implemented yet"
+    },
+    "snapshot": {}
+  },
+  "capabilities": {
+    "list": true,
+    "get_one": true
   }
 }
 ```
+
+Текущее уточнение:
+
+- `site_item` history в текущем scope еще не реализован
+- если FE запросит `entity_type = site_item`, backend должен вернуть явную ошибку, а не пустой success
 
 ---
 
@@ -741,27 +808,18 @@ Response:
 {
   "access": {
     "units_view": 1,
-    "units_edit": 1,
     "categories_view": 1,
-    "categories_edit": 0,
-    "warehouse_items_view": 1,
-    "warehouse_items_edit": 1,
     "recipes_view": 1,
-    "recipes_edit": 1,
     "semi_finished_view": 1,
-    "semi_finished_edit": 1,
     "site_items_view": 1,
-    "site_items_edit": 1,
     "history_view": 1,
-    "delete_view": 1,
     "delete_execute": 0,
-    "archive_view": 1,
-    "archive_edit": 1
+    "archive_view": 1
   },
   "legacy_access": {
-    "name_edit": 1,
-    "items_edit": 1,
-    "ed_izmer_edit": 1
+    "rec_list_view": 1,
+    "pf_list_view": 1,
+    "tech_view": 1
   }
 }
 ```

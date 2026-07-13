@@ -16,6 +16,7 @@
 
 - warehouse/recipe/semi-finished master-data сейчас живет в `jaco_main_rolls`
 - site item catalog живет отдельно в `jaco_site_rolls`
+- `sklad_items_module_new` как текущий FE-модуль пока остается самостоятельным и не входит в текущий merge scope
 - новый модуль `sklad` поэтому по факту объединяет как минимум два существующих data domain-а
 
 Это значит:
@@ -30,11 +31,11 @@
 
 Сейчас бизнес-сущности разнесены по разным legacy-модулям:
 
-- товары склада
 - рецепты
 - полуфабрикаты
 - товары сайта
 - единицы измерения
+- связанные upstream-справочники и source entities
 
 Из-за этого один и тот же жизненный цикл позиции размазан по разным экранам, правам, history-подходам и правилам активности.
 
@@ -90,13 +91,18 @@
 
 - единицы измерения
 - категории
-- товары склада
 - рецепты
 - полуфабрикаты
 - товары сайта
 - история изменений этих сущностей
 - архивный слой
 - access map для нового FE
+
+Использует как upstream source/reference:
+
+- `Item` / товары склада
+- storage-related dictionaries
+- shared production dictionaries
 
 Не входит в прямую ответственность модуля:
 
@@ -109,7 +115,7 @@
 
 Практически это каталог поверх двух исходных источников:
 
-- `jaco_main_rolls` для warehouse items / recipes / semi-finished / units / storages / shared production dictionaries
+- `jaco_main_rolls` для recipes / semi-finished / units / storages / shared production dictionaries / upstream `Item`
 - `jaco_site_rolls` для site items / site categories / tags / images / stage composition / public product attributes
 
 ## 4. Target business model
@@ -137,7 +143,7 @@
 Бизнес-смысл категории:
 
 - группировать сущности по понятной операционной логике
-- быть reusable across warehouse items / recipes / semi-finished
+- быть reusable across recipes / semi-finished
 - показывать usage density по связанным сущностям
 - быть архивируемой, но не удаляемой при наличии usage
 
@@ -221,33 +227,7 @@ History должен отвечать на бизнес-вопрос:
 - дать бизнесу контролируемую классификацию
 - показать usage by entity types
 
-### 5.3. Warehouse items
-
-Товар склада это supply-side master item.
-
-Бизнес-роль:
-
-- сущность закупки и складского учета
-- источник для рецептов/заготовок
-- хранит supplier-facing and ops-facing attributes
-
-Ключевые business attributes:
-
-- категория
-- единица измерения
-- vendor-facing naming
-- код учетной системы
-- storage relations
-- allergen/accounting/meta flags where applicable
-
-Schema confirmation:
-
-- warehouse items сейчас сидят в `items_new`
-- категорийная привязка идет через `cat_id`
-- unit reference идет через `ed_izmer_id`
-- отдельные operational flags уже существуют на storage-side model
-
-### 5.4. Recipes and semi-finished
+### 5.3. Recipes and semi-finished
 
 Рецепт и полуфабрикат это два production-type одной предметной зоны с почти одинаковым lifecycle.
 
@@ -269,7 +249,7 @@ Schema confirmation:
 - но их field families очень близки
 - поэтому объединение на уровне canonical contract оправдано
 
-### 5.5. Site items
+### 5.4. Site items
 
 Товар сайта это channel-facing catalog item.
 
@@ -316,7 +296,6 @@ Schema confirmation:
 
 - Units
 - Categories
-- Warehouse items
 - Recipes
 - Semi-finished
 - Site items

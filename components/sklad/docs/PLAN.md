@@ -7,8 +7,9 @@
 - business definition: `README.md`
 - canonical API: `API.md`
 - raw scope: `TASK.md`
-- существующие FE reference points: `sklad_items_module_new`, `recept_module_new_2`, `site_items_new`, newer modules pattern
+- существующие FE reference points: `recept_module_new_2`, `site_items_new`, newer modules pattern
 - local schema check on `127.0.0.1:3307`
+- 1C reference screenshot: [1c-history-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad/docs/assets/1c-history-reference.png)
 
 ## 1. Delivery goal
 
@@ -18,6 +19,8 @@
 - покрывает все целевые master-data сущности
 - не зависит runtime-архитектурно от старых module classes
 - позволяет переводить FE по section-ам, а не big-bang миграцией
+- не требует включать текущий экран `sklad_items_module_new` в этот FE merge на текущем этапе
+- не строит отдельный `Warehouse items` tab/screen в текущей итерации
 
 ## 2. Delivery strategy
 
@@ -84,30 +87,7 @@
 - это foundation для всех остальных сущностей
 - без этого будут плодиться локальные справочники и переходные хаки
 
-### Slice C. Warehouse items
-
-Цель:
-
-- перевести supply-side item master в canonical module
-
-В scope:
-
-- list
-- get_one/bootstrap
-- create/edit
-- simple flag save
-- archive
-- delete
-- history read
-
-Зависимости:
-
-- units
-- categories
-- storages
-- accounting systems
-
-### Slice D. Recipes + semi-finished
+### Slice C. Recipes + semi-finished
 
 Цель:
 
@@ -120,13 +100,21 @@
 - convert type flow
 - composition/items rows
 - allergens and possible allergens
+- one shared category model for recipes and semi-finished
 
 Почему вместе:
 
 - это одна family по lifecycle и UI architecture
 - их раздельный перенос создаст лишнюю дубликацию
+- customer follow-up explicitly removes the idea of a separate recipe category entity
 
-### Slice E. Site items
+Contract note:
+
+- category read model for this family is keyed via `category_key`
+- `source_type = semi_finished` currently represents the shared production category space
+- recipe usage is included inside that same category space by contract
+
+### Slice D. Site items
 
 Цель:
 
@@ -146,9 +134,9 @@
 Почему slice вынесен отдельно:
 
 - site items уже сейчас являются aggregate с base item, tags, images и stage relations
-- это structurally более сложная family, чем warehouse items
+- это structurally более сложная family, чем recipes/semi-finished family
 
-### Slice F. Unified archive + history
+### Slice E. Unified archive + history
 
 Цель:
 
@@ -160,6 +148,7 @@
 - unified history get_one
 - cross-entity archive filters
 - history presentation consistency
+- version comparison flow inspired by 1C business behavior
 
 ## 4. Recommended backend architecture
 
@@ -171,7 +160,6 @@
 - `SkladBootstrapService`
 - `UnitsService`
 - `CategoriesService`
-- `WarehouseItemsService`
 - `RecipesService`
 - `SemiFinishedService`
 - `SiteItemsService`
@@ -180,6 +168,12 @@
 - `AccessService`
 
 Допустимо объединить `RecipesService` и `SemiFinishedService` в общий family-service, если код реально общий.
+
+Для category ownership это особенно важно:
+
+- recipes и semi-finished не должны расходиться по разным category services/models
+- у production family должен быть один category source and one canonical category contract
+- category API must be built around `category_key`, not around unsafe assumptions that every category has one global numeric id
 
 Также нужен explicit repository/adapter split по источникам данных:
 
@@ -199,6 +193,7 @@ Backend должен:
 - считать derived fields по одной формуле
 - адаптировать legacy storage в canonical response shape
 - скрывать от FE physical split между разными БД/табличными family
+- history API должен гарантировать full snapshot semantics, а не только event-log semantics
 
 ## 4.3. What must stay out of controller
 
@@ -234,7 +229,6 @@ Backend должен:
 - section modules:
   - `sklad/units/*`
   - `sklad/categories/*`
-  - `sklad/warehouse-items/*`
   - `sklad/recipes/*`
   - `sklad/semi-finished/*`
   - `sklad/site-items/*`
@@ -322,23 +316,14 @@ Implementation note:
 
 - не форсировать premature merge между `items_cat`, recipe/pf category shape и site `category`
 - сначала выстроить canonical semantics и API façade
+- categories API already moved toward explicit source-aware read model:
+  - `category_key`
+  - `source_type`
+  - `source_model`
+  - `delete_state`
+- FE should treat this as a typed category reference, not as one flat legacy integer id space
 
-### Phase 4. Warehouse items
-
-Сделать:
-
-- canonical list and form bootstrap
-- save_new/save_edit
-- save_flag for simple toggles
-- archive/delete/history
-- long-label UX policy
-
-Acceptance:
-
-- warehouse item можно полностью создать и отредактировать в новом модуле
-- доступы и delete restrictions соблюдаются
-
-### Phase 5. Recipes and semi-finished family
+### Phase 4. Recipes and semi-finished family
 
 Сделать:
 
@@ -347,13 +332,25 @@ Acceptance:
 - items table editing
 - convert type flow
 - archive/delete/history
+- one shared category source for both entity types
 
 Acceptance:
 
 - user can manage both families without leaving `sklad`
 - conversion works as controlled business action
+- recipe does not have its own separate category model apart from semi-finished
 
-### Phase 6. Site items
+Contract note:
+
+- category selection and filtering for this family should operate through the shared semi-finished category space defined in `categories/*`
+
+Implementation note:
+
+- old screen with `Добавить рецепт или полуфабрикат` is only business-context reference
+- target for new module is not “two visual sections with separate category semantics”
+- target is one production-family category taxonomy reused by both entity types
+
+### Phase 5. Site items
 
 Сделать:
 
@@ -375,7 +372,7 @@ Implementation note:
 - site item aggregate нужно собирать из `items` + relation tables
 - это надо учитывать и в service split, и в integration tests
 
-### Phase 7. Unified archive and history
+### Phase 6. Unified archive and history
 
 Сделать:
 
@@ -383,10 +380,74 @@ Implementation note:
 - cross-entity archive UI
 - unified history read UI
 - consistent “open historical state” pattern
+- history modal/details flow in project style:
+  - модалка со списком версий
+  - detail area выбранной версии
+  - полная раскладка для составных сущностей
+  - визуальная подсветка отличий относительно предыдущей версии
 
 Acceptance:
 
 - бизнес может найти архивную сущность и понять ее состояние/изменения
+- бизнес видит не только факт изменения, но и полный состав/раскладку выбранной версии
+
+Implementation note:
+
+- history UX надо строить не как “лента только измененных полей”, а как version browser в рамках project-consistent modal pattern
+- минимальный target pattern берется с 1C reference screenshot
+- для recipe / semi-finished / site item нижняя зона должна показывать составные строки целиком, а не только field diff summary
+
+### Phase 6.1. History screen definition by 1C pattern
+
+Целевой interaction pattern:
+
+- в history modal есть верхняя зона списка версий:
+  - дата создания версии
+  - дата начала действия
+  - дата конца действия
+  - тип операции, если есть
+  - идентификатор документа/версии, если есть
+- detail zone выбранной версии показывает:
+  - полный список строк раскладки
+  - все доступные расчетные поля
+  - changed rows and changed cells highlighted against previous version
+
+Что это означает для нового canonical contract:
+
+- history list должен возвращать ordered versions
+- каждая версия должна быть открываема как full snapshot
+- full snapshot должен включать row collections, если сущность составная
+- API должен позволять сравнить snapshot с предыдущей версией детерминированно
+
+### Phase 6.2. API sufficiency check for 1C-style history
+
+Текущее состояние по данным FE и local schema:
+
+- `recipe`
+  - по данным в целом достаточно
+  - legacy FE already compares full snapshots including `pf_list`
+  - для нового API надо явно гарантировать полную раскладку выбранной версии
+
+- `semi_finished`
+  - по данным в целом достаточно по той же модели, что recipe
+  - нужны те же contract guarantees
+
+- `site_item`
+  - частично достаточно
+  - tech history path уже умеет сравнивать full snapshots со `stage_1/2/3` и `items`
+  - но сейчас history split-ится на `get_one_hist_tech` и `get_one_hist_mark`
+  - для truly unified 1C-style history этого недостаточно как canonical contract
+
+Главные contract gaps:
+
+- image history отдельно помечена как capability gap, значит full revision completeness for every site-item asset is not yet guaranteed
+
+Вывод:
+
+- updated `API.md` уже описывает нужный direction для version list + canonical revision snapshot
+- для `recipe` и `semi_finished` данные legacy API выглядят достаточными, если их канонизировать без потери snapshot depth
+- для `site_item` contract now is close to sufficient, but image-state completeness still remains an explicit gap
+- следовательно эта фаза теперь в первую очередь UI/adapter task plus explicit handling of remaining image-history gap
 
 ### Phase 8. Migration hardening
 
@@ -458,6 +519,39 @@ Mobile:
 - bottom-sheet or full-screen edit flows for complex forms
 - avoid desktop carry-over layouts inside narrow dialogs
 
+### 8.1. Long text field behavior
+
+Отдельное UX-уточнение по create/edit forms:
+
+- проблема длинных полей теперь трактуется не только как проблема label
+- для поля `Состав` и аналогичных long-text business fields нужен compact-by-default control
+- при этом оператор должен иметь возможность быстро увидеть и отредактировать полный текст без отдельного экрана
+
+Рекомендуемое решение:
+
+- использовать textarea / autosize text field
+- в обычном состоянии держать небольшую высоту
+- на focus автоматически расширять поле
+- ограничивать рост через разумный `maxRows`, чтобы модалка не ломалась
+
+Почему это лучше project-wise:
+
+- сохраняет плотность формы
+- не требует отдельного custom expander control
+- остается в рамках привычного modal edit flow проекта
+
+Reference:
+
+- [long-structure-field-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad/docs/assets/long-structure-field-reference.png)
+
+Clarification:
+
+- reference screenshot is a legacy anti-example from the old module, not a target layout to reproduce
+- for the new UI, the requirement is the follow-up behavior itself:
+  - compact field by default
+  - automatic expansion on focus
+  - modal-safe autosize behavior consistent with the current project UI
+
 ## 9. Testing plan
 
 ## 9.1. Unit level
@@ -479,6 +573,7 @@ Mobile:
 - create/edit payload mapping
 - archive/delete flows
 - history rendering adapters
+- long-text field state handling where UI depends on compact vs expanded behavior
 
 ## 9.3. E2E level
 
@@ -515,6 +610,12 @@ Mitigation:
 
 - explicitly define category ownership before full FE build
 - accept separate physical sources if one canonical UX/API is enough
+
+Дополнение для production family:
+
+- не допускать отдельную recipe-category ветку рядом с semi-finished categories
+- recipes and semi-finished must share one production category model
+- category read contracts should stay source-aware so FE does not collapse unlike category spaces into one broken id namespace
 
 ### Risk 3. Delete semantics become unsafe
 
@@ -565,11 +666,10 @@ Mitigation:
 1. Lock docs and naming.
 2. Build backend shell and bootstrap.
 3. Build Units and Categories first.
-4. Build Warehouse items.
-5. Build Recipes/Semi-finished together.
-6. Build Site items.
-7. Build unified Archive/History.
-8. Run migration cleanup and test hardening.
+4. Build Recipes/Semi-finished together.
+5. Build Site items.
+6. Build unified Archive/History.
+7. Run migration cleanup and test hardening.
 
 Это дает раннюю бизнес-ценность и не тащит самый сложный `site-items` slice в начало.
 
