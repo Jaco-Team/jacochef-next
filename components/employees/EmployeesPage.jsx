@@ -43,7 +43,12 @@ import "dayjs/locale/ru";
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
-import { api_laravel_local, api_laravel_local_upload } from "@/src/api_new";
+import {
+  api_laravel,
+  api_laravel_local,
+  api_laravel_local_upload,
+  api_laravel_upload,
+} from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 dayjs.locale("ru");
@@ -845,7 +850,7 @@ export default function EmployeesPage() {
     setIsLoad(true);
 
     try {
-      const res = await api_laravel_local(MODULE, method, data);
+      const res = await api_laravel(MODULE, method, data);
       return unwrapResponse(res);
     } catch (e) {
       showAlert(false, "Не удалось выполнить запрос");
@@ -859,7 +864,7 @@ export default function EmployeesPage() {
     setIsLoad(true);
 
     try {
-      const res = await api_laravel_local_upload(MODULE, method, file, data);
+      const res = await api_laravel_upload(MODULE, method, file, data);
       return unwrapResponse(res);
     } catch (e) {
       showAlert(false, "Не удалось загрузить файл");

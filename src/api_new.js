@@ -167,3 +167,43 @@ export function api_laravel_local_upload(module = "", method = "", file, data = 
       }
     });
 }
+
+export function api_laravel_upload(module = "", method = "", file, data = {}, dop_type = {}) {
+  const apiUrl = "https://apichef.jacochef.ru/api/";
+  const url = `${apiUrl.replace(/\/$/, "")}/${module}/${method}`;
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("method", method);
+  formData.append("module", module);
+  formData.append("version", 2);
+  formData.append("login", localStorage.getItem("token"));
+  formData.append("data", JSON.stringify(data));
+
+  return axios
+    .post(url, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      ...dop_type,
+    })
+    .then((response) => {
+      if (typeof response.data == "string") {
+        return {
+          st: false,
+          text: response.data,
+        };
+      }
+
+      return response.data;
+    })
+    .catch((error) => {
+      console.log(error?.response?.status);
+
+      if (error?.response?.status == 401) {
+        window.location = "/auth";
+      }
+
+      if (error?.response?.status == 403) {
+        window.location = "/";
+      }
+    });
+}
