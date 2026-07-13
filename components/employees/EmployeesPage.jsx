@@ -43,12 +43,8 @@ import "dayjs/locale/ru";
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
-import {
-  api_laravel,
-  api_laravel_local,
-  api_laravel_local_upload,
-  api_laravel_upload,
-} from "@/src/api_new";
+import EmployeeHierarchyTab from "@/components/employees/EmployeeHierarchyTab";
+import { api_laravel, api_laravel_local, api_laravel_upload } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 dayjs.locale("ru");
@@ -529,6 +525,7 @@ const getEmployeePermissions = (access) => {
     employmentDate: field("employment_date"),
     authCode: field("auth_code"),
     position: field("position"),
+    positionHierarchy: field("position_hierarchy"),
     cafes: field("cafes"),
     absences: field("absences"),
     healthBook: field("health_book"),
@@ -821,6 +818,7 @@ export default function EmployeesPage() {
   const [employeeDialog, setEmployeeDialog] = useState(false);
   const [employee, setEmployee] = useState(null);
   const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
+  const [pageTab, setPageTab] = useState("employees");
   const [activeTab, setActiveTab] = useState("basic");
   const [newDialog, setNewDialog] = useState(false);
   const [newEmployee, setNewEmployee] = useState(emptyEmployee);
@@ -833,6 +831,13 @@ export default function EmployeesPage() {
   const [clothName, setClothName] = useState("");
   const [confirm, setConfirm] = useState(null);
   const permissions = useMemo(() => getEmployeePermissions(access), [access]);
+  const canViewHierarchy = permissions.positionHierarchy.view;
+
+  useEffect(() => {
+    if (pageTab === "hierarchy" && !canViewHierarchy) {
+      setPageTab("employees");
+    }
+  }, [canViewHierarchy, pageTab]);
 
   useEffect(() => {
     filtersRef.current = filters;
@@ -1752,262 +1757,292 @@ export default function EmployeesPage() {
         </Grid>
 
         <Grid size={12}>
-          <Paper
-            variant="outlined"
-            sx={{ ...compactPaperSx, p: 1.5 }}
+          <Tabs
+            value={canViewHierarchy ? pageTab : "employees"}
+            onChange={(_, value) => setPageTab(value)}
+            sx={{ borderBottom: 1, borderColor: "divider" }}
           >
-            <Grid
-              container
-              spacing={1.5}
-              alignItems="center"
-            >
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <CityCafeAutocomplete2
-                  label="Кафе"
-                  placeholder="Выберите кафе"
-                  withAll
-                  withAllSelected
-                  withOrganizationMode={false}
-                  compact
-                  points={cafeFilterPoints}
-                  value={filters.points}
-                  onChange={(value) =>
-                    handleFilterDraftChange({
-                      city: getCityIdFromPoints(value),
-                      points: value || [],
-                    })
-                  }
-                  onBlur={() => applyFilters()}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <MyAutocomplite
-                  label="Должность"
-                  multiple={false}
-                  data={refs.apps}
-                  value={filters.app}
-                  func={(_, value) => handleFilterDraftChange({ app: value })}
-                  onBlur={() => applyFilters()}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <MyTextInput
-                  label="Поиск по ФИО или телефону"
-                  placeholder="Иванов или +7911..."
-                  value={filters.search}
-                  func={(event) => handleFilterDraftChange({ search: event.target.value })}
-                  onBlur={(event) =>
-                    applyFilters({ ...filtersRef.current, search: event.target.value })
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      applyFilters({ ...filtersRef.current, search: event.target.value });
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <MyAutocomplite
-                  label="Оф. статус"
-                  multiple={false}
-                  data={officialFilters}
-                  value={filters.official}
-                  func={(_, value) =>
-                    handleFilterDraftChange({ official: value || officialFilters[0] })
-                  }
-                  onBlur={() => applyFilters()}
-                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
-                  disableClearable
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <MyAutocomplite
-                  label="Медкнижка"
-                  multiple={false}
-                  data={healthBookFilters}
-                  value={filters.healthBook}
-                  func={(_, value) =>
-                    handleFilterDraftChange({ healthBook: value || healthBookFilters[0] })
-                  }
-                  onBlur={() => applyFilters()}
-                  isOptionEqualToValue={(option, value) => option?.id === value?.id}
-                  disableClearable
-                />
-              </Grid>
-
-              <Grid size={12}>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1}
-                  alignItems={{ xs: "stretch", sm: "center" }}
-                  justifyContent="flex-end"
-                >
-                  <Typography
-                    sx={{
-                      mr: { sm: "auto" },
-                      fontSize: 13,
-                      color: "text.secondary",
-                      alignSelf: { xs: "flex-start", sm: "center" },
-                    }}
-                  >
-                    Найдено: {totalRows || employees.length}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<RefreshIcon />}
-                    onClick={() => applyFilters()}
-                    sx={{ whiteSpace: "nowrap" }}
-                  >
-                    Обновить
-                  </Button>
-                  {permissions.addEmployee ? (
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={openCreateDialog}
-                      sx={{ whiteSpace: "nowrap" }}
-                    >
-                      Добавить сотрудника
-                    </Button>
-                  ) : null}
-                </Stack>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-
-        <Grid size={12}>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, md: 6 }}>
-              <StatCard title="Стаж сотрудников">{renderExperienceStats()}</StatCard>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <StatCard title="Трудоустройство">{renderEmploymentStats()}</StatCard>
-            </Grid>
-          </Grid>
-        </Grid>
-
-        <Grid
-          size={12}
-          sx={{ mt: 2 }}
-        >
-          <StatCard title="Ситуация по кафе">{renderCafeStats()}</StatCard>
-        </Grid>
-
-        <Grid
-          size={12}
-          sx={{ mt: 2 }}
-        >
-          <Paper
-            variant="outlined"
-            sx={{ ...compactPaperSx, overflow: "hidden", mb: 4 }}
-          >
-            <TableContainer sx={{ overflowX: "auto" }}>
-              <Table
-                size="small"
-                sx={{ minWidth: 1180 }}
-              >
-                <TableHead>
-                  <TableRow sx={tableHeaderSx}>
-                    <TableCell>ФИО</TableCell>
-                    <TableCell>Телефон</TableCell>
-                    <TableCell>Должность</TableCell>
-                    <TableCell>Кафе</TableCell>
-                    <TableCell>Принят</TableCell>
-                    <TableCell>Стаж</TableCell>
-                    <TableCell align="center">Оф.</TableCell>
-                    <TableCell>Медкнижка</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {visibleEmployees.map((item) => {
-                    const health = getHealthStatusMeta(item);
-
-                    return (
-                      <TableRow
-                        key={item.id}
-                        hover
-                        onClick={() => openEmployee(item.id)}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <TableCell>
-                          <Stack
-                            direction="row"
-                            spacing={1.25}
-                            alignItems="center"
-                          >
-                            <EmployeeAvatar employee={item} />
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography
-                                sx={{ fontWeight: 800, maxWidth: 240 }}
-                                noWrap
-                              >
-                                {item.displayName}
-                              </Typography>
-                              {String(item.is_active) === "0" ? (
-                                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                                  уволен
-                                </Typography>
-                              ) : null}
-                            </Box>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>{item.phone || "—"}</TableCell>
-                        <TableCell>{item.app_name || "—"}</TableCell>
-                        <TableCell>{item.point || "—"}</TableCell>
-                        <TableCell>{formatDate(item.date_registration)}</TableCell>
-                        <TableCell>{item.exp || "—"}</TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            size="small"
-                            label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
-                            color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
-                            sx={{ fontWeight: 800 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={health.label}
-                            color={health.color}
-                            sx={{ fontWeight: 800 }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {!visibleEmployees.length ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        align="center"
-                        sx={{ py: 5, color: "text.secondary" }}
-                      >
-                        Сотрудники не найдены
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              component="div"
-              count={totalRows || employees.length}
-              page={page}
-              rowsPerPage={rows}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsChange}
-              labelRowsPerPage="Строк на странице"
-              rowsPerPageOptions={[25, 50, 100, { value: -1, label: "Все" }]}
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}–${to} из ${count !== -1 ? count : `больше, чем ${to}`}`
-              }
+            <Tab
+              value="employees"
+              label="Сотрудники"
             />
-          </Paper>
+            {canViewHierarchy ? (
+              <Tab
+                value="hierarchy"
+                label="Иерархия найма"
+              />
+            ) : null}
+          </Tabs>
         </Grid>
+
+        {pageTab !== "hierarchy" || !canViewHierarchy ? (
+          <>
+            <Grid size={12}>
+              <Paper
+                variant="outlined"
+                sx={{ ...compactPaperSx, p: 1.5 }}
+              >
+                <Grid
+                  container
+                  spacing={1.5}
+                  alignItems="center"
+                >
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <CityCafeAutocomplete2
+                      label="Кафе"
+                      placeholder="Выберите кафе"
+                      withAll
+                      withAllSelected
+                      withOrganizationMode={false}
+                      compact
+                      points={cafeFilterPoints}
+                      value={filters.points}
+                      onChange={(value) =>
+                        handleFilterDraftChange({
+                          city: getCityIdFromPoints(value),
+                          points: value || [],
+                        })
+                      }
+                      onBlur={() => applyFilters()}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <MyAutocomplite
+                      label="Должность"
+                      multiple={false}
+                      data={refs.apps}
+                      value={filters.app}
+                      func={(_, value) => handleFilterDraftChange({ app: value })}
+                      onBlur={() => applyFilters()}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <MyTextInput
+                      label="Поиск по ФИО или телефону"
+                      placeholder="Иванов или +7911..."
+                      value={filters.search}
+                      func={(event) => handleFilterDraftChange({ search: event.target.value })}
+                      onBlur={(event) =>
+                        applyFilters({ ...filtersRef.current, search: event.target.value })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          applyFilters({ ...filtersRef.current, search: event.target.value });
+                        }
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <MyAutocomplite
+                      label="Оф. статус"
+                      multiple={false}
+                      data={officialFilters}
+                      value={filters.official}
+                      func={(_, value) =>
+                        handleFilterDraftChange({ official: value || officialFilters[0] })
+                      }
+                      onBlur={() => applyFilters()}
+                      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                      disableClearable
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <MyAutocomplite
+                      label="Медкнижка"
+                      multiple={false}
+                      data={healthBookFilters}
+                      value={filters.healthBook}
+                      func={(_, value) =>
+                        handleFilterDraftChange({ healthBook: value || healthBookFilters[0] })
+                      }
+                      onBlur={() => applyFilters()}
+                      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                      disableClearable
+                    />
+                  </Grid>
+
+                  <Grid size={12}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                      alignItems={{ xs: "stretch", sm: "center" }}
+                      justifyContent="flex-end"
+                    >
+                      <Typography
+                        sx={{
+                          mr: { sm: "auto" },
+                          fontSize: 13,
+                          color: "text.secondary",
+                          alignSelf: { xs: "flex-start", sm: "center" },
+                        }}
+                      >
+                        Найдено: {totalRows || employees.length}
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        startIcon={<RefreshIcon />}
+                        onClick={() => applyFilters()}
+                        sx={{ whiteSpace: "nowrap" }}
+                      >
+                        Обновить
+                      </Button>
+                      {permissions.addEmployee ? (
+                        <Button
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          onClick={openCreateDialog}
+                          sx={{ whiteSpace: "nowrap" }}
+                        >
+                          Добавить сотрудника
+                        </Button>
+                      ) : null}
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+
+            <Grid size={12}>
+              <Grid
+                container
+                spacing={2}
+              >
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <StatCard title="Стаж сотрудников">{renderExperienceStats()}</StatCard>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <StatCard title="Трудоустройство">{renderEmploymentStats()}</StatCard>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{ mt: 2 }}
+            >
+              <StatCard title="Ситуация по кафе">{renderCafeStats()}</StatCard>
+            </Grid>
+
+            <Grid
+              size={12}
+              sx={{ mt: 2 }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{ ...compactPaperSx, overflow: "hidden", mb: 4 }}
+              >
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table
+                    size="small"
+                    sx={{ minWidth: 1180 }}
+                  >
+                    <TableHead>
+                      <TableRow sx={tableHeaderSx}>
+                        <TableCell>ФИО</TableCell>
+                        <TableCell>Телефон</TableCell>
+                        <TableCell>Должность</TableCell>
+                        <TableCell>Кафе</TableCell>
+                        <TableCell>Принят</TableCell>
+                        <TableCell>Стаж</TableCell>
+                        <TableCell align="center">Оф.</TableCell>
+                        <TableCell>Медкнижка</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {visibleEmployees.map((item) => {
+                        const health = getHealthStatusMeta(item);
+
+                        return (
+                          <TableRow
+                            key={item.id}
+                            hover
+                            onClick={() => openEmployee(item.id)}
+                            sx={{ cursor: "pointer" }}
+                          >
+                            <TableCell>
+                              <Stack
+                                direction="row"
+                                spacing={1.25}
+                                alignItems="center"
+                              >
+                                <EmployeeAvatar employee={item} />
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Typography
+                                    sx={{ fontWeight: 800, maxWidth: 240 }}
+                                    noWrap
+                                  >
+                                    {item.displayName}
+                                  </Typography>
+                                  {String(item.is_active) === "0" ? (
+                                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                                      уволен
+                                    </Typography>
+                                  ) : null}
+                                </Box>
+                              </Stack>
+                            </TableCell>
+                            <TableCell>{item.phone || "—"}</TableCell>
+                            <TableCell>{item.app_name || "—"}</TableCell>
+                            <TableCell>{item.point || "—"}</TableCell>
+                            <TableCell>{formatDate(item.date_registration)}</TableCell>
+                            <TableCell>{item.exp || "—"}</TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                size="small"
+                                label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
+                                color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
+                                sx={{ fontWeight: 800 }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                size="small"
+                                label={health.label}
+                                color={health.color}
+                                sx={{ fontWeight: 800 }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {!visibleEmployees.length ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={8}
+                            align="center"
+                            sx={{ py: 5, color: "text.secondary" }}
+                          >
+                            Сотрудники не найдены
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={totalRows || employees.length}
+                  page={page}
+                  rowsPerPage={rows}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsChange}
+                  labelRowsPerPage="Строк на странице"
+                  rowsPerPageOptions={[25, 50, 100, { value: -1, label: "Все" }]}
+                  labelDisplayedRows={({ from, to, count }) =>
+                    `${from}–${to} из ${count !== -1 ? count : `больше, чем ${to}`}`
+                  }
+                />
+              </Paper>
+            </Grid>
+          </>
+        ) : (
+          <Grid size={12}>
+            <EmployeeHierarchyTab
+              request={getData}
+              showAlert={showAlert}
+            />
+          </Grid>
+        )}
       </Grid>
 
       <EmployeeDialog
