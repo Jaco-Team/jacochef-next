@@ -8,6 +8,9 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/blob-report
 
 # next.js
 /.next/
@@ -45,4 +48,11 @@ next-env.d.ts
 
 # AI
 .codex
-./.codex
+.codex/
+.codex-artifacts/
+tmp-staff-*
+*.network-request
+*.network-response
+.playwright-mcp/
+.cursor
+.cursor*

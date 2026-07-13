@@ -29,7 +29,7 @@ export function MyTimePicker(props) {
       type="time"
       disabled={props.disabled}
       value={props.func ? (props.value ?? "") : thisVal}
-      sx={{ width: "100%" }}
+      sx={{ width: "100%", ...(props.sx || {}) }}
       onChange={props.func ? props.func : onChange}
       onBlur={props.onBlur ? onBlur : undefined}
       step={600}

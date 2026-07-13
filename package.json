@@ -3,15 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,yml,yaml,css,scss,html,mjs,cjs}": "prettier --write"
+    "*.{js,jsx,mjs,cjs}": [
+      "node scripts/check-js-syntax.js --",
+      "prettier --write"
+    ],
+    "*.{ts,tsx,json,md,yml,yaml,css,scss,html}": "prettier --write"
   },
   "scripts": {
     "postinstall": "node scripts/copy-tinymce.js",
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
+    "test": "node scripts/test.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "check:syntax": "node scripts/check-js-syntax.js",
     "format": "prettier --write .",
     "prepare": "husky",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
@@ -64,6 +70,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/dropzone": "^5.7.9",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.2.17",

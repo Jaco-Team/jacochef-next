@@ -16,6 +16,7 @@
 
 - Read the target page/component before editing.
 - Use `apply_patch` for manual code edits.
+- Save temporary screenshots, browser snapshots, network dumps, and other agent-generated inspection artifacts under `.codex-artifacts/`; never put them in the repo root.
 - Read the surrounding module flow before changing behavior that crosses tabs, modals, or shared hooks/stores.
 - Prefer focused changes in existing files over broad refactors.
 - Do not remove existing behavior unless explicitly requested.
@@ -30,11 +31,13 @@
 
 ## Formatting And Checks
 
-- Do not run `prettier`, `eslint`, `lint`, or similar formatting/check commands unless the user explicitly asks.
-- Assume formatting/check hooks are handled by husky or the user's normal workflow.
+- Pre-commit runs JS/JSX syntax check (`scripts/check-js-syntax.js`) before prettier.
+- After editing any `.js`, `.jsx`, `.mjs`, or `.cjs` file, run `npm run check:syntax -- <file>` on touched files before finishing.
+- Do not run full-repo `prettier`, `eslint`, or `lint` unless the user explicitly asks.
+- Assume formatting hooks are handled by husky for committed files.
 - Keep code style consistent with the surrounding file.
 - Avoid adding new dependencies unless required.
-- Prefer fast, local verification such as syntax-aware review or targeted checks.
+- Prefer fast, local verification such as syntax check on touched files.
 - Do not do broad cleanup unrelated to the task.
 
 ## Output
@@ -54,6 +57,7 @@
 
 ## UI And Design
 
+- Before reporting a UI task done, sanity-check against sibling controls: typography, height, radius, border, spacing. See `.cursor/rules/ui-sanity-check.mdc`.
 - If the user provides a Figma URL, match Figma closely.
 - Use existing MUI patterns already present in the repo.
 - Keep desktop and mobile behavior aligned when both versions exist.
@@ -97,7 +101,7 @@ Always produce senior-level code: avoid inventing field names or making assumpti
 - Prefer clear, minimal, and well-tested transformations over ad-hoc, speculative code.
 - Prefer senior-level solutions: strong structure, clean abstractions, and maintainable logic without overengineering or spaghetti.
 - Keep names aligned with existing domain terminology.
-- Fast syntax checks, no extra formatting.
+- Fast syntax checks on touched JS/JSX files are mandatory; no extra formatting.
 - Do not silently change behavior outside the stated task.
 - If an assumption would materially affect behavior, stop and ask instead of guessing.
 

@@ -12,6 +12,7 @@ import {
   TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const UnifiedSelectPopper = forwardRef(function UnifiedSelectPopper(popperProps, ref) {
@@ -95,9 +96,8 @@ export function MySelect(props) {
 
   // add None option at the top if needed
   // TODO: this behavior is counterintuitive, swap
-  if (props.is_none !== false) {
-    normalizedData.unshift({ id: "none", name: "None" });
-  }
+  const dataWithNone =
+    props.is_none !== false ? [{ id: "none", name: "None" }, ...normalizedData] : normalizedData;
 
   // normalize value
   const normalizedValue = props.multiple
@@ -117,7 +117,7 @@ export function MySelect(props) {
         .map((item) => item.name)
         .join(", ");
     } else {
-      const sel = normalizedData.find((i) => i.id === normalizedValue);
+      const sel = dataWithNone.find((i) => i.id === normalizedValue);
       return sel ? sel.name : "None";
     }
   };
@@ -378,8 +378,8 @@ export function MySelect(props) {
   };
 
   const unifiedValue = props.multiple
-    ? normalizedData.filter((item) => normalizedValue.includes(item.id))
-    : (normalizedData.find((item) => item.id === normalizedValue) ?? null);
+    ? dataWithNone.filter((item) => normalizedValue.includes(item.id))
+    : (dataWithNone.find((item) => item.id === normalizedValue) ?? null);
 
   if (isUnifiedPopup) {
     return (
@@ -389,7 +389,7 @@ export function MySelect(props) {
           style={props.style}
           disablePortal={props.disablePortal ?? false}
           selectOnFocus={false}
-          options={normalizedData}
+          options={dataWithNone}
           value={unifiedValue}
           disabled={!!props.disabled}
           multiple={!!props.multiple}
@@ -424,16 +424,26 @@ export function MySelect(props) {
 
             props.func?.({ target: { value: nextValue } }, value);
           }}
-          renderOption={(optionProps, option) => (
+          renderOption={(optionProps, option, state) => (
             <li
               {...optionProps}
               key={option.id}
               style={{
                 ...optionProps.style,
                 color: option?.color || optionProps.style?.color,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
               }}
             >
-              {option.name}
+              <span>{option.name}</span>
+              {state.selected ? (
+                <CheckRoundedIcon
+                  fontSize="small"
+                  style={{ color: "#EE2737", flexShrink: 0 }}
+                />
+              ) : null}
             </li>
           )}
           renderInput={(params) => (
@@ -515,9 +525,9 @@ export function MySelect(props) {
             ...(props.MenuProps || {}),
           }}
         >
-          {normalizedData?.map((item, key) => (
+          {dataWithNone?.map((item) => (
             <MenuItem
-              key={key}
+              key={item.id}
               value={item.id}
               sx={{ color: item?.color ? item.color : null }}
             >

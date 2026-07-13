@@ -1,0 +1,170 @@
+import { Box, Grid, useMediaQuery, useTheme } from "@mui/material";
+import { V2Alert, V2BackdropLoader } from "@/ui/v2";
+import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
+import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
+import StaffScheduleFastActionsDialog from "./modals/StaffScheduleFastActionsDialog";
+import StaffScheduleMonthModal from "./modals/StaffScheduleMonthModal";
+import StaffScheduleErrorAppealDialog from "./modals/StaffScheduleErrorAppealDialog";
+import StaffScheduleSmenaModal from "./modals/StaffScheduleSmenaModal";
+import StaffScheduleSummaryActionDialog from "./modals/StaffScheduleSummaryActionDialog";
+import useStaffSchedulePage from "./useStaffSchedulePage";
+import { PAGE_BOTTOM_PADDING } from "./staffScheduleConstants";
+import StaffScheduleErrorsSection from "./sections/StaffScheduleErrorsSection";
+import StaffScheduleHeaderSection from "./sections/StaffScheduleHeaderSection";
+import StaffScheduleMobileScheduleControls from "./sections/StaffScheduleMobileScheduleControls";
+import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
+import StaffScheduleAccessTester from "./StaffScheduleAccessTester";
+
+export default function StaffSchedulePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const page = useStaffSchedulePage();
+
+  return (
+    <Box
+      className="v2-module"
+      sx={{ pb: PAGE_BOTTOM_PADDING, fontSize: 14 }}
+    >
+      <V2BackdropLoader open={page.isLoading} />
+
+      <Grid
+        container
+        spacing={2.5}
+        className="container_first_child"
+      >
+        <Grid
+          size={12}
+          sx={{ mb: 1 }}
+        >
+          <h1>{page.view.moduleName}</h1>
+        </Grid>
+
+        <Grid size={12}>
+          <StaffScheduleHeaderSection
+            page={page}
+            isMobile={isMobile}
+          />
+        </Grid>
+
+        {page.error ? (
+          <Grid size={12}>
+            <V2Alert severity="error">{page.error}</V2Alert>
+          </Grid>
+        ) : null}
+
+        {isMobile ? (
+          <Grid size={12}>
+            <StaffScheduleMobileScheduleControls
+              canCreateSmena={page.canManageSmena}
+              isCalendarHidden={page.isCalendarHidden}
+              onCalendarVisibilityChange={page.handleCalendarVisibilityChange}
+              useColors={page.colorMode !== "plain"}
+              onColorModeChange={page.handleColorModeChange}
+              onOpenCreateSmena={page.handleOpenCreateSmena}
+            />
+          </Grid>
+        ) : null}
+      </Grid>
+
+      <Grid
+        container
+        spacing={2.5}
+        sx={{ pt: 1 }}
+      >
+        <Grid size={12}>
+          <StaffScheduleTableSection
+            period={page.view.activePeriod}
+            rows={page.view.visibleRows}
+            shownShiftCount={page.view.shownShiftCount}
+            summaryColumns={page.view.summaryColumns}
+            access={page.access}
+            graphKind={page.effectiveGraphKind}
+            directorLevel={page.directorLevel}
+            periodBonusState={page.periodBonusState}
+            onOpenDay={page.handleOpenDayModal}
+            onOpenMonth={page.handleOpenMonthModal}
+            onOpenFastActions={page.handleOpenFastActions}
+            onOpenBulkFastActions={page.handleOpenBulkFastActions}
+            onOpenSelectedFastActions={page.handleOpenSelectedFastActions}
+            onOpenCreateSmena={page.handleOpenCreateSmena}
+            onOpenEditSmena={page.handleOpenEditSmena}
+            selectedRowIds={page.selectedRowIds}
+            onToggleRowSelection={page.handleToggleRowSelection}
+            onClearRowSelection={page.handleClearRowSelection}
+            collapsedShiftIds={page.collapsedShiftIds}
+            onToggleShiftCollapse={page.handleToggleShiftCollapse}
+            isCalendarHidden={page.isCalendarHidden}
+            onCalendarVisibilityChange={page.handleCalendarVisibilityChange}
+            colorMode={page.colorMode}
+            onColorModeChange={page.handleColorModeChange}
+            selectedPart={page.selectedPart}
+            onOpenSummaryAction={page.handleOpenSummaryAction}
+            onRemoveTeamBonusFromUser={page.handleRemoveTeamBonusFromUser}
+            isMobile={isMobile}
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <StaffScheduleErrorsSection
+            errors={page.view.activePeriod?.errors}
+            onOpenOrderError={page.handleOpenOrderError}
+            onOpenCamError={page.handleOpenCamError}
+          />
+        </Grid>
+      </Grid>
+
+      <StaffScheduleDayModal
+        modal={page.dayModal}
+        onClose={page.handleCloseDayModal}
+        onSave={page.handleSaveDayModal}
+      />
+      <StaffScheduleMonthModal
+        modal={page.monthModal}
+        onClose={page.handleCloseMonthModal}
+        onSave={page.handleSaveMonthModal}
+      />
+      <StaffScheduleSmenaModal
+        modal={page.smenaModal}
+        onClose={page.handleCloseSmenaModal}
+        onSave={page.handleSaveSmenaModal}
+        onRequestDelete={page.handleRequestDeleteSmena}
+      />
+      <StaffScheduleSummaryActionDialog
+        modal={page.summaryActionModal}
+        onClose={page.handleCloseSummaryAction}
+        onSave={page.handleSaveSummaryAction}
+      />
+      <StaffScheduleErrorAppealDialog
+        modal={page.errorAppealModal}
+        onClose={page.handleCloseErrorAppeal}
+        onSubmit={page.handleSaveErrorAppeal}
+      />
+      <page.ConfirmDialog />
+      <StaffScheduleFastActionsDialog
+        state={page.fastActions}
+        access={page.access}
+        selectedPart={page.selectedPart}
+        monthId={page.monthId}
+        pointLabel={page.pointLabel}
+        shiftLabel={page.fastActions.shiftLabel}
+        onClose={page.handleCloseFastActions}
+        onBackToHub={page.handleEditDialogBackToHub}
+        onOpenSchedule={page.handleEditDialogOpenSchedule}
+        onOpenShift={page.handleEditDialogOpenShift}
+        onOpenPoint={page.handleEditDialogOpenPoint}
+        onApplyScheduleDraft={page.handleEditDialogApplyScheduleDraft}
+        onApplyShiftDraft={page.handleEditDialogApplyShiftDraft}
+        onApplyPointDraft={page.handleEditDialogApplyPointDraft}
+        onSaveChanges={page.handleEditDialogSaveChanges}
+      />
+      <StaffScheduleExportDialog
+        dialog={page.exportDialog}
+        onClose={page.handleCloseExportDialog}
+        onDateStartChange={page.handleExportDateStartChange}
+        onDateEndChange={page.handleExportDateEndChange}
+        onDownload={page.handleExportDownload}
+      />
+      <StaffScheduleAccessTester page={page} />
+    </Box>
+  );
+}
