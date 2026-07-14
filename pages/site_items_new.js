@@ -49,6 +49,58 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
+const siteItemModalAccessFields = [
+  "name",
+  "short_name",
+  "art",
+  "date_start",
+  "date_end",
+  "category_id",
+  "stol",
+  "marc",
+  "dropzone",
+  "count_part",
+  "weight",
+  "protein",
+  "fat",
+  "carbohydrates",
+  "tmp_desc",
+  "marc_desc_full",
+  "marc_desc",
+  "tags",
+  "is_new",
+  "is_updated",
+  "is_hit",
+  "is_price",
+  "is_show",
+  "show_site",
+  "show_program",
+  "time_stage_1",
+  "time_stage_2",
+  "time_stage_3",
+  "stage",
+  "items",
+];
+const hasAccessValue = (value) => value === true || value === 1 || value === "1";
+const canViewAccess = (access, field, fallback = false) => {
+  const viewKey = `${field}_view`;
+  const editKey = `${field}_edit`;
+
+  if (!(viewKey in (access || {})) && !(editKey in (access || {}))) {
+    return fallback;
+  }
+
+  return hasAccessValue(access?.[viewKey]) || hasAccessValue(access?.[editKey]);
+};
+const canEditAccess = (access, field, fallback = false) => {
+  const editKey = `${field}_edit`;
+
+  if (!(editKey in (access || {}))) {
+    return fallback;
+  }
+
+  return hasAccessValue(access?.[editKey]);
+};
 const tableSortLabelSx = {
   fontWeight: 600,
   color: textPrimary,
@@ -1755,20 +1807,19 @@ class SiteItems_Modal_History_View_Mark extends React.Component {
                     >
                       <picture>
                         <source
-                          srcSet={`https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_276x276.jpg 138w, 
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_292x292.jpg 146w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_366x366.jpg 183w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_466x466.jpg 233w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_585x585.jpg 292w
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_732x732.jpg 366w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_1168x1168.jpg 584w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_1420x1420.jpg 760w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_2000x2000.jpg 1875w`}
+                          srcSet={`https://mainimg.jacofood.ru/${this.state.itemView.img_app}_276x276.jpg 138w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_292x292.jpg 146w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_366x366.jpg 183w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_466x466.jpg 233w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_585x585.jpg 292w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_732x732.jpg 366w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_1168x1168.jpg 584w,
+                                  https://mainimg.jacofood.ru/${this.state.itemView.img_app}_1420x1420.jpg 760w`}
                           sizes="(max-width=1439px) 233px, (max-width=1279px) 218px, 292px"
                         />
                         <img
                           style={{ maxHeight: 300 }}
-                          src={`https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_276x276.jpg`}
+                          src={`https://mainimg.jacofood.ru/${this.state.itemView.img_app}_276x276.jpg`}
                         />
                       </picture>
                     </Grid>
@@ -1980,7 +2031,7 @@ class SiteItems_Modal_Mark extends React.Component {
     }
 
     if (this.props.item !== prevProps.item) {
-      const tags = [{ id: -1, name: "Новый" }, ...this.props.item?.tags_all];
+      const tags = [{ id: -1, name: "Добавить новый тег" }, ...this.props.item?.tags_all];
       this.setState({
         date_start: this.props.item?.date_start ? formatDate(this.props.item.date_start) : null,
         date_end: this.props.item?.date_end ? formatDate(this.props.item.date_end) : null,
@@ -2697,6 +2748,7 @@ class SiteItems_Table extends React.Component {
         return value.toString().toLowerCase();
 
       case "date_start":
+      case "date_end":
       case "date_update":
         if (typeof value === "string") {
           const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -2738,41 +2790,53 @@ class SiteItems_Table extends React.Component {
     const { user_app, acces } = this.props;
     const { changeSort, saveSort, changeTableCheck, openItem, openHistoryItem } = this.props;
     const activityLabel = user_app === "technologist" ? "Активность" : "Сайт и КЦ";
+    const canOpenItem = siteItemModalAccessFields.some((field) => canViewAccess(acces, field));
+    const canEditItem = siteItemModalAccessFields.some((field) => canEditAccess(acces, field));
+    const canViewHistory = canViewAccess(acces, "history", true);
+    const canViewSort = user_app === "marketing" && canViewAccess(acces, "sort", true);
+    const canEditSort = user_app === "marketing" && canEditAccess(acces, "sort", true);
+    const canViewDateEnd = canViewAccess(acces, "date_end", true);
+    const canViewDateUpdate = canViewAccess(acces, "date_update", true);
     const mobileSortOptions = [
       {
         field: user_app === "technologist" ? "is_show" : "show_site",
         label: activityLabel,
-        visible: acces?.site_kc_edit || acces?.site_kc_view,
+        visible: canViewAccess(acces, "site_kc"),
       },
       {
         field: "show_program",
         label: "Касса",
-        visible: acces?.kassa_edit || acces?.kassa_view,
+        visible: canViewAccess(acces, "kassa"),
       },
       {
         field: "sort",
         label: "Сортировка",
-        visible: user_app === "marketing",
+        visible: canViewSort,
       },
       {
         field: "name",
         label: "Название",
-        visible: true,
+        visible: canViewAccess(acces, "name"),
       },
       {
         field: "date_start",
         label: "Действует с",
-        visible: true,
+        visible: canViewAccess(acces, "date_start"),
+      },
+      {
+        field: "date_end",
+        label: "Действует по",
+        visible: canViewDateEnd,
       },
       {
         field: "date_update",
         label: "Обновление",
-        visible: true,
+        visible: canViewDateUpdate,
       },
       {
         field: "art",
         label: "Код 1С",
-        visible: user_app === "technologist",
+        visible: user_app === "technologist" && canViewAccess(acces, "art"),
       },
     ].filter((option) => option.visible);
     const renderMobileSortButton = (field, label) => {
@@ -2806,7 +2870,7 @@ class SiteItems_Table extends React.Component {
         </Button>
       );
     };
-    const renderMobileStatusControl = (label, checked, onChange) => (
+    const renderMobileStatusControl = (label, checked, onChange, disabled) => (
       <Box
         key={label}
         sx={{
@@ -2835,6 +2899,7 @@ class SiteItems_Table extends React.Component {
         <Checkbox
           checked={checked}
           onChange={onChange}
+          disabled={disabled}
           size="small"
           sx={{
             p: 0.5,
@@ -3054,7 +3119,7 @@ class SiteItems_Table extends React.Component {
                         <TableRow sx={{ "& th": { fontWeight: "bold", color: textPrimary } }}>
                           <TableCell sx={{ width: "3%" }}>№</TableCell>
 
-                          {(acces?.site_kc_edit || acces?.site_kc_view) && (
+                          {canViewAccess(acces, "site_kc") && (
                             <TableCell sx={{ width: "8%" }}>
                               <TableSortLabel
                                 {...this.getSortProps(
@@ -3067,7 +3132,7 @@ class SiteItems_Table extends React.Component {
                             </TableCell>
                           )}
 
-                          {(acces?.kassa_edit || acces?.kassa_view) && (
+                          {canViewAccess(acces, "kassa") && (
                             <TableCell sx={{ width: "8%" }}>
                               <TableSortLabel
                                 {...this.getSortProps("show_program")}
@@ -3078,7 +3143,7 @@ class SiteItems_Table extends React.Component {
                             </TableCell>
                           )}
 
-                          {user_app === "marketing" && (
+                          {canViewSort && (
                             <TableCell sx={{ width: "9%" }}>
                               <TableSortLabel
                                 {...this.getSortProps("sort")}
@@ -3089,43 +3154,51 @@ class SiteItems_Table extends React.Component {
                             </TableCell>
                           )}
 
-                          <TableCell sx={{ width: user_app === "technologist" ? "18%" : "21%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("name")}
-                              sx={tableSortLabelSx}
-                            >
-                              Название
-                            </TableSortLabel>
-                          </TableCell>
+                          {canViewAccess(acces, "name") && (
+                            <TableCell sx={{ width: user_app === "technologist" ? "18%" : "21%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("name")}
+                                sx={tableSortLabelSx}
+                              >
+                                Название
+                              </TableSortLabel>
+                            </TableCell>
+                          )}
 
-                          <TableCell sx={{ width: "11%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("date_start")}
-                              sx={tableSortLabelSx}
-                            >
-                              Действует с
-                            </TableSortLabel>
-                          </TableCell>
+                          {canViewAccess(acces, "date_start") && (
+                            <TableCell sx={{ width: "11%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("date_start")}
+                                sx={tableSortLabelSx}
+                              >
+                                Действует с
+                              </TableSortLabel>
+                            </TableCell>
+                          )}
 
-                          <TableCell sx={{ width: "9%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("date_end")}
-                              sx={tableSortLabelSx}
-                            >
-                              по
-                            </TableSortLabel>
-                          </TableCell>
+                          {canViewDateEnd && (
+                            <TableCell sx={{ width: "9%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("date_end")}
+                                sx={tableSortLabelSx}
+                              >
+                                по
+                              </TableSortLabel>
+                            </TableCell>
+                          )}
 
-                          <TableCell sx={{ width: "12%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("date_update")}
-                              sx={tableSortLabelSx}
-                            >
-                              Обновление
-                            </TableSortLabel>
-                          </TableCell>
+                          {canViewDateUpdate && (
+                            <TableCell sx={{ width: "12%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("date_update")}
+                                sx={tableSortLabelSx}
+                              >
+                                Обновление
+                              </TableSortLabel>
+                            </TableCell>
+                          )}
 
-                          {user_app === "technologist" && (
+                          {user_app === "technologist" && canViewAccess(acces, "art") && (
                             <TableCell sx={{ width: "10%" }}>
                               <TableSortLabel
                                 {...this.getSortProps("art")}
@@ -3136,18 +3209,22 @@ class SiteItems_Table extends React.Component {
                             </TableCell>
                           )}
 
-                          <TableCell
-                            align="center"
-                            sx={{ width: "7%" }}
-                          >
-                            Редактирование
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{ width: "7%" }}
-                          >
-                            История изменений
-                          </TableCell>
+                          {canOpenItem && (
+                            <TableCell
+                              align="center"
+                              sx={{ width: "7%" }}
+                            >
+                              {canEditItem ? "Редактирование" : "Просмотр"}
+                            </TableCell>
+                          )}
+                          {canViewHistory && (
+                            <TableCell
+                              align="center"
+                              sx={{ width: "7%" }}
+                            >
+                              История изменений
+                            </TableCell>
+                          )}
                         </TableRow>
                       </TableHead>
 
@@ -3159,7 +3236,7 @@ class SiteItems_Table extends React.Component {
                                 {index + 1}
                               </TableCell>
 
-                              {(acces?.site_kc_edit || acces?.site_kc_view) && (
+                              {canViewAccess(acces, "site_kc") && (
                                 <TableCell align="center">
                                   <MyCheckBox
                                     label=""
@@ -3175,11 +3252,12 @@ class SiteItems_Table extends React.Component {
                                       item.id,
                                       user_app === "technologist" ? "is_show" : "show_site",
                                     )}
+                                    disabled={!canEditAccess(acces, "site_kc")}
                                   />
                                 </TableCell>
                               )}
 
-                              {(acces?.kassa_edit || acces?.kassa_view) && (
+                              {canViewAccess(acces, "kassa") && (
                                 <TableCell align="center">
                                   <MyCheckBox
                                     label=""
@@ -3191,65 +3269,86 @@ class SiteItems_Table extends React.Component {
                                       item.id,
                                       "show_program",
                                     )}
+                                    disabled={!canEditAccess(acces, "kassa")}
                                   />
                                 </TableCell>
                               )}
 
-                              {user_app === "marketing" && (
+                              {canViewSort && (
                                 <TableCell>
-                                  <MyTextInput
-                                    label=""
-                                    value={item.sort}
-                                    func={changeSort.bind(this, key, index)}
-                                    onBlur={saveSort.bind(this, item.id, "sort")}
-                                  />
+                                  {canEditSort ? (
+                                    <MyTextInput
+                                      label=""
+                                      value={item.sort}
+                                      func={changeSort.bind(this, key, index)}
+                                      onBlur={saveSort.bind(this, item.id, "sort")}
+                                    />
+                                  ) : (
+                                    item.sort
+                                  )}
                                 </TableCell>
                               )}
 
-                              <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
-                                {item.name}
-                              </TableCell>
-                              <TableCell>{item.date_start}</TableCell>
-                              <TableCell>{item.date_end}</TableCell>
-                              <TableCell>{item.date_update || item.update_item}</TableCell>
+                              {canViewAccess(acces, "name") && (
+                                <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
+                                  {item.name}
+                                </TableCell>
+                              )}
+                              {canViewAccess(acces, "date_start") && (
+                                <TableCell>{item.date_start}</TableCell>
+                              )}
+                              {canViewDateEnd && <TableCell>{item.date_end}</TableCell>}
+                              {canViewDateUpdate && (
+                                <TableCell>{item.date_update || item.update_item}</TableCell>
+                              )}
 
-                              {user_app === "technologist" && <TableCell>{item.art}</TableCell>}
+                              {user_app === "technologist" && canViewAccess(acces, "art") && (
+                                <TableCell>{item.art}</TableCell>
+                              )}
 
-                              <TableCell align="center">
-                                <IconButton
-                                  onClick={openItem.bind(this, item.id, item.name)}
-                                  sx={{
-                                    color: textSecondary,
-                                    border: `1px solid ${blockBorder}`,
-                                    borderRadius: 1.5,
-                                    backgroundColor: "#fff",
-                                    "&:hover": {
-                                      backgroundColor: blockBackground,
-                                      color: textPrimary,
-                                    },
-                                  }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              </TableCell>
+                              {canOpenItem && (
+                                <TableCell align="center">
+                                  <IconButton
+                                    onClick={openItem.bind(this, item.id, item.name)}
+                                    sx={{
+                                      color: textSecondary,
+                                      border: `1px solid ${blockBorder}`,
+                                      borderRadius: 1.5,
+                                      backgroundColor: "#fff",
+                                      "&:hover": {
+                                        backgroundColor: blockBackground,
+                                        color: textPrimary,
+                                      },
+                                    }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              )}
 
-                              <TableCell align="center">
-                                <IconButton
-                                  onClick={openHistoryItem.bind(this, item.id, "История изменений")}
-                                  sx={{
-                                    color: textSecondary,
-                                    border: `1px solid ${blockBorder}`,
-                                    borderRadius: 1.5,
-                                    backgroundColor: "#fff",
-                                    "&:hover": {
-                                      backgroundColor: blockBackground,
-                                      color: textPrimary,
-                                    },
-                                  }}
-                                >
-                                  <EditNoteIcon fontSize="small" />
-                                </IconButton>
-                              </TableCell>
+                              {canViewHistory && (
+                                <TableCell align="center">
+                                  <IconButton
+                                    onClick={openHistoryItem.bind(
+                                      this,
+                                      item.id,
+                                      "История изменений",
+                                    )}
+                                    sx={{
+                                      color: textSecondary,
+                                      border: `1px solid ${blockBorder}`,
+                                      borderRadius: 1.5,
+                                      backgroundColor: "#fff",
+                                      "&:hover": {
+                                        backgroundColor: blockBackground,
+                                        color: textPrimary,
+                                      },
+                                    }}
+                                  >
+                                    <EditNoteIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              )}
                             </TableRow>
                           ))}
                       </TableBody>
@@ -3265,6 +3364,7 @@ class SiteItems_Table extends React.Component {
                 >
                   <Box
                     sx={{
+                      display: mobileSortOptions.length ? "block" : "none",
                       px: 1.25,
                       py: 1.25,
                       borderRadius: 2.5,
@@ -3329,9 +3429,12 @@ class SiteItems_Table extends React.Component {
                                     wordBreak: "break-word",
                                   }}
                                 >
-                                  {index + 1}. {item.name || "Без названия"}
+                                  {index + 1}
+                                  {canViewAccess(acces, "name")
+                                    ? `. ${item.name || "Без названия"}`
+                                    : ""}
                                 </Typography>
-                                {user_app === "technologist" ? (
+                                {user_app === "technologist" && canViewAccess(acces, "art") ? (
                                   <Typography
                                     sx={{
                                       mt: 0.4,
@@ -3345,14 +3448,20 @@ class SiteItems_Table extends React.Component {
                                 ) : null}
                               </Box>
 
-                              {user_app === "marketing" ? (
+                              {canViewSort ? (
                                 <Box sx={{ width: 88, flexShrink: 0 }}>
-                                  <MyTextInput
-                                    label=""
-                                    value={item.sort}
-                                    func={changeSort.bind(this, key, index)}
-                                    onBlur={saveSort.bind(this, item.id, "sort")}
-                                  />
+                                  {canEditSort ? (
+                                    <MyTextInput
+                                      label=""
+                                      value={item.sort}
+                                      func={changeSort.bind(this, key, index)}
+                                      onBlur={saveSort.bind(this, item.id, "sort")}
+                                    />
+                                  ) : (
+                                    <Typography sx={{ color: textSecondary }}>
+                                      {item.sort ?? "—"}
+                                    </Typography>
+                                  )}
                                 </Box>
                               ) : null}
                             </Stack>
@@ -3364,19 +3473,22 @@ class SiteItems_Table extends React.Component {
                                 gap: 1.25,
                               }}
                             >
-                              {renderMobileInfoItem(
-                                "Действует с",
-                                formatSiteItemsTableDate(item.date_start),
-                              )}
-                              {renderMobileInfoItem("По", formatSiteItemsTableDate(item.date_end))}
-                              {renderMobileInfoItem(
-                                "Обновление",
-                                formatSiteItemsTableDate(
-                                  item.date_update || item.update_item,
+                              {canViewAccess(acces, "date_start") &&
+                                renderMobileInfoItem(
+                                  "Действует с",
+                                  formatSiteItemsTableDate(item.date_start),
+                                )}
+                              {canViewDateEnd &&
+                                renderMobileInfoItem("По", formatSiteItemsTableDate(item.date_end))}
+                              {canViewDateUpdate &&
+                                renderMobileInfoItem(
+                                  "Обновление",
+                                  formatSiteItemsTableDate(
+                                    item.date_update || item.update_item,
+                                    true,
+                                  ),
                                   true,
-                                ),
-                                true,
-                              )}
+                                )}
                             </Box>
 
                             <Stack
@@ -3385,7 +3497,7 @@ class SiteItems_Table extends React.Component {
                               useFlexGap
                               gap={0.75}
                             >
-                              {(acces?.site_kc_edit || acces?.site_kc_view) &&
+                              {canViewAccess(acces, "site_kc") &&
                                 renderMobileStatusControl(
                                   activityLabel,
                                   parseInt(
@@ -3398,37 +3510,49 @@ class SiteItems_Table extends React.Component {
                                     item.id,
                                     user_app === "technologist" ? "is_show" : "show_site",
                                   ),
+                                  !canEditAccess(acces, "site_kc"),
                                 )}
 
-                              {(acces?.kassa_edit || acces?.kassa_view) &&
+                              {canViewAccess(acces, "kassa") &&
                                 renderMobileStatusControl(
                                   "Касса",
                                   parseInt(item.show_program) === 1,
                                   changeTableCheck.bind(this, key, index, item.id, "show_program"),
+                                  !canEditAccess(acces, "kassa"),
                                 )}
                             </Stack>
 
-                            <Stack
-                              direction="row"
-                              spacing={1}
-                            >
-                              <Button
-                                variant="outlined"
-                                startIcon={<EditIcon fontSize="small" />}
-                                onClick={openItem.bind(this, item.id, item.name)}
-                                sx={actionButtonSx}
+                            {(canOpenItem || canViewHistory) && (
+                              <Stack
+                                direction="row"
+                                spacing={1}
                               >
-                                Изменить
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                startIcon={<EditNoteIcon fontSize="small" />}
-                                onClick={openHistoryItem.bind(this, item.id, "История изменений")}
-                                sx={actionButtonSx}
-                              >
-                                История
-                              </Button>
-                            </Stack>
+                                {canOpenItem && (
+                                  <Button
+                                    variant="outlined"
+                                    startIcon={<EditIcon fontSize="small" />}
+                                    onClick={openItem.bind(this, item.id, item.name)}
+                                    sx={actionButtonSx}
+                                  >
+                                    {canEditItem ? "Изменить" : "Открыть"}
+                                  </Button>
+                                )}
+                                {canViewHistory && (
+                                  <Button
+                                    variant="outlined"
+                                    startIcon={<EditNoteIcon fontSize="small" />}
+                                    onClick={openHistoryItem.bind(
+                                      this,
+                                      item.id,
+                                      "История изменений",
+                                    )}
+                                    sx={actionButtonSx}
+                                  >
+                                    История
+                                  </Button>
+                                )}
+                              </Stack>
+                            )}
                           </Stack>
                         </Box>
                       ))}
@@ -3513,11 +3637,9 @@ class SiteItems_ extends React.Component {
     let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
-        setTimeout(() => {
-          this.setState({
-            is_load: false,
-          });
-        }, 750);
+        this.setState({
+          is_load: false,
+        });
       });
 
     return res;
@@ -3547,6 +3669,10 @@ class SiteItems_ extends React.Component {
   }
 
   async openItemNew(method) {
+    if (!hasAccessValue(this.state.acces?.new_item_access)) {
+      return;
+    }
+
     this.handleResize();
 
     let res = await this.getData("get_all_for_new_tech");
@@ -3572,6 +3698,10 @@ class SiteItems_ extends React.Component {
   }
 
   async openItemTech(id, method) {
+    if (!siteItemModalAccessFields.some((field) => canViewAccess(this.state.acces, field))) {
+      return;
+    }
+
     this.handleResize();
 
     const data = {
@@ -3580,74 +3710,35 @@ class SiteItems_ extends React.Component {
 
     const res = await this.getData("get_one_tech", data);
 
-    res.items_stage.stage_1.map((it) => {
-      let value;
+    const stageOptionsByKey = new Map(
+      (res.items_stage?.all || []).map((item) => [`${item.type}:${item.id}`, item]),
+    );
 
-      if (it.type === "rec") {
-        value = res.items_stage.all.find(
-          (item) => item.type === "rec" && parseInt(item.id) === parseInt(it.rec_id),
-        );
-      } else {
-        value = res.items_stage.all.find(
-          (item) => item.type === "pf" && parseInt(item.id) === parseInt(it.pf_id),
-        );
-      }
+    ["stage_1", "stage_2", "stage_3"].forEach((stage) => {
+      res.items_stage[stage] = (res.items_stage?.[stage] || []).map((item) => {
+        const itemId = item.type === "rec" ? item.rec_id : item.pf_id;
+        const value = stageOptionsByKey.get(`${item.type}:${itemId}`);
 
-      if (value) {
-        it.type_id = { id: value.id, name: value.name };
-      } else {
-        it.type_id = { id: "", name: it.name };
-      }
-    });
-
-    res.items_stage.stage_2.map((it) => {
-      let value;
-
-      if (it.type === "rec") {
-        value = res.items_stage.all.find(
-          (item) => item.type === "rec" && parseInt(item.id) === parseInt(it.rec_id),
-        );
-      } else {
-        value = res.items_stage.all.find(
-          (item) => item.type === "pf" && parseInt(item.id) === parseInt(it.pf_id),
-        );
-      }
-
-      if (value) {
-        it.type_id = { id: value.id, name: value.name };
-      } else {
-        it.type_id = { id: "", name: it.name };
-      }
-    });
-
-    res.items_stage.stage_3.map((it) => {
-      let value;
-
-      if (it.type === "rec") {
-        value = res.items_stage.all.find(
-          (item) => item.type === "rec" && parseInt(item.id) === parseInt(it.rec_id),
-        );
-      } else {
-        value = res.items_stage.all.find(
-          (item) => item.type === "pf" && parseInt(item.id) === parseInt(it.pf_id),
-        );
-      }
-
-      if (value) {
-        it.type_id = { id: value.id, name: value.name };
-      } else {
-        it.type_id = { id: "", name: it.name };
-      }
+        return {
+          ...item,
+          type_id: value ? { id: value.id, name: value.name } : { id: "", name: item.name },
+        };
+      });
     });
 
     res.items_stage.not_stage = [];
 
-    res.item_items.this_items.map((it) => {
-      const value = res.item_items.all_items.find(
-        (item) => parseInt(item.id) === parseInt(it.item_id),
-      );
-      it.item_id = { id: value.id, name: value.name };
-      return it;
+    const itemOptionsById = new Map(
+      (res.item_items?.all_items || []).map((item) => [String(item.id), item]),
+    );
+    res.item_items.this_items = (res.item_items?.this_items || []).map((item) => {
+      const currentItemId = typeof item.item_id === "object" ? item.item_id?.id : item.item_id;
+      const value = itemOptionsById.get(String(currentItemId));
+
+      return {
+        ...item,
+        item_id: value ? { id: value.id, name: value.name } : { id: "", name: item.name },
+      };
     });
 
     const stages = [
@@ -3686,6 +3777,10 @@ class SiteItems_ extends React.Component {
   }
 
   async updateVK() {
+    if (!hasAccessValue(this.state.acces?.reload_vk_access)) {
+      return;
+    }
+
     this.setState({
       confirmDialog: false,
     });
@@ -3706,6 +3801,10 @@ class SiteItems_ extends React.Component {
   }
 
   async saveSort(id, type, event) {
+    if (!canEditAccess(this.state.acces, "sort", true)) {
+      return;
+    }
+
     const value = event.target.value;
 
     const data = {
@@ -3714,10 +3813,24 @@ class SiteItems_ extends React.Component {
       value,
     };
 
-    await this.getData("save_check", data);
+    const res = await this.getData("save_check", data);
+
+    if (res?.st === false) {
+      await this.update();
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res?.text || "Не удалось сохранить сортировку",
+      });
+    }
   }
 
   async changeTableCheck(key_cat, key_item, id, type, event, val) {
+    const accessKey = type === "show_program" ? "kassa" : "site_kc";
+    if (!canEditAccess(this.state.acces, accessKey)) {
+      return;
+    }
+
     const value = val ? 1 : 0;
 
     let cats = this.state.cats;
@@ -3736,9 +3849,14 @@ class SiteItems_ extends React.Component {
 
     const res = await this.getData("save_check", data);
 
-    // setTimeout(() => {
-    //   this.update();
-    // }, 300);
+    if (res?.st === false) {
+      await this.update();
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res?.text || "Не удалось сохранить изменение",
+      });
+    }
   }
 
   async saveTech(item_) {
@@ -3840,6 +3958,10 @@ class SiteItems_ extends React.Component {
   }
 
   async openHistoryMark(id, method) {
+    if (!canViewAccess(this.state.acces, "history", true)) {
+      return;
+    }
+
     this.handleResize();
 
     const data = {
@@ -3876,6 +3998,10 @@ class SiteItems_ extends React.Component {
   }
 
   async openHistoryTech(id, method, type) {
+    if (!canViewAccess(this.state.acces, "history", true)) {
+      return;
+    }
+
     this.handleResize();
 
     const data = {
@@ -3925,6 +4051,10 @@ class SiteItems_ extends React.Component {
   }
 
   async changeTags(chooseTag, name) {
+    if (!hasAccessValue(this.state.acces?.change_tag_access)) {
+      return;
+    }
+
     const res = await this.getData("edit_tag", { chooseTag, name });
     if (res.st) {
       this.setState({
@@ -4351,7 +4481,7 @@ class SiteItems_ extends React.Component {
                   flexWrap="wrap"
                   sx={{ width: { xs: "100%", lg: "auto" } }}
                 >
-                  {this.state.acces?.reload_vk_access ? (
+                  {hasAccessValue(this.state.acces?.reload_vk_access) ? (
                     <Button
                       onClick={() => this.setState({ confirmDialog: true })}
                       variant="contained"
@@ -4376,7 +4506,7 @@ class SiteItems_ extends React.Component {
                     </Button>
                   ) : null}
 
-                  {this.state.acces?.new_item_access ? (
+                  {hasAccessValue(this.state.acces?.new_item_access) ? (
                     <OutlineActionButton
                       onClick={this.openItemNew.bind(this, "Новое блюдо")}
                       sx={{ width: { xs: "100%", sm: "auto" } }}
@@ -4385,7 +4515,7 @@ class SiteItems_ extends React.Component {
                     </OutlineActionButton>
                   ) : null}
 
-                  {this.state.acces?.change_tag_access ? (
+                  {hasAccessValue(this.state.acces?.change_tag_access) ? (
                     <OutlineActionButton
                       onClick={() => this.setState({ modalEditTags: true })}
                       sx={{ width: { xs: "100%", sm: "auto" } }}

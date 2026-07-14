@@ -311,6 +311,7 @@ export function MyAutocomplite(props) {
         disabled={props.disabled || props.disabled === true ? true : false}
         id={props.id ?? null}
         options={props.data ?? []}
+        filterOptions={props.filterOptions}
         getOptionLabel={(option) => option?.name || ""}
         disableClearable={props.disableClearable}
         getOptionKey={resolveOptionKey}
