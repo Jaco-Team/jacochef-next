@@ -18,16 +18,138 @@ import {
   TableFooter,
   TableHead,
   TableRow,
+  Tooltip,
 } from "@mui/material";
 
 import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
 import dayjs from "dayjs";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, api_laravel_local } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import MyAlert from "@/ui/MyAlert";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import { Close } from "@mui/icons-material";
+
+const toCashNumber = (value) => Number(value) || 0;
+
+const getCashAnalytics = (value = {}) => {
+  const sdacha = toCashNumber(value.sdacha);
+  const giveByDate = toCashNumber(value.give_by_date);
+  const ostCash = toCashNumber(value.ost_cash);
+  const balanceChange =
+    value.balance_change === null || value.balance_change === undefined
+      ? sdacha - giveByDate
+      : toCashNumber(value.balance_change);
+  const openingCash =
+    value.opening_cash === null || value.opening_cash === undefined
+      ? ostCash - balanceChange
+      : toCashNumber(value.opening_cash);
+
+  return {
+    sdacha,
+    giveByDate,
+    ostCash,
+    openingCash,
+    balanceChange,
+    result:
+      ostCash < 0
+        ? "Пересдал"
+        : balanceChange > 0
+          ? "Остаток вырос"
+          : balanceChange < 0
+            ? "Остаток снизился"
+            : "Без изменений",
+  };
+};
+
+const getDayAnalytics = (data, date) => {
+  if (data.analytics?.[date]) {
+    return data.analytics[date];
+  }
+
+  return data.drivers.reduce(
+    (result, driver) => {
+      const analytics = getCashAnalytics(driver.values?.[date]);
+
+      if (analytics.balanceChange > 0) {
+        result.increased++;
+      } else if (analytics.balanceChange < 0) {
+        result.decreased++;
+      } else {
+        result.unchanged++;
+      }
+
+      if (analytics.ostCash < 0) {
+        result.overpaid++;
+      }
+
+      return result;
+    },
+    { increased: 0, decreased: 0, unchanged: 0, overpaid: 0 },
+  );
+};
+
+const formatSignedCash = (value) => {
+  const number = toCashNumber(value);
+  return number > 0 ? `+${number}` : number;
+};
+
+const getBalanceStatus = (value) => {
+  if (value < 0) return "Пересдал";
+  if (value > 0) return "На руках";
+  return "Закрыто";
+};
+
+const getDailyCashStatus = (data) => {
+  const discrepancy = data.ostCash - data.openingCash - data.balanceChange;
+
+  if (discrepancy !== 0) return `Расхождение ${formatSignedCash(discrepancy)}`;
+  if (data.ostCash < 0) return "Пересдал";
+  if (data.ostCash === 0) return "Закрыто";
+  if (data.sdacha > 0 && data.giveByDate === 0) return "Не сдавал";
+  if (data.giveByDate > 0 && data.ostCash > 0) return "Сдал частично";
+  if (data.balanceChange === 0) return "Остаток без изменений";
+  return data.balanceChange > 0 ? "Остаток вырос" : "Остаток снизился";
+};
+
+const formatCashDate = (value) =>
+  value && dayjs(value).isValid() ? dayjs(value).format("DD.MM.YYYY") : "—";
+
+const formatCashDateTime = (value) =>
+  value && dayjs(value).isValid() ? dayjs(value).format("DD.MM.YYYY HH:mm") : "—";
+
+const getDriverCashSummary = (driver, dates = []) => {
+  const firstDate = dates[0];
+  const lastDate = dates[dates.length - 1];
+  const firstValue = getCashAnalytics(driver?.values?.[firstDate]);
+  const lastValue = getCashAnalytics(driver?.values?.[lastDate]);
+  const fallbackChange = dates.reduce(
+    (sum, date) => sum + getCashAnalytics(driver?.values?.[date]).balanceChange,
+    0,
+  );
+
+  return {
+    opening_cash: driver?.summary?.opening_cash ?? firstValue.openingCash,
+    balance_change: driver?.summary?.balance_change ?? fallbackChange,
+    ost_cash: driver?.summary?.ost_cash ?? lastValue.ostCash,
+    balance_open_since: driver?.summary?.balance_open_since ?? null,
+    last_give_at: driver?.summary?.last_give_at ?? null,
+    last_give_amount: driver?.summary?.last_give_amount ?? 0,
+    last_cash_at: driver?.summary?.last_cash_at ?? null,
+    top_growth_days: driver?.summary?.top_growth_days ?? [],
+  };
+};
+
+const CashAnalyticsTooltip = ({ data }) => (
+  <div>
+    <div>Остаток на начало: {data.openingCash}</div>
+    <div>К сдаче: {data.sdacha}</div>
+    <div>Сдал: {data.giveByDate}</div>
+    <div>Изменение: {formatSignedCash(data.balanceChange)}</div>
+    <div>Остаток на конец: {data.ostCash}</div>
+    <div>Результат: {getDailyCashStatus(data)}</div>
+  </div>
+);
 
 class DriverStat_ extends React.Component {
   click = false;
@@ -52,6 +174,8 @@ class DriverStat_ extends React.Component {
 
       drive_stat_full: [],
       drive_stat_date: null,
+      driver_cash_by_date: null,
+      driverCashDetails: null,
       summ: 0,
       choose_driver_id: 0,
       check_cash: 0,
@@ -124,6 +248,7 @@ class DriverStat_ extends React.Component {
         show_dop: parseInt(res.user.kind) < 3 ? 1 : 0,
         drive_stat_full: res.drive_stat_full,
         drive_stat_date: res.stat_drive_date,
+        driver_cash_by_date: res.driver_cash_by_date ?? null,
       });
     } else {
       this.showAlert(res?.text || "Ошибка");
@@ -334,6 +459,16 @@ class DriverStat_ extends React.Component {
   };
 
   render() {
+    const driverCashDetails = this.state.driverCashDetails;
+    const driverCashSummary = driverCashDetails
+      ? getDriverCashSummary(driverCashDetails, this.state.driver_cash_by_date?.dates)
+      : null;
+    const driverCashDiscrepancy = driverCashSummary
+      ? toCashNumber(driverCashSummary.ost_cash) -
+        toCashNumber(driverCashSummary.opening_cash) -
+        toCashNumber(driverCashSummary.balance_change)
+      : 0;
+
     return (
       <>
         <Backdrop
@@ -537,6 +672,129 @@ class DriverStat_ extends React.Component {
             </Table>
           </DialogContent>
         </Dialog>
+        <Dialog
+          open={Boolean(driverCashDetails)}
+          onClose={() => this.setState({ driverCashDetails: null })}
+          fullWidth={true}
+          maxWidth="md"
+        >
+          <DialogTitle style={{ paddingRight: 64 }}>
+            Движение наличных — {driverCashDetails?.name || ""}
+            <IconButton
+              onClick={() => this.setState({ driverCashDetails: null })}
+              style={{ cursor: "pointer", position: "absolute", top: 0, right: 0, padding: 20 }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent style={{ paddingBottom: 24, paddingTop: 10 }}>
+            <Grid
+              container
+              spacing={2}
+            >
+              {[
+                ["На начало периода", driverCashSummary?.opening_cash ?? 0],
+                ["Изменение за период", formatSignedCash(driverCashSummary?.balance_change ?? 0)],
+                ["Сейчас на руках", driverCashSummary?.ost_cash ?? 0],
+              ].map(([label, value]) => (
+                <Grid
+                  key={label}
+                  size={{ xs: 12, sm: 4 }}
+                  style={{ height: "max-content" }}
+                >
+                  <Paper
+                    variant="outlined"
+                    style={{ height: "100%", padding: 16 }}
+                  >
+                    <div style={{ color: "#666", fontSize: 13 }}>{label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 600, marginTop: 4 }}>{value}</div>
+                  </Paper>
+                </Grid>
+              ))}
+
+              <Grid size={{ xs: 12 }}>
+                <Paper
+                  variant="outlined"
+                  style={{ padding: 16 }}
+                >
+                  <div style={{ fontWeight: 600 }}>
+                    {driverCashSummary?.opening_cash ?? 0} {" + "}
+                    {formatSignedCash(driverCashSummary?.balance_change ?? 0)} {" = "}
+                    {toCashNumber(driverCashSummary?.opening_cash) +
+                      toCashNumber(driverCashSummary?.balance_change)}
+                  </div>
+                  <div
+                    style={{
+                      color: driverCashDiscrepancy === 0 ? "#2e7d32" : "#d32f2f",
+                      fontSize: 13,
+                      marginTop: 6,
+                    }}
+                  >
+                    {driverCashDiscrepancy === 0
+                      ? "Расчёт сходится с текущим остатком"
+                      : `Расхождение с текущим остатком: ${formatSignedCash(driverCashDiscrepancy)}`}
+                  </div>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <div style={{ color: "#666", fontSize: 13 }}>Остаток не закрыт с</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>
+                  {toCashNumber(driverCashSummary?.ost_cash) > 0
+                    ? formatCashDate(driverCashSummary?.balance_open_since)
+                    : "Остаток закрыт"}
+                </div>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <div style={{ color: "#666", fontSize: 13 }}>Последняя сдача</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>
+                  {formatCashDateTime(driverCashSummary?.last_give_at)}
+                </div>
+                <div style={{ fontSize: 13, marginTop: 2 }}>
+                  Сумма: {driverCashSummary?.last_give_amount ?? 0}
+                </div>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <div style={{ color: "#666", fontSize: 13 }}>Последнее поступление наличных</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>
+                  {formatCashDateTime(driverCashSummary?.last_cash_at)}
+                </div>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+                  Дни максимального роста остатка за всё время до конца выбранного периода
+                </div>
+                {driverCashSummary?.top_growth_days?.length ? (
+                  <TableContainer component={Paper}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Дата</TableCell>
+                          <TableCell align="right">Изменение</TableCell>
+                          <TableCell align="right">Остаток на конец</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {driverCashSummary.top_growth_days.map((day) => (
+                          <TableRow key={day.date}>
+                            <TableCell>{formatCashDate(day.date)}</TableCell>
+                            <TableCell align="right">
+                              {formatSignedCash(day.balance_change)}
+                            </TableCell>
+                            <TableCell align="right">{day.ending_balance}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <div style={{ color: "#666" }}>Дней с ростом остатка нет</div>
+                )}
+              </Grid>
+            </Grid>
+          </DialogContent>
+        </Dialog>
         <Grid
           container
           spacing={3}
@@ -705,6 +963,274 @@ class DriverStat_ extends React.Component {
               </Table>
             </TableContainer>
           </Grid>
+
+          {this.state.driver_cash_by_date?.dates?.length ? (
+            <Grid
+              size={{
+                xs: 12,
+              }}
+            >
+              <h2>Временная таблица: наличные по датам</h2>
+
+              <TableContainer
+                component={Paper}
+                style={{ overflowX: "auto", paddingBottom: 8, scrollbarGutter: "stable" }}
+              >
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#fff",
+                          boxShadow: "2px 0 4px rgba(0, 0, 0, 0.08)",
+                          left: 0,
+                          minWidth: 340,
+                          position: "sticky",
+                          zIndex: 3,
+                        }}
+                      >
+                        Курьер
+                      </TableCell>
+
+                      {this.state.driver_cash_by_date.dates.map((date) => {
+                        const analytics = getDayAnalytics(this.state.driver_cash_by_date, date);
+
+                        return (
+                          <TableCell
+                            key={date}
+                            colSpan={4}
+                            style={{ borderLeft: "1px solid #eee", textAlign: "center" }}
+                          >
+                            <div>{dayjs(date).format("DD.MM.YYYY")}</div>
+                            <div
+                              style={{
+                                color: "#666",
+                                fontSize: 11,
+                                fontWeight: 400,
+                                marginTop: 4,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Вырос: {analytics.increased} · Снизился: {analytics.decreased} · Без
+                              изменений: {analytics.unchanged} · Пересдали: {analytics.overpaid}
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                    <TableRow>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#fff",
+                          boxShadow: "2px 0 4px rgba(0, 0, 0, 0.08)",
+                          left: 0,
+                          minWidth: 340,
+                          position: "sticky",
+                          zIndex: 3,
+                        }}
+                      ></TableCell>
+
+                      {this.state.driver_cash_by_date.dates.map((date) => (
+                        <React.Fragment key={date}>
+                          <TableCell
+                            style={{
+                              borderLeft: "1px solid #eee",
+                              textAlign: "center",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            К сдаче
+                          </TableCell>
+                          <TableCell style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                            Сдал за период
+                          </TableCell>
+                          <TableCell style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                            Наличных на руках
+                          </TableCell>
+                          <TableCell style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                            Изменение остатка
+                          </TableCell>
+                        </React.Fragment>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {this.state.driver_cash_by_date.drivers.map((driver) => {
+                      const summary = getDriverCashSummary(
+                        driver,
+                        this.state.driver_cash_by_date.dates,
+                      );
+                      const summaryDiscrepancy =
+                        toCashNumber(summary.ost_cash) -
+                        toCashNumber(summary.opening_cash) -
+                        toCashNumber(summary.balance_change);
+
+                      return (
+                        <TableRow key={driver.driver_id}>
+                          <TableCell
+                            style={{
+                              backgroundColor: "#fff",
+                              boxShadow: "2px 0 4px rgba(0, 0, 0, 0.08)",
+                              left: 0,
+                              minWidth: 340,
+                              position: "sticky",
+                              zIndex: 1,
+                            }}
+                          >
+                            <Button
+                              variant="text"
+                              onClick={() => this.setState({ driverCashDetails: driver })}
+                              style={{
+                                alignItems: "flex-start",
+                                color: "inherit",
+                                display: "flex",
+                                flexDirection: "column",
+                                padding: 0,
+                                textAlign: "left",
+                                textTransform: "none",
+                              }}
+                            >
+                              <span style={{ fontWeight: 600 }}>{driver.name}</span>
+                              <span style={{ color: "#666", fontSize: 11, marginTop: 3 }}>
+                                Было: {summary.opening_cash} · Изм.:{" "}
+                                {formatSignedCash(summary.balance_change)} · Сейчас:{" "}
+                                {summary.ost_cash}
+                              </span>
+                              <span style={{ color: "#666", fontSize: 11, marginTop: 2 }}>
+                                {toCashNumber(summary.ost_cash) > 0
+                                  ? `Не закрыт с: ${formatCashDate(summary.balance_open_since)}`
+                                  : getBalanceStatus(toCashNumber(summary.ost_cash))}
+                              </span>
+                              {summaryDiscrepancy !== 0 ? (
+                                <span style={{ color: "#d32f2f", fontSize: 11, marginTop: 2 }}>
+                                  Расхождение: {formatSignedCash(summaryDiscrepancy)}
+                                </span>
+                              ) : null}
+                            </Button>
+                          </TableCell>
+
+                          {this.state.driver_cash_by_date.dates.map((date) => {
+                            const analytics = getCashAnalytics(driver.values?.[date]);
+                            const dailyDiscrepancy =
+                              analytics.ostCash - analytics.openingCash - analytics.balanceChange;
+                            const changeBackgroundColor =
+                              dailyDiscrepancy !== 0
+                                ? "#fff3e0"
+                                : analytics.balanceChange > 0
+                                  ? "#ffebee"
+                                  : analytics.balanceChange < 0
+                                    ? "#e8f5e9"
+                                    : "#f5f5f5";
+                            const balanceBackgroundColor =
+                              analytics.ostCash < 0
+                                ? "#e3f2fd"
+                                : analytics.ostCash > 0
+                                  ? "#fff8e1"
+                                  : "#e8f5e9";
+
+                            return (
+                              <React.Fragment key={date}>
+                                <TableCell
+                                  style={{ borderLeft: "1px solid #eee", textAlign: "center" }}
+                                >
+                                  {analytics.sdacha}
+                                </TableCell>
+                                <TableCell style={{ textAlign: "center" }}>
+                                  {analytics.giveByDate}
+                                </TableCell>
+                                <TableCell
+                                  style={{
+                                    backgroundColor: balanceBackgroundColor,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  <Tooltip
+                                    arrow
+                                    title={<CashAnalyticsTooltip data={analytics} />}
+                                  >
+                                    <div style={{ cursor: "help" }}>
+                                      <div style={{ fontWeight: 600 }}>{analytics.ostCash}</div>
+                                      <div style={{ fontSize: 11, marginTop: 2 }}>
+                                        {getBalanceStatus(analytics.ostCash)}
+                                      </div>
+                                    </div>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell
+                                  style={{
+                                    backgroundColor: changeBackgroundColor,
+                                    fontWeight: 600,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  <Tooltip
+                                    arrow
+                                    title={<CashAnalyticsTooltip data={analytics} />}
+                                  >
+                                    <div style={{ cursor: "help" }}>
+                                      <div>{formatSignedCash(analytics.balanceChange)}</div>
+                                      <div style={{ fontSize: 11, fontWeight: 400, marginTop: 2 }}>
+                                        {getDailyCashStatus(analytics)}
+                                      </div>
+                                    </div>
+                                  </Tooltip>
+                                </TableCell>
+                              </React.Fragment>
+                            );
+                          })}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#fafafa",
+                          boxShadow: "2px 0 4px rgba(0, 0, 0, 0.08)",
+                          fontWeight: 600,
+                          left: 0,
+                          minWidth: 340,
+                          position: "sticky",
+                          whiteSpace: "nowrap",
+                          zIndex: 2,
+                        }}
+                      >
+                        Итого
+                      </TableCell>
+
+                      {this.state.driver_cash_by_date.dates.map((date) => (
+                        <React.Fragment key={date}>
+                          <TableCell style={{ borderLeft: "1px solid #eee", textAlign: "center" }}>
+                            {this.state.driver_cash_by_date.totals?.[date]?.sdacha ?? 0}
+                          </TableCell>
+                          <TableCell style={{ textAlign: "center" }}>
+                            {this.state.driver_cash_by_date.totals?.[date]?.give_by_date ?? 0}
+                          </TableCell>
+                          <TableCell style={{ textAlign: "center" }}>
+                            {this.state.driver_cash_by_date.totals?.[date]?.ost_cash ?? 0}
+                          </TableCell>
+                          <TableCell style={{ fontWeight: 600, textAlign: "center" }}>
+                            {formatSignedCash(
+                              this.state.driver_cash_by_date.totals?.[date]?.balance_change ??
+                                toCashNumber(
+                                  this.state.driver_cash_by_date.totals?.[date]?.sdacha,
+                                ) -
+                                  toCashNumber(
+                                    this.state.driver_cash_by_date.totals?.[date]?.give_by_date,
+                                  ),
+                            )}
+                          </TableCell>
+                        </React.Fragment>
+                      ))}
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              </TableContainer>
+            </Grid>
+          ) : null}
 
           {this.state.drive_stat_date == null ? null : (
             <Grid

@@ -108,6 +108,15 @@ export function MySelect(props) {
       ? String(props.value)
       : "";
 
+  const availableValues = new Set(normalizedData.map((item) => item.id));
+  const selectValue = props.multiple
+    ? normalizedValue.filter((value) => availableValues.has(value))
+    : availableValues.has(normalizedValue)
+      ? normalizedValue
+      : availableValues.has("none")
+        ? "none"
+        : "";
+
   // force display of selected name
   const renderValue = (selected) => {
     if (props.multiple) {
@@ -117,7 +126,7 @@ export function MySelect(props) {
         .map((item) => item.name)
         .join(", ");
     } else {
-      const sel = normalizedData.find((i) => i.id === normalizedValue);
+      const sel = normalizedData.find((i) => i.id === String(selected));
       return sel ? sel.name : "None";
     }
   };
@@ -482,13 +491,13 @@ export function MySelect(props) {
           {props.label}
         </InputLabel>
         <Select
-          value={normalizedValue}
+          value={selectValue}
           IconComponent={isJournalStyle ? KeyboardArrowDownIcon : undefined}
           {...(isJournalStyle &&
           !props.multiple &&
           !props.disabled &&
-          normalizedValue &&
-          normalizedValue !== "none"
+          selectValue &&
+          selectValue !== "none"
             ? {
                 clearIcon: (
                   <CloseIcon
