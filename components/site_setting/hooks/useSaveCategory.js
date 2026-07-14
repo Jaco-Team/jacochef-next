@@ -3,7 +3,9 @@
 import { useCallback } from "react";
 
 import { useCategoryStore } from "../category/useCategoryStore";
-import { getCategoryDTO } from "../category/categoryUtils";
+import { getCategoryDTO, newCategoryTemplate } from "../category/categoryUtils";
+import { useSiteSettingStore } from "../useSiteSettingStore";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 export default function useSaveCategory(onClose, showAlert, getData, onAfterSave) {
   const { setItem, setItemName } = useCategoryStore.getState();
@@ -11,10 +13,39 @@ export default function useSaveCategory(onClose, showAlert, getData, onAfterSave
   const checkForm = useCallback(() => {
     const { item } = useCategoryStore.getState();
 
-    if (!item.name) {
+    if (!item?.name) {
       showAlert("Необходимо указать название", false);
       return false;
     }
+
+    const access = useSiteSettingStore.getState().access;
+    if (!handleUserAccess(access).userCan("edit", "category_items")) {
+      return true;
+    }
+
+    const itemIds = new Set();
+    for (const categoryItem of item.items || []) {
+      const itemId = String(categoryItem.item_id || "");
+      const count = String(categoryItem.count || "");
+
+      if (!/^[1-9]\d*$/.test(itemId)) {
+        showAlert("Необходимо выбрать товар", false);
+        return false;
+      }
+
+      if (!/^[1-9]\d*$/.test(count)) {
+        showAlert("Количество должно быть целым положительным числом", false);
+        return false;
+      }
+
+      if (itemIds.has(itemId)) {
+        showAlert("Товар нельзя добавить в категорию повторно", false);
+        return false;
+      }
+
+      itemIds.add(itemId);
+    }
+
     return true;
   }, []);
 
@@ -62,11 +93,14 @@ export default function useSaveCategory(onClose, showAlert, getData, onAfterSave
         showAlert(`Категория id ${id} не найдена`);
         return;
       }
-      setItem(selectedCategory);
+      setItem({
+        ...selectedCategory,
+        items: (selectedCategory.items || []).map((item) => ({ ...item })),
+      });
       setItemName(selectedCategory.name);
       // showAlert(`Item id ${id} found`, true);
     } else {
-      const itemTemplate = newCategoryTemplate;
+      const itemTemplate = { ...newCategoryTemplate, items: [] };
       setItem(itemTemplate);
       setItemName("Новая категория");
       // showAlert(`New page requested`, true);

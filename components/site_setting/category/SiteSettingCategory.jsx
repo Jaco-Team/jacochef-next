@@ -50,6 +50,8 @@ export function SiteSettingCategory() {
   const access = useSiteSettingStore((state) => state.access);
 
   const canEdit = (key) => handleUserAccess(access).userCan("edit", key);
+  const canViewCategoryItems = handleUserAccess(access).userCan("view", "category_items");
+  const canEditCategoryItems = canEdit("category_items");
   // Category store
   const {
     itemName,
@@ -59,6 +61,7 @@ export function SiteSettingCategory() {
     setItem,
     setItemName,
     setCategories,
+    setItemsNew,
     changeSort,
     setHistory,
     history,
@@ -70,6 +73,7 @@ export function SiteSettingCategory() {
     setItem: s.setItem,
     setItemName: s.setItemName,
     setCategories: s.setCategories,
+    setItemsNew: s.setItemsNew,
     changeSort: s.changeSort,
     setHistory: s.setHistory,
     history: s.history,
@@ -94,6 +98,7 @@ export function SiteSettingCategory() {
       }
       setModuleName(res.submodule.name);
       setCategories(res.categories);
+      setItemsNew(res.items_new || []);
       setHistory(res.history);
     } catch (e) {
       console.error(e);
@@ -136,7 +141,11 @@ export function SiteSettingCategory() {
       modalPrefix,
       () => (
         <>
-          {canEdit("category") ? (
+          {(
+            action === "newCategory"
+              ? canEdit("category")
+              : canEdit("category") || canEditCategoryItems
+          ) ? (
             <Button
               variant="contained"
               onClick={async () => (action === "newCategory" ? await saveNew() : await saveEdit())}
@@ -210,6 +219,7 @@ export function SiteSettingCategory() {
                 <TableCell sx={{ minWidth: "200px" }}>Название</TableCell>
                 <TableCell>Сортировка</TableCell>
                 <TableCell sx={{ minWidth: "200px" }}>Сроки хранения</TableCell>
+                {canViewCategoryItems ? <TableCell>Товары</TableCell> : null}
                 <TableCell sx={{ minWidth: "200px" }}>Для курьеров</TableCell>
                 <TableCell sx={{ minWidth: "200px" }}>Для кухни</TableCell>
               </TableRow>
@@ -243,6 +253,9 @@ export function SiteSettingCategory() {
                         />
                       </TableCell>
                       <TableCell sx={{ minWidth: "200px" }}>{item.shelf_life}</TableCell>
+                      {canViewCategoryItems ? (
+                        <TableCell align="center">{item.items?.length || "—"}</TableCell>
+                      ) : null}
                       <ColorPickerCell
                         value={color}
                         onChange={(e) => setColor(e)}
@@ -282,6 +295,9 @@ export function SiteSettingCategory() {
                           />
                         </TableCell>
                         <TableCell sx={{ minWidth: "200px" }}>{subcat.shelf_life}</TableCell>
+                        {canViewCategoryItems ? (
+                          <TableCell align="center">{subcat.items?.length || "—"}</TableCell>
+                        ) : null}
                         <ColorPickerCell
                           value={color}
                           onChange={(e) => setColor(e)}
@@ -317,6 +333,9 @@ export function SiteSettingCategory() {
                       />
                     </TableCell>
                     <TableCell sx={{ minWidth: "200px" }}>{item.shelf_life}</TableCell>
+                    {canViewCategoryItems ? (
+                      <TableCell align="center">{item.items?.length || "—"}</TableCell>
+                    ) : null}
                     <ColorPickerCell
                       value={color}
                       onChange={(e) => setColor(e)}

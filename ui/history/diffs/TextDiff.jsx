@@ -2,6 +2,14 @@
 
 import { Card, Stack, Typography } from "@mui/material";
 
+function formatValue(value) {
+  if (value !== null && typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return value;
+}
+
 export default function TextDiff({ items }) {
   return (
     <Stack spacing={1}>
@@ -37,7 +45,7 @@ export default function TextDiff({ items }) {
                     variant="body2"
                     sx={{ textDecoration: "line-through", color: "text.secondary" }}
                   >
-                    {from}
+                    {formatValue(from)}
                   </Typography>
 
                   <Typography
@@ -53,7 +61,7 @@ export default function TextDiff({ items }) {
                 variant="body2"
                 fontWeight={500}
               >
-                {to}
+                {formatValue(to)}
               </Typography>
             </Stack>
           </Card>
