@@ -1485,7 +1485,8 @@ export class SiteItemsModalTech extends React.Component {
           this.isInit = true;
 
           let name = this.state.name,
-            id = this.props.item?.id ? this.props.item.id : idGet;
+            id = this.props.item?.id ? this.props.item.id : idGet,
+            historyId = data.history_id;
           this.myDropzone.on("sending", (file, xhr, data) => {
             let file_type = file.name.split(".");
             file_type = file_type[file_type.length - 1];
@@ -1495,6 +1496,9 @@ export class SiteItemsModalTech extends React.Component {
             data.append("name", name + "site_items");
             data.append("login", localStorage.getItem("token"));
             data.append("id", id);
+            if (historyId) {
+              data.append("history_id", historyId);
+            }
           });
 
           this.myDropzone.on("queuecomplete", (data) => {
