@@ -869,7 +869,7 @@ export default function EmployeesPage() {
     setIsLoad(true);
 
     try {
-      const res = await api_laravel_local(MODULE, method, data);
+      const res = await api_laravel(MODULE, method, data);
       return unwrapResponse(res);
     } catch (e) {
       showAlert(false, "Не удалось выполнить запрос");
