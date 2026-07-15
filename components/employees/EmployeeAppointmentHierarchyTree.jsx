@@ -69,6 +69,16 @@ const itemParentGroupKey = (item) => {
   return level > 0 ? `legacy_level_${level - 1}` : null;
 };
 
+const unitParentGroupKey = (unit) =>
+  unit?.parent_group_key ? String(unit.parent_group_key) : null;
+
+const unitParentUnitKey = (unit) =>
+  unit?.parent_unit_id === null || unit?.parent_unit_id === undefined
+    ? null
+    : unitKeyOf(unit.parent_unit_id);
+
+const groupNodeKey = (unitKey, groupKey) => `${unitKey}|${groupKey}`;
+
 const buildModel = (items, isCollapsed = () => false) => {
   const groups = new Map();
 
@@ -230,7 +240,10 @@ const moveItem = (items, itemId, targetType, targetKey) => {
       return item;
     });
 
-    return { items: normalizeOrdering(nextItems) };
+    return {
+      items: normalizeOrdering(nextItems),
+      groupReplacement: sourceIsWholeGroup ? { from: sourceKey, to: targetKey } : null,
+    };
   }
 
   const parentKey = targetType === "root" ? null : targetKey;
@@ -274,7 +287,6 @@ const moveItem = (items, itemId, targetType, targetKey) => {
 function PositionCard({
   item,
   disabled,
-  activeId,
   scale,
   subordinateCount,
   onPositionClick,
@@ -366,19 +378,15 @@ function GroupCard({
   model,
   unitKey,
   disabled,
-  activeId,
+  activeType,
   scale,
+  subordinateCount,
   onPositionClick,
   highlightedId,
   registerPositionRef,
 }) {
   const droppable = useDroppable({ id: `equal|${unitKey}|${group.key}`, disabled });
   const layout = model.layouts.get(group.key);
-  const descendants = descendantGroupKeys(model, group.key);
-  const subordinateCount = [...descendants].reduce(
-    (count, key) => count + (model.groups.get(key)?.members.length || 0),
-    0,
-  );
 
   return (
     <Paper
@@ -412,7 +420,6 @@ function GroupCard({
             key={item.id}
             item={item}
             disabled={disabled}
-            activeId={activeId}
             scale={scale}
             subordinateCount={subordinateCount}
             onPositionClick={onPositionClick}
@@ -431,14 +438,16 @@ function GroupCard({
             fontWeight: 700,
           }}
         >
-          Добавить на один уровень
+          {activeType === "department"
+            ? "Вложить отдел под эту группу"
+            : "Добавить на один уровень"}
         </Typography>
       ) : null}
     </Paper>
   );
 }
 
-function ChildDropZone({ groupKey, unitKey, disabled, active, hasChildren }) {
+function ChildDropZone({ groupKey, unitKey, disabled, active, activeType, hasChildren }) {
   const droppable = useDroppable({ id: `child|${unitKey}|${groupKey}`, disabled });
 
   return (
@@ -462,7 +471,15 @@ function ChildDropZone({ groupKey, unitKey, disabled, active, hasChildren }) {
         transition: "height 120ms ease, border-color 120ms ease, background-color 120ms ease",
       }}
     >
-      {active ? (droppable.isOver ? "Создать ветку здесь" : "Новая дочерняя ветка") : null}
+      {active
+        ? droppable.isOver
+          ? activeType === "department"
+            ? "Вложить отдел здесь"
+            : "Создать ветку здесь"
+          : activeType === "department"
+            ? "Вложить отдел"
+            : "Новая дочерняя ветка"
+        : null}
     </Box>
   );
 }
@@ -471,8 +488,9 @@ function BranchNode({
   group,
   model,
   unitKey,
+  hierarchy,
   disabled,
-  activeId,
+  activeDrag,
   scale,
   onPositionClick,
   collapsedGroups,
@@ -481,15 +499,14 @@ function BranchNode({
   registerPositionRef,
 }) {
   const layout = model.layouts.get(group.key);
-  const allChildGroups = model.children.get(group.key) || [];
   const collapsed = collapsedGroups.has(`${unitKey}|${group.key}`);
-  const childGroups = collapsed ? [] : allChildGroups;
-  const childLayouts = childGroups.map((child) => model.layouts.get(child.key));
-  const childrenWidth = layout.childrenWidth;
-  const hiddenPositionCount = [...descendantGroupKeys(model, group.key)].reduce(
-    (count, key) => count + (model.groups.get(key)?.members.length || 0),
-    0,
+  const allChildNodes = layout.allChildNodes || [];
+  const childNodes = collapsed ? [] : allChildNodes;
+  const childLayouts = childNodes.map((child) =>
+    child.type === "group" ? model.layouts.get(child.group.key) : { width: child.department.width },
   );
+  const childrenWidth = layout.childrenWidth;
+  const hiddenPositionCount = layout.descendantPositionCount || 0;
   let offset = 0;
   const centers = childLayouts.map((childLayout) => {
     const center = offset + childLayout.width / 2;
@@ -507,14 +524,15 @@ function BranchNode({
           model={model}
           unitKey={unitKey}
           disabled={disabled}
-          activeId={activeId}
+          activeType={activeDrag?.type}
           scale={scale}
+          subordinateCount={hiddenPositionCount}
           onPositionClick={onPositionClick}
           highlightedId={highlightedId}
           registerPositionRef={registerPositionRef}
         />
       </Box>
-      {allChildGroups.length ? (
+      {allChildNodes.length ? (
         <Box sx={{ mt: 0.5, textAlign: "center" }}>
           <Button
             size="small"
@@ -531,11 +549,12 @@ function BranchNode({
         groupKey={group.key}
         unitKey={unitKey}
         disabled={disabled}
-        active={activeId !== null}
-        hasChildren={Boolean(allChildGroups.length)}
+        active={Boolean(activeDrag)}
+        activeType={activeDrag?.type}
+        hasChildren={Boolean(allChildNodes.length)}
       />
 
-      {childGroups.length ? (
+      {childNodes.length ? (
         <>
           <Box
             sx={{
@@ -555,7 +574,7 @@ function BranchNode({
                 borderColor: CONNECTOR_COLOR,
               }}
             />
-            {childGroups.length > 1 ? (
+            {childNodes.length > 1 ? (
               <Box
                 sx={{
                   position: "absolute",
@@ -568,7 +587,7 @@ function BranchNode({
               />
             ) : null}
             {centers.map((center, index) => (
-              <React.Fragment key={childGroups[index].key}>
+              <React.Fragment key={childNodes[index].nodeKey}>
                 <Box
                   sx={{
                     position: "absolute",
@@ -600,22 +619,40 @@ function BranchNode({
             spacing={`${BRANCH_GAP}px`}
             sx={{ width: childrenWidth, mx: "auto", alignItems: "flex-start" }}
           >
-            {childGroups.map((child) => (
-              <BranchNode
-                key={child.key}
-                group={child}
-                model={model}
-                unitKey={unitKey}
-                disabled={disabled}
-                activeId={activeId}
-                scale={scale}
-                onPositionClick={onPositionClick}
-                collapsedGroups={collapsedGroups}
-                onToggleGroup={onToggleGroup}
-                highlightedId={highlightedId}
-                registerPositionRef={registerPositionRef}
-              />
-            ))}
+            {childNodes.map((child) =>
+              child.type === "group" ? (
+                <BranchNode
+                  key={child.nodeKey}
+                  group={child.group}
+                  model={model}
+                  unitKey={unitKey}
+                  hierarchy={hierarchy}
+                  disabled={disabled}
+                  activeDrag={activeDrag}
+                  scale={scale}
+                  onPositionClick={onPositionClick}
+                  collapsedGroups={collapsedGroups}
+                  onToggleGroup={onToggleGroup}
+                  highlightedId={highlightedId}
+                  registerPositionRef={registerPositionRef}
+                />
+              ) : (
+                <DepartmentBranch
+                  key={child.nodeKey}
+                  department={child.department}
+                  hierarchy={hierarchy}
+                  disabled={disabled}
+                  activeDrag={activeDrag}
+                  scale={scale}
+                  onPositionClick={onPositionClick}
+                  collapsedGroups={collapsedGroups}
+                  onToggleGroup={onToggleGroup}
+                  highlightedSearch={hierarchy.highlightedSearch}
+                  registerPositionRef={registerPositionRef}
+                  registerDepartmentRef={hierarchy.registerDepartmentRef}
+                />
+              ),
+            )}
           </Stack>
         </>
       ) : null}
@@ -652,21 +689,59 @@ function DepartmentRootDropZone({ unitKey, disabled, active, hasRoots }) {
   );
 }
 
+function DepartmentGlobalDropZone({ disabled, active }) {
+  const droppable = useDroppable({ id: "department-root|root|root", disabled });
+
+  return (
+    <Box
+      ref={droppable.setNodeRef}
+      sx={{
+        width: 220,
+        height: active ? 42 : 12,
+        mx: "auto",
+        my: 0.5,
+        border: "1px dashed",
+        borderColor: droppable.isOver ? "primary.main" : active ? "divider" : "transparent",
+        borderRadius: 1.5,
+        bgcolor: droppable.isOver ? "rgba(213, 0, 50, 0.06)" : "transparent",
+        color: droppable.isOver ? "primary.main" : "text.secondary",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 12,
+        fontWeight: 700,
+      }}
+    >
+      {active ? (droppable.isOver ? "Вернуть на высший уровень" : "Корневой отдел") : null}
+    </Box>
+  );
+}
+
 function DepartmentBranch({
   department,
+  hierarchy,
   disabled,
-  activeId,
+  activeDrag,
   scale,
   onPositionClick,
   collapsedGroups,
   onToggleGroup,
-  highlightedId,
+  highlightedSearch,
   registerPositionRef,
+  registerDepartmentRef,
 }) {
   const { model, unitKey, width } = department;
-  const rootsWidth = model.contentWidth;
+  const rootsWidth = department.rootsWidth;
+  const draggable = useDraggable({
+    id: `department|${unitKey}`,
+    disabled: disabled || department.id === null,
+  });
+  const setDepartmentRef = (node) => {
+    draggable.setNodeRef(node);
+    registerDepartmentRef?.(unitKey, node);
+  };
   let offset = 0;
-  const centers = model.rootWidths.map((rootWidth) => {
+  const centers = department.rootWidths.map((rootWidth) => {
     const center = offset + rootWidth / 2;
     offset += rootWidth + BRANCH_GAP;
     return center;
@@ -678,7 +753,18 @@ function DepartmentBranch({
     <Box sx={{ width, flex: `0 0 ${width}px` }}>
       <Box sx={{ display: "flex", justifyContent: "center" }}>
         <Paper
+          ref={setDepartmentRef}
           variant="outlined"
+          style={{
+            transform: draggable.transform
+              ? CSS.Translate.toString({
+                  ...draggable.transform,
+                  x: draggable.transform.x / scale,
+                  y: draggable.transform.y / scale,
+                })
+              : undefined,
+            opacity: draggable.isDragging ? 0.25 : 1,
+          }}
           sx={{
             width: DEPARTMENT_WIDTH,
             minHeight: 64,
@@ -686,28 +772,57 @@ function DepartmentBranch({
             py: 1.25,
             boxSizing: "border-box",
             bgcolor: "background.paper",
-            borderColor: "primary.main",
+            borderColor:
+              highlightedSearch?.type === "department" && highlightedSearch.unitKey === unitKey
+                ? "info.main"
+                : "primary.main",
+            outline:
+              highlightedSearch?.type === "department" && highlightedSearch.unitKey === unitKey
+                ? "3px solid rgba(2, 136, 209, 0.18)"
+                : "none",
+            outlineOffset: 2,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             textAlign: "center",
           }}
         >
-          <Box>
-            <Typography sx={{ fontSize: 16, fontWeight: 900, lineHeight: 1.25 }}>
-              {department.name}
-            </Typography>
-            <Typography sx={{ mt: 0.25, fontSize: 12, color: "text.secondary" }}>
-              {department.items.length} должностей
-            </Typography>
-          </Box>
+          <Stack
+            direction="row"
+            spacing={0.5}
+            alignItems="center"
+          >
+            {department.id !== null ? (
+              <Tooltip title={disabled ? "Перемещение недоступно" : "Перетащить отдел целиком"}>
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={disabled}
+                    {...draggable.attributes}
+                    {...draggable.listeners}
+                    sx={{ cursor: disabled ? "default" : "grab" }}
+                  >
+                    <DragIndicatorIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            ) : null}
+            <Box>
+              <Typography sx={{ fontSize: 16, fontWeight: 900, lineHeight: 1.25 }}>
+                {department.name}
+              </Typography>
+              <Typography sx={{ mt: 0.25, fontSize: 12, color: "text.secondary" }}>
+                {department.totalPositionCount} должностей
+              </Typography>
+            </Box>
+          </Stack>
         </Paper>
       </Box>
 
       <DepartmentRootDropZone
         unitKey={unitKey}
-        disabled={disabled}
-        active={activeId !== null}
+        disabled={disabled || activeDrag?.type !== "position"}
+        active={activeDrag?.type === "position"}
         hasRoots={Boolean(model.roots.length)}
       />
 
@@ -783,13 +898,14 @@ function DepartmentBranch({
                 group={root}
                 model={model}
                 unitKey={unitKey}
+                hierarchy={hierarchy}
                 disabled={disabled}
-                activeId={activeId}
+                activeDrag={activeDrag}
                 scale={scale}
                 onPositionClick={onPositionClick}
                 collapsedGroups={collapsedGroups}
                 onToggleGroup={onToggleGroup}
-                highlightedId={highlightedId}
+                highlightedId={highlightedSearch?.type === "position" ? highlightedSearch.id : null}
                 registerPositionRef={registerPositionRef}
               />
             ))}
@@ -809,19 +925,27 @@ export default function EmployeeAppointmentHierarchyTree({
   onPositionClick,
 }) {
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
-  const departments = useMemo(() => {
+  const hierarchyData = useMemo(() => {
     const options = units.map((unit) => ({
       id: Number(unit.id),
       name: unit.name,
       sort: Number(unit.sort ?? 0),
+      parentUnitKey: unitParentUnitKey(unit),
+      parentGroupKey: unitParentGroupKey(unit),
     }));
     const hasUnassigned = items.some((item) => item.unit_id === null || item.unit_id === undefined);
 
     if (hasUnassigned) {
-      options.push({ id: null, name: "Без отдела", sort: Number.MAX_SAFE_INTEGER });
+      options.push({
+        id: null,
+        name: "Без отдела",
+        sort: Number.MAX_SAFE_INTEGER,
+        parentUnitKey: null,
+        parentGroupKey: null,
+      });
     }
 
-    return options
+    const departments = options
       .sort(
         (left, right) =>
           left.sort - right.sort || String(left.name).localeCompare(String(right.name), "ru"),
@@ -829,20 +953,181 @@ export default function EmployeeAppointmentHierarchyTree({
       .map((unit) => {
         const unitKey = unitKeyOf(unit.id);
         const departmentItems = items.filter((item) => unitKeyOf(item.unit_id) === unitKey);
-        const model = buildModel(departmentItems, (groupKey) =>
-          collapsedGroups.has(`${unitKey}|${groupKey}`),
-        );
+        const model = buildModel(departmentItems);
 
         return {
           ...unit,
           unitKey,
           items: departmentItems,
           model,
-          width: Math.max(DEPARTMENT_WIDTH, model.contentWidth),
+          width: DEPARTMENT_WIDTH,
+          rootsWidth: DEPARTMENT_WIDTH,
+          rootWidths: [],
+          totalPositionCount: departmentItems.length,
         };
       });
+    const byUnitKey = new Map(departments.map((department) => [department.unitKey, department]));
+    const nestedByParent = new Map();
+    const rootDepartments = [];
+
+    departments.forEach((department) => {
+      const visitedUnits = new Set([department.unitKey]);
+      let ancestor = department.parentUnitKey ? byUnitKey.get(department.parentUnitKey) : null;
+      let hasCycle = false;
+
+      while (ancestor) {
+        if (visitedUnits.has(ancestor.unitKey)) {
+          hasCycle = true;
+          break;
+        }
+
+        visitedUnits.add(ancestor.unitKey);
+        ancestor = ancestor.parentUnitKey ? byUnitKey.get(ancestor.parentUnitKey) : null;
+      }
+
+      const parentDepartment = department.parentUnitKey
+        ? byUnitKey.get(department.parentUnitKey)
+        : null;
+      const parentGroupExists = parentDepartment?.model.groups.has(department.parentGroupKey);
+
+      if (
+        hasCycle ||
+        !parentDepartment ||
+        !parentGroupExists ||
+        parentDepartment.unitKey === department.unitKey
+      ) {
+        rootDepartments.push(department);
+        return;
+      }
+
+      const parentNodeKey = groupNodeKey(parentDepartment.unitKey, department.parentGroupKey);
+      if (!nestedByParent.has(parentNodeKey)) nestedByParent.set(parentNodeKey, []);
+      nestedByParent.get(parentNodeKey).push(department);
+    });
+
+    nestedByParent.forEach((nestedDepartments) => {
+      nestedDepartments.sort(
+        (left, right) =>
+          left.sort - right.sort || String(left.name).localeCompare(String(right.name), "ru"),
+      );
+    });
+
+    const measureDepartment = (department, path = new Set()) => {
+      const departmentNodeKey = `department|${department.unitKey}`;
+      if (path.has(departmentNodeKey)) {
+        return DEPARTMENT_WIDTH;
+      }
+
+      const nextPath = new Set(path);
+      nextPath.add(departmentNodeKey);
+
+      const measureGroup = (group, groupPath) => {
+        const nodeKey = `group|${groupNodeKey(department.unitKey, group.key)}`;
+        const groupWidth = Math.max(
+          220,
+          group.members.length * POSITION_WIDTH +
+            Math.max(0, group.members.length - 1) * POSITION_GAP +
+            16,
+        );
+
+        if (groupPath.has(nodeKey)) {
+          const cycleLayout = {
+            width: groupWidth,
+            groupWidth,
+            childrenWidth: 0,
+            allChildNodes: [],
+            descendantPositionCount: 0,
+          };
+          department.model.layouts.set(group.key, cycleLayout);
+          return cycleLayout;
+        }
+
+        const nextGroupPath = new Set(groupPath);
+        nextGroupPath.add(nodeKey);
+        const childGroups = department.model.children.get(group.key) || [];
+        const nestedDepartments =
+          nestedByParent.get(groupNodeKey(department.unitKey, group.key)) || [];
+        const allChildNodes = [
+          ...childGroups.map((child) => ({
+            type: "group",
+            group: child,
+            nodeKey: `group|${groupNodeKey(department.unitKey, child.key)}`,
+            sort: child.sort,
+          })),
+          ...nestedDepartments.map((child) => ({
+            type: "department",
+            department: child,
+            nodeKey: `department|${child.unitKey}`,
+            sort: child.sort,
+          })),
+        ].sort(
+          (left, right) =>
+            left.sort - right.sort ||
+            String(left.nodeKey).localeCompare(String(right.nodeKey), "ru"),
+        );
+        const childLayouts = allChildNodes.map((child) =>
+          child.type === "group"
+            ? measureGroup(child.group, nextGroupPath)
+            : {
+                width: measureDepartment(child.department, nextGroupPath),
+                descendantPositionCount: child.department.totalPositionCount,
+              },
+        );
+        const descendantPositionCount = allChildNodes.reduce((count, child, index) => {
+          if (child.type === "group") {
+            return (
+              count +
+              child.group.members.length +
+              (childLayouts[index].descendantPositionCount || 0)
+            );
+          }
+
+          return count + child.department.totalPositionCount;
+        }, 0);
+        const visibleChildLayouts = collapsedGroups.has(`${department.unitKey}|${group.key}`)
+          ? []
+          : childLayouts;
+        const childrenWidth = visibleChildLayouts.length
+          ? visibleChildLayouts.reduce((sum, child) => sum + child.width, 0) +
+            Math.max(0, visibleChildLayouts.length - 1) * BRANCH_GAP
+          : 0;
+        const layout = {
+          width: Math.max(groupWidth, childrenWidth),
+          groupWidth,
+          childrenWidth,
+          allChildNodes,
+          descendantPositionCount,
+        };
+
+        department.model.layouts.set(group.key, layout);
+        return layout;
+      };
+
+      department.rootWidths = department.model.roots.map(
+        (root) => measureGroup(root, nextPath).width,
+      );
+      department.rootsWidth = Math.max(
+        DEPARTMENT_WIDTH,
+        department.rootWidths.reduce((sum, width) => sum + width, 0) +
+          Math.max(0, department.rootWidths.length - 1) * BRANCH_GAP,
+      );
+      const directNestedDepartments = [...nestedByParent.entries()]
+        .filter(([key]) => key.startsWith(`${department.unitKey}|`))
+        .flatMap(([, children]) => children);
+      department.totalPositionCount =
+        department.items.length +
+        directNestedDepartments.reduce((sum, child) => sum + child.totalPositionCount, 0);
+      department.width = Math.max(DEPARTMENT_WIDTH, department.rootsWidth);
+
+      return department.width;
+    };
+
+    rootDepartments.forEach((department) => measureDepartment(department));
+
+    return { departments, byUnitKey, nestedByParent, rootDepartments };
   }, [collapsedGroups, items, units]);
-  const [activeId, setActiveId] = useState(null);
+  const { departments, byUnitKey, rootDepartments } = hierarchyData;
+  const [activeDrag, setActiveDrag] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [panMode, setPanMode] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -853,8 +1138,14 @@ export default function EmployeeAppointmentHierarchyTree({
   const canvasRef = useRef(null);
   const panStartRef = useRef(null);
   const positionRefsRef = useRef(new Map());
+  const departmentRefsRef = useRef(new Map());
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
-  const activeItem = items.find((item) => Number(item.id) === Number(activeId));
+  const activeItem =
+    activeDrag?.type === "position"
+      ? items.find((item) => Number(item.id) === Number(activeDrag.id))
+      : activeDrag?.type === "department"
+        ? byUnitKey.get(String(activeDrag.id))
+        : null;
   const normalizedSearch = search.trim().toLocaleLowerCase("ru");
   const departmentNames = useMemo(
     () => new Map(departments.map((department) => [department.unitKey, department.name])),
@@ -863,14 +1154,29 @@ export default function EmployeeAppointmentHierarchyTree({
   const searchMatches = useMemo(() => {
     if (!normalizedSearch) return [];
 
-    return items.filter((item) =>
-      `${item.name || ""} ${departmentNames.get(unitKeyOf(item.unit_id)) || ""}`
-        .toLocaleLowerCase("ru")
-        .includes(normalizedSearch),
-    );
-  }, [departmentNames, items, normalizedSearch]);
+    const positionMatches = items
+      .filter((item) =>
+        `${item.name || ""} ${departmentNames.get(unitKeyOf(item.unit_id)) || ""}`
+          .toLocaleLowerCase("ru")
+          .includes(normalizedSearch),
+      )
+      .map((item) => ({ type: "position", id: Number(item.id), item }));
+    const departmentMatches = departments
+      .filter((department) =>
+        String(department.name || "")
+          .toLocaleLowerCase("ru")
+          .includes(normalizedSearch),
+      )
+      .map((department) => ({
+        type: "department",
+        unitKey: department.unitKey,
+        department,
+      }));
+
+    return [...positionMatches, ...departmentMatches];
+  }, [departmentNames, departments, items, normalizedSearch]);
   const activeSearchItem = searchMatches[searchIndex] || null;
-  const departmentWidths = departments.map((department) => department.width);
+  const departmentWidths = rootDepartments.map((department) => department.width);
   const departmentsWidth =
     departmentWidths.reduce((sum, width) => sum + width, 0) +
     Math.max(0, departmentWidths.length - 1) * DEPARTMENT_GAP;
@@ -888,10 +1194,20 @@ export default function EmployeeAppointmentHierarchyTree({
   const canvasBottomPadding = 128;
 
   const registerPositionRef = (itemId, node) => {
+    const key = `position|${Number(itemId)}`;
     if (node) {
-      positionRefsRef.current.set(Number(itemId), node);
+      positionRefsRef.current.set(key, node);
     } else {
-      positionRefsRef.current.delete(Number(itemId));
+      positionRefsRef.current.delete(key);
+    }
+  };
+
+  const registerDepartmentRef = (unitKey, node) => {
+    const key = `department|${unitKey}`;
+    if (node) {
+      departmentRefsRef.current.set(key, node);
+    } else {
+      departmentRefsRef.current.delete(key);
     }
   };
 
@@ -923,16 +1239,39 @@ export default function EmployeeAppointmentHierarchyTree({
   useEffect(() => {
     if (!activeSearchItem) return undefined;
 
-    const unitKey = unitKeyOf(activeSearchItem.unit_id);
-    const department = departments.find((item) => item.unitKey === unitKey);
-    let parentKey = department?.model.groups.get(itemGroupKey(activeSearchItem))?.parentKey;
+    let department =
+      activeSearchItem.type === "position"
+        ? byUnitKey.get(unitKeyOf(activeSearchItem.item.unit_id))
+        : activeSearchItem.department;
+    let parentKey =
+      activeSearchItem.type === "position"
+        ? department?.model.groups.get(itemGroupKey(activeSearchItem.item))?.parentKey
+        : department?.parentGroupKey;
+    if (activeSearchItem.type === "department" && parentKey) {
+      department = byUnitKey.get(department.parentUnitKey);
+    } else if (!parentKey && department?.parentGroupKey) {
+      parentKey = department.parentGroupKey;
+      department = byUnitKey.get(department.parentUnitKey);
+    }
     const groupsToReveal = [];
     const visited = new Set();
 
-    while (parentKey && !visited.has(parentKey)) {
-      visited.add(parentKey);
-      groupsToReveal.push(`${unitKey}|${parentKey}`);
-      parentKey = department?.model.groups.get(parentKey)?.parentKey;
+    while (department && parentKey) {
+      const nodeKey = groupNodeKey(department.unitKey, parentKey);
+      if (visited.has(nodeKey)) break;
+
+      visited.add(nodeKey);
+      groupsToReveal.push(nodeKey);
+      const group = department.model.groups.get(parentKey);
+
+      if (group?.parentKey) {
+        parentKey = group.parentKey;
+      } else if (department.parentGroupKey) {
+        parentKey = department.parentGroupKey;
+        department = byUnitKey.get(department.parentUnitKey);
+      } else {
+        parentKey = null;
+      }
     }
 
     if (groupsToReveal.length) {
@@ -954,7 +1293,14 @@ export default function EmployeeAppointmentHierarchyTree({
     const outerFrame = requestAnimationFrame(() => {
       innerFrame = requestAnimationFrame(() => {
         const viewport = viewportRef.current;
-        const node = positionRefsRef.current.get(Number(activeSearchItem.id));
+        const refKey =
+          activeSearchItem.type === "position"
+            ? `position|${activeSearchItem.id}`
+            : `department|${activeSearchItem.unitKey}`;
+        const node =
+          activeSearchItem.type === "position"
+            ? positionRefsRef.current.get(refKey)
+            : departmentRefsRef.current.get(refKey);
         if (!viewport || !node) return;
 
         const viewportRect = viewport.getBoundingClientRect();
@@ -972,7 +1318,7 @@ export default function EmployeeAppointmentHierarchyTree({
       cancelAnimationFrame(outerFrame);
       if (innerFrame) cancelAnimationFrame(innerFrame);
     };
-  }, [activeSearchItem?.id]);
+  }, [activeSearchItem?.id, activeSearchItem?.type, activeSearchItem?.unitKey, byUnitKey]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1067,11 +1413,77 @@ export default function EmployeeAppointmentHierarchyTree({
   };
 
   const handleDragEnd = ({ active, over }) => {
-    const itemId = Number(String(active.id).split("|")[1]);
-    setActiveId(null);
+    const [sourceType, sourceValue] = String(active.id).split("|");
+    setActiveDrag(null);
     if (!over) return;
 
     const [targetType, targetUnitKey, targetKey] = String(over.id).split("|");
+
+    if (sourceType === "department") {
+      const sourceUnitKey = String(sourceValue);
+      const sourceDepartment = byUnitKey.get(sourceUnitKey);
+      if (!sourceDepartment || sourceDepartment.id === null) return;
+
+      let parentUnitId = null;
+      let parentGroupKey = null;
+
+      if (targetType !== "department-root") {
+        if (!["equal", "child"].includes(targetType)) return;
+
+        const targetDepartment = byUnitKey.get(targetUnitKey);
+        if (!targetDepartment || targetDepartment.id === null) return;
+
+        let current = targetDepartment;
+        const visited = new Set();
+        while (current && !visited.has(current.unitKey)) {
+          if (current.unitKey === sourceUnitKey) {
+            onInvalid?.("Отдел нельзя переместить внутрь собственного поддерева");
+            return;
+          }
+
+          visited.add(current.unitKey);
+          current = current.parentUnitKey ? byUnitKey.get(current.parentUnitKey) : null;
+        }
+
+        if (!targetDepartment.model.groups.has(targetKey)) {
+          onInvalid?.("Родительская группа отдела не найдена");
+          return;
+        }
+
+        parentUnitId = targetDepartment.id;
+        parentGroupKey = targetKey;
+      }
+
+      const unchanged =
+        sourceDepartment.parentUnitKey ===
+          (parentUnitId === null ? null : unitKeyOf(parentUnitId)) &&
+        sourceDepartment.parentGroupKey === parentGroupKey;
+      if (unchanged) return;
+
+      const siblingCount = units.filter(
+        (unit) =>
+          Number(unit.id) !== Number(sourceDepartment.id) &&
+          (unit.parent_unit_id === null || unit.parent_unit_id === undefined
+            ? null
+            : Number(unit.parent_unit_id)) === parentUnitId &&
+          unitParentGroupKey(unit) === parentGroupKey,
+      ).length;
+      const nextUnits = units.map((unit) =>
+        Number(unit.id) === Number(sourceDepartment.id)
+          ? {
+              ...unit,
+              parent_unit_id: parentUnitId,
+              parent_group_key: parentGroupKey,
+              sort: siblingCount,
+            }
+          : unit,
+      );
+
+      onChange(items, nextUnits);
+      return;
+    }
+
+    const itemId = Number(sourceValue);
     if (!["equal", "child", "root"].includes(targetType)) return;
 
     const sourceItem = items.find((item) => Number(item.id) === itemId);
@@ -1091,6 +1503,14 @@ export default function EmployeeAppointmentHierarchyTree({
 
     const nextMap = new Map(result.items.map((item) => [Number(item.id), item]));
     const nextItems = items.map((item) => nextMap.get(Number(item.id)) || item);
+    const nextUnits = result.groupReplacement
+      ? units.map((unit) =>
+          unitParentUnitKey(unit) === sourceUnitKey &&
+          unitParentGroupKey(unit) === result.groupReplacement.from
+            ? { ...unit, parent_group_key: result.groupReplacement.to }
+            : unit,
+        )
+      : units;
     const changed = nextItems.some((item, index) => {
       const previousItem = items[index];
       return (
@@ -1101,17 +1521,31 @@ export default function EmployeeAppointmentHierarchyTree({
       );
     });
 
-    if (changed) onChange(nextItems);
+    const unitsChanged = nextUnits.some(
+      (unit, index) =>
+        unitParentUnitKey(unit) !== unitParentUnitKey(units[index]) ||
+        unitParentGroupKey(unit) !== unitParentGroupKey(units[index]),
+    );
+
+    if (changed || unitsChanged) onChange(nextItems, nextUnits);
   };
 
   const interactionDisabled = disabled || panMode;
+  const hierarchy = {
+    ...hierarchyData,
+    highlightedSearch: activeSearchItem,
+    registerDepartmentRef,
+  };
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={pointerWithin}
-      onDragStart={({ active }) => setActiveId(Number(String(active.id).split("|")[1]))}
-      onDragCancel={() => setActiveId(null)}
+      onDragStart={({ active }) => {
+        const [type, value] = String(active.id).split("|");
+        setActiveDrag({ type, id: type === "position" ? Number(value) : value });
+      }}
+      onDragCancel={() => setActiveDrag(null)}
       onDragEnd={handleDragEnd}
     >
       <Box sx={{ position: "relative" }}>
@@ -1338,6 +1772,10 @@ export default function EmployeeAppointmentHierarchyTree({
                   </Box>
                 </Paper>
               </Box>
+              <DepartmentGlobalDropZone
+                disabled={interactionDisabled || activeDrag?.type !== "department"}
+                active={activeDrag?.type === "department"}
+              />
 
               <Box
                 sx={{
@@ -1357,7 +1795,7 @@ export default function EmployeeAppointmentHierarchyTree({
                     borderColor: CONNECTOR_COLOR,
                   }}
                 />
-                {departments.length > 1 ? (
+                {rootDepartments.length > 1 ? (
                   <Box
                     sx={{
                       position: "absolute",
@@ -1370,7 +1808,7 @@ export default function EmployeeAppointmentHierarchyTree({
                   />
                 ) : null}
                 {departmentCenters.map((center, index) => (
-                  <React.Fragment key={departments[index].unitKey}>
+                  <React.Fragment key={rootDepartments[index].unitKey}>
                     <Box
                       sx={{
                         position: "absolute",
@@ -1404,18 +1842,20 @@ export default function EmployeeAppointmentHierarchyTree({
                 alignItems="flex-start"
                 sx={{ width: departmentsWidth, mx: "auto" }}
               >
-                {departments.map((department) => (
+                {rootDepartments.map((department) => (
                   <DepartmentBranch
                     key={department.unitKey}
                     department={department}
+                    hierarchy={hierarchy}
                     disabled={interactionDisabled}
-                    activeId={activeId}
+                    activeDrag={activeDrag}
                     scale={zoom}
                     onPositionClick={onPositionClick}
                     collapsedGroups={collapsedGroups}
                     onToggleGroup={toggleGroup}
-                    highlightedId={activeSearchItem?.id}
+                    highlightedSearch={activeSearchItem}
                     registerPositionRef={registerPositionRef}
+                    registerDepartmentRef={registerDepartmentRef}
                   />
                 ))}
               </Stack>

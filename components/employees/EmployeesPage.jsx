@@ -44,6 +44,7 @@ import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/F
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
 import EmployeeHierarchyTab from "@/components/employees/EmployeeHierarchyTab";
+import EmployeePositionFilter from "@/components/employees/EmployeePositionFilter";
 import { api_laravel, api_laravel_local, api_laravel_upload } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
@@ -809,13 +810,19 @@ export default function EmployeesPage() {
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [isLoad, setIsLoad] = useState(false);
   const [alert, setAlert] = useState({ open: false, status: true, text: "" });
-  const [refs, setRefs] = useState({ cities: [], points: [], apps: [], cloth: [] });
+  const [refs, setRefs] = useState({
+    cities: [],
+    points: [],
+    apps: [],
+    hireableApps: [],
+    cloth: [],
+  });
   const [access, setAccess] = useState(getAccess({}));
   const [pageTitle, setPageTitle] = useState("");
   const [filters, setFilters] = useState({
     city: "",
     points: [],
-    app: null,
+    apps: [],
     official: officialFilters[0],
     healthBook: healthBookFilters[0],
     search: "",
@@ -905,8 +912,11 @@ export default function EmployeesPage() {
       city_id: getCityIdFromPoints(requestPoints),
       point_id: requestPoints,
       point_ids: requestPoints.filter((point) => parseInt(point?.id) > 0).map((point) => point.id),
-      app: nextFilters.app,
-      app_id: nextFilters.app?.id ?? -2,
+      app: null,
+      app_id: -2,
+      app_ids: asArray(nextFilters.apps)
+        .map((app) => Number(app?.id))
+        .filter((id) => id > 0),
       official_status: nextFilters.official?.id ?? "all",
       health_status: nextFilters.healthBook?.id ?? "all",
       search: nextFilters.search,
@@ -931,9 +941,15 @@ export default function EmployeesPage() {
 
     const res = await getData("get_employee", { user_id: employeeId, id: employeeId });
 
-    if (!res) return;
+    if (!res) return false;
+    if (res.st === false) {
+      setEmployeeDialog(false);
+      setEmployee(null);
+      return false;
+    }
 
     setEmployee(normalizeEmployeeCard(res));
+    return true;
   };
 
   const loadInitial = async () => {
@@ -943,22 +959,26 @@ export default function EmployeesPage() {
 
     const cities = normalizeOptions(res.cities);
     const points = normalizeOptions(res.points);
-    const apps = normalizeOptions(res.apps).map((app) =>
-      Number(app.id) > 0 && app.unit_name
-        ? { ...app, name: `${app.unit_name} — ${app.name}` }
-        : app,
+    const formatHireableApps = (value) =>
+      normalizeOptions(value).map((app) =>
+        Number(app.id) > 0 && app.unit_name
+          ? { ...app, name: `${app.unit_name} — ${app.name}` }
+          : app,
+      );
+    const apps = normalizeOptions(res.apps);
+    const hireableApps = formatHireableApps(res.hireable_apps ?? res.apps).filter(
+      (app) => Number(app.id) > 0,
     );
     const nextAccess = getAccess(res);
     const defaultCity =
       cities.length === 1 ? cities[0].id : (cities.find((city) => sameId(city, -1))?.id ?? "");
     const defaultPoints = getSelectableCafes(points);
-    const defaultApp =
-      apps.find((app) => sameId(app, -2)) ?? apps.find((app) => parseInt(app.id) > 0) ?? null;
 
     setRefs({
       cities,
       points,
       apps,
+      hireableApps,
       cloth: normalizeOptions(res.cloth ?? res.cloth_list),
     });
     setAccess(nextAccess);
@@ -966,7 +986,7 @@ export default function EmployeesPage() {
     const nextFilters = {
       city: defaultCity,
       points: defaultPoints,
-      app: defaultApp,
+      apps: [],
       official: officialFilters[0],
       healthBook: healthBookFilters[0],
       search: "",
@@ -1008,7 +1028,7 @@ export default function EmployeesPage() {
     setEmployeePhotoFile(null);
     const res = await getData("get_employee", { user_id: employeeId, id: employeeId });
 
-    if (!res) return;
+    if (!res || res.st === false) return;
 
     setEmployee(normalizeEmployeeCard(res));
     setEmployeeDialog(true);
@@ -1021,7 +1041,7 @@ export default function EmployeesPage() {
         [field]: value,
       };
 
-      if (field === "app_id" && !authCodeRequiredForApp(value, refs.apps)) {
+      if (field === "app_id" && !authCodeRequiredForApp(value, refs.hireableApps)) {
         nextUser.auth_code = "";
       }
 
@@ -1039,7 +1059,7 @@ export default function EmployeesPage() {
         [field]: value,
       };
 
-      if (field === "app_id" && !authCodeRequiredForApp(value, refs.apps)) {
+      if (field === "app_id" && !authCodeRequiredForApp(value, refs.hireableApps)) {
         nextEmployee.auth_code = "";
       }
 
@@ -1861,12 +1881,10 @@ export default function EmployeesPage() {
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <MyAutocomplite
-                      label="Должность"
-                      multiple={false}
-                      data={refs.apps}
-                      value={filters.app}
-                      func={(_, value) => handleFilterDraftChange({ app: value })}
+                    <EmployeePositionFilter
+                      options={refs.apps}
+                      value={filters.apps}
+                      onChange={(value) => handleFilterDraftChange({ apps: value })}
                       onBlur={() => applyFilters()}
                     />
                   </Grid>
@@ -2965,7 +2983,7 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
     ? asArray(employee.health_items)
     : getEmptyHealthItems();
   const cafeOptions = getRealCafes(refs.points);
-  const isAuthCodeRequired = authCodeRequiredForApp(employee.app_id, refs.apps);
+  const isAuthCodeRequired = authCodeRequiredForApp(employee.app_id, refs.hireableApps);
 
   useEffect(() => {
     if (!open) return;
@@ -3158,7 +3176,7 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <MyAutocomplite
                     label="Должность"
-                    data={refs.apps}
+                    data={refs.hireableApps}
                     value={employee.app_id}
                     multiple={false}
                     func={(_, value) => onChange("app_id", value)}

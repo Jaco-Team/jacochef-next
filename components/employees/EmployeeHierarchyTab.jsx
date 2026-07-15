@@ -27,6 +27,11 @@ const getUnitPayloadItems = (items) =>
     id: Number(item.id),
     level: Number(item.level ?? 0),
     sort: Number(item.sort ?? 0),
+    parent_unit_id:
+      item.parent_unit_id === null || item.parent_unit_id === undefined
+        ? null
+        : Number(item.parent_unit_id),
+    parent_group_key: item.parent_group_key ? String(item.parent_group_key) : null,
   }));
 
 const getAppointmentPayloadItems = (items) =>
@@ -78,17 +83,20 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
     loadHierarchy();
   }, []);
 
-  const handleAppointmentTreeChange = (nextAppointments) => {
-    setUndoStack((current) => [...current, appointments].slice(-20));
+  const handleHierarchyTreeChange = (nextAppointments, nextUnits = units) => {
+    setUndoStack((current) => [...current, { appointments, units }].slice(-20));
 
     if (selectedUnitId === "all") {
       setAppointments(nextAppointments);
+      setUnits(nextUnits);
     } else {
       const nextAppointmentsById = new Map(nextAppointments.map((item) => [Number(item.id), item]));
+      const nextUnitsById = new Map(nextUnits.map((item) => [Number(item.id), item]));
 
       setAppointments((current) =>
         current.map((item) => nextAppointmentsById.get(Number(item.id)) || item),
       );
+      setUnits((current) => current.map((item) => nextUnitsById.get(Number(item.id)) || item));
     }
     setDirty(true);
     setUndoNoticeOpen(true);
@@ -98,10 +106,11 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
     setUndoStack((current) => {
       if (!current.length) return current;
 
-      const previousAppointments = current[current.length - 1];
+      const previous = current[current.length - 1];
       const nextStack = current.slice(0, -1);
 
-      setAppointments(previousAppointments);
+      setAppointments(previous.appointments);
+      setUnits(previous.units);
       setDirty(nextStack.length > 0);
       setUndoNoticeOpen(false);
 
@@ -146,7 +155,7 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
             <Typography sx={{ fontSize: 18, fontWeight: 900 }}>Иерархия найма</Typography>
             <Typography sx={{ mt: 0.25, fontSize: 13, color: "text.secondary" }}>
               Все отделы и должности показаны в одном дереве. Виртуальный узел «Высший уровень»
-              объединяет отделы и не сохраняется в справочниках.
+              объединяет корневые отделы и не сохраняется в справочниках.
             </Typography>
           </Box>
           <Stack
@@ -223,8 +232,9 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
 
       <Alert severity="info">
         Перетащите должность в существующий блок, чтобы поставить её на один уровень, либо в область
-        «Новая дочерняя ветка» под руководителем. Перенос между отделами недоступен. Для навигации
-        включите режим руки; масштаб также меняется через Ctrl/⌘ + колесо.
+        «Новая дочерняя ветка». Отдел можно целиком вложить под группу должностей или вернуть на
+        высший уровень; отдельные должности между отделами не переносятся. Для навигации включите
+        режим руки; масштаб также меняется через Ctrl/⌘ + колесо.
       </Alert>
 
       <Paper
@@ -287,7 +297,7 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
             units={displayedUnits}
             items={displayedAppointments}
             disabled={!tablesReady || !canEdit}
-            onChange={handleAppointmentTreeChange}
+            onChange={handleHierarchyTreeChange}
             onInvalid={(text) => showAlert(false, text)}
             onPositionClick={(position) => setPositionModal({ positionId: Number(position.id) })}
           />

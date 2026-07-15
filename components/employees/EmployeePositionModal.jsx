@@ -76,6 +76,7 @@ const serializePosition = (position) => ({
       : Number(position.is_office) === 1
         ? 1
         : 0,
+  can_manage_all_employees: Number(position?.can_manage_all_employees) === 1 ? 1 : 0,
 });
 
 const LOCKED_MODULE_KEYS = new Set(["lk", "home"]);
@@ -1151,6 +1152,28 @@ export default function EmployeePositionModal({
                         />
                         <Typography sx={{ fontSize: 14 }}>Офисная должность</Typography>
                       </Stack>
+                      <Tooltip title="Может видеть и нанимать сотрудников любых должностей и кафе, кроме самого себя">
+                        <Stack
+                          direction="row"
+                          spacing={0.25}
+                          alignItems="center"
+                        >
+                          <Switch
+                            size="small"
+                            checked={Number(position.can_manage_all_employees) === 1}
+                            disabled={!canEdit}
+                            onChange={(event) =>
+                              updatePosition(
+                                "can_manage_all_employees",
+                                event.target.checked ? 1 : 0,
+                              )
+                            }
+                          />
+                          <Typography sx={{ fontSize: 14 }}>
+                            Управляет всеми сотрудниками
+                          </Typography>
+                        </Stack>
+                      </Tooltip>
                     </Stack>
                   </Grid>
                 </Grid>
