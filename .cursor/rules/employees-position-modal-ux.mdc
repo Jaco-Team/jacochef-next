@@ -1,0 +1,64 @@
+---
+description: UI/UX patterns for employees hierarchy and position modal (EmployeePositionModal, EmployeeUnitModal, EmployeeHierarchyTab)
+globs: components/employees/**/*
+alwaysApply: false
+---
+
+# Employees Module — UI/UX
+
+Apply when editing `components/employees/**` (especially position/unit modals and hierarchy tab).
+
+## Skills To Follow
+
+- **next-mui-admin-page**: reuse `MyTextInput`, `MyAutocomplite`, `Dialog`, styled confirm dialogs, access flags, server refresh after mutations.
+- **admin-history-confirm**: destructive actions only via styled MUI dialogs, never browser `confirm`.
+
+## Position Modal Layout
+
+- `Dialog` with `fullWidth`, `maxWidth="lg"`, `useFullScreen()` on mobile (`src/hooks/useFullScreen.js`).
+- Paper must be `display: flex; flexDirection: column; overflow: hidden` with fixed height.
+- `DialogContent`: `flex: 1; minHeight: 0; overflowY: auto` — single scroll for the whole body.
+- Block «Основное» scrolls away on scroll; «Доступ к модулям» toolbar (title, search, filters) stays `position: sticky; top: 0`.
+- Left section list: `position: sticky` on desktop while scrolling module cards in the main flow.
+- Header (DialogTitle) and footer (DialogActions) stay fixed (`flexShrink: 0`).
+
+## Module Access UX
+
+- Left sidebar: sections with enabled/total counters.
+- Search is global across all sections; filters apply only within the selected section when search is empty.
+- While search is active, filter chips are disabled so search and filters do not interfere.
+- Clicking a left section or a top filter resets scroll so the module list starts under the sticky toolbar.
+- Filters: Все / Включённые / С правами / Без прав.
+- Use a two-level master-detail flow: compact module cards first, then a dedicated full-width rights screen for one selected module.
+- Do not expand permission matrices inline inside the module list.
+- The module detail screen has a prominent leading Back action in the sticky top toolbar, its own rights search, presets, one category accordion open at a time, and independent Access/View/Edit columns.
+- Warning state when module is on but no rights granted (`Требуются права`).
+- Bulk: «Включить всё» / «Выключить всё» per visible section; master checkboxes per permission column in expanded module.
+- Enabling an internal right automatically enables the module; removing rights never disables it.
+- Dirty indicator in title; styled close-without-save dialog when there are unsaved changes.
+
+## Color Semantics
+
+- Use neutral `background.paper`, `divider`, `action.hover`, and `action.selected` for most surfaces.
+- Keep brand `primary` for Save, selected filters, active controls, focus, and a thin selected-navigation indicator.
+- Module statuses: success = enabled, warning = enabled without rights, info = always enabled, default gray = disabled.
+- Status chips remain outlined and include text; never communicate state by color alone.
+- Do not tint the whole card for normal enabled state. Red/error styling is reserved for destructive actions and actual errors.
+
+## Access & Actions
+
+- Respect `canEdit`: disable inputs, hide Save/Copy/Delete.
+- Copy/delete: existing styled sub-dialogs; delete blocked when employees are assigned.
+- After save/copy/delete: call `onSaved()` and refresh hierarchy from server.
+
+## Mobile
+
+- `fullScreen` dialog on small breakpoints.
+- Section list: horizontal scroll chips/tabs on xs instead of tall vertical list when possible.
+- Avoid nested scroll traps; one primary scroll region for module cards.
+
+## Do Not
+
+- Do not introduce new visual system or heavy custom `sx` beyond layout/scroll fixes.
+- Do not use browser `confirm`.
+- Do not invent API fields; follow `EMPLOYEES_API.md`.

@@ -509,27 +509,42 @@ const getAccess = (data) => {
 
 const getEmployeePermissions = (access) => {
   const { userCan } = handleUserAccess(access);
-  const field = (key) => ({
-    view: userCan("view", key),
-    edit: userCan("edit", key),
-  });
+  const tab = (key) => {
+    const allowed = userCan("access", key);
+
+    return { view: allowed, edit: allowed };
+  };
+  const basicTab = tab("basic_tab");
+  const workTab = tab("work_tab");
+  const absencesTab = tab("absences_tab");
+  const healthBookTab = tab("health_book_tab");
+  const clothingTab = tab("clothing_tab");
 
   return {
     addEmployee: userCan("access", "add_employee"),
-    officialEmployment: field("official_employment"),
-    photo: field("photo"),
-    fullName: field("full_name"),
-    phone: field("phone"),
-    inn: field("inn"),
-    birthDate: field("birth_date"),
-    employmentDate: field("employment_date"),
-    authCode: field("auth_code"),
-    position: field("position"),
-    positionHierarchy: field("position_hierarchy"),
-    cafes: field("cafes"),
-    absences: field("absences"),
-    healthBook: field("health_book"),
-    clothing: field("clothing"),
+    mainStats: userCan("access", "main_stats"),
+    basicTab,
+    workTab,
+    absencesTab,
+    healthBookTab,
+    clothingTab,
+    officialEmployment: workTab,
+    photo: basicTab,
+    fullName: basicTab,
+    phone: basicTab,
+    inn: basicTab,
+    birthDate: basicTab,
+    employmentDate: workTab,
+    authCode: basicTab,
+    position: workTab,
+    positionHierarchy: {
+      view: userCan("view", "position_hierarchy"),
+      edit: userCan("edit", "position_hierarchy"),
+    },
+    cafes: workTab,
+    absences: absencesTab,
+    healthBook: healthBookTab,
+    clothing: clothingTab,
   };
 };
 
@@ -540,11 +555,7 @@ const hasBasicEmployeeView = (permissions) =>
     permissions.phone,
     permissions.inn,
     permissions.birthDate,
-    permissions.employmentDate,
     permissions.authCode,
-    permissions.position,
-    permissions.cafes,
-    permissions.officialEmployment,
   ].some((permission) => permission.view);
 
 const hasBasicEmployeeEdit = (permissions) =>
@@ -553,23 +564,25 @@ const hasBasicEmployeeEdit = (permissions) =>
     permissions.phone,
     permissions.inn,
     permissions.birthDate,
-    permissions.employmentDate,
     permissions.authCode,
-    permissions.position,
-    permissions.cafes,
-    permissions.officialEmployment,
   ].some((permission) => permission.edit);
 
 const getDefaultEmployeeTab = (permissions) => {
   if (hasBasicEmployeeView(permissions)) return "basic";
-  if (permissions.position.view) return "work";
+  if (permissions.workTab.view) return "work";
   if (permissions.absences.view) return "absence";
-  if (permissions.employmentDate.view || permissions.officialEmployment.view) return "experience";
   if (permissions.healthBook.view) return "health";
   if (permissions.clothing.view) return "cloth";
 
   return "history";
 };
+
+const canOpenEmployeeCard = (permissions) =>
+  hasBasicEmployeeView(permissions) ||
+  permissions.workTab.view ||
+  permissions.absences.view ||
+  permissions.healthBook.view ||
+  permissions.clothing.view;
 
 const unwrapResponse = (res) => res?.data ?? res;
 
@@ -814,6 +827,7 @@ export default function EmployeesPage() {
   const [expandedOfficeUnits, setExpandedOfficeUnits] = useState([]);
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState(DEFAULT_ROWS);
+  const [sort, setSort] = useState({ by: "position", direction: "asc" });
   const [totalRows, setTotalRows] = useState(0);
   const [employeeDialog, setEmployeeDialog] = useState(false);
   const [employee, setEmployee] = useState(null);
@@ -855,7 +869,7 @@ export default function EmployeesPage() {
     setIsLoad(true);
 
     try {
-      const res = await api_laravel(MODULE, method, data);
+      const res = await api_laravel_local(MODULE, method, data);
       return unwrapResponse(res);
     } catch (e) {
       showAlert(false, "Не удалось выполнить запрос");
@@ -879,7 +893,12 @@ export default function EmployeesPage() {
     }
   };
 
-  const refreshEmployees = async (nextFilters = filters, nextPage = page, nextRows = rows) => {
+  const refreshEmployees = async (
+    nextFilters = filters,
+    nextPage = page,
+    nextRows = rows,
+    nextSort = sort,
+  ) => {
     const requestPoints = getSelectableCafes(nextFilters.points);
 
     const data = {
@@ -893,6 +912,8 @@ export default function EmployeesPage() {
       search: nextFilters.search,
       page: nextPage + 1,
       rows: nextRows,
+      sort_by: nextSort.by,
+      sort_direction: nextSort.direction,
     };
     const res = await getData("get_employees", data);
 
@@ -922,7 +943,11 @@ export default function EmployeesPage() {
 
     const cities = normalizeOptions(res.cities);
     const points = normalizeOptions(res.points);
-    const apps = normalizeOptions(res.apps);
+    const apps = normalizeOptions(res.apps).map((app) =>
+      Number(app.id) > 0 && app.unit_name
+        ? { ...app, name: `${app.unit_name} — ${app.name}` }
+        : app,
+    );
     const nextAccess = getAccess(res);
     const defaultCity =
       cities.length === 1 ? cities[0].id : (cities.find((city) => sameId(city, -1))?.id ?? "");
@@ -971,6 +996,10 @@ export default function EmployeesPage() {
   }, [employees, page, rows, totalRows]);
 
   const openEmployee = async (employeeId, tab = "basic") => {
+    if (!canOpenEmployeeCard(permissions)) {
+      return;
+    }
+
     setActiveTab(
       tab === "basic" && !hasBasicEmployeeView(permissions)
         ? getDefaultEmployeeTab(permissions)
@@ -1064,12 +1093,17 @@ export default function EmployeesPage() {
 
   const saveBasic = async () => {
     if (hasBasicEmployeeEdit(permissions)) {
+      const basicUser = {
+        ...employee.user,
+        date_start_day: dayjs().format("YYYY-MM-DD"),
+      };
       const ok = await handleMutation(
         "save_basic",
         {
           user_id: employee.user.id,
-          user: employee.user,
-          employee: employee.user,
+          user: basicUser,
+          employee: basicUser,
+          date_start_day: dayjs().format("YYYY-MM-DD"),
         },
         "Данные сотрудника сохранены",
       );
@@ -1119,17 +1153,6 @@ export default function EmployeesPage() {
         user,
       },
       "Изменения по работе применены",
-    );
-  };
-
-  const saveDateRegistration = async () => {
-    await handleMutation(
-      "save_date_registration",
-      {
-        user_id: employee.user.id,
-        date_registration: formatDate(employee.user.date_registration),
-      },
-      "Дата трудоустройства сохранена",
     );
   };
 
@@ -1374,6 +1397,20 @@ export default function EmployeesPage() {
     setPage(0);
     refreshEmployees(nextFilters, 0, rows);
   };
+
+  const changeSort = (by) => {
+    const nextSort =
+      sort.by === by
+        ? { by, direction: sort.direction === "asc" ? "desc" : "asc" }
+        : { by, direction: "asc" };
+
+    setSort(nextSort);
+    setPage(0);
+    refreshEmployees(filtersRef.current, 0, rows, nextSort);
+  };
+
+  const sortLabel = (label, by) =>
+    `${label}${sort.by === by ? (sort.direction === "asc" ? " ↑" : " ↓") : ""}`;
 
   const renderExperienceStats = () => {
     const items = stats.experience.length
@@ -1746,14 +1783,31 @@ export default function EmployeesPage() {
         className="container_first_child"
       >
         <Grid size={12}>
-          {pageTitle ? (
-            <Typography
-              component="h1"
-              sx={{ m: 0, fontSize: { xs: 26, md: 32 }, fontWeight: 900 }}
-            >
-              {pageTitle}
-            </Typography>
-          ) : null}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            justifyContent="space-between"
+          >
+            {pageTitle ? (
+              <Typography
+                component="h1"
+                sx={{ m: 0, fontSize: { xs: 26, md: 32 }, fontWeight: 900 }}
+              >
+                {pageTitle}
+              </Typography>
+            ) : null}
+            {permissions.addEmployee ? (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openCreateDialog}
+                sx={{ alignSelf: { xs: "flex-start", sm: "auto" }, whiteSpace: "nowrap" }}
+              >
+                Добавить сотрудника
+              </Button>
+            ) : null}
+          </Stack>
         </Grid>
 
         <Grid size={12}>
@@ -1886,42 +1940,36 @@ export default function EmployeesPage() {
                       >
                         Обновить
                       </Button>
-                      {permissions.addEmployee ? (
-                        <Button
-                          variant="contained"
-                          startIcon={<AddIcon />}
-                          onClick={openCreateDialog}
-                          sx={{ whiteSpace: "nowrap" }}
-                        >
-                          Добавить сотрудника
-                        </Button>
-                      ) : null}
                     </Stack>
                   </Grid>
                 </Grid>
               </Paper>
             </Grid>
 
-            <Grid size={12}>
-              <Grid
-                container
-                spacing={2}
-              >
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <StatCard title="Стаж сотрудников">{renderExperienceStats()}</StatCard>
+            {permissions.mainStats ? (
+              <React.Fragment>
+                <Grid size={12}>
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <StatCard title="Стаж сотрудников">{renderExperienceStats()}</StatCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <StatCard title="Трудоустройство">{renderEmploymentStats()}</StatCard>
+                    </Grid>
+                  </Grid>
                 </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <StatCard title="Трудоустройство">{renderEmploymentStats()}</StatCard>
-                </Grid>
-              </Grid>
-            </Grid>
 
-            <Grid
-              size={12}
-              sx={{ mt: 2 }}
-            >
-              <StatCard title="Ситуация по кафе">{renderCafeStats()}</StatCard>
-            </Grid>
+                <Grid
+                  size={12}
+                  sx={{ mt: 2 }}
+                >
+                  <StatCard title="Ситуация по кафе">{renderCafeStats()}</StatCard>
+                </Grid>
+              </React.Fragment>
+            ) : null}
 
             <Grid
               size={12}
@@ -1938,11 +1986,31 @@ export default function EmployeesPage() {
                   >
                     <TableHead>
                       <TableRow sx={tableHeaderSx}>
-                        <TableCell>ФИО</TableCell>
+                        <TableCell
+                          onClick={() => changeSort("fio")}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          {sortLabel("ФИО", "fio")}
+                        </TableCell>
                         <TableCell>Телефон</TableCell>
-                        <TableCell>Должность</TableCell>
-                        <TableCell>Кафе</TableCell>
-                        <TableCell>Принят</TableCell>
+                        <TableCell
+                          onClick={() => changeSort("position")}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          {sortLabel("Должность", "position")}
+                        </TableCell>
+                        <TableCell
+                          onClick={() => changeSort("cafe")}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          {sortLabel("Кафе", "cafe")}
+                        </TableCell>
+                        <TableCell
+                          onClick={() => changeSort("employment_date")}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          {sortLabel("Принят", "employment_date")}
+                        </TableCell>
                         <TableCell>Стаж</TableCell>
                         <TableCell align="center">Оф.</TableCell>
                         <TableCell>Медкнижка</TableCell>
@@ -1955,9 +2023,11 @@ export default function EmployeesPage() {
                         return (
                           <TableRow
                             key={item.id}
-                            hover
+                            hover={canOpenEmployeeCard(permissions)}
                             onClick={() => openEmployee(item.id)}
-                            sx={{ cursor: "pointer" }}
+                            sx={{
+                              cursor: canOpenEmployeeCard(permissions) ? "pointer" : "default",
+                            }}
                           >
                             <TableCell>
                               <Stack
@@ -2067,7 +2137,6 @@ export default function EmployeesPage() {
         onPhotoFileChange={setEmployeePhotoFile}
         onSaveBasic={saveBasic}
         onApplyWork={applyWorkChange}
-        onSaveDateRegistration={saveDateRegistration}
         onAbsenceChange={setAbsence}
         onSaveAbsence={saveAbsence}
         onEditAbsence={editAbsence}
@@ -2140,7 +2209,6 @@ function EmployeeDialog({
   onPhotoFileChange,
   onSaveBasic,
   onApplyWork,
-  onSaveDateRegistration,
   onAbsenceChange,
   onSaveAbsence,
   onEditAbsence,
@@ -2165,17 +2233,18 @@ function EmployeeDialog({
     permissions.birthDate.view ||
     permissions.authCode.view ||
     permissions.inn.view;
-  const hasWorkView =
-    permissions.employmentDate.view ||
-    permissions.position.view ||
-    permissions.officialEmployment.view ||
-    permissions.cafes.view;
   const healthItems = employee ? getHealthItems(employee) : [];
-  const overallHealth = healthItems.some((item) => getHealthItemStatus(item).color === "error")
-    ? "Просрочено"
-    : healthItems.some((item) => getHealthItemStatus(item).color === "warning")
-      ? "Скоро истекает"
-      : "Актуально";
+  const overallHealth = (() => {
+    const statuses = healthItems.map((item) => getHealthItemStatus(item));
+
+    if (statuses.some((item) => item.color === "error")) return "Просрочено";
+    if (statuses.some((item) => item.color === "warning")) return "Скоро истекает";
+    if (!statuses.length || statuses.some((item) => item.label === "Нет даты")) {
+      return "Не заполнена";
+    }
+
+    return "Актуально";
+  })();
 
   if (!employee || !user) return null;
 
@@ -2208,10 +2277,17 @@ function EmployeeDialog({
             >
               {permissions.fullName.view ? joinName(user) : `Сотрудник #${user.id}`}
             </Typography>
-            {permissions.position.view ? (
+            {permissions.workTab.view ? (
               <Chip
                 size="small"
-                label={isDismissal ? "Уволен" : "Работает"}
+                label={
+                  isDismissal
+                    ? "Уволен"
+                    : parseInt(user.acc_to_kas) === 1
+                      ? "Официально трудоустроен"
+                      : "Работает"
+                }
+                color={!isDismissal && parseInt(user.acc_to_kas) === 1 ? "success" : "default"}
                 sx={{ mt: 0.5, fontWeight: 700 }}
               />
             ) : null}
@@ -2235,7 +2311,7 @@ function EmployeeDialog({
                 value="basic"
               />
             ) : null}
-            {permissions.position.view ? (
+            {permissions.workTab.view ? (
               <Tab
                 label="Работа"
                 value="work"
@@ -2245,12 +2321,6 @@ function EmployeeDialog({
               <Tab
                 label="Отсутствия"
                 value="absence"
-              />
-            ) : null}
-            {permissions.employmentDate.view || permissions.officialEmployment.view ? (
-              <Tab
-                label="Стаж"
-                value="experience"
               />
             ) : null}
             {permissions.healthBook.view ? (
@@ -2417,129 +2487,6 @@ function EmployeeDialog({
                     )}
                   </Grid>
                 ) : null}
-                {hasWorkView ? (
-                  <Grid
-                    size={12}
-                    sx={{ mt: hasPersonalView ? 0.75 : 0 }}
-                  >
-                    <Typography sx={{ color: "text.secondary", fontSize: 13, fontWeight: 900 }}>
-                      Работа и доступ
-                    </Typography>
-                  </Grid>
-                ) : null}
-                {permissions.employmentDate.view ? (
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    {permissions.employmentDate.edit ? (
-                      <MyDatePickerNew
-                        label="Дата трудоустройства"
-                        value={user.date_registration}
-                        func={(value) =>
-                          onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
-                        }
-                      />
-                    ) : (
-                      <EmployeeViewField
-                        label="Дата трудоустройства"
-                        value={formatActivityHistoryDate(user.date_registration)}
-                      />
-                    )}
-                  </Grid>
-                ) : null}
-                {permissions.position.view ? (
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    {permissions.position.edit ? (
-                      <MyAutocomplite
-                        label="Должность"
-                        data={appOptions}
-                        value={selectedApp}
-                        multiple={false}
-                        func={(_, value) => onUserChange("app_id", value)}
-                      />
-                    ) : (
-                      <EmployeeViewField
-                        label="Должность"
-                        value={selectedApp?.name ?? user.app_name}
-                      />
-                    )}
-                  </Grid>
-                ) : null}
-                {permissions.officialEmployment.view ? (
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    {permissions.officialEmployment.edit ? (
-                      <MyCheckBox
-                        label="Официальное трудоустройство"
-                        value={parseInt(user.acc_to_kas) === 1}
-                        func={(event) => onUserChange("acc_to_kas", event.target.checked ? 1 : 0)}
-                      />
-                    ) : (
-                      <EmployeeViewField label="Трудоустройство">
-                        <Chip
-                          size="small"
-                          label={parseInt(user.acc_to_kas) === 1 ? "Официально" : "Неофициально"}
-                          color={parseInt(user.acc_to_kas) === 1 ? "success" : "default"}
-                          sx={{ fontWeight: 800 }}
-                        />
-                      </EmployeeViewField>
-                    )}
-                  </Grid>
-                ) : null}
-                {permissions.position.view && isDismissal ? (
-                  <Grid size={12}>
-                    {permissions.position.edit ? (
-                      <MyTextInput
-                        label="Причина увольнения"
-                        value={user.textDel ?? ""}
-                        multiline
-                        minRows={3}
-                        func={(event) => onUserChange("textDel", event.target.value)}
-                      />
-                    ) : (
-                      <EmployeeViewField
-                        label="Причина увольнения"
-                        value={user.textDel}
-                      />
-                    )}
-                  </Grid>
-                ) : null}
-                {permissions.cafes.view ? (
-                  <Grid size={12}>
-                    {permissions.cafes.edit ? (
-                      <CityCafeAutocomplete2
-                        label="Доступные кафе"
-                        placeholder="Выберите кафе"
-                        withAll
-                        withOrganizationMode={false}
-                        compact
-                        points={cafeAccessOptions}
-                        value={asArray(user.point_access)}
-                        onChange={(value) => onUserChange("point_access", value || [])}
-                      />
-                    ) : (
-                      <EmployeeViewField label="Доступные кафе">
-                        <Stack
-                          direction="row"
-                          useFlexGap
-                          flexWrap="wrap"
-                          gap={0.75}
-                        >
-                          {asArray(user.point_access).length ? (
-                            asArray(user.point_access).map((point) => (
-                              <Chip
-                                key={point.id ?? point.name}
-                                size="small"
-                                label={point.name ?? point.addr}
-                                variant="outlined"
-                                sx={{ bgcolor: "background.paper", fontWeight: 700 }}
-                              />
-                            ))
-                          ) : (
-                            <Typography sx={{ fontWeight: 800 }}>—</Typography>
-                          )}
-                        </Stack>
-                      </EmployeeViewField>
-                    )}
-                  </Grid>
-                ) : null}
               </Grid>
             </Grid>
           </Grid>
@@ -2572,6 +2519,40 @@ function EmployeeDialog({
                     onUserChange("date_start_day", value ? value.format("YYYY-MM-DD") : "")
                   }
                 />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <MyCheckBox
+                  label="Официальное трудоустройство"
+                  value={parseInt(user.acc_to_kas) === 1}
+                  disabled={isDismissal}
+                  func={(event) => onUserChange("acc_to_kas", event.target.checked ? 1 : 0)}
+                />
+              </Grid>
+              <Grid size={12}>
+                <CityCafeAutocomplete2
+                  label="Доступные кафе"
+                  placeholder="Выберите кафе"
+                  withAll
+                  withOrganizationMode={false}
+                  compact
+                  points={cafeAccessOptions}
+                  value={asArray(user.point_access)}
+                  onChange={(value) => onUserChange("point_access", value || [])}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <EmployeeViewField label="Стаж">
+                  <Typography sx={{ fontSize: 15, fontWeight: 800 }}>
+                    {[
+                      user.date_registration
+                        ? `с ${formatActivityHistoryDate(user.date_registration)}`
+                        : null,
+                      user.exp ?? employee.user.experience ?? null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+                  </Typography>
+                </EmployeeViewField>
               </Grid>
               {isDismissal ? (
                 <Grid size={12}>
@@ -2612,6 +2593,20 @@ function EmployeeDialog({
                     color={isDismissal ? "default" : "success"}
                     sx={{ fontWeight: 800 }}
                   />
+                </EmployeeViewField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <EmployeeViewField label="Стаж">
+                  <Typography sx={{ fontSize: 15, fontWeight: 800 }}>
+                    {[
+                      user.date_registration
+                        ? `с ${formatActivityHistoryDate(user.date_registration)}`
+                        : null,
+                      user.exp ?? employee.user.experience ?? null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+                  </Typography>
                 </EmployeeViewField>
               </Grid>
               {isDismissal ? (
@@ -2752,80 +2747,6 @@ function EmployeeDialog({
 
         <TabPanel
           active={activeTab}
-          value="experience"
-        >
-          <Box sx={{ maxWidth: 760 }}>
-            {permissions.employmentDate.view ? (
-              <React.Fragment>
-                <ExperienceRow
-                  label="Дата трудоустройства"
-                  value={
-                    <Box sx={{ maxWidth: 260 }}>
-                      {permissions.employmentDate.edit ? (
-                        <MyDatePickerNew
-                          label="Дата трудоустройства"
-                          value={user.date_registration}
-                          func={(value) =>
-                            onUserChange(
-                              "date_registration",
-                              value ? value.format("YYYY-MM-DD") : "",
-                            )
-                          }
-                        />
-                      ) : (
-                        <Typography sx={{ fontWeight: 800 }}>
-                          {formatActivityHistoryDate(user.date_registration)}
-                        </Typography>
-                      )}
-                    </Box>
-                  }
-                />
-                <ExperienceRow
-                  label="Общий стаж"
-                  value={user.exp ?? employee.user.experience ?? "—"}
-                />
-                <ExperienceRow
-                  label="Текущая организация"
-                  value={user.organization ?? user.org_name ?? "—"}
-                />
-              </React.Fragment>
-            ) : null}
-            {permissions.officialEmployment.view ? (
-              <ExperienceRow
-                label="Официальное трудоустройство"
-                value={
-                  <Chip
-                    size="small"
-                    label={parseInt(user.acc_to_kas) === 1 ? "Да" : "Нет"}
-                    color={parseInt(user.acc_to_kas) === 1 ? "success" : "error"}
-                    sx={{ fontWeight: 800 }}
-                  />
-                }
-              />
-            ) : null}
-            {permissions.employmentDate.edit ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: { xs: "stretch", sm: "center" },
-                  mt: 3,
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={onSaveDateRegistration}
-                  sx={{ width: { xs: "100%", sm: "auto" } }}
-                >
-                  Сохранить дату трудоустройства
-                </Button>
-              </Box>
-            ) : null}
-          </Box>
-        </TabPanel>
-
-        <TabPanel
-          active={activeTab}
           value="health"
         >
           <Stack
@@ -2842,7 +2763,9 @@ function EmployeeDialog({
                   ? "error"
                   : overallHealth === "Скоро истекает"
                     ? "warning"
-                    : "success"
+                    : overallHealth === "Не заполнена"
+                      ? "default"
+                      : "success"
               }
               sx={{ fontWeight: 800 }}
             />
