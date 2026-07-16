@@ -3,22 +3,32 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   FormControl,
+  IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Paper,
   Select,
   Snackbar,
   Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SaveIcon from "@mui/icons-material/Save";
+import SearchIcon from "@mui/icons-material/Search";
 import UndoIcon from "@mui/icons-material/Undo";
 import EmployeeAppointmentHierarchyTree from "./EmployeeAppointmentHierarchyTree";
+import EmployeeHierarchyList from "./EmployeeHierarchyList";
 import EmployeePositionModal from "./EmployeePositionModal";
 import EmployeeUnitModal from "./EmployeeUnitModal";
 
@@ -52,6 +62,9 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
   const [canEdit, setCanEdit] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState("all");
+  const [viewMode, setViewMode] = useState("list");
+  const [listSearch, setListSearch] = useState("");
+  const [visibleListCount, setVisibleListCount] = useState(0);
   const [positionModal, setPositionModal] = useState(null);
   const [unitModal, setUnitModal] = useState(null);
   const [undoStack, setUndoStack] = useState([]);
@@ -154,8 +167,9 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
           <Box>
             <Typography sx={{ fontSize: 18, fontWeight: 900 }}>Иерархия найма</Typography>
             <Typography sx={{ mt: 0.25, fontSize: 13, color: "text.secondary" }}>
-              Все отделы и должности показаны в одном дереве. Виртуальный узел «Высший уровень»
-              объединяет корневые отделы и не сохраняется в справочниках.
+              Список — для быстрого поиска и открытия должности. Дерево — для настройки связей,
+              вложенных отделов и перетаскивания. Виртуальный узел «Высший уровень» не сохраняется в
+              справочниках.
             </Typography>
           </Box>
           <Stack
@@ -230,69 +244,163 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
         </Alert>
       ) : null}
 
-      <Alert severity="info">
-        Перетащите должность в существующий блок, чтобы поставить её на один уровень, либо в область
-        «Новая дочерняя ветка». Отдел можно целиком вложить под группу должностей или вернуть на
-        высший уровень; отдельные должности между отделами не переносятся. Для навигации включите
-        режим руки; масштаб также меняется через Ctrl/⌘ + колесо.
-      </Alert>
+      {viewMode === "tree" ? (
+        <Alert severity="info">
+          Перетащите должность в существующий блок, чтобы поставить её на один уровень, либо в
+          область «Новая дочерняя ветка». Отдел можно целиком вложить под группу должностей или
+          вернуть на высший уровень; отдельные должности между отделами не переносятся. Для
+          навигации включите режим руки; масштаб также меняется через Ctrl/⌘ + колесо.
+        </Alert>
+      ) : null}
 
       <Paper
         variant="outlined"
         sx={{ p: 2 }}
       >
         <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          sx={{ mb: 1.5 }}
+          spacing={1.5}
+          sx={{ mb: 2 }}
         >
-          <AccountTreeOutlinedIcon color="primary" />
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 900 }}>Общее дерево отделов и должностей</Typography>
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-              Названия должностей отображаются полностью, параллельные ветки настраиваются внутри
-              своего отдела
-            </Typography>
-          </Box>
-          <FormControl
-            size="small"
-            sx={{ width: { xs: "100%", sm: 280 } }}
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
           >
-            <InputLabel id="employee-hierarchy-unit-label">Отдел</InputLabel>
-            <Select
-              labelId="employee-hierarchy-unit-label"
-              label="Отдел"
-              value={selectedUnitId}
-              onChange={(event) => setSelectedUnitId(event.target.value)}
+            {viewMode === "tree" ? (
+              <AccountTreeOutlinedIcon color="primary" />
+            ) : (
+              <FormatListBulletedIcon color="primary" />
+            )}
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography sx={{ fontWeight: 900 }}>
+                {viewMode === "tree" ? "Общее дерево отделов и должностей" : "Список должностей"}
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                {viewMode === "tree"
+                  ? "Настройка связей, вложенных отделов и уровней подчинения"
+                  : "Быстрый поиск и открытие карточек должностей"}
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                display: { xs: "none", sm: "block" },
+                color: "text.secondary",
+                fontSize: 12,
+                whiteSpace: "nowrap",
+              }}
             >
-              <MenuItem value="all">Все отделы</MenuItem>
-              {units.map((unit) => (
-                <MenuItem
-                  key={unit.id}
-                  value={String(unit.id)}
-                >
-                  {unit.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {selectedUnitId !== "all" ? (
-            <Button
+              {viewMode === "list"
+                ? `Найдено: ${visibleListCount} из ${displayedAppointments.length}`
+                : `${displayedUnits.length} отделов · ${displayedAppointments.length} должностей`}
+            </Typography>
+          </Stack>
+
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1}
+            alignItems={{ xs: "stretch", md: "center" }}
+          >
+            {viewMode === "list" ? (
+              <TextField
+                size="small"
+                value={listSearch}
+                onChange={(event) => setListSearch(event.target.value)}
+                placeholder="Поиск по должности или отделу…"
+                sx={{ minWidth: { md: 320 }, flex: 1 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: listSearch ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        aria-label="Очистить поиск"
+                        onClick={() => setListSearch("")}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                }}
+              />
+            ) : (
+              <Box sx={{ flex: 1 }} />
+            )}
+            <ToggleButtonGroup
+              exclusive
               size="small"
-              disabled={!canEdit}
-              onClick={() => setUnitModal({ unitId: Number(selectedUnitId) })}
+              value={viewMode}
+              onChange={(_, value) => {
+                if (value) setViewMode(value);
+              }}
+              aria-label="Режим просмотра иерархии"
+              fullWidth={false}
             >
-              Редактировать отдел
-            </Button>
-          ) : null}
-          <Chip
-            size="small"
-            label={`${displayedUnits.length} отделов · ${displayedAppointments.length} должностей`}
-          />
+              <ToggleButton value="list">Список</ToggleButton>
+              <ToggleButton value="tree">Дерево</ToggleButton>
+            </ToggleButtonGroup>
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+            >
+              <FormControl
+                size="small"
+                sx={{ width: { xs: "100%", md: 240 } }}
+              >
+                <InputLabel id="employee-hierarchy-unit-label">Отдел</InputLabel>
+                <Select
+                  labelId="employee-hierarchy-unit-label"
+                  label="Отдел"
+                  value={selectedUnitId}
+                  onChange={(event) => setSelectedUnitId(event.target.value)}
+                >
+                  <MenuItem value="all">Все отделы</MenuItem>
+                  {units.map((unit) => (
+                    <MenuItem
+                      key={unit.id}
+                      value={String(unit.id)}
+                    >
+                      {unit.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {selectedUnitId !== "all" ? (
+                <Tooltip title="Редактировать отдел">
+                  <span>
+                    <IconButton
+                      disabled={!canEdit}
+                      onClick={() => setUnitModal({ unitId: Number(selectedUnitId) })}
+                      aria-label="Редактировать отдел"
+                    >
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              ) : null}
+            </Stack>
+          </Stack>
         </Stack>
 
-        {displayedUnits.length ? (
+        {!displayedUnits.length && !displayedAppointments.length ? (
+          <Box sx={{ py: 8, textAlign: "center", color: "text.secondary" }}>
+            Нет отделов для отображения
+          </Box>
+        ) : viewMode === "list" ? (
+          <EmployeeHierarchyList
+            units={displayedUnits}
+            items={displayedAppointments}
+            canEdit={canEdit}
+            search={listSearch}
+            onVisibleCountChange={setVisibleListCount}
+            onPositionClick={(position) => setPositionModal({ positionId: Number(position.id) })}
+          />
+        ) : (
           <EmployeeAppointmentHierarchyTree
             units={displayedUnits}
             items={displayedAppointments}
@@ -301,10 +409,6 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
             onInvalid={(text) => showAlert(false, text)}
             onPositionClick={(position) => setPositionModal({ positionId: Number(position.id) })}
           />
-        ) : (
-          <Box sx={{ py: 8, textAlign: "center", color: "text.secondary" }}>
-            Нет отделов для отображения
-          </Box>
         )}
       </Paper>
 
