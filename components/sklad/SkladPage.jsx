@@ -50,7 +50,7 @@ export default function SkladPage() {
   const { api_laravel } = useApi("sklad");
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
-  const loading = useSkladStore((state) => state.loading);
+  const isLoading = useSkladStore((state) => state.isLoading);
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
   const summary = useSkladStore((state) => state.summary);
@@ -58,8 +58,7 @@ export default function SkladPage() {
   const access = useSkladStore((state) => state.access);
   const tab = useSkladStore((state) => state.tab);
   const setBootstrap = useSkladStore((state) => state.setBootstrap);
-  const setLoading = useSkladStore((state) => state.setLoading);
-  const setTab = useSkladStore((state) => state.setTab);
+  const setState = useSkladStore((state) => state.setState);
   const requestRefresh = useSkladStore((state) => state.requestRefresh);
 
   const tabs = useMemo(() => getVisibleSkladTabs({ sections, access }), [sections, access]);
@@ -68,7 +67,7 @@ export default function SkladPage() {
     let isMounted = true;
 
     const loadBootstrap = async () => {
-      setLoading(true);
+      setState({ isLoading: true });
 
       try {
         const response = await api_laravel("get_all", { archive_mode: "active" });
@@ -99,7 +98,7 @@ export default function SkladPage() {
         }
       } finally {
         if (isMounted) {
-          setLoading(false);
+          setState({ isLoading: false });
         }
       }
     };
@@ -109,7 +108,7 @@ export default function SkladPage() {
     return () => {
       isMounted = false;
     };
-  }, [api_laravel, refreshToken, setBootstrap, setLoading, showAlert]);
+  }, [api_laravel, refreshToken, setBootstrap, setState, showAlert]);
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -117,9 +116,9 @@ export default function SkladPage() {
     }
 
     if (tab > tabs.length - 1) {
-      setTab(0);
+      setState({ tab: 0 });
     }
-  }, [tab, tabs, setTab]);
+  }, [tab, tabs, setState]);
 
   const summaryChips = [
     { key: "recipes_active", label: "Рецепты" },
@@ -132,7 +131,7 @@ export default function SkladPage() {
     <>
       <Backdrop
         sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
-        open={loading}
+        open={isLoading}
       >
         <CircularProgress />
       </Backdrop>
@@ -150,56 +149,60 @@ export default function SkladPage() {
         className="container_first_child"
       >
         <Grid size={12}>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
+          <Grid
+            container
             spacing={2}
-            justifyContent="space-between"
             alignItems={{ xs: "flex-start", md: "center" }}
           >
-            <Box>
-              <Typography
-                component="h1"
-                variant="h4"
-                sx={{ fontWeight: 700 }}
-              >
-                {moduleName || "Склад"}
-              </Typography>
+            <Grid size={{ xs: 12, md: "grow" }}>
+              <Box>
+                <h1>{moduleName || "Склад"}</h1>
 
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.5 }}
-              >
-                Canonical shell нового модуля на `/api/sklad/*`.
-              </Typography>
-            </Box>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
+                  Canonical shell нового модуля на `/api/sklad/*`.
+                </Typography>
+              </Box>
+            </Grid>
 
-            <Button
-              variant="contained"
-              startIcon={<RefreshIcon />}
-              onClick={() => requestRefresh()}
-            >
-              Обновить
-            </Button>
-          </Stack>
+            <Grid size={{ xs: 12, md: "auto" }}>
+              <Stack
+                direction="row"
+                justifyContent={{ xs: "flex-start", md: "flex-end" }}
+              >
+                <Button
+                  variant="contained"
+                  startIcon={<RefreshIcon />}
+                  onClick={() => requestRefresh()}
+                >
+                  Обновить
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
         </Grid>
 
         {summaryChips.length ? (
           <Grid size={12}>
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              flexWrap="wrap"
-            >
-              {summaryChips.map((item) => (
-                <Chip
-                  key={item.key}
-                  label={`${item.label}: ${summary[item.key]}`}
-                  variant="outlined"
-                />
-              ))}
-            </Stack>
+            <Paper sx={{ p: 2, borderRadius: 3 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                useFlexGap
+                flexWrap="wrap"
+              >
+                {summaryChips.map((item) => (
+                  <Chip
+                    key={item.key}
+                    label={`${item.label}: ${summary[item.key]}`}
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+            </Paper>
           </Grid>
         ) : null}
 
@@ -207,7 +210,7 @@ export default function SkladPage() {
           <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
             <Tabs
               value={tabs.length ? tab : 0}
-              onChange={(_, value) => setTab(value)}
+              onChange={(_, value) => setState({ tab: value })}
               aria-label="sklad tabs"
               variant="scrollable"
               scrollButtons="auto"
@@ -224,28 +227,35 @@ export default function SkladPage() {
         </Grid>
 
         <Grid size={12}>
-          {tabs.length ? (
-            tabs.map((item, index) => (
-              <TabPanel
-                key={item.key}
-                value={tab}
-                index={index}
-              >
-                <SkladPlaceholderTab
-                  title={item.label}
-                  description={item.description}
-                  summaryValue={item.summaryKey ? (summary?.[item.summaryKey] ?? 0) : null}
-                />
-              </TabPanel>
-            ))
-          ) : (
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
-              <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
-              <Typography color="text.secondary">
-                Проверь права доступа и published sections в `sklad/get_all`.
-              </Typography>
-            </Paper>
-          )}
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={12}>
+              {tabs.length ? (
+                tabs.map((item, index) => (
+                  <TabPanel
+                    key={item.key}
+                    value={tab}
+                    index={index}
+                  >
+                    <SkladPlaceholderTab
+                      title={item.label}
+                      description={item.description}
+                      summaryValue={item.summaryKey ? (summary?.[item.summaryKey] ?? 0) : null}
+                    />
+                  </TabPanel>
+                ))
+              ) : (
+                <Paper sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
+                  <Typography color="text.secondary">
+                    Проверь права доступа и published sections в `sklad/get_all`.
+                  </Typography>
+                </Paper>
+              )}
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </>

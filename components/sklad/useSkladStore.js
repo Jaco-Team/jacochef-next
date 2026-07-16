@@ -5,7 +5,7 @@ import { create } from "zustand";
 const defaultState = {
   module: "sklad",
   moduleName: "",
-  loading: false,
+  isLoading: false,
   refreshToken: 0,
   access: {},
   summary: {},
@@ -27,12 +27,8 @@ const defaultState = {
 export const useSkladStore = create((set) => ({
   ...defaultState,
 
-  setLoading(loading) {
-    set({ loading: Boolean(loading) });
-  },
-
-  setTab(tab) {
-    set({ tab });
+  setState(payload = {}) {
+    set(payload);
   },
 
   requestRefresh() {
@@ -56,7 +52,7 @@ export const useSkladStore = create((set) => ({
       uiMeta: payload.uiMeta ?? {},
       businessMeta: payload.businessMeta ?? {},
       capabilities: payload.capabilities ?? {},
-      tab: payload.tab ?? 0,
+      tab: payload.tab ?? defaultState.tab,
     });
   },
 }));

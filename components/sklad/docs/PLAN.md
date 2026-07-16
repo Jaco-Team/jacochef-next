@@ -647,6 +647,12 @@ Deliverables:
 - work incremental slices, each slice ends in runnable code on canonical `/api/sklad/*`
 - first slice is shell/bootstrap/access/tab foundation
 - each next slice should land as one business-capable scope, not as scattered partial files
+- follow latest module architecture style:
+- zustand global shell store for shared module state only
+- separate per-tab scoped stores/controllers for tab-local state and flows
+- no API calls inside stores
+- prefer mass state setters over many tiny setters where it keeps store surface smaller
+- one global `isLoading` flag and one global backdrop at page-shell level
 - chat reporting format for this workstream:
 - short commit-message style scope summary
 - explicit next step draft
@@ -655,7 +661,7 @@ Deliverables:
 ### Current pinned sequence
 
 1. Shell foundation: page route, bootstrap load, access adapter, tab registry, section placeholders.
-2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`.
+2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`, with its own tab-scoped state/controller on top of the global shell store.
 3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`.
 4. Production list slice: shared list/filter shell for recipes and semi-finished.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields.
