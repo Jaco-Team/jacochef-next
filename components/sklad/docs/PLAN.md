@@ -35,7 +35,7 @@
 Делать:
 
 - сначала выровнять canonical domain model
-- затем поднять shell + bootstrap
+- затем поднять shell + shared refs через `get_all`
 - затем переводить section-ы по приоритету
 - параллельно оставить compatibility bridge только там, где он нужен для migration safety
 
@@ -58,16 +58,22 @@
 В scope:
 
 - `get_all`
-- `bootstrap`
 - canonical access map
 - sections list
 - summary counters
+- shared refs, которые уже возвращаются в `get_all`
 
 Выход:
 
 - пустой, но рабочий module shell
 - role-safe navigation
 - готовая база для переключения на реальные section pages
+
+Текущий статус:
+
+- partially implemented
+- отдельный `/bootstrap` больше не является target requirement этой итерации
+- shell и shared refs уже приходят через `get_all`
 
 ### Slice B. Shared governance
 
@@ -96,7 +102,8 @@
 В scope:
 
 - shared editor model
-- list/get/save/archive/delete/history
+- live read routes
+- planned save/archive/delete/history write lifecycle
 - convert type flow
 - composition/items rows
 - allergens and possible allergens
@@ -114,6 +121,11 @@ Contract note:
 - `source_type = semi_finished` currently represents the shared production category space
 - recipe usage is included inside that same category space by contract
 
+Текущий статус:
+
+- `recipes/list`, `recipes/get_one`, `semi-finished/list`, `semi-finished/get_one` уже live
+- write lifecycle и convert flow остаются следующей фазой
+
 ### Slice D. Site items
 
 Цель:
@@ -122,7 +134,8 @@ Contract note:
 
 В scope:
 
-- list/get/bootstrap
+- live read routes
+- next-step form bootstrap/read support via `site-items/get_all_for_new` + `site-items/get_one`
 - create/edit
 - tags
 - image upload
@@ -135,6 +148,11 @@ Contract note:
 
 - site items уже сейчас являются aggregate с base item, tags, images и stage relations
 - это structurally более сложная family, чем recipes/semi-finished family
+
+Текущий статус:
+
+- `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one` уже live
+- write flows, dedicated marking route и unified history detail для `site_item` еще planned
 
 ### Slice E. Unified archive + history
 
@@ -242,6 +260,10 @@ Backend должен:
 - shared destructive confirm pattern
 - no direct FE dependence on old response quirks
 
+Implementation note:
+
+- `useSkladBootstrap` naming можно сохранить как FE abstraction, но фактически он должен ходить в `get_all`, а не ждать отдельный `/bootstrap`
+
 ## 5.3. Reuse policy
 
 Что переиспользуем:
@@ -288,10 +310,10 @@ Open questions to settle here:
 
 - route prefix `/api/sklad`
 - `get_all`
-- `bootstrap`
 - canonical access response
 - summary counters
 - sections response
+- shared refs inside `get_all`
 
 Acceptance:
 
@@ -569,7 +591,7 @@ Clarification:
 
 Покрыть:
 
-- section bootstrap loads
+- section shared-read loads
 - create/edit payload mapping
 - archive/delete flows
 - history rendering adapters
@@ -664,10 +686,10 @@ Mitigation:
 Практически я бы делал так:
 
 1. Lock docs and naming.
-2. Build backend shell and bootstrap.
+2. Build backend shell and finalize `get_all` shell/shared-refs contract.
 3. Build Units and Categories first.
-4. Build Recipes/Semi-finished together.
-5. Build Site items.
+4. Finish Recipes/Semi-finished write lifecycle on top of live read routes.
+5. Finish Site items write lifecycle on top of live read routes.
 6. Build unified Archive/History.
 7. Run migration cleanup and test hardening.
 

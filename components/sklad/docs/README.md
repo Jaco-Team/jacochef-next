@@ -25,6 +25,12 @@
 - unified backend contract тоже реален
 - но storage layer у модуля изначально будет не единым физически, а federated над двумя схемами
 
+Уточнение по текущему состоянию API:
+
+- read contour уже частично опубликован
+- `get_all` в текущей итерации совмещает shell payload и shared references
+- write/archive/delete/convert контур остается следующей фазой
+
 ## 1. Зачем нужен модуль
 
 `Sklad` нужен не как еще один экран редактирования справочников, а как единая мастер-система производственного каталога.
@@ -46,6 +52,12 @@
 - унифицировать доступы и управляемость
 - дать прозрачную историю изменений
 - убрать зависимость нового FE от старых module classes и старых route-prefix
+
+Текущее состояние внедрения:
+
+- Units и Categories уже доступны на read layer
+- Recipes, Semi-finished и Site items уже имеют live read routes
+- это еще не означает завершенный lifecycle управления, потому что write/archive/delete flows остаются planned
 
 ## 2. Core business need
 
@@ -352,7 +364,7 @@ Schema confirmation:
 При проектировании и реализации нельзя потерять такие правила:
 
 - формы не должны зависеть от старых payload shape на уровне FE state
-- селекты и справочники грузятся из bootstrap/context endpoints, а не из giant `get_all`
+- селекты и справочники должны грузиться из context-specific read endpoints или из явно задокументированного shared payload `get_all`, а не из giant ad hoc response
 - все destructive operations проходят через explicit confirm flow
 - archive и delete это разные сценарии
 - usage checks обязательны на backend
