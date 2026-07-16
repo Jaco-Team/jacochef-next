@@ -35,6 +35,11 @@ import TuneIcon from "@mui/icons-material/Tune";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import useFullScreen from "@/src/hooks/useFullScreen";
 import HistoryLog from "@/ui/history/HistoryLog";
+import {
+  SITE_ITEMS_NEW_MODULE_KEY,
+  normalizeCategoryDisplayName,
+  prepareSiteItemsFeatureGroups,
+} from "@/components/site_items_new/site_items_access";
 
 const normalizeMenu = (value) => {
   if (!Array.isArray(value)) return [];
@@ -115,7 +120,11 @@ const permissionCounts = (module) =>
     {},
   );
 
-const groupModuleFeatures = (features = []) => {
+const groupModuleFeatures = (features = [], moduleKey = "") => {
+  if (String(moduleKey) === SITE_ITEMS_NEW_MODULE_KEY) {
+    return prepareSiteItemsFeatureGroups(features);
+  }
+
   const groups = [];
   const groupsByKey = new Map();
 
@@ -126,7 +135,7 @@ const groupModuleFeatures = (features = []) => {
     if (!groupsByKey.has(key)) {
       const group = {
         key,
-        name: category ? String(feature.category_name || category) : "",
+        name: category ? normalizeCategoryDisplayName(feature.category_name || category) : "",
         items: [],
       };
 
@@ -226,7 +235,7 @@ function ModuleRightsDetail({
   const status = moduleStatus(module);
   const rights = permissionCounts(module);
   const query = rightsSearch.trim().toLowerCase();
-  const featureGroups = groupModuleFeatures(module.features)
+  const featureGroups = groupModuleFeatures(module.features, module.key_query)
     .map((group) => {
       const categoryMatches =
         query &&
@@ -728,7 +737,7 @@ export default function EmployeePositionModal({
   }, [fullMenu, selectedModule]);
 
   const openModuleDetails = (parentIndex, childIndex, module) => {
-    const firstGroup = groupModuleFeatures(module.features)[0];
+    const firstGroup = groupModuleFeatures(module.features, module.key_query)[0];
 
     setSelectedModule({ parentIndex, childIndex });
     setRightsSearch("");
@@ -1491,7 +1500,7 @@ export default function EmployeePositionModal({
                                     const isOpen = false;
                                     const rights = permissionCounts(module);
                                     const featureGroups = isOpen
-                                      ? groupModuleFeatures(module.features)
+                                      ? groupModuleFeatures(module.features, module.key_query)
                                       : [];
                                     const hasCategories = featureGroups.some((group) => group.name);
 

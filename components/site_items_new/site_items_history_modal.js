@@ -34,6 +34,7 @@ import {
   formatHistoryTimestamp,
   formatHistoryValue,
   getCompositionRowName,
+  getVersionChangedSections,
   historySections,
   normalizeHistorySnapshots,
 } from "./site_items_history_model";
@@ -394,6 +395,7 @@ export default function SiteItemsHistoryModal({
   );
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeSection, setActiveSection] = useState("main");
+  const [sectionFilter, setSectionFilter] = useState("all");
   const navigationSections = useMemo(
     () => [
       ...historySections
@@ -416,16 +418,44 @@ export default function SiteItemsHistoryModal({
     [access],
   );
 
+  const versionsWithChanges = useMemo(
+    () =>
+      versions.map((version, index) => ({
+        ...version,
+        originalIndex: index,
+        changedSections: getVersionChangedSections(versions, index),
+      })),
+    [versions],
+  );
+
+  const filteredVersions = useMemo(() => {
+    if (sectionFilter === "all") {
+      return versionsWithChanges;
+    }
+
+    return versionsWithChanges.filter((version) =>
+      version.changedSections.some((section) => section.id === sectionFilter),
+    );
+  }, [sectionFilter, versionsWithChanges]);
+
   useEffect(() => {
     if (open) {
       setSelectedIndex(0);
+      setSectionFilter("all");
       setActiveSection(navigationSections[0]?.id || "main");
     }
   }, [navigationSections, open, snapshots]);
 
+  useEffect(() => {
+    if (selectedIndex >= filteredVersions.length) {
+      setSelectedIndex(0);
+    }
+  }, [filteredVersions.length, selectedIndex]);
+
+  const selectedOriginalIndex = filteredVersions[selectedIndex]?.originalIndex ?? 0;
   const comparison = useMemo(
-    () => buildHistoryComparison(versions, selectedIndex),
-    [versions, selectedIndex],
+    () => buildHistoryComparison(versions, selectedOriginalIndex),
+    [versions, selectedOriginalIndex],
   );
   const currentSection = historySections.find((section) => section.id === activeSection);
 
@@ -522,12 +552,46 @@ export default function SiteItemsHistoryModal({
                   borderBottom: `1px solid ${blockBorder}`,
                 }}
               >
-                <Typography sx={{ color: textPrimary, fontSize: 18, fontWeight: 700 }}>
-                  Версии карточки
-                </Typography>
-                <Typography sx={{ mt: 0.5, color: textSecondary, fontSize: 14 }}>
-                  Выберите дату редактирования для просмотра сохраненного состояния.
-                </Typography>
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={1.5}
+                  alignItems={{ xs: "stretch", md: "center" }}
+                  justifyContent="space-between"
+                >
+                  <Box>
+                    <Typography sx={{ color: textPrimary, fontSize: 18, fontWeight: 700 }}>
+                      Версии карточки
+                    </Typography>
+                    <Typography sx={{ mt: 0.5, color: textSecondary, fontSize: 14 }}>
+                      Выберите дату редактирования для просмотра сохраненного состояния.
+                    </Typography>
+                  </Box>
+                  <FormControl
+                    size="small"
+                    sx={{ minWidth: { xs: "100%", md: 220 } }}
+                  >
+                    <InputLabel id="site-item-history-section-filter-label">Модалка</InputLabel>
+                    <Select
+                      labelId="site-item-history-section-filter-label"
+                      value={sectionFilter}
+                      label="Модалка"
+                      onChange={(event) => {
+                        setSectionFilter(event.target.value);
+                        setSelectedIndex(0);
+                      }}
+                    >
+                      <MenuItem value="all">Все</MenuItem>
+                      {navigationSections.map((section) => (
+                        <MenuItem
+                          key={section.id}
+                          value={section.id}
+                        >
+                          {section.title}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Stack>
               </Box>
 
               <Box sx={{ display: { xs: "block", md: "none" }, p: 2 }}>
@@ -538,214 +602,258 @@ export default function SiteItemsHistoryModal({
                   <InputLabel id="site-item-history-version-label">Дата редактирования</InputLabel>
                   <Select
                     labelId="site-item-history-version-label"
-                    value={selectedIndex}
+                    value={filteredVersions.length ? selectedIndex : ""}
                     label="Дата редактирования"
                     onChange={(event) => setSelectedIndex(Number(event.target.value))}
+                    disabled={!filteredVersions.length}
                   >
-                    {versions.map((version, index) => (
+                    {filteredVersions.map((version, index) => (
                       <MenuItem
                         key={version?.id || index}
                         value={index}
                       >
                         {formatHistoryTimestamp(version.history_timestamp)}
                         {version?.user ? ` · ${version.user}` : ""}
+                        {version.changedSections.length
+                          ? ` · ${version.changedSections.map((section) => section.title).join(", ")}`
+                          : ""}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Box>
 
-              <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 190 }}>
+              <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 220 }}>
                 <Table
                   stickyHeader
                   size="small"
                 >
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 280 }}>Дата редактирования</TableCell>
-                      <TableCell>Автор</TableCell>
+                      <TableCell sx={{ width: 220 }}>Дата редактирования</TableCell>
+                      <TableCell sx={{ width: 180 }}>Автор</TableCell>
+                      <TableCell>Изменённые модалки</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {versions.map((version, index) => (
-                      <TableRow
-                        key={version?.id || index}
-                        hover
-                        selected={selectedIndex === index}
-                        onClick={() => setSelectedIndex(index)}
-                        sx={{
-                          cursor: "pointer",
-                          "&.Mui-selected": { backgroundColor: selectedBackground },
-                          "&.Mui-selected:hover": { backgroundColor: selectedBackground },
-                        }}
-                      >
-                        <TableCell>{formatHistoryTimestamp(version.history_timestamp)}</TableCell>
-                        <TableCell>{version?.user || "Неизвестно"}</TableCell>
+                    {filteredVersions.length ? (
+                      filteredVersions.map((version, index) => (
+                        <TableRow
+                          key={version?.id || index}
+                          hover
+                          selected={selectedIndex === index}
+                          onClick={() => setSelectedIndex(index)}
+                          sx={{
+                            cursor: "pointer",
+                            "&.Mui-selected": { backgroundColor: selectedBackground },
+                            "&.Mui-selected:hover": { backgroundColor: selectedBackground },
+                          }}
+                        >
+                          <TableCell>{formatHistoryTimestamp(version.history_timestamp)}</TableCell>
+                          <TableCell>{version?.user || "Неизвестно"}</TableCell>
+                          <TableCell>
+                            {version.changedSections.length ? (
+                              <Stack
+                                direction="row"
+                                spacing={0.75}
+                                useFlexGap
+                                flexWrap="wrap"
+                              >
+                                {version.changedSections.map((section) => (
+                                  <Chip
+                                    key={`${version.id || index}-${section.id}`}
+                                    size="small"
+                                    label={section.title}
+                                    sx={{ backgroundColor: selectedBackground }}
+                                  />
+                                ))}
+                              </Stack>
+                            ) : (
+                              <Typography sx={{ color: textSecondary, fontSize: 13 }}>
+                                Без изменений относительно предыдущей
+                              </Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3}>
+                          <Typography sx={{ color: textSecondary, fontSize: 14 }}>
+                            Нет версий с изменениями в выбранной модалке.
+                          </Typography>
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
             </Paper>
 
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={1}
-              useFlexGap
-              flexWrap="wrap"
-              alignItems={{ xs: "flex-start", md: "center" }}
-            >
-              <Typography sx={{ color: textSecondary, fontSize: 14 }}>
-                Состояние на {formatHistoryTimestamp(comparison.current.history_timestamp)}
-              </Typography>
-              {comparison.previous ? (
-                <>
-                  <Chip
-                    size="small"
-                    label="Изменено"
-                    sx={{ backgroundColor: selectedBackground }}
-                  />
-                  <Chip
-                    size="small"
-                    label="Добавлено"
-                    sx={{ backgroundColor: addedBackground }}
-                  />
-                  <Chip
-                    size="small"
-                    label="Удалено"
-                    sx={{ backgroundColor: removedBackground }}
-                  />
-                </>
-              ) : (
-                <Chip
-                  size="small"
-                  label="Нет предыдущей версии для сравнения"
-                />
-              )}
-            </Stack>
-
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", lg: "row" },
-                gap: 2,
-                minHeight: { lg: 620 },
-              }}
-            >
-              <Box
-                sx={{
-                  display: { xs: "flex", lg: "none" },
-                  gap: 1,
-                  overflowX: "auto",
-                  pb: 0.5,
-                }}
-              >
-                {navigationSections.map((section) => {
-                  const active = activeSection === section.id;
-
-                  return (
-                    <Button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      sx={{
-                        flexShrink: 0,
-                        minHeight: 42,
-                        px: 1.5,
-                        py: 1,
-                        borderRadius: 2,
-                        border: `1px solid ${active ? "#DD1A32" : blockBorder}`,
-                        backgroundColor: active ? "#fff" : blockBackground,
-                        color: active ? textPrimary : textSecondary,
-                        textTransform: "none",
-                        fontWeight: active ? 700 : 500,
-                      }}
-                    >
-                      {section.title}
-                    </Button>
-                  );
-                })}
-              </Box>
-
-              <Paper
-                sx={{
-                  display: { xs: "none", lg: "block" },
-                  width: 252,
-                  flexShrink: 0,
-                  alignSelf: "flex-start",
-                  p: 1.5,
-                  borderRadius: 3,
-                  border: `1px solid ${blockBorder}`,
-                  backgroundColor: blockBackground,
-                  boxShadow: "none",
-                  position: "sticky",
-                  top: 0,
-                }}
-              >
-                <Stack spacing={1}>
-                  <Typography sx={{ color: textPrimary, fontSize: 18, fontWeight: 700 }}>
-                    Разделы
+            {!filteredVersions.length ? (
+              <Alert severity="info">Нет версий с изменениями в выбранной модалке.</Alert>
+            ) : (
+              <>
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={1}
+                  useFlexGap
+                  flexWrap="wrap"
+                  alignItems={{ xs: "flex-start", md: "center" }}
+                >
+                  <Typography sx={{ color: textSecondary, fontSize: 14 }}>
+                    Состояние на {formatHistoryTimestamp(comparison.current.history_timestamp)}
                   </Typography>
-                  {navigationSections.map((section) => {
-                    const active = activeSection === section.id;
+                  {comparison.previous ? (
+                    <>
+                      <Chip
+                        size="small"
+                        label="Изменено"
+                        sx={{ backgroundColor: selectedBackground }}
+                      />
+                      <Chip
+                        size="small"
+                        label="Добавлено"
+                        sx={{ backgroundColor: addedBackground }}
+                      />
+                      <Chip
+                        size="small"
+                        label="Удалено"
+                        sx={{ backgroundColor: removedBackground }}
+                      />
+                    </>
+                  ) : (
+                    <Chip
+                      size="small"
+                      label="Нет предыдущей версии для сравнения"
+                    />
+                  )}
+                </Stack>
 
-                    return (
-                      <Button
-                        key={section.id}
-                        onClick={() => setActiveSection(section.id)}
-                        sx={{
-                          width: "100%",
-                          px: 1.5,
-                          py: 1.25,
-                          borderRadius: 2.5,
-                          justifyContent: "flex-start",
-                          alignItems: "flex-start",
-                          textAlign: "left",
-                          textTransform: "none",
-                          border: `1px solid ${active ? "#DD1A32" : "transparent"}`,
-                          backgroundColor: active ? "#fff" : "transparent",
-                          color: active ? textPrimary : textSecondary,
-                          "&:hover": {
-                            backgroundColor: "#fff",
-                            borderColor: active ? "#DD1A32" : blockBorder,
-                          },
-                        }}
-                      >
-                        <Box>
-                          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
-                            {section.title}
-                          </Typography>
-                          <Typography
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", lg: "row" },
+                    gap: 2,
+                    minHeight: { lg: 620 },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: { xs: "flex", lg: "none" },
+                      gap: 1,
+                      overflowX: "auto",
+                      pb: 0.5,
+                    }}
+                  >
+                    {navigationSections.map((section) => {
+                      const active = activeSection === section.id;
+
+                      return (
+                        <Button
+                          key={section.id}
+                          onClick={() => setActiveSection(section.id)}
+                          sx={{
+                            flexShrink: 0,
+                            minHeight: 42,
+                            px: 1.5,
+                            py: 1,
+                            borderRadius: 2,
+                            border: `1px solid ${active ? "#DD1A32" : blockBorder}`,
+                            backgroundColor: active ? "#fff" : blockBackground,
+                            color: active ? textPrimary : textSecondary,
+                            textTransform: "none",
+                            fontWeight: active ? 700 : 500,
+                          }}
+                        >
+                          {section.title}
+                        </Button>
+                      );
+                    })}
+                  </Box>
+
+                  <Paper
+                    sx={{
+                      display: { xs: "none", lg: "block" },
+                      width: 252,
+                      flexShrink: 0,
+                      alignSelf: "flex-start",
+                      p: 1.5,
+                      borderRadius: 3,
+                      border: `1px solid ${blockBorder}`,
+                      backgroundColor: blockBackground,
+                      boxShadow: "none",
+                      position: "sticky",
+                      top: 0,
+                    }}
+                  >
+                    <Stack spacing={1}>
+                      <Typography sx={{ color: textPrimary, fontSize: 18, fontWeight: 700 }}>
+                        Разделы
+                      </Typography>
+                      {navigationSections.map((section) => {
+                        const active = activeSection === section.id;
+
+                        return (
+                          <Button
+                            key={section.id}
+                            onClick={() => setActiveSection(section.id)}
                             sx={{
-                              mt: 0.5,
-                              color: active ? textSecondary : "#737373",
-                              fontSize: 12,
+                              width: "100%",
+                              px: 1.5,
+                              py: 1.25,
+                              borderRadius: 2.5,
+                              justifyContent: "flex-start",
+                              alignItems: "flex-start",
+                              textAlign: "left",
+                              textTransform: "none",
+                              border: `1px solid ${active ? "#DD1A32" : "transparent"}`,
+                              backgroundColor: active ? "#fff" : "transparent",
+                              color: active ? textPrimary : textSecondary,
+                              "&:hover": {
+                                backgroundColor: "#fff",
+                                borderColor: active ? "#DD1A32" : blockBorder,
+                              },
                             }}
                           >
-                            {section.description}
-                          </Typography>
-                        </Box>
-                      </Button>
-                    );
-                  })}
-                </Stack>
-              </Paper>
+                            <Box>
+                              <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+                                {section.title}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  mt: 0.5,
+                                  color: active ? textSecondary : "#737373",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {section.description}
+                              </Typography>
+                            </Box>
+                          </Button>
+                        );
+                      })}
+                    </Stack>
+                  </Paper>
 
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                {activeSection === "composition" ? (
-                  <HistoryComposition
-                    comparison={comparison}
-                    access={access}
-                  />
-                ) : currentSection ? (
-                  <SnapshotSection
-                    section={currentSection}
-                    snapshot={comparison.current}
-                    changedFields={comparison.changedFields}
-                    access={access}
-                  />
-                ) : null}
-              </Box>
-            </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    {activeSection === "composition" ? (
+                      <HistoryComposition
+                        comparison={comparison}
+                        access={access}
+                      />
+                    ) : currentSection ? (
+                      <SnapshotSection
+                        section={currentSection}
+                        snapshot={comparison.current}
+                        changedFields={comparison.changedFields}
+                        access={access}
+                      />
+                    ) : null}
+                  </Box>
+                </Box>
+              </>
+            )}
           </Stack>
         )}
       </DialogContent>

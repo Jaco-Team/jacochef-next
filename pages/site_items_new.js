@@ -10,6 +10,11 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import AddIcon from "@mui/icons-material/Add";
+import SyncIcon from "@mui/icons-material/Sync";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -42,65 +47,23 @@ import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { SiteItemsModalTech } from "@/components/site_items_new/site_items_tech_modal";
 import SiteItemsHistoryModal from "@/components/site_items_new/site_items_history_modal";
-import { TableSortLabel } from "@mui/material";
+import {
+  SITE_ITEMS_MODAL_FIELD_KEYS,
+  canEditAccess,
+  canViewAccess,
+  filterCatsByActivity,
+  filterCatsByName,
+  hasAccessValue,
+} from "@/components/site_items_new/site_items_access";
+import { TableSortLabel, TextField, InputAdornment } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 const brandRed = "#DD1A32";
 const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
-const siteItemModalAccessFields = [
-  "name",
-  "short_name",
-  "art",
-  "date_start",
-  "date_end",
-  "category_id",
-  "stol",
-  "marc",
-  "dropzone",
-  "count_part",
-  "weight",
-  "protein",
-  "fat",
-  "carbohydrates",
-  "tmp_desc",
-  "marc_desc_full",
-  "marc_desc",
-  "tags",
-  "is_new",
-  "is_updated",
-  "is_hit",
-  "is_price",
-  "is_show",
-  "show_site",
-  "show_program",
-  "time_stage_1",
-  "time_stage_2",
-  "time_stage_3",
-  "stage",
-  "items",
-];
-const hasAccessValue = (value) => value === true || value === 1 || value === "1";
-const canViewAccess = (access, field, fallback = false) => {
-  const viewKey = `${field}_view`;
-  const editKey = `${field}_edit`;
-
-  if (!(viewKey in (access || {})) && !(editKey in (access || {}))) {
-    return fallback;
-  }
-
-  return hasAccessValue(access?.[viewKey]) || hasAccessValue(access?.[editKey]);
-};
-const canEditAccess = (access, field, fallback = false) => {
-  const editKey = `${field}_edit`;
-
-  if (!(editKey in (access || {}))) {
-    return fallback;
-  }
-
-  return hasAccessValue(access?.[editKey]);
-};
+const siteItemModalAccessFields = SITE_ITEMS_MODAL_FIELD_KEYS;
 const tableSortLabelSx = {
   fontWeight: 600,
   color: textPrimary,
@@ -174,17 +137,17 @@ function OutlineActionButton({ children, onClick, sx = {} }) {
         minHeight: 40,
         px: 2,
         borderRadius: 1.5,
-        borderColor: brandRed,
-        color: brandRed,
+        borderColor: blockBorder,
+        color: textPrimary,
         backgroundColor: "#fff",
         textTransform: "none",
-        fontSize: 16,
+        fontSize: 14,
         lineHeight: "20px",
-        fontWeight: 400,
+        fontWeight: 500,
         whiteSpace: "nowrap",
         "&:hover": {
-          borderColor: brandRed,
-          backgroundColor: "#fff",
+          borderColor: "#CFCFCF",
+          backgroundColor: "#FAFAFA",
         },
         ...sx,
       }}
@@ -877,32 +840,90 @@ class SiteItems_Table extends React.Component {
       sortField: "name",
       sortOrder: "asc",
       type: "",
+      expandedCategories: [],
     };
   }
 
   componentDidUpdate(prevProps) {
-    // Обновляем состояние только если изменились данные и они не равны текущим
-    if (prevProps.cats !== this.props.cats && this.props.cats) {
-      this.setState({
-        cats: this.props.cats,
-        sortField: "name",
-        sortOrder: "asc",
-      });
+    if (prevProps.cats === this.props.cats || !this.props.cats) {
+      return;
     }
+
+    const tabChanged = prevProps.listTab !== this.props.listTab;
+    const sortField = tabChanged ? "name" : this.state.sortField;
+    const sortOrder = tabChanged ? "asc" : this.state.sortOrder;
+    const nextCats = this.sortCats(this.props.cats, sortField, sortOrder);
+
+    this.setState((state) => {
+      const nextKeys = new Set(nextCats.map((cat, index) => this.getCategoryKey(cat, index)));
+
+      return {
+        cats: nextCats,
+        sortField,
+        sortOrder,
+        expandedCategories: tabChanged
+          ? []
+          : state.expandedCategories.filter((key) => nextKeys.has(key)),
+      };
+    });
   }
 
-  // Удалить shouldComponentUpdate или исправить:
   shouldComponentUpdate(nextProps, nextState) {
-    // Проверяем, изменились ли пропсы или состояние
-    if (this.props.timeUpdate !== nextProps.timeUpdate) return true;
-    if (this.state.sortField !== nextState.sortField) return true;
-    if (this.state.sortOrder !== nextState.sortOrder) return true;
-    if (JSON.stringify(this.state.cats) !== JSON.stringify(nextState.cats)) return true;
-    if (this.props.user_app !== nextProps.user_app) return true;
-    if (this.props.acces !== nextProps.acces) return true;
-
-    return false;
+    return (
+      this.props.timeUpdate !== nextProps.timeUpdate ||
+      this.props.cats !== nextProps.cats ||
+      this.props.listTab !== nextProps.listTab ||
+      this.props.user_app !== nextProps.user_app ||
+      this.props.acces !== nextProps.acces ||
+      this.state.sortField !== nextState.sortField ||
+      this.state.sortOrder !== nextState.sortOrder ||
+      this.state.cats !== nextState.cats ||
+      this.state.expandedCategories !== nextState.expandedCategories
+    );
   }
+
+  getCategoryKey = (cat, index) => String(cat?.id ?? cat?.category_id ?? index);
+
+  toggleCategory = (categoryKey) => {
+    this.setState((state) => ({
+      expandedCategories: state.expandedCategories.includes(categoryKey)
+        ? state.expandedCategories.filter((key) => key !== categoryKey)
+        : [...state.expandedCategories, categoryKey],
+    }));
+  };
+
+  toggleAllCategories = () => {
+    this.setState((state) => {
+      const allKeys = state.cats.map(this.getCategoryKey);
+      const allExpanded =
+        allKeys.length > 0 && allKeys.every((key) => state.expandedCategories.includes(key));
+
+      return {
+        expandedCategories: allExpanded ? [] : allKeys,
+      };
+    });
+  };
+
+  sortCats = (cats, field, sortOrder) =>
+    (cats || []).map((category) => ({
+      ...category,
+      items: Array.isArray(category.items)
+        ? [...category.items].sort((a, b) => {
+            const valueA = this.prepareValueForSort(
+              field === "date_update" ? a[field] || a.update_item : a[field],
+              field,
+            );
+            const valueB = this.prepareValueForSort(
+              field === "date_update" ? b[field] || b.update_item : b[field],
+              field,
+            );
+
+            if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+            if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+          })
+        : category.items,
+    }));
 
   handleSort = (field) => {
     let sortOrder = "asc";
@@ -910,43 +931,10 @@ class SiteItems_Table extends React.Component {
       sortOrder = this.state.sortOrder === "asc" ? "desc" : "asc";
     }
 
-    const sortedData = [...this.state.cats];
-
-    sortedData.forEach((category) => {
-      if (category.items && Array.isArray(category.items)) {
-        category.items.sort((a, b) => {
-          let valueA = this.prepareValueForSort(
-            field === "date_update" ? a[field] || a.update_item : a[field],
-            field,
-          );
-          let valueB = this.prepareValueForSort(
-            field === "date_update" ? b[field] || b.update_item : b[field],
-            field,
-          );
-
-          if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
-          if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
-          return 0;
-        });
-      }
-    });
-
-    // Также сортируем категории, если нужно
-    if (field === "name") {
-      sortedData.sort((a, b) => {
-        let valueA = this.prepareValueForSort(a[field], field);
-        let valueB = this.prepareValueForSort(b[field], field);
-
-        if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
-        if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-
     this.setState({
-      cats: sortedData,
+      cats: this.sortCats(this.state.cats, field, sortOrder),
       sortField: field,
-      sortOrder: sortOrder,
+      sortOrder,
     });
   };
 
@@ -1003,11 +991,13 @@ class SiteItems_Table extends React.Component {
     const activityLabel = user_app === "technologist" ? "Активность" : "Сайт и КЦ";
     const canOpenItem = siteItemModalAccessFields.some((field) => canViewAccess(acces, field));
     const canEditItem = siteItemModalAccessFields.some((field) => canEditAccess(acces, field));
-    const canViewHistory = canViewAccess(acces, "history", true);
     const canViewSort = user_app === "marketing" && canViewAccess(acces, "sort", true);
     const canEditSort = user_app === "marketing" && canEditAccess(acces, "sort", true);
     const canViewDateEnd = canViewAccess(acces, "date_end", true);
-    const canViewDateUpdate = canViewAccess(acces, "date_update", true);
+    const categoryKeys = this.state.cats.map(this.getCategoryKey);
+    const allCategoriesExpanded =
+      categoryKeys.length > 0 &&
+      categoryKeys.every((key) => this.state.expandedCategories.includes(key));
     const mobileSortOptions = [
       {
         field: user_app === "technologist" ? "is_show" : "show_site",
@@ -1042,7 +1032,7 @@ class SiteItems_Table extends React.Component {
       {
         field: "date_update",
         label: "Обновление",
-        visible: canViewDateUpdate,
+        visible: true,
       },
       {
         field: "art",
@@ -1179,226 +1169,250 @@ class SiteItems_Table extends React.Component {
         }}
       >
         <Stack
-          spacing={2}
+          spacing={1.25}
           sx={{ pb: 2 }}
         >
-          {this.state.cats.map((cat, key) => (
-            <Accordion
-              key={key}
-              disableGutters
-              elevation={0}
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ px: 0.25, pb: 0.25 }}
+          >
+            <Typography sx={{ color: textSecondary, fontSize: 13 }}>
+              Выберите категорию, чтобы увидеть товары
+            </Typography>
+            <Button
+              size="small"
+              startIcon={allCategoriesExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+              onClick={this.toggleAllCategories}
               sx={{
-                borderRadius: 3,
-                border: `1px solid ${blockBorder}`,
-                backgroundColor: blockBackground,
-                boxShadow: "none",
-                overflow: "hidden",
-                "&::before": {
-                  display: "none",
-                },
-                "&.Mui-expanded": {
-                  margin: 0,
-                },
+                minHeight: 32,
+                px: 1.25,
+                borderRadius: 1.5,
+                color: textSecondary,
+                textTransform: "none",
+                fontSize: 13,
+                "&:hover": { backgroundColor: "#fff" },
               }}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
+              {allCategoriesExpanded ? "Свернуть все" : "Развернуть все"}
+            </Button>
+          </Stack>
+
+          {this.state.cats.map((cat, key) => {
+            const categoryKey = this.getCategoryKey(cat, key);
+
+            return (
+              <Accordion
+                key={categoryKey}
+                expanded={this.state.expandedCategories.includes(categoryKey)}
+                onChange={() => this.toggleCategory(categoryKey)}
+                disableGutters
+                elevation={0}
                 sx={{
-                  px: { xs: 1.5, lg: 2.5 },
-                  py: 0.75,
-                  minHeight: 72,
+                  borderRadius: 2.5,
+                  border: `1px solid ${blockBorder}`,
+                  backgroundColor: "#fff",
+                  boxShadow: "none",
+                  overflow: "hidden",
+                  "&::before": {
+                    display: "none",
+                  },
                   "&.Mui-expanded": {
-                    minHeight: 72,
-                  },
-                  "& .MuiAccordionSummary-content": {
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                    margin: "14px 0",
-                  },
-                  "& .MuiAccordionSummary-content.Mui-expanded": {
-                    margin: "14px 0",
+                    margin: 0,
+                    borderColor: "#D8D8D8",
                   },
                 }}
               >
-                <Box sx={{ minWidth: 0 }}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
+                  sx={{
+                    px: { xs: 1.5, lg: 2 },
+                    py: 0,
+                    minHeight: 56,
+                    "&.Mui-expanded": {
+                      minHeight: 56,
+                      borderBottom: `1px solid ${blockBorder}`,
+                    },
+                    "& .MuiAccordionSummary-content": {
+                      alignItems: "center",
+                      gap: 1.25,
+                      my: 1.25,
+                    },
+                    "& .MuiAccordionSummary-content.Mui-expanded": {
+                      my: 1.25,
+                    },
+                    "&:hover": {
+                      backgroundColor: "#FAFAFA",
+                    },
+                  }}
+                >
                   <Typography
                     sx={{
-                      fontSize: 18,
-                      lineHeight: "22px",
-                      fontWeight: 500,
+                      fontSize: 16,
+                      lineHeight: "20px",
+                      fontWeight: 600,
                       color: textPrimary,
                     }}
                   >
                     {cat.name}
                   </Typography>
-                  <Typography
+                  <Box
                     sx={{
-                      mt: 0.5,
-                      fontSize: 14,
-                      lineHeight: "18px",
+                      minWidth: 28,
+                      height: 24,
+                      px: 1,
+                      borderRadius: 999,
+                      backgroundColor: blockBackground,
                       color: textSecondary,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 13,
+                      lineHeight: 1,
+                      fontWeight: 600,
                     }}
                   >
-                    Товаров в категории: {cat.items?.length || 0}
-                  </Typography>
-                </Box>
+                    {cat.items?.length || 0}
+                  </Box>
+                </AccordionSummary>
 
-                <Box
+                <AccordionDetails
+                  className="accordion_details"
                   sx={{
-                    minWidth: 42,
-                    height: 42,
-                    px: 1.5,
-                    borderRadius: 999,
-                    border: `1px solid ${blockBorder}`,
-                    backgroundColor: "#fff",
-                    color: textSecondary,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 16,
-                    lineHeight: "20px",
-                    fontWeight: 500,
+                    px: 0,
+                    pt: 0,
+                    pb: { xs: 1.5, lg: 2 },
+                    backgroundColor: blockBackground,
                   }}
                 >
-                  {cat.items?.length || 0}
-                </Box>
-              </AccordionSummary>
-
-              <AccordionDetails
-                className="accordion_details"
-                sx={{
-                  px: 0,
-                  pt: 0,
-                  pb: { xs: 1.5, lg: 2 },
-                }}
-              >
-                <Box sx={{ display: { xs: "none", sm: "block" } }}>
-                  <TableContainer
-                    component={Paper}
-                    elevation={0}
-                    sx={{
-                      mx: { xs: 1, lg: 2 },
-                      borderRadius: 2.5,
-                      border: `1px solid ${blockBorder}`,
-                      boxShadow: "none",
-                      backgroundColor: "#fff",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <Table
-                      aria-label={`Категория ${cat.name}`}
+                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <TableContainer
+                      component={Paper}
+                      elevation={0}
                       sx={{
-                        width: "100%",
-                        tableLayout: "fixed",
-                        "& th, & td": {
-                          px: { xs: 1, lg: 1.25 },
-                          py: 1.5,
-                          fontSize: { xs: 12, lg: 14 },
-                          lineHeight: { xs: "16px", lg: "20px" },
-                          verticalAlign: "middle",
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                        },
-                        "& thead th": {
-                          backgroundColor: blockBackground,
-                          borderBottom: `1px solid ${blockBorder}`,
-                        },
-                        "& tbody td": {
-                          borderBottom: `1px solid ${blockBorder}`,
-                          color: textSecondary,
-                        },
-                        "& tbody tr:last-of-type td": {
-                          borderBottom: "none",
-                        },
-                        "& tbody tr": {
-                          transition: "background-color 0.15s ease",
-                        },
-                        "& tbody tr:hover": {
-                          backgroundColor: "#FAFAFA",
-                        },
-                        "& .MuiTableSortLabel-root": {
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          width: "100%",
-                          whiteSpace: "normal",
-                        },
+                        mx: { xs: 1, lg: 2 },
+                        borderRadius: 2.5,
+                        border: `1px solid ${blockBorder}`,
+                        boxShadow: "none",
+                        backgroundColor: "#fff",
+                        overflow: "hidden",
                       }}
                     >
-                      <TableHead>
-                        <TableRow sx={{ "& th": { fontWeight: "bold", color: textPrimary } }}>
-                          <TableCell sx={{ width: "3%" }}>№</TableCell>
+                      <Table
+                        aria-label={`Категория ${cat.name}`}
+                        sx={{
+                          width: "100%",
+                          tableLayout: "fixed",
+                          "& th, & td": {
+                            px: { xs: 1, lg: 1.25 },
+                            py: 1.5,
+                            fontSize: { xs: 12, lg: 14 },
+                            lineHeight: { xs: "16px", lg: "20px" },
+                            verticalAlign: "middle",
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                          },
+                          "& thead th": {
+                            backgroundColor: blockBackground,
+                            borderBottom: `1px solid ${blockBorder}`,
+                          },
+                          "& tbody td": {
+                            borderBottom: `1px solid ${blockBorder}`,
+                            color: textSecondary,
+                          },
+                          "& tbody tr:last-of-type td": {
+                            borderBottom: "none",
+                          },
+                          "& tbody tr": {
+                            transition: "background-color 0.15s ease",
+                          },
+                          "& tbody tr:hover": {
+                            backgroundColor: "#FAFAFA",
+                          },
+                          "& .MuiTableSortLabel-root": {
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            width: "100%",
+                            whiteSpace: "normal",
+                          },
+                        }}
+                      >
+                        <TableHead>
+                          <TableRow sx={{ "& th": { fontWeight: "bold", color: textPrimary } }}>
+                            <TableCell sx={{ width: "3%" }}>№</TableCell>
 
-                          {canViewAccess(acces, "site_kc") && (
-                            <TableCell sx={{ width: "8%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps(
-                                  user_app === "technologist" ? "is_show" : "show_site",
-                                )}
-                                sx={tableSortLabelSx}
+                            {canViewAccess(acces, "site_kc") && (
+                              <TableCell sx={{ width: "8%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps(
+                                    user_app === "technologist" ? "is_show" : "show_site",
+                                  )}
+                                  sx={tableSortLabelSx}
+                                >
+                                  {activityLabel}
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewAccess(acces, "kassa") && (
+                              <TableCell sx={{ width: "8%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("show_program")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Касса
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewSort && (
+                              <TableCell sx={{ width: "9%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("sort")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Сортировка
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewAccess(acces, "name") && (
+                              <TableCell
+                                sx={{ width: user_app === "technologist" ? "18%" : "21%" }}
                               >
-                                {activityLabel}
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
+                                <TableSortLabel
+                                  {...this.getSortProps("name")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Название
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
 
-                          {canViewAccess(acces, "kassa") && (
-                            <TableCell sx={{ width: "8%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("show_program")}
-                                sx={tableSortLabelSx}
-                              >
-                                Касса
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
+                            {canViewAccess(acces, "date_start") && (
+                              <TableCell sx={{ width: "11%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("date_start")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Действует с
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
 
-                          {canViewSort && (
-                            <TableCell sx={{ width: "9%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("sort")}
-                                sx={tableSortLabelSx}
-                              >
-                                Сортировка
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
+                            {canViewDateEnd && (
+                              <TableCell sx={{ width: "9%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("date_end")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  по
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
 
-                          {canViewAccess(acces, "name") && (
-                            <TableCell sx={{ width: user_app === "technologist" ? "18%" : "21%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("name")}
-                                sx={tableSortLabelSx}
-                              >
-                                Название
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          {canViewAccess(acces, "date_start") && (
-                            <TableCell sx={{ width: "11%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("date_start")}
-                                sx={tableSortLabelSx}
-                              >
-                                Действует с
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          {canViewDateEnd && (
-                            <TableCell sx={{ width: "9%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("date_end")}
-                                sx={tableSortLabelSx}
-                              >
-                                по
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          {canViewDateUpdate && (
                             <TableCell sx={{ width: "12%" }}>
                               <TableSortLabel
                                 {...this.getSortProps("date_update")}
@@ -1407,137 +1421,133 @@ class SiteItems_Table extends React.Component {
                                 Обновление
                               </TableSortLabel>
                             </TableCell>
-                          )}
 
-                          {user_app === "technologist" && canViewAccess(acces, "art") && (
-                            <TableCell sx={{ width: "10%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("art")}
-                                sx={tableSortLabelSx}
+                            {user_app === "technologist" && canViewAccess(acces, "art") && (
+                              <TableCell sx={{ width: "10%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("art")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Код для 1С
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canOpenItem && (
+                              <TableCell
+                                align="center"
+                                sx={{ width: "7%" }}
                               >
-                                Код для 1С
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          {canOpenItem && (
-                            <TableCell
-                              align="center"
-                              sx={{ width: "7%" }}
-                            >
-                              {canEditItem ? "Редактирование" : "Просмотр"}
-                            </TableCell>
-                          )}
-                          {canViewHistory && (
+                                {canEditItem ? "Редактирование" : "Просмотр"}
+                              </TableCell>
+                            )}
                             <TableCell
                               align="center"
                               sx={{ width: "7%" }}
                             >
                               История изменений
                             </TableCell>
-                          )}
-                        </TableRow>
-                      </TableHead>
+                          </TableRow>
+                        </TableHead>
 
-                      <TableBody>
-                        {cat.items &&
-                          cat.items.map((item, index) => (
-                            <TableRow key={item.id || index}>
-                              <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
-                                {index + 1}
-                              </TableCell>
-
-                              {canViewAccess(acces, "site_kc") && (
-                                <TableCell align="center">
-                                  <MyCheckBox
-                                    label=""
-                                    value={
-                                      parseInt(
-                                        user_app === "technologist" ? item.is_show : item.show_site,
-                                      ) === 1
-                                    }
-                                    func={changeTableCheck.bind(
-                                      this,
-                                      key,
-                                      index,
-                                      item.id,
-                                      user_app === "technologist" ? "is_show" : "show_site",
-                                    )}
-                                    disabled={!canEditAccess(acces, "site_kc")}
-                                  />
-                                </TableCell>
-                              )}
-
-                              {canViewAccess(acces, "kassa") && (
-                                <TableCell align="center">
-                                  <MyCheckBox
-                                    label=""
-                                    value={parseInt(item.show_program) === 1}
-                                    func={changeTableCheck.bind(
-                                      this,
-                                      key,
-                                      index,
-                                      item.id,
-                                      "show_program",
-                                    )}
-                                    disabled={!canEditAccess(acces, "kassa")}
-                                  />
-                                </TableCell>
-                              )}
-
-                              {canViewSort && (
-                                <TableCell>
-                                  {canEditSort ? (
-                                    <MyTextInput
-                                      label=""
-                                      value={item.sort}
-                                      func={changeSort.bind(this, key, index)}
-                                      onBlur={saveSort.bind(this, item.id, "sort")}
-                                    />
-                                  ) : (
-                                    item.sort
-                                  )}
-                                </TableCell>
-                              )}
-
-                              {canViewAccess(acces, "name") && (
+                        <TableBody>
+                          {cat.items &&
+                            cat.items.map((item, index) => (
+                              <TableRow key={item.id || index}>
                                 <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
-                                  {item.name}
+                                  {index + 1}
                                 </TableCell>
-                              )}
-                              {canViewAccess(acces, "date_start") && (
-                                <TableCell>{item.date_start}</TableCell>
-                              )}
-                              {canViewDateEnd && <TableCell>{item.date_end}</TableCell>}
-                              {canViewDateUpdate && (
+
+                                {canViewAccess(acces, "site_kc") && (
+                                  <TableCell align="center">
+                                    <MyCheckBox
+                                      label=""
+                                      value={
+                                        parseInt(
+                                          user_app === "technologist"
+                                            ? item.is_show
+                                            : item.show_site,
+                                        ) === 1
+                                      }
+                                      func={changeTableCheck.bind(
+                                        this,
+                                        key,
+                                        index,
+                                        item.id,
+                                        user_app === "technologist" ? "is_show" : "show_site",
+                                      )}
+                                      disabled={!canEditAccess(acces, "site_kc")}
+                                    />
+                                  </TableCell>
+                                )}
+
+                                {canViewAccess(acces, "kassa") && (
+                                  <TableCell align="center">
+                                    <MyCheckBox
+                                      label=""
+                                      value={parseInt(item.show_program) === 1}
+                                      func={changeTableCheck.bind(
+                                        this,
+                                        key,
+                                        index,
+                                        item.id,
+                                        "show_program",
+                                      )}
+                                      disabled={!canEditAccess(acces, "kassa")}
+                                    />
+                                  </TableCell>
+                                )}
+
+                                {canViewSort && (
+                                  <TableCell>
+                                    {canEditSort ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item.sort}
+                                        func={changeSort.bind(this, item.id)}
+                                        onBlur={saveSort.bind(this, item.id, "sort")}
+                                      />
+                                    ) : (
+                                      item.sort
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {canViewAccess(acces, "name") && (
+                                  <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
+                                    {item.name}
+                                  </TableCell>
+                                )}
+                                {canViewAccess(acces, "date_start") && (
+                                  <TableCell>{item.date_start}</TableCell>
+                                )}
+                                {canViewDateEnd && <TableCell>{item.date_end}</TableCell>}
                                 <TableCell>{item.date_update || item.update_item}</TableCell>
-                              )}
 
-                              {user_app === "technologist" && canViewAccess(acces, "art") && (
-                                <TableCell>{item.art}</TableCell>
-                              )}
+                                {user_app === "technologist" && canViewAccess(acces, "art") && (
+                                  <TableCell>{item.art}</TableCell>
+                                )}
 
-                              {canOpenItem && (
-                                <TableCell align="center">
-                                  <IconButton
-                                    onClick={openItem.bind(this, item.id, item.name)}
-                                    sx={{
-                                      color: textSecondary,
-                                      border: `1px solid ${blockBorder}`,
-                                      borderRadius: 1.5,
-                                      backgroundColor: "#fff",
-                                      "&:hover": {
-                                        backgroundColor: blockBackground,
-                                        color: textPrimary,
-                                      },
-                                    }}
-                                  >
-                                    <EditIcon fontSize="small" />
-                                  </IconButton>
-                                </TableCell>
-                              )}
+                                {canOpenItem && (
+                                  <TableCell align="center">
+                                    <IconButton
+                                      onClick={openItem.bind(this, item.id, item.name)}
+                                      sx={{
+                                        color: textSecondary,
+                                        border: `1px solid ${blockBorder}`,
+                                        borderRadius: 1.5,
+                                        backgroundColor: "#fff",
+                                        "&:hover": {
+                                          backgroundColor: blockBackground,
+                                          color: textPrimary,
+                                        },
+                                      }}
+                                    >
+                                      <EditIcon fontSize="small" />
+                                    </IconButton>
+                                  </TableCell>
+                                )}
 
-                              {canViewHistory && (
                                 <TableCell align="center">
                                   <IconButton
                                     onClick={openHistoryItem.bind(
@@ -1559,140 +1569,141 @@ class SiteItems_Table extends React.Component {
                                     <EditNoteIcon fontSize="small" />
                                   </IconButton>
                                 </TableCell>
-                              )}
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: { xs: "block", sm: "none" },
-                    mx: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: mobileSortOptions.length ? "block" : "none",
-                      px: 1.25,
-                      py: 1.25,
-                      borderRadius: 2.5,
-                      border: `1px solid ${blockBorder}`,
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        mb: 1,
-                        fontSize: 12,
-                        lineHeight: "16px",
-                        fontWeight: 600,
-                        color: "#8B8B8B",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      Сортировка списка
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      flexWrap="wrap"
-                      useFlexGap
-                      gap={0.75}
-                    >
-                      {mobileSortOptions.map((option) =>
-                        renderMobileSortButton(option.field, option.label),
-                      )}
-                    </Stack>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Box>
 
-                  <Stack
-                    spacing={1}
-                    sx={{ mt: 1 }}
+                  <Box
+                    sx={{
+                      display: { xs: "block", sm: "none" },
+                      mx: 1,
+                    }}
                   >
-                    {cat.items &&
-                      cat.items.map((item, index) => (
-                        <Box
-                          key={item.id || index}
-                          sx={{
-                            borderRadius: 2.5,
-                            border: `1px solid ${blockBorder}`,
-                            backgroundColor: "#fff",
-                            p: 1.25,
-                          }}
-                        >
-                          <Stack spacing={1.25}>
-                            <Stack
-                              direction="row"
-                              alignItems="flex-start"
-                              justifyContent="space-between"
-                              spacing={1.25}
-                            >
-                              <Box sx={{ minWidth: 0, flex: 1 }}>
-                                <Typography
-                                  sx={{
-                                    fontSize: 16,
-                                    lineHeight: "20px",
-                                    fontWeight: 700,
-                                    color: textPrimary,
-                                    wordBreak: "break-word",
-                                  }}
-                                >
-                                  {index + 1}
-                                  {canViewAccess(acces, "name")
-                                    ? `. ${item.name || "Без названия"}`
-                                    : ""}
-                                </Typography>
-                                {user_app === "technologist" && canViewAccess(acces, "art") ? (
+                    <Box
+                      sx={{
+                        display: mobileSortOptions.length ? "block" : "none",
+                        px: 1.25,
+                        py: 1.25,
+                        borderRadius: 2.5,
+                        border: `1px solid ${blockBorder}`,
+                        backgroundColor: "#fff",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          mb: 1,
+                          fontSize: 12,
+                          lineHeight: "16px",
+                          fontWeight: 600,
+                          color: "#8B8B8B",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        Сортировка списка
+                      </Typography>
+                      <Stack
+                        direction="row"
+                        flexWrap="wrap"
+                        useFlexGap
+                        gap={0.75}
+                      >
+                        {mobileSortOptions.map((option) =>
+                          renderMobileSortButton(option.field, option.label),
+                        )}
+                      </Stack>
+                    </Box>
+
+                    <Stack
+                      spacing={1}
+                      sx={{ mt: 1 }}
+                    >
+                      {cat.items &&
+                        cat.items.map((item, index) => (
+                          <Box
+                            key={item.id || index}
+                            sx={{
+                              borderRadius: 2.5,
+                              border: `1px solid ${blockBorder}`,
+                              backgroundColor: "#fff",
+                              p: 1.25,
+                            }}
+                          >
+                            <Stack spacing={1.25}>
+                              <Stack
+                                direction="row"
+                                alignItems="flex-start"
+                                justifyContent="space-between"
+                                spacing={1.25}
+                              >
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
                                   <Typography
                                     sx={{
-                                      mt: 0.4,
-                                      fontSize: 13,
-                                      lineHeight: "16px",
-                                      color: textSecondary,
+                                      fontSize: 16,
+                                      lineHeight: "20px",
+                                      fontWeight: 700,
+                                      color: textPrimary,
+                                      wordBreak: "break-word",
                                     }}
                                   >
-                                    Код 1С: {item.art || "—"}
+                                    {index + 1}
+                                    {canViewAccess(acces, "name")
+                                      ? `. ${item.name || "Без названия"}`
+                                      : ""}
                                   </Typography>
-                                ) : null}
-                              </Box>
-
-                              {canViewSort ? (
-                                <Box sx={{ width: 88, flexShrink: 0 }}>
-                                  {canEditSort ? (
-                                    <MyTextInput
-                                      label=""
-                                      value={item.sort}
-                                      func={changeSort.bind(this, key, index)}
-                                      onBlur={saveSort.bind(this, item.id, "sort")}
-                                    />
-                                  ) : (
-                                    <Typography sx={{ color: textSecondary }}>
-                                      {item.sort ?? "—"}
+                                  {user_app === "technologist" && canViewAccess(acces, "art") ? (
+                                    <Typography
+                                      sx={{
+                                        mt: 0.4,
+                                        fontSize: 13,
+                                        lineHeight: "16px",
+                                        color: textSecondary,
+                                      }}
+                                    >
+                                      Код 1С: {item.art || "—"}
                                     </Typography>
-                                  )}
+                                  ) : null}
                                 </Box>
-                              ) : null}
-                            </Stack>
 
-                            <Box
-                              sx={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                                gap: 1.25,
-                              }}
-                            >
-                              {canViewAccess(acces, "date_start") &&
-                                renderMobileInfoItem(
-                                  "Действует с",
-                                  formatSiteItemsTableDate(item.date_start),
-                                )}
-                              {canViewDateEnd &&
-                                renderMobileInfoItem("По", formatSiteItemsTableDate(item.date_end))}
-                              {canViewDateUpdate &&
-                                renderMobileInfoItem(
+                                {canViewSort ? (
+                                  <Box sx={{ width: 88, flexShrink: 0 }}>
+                                    {canEditSort ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item.sort}
+                                        func={changeSort.bind(this, item.id)}
+                                        onBlur={saveSort.bind(this, item.id, "sort")}
+                                      />
+                                    ) : (
+                                      <Typography sx={{ color: textSecondary }}>
+                                        {item.sort ?? "—"}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                ) : null}
+                              </Stack>
+
+                              <Box
+                                sx={{
+                                  display: "grid",
+                                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                  gap: 1.25,
+                                }}
+                              >
+                                {canViewAccess(acces, "date_start") &&
+                                  renderMobileInfoItem(
+                                    "Действует с",
+                                    formatSiteItemsTableDate(item.date_start),
+                                  )}
+                                {canViewDateEnd &&
+                                  renderMobileInfoItem(
+                                    "По",
+                                    formatSiteItemsTableDate(item.date_end),
+                                  )}
+                                {renderMobileInfoItem(
                                   "Обновление",
                                   formatSiteItemsTableDate(
                                     item.date_update || item.update_item,
@@ -1700,40 +1711,45 @@ class SiteItems_Table extends React.Component {
                                   ),
                                   true,
                                 )}
-                            </Box>
+                              </Box>
 
-                            <Stack
-                              direction="row"
-                              flexWrap="wrap"
-                              useFlexGap
-                              gap={0.75}
-                            >
-                              {canViewAccess(acces, "site_kc") &&
-                                renderMobileStatusControl(
-                                  activityLabel,
-                                  parseInt(
-                                    user_app === "technologist" ? item.is_show : item.show_site,
-                                  ) === 1,
-                                  changeTableCheck.bind(
-                                    this,
-                                    key,
-                                    index,
-                                    item.id,
-                                    user_app === "technologist" ? "is_show" : "show_site",
-                                  ),
-                                  !canEditAccess(acces, "site_kc"),
-                                )}
+                              <Stack
+                                direction="row"
+                                flexWrap="wrap"
+                                useFlexGap
+                                gap={0.75}
+                              >
+                                {canViewAccess(acces, "site_kc") &&
+                                  renderMobileStatusControl(
+                                    activityLabel,
+                                    parseInt(
+                                      user_app === "technologist" ? item.is_show : item.show_site,
+                                    ) === 1,
+                                    changeTableCheck.bind(
+                                      this,
+                                      key,
+                                      index,
+                                      item.id,
+                                      user_app === "technologist" ? "is_show" : "show_site",
+                                    ),
+                                    !canEditAccess(acces, "site_kc"),
+                                  )}
 
-                              {canViewAccess(acces, "kassa") &&
-                                renderMobileStatusControl(
-                                  "Касса",
-                                  parseInt(item.show_program) === 1,
-                                  changeTableCheck.bind(this, key, index, item.id, "show_program"),
-                                  !canEditAccess(acces, "kassa"),
-                                )}
-                            </Stack>
+                                {canViewAccess(acces, "kassa") &&
+                                  renderMobileStatusControl(
+                                    "Касса",
+                                    parseInt(item.show_program) === 1,
+                                    changeTableCheck.bind(
+                                      this,
+                                      key,
+                                      index,
+                                      item.id,
+                                      "show_program",
+                                    ),
+                                    !canEditAccess(acces, "kassa"),
+                                  )}
+                              </Stack>
 
-                            {(canOpenItem || canViewHistory) && (
                               <Stack
                                 direction="row"
                                 spacing={1}
@@ -1748,30 +1764,24 @@ class SiteItems_Table extends React.Component {
                                     {canEditItem ? "Изменить" : "Открыть"}
                                   </Button>
                                 )}
-                                {canViewHistory && (
-                                  <Button
-                                    variant="outlined"
-                                    startIcon={<EditNoteIcon fontSize="small" />}
-                                    onClick={openHistoryItem.bind(
-                                      this,
-                                      item.id,
-                                      "История изменений",
-                                    )}
-                                    sx={actionButtonSx}
-                                  >
-                                    История
-                                  </Button>
-                                )}
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<EditNoteIcon fontSize="small" />}
+                                  onClick={openHistoryItem.bind(this, item.id, "История изменений")}
+                                  sx={actionButtonSx}
+                                >
+                                  История
+                                </Button>
                               </Stack>
-                            )}
-                          </Stack>
-                        </Box>
-                      ))}
-                  </Stack>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+                            </Stack>
+                          </Box>
+                        ))}
+                    </Stack>
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
         </Stack>
       </Grid>
     );
@@ -1790,9 +1800,18 @@ class SiteItems_ extends React.Component {
       user_app: "",
 
       cats: [],
+      displayCats: [],
+      listCounts: {
+        activeCategories: 0,
+        activeItems: 0,
+        archiveCategories: 0,
+        archiveItems: 0,
+      },
       confirmDialog: false,
       timeUpdate: new Date(),
       fullScreen: false,
+      listTab: "active",
+      searchItem: "",
 
       openAlert: false,
       err_status: false,
@@ -1818,6 +1837,32 @@ class SiteItems_ extends React.Component {
       category: [],
       stages: [],
     };
+
+    this.changeSort = this.changeSort.bind(this);
+    this.saveSort = this.saveSort.bind(this);
+    this.changeTableCheck = this.changeTableCheck.bind(this);
+    this.openItemTech = this.openItemTech.bind(this);
+    this.openHistoryTech = this.openHistoryTech.bind(this);
+    this.openHistoryMark = this.openHistoryMark.bind(this);
+  }
+
+  buildListView(cats, listTab, searchItem) {
+    const activeCats = filterCatsByActivity(cats, false);
+    const archiveCats = filterCatsByActivity(cats, true);
+    const byActivity = listTab === "archive" ? archiveCats : activeCats;
+    const displayCats = filterCatsByName(byActivity, searchItem);
+    const countItems = (list) =>
+      (list || []).reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
+
+    return {
+      displayCats,
+      listCounts: {
+        activeCategories: activeCats.length,
+        activeItems: countItems(activeCats),
+        archiveCategories: archiveCats.length,
+        archiveItems: countItems(archiveCats),
+      },
+    };
   }
 
   async componentDidMount() {
@@ -1826,6 +1871,7 @@ class SiteItems_ extends React.Component {
     this.setState({
       module_name: data.module_info.name,
       cats: data.cats,
+      ...this.buildListView(data.cats, this.state.listTab, this.state.searchItem),
       acces: data.acces,
       user_app: data.user_app,
       timeUpdate: new Date(),
@@ -1868,6 +1914,7 @@ class SiteItems_ extends React.Component {
 
     this.setState({
       cats: data.cats,
+      ...this.buildListView(data.cats, this.state.listTab, this.state.searchItem),
       user_app: data.user_app,
       timeUpdate: new Date(),
       tags: data.tags,
@@ -1994,16 +2041,27 @@ class SiteItems_ extends React.Component {
     await this.getData("updateVK", {});
   }
 
-  changeSort(key_cat, key_item, event) {
-    const value = event.target.value;
-    let cats = this.state.cats;
-
-    cats[key_cat]["items"][key_item]["sort"] = value;
+  updateCatItemById(id, patch) {
+    const cats = (this.state.cats || []).map((cat) => ({
+      ...cat,
+      items: (cat.items || []).map((item) =>
+        String(item?.id) === String(id) ? { ...item, ...patch } : item,
+      ),
+    }));
 
     this.setState({
       cats,
+      ...this.buildListView(cats, this.state.listTab, this.state.searchItem),
       timeUpdate: new Date(),
     });
+  }
+
+  changeSort(itemId, event) {
+    if (itemId === undefined || itemId === null) {
+      return;
+    }
+
+    this.updateCatItemById(itemId, { sort: event.target.value });
   }
 
   async saveSort(id, type, event) {
@@ -2038,14 +2096,7 @@ class SiteItems_ extends React.Component {
     }
 
     const value = val ? 1 : 0;
-
-    let cats = this.state.cats;
-    cats[key_cat]["items"][key_item][type] = value;
-
-    this.setState({
-      cats,
-      timeUpdate: new Date(),
-    });
+    this.updateCatItemById(id, { [type]: value });
 
     const data = {
       id,
@@ -2168,10 +2219,6 @@ class SiteItems_ extends React.Component {
   }
 
   async openHistoryTech(id, method, type) {
-    if (!canViewAccess(this.state.acces, "history", true)) {
-      return;
-    }
-
     this.handleResize();
 
     const data = {
@@ -2335,15 +2382,16 @@ class SiteItems_ extends React.Component {
         >
           <Box
             sx={{
-              bgcolor: blockBackground,
+              bgcolor: "#fff",
+              border: { lg: `1px solid ${blockBorder}` },
               borderRadius: { xs: 0, lg: 3 },
               mx: { xs: -3, lg: 0 },
               px: { xs: 1.5, lg: 2.5 },
-              py: { xs: 2, lg: 2.5 },
-              mb: 2.5,
+              py: { xs: 2, lg: 2.25 },
+              mb: 2,
             }}
           >
-            <Stack spacing={2.5}>
+            <Stack spacing={2}>
               <Box
                 sx={{
                   display: "flex",
@@ -2353,19 +2401,17 @@ class SiteItems_ extends React.Component {
                   gap: 2,
                 }}
               >
-                <Box>
-                  <Typography
-                    component="h1"
-                    sx={{
-                      fontSize: { xs: 28, lg: 36 },
-                      lineHeight: { xs: "32px", lg: "40px" },
-                      fontWeight: 400,
-                      color: textPrimary,
-                    }}
-                  >
-                    {this.state.module_name}
-                  </Typography>
-                </Box>
+                <Typography
+                  component="h1"
+                  sx={{
+                    fontSize: { xs: 26, lg: 30 },
+                    lineHeight: { xs: "32px", lg: "36px" },
+                    fontWeight: 600,
+                    color: textPrimary,
+                  }}
+                >
+                  {this.state.module_name}
+                </Typography>
 
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
@@ -2374,10 +2420,11 @@ class SiteItems_ extends React.Component {
                   flexWrap="wrap"
                   sx={{ width: { xs: "100%", lg: "auto" } }}
                 >
-                  {hasAccessValue(this.state.acces?.reload_vk_access) ? (
+                  {hasAccessValue(this.state.acces?.new_item_access) ? (
                     <Button
-                      onClick={() => this.setState({ confirmDialog: true })}
+                      onClick={this.openItemNew.bind(this, "Новое блюдо")}
                       variant="contained"
+                      startIcon={<AddIcon />}
                       sx={{
                         minHeight: 40,
                         px: 2,
@@ -2385,9 +2432,9 @@ class SiteItems_ extends React.Component {
                         backgroundColor: brandRed,
                         color: "#fff",
                         textTransform: "none",
-                        fontSize: 16,
+                        fontSize: 14,
                         lineHeight: "20px",
-                        fontWeight: 400,
+                        fontWeight: 600,
                         boxShadow: "none",
                         "&:hover": {
                           backgroundColor: brandRed,
@@ -2395,17 +2442,8 @@ class SiteItems_ extends React.Component {
                         },
                       }}
                     >
-                      Обновить товары VK
-                    </Button>
-                  ) : null}
-
-                  {hasAccessValue(this.state.acces?.new_item_access) ? (
-                    <OutlineActionButton
-                      onClick={this.openItemNew.bind(this, "Новое блюдо")}
-                      sx={{ width: { xs: "100%", sm: "auto" } }}
-                    >
                       Новый товар
-                    </OutlineActionButton>
+                    </Button>
                   ) : null}
 
                   {hasAccessValue(this.state.acces?.change_tag_access) ? (
@@ -2413,7 +2451,18 @@ class SiteItems_ extends React.Component {
                       onClick={() => this.setState({ modalEditTags: true })}
                       sx={{ width: { xs: "100%", sm: "auto" } }}
                     >
-                      Редактировать тэги
+                      <LocalOfferOutlinedIcon sx={{ mr: 1, fontSize: 18 }} />
+                      Редактировать теги
+                    </OutlineActionButton>
+                  ) : null}
+
+                  {hasAccessValue(this.state.acces?.reload_vk_access) ? (
+                    <OutlineActionButton
+                      onClick={() => this.setState({ confirmDialog: true })}
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                    >
+                      <SyncIcon sx={{ mr: 1, fontSize: 18 }} />
+                      Обновить товары VK
                     </OutlineActionButton>
                   ) : null}
                 </Stack>
@@ -2430,56 +2479,312 @@ class SiteItems_ extends React.Component {
               py: { xs: 2, lg: 2.5 },
             }}
           >
-            <Box sx={{ mb: 2.5 }}>
-              <Typography
-                sx={{
-                  fontSize: 20,
-                  lineHeight: "24px",
-                  fontWeight: 400,
-                  color: textPrimary,
-                }}
-              >
-                Категории
-              </Typography>
-            </Box>
+            {(() => {
+              const displayCats = this.state.displayCats;
+              const counts = this.state.listCounts;
+              const isArchive = this.state.listTab === "archive";
+              const visibleItems = displayCats.reduce(
+                (sum, cat) => sum + (cat.items?.length || 0),
+                0,
+              );
+              const searchValue = this.state.searchItem || "";
 
-            {this.state.cats.length == 0 ? (
-              <Box
-                sx={{
-                  borderRadius: 2.5,
-                  border: `1px solid ${blockBorder}`,
-                  backgroundColor: "#fff",
-                  px: 2,
-                  py: 4,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 16,
-                    lineHeight: "20px",
-                    color: textSecondary,
-                  }}
-                >
-                  Категории пока не загружены.
-                </Typography>
-              </Box>
-            ) : (
-              <SiteItems_Table
-                user_app={this.state.user_app}
-                cats={this.state.cats}
-                timeUpdate={this.state.timeUpdate}
-                changeSort={this.changeSort.bind(this)}
-                saveSort={this.saveSort.bind(this)}
-                changeTableCheck={this.changeTableCheck.bind(this)}
-                acces={this.state.acces}
-                openItem={this.openItemTech.bind(this)}
-                openHistoryItem={
-                  this.state.user_app === "technologist"
-                    ? this.openHistoryTech.bind(this)
-                    : this.openHistoryMark.bind(this)
-                }
-              />
-            )}
+              return (
+                <Stack spacing={2}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: { xs: 1.5, lg: 2 },
+                      borderRadius: 2.5,
+                      border: `1px solid ${blockBorder}`,
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Stack spacing={1.75}>
+                      <Stack
+                        direction={{ xs: "column", lg: "row" }}
+                        spacing={1.5}
+                        alignItems={{ xs: "stretch", lg: "center" }}
+                        justifyContent="space-between"
+                      >
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: 20,
+                              lineHeight: "24px",
+                              fontWeight: 500,
+                              color: textPrimary,
+                            }}
+                          >
+                            {isArchive ? "Архив товаров" : "Каталог товаров"}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              mt: 0.5,
+                              fontSize: 14,
+                              lineHeight: "18px",
+                              color: textSecondary,
+                            }}
+                          >
+                            {this.state.cats.length === 0
+                              ? "Загрузите данные, чтобы начать работу"
+                              : isArchive
+                                ? "Позиции с выключенной активностью"
+                                : "Активные позиции, сгруппированные по категориям"}
+                          </Typography>
+                        </Box>
+
+                        <TextField
+                          size="small"
+                          placeholder="Поиск по названию"
+                          value={searchValue}
+                          onChange={(event) => {
+                            const searchItem = event.target.value;
+                            this.setState((state) => ({
+                              searchItem,
+                              ...this.buildListView(state.cats, state.listTab, searchItem),
+                            }));
+                          }}
+                          sx={{
+                            width: { xs: "100%", lg: 320 },
+                            backgroundColor: "#fff",
+                            borderRadius: 1.5,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 1.5,
+                            },
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
+                              </InputAdornment>
+                            ),
+                            endAdornment: searchValue ? (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  aria-label="Очистить поиск"
+                                  onClick={() =>
+                                    this.setState((state) => ({
+                                      searchItem: "",
+                                      ...this.buildListView(state.cats, state.listTab, ""),
+                                    }))
+                                  }
+                                  edge="end"
+                                >
+                                  <CloseIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </InputAdornment>
+                            ) : null,
+                          }}
+                        />
+                      </Stack>
+
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={1.5}
+                        alignItems={{ xs: "stretch", md: "center" }}
+                        justifyContent="space-between"
+                      >
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            p: 0.5,
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                            border: `1px solid ${blockBorder}`,
+                            width: { xs: "100%", md: "auto" },
+                          }}
+                        >
+                          {[
+                            {
+                              value: "active",
+                              label: "Активные",
+                              count: counts.activeItems,
+                            },
+                            {
+                              value: "archive",
+                              label: "Архив",
+                              count: counts.archiveItems,
+                            },
+                          ].map((tab) => {
+                            const selected = this.state.listTab === tab.value;
+
+                            return (
+                              <Button
+                                key={tab.value}
+                                onClick={() =>
+                                  this.setState((state) => ({
+                                    listTab: tab.value,
+                                    ...this.buildListView(state.cats, tab.value, state.searchItem),
+                                  }))
+                                }
+                                sx={{
+                                  flex: { xs: 1, md: "none" },
+                                  minHeight: 36,
+                                  px: 1.75,
+                                  borderRadius: 1.5,
+                                  textTransform: "none",
+                                  fontSize: 14,
+                                  fontWeight: selected ? 600 : 400,
+                                  color: selected ? "#fff" : textSecondary,
+                                  backgroundColor: selected ? brandRed : "transparent",
+                                  boxShadow: "none",
+                                  "&:hover": {
+                                    backgroundColor: selected ? brandRed : blockBackground,
+                                    boxShadow: "none",
+                                  },
+                                }}
+                              >
+                                {tab.label}
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    ml: 1,
+                                    minWidth: 22,
+                                    height: 20,
+                                    px: 0.75,
+                                    borderRadius: 999,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    backgroundColor: selected
+                                      ? "rgba(255,255,255,0.2)"
+                                      : blockBackground,
+                                    color: selected ? "#fff" : textSecondary,
+                                  }}
+                                >
+                                  {tab.count}
+                                </Box>
+                              </Button>
+                            );
+                          })}
+                        </Box>
+
+                        {this.state.cats.length > 0 ? (
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              lineHeight: "18px",
+                              color: textSecondary,
+                              textAlign: { xs: "left", md: "right" },
+                            }}
+                          >
+                            Показано {displayCats.length}{" "}
+                            {displayCats.length === 1 ? "категория" : "категорий"}
+                            {" · "}
+                            {visibleItems} {visibleItems === 1 ? "товар" : "товаров"}
+                            {searchValue.trim() ? ` по запросу «${searchValue.trim()}»` : ""}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    </Stack>
+                  </Paper>
+
+                  {this.state.cats.length == 0 ? (
+                    <Box
+                      sx={{
+                        borderRadius: 2.5,
+                        border: `1px solid ${blockBorder}`,
+                        backgroundColor: "#fff",
+                        px: 2,
+                        py: 4,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          lineHeight: "20px",
+                          color: textSecondary,
+                        }}
+                      >
+                        Категории пока не загружены.
+                      </Typography>
+                    </Box>
+                  ) : displayCats.length === 0 ? (
+                    <Box
+                      sx={{
+                        borderRadius: 2.5,
+                        border: `1px dashed ${blockBorder}`,
+                        backgroundColor: "#fff",
+                        px: 2,
+                        py: 5,
+                        textAlign: "center",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          lineHeight: "22px",
+                          fontWeight: 500,
+                          color: textPrimary,
+                        }}
+                      >
+                        {isArchive
+                          ? "В архиве пока нет товаров"
+                          : searchValue.trim()
+                            ? "Ничего не найдено"
+                            : "Нет активных товаров"}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          mt: 0.75,
+                          fontSize: 14,
+                          lineHeight: "20px",
+                          color: textSecondary,
+                        }}
+                      >
+                        {searchValue.trim()
+                          ? "Попробуйте изменить запрос или сбросить поиск."
+                          : isArchive
+                            ? "Сюда попадают позиции с выключенной активностью."
+                            : "Активные позиции появятся здесь после включения активности."}
+                      </Typography>
+                      {searchValue.trim() ? (
+                        <Button
+                          onClick={() =>
+                            this.setState((state) => ({
+                              searchItem: "",
+                              ...this.buildListView(state.cats, state.listTab, ""),
+                            }))
+                          }
+                          sx={{
+                            mt: 2,
+                            minHeight: 36,
+                            px: 2,
+                            borderRadius: 1.5,
+                            border: `1px solid ${blockBorder}`,
+                            color: textPrimary,
+                            textTransform: "none",
+                          }}
+                        >
+                          Сбросить поиск
+                        </Button>
+                      ) : null}
+                    </Box>
+                  ) : (
+                    <SiteItems_Table
+                      listTab={this.state.listTab}
+                      user_app={this.state.user_app}
+                      cats={displayCats}
+                      timeUpdate={this.state.timeUpdate}
+                      changeSort={this.changeSort}
+                      saveSort={this.saveSort}
+                      changeTableCheck={this.changeTableCheck}
+                      acces={this.state.acces}
+                      openItem={this.openItemTech}
+                      openHistoryItem={
+                        this.state.user_app === "technologist"
+                          ? this.openHistoryTech
+                          : this.openHistoryMark
+                      }
+                    />
+                  )}
+                </Stack>
+              );
+            })()}
           </Box>
         </Box>
       </>

@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { canViewAccess } from "@/components/site_items_new/site_items_access";
 
 export const historySections = [
   {
@@ -62,6 +63,7 @@ export const historySections = [
       { key: "is_new", label: "Новинка", access: "is_new", type: "boolean" },
       { key: "is_update", label: "Обновлено", access: "is_updated", type: "boolean" },
       { key: "is_hit", label: "Хит", access: "is_hit", type: "boolean" },
+      { key: "is_spicy", label: "Острый", access: "is_spicy", type: "boolean" },
     ],
   },
   {
@@ -349,6 +351,55 @@ export function compareCollection(currentRows = [], previousRows = [], isFinal =
   return { rows, removed };
 }
 
+function getChangedSectionsForPair(current, previous) {
+  const changedSections = [];
+
+  if (!current || !previous) {
+    return changedSections;
+  }
+
+  historySections.forEach((section) => {
+    const hasFieldChange = section.fields.some(
+      (field) => normalizeFieldValue(field, current) !== normalizeFieldValue(field, previous),
+    );
+
+    if (hasFieldChange) {
+      changedSections.push({ id: section.id, title: section.title });
+    }
+  });
+
+  const hasCompositionFieldChange = compositionTotals.some(
+    (field) => normalizeFieldValue(field, current) !== normalizeFieldValue(field, previous),
+  );
+
+  const hasCompositionCollectionChange = compositionSections.some((section) => {
+    const comparison = compareCollection(
+      current?.[section.key] || [],
+      previous?.[section.key] || [],
+      section.isFinal,
+    );
+
+    return (
+      comparison.removed.length > 0 ||
+      comparison.rows.some(
+        (row) => row.historyStatus === "added" || row.historyStatus === "changed",
+      )
+    );
+  });
+
+  if (hasCompositionFieldChange || hasCompositionCollectionChange) {
+    changedSections.push({ id: "composition", title: "Состав" });
+  }
+
+  return changedSections;
+}
+
+export function getVersionChangedSections(versions, index) {
+  const current = versions[index] || null;
+  const previous = versions[index + 1] || null;
+  return getChangedSectionsForPair(current, previous);
+}
+
 export function buildHistoryComparison(versions, selectedIndex) {
   const current = versions[selectedIndex] || null;
   const previous = versions[selectedIndex + 1] || null;
@@ -377,6 +428,7 @@ export function buildHistoryComparison(versions, selectedIndex) {
     current,
     previous,
     changedFields,
+    changedSections: getChangedSectionsForPair(current, previous),
     collections,
   };
 }
@@ -386,17 +438,7 @@ export function canViewHistoryField(access, field) {
     return true;
   }
 
-  const viewKey = `${field.access}_view`;
-  const editKey = `${field.access}_edit`;
-
-  if (
-    Object.prototype.hasOwnProperty.call(access || {}, viewKey) ||
-    Object.prototype.hasOwnProperty.call(access || {}, editKey)
-  ) {
-    return parseInt(access?.[viewKey] || 0, 10) === 1 || parseInt(access?.[editKey] || 0, 10) === 1;
-  }
-
-  return false;
+  return canViewAccess(access, field.access, false);
 }
 
 export function getCompositionRowName(row) {

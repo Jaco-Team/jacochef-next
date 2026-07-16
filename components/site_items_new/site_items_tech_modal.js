@@ -27,6 +27,16 @@ import Box from "@mui/material/Box";
 import TabList from "@mui/lab/TabList";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
+import {
+  SITE_ITEMS_MODAL_FIELD_KEYS,
+  SITE_ITEMS_MODAL_SECTIONS,
+  canEditAccess,
+  canEditSection,
+  canViewAccess,
+  canViewSection,
+  hasAccessValue,
+} from "@/components/site_items_new/site_items_access";
+
 const roundTo = (value, decimals) => {
   return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
 };
@@ -63,55 +73,13 @@ const filterCompositionOptions = (options, { inputValue }) => {
 
   return filteredOptions;
 };
-const modalSections = [
-  {
-    value: "0",
-    label: "Основные",
-    description: "Наименование, категория и изображение",
-    fields: [
-      "name",
-      "short_name",
-      "art",
-      "date_start",
-      "date_end",
-      "category_id",
-      "stol",
-      "marc",
-      "dropzone",
-    ],
-  },
-  {
-    value: "1",
-    label: "БЖУ",
-    description: "Вес, порция и пищевая ценность",
-    fields: ["count_part", "weight", "protein", "fat", "carbohydrates"],
-  },
-  {
-    value: "2",
-    label: "Описание",
-    description: "Тексты для карточки и списка",
-    fields: ["tmp_desc", "marc_desc_full", "marc_desc"],
-  },
-  {
-    value: "3",
-    label: "Теги",
-    description: "Теги и промо-маркеры",
-    fields: ["tags", "is_new", "is_updated", "is_hit"],
-  },
-  {
-    value: "4",
-    label: "Активность",
-    description: "Публикация и продажи",
-    fields: ["is_price", "is_show", "show_site", "show_program"],
-  },
-  {
-    value: "5",
-    label: "Состав",
-    description: "Тайминги, заготовки и позиции",
-    fields: ["time_stage_1", "time_stage_2", "time_stage_3", "stage", "items"],
-  },
-];
-const modalFieldKeys = modalSections.flatMap((section) => section.fields);
+const modalSections = SITE_ITEMS_MODAL_SECTIONS.map((section) => ({
+  value: section.value,
+  label: section.label,
+  description: section.description,
+  fields: section.fields,
+}));
+const modalFieldKeys = SITE_ITEMS_MODAL_FIELD_KEYS;
 const markingOptions = [
   { id: "0", name: "Обычный товар" },
   { id: "1", name: "Вода" },
@@ -191,6 +159,7 @@ export class SiteItemsModalTech extends React.Component {
       is_hit: "0",
       is_new: "0",
       is_updated: "0",
+      is_spicy: "0",
       show_program: "0",
       show_site: "0",
       img_app: "",
@@ -289,40 +258,44 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   hasAccessFlag(value) {
-    return value === true || value === 1 || value === "1";
+    return hasAccessValue(value);
   }
 
   getFieldAccess(field, type = "edit") {
-    return this.hasAccessFlag(this.props.acces?.[`${field}_${type}`]);
+    if (type === "view") {
+      return canViewAccess(this.props.acces, field, false);
+    }
+
+    return canEditAccess(this.props.acces, field, false);
   }
 
   getFieldAccessOrDefault(field, type = "edit", fallback = true) {
-    const accessKey = `${field}_${type}`;
-
-    if (!(accessKey in (this.props.acces || {}))) {
-      return fallback;
+    if (type === "view") {
+      return canViewAccess(this.props.acces, field, fallback);
     }
 
-    return this.getFieldAccess(field, type);
+    return canEditAccess(this.props.acces, field, fallback);
   }
 
   getFieldVisibilityOrDefault(field, fallback = true) {
-    const editKey = `${field}_edit`;
-    const viewKey = `${field}_view`;
-    const rawAccess = this.props.acces || {};
-
-    if (!(editKey in rawAccess) && !(viewKey in rawAccess)) {
-      return fallback;
-    }
-
-    return this.hasAccessFlag(rawAccess[editKey]) || this.hasAccessFlag(rawAccess[viewKey]);
+    return canViewAccess(this.props.acces, field, fallback);
   }
 
   getNormalizedAccess() {
-    return Object.entries(this.props.acces || {}).reduce((acc, [key, value]) => {
-      acc[key] = key.endsWith("_edit") || key.endsWith("_view") ? this.hasAccessFlag(value) : value;
-      return acc;
+    const rawAccess = this.props.acces || {};
+    const acc = Object.entries(rawAccess).reduce((result, [key, value]) => {
+      result[key] =
+        key.endsWith("_edit") || key.endsWith("_view") ? this.hasAccessFlag(value) : value;
+      return result;
     }, {});
+
+    modalFieldKeys.forEach((field) => {
+      const fallback = field === "tags";
+      acc[`${field}_view`] = canViewAccess(rawAccess, field, fallback);
+      acc[`${field}_edit`] = canEditAccess(rawAccess, field, fallback);
+    });
+
+    return acc;
   }
 
   getVisibleSections() {
@@ -912,6 +885,7 @@ export class SiteItemsModalTech extends React.Component {
           marc_desc_full: isNewItem ? "" : this.props.item?.marc_desc_full || "",
           is_hit: isNewItem ? "0" : parseInt(this.props.item?.is_hit) ? 1 : 0,
           is_new: isNewItem ? "0" : parseInt(this.props.item?.is_new) ? 1 : 0,
+          is_spicy: isNewItem ? "0" : parseInt(this.props.item?.is_spicy) ? 1 : 0,
           show_program: isNewItem ? "0" : parseInt(this.props.item?.show_program) ? 1 : 0,
           show_site: isNewItem ? "0" : parseInt(this.props.item?.show_site) ? 1 : 0,
           img_app: isNewItem ? "" : this.props.item?.img_app || "",
@@ -1430,6 +1404,7 @@ export class SiteItemsModalTech extends React.Component {
       short_name: this.state.short_name,
       is_hit: this.state.is_hit,
       is_new: this.state.is_new,
+      is_spicy: this.state.is_spicy,
       show_program: this.state.show_program,
       show_site: this.state.show_site,
       img_app: this.state.img_app,
@@ -1590,12 +1565,30 @@ export class SiteItemsModalTech extends React.Component {
       visibleSections[0] ||
       modalSections[0];
     const canSave = this.hasAnyEditableField();
-    const canViewTags = this.getFieldVisibilityOrDefault("tags", true);
-    const canEditTags = this.getFieldAccessOrDefault("tags", "edit", true);
+    const canViewTags = canViewSection(this.props.acces, "tags", true);
+    const canEditTags = canEditSection(this.props.acces, "tags", true);
     const canViewDropzone = this.getFieldVisibilityOrDefault("dropzone", false);
-    const canViewPromoMarkers = ["is_new", "is_updated", "is_hit"].some((field) =>
-      this.getFieldVisibilityOrDefault(field, false),
-    );
+    const canViewPromoMarkers = canViewTags;
+    const canViewDescription = canViewSection(this.props.acces, "description", false);
+    const canEditDescription = canEditSection(this.props.acces, "description", false);
+    const canViewActivity = canViewSection(this.props.acces, "activity", false);
+    const canEditActivity = canEditSection(this.props.acces, "activity", false);
+    const canViewComposition = canViewSection(this.props.acces, "composition", false);
+    const canEditComposition = canEditSection(this.props.acces, "composition", false);
+    const canViewPortion =
+      this.getFieldVisibilityOrDefault("count_part", false) ||
+      this.getFieldVisibilityOrDefault("weight", false);
+    const canEditPortion =
+      this.getFieldAccessOrDefault("count_part", "edit", false) ||
+      this.getFieldAccessOrDefault("weight", "edit", false);
+    const canViewBju =
+      this.getFieldVisibilityOrDefault("protein", false) ||
+      this.getFieldVisibilityOrDefault("fat", false) ||
+      this.getFieldVisibilityOrDefault("carbohydrates", false);
+    const canEditBju =
+      this.getFieldAccessOrDefault("protein", "edit", false) ||
+      this.getFieldAccessOrDefault("fat", "edit", false) ||
+      this.getFieldAccessOrDefault("carbohydrates", "edit", false);
     const hiddenIf = (condition) => (condition ? { display: "none" } : {});
     const isChecked = (value) => parseInt(value) === 1;
     const canViewMarkingType = this.getFieldVisibilityOrDefault("marc");
@@ -2375,72 +2368,161 @@ export class SiteItemsModalTech extends React.Component {
                 xs: 1.25,
                 md: 1.5,
               },
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 2,
               bgcolor: blockBackground,
               borderBottom: `1px solid ${blockBorder}`,
             }}
           >
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                sx={{
-                  color: textSecondary,
-                  fontSize: 13,
-                  lineHeight: "18px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                {activeSection.label}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.5,
-                  color: textPrimary,
-                  fontSize: {
-                    xs: 20,
-                    md: 24,
-                  },
-                  lineHeight: {
-                    xs: "26px",
-                    md: "32px",
-                  },
-                  fontWeight: 700,
-                }}
-              >
-                {method === "Новое блюдо" ? "Новая карточка блюда" : method}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.75,
-                  maxWidth: 720,
-                  color: textSecondary,
-                  fontSize: 14,
-                  lineHeight: "20px",
-                }}
-              >
-                {activeSection.description}
-              </Typography>
-            </Box>
-            <IconButton
-              onClick={this.onClose.bind(this)}
+            <Box
               sx={{
-                mt: {
-                  xs: -0.25,
-                  md: 0,
-                },
-                color: "#A6A6A6",
-                borderRadius: "50%",
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
-                },
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 2,
               }}
             >
-              <CloseIcon />
-            </IconButton>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    color: textSecondary,
+                    fontSize: 13,
+                    lineHeight: "18px",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {activeSection.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    color: textPrimary,
+                    fontSize: {
+                      xs: 20,
+                      md: 24,
+                    },
+                    lineHeight: {
+                      xs: "26px",
+                      md: "32px",
+                    },
+                    fontWeight: 700,
+                  }}
+                >
+                  {method === "Новое блюдо" ? "Новая карточка блюда" : method}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.75,
+                    maxWidth: 720,
+                    color: textSecondary,
+                    fontSize: 14,
+                    lineHeight: "20px",
+                  }}
+                >
+                  {activeSection.description}
+                </Typography>
+              </Box>
+              <IconButton
+                onClick={this.onClose.bind(this)}
+                sx={{
+                  mt: {
+                    xs: -0.25,
+                    md: 0,
+                  },
+                  flexShrink: 0,
+                  color: "#A6A6A6",
+                  borderRadius: "50%",
+                  "&:hover": {
+                    backgroundColor: "rgba(0, 0, 0, 0.04)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {(access?.date_start_edit ||
+              access?.date_start_view ||
+              access?.date_end_edit ||
+              access?.date_end_view) && (
+              <Box
+                sx={{
+                  mt: 1.5,
+                  p: 1.25,
+                  display: "flex",
+                  flexDirection: {
+                    xs: "column",
+                    sm: "row",
+                  },
+                  alignItems: {
+                    xs: "stretch",
+                    sm: "center",
+                  },
+                  justifyContent: "space-between",
+                  gap: 1.25,
+                  border: `1px solid ${blockBorder}`,
+                  borderRadius: 2,
+                  bgcolor: "#FFFFFF",
+                }}
+              >
+                <Box sx={{ flexShrink: 0 }}>
+                  <Typography
+                    sx={{
+                      color: textPrimary,
+                      fontSize: 13,
+                      lineHeight: "18px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Период действия
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.25,
+                      color: textSecondary,
+                      fontSize: 12,
+                      lineHeight: "16px",
+                    }}
+                  >
+                    Срок публикации карточки
+                  </Typography>
+                </Box>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    width: {
+                      xs: "100%",
+                      sm: "auto",
+                    },
+                  }}
+                >
+                  {(access?.date_start_edit || access?.date_start_view) && (
+                    <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
+                      <MyDatePickerNew
+                        label="С"
+                        value={this.state.date_start}
+                        disabled={!access?.date_start_edit}
+                        sx={this.getErrorFieldSx("date_start")}
+                        func={this.changeDateRange.bind(this, "date_start")}
+                        minDate={dayjs(new Date())}
+                      />
+                    </Box>
+                  )}
+                  {(access?.date_end_edit || access?.date_end_view) && (
+                    <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
+                      <MyDatePickerNew
+                        label="По"
+                        value={this.state.date_end}
+                        disabled={!access?.date_end_edit}
+                        func={this.changeDateRange.bind(this, "date_end")}
+                        clearable={true}
+                      />
+                    </Box>
+                  )}
+                </Stack>
+              </Box>
+            )}
           </DialogTitle>
           <DialogContent sx={dialogContentSx}>
             <TabContext value={this.state.activeTab}>
@@ -2551,7 +2633,7 @@ export class SiteItemsModalTech extends React.Component {
                       {renderSectionCard(
                         "Основные данные",
                         "Карточка блюда",
-                        "Заполните ключевые поля карточки: название, код, дату начала действия, категорию и параметры для зала.",
+                        "Заполните ключевые поля карточки: название, код, категорию и параметры для зала.",
                         <Grid
                           container
                           spacing={2.5}
@@ -2605,37 +2687,6 @@ export class SiteItemsModalTech extends React.Component {
                               onFocus={() => this.clearFieldError("art")}
                               sx={this.getErrorFieldSx("art")}
                               func={this.changeItem.bind(this, "art")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 3,
-                            }}
-                            style={hiddenIf(!access?.date_start_edit && !access?.date_start_view)}
-                          >
-                            <MyDatePickerNew
-                              label="Действует с"
-                              value={this.state.date_start}
-                              disabled={!access?.date_start_edit}
-                              sx={this.getErrorFieldSx("date_start")}
-                              func={this.changeDateRange.bind(this, "date_start")}
-                              minDate={dayjs(new Date())}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 3,
-                            }}
-                            style={hiddenIf(!access?.date_end_edit && !access?.date_end_view)}
-                          >
-                            <MyDatePickerNew
-                              label="Действует по"
-                              value={this.state.date_end}
-                              disabled={!access?.date_end_edit}
-                              func={this.changeDateRange.bind(this, "date_end")}
-                              clearable={true}
                             />
                           </Grid>
                           <Grid
@@ -2733,142 +2784,139 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Порция",
-                        "Размер и выход порции",
-                        "Поля используются для базовых параметров блюда и отображения в карточке.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.count_part_edit && !access?.count_part_view)}
-                          >
-                            <MyTextInput
-                              label="Кусочков или размер"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              disabled={!access?.count_part_edit}
-                              value={this.state.count_part}
-                              onFocus={() => this.clearFieldError("count_part")}
-                              sx={this.getErrorFieldSx("count_part")}
-                              func={this.changeItem.bind(this, "count_part")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.weight_edit && !access?.weight_view)}
-                          >
-                            <MyTextInput
-                              label="Вес"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.weight}
-                              disabled={!access?.weight_edit}
-                              onFocus={() => this.clearFieldError("weight")}
-                              sx={this.getErrorFieldSx("weight")}
-                              func={this.changeItem.bind(this, "weight")}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
-                      {renderSectionCard(
-                        "БЖУ",
-                        "Пищевая ценность",
-                        "БЖУ указываются на 100 г. Калорийность рассчитывается автоматически для 100 г и полного веса блюда.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.protein_edit && !access?.protein_view)}
-                          >
-                            <MyTextInput
-                              label="Белки"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.protein}
-                              disabled={!access?.protein_edit}
-                              onFocus={() => this.clearFieldError("protein")}
-                              sx={this.getErrorFieldSx("protein")}
-                              func={this.changeItem.bind(this, "protein")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.fat_edit && !access?.fat_view)}
-                          >
-                            <MyTextInput
-                              label="Жиры"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.fat}
-                              disabled={!access?.fat_edit}
-                              onFocus={() => this.clearFieldError("fat")}
-                              sx={this.getErrorFieldSx("fat")}
-                              func={this.changeItem.bind(this, "fat")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(
-                              !access?.carbohydrates_edit && !access?.carbohydrates_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Углеводы"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.carbohydrates}
-                              disabled={!access?.carbohydrates_edit}
-                              onFocus={() => this.clearFieldError("carbohydrates")}
-                              sx={this.getErrorFieldSx("carbohydrates")}
-                              func={this.changeItem.bind(this, "carbohydrates")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                          >
-                            <MyTextInput
-                              label="Калорийность на 100 г, ккал"
-                              value={this.getCaloriesPer100g()}
-                              disabled={true}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                          >
-                            <MyTextInput
-                              label="Калорийность всего блюда, ккал"
-                              value={this.getCaloriesForDish()}
-                              disabled={true}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewPortion
+                        ? renderSectionCard(
+                            "Порция",
+                            "Размер и выход порции",
+                            "Поля используются для базовых параметров блюда и отображения в карточке.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Кусочков или размер"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  disabled={!canEditPortion}
+                                  value={this.state.count_part}
+                                  onFocus={() => this.clearFieldError("count_part")}
+                                  sx={this.getErrorFieldSx("count_part")}
+                                  func={this.changeItem.bind(this, "count_part")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Вес"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.weight}
+                                  disabled={!canEditPortion}
+                                  onFocus={() => this.clearFieldError("weight")}
+                                  sx={this.getErrorFieldSx("weight")}
+                                  func={this.changeItem.bind(this, "weight")}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
+                      {canViewBju
+                        ? renderSectionCard(
+                            "БЖУ",
+                            "Пищевая ценность",
+                            "БЖУ указываются на 100 г. Калорийность рассчитывается автоматически для 100 г и полного веса блюда.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 4,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Белки"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.protein}
+                                  disabled={!canEditBju}
+                                  onFocus={() => this.clearFieldError("protein")}
+                                  sx={this.getErrorFieldSx("protein")}
+                                  func={this.changeItem.bind(this, "protein")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 4,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Жиры"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.fat}
+                                  disabled={!canEditBju}
+                                  onFocus={() => this.clearFieldError("fat")}
+                                  sx={this.getErrorFieldSx("fat")}
+                                  func={this.changeItem.bind(this, "fat")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 4,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Углеводы"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.carbohydrates}
+                                  disabled={!canEditBju}
+                                  onFocus={() => this.clearFieldError("carbohydrates")}
+                                  sx={this.getErrorFieldSx("carbohydrates")}
+                                  func={this.changeItem.bind(this, "carbohydrates")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Калорийность на 100 г, ккал"
+                                  value={this.getCaloriesPer100g()}
+                                  disabled={true}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Калорийность всего блюда, ккал"
+                                  value={this.getCaloriesForDish()}
+                                  disabled={true}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
@@ -2877,70 +2925,55 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Описание",
-                        "Тексты для карточки",
-                        "Соберите текстовую часть блюда: состав, полное описание и короткий анонс для списка.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                            style={hiddenIf(!access?.tmp_desc_edit && !access?.tmp_desc_view)}
-                          >
-                            <MyTextInput
-                              label="Состав"
-                              value={this.state.tmp_desc}
-                              disabled={!access?.tmp_desc_edit}
-                              onFocus={() => this.clearFieldError("tmp_desc")}
-                              sx={this.getErrorFieldSx("tmp_desc")}
-                              func={this.changeItem.bind(this, "tmp_desc")}
-                              multiline={true}
-                              minRows={4}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                            style={hiddenIf(
-                              !access?.marc_desc_full_edit && !access?.marc_desc_full_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Полное описание (в карточке)"
-                              value={this.state.marc_desc_full}
-                              disabled={!access?.marc_desc_full_edit}
-                              onFocus={() => this.clearFieldError("marc_desc_full")}
-                              sx={this.getErrorFieldSx("marc_desc_full")}
-                              func={this.changeItem.bind(this, "marc_desc_full")}
-                              multiline={true}
-                              minRows={4}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                            style={hiddenIf(!access?.marc_desc_edit && !access?.marc_desc_view)}
-                          >
-                            <MyTextInput
-                              label="Короткое описание (в списке)"
-                              value={this.state.marc_desc}
-                              maxLength={20}
-                              disabled={!access?.marc_desc_edit}
-                              onFocus={() => this.clearFieldError("marc_desc")}
-                              sx={this.getErrorFieldSx("marc_desc")}
-                              func={this.changeItem.bind(this, "marc_desc")}
-                              multiline={true}
-                              minRows={3}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewDescription
+                        ? renderSectionCard(
+                            "Описание",
+                            "Тексты для карточки",
+                            "Соберите текстовую часть блюда: состав, полное описание и короткий анонс для списка.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid size={{ xs: 12 }}>
+                                <MyTextInput
+                                  label="Состав"
+                                  value={this.state.tmp_desc}
+                                  disabled={!canEditDescription}
+                                  onFocus={() => this.clearFieldError("tmp_desc")}
+                                  sx={this.getErrorFieldSx("tmp_desc")}
+                                  func={this.changeItem.bind(this, "tmp_desc")}
+                                  multiline={true}
+                                  minRows={4}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12 }}>
+                                <MyTextInput
+                                  label="Полное описание (в карточке)"
+                                  value={this.state.marc_desc_full}
+                                  disabled={!canEditDescription}
+                                  onFocus={() => this.clearFieldError("marc_desc_full")}
+                                  sx={this.getErrorFieldSx("marc_desc_full")}
+                                  func={this.changeItem.bind(this, "marc_desc_full")}
+                                  multiline={true}
+                                  minRows={4}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12 }}>
+                                <MyTextInput
+                                  label="Короткое описание (в списке)"
+                                  value={this.state.marc_desc}
+                                  maxLength={20}
+                                  disabled={!canEditDescription}
+                                  onFocus={() => this.clearFieldError("marc_desc")}
+                                  sx={this.getErrorFieldSx("marc_desc")}
+                                  func={this.changeItem.bind(this, "marc_desc")}
+                                  multiline={true}
+                                  minRows={3}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
@@ -2988,45 +3021,53 @@ export class SiteItemsModalTech extends React.Component {
                               <Grid
                                 size={{
                                   xs: 12,
-                                  md: 4,
+                                  md: 3,
                                 }}
-                                style={hiddenIf(!access?.is_new_edit && !access?.is_new_view)}
                               >
                                 {renderToggleCard(
                                   "Новинка",
                                   isChecked(this.state.is_new),
                                   this.changeItemChecked.bind(this, "is_new"),
-                                  !access?.is_new_edit,
+                                  !canEditTags,
                                 )}
                               </Grid>
                               <Grid
                                 size={{
                                   xs: 12,
-                                  md: 4,
+                                  md: 3,
                                 }}
-                                style={hiddenIf(
-                                  !access?.is_updated_edit && !access?.is_updated_view,
-                                )}
                               >
                                 {renderToggleCard(
                                   "Обновлено",
                                   isChecked(this.state.is_updated),
                                   this.changeItemChecked.bind(this, "is_updated"),
-                                  !access?.is_updated_edit,
+                                  !canEditTags,
                                 )}
                               </Grid>
                               <Grid
                                 size={{
                                   xs: 12,
-                                  md: 4,
+                                  md: 3,
                                 }}
-                                style={hiddenIf(!access?.is_hit_edit && !access?.is_hit_view)}
                               >
                                 {renderToggleCard(
                                   "Хит",
                                   isChecked(this.state.is_hit),
                                   this.changeItemChecked.bind(this, "is_hit"),
-                                  !access?.is_hit_edit,
+                                  !canEditTags,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 3,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Острый",
+                                  isChecked(this.state.is_spicy),
+                                  this.changeItemChecked.bind(this, "is_spicy"),
+                                  !canEditTags,
                                 )}
                               </Grid>
                             </Grid>,
@@ -3040,74 +3081,70 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Активность",
-                        "Публикация и продажи",
-                        "Определите, где блюдо доступно и должно ли участвовать в сценариях показа и продаж.",
-                        <Grid
-                          container
-                          spacing={2}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.is_price_edit && !access?.is_price_view)}
-                          >
-                            {renderToggleCard(
-                              "Установить цену",
-                              isChecked(this.state.is_price),
-                              this.changeItemChecked.bind(this, "is_price"),
-                              !access?.is_price_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.is_show_edit && !access?.is_show_view)}
-                          >
-                            {renderToggleCard(
-                              "Активность",
-                              isChecked(this.state.is_show),
-                              this.changeItemChecked.bind(this, "is_show"),
-                              !access?.is_show_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.show_site_edit && !access?.show_site_view)}
-                          >
-                            {renderToggleCard(
-                              "На сайте и КЦ",
-                              isChecked(this.state.show_site),
-                              this.changeItemChecked.bind(this, "show_site"),
-                              !access?.show_site_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(
-                              !access?.show_program_edit && !access?.show_program_view,
-                            )}
-                          >
-                            {renderToggleCard(
-                              "На кассе",
-                              isChecked(this.state.show_program),
-                              this.changeItemChecked.bind(this, "show_program"),
-                              !access?.show_program_edit,
-                            )}
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewActivity
+                        ? renderSectionCard(
+                            "Активность",
+                            "Публикация и продажи",
+                            "Определите, где блюдо доступно и должно ли участвовать в сценариях показа и продаж.",
+                            <Grid
+                              container
+                              spacing={2}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Установить цену",
+                                  isChecked(this.state.is_price),
+                                  this.changeItemChecked.bind(this, "is_price"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Активность",
+                                  isChecked(this.state.is_show),
+                                  this.changeItemChecked.bind(this, "is_show"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "На сайте и КЦ",
+                                  isChecked(this.state.show_site),
+                                  this.changeItemChecked.bind(this, "show_site"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "На кассе",
+                                  isChecked(this.state.show_program),
+                                  this.changeItemChecked.bind(this, "show_program"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
@@ -3117,292 +3154,283 @@ export class SiteItemsModalTech extends React.Component {
                   >
                     {this.state.compositionContentReady ? (
                       <Stack spacing={2.5}>
-                        {renderSectionCard(
-                          "Тайминги",
-                          "Время по этапам",
-                          "Укажите продолжительность для каждого производственного этапа в формате MM:SS.",
-                          <Grid
-                            container
-                            spacing={2.5}
-                          >
-                            <Grid
-                              size={{
-                                xs: 12,
-                                md: 4,
-                              }}
-                              style={hiddenIf(
-                                !access?.time_stage_1_edit && !access?.time_stage_1_view,
-                              )}
-                            >
-                              <MyTextInput
-                                label="Время на 1 этап MM:SS"
-                                value={this.state.time_stage_1}
-                                disabled={!access?.time_stage_1_edit}
-                                onFocus={() => this.clearFieldError("time_stage_1")}
-                                sx={this.getErrorFieldSx("time_stage_1")}
-                                isTimeMask={true}
-                                placeholder="MM:SS"
-                                func={this.changeItem.bind(this, "time_stage_1")}
-                              />
-                            </Grid>
-                            <Grid
-                              size={{
-                                xs: 12,
-                                md: 4,
-                              }}
-                              style={hiddenIf(
-                                !access?.time_stage_2_edit && !access?.time_stage_2_view,
-                              )}
-                            >
-                              <MyTextInput
-                                label="Время на 2 этап MM:SS"
-                                value={this.state.time_stage_2}
-                                disabled={!access?.time_stage_2_edit}
-                                onFocus={() => this.clearFieldError("time_stage_2")}
-                                sx={this.getErrorFieldSx("time_stage_2")}
-                                isTimeMask={true}
-                                placeholder="MM:SS"
-                                func={this.changeItem.bind(this, "time_stage_2")}
-                              />
-                            </Grid>
-                            <Grid
-                              size={{
-                                xs: 12,
-                                md: 4,
-                              }}
-                              style={hiddenIf(
-                                !access?.time_stage_3_edit && !access?.time_stage_3_view,
-                              )}
-                            >
-                              <MyTextInput
-                                label="Время на 3 этап MM:SS"
-                                value={this.state.time_stage_3}
-                                disabled={!access?.time_stage_3_edit}
-                                onFocus={() => this.clearFieldError("time_stage_3")}
-                                sx={this.getErrorFieldSx("time_stage_3")}
-                                isTimeMask={true}
-                                placeholder="MM:SS"
-                                func={this.changeItem.bind(this, "time_stage_3")}
-                              />
-                            </Grid>
-                          </Grid>,
-                        )}
-
-                        {renderSectionCard(
-                          "Заготовки",
-                          "Состав технологической карты",
-                          "Добавляйте заготовки, управляйте потерями и перемещайте их по этапам.",
-                          <Box
-                            sx={tableWrapperSx}
-                            style={hiddenIf(!access?.stage_edit && !access?.stage_view)}
-                          >
-                            <Table sx={tableSx}>
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell sx={tableHeaderCellSx}>Номенклатура</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Ед. изм.</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Этап</TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={tableHeaderCellSx}
+                        {canViewComposition
+                          ? renderSectionCard(
+                              "Тайминги",
+                              "Время по этапам",
+                              "Укажите продолжительность для каждого производственного этапа в формате MM:SS.",
+                              <Grid
+                                container
+                                spacing={2.5}
+                              >
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <MyTextInput
+                                    label="Время на 1 этап MM:SS"
+                                    value={this.state.time_stage_1}
+                                    disabled={!canEditComposition}
+                                    onFocus={() => this.clearFieldError("time_stage_1")}
+                                    sx={this.getErrorFieldSx("time_stage_1")}
+                                    isTimeMask={true}
+                                    placeholder="MM:SS"
+                                    func={this.changeItem.bind(this, "time_stage_1")}
                                   />
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {renderPreparationRows("stage_1", "1 этап")}
-                                {renderPreparationRows("stage_2", "2 этап")}
-                                {renderPreparationRows("stage_3", "3 этап")}
-                                {renderPreparationRows("not_stage", "Без этапа")}
-                                <TableRow>
-                                  <TableCell>
-                                    <MyAutocomplite
-                                      multiple={false}
-                                      disableNoSsr
-                                      unifiedPopup
-                                      data={this.getCompositionAutocompleteOptions(
-                                        "preparation-new",
-                                        null,
-                                        this.state.items_stage?.all,
-                                      )}
-                                      filterOptions={filterCompositionOptions}
-                                      disabledItemsFocusable={true}
-                                      value={null}
-                                      optionKey="un_id"
-                                      blurOnSelect={true}
-                                      autoFocus={false}
-                                      onFocus={this.activateCompositionAutocomplete.bind(
-                                        this,
-                                        "preparation-new",
-                                      )}
-                                      func={this.chooseItem.bind(this, "stages")}
-                                    />
-                                  </TableCell>
-                                  <TableCell colSpan={8} />
-                                </TableRow>
-                                <TableRow sx={tableTotalRowSx}>
-                                  <TableCell colSpan={2}>
-                                    <Typography
-                                      sx={{
-                                        color: textPrimary,
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      Итого по заготовкам
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    <MyTextInput
-                                      value={this.state.all_w_brutto_p}
-                                      isDecimalMask
-                                      disabled={true}
-                                      className="disabled_input"
-                                    />
-                                  </TableCell>
-                                  <TableCell />
-                                  <TableCell>
-                                    <MyTextInput
-                                      value={this.state.all_w_netto_p}
-                                      isDecimalMask
-                                      disabled={true}
-                                      className="disabled_input"
-                                    />
-                                  </TableCell>
-                                  <TableCell />
-                                  <TableCell>
-                                    <MyTextInput
-                                      value={this.state.all_w_p}
-                                      isDecimalMask
-                                      disabled={true}
-                                      className="disabled_input"
-                                    />
-                                  </TableCell>
-                                  <TableCell colSpan={2} />
-                                </TableRow>
-                              </TableBody>
-                            </Table>
-                          </Box>,
-                          {},
-                          {
-                            px: {
-                              xs: 1.25,
-                              md: 1.5,
-                            },
-                            py: {
-                              xs: 1.5,
-                              md: 1.75,
-                            },
-                          },
-                        )}
-
-                        {renderSectionCard(
-                          "Позиции",
-                          "Финальные товары",
-                          "Управляйте позициями, которые формируют итоговый состав блюда.",
-                          <Box
-                            sx={tableWrapperSx}
-                            style={hiddenIf(!access?.items_edit && !access?.items_view)}
-                          >
-                            <Table sx={positionTableSx}>
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell sx={tableHeaderCellSx}>Позиция</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
-                                  <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={tableHeaderCellSx}
+                                </Grid>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <MyTextInput
+                                    label="Время на 2 этап MM:SS"
+                                    value={this.state.time_stage_2}
+                                    disabled={!canEditComposition}
+                                    onFocus={() => this.clearFieldError("time_stage_2")}
+                                    sx={this.getErrorFieldSx("time_stage_2")}
+                                    isTimeMask={true}
+                                    placeholder="MM:SS"
+                                    func={this.changeItem.bind(this, "time_stage_2")}
                                   />
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {renderItemRows()}
-                                <TableRow>
-                                  <TableCell>
-                                    <MyAutocomplite
-                                      multiple={false}
-                                      disableNoSsr
-                                      unifiedPopup
-                                      data={this.getCompositionAutocompleteOptions(
-                                        "item-new",
-                                        null,
-                                        this.state.item_items?.all_items,
-                                      )}
-                                      filterOptions={filterCompositionOptions}
-                                      disabledItemsFocusable={true}
-                                      value={null}
-                                      blurOnSelect={true}
-                                      autoFocus={false}
-                                      onFocus={this.activateCompositionAutocomplete.bind(
-                                        this,
-                                        "item-new",
-                                      )}
-                                      func={this.chooseItem.bind(this, "items")}
-                                    />
-                                  </TableCell>
-                                  <TableCell colSpan={6} />
-                                </TableRow>
-                                <TableRow sx={tableTotalRowSx}>
-                                  <TableCell>
-                                    <Typography
-                                      sx={{
-                                        color: textPrimary,
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      Итого по позициям
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    <MyTextInput
-                                      value={this.state.all_w_brutto}
-                                      isDecimalMask
-                                      disabled={true}
-                                      className="disabled_input"
-                                    />
-                                  </TableCell>
-                                  <TableCell />
-                                  <TableCell>
-                                    <MyTextInput
-                                      value={this.state.all_w_netto}
-                                      isDecimalMask
-                                      disabled={true}
-                                      className="disabled_input"
-                                    />
-                                  </TableCell>
-                                  <TableCell />
-                                  <TableCell>
-                                    <MyTextInput
-                                      value={this.state.all_w}
-                                      isDecimalMask
-                                      disabled={true}
-                                      className="disabled_input"
-                                    />
-                                  </TableCell>
-                                  <TableCell />
-                                </TableRow>
-                              </TableBody>
-                            </Table>
-                          </Box>,
-                          {},
-                          {
-                            px: {
-                              xs: 1.25,
-                              md: 1.5,
-                            },
-                            py: {
-                              xs: 1.5,
-                              md: 1.75,
-                            },
-                          },
-                        )}
+                                </Grid>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <MyTextInput
+                                    label="Время на 3 этап MM:SS"
+                                    value={this.state.time_stage_3}
+                                    disabled={!canEditComposition}
+                                    onFocus={() => this.clearFieldError("time_stage_3")}
+                                    sx={this.getErrorFieldSx("time_stage_3")}
+                                    isTimeMask={true}
+                                    placeholder="MM:SS"
+                                    func={this.changeItem.bind(this, "time_stage_3")}
+                                  />
+                                </Grid>
+                              </Grid>,
+                            )
+                          : null}
+
+                        {canViewComposition
+                          ? renderSectionCard(
+                              "Заготовки",
+                              "Состав технологической карты",
+                              "Добавляйте заготовки, управляйте потерями и перемещайте их по этапам.",
+                              <Box sx={tableWrapperSx}>
+                                <Table sx={tableSx}>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell sx={tableHeaderCellSx}>Номенклатура</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Ед. изм.</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Этап</TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={tableHeaderCellSx}
+                                      />
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {renderPreparationRows("stage_1", "1 этап")}
+                                    {renderPreparationRows("stage_2", "2 этап")}
+                                    {renderPreparationRows("stage_3", "3 этап")}
+                                    {renderPreparationRows("not_stage", "Без этапа")}
+                                    <TableRow>
+                                      <TableCell>
+                                        <MyAutocomplite
+                                          multiple={false}
+                                          disableNoSsr
+                                          unifiedPopup
+                                          data={this.getCompositionAutocompleteOptions(
+                                            "preparation-new",
+                                            null,
+                                            this.state.items_stage?.all,
+                                          )}
+                                          filterOptions={filterCompositionOptions}
+                                          disabledItemsFocusable={true}
+                                          value={null}
+                                          optionKey="un_id"
+                                          blurOnSelect={true}
+                                          autoFocus={false}
+                                          onFocus={this.activateCompositionAutocomplete.bind(
+                                            this,
+                                            "preparation-new",
+                                          )}
+                                          func={this.chooseItem.bind(this, "stages")}
+                                        />
+                                      </TableCell>
+                                      <TableCell colSpan={8} />
+                                    </TableRow>
+                                    <TableRow sx={tableTotalRowSx}>
+                                      <TableCell colSpan={2}>
+                                        <Typography
+                                          sx={{
+                                            color: textPrimary,
+                                            fontWeight: 700,
+                                          }}
+                                        >
+                                          Итого по заготовкам
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_brutto_p}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_netto_p}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_p}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell colSpan={2} />
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                              </Box>,
+                              {},
+                              {
+                                px: {
+                                  xs: 1.25,
+                                  md: 1.5,
+                                },
+                                py: {
+                                  xs: 1.5,
+                                  md: 1.75,
+                                },
+                              },
+                            )
+                          : null}
+
+                        {canViewComposition
+                          ? renderSectionCard(
+                              "Позиции",
+                              "Финальные товары",
+                              "Управляйте позициями, которые формируют итоговый состав блюда.",
+                              <Box sx={tableWrapperSx}>
+                                <Table sx={positionTableSx}>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell sx={tableHeaderCellSx}>Позиция</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={tableHeaderCellSx}
+                                      />
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {renderItemRows()}
+                                    <TableRow>
+                                      <TableCell>
+                                        <MyAutocomplite
+                                          multiple={false}
+                                          disableNoSsr
+                                          unifiedPopup
+                                          data={this.getCompositionAutocompleteOptions(
+                                            "item-new",
+                                            null,
+                                            this.state.item_items?.all_items,
+                                          )}
+                                          filterOptions={filterCompositionOptions}
+                                          disabledItemsFocusable={true}
+                                          value={null}
+                                          blurOnSelect={true}
+                                          autoFocus={false}
+                                          onFocus={this.activateCompositionAutocomplete.bind(
+                                            this,
+                                            "item-new",
+                                          )}
+                                          func={this.chooseItem.bind(this, "items")}
+                                        />
+                                      </TableCell>
+                                      <TableCell colSpan={6} />
+                                    </TableRow>
+                                    <TableRow sx={tableTotalRowSx}>
+                                      <TableCell>
+                                        <Typography
+                                          sx={{
+                                            color: textPrimary,
+                                            fontWeight: 700,
+                                          }}
+                                        >
+                                          Итого по позициям
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_brutto}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_netto}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                              </Box>,
+                              {},
+                              {
+                                px: {
+                                  xs: 1.25,
+                                  md: 1.5,
+                                },
+                                py: {
+                                  xs: 1.5,
+                                  md: 1.75,
+                                },
+                              },
+                            )
+                          : null}
                       </Stack>
                     ) : (
                       <Stack
@@ -3440,11 +3468,13 @@ export class SiteItemsModalTech extends React.Component {
                             <Grid
                               size={{
                                 xs: 12,
-                                xl: 6,
+                                md: "auto",
                               }}
                             >
                               <Box
                                 sx={{
+                                  width: 180,
+                                  maxWidth: "100%",
                                   borderRadius: 3,
                                   overflow: "hidden",
                                   border: `1px solid ${blockBorder}`,
@@ -3457,27 +3487,15 @@ export class SiteItemsModalTech extends React.Component {
                                       type="image/webp"
                                       srcSet={`https://mainimg.jacofood.ru/${this.state.img_app}_366x366.webp 138w,
                                       https://mainimg.jacofood.ru/${this.state.img_app}_466x466.webp 146w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_585x585.webp 183w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_1168x1168.webp 233w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_1420x1420.webp 292w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.webp 366w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.webp 584w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.webp 760w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.webp 1875w`}
-                                      sizes="(max-width=1439px) 233px, (max-width=1279px) 218px, 292px"
+                                      https://mainimg.jacofood.ru/${this.state.img_app}_585x585.webp 180w`}
+                                      sizes="180px"
                                     />
                                     <source
                                       type="image/jpeg"
                                       srcSet={`https://mainimg.jacofood.ru/${this.state.img_app}_366x366.jpg 138w,
                                       https://mainimg.jacofood.ru/${this.state.img_app}_466x466.jpg 146w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_585x585.jpg 183w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_1168x1168.jpg 233w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_1420x1420.jpg 292w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.jpg 366w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.jpg 584w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.jpg 760w,
-                                      https://mainimg.jacofood.ru/${this.state.img_app}_2000x2000.jpg 1875w`}
-                                      sizes="(max-width=1439px) 233px, (max-width=1279px) 218px, 292px"
+                                      https://mainimg.jacofood.ru/${this.state.img_app}_585x585.jpg 180w`}
+                                      sizes="180px"
                                     />
                                     <img
                                       src={`https://mainimg.jacofood.ru/${this.state.img_app}_292x292.jpg`}
@@ -3485,10 +3503,11 @@ export class SiteItemsModalTech extends React.Component {
                                       loading="lazy"
                                       decoding="async"
                                       fetchPriority="low"
-                                      width="292"
-                                      height="292"
+                                      width="180"
+                                      height="180"
                                       style={{
-                                        width: "100%",
+                                        width: 180,
+                                        maxWidth: "100%",
                                         height: "auto",
                                         display: "block",
                                         objectFit: "cover",
@@ -3500,8 +3519,9 @@ export class SiteItemsModalTech extends React.Component {
                                     alignItems="center"
                                     justifyContent="center"
                                     sx={{
+                                      width: 180,
+                                      maxWidth: "100%",
                                       aspectRatio: "1 / 1",
-                                      minHeight: 220,
                                       color: textSecondary,
                                     }}
                                   >
@@ -3514,7 +3534,7 @@ export class SiteItemsModalTech extends React.Component {
                           <Grid
                             size={{
                               xs: 12,
-                              xl: this.state.img_app.length > 0 ? 6 : 12,
+                              md: this.state.img_app.length > 0 ? 8 : 12,
                             }}
                           >
                             <Box
