@@ -22,6 +22,8 @@ export default function useSkladApi() {
       createCategory: (payload) => request("categories/save_new", payload),
       updateCategory: (payload) => request("categories/save_edit", payload),
       deleteCategory: (id) => request("categories/delete", { id }),
+      getRecipes: (payload = {}) => request("recipes/list", payload),
+      getSemiFinished: (payload = {}) => request("semi-finished/list", payload),
     };
   }, []);
 }
