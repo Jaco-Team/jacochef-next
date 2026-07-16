@@ -962,7 +962,7 @@ function EndPage() {
     }
 
     if (result.length > 0) {
-      result.unshift(
+      return [
         aggregateTotalRow(
           {
             id: `total_grand`,
@@ -971,9 +971,9 @@ function EndPage() {
             isGrandTotal: true,
             sourceType: "grand",
           },
-          result.slice(),
+          result,
         ),
-      );
+      ];
     }
 
     return result;
@@ -1189,31 +1189,23 @@ function EndPage() {
 
   const formatNumber = (value) => {
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toLocaleString("ru-RU");
+      return Math.round(value).toLocaleString("ru-RU");
     }
     return "0";
   };
 
   const formatPercent = (value) => {
     if (typeof value === "number" && !isNaN(value)) {
-      return (
-        value.toLocaleString("ru-RU", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }) + "%"
-      );
+      return Math.round(value).toLocaleString("ru-RU");
     }
-    return "0%";
+    return "0";
   };
 
   const formatCurrency = (value) => {
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toLocaleString("ru-RU", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+      return Math.round(value).toLocaleString("ru-RU");
     }
-    return "0,00";
+    return "0";
   };
 
   const getLevelIcon = (level) => {
@@ -1342,7 +1334,7 @@ function EndPage() {
             align="right"
             noWrap
           >
-            {formatCurrency(row.costPerOrder)} ₽
+            {formatCurrency(row.costPerOrder)}
           </StyledTableCell>
           <StyledTableCell
             isHeader={false}
@@ -1350,7 +1342,7 @@ function EndPage() {
             align="right"
             noWrap
           >
-            {formatNumber(row.revenue)} ₽
+            {formatNumber(row.revenue)}
           </StyledTableCell>
           <StyledTableCell
             isHeader={false}
@@ -1358,7 +1350,7 @@ function EndPage() {
             align="right"
             noWrap
           >
-            {formatCurrency(row.averageCheck)} ₽
+            {formatCurrency(row.averageCheck)}
           </StyledTableCell>
           <StyledTableCell
             isHeader={false}
@@ -1421,7 +1413,7 @@ function EndPage() {
             align="right"
             noWrap
           >
-            {formatCurrency(row.ltv)} ₽
+            {formatCurrency(row.ltv)}
           </StyledTableCell>
         </StyledTableRow>
         {hasChildren &&
@@ -1879,7 +1871,7 @@ function EndPage() {
                     align="right"
                     noWrap
                   >
-                    РАСХОД
+                    РАСХОД (₽)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
@@ -1893,35 +1885,35 @@ function EndPage() {
                     align="right"
                     noWrap
                   >
-                    КОНВЕРСИЯ
+                    КОНВЕРСИЯ (%)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
                     noWrap
                   >
-                    СТОИМОСТЬ ЗАКАЗА
+                    СТОИМОСТЬ ЗАКАЗА (₽)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
                     noWrap
                   >
-                    СУММА ЗАКАЗОВ
+                    СУММА ЗАКАЗОВ (₽)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
                     noWrap
                   >
-                    СРЕДНИЙ ЧЕК
+                    СРЕДНИЙ ЧЕК (₽)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
                     noWrap
                   >
-                    ROI
+                    ROI (%)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
@@ -1956,14 +1948,14 @@ function EndPage() {
                     align="right"
                     noWrap
                   >
-                    ДРР
+                    ДРР (%)
                   </StyledTableCell>
                   <StyledTableCell
                     isHeader={true}
                     align="right"
                     noWrap
                   >
-                    LTV
+                    LTV (₽)
                   </StyledTableCell>
                 </TableRow>
               </TableHead>
