@@ -16,13 +16,14 @@ import {
   Typography,
 } from "@mui/material";
 
-import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import MyAlert from "@/ui/MyAlert";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 
 import SkladPlaceholderTab from "./SkladPlaceholderTab";
+import useSkladApi from "./useSkladApi";
+import SkladUnitsTab from "./units/SkladUnitsTab";
 import { getVisibleSkladTabs } from "./skladTabs";
 import { useSkladStore } from "./useSkladStore";
 
@@ -47,7 +48,7 @@ function normalizeBootstrap(response) {
 }
 
 export default function SkladPage() {
-  const { api_laravel } = useApi("sklad");
+  const api = useSkladApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const isLoading = useSkladStore((state) => state.isLoading);
@@ -70,7 +71,7 @@ export default function SkladPage() {
       setState({ isLoading: true });
 
       try {
-        const response = await api_laravel("get_all", { archive_mode: "active" });
+        const response = await api.getBootstrap({ archive_mode: "active" });
 
         if (!response?.st) {
           throw new Error(response?.text || "Ошибка загрузки модуля");
@@ -108,7 +109,7 @@ export default function SkladPage() {
     return () => {
       isMounted = false;
     };
-  }, [api_laravel, refreshToken, setBootstrap, setState, showAlert]);
+  }, [api, refreshToken, setBootstrap, setState, showAlert]);
 
   useEffect(() => {
     if (tabs.length === 0) {
@@ -126,6 +127,25 @@ export default function SkladPage() {
     { key: "site_items_active", label: "Товары сайта" },
     { key: "archive_total", label: "Архив" },
   ].filter((item) => summary?.[item.key] !== undefined);
+
+  const renderTabContent = (item) => {
+    if (item.key === "units") {
+      return (
+        <SkladUnitsTab
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+        />
+      );
+    }
+
+    return (
+      <SkladPlaceholderTab
+        title={item.label}
+        description={item.description}
+        summaryValue={item.summaryKey ? (summary?.[item.summaryKey] ?? 0) : null}
+      />
+    );
+  };
 
   return (
     <>
@@ -239,11 +259,7 @@ export default function SkladPage() {
                     value={tab}
                     index={index}
                   >
-                    <SkladPlaceholderTab
-                      title={item.label}
-                      description={item.description}
-                      summaryValue={item.summaryKey ? (summary?.[item.summaryKey] ?? 0) : null}
-                    />
+                    {renderTabContent(item)}
                   </TabPanel>
                 ))
               ) : (
