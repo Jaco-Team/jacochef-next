@@ -18,6 +18,10 @@ export default function useSkladApi() {
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
       deleteUnit: (id) => request("units/delete", { id }),
+      getCategories: (payload = {}) => request("categories/list", payload),
+      createCategory: (payload) => request("categories/save_new", payload),
+      updateCategory: (payload) => request("categories/save_edit", payload),
+      deleteCategory: (id) => request("categories/delete", { id }),
     };
   }, []);
 }

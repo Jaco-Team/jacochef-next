@@ -24,6 +24,7 @@ import a11yProps from "@/ui/TabPanel/a11yProps";
 import SkladPlaceholderTab from "./SkladPlaceholderTab";
 import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
+import SkladCategoriesTab from "./categories/SkladCategoriesTab";
 import { getVisibleSkladTabs } from "./skladTabs";
 import { useSkladStore } from "./useSkladStore";
 
@@ -132,6 +133,15 @@ export default function SkladPage() {
     if (item.key === "units") {
       return (
         <SkladUnitsTab
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+        />
+      );
+    }
+
+    if (item.key === "categories") {
+      return (
+        <SkladCategoriesTab
           showAlert={showAlert}
           refreshToken={refreshToken}
         />
