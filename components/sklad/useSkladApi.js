@@ -4,7 +4,7 @@ import { useMemo, useRef } from "react";
 import useApi from "@/src/hooks/useApi";
 
 export default function useSkladApi() {
-  const { api_laravel } = useApi("sklad");
+  const { api_laravel } = useApi("sklad_items");
   const apiRef = useRef(api_laravel);
   apiRef.current = api_laravel;
 

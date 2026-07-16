@@ -3,7 +3,7 @@
 import { create } from "zustand";
 
 const defaultState = {
-  module: "sklad",
+  module: "sklad_items",
   moduleName: "",
   isLoading: false,
   refreshToken: 0,
