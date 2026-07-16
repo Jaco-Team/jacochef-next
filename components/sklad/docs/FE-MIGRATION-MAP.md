@@ -13,6 +13,7 @@
 - legacy route/payload shape не является целевой моделью нового модуля
 - legacy route/payload shape сохраняется здесь только как reference при переходе со старых модулей на canonical API
 - новый `sklad` не поддерживает runtime compatibility aliases; этот файл нужен только как карта соответствий
+- legacy modules можно читать для реконструкции flow и полей, но новый FE не должен вызывать их API напрямую
 
 ---
 
@@ -134,4 +135,4 @@
 - backend владеет новым route-space и новым canonical contract
 - FE строится по `API.md`
 - legacy contracts сохраняются только как migration knowledge
-- migration knowledge хранится отдельно и удаляется/сжимается позже, когда переход завершен
+- migration knowledge хранится отдельно как reference layer и не спорит с canonical contract

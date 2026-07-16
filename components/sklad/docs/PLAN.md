@@ -21,6 +21,8 @@
 - позволяет переводить FE по section-ам, а не big-bang миграцией
 - не требует включать текущий экран `sklad_items_module_new` в этот FE merge на текущем этапе
 - не строит отдельный `Warehouse items` tab/screen в текущей итерации
+- использует tabbed UI shell по современному project pattern
+- переиспользует project form controls и modal patterns без копирования legacy page architecture
 
 ## 2. Delivery strategy
 
@@ -36,7 +38,7 @@
 
 - сначала выровнять canonical domain model
 - затем поднять shell + shared refs через `get_all`
-- затем переводить section-ы по приоритету
+- затем переводить tab-ы по приоритету
 - параллельно оставить compatibility bridge только там, где он нужен для migration safety
 
 Важное уточнение после schema pass:
@@ -44,6 +46,16 @@
 - это orchestration-layer не над одной legacy schema, а как минимум над `jaco_main_rolls` и `jaco_site_rolls`
 - поэтому не надо пытаться в первой фазе физически унифицировать storage
 - физическая раздельность допустима, пока canonical API и business rules едины
+
+FE strategy after current backend update:
+
+- новый модуль строим как единый page shell с tabs
+- каждый tab соответствует legacy business area, а не backend table
+- shared/global fields и dictionaries живут в module-level adapters and scoped lib
+- MUI v7 используем как базовый UI-kit
+- existing shared form controls reused as-is; если нужна адаптация, она делается только в `components/sklad/lib/*`
+- legacy modules используются только как analytical reference for flows and field meaning
+- new FE runtime integration binds only to canonical `/api/sklad/*`, never directly to legacy module APIs
 
 ## 3. Prioritized release slices
 
@@ -101,13 +113,15 @@
 
 В scope:
 
-- shared editor model
+- shared tab with split list/filtering and one editor family
 - live read routes
 - planned save/archive/delete/history write lifecycle
 - convert type flow
 - composition/items rows
 - allergens and possible allergens
 - one shared category model for recipes and semi-finished
+- global lifecycle fields `date_start` + `date_end`
+- compact auto-expanding multiline field behavior for long composition/structure inputs
 
 Почему вместе:
 
@@ -143,6 +157,7 @@ Contract note:
 - stage composition
 - FE/BE-consistent calorie calculation rule
 - history read, включая images follow-up gap
+- перенос итогового состава/аллергенов/possible allergens into site-item-facing UI as explicit source/derived model
 
 Почему slice вынесен отдельно:
 
@@ -167,6 +182,18 @@ Contract note:
 - cross-entity archive filters
 - history presentation consistency
 - version comparison flow inspired by 1C business behavior
+
+## 3.1. Documentation roles
+
+Во время реализации роли документов такие:
+
+- `README.md` — business definition и module boundaries
+- `API.md` — единственный runtime contract
+- `PLAN.md` — реализационная дорожная карта
+- `TASK.md` — исходные и follow-up требования
+- `FE-MIGRATION-MAP.md` — legacy-to-canonical reference
+- `BUSINESS-PROCESSES.md` и `SITE-ITEM-IMAGE-VERSIONING.md` — backend/business research context
+- `SUGGESTIONS.md` — future-looking notes, не обязательные для первой FE-реализации
 
 ## 4. Recommended backend architecture
 
@@ -232,10 +259,16 @@ Backend должен:
 Создать новый page-level shell для `sklad`:
 
 - module title
-- section navigation
+- tab navigation
 - summary counters
 - archive mode switch if needed
 - shared error/loading/confirm handling
+- one top toolbar for global actions/filters allowed by access
+
+Reference pattern:
+
+- shell, loading and access composition брать ближе к `vendors` / `ads`
+- dense business tab content and modal-heavy flows нормализовать из legacy modules
 
 ## 5.2. FE composition
 
@@ -244,11 +277,12 @@ Backend должен:
 - `SkladPage`
 - `useSkladAccess`
 - `useSkladBootstrap`
+- `useSkladTabs`
+- `sklad/lib/*` for scoped adapters/helpers only when existing shared helpers are not enough
 - section modules:
   - `sklad/units/*`
   - `sklad/categories/*`
-  - `sklad/recipes/*`
-  - `sklad/semi-finished/*`
+  - `sklad/production/*`
   - `sklad/site-items/*`
   - `sklad/history/*`
   - `sklad/archive/*`
@@ -259,6 +293,7 @@ Backend должен:
 - normalized adapters from API to FE view models
 - shared destructive confirm pattern
 - no direct FE dependence on old response quirks
+- no copy-paste of giant class-page state machines
 
 Implementation note:
 
@@ -282,6 +317,8 @@ Implementation note:
 
 - копировать domain-specific field logic
 - не копировать uncontrolled page complexity
+- не копировать old visual composition 1:1
+- переносить successful UX semantics, but render them in current project modal/tab language
 
 ## 6. Section-by-section implementation detail
 
@@ -297,12 +334,18 @@ Implementation note:
 Результат:
 
 - backend and frontend work from one target model
+- no parallel research notes left in active docs folder
 
 Open questions to settle here:
 
 - действительно ли site item categories остаются отдельными physical source-ами при unified UX/API
 - где физически хранится/будет храниться image history
 - какие exact legacy access aliases еще нужны на migration period
+
+Close-out for this phase:
+
+- выжимка backend-research внесена в `README.md` и `PLAN.md`
+- роли документов и приоритет source-of-truth явно зафиксированы
 
 ### Phase 2. Backend foundation
 
@@ -321,6 +364,13 @@ Acceptance:
 - FE не зависит от старых route-prefix для initial open
 - FE не знает, из какой физической схемы приехал каждый section
 
+FE implementation output:
+
+- базовая страница `sklad`
+- tab shell
+- access-aware tab visibility
+- shared loading, alert, confirm and empty states
+
 ### Phase 3. Shared dictionaries
 
 Сделать:
@@ -334,6 +384,12 @@ Acceptance:
 - единицы и категории живут как самостоятельные управляемые sections
 - delete errors возвращают usage payload, пригодный для UI explanation
 
+UI target:
+
+- две компактные dictionary tabs
+- list + edit/create side-by-side on desktop where it helps density
+- modal/drawer fallback on mobile in project-consistent style
+
 Implementation note:
 
 - не форсировать premature merge между `items_cat`, recipe/pf category shape и site `category`
@@ -345,22 +401,37 @@ Implementation note:
   - `delete_state`
 - FE should treat this as a typed category reference, not as one flat legacy integer id space
 
-### Phase 4. Recipes and semi-finished family
+### Phase 4. Production family tab
 
 Сделать:
 
+- один tab `Рецепты и полуфабрикаты`
 - shared card/view model
 - category/unit/allergen composition
 - items table editing
 - convert type flow
 - archive/delete/history
 - one shared category source for both entity types
+- global form fields, одинаковые для recipe и semi-finished:
+  - `name`
+  - `unit`
+  - `date_start`
+  - `date_end`
+  - flags/statuses supported by API
+- compact multiline inputs for long text fields with auto-expand on focus
 
 Acceptance:
 
 - user can manage both families without leaving `sklad`
 - conversion works as controlled business action
 - recipe does not have its own separate category model apart from semi-finished
+
+UI target:
+
+- внутри tab сначала family filters / category / search
+- затем grouped list of entities
+- editor opens in project-consistent modal
+- editor uses shared field sections, not separate legacy page clones
 
 Contract note:
 
@@ -376,6 +447,7 @@ Implementation note:
 
 Сделать:
 
+- dedicated `Товары сайта` tab
 - site item editor
 - BJU + calorie preview
 - stages
@@ -383,11 +455,22 @@ Implementation note:
 - images
 - marking
 - archive/delete/history
+- явное разделение source/derived fields:
+  - BJU source
+  - calorie derived preview
+  - composition/allergens source and derived blocks according to API
 
 Acceptance:
 
 - site-facing item lifecycle полностью управляется в новом модуле
 - image/mapping gaps явно закрыты или оформлены как follow-up
+
+UI target:
+
+- table/list in tab
+- create/edit modal in current project style
+- no legacy accordion sprawl copied 1:1
+- long “Состав” field behaves as compact textarea that expands on focus
 
 Implementation note:
 
@@ -412,6 +495,12 @@ Acceptance:
 
 - бизнес может найти архивную сущность и понять ее состояние/изменения
 - бизнес видит не только факт изменения, но и полный состав/раскладку выбранной версии
+
+UI target:
+
+- one history tab with entity-type filter
+- list row opens details modal
+- for compound entities detail modal shows full composition table and changed cells
 
 Implementation note:
 
@@ -471,6 +560,20 @@ Implementation note:
 - для `site_item` contract now is close to sufficient, but image-state completeness still remains an explicit gap
 - следовательно эта фаза теперь в первую очередь UI/adapter task plus explicit handling of remaining image-history gap
 
+### Phase 7. Access and destructive-flow hardening
+
+Сделать:
+
+- final access map adapter for FE
+- gate tabs, actions and destructive flows separately
+- wire delete/archive/save confirms only through project styled confirm flow
+
+Acceptance:
+
+- user never sees unsupported action as enabled
+- access differences between tabs and actions remain explicit
+- destructive flows are consistent across all entity families
+
 ### Phase 8. Migration hardening
 
 Сделать:
@@ -483,6 +586,12 @@ Implementation note:
 Acceptance:
 
 - old modules are no longer required for core business operations
+
+Deliverables:
+
+- smoke checklist per tab
+- field mapping checklist from `FE-MIGRATION-MAP.md`
+- explicit leftover list of non-migrated legacy capabilities
 
 ## 7. Cross-cutting rules
 
@@ -518,6 +627,49 @@ Acceptance:
 - no giant `get_all`
 - lists are loaded per section
 - form bootstraps are context-specific
+
+## 8. Step-by-step FE implementation order
+
+1. Create page shell, bootstrap hook, access hook and tab model.
+2. Build `Units` tab on canonical API and finalize dictionary CRUD pattern.
+3. Build `Categories` tab on canonical API and finalize source-aware category handling.
+4. Build `Рецепты и полуфабрикаты` tab list/filter shell.
+5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields.
+6. Wire production history and convert-type flow.
+7. Build `Товары сайта` tab list/filter shell.
+8. Build site-item editor modal, derived calorie preview, tags, images and marking flows.
+9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting.
+10. Build `Архив` tab and archive restore/view flows if contract supports them.
+11. Run access hardening, migration checklist pass and targeted smoke coverage.
+
+## 8.1. Delivery flow for implementation
+
+- work incremental slices, each slice ends in runnable code on canonical `/api/sklad/*`
+- first slice is shell/bootstrap/access/tab foundation
+- each next slice should land as one business-capable scope, not as scattered partial files
+- chat reporting format for this workstream:
+- short commit-message style scope summary
+- explicit next step draft
+- no visual parity pass as a planning item
+
+### Current pinned sequence
+
+1. Shell foundation: page route, bootstrap load, access adapter, tab registry, section placeholders.
+2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`.
+3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`.
+4. Production list slice: shared list/filter shell for recipes and semi-finished.
+5. Production editor slice: shared modal, composition rows, multiline auto-expand fields.
+6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking.
+7. History/archive slice: unified readers and action flows.
+8. Hardening slice: access matrix, smoke tests, migration leftovers.
+
+## 9. Explicit non-goals for current iteration
+
+- no dedicated warehouse-items CRUD tab inside `sklad`
+- no runtime support for legacy route names or payload aliases
+- no broad refactor of shared project controls
+- no storage-layer unification between `jaco_main_rolls` and `jaco_site_rolls`
+- no visual copy of legacy pages where current project patterns already solve the shell better
 - history loads on demand
 
 ## 8. UI implementation direction

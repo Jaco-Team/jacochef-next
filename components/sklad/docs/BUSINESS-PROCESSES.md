@@ -2,6 +2,13 @@
 
 Статус: исследование текущей бизнес-логики складского контура и целевые правила для нового модуля `sklad`.
 
+Роль документа:
+
+- это business/back-end research reference
+- runtime contract определяется только `API.md`
+- FE implementation order определяется только `PLAN.md`
+- документ помогает понять доменную цепочку и derived-правила, но не заменяет canonical scope
+
 Основание:
 
 - код старых модулей `sklad_items_module_new`, `recept_module_new_2`, `site_items_new`
@@ -19,7 +26,8 @@
 - таблица `jaco_main_rolls.items`
 - это ингредиент / сырье / закупаемая складская позиция
 - это не продаваемый продукт
-- это upstream-уровень для остальной цепочки и одновременно часть текущего scope нового `sklad`
+- это upstream-уровень для остальной цепочки и shared reference entity нового `sklad`
+- в текущем FE scope это не отдельный CRUD tab, а source layer для составов, связей и history
 
 Связанные данные:
 

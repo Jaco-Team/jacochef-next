@@ -2,6 +2,12 @@
 
 Статус: детальное предложение по реализации image versioning для `sklad/site-items`.
 
+Роль документа:
+
+- это focused technical research note for one subdomain
+- runtime behavior и supported routes фиксируются только в `API.md`
+- приоритет реализации и inclusion в первую FE-итерацию фиксируются только в `PLAN.md`
+
 Цель документа:
 
 - зафиксировать, почему текущий `upload_image` недостаточен
@@ -66,7 +72,7 @@
 
 ---
 
-## 2. Почему текущий `upload_image` неполон
+## 2. Почему текущий `upload_image` все еще требует аккуратного FE/BE согласования
 
 Сейчас реализованный `sklad/site-items/upload_image`:
 
@@ -77,7 +83,7 @@
 - пишет revision в `items_hist_new`
 - возвращает structured image state
 
-Но он:
+При этом:
 
 - все еще опирается на existing image fields в `items_new` / `items_hist_new`
 - не дает отдельного media-registry вне entity history

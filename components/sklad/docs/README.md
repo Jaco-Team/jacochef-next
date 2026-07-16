@@ -7,6 +7,21 @@
 - canonical API contract: `API.md`
 - исходный сырой scope: `TASK.md`
 - план реализации: `PLAN.md`
+- migration map старых модулей: `FE-MIGRATION-MAP.md`
+
+Рабочий набор документов для реализации должен оставаться минимальным:
+
+- `README.md` — business definition и boundaries
+- `API.md` — единственный source of truth для runtime contract
+- `PLAN.md` — реализационная дорожная карта
+- `TASK.md` — исходные follow-up требования из чата
+- `FE-MIGRATION-MAP.md` — справка для чтения legacy-кода и переноса flow
+
+Дополнительные research/reference docs допустимы, но не должны спорить с этими файлами:
+
+- `API.md` остается единственным runtime contract source of truth
+- `PLAN.md` остается единственным implementation roadmap
+- research docs используются как поясняющий backend/business context
 
 ## Schema-grounded notes
 
@@ -58,6 +73,39 @@
 - Units и Categories уже доступны на read layer
 - Recipes, Semi-finished и Site items уже имеют live read routes
 - это еще не означает завершенный lifecycle управления, потому что write/archive/delete flows остаются planned
+
+## 2.1. FE product shape
+
+Новый `sklad` должен быть не “одной огромной формой”, а unified shell с tab navigation.
+
+Базовый UX-принцип:
+
+- верхний shell один на весь модуль
+- внутри tab per legacy business area
+- внутри tab используется новый canonical API, а не legacy route-space
+- глобальные поля и shared dictionaries должны выглядеть одинаково во всех editor flows
+
+Целевые tab-ы первой версии:
+
+- `Единицы`
+- `Категории`
+- `Рецепты и полуфабрикаты`
+- `Товары сайта`
+- `История`
+- `Архив`
+
+Важное ограничение:
+
+- tab-а отдельного CRUD для warehouse items сейчас нет
+- `Item` используется только как upstream source/reference inside editors and history
+
+UI pattern for tabs:
+
+- по структуре брать современные module-shell patterns из `vendors`, `ads`, `site_clients`
+- по содержанию полей и бизнес-flow смотреть legacy `recept_module_new_2` и `site_items_new`
+- старые layout-ы использовать только как reference данных и сценариев, а не как visual target
+- старые модули можно изучать для понимания flow, field semantics и migration mapping, но новый FE не должен ходить в их API, route-space или runtime helpers
+- все runtime bindings нового FE должны идти только в canonical `/api/sklad/*`
 
 ## 2. Core business need
 
