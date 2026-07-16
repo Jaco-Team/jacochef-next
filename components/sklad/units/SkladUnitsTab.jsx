@@ -8,7 +8,7 @@ export default function SkladUnitsTab({ showAlert, refreshToken }) {
 
   useEffect(() => {
     loadUnits();
-  }, [loadUnits, refreshToken]);
+  }, [refreshToken]);
 
   return content;
 }

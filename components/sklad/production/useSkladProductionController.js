@@ -428,6 +428,10 @@ export default function useSkladProductionController({ showAlert }) {
   );
 
   return {
+    entityType,
+    search,
+    categoryId,
+    archiveMode,
     loadRows,
     content,
   };

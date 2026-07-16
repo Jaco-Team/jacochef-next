@@ -111,7 +111,7 @@ export default function SkladPage() {
     return () => {
       isMounted = false;
     };
-  }, [api, refreshToken, setBootstrap, setState, showAlert]);
+  }, [api, refreshToken, setBootstrap, setState]);
 
   useEffect(() => {
     if (tabs.length === 0) {

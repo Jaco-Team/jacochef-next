@@ -8,7 +8,7 @@ export default function SkladCategoriesTab({ showAlert, refreshToken }) {
 
   useEffect(() => {
     loadCategories();
-  }, [loadCategories, refreshToken]);
+  }, [refreshToken]);
 
   return content;
 }
