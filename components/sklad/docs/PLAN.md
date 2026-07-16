@@ -1,6 +1,6 @@
 # Sklad Implementation Plan
 
-Статус: детальный phased plan для нового модуля `sklad`.
+Статус: детальный phased plan для нового модуля `sklad_items`.
 
 Основания:
 
@@ -13,9 +13,9 @@
 
 ## 1. Delivery goal
 
-Построить новый модуль `sklad`, который:
+Построить новый модуль `sklad_items`, который:
 
-- работает через canonical `/api/sklad/*`
+- работает через canonical `/api/sklad_items/*`
 - покрывает все целевые master-data сущности
 - не зависит runtime-архитектурно от старых module classes
 - позволяет переводить FE по section-ам, а не big-bang миграцией
@@ -53,9 +53,9 @@ FE strategy after current backend update:
 - каждый tab соответствует legacy business area, а не backend table
 - shared/global fields и dictionaries живут в module-level adapters and scoped lib
 - MUI v7 используем как базовый UI-kit
-- existing shared form controls reused as-is; если нужна адаптация, она делается только в `components/sklad/lib/*`
+- existing shared form controls reused as-is; если нужна адаптация, она делается только в `components/sklad_items/lib/*`
 - legacy modules используются только как analytical reference for flows and field meaning
-- new FE runtime integration binds only to canonical `/api/sklad/*`, never directly to legacy module APIs
+- new FE runtime integration binds only to canonical `/api/sklad_items/*`, never directly to legacy module APIs
 
 ## 3. Prioritized release slices
 
@@ -256,7 +256,7 @@ Backend должен:
 
 ## 5.1. Shell
 
-Создать новый page-level shell для `sklad`:
+Создать новый page-level shell для `sklad_items`:
 
 - module title
 - tab navigation
@@ -278,14 +278,14 @@ Reference pattern:
 - `useSkladAccess`
 - `useSkladBootstrap`
 - `useSkladTabs`
-- `sklad/lib/*` for scoped adapters/helpers only when existing shared helpers are not enough
+- `sklad_items/lib/*` for scoped adapters/helpers only when existing shared helpers are not enough
 - section modules:
-  - `sklad/units/*`
-  - `sklad/categories/*`
-  - `sklad/production/*`
-  - `sklad/site-items/*`
-  - `sklad/history/*`
-  - `sklad/archive/*`
+  - `sklad_items/units/*`
+  - `sklad_items/categories/*`
+  - `sklad_items/production/*`
+  - `sklad_items/site-items/*`
+  - `sklad_items/history/*`
+  - `sklad_items/archive/*`
 
 Подход:
 
@@ -351,7 +351,7 @@ Close-out for this phase:
 
 Сделать:
 
-- route prefix `/api/sklad`
+- route prefix `/api/sklad_items`
 - `get_all`
 - canonical access response
 - summary counters
@@ -366,7 +366,7 @@ Acceptance:
 
 FE implementation output:
 
-- базовая страница `sklad`
+- базовая страница `sklad_items`
 - tab shell
 - access-aware tab visibility
 - shared loading, alert, confirm and empty states
@@ -422,7 +422,7 @@ Implementation note:
 
 Acceptance:
 
-- user can manage both families without leaving `sklad`
+- user can manage both families without leaving `sklad_items`
 - conversion works as controlled business action
 - recipe does not have its own separate category model apart from semi-finished
 
@@ -644,7 +644,7 @@ Deliverables:
 
 ## 8.1. Delivery flow for implementation
 
-- work incremental slices, each slice ends in runnable code on canonical `/api/sklad/*`
+- work incremental slices, each slice ends in runnable code on canonical `/api/sklad_items/*`
 - first slice is shell/bootstrap/access/tab foundation
 - each next slice should land as one business-capable scope, not as scattered partial files
 - follow latest module architecture style:
@@ -671,7 +671,7 @@ Deliverables:
 
 ## 9. Explicit non-goals for current iteration
 
-- no dedicated warehouse-items CRUD tab inside `sklad`
+- no dedicated warehouse-items CRUD tab inside `sklad_items`
 - no runtime support for legacy route names or payload aliases
 - no broad refactor of shared project controls
 - no storage-layer unification between `jaco_main_rolls` and `jaco_site_rolls`

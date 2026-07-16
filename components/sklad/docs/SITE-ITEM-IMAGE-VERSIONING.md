@@ -1,12 +1,6 @@
 # Site Item Image Versioning
 
-Статус: детальное предложение по реализации image versioning для `sklad/site-items`.
-
-Роль документа:
-
-- это focused technical research note for one subdomain
-- runtime behavior и supported routes фиксируются только в `API.md`
-- приоритет реализации и inclusion в первую FE-итерацию фиксируются только в `PLAN.md`
+Статус: детальное предложение по реализации image versioning для `sklad_items/site-items`.
 
 Цель документа:
 
@@ -72,9 +66,9 @@
 
 ---
 
-## 2. Почему текущий `upload_image` все еще требует аккуратного FE/BE согласования
+## 2. Почему текущий `upload_image` неполон
 
-Сейчас реализованный `sklad/site-items/upload_image`:
+Сейчас реализованный `sklad_items/site-items/upload_image`:
 
 - принимает `file`, canonical `id` и optional `slot`
 - генерирует размеры
@@ -83,7 +77,7 @@
 - пишет revision в `items_hist_new`
 - возвращает structured image state
 
-При этом:
+Но он:
 
 - все еще опирается на existing image fields в `items_new` / `items_hist_new`
 - не дает отдельного media-registry вне entity history
@@ -165,7 +159,7 @@ Canonical source of truth:
 
 Вместо текущего свободного upload contract нужен item-bound contract:
 
-`POST|ANY /api/sklad/site-items/upload_image`
+`POST|ANY /api/sklad_items/site-items/upload_image`
 
 Request:
 

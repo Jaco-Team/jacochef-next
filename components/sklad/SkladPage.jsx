@@ -183,7 +183,7 @@ export default function SkladPage() {
                   color="text.secondary"
                   sx={{ mt: 0.5 }}
                 >
-                  Canonical shell нового модуля на `/api/sklad/*`.
+                  Canonical shell нового модуля на `/api/sklad_items/*`.
                 </Typography>
               </Box>
             </Grid>
@@ -231,7 +231,7 @@ export default function SkladPage() {
             <Tabs
               value={tabs.length ? tab : 0}
               onChange={(_, value) => setState({ tab: value })}
-              aria-label="sklad tabs"
+              aria-label="sklad_items tabs"
               variant="scrollable"
               scrollButtons="auto"
             >
@@ -266,7 +266,7 @@ export default function SkladPage() {
                 <Paper sx={{ p: 3, borderRadius: 3 }}>
                   <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
                   <Typography color="text.secondary">
-                    Проверь права доступа и published sections в `sklad/get_all`.
+                    Проверь права доступа и published sections в `sklad_items/get_all`.
                   </Typography>
                 </Paper>
               )}

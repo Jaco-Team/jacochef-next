@@ -1,6 +1,6 @@
 # Sklad
 
-Статус: business definition нового объединенного модуля `sklad`.
+Статус: business definition нового объединенного модуля `sklad_items`.
 
 Связанные документы:
 
@@ -32,7 +32,7 @@
 - warehouse/recipe/semi-finished master-data сейчас живет в `jaco_main_rolls`
 - site item catalog живет отдельно в `jaco_site_rolls`
 - `sklad_items_module_new` как текущий FE-модуль пока остается самостоятельным и не входит в текущий merge scope
-- новый модуль `sklad` поэтому по факту объединяет как минимум два существующих data domain-а
+- новый модуль `sklad_items` поэтому по факту объединяет как минимум два существующих data domain-а
 
 Это значит:
 
@@ -76,7 +76,7 @@
 
 ## 2.1. FE product shape
 
-Новый `sklad` должен быть не “одной огромной формой”, а unified shell с tab navigation.
+Новый `sklad_items` должен быть не “одной огромной формой”, а unified shell с tab navigation.
 
 Базовый UX-принцип:
 
@@ -105,7 +105,7 @@ UI pattern for tabs:
 - по содержанию полей и бизнес-flow смотреть legacy `recept_module_new_2` и `site_items_new`
 - старые layout-ы использовать только как reference данных и сценариев, а не как visual target
 - старые модули можно изучать для понимания flow, field semantics и migration mapping, но новый FE не должен ходить в их API, route-space или runtime helpers
-- все runtime bindings нового FE должны идти только в canonical `/api/sklad/*`
+- все runtime bindings нового FE должны идти только в canonical `/api/sklad_items/*`
 
 ## 2. Core business need
 
@@ -145,7 +145,7 @@ UI pattern for tabs:
 
 ## 3. What Sklad owns
 
-`Sklad` должен владеть не всеми складскими процессами, а именно master-data слоем.
+`sklad_items` должен владеть не всеми складскими процессами, а именно master-data слоем.
 
 Владение модуля:
 
@@ -207,7 +207,7 @@ UI pattern for tabs:
 - показывать usage density по связанным сущностям
 - быть архивируемой, но не удаляемой при наличии usage
 
-Для сайта допустимо отдельное представление category mapping, если бизнес-модель реально отличается, но primary category governance должен жить в `sklad`.
+Для сайта допустимо отдельное представление category mapping, если бизнес-модель реально отличается, но primary category governance должен жить в `sklad_items`.
 
 Schema implication:
 
@@ -446,7 +446,7 @@ Schema confirmation:
 
 Бизнес-задача модуля считается решенной, когда:
 
-- все целевые сущности живут в едином `sklad` domain
+- все целевые сущности живут в едином `sklad_items` domain
 - FE работает от canonical contract
 - lifecycle управляется единообразно
 - archive/delete/history работают предсказуемо

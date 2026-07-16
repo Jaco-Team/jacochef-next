@@ -1,11 +1,5 @@
 # SUGGESTIONS
 
-Роль документа:
-
-- это optional future-notes file
-- он не меняет текущий scope, runtime contract или implementation order
-- использовать его только после закрытия core FE delivery по `PLAN.md`
-
 Правило:
 
 - при каждом крупном backend-этапе отдельно проверять, появились ли opportunities для вынесения shared abstraction или global service
