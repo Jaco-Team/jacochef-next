@@ -32,7 +32,13 @@ export default function usePromoItemsStatPage() {
   const setStats = usePromoItemsStatStore((state) => state.setStats);
   const setPromoTable = usePromoItemsStatStore((state) => state.setPromoTable);
   const setPromoTableTotals = usePromoItemsStatStore((state) => state.setPromoTableTotals);
+  const setPromoTableGroups = usePromoItemsStatStore((state) => state.setPromoTableGroups);
   const setPromoTablePagination = usePromoItemsStatStore((state) => state.setPromoTablePagination);
+  const resetPromoItemDetails = usePromoItemsStatStore((state) => state.resetPromoItemDetails);
+  const setPromoItemDetails = usePromoItemsStatStore((state) => state.setPromoItemDetails);
+  const setPromoItemDetailsLoading = usePromoItemsStatStore(
+    (state) => state.setPromoItemDetailsLoading,
+  );
   const setPromoList = usePromoItemsStatStore((state) => state.setPromoList);
   const setPromoListRequestKey = usePromoItemsStatStore((state) => state.setPromoListRequestKey);
   const setSelectedPromos = usePromoItemsStatStore((state) => state.setSelectedPromos);
@@ -79,6 +85,7 @@ export default function usePromoItemsStatPage() {
         stats: response.stats || [],
         promoTable: response.promo_table || [],
         promoTableTotals: response.promo_table_totals || {},
+        promoTableGroups: response.promo_table_groups || [],
         promoTablePagination: response.promo_table_pagination || undefined,
         itemList: response.items || [],
         typeOrderList: response.type_orders || [],
@@ -192,6 +199,8 @@ export default function usePromoItemsStatPage() {
     if (tab === 0) {
       setPromoTable(response.promo_table || []);
       setPromoTableTotals(response.promo_table_totals || {});
+      setPromoTableGroups(response.promo_table_groups || []);
+      resetPromoItemDetails();
       setPromoTablePagination(
         response.promo_table_pagination || {
           page: nextPage,
@@ -206,11 +215,49 @@ export default function usePromoItemsStatPage() {
     setStats(response.stats || []);
   };
 
+  const loadPromoItems = async (promo) => {
+    const promoKey = promo?.promo_key || String(promo?.promo_id || "");
+
+    if (!promoKey || !promo?.promo_id) {
+      return;
+    }
+
+    const { promoItemDetails, promoItemDetailsLoading } = usePromoItemsStatStore.getState();
+
+    if (promoItemDetails[promoKey] || promoItemDetailsLoading[promoKey]) {
+      return;
+    }
+
+    const payload = buildPromoItemsStatPayload(
+      {
+        selectedPoints,
+        date_start,
+        date_end,
+        selectedPromos,
+        selectedItems,
+        typeOrder,
+        selectedClientSources,
+        orderSumAfterDiscountFilter,
+      },
+      { typeOrderKey: "promo_type" },
+    );
+    payload.promo_id = promo.promo_id;
+
+    setPromoItemDetailsLoading(promoKey, true);
+    const response = await callApi("get_promo_items", payload, false);
+    setPromoItemDetailsLoading(promoKey, false);
+
+    if (response) {
+      setPromoItemDetails(promoKey, response.items || []);
+    }
+  };
+
   return {
     alert,
     isLoad,
     tab,
     moduleName,
     handleRefresh,
+    loadPromoItems,
   };
 }

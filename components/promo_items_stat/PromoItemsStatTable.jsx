@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import dayjs from "dayjs";
 import {
+  Box,
   Button,
+  Chip,
+  CircularProgress,
+  Collapse,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -13,7 +18,11 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Typography,
 } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import usePromoItemsStatStore from "./usePromoItemsStatStore";
 import { formatPromoItemsPercent, formatPromoItemsSum } from "./promoItemsStatUtils";
 import PromoItemsStatEmptyState from "./PromoItemsStatEmptyState";
@@ -148,20 +157,379 @@ function formatPromoItemsDate(value) {
   return date.isValid() ? date.format("DD.MM.YYYY") : "—";
 }
 
-export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
+export default function PromoItemsStatTable({ type = "promo", onRefresh, onLoadPromoItems }) {
   const stats = usePromoItemsStatStore((state) => state.stats);
   const promoTable = usePromoItemsStatStore((state) => state.promoTable);
   const promoTableTotals = usePromoItemsStatStore((state) => state.promoTableTotals);
+  const promoTableGroups = usePromoItemsStatStore((state) => state.promoTableGroups);
   const promoTablePagination = usePromoItemsStatStore((state) => state.promoTablePagination);
+  const promoItemDetails = usePromoItemsStatStore((state) => state.promoItemDetails);
+  const promoItemDetailsLoading = usePromoItemsStatStore((state) => state.promoItemDetailsLoading);
   const date_start = usePromoItemsStatStore((state) => state.date_start);
   const date_end = usePromoItemsStatStore((state) => state.date_end);
   const [activationDetailsItem, setActivationDetailsItem] = useState(null);
+  const [expandedPromoKeys, setExpandedPromoKeys] = useState(new Set());
   const dateRange = `${formatPromoItemsDate(date_start)}-${formatPromoItemsDate(date_end)}`;
+
+  useEffect(() => {
+    setExpandedPromoKeys(new Set());
+  }, [promoTable]);
+
+  const getPromoKey = (item) => item?.promo_key || String(item?.promo_id || "");
+
+  const togglePromoItems = (item) => {
+    const promoKey = getPromoKey(item);
+
+    if (!promoKey) {
+      return;
+    }
+
+    setExpandedPromoKeys((currentKeys) => {
+      const nextKeys = new Set(currentKeys);
+      const isOpening = !nextKeys.has(promoKey);
+
+      if (isOpening) {
+        nextKeys.add(promoKey);
+        onLoadPromoItems?.(item);
+      } else {
+        nextKeys.delete(promoKey);
+      }
+
+      return nextKeys;
+    });
+  };
+
+  const renderPromoTotalsCell = (column, totals, label) => {
+    if (column.key === "promo_name") {
+      return (
+        <TableCell key={column.key}>
+          <strong>{label}</strong>
+        </TableCell>
+      );
+    }
+
+    if (column.key === "total_activations") {
+      return <TableCell key={column.key}>{totals?.total_activations ?? 0}</TableCell>;
+    }
+
+    if (column.key === "sum_amount") {
+      return (
+        <TableCell key={column.key}>
+          <PromoItemsStatCompoundCell
+            primary={formatPromoItemsSum(totals?.sum_before_discount)}
+            secondary={formatPromoItemsSum(totals?.sum_after_discount)}
+            direction="column"
+          />
+        </TableCell>
+      );
+    }
+
+    if (column.key === "discount_label") {
+      return (
+        <TableCell key={column.key}>
+          <PromoItemsStatCompoundCell
+            primary={formatPromoItemsSum(totals?.discount_value)}
+            secondary={formatPromoItemsPercent(totals?.discount_percent)}
+            direction="column"
+          />
+        </TableCell>
+      );
+    }
+
+    if (column.key === "avg_check_label" || column.key === "usage_places") {
+      return <TableCell key={column.key}>—</TableCell>;
+    }
+
+    if (column.key === "active_client_activations") {
+      return <TableCell key={column.key}>{totals?.active_client_activations ?? 0}</TableCell>;
+    }
+
+    if (column.key === "new_client_activations") {
+      return <TableCell key={column.key}>{totals?.new_client_activations ?? 0}</TableCell>;
+    }
+
+    if (column.key === "unique_clients_count") {
+      return <TableCell key={column.key}>{totals?.unique_clients_count ?? 0}</TableCell>;
+    }
+
+    return <TableCell key={column.key}>—</TableCell>;
+  };
+
+  const renderPromoItemsRow = (item, index) => {
+    const promoKey = getPromoKey(item);
+    const isExpanded = expandedPromoKeys.has(promoKey);
+    const isLoadingItems = Boolean(promoItemDetailsLoading[promoKey]);
+    const items = promoItemDetails[promoKey] || [];
+    const itemsTotals = items.reduce(
+      (totals, promoItem) => ({
+        quantity: totals.quantity + Number(promoItem?.quantity || 0),
+        sum: totals.sum + Number(promoItem?.sum_before_discount || 0),
+        discount: totals.discount + Number(promoItem?.discount_value || 0),
+      }),
+      { quantity: 0, sum: 0, discount: 0 },
+    );
+
+    return (
+      <Fragment key={promoKey || `${item?.promo_name || "promo"}-${index}`}>
+        <TableRow
+          hover
+          sx={
+            isExpanded
+              ? {
+                  "& > td": {
+                    backgroundColor: "action.selected",
+                    borderBottom: 0,
+                  },
+                }
+              : undefined
+          }
+        >
+          {promoColumns.map((column) => {
+            if (column.key === "promo_name") {
+              return (
+                <TableCell key={column.key}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <IconButton
+                      size="small"
+                      aria-label={isExpanded ? "Скрыть позиции" : "Показать позиции"}
+                      onClick={() => togglePromoItems(item)}
+                    >
+                      {isExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+                    </IconButton>
+                    {column.value(item)}
+                  </Box>
+                </TableCell>
+              );
+            }
+
+            if (column.render) {
+              return (
+                <TableCell key={column.key}>
+                  <PromoItemsStatCompoundCell {...column.render(item)} />
+                </TableCell>
+              );
+            }
+
+            if (column.key === "total_activations") {
+              return (
+                <TableCell key={column.key}>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => setActivationDetailsItem(item)}
+                    sx={{ minWidth: 0, p: 0, fontWeight: 600 }}
+                  >
+                    {column.value(item)}
+                  </Button>
+                </TableCell>
+              );
+            }
+
+            return <TableCell key={column.key}>{column.value(item)}</TableCell>;
+          })}
+        </TableRow>
+        <TableRow>
+          <TableCell
+            colSpan={promoColumns.length}
+            sx={{
+              p: 0,
+              borderBottom: isExpanded ? undefined : 0,
+              backgroundColor: "grey.50",
+            }}
+          >
+            <Collapse
+              in={isExpanded}
+              timeout="auto"
+              unmountOnExit
+            >
+              <Box
+                sx={{
+                  my: 1,
+                  mx: { xs: 1, md: 3 },
+                  width: { xs: "calc(100% - 16px)", md: 720 },
+                  maxWidth: { xs: "calc(100% - 16px)", md: "calc(100% - 48px)" },
+                  border: 1,
+                  borderColor: "divider",
+                  borderLeft: 3,
+                  borderLeftColor: "primary.main",
+                  borderRadius: 1.5,
+                  overflow: "hidden",
+                  backgroundColor: "background.paper",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
+                }}
+              >
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    gap: 0.75,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    backgroundColor: "grey.50",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                    <Inventory2OutlinedIcon
+                      color="action"
+                      fontSize="small"
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Проданные позиции
+                    </Typography>
+                  </Box>
+                  {!isLoadingItems ? (
+                    <Chip
+                      size="small"
+                      label={`${items.length} поз.`}
+                      sx={{ ml: 0.5, height: 22 }}
+                    />
+                  ) : null}
+                </Box>
+                {isLoadingItems ? (
+                  <Box
+                    sx={{
+                      minHeight: 96,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : items.length ? (
+                  <TableContainer>
+                    <Table
+                      size="small"
+                      sx={{
+                        tableLayout: "fixed",
+                        "& th": {
+                          py: 0.6,
+                          px: 1.25,
+                          color: "text.secondary",
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                        },
+                        "& td": {
+                          py: 0.65,
+                          px: 1.25,
+                          fontSize: "0.8rem",
+                        },
+                      }}
+                    >
+                      <colgroup>
+                        <col />
+                        <col style={{ width: 90 }} />
+                        <col style={{ width: 110 }} />
+                        <col style={{ width: 125 }} />
+                      </colgroup>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Позиция</TableCell>
+                          <TableCell align="right">Количество</TableCell>
+                          <TableCell align="right">Сумма</TableCell>
+                          <TableCell align="right">Сумма скидки</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {items.map((promoItem, itemIndex) => (
+                          <TableRow
+                            key={promoItem.item_id}
+                            hover
+                            sx={{
+                              backgroundColor: itemIndex % 2 === 0 ? "background.paper" : "grey.50",
+                            }}
+                          >
+                            <TableCell sx={{ fontWeight: 500 }}>{promoItem.item_name}</TableCell>
+                            <TableCell align="right">
+                              {new Intl.NumberFormat("ru-RU").format(promoItem.quantity || 0)}
+                            </TableCell>
+                            <TableCell align="right">
+                              {formatPromoItemsSum(promoItem.sum_before_discount)}
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{
+                                color:
+                                  promoItem.discount_value > 0 ? "error.main" : "text.secondary",
+                              }}
+                            >
+                              {formatPromoItemsSum(promoItem.discount_value)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow
+                          sx={{
+                            "& td": {
+                              borderTop: 2,
+                              borderColor: "divider",
+                              backgroundColor: "grey.100",
+                              fontWeight: 700,
+                            },
+                          }}
+                        >
+                          <TableCell>Итого по позициям</TableCell>
+                          <TableCell align="right">
+                            {new Intl.NumberFormat("ru-RU").format(itemsTotals.quantity)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPromoItemsSum(itemsTotals.sum)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatPromoItemsSum(itemsTotals.discount)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
+                    <Typography color="text.secondary">Нет проданных позиций</Typography>
+                  </Box>
+                )}
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </Fragment>
+    );
+  };
 
   if (type === "promo") {
     if (!promoTable.length) {
       return <PromoItemsStatEmptyState />;
     }
+
+    const rowsByGroup = promoTable.reduce((groups, item) => {
+      const groupKey = item?.promo_group_key || "other";
+      groups[groupKey] = [...(groups[groupKey] || []), item];
+      return groups;
+    }, {});
+    const groupMetaByKey = promoTableGroups.reduce((groups, group) => {
+      groups[group.key] = group;
+      return groups;
+    }, {});
+    const visibleGroupKeys = [
+      ...promoTableGroups.map((group) => group.key).filter((key) => rowsByGroup[key]),
+      ...Object.keys(rowsByGroup).filter((key) => !groupMetaByKey[key]),
+    ];
+    const visibleGroups = visibleGroupKeys.map((groupKey) => {
+      const group = groupMetaByKey[groupKey];
+      const rows = rowsByGroup[groupKey];
+
+      return {
+        key: groupKey,
+        label: group?.label || rows[0]?.promo_group_label || "Прочие",
+        rows,
+        totals: group?.totals,
+      };
+    });
 
     return (
       <Paper sx={{ overflow: "hidden" }}>
@@ -181,40 +549,23 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
             </TableHead>
 
             <TableBody>
-              {promoTable.map((item, index) => (
-                <TableRow
-                  key={`${item?.promo_id || item?.promo_name || "promo"}-${index}`}
-                  hover
-                >
-                  {promoColumns.map((column) => {
-                    if (column.render) {
-                      const compoundValue = column.render(item);
-
-                      return (
-                        <TableCell key={column.key}>
-                          <PromoItemsStatCompoundCell {...compoundValue} />
-                        </TableCell>
-                      );
-                    }
-
-                    if (column.key === "total_activations") {
-                      return (
-                        <TableCell key={column.key}>
-                          <Button
-                            size="small"
-                            variant="text"
-                            onClick={() => setActivationDetailsItem(item)}
-                            sx={{ minWidth: 0, p: 0, fontWeight: 600 }}
-                          >
-                            {column.value(item)}
-                          </Button>
-                        </TableCell>
-                      );
-                    }
-
-                    return <TableCell key={column.key}>{column.value(item)}</TableCell>;
-                  })}
-                </TableRow>
+              {visibleGroups.map((group) => (
+                <Fragment key={group.key}>
+                  <TableRow>
+                    <TableCell
+                      colSpan={promoColumns.length}
+                      sx={{ backgroundColor: "action.hover", fontWeight: 700 }}
+                    >
+                      {group.label}
+                    </TableCell>
+                  </TableRow>
+                  {group.rows.map(renderPromoItemsRow)}
+                  <TableRow>
+                    {promoColumns.map((column) =>
+                      renderPromoTotalsCell(column, group.totals, "Итого по группе"),
+                    )}
+                  </TableRow>
+                </Fragment>
               ))}
             </TableBody>
             <TableFooter
@@ -229,81 +580,9 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh }) {
               }}
             >
               <TableRow hover={false}>
-                {promoColumns.map((column) => {
-                  if (column.key === "promo_name") {
-                    return (
-                      <TableCell key={column.key}>
-                        <strong>Итого</strong>
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "total_activations") {
-                    return (
-                      <TableCell key={column.key}>
-                        {promoTableTotals?.total_activations ?? 0}
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "sum_amount") {
-                    return (
-                      <TableCell key={column.key}>
-                        <PromoItemsStatCompoundCell
-                          primary={formatPromoItemsSum(promoTableTotals?.sum_before_discount)}
-                          secondary={formatPromoItemsSum(promoTableTotals?.sum_after_discount)}
-                          direction="column"
-                        />
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "discount_label") {
-                    return (
-                      <TableCell key={column.key}>
-                        <PromoItemsStatCompoundCell
-                          primary={formatPromoItemsSum(promoTableTotals?.discount_value)}
-                          secondary={formatPromoItemsPercent(promoTableTotals?.discount_percent)}
-                          direction="column"
-                        />
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "avg_check_label") {
-                    return <TableCell key={column.key}>—</TableCell>;
-                  }
-
-                  if (column.key === "active_client_activations") {
-                    return (
-                      <TableCell key={column.key}>
-                        {promoTableTotals?.active_client_activations ?? 0}
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "new_client_activations") {
-                    return (
-                      <TableCell key={column.key}>
-                        {promoTableTotals?.new_client_activations ?? 0}
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "unique_clients_count") {
-                    return (
-                      <TableCell key={column.key}>
-                        {promoTableTotals?.unique_clients_count ?? 0}
-                      </TableCell>
-                    );
-                  }
-
-                  if (column.key === "usage_places") {
-                    return <TableCell key={column.key}>—</TableCell>;
-                  }
-
-                  return <TableCell key={column.key}>—</TableCell>;
-                })}
+                {promoColumns.map((column) =>
+                  renderPromoTotalsCell(column, promoTableTotals, "Итого"),
+                )}
               </TableRow>
             </TableFooter>
           </Table>

@@ -4,6 +4,8 @@ import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 import { MyDatePickerNew, MyAutocomplite } from "@/ui/Forms";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
@@ -44,6 +46,7 @@ class ReportRevenue_ extends React.Component {
 
       months: [],
       reportCats: [],
+      promoDiscountTotal: 0,
     };
   }
 
@@ -145,6 +148,7 @@ class ReportRevenue_ extends React.Component {
       this.setState({
         months: res.months,
         reportCats: res.cats,
+        promoDiscountTotal: res.promo_discount_total ?? 0,
       });
     } else {
       this.openAlert(false, res.text);
@@ -153,6 +157,7 @@ class ReportRevenue_ extends React.Component {
         months: [],
         reportCats: [],
         total: {},
+        promoDiscountTotal: 0,
       });
     }
   };
@@ -215,6 +220,7 @@ class ReportRevenue_ extends React.Component {
       cat,
       months,
       reportCats,
+      promoDiscountTotal,
     } = this.state;
 
     return (
@@ -343,6 +349,18 @@ class ReportRevenue_ extends React.Component {
                 mt: 3,
               }}
             >
+              <Box
+                sx={{
+                  mb: 1,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <Typography variant="subtitle2">
+                  Скидка по промокодам и автоподаркам:{" "}
+                  {new Intl.NumberFormat("ru-RU").format(promoDiscountTotal)} ₽
+                </Typography>
+              </Box>
               <ReportRevenueTable
                 months={months}
                 cats={reportCats}

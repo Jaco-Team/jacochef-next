@@ -18,6 +18,7 @@ export function getDefaultPromoItemsStatState() {
     stats: [],
     promoTable: [],
     promoTableTotals: {},
+    promoTableGroups: [],
     promoTablePagination: {
       page: 0,
       perpage: 50,
@@ -36,6 +37,8 @@ export function getDefaultPromoItemsStatState() {
     activationsRange: { min: null, max: null },
     activationsFilter: { from: null, to: null },
     orderSumAfterDiscountFilter: { from: null, to: null },
+    promoItemDetails: {},
+    promoItemDetailsLoading: {},
   };
 }
 

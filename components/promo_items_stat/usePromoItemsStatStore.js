@@ -26,6 +26,7 @@ const usePromoItemsStatStore = create((set) => ({
       stats: payload.stats ?? [],
       promoTable: payload.promoTable ?? [],
       promoTableTotals: payload.promoTableTotals ?? {},
+      promoTableGroups: payload.promoTableGroups ?? [],
       promoTablePagination: payload.promoTablePagination ?? state.promoTablePagination,
       itemList: payload.itemList ?? [],
       typeOrderList: payload.typeOrderList ?? [],
@@ -112,11 +113,40 @@ const usePromoItemsStatStore = create((set) => ({
     set({ promoTableTotals });
   },
 
+  setPromoTableGroups(promoTableGroups = []) {
+    set({ promoTableGroups });
+  },
+
   setPromoTablePagination(promoTablePagination = {}) {
     set((state) => ({
       promoTablePagination: {
         ...state.promoTablePagination,
         ...promoTablePagination,
+      },
+    }));
+  },
+
+  resetPromoItemDetails() {
+    set({
+      promoItemDetails: {},
+      promoItemDetailsLoading: {},
+    });
+  },
+
+  setPromoItemDetails(promoKey, items = []) {
+    set((state) => ({
+      promoItemDetails: {
+        ...state.promoItemDetails,
+        [promoKey]: items,
+      },
+    }));
+  },
+
+  setPromoItemDetailsLoading(promoKey, isLoading) {
+    set((state) => ({
+      promoItemDetailsLoading: {
+        ...state.promoItemDetailsLoading,
+        [promoKey]: Boolean(isLoading),
       },
     }));
   },

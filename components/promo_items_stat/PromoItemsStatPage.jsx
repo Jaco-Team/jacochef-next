@@ -10,7 +10,7 @@ import usePromoItemsStatPage from "./usePromoItemsStatPage";
 import usePromoItemsStatStore from "./usePromoItemsStatStore";
 
 export default function PromoItemsStatPage() {
-  const { alert, isLoad, tab, moduleName, handleRefresh } = usePromoItemsStatPage();
+  const { alert, isLoad, tab, moduleName, handleRefresh, loadPromoItems } = usePromoItemsStatPage();
   const setTab = usePromoItemsStatStore((state) => state.setTab);
 
   const tabs = [{ label: "Промокоды" }, { label: "Анализ" }];
@@ -73,6 +73,7 @@ export default function PromoItemsStatPage() {
               <PromoItemsStatTable
                 type={index === 0 ? "promo" : "legacy"}
                 onRefresh={handleRefresh}
+                onLoadPromoItems={loadPromoItems}
               />
             </TabPanel>
           ))}
