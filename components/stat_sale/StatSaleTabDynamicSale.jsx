@@ -393,17 +393,32 @@ class StatSale_Tab_DynamicSale extends React.Component {
   }
 
   renderPizzaTable(pizzaArr, title, subTitle, options = {}) {
-    const { planFulfillment = false, tableKey = title, showFactYoY = true } = options;
+    const {
+      planFulfillment = false,
+      tableKey = title,
+      showFactYoY = true,
+      preserveAccountPercentDecimals = false,
+    } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(String(value ?? "").replace(",", "."));
       return Number.isFinite(parsed) ? parsed : 0;
     };
+    const formatQuantity = (value) =>
+      value !== null && value !== undefined
+        ? getSafeNumber(value).toLocaleString("ru-RU").replace(/\s/g, " ")
+        : "";
     const hasPlanFact = pizzaArr.some((row) => row.planFact !== null && row.planFact !== undefined);
     const yearGroups = this.getYearGroups(pizzaArr);
     const factColumnCount = 4 + (showFactYoY ? 1 : 0) + (hasPlanFact ? 1 : 0);
     const columnCount = 1 + (planFulfillment ? 1 : 2) + factColumnCount;
 
-    const formatPercent = (value) => `${getSafeNumber(value).toFixed(2)}%`;
+    const formatPercent = (value) => {
+      const numericValue = getSafeNumber(value);
+
+      return preserveAccountPercentDecimals
+        ? String(Number(numericValue.toFixed(2)))
+        : String(Math.round(numericValue));
+    };
     const renderPercentChip = (value, variant = "filled") => (
       <Chip
         label={formatPercent(value)}
@@ -480,7 +495,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
           }}
         >
-          {row.planQty?.toLocaleString()}
+          {formatQuantity(row.planQty)}
         </TableCell>
         {!planFulfillment && (
           <TableCell
@@ -499,7 +514,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
           }}
         >
-          {row.factQty?.toLocaleString()}
+          {formatQuantity(row.factQty)}
         </TableCell>
         {showFactYoY && (
           <TableCell
@@ -554,7 +569,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               }}
             >
               {getSafeNumber(row.factDynQty) > 0 ? "+" : ""}
-              {getSafeNumber(row.factDynQty).toLocaleString()}
+              {formatQuantity(row.factDynQty)}
             </span>
             {getSafeNumber(row.factDynQty) !== 0 && (
               <span style={{ fontSize: "0.7rem" }}>
@@ -679,18 +694,20 @@ class StatSale_Tab_DynamicSale extends React.Component {
               <TableRow>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
                 {!planFulfillment && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка</TableCell>
+                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка, %</TableCell>
                 )}
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
                 {showFactYoY && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика г/г</TableCell>
+                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика г/г, %</TableCell>
                 )}
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м, %</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
-                  {planFulfillment ? "п/ф" : "Загрузка"}
+                  {planFulfillment ? "п/ф, %" : "Загрузка, %"}
                 </TableCell>
-                {hasPlanFact && <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>п/ф</TableCell>}
+                {hasPlanFact && (
+                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>п/ф, %</TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -835,6 +852,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               {
                 planFulfillment: true,
                 showFactYoY: false,
+                preserveAccountPercentDecimals: true,
               },
             )}
             {accountArr.length ? (
