@@ -19,6 +19,14 @@ export const useSkladProductionStore = create((set) => ({
   search: "",
   categoryId: "",
   archiveMode: "active",
+  modal: {
+    open: false,
+    mode: "view",
+    loading: false,
+    tab: "main",
+  },
+  detail: null,
+  draft: null,
 
   setState(payload = {}) {
     set(payload);

@@ -10,8 +10,10 @@ import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
   Alert,
+  Box,
   Button,
   Chip,
+  Divider,
   IconButton,
   Paper,
   Stack,
@@ -29,7 +31,9 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
 import { useSkladStore } from "../useSkladStore";
+import SkladSiteItemViewDialog from "./SkladSiteItemViewDialog";
 import { SITE_ITEMS_ARCHIVE_MODE_OPTIONS, useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
 
 function formatDateRange(row) {
@@ -87,12 +91,13 @@ function getTagNames(row, tags) {
 
 function getStatusChips(row) {
   const chips = [];
+  const isVisible = row?.is_show ?? row?.is_active ?? 0;
 
   if (Number(row?.is_archived) === 1) {
     chips.push({ key: "archived", label: "Архив", color: "default" });
   }
 
-  if (Number(row?.is_show) === 1) {
+  if (Number(isVisible) === 1) {
     chips.push({ key: "active", label: "Активен", color: "success" });
   }
 
@@ -115,36 +120,8 @@ function getStatusChips(row) {
   return chips;
 }
 
-function getDeleteHint(row) {
-  const activeCount = row?.delete_usage?.active_relations?.length || 0;
-  const historyCount = row?.delete_usage?.history_relations?.length || 0;
-  const parts = [];
-
-  if (activeCount) {
-    parts.push(`активные связи: ${activeCount}`);
-  }
-
-  if (historyCount) {
-    parts.push(`история: ${historyCount}`);
-  }
-
-  return parts.length ? `Удаление заблокировано, ${parts.join(", ")}` : "Удаление заблокировано";
-}
-
-function canDeleteRow(row) {
-  if (typeof row?.can_delete === "boolean") {
-    return row.can_delete;
-  }
-
-  if (typeof row?.delete_state?.can_delete === "boolean") {
-    return row.delete_state.can_delete;
-  }
-
-  if (typeof row?.delete_usage?.can_delete === "boolean") {
-    return row.delete_usage.can_delete;
-  }
-
-  return false;
+function getArchiveModeLabel(value) {
+  return SITE_ITEMS_ARCHIVE_MODE_OPTIONS.find((item) => item.id === value)?.name || "Активные";
 }
 
 export default function useSkladSiteItemsController({ showAlert }) {
@@ -160,9 +137,13 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const categoryId = useSkladSiteItemsStore((state) => state.categoryId);
   const tagId = useSkladSiteItemsStore((state) => state.tagId);
   const archiveMode = useSkladSiteItemsStore((state) => state.archiveMode);
+  const modal = useSkladSiteItemsStore((state) => state.modal);
+  const detail = useSkladSiteItemsStore((state) => state.detail);
+  const draft = useSkladSiteItemsStore((state) => state.draft);
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canEdit("site_items");
+  const canOpenEditorWireframe = true;
 
   const loadRows = useCallback(async () => {
     setShellState({ isLoading: true });
@@ -214,6 +195,198 @@ export default function useSkladSiteItemsController({ showAlert }) {
       showAlert(`${scopeLabel} для товаров сайта войдет в следующий production slice`, false);
     },
     [showAlert],
+  );
+
+  const closeModal = useCallback(() => {
+    setState({
+      modal: {
+        open: false,
+        mode: "view",
+        loading: false,
+        section: "tech",
+      },
+      detail: null,
+      draft: null,
+    });
+  }, [setState]);
+
+  const openCreate = useCallback(() => {
+    setState({
+      modal: {
+        open: true,
+        mode: "create",
+        loading: false,
+        section: "tech",
+      },
+      detail: null,
+      draft: {
+        name: "",
+        short_name: "",
+        category_id: "",
+        date_start: "",
+        date_end: "",
+        art: "",
+        stol: "",
+        count_part: "",
+        weight: "",
+        protein: "",
+        fat: "",
+        carbohydrates: "",
+        kkal: "",
+        kkal_preview: "",
+        tmp_desc: "",
+        marc_desc: "",
+        marc_desc_full: "",
+        tags: [],
+        marking: {},
+      },
+    });
+  }, [setState]);
+
+  const openEdit = useCallback(
+    async (row) => {
+      if (!row?.id) {
+        return;
+      }
+
+      setState({
+        modal: {
+          open: true,
+          mode: "edit",
+          loading: true,
+          section: "tech",
+        },
+        detail: null,
+        draft: null,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.getSiteItem(row.id);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки товара");
+        }
+
+        const item = response?.item || {};
+        const normalizedDraft = {
+          ...item,
+          category_name:
+            item?.category_name ||
+            categories.find((category) => String(category?.id) === String(item?.category_id))
+              ?.name ||
+            "",
+          tags: item?.tags || [],
+          composition_source: item?.composition_source || response?.composition_source || {},
+          composition_derived: item?.composition_derived || response?.composition_derived || {},
+          image: item?.image || response?.image || null,
+          marking: item?.marking || response?.marking || {},
+          item_items: response?.item_items || item?.item_items || null,
+          items_stage: response?.items_stage || item?.items_stage || null,
+        };
+
+        setState({
+          modal: {
+            open: true,
+            mode: "edit",
+            loading: false,
+            section: "tech",
+          },
+          detail: normalizedDraft,
+          draft: normalizedDraft,
+        });
+      } catch (error) {
+        setState({
+          modal: {
+            open: false,
+            mode: "view",
+            loading: false,
+            section: "tech",
+          },
+          detail: null,
+          draft: null,
+        });
+        showAlert(error?.message || "Ошибка загрузки товара", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, categories, setShellState, setState, showAlert],
+  );
+
+  const openView = useCallback(
+    async (row, section = "tech") => {
+      if (!row?.id) {
+        return;
+      }
+
+      setState({
+        modal: {
+          open: true,
+          mode: "view",
+          loading: true,
+          section,
+        },
+        detail: null,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.getSiteItem(row.id);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки товара");
+        }
+
+        const item = response?.item || {};
+
+        setState({
+          modal: {
+            open: true,
+            mode: "view",
+            loading: false,
+            section,
+          },
+          detail: {
+            ...item,
+            category_name:
+              item?.category_name ||
+              categories.find((category) => String(category?.id) === String(item?.category_id))
+                ?.name ||
+              "",
+            tags: item?.tags || [],
+            composition_source: item?.composition_source || response?.composition_source || {},
+            composition_derived: item?.composition_derived || response?.composition_derived || {},
+            allergens_derived: item?.allergens_derived || response?.allergens_derived || [],
+            possible_allergens_derived:
+              item?.possible_allergens_derived || response?.possible_allergens_derived || [],
+            image: item?.image || response?.image || null,
+            marking: item?.marking || response?.marking || {},
+            can_delete:
+              typeof response?.can_delete === "boolean"
+                ? response.can_delete
+                : (item?.can_delete ?? null),
+            delete_usage: response?.delete_usage || item?.delete_usage || null,
+            item_items: response?.item_items || item?.item_items || null,
+            items_stage: response?.items_stage || item?.items_stage || null,
+          },
+        });
+      } catch (error) {
+        setState({
+          modal: {
+            open: false,
+            mode: "view",
+            loading: false,
+            section: "tech",
+          },
+          detail: null,
+        });
+        showAlert(error?.message || "Ошибка загрузки товара", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, categories, setShellState, setState, showAlert],
   );
 
   const content = (
@@ -270,8 +443,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              disabled={!isEditable}
-              onClick={() => openNotImplemented("Создание")}
+              disabled={!canOpenEditorWireframe}
+              onClick={openCreate}
             >
               Добавить товар
             </Button>
@@ -282,9 +455,71 @@ export default function useSkladSiteItemsController({ showAlert }) {
           severity="info"
           sx={{ borderRadius: 2 }}
         >
-          Этот slice закрывает canonical list/filter contour для товаров сайта. Editor, marking,
-          image и history flows будут подключены следующим шагом.
+          Текущий экран уже закрывает list, detail tabs и editor wireframe. Delete и save остаются
+          staged до следующего backend pass.
         </Alert>
+
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 3 }}
+        >
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            divider={
+              <Divider
+                flexItem
+                orientation="vertical"
+                sx={{ display: { xs: "none", md: "block" } }}
+              />
+            }
+          >
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Режим выборки
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>{getArchiveModeLabel(archiveMode)}</Typography>
+            </Box>
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Найдено позиций
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>{rows.length}</Typography>
+            </Box>
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Активные фильтры
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>
+                {[search, categoryId, tagId].filter(Boolean).length || "Нет"}
+              </Typography>
+            </Box>
+
+            <Box sx={{ minWidth: 0, flex: 2 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Следующий шаг
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>
+                После стабилизации API сюда без перелома UX подключатся edit, marking, image и
+                delete flows
+              </Typography>
+            </Box>
+          </Stack>
+        </Paper>
 
         <TableContainer>
           <Table size="small">
@@ -305,12 +540,13 @@ export default function useSkladSiteItemsController({ showAlert }) {
               {rows.map((row) => {
                 const rowTagNames = getTagNames(row, tags);
                 const statusChips = getStatusChips(row);
-                const canDelete = canDeleteRow(row);
 
                 return (
                   <TableRow
                     key={`site-item-${row?.id}`}
                     hover
+                    onClick={() => openView(row)}
+                    sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
                       <Stack spacing={0.5}>
@@ -357,11 +593,15 @@ export default function useSkladSiteItemsController({ showAlert }) {
                         spacing={1}
                         justifyContent="flex-end"
                       >
-                        <Tooltip title="Просмотр будет подключен следующим шагом">
+                        <Tooltip title="Открыть карточку">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={() => openNotImplemented("Просмотр")}
+                              aria-label="Открыть карточку"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openView(row, "tech");
+                              }}
                             >
                               <VisibilityOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -371,79 +611,91 @@ export default function useSkladSiteItemsController({ showAlert }) {
                         <Tooltip
                           title={
                             isEditable
-                              ? "Редактирование будет подключено следующим шагом"
-                              : "Недостаточно прав"
+                              ? "Открыть редактор"
+                              : "Открыть read-only wireframe редактора"
                           }
                         >
                           <span>
                             <IconButton
                               size="small"
-                              disabled={!isEditable}
-                              onClick={() => openNotImplemented("Редактирование")}
+                              aria-label="Редактировать"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openEdit(row);
+                              }}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="Маркировка будет подключена следующим шагом">
+                        <Tooltip title="Открыть вкладку маркировки">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={() => openNotImplemented("Маркировка")}
+                              aria-label="Маркировка"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openView(row, "marking");
+                              }}
                             >
                               <LocalOfferOutlinedIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="Изображения будут подключены следующим шагом">
+                        <Tooltip title="Открыть вкладку изображения">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={() => openNotImplemented("Изображения")}
+                              aria-label="Изображения"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openView(row, "image");
+                              }}
                             >
                               <PhotoOutlinedIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="История будет подключена следующим шагом">
+                        <Tooltip title="Открыть вкладку истории">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={() => openNotImplemented("История")}
+                              aria-label="История"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openView(row, "history");
+                              }}
                             >
                               <HistoryOutlinedIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
 
-                        {canDelete ? (
-                          <Tooltip title="Удаление будет подключено следующим шагом">
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                disabled={!isEditable}
-                                onClick={() => openNotImplemented("Удаление")}
-                              >
-                                <DeleteOutlineIcon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title={getDeleteHint(row)}>
-                            <span>
-                              <IconButton
-                                size="small"
-                                disabled
-                              >
-                                <DeleteOutlineIcon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        )}
+                        <Tooltip
+                          title={
+                            isEditable
+                              ? "Удаление будет подключено следующим шагом"
+                              : "Недостаточно прав"
+                          }
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={!isEditable}
+                              aria-label="Удалить"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openNotImplemented("Удаление");
+                              }}
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -453,15 +705,70 @@ export default function useSkladSiteItemsController({ showAlert }) {
               {rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8}>
-                    <Typography color="text.secondary">
-                      Ничего не найдено. Измените фильтры или режим показа.
-                    </Typography>
+                    <Stack
+                      spacing={1.5}
+                      sx={{ py: 2 }}
+                    >
+                      <Typography color="text.secondary">
+                        Ничего не найдено. Измените фильтры или режим показа.
+                      </Typography>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1}
+                      >
+                        <Button
+                          variant="outlined"
+                          onClick={() =>
+                            setState({
+                              search: "",
+                              categoryId: "",
+                              tagId: "",
+                              archiveMode: "active",
+                            })
+                          }
+                        >
+                          Сбросить фильтры
+                        </Button>
+                        <Button
+                          variant="text"
+                          onClick={loadRows}
+                        >
+                          Обновить список
+                        </Button>
+                      </Stack>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ) : null}
             </TableBody>
           </Table>
         </TableContainer>
+
+        <SkladSiteItemViewDialog
+          open={modal.open && modal.mode === "view"}
+          loading={modal.loading}
+          section={modal.section}
+          onSectionChange={(section) =>
+            setState({
+              modal: {
+                ...modal,
+                section,
+              },
+            })
+          }
+          detail={detail}
+          onClose={closeModal}
+        />
+
+        <SkladSiteItemEditorDialog
+          open={modal.open && (modal.mode === "edit" || modal.mode === "create")}
+          mode={modal.mode}
+          draft={draft}
+          categories={categories}
+          tags={tags}
+          isEditable={isEditable}
+          onClose={closeModal}
+        />
       </Stack>
     </Paper>
   );

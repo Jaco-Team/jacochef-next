@@ -942,6 +942,13 @@ Response:
 }
 ```
 
+Текущее уточнение:
+
+- `site-items/list` intentionally остается lightweight read endpoint
+- list row не содержит `delete_state` и `delete_usage`
+- authoritative delete guard выполняется на `site-items/delete`
+- если FE нужен blocked reason до клика по delete, его надо брать из `site-items/get_one`
+
 ## `POST|ANY /api/sklad_items/site-items/get_all_for_new`
 
 Response:
@@ -995,9 +1002,10 @@ Response:
 - `marking` возвращается как часть `get_one`
 - image state возвращается только через structured `image`
 - `image.variants.jpg|webp` содержат path/url пары для текущих published asset variants
-- `site-items/list` уже возвращает `delete_state` и `delete_usage`, чтобы FE мог блокировать delete action еще на списке
+- `site-items/list` intentionally не рассчитывает `delete_state` и `delete_usage`, чтобы list не платил тяжелый runtime cost на каждом чтении
 - reference datasets по умолчанию показывают active rows, но для `get_one` backend дополнительно включает уже привязанные inactive rows, чтобы FE не терял текущие связи в payload
-- `get_one` также возвращает `can_delete` и `delete_usage`, чтобы FE мог показать blocked reason еще до попытки удаления
+- `get_one` возвращает preview `can_delete` и `delete_usage`, но detail payload не должен падать, если preview delete-check временно недоступен
+- `site-items/delete` делает authoritative blocked check на момент попытки удаления и возвращает usage reason при запрете
 
 ## `POST|ANY /api/sklad_items/site-items/get_marking`
 

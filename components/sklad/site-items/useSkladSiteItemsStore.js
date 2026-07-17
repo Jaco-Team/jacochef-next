@@ -16,6 +16,14 @@ export const useSkladSiteItemsStore = create((set) => ({
   categoryId: "",
   tagId: "",
   archiveMode: "active",
+  modal: {
+    open: false,
+    mode: "view",
+    loading: false,
+    section: "tech",
+  },
+  detail: null,
+  draft: null,
 
   setState(payload = {}) {
     set(payload);

@@ -23,8 +23,11 @@ export default function useSkladApi() {
       updateCategory: (payload) => request("categories/save_edit", payload),
       deleteCategory: (id) => request("categories/delete", { id }),
       getRecipes: (payload = {}) => request("recipes/list", payload),
+      getRecipe: (id) => request("recipes/get_one", { id }),
       getSemiFinished: (payload = {}) => request("semi-finished/list", payload),
+      getSemiFinishedOne: (id) => request("semi-finished/get_one", { id }),
       getSiteItems: (payload = {}) => request("site-items/list", payload),
+      getSiteItem: (id) => request("site-items/get_one", { id }),
     };
   }, []);
 }

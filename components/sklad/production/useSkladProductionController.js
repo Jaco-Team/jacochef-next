@@ -31,6 +31,8 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
+import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
+import SkladProductionViewDialog from "./SkladProductionViewDialog";
 import {
   PRODUCTION_ARCHIVE_MODE_OPTIONS,
   PRODUCTION_ENTITY_OPTIONS,
@@ -107,6 +109,9 @@ export default function useSkladProductionController({ showAlert }) {
   const search = useSkladProductionStore((state) => state.search);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
   const archiveMode = useSkladProductionStore((state) => state.archiveMode);
+  const modal = useSkladProductionStore((state) => state.modal);
+  const detail = useSkladProductionStore((state) => state.detail);
+  const draft = useSkladProductionStore((state) => state.draft);
   const setState = useSkladProductionStore((state) => state.setState);
 
   const accessKey = getEntityAccessKey(entityType);
@@ -164,6 +169,126 @@ export default function useSkladProductionController({ showAlert }) {
       showAlert(`${scopeLabel} войдет в следующий production slice`, false);
     },
     [showAlert],
+  );
+
+  const closeModal = useCallback(() => {
+    setState({
+      modal: {
+        open: false,
+        mode: "view",
+        loading: false,
+        tab: "main",
+      },
+      detail: null,
+      draft: null,
+    });
+  }, [setState]);
+
+  const loadEntityDetail = useCallback(
+    async (row) => {
+      if (!row?.id) {
+        return null;
+      }
+
+      const response =
+        entityType === "recipe"
+          ? await api.getRecipe(row.id)
+          : await api.getSemiFinishedOne(row.id);
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка загрузки карточки");
+      }
+
+      const entity = response?.entity || {};
+
+      return {
+        ...entity,
+        unit_name:
+          response?.units?.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ||
+          "",
+        units: response?.units || [],
+        categories: entity?.categories || response?.categories || [],
+        allergens: entity?.allergens || [],
+        allergens_possible: entity?.allergens_possible || [],
+        allergens_derived: entity?.allergens_derived || [],
+        allergens_possible_derived: entity?.allergens_possible_derived || [],
+        storages: entity?.storages || response?.all_storages || [],
+        apps: entity?.apps || response?.apps || [],
+        items: entity?.items || [],
+      };
+    },
+    [api, entityType],
+  );
+
+  const openView = useCallback(
+    async (row, tab = "main") => {
+      setState({
+        modal: {
+          open: true,
+          mode: "view",
+          loading: true,
+          tab,
+        },
+        detail: null,
+        draft: null,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const entity = await loadEntityDetail(row);
+        setState({
+          modal: {
+            open: true,
+            mode: "view",
+            loading: false,
+            tab,
+          },
+          detail: entity,
+        });
+      } catch (error) {
+        closeModal();
+        showAlert(error?.message || "Ошибка загрузки карточки", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [closeModal, loadEntityDetail, setShellState, setState, showAlert],
+  );
+
+  const openEdit = useCallback(
+    async (row) => {
+      setState({
+        modal: {
+          open: true,
+          mode: "edit",
+          loading: true,
+          tab: "main",
+        },
+        detail: null,
+        draft: null,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const entity = await loadEntityDetail(row);
+        setState({
+          modal: {
+            open: true,
+            mode: "edit",
+            loading: false,
+            tab: "main",
+          },
+          detail: entity,
+          draft: entity,
+        });
+      } catch (error) {
+        closeModal();
+        showAlert(error?.message || "Ошибка загрузки карточки", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [closeModal, loadEntityDetail, setShellState, setState, showAlert],
   );
 
   const content = (
@@ -256,8 +381,8 @@ export default function useSkladProductionController({ showAlert }) {
           severity="info"
           sx={{ borderRadius: 2 }}
         >
-          Этот slice закрывает общий list/filter contour для production family. Детальный editor,
-          history и convert flow будут подключены следующим шагом.
+          Этот slice уже закрывает общий list/filter contour и basic detail/editor wireframe для
+          production family. History, convert и write actions остаются следующим шагом.
         </Alert>
 
         <TableContainer>
@@ -322,29 +447,25 @@ export default function useSkladProductionController({ showAlert }) {
                         spacing={1}
                         justifyContent="flex-end"
                       >
-                        <Tooltip title="Просмотр будет подключен следующим шагом">
+                        <Tooltip title="Открыть карточку">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={() => openNotImplemented("Просмотр")}
+                              aria-label="Просмотр"
+                              onClick={() => openView(row, "main")}
                             >
                               <VisibilityOutlinedIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={
-                            canCreateOrEdit
-                              ? "Редактирование будет подключено следующим шагом"
-                              : "Недостаточно прав"
-                          }
-                        >
+                        <Tooltip title={canCreateOrEdit ? "Открыть редактор" : "Недостаточно прав"}>
                           <span>
                             <IconButton
                               size="small"
                               disabled={!canCreateOrEdit}
-                              onClick={() => openNotImplemented("Редактирование")}
+                              aria-label="Редактировать"
+                              onClick={() => openEdit(row)}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>
@@ -433,6 +554,37 @@ export default function useSkladProductionController({ showAlert }) {
     categoryId,
     archiveMode,
     loadRows,
-    content,
+    content: (
+      <>
+        {content}
+        <SkladProductionViewDialog
+          open={modal.open && modal.mode === "view"}
+          loading={modal.loading}
+          tab={modal.tab}
+          onTabChange={(tab) =>
+            setState({
+              modal: {
+                ...modal,
+                tab,
+              },
+            })
+          }
+          detail={detail}
+          entityLabel={getEntityLabel(entityType)}
+          onClose={closeModal}
+        />
+        <SkladProductionEditorDialog
+          open={modal.open && modal.mode === "edit"}
+          loading={modal.loading}
+          mode="edit"
+          entityLabel={getEntityLabel(entityType)}
+          draft={draft}
+          categories={categories}
+          units={draft?.units || detail?.units || []}
+          isEditable={canCreateOrEdit}
+          onClose={closeModal}
+        />
+      </>
+    ),
   };
 }

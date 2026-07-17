@@ -2,6 +2,12 @@
 
 Статус: детальный phased plan для нового модуля `sklad_items`.
 
+Pinned execution rule:
+
+- completed steps in this plan must stay in the document as execution history
+- when a step is finished, mark it explicitly as completed or partially completed
+- do not remove completed steps from the plan
+
 Основания:
 
 - business definition: `README.md`
@@ -83,7 +89,7 @@ FE strategy after current backend update:
 
 Текущий статус:
 
-- partially implemented
+- completed
 - отдельный `/bootstrap` больше не является target requirement этой итерации
 - shell и shared refs уже приходят через `get_all`
 
@@ -104,6 +110,12 @@ FE strategy after current backend update:
 
 - это foundation для всех остальных сущностей
 - без этого будут плодиться локальные справочники и переходные хаки
+
+Текущий статус:
+
+- completed for current FE scope
+- `Units` и `Categories` tabs уже работают на canonical API
+- delete-state and source-aware category handling уже выведены в UI
 
 ### Slice C. Recipes + semi-finished
 
@@ -137,8 +149,10 @@ Contract note:
 
 Текущий статус:
 
+- partially implemented
 - `recipes/list`, `recipes/get_one`, `semi-finished/list`, `semi-finished/get_one` уже live
-- write lifecycle и convert flow остаются следующей фазой
+- общий list/filter shell уже собран в новом FE
+- detail/editor/history/convert actions в новом FE еще не доведены до рабочего modal flow
 
 ### Slice D. Site items
 
@@ -166,8 +180,11 @@ Contract note:
 
 Текущий статус:
 
+- partially implemented
 - `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one` уже live
-- write flows, dedicated marking route и unified history detail для `site_item` еще planned
+- list/filter shell уже собран
+- detail tabs и editor wireframe уже собраны и открываются
+- save/delete/image/tag/history mutations остаются staged до следующего backend pass
 
 ### Slice E. Unified archive + history
 
@@ -630,17 +647,17 @@ Deliverables:
 
 ## 8. Step-by-step FE implementation order
 
-1. Create page shell, bootstrap hook, access hook and tab model.
-2. Build `Units` tab on canonical API and finalize dictionary CRUD pattern.
-3. Build `Categories` tab on canonical API and finalize source-aware category handling.
-4. Build `Рецепты и полуфабрикаты` tab list/filter shell.
-5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields.
-6. Wire production history and convert-type flow.
-7. Build `Товары сайта` tab list/filter shell.
-8. Build site-item editor modal, derived calorie preview, tags, images and marking flows.
-9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting.
-10. Build `Архив` tab and archive restore/view flows if contract supports them.
-11. Run access hardening, migration checklist pass and targeted smoke coverage.
+1. Create page shell, bootstrap hook, access hook and tab model. Status: completed.
+2. Build `Units` tab on canonical API and finalize dictionary CRUD pattern. Status: completed.
+3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
+4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
+5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: in progress.
+6. Wire production history and convert-type flow. Status: pending.
+7. Build `Товары сайта` tab list/filter shell. Status: completed.
+8. Build site-item editor modal, derived calorie preview, tags, images and marking flows. Status: partially completed.
+9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: pending.
+10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: pending.
+11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
 
 ## 8.1. Delivery flow for implementation
 
@@ -660,14 +677,14 @@ Deliverables:
 
 ### Current pinned sequence
 
-1. Shell foundation: page route, bootstrap load, access adapter, tab registry, section placeholders.
-2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`, with its own tab-scoped state/controller on top of the global shell store.
-3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`.
-4. Production list slice: shared list/filter shell for recipes and semi-finished.
-5. Production editor slice: shared modal, composition rows, multiline auto-expand fields.
-6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking.
-7. History/archive slice: unified readers and action flows.
-8. Hardening slice: access matrix, smoke tests, migration leftovers.
+1. Shell foundation: page route, bootstrap load, access adapter, tab registry, section placeholders. Status: completed.
+2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`, with its own tab-scoped state/controller on top of the global shell store. Status: completed.
+3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`. Status: completed.
+4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
+5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: in progress.
+6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking. Status: partially completed.
+7. History/archive slice: unified readers and action flows. Status: pending.
+8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
 
 ## 9. Explicit non-goals for current iteration
 
