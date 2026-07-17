@@ -609,11 +609,27 @@ export function normalizeCafesResponse(response) {
 
 export function normalizeControlResponse(response) {
   const data = unwrapData(response);
+  const seenCleaningIds = new Set();
+  const cleanings = Array.isArray(data.cleanings)
+    ? data.cleanings
+    : [...toArray(data.items?.length ? data.items : data.work), ...toArray(data.all_work)].filter(
+        (item) => {
+          if (item?.id == null) {
+            return true;
+          }
+
+          const cleaningId = String(item.id);
+          if (seenCleaningIds.has(cleaningId)) {
+            return false;
+          }
+
+          seenCleaningIds.add(cleaningId);
+          return true;
+        },
+      );
 
   return {
-    cleanings: toArray(
-      data.items?.length ? data.items : data.cleanings?.length ? data.cleanings : data.work,
-    ).map(normalizeControlItem),
+    cleanings: cleanings.map(normalizeControlItem),
     preparations: toArray(data.preparations?.length ? data.preparations : data.pf_list).map(
       normalizePreparationItem,
     ),
