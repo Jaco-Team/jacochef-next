@@ -31,6 +31,9 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
+import { useSkladHistoryStore, HISTORY_INITIAL_STATE } from "../history/useSkladHistoryStore";
+import { getVisibleSkladTabs } from "../skladTabs";
+import SkladProductionConvertDialog from "./SkladProductionConvertDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladProductionViewDialog from "./SkladProductionViewDialog";
 import {
@@ -102,7 +105,10 @@ export default function useSkladProductionController({ showAlert }) {
   const { canEdit, canExecute } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const shellSections = useSkladStore((state) => state.sections);
+  const shellAccess = useSkladStore((state) => state.access);
   const categories = useSkladStore((state) => state.categories);
+  const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const entityType = useSkladProductionStore((state) => state.entityType);
   const rows = useSkladProductionStore((state) => state.rows);
@@ -169,6 +175,34 @@ export default function useSkladProductionController({ showAlert }) {
       showAlert(`${scopeLabel} войдет в следующий production slice`, false);
     },
     [showAlert],
+  );
+
+  const openHistoryTab = useCallback(
+    (row) => {
+      if (!row?.id) {
+        showAlert("Не удалось определить сущность для открытия истории", false);
+        return;
+      }
+
+      const visibleTabs = getVisibleSkladTabs({
+        sections: shellSections,
+        access: shellAccess,
+      });
+      const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
+
+      if (historyTabIndex === -1) {
+        showAlert("Вкладка истории недоступна по текущим section/access", false);
+        return;
+      }
+
+      setHistoryState({
+        entityType,
+        entityId: String(row.id),
+        ...HISTORY_INITIAL_STATE,
+      });
+      setShellState({ tab: historyTabIndex });
+    },
+    [entityType, setHistoryState, setShellState, shellAccess, shellSections, showAlert],
   );
 
   const closeModal = useCallback(() => {
@@ -291,6 +325,41 @@ export default function useSkladProductionController({ showAlert }) {
     [closeModal, loadEntityDetail, setShellState, setState, showAlert],
   );
 
+  const openConvert = useCallback(
+    async (row) => {
+      setState({
+        modal: {
+          open: true,
+          mode: "convert",
+          loading: true,
+          tab: "main",
+        },
+        detail: null,
+        draft: null,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const entity = await loadEntityDetail(row);
+        setState({
+          modal: {
+            open: true,
+            mode: "convert",
+            loading: false,
+            tab: "main",
+          },
+          detail: entity,
+        });
+      } catch (error) {
+        closeModal();
+        showAlert(error?.message || "Ошибка загрузки карточки для конвертации", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [closeModal, loadEntityDetail, setShellState, setState, showAlert],
+  );
+
   const content = (
     <Paper sx={{ p: 2.5, borderRadius: 3 }}>
       <Stack spacing={2}>
@@ -381,8 +450,9 @@ export default function useSkladProductionController({ showAlert }) {
           severity="info"
           sx={{ borderRadius: 2 }}
         >
-          Этот slice уже закрывает общий list/filter contour и basic detail/editor wireframe для
-          production family. History, convert и write actions остаются следующим шагом.
+          Этот slice уже закрывает общий list/filter contour, basic detail/editor wireframe и
+          handoff в unified History tab для production family. Convert и write actions остаются
+          staged.
         </Alert>
 
         <TableContainer>
@@ -475,26 +545,28 @@ export default function useSkladProductionController({ showAlert }) {
                         <Tooltip
                           title={
                             canConvert
-                              ? "Конвертация будет подключена следующим шагом"
-                              : "Недостаточно прав"
+                              ? "Открыть staged shell конвертации"
+                              : "Недостаточно прав; доступен только staged shell без выполнения"
                           }
                         >
                           <span>
                             <IconButton
                               size="small"
                               disabled={!canConvert}
-                              onClick={() => openNotImplemented("Конвертация типа")}
+                              aria-label="Открыть staged shell конвертации"
+                              onClick={() => openConvert(row)}
                             >
                               <SwapHorizIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="История будет подключена следующим шагом">
+                        <Tooltip title="Открыть unified History tab">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={() => openNotImplemented("История")}
+                              aria-label="Открыть историю"
+                              onClick={() => openHistoryTab(row)}
                             >
                               <HistoryOutlinedIcon fontSize="small" />
                             </IconButton>
@@ -582,6 +654,13 @@ export default function useSkladProductionController({ showAlert }) {
           categories={categories}
           units={draft?.units || detail?.units || []}
           isEditable={canCreateOrEdit}
+          onClose={closeModal}
+        />
+        <SkladProductionConvertDialog
+          open={modal.open && modal.mode === "convert"}
+          detail={detail}
+          entityType={entityType}
+          canConvert={canConvert}
           onClose={closeModal}
         />
       </>

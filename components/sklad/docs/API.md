@@ -1,6 +1,6 @@
 # API
 
-Статус: целевой API contract нового модуля `sklad_items`.
+Статус: целевой API contract нового модуля `sklad`.
 
 Статус текущей итерации:
 
@@ -463,14 +463,14 @@ Blocked delete response:
 Текущее уточнение scope:
 
 - dedicated CRUD/list screen для `Item` остается в `sklad_items_module_new`
-- текущий `sklad_items` публикует для `Item` только read/open routes; write/delete/archive остаются вне этого scope
+- текущий `sklad` публикует для `Item` только read/open routes; write/delete/archive остаются вне этого scope
 - при этом `Item` остается shared upstream-сущностью для `SemiFinished -> Recipe -> SiteItem`
 - новый `sklad_items` вправе использовать `Item` как reference/source layer внутри рецептов, полуфабрикатов, категорий и истории
 
 История:
 
 - generic `history/list` и `history/get_one` уже поддерживают `entity_type = item`
-- это не означает, что в текущем FE scope есть отдельный экран управления `Item` внутри `sklad_items`
+- это не означает, что в текущем FE scope есть отдельный экран управления `Item` внутри `sklad`
 
 ---
 
@@ -795,11 +795,11 @@ Response:
 
 ## `POST|ANY /api/sklad_items/items/list`
 
-Опубликованный read-only slice для `warehouse_item` внутри нового модуля `sklad_items`.
+Опубликованный read-only slice для `warehouse_item` внутри нового модуля `sklad`.
 
 Замысел текущего этапа:
 
-- `sklad_items` уже умеет открывать и читать warehouse item
+- `Sklad` уже умеет открывать и читать warehouse item
 - отдельный legacy CRUD-экран `sklad_items_module_new` пока остается основным write-модулем
 - новый API не проксирует старый модуль runtime-ом, а читает ту же БД собственным service-layer
 
@@ -842,7 +842,7 @@ Response:
 Примечания:
 
 - route опубликован как read-only opening/list contract
-- write/delete/archive для warehouse items в `sklad_items` пока не публикуются
+- write/delete/archive для warehouse items в `sklad` пока не публикуются
 - `date_start/date_end` читаются из latest persisted revision в `items_hist_new`
 - `items/list` уже возвращает `delete_state` и `delete_usage` по реальным production/history relations, даже несмотря на то что отдельный delete route для `Item` в новом модуле пока не опубликован
 
@@ -878,7 +878,7 @@ Response:
 
 Примечания:
 
-- это новый form-open contract для warehouse item внутри `sklad_items`
+- это новый form-open contract для warehouse item внутри `sklad`
 - naming `get_all_for_new` сохранен как repo-compatible opening pattern
 
 ## `POST|ANY /api/sklad_items/items/get_one`
@@ -974,6 +974,23 @@ Response:
     "image": null,
     "marking": {}
   },
+  "item_items": {
+    "this_items": [],
+    "all_items": []
+  },
+  "items_stage": {
+    "stage_1": [],
+    "stage_2": [],
+    "stage_3": [],
+    "all": []
+  },
+  "composition_source": {
+    "pf": [],
+    "recipes": []
+  },
+  "composition_derived": {
+    "pf_total": []
+  },
   "cat_list": [],
   "tags_all": [],
   "all_pf": [],
@@ -984,8 +1001,8 @@ Response:
 
 Текущее уточнение:
 
-- `get_all_for_new` сейчас возвращает только базовую форму и reference datasets
-- composition blocks, derived allergens и linked relations появляются в `site-items/get_one`
+- `get_all_for_new` уже возвращает пустые `item_items`, `items_stage`, `composition_source` и `composition_derived`, чтобы create-form жила на том же shape, что и `get_one`
+- derived allergens и delete preview появляются только в `site-items/get_one`
 
 ## `POST|ANY /api/sklad_items/site-items/get_one`
 
@@ -993,7 +1010,7 @@ Response:
 
 - `composition_source.pf` = прямые связи `site_item -> pf`
 - `composition_source.recipes` = прямые связи `site_item -> recipe`
-- `composition_derived.pf_total` = развёрнутый состав по всем заготовкам с учетом рецептов
+- `composition_derived.pf_total` = развёрнутый состав по всем заготовкам с учетом рецептов, уже агрегированный по `pf_id`, без raw-дублей из `items_all_pf_new`
 - `allergens_derived` и `possible_allergens_derived` считаются по итоговой composition chain
 
 Текущее уточнение:
@@ -1001,10 +1018,12 @@ Response:
 - в этом slice опубликован technical read contour
 - `marking` возвращается как часть `get_one`
 - image state возвращается только через structured `image`
+- `image.current_fields` возвращает текущие persisted `img_new`, `img_new_update`, `img_app`
 - `image.variants.jpg|webp` содержат path/url пары для текущих published asset variants
 - `site-items/list` intentionally не рассчитывает `delete_state` и `delete_usage`, чтобы list не платил тяжелый runtime cost на каждом чтении
 - reference datasets по умолчанию показывают active rows, но для `get_one` backend дополнительно включает уже привязанные inactive rows, чтобы FE не терял текущие связи в payload
 - `get_one` возвращает preview `can_delete` и `delete_usage`, но detail payload не должен падать, если preview delete-check временно недоступен
+- если preview check временно недоступен, backend возвращает `can_delete = null`, `delete_usage.status = unavailable`, `delete_usage.is_available = false`, а не fake-blocked ответ
 - `site-items/delete` делает authoritative blocked check на момент попытки удаления и возвращает usage reason при запрете
 
 ## `POST|ANY /api/sklad_items/site-items/get_marking`
@@ -1195,6 +1214,12 @@ Response blocked:
   }
 }
 ```
+
+Detail preview note:
+
+- `site-items/get_one` использует preview-only delete check
+- preview payload может вернуть `status = ready|unavailable`
+- `is_available = false` означает, что preview не удалось собрать; authoritative delete-check при `site-items/delete` все равно выполняется отдельно и не опирается на preview result
 
 ## `POST|ANY /api/sklad_items/site-items/upload_image`
 
@@ -1626,7 +1651,7 @@ Response shape:
 
 ## 16. Compatibility policy
 
-Runtime compatibility aliases в новом `sklad_items` больше не поддерживаются.
+Runtime compatibility aliases в новом `sklad` больше не поддерживаются.
 
 Важно:
 

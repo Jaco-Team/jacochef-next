@@ -184,6 +184,7 @@ Contract note:
 - `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one` уже live
 - list/filter shell уже собран
 - detail tabs и editor wireframe уже собраны и открываются
+- create draft shape, detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
 - save/delete/image/tag/history mutations остаются staged до следующего backend pass
 
 ### Slice E. Unified archive + history
@@ -199,6 +200,14 @@ Contract note:
 - cross-entity archive filters
 - history presentation consistency
 - version comparison flow inspired by 1C business behavior
+
+Текущий статус:
+
+- partially implemented
+- unified `История` tab уже читает canonical version list, `get_one` snapshot и базовый compare
+- production row action now hands off into the real History tab with prefilled `entity_type` + `entity_id`
+- `Архив` tab уже читает canonical archive list for supported entity types
+- archive restore/view flows и domain-specific history presentation consistency остаются следующим pass
 
 ## 3.1. Documentation roles
 
@@ -652,11 +661,11 @@ Deliverables:
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: in progress.
-6. Wire production history and convert-type flow. Status: pending.
+6. Wire production history and convert-type flow. Status: partially completed.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
 8. Build site-item editor modal, derived calorie preview, tags, images and marking flows. Status: partially completed.
-9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: pending.
-10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: pending.
+9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: partially completed.
+10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: partially completed.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
 
 ## 8.1. Delivery flow for implementation
@@ -683,7 +692,7 @@ Deliverables:
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: in progress.
 6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking. Status: partially completed.
-7. History/archive slice: unified readers and action flows. Status: pending.
+7. History/archive slice: unified readers live, action flows partially completed. Status: partially completed.
 8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
 
 ## 9. Explicit non-goals for current iteration

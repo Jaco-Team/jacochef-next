@@ -124,6 +124,28 @@ function getArchiveModeLabel(value) {
   return SITE_ITEMS_ARCHIVE_MODE_OPTIONS.find((item) => item.id === value)?.name || "Активные";
 }
 
+function createEmptySiteItemRelations() {
+  return {
+    item_items: {
+      this_items: [],
+      all_items: [],
+    },
+    items_stage: {
+      stage_1: [],
+      stage_2: [],
+      stage_3: [],
+      all: [],
+    },
+    composition_source: {
+      pf: [],
+      recipes: [],
+    },
+    composition_derived: {
+      pf_total: [],
+    },
+  };
+}
+
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
   const { canEdit } = useSkladAccess();
@@ -211,6 +233,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
   }, [setState]);
 
   const openCreate = useCallback(() => {
+    const emptyRelations = createEmptySiteItemRelations();
+
     setState({
       modal: {
         open: true,
@@ -238,7 +262,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
         marc_desc: "",
         marc_desc_full: "",
         tags: [],
+        image: null,
         marking: {},
+        ...emptyRelations,
       },
     });
   }, [setState]);
@@ -269,6 +295,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         }
 
         const item = response?.item || {};
+        const emptyRelations = createEmptySiteItemRelations();
         const normalizedDraft = {
           ...item,
           category_name:
@@ -277,12 +304,18 @@ export default function useSkladSiteItemsController({ showAlert }) {
               ?.name ||
             "",
           tags: item?.tags || [],
-          composition_source: item?.composition_source || response?.composition_source || {},
-          composition_derived: item?.composition_derived || response?.composition_derived || {},
+          composition_source:
+            item?.composition_source ||
+            response?.composition_source ||
+            emptyRelations.composition_source,
+          composition_derived:
+            item?.composition_derived ||
+            response?.composition_derived ||
+            emptyRelations.composition_derived,
           image: item?.image || response?.image || null,
           marking: item?.marking || response?.marking || {},
-          item_items: response?.item_items || item?.item_items || null,
-          items_stage: response?.items_stage || item?.items_stage || null,
+          item_items: response?.item_items || item?.item_items || emptyRelations.item_items,
+          items_stage: response?.items_stage || item?.items_stage || emptyRelations.items_stage,
         };
 
         setState({
@@ -339,6 +372,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         }
 
         const item = response?.item || {};
+        const emptyRelations = createEmptySiteItemRelations();
 
         setState({
           modal: {
@@ -355,8 +389,14 @@ export default function useSkladSiteItemsController({ showAlert }) {
                 ?.name ||
               "",
             tags: item?.tags || [],
-            composition_source: item?.composition_source || response?.composition_source || {},
-            composition_derived: item?.composition_derived || response?.composition_derived || {},
+            composition_source:
+              item?.composition_source ||
+              response?.composition_source ||
+              emptyRelations.composition_source,
+            composition_derived:
+              item?.composition_derived ||
+              response?.composition_derived ||
+              emptyRelations.composition_derived,
             allergens_derived: item?.allergens_derived || response?.allergens_derived || [],
             possible_allergens_derived:
               item?.possible_allergens_derived || response?.possible_allergens_derived || [],
@@ -367,8 +407,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
                 ? response.can_delete
                 : (item?.can_delete ?? null),
             delete_usage: response?.delete_usage || item?.delete_usage || null,
-            item_items: response?.item_items || item?.item_items || null,
-            items_stage: response?.items_stage || item?.items_stage || null,
+            item_items: response?.item_items || item?.item_items || emptyRelations.item_items,
+            items_stage: response?.items_stage || item?.items_stage || emptyRelations.items_stage,
           },
         });
       } catch (error) {

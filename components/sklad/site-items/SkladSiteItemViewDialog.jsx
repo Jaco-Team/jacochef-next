@@ -151,6 +151,49 @@ function getStageTimingRows(detail) {
   }));
 }
 
+function getDeletePreviewMeta(detail) {
+  const status = detail?.delete_usage?.status || "";
+  const isAvailable = detail?.delete_usage?.is_available;
+  const previewError = detail?.delete_usage?.preview_error || "";
+
+  if (typeof detail?.can_delete === "boolean") {
+    return {
+      label: detail.can_delete ? "Можно удалить" : "Удаление ограничено",
+      color: detail.can_delete ? "success" : "warning",
+      variant: detail.can_delete ? "filled" : "outlined",
+      helper: previewError,
+    };
+  }
+
+  if (isAvailable === false || status === "unavailable") {
+    return {
+      label: "Preview недоступен",
+      color: "default",
+      variant: "outlined",
+      helper: previewError || "Проверка удаления временно недоступна.",
+    };
+  }
+
+  return {
+    label: "Статус не получен",
+    color: "default",
+    variant: "outlined",
+    helper: previewError,
+  };
+}
+
+function getImageCurrentFieldRows(image) {
+  if (!image?.current_fields || typeof image.current_fields !== "object") {
+    return [];
+  }
+
+  return [
+    { key: "img_new", label: "img_new", value: image.current_fields.img_new },
+    { key: "img_new_update", label: "img_new_update", value: image.current_fields.img_new_update },
+    { key: "img_app", label: "img_app", value: image.current_fields.img_app },
+  ];
+}
+
 function SectionCard({ title, subtitle, children }) {
   return (
     <Paper sx={{ p: 2, borderRadius: 3 }}>
@@ -261,13 +304,8 @@ export default function SkladSiteItemViewDialog({
   const stageRows = formatStageRows(detail?.items_stage);
   const linkedItemRows = formatLinkedItemRows(detail?.item_items);
   const stageTimingRows = getStageTimingRows(detail);
-  const deletePreviewError = detail?.delete_usage?.preview_error || "";
-  const deletePreviewState =
-    typeof detail?.can_delete === "boolean"
-      ? detail.can_delete
-        ? "Можно удалить"
-        : "Удаление может быть ограничено"
-      : "Статус удаления не определен";
+  const deletePreviewMeta = getDeletePreviewMeta(detail);
+  const imageCurrentFieldRows = getImageCurrentFieldRows(detail?.image);
 
   return (
     <Dialog
@@ -332,12 +370,17 @@ export default function SkladSiteItemViewDialog({
                 sx={{ p: 0 }}
               >
                 <Stack spacing={2.5}>
-                  {deletePreviewError ? (
+                  {deletePreviewMeta.helper ? (
                     <Alert
-                      severity="info"
+                      severity={
+                        detail?.delete_usage?.is_available === false ||
+                        detail?.delete_usage?.status === "unavailable"
+                          ? "warning"
+                          : "info"
+                      }
                       sx={{ borderRadius: 2 }}
                     >
-                      {deletePreviewError}
+                      {deletePreviewMeta.helper}
                     </Alert>
                   ) : null}
 
@@ -381,7 +424,7 @@ export default function SkladSiteItemViewDialog({
                           <Grid size={{ xs: 12, md: 6 }}>
                             <InfoField
                               label="Статус удаления"
-                              value={deletePreviewState}
+                              value={deletePreviewMeta.label}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
@@ -467,10 +510,10 @@ export default function SkladSiteItemViewDialog({
                                 size="small"
                               />
                               <Chip
-                                label={deletePreviewState}
-                                color={detail?.can_delete ? "success" : "default"}
+                                label={deletePreviewMeta.label}
+                                color={deletePreviewMeta.color}
                                 size="small"
-                                variant={detail?.can_delete ? "filled" : "outlined"}
+                                variant={deletePreviewMeta.variant}
                               />
                             </Stack>
                           </Stack>
@@ -837,6 +880,17 @@ export default function SkladSiteItemViewDialog({
                             value={formatValue(detail?.image?.variants?.jpg?.path)}
                           />
                         </Grid>
+                        {imageCurrentFieldRows.map((row) => (
+                          <Grid
+                            key={row.key}
+                            size={{ xs: 12, md: 4 }}
+                          >
+                            <InfoField
+                              label={row.label}
+                              value={formatValue(row.value)}
+                            />
+                          </Grid>
+                        ))}
                       </Grid>
                     </Stack>
                   </SectionCard>
@@ -887,7 +941,7 @@ export default function SkladSiteItemViewDialog({
                       <Grid size={{ xs: 12, md: 6 }}>
                         <InfoField
                           label="Preview delete"
-                          value={deletePreviewState}
+                          value={deletePreviewMeta.label}
                         />
                       </Grid>
                     </Grid>

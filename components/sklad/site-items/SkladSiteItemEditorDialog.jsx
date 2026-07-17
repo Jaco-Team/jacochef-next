@@ -45,7 +45,31 @@ const MARKING_OPTIONS = [
   { id: "2", name: "Сладкий напиток" },
 ];
 
+function createEmptySiteItemRelations() {
+  return {
+    composition_source: {
+      pf: [],
+      recipes: [],
+    },
+    composition_derived: {
+      pf_total: [],
+    },
+    item_items: {
+      this_items: [],
+      all_items: [],
+    },
+    items_stage: {
+      stage_1: [],
+      stage_2: [],
+      stage_3: [],
+      all: [],
+    },
+  };
+}
+
 function buildInitialDraft(draft) {
+  const emptyRelations = createEmptySiteItemRelations();
+
   return {
     id: draft?.id ?? null,
     name: draft?.name ?? "",
@@ -78,10 +102,10 @@ function buildInitialDraft(draft) {
     time_stage_1: draft?.time_stage_1 ?? "",
     time_stage_2: draft?.time_stage_2 ?? "",
     time_stage_3: draft?.time_stage_3 ?? "",
-    composition_source: draft?.composition_source ?? {},
-    composition_derived: draft?.composition_derived ?? {},
-    item_items: draft?.item_items ?? {},
-    items_stage: draft?.items_stage ?? {},
+    composition_source: draft?.composition_source ?? emptyRelations.composition_source,
+    composition_derived: draft?.composition_derived ?? emptyRelations.composition_derived,
+    item_items: draft?.item_items ?? emptyRelations.item_items,
+    items_stage: draft?.items_stage ?? emptyRelations.items_stage,
   };
 }
 

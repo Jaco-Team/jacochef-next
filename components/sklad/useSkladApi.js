@@ -28,6 +28,14 @@ export default function useSkladApi() {
       getSemiFinishedOne: (id) => request("semi-finished/get_one", { id }),
       getSiteItems: (payload = {}) => request("site-items/list", payload),
       getSiteItem: (id) => request("site-items/get_one", { id }),
+      getHistoryList: (payload = {}) => request("history/list", payload),
+      getHistoryOne: (payload = {}) => request("history/get_one", payload),
+      getHistoryCompare: (payload = {}) => request("history/compare", payload),
+      historyList: (payload = {}) => request("history/list", payload),
+      historyGetOne: (payload = {}) => request("history/get_one", payload),
+      historyCompare: (payload = {}) => request("history/compare", payload),
+      getArchiveList: (payload = {}) => request("entities/archive_list", payload),
+      archiveList: (payload = {}) => request("entities/archive_list", payload),
     };
   }, []);
 }
