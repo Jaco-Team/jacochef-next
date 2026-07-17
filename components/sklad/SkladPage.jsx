@@ -26,6 +26,7 @@ import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
 import SkladCategoriesTab from "./categories/SkladCategoriesTab";
 import SkladProductionTab from "./production/SkladProductionTab";
+import SkladSiteItemsTab from "./site-items/SkladSiteItemsTab";
 import { getVisibleSkladTabs } from "./skladTabs";
 import { useSkladStore } from "./useSkladStore";
 
@@ -152,6 +153,15 @@ export default function SkladPage() {
     if (item.key === "production") {
       return (
         <SkladProductionTab
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+        />
+      );
+    }
+
+    if (item.key === "site-items") {
+      return (
+        <SkladSiteItemsTab
           showAlert={showAlert}
           refreshToken={refreshToken}
         />
