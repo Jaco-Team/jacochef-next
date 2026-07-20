@@ -14,8 +14,13 @@ import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 
 import { MySelect, MyAutocomplite2 } from "@/ui/Forms";
+import RevisionAnalysisTab from "@/components/revizion/RevisionAnalysisTab";
+import { api_laravel_local } from "@/src/api_new";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 import queryString from "query-string";
 
@@ -46,11 +51,15 @@ class Revizion_ extends React.Component {
       pfCopy: [],
       recCopy: [],
       search: "",
+      pageTab: "revisions",
+      analysisAccess: false,
+      analysisFilters: null,
     };
   }
 
   // переменные для фильтра
   async componentDidMount() {
+    this.loadAnalysisAccess();
     const data = await this.getData("get_all");
 
     this.setState({
@@ -65,6 +74,18 @@ class Revizion_ extends React.Component {
       this.getRevList();
     }, 10);
   }
+
+  loadAnalysisAccess = async () => {
+    const response = await api_laravel_local("revizion", "get_analysis_filters");
+    const data = response?.data ?? response;
+    const analysisAccess = handleUserAccess(data?.access).userCan("view", "analysis");
+
+    this.setState({
+      analysisAccess,
+      analysisFilters: analysisAccess ? data : null,
+      pageTab: analysisAccess ? this.state.pageTab : "revisions",
+    });
+  };
 
   getData = (method, data = {}) => {
     this.setState({
@@ -247,171 +268,199 @@ class Revizion_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
-          <Grid
-            size={{
-              xs: 12,
-              sm: 2,
-            }}
-          >
-            <Button
-              variant="contained"
-              style={{ whiteSpace: "nowrap" }}
+          <Grid size={12}>
+            <Tabs
+              value={this.state.pageTab}
+              onChange={(_, pageTab) => this.setState({ pageTab })}
+              variant="scrollable"
+              scrollButtons="auto"
             >
-              <Link
-                style={{ color: "#fff", textDecoration: "none" }}
-                href="/revizion/new"
+              <Tab
+                value="revisions"
+                label="Ревизии"
+              />
+              {this.state.analysisAccess ? (
+                <Tab
+                  value="analysis"
+                  label="Анализ по ревизиям"
+                />
+              ) : null}
+            </Tabs>
+          </Grid>
+
+          {this.state.pageTab === "revisions" ? (
+            <>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
               >
-                Новая ревизия
-              </Link>
-            </Button>
-          </Grid>
+                <Button
+                  variant="contained"
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  <Link
+                    style={{ color: "#fff", textDecoration: "none" }}
+                    href="/revizion/new"
+                  >
+                    Новая ревизия
+                  </Link>
+                </Button>
+              </Grid>
 
-          <Grid
-            size={{
-              xs: 12,
-              sm: 8,
-            }}
-          >
-            <MyAutocomplite2
-              label="Поиск"
-              freeSolo={true}
-              multiple={false}
-              data={this.state.all_for_search}
-              value={this.state.search}
-              func={this.search.bind(this)}
-              onBlur={this.search.bind(this)}
-            />
-          </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 8,
+                }}
+              >
+                <MyAutocomplite2
+                  label="Поиск"
+                  freeSolo={true}
+                  multiple={false}
+                  data={this.state.all_for_search}
+                  value={this.state.search}
+                  func={this.search.bind(this)}
+                  onBlur={this.search.bind(this)}
+                />
+              </Grid>
 
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MySelect
-              is_none={false}
-              data={this.state.points}
-              value={this.state.point}
-              func={this.changePoint.bind(this)}
-              label="Точка"
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <MySelect
-              is_none={false}
-              data={this.state.revList}
-              value={this.state.chooseRev}
-              func={this.changeRev.bind(this)}
-              label="Ревизия"
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 2,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={this.getDataRev.bind(this)}
-              style={{ whiteSpace: "nowrap" }}
-            >
-              Обновить данные
-            </Button>
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 2,
-            }}
-          >
-            <Button
-              variant="contained"
-              style={{ whiteSpace: "nowrap" }}
-              onClick={this.editDataRev.bind(this)}
-              disabled={
-                !this.state.point || !this.state.chooseRev || this.state.point === "0"
-                  ? true
-                  : false
-              }
-            >
-              Редактировать ревизию
-            </Button>
-          </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+              >
+                <MySelect
+                  is_none={false}
+                  data={this.state.points}
+                  value={this.state.point}
+                  func={this.changePoint.bind(this)}
+                  label="Точка"
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+              >
+                <MySelect
+                  is_none={false}
+                  data={this.state.revList}
+                  value={this.state.chooseRev}
+                  func={this.changeRev.bind(this)}
+                  label="Ревизия"
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={this.getDataRev.bind(this)}
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  Обновить данные
+                </Button>
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 2,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  style={{ whiteSpace: "nowrap" }}
+                  onClick={this.editDataRev.bind(this)}
+                  disabled={
+                    !this.state.point || !this.state.chooseRev || this.state.point === "0"
+                      ? true
+                      : false
+                  }
+                >
+                  Редактировать ревизию
+                </Button>
+              </Grid>
 
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <TableContainer component={Paper}>
-              <Table>
-                {!this.state.items.length ? null : (
-                  <TableHead>
-                    <TableRow style={{ backgroundColor: "#ADD8E6" }}>
-                      <TableCell style={{ width: "60%" }}>Товар</TableCell>
-                      <TableCell style={{ width: "40%" }}>Объем</TableCell>
-                    </TableRow>
-                  </TableHead>
-                )}
-                <TableBody>
-                  {this.state.items.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>
-                        {item.value} {item.ei_name}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <TableContainer component={Paper}>
+                  <Table>
+                    {!this.state.items.length ? null : (
+                      <TableHead>
+                        <TableRow style={{ backgroundColor: "#ADD8E6" }}>
+                          <TableCell style={{ width: "60%" }}>Товар</TableCell>
+                          <TableCell style={{ width: "40%" }}>Объем</TableCell>
+                        </TableRow>
+                      </TableHead>
+                    )}
+                    <TableBody>
+                      {this.state.items.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            {item.value} {item.ei_name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
 
-                {!this.state.pf.length ? null : (
-                  <TableHead>
-                    <TableRow style={{ backgroundColor: "#ADD8E6" }}>
-                      <TableCell style={{ width: "60%" }}>Заготовка</TableCell>
-                      <TableCell style={{ width: "40%" }}>Объем</TableCell>
-                    </TableRow>
-                  </TableHead>
-                )}
-                <TableBody>
-                  {this.state.pf.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>
-                        {item.value} {item.ei_name}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                    {!this.state.pf.length ? null : (
+                      <TableHead>
+                        <TableRow style={{ backgroundColor: "#ADD8E6" }}>
+                          <TableCell style={{ width: "60%" }}>Заготовка</TableCell>
+                          <TableCell style={{ width: "40%" }}>Объем</TableCell>
+                        </TableRow>
+                      </TableHead>
+                    )}
+                    <TableBody>
+                      {this.state.pf.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            {item.value} {item.ei_name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
 
-                {!this.state.rec.length ? null : (
-                  <TableHead>
-                    <TableRow style={{ backgroundColor: "#ADD8E6" }}>
-                      <TableCell style={{ width: "60%" }}>Рецепт</TableCell>
-                      <TableCell style={{ width: "40%" }}>Объем</TableCell>
-                    </TableRow>
-                  </TableHead>
-                )}
-                <TableBody>
-                  {this.state.rec.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>
-                        {item.value} {item.ei_name}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
+                    {!this.state.rec.length ? null : (
+                      <TableHead>
+                        <TableRow style={{ backgroundColor: "#ADD8E6" }}>
+                          <TableCell style={{ width: "60%" }}>Рецепт</TableCell>
+                          <TableCell style={{ width: "40%" }}>Объем</TableCell>
+                        </TableRow>
+                      </TableHead>
+                    )}
+                    <TableBody>
+                      {this.state.rec.map((item, key) => (
+                        <TableRow key={key}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            {item.value} {item.ei_name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            </>
+          ) : this.state.pageTab === "analysis" && this.state.analysisAccess ? (
+            <Grid size={12}>
+              <RevisionAnalysisTab initialData={this.state.analysisFilters} />
+            </Grid>
+          ) : null}
         </Grid>
       </>
     );
