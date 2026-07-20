@@ -9,7 +9,6 @@ import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -44,6 +43,21 @@ const MARKING_OPTIONS = [
   { id: "1", name: "Вода" },
   { id: "2", name: "Сладкий напиток" },
 ];
+
+function dedupeSelectOptions(options) {
+  const seen = new Set();
+
+  return options.filter((option) => {
+    const key = String(option?.id ?? "");
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
 
 function createEmptySiteItemRelations() {
   return {
@@ -147,10 +161,12 @@ function formatValue(value, fallback = "-") {
 export default function SkladSiteItemEditorDialog({
   open,
   mode = "edit",
+  loading = false,
   draft,
   categories = [],
   tags = [],
   isEditable = false,
+  onSubmit,
   onClose,
 }) {
   const [activeTab, setActiveTab] = useState("main");
@@ -166,13 +182,32 @@ export default function SkladSiteItemEditorDialog({
   }, [draft, open]);
 
   const categoryOptions = useMemo(() => {
-    return [{ id: "", name: "Выберите категорию" }].concat(
+    const options = [{ id: "", name: "Выберите категорию" }].concat(
       (categories || []).map((item) => ({
         id: String(item?.id ?? ""),
         name: item?.name || String(item?.id || ""),
       })),
     );
-  }, [categories]);
+
+    if (
+      form.category_id &&
+      !options.some((item) => String(item.id) === String(form.category_id)) &&
+      draft?.category_name
+    ) {
+      options.push({
+        id: String(form.category_id),
+        name: draft.category_name,
+      });
+    }
+
+    return dedupeSelectOptions(options);
+  }, [categories, draft?.category_name, form.category_id]);
+
+  const safeCategoryValue = useMemo(() => {
+    return categoryOptions.some((item) => String(item.id) === String(form.category_id))
+      ? form.category_id
+      : "";
+  }, [categoryOptions, form.category_id]);
 
   const tagNames = useMemo(() => {
     return Array.isArray(form.tags) ? form.tags.map((tag) => tag?.name).filter(Boolean) : [];
@@ -219,24 +254,6 @@ export default function SkladSiteItemEditorDialog({
 
       <DialogContent dividers>
         <Stack spacing={2.5}>
-          <Alert
-            severity="info"
-            sx={{ borderRadius: 2 }}
-          >
-            Это wireframe редактора. Поля уже разложены по legacy-логике, но save/upload/tag
-            mutations intentionally не отправляются в API до следующего backend pass.
-          </Alert>
-
-          {!isEditable ? (
-            <Alert
-              severity="warning"
-              sx={{ borderRadius: 2 }}
-            >
-              Редактор открыт в preview-режиме без edit access. Табы и компоновка можно проверить,
-              но сохранение останется выключенным.
-            </Alert>
-          ) : null}
-
           <TabContext value={activeTab}>
             <TabList
               onChange={(_, nextValue) => setActiveTab(nextValue)}
@@ -302,7 +319,7 @@ export default function SkladSiteItemEditorDialog({
                           label="Категория"
                           data={categoryOptions}
                           is_none={false}
-                          value={form.category_id}
+                          value={safeCategoryValue}
                           disabled={!isEditable}
                           func={(event) => updateField("category_id", event.target.value)}
                         />
@@ -539,7 +556,7 @@ export default function SkladSiteItemEditorDialog({
               <Stack spacing={2}>
                 <InfoCard
                   title="Теги"
-                  description="Read-first wireframe под следующий tag-management slice"
+                  description="Текущие привязанные теги"
                 >
                   {tagNames.length ? (
                     <Stack
@@ -561,14 +578,6 @@ export default function SkladSiteItemEditorDialog({
                     <Typography color="text.secondary">Теги пока не назначены.</Typography>
                   )}
                 </InfoCard>
-
-                <Alert
-                  severity="info"
-                  sx={{ borderRadius: 2 }}
-                >
-                  Inline tag create/edit deliberately postponed until `site-items/tags/save_new` and
-                  `save_edit` are validated against the current API quality.
-                </Alert>
               </Stack>
             </TabPanel>
 
@@ -632,7 +641,7 @@ export default function SkladSiteItemEditorDialog({
               <Stack spacing={2}>
                 <InfoCard
                   title="Состав технологической карты"
-                  description="Каркас под staged composition editor"
+                  description="Источник состава и этапы приготовления"
                 >
                   <Grid
                     container
@@ -706,14 +715,6 @@ export default function SkladSiteItemEditorDialog({
                     </InfoCard>
                   </Grid>
                 </Grid>
-
-                <Alert
-                  severity="info"
-                  sx={{ borderRadius: 2 }}
-                >
-                  Full composition row editor is the next FE slice. The shell is already aligned so
-                  staged PF/recipe inputs can be mounted here without rebuilding the dialog.
-                </Alert>
               </Stack>
             </TabPanel>
           </TabContext>
@@ -722,12 +723,12 @@ export default function SkladSiteItemEditorDialog({
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose}>Закрыть</Button>
-        <Button disabled>Сохранить черновик</Button>
         <Button
           variant="contained"
-          disabled
+          disabled={!isEditable || loading}
+          onClick={() => onSubmit?.(form)}
         >
-          {mode === "create" ? "Создать товар" : "Сохранить изменения"}
+          {loading ? "Сохраняем..." : mode === "create" ? "Создать товар" : "Сохранить изменения"}
         </Button>
       </DialogActions>
     </Dialog>

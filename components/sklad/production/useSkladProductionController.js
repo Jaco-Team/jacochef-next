@@ -116,6 +116,14 @@ function formatCategories(categories) {
   return names.length ? names.join(", ") : "-";
 }
 
+function formatDateRangeCell(row) {
+  if (!row?.date_start && !row?.date_end) {
+    return "—";
+  }
+
+  return `${row?.date_start || "—"} - ${row?.date_end || "—"}`;
+}
+
 function getStatusChips(row) {
   const chips = [];
 
@@ -893,15 +901,29 @@ export default function useSkladProductionController({ showAlert }) {
         </Paper>
 
         <TableContainer>
-          <Table size="small">
+          <Table
+            size="small"
+            stickyHeader
+            sx={{
+              "& th": {
+                whiteSpace: "nowrap",
+                fontWeight: 700,
+              },
+            }}
+          >
             <TableHead>
               <TableRow>
                 <TableCell>Название</TableCell>
                 <TableCell>Категории</TableCell>
                 <TableCell>Срок годности</TableCell>
-                <TableCell>Период действия</TableCell>
-                <TableCell>Статус</TableCell>
-                <TableCell align="right">Действия</TableCell>
+                <TableCell sx={{ width: 220 }}>Действует</TableCell>
+                <TableCell sx={{ minWidth: 260 }}>Статус</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ width: 240 }}
+                >
+                  Действия
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -921,10 +943,13 @@ export default function useSkladProductionController({ showAlert }) {
 
                     <TableCell>{formatCategories(row?.categories)}</TableCell>
                     <TableCell>{row?.shelf_life || "-"}</TableCell>
-                    <TableCell>
-                      {row?.date_start || row?.date_end
-                        ? `${row?.date_start || "..."} - ${row?.date_end || "..."}`
-                        : "-"}
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: 12, lineHeight: 1.35 }}
+                      >
+                        {formatDateRangeCell(row)}
+                      </Typography>
                     </TableCell>
 
                     <TableCell>

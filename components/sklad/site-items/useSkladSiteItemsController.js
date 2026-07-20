@@ -42,20 +42,20 @@ import { SITE_ITEMS_ARCHIVE_MODE_OPTIONS, useSkladSiteItemsStore } from "./useSk
 
 function formatDateRange(row) {
   if (!row?.date_start && !row?.date_end) {
-    return "-";
+    return "—";
   }
 
-  return `${row?.date_start || "..."} - ${row?.date_end || "..."}`;
+  return `${row?.date_start || "—"} - ${row?.date_end || "—"}`;
 }
 
 function formatBju(row) {
   const parts = [
     row?.protein !== undefined && row?.protein !== null && row?.protein !== ""
-      ? `Б: ${row.protein}`
+      ? String(row.protein)
       : null,
-    row?.fat !== undefined && row?.fat !== null && row?.fat !== "" ? `Ж: ${row.fat}` : null,
+    row?.fat !== undefined && row?.fat !== null && row?.fat !== "" ? String(row.fat) : null,
     row?.carbohydrates !== undefined && row?.carbohydrates !== null && row?.carbohydrates !== ""
-      ? `У: ${row.carbohydrates}`
+      ? String(row.carbohydrates)
       : null,
   ].filter(Boolean);
 
@@ -128,6 +128,21 @@ function getArchiveModeLabel(value) {
   return SITE_ITEMS_ARCHIVE_MODE_OPTIONS.find((item) => item.id === value)?.name || "Активные";
 }
 
+function dedupeSelectOptions(options) {
+  const seen = new Set();
+
+  return options.filter((option) => {
+    const key = String(option?.id ?? "");
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 function createEmptySiteItemRelations() {
   return {
     item_items: {
@@ -148,6 +163,100 @@ function createEmptySiteItemRelations() {
       pf_total: [],
     },
   };
+}
+
+function normalizeSiteItemDraft(response, fallbackCategories = []) {
+  const item = response?.item || {};
+  const emptyRelations = createEmptySiteItemRelations();
+
+  return {
+    ...item,
+    category_name:
+      item?.category_name ||
+      fallbackCategories.find((category) => String(category?.id) === String(item?.category_id))
+        ?.name ||
+      "",
+    tags: item?.tags || [],
+    composition_source:
+      item?.composition_source || response?.composition_source || emptyRelations.composition_source,
+    composition_derived:
+      item?.composition_derived ||
+      response?.composition_derived ||
+      emptyRelations.composition_derived,
+    allergens_derived: item?.allergens_derived || response?.allergens_derived || [],
+    possible_allergens_derived:
+      item?.possible_allergens_derived || response?.possible_allergens_derived || [],
+    image: item?.image || response?.image || null,
+    marking: item?.marking || response?.marking || {},
+    can_delete:
+      typeof response?.can_delete === "boolean" ? response.can_delete : (item?.can_delete ?? null),
+    delete_usage: response?.delete_usage || item?.delete_usage || null,
+    item_items: response?.item_items || item?.item_items || emptyRelations.item_items,
+    items_stage: response?.items_stage || item?.items_stage || emptyRelations.items_stage,
+  };
+}
+
+function normalizeSiteItemSavePayload(draft) {
+  const marking = draft?.marking || {};
+
+  return {
+    id: draft?.id ?? null,
+    name: String(draft?.name || "").trim(),
+    short_name: String(draft?.short_name || "").trim(),
+    category_id: draft?.category_id ? Number(draft.category_id) : null,
+    date_start: draft?.date_start ?? "",
+    date_end: draft?.date_end ?? "",
+    art: draft?.art ?? "",
+    stol: draft?.stol ?? "",
+    count_part: draft?.count_part ?? "",
+    weight: draft?.weight ?? "",
+    protein: draft?.protein ?? "",
+    fat: draft?.fat ?? "",
+    carbohydrates: draft?.carbohydrates ?? "",
+    kkal: draft?.kkal ?? "",
+    tmp_desc: draft?.tmp_desc ?? "",
+    marc_desc: draft?.marc_desc ?? "",
+    marc_desc_full: draft?.marc_desc_full ?? "",
+    tags: Array.isArray(draft?.tags) ? draft.tags : [],
+    image: draft?.image ?? null,
+    marking: {
+      ...marking,
+      is_mark: draft?.is_mark ? Number(draft.is_mark) : 0,
+      mark_code: draft?.mark_code ?? "",
+      series: draft?.series ?? "",
+      is_akchis: draft?.is_akchis ? 1 : 0,
+    },
+    show_site: draft?.show_site ? 1 : 0,
+    show_program: draft?.show_program ? 1 : 0,
+    is_show: draft?.is_show ? 1 : 0,
+    is_hit: draft?.is_hit ? 1 : 0,
+    is_new: draft?.is_new ? 1 : 0,
+    time_stage_1: draft?.time_stage_1 ?? "",
+    time_stage_2: draft?.time_stage_2 ?? "",
+    time_stage_3: draft?.time_stage_3 ?? "",
+    composition_source:
+      draft?.composition_source || createEmptySiteItemRelations().composition_source,
+    composition_derived:
+      draft?.composition_derived || createEmptySiteItemRelations().composition_derived,
+    item_items: draft?.item_items || createEmptySiteItemRelations().item_items,
+    items_stage: draft?.items_stage || createEmptySiteItemRelations().items_stage,
+  };
+}
+
+function validateSiteItemDraft(draft) {
+  if (!String(draft?.name || "").trim()) {
+    return "Название обязательно";
+  }
+
+  if (!String(draft?.date_start || "").trim()) {
+    return "Дата начала обязательна";
+  }
+
+  if (draft?.date_end && draft?.date_start && String(draft.date_end) < String(draft.date_start)) {
+    return "Дата окончания не может быть раньше даты начала";
+  }
+
+  return null;
 }
 
 function getDeleteError(response) {
@@ -193,8 +302,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canEdit("site_items");
-  const canOpenEditorWireframe = true;
-
   const loadRows = useCallback(async () => {
     setShellState({ isLoading: true });
 
@@ -223,20 +330,24 @@ export default function useSkladSiteItemsController({ showAlert }) {
   }, [api, archiveMode, categoryId, search, setShellState, setState, showAlert, tagId]);
 
   const categoryOptions = useMemo(() => {
-    return [{ id: "", name: "Все категории" }].concat(
-      (categories || []).map((item) => ({
-        id: String(item?.id ?? ""),
-        name: item?.name || String(item?.id || ""),
-      })),
+    return dedupeSelectOptions(
+      [{ id: "", name: "Все категории" }].concat(
+        (categories || []).map((item) => ({
+          id: String(item?.id ?? ""),
+          name: item?.name || String(item?.id || ""),
+        })),
+      ),
     );
   }, [categories]);
 
   const tagOptions = useMemo(() => {
-    return [{ id: "", name: "Все теги" }].concat(
-      (tags || []).map((item) => ({
-        id: String(item?.id ?? ""),
-        name: item?.name || String(item?.id || ""),
-      })),
+    return dedupeSelectOptions(
+      [{ id: "", name: "Все теги" }].concat(
+        (tags || []).map((item) => ({
+          id: String(item?.id ?? ""),
+          name: item?.name || String(item?.id || ""),
+        })),
+      ),
     );
   }, [tags]);
 
@@ -465,41 +576,106 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
 
   const openCreate = useCallback(() => {
-    const emptyRelations = createEmptySiteItemRelations();
-
     setState({
       modal: {
         open: true,
         mode: "create",
-        loading: false,
+        loading: true,
         section: "tech",
       },
       detail: null,
-      draft: {
-        name: "",
-        short_name: "",
-        category_id: "",
-        date_start: "",
-        date_end: "",
-        art: "",
-        stol: "",
-        count_part: "",
-        weight: "",
-        protein: "",
-        fat: "",
-        carbohydrates: "",
-        kkal: "",
-        kkal_preview: "",
-        tmp_desc: "",
-        marc_desc: "",
-        marc_desc_full: "",
-        tags: [],
-        image: null,
-        marking: {},
-        ...emptyRelations,
-      },
+      draft: null,
     });
-  }, [setState]);
+    setShellState({ isLoading: true });
+
+    api
+      .getSiteItemBootstrap()
+      .then((response) => {
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки формы");
+        }
+
+        const normalizedDraft = normalizeSiteItemDraft(response, response?.cat_list || categories);
+
+        setState({
+          categories: response?.cat_list || categories,
+          tags: response?.tags_all || tags,
+          modal: {
+            open: true,
+            mode: "create",
+            loading: false,
+            section: "tech",
+          },
+          detail: normalizedDraft,
+          draft: normalizedDraft,
+        });
+      })
+      .catch((error) => {
+        setState({
+          modal: {
+            open: false,
+            mode: "view",
+            loading: false,
+            section: "tech",
+          },
+          detail: null,
+          draft: null,
+        });
+        showAlert(error?.message || "Ошибка загрузки формы", false);
+      })
+      .finally(() => {
+        setShellState({ isLoading: false });
+      });
+  }, [api, categories, setShellState, setState, showAlert, tags]);
+
+  const submitDraft = useCallback(
+    async (nextDraft) => {
+      const validationError = validateSiteItemDraft(nextDraft);
+
+      if (validationError) {
+        showAlert(validationError, false);
+        return;
+      }
+
+      const saveItem = modal.mode === "create" ? api.createSiteItem : api.updateSiteItem;
+      const payload = normalizeSiteItemSavePayload(nextDraft);
+
+      setState({
+        modal: {
+          ...modal,
+          loading: true,
+        },
+        draft: nextDraft,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await saveItem({
+          data: payload,
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка сохранения");
+        }
+
+        showAlert(response?.text || "Успешно сохранено", true);
+        closeModal();
+        await loadRows();
+      } catch (error) {
+        setState({
+          modal: {
+            ...modal,
+            loading: false,
+          },
+          draft: nextDraft,
+        });
+        showAlert(error?.message || "Ошибка сохранения", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, closeModal, loadRows, modal, setShellState, setState, showAlert],
+  );
 
   const openEdit = useCallback(
     async (row) => {
@@ -526,29 +702,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           throw new Error(response?.text || "Ошибка загрузки товара");
         }
 
-        const item = response?.item || {};
-        const emptyRelations = createEmptySiteItemRelations();
-        const normalizedDraft = {
-          ...item,
-          category_name:
-            item?.category_name ||
-            categories.find((category) => String(category?.id) === String(item?.category_id))
-              ?.name ||
-            "",
-          tags: item?.tags || [],
-          composition_source:
-            item?.composition_source ||
-            response?.composition_source ||
-            emptyRelations.composition_source,
-          composition_derived:
-            item?.composition_derived ||
-            response?.composition_derived ||
-            emptyRelations.composition_derived,
-          image: item?.image || response?.image || null,
-          marking: item?.marking || response?.marking || {},
-          item_items: response?.item_items || item?.item_items || emptyRelations.item_items,
-          items_stage: response?.items_stage || item?.items_stage || emptyRelations.items_stage,
-        };
+        const normalizedDraft = normalizeSiteItemDraft(response, categories);
 
         setState({
           modal: {
@@ -603,9 +757,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
           throw new Error(response?.text || "Ошибка загрузки товара");
         }
 
-        const item = response?.item || {};
-        const emptyRelations = createEmptySiteItemRelations();
-
         setState({
           modal: {
             open: true,
@@ -613,35 +764,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             loading: false,
             section,
           },
-          detail: {
-            ...item,
-            category_name:
-              item?.category_name ||
-              categories.find((category) => String(category?.id) === String(item?.category_id))
-                ?.name ||
-              "",
-            tags: item?.tags || [],
-            composition_source:
-              item?.composition_source ||
-              response?.composition_source ||
-              emptyRelations.composition_source,
-            composition_derived:
-              item?.composition_derived ||
-              response?.composition_derived ||
-              emptyRelations.composition_derived,
-            allergens_derived: item?.allergens_derived || response?.allergens_derived || [],
-            possible_allergens_derived:
-              item?.possible_allergens_derived || response?.possible_allergens_derived || [],
-            image: item?.image || response?.image || null,
-            marking: item?.marking || response?.marking || {},
-            can_delete:
-              typeof response?.can_delete === "boolean"
-                ? response.can_delete
-                : (item?.can_delete ?? null),
-            delete_usage: response?.delete_usage || item?.delete_usage || null,
-            item_items: response?.item_items || item?.item_items || emptyRelations.item_items,
-            items_stage: response?.items_stage || item?.items_stage || emptyRelations.items_stage,
-          },
+          detail: normalizeSiteItemDraft(response, categories),
         });
       } catch (error) {
         setState({
@@ -715,7 +838,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              disabled={!canOpenEditorWireframe}
+              disabled={!isEditable}
               onClick={openCreate}
             >
               Добавить товар
@@ -787,17 +910,31 @@ export default function useSkladSiteItemsController({ showAlert }) {
         </Paper>
 
         <TableContainer>
-          <Table size="small">
+          <Table
+            size="small"
+            stickyHeader
+            sx={{
+              "& th": {
+                whiteSpace: "nowrap",
+                fontWeight: 700,
+              },
+            }}
+          >
             <TableHead>
               <TableRow>
                 <TableCell>Название</TableCell>
                 <TableCell>Категория</TableCell>
-                <TableCell>БЖУ</TableCell>
-                <TableCell>Ккал</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Б/Ж/У</TableCell>
+                <TableCell sx={{ width: 84 }}>Ккал</TableCell>
                 <TableCell>Теги</TableCell>
-                <TableCell>Действует</TableCell>
-                <TableCell>Статус</TableCell>
-                <TableCell align="right">Действия</TableCell>
+                <TableCell sx={{ width: 188 }}>Действует</TableCell>
+                <TableCell sx={{ minWidth: 280 }}>Статус</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ width: 216 }}
+                >
+                  Действия
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -816,20 +953,38 @@ export default function useSkladSiteItemsController({ showAlert }) {
                     <TableCell>
                       <Stack spacing={0.5}>
                         <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          {row?.short_name || "Без короткого названия"}
-                        </Typography>
+                        {row?.short_name ? (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            {row.short_name}
+                          </Typography>
+                        ) : null}
                       </Stack>
                     </TableCell>
 
                     <TableCell>{getCategoryName(row, categories)}</TableCell>
-                    <TableCell>{formatBju(row)}</TableCell>
-                    <TableCell>{row?.kkal_preview ?? row?.kkal ?? "-"}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: 12, lineHeight: 1.35 }}
+                      >
+                        {formatBju(row)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      {row?.kkal_preview ?? row?.kkal ?? "-"}
+                    </TableCell>
                     <TableCell>{rowTagNames.length ? rowTagNames.join(", ") : "-"}</TableCell>
-                    <TableCell>{formatDateRange(row)}</TableCell>
+                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: 12, lineHeight: 1.35 }}
+                      >
+                        {formatDateRange(row)}
+                      </Typography>
+                    </TableCell>
 
                     <TableCell>
                       <Stack
@@ -946,11 +1101,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                         </Tooltip>
 
                         <Tooltip
-                          title={
-                            isEditable
-                              ? "Открыть редактор"
-                              : "Открыть read-only wireframe редактора"
-                          }
+                          title={isEditable ? "Открыть редактор" : "Открыть read-only редактор"}
                         >
                           <span>
                             <IconButton
@@ -1119,7 +1270,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
           draft={draft}
           categories={categories}
           tags={tags}
+          loading={modal.loading}
           isEditable={isEditable}
+          onSubmit={submitDraft}
           onClose={closeModal}
         />
         <SkladDeleteDialog

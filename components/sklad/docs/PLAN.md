@@ -191,8 +191,9 @@ Contract note:
 - `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one` уже live
 - list/filter shell уже собран
 - detail tabs и editor wireframe уже собраны и открываются
-- create draft shape, detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
-- save/image/tag mutations остаются staged до следующего backend pass
+- create bootstrap и canonical `save_new` / `save_edit` уже подключены
+- detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
+- image upload и inline tag mutations остаются staged до следующего backend pass
 - authoritative delete confirmation + server-side delete call для site items уже подключены
 - authoritative archive/unarchive confirmation + server-side archive call для site items уже подключены
 

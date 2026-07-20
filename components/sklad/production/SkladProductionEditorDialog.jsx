@@ -33,6 +33,21 @@ const TABS = [
   { value: "activity", label: "Статус", icon: <SettingsOutlinedIcon fontSize="small" /> },
 ];
 
+function dedupeSelectOptions(options) {
+  const seen = new Set();
+
+  return options.filter((option) => {
+    const key = String(option?.id ?? "");
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 function buildInitialDraft(draft) {
   return {
     id: draft?.id ?? null,
@@ -102,13 +117,32 @@ export default function SkladProductionEditorDialog({
   }, [draft, open]);
 
   const unitOptions = useMemo(() => {
-    return [{ id: "", name: "Выберите единицу" }].concat(
+    const options = [{ id: "", name: "Выберите единицу" }].concat(
       (units || []).map((item) => ({
         id: String(item?.id ?? ""),
         name: item?.name || String(item?.id || ""),
       })),
     );
-  }, [units]);
+
+    if (
+      form.ed_izmer_id &&
+      !options.some((item) => String(item.id) === String(form.ed_izmer_id)) &&
+      draft?.unit_name
+    ) {
+      options.push({
+        id: String(form.ed_izmer_id),
+        name: draft.unit_name,
+      });
+    }
+
+    return dedupeSelectOptions(options);
+  }, [draft?.unit_name, form.ed_izmer_id, units]);
+
+  const safeUnitValue = useMemo(() => {
+    return unitOptions.some((item) => String(item.id) === String(form.ed_izmer_id))
+      ? form.ed_izmer_id
+      : "";
+  }, [form.ed_izmer_id, unitOptions]);
 
   const categoryNames = useMemo(() => {
     return Array.isArray(form.categories)
@@ -253,7 +287,7 @@ export default function SkladProductionEditorDialog({
                             label="Единица"
                             data={unitOptions}
                             is_none={false}
-                            value={form.ed_izmer_id}
+                            value={safeUnitValue}
                             disabled={!isEditable}
                             func={(event) => updateField("ed_izmer_id", event.target.value)}
                           />
