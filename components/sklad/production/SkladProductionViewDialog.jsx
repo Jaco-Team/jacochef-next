@@ -26,6 +26,16 @@ function formatTags(items) {
   return items.map((item) => item?.name || item?.title || item?.label || "").filter(Boolean);
 }
 
+function pickFirstDefined(...values) {
+  for (const value of values) {
+    if (value !== null && value !== undefined && value !== "") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 function InfoCard({ title, subtitle, children }) {
   return (
     <Paper sx={{ p: 2, borderRadius: 3 }}>
@@ -143,7 +153,7 @@ export default function SkladProductionViewDialog({
               <Stack spacing={2}>
                 <InfoCard
                   title="Основная карточка"
-                  subtitle="Основные поля текущей карточки"
+                  subtitle="Основные поля и срок действия текущей карточки"
                 >
                   <Grid
                     container
@@ -202,7 +212,7 @@ export default function SkladProductionViewDialog({
 
                 <InfoCard
                   title="Аллергены"
-                  subtitle="Исходные и итоговые аллергены"
+                  subtitle="Исходные и производные аллергены карточки"
                 >
                   <Grid
                     container
@@ -287,7 +297,7 @@ export default function SkladProductionViewDialog({
                             <Grid size={{ xs: 6, md: 1.5 }}>
                               <InfoField
                                 label="Выход"
-                                value={formatValue(item?.res || item?.output)}
+                                value={formatValue(pickFirstDefined(item?.res, item?.output))}
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 1.5 }}>

@@ -222,6 +222,7 @@ export default function useSkladProductionController({ showAlert }) {
   const setShellState = useSkladStore((state) => state.setState);
   const shellSections = useSkladStore((state) => state.sections);
   const shellAccess = useSkladStore((state) => state.access);
+  const shellUnits = useSkladStore((state) => state.units);
   const categories = useSkladStore((state) => state.categories);
   const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
@@ -1167,8 +1168,9 @@ export default function useSkladProductionController({ showAlert }) {
           mode={detail?.id ? "edit" : "create"}
           entityLabel={getEntityLabel(entityType)}
           draft={draft}
-          categories={categories}
-          units={draft?.units || detail?.units || []}
+          units={
+            draft?.units?.length ? draft.units : detail?.units?.length ? detail.units : shellUnits
+          }
           isEditable={canCreateOrEdit}
           onSubmit={submitDraft}
           onClose={closeModal}

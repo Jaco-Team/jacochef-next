@@ -95,7 +95,6 @@ export default function SkladProductionEditorDialog({
   mode = "edit",
   entityLabel,
   draft,
-  categories = [],
   units = [],
   isEditable = false,
   onSubmit,
@@ -169,20 +168,12 @@ export default function SkladProductionEditorDialog({
     >
       <DialogContent dividers>
         <Stack spacing={2.5}>
-          <Alert
-            severity="info"
-            sx={{ borderRadius: 2 }}
-          >
-            Редактор работает на canonical production payload. Поля состава и категорий пока
-            остаются read-only в текущем FE scope.
-          </Alert>
-
           {!isEditable ? (
             <Alert
               severity="warning"
               sx={{ borderRadius: 2 }}
             >
-              Текущий доступ позволяет проверить layout и поля, но сохранение останется выключенным.
+              Недостаточно прав для сохранения этой карточки. Поля доступны только для просмотра.
             </Alert>
           ) : null}
 
@@ -191,7 +182,7 @@ export default function SkladProductionEditorDialog({
               severity="info"
               sx={{ borderRadius: 2 }}
             >
-              Загружаем payload редактора...
+              Загружаем данные карточки...
             </Alert>
           ) : (
             <TabContext value={activeTab}>
@@ -232,7 +223,7 @@ export default function SkladProductionEditorDialog({
                   <Grid size={{ xs: 12, md: 8 }}>
                     <InfoCard
                       title="Основные поля"
-                      description="Shared editor surface для recipe и semi-finished"
+                      description={`${entityLabel} с общими полями карточки и сроком действия`}
                     >
                       <Grid
                         container
@@ -298,7 +289,7 @@ export default function SkladProductionEditorDialog({
                   <Grid size={{ xs: 12, md: 4 }}>
                     <InfoCard
                       title="Категории"
-                      description="Source-aware production categories"
+                      description="Привязанные категории карточки"
                     >
                       {categoryNames.length ? (
                         <Stack
@@ -318,12 +309,6 @@ export default function SkladProductionEditorDialog({
                       ) : (
                         <Typography color="text.secondary">Категории пока не привязаны.</Typography>
                       )}
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        Categories create/edit wiring остается следующим этапом production slice.
-                      </Typography>
                     </InfoCard>
                   </Grid>
                 </Grid>
@@ -335,7 +320,7 @@ export default function SkladProductionEditorDialog({
               >
                 <InfoCard
                   title="Состав"
-                  description="Read-first shell для будущего composition editor"
+                  description="Текущие строки состава карточки"
                 >
                   {form.items.length ? (
                     <Stack spacing={1.5}>
@@ -397,7 +382,7 @@ export default function SkladProductionEditorDialog({
               >
                 <InfoCard
                   title="Флаги"
-                  description="Подготовка под save_flag/archive wiring"
+                  description="Текущие признаки публикации и участия в ревизии"
                 >
                   <Stack
                     direction="row"

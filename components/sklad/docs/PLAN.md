@@ -157,8 +157,8 @@ Contract note:
 - partially implemented
 - `recipes/list`, `recipes/get_one`, `semi-finished/list`, `semi-finished/get_one` уже live
 - общий list/filter shell уже собран в новом FE
-- detail/editor/history/convert actions уже доведены до working modal flow уровня wireframe
-- create/save mutations для production family остаются следующим backend-alignment pass
+- detail/editor/history/convert actions уже доведены до working modal flow на canonical read path
+- create/save mutations для production family уже подключены на canonical API для текущего FE scope
 - authoritative delete confirmation + server-side delete call для production family уже подключены
 - authoritative archive/unarchive confirmation + server-side archive call для production family уже подключены
 
@@ -674,7 +674,7 @@ Deliverables:
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: completed for canonical basic field editing and create/save flow; composition/category editing remains read-only in current FE scope.
-6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete and canonical list flag toggles; create/save remains pending.
+6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete, canonical list flag toggles and canonical create/save flow within current FE scope.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
 8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for working editor/view tabs, archive/unarchive, delete, canonical list flag toggles, canonical save flow, image upload and VK sync trigger; inline tag dictionary mutations are connected, broader tag UX polish remains.
 9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
@@ -695,7 +695,7 @@ Deliverables:
 - chat reporting format for this workstream:
 - short commit-message style scope summary
 - explicit next step draft
-- no visual parity pass as a planning item
+- explicit Chrome UX walkthrough as a closing hardening step
 
 ### Current pinned sequence
 
@@ -706,7 +706,8 @@ Deliverables:
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
 6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: completed for current FE scope; canonical create/edit, tag mutation, image upload, VK sync, history handoff, archive/delete flows and strict current API binding are in place, while deeper composition editing remains backend follow-up.
 7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive view/history/restore row actions connected, production/detail modals aligned to module modal pattern. Status: completed.
-8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
+8. Hardening slice: access matrix, smoke tests, migration leftovers and removal of leftover info stubs / temporary explanatory surfaces before finalization. Status: in progress.
+9. Chrome UX walkthrough slice: open `/sklad_items`, check each working tab step by step, fix runtime/UX regressions found there, then rerun reviewer pass on that chunk. Status: pending.
 
 ## 9. Explicit non-goals for current iteration
 
