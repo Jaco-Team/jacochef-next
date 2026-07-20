@@ -86,6 +86,7 @@ export default function SkladProductionEditorDialog({
   categories = [],
   units = [],
   isEditable = false,
+  onSubmit,
   onClose,
 }) {
   const [activeTab, setActiveTab] = useState("main");
@@ -122,6 +123,8 @@ export default function SkladProductionEditorDialog({
     }));
   };
 
+  const submitLabel = mode === "create" ? "Создать" : "Сохранить изменения";
+
   return (
     <Dialog
       open={open}
@@ -148,8 +151,8 @@ export default function SkladProductionEditorDialog({
             severity="info"
             sx={{ borderRadius: 2 }}
           >
-            Production editor сейчас собран как wireframe на canonical `get_one`, без save/archive
-            mutations.
+            Редактор работает на canonical production payload. Поля состава и категорий пока
+            остаются read-only в текущем FE scope.
           </Alert>
 
           {!isEditable ? (
@@ -403,16 +406,11 @@ export default function SkladProductionEditorDialog({
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose}>Закрыть</Button>
         <Button
-          variant="outlined"
-          disabled
-        >
-          Сохранить черновик
-        </Button>
-        <Button
           variant="contained"
-          disabled
+          disabled={!isEditable || loading}
+          onClick={() => onSubmit?.(form)}
         >
-          {mode === "create" ? "Создать" : "Сохранить изменения"}
+          {loading ? "Сохраняем..." : submitLabel}
         </Button>
       </DialogActions>
     </Dialog>

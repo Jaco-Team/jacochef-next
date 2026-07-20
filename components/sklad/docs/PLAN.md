@@ -670,12 +670,12 @@ Deliverables:
 2. Build `Units` tab on canonical API and finalize dictionary CRUD pattern. Status: completed.
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
-5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: in progress.
+5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: completed for canonical basic field editing and create/save flow; composition/category editing remains read-only in current FE scope.
 6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete and canonical list flag toggles; create/save remains pending.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
 8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for wireframe editor/view tabs, archive/unarchive, delete and canonical list flag toggles; save/upload/tag mutations remain pending.
 9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
-10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: in progress.
+10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: completed for archive list, view, history handoff and restore-to-active flow; further UX polish and smoke coverage remain pending.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
 
 ## 8.1. Delivery flow for implementation
@@ -700,9 +700,9 @@ Deliverables:
 2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`, with its own tab-scoped state/controller on top of the global shell store. Status: completed.
 3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`. Status: completed.
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
-5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: in progress.
+5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
 6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: partially completed.
-7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive row actions in progress. Status: in progress.
+7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive view/history/restore row actions connected. Status: in progress.
 8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
 
 ## 9. Explicit non-goals for current iteration

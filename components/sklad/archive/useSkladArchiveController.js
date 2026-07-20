@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
   Button,
@@ -20,6 +21,7 @@ import {
 
 import { MySelect } from "@/ui/Forms";
 
+import SkladDeleteDialog from "../SkladDeleteDialog";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import { getVisibleSkladTabs } from "../skladTabs";
@@ -83,7 +85,14 @@ function getCategoryLabel(row) {
 
 function normalizeRows(entityType, response) {
   return getArchiveRows(response).map((row, index) => ({
-    key: row?.id ?? `${entityType}-${index}`,
+    key: [
+      row?.entity_type || entityType,
+      row?.id ?? "no-id",
+      row?.date_start ?? "no-start",
+      row?.date_end ?? "no-end",
+      row?.history_id ?? row?.revision_key ?? "no-history",
+      index,
+    ].join("-"),
     id: row?.id ?? "—",
     name: getRowName(row),
     entityType: row?.entity_type || entityType,
@@ -124,6 +133,11 @@ export default function useSkladArchiveController({ showAlert }) {
   const [entityType, setEntityType] = useState("recipe");
   const [rows, setRows] = useState([]);
   const [detail, setDetail] = useState(null);
+  const [restoreDialog, setRestoreDialog] = useState({
+    open: false,
+    loading: false,
+    row: null,
+  });
   const [modal, setModal] = useState({
     open: false,
     loading: false,
@@ -190,6 +204,14 @@ export default function useSkladArchiveController({ showAlert }) {
     setDetail(null);
   }, []);
 
+  const closeRestoreDialog = useCallback(() => {
+    setRestoreDialog({
+      open: false,
+      loading: false,
+      row: null,
+    });
+  }, []);
+
   const loadArchiveDetail = useCallback(
     async (row) => {
       if (row.entityType === "recipe") {
@@ -249,6 +271,60 @@ export default function useSkladArchiveController({ showAlert }) {
     },
     [closeModal, loadArchiveDetail, setShellState, showAlert],
   );
+
+  const openRestoreDialog = useCallback((row) => {
+    if (!row?.id) {
+      return;
+    }
+
+    setRestoreDialog({
+      open: true,
+      loading: false,
+      row,
+    });
+  }, []);
+
+  const confirmRestore = useCallback(async () => {
+    const row = restoreDialog?.row;
+
+    if (!row?.id) {
+      return;
+    }
+
+    setRestoreDialog({
+      open: true,
+      loading: true,
+      row,
+    });
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.archiveEntity({
+        data: {
+          entity_type: row.entityType,
+          id: row.id,
+          is_archived: 0,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка восстановления из архива");
+      }
+
+      closeRestoreDialog();
+      showAlert(response?.text || "Успешно сохранено", true);
+      await loadRows();
+    } catch (error) {
+      setRestoreDialog({
+        open: true,
+        loading: false,
+        row,
+      });
+      showAlert(error?.message || "Ошибка восстановления из архива", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [api, closeRestoreDialog, loadRows, restoreDialog?.row, setShellState, showAlert]);
 
   const content = useMemo(() => {
     return (
@@ -329,9 +405,7 @@ export default function useSkladArchiveController({ showAlert }) {
                 >
                   Действия
                 </Typography>
-                <Typography sx={{ fontWeight: 700 }}>
-                  Просмотр карточки и переход в историю
-                </Typography>
+                <Typography sx={{ fontWeight: 700 }}>Просмотр, восстановление и история</Typography>
               </Stack>
             </Stack>
           </Paper>
@@ -346,7 +420,7 @@ export default function useSkladArchiveController({ showAlert }) {
                   <TableCell sx={{ width: 140 }}>Статус</TableCell>
                   <TableCell
                     align="right"
-                    sx={{ width: 220 }}
+                    sx={{ width: 320 }}
                   >
                     Действия
                   </TableCell>
@@ -389,6 +463,14 @@ export default function useSkladArchiveController({ showAlert }) {
                           >
                             История
                           </Button>
+                          <Button
+                            size="small"
+                            color="inherit"
+                            startIcon={<UnarchiveOutlinedIcon />}
+                            onClick={() => openRestoreDialog(row)}
+                          >
+                            Восстановить
+                          </Button>
                         </Stack>
                       </TableCell>
                     </TableRow>
@@ -415,7 +497,7 @@ export default function useSkladArchiveController({ showAlert }) {
         </Paper>
       </Stack>
     );
-  }, [entityType, openHistoryTab, openView, rows]);
+  }, [entityType, openHistoryTab, openRestoreDialog, openView, rows]);
 
   return {
     entityType,
@@ -441,6 +523,16 @@ export default function useSkladArchiveController({ showAlert }) {
           onSectionChange={(section) => setModal((prev) => ({ ...prev, section }))}
           detail={detail}
           onClose={closeModal}
+        />
+        <SkladDeleteDialog
+          open={restoreDialog.open}
+          loading={restoreDialog.loading}
+          title="Вернуть запись из архива?"
+          description={`Запись "${restoreDialog?.row?.name || ""}" снова станет активной.`}
+          warning="Backend выполнит canonical archive mutation и запишет новую history revision."
+          confirmLabel="Восстановить"
+          onClose={closeRestoreDialog}
+          onConfirm={confirmRestore}
         />
       </>
     ),

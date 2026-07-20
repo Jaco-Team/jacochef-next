@@ -57,6 +57,18 @@ function getEntityFlagApi(api, entityType) {
   return entityType === "recipe" ? api.saveRecipeFlag : api.saveSemiFinishedFlag;
 }
 
+function getEntitySaveApi(api, entityType, mode) {
+  if (entityType === "recipe") {
+    return mode === "create" ? api.createRecipe : api.updateRecipe;
+  }
+
+  return mode === "create" ? api.createSemiFinished : api.updateSemiFinished;
+}
+
+function getProductionVisibleState(row) {
+  return Number(row?.is_show ?? row?.is_active ?? 0) === 1;
+}
+
 function getDeleteHint(row) {
   const activeCount = row?.delete_usage?.active_relations?.length || 0;
   const historyCount = row?.delete_usage?.history_relations?.length || 0;
@@ -111,7 +123,7 @@ function getStatusChips(row) {
     chips.push({ key: "archived", label: "Архив", color: "default" });
   }
 
-  if (Number(row?.is_active) === 1) {
+  if (getProductionVisibleState(row)) {
     chips.push({ key: "active", label: "Активен", color: "success" });
   }
 
@@ -159,6 +171,42 @@ function createEmptyProductionDraft() {
     apps: [],
     units: [],
   };
+}
+
+function normalizeProductionSavePayload(draft) {
+  return {
+    id: draft?.id ?? null,
+    name: String(draft?.name || "").trim(),
+    shelf_life: draft?.shelf_life ?? "",
+    date_start: draft?.date_start ?? "",
+    date_end: draft?.date_end ?? "",
+    ed_izmer_id: draft?.ed_izmer_id ? Number(draft.ed_izmer_id) : null,
+    structure: draft?.structure ?? "",
+    show_in_rev: draft?.show_in_rev ? 1 : 0,
+    two_user: draft?.two_user ? 1 : 0,
+    allergens: Array.isArray(draft?.allergens) ? draft.allergens : [],
+    allergens_possible: Array.isArray(draft?.allergens_possible) ? draft.allergens_possible : [],
+    categories: Array.isArray(draft?.categories) ? draft.categories : [],
+    storages: Array.isArray(draft?.storages) ? draft.storages : [],
+    apps: Array.isArray(draft?.apps) ? draft.apps : [],
+    items: Array.isArray(draft?.items) ? draft.items : [],
+  };
+}
+
+function validateProductionDraft(draft) {
+  if (!String(draft?.name || "").trim()) {
+    return "Название обязательно";
+  }
+
+  if (!String(draft?.date_start || "").trim()) {
+    return "Дата начала обязательна";
+  }
+
+  if (draft?.date_end && draft?.date_start && String(draft.date_end) < String(draft.date_start)) {
+    return "Дата окончания не может быть раньше даты начала";
+  }
+
+  return null;
 }
 
 export default function useSkladProductionController({ showAlert }) {
@@ -445,7 +493,14 @@ export default function useSkladProductionController({ showAlert }) {
         return;
       }
 
-      const currentValue = Number(row?.[type] ?? row?.is_active ?? 0) === 1 ? 1 : 0;
+      const currentValue =
+        type === "is_show"
+          ? getProductionVisibleState(row)
+            ? 1
+            : 0
+          : Number(row?.[type] ?? 0) === 1
+            ? 1
+            : 0;
       const nextValue = currentValue === 1 ? 0 : 1;
       const saveFlag = getEntityFlagApi(api, entityType);
 
@@ -490,6 +545,56 @@ export default function useSkladProductionController({ showAlert }) {
       },
     });
   }, [setState]);
+
+  const submitDraft = useCallback(
+    async (nextDraft) => {
+      const validationError = validateProductionDraft(nextDraft);
+
+      if (validationError) {
+        showAlert(validationError, false);
+        return;
+      }
+
+      const saveMode = modal.mode === "create" ? "create" : "edit";
+      const saveEntity = getEntitySaveApi(api, entityType, saveMode);
+      const payload = normalizeProductionSavePayload(nextDraft);
+
+      setState({
+        modal: {
+          ...modal,
+          loading: true,
+        },
+        draft: nextDraft,
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await saveEntity({
+          data: payload,
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка сохранения");
+        }
+
+        showAlert(response?.text || "Успешно сохранено", true);
+        closeModal();
+        await loadRows();
+      } catch (error) {
+        setState({
+          modal: {
+            ...modal,
+            loading: false,
+          },
+          draft: nextDraft,
+        });
+        showAlert(error?.message || "Ошибка сохранения", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, closeModal, entityType, loadRows, modal, setShellState, setState, showAlert],
+  );
 
   const loadEntityDetail = useCallback(
     async (row) => {
@@ -855,8 +960,8 @@ export default function useSkladProductionController({ showAlert }) {
                             <Chip
                               size="small"
                               clickable
-                              color={Number(row?.is_active) === 1 ? "success" : "default"}
-                              label={Number(row?.is_active) === 1 ? "Активен" : "Скрыт"}
+                              color={getProductionVisibleState(row) ? "success" : "default"}
+                              label={getProductionVisibleState(row) ? "Активен" : "Скрыт"}
                               onClick={() => toggleFlag(row, "is_show")}
                             />
                             <Chip
@@ -1038,6 +1143,7 @@ export default function useSkladProductionController({ showAlert }) {
           categories={categories}
           units={draft?.units || detail?.units || []}
           isEditable={canCreateOrEdit}
+          onSubmit={submitDraft}
           onClose={closeModal}
         />
         <SkladProductionConvertDialog
