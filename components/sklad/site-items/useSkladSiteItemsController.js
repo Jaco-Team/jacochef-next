@@ -2,11 +2,13 @@
 
 import { useCallback, useMemo } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
   Box,
@@ -186,6 +188,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const modal = useSkladSiteItemsStore((state) => state.modal);
   const detail = useSkladSiteItemsStore((state) => state.detail);
   const draft = useSkladSiteItemsStore((state) => state.draft);
+  const archiveDialog = useSkladSiteItemsStore((state) => state.archiveDialog);
   const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
@@ -295,6 +298,33 @@ export default function useSkladSiteItemsController({ showAlert }) {
     });
   }, [setState]);
 
+  const closeArchiveDialog = useCallback(() => {
+    setState({
+      archiveDialog: {
+        open: false,
+        loading: false,
+        row: null,
+      },
+    });
+  }, [setState]);
+
+  const openArchiveDialog = useCallback(
+    (row) => {
+      if (!row?.id) {
+        return;
+      }
+
+      setState({
+        archiveDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+    },
+    [setState],
+  );
+
   const openDeleteDialog = useCallback(
     (row) => {
       if (!row?.id) {
@@ -356,6 +386,54 @@ export default function useSkladSiteItemsController({ showAlert }) {
       setShellState({ isLoading: false });
     }
   }, [api, closeDeleteDialog, deleteDialog?.row, loadRows, setShellState, setState, showAlert]);
+
+  const confirmArchive = useCallback(async () => {
+    const row = archiveDialog?.row;
+
+    if (!row?.id) {
+      return;
+    }
+
+    const nextArchived = Number(row?.is_archived) === 1 ? 0 : 1;
+
+    setState({
+      archiveDialog: {
+        open: true,
+        loading: true,
+        row,
+      },
+    });
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.archiveEntity({
+        data: {
+          entity_type: "site_item",
+          id: row.id,
+          is_archived: nextArchived,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка изменения архива");
+      }
+
+      closeArchiveDialog();
+      showAlert(response?.text || "Успешно сохранено", true);
+      await loadRows();
+    } catch (error) {
+      setState({
+        archiveDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+      showAlert(error?.message || "Ошибка изменения архива", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [api, archiveDialog?.row, closeArchiveDialog, loadRows, setShellState, setState, showAlert]);
 
   const openCreate = useCallback(() => {
     const emptyRelations = createEmptySiteItemRelations();
@@ -832,6 +910,28 @@ export default function useSkladSiteItemsController({ showAlert }) {
                           </span>
                         </Tooltip>
 
+                        <Tooltip
+                          title={Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"}
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={!isEditable}
+                              aria-label="Архив"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openArchiveDialog(row);
+                              }}
+                            >
+                              {Number(row?.is_archived) === 1 ? (
+                                <UnarchiveOutlinedIcon fontSize="small" />
+                              ) : (
+                                <ArchiveOutlinedIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+
                         <Tooltip title={isEditable ? "Удалить" : "Недостаточно прав"}>
                           <span>
                             <IconButton
@@ -929,6 +1029,24 @@ export default function useSkladSiteItemsController({ showAlert }) {
           warning="Backend выполнит authoritative usage-check в момент удаления и вернет причину запрета, если товар уже использовался."
           onClose={closeDeleteDialog}
           onConfirm={confirmDelete}
+        />
+        <SkladDeleteDialog
+          open={archiveDialog.open}
+          loading={archiveDialog.loading}
+          title={
+            Number(archiveDialog?.row?.is_archived) === 1
+              ? "Вернуть товар сайта из архива?"
+              : "Отправить товар сайта в архив?"
+          }
+          description={`Запись "${archiveDialog?.row?.name || ""}" будет ${
+            Number(archiveDialog?.row?.is_archived) === 1
+              ? "снова показана в активных списках"
+              : "убрана из активных списков"
+          }.`}
+          warning="Backend создаст новую history revision и изменит archive state через canonical entities/archive."
+          confirmLabel={Number(archiveDialog?.row?.is_archived) === 1 ? "Вернуть" : "В архив"}
+          onClose={closeArchiveDialog}
+          onConfirm={confirmArchive}
         />
       </Stack>
     </Paper>

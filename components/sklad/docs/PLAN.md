@@ -154,8 +154,9 @@ Contract note:
 - `recipes/list`, `recipes/get_one`, `semi-finished/list`, `semi-finished/get_one` уже live
 - общий list/filter shell уже собран в новом FE
 - detail/editor/history/convert actions уже доведены до working modal flow уровня wireframe
-- create/save/archive mutations для production family остаются следующим backend-alignment pass
+- create/save mutations для production family остаются следующим backend-alignment pass
 - authoritative delete confirmation + server-side delete call для production family уже подключены
+- authoritative archive/unarchive confirmation + server-side archive call для production family уже подключены
 
 ### Slice D. Site items
 
@@ -190,6 +191,7 @@ Contract note:
 - create draft shape, detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
 - save/image/tag mutations остаются staged до следующего backend pass
 - authoritative delete confirmation + server-side delete call для site items уже подключены
+- authoritative archive/unarchive confirmation + server-side archive call для site items уже подключены
 
 ### Slice E. Unified archive + history
 
@@ -666,9 +668,9 @@ Deliverables:
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: in progress.
-6. Wire production history, convert-type flow and destructive delete path. Status: partially completed.
+6. Wire production history, convert-type flow, archive and destructive delete path. Status: partially completed.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
-8. Build site-item editor modal, derived calorie preview, tags, images, marking and destructive delete flow. Status: partially completed.
+8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: partially completed.
 9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
 10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: in progress.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.

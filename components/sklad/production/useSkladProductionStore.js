@@ -27,6 +27,11 @@ export const useSkladProductionStore = create((set) => ({
   },
   detail: null,
   draft: null,
+  archiveDialog: {
+    open: false,
+    loading: false,
+    row: null,
+  },
   deleteDialog: {
     open: false,
     loading: false,

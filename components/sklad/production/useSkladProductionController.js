@@ -2,10 +2,12 @@
 
 import { useCallback, useMemo } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
   Button,
@@ -173,6 +175,7 @@ export default function useSkladProductionController({ showAlert }) {
   const modal = useSkladProductionStore((state) => state.modal);
   const detail = useSkladProductionStore((state) => state.detail);
   const draft = useSkladProductionStore((state) => state.draft);
+  const archiveDialog = useSkladProductionStore((state) => state.archiveDialog);
   const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
 
@@ -284,6 +287,33 @@ export default function useSkladProductionController({ showAlert }) {
     });
   }, [setState]);
 
+  const closeArchiveDialog = useCallback(() => {
+    setState({
+      archiveDialog: {
+        open: false,
+        loading: false,
+        row: null,
+      },
+    });
+  }, [setState]);
+
+  const openArchiveDialog = useCallback(
+    (row) => {
+      if (!row?.id) {
+        return;
+      }
+
+      setState({
+        archiveDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+    },
+    [setState],
+  );
+
   const openDeleteDialog = useCallback(
     (row) => {
       if (!row?.id) {
@@ -348,6 +378,63 @@ export default function useSkladProductionController({ showAlert }) {
     api,
     closeDeleteDialog,
     deleteDialog?.row,
+    entityType,
+    loadRows,
+    setShellState,
+    setState,
+    showAlert,
+  ]);
+
+  const confirmArchive = useCallback(async () => {
+    const row = archiveDialog?.row;
+
+    if (!row?.id) {
+      return;
+    }
+
+    const nextArchived = Number(row?.is_archived) === 1 ? 0 : 1;
+
+    setState({
+      archiveDialog: {
+        open: true,
+        loading: true,
+        row,
+      },
+    });
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.archiveEntity({
+        data: {
+          entity_type: entityType,
+          id: row.id,
+          is_archived: nextArchived,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка изменения архива");
+      }
+
+      closeArchiveDialog();
+      showAlert(response?.text || "Успешно сохранено", true);
+      await loadRows();
+    } catch (error) {
+      setState({
+        archiveDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+      showAlert(error?.message || "Ошибка изменения архива", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [
+    api,
+    archiveDialog?.row,
+    closeArchiveDialog,
     entityType,
     loadRows,
     setShellState,
@@ -784,6 +871,24 @@ export default function useSkladProductionController({ showAlert }) {
                           </span>
                         </Tooltip>
 
+                        <Tooltip
+                          title={Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"}
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={!canCreateOrEdit}
+                              onClick={() => openArchiveDialog(row)}
+                            >
+                              {Number(row?.is_archived) === 1 ? (
+                                <UnarchiveOutlinedIcon fontSize="small" />
+                              ) : (
+                                <ArchiveOutlinedIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+
                         {canDelete ? (
                           <Tooltip title="Удалить">
                             <span>
@@ -882,6 +987,24 @@ export default function useSkladProductionController({ showAlert }) {
           warning="Backend повторно проверит usage relations в момент удаления и вернет причину отказа, если запись уже использовалась."
           onClose={closeDeleteDialog}
           onConfirm={confirmDelete}
+        />
+        <SkladDeleteDialog
+          open={archiveDialog.open}
+          loading={archiveDialog.loading}
+          title={
+            Number(archiveDialog?.row?.is_archived) === 1
+              ? `Вернуть ${getEntityLabel(entityType).toLowerCase()} из архива?`
+              : `Отправить ${getEntityLabel(entityType).toLowerCase()} в архив?`
+          }
+          description={`Запись "${archiveDialog?.row?.name || ""}" будет ${
+            Number(archiveDialog?.row?.is_archived) === 1
+              ? "снова показана в активных списках"
+              : "убрана из активных списков"
+          }.`}
+          warning="Backend создаст новую history revision и изменит archive state через canonical entities/archive."
+          confirmLabel={Number(archiveDialog?.row?.is_archived) === 1 ? "Вернуть" : "В архив"}
+          onClose={closeArchiveDialog}
+          onConfirm={confirmArchive}
         />
       </>
     ),
