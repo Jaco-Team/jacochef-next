@@ -9,7 +9,6 @@ import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -31,8 +30,11 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
-import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
+import SkladDeleteDialog from "../SkladDeleteDialog";
 import { useSkladStore } from "../useSkladStore";
+import { getVisibleSkladTabs } from "../skladTabs";
+import { HISTORY_INITIAL_STATE, useSkladHistoryStore } from "../history/useSkladHistoryStore";
+import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
 import SkladSiteItemViewDialog from "./SkladSiteItemViewDialog";
 import { SITE_ITEMS_ARCHIVE_MODE_OPTIONS, useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
 
@@ -146,11 +148,33 @@ function createEmptySiteItemRelations() {
   };
 }
 
+function getDeleteError(response) {
+  const usage = response?.usage || response?.delete_usage || {};
+  const activeCount = Array.isArray(usage?.active_relations) ? usage.active_relations.length : 0;
+  const historyCount = Array.isArray(usage?.history_relations) ? usage.history_relations.length : 0;
+  const counts = [];
+
+  if (activeCount) {
+    counts.push(`активные связи: ${activeCount}`);
+  }
+
+  if (historyCount) {
+    counts.push(`история: ${historyCount}`);
+  }
+
+  return counts.length
+    ? `${response?.text || "Удаление запрещено"} (${counts.join(", ")})`
+    : response?.text || "Удаление запрещено";
+}
+
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
   const { canEdit } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const shellSections = useSkladStore((state) => state.sections);
+  const shellAccess = useSkladStore((state) => state.access);
+  const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const rows = useSkladSiteItemsStore((state) => state.rows);
   const categories = useSkladSiteItemsStore((state) => state.categories);
@@ -162,6 +186,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const modal = useSkladSiteItemsStore((state) => state.modal);
   const detail = useSkladSiteItemsStore((state) => state.detail);
   const draft = useSkladSiteItemsStore((state) => state.draft);
+  const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canEdit("site_items");
@@ -219,6 +244,34 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [showAlert],
   );
 
+  const openHistoryTab = useCallback(
+    (row) => {
+      if (!row?.id) {
+        showAlert("Не удалось определить сущность для открытия истории", false);
+        return;
+      }
+
+      const visibleTabs = getVisibleSkladTabs({
+        sections: shellSections,
+        access: shellAccess,
+      });
+      const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
+
+      if (historyTabIndex === -1) {
+        showAlert("Вкладка истории недоступна по текущим section/access", false);
+        return;
+      }
+
+      setHistoryState({
+        entityType: "site_item",
+        entityId: String(row.id),
+        ...HISTORY_INITIAL_STATE,
+      });
+      setShellState({ tab: historyTabIndex });
+    },
+    [setHistoryState, setShellState, shellAccess, shellSections, showAlert],
+  );
+
   const closeModal = useCallback(() => {
     setState({
       modal: {
@@ -231,6 +284,78 @@ export default function useSkladSiteItemsController({ showAlert }) {
       draft: null,
     });
   }, [setState]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setState({
+      deleteDialog: {
+        open: false,
+        loading: false,
+        row: null,
+      },
+    });
+  }, [setState]);
+
+  const openDeleteDialog = useCallback(
+    (row) => {
+      if (!row?.id) {
+        return;
+      }
+
+      setState({
+        deleteDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+    },
+    [setState],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    const row = deleteDialog?.row;
+
+    if (!row?.id) {
+      return;
+    }
+
+    setState({
+      deleteDialog: {
+        open: true,
+        loading: true,
+        row,
+      },
+    });
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.deleteEntity({
+        data: {
+          entity_type: "site_item",
+          id: row.id,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(getDeleteError(response));
+      }
+
+      closeDeleteDialog();
+      showAlert(response?.text || "Успешное удаление", true);
+      await loadRows();
+    } catch (error) {
+      setState({
+        deleteDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+      showAlert(error?.message || "Ошибка удаления", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [api, closeDeleteDialog, deleteDialog?.row, loadRows, setShellState, setState, showAlert]);
 
   const openCreate = useCallback(() => {
     const emptyRelations = createEmptySiteItemRelations();
@@ -491,14 +616,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
           </Stack>
         </Stack>
 
-        <Alert
-          severity="info"
-          sx={{ borderRadius: 2 }}
-        >
-          Текущий экран уже закрывает list, detail tabs и editor wireframe. Delete и save остаются
-          staged до следующего backend pass.
-        </Alert>
-
         <Paper
           variant="outlined"
           sx={{ p: 2, borderRadius: 3 }}
@@ -551,11 +668,12 @@ export default function useSkladSiteItemsController({ showAlert }) {
                 variant="caption"
                 color="text.secondary"
               >
-                Следующий шаг
+                Доступные действия
               </Typography>
               <Typography sx={{ fontWeight: 700 }}>
-                После стабилизации API сюда без перелома UX подключатся edit, marking, image и
-                delete flows
+                {isEditable
+                  ? "Просмотр, создание, редактирование и history handoff"
+                  : "Просмотр и history handoff"}
               </Typography>
             </Box>
           </Stack>
@@ -706,7 +824,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                               aria-label="История"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openView(row, "history");
+                                openHistoryTab(row);
                               }}
                             >
                               <HistoryOutlinedIcon fontSize="small" />
@@ -714,13 +832,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={
-                            isEditable
-                              ? "Удаление будет подключено следующим шагом"
-                              : "Недостаточно прав"
-                          }
-                        >
+                        <Tooltip title={isEditable ? "Удалить" : "Недостаточно прав"}>
                           <span>
                             <IconButton
                               size="small"
@@ -729,7 +841,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                               aria-label="Удалить"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openNotImplemented("Удаление");
+                                openDeleteDialog(row);
                               }}
                             >
                               <DeleteOutlineIcon fontSize="small" />
@@ -808,6 +920,15 @@ export default function useSkladSiteItemsController({ showAlert }) {
           tags={tags}
           isEditable={isEditable}
           onClose={closeModal}
+        />
+        <SkladDeleteDialog
+          open={deleteDialog.open}
+          loading={deleteDialog.loading}
+          title="Удалить товар сайта?"
+          description={`Запись "${deleteDialog?.row?.name || ""}" будет удалена без возможности восстановления.`}
+          warning="Backend выполнит authoritative usage-check в момент удаления и вернет причину запрета, если товар уже использовался."
+          onClose={closeDeleteDialog}
+          onConfirm={confirmDelete}
         />
       </Stack>
     </Paper>

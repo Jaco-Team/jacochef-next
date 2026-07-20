@@ -36,6 +36,7 @@ export default function useSkladApi() {
       historyCompare: (payload = {}) => request("history/compare", payload),
       getArchiveList: (payload = {}) => request("entities/archive_list", payload),
       archiveList: (payload = {}) => request("entities/archive_list", payload),
+      deleteEntity: (payload) => request("entities/delete", payload),
     };
   }, []);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Chip, Paper, Stack, Typography } from "@mui/material";
 
 export default function SkladPlaceholderTab({ title, description, summaryValue = null }) {
   return (
@@ -30,12 +30,20 @@ export default function SkladPlaceholderTab({ title, description, summaryValue =
 
         <Typography color="text.secondary">{description}</Typography>
 
-        <Alert
-          severity="info"
-          sx={{ alignItems: "center" }}
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 2 }}
         >
-          Базовый shell готов. Следующим слайсом сюда подключается рабочий list/form flow.
-        </Alert>
+          <Stack spacing={0.5}>
+            <Typography sx={{ fontWeight: 600 }}>Раздел подключен к shell модуля</Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              Контент для этой business-area еще не опубликован в текущем runtime scope.
+            </Typography>
+          </Stack>
+        </Paper>
       </Stack>
     </Paper>
   );

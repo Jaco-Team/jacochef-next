@@ -24,6 +24,11 @@ export const useSkladSiteItemsStore = create((set) => ({
   },
   detail: null,
   draft: null,
+  deleteDialog: {
+    open: false,
+    loading: false,
+    row: null,
+  },
 
   setState(payload = {}) {
     set(payload);

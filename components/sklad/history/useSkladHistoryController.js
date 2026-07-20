@@ -5,7 +5,6 @@ import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -89,6 +88,52 @@ function SnapshotField({ label, value }) {
       <Typography>{value}</Typography>
     </Stack>
   );
+}
+
+function getSnapshotCollections(snapshot) {
+  return [
+    {
+      key: "categories",
+      label: "Категории",
+      items: Array.isArray(snapshot?.categories) ? snapshot.categories : [],
+    },
+    {
+      key: "tags",
+      label: "Теги",
+      items: Array.isArray(snapshot?.tags) ? snapshot.tags : [],
+    },
+    {
+      key: "allergens",
+      label: "Аллергены",
+      items: Array.isArray(snapshot?.allergens) ? snapshot.allergens : [],
+    },
+    {
+      key: "allergens_derived",
+      label: "Derived allergens",
+      items: Array.isArray(snapshot?.allergens_derived) ? snapshot.allergens_derived : [],
+    },
+  ]
+    .map((section) => ({
+      ...section,
+      values: section.items
+        .map((item) => item?.name || item?.title || item?.label || "")
+        .filter(Boolean)
+        .slice(0, 8),
+    }))
+    .filter((section) => section.values.length);
+}
+
+function getCompositionPreviewRows(snapshot) {
+  const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
+
+  return items.slice(0, 6).map((item, index) => ({
+    key: String(item?.id || item?.item_id || index),
+    name: item?.name || item?.item_name || item?.item?.name || "-",
+    brutto: item?.brutto ?? "-",
+    netto: item?.netto ?? "-",
+    output: item?.res ?? item?.output ?? "-",
+    type: item?.type || item?.entity_type || "-",
+  }));
 }
 
 export default function useSkladHistoryController({ showAlert }) {
@@ -278,14 +323,6 @@ export default function useSkladHistoryController({ showAlert }) {
           </Stack>
         </Stack>
 
-        <Alert
-          severity="info"
-          sx={{ borderRadius: 2 }}
-        >
-          Это первый working slice unified history reader: версия списка, открытие canonical
-          snapshot и базовый compare без отдельного domain-specific diff UI.
-        </Alert>
-
         <Paper
           variant="outlined"
           sx={{ p: 2, borderRadius: 3 }}
@@ -331,6 +368,22 @@ export default function useSkladHistoryController({ showAlert }) {
                 Открытая ревизия
               </Typography>
               <Typography sx={{ fontWeight: 700 }}>{selectedRevisionKey || "Нет"}</Typography>
+            </Box>
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Compare
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>
+                {compareResult
+                  ? compareResult?.compare?.has_changes
+                    ? `Изменения: ${compareResult?.compare?.changes_count || compareChanges.length}`
+                    : "Без изменений"
+                  : "Не запущен"}
+              </Typography>
             </Box>
           </Stack>
         </Paper>
@@ -445,17 +498,6 @@ export default function useSkladHistoryController({ showAlert }) {
               </Button>
             </Stack>
 
-            {compareResult ? (
-              <Alert
-                severity={compareResult?.compare?.has_changes ? "warning" : "success"}
-                sx={{ borderRadius: 2 }}
-              >
-                {compareResult?.compare?.has_changes
-                  ? `Найдено изменений: ${compareResult?.compare?.changes_count || compareChanges.length}`
-                  : "Изменения не найдены"}
-              </Alert>
-            ) : null}
-
             {compareChanges.length ? (
               <Stack
                 direction="row"
@@ -528,6 +570,8 @@ function GridLikeSnapshot({ snapshot, revision }) {
     ["Tags", Array.isArray(snapshot?.tags) ? snapshot.tags.length : null],
     ["Stages", Array.isArray(snapshot?.stages) ? snapshot.stages.length : null],
   ].filter((item) => item[1] !== null);
+  const collectionSections = getSnapshotCollections(snapshot);
+  const compositionRows = getCompositionPreviewRows(snapshot);
 
   return (
     <Stack spacing={2}>
@@ -565,13 +609,79 @@ function GridLikeSnapshot({ snapshot, revision }) {
         </Stack>
       ) : null}
 
-      <Alert
-        severity="info"
-        sx={{ borderRadius: 2 }}
-      >
-        Full domain-specific historical rendering is the next pass. Current reader intentionally
-        exposes the canonical snapshot entry point first.
-      </Alert>
+      {collectionSections.length ? (
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 2 }}
+        >
+          <Stack spacing={2}>
+            <Typography sx={{ fontWeight: 700 }}>Связанные наборы</Typography>
+            {collectionSections.map((section) => (
+              <Stack
+                key={section.key}
+                spacing={1}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  {section.label}
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  useFlexGap
+                  flexWrap="wrap"
+                >
+                  {section.values.map((value) => (
+                    <Chip
+                      key={`${section.key}-${value}`}
+                      label={value}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                </Stack>
+              </Stack>
+            ))}
+          </Stack>
+        </Paper>
+      ) : null}
+
+      {compositionRows.length ? (
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 2 }}
+        >
+          <Stack spacing={2}>
+            <Typography sx={{ fontWeight: 700 }}>Состав ревизии</Typography>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Позиция</TableCell>
+                    <TableCell>Тип</TableCell>
+                    <TableCell>Брутто</TableCell>
+                    <TableCell>Нетто</TableCell>
+                    <TableCell>Выход</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {compositionRows.map((row) => (
+                    <TableRow key={row.key}>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.type}</TableCell>
+                      <TableCell>{row.brutto}</TableCell>
+                      <TableCell>{row.netto}</TableCell>
+                      <TableCell>{row.output}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Stack>
+        </Paper>
+      ) : null}
     </Stack>
   );
 }

@@ -7,6 +7,7 @@ Pinned execution rule:
 - completed steps in this plan must stay in the document as execution history
 - when a step is finished, mark it explicitly as completed or partially completed
 - do not remove completed steps from the plan
+- UI info stubs, temporary explanatory alerts and "next slice" helper blocks are acceptable during in-progress wireframing, but they must be removed by the final pass; final UI should use operational surfaces, real state summaries or actionable empty states instead
 
 Основания:
 
@@ -152,7 +153,9 @@ Contract note:
 - partially implemented
 - `recipes/list`, `recipes/get_one`, `semi-finished/list`, `semi-finished/get_one` уже live
 - общий list/filter shell уже собран в новом FE
-- detail/editor/history/convert actions в новом FE еще не доведены до рабочего modal flow
+- detail/editor/history/convert actions уже доведены до working modal flow уровня wireframe
+- create/save/archive mutations для production family остаются следующим backend-alignment pass
+- authoritative delete confirmation + server-side delete call для production family уже подключены
 
 ### Slice D. Site items
 
@@ -185,7 +188,8 @@ Contract note:
 - list/filter shell уже собран
 - detail tabs и editor wireframe уже собраны и открываются
 - create draft shape, detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
-- save/delete/image/tag/history mutations остаются staged до следующего backend pass
+- save/image/tag mutations остаются staged до следующего backend pass
+- authoritative delete confirmation + server-side delete call для site items уже подключены
 
 ### Slice E. Unified archive + history
 
@@ -206,6 +210,7 @@ Contract note:
 - partially implemented
 - unified `История` tab уже читает canonical version list, `get_one` snapshot и базовый compare
 - production row action now hands off into the real History tab with prefilled `entity_type` + `entity_id`
+- site-items row action now hands off into the real History tab with prefilled `entity_type = site_item` + `entity_id`
 - `Архив` tab уже читает canonical archive list for supported entity types
 - archive restore/view flows и domain-specific history presentation consistency остаются следующим pass
 
@@ -661,11 +666,11 @@ Deliverables:
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: in progress.
-6. Wire production history and convert-type flow. Status: partially completed.
+6. Wire production history, convert-type flow and destructive delete path. Status: partially completed.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
-8. Build site-item editor modal, derived calorie preview, tags, images and marking flows. Status: partially completed.
-9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: partially completed.
-10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: partially completed.
+8. Build site-item editor modal, derived calorie preview, tags, images, marking and destructive delete flow. Status: partially completed.
+9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
+10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: in progress.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
 
 ## 8.1. Delivery flow for implementation
@@ -691,8 +696,8 @@ Deliverables:
 3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`. Status: completed.
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: in progress.
-6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking. Status: partially completed.
-7. History/archive slice: unified readers live, action flows partially completed. Status: partially completed.
+6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: partially completed.
+7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive row actions in progress. Status: in progress.
 8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
 
 ## 9. Explicit non-goals for current iteration

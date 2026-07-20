@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
-  Alert,
+  Button,
   Chip,
+  Divider,
   Paper,
   Stack,
   Table,
@@ -19,6 +22,10 @@ import { MySelect } from "@/ui/Forms";
 
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
+import { getVisibleSkladTabs } from "../skladTabs";
+import { HISTORY_INITIAL_STATE, useSkladHistoryStore } from "../history/useSkladHistoryStore";
+import SkladProductionViewDialog from "../production/SkladProductionViewDialog";
+import SkladSiteItemViewDialog from "../site-items/SkladSiteItemViewDialog";
 
 const ARCHIVE_ENTITY_OPTIONS = [
   { id: "recipe", name: "Рецепты" },
@@ -85,12 +92,45 @@ function normalizeRows(entityType, response) {
   }));
 }
 
+function normalizeArchiveDetail(response, entityType) {
+  if (entityType === "site_item") {
+    return response?.item || {};
+  }
+
+  const entity = response?.entity || {};
+
+  return {
+    ...entity,
+    unit_name:
+      response?.units?.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name || "",
+    categories: entity?.categories || response?.categories || [],
+    allergens: entity?.allergens || [],
+    allergens_possible: entity?.allergens_possible || [],
+    allergens_derived: entity?.allergens_derived || [],
+    allergens_possible_derived: entity?.allergens_possible_derived || [],
+    storages: entity?.storages || response?.all_storages || [],
+    apps: entity?.apps || response?.apps || [],
+    items: entity?.items || [],
+  };
+}
+
 export default function useSkladArchiveController({ showAlert }) {
   const api = useSkladApi();
   const setShellState = useSkladStore((state) => state.setState);
+  const shellSections = useSkladStore((state) => state.sections);
+  const shellAccess = useSkladStore((state) => state.access);
+  const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const [entityType, setEntityType] = useState("recipe");
   const [rows, setRows] = useState([]);
+  const [detail, setDetail] = useState(null);
+  const [modal, setModal] = useState({
+    open: false,
+    loading: false,
+    entityType: "recipe",
+    tab: "main",
+    section: "tech",
+  });
 
   const loadRows = useCallback(async () => {
     setShellState({ isLoading: true });
@@ -110,6 +150,105 @@ export default function useSkladArchiveController({ showAlert }) {
       setShellState({ isLoading: false });
     }
   }, [api, entityType, setShellState, showAlert]);
+
+  const openHistoryTab = useCallback(
+    (row) => {
+      if (!row?.id) {
+        showAlert("Не удалось определить сущность для открытия истории", false);
+        return;
+      }
+
+      const visibleTabs = getVisibleSkladTabs({
+        sections: shellSections,
+        access: shellAccess,
+      });
+      const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
+
+      if (historyTabIndex === -1) {
+        showAlert("Вкладка истории недоступна по текущим section/access", false);
+        return;
+      }
+
+      setHistoryState({
+        entityType: row.entityType,
+        entityId: String(row.id),
+        ...HISTORY_INITIAL_STATE,
+      });
+      setShellState({ tab: historyTabIndex });
+    },
+    [setHistoryState, setShellState, shellAccess, shellSections, showAlert],
+  );
+
+  const closeModal = useCallback(() => {
+    setModal({
+      open: false,
+      loading: false,
+      entityType: "recipe",
+      tab: "main",
+      section: "tech",
+    });
+    setDetail(null);
+  }, []);
+
+  const loadArchiveDetail = useCallback(
+    async (row) => {
+      if (row.entityType === "recipe") {
+        return api.getRecipe(row.id);
+      }
+
+      if (row.entityType === "semi_finished") {
+        return api.getSemiFinishedOne(row.id);
+      }
+
+      if (row.entityType === "site_item") {
+        return api.getSiteItem(row.id);
+      }
+
+      throw new Error("Неподдержанный тип сущности");
+    },
+    [api],
+  );
+
+  const openView = useCallback(
+    async (row) => {
+      if (!row?.id) {
+        return;
+      }
+
+      setModal({
+        open: true,
+        loading: true,
+        entityType: row.entityType,
+        tab: "main",
+        section: "tech",
+      });
+      setDetail(null);
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await loadArchiveDetail(row);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки карточки");
+        }
+
+        setDetail(normalizeArchiveDetail(response, row.entityType));
+        setModal({
+          open: true,
+          loading: false,
+          entityType: row.entityType,
+          tab: "main",
+          section: "tech",
+        });
+      } catch (error) {
+        closeModal();
+        showAlert(error?.message || "Ошибка загрузки карточки", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [closeModal, loadArchiveDetail, setShellState, showAlert],
+  );
 
   const content = useMemo(() => {
     return (
@@ -141,12 +280,61 @@ export default function useSkladArchiveController({ showAlert }) {
             />
           </Stack>
 
-          <Alert
-            severity="info"
-            sx={{ mb: 2 }}
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, borderRadius: 2, mb: 2 }}
           >
-            Таблица показывает только поддержанные archived entity families canonical API.
-          </Alert>
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={2}
+              divider={
+                <Divider
+                  flexItem
+                  orientation="vertical"
+                  sx={{ display: { xs: "none", md: "block" } }}
+                />
+              }
+            >
+              <Stack
+                spacing={0.5}
+                sx={{ minWidth: 0, flex: 1 }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  Тип сущности
+                </Typography>
+                <Typography sx={{ fontWeight: 700 }}>{getEntityLabel(entityType)}</Typography>
+              </Stack>
+              <Stack
+                spacing={0.5}
+                sx={{ minWidth: 0, flex: 1 }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  Архивных записей
+                </Typography>
+                <Typography sx={{ fontWeight: 700 }}>{rows.length}</Typography>
+              </Stack>
+              <Stack
+                spacing={0.5}
+                sx={{ minWidth: 0, flex: 1 }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  Действия
+                </Typography>
+                <Typography sx={{ fontWeight: 700 }}>
+                  Просмотр карточки и переход в историю
+                </Typography>
+              </Stack>
+            </Stack>
+          </Paper>
 
           <TableContainer>
             <Table size="small">
@@ -156,6 +344,12 @@ export default function useSkladArchiveController({ showAlert }) {
                   <TableCell>Название</TableCell>
                   <TableCell sx={{ width: 180 }}>Категория</TableCell>
                   <TableCell sx={{ width: 140 }}>Статус</TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ width: 220 }}
+                  >
+                    Действия
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
@@ -174,12 +368,35 @@ export default function useSkladArchiveController({ showAlert }) {
                           variant={row.isArchived ? "filled" : "outlined"}
                         />
                       </TableCell>
+                      <TableCell align="right">
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="flex-end"
+                        >
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<VisibilityOutlinedIcon />}
+                            onClick={() => openView(row)}
+                          >
+                            Открыть
+                          </Button>
+                          <Button
+                            size="small"
+                            startIcon={<HistoryOutlinedIcon />}
+                            onClick={() => openHistoryTab(row)}
+                          >
+                            История
+                          </Button>
+                        </Stack>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       sx={{ py: 4 }}
                     >
                       <Typography
@@ -198,11 +415,34 @@ export default function useSkladArchiveController({ showAlert }) {
         </Paper>
       </Stack>
     );
-  }, [entityType, rows]);
+  }, [entityType, openHistoryTab, openView, rows]);
 
   return {
     entityType,
     loadRows,
-    content,
+    content: (
+      <>
+        {content}
+        <SkladProductionViewDialog
+          open={
+            modal.open && (modal.entityType === "recipe" || modal.entityType === "semi_finished")
+          }
+          loading={modal.loading}
+          tab={modal.tab}
+          onTabChange={(tab) => setModal((prev) => ({ ...prev, tab }))}
+          detail={detail}
+          entityLabel={getEntityLabel(modal.entityType)}
+          onClose={closeModal}
+        />
+        <SkladSiteItemViewDialog
+          open={modal.open && modal.entityType === "site_item"}
+          loading={modal.loading}
+          section={modal.section}
+          onSectionChange={(section) => setModal((prev) => ({ ...prev, section }))}
+          detail={detail}
+          onClose={closeModal}
+        />
+      </>
+    ),
   };
 }

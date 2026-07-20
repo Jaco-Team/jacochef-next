@@ -8,9 +8,9 @@ import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
-  Alert,
   Button,
   Chip,
+  Divider,
   IconButton,
   Paper,
   Stack,
@@ -30,6 +30,7 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import SkladDeleteDialog from "../SkladDeleteDialog";
 import { useSkladStore } from "../useSkladStore";
 import { useSkladHistoryStore, HISTORY_INITIAL_STATE } from "../history/useSkladHistoryStore";
 import { getVisibleSkladTabs } from "../skladTabs";
@@ -66,6 +67,25 @@ function getDeleteHint(row) {
   return parts.length ? `Удаление заблокировано, ${parts.join(", ")}` : "Удаление заблокировано";
 }
 
+function getDeleteError(response) {
+  const usage = response?.usage || response?.delete_usage || {};
+  const activeCount = Array.isArray(usage?.active_relations) ? usage.active_relations.length : 0;
+  const historyCount = Array.isArray(usage?.history_relations) ? usage.history_relations.length : 0;
+  const counts = [];
+
+  if (activeCount) {
+    counts.push(`активные связи: ${activeCount}`);
+  }
+
+  if (historyCount) {
+    counts.push(`история: ${historyCount}`);
+  }
+
+  return counts.length
+    ? `${response?.text || "Удаление запрещено"} (${counts.join(", ")})`
+    : response?.text || "Удаление запрещено";
+}
+
 function formatCategories(categories) {
   if (!Array.isArray(categories) || !categories.length) {
     return "-";
@@ -100,6 +120,41 @@ function getStatusChips(row) {
   return chips;
 }
 
+function getRowKey(entityType, row, index) {
+  return [
+    entityType,
+    row?.id ?? "no-id",
+    row?.date_start ?? "no-start",
+    row?.date_end ?? "no-end",
+    index,
+  ].join("-");
+}
+
+function createEmptyProductionDraft() {
+  return {
+    id: null,
+    name: "",
+    shelf_life: "",
+    date_start: "",
+    date_end: "",
+    ed_izmer_id: "",
+    structure: "",
+    show_in_rev: 0,
+    two_user: 0,
+    is_active: 1,
+    is_archived: 0,
+    categories: [],
+    items: [],
+    allergens: [],
+    allergens_possible: [],
+    allergens_derived: [],
+    allergens_possible_derived: [],
+    storages: [],
+    apps: [],
+    units: [],
+  };
+}
+
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
   const { canEdit, canExecute } = useSkladAccess();
@@ -118,6 +173,7 @@ export default function useSkladProductionController({ showAlert }) {
   const modal = useSkladProductionStore((state) => state.modal);
   const detail = useSkladProductionStore((state) => state.detail);
   const draft = useSkladProductionStore((state) => state.draft);
+  const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
 
   const accessKey = getEntityAccessKey(entityType);
@@ -215,6 +271,103 @@ export default function useSkladProductionController({ showAlert }) {
       },
       detail: null,
       draft: null,
+    });
+  }, [setState]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setState({
+      deleteDialog: {
+        open: false,
+        loading: false,
+        row: null,
+      },
+    });
+  }, [setState]);
+
+  const openDeleteDialog = useCallback(
+    (row) => {
+      if (!row?.id) {
+        return;
+      }
+
+      setState({
+        deleteDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+    },
+    [setState],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    const row = deleteDialog?.row;
+
+    if (!row?.id) {
+      return;
+    }
+
+    setState({
+      deleteDialog: {
+        open: true,
+        loading: true,
+        row,
+      },
+    });
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.deleteEntity({
+        data: {
+          entity_type: entityType,
+          id: row.id,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(getDeleteError(response));
+      }
+
+      closeDeleteDialog();
+      showAlert(response?.text || "Успешное удаление", true);
+      await loadRows();
+    } catch (error) {
+      setState({
+        deleteDialog: {
+          open: true,
+          loading: false,
+          row,
+        },
+      });
+      showAlert(error?.message || "Ошибка удаления", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [
+    api,
+    closeDeleteDialog,
+    deleteDialog?.row,
+    entityType,
+    loadRows,
+    setShellState,
+    setState,
+    showAlert,
+  ]);
+
+  const openCreate = useCallback(() => {
+    setState({
+      modal: {
+        open: true,
+        mode: "create",
+        loading: false,
+        tab: "main",
+      },
+      detail: null,
+      draft: {
+        ...createEmptyProductionDraft(),
+        units: [],
+      },
     });
   }, [setState]);
 
@@ -436,9 +589,7 @@ export default function useSkladProductionController({ showAlert }) {
                 variant="contained"
                 startIcon={<AddIcon />}
                 disabled={!canCreateOrEdit}
-                onClick={() =>
-                  openNotImplemented(`Создание ${getEntityLabel(entityType).toLowerCase()}`)
-                }
+                onClick={openCreate}
               >
                 Добавить {getEntityLabel(entityType).toLowerCase()}
               </Button>
@@ -446,14 +597,75 @@ export default function useSkladProductionController({ showAlert }) {
           </Stack>
         </Stack>
 
-        <Alert
-          severity="info"
-          sx={{ borderRadius: 2 }}
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 3 }}
         >
-          Этот slice уже закрывает общий list/filter contour, basic detail/editor wireframe и
-          handoff в unified History tab для production family. Convert и write actions остаются
-          staged.
-        </Alert>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            divider={
+              <Divider
+                flexItem
+                orientation="vertical"
+                sx={{ display: { xs: "none", md: "block" } }}
+              />
+            }
+          >
+            <Stack
+              spacing={0.5}
+              sx={{ minWidth: 0, flex: 1 }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Текущий тип
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>{getEntityLabel(entityType)}</Typography>
+            </Stack>
+            <Stack
+              spacing={0.5}
+              sx={{ minWidth: 0, flex: 1 }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Найдено позиций
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>{sortedRows.length}</Typography>
+            </Stack>
+            <Stack
+              spacing={0.5}
+              sx={{ minWidth: 0, flex: 1 }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Доступные действия
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>
+                {canCreateOrEdit ? "Просмотр, создание, редактирование" : "Просмотр"}
+              </Typography>
+            </Stack>
+            <Stack
+              spacing={0.5}
+              sx={{ minWidth: 0, flex: 1 }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                История и конвертация
+              </Typography>
+              <Typography sx={{ fontWeight: 700 }}>
+                {canConvert ? "История и сценарий конвертации доступны" : "История доступна"}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Paper>
 
         <TableContainer>
           <Table size="small">
@@ -469,13 +681,13 @@ export default function useSkladProductionController({ showAlert }) {
             </TableHead>
 
             <TableBody>
-              {sortedRows.map((row) => {
+              {sortedRows.map((row, index) => {
                 const canDelete = Boolean(row?.delete_usage?.can_delete);
                 const statusChips = getStatusChips(row);
 
                 return (
                   <TableRow
-                    key={`${entityType}-${row?.id}`}
+                    key={getRowKey(entityType, row, index)}
                     hover
                   >
                     <TableCell>
@@ -552,8 +764,7 @@ export default function useSkladProductionController({ showAlert }) {
                           <span>
                             <IconButton
                               size="small"
-                              disabled={!canConvert}
-                              aria-label="Открыть staged shell конвертации"
+                              aria-label="Открыть сценарий конвертации"
                               onClick={() => openConvert(row)}
                             >
                               <SwapHorizIcon fontSize="small" />
@@ -574,13 +785,13 @@ export default function useSkladProductionController({ showAlert }) {
                         </Tooltip>
 
                         {canDelete ? (
-                          <Tooltip title="Удаление будет подключено следующим шагом">
+                          <Tooltip title="Удалить">
                             <span>
                               <IconButton
                                 size="small"
                                 color="error"
                                 disabled={!canCreateOrEdit}
-                                onClick={() => openNotImplemented("Удаление")}
+                                onClick={() => openDeleteDialog(row)}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
                               </IconButton>
@@ -646,9 +857,9 @@ export default function useSkladProductionController({ showAlert }) {
           onClose={closeModal}
         />
         <SkladProductionEditorDialog
-          open={modal.open && modal.mode === "edit"}
+          open={modal.open && (modal.mode === "edit" || modal.mode === "create")}
           loading={modal.loading}
-          mode="edit"
+          mode={detail?.id ? "edit" : "create"}
           entityLabel={getEntityLabel(entityType)}
           draft={draft}
           categories={categories}
@@ -662,6 +873,15 @@ export default function useSkladProductionController({ showAlert }) {
           entityType={entityType}
           canConvert={canConvert}
           onClose={closeModal}
+        />
+        <SkladDeleteDialog
+          open={deleteDialog.open}
+          loading={deleteDialog.loading}
+          title={`Удалить ${getEntityLabel(entityType).toLowerCase()}?`}
+          description={`Запись "${deleteDialog?.row?.name || ""}" будет удалена без возможности восстановления.`}
+          warning="Backend повторно проверит usage relations в момент удаления и вернет причину отказа, если запись уже использовалась."
+          onClose={closeDeleteDialog}
+          onConfirm={confirmDelete}
         />
       </>
     ),
