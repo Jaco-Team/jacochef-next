@@ -53,6 +53,10 @@ function getEntityLabel(entityType) {
   return entityType === "recipe" ? "Рецепт" : "Полуфабрикат";
 }
 
+function getEntityFlagApi(api, entityType) {
+  return entityType === "recipe" ? api.saveRecipeFlag : api.saveSemiFinishedFlag;
+}
+
 function getDeleteHint(row) {
   const activeCount = row?.delete_usage?.active_relations?.length || 0;
   const historyCount = row?.delete_usage?.history_relations?.length || 0;
@@ -228,13 +232,6 @@ export default function useSkladProductionController({ showAlert }) {
       String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
     );
   }, [rows]);
-
-  const openNotImplemented = useCallback(
-    (scopeLabel) => {
-      showAlert(`${scopeLabel} войдет в следующий production slice`, false);
-    },
-    [showAlert],
-  );
 
   const openHistoryTab = useCallback(
     (row) => {
@@ -441,6 +438,42 @@ export default function useSkladProductionController({ showAlert }) {
     setState,
     showAlert,
   ]);
+
+  const toggleFlag = useCallback(
+    async (row, type) => {
+      if (!row?.id || !type) {
+        return;
+      }
+
+      const currentValue = Number(row?.[type] ?? row?.is_active ?? 0) === 1 ? 1 : 0;
+      const nextValue = currentValue === 1 ? 0 : 1;
+      const saveFlag = getEntityFlagApi(api, entityType);
+
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await saveFlag({
+          data: {
+            id: row.id,
+            type,
+            value: nextValue,
+          },
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка изменения флага");
+        }
+
+        showAlert(response?.text || "Успешно сохранено", true);
+        await loadRows();
+      } catch (error) {
+        showAlert(error?.message || "Ошибка изменения флага", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, entityType, loadRows, setShellState, showAlert],
+  );
 
   const openCreate = useCallback(() => {
     setState({
@@ -791,22 +824,57 @@ export default function useSkladProductionController({ showAlert }) {
 
                     <TableCell>
                       <Stack
-                        direction="row"
+                        direction="column"
                         spacing={1}
-                        useFlexGap
-                        flexWrap="wrap"
                       >
-                        {statusChips.length
-                          ? statusChips.map((chip) => (
-                              <Chip
-                                key={chip.key}
-                                label={chip.label}
-                                size="small"
-                                color={chip.color}
-                                variant={chip.color === "default" ? "outlined" : "filled"}
-                              />
-                            ))
-                          : "-"}
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          useFlexGap
+                          flexWrap="wrap"
+                        >
+                          {statusChips.length
+                            ? statusChips.map((chip) => (
+                                <Chip
+                                  key={chip.key}
+                                  label={chip.label}
+                                  size="small"
+                                  color={chip.color}
+                                  variant={chip.color === "default" ? "outlined" : "filled"}
+                                />
+                              ))
+                            : "-"}
+                        </Stack>
+                        {canCreateOrEdit ? (
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            useFlexGap
+                            flexWrap="wrap"
+                          >
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.is_active) === 1 ? "success" : "default"}
+                              label={Number(row?.is_active) === 1 ? "Активен" : "Скрыт"}
+                              onClick={() => toggleFlag(row, "is_show")}
+                            />
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.show_in_rev) === 1 ? "primary" : "default"}
+                              label={Number(row?.show_in_rev) === 1 ? "В ревизии" : "Без ревизии"}
+                              onClick={() => toggleFlag(row, "show_in_rev")}
+                            />
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.two_user) === 1 ? "secondary" : "default"}
+                              label={Number(row?.two_user) === 1 ? "2 сотрудника" : "1 сотрудник"}
+                              onClick={() => toggleFlag(row, "two_user")}
+                            />
+                          </Stack>
+                        ) : null}
                       </Stack>
                     </TableCell>
 

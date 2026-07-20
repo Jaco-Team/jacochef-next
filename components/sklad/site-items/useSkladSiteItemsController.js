@@ -240,13 +240,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
     );
   }, [tags]);
 
-  const openNotImplemented = useCallback(
-    (scopeLabel) => {
-      showAlert(`${scopeLabel} для товаров сайта войдет в следующий production slice`, false);
-    },
-    [showAlert],
-  );
-
   const openHistoryTab = useCallback(
     (row) => {
       if (!row?.id) {
@@ -434,6 +427,42 @@ export default function useSkladSiteItemsController({ showAlert }) {
       setShellState({ isLoading: false });
     }
   }, [api, archiveDialog?.row, closeArchiveDialog, loadRows, setShellState, setState, showAlert]);
+
+  const toggleFlag = useCallback(
+    async (row, type) => {
+      if (!row?.id || !type) {
+        return;
+      }
+
+      const currentSourceValue =
+        type === "is_show" ? (row?.is_show ?? row?.is_active ?? 0) : (row?.[type] ?? 0);
+      const nextValue = Number(currentSourceValue) === 1 ? 0 : 1;
+
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.saveSiteItemFlag({
+          data: {
+            id: row.id,
+            type,
+            value: nextValue,
+          },
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка изменения флага");
+        }
+
+        showAlert(response?.text || "Успешно сохранено", true);
+        await loadRows();
+      } catch (error) {
+        showAlert(error?.message || "Ошибка изменения флага", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, loadRows, setShellState, showAlert],
+  );
 
   const openCreate = useCallback(() => {
     const emptyRelations = createEmptySiteItemRelations();
@@ -804,22 +833,94 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
                     <TableCell>
                       <Stack
-                        direction="row"
+                        direction="column"
                         spacing={1}
-                        useFlexGap
-                        flexWrap="wrap"
                       >
-                        {statusChips.length
-                          ? statusChips.map((chip) => (
-                              <Chip
-                                key={chip.key}
-                                label={chip.label}
-                                size="small"
-                                color={chip.color}
-                                variant={chip.color === "default" ? "outlined" : "filled"}
-                              />
-                            ))
-                          : "-"}
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          useFlexGap
+                          flexWrap="wrap"
+                        >
+                          {statusChips.length
+                            ? statusChips.map((chip) => (
+                                <Chip
+                                  key={chip.key}
+                                  label={chip.label}
+                                  size="small"
+                                  color={chip.color}
+                                  variant={chip.color === "default" ? "outlined" : "filled"}
+                                />
+                              ))
+                            : "-"}
+                        </Stack>
+                        {isEditable ? (
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            useFlexGap
+                            flexWrap="wrap"
+                          >
+                            <Chip
+                              size="small"
+                              clickable
+                              color={
+                                Number(row?.is_show ?? row?.is_active ?? 0) === 1
+                                  ? "success"
+                                  : "default"
+                              }
+                              label={
+                                Number(row?.is_show ?? row?.is_active ?? 0) === 1
+                                  ? "Активен"
+                                  : "Скрыт"
+                              }
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleFlag(row, "is_show");
+                              }}
+                            />
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.show_site) === 1 ? "primary" : "default"}
+                              label={Number(row?.show_site) === 1 ? "Сайт" : "Без сайта"}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleFlag(row, "show_site");
+                              }}
+                            />
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.show_program) === 1 ? "secondary" : "default"}
+                              label={Number(row?.show_program) === 1 ? "Касса" : "Без кассы"}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleFlag(row, "show_program");
+                              }}
+                            />
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.is_hit) === 1 ? "warning" : "default"}
+                              label={Number(row?.is_hit) === 1 ? "Хит" : "Не хит"}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleFlag(row, "is_hit");
+                              }}
+                            />
+                            <Chip
+                              size="small"
+                              clickable
+                              color={Number(row?.is_new) === 1 ? "info" : "default"}
+                              label={Number(row?.is_new) === 1 ? "Новинка" : "Обычный"}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleFlag(row, "is_new");
+                              }}
+                            />
+                          </Stack>
+                        ) : null}
                       </Stack>
                     </TableCell>
 

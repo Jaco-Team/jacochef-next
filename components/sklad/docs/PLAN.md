@@ -8,6 +8,9 @@ Pinned execution rule:
 - when a step is finished, mark it explicitly as completed or partially completed
 - do not remove completed steps from the plan
 - UI info stubs, temporary explanatory alerts and "next slice" helper blocks are acceptable during in-progress wireframing, but they must be removed by the final pass; final UI should use operational surfaces, real state summaries or actionable empty states instead
+- after each completed implementation chunk, run a senior software engineer review pass on that chunk
+- that review pass must actively look for design flaws, stale or dead code, duplication, over-complication and weak structure
+- if issues are found, refactor them in the same chunk before moving on, following DRY, KISS and SOLID within current module scope
 
 Основания:
 
@@ -668,9 +671,9 @@ Deliverables:
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: in progress.
-6. Wire production history, convert-type flow, archive and destructive delete path. Status: partially completed.
+6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete and canonical list flag toggles; create/save remains pending.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
-8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: partially completed.
+8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for wireframe editor/view tabs, archive/unarchive, delete and canonical list flag toggles; save/upload/tag mutations remain pending.
 9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
 10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: in progress.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.

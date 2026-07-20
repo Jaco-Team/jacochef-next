@@ -9,7 +9,7 @@ export default function SkladArchiveTab({ showAlert, refreshToken }) {
 
   useEffect(() => {
     loadRows();
-  }, [refreshToken, entityType, loadRows]);
+  }, [refreshToken, entityType]);
 
   return content;
 }
