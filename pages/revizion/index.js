@@ -19,7 +19,8 @@ import Tab from "@mui/material/Tab";
 
 import { MySelect, MyAutocomplite2 } from "@/ui/Forms";
 import RevisionAnalysisTab from "@/components/revizion/RevisionAnalysisTab";
-import { api_laravel_local } from "@/src/api_new";
+// import { api_laravel_local } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 import queryString from "query-string";
