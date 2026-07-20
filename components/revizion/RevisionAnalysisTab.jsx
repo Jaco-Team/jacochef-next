@@ -1714,7 +1714,7 @@ export default function RevisionAnalysisTab({ initialData = null }) {
           spacing={2}
           alignItems="flex-start"
         >
-          <Grid size={12}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CityCafeAutocomplete2
               points={points}
               value={selectedPoints}
@@ -1726,7 +1726,7 @@ export default function RevisionAnalysisTab({ initialData = null }) {
               compact
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <RevisionSelect
               label="Начальная ревизия"
               options={revisions}
@@ -1741,7 +1741,7 @@ export default function RevisionAnalysisTab({ initialData = null }) {
               disabled={revisionLoading}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <RevisionSelect
               label="Конечная ревизия"
               options={revisions}
@@ -1756,7 +1756,7 @@ export default function RevisionAnalysisTab({ initialData = null }) {
               disabled={revisionLoading}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={12}>
             <PositionSelect
               positions={allPositions}
               value={allSelectedPositions}
