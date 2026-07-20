@@ -77,7 +77,7 @@ class Revizion_ extends React.Component {
   }
 
   loadAnalysisAccess = async () => {
-    const response = await api_laravel_local("revizion", "get_analysis_filters");
+    const response = await api_laravel("revizion", "get_analysis_filters");
     const data = response?.data ?? response;
     const analysisAccess = handleUserAccess(data?.access).userCan("view", "analysis");
 
