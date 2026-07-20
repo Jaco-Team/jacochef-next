@@ -42,7 +42,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 
-import { api_laravel_local as api_laravel } from "@/src/api_new";
+// import { api_laravel_local as api_laravel } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 const ALL_POSITIONS = { id: "__all__", name: "Все позиции" };
