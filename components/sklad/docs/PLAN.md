@@ -9,6 +9,7 @@ Pinned execution rule:
 - do not remove completed steps from the plan
 - UI info stubs, temporary explanatory alerts and "next slice" helper blocks are acceptable during in-progress wireframing, but they must be removed by the final pass; final UI should use operational surfaces, real state summaries or actionable empty states instead
 - after each completed implementation chunk, run a senior software engineer review pass on that chunk
+- that post-chunk review pass is mandatory through the dedicated reviewer subagent (`sklad_senior_reviewer`) whenever that agent role is available
 - that review pass must actively look for design flaws, stale or dead code, duplication, over-complication and weak structure
 - if issues are found, refactor them in the same chunk before moving on, following DRY, KISS and SOLID within current module scope
 
@@ -193,7 +194,8 @@ Contract note:
 - detail tabs и editor wireframe уже собраны и открываются
 - create bootstrap и canonical `save_new` / `save_edit` уже подключены
 - detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
-- image upload и inline tag mutations остаются staged до следующего backend pass
+- image upload, VK sync trigger and direct history/editor handoff уже подключены в detail flow
+- inline tag mutations остаются staged до следующего backend pass
 - authoritative delete confirmation + server-side delete call для site items уже подключены
 - authoritative archive/unarchive confirmation + server-side archive call для site items уже подключены
 
@@ -674,7 +676,7 @@ Deliverables:
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: completed for canonical basic field editing and create/save flow; composition/category editing remains read-only in current FE scope.
 6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete and canonical list flag toggles; create/save remains pending.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
-8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for wireframe editor/view tabs, archive/unarchive, delete and canonical list flag toggles; save/upload/tag mutations remain pending.
+8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for working editor/view tabs, archive/unarchive, delete, canonical list flag toggles, canonical save flow, image upload and VK sync trigger; inline tag dictionary mutations are connected, broader tag UX polish remains.
 9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
 10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: completed for archive list, view, history handoff and restore-to-active flow; further UX polish and smoke coverage remain pending.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
@@ -703,7 +705,7 @@ Deliverables:
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
 6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: partially completed.
-7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive view/history/restore row actions connected. Status: in progress.
+7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive view/history/restore row actions connected, production/detail modals aligned to module modal pattern. Status: completed.
 8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
 
 ## 9. Explicit non-goals for current iteration

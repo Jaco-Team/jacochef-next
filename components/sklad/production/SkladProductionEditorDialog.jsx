@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
@@ -10,12 +9,9 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   Paper,
   Stack,
   Typography,
@@ -26,6 +22,7 @@ import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import { MySelect, MyTextInput } from "@/ui/Forms";
+import MyModal from "@/ui/MyModal";
 
 const TABS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
@@ -160,25 +157,16 @@ export default function SkladProductionEditorDialog({
   const submitLabel = mode === "create" ? "Создать" : "Сохранить изменения";
 
   return (
-    <Dialog
+    <MyModal
       open={open}
       onClose={onClose}
-      fullWidth
       maxWidth="lg"
-    >
-      <DialogTitle sx={{ pr: 7 }}>
-        {mode === "create"
+      title={
+        mode === "create"
           ? `Новый ${entityLabel.toLowerCase()}`
-          : `Редактирование: ${draft?.name || entityLabel}`}
-        <IconButton
-          onClick={onClose}
-          aria-label="Закрыть"
-          sx={{ position: "absolute", right: 16, top: 16 }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
+          : `Редактирование: ${draft?.name || entityLabel}`
+      }
+    >
       <DialogContent dividers>
         <Stack spacing={2.5}>
           <Alert
@@ -447,6 +435,6 @@ export default function SkladProductionEditorDialog({
           {loading ? "Сохраняем..." : submitLabel}
         </Button>
       </DialogActions>
-    </Dialog>
+    </MyModal>
   );
 }

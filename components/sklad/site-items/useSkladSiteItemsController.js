@@ -784,6 +784,163 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [api, categories, setShellState, setState, showAlert],
   );
 
+  const refreshOpenDetail = useCallback(
+    async (id, section = "tech") => {
+      if (!id) {
+        return;
+      }
+
+      const response = await api.getSiteItem(id);
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка загрузки товара");
+      }
+
+      setState({
+        modal: {
+          open: true,
+          mode: "view",
+          loading: false,
+          section,
+        },
+        detail: normalizeSiteItemDraft(response, categories),
+      });
+    },
+    [api, categories, setState],
+  );
+
+  const handleUploadImage = useCallback(
+    async (row, file, section = "image") => {
+      if (!row?.id || !file) {
+        return;
+      }
+
+      setState({
+        modal: {
+          ...modal,
+          loading: true,
+          section,
+        },
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.uploadSiteItemImage(file, {
+          data: {
+            id: row.id,
+            slot: "main",
+          },
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки изображения");
+        }
+
+        await refreshOpenDetail(row.id, section);
+        showAlert(response?.text || "Изображение загружено", true);
+        await loadRows();
+      } catch (error) {
+        setState({
+          modal: {
+            ...modal,
+            loading: false,
+            section,
+          },
+        });
+        showAlert(error?.message || "Ошибка загрузки изображения", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, loadRows, modal, refreshOpenDetail, setShellState, setState, showAlert],
+  );
+
+  const handleSyncVk = useCallback(async () => {
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.syncSiteItemsVk();
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка синхронизации VK");
+      }
+
+      showAlert(response?.text || "Синхронизация VK запущена", true);
+    } catch (error) {
+      showAlert(error?.message || "Ошибка синхронизации VK", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [api, setShellState, showAlert]);
+
+  const handleCreateTag = useCallback(
+    async (name) => {
+      const trimmedName = String(name || "").trim();
+
+      if (!trimmedName) {
+        throw new Error("Название тега обязательно");
+      }
+
+      const response = await api.createSiteItemTag({
+        data: {
+          name: trimmedName,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка создания тега");
+      }
+
+      const nextTags = response?.tags_all || [];
+      setState({ tags: nextTags });
+
+      return {
+        tags: nextTags,
+        createdTag:
+          nextTags.find((tag) => String(tag?.id) === String(response?.id)) ||
+          nextTags.find((tag) => String(tag?.name || "").trim() === trimmedName) ||
+          null,
+        text: response?.text || "Тег создан",
+      };
+    },
+    [api, setState],
+  );
+
+  const handleRenameTag = useCallback(
+    async (tagId, name) => {
+      const normalizedTagId = tagId ? Number(tagId) : null;
+      const trimmedName = String(name || "").trim();
+
+      if (!normalizedTagId) {
+        throw new Error("Выберите тег");
+      }
+
+      if (!trimmedName) {
+        throw new Error("Название тега обязательно");
+      }
+
+      const response = await api.updateSiteItemTag({
+        data: {
+          tag_id: normalizedTagId,
+          name: trimmedName,
+        },
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка изменения тега");
+      }
+
+      const nextTags = response?.tags_all || [];
+      setState({ tags: nextTags });
+
+      return {
+        tags: nextTags,
+        text: response?.text || "Тег обновлен",
+      };
+    },
+    [api, setState],
+  );
+
   const content = (
     <Paper sx={{ p: 2.5, borderRadius: 3 }}>
       <Stack spacing={2}>
@@ -1261,6 +1418,11 @@ export default function useSkladSiteItemsController({ showAlert }) {
             })
           }
           detail={detail}
+          isEditable={isEditable}
+          onEdit={() => (detail?.id ? openEdit(detail) : null)}
+          onOpenHistory={() => (detail?.id ? openHistoryTab(detail) : null)}
+          onUploadImage={(file) => handleUploadImage(detail, file, "image")}
+          onSyncVk={handleSyncVk}
           onClose={closeModal}
         />
 
@@ -1273,6 +1435,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
           loading={modal.loading}
           isEditable={isEditable}
           onSubmit={submitDraft}
+          onCreateTag={handleCreateTag}
+          onRenameTag={handleRenameTag}
+          showAlert={showAlert}
           onClose={closeModal}
         />
         <SkladDeleteDialog

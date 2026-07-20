@@ -1,26 +1,14 @@
 "use client";
 
-import CloseIcon from "@mui/icons-material/Close";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import {
-  Alert,
-  Box,
-  Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Chip, DialogContent, Grid, Paper, Stack, Typography } from "@mui/material";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
+import MyModal from "@/ui/MyModal";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -102,32 +90,23 @@ export default function SkladProductionViewDialog({
   const items = Array.isArray(detail?.items) ? detail.items : [];
 
   return (
-    <Dialog
+    <MyModal
       open={open}
       onClose={onClose}
-      fullWidth
       maxWidth="lg"
-    >
-      <DialogTitle sx={{ pr: 7 }}>
-        {loading
+      title={
+        loading
           ? `Загрузка ${entityLabel.toLowerCase()}...`
-          : `${entityLabel}: ${detail?.name || "-"}`}
-        <IconButton
-          onClick={onClose}
-          aria-label="Закрыть"
-          sx={{ position: "absolute", right: 16, top: 16 }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
+          : `${entityLabel}: ${detail?.name || "-"}`
+      }
+    >
       <DialogContent dividers>
         {loading ? (
           <Alert
             severity="info"
             sx={{ borderRadius: 2 }}
           >
-            Загружаем детальную карточку с canonical `get_one`.
+            Загружаем детальную карточку.
           </Alert>
         ) : (
           <TabContext value={tab}>
@@ -164,7 +143,7 @@ export default function SkladProductionViewDialog({
               <Stack spacing={2}>
                 <InfoCard
                   title="Основная карточка"
-                  subtitle="Read-first detail shell для production family"
+                  subtitle="Основные поля текущей карточки"
                 >
                   <Grid
                     container
@@ -223,7 +202,7 @@ export default function SkladProductionViewDialog({
 
                 <InfoCard
                   title="Аллергены"
-                  subtitle="Source и derived layers разнесены явно"
+                  subtitle="Исходные и итоговые аллергены"
                 >
                   <Grid
                     container
@@ -231,13 +210,13 @@ export default function SkladProductionViewDialog({
                   >
                     <Grid size={{ xs: 12, md: 6 }}>
                       <InfoField
-                        label="Source allergens"
+                        label="Исходные аллергены"
                         value={allergenNames.length ? allergenNames.join(", ") : "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <InfoField
-                        label="Possible source allergens"
+                        label="Возможные исходные аллергены"
                         value={
                           possibleAllergenNames.length ? possibleAllergenNames.join(", ") : "-"
                         }
@@ -245,13 +224,13 @@ export default function SkladProductionViewDialog({
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <InfoField
-                        label="Derived allergens"
+                        label="Итоговые аллергены"
                         value={derivedAllergenNames.length ? derivedAllergenNames.join(", ") : "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <InfoField
-                        label="Possible derived allergens"
+                        label="Возможные итоговые аллергены"
                         value={
                           derivedPossibleAllergenNames.length
                             ? derivedPossibleAllergenNames.join(", ")
@@ -271,7 +250,7 @@ export default function SkladProductionViewDialog({
               <Stack spacing={2}>
                 <InfoCard
                   title="Состав"
-                  subtitle="Текущие linked rows из canonical detail payload"
+                  subtitle="Связанные позиции текущей карточки"
                 >
                   {items.length ? (
                     <Stack spacing={1.5}>
@@ -335,7 +314,7 @@ export default function SkladProductionViewDialog({
               <Stack spacing={2}>
                 <InfoCard
                   title="Статусы и операции"
-                  subtitle="Текущий lifecycle state без write actions"
+                  subtitle="Текущее состояние карточки"
                 >
                   <Stack
                     direction="row"
@@ -369,6 +348,6 @@ export default function SkladProductionViewDialog({
           </TabContext>
         )}
       </DialogContent>
-    </Dialog>
+    </MyModal>
   );
 }

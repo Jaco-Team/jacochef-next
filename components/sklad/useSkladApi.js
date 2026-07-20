@@ -4,13 +4,16 @@ import { useMemo, useRef } from "react";
 import useApi from "@/src/hooks/useApi";
 
 export default function useSkladApi() {
-  const { api_laravel } = useApi("sklad_items");
+  const { api_laravel, api_upload } = useApi("sklad_items");
   const apiRef = useRef(api_laravel);
+  const uploadRef = useRef(api_upload);
   apiRef.current = api_laravel;
+  uploadRef.current = api_upload;
 
   return useMemo(() => {
     const request = (method, payload = {}, options = {}) =>
       apiRef.current(method, payload, options);
+    const upload = (method, file, payload = {}) => uploadRef.current(method, file, payload);
 
     return {
       getBootstrap: (payload = {}) => request("get_all", payload),
@@ -38,6 +41,10 @@ export default function useSkladApi() {
       createSiteItem: (payload) => request("site-items/save_new", payload),
       updateSiteItem: (payload) => request("site-items/save_edit", payload),
       saveSiteItemFlag: (payload) => request("site-items/save_flag", payload),
+      createSiteItemTag: (payload) => request("site-items/tags/save_new", payload),
+      updateSiteItemTag: (payload) => request("site-items/tags/save_edit", payload),
+      syncSiteItemsVk: () => request("site-items/sync_vk", {}),
+      uploadSiteItemImage: (file, payload) => upload("site-items/upload_image", file, payload),
       getHistoryList: (payload = {}) => request("history/list", payload),
       getHistoryOne: (payload = {}) => request("history/get_one", payload),
       getHistoryCompare: (payload = {}) => request("history/compare", payload),

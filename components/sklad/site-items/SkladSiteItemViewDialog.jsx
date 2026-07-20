@@ -1,10 +1,13 @@
 "use client";
 
-import CloseIcon from "@mui/icons-material/Close";
+import { useRef } from "react";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import SyncAltOutlinedIcon from "@mui/icons-material/SyncAltOutlined";
 import {
   Alert,
   Box,
@@ -12,11 +15,8 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  Dialog,
   DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -31,6 +31,7 @@ import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
+import MyModal from "@/ui/MyModal";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -154,6 +155,7 @@ function getStageTimingRows(detail) {
 function getDeletePreviewMeta(detail) {
   const status = detail?.delete_usage?.status || "";
   const isAvailable = detail?.delete_usage?.is_available;
+  const usageCanDelete = detail?.delete_usage?.can_delete;
   const previewError = detail?.delete_usage?.preview_error || "";
 
   if (typeof detail?.can_delete === "boolean") {
@@ -165,9 +167,18 @@ function getDeletePreviewMeta(detail) {
     };
   }
 
+  if (typeof usageCanDelete === "boolean") {
+    return {
+      label: usageCanDelete ? "Можно удалить" : "Удаление ограничено",
+      color: usageCanDelete ? "success" : "warning",
+      variant: usageCanDelete ? "filled" : "outlined",
+      helper: previewError,
+    };
+  }
+
   if (isAvailable === false || status === "unavailable") {
     return {
-      label: "Preview недоступен",
+      label: "Проверка недоступна",
       color: "default",
       variant: "outlined",
       helper: previewError || "Проверка удаления временно недоступна.",
@@ -221,40 +232,6 @@ function SectionCard({ title, subtitle, children }) {
   );
 }
 
-function PlaceholderCard({ title, description, note, actions = [] }) {
-  return (
-    <SectionCard
-      title={title}
-      subtitle={description}
-    >
-      <Stack spacing={2}>
-        <Alert
-          severity="info"
-          sx={{ borderRadius: 2 }}
-        >
-          {note}
-        </Alert>
-        {actions.length ? (
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-          >
-            {actions.map((action) => (
-              <Button
-                key={action.label}
-                variant={action.variant || "outlined"}
-                disabled
-              >
-                {action.label}
-              </Button>
-            ))}
-          </Stack>
-        ) : null}
-      </Stack>
-    </SectionCard>
-  );
-}
-
 function InfoField({ label, value }) {
   return (
     <Stack spacing={0.5}>
@@ -282,8 +259,14 @@ export default function SkladSiteItemViewDialog({
   section = "tech",
   onSectionChange,
   detail,
+  isEditable = false,
+  onEdit,
+  onOpenHistory,
+  onUploadImage,
+  onSyncVk,
   onClose,
 }) {
+  const fileInputRef = useRef(null);
   const imageUrl =
     detail?.image?.variants?.webp?.url ||
     detail?.image?.variants?.jpg?.url ||
@@ -306,26 +289,35 @@ export default function SkladSiteItemViewDialog({
   const stageTimingRows = getStageTimingRows(detail);
   const deletePreviewMeta = getDeletePreviewMeta(detail);
   const imageCurrentFieldRows = getImageCurrentFieldRows(detail?.image);
+  const handlePickImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      onUploadImage?.(file);
+    }
+
+    event.target.value = "";
+  };
 
   return (
-    <Dialog
+    <MyModal
       open={open}
       onClose={onClose}
-      fullWidth
       maxWidth="lg"
+      title={loading ? "Загрузка карточки" : detail?.name || "Товар сайта"}
     >
-      <DialogTitle sx={{ pr: 7 }}>
-        {loading ? "Загрузка карточки" : detail?.name || "Товар сайта"}
-        <IconButton
-          onClick={onClose}
-          aria-label="Закрыть"
-          sx={{ position: "absolute", right: 16, top: 16 }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
       <DialogContent dividers>
+        <input
+          ref={fileInputRef}
+          hidden
+          type="file"
+          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+          onChange={handleFileChange}
+        />
         {loading ? (
           <Stack
             spacing={2}
@@ -334,7 +326,7 @@ export default function SkladSiteItemViewDialog({
             sx={{ minHeight: 240 }}
           >
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Загружаем technical card товара сайта...</Typography>
+            <Typography color="text.secondary">Загружаем карточку товара сайта...</Typography>
           </Stack>
         ) : (
           <TabContext value={section}>
@@ -521,7 +513,7 @@ export default function SkladSiteItemViewDialog({
 
                         <SectionCard
                           title="Маркировка"
-                          subtitle="Текущий published marking slice"
+                          subtitle="Текущие данные маркировки"
                         >
                           <Stack spacing={1}>
                             <InfoField
@@ -589,7 +581,7 @@ export default function SkladSiteItemViewDialog({
                     <Grid size={{ xs: 12, md: 6 }}>
                       <SectionCard
                         title="Этапы по времени"
-                        subtitle="Каркас временных слотов сохранен под legacy UX"
+                        subtitle="Временные интервалы по этапам"
                       >
                         <Grid
                           container
@@ -613,7 +605,7 @@ export default function SkladSiteItemViewDialog({
                     <Grid size={{ xs: 12, md: 6 }}>
                       <SectionCard
                         title="Сводка связей"
-                        subtitle="Быстрый technical overview текущей карточки"
+                        subtitle="Краткая сводка по связям текущей карточки"
                       >
                         <Stack
                           direction={{ xs: "column", sm: "row" }}
@@ -681,7 +673,7 @@ export default function SkladSiteItemViewDialog({
 
                   <SectionCard
                     title="Итоговый состав"
-                    subtitle="Развернутый payload `composition_derived.pf_total`"
+                    subtitle="Расчетный состав карточки"
                   >
                     {derivedRows.length ? (
                       <TableContainer>
@@ -717,7 +709,7 @@ export default function SkladSiteItemViewDialog({
 
                   <SectionCard
                     title="Этапы приготовления"
-                    subtitle="Stage breakdown, близкий к legacy technical modal"
+                    subtitle="Разбивка состава по этапам"
                   >
                     {stageRows.length ? (
                       <TableContainer>
@@ -753,7 +745,7 @@ export default function SkladSiteItemViewDialog({
 
                   <SectionCard
                     title="Связанные позиции"
-                    subtitle="Текущие menu/item links, которые вернул `item_items.this_items`"
+                    subtitle="Позиции, которые связаны с этой карточкой"
                   >
                     {linkedItemRows.length ? (
                       <TableContainer>
@@ -790,7 +782,7 @@ export default function SkladSiteItemViewDialog({
                 <Stack spacing={2.5}>
                   <SectionCard
                     title="Маркировка"
-                    subtitle="Отдельный marking workspace, визуально близкий к legacy flow"
+                    subtitle="Отдельный раздел маркировки"
                   >
                     <Grid
                       container
@@ -828,13 +820,31 @@ export default function SkladSiteItemViewDialog({
                       </Grid>
                     </Grid>
                   </SectionCard>
-
-                  <PlaceholderCard
-                    title="Staged actions"
-                    description="Write-side кнопки оставлены на своих местах, но честно отключены до API pass"
-                    note="После улучшения API сюда подключатся edit-tag, get_marking refinement и save flows без смены UX."
-                    actions={[{ label: "Изменить маркировку" }, { label: "Редактировать теги" }]}
-                  />
+                  <SectionCard
+                    title="Действия"
+                    subtitle="Быстрые переходы к связанным действиям"
+                  >
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                    >
+                      <Button
+                        variant="contained"
+                        startIcon={<EditOutlinedIcon />}
+                        disabled={!isEditable}
+                        onClick={onEdit}
+                      >
+                        Открыть редактор
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        startIcon={<HistoryOutlinedIcon />}
+                        onClick={onOpenHistory}
+                      >
+                        Открыть историю
+                      </Button>
+                    </Stack>
+                  </SectionCard>
                 </Stack>
               </TabPanel>
 
@@ -845,7 +855,7 @@ export default function SkladSiteItemViewDialog({
                 <Stack spacing={2.5}>
                   <SectionCard
                     title="Изображение товара"
-                    subtitle="Подготовленный image workspace под upload/history flows"
+                    subtitle="Текущее изображение и доступные действия"
                   >
                     <Stack spacing={2}>
                       {imageUrl ? (
@@ -892,18 +902,36 @@ export default function SkladSiteItemViewDialog({
                           </Grid>
                         ))}
                       </Grid>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1}
+                      >
+                        <Button
+                          variant="contained"
+                          startIcon={<CloudUploadOutlinedIcon />}
+                          disabled={!isEditable}
+                          onClick={handlePickImage}
+                        >
+                          Загрузить изображение
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<HistoryOutlinedIcon />}
+                          onClick={onOpenHistory}
+                        >
+                          История изображения
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<SyncAltOutlinedIcon />}
+                          disabled={!isEditable}
+                          onClick={onSyncVk}
+                        >
+                          Синхронизировать VK
+                        </Button>
+                      </Stack>
                     </Stack>
                   </SectionCard>
-
-                  <PlaceholderCard
-                    title="Upload contour"
-                    description="Каркас под image mutation уже здесь"
-                    note="Как только API стабилизируется, сюда без перелома макета встанут upload, versioning и image-history actions."
-                    actions={[
-                      { label: "Загрузить изображение", variant: "contained" },
-                      { label: "Открыть историю изображений" },
-                    ]}
-                  />
                 </Stack>
               </TabPanel>
 
@@ -914,7 +942,7 @@ export default function SkladSiteItemViewDialog({
                 <Stack spacing={2.5}>
                   <SectionCard
                     title="История карточки"
-                    subtitle="Временная read-first секция до подключения canonical history endpoints"
+                    subtitle="Сводка текущей версии и переход к журналу изменений"
                   >
                     <Grid
                       container
@@ -940,25 +968,43 @@ export default function SkladSiteItemViewDialog({
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
                         <InfoField
-                          label="Preview delete"
+                          label="Удаление"
                           value={deletePreviewMeta.label}
                         />
                       </Grid>
                     </Grid>
                   </SectionCard>
-
-                  <PlaceholderCard
-                    title="History actions"
-                    description="Расположение и иерархия уже приближены к legacy operator flow"
-                    note="Следующим шагом сюда подключатся canonical history/list, get_one и compare без пересборки модального каркаса."
-                    actions={[{ label: "Открыть журнал изменений" }, { label: "Сравнить версии" }]}
-                  />
+                  <SectionCard
+                    title="Действия истории"
+                    subtitle="Открывает общий журнал изменений модуля"
+                  >
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                    >
+                      <Button
+                        variant="contained"
+                        startIcon={<HistoryOutlinedIcon />}
+                        onClick={onOpenHistory}
+                      >
+                        Открыть журнал изменений
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        startIcon={<EditOutlinedIcon />}
+                        disabled={!isEditable}
+                        onClick={onEdit}
+                      >
+                        Открыть редактор
+                      </Button>
+                    </Stack>
+                  </SectionCard>
                 </Stack>
               </TabPanel>
             </Stack>
           </TabContext>
         )}
       </DialogContent>
-    </Dialog>
+    </MyModal>
   );
 }

@@ -58,6 +58,25 @@ function normalizeRows(response) {
   }));
 }
 
+function getRevisionSummary(rows) {
+  if (!rows.length) {
+    return "Версии не загружены";
+  }
+
+  const firstCreatedAt = rows[0]?.createdAt;
+  const lastCreatedAt = rows[rows.length - 1]?.createdAt;
+
+  if (firstCreatedAt && lastCreatedAt && firstCreatedAt !== lastCreatedAt) {
+    return `${rows.length} верс. · ${lastCreatedAt} -> ${firstCreatedAt}`;
+  }
+
+  if (firstCreatedAt) {
+    return `${rows.length} верс. · ${firstCreatedAt}`;
+  }
+
+  return `${rows.length} верс.`;
+}
+
 function getEntityPayload(entityType, entityId) {
   return {
     entity_type: entityType,
@@ -109,7 +128,7 @@ function getSnapshotCollections(snapshot) {
     },
     {
       key: "allergens_derived",
-      label: "Derived allergens",
+      label: "Итоговые аллергены",
       items: Array.isArray(snapshot?.allergens_derived) ? snapshot.allergens_derived : [],
     },
   ]
@@ -355,9 +374,9 @@ export default function useSkladHistoryController({ showAlert }) {
                 variant="caption"
                 color="text.secondary"
               >
-                Загружено ревизий
+                Сводка
               </Typography>
-              <Typography sx={{ fontWeight: 700 }}>{rows.length}</Typography>
+              <Typography sx={{ fontWeight: 700 }}>{getRevisionSummary(rows)}</Typography>
             </Box>
 
             <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -375,7 +394,7 @@ export default function useSkladHistoryController({ showAlert }) {
                 variant="caption"
                 color="text.secondary"
               >
-                Compare
+                Сравнение
               </Typography>
               <Typography sx={{ fontWeight: 700 }}>
                 {compareResult
@@ -392,7 +411,7 @@ export default function useSkladHistoryController({ showAlert }) {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Revision key</TableCell>
+                <TableCell>Ключ версии</TableCell>
                 <TableCell>Создана</TableCell>
                 <TableCell>Действует с</TableCell>
                 <TableCell>Действует по</TableCell>
@@ -434,7 +453,7 @@ export default function useSkladHistoryController({ showAlert }) {
                         disabled={!row.revisionKey}
                         onClick={() => setState({ compareLeftKey: row.revisionKey })}
                       >
-                        Left
+                        Слева
                       </Button>
                       <Button
                         size="small"
@@ -442,7 +461,7 @@ export default function useSkladHistoryController({ showAlert }) {
                         disabled={!row.revisionKey}
                         onClick={() => setState({ compareRightKey: row.revisionKey })}
                       >
-                        Right
+                        Справа
                       </Button>
                     </Stack>
                   </TableCell>
@@ -475,14 +494,14 @@ export default function useSkladHistoryController({ showAlert }) {
               alignItems={{ xs: "stretch", md: "center" }}
             >
               <MySelect
-                label="Left revision"
+                label="Левая версия"
                 data={revisionOptions}
                 is_none={false}
                 value={compareLeftKey}
                 func={(event) => setState({ compareLeftKey: event.target.value })}
               />
               <MySelect
-                label="Right revision"
+                label="Правая версия"
                 data={revisionOptions}
                 is_none={false}
                 value={compareRightKey}
@@ -513,6 +532,13 @@ export default function useSkladHistoryController({ showAlert }) {
                   />
                 ))}
               </Stack>
+            ) : compareResult ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Выбранные версии совпадают по данным сравнения.
+              </Typography>
             ) : null}
           </Stack>
         </Paper>
@@ -526,7 +552,7 @@ export default function useSkladHistoryController({ showAlert }) {
               variant="subtitle2"
               sx={{ fontWeight: 700 }}
             >
-              Snapshot preview
+              Снимок версии
             </Typography>
 
             {selectedRevision ? (
@@ -536,7 +562,7 @@ export default function useSkladHistoryController({ showAlert }) {
               />
             ) : (
               <Typography color="text.secondary">
-                Откройте ревизию, чтобы увидеть canonical snapshot.
+                Откройте ревизию, чтобы увидеть сохраненный снимок данных.
               </Typography>
             )}
           </Stack>
@@ -556,19 +582,19 @@ export default function useSkladHistoryController({ showAlert }) {
 function GridLikeSnapshot({ snapshot, revision }) {
   const snapshotEntityType = snapshot?.type || revision?.entity_type || revision?.type || "-";
   const mainFields = [
-    ["Revision key", revision?.revision_key || revision?.history_id || "-"],
-    ["Source", revision?.source || "-"],
-    ["Entity type", snapshotEntityType],
-    ["Name", snapshot?.name || snapshot?.title || "-"],
-    ["Date start", snapshot?.date_start || "-"],
-    ["Date end", snapshot?.date_end || "-"],
+    ["Ключ версии", revision?.revision_key || revision?.history_id || "-"],
+    ["Источник", revision?.source || "-"],
+    ["Тип сущности", snapshotEntityType],
+    ["Название", snapshot?.name || snapshot?.title || "-"],
+    ["Действует с", snapshot?.date_start || "-"],
+    ["Действует по", snapshot?.date_end || "-"],
   ];
 
   const collections = [
-    ["Items", Array.isArray(snapshot?.items) ? snapshot.items.length : null],
-    ["Categories", Array.isArray(snapshot?.categories) ? snapshot.categories.length : null],
-    ["Tags", Array.isArray(snapshot?.tags) ? snapshot.tags.length : null],
-    ["Stages", Array.isArray(snapshot?.stages) ? snapshot.stages.length : null],
+    ["Состав", Array.isArray(snapshot?.items) ? snapshot.items.length : null],
+    ["Категории", Array.isArray(snapshot?.categories) ? snapshot.categories.length : null],
+    ["Теги", Array.isArray(snapshot?.tags) ? snapshot.tags.length : null],
+    ["Этапы", Array.isArray(snapshot?.stages) ? snapshot.stages.length : null],
   ].filter((item) => item[1] !== null);
   const collectionSections = getSnapshotCollections(snapshot);
   const compositionRows = getCompositionPreviewRows(snapshot);

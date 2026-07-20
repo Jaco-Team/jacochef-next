@@ -486,7 +486,7 @@ export default function useSkladArchiveController({ showAlert }) {
                         color="text.secondary"
                         align="center"
                       >
-                        Архивных записей нет или backend вернул сокращенный payload без списка.
+                        Архивных записей по выбранному типу сейчас нет.
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -529,7 +529,7 @@ export default function useSkladArchiveController({ showAlert }) {
           loading={restoreDialog.loading}
           title="Вернуть запись из архива?"
           description={`Запись "${restoreDialog?.row?.name || ""}" снова станет активной.`}
-          warning="Backend выполнит canonical archive mutation и запишет новую history revision."
+          warning="Запись будет возвращена в активный список и backend создаст новую запись в истории."
           confirmLabel="Восстановить"
           onClose={closeRestoreDialog}
           onConfirm={confirmRestore}

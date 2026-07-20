@@ -485,6 +485,12 @@ Blocked delete response:
 
 ## `POST|ANY /api/sklad_items/recipes/list`
 
+Текущее правило выбора history head для list/current read:
+
+- latest revision выбирается канонически по `(date_start DESC, id DESC)`
+- это синхронизировано с detail/history-open semantics
+- больше не используется `MAX(date_start)` без tie-break и не допускаются дубли строк при одинаковом `date_start`
+
 Request:
 
 ```json
@@ -644,6 +650,12 @@ Response:
 ### Live Read Routes
 
 ## `POST|ANY /api/sklad_items/semi-finished/list`
+
+Текущее правило выбора history head для list/current read:
+
+- latest revision выбирается канонически по `(date_start DESC, id DESC)`
+- это убирает duplicate rows в `semi-finished/list`, когда в history есть несколько записей с одинаковым `date_start`
+- `date_start`/`date_end` теперь берутся из той же effective revision, что и detail/history-open semantics
 
 ## `POST|ANY /api/sklad_items/semi-finished/get_one`
 
@@ -930,6 +942,12 @@ Response:
 - usage check для `Item` учитывает не только current production chain (`polufabricat_items_new`, `recipe_items_new`, `order_post_rec`), но и historical/operational tails вроде history tables, billing и write-off journals по schema-per-point базам
 
 ## `POST|ANY /api/sklad_items/site-items/list`
+
+Текущее правило выбора history head для list/current read:
+
+- latest revision выбирается канонически по `(date_start DESC, id DESC)`
+- больше не используется `MAX(id)` как отдельное правило latest revision
+- `date_start`/`date_end` в current list синхронизированы с detail/history-open semantics
 
 Response:
 

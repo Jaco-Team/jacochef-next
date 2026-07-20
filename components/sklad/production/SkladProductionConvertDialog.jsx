@@ -1,19 +1,16 @@
 "use client";
 
-import CloseIcon from "@mui/icons-material/Close";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import {
   Alert,
   Button,
-  Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
-  IconButton,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
+import MyModal from "@/ui/MyModal";
 
 function getTargetType(entityType) {
   return entityType === "recipe" ? "semi_finished" : "recipe";
@@ -62,31 +59,20 @@ export default function SkladProductionConvertDialog({
   const targetLabel = getTypeLabel(targetType);
 
   return (
-    <Dialog
+    <MyModal
       open={open}
       onClose={onClose}
-      fullWidth
       maxWidth="sm"
+      title={`Конвертация: ${detail?.name || sourceLabel}`}
     >
-      <DialogTitle sx={{ pr: 7 }}>
-        Конвертация: {detail?.name || sourceLabel}
-        <IconButton
-          onClick={onClose}
-          aria-label="Закрыть"
-          sx={{ position: "absolute", right: 16, top: 16 }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
       <DialogContent dividers>
         <Stack spacing={2}>
           <Alert
             severity="warning"
             sx={{ borderRadius: 2 }}
           >
-            Этот экран уже показывает реальный canonical contract конвертации, но запуск действия в
-            новом FE пока оставлен staged и отключен.
+            Экран показывает сценарий конвертации, но запуск действия в текущем интерфейсе пока
+            отключен.
           </Alert>
 
           {!canConvert ? (
@@ -100,7 +86,7 @@ export default function SkladProductionConvertDialog({
 
           <InfoCard
             title="Направление"
-            description="Новый production flow использует canonical business action `entities/convert_type`."
+            description="Конвертация выполняется отдельным backend-действием `entities/convert_type`."
           >
             <Stack
               direction="row"
@@ -125,7 +111,7 @@ export default function SkladProductionConvertDialog({
 
           <InfoCard
             title="Что подтверждено контрактом"
-            description="Только documented semantics, без speculative FE checks."
+            description="Здесь показаны только подтвержденные правила без дополнительных FE-допущений."
           >
             <Stack spacing={1}>
               <Typography variant="body2">
@@ -143,7 +129,7 @@ export default function SkladProductionConvertDialog({
 
           <InfoCard
             title="Почему выполнение еще выключено"
-            description="Эта оболочка нужна, чтобы показать честный destructive flow до полного backend-ready pass."
+            description="Экран подготовлен для полного сценария, но выполнение еще не доведено до рабочего состояния."
           >
             <Typography
               variant="body2"
@@ -167,6 +153,6 @@ export default function SkladProductionConvertDialog({
           Конвертировать
         </Button>
       </DialogActions>
-    </Dialog>
+    </MyModal>
   );
 }
