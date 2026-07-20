@@ -99,17 +99,18 @@ function buildInitialDraft(draft) {
     carbohydrates: draft?.carbohydrates ?? "",
     kkal: draft?.kkal ?? "",
     kkal_preview: draft?.kkal_preview ?? "",
+    image: draft?.image ?? null,
     tmp_desc: draft?.tmp_desc ?? "",
     marc_desc: draft?.marc_desc ?? "",
     marc_desc_full: draft?.marc_desc_full ?? "",
-    is_mark: String(draft?.marking?.is_mark ?? draft?.is_mark ?? 0),
-    mark_code: draft?.marking?.mark_code ?? draft?.mark_code ?? "",
-    series: draft?.marking?.series ?? draft?.series ?? "",
-    is_akchis: Number(draft?.marking?.is_akchis ?? draft?.is_akchis ?? 0) === 1,
+    is_mark: String(draft?.marking?.is_mark ?? 0),
+    mark_code: draft?.marking?.mark_code ?? "",
+    series: draft?.marking?.series ?? "",
+    is_akchis: Number(draft?.marking?.is_akchis ?? 0) === 1,
     tags: Array.isArray(draft?.tags) ? draft.tags : [],
     show_site: Number(draft?.show_site ?? 0) === 1,
     show_program: Number(draft?.show_program ?? 0) === 1,
-    is_show: Number(draft?.is_show ?? draft?.is_active ?? 0) === 1,
+    is_show: Number(draft?.is_show ?? 0) === 1,
     is_hit: Number(draft?.is_hit ?? 0) === 1,
     is_new: Number(draft?.is_new ?? 0) === 1,
     time_stage_1: draft?.time_stage_1 ?? "",
@@ -147,14 +148,6 @@ function InfoCard({ title, description, children }) {
       </Stack>
     </Paper>
   );
-}
-
-function formatValue(value, fallback = "-") {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-
-  return String(value);
 }
 
 function normalizeTagList(tags) {
@@ -220,7 +213,7 @@ export default function SkladSiteItemEditorDialog({
     const options = [{ id: "", name: "Выберите категорию" }].concat(
       (categories || []).map((item) => ({
         id: String(item?.id ?? ""),
-        name: item?.name || String(item?.id || ""),
+        name: item?.name ?? String(item?.id ?? ""),
       })),
     );
 
@@ -260,7 +253,7 @@ export default function SkladSiteItemEditorDialog({
     return [{ id: "", name: "Выберите тег" }].concat(
       availableTags.map((tag) => ({
         id: String(tag?.id ?? ""),
-        name: tag?.name || String(tag?.id || ""),
+        name: tag?.name ?? String(tag?.id ?? ""),
       })),
     );
   }, [availableTags]);
@@ -436,7 +429,7 @@ export default function SkladSiteItemEditorDialog({
                   <Grid size={{ xs: 12, md: 8 }}>
                     <InfoCard
                       title="Основные данные"
-                      description="Базовая карточка, близкая к legacy tab `Основные`"
+                      description="Базовые поля карточки товара."
                     >
                       <Grid
                         container
@@ -520,7 +513,7 @@ export default function SkladSiteItemEditorDialog({
                     <Stack spacing={2}>
                       <InfoCard
                         title="Маркировка"
-                        description="Вынесена в editor shell сразу, как в legacy flow"
+                        description="Поля маркировки текущей версии."
                       >
                         <Grid
                           container
@@ -721,7 +714,7 @@ export default function SkladSiteItemEditorDialog({
                             {form.tags.map((tag) => (
                               <Chip
                                 key={`assigned-${tag?.id}`}
-                                label={tag?.name || tag?.id}
+                                label={tag?.name ?? String(tag?.id ?? "")}
                                 color="primary"
                                 variant="filled"
                                 clickable={isEditable}
@@ -760,7 +753,7 @@ export default function SkladSiteItemEditorDialog({
                               return (
                                 <Chip
                                   key={`available-${tag?.id}`}
-                                  label={tag?.name || tag?.id}
+                                  label={tag?.name ?? String(tag?.id ?? "")}
                                   color={isAssigned ? "primary" : "default"}
                                   variant={isAssigned ? "filled" : "outlined"}
                                   clickable={isEditable}
@@ -983,7 +976,7 @@ export default function SkladSiteItemEditorDialog({
                   setTagModal((prev) => ({
                     ...prev,
                     tagId: nextTagId,
-                    name: selectedTag?.name || prev.name,
+                    name: selectedTag?.name ?? prev.name,
                   }));
                 }}
               />

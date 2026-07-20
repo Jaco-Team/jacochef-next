@@ -39,21 +39,17 @@ function formatValue(value, fallback = "-") {
 }
 
 function normalizeRows(response) {
-  const rawRows = response?.list || response?.versions || response?.revisions || [];
-
-  if (!Array.isArray(rawRows)) {
-    return [];
-  }
+  const rawRows = Array.isArray(response?.list) ? response.list : [];
 
   return rawRows.map((row, index) => ({
-    key: String(row?.revision_key || row?.history_id || row?.id || index),
-    revisionKey: String(row?.revision_key || row?.history_id || row?.id || ""),
-    historyId: row?.history_id ?? row?.id ?? null,
-    createdAt: row?.created_at || row?.date_create || row?.created || "",
-    dateStart: row?.date_start || "",
-    dateEnd: row?.date_end || "",
-    operationType: row?.operation_type || row?.operation || row?.type_operation || "",
-    source: row?.source || "",
+    key: row?.revision_key ? String(row.revision_key) : `history-row-${index}`,
+    revisionKey: row?.revision_key ? String(row.revision_key) : "",
+    historyId: row?.history_id ?? null,
+    createdAt: row?.created_at ?? "",
+    dateStart: row?.date_start ?? "",
+    dateEnd: row?.date_end ?? "",
+    operationType: row?.operation_type ?? "",
+    source: row?.source ?? "",
     raw: row,
   }));
 }
@@ -86,9 +82,7 @@ function getEntityPayload(entityType, entityId) {
 
 function normalizeRevision(response, revisionKey) {
   return (
-    response?.revision ||
-    response?.item ||
-    response?.data || {
+    response?.revision ?? {
       revision_key: revisionKey,
       snapshot: null,
     }
@@ -135,7 +129,7 @@ function getSnapshotCollections(snapshot) {
     .map((section) => ({
       ...section,
       values: section.items
-        .map((item) => item?.name || item?.title || item?.label || "")
+        .map((item) => item?.name ?? "")
         .filter(Boolean)
         .slice(0, 8),
     }))
@@ -146,12 +140,12 @@ function getCompositionPreviewRows(snapshot) {
   const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
 
   return items.slice(0, 6).map((item, index) => ({
-    key: String(item?.id || item?.item_id || index),
-    name: item?.name || item?.item_name || item?.item?.name || "-",
+    key: String(item?.id ?? index),
+    name: item?.name ?? "-",
     brutto: item?.brutto ?? "-",
     netto: item?.netto ?? "-",
-    output: item?.res ?? item?.output ?? "-",
-    type: item?.type || item?.entity_type || "-",
+    output: item?.res ?? "-",
+    type: item?.type ?? "-",
   }));
 }
 
@@ -580,14 +574,14 @@ export default function useSkladHistoryController({ showAlert }) {
 }
 
 function GridLikeSnapshot({ snapshot, revision }) {
-  const snapshotEntityType = snapshot?.type || revision?.entity_type || revision?.type || "-";
+  const snapshotEntityType = snapshot?.type ?? revision?.entity_type ?? "-";
   const mainFields = [
-    ["Ключ версии", revision?.revision_key || revision?.history_id || "-"],
-    ["Источник", revision?.source || "-"],
+    ["Ключ версии", revision?.revision_key ?? "-"],
+    ["Источник", revision?.source ?? "-"],
     ["Тип сущности", snapshotEntityType],
-    ["Название", snapshot?.name || snapshot?.title || "-"],
-    ["Действует с", snapshot?.date_start || "-"],
-    ["Действует по", snapshot?.date_end || "-"],
+    ["Название", snapshot?.name ?? "-"],
+    ["Действует с", snapshot?.date_start ?? "-"],
+    ["Действует по", snapshot?.date_end ?? "-"],
   ];
 
   const collections = [

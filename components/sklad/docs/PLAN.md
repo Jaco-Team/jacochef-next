@@ -191,11 +191,11 @@ Contract note:
 - partially implemented
 - `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one` уже live
 - list/filter shell уже собран
-- detail tabs и editor wireframe уже собраны и открываются
+- detail tabs и editor dialog уже собраны и работают на canonical read flow
 - create bootstrap и canonical `save_new` / `save_edit` уже подключены
 - detail delete-preview semantics и image current-fields readout подровнены под актуальный `API.md` contract без расширения scope
 - image upload, VK sync trigger and direct history/editor handoff уже подключены в detail flow
-- inline tag mutations остаются staged до следующего backend pass
+- tag create/rename actions уже подключены через canonical `site-items/tags/save_new` и `site-items/tags/save_edit`
 - authoritative delete confirmation + server-side delete call для site items уже подключены
 - authoritative archive/unarchive confirmation + server-side archive call для site items уже подключены
 
@@ -704,7 +704,7 @@ Deliverables:
 3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`. Status: completed.
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
-6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: partially completed.
+6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: completed for current FE scope; canonical create/edit, tag mutation, image upload, VK sync, history handoff, archive/delete flows and strict current API binding are in place, while deeper composition editing remains backend follow-up.
 7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive view/history/restore row actions connected, production/detail modals aligned to module modal pattern. Status: completed.
 8. Hardening slice: access matrix, smoke tests, migration leftovers. Status: pending.
 

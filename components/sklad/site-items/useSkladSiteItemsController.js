@@ -63,9 +63,8 @@ function formatBju(row) {
 }
 
 function getCategoryName(row, categories) {
-  const categoryId = row?.category_id ?? row?.category?.id ?? null;
-  const directName =
-    row?.category_name || row?.category?.name || row?.cat_name || row?.category_title || "";
+  const categoryId = row?.category_id ?? null;
+  const directName = row?.category_name || "";
 
   if (directName) {
     return directName;
@@ -84,18 +83,12 @@ function getTagNames(row, tags) {
     return row.tags.map((item) => item?.name).filter(Boolean);
   }
 
-  if (Array.isArray(row?.tag_ids) && row.tag_ids.length) {
-    return row.tag_ids
-      .map((tagId) => tags.find((item) => String(item?.id) === String(tagId))?.name || "")
-      .filter(Boolean);
-  }
-
   return [];
 }
 
 function getStatusChips(row) {
   const chips = [];
-  const isVisible = row?.is_show ?? row?.is_active ?? 0;
+  const isVisible = row?.is_show ?? 0;
 
   if (Number(row?.is_archived) === 1) {
     chips.push({ key: "archived", label: "Архив", color: "default" });
@@ -166,7 +159,7 @@ function createEmptySiteItemRelations() {
 }
 
 function normalizeSiteItemDraft(response, fallbackCategories = []) {
-  const item = response?.item || {};
+  const item = response?.item ?? {};
   const emptyRelations = createEmptySiteItemRelations();
 
   return {
@@ -176,23 +169,19 @@ function normalizeSiteItemDraft(response, fallbackCategories = []) {
       fallbackCategories.find((category) => String(category?.id) === String(item?.category_id))
         ?.name ||
       "",
-    tags: item?.tags || [],
-    composition_source:
-      item?.composition_source || response?.composition_source || emptyRelations.composition_source,
-    composition_derived:
-      item?.composition_derived ||
-      response?.composition_derived ||
-      emptyRelations.composition_derived,
-    allergens_derived: item?.allergens_derived || response?.allergens_derived || [],
-    possible_allergens_derived:
-      item?.possible_allergens_derived || response?.possible_allergens_derived || [],
-    image: item?.image || response?.image || null,
-    marking: item?.marking || response?.marking || {},
-    can_delete:
-      typeof response?.can_delete === "boolean" ? response.can_delete : (item?.can_delete ?? null),
-    delete_usage: response?.delete_usage || item?.delete_usage || null,
-    item_items: response?.item_items || item?.item_items || emptyRelations.item_items,
-    items_stage: response?.items_stage || item?.items_stage || emptyRelations.items_stage,
+    tags: Array.isArray(item?.tags) ? item.tags : [],
+    composition_source: response?.composition_source ?? emptyRelations.composition_source,
+    composition_derived: response?.composition_derived ?? emptyRelations.composition_derived,
+    allergens_derived: Array.isArray(response?.allergens_derived) ? response.allergens_derived : [],
+    possible_allergens_derived: Array.isArray(response?.possible_allergens_derived)
+      ? response.possible_allergens_derived
+      : [],
+    image: response?.image ?? null,
+    marking: response?.marking ?? {},
+    can_delete: typeof response?.can_delete === "boolean" ? response.can_delete : null,
+    delete_usage: response?.delete_usage ?? null,
+    item_items: response?.item_items ?? emptyRelations.item_items,
+    items_stage: response?.items_stage ?? emptyRelations.items_stage,
   };
 }
 
@@ -260,7 +249,7 @@ function validateSiteItemDraft(draft) {
 }
 
 function getDeleteError(response) {
-  const usage = response?.usage || response?.delete_usage || {};
+  const usage = response?.usage ?? {};
   const activeCount = Array.isArray(usage?.active_relations) ? usage.active_relations.length : 0;
   const historyCount = Array.isArray(usage?.history_relations) ? usage.history_relations.length : 0;
   const counts = [];
@@ -318,9 +307,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
       }
 
       setState({
-        rows: response?.list || [],
-        categories: response?.categories || [],
-        tags: response?.tags || [],
+        rows: Array.isArray(response?.list) ? response.list : [],
+        categories: Array.isArray(response?.categories) ? response.categories : [],
+        tags: Array.isArray(response?.tags) ? response.tags : [],
       });
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки товаров сайта", false);
@@ -545,8 +534,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         return;
       }
 
-      const currentSourceValue =
-        type === "is_show" ? (row?.is_show ?? row?.is_active ?? 0) : (row?.[type] ?? 0);
+      const currentSourceValue = type === "is_show" ? (row?.is_show ?? 0) : (row?.[type] ?? 0);
       const nextValue = Number(currentSourceValue) === 1 ? 0 : 1;
 
       setShellState({ isLoading: true });
@@ -1176,16 +1164,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
                             <Chip
                               size="small"
                               clickable
-                              color={
-                                Number(row?.is_show ?? row?.is_active ?? 0) === 1
-                                  ? "success"
-                                  : "default"
-                              }
-                              label={
-                                Number(row?.is_show ?? row?.is_active ?? 0) === 1
-                                  ? "Активен"
-                                  : "Скрыт"
-                              }
+                              color={Number(row?.is_show ?? 0) === 1 ? "success" : "default"}
+                              label={Number(row?.is_show ?? 0) === 1 ? "Активен" : "Скрыт"}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 toggleFlag(row, "is_show");

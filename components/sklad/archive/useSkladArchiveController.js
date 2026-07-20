@@ -36,19 +36,7 @@ const ARCHIVE_ENTITY_OPTIONS = [
 ];
 
 function getArchiveRows(response) {
-  if (Array.isArray(response?.list)) {
-    return response.list;
-  }
-
-  if (Array.isArray(response?.rows)) {
-    return response.rows;
-  }
-
-  if (Array.isArray(response?.items)) {
-    return response.items;
-  }
-
-  return [];
+  return Array.isArray(response?.list) ? response.list : [];
 }
 
 function getEntityLabel(entityType) {
@@ -90,7 +78,6 @@ function normalizeRows(entityType, response) {
       row?.id ?? "no-id",
       row?.date_start ?? "no-start",
       row?.date_end ?? "no-end",
-      row?.history_id ?? row?.revision_key ?? "no-history",
       index,
     ].join("-"),
     id: row?.id ?? "—",
@@ -103,23 +90,25 @@ function normalizeRows(entityType, response) {
 
 function normalizeArchiveDetail(response, entityType) {
   if (entityType === "site_item") {
-    return response?.item || {};
+    return response?.item ?? {};
   }
 
-  const entity = response?.entity || {};
+  const entity = response?.entity ?? {};
+  const units = Array.isArray(response?.units) ? response.units : [];
 
   return {
     ...entity,
-    unit_name:
-      response?.units?.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name || "",
-    categories: entity?.categories || response?.categories || [],
-    allergens: entity?.allergens || [],
-    allergens_possible: entity?.allergens_possible || [],
-    allergens_derived: entity?.allergens_derived || [],
-    allergens_possible_derived: entity?.allergens_possible_derived || [],
-    storages: entity?.storages || response?.all_storages || [],
-    apps: entity?.apps || response?.apps || [],
-    items: entity?.items || [],
+    unit_name: units.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ?? "",
+    categories: Array.isArray(entity?.categories) ? entity.categories : [],
+    allergens: Array.isArray(entity?.allergens) ? entity.allergens : [],
+    allergens_possible: Array.isArray(entity?.allergens_possible) ? entity.allergens_possible : [],
+    allergens_derived: Array.isArray(entity?.allergens_derived) ? entity.allergens_derived : [],
+    allergens_possible_derived: Array.isArray(entity?.allergens_possible_derived)
+      ? entity.allergens_possible_derived
+      : [],
+    storages: Array.isArray(entity?.storages) ? entity.storages : [],
+    apps: Array.isArray(entity?.apps) ? entity.apps : [],
+    items: Array.isArray(entity?.items) ? entity.items : [],
   };
 }
 

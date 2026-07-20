@@ -42,6 +42,10 @@ function formatValue(value, fallback = "-") {
 }
 
 function formatBoolean(value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
   return Number(value) === 1 ? "Да" : "Нет";
 }
 
@@ -80,7 +84,7 @@ function formatAllergenNames(items) {
     return "-";
   }
 
-  const names = items.map((item) => item?.name || item?.title || item?.label || "").filter(Boolean);
+  const names = items.map((item) => item?.name ?? "").filter(Boolean);
 
   return names.length ? names.join(", ") : "-";
 }
@@ -91,13 +95,13 @@ function formatCompositionRows(items, typeLabel) {
   }
 
   return items.map((item, index) => ({
-    key: `${typeLabel}-${item?.id || item?.pf_id || item?.rec_id || index}`,
+    key: `${typeLabel}-${item?.id ?? index}`,
     typeLabel,
-    name: item?.name || item?.title || "-",
-    brutto: item?.brutto ?? item?.weight_brutto ?? "-",
-    netto: item?.netto ?? item?.weight_netto ?? "-",
-    output: item?.res ?? item?.output ?? "-",
-    stage: item?.stage || "-",
+    name: item?.name ?? "-",
+    brutto: item?.brutto ?? "-",
+    netto: item?.netto ?? "-",
+    output: item?.res ?? "-",
+    stage: item?.stage ?? "-",
   }));
 }
 
@@ -116,10 +120,10 @@ function formatStageRows(itemsStage) {
     const stageItems = Array.isArray(itemsStage?.[stage.key]) ? itemsStage[stage.key] : [];
 
     return stageItems.map((item, index) => ({
-      key: `${stage.key}-${item?.id || item?.pf_id || item?.rec_id || index}`,
+      key: `${stage.key}-${item?.id ?? index}`,
       stage: stage.label,
       entityType: item?.type === "rec" ? "Рецепт" : "Заготовка",
-      name: item?.type_id?.name || item?.name || "-",
+      name: item?.name ?? "-",
       brutto: item?.brutto ?? "-",
       netto: item?.netto ?? "-",
       output: item?.res ?? "-",
@@ -131,8 +135,8 @@ function formatLinkedItemRows(itemItems) {
   const items = Array.isArray(itemItems?.this_items) ? itemItems.this_items : [];
 
   return items.map((item, index) => ({
-    key: `linked-item-${item?.id || item?.item_id || index}`,
-    name: item?.item?.name || item?.type_id?.name || item?.name || "-",
+    key: `linked-item-${item?.id ?? index}`,
+    name: item?.name ?? "-",
     maxCount: item?.max_count ?? "-",
     isAdd: Number(item?.is_add) === 1 ? "Да" : "Нет",
   }));
@@ -267,14 +271,8 @@ export default function SkladSiteItemViewDialog({
   onClose,
 }) {
   const fileInputRef = useRef(null);
-  const imageUrl =
-    detail?.image?.variants?.webp?.url ||
-    detail?.image?.variants?.jpg?.url ||
-    detail?.image?.urls?.img_new_update ||
-    detail?.image?.urls?.img_new ||
-    detail?.image?.url ||
-    null;
-  const isVisible = detail?.is_show ?? detail?.is_active ?? 0;
+  const imageUrl = detail?.image?.variants?.webp?.url ?? detail?.image?.variants?.jpg?.url ?? null;
+  const isVisible = detail?.is_show ?? 0;
 
   const compositionRows = formatCompositionRows(detail?.composition_source?.pf, "Заготовка").concat(
     formatCompositionRows(detail?.composition_source?.recipes, "Рецепт"),
@@ -398,7 +396,7 @@ export default function SkladSiteItemViewDialog({
                           <Grid size={{ xs: 12, md: 6 }}>
                             <InfoField
                               label="Категория"
-                              value={formatValue(detail?.category_name || detail?.category?.name)}
+                              value={formatValue(detail?.category_name)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>
@@ -701,9 +699,7 @@ export default function SkladSiteItemViewDialog({
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Typography color="text.secondary">
-                        Итоговый состав не вернулся в payload.
-                      </Typography>
+                      <Typography color="text.secondary">Итоговый состав не найден.</Typography>
                     )}
                   </SectionCard>
 
@@ -919,7 +915,7 @@ export default function SkladSiteItemViewDialog({
                           startIcon={<HistoryOutlinedIcon />}
                           onClick={onOpenHistory}
                         >
-                          История изображения
+                          Открыть историю
                         </Button>
                         <Button
                           variant="outlined"

@@ -66,7 +66,7 @@ function getEntitySaveApi(api, entityType, mode) {
 }
 
 function getProductionVisibleState(row) {
-  return Number(row?.is_show ?? row?.is_active ?? 0) === 1;
+  return Number(row?.is_show ?? 0) === 1;
 }
 
 function getDeleteHint(row) {
@@ -86,7 +86,7 @@ function getDeleteHint(row) {
 }
 
 function getDeleteError(response) {
-  const usage = response?.usage || response?.delete_usage || {};
+  const usage = response?.usage ?? {};
   const activeCount = Array.isArray(usage?.active_relations) ? usage.active_relations.length : 0;
   const historyCount = Array.isArray(usage?.history_relations) ? usage.history_relations.length : 0;
   const counts = [];
@@ -109,9 +109,7 @@ function formatCategories(categories) {
     return "-";
   }
 
-  const names = categories
-    .map((item) => item?.name || item?.title || item?.label || "")
-    .filter(Boolean);
+  const names = categories.map((item) => item?.name ?? "").filter(Boolean);
 
   return names.length ? names.join(", ") : "-";
 }
@@ -275,7 +273,7 @@ export default function useSkladProductionController({ showAlert }) {
         throw new Error(response?.text || "Ошибка загрузки списка");
       }
 
-      setState({ rows: response?.list || [] });
+      setState({ rows: Array.isArray(response?.list) ? response.list : [] });
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки списка", false);
     } finally {
@@ -620,21 +618,25 @@ export default function useSkladProductionController({ showAlert }) {
       }
 
       const entity = response?.entity || {};
+      const units = Array.isArray(response?.units) ? response.units : [];
 
       return {
         ...entity,
         unit_name:
-          response?.units?.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ||
-          "",
-        units: response?.units || [],
-        categories: entity?.categories || response?.categories || [],
-        allergens: entity?.allergens || [],
-        allergens_possible: entity?.allergens_possible || [],
-        allergens_derived: entity?.allergens_derived || [],
-        allergens_possible_derived: entity?.allergens_possible_derived || [],
-        storages: entity?.storages || response?.all_storages || [],
-        apps: entity?.apps || response?.apps || [],
-        items: entity?.items || [],
+          units.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ?? "",
+        units,
+        categories: Array.isArray(entity?.categories) ? entity.categories : [],
+        allergens: Array.isArray(entity?.allergens) ? entity.allergens : [],
+        allergens_possible: Array.isArray(entity?.allergens_possible)
+          ? entity.allergens_possible
+          : [],
+        allergens_derived: Array.isArray(entity?.allergens_derived) ? entity.allergens_derived : [],
+        allergens_possible_derived: Array.isArray(entity?.allergens_possible_derived)
+          ? entity.allergens_possible_derived
+          : [],
+        storages: Array.isArray(entity?.storages) ? entity.storages : [],
+        apps: Array.isArray(entity?.apps) ? entity.apps : [],
+        items: Array.isArray(entity?.items) ? entity.items : [],
       };
     },
     [api, entityType],
