@@ -1,90 +1,102 @@
 "use client";
 
 import { useMemo } from "react";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import { useSkladStore } from "./useSkladStore";
 
-const ACCESS_KEY_ALIASES = {
-  units: ["ed_izmer"],
-  categories: ["cats"],
-  recipes: ["rec_list"],
-  semi_finished: ["pf_list"],
-  site_items: ["item", "tech"],
-  delete: ["delete_item"],
-};
-
-const FULL_MODULE_WRITE_KEYS = [
-  "units",
-  "categories",
-  "recipes",
-  "semi_finished",
-  "site_items",
-  "history",
-  "archive",
+const PRODUCTION_WRITE_KEYS = [
+  "name",
+  "shelf_life",
+  "date_start",
+  "date_end",
+  "time",
+  "dop_time",
+  "rec_apps",
+  "storages",
+  "items",
+  "allergens",
+  "allergens_diff",
+  "structure",
+  "cats",
+  "ed_izmer",
+  "show_in_rev",
+  "two_user",
+  "is_show",
 ];
+
+const SITE_ITEM_WRITE_KEYS = [
+  "create_new",
+  "is_show",
+  "show_in_order",
+  "honest_sign",
+  "tmp_desc",
+  "marc_desc",
+  "marc_desc_full",
+  "show_program",
+  "is_new",
+  "show_site",
+  "is_hit",
+  "dropzone",
+  "category_id",
+  "count_part",
+  "stol",
+  "weight",
+  "protein",
+  "fat",
+  "carbohydrates",
+  "time_stage_1",
+  "time_stage_2",
+  "time_stage_3",
+  "change_tag",
+  "reload_vk",
+  "short_name",
+  "marc",
+  "stage",
+  "items",
+];
+
+function canAny(accessApi, action, keys) {
+  return keys.some((key) => accessApi.userCan(action, key));
+}
 
 export default function useSkladAccess() {
   const access = useSkladStore((state) => state.access);
 
   return useMemo(() => {
-    const normalizeKey = (key) =>
-      String(key || "")
-        .trim()
-        .replace(/-/g, "_");
-    const getKeyBase = (key) => normalizeKey(key).replace(/_(access|view|edit|execute)$/, "");
-    const getKeyBases = (key) => {
-      const base = getKeyBase(key);
-      const aliases = ACCESS_KEY_ALIASES[base] || [];
-      return [base, ...aliases].filter(Boolean);
-    };
-    const hasFlag = (key, suffix) =>
-      getKeyBases(key).some((base) => Number(access?.[`${base}_${suffix}`]) === 1);
-    const hasRawFlag = (key) => getKeyBases(key).some((base) => Number(access?.[base]) === 1);
-    const hasAnyFlag = (keys = [], suffixes = []) =>
-      keys.some((key) => suffixes.some((suffix) => hasFlag(key, suffix)));
-    const hasViewAccess = (key) =>
-      hasFlag(key, "view") || hasFlag(key, "edit") || hasFlag(key, "access") || hasRawFlag(key);
-    const hasWriteAccess = (key) =>
-      hasFlag(key, "edit") || hasFlag(key, "access") || hasRawFlag(key);
-    const hasFullModuleWriteContour = () =>
-      FULL_MODULE_WRITE_KEYS.every((key) => hasViewAccess(key));
-    const canAccess = (key) => hasViewAccess(key);
-    const canView = (key) => canAccess(key);
-    const canEdit = (key) => hasWriteAccess(key);
-    const canDelete = () =>
-      hasFlag("delete", "execute") ||
-      hasFlag("delete", "edit") ||
-      hasRawFlag("delete_execute") ||
-      hasRawFlag("delete");
-    const canExecute = (key) => hasFlag(key, "execute");
-    const canManageProduction = (entityType) => {
-      if (entityType === "recipe") {
-        return (
-          hasFullModuleWriteContour() ||
-          hasWriteAccess("recipes") ||
-          hasAnyFlag(["create_rec", "change_rec_pf"], ["edit", "access"]) ||
-          hasRawFlag("create_rec")
-        );
+    const accessApi = handleUserAccess(access);
+    const canView = (key) => accessApi.userCan("view", key);
+    const canEdit = (key) => accessApi.userCan("edit", key);
+    const canAccess = (key) => accessApi.userCan("access", key);
+    const canExecute = (key) => accessApi.userCan("access", key);
+    const canCreateProduction = (entityType) =>
+      entityType === "recipe" ? canEdit("create_rec") : canEdit("create_pol");
+    const canManageProduction = (entityType) =>
+      canCreateProduction(entityType) ||
+      canEdit("change_rec_pf") ||
+      canAny(accessApi, "edit", PRODUCTION_WRITE_KEYS);
+    const canManageSiteItems = () => canAny(accessApi, "edit", SITE_ITEM_WRITE_KEYS);
+    const canDelete = (entityType = "production") => {
+      if (entityType === "site_item") {
+        return canEdit("delete_item");
       }
 
-      return (
-        hasFullModuleWriteContour() ||
-        hasWriteAccess("semi_finished") ||
-        hasAnyFlag(["create_pol", "change_rec_pf"], ["edit", "access"]) ||
-        hasRawFlag("create_pol")
-      );
+      if (entityType === "unit") {
+        return canEdit("ed_izmer");
+      }
+
+      if (entityType === "category") {
+        return canEdit("cats");
+      }
+
+      return canEdit("delete");
     };
-    const canManageSiteItems = () =>
-      hasFullModuleWriteContour() ||
-      hasWriteAccess("site_items") ||
-      hasAnyFlag(["create_new", "change_tag", "reload_vk"], ["edit", "access"]) ||
-      hasRawFlag("create_new");
     const canManageArchivedEntity = (entityType) => {
       if (entityType === "recipe" || entityType === "semi_finished") {
-        return canManageProduction(entityType);
+        return canEdit("is_show") || canManageProduction(entityType);
       }
 
       if (entityType === "site_item") {
-        return canManageSiteItems();
+        return canEdit("is_show") || canManageSiteItems();
       }
 
       return false;
@@ -92,10 +104,12 @@ export default function useSkladAccess() {
 
     return {
       access,
+      accessApi,
       canView,
       canEdit,
       canAccess,
       canExecute,
+      canCreateProduction,
       canDelete,
       canManageProduction,
       canManageSiteItems,

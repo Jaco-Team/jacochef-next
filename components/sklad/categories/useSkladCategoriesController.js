@@ -104,7 +104,7 @@ function getDeleteHint(row) {
 
 export default function useSkladCategoriesController({ showAlert }) {
   const api = useSkladApi();
-  const { canEdit } = useSkladAccess();
+  const { canEdit, canDelete: canDeleteByAccess } = useSkladAccess();
   const { ConfirmDialog, withConfirm } = useConfirm();
 
   const setShellState = useSkladStore((state) => state.setState);
@@ -119,7 +119,8 @@ export default function useSkladCategoriesController({ showAlert }) {
   const setDraft = useSkladCategoriesStore((state) => state.setDraft);
   const resetDraft = useSkladCategoriesStore((state) => state.resetDraft);
 
-  const isEditable = canEdit("categories");
+  const isEditable = canEdit("cats");
+  const canDeleteAction = canDeleteByAccess("category");
 
   const loadCategories = useCallback(async () => {
     setShellState({ isLoading: true });
@@ -221,7 +222,7 @@ export default function useSkladCategoriesController({ showAlert }) {
 
   const deleteCategory = useCallback(
     async (row) => {
-      if (!row?.id) {
+      if (!row?.id || !canDeleteAction) {
         return;
       }
 
@@ -242,7 +243,7 @@ export default function useSkladCategoriesController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, loadCategories, setShellState, showAlert],
+    [api, canDeleteAction, loadCategories, setShellState, showAlert],
   );
 
   const filteredRows = useMemo(() => {
@@ -389,7 +390,11 @@ export default function useSkladCategoriesController({ showAlert }) {
               <TableBody>
                 {paginatedRows.map((row) => {
                   const sourceMeta = getCategorySourceMeta(row?.source_type);
-                  const canDelete = Boolean(row?.delete_usage?.can_delete);
+                  const canDeleteByUsage = Boolean(row?.delete_usage?.can_delete);
+                  const canDelete = canDeleteByUsage && canDeleteAction;
+                  const deleteHint = canDeleteByUsage
+                    ? "Недостаточно прав для удаления"
+                    : getDeleteHint(row);
                   const usageCount = row?.total_usage_count ?? 0;
 
                   return (
@@ -453,14 +458,14 @@ export default function useSkladCategoriesController({ showAlert }) {
                                       onConfirm: () => deleteCategory(row),
                                     })
                                   }
-                                  disabled={!isEditable}
+                                  disabled={!isEditable || !canDeleteAction}
                                 >
                                   <DeleteOutlineIcon fontSize="small" />
                                 </IconButton>
                               </span>
                             </Tooltip>
                           ) : (
-                            <Tooltip title={getDeleteHint(row)}>
+                            <Tooltip title={deleteHint}>
                               <span>
                                 <IconButton
                                   size="small"

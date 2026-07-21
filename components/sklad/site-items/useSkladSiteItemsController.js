@@ -301,7 +301,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canManageSiteItems();
-  const canDeleteAction = canDelete();
+  const canDeleteAction = canDelete("site_item");
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
       setShellState({ isLoading: true });

@@ -320,7 +320,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const canCreateOrEdit = canManageProduction(entityType);
   const canConvert = canManageProduction("recipe") || canManageProduction("semi_finished");
-  const canDeleteAction = canDelete();
+  const canDeleteAction = canDelete("production");
 
   const categoryOptions = useMemo(() => {
     const sourceAwareCategories = (categories || []).filter(

@@ -728,7 +728,7 @@ Latest chunk status:
   - history/archive request effects no longer depend on unstable callback identity
   - `ACCESS-MAP.md` now records canonical section flags, legacy action equivalents and unclear/redundant flags for the current FE scope
 - July 21, 2026 reviewer correction:
-  - plain `*_view` access remains strictly read-only; `delete_execute` is kept as destructive-only contour and no longer broadens create/edit/archive controls
+  - plain `*_view` access remains strictly read-only; destructive actions now use raw middleware delete keys (`delete_*` / `delete_item_*`) instead of synthetic `delete_execute`
 - remaining cleanup decision:
   - decide whether convert, VK sync, tag mutation and archive restore should receive dedicated canonical action keys from backend docs, or stay intentionally covered by broad section edit/access gating
 - reviewer pass remains mandatory after each implementation chunk
@@ -942,3 +942,23 @@ Remaining gaps:
 
 - не выполнялся широкий live sweep; read contract подтвержден статически по module callers and docs, без массовых endpoint probes
 - `ACCESS-MAP.md` пока не требовал корректировок в этом pass, потому что найденный mismatch был transport-level inside module callers, а не access-map drift
+
+## 14. Review checklist: module compliance, business process, usability, access gating
+
+Status: active remediation list from July 21, 2026 senior review. Keep this section as checklist history; mark items completed, do not remove.
+
+High priority:
+
+- completed: consolidate module tab visibility with raw `handleUserAccess` semantics used by action gating, so section navigation does not drift from middleware access.
+- completed: gate Units create/edit/delete actions through raw `ed_izmer_*` access rules.
+
+Medium priority:
+
+- completed: align Categories create/edit/delete gating with raw `cats_*` access rules.
+- pending: clean remaining negative/mirror status chips from detail/editor where they do not add business value.
+- pending: address Chrome accessibility issues for unlabeled/unnamed form fields without touching shared controls unless explicitly approved.
+
+Low priority:
+
+- pending: replace archive row fallback status “Неизвестно” with a business-meaningful anomaly state or remove it from normal archive rows.
+- pending: remove or rewrite remaining implementation-facing wording that leaks into visible UI metadata.

@@ -1,6 +1,6 @@
 # BUSINESS PROCESSES
 
-Статус: исследование текущей бизнес-логики складского контура и целевые правила для нового модуля `sklad_items`.
+Статус: исследование текущей бизнес-логики складского контура и целевые правила для нового модуля `sklad`.
 
 Основание:
 
@@ -19,7 +19,7 @@
 - таблица `jaco_main_rolls.items`
 - это ингредиент / сырье / закупаемая складская позиция
 - это не продаваемый продукт
-- это upstream-уровень для остальной цепочки и одновременно часть текущего scope нового `sklad_items`
+- это upstream-уровень для остальной цепочки и одновременно часть текущего scope нового `sklad`
 
 Связанные данные:
 
@@ -242,7 +242,7 @@
 
 ## 7. Что новый модуль обязан сделать явно
 
-Новый `sklad_items` должен описать в коде и контракте:
+Новый `sklad` должен описать в коде и контракте:
 
 - откуда берется итоговый состав `SiteItem`
 - откуда берутся итоговые аллергены `SiteItem`
@@ -258,7 +258,7 @@
 
 ## 8. Конвертация recipe <-> semi_finished
 
-Целевая реализация в новом `sklad_items` должна считать конвертацию не rename-операцией, а business transformation:
+Целевая реализация в новом `sklad` должна считать конвертацию не rename-операцией, а business transformation:
 
 - создается новая сущность целевого типа
 - переносится карточка, состав, места хранения, роли приготовления и история стартового состояния новой сущности
@@ -277,3 +277,30 @@
 Следствие для API:
 
 - конвертация `recipe -> semi_finished` должна явно отклоняться для рецептов, чей состав не является item-based
+
+---
+
+## 9. History business process
+
+История в новом `sklad_items` считается не event-log витриной, а отдельным read-процессом восстановления revision состояния.
+
+Фактическое правило runtime:
+
+1. FE запрашивает history по canonical `entity_type` (`item`, `recipe`, `semi_finished`, `site_item`).
+2. `SkladHistoryService` выбирает source через `SkladHistorySourceRegistry`.
+3. Для каждой revision source берет head-строку из legacy history table по `history_id`.
+4. Дочерние связи этой revision дочитываются из соответствующих history link tables той же сущности.
+5. Если внутри snapshot есть связанные сущности (`item`, `pf`, `recipe`, linked `site_item`), их labels и derived blocks резолвятся по ближайшей historical revision на дату текущего snapshot, а не только по current rows.
+6. Если legacy schema не хранит отдельный historical snapshot для dictionary names (`unit`, `tag`, `category`, `allergen`), backend честно использует current dictionary tables как fallback и не эмулирует несуществующую историю.
+
+Практический результат:
+
+- `history/list` возвращает version list той же business-сущности, а не сырые audit events
+- `history/get_one` возвращает canonical revision snapshot
+- `history/compare` сравнивает именно canonical snapshot, поэтому derived composition/allergen blocks идут по тем же правилам, что и current read
+
+Отдельное правило для `site_item`:
+
+- source of truth для image/history остается `jaco_site_rolls.items_hist_new`
+- отдельная image-revision таблица в текущий scope не добавляется
+- поля, которых физически нет в этой persistence (`is_updated`, `is_price`), не подделываются в history snapshot

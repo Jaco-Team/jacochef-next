@@ -24,6 +24,7 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import { MyTextInput } from "@/ui/Forms";
 
 import { useSkladStore } from "../useSkladStore";
+import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { getDefaultUnitDraft, useSkladUnitsStore } from "./useSkladUnitsStore";
 import SkladUnitDialog from "./SkladUnitDialog";
@@ -73,6 +74,7 @@ function buildSavePayload(draft) {
 export default function useSkladUnitsController({ showAlert }) {
   const api = useSkladApi();
   const { ConfirmDialog, withConfirm } = useConfirm();
+  const { canEdit, canDelete } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const rows = useSkladUnitsStore((state) => state.rows);
@@ -82,6 +84,9 @@ export default function useSkladUnitsController({ showAlert }) {
   const setState = useSkladUnitsStore((state) => state.setState);
   const setDraft = useSkladUnitsStore((state) => state.setDraft);
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
+
+  const isEditable = canEdit("ed_izmer");
+  const canDeleteAction = canDelete("unit");
 
   const loadUnits = useCallback(async () => {
     setShellState({ isLoading: true });
@@ -105,6 +110,10 @@ export default function useSkladUnitsController({ showAlert }) {
   }, [api, setShellState, setState, showAlert]);
 
   const openCreate = useCallback(() => {
+    if (!isEditable) {
+      return;
+    }
+
     setState({
       draft: getDefaultUnitDraft(),
       modal: {
@@ -112,10 +121,14 @@ export default function useSkladUnitsController({ showAlert }) {
         mode: "create",
       },
     });
-  }, [setState]);
+  }, [isEditable, setState]);
 
   const openEdit = useCallback(
     (row) => {
+      if (!isEditable) {
+        return;
+      }
+
       setState({
         draft: {
           id: row?.id ?? null,
@@ -130,7 +143,7 @@ export default function useSkladUnitsController({ showAlert }) {
         },
       });
     },
-    [setState],
+    [isEditable, setState],
   );
 
   const closeModal = useCallback(() => {
@@ -138,6 +151,11 @@ export default function useSkladUnitsController({ showAlert }) {
   }, [resetDraft]);
 
   const saveUnit = useCallback(async () => {
+    if (!isEditable) {
+      showAlert("Недостаточно прав", false);
+      return;
+    }
+
     const normalizedDraft = normalizeUnitDraft(draft);
 
     if (!normalizedDraft.name) {
@@ -171,11 +189,11 @@ export default function useSkladUnitsController({ showAlert }) {
     } finally {
       setShellState({ isLoading: false });
     }
-  }, [api, closeModal, draft, loadUnits, modal.mode, setShellState, showAlert]);
+  }, [api, closeModal, draft, isEditable, loadUnits, modal.mode, setShellState, showAlert]);
 
   const deleteUnit = useCallback(
     async (row) => {
-      if (!row?.id) {
+      if (!row?.id || !canDeleteAction) {
         return;
       }
 
@@ -196,7 +214,7 @@ export default function useSkladUnitsController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, loadUnits, setShellState, showAlert],
+    [api, canDeleteAction, loadUnits, setShellState, showAlert],
   );
 
   const filteredRows = useMemo(() => {
@@ -264,6 +282,7 @@ export default function useSkladUnitsController({ showAlert }) {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={openCreate}
+              disabled={!isEditable}
             >
               Новая единица
             </Button>
@@ -287,7 +306,9 @@ export default function useSkladUnitsController({ showAlert }) {
               {filteredRows.map((row) => {
                 const relationUnit = rows.find((item) => Number(item.id) === Number(row?.con_id));
                 const deleteBlocked = row?.delete_state === "blocked";
-                const deleteHint = getDeleteHint(row);
+                const deleteHint = canDeleteAction
+                  ? getDeleteHint(row)
+                  : "Недостаточно прав для удаления";
 
                 return (
                   <TableRow
@@ -301,7 +322,9 @@ export default function useSkladUnitsController({ showAlert }) {
                     <TableCell align="right">{row?.con_count ?? "—"}</TableCell>
                     <TableCell>{relationUnit?.name || "—"}</TableCell>
                     <TableCell>
-                      <Tooltip title={deleteBlocked ? deleteHint : "Можно удалить"}>
+                      <Tooltip
+                        title={deleteBlocked || !canDeleteAction ? deleteHint : "Можно удалить"}
+                      >
                         <Chip
                           label={deleteBlocked ? "Заблокировано" : "Доступно"}
                           color={deleteBlocked ? "default" : "success"}
@@ -316,17 +339,30 @@ export default function useSkladUnitsController({ showAlert }) {
                         spacing={0.5}
                         justifyContent="flex-end"
                       >
-                        <Tooltip title="Редактировать">
-                          <IconButton onClick={() => openEdit(row)}>
-                            <EditIcon />
-                          </IconButton>
+                        <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
+                          <span>
+                            <IconButton
+                              onClick={() => openEdit(row)}
+                              disabled={!isEditable}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </span>
                         </Tooltip>
 
-                        <Tooltip title={deleteBlocked ? deleteHint : "Удалить"}>
+                        <Tooltip
+                          title={
+                            deleteBlocked
+                              ? deleteHint
+                              : canDeleteAction
+                                ? "Удалить"
+                                : "Недостаточно прав для удаления"
+                          }
+                        >
                           <span>
                             <IconButton
                               color="error"
-                              disabled={deleteBlocked}
+                              disabled={deleteBlocked || !canDeleteAction}
                               onClick={withConfirm(
                                 () => deleteUnit(row),
                                 `Удалить единицу "${row?.name || ""}"?`,

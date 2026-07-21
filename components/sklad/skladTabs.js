@@ -1,9 +1,11 @@
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+
 export const SKLAD_TAB_DEFINITIONS = [
   {
     key: "units",
     sections: ["units"],
     label: "Единицы измерения",
-    accessKeys: ["units"],
+    accessKeys: ["ed_izmer"],
     summaryKey: null,
     description: "Справочник единиц измерения и их базовые CRUD-операции.",
   },
@@ -11,7 +13,7 @@ export const SKLAD_TAB_DEFINITIONS = [
     key: "categories",
     sections: ["categories"],
     label: "Категории",
-    accessKeys: ["categories"],
+    accessKeys: ["cats"],
     summaryKey: null,
     description: "Source-aware категории для production family и связанных сущностей.",
   },
@@ -19,7 +21,7 @@ export const SKLAD_TAB_DEFINITIONS = [
     key: "production",
     sections: ["recipes", "semi-finished"],
     label: "Рецепты и полуфабрикаты",
-    accessKeys: ["recipes", "semi_finished"],
+    accessKeys: ["name", "items", "create_rec", "create_pol", "change_rec_pf"],
     summaryKey: "recipes_active",
     description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
@@ -27,7 +29,15 @@ export const SKLAD_TAB_DEFINITIONS = [
     key: "site-items",
     sections: ["site-items"],
     label: "Товары сайта",
-    accessKeys: ["site_items"],
+    accessKeys: [
+      "create_new",
+      "is_show",
+      "show_site",
+      "show_program",
+      "category_id",
+      "short_name",
+      "tmp_desc",
+    ],
     summaryKey: "site_items_active",
     description: "Site-facing товарный контур, теги, маркировка, картинки и derived-поля.",
   },
@@ -35,7 +45,7 @@ export const SKLAD_TAB_DEFINITIONS = [
     key: "history",
     sections: ["history"],
     label: "История",
-    accessKeys: ["history"],
+    accessKeys: ["name", "items", "create_new", "is_show"],
     summaryKey: null,
     description: "Unified history browser для canonical entity families.",
   },
@@ -43,23 +53,18 @@ export const SKLAD_TAB_DEFINITIONS = [
     key: "archive",
     sections: ["archive"],
     label: "Архив",
-    accessKeys: ["archive"],
+    accessKeys: ["is_show", "active"],
     summaryKey: "archive_total",
     description: "Archive contour для поддерживаемых entity types.",
   },
 ];
 
 export function getVisibleSkladTabs({ sections = [], access = {} } = {}) {
+  const accessApi = handleUserAccess(access);
+
   return SKLAD_TAB_DEFINITIONS.filter((tab) => {
     const hasSection = tab.sections.some((section) => sections.includes(section));
-    const canView = tab.accessKeys.some((key) => {
-      const keyBase = String(key || "");
-      return (
-        Number(access[`${keyBase}_view`]) === 1 ||
-        Number(access[`${keyBase}_edit`]) === 1 ||
-        Number(access[`${keyBase}_access`]) === 1
-      );
-    });
+    const canView = tab.accessKeys.some((key) => accessApi.userCan("view", key));
 
     return hasSection && canView;
   });
