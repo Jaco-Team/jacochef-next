@@ -40,9 +40,16 @@ import { Button, ListItemButton, Menu, MenuItem } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import { useRouter } from "next/router";
+import {
+  getRevizionAnalysisTheme,
+  REVIZION_ANALYSIS_THEME_EVENT,
+  setRevizionAnalysisTheme,
+} from "@/src/revizionAnalysisTheme";
 
-const UserMenu = ({ my, logOut }) => {
+const UserMenu = ({ my, logOut, themeMode = null }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const router = useRouter();
   const handleMenuOpen = (event) => {
@@ -93,7 +100,7 @@ const UserMenu = ({ my, logOut }) => {
                 sx={{
                   width: { xs: 20, sm: 38 },
                   height: { xs: 20, sm: 38 },
-                  bgcolor: "primary.main",
+                  bgcolor: themeMode === "dark" ? "#616978" : "primary.main",
                   boxShadow: "none",
                 }}
               >
@@ -163,10 +170,13 @@ const UserMenu = ({ my, logOut }) => {
 };
 
 export default function Header() {
+  const router = useRouter();
   const [isOpenMenu, setIsOpenMenu] = useState(false);
   const [CatMenu, setCatMenu] = useState([]);
   const [FullMenu, setFullMenu] = useState([]);
   const [my, setMy] = useState({});
+  const [revizionAnalysisTheme, setRevizionAnalysisThemeState] = useState("dark");
+  const isRevizionAnalysisV2 = router.pathname === "/revizion/analysis-v2";
 
   function openMenu() {
     setIsOpenMenu((state) => !state);
@@ -203,6 +213,24 @@ export default function Header() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isRevizionAnalysisV2) return undefined;
+
+    const currentTheme = getRevizionAnalysisTheme();
+    setRevizionAnalysisThemeState(currentTheme);
+    document.documentElement.dataset.revizionAnalysisTheme = currentTheme;
+
+    const handleThemeChange = (event) => {
+      setRevizionAnalysisThemeState(event.detail === "light" ? "light" : "dark");
+    };
+    window.addEventListener(REVIZION_ANALYSIS_THEME_EVENT, handleThemeChange);
+
+    return () => {
+      window.removeEventListener(REVIZION_ANALYSIS_THEME_EVENT, handleThemeChange);
+      delete document.documentElement.dataset.revizionAnalysisTheme;
+    };
+  }, [isRevizionAnalysisV2]);
+
   function logOut() {
     localStorage.removeItem("token");
     Cookies.remove("token");
@@ -224,6 +252,19 @@ export default function Header() {
       <AppBar
         position="fixed"
         className={font.variable}
+        sx={
+          isRevizionAnalysisV2
+            ? {
+                color: "#F5F4EE",
+                bgcolor: revizionAnalysisTheme === "dark" ? "rgba(30,29,27,.72)" : "#c03",
+                borderBottom: `1px solid ${
+                  revizionAnalysisTheme === "dark" ? "rgba(255,255,255,.12)" : "rgba(153,0,38,.45)"
+                }`,
+                backdropFilter: "blur(22px) saturate(180%)",
+                boxShadow: "0 6px 22px rgba(0,0,0,.16)",
+              }
+            : undefined
+        }
       >
         <Toolbar>
           <IconButton
@@ -241,11 +282,46 @@ export default function Header() {
             noWrap
             style={{ flexGrow: 1 }}
           >
-            Dashboard
+            {isRevizionAnalysisV2 ? "Анализ ревизий" : "Dashboard"}
           </Typography>
+          {isRevizionAnalysisV2 ? (
+            <IconButton
+              color="inherit"
+              aria-label={
+                revizionAnalysisTheme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"
+              }
+              title={
+                revizionAnalysisTheme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"
+              }
+              onClick={() =>
+                setRevizionAnalysisTheme(revizionAnalysisTheme === "dark" ? "light" : "dark")
+              }
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: "9px",
+                mr: 0.5,
+                color: revizionAnalysisTheme === "dark" ? "#B0ADA4" : "#fff",
+                "&:hover": {
+                  color: "#fff",
+                  bgcolor:
+                    revizionAnalysisTheme === "dark"
+                      ? "rgba(255,255,255,.12)"
+                      : "rgba(255,255,255,.14)",
+                },
+              }}
+            >
+              {revizionAnalysisTheme === "dark" ? (
+                <LightModeOutlinedIcon sx={{ fontSize: 19 }} />
+              ) : (
+                <DarkModeOutlinedIcon sx={{ fontSize: 19 }} />
+              )}
+            </IconButton>
+          ) : null}
           <UserMenu
             my={my}
             logOut={logOut}
+            themeMode={isRevizionAnalysisV2 ? revizionAnalysisTheme : null}
           />
         </Toolbar>
       </AppBar>

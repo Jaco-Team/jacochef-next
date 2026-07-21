@@ -14,11 +14,10 @@ import TableRow from "@mui/material/TableRow";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
 
 import { MySelect, MyAutocomplite2 } from "@/ui/Forms";
 import RevisionAnalysisTab from "@/components/revizion/RevisionAnalysisTab";
+import RevisionPageTabs from "@/components/revizion/RevisionPageTabs";
 // import { api_laravel_local } from "@/src/api_new";
 import { api_laravel } from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
@@ -54,6 +53,7 @@ class Revizion_ extends React.Component {
       search: "",
       pageTab: "revisions",
       analysisAccess: false,
+      analysisV2Access: false,
       analysisFilters: null,
     };
   }
@@ -79,12 +79,15 @@ class Revizion_ extends React.Component {
   loadAnalysisAccess = async () => {
     const response = await api_laravel("revizion", "get_analysis_filters");
     const data = response?.data ?? response;
-    const analysisAccess = handleUserAccess(data?.access).userCan("view", "analysis");
+    const access = handleUserAccess(data?.access);
+    const analysisAccess = access.userCan("view", "analysis");
+    const analysisV2Access = access.userCan("view", "analysis_v2");
 
     this.setState({
       analysisAccess,
+      analysisV2Access,
       analysisFilters: analysisAccess ? data : null,
-      pageTab: analysisAccess ? this.state.pageTab : "revisions",
+      pageTab: analysisAccess || analysisV2Access ? this.state.pageTab : "revisions",
     });
   };
 
@@ -270,23 +273,11 @@ class Revizion_ extends React.Component {
           </Grid>
 
           <Grid size={12}>
-            <Tabs
+            <RevisionPageTabs
               value={this.state.pageTab}
-              onChange={(_, pageTab) => this.setState({ pageTab })}
-              variant="scrollable"
-              scrollButtons="auto"
-            >
-              <Tab
-                value="revisions"
-                label="Ревизии"
-              />
-              {this.state.analysisAccess ? (
-                <Tab
-                  value="analysis"
-                  label="Анализ ревизий"
-                />
-              ) : null}
-            </Tabs>
+              analysisAccess={this.state.analysisAccess}
+              analysisV2Access={this.state.analysisV2Access}
+            />
           </Grid>
 
           {this.state.pageTab === "revisions" ? (
