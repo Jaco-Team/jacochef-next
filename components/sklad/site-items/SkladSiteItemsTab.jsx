@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import useSkladSiteItemsController from "./useSkladSiteItemsController";
 
 export default function SkladSiteItemsTab({ showAlert, refreshToken }) {
@@ -8,9 +8,19 @@ export default function SkladSiteItemsTab({ showAlert, refreshToken }) {
     { showAlert },
   );
 
+  const loadRowsRef = useRef(loadRows);
+
   useEffect(() => {
-    loadRows();
-  }, [refreshToken, search, categoryId, tagId, archiveMode]);
+    loadRowsRef.current = loadRows;
+  }, [loadRows]);
+
+  useEffect(() => {
+    loadRowsRef.current({ resetPage: true });
+  }, [archiveMode, categoryId, search, tagId]);
+
+  useEffect(() => {
+    loadRowsRef.current();
+  }, [refreshToken]);
 
   return content;
 }

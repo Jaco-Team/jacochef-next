@@ -40,6 +40,7 @@
 Transport:
 
 - по проектному стандарту входной payload передается через `data`
+- frontend callers inside `components/sklad/**` должны передавать в `useSkladApi` плоский payload без дополнительного вложения `data`; transport envelope добавляет shared `useApi` wrapper
 
 ---
 
@@ -681,6 +682,28 @@ Response:
 
 - implemented now
 
+Важные поля:
+
+- `name`
+- `shelf_life`
+- `date_start`
+- `date_end`
+- `ed_izmer_id`
+- `all_w`
+- `all_w_brutto`
+- `all_w_netto`
+- `time_min`
+- `time_min_dop`
+- `show_in_rev`
+- `two_user`
+- `allergens`
+- `allergens_possible`
+- `categories`
+- `structure`
+- `storages`
+- `apps`
+- `items`
+
 ## `POST|ANY /api/sklad_items/semi-finished/save_flag`
 
 Статус:
@@ -695,10 +718,16 @@ Response:
 Поведение write-side:
 
 - `save_new` и `save_edit` принимают только canonical payload в `data`
+- FE callers for these routes send a flat module payload into `useSkladApi`; the shared transport wrapper adds the standard envelope
 - `semi_finished/save_edit` обновляет current row сразу, затем пишет history snapshot
 - linked `storages`, `apps`, `items` пересобираются в новом сервисе
 - в ответе backend возвращает `id` и `history_id`
 - runtime-calls в legacy controllers/modules нет; write flow живет в `SkladProductionWriteService`
+
+Parity note for the current FE pass:
+
+- the production editor/view only uses fields already listed in the canonical production write contract above
+- unsupported legacy parity is not faked in FE; backend publication is still needed for any numeric employee-count field beyond `two_user`, for explicit `semi-finished/get_one` publication of `all_w` / `all_w_brutto` / `all_w_netto` / `time_min` / `time_min_dop`, and for any extra legacy composition-row metrics not currently returned in canonical `items` rows
 
 ## `POST|ANY /api/sklad_items/semi-finished/archive`
 

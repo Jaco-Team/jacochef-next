@@ -16,6 +16,8 @@ export const useSkladSiteItemsStore = create((set) => ({
   categoryId: "",
   tagId: "",
   archiveMode: "active",
+  page: 0,
+  rowsPerPage: 25,
   modal: {
     open: false,
     mode: "view",

@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import {
-  Alert,
   Button,
   Chip,
   IconButton,
@@ -18,6 +17,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tooltip,
   Typography,
@@ -111,6 +111,8 @@ export default function useSkladCategoriesController({ showAlert }) {
   const rows = useSkladCategoriesStore((state) => state.rows);
   const search = useSkladCategoriesStore((state) => state.search);
   const archiveMode = useSkladCategoriesStore((state) => state.archiveMode);
+  const page = useSkladCategoriesStore((state) => state.page);
+  const rowsPerPage = useSkladCategoriesStore((state) => state.rowsPerPage);
   const modal = useSkladCategoriesStore((state) => state.modal);
   const draft = useSkladCategoriesStore((state) => state.draft);
   const setState = useSkladCategoriesStore((state) => state.setState);
@@ -134,7 +136,7 @@ export default function useSkladCategoriesController({ showAlert }) {
 
       const list = response?.list || [];
 
-      setState({ rows: list });
+      setState({ rows: list, page: 0 });
       setShellState({ categories: list });
     } catch (error) {
       showAlert(error?.message || "Ошибка загрузки категорий", false);
@@ -283,6 +285,21 @@ export default function useSkladCategoriesController({ showAlert }) {
     });
   }, [filteredRows]);
 
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return sortedRows.slice(start, start + rowsPerPage);
+  }, [page, rowsPerPage, sortedRows]);
+
+  useEffect(() => {
+    const maxPage = sortedRows.length
+      ? Math.max(0, Math.ceil(sortedRows.length / rowsPerPage) - 1)
+      : 0;
+
+    if (page > maxPage) {
+      setState({ page: maxPage });
+    }
+  }, [page, rowsPerPage, setState, sortedRows.length]);
+
   const warehouseRootOptions = useMemo(() => {
     return rows
       .filter((row) => row?.source_type === "warehouse_item" && !row?.parent_id)
@@ -329,7 +346,7 @@ export default function useSkladCategoriesController({ showAlert }) {
               <MyTextInput
                 label="Поиск"
                 value={search}
-                func={(event) => setState({ search: event.target.value })}
+                func={(event) => setState({ search: event.target.value, page: 0 })}
               />
 
               <MySelect
@@ -337,7 +354,7 @@ export default function useSkladCategoriesController({ showAlert }) {
                 data={CATEGORY_ARCHIVE_MODE_OPTIONS}
                 is_none={false}
                 value={archiveMode}
-                func={(event) => setState({ archiveMode: event.target.value })}
+                func={(event) => setState({ archiveMode: event.target.value, page: 0 })}
               />
             </Stack>
 
@@ -357,14 +374,6 @@ export default function useSkladCategoriesController({ showAlert }) {
             </Stack>
           </Stack>
 
-          <Alert
-            severity="info"
-            sx={{ borderRadius: 2 }}
-          >
-            Категории рецептов входят в семейство полуфабрикатов. Отдельной recipe-category сущности
-            в новом модуле нет.
-          </Alert>
-
           <TableContainer>
             <Table size="small">
               <TableHead>
@@ -378,7 +387,7 @@ export default function useSkladCategoriesController({ showAlert }) {
               </TableHead>
 
               <TableBody>
-                {sortedRows.map((row) => {
+                {paginatedRows.map((row) => {
                   const sourceMeta = getCategorySourceMeta(row?.source_type);
                   const canDelete = Boolean(row?.delete_usage?.can_delete);
                   const usageCount = row?.total_usage_count ?? 0;
@@ -480,6 +489,21 @@ export default function useSkladCategoriesController({ showAlert }) {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={sortedRows.length}
+            page={page}
+            onPageChange={(_, nextPage) => setState({ page: nextPage })}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(event) =>
+              setState({
+                page: 0,
+                rowsPerPage: Number(event.target.value) || 25,
+              })
+            }
+            rowsPerPageOptions={[25, 50, 100]}
+            labelRowsPerPage="Строк на странице:"
+          />
         </Stack>
       </Paper>
 

@@ -9,6 +9,7 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
+import { formatDateRangeRU } from "../formatDateRangeRU";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -16,6 +17,10 @@ function formatValue(value, fallback = "-") {
   }
 
   return String(value);
+}
+
+function formatDateRangeValue(detail) {
+  return formatDateRangeRU(detail?.date_start, detail?.date_end);
 }
 
 function formatTags(items) {
@@ -26,6 +31,14 @@ function formatTags(items) {
   return items.map((item) => item?.name || item?.title || item?.label || "").filter(Boolean);
 }
 
+function formatMetricValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  return String(value);
+}
+
 function pickFirstDefined(...values) {
   for (const value of values) {
     if (value !== null && value !== undefined && value !== "") {
@@ -34,6 +47,14 @@ function pickFirstDefined(...values) {
   }
 
   return null;
+}
+
+function getCompositionLoss(item) {
+  return pickFirstDefined(item?.loss, item?.waste, item?.proc_loss, item?.loss_percent);
+}
+
+function getCompositionOutput(item) {
+  return pickFirstDefined(item?.res, item?.output, item?.all_w, item?.weight_out);
 }
 
 function InfoCard({ title, subtitle, children }) {
@@ -179,14 +200,20 @@ export default function SkladProductionViewDialog({
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <InfoField
-                        label="Действует с"
-                        value={formatValue(detail?.date_start)}
+                        label="Действует"
+                        value={formatDateRangeValue(detail)}
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <InfoField
-                        label="Действует по"
-                        value={formatValue(detail?.date_end)}
+                        label="Время приготовления"
+                        value={formatMetricValue(detail?.time_min)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <InfoField
+                        label="Доп. время"
+                        value={formatMetricValue(detail?.time_min_dop)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
@@ -195,10 +222,40 @@ export default function SkladProductionViewDialog({
                         value={formatValue(detail?.unit_name || detail?.ed_izmer_id)}
                       />
                     </Grid>
+                    <Grid size={{ xs: 12, md: 2 }}>
+                      <InfoField
+                        label="Выход"
+                        value={formatMetricValue(detail?.all_w)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 2 }}>
+                      <InfoField
+                        label="Брутто"
+                        value={formatMetricValue(detail?.all_w_brutto)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 2 }}>
+                      <InfoField
+                        label="Нетто"
+                        value={formatMetricValue(detail?.all_w_netto)}
+                      />
+                    </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <InfoField
                         label="Категории"
                         value={categoryNames.length ? categoryNames.join(", ") : "-"}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <InfoField
+                        label="Места хранения"
+                        value={formatTags(detail?.storages).join(", ") || "-"}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <InfoField
+                        label="Позиции кафе"
+                        value={formatTags(detail?.apps).join(", ") || "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
@@ -282,10 +339,24 @@ export default function SkladProductionViewDialog({
                                 )}
                               />
                             </Grid>
+                            <Grid size={{ xs: 6, md: 1.5 }}>
+                              <InfoField
+                                label="Ед."
+                                value={formatValue(
+                                  item?.unit_name || item?.ed_izmer_name || item?.unit?.name,
+                                )}
+                              />
+                            </Grid>
                             <Grid size={{ xs: 6, md: 2 }}>
                               <InfoField
                                 label="Брутто"
                                 value={formatValue(item?.brutto)}
+                              />
+                            </Grid>
+                            <Grid size={{ xs: 6, md: 1.5 }}>
+                              <InfoField
+                                label="Потери"
+                                value={formatValue(getCompositionLoss(item))}
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 2 }}>
@@ -297,13 +368,7 @@ export default function SkladProductionViewDialog({
                             <Grid size={{ xs: 6, md: 1.5 }}>
                               <InfoField
                                 label="Выход"
-                                value={formatValue(pickFirstDefined(item?.res, item?.output))}
-                              />
-                            </Grid>
-                            <Grid size={{ xs: 6, md: 1.5 }}>
-                              <InfoField
-                                label="Тип"
-                                value={formatValue(item?.type || item?.entity_type)}
+                                value={formatValue(getCompositionOutput(item))}
                               />
                             </Grid>
                           </Grid>

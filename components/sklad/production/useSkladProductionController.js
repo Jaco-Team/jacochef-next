@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -21,6 +21,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   ToggleButton,
   ToggleButtonGroup,
@@ -32,6 +33,7 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { formatDateRangeRU } from "../formatDateRangeRU";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import { useSkladStore } from "../useSkladStore";
 import { useSkladHistoryStore, HISTORY_INITIAL_STATE } from "../history/useSkladHistoryStore";
@@ -115,42 +117,42 @@ function formatCategories(categories) {
 }
 
 function formatDateRangeCell(row) {
-  if (!row?.date_start && !row?.date_end) {
-    return "—";
-  }
-
-  return `${row?.date_start || "—"} - ${row?.date_end || "—"}`;
+  return formatDateRangeRU(row?.date_start, row?.date_end);
 }
 
-function getStatusChips(row) {
-  const chips = [];
-
+function getPrimaryStatusChip(row) {
   if (Number(row?.is_archived) === 1) {
-    chips.push({ key: "archived", label: "Архив", color: "default" });
+    return { key: "archived", label: "Архив", color: "default" };
   }
 
   if (getProductionVisibleState(row)) {
-    chips.push({ key: "active", label: "Активен", color: "success" });
+    return { key: "active", label: "Активен", color: "success" };
   }
 
-  if (Number(row?.show_in_rev) === 1) {
-    chips.push({ key: "show_in_rev", label: "В ревизии", color: "primary" });
-  }
-
-  if (Number(row?.two_user) === 1) {
-    chips.push({ key: "two_user", label: "2 сотрудника", color: "secondary" });
-  }
-
-  return chips;
+  return { key: "hidden", label: "Скрыт", color: "default" };
 }
 
-function getRowKey(entityType, row, index) {
+function getSecondaryStatusChips(row) {
+  return [
+    Number(row?.show_in_rev) === 1
+      ? { key: "show_in_rev", label: "В ревизии", color: "primary" }
+      : null,
+    Number(row?.two_user) === 1
+      ? { key: "two_user", label: "2 сотрудника", color: "secondary" }
+      : null,
+  ].filter(Boolean);
+}
+
+function getRowKey(entityType, row) {
+  if (row?.id !== null && row?.id !== undefined && row?.id !== "") {
+    return [entityType, row.id].join("-");
+  }
+
   return [
     entityType,
-    row?.id ?? "no-id",
+    row?.name ?? "no-name",
     row?.date_start ?? "no-start",
     row?.date_end ?? "no-end",
-    index,
   ].join("-");
 }
 
@@ -162,9 +164,15 @@ function createEmptyProductionDraft() {
     date_start: "",
     date_end: "",
     ed_izmer_id: "",
+    all_w: "",
+    all_w_brutto: "",
+    all_w_netto: "",
+    time_min: "",
+    time_min_dop: "",
     structure: "",
     show_in_rev: 0,
     two_user: 0,
+    is_show: 1,
     is_active: 1,
     is_archived: 0,
     categories: [],
@@ -179,24 +187,91 @@ function createEmptyProductionDraft() {
   };
 }
 
-function normalizeProductionSavePayload(draft) {
+function normalizeRelationIds(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  return list
+    .map((item) => item?.id ?? item)
+    .filter((id) => id !== null && id !== undefined && id !== "")
+    .map((id) => ({ id }));
+}
+
+function normalizeCompositionItems(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => ({
+    item_id: item?.item_id ?? item?.nomenclature_id ?? item?.id ?? "",
+    type_rec: item?.type_rec ?? item?.type ?? "item",
+    brutto: item?.brutto ?? "",
+    pr_1: item?.pr_1 ?? item?.loss ?? item?.waste ?? item?.proc_loss ?? item?.loss_percent ?? "",
+    netto: item?.netto ?? "",
+    pr_2: item?.pr_2 ?? "",
+    res: item?.res ?? item?.output ?? item?.all_w ?? item?.weight_out ?? "",
+  }));
+}
+
+function normalizeProductionDraft(entity, response = {}) {
+  const units = Array.isArray(response?.units) ? response.units : [];
+
   return {
-    id: draft?.id ?? null,
+    ...createEmptyProductionDraft(),
+    ...entity,
+    unit_name:
+      units.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ??
+      entity?.unit_name ??
+      "",
+    units,
+    categories: Array.isArray(entity?.categories) ? entity.categories : [],
+    allergens: Array.isArray(entity?.allergens) ? entity.allergens : [],
+    allergens_possible: Array.isArray(entity?.allergens_possible) ? entity.allergens_possible : [],
+    allergens_derived: Array.isArray(entity?.allergens_derived) ? entity.allergens_derived : [],
+    allergens_possible_derived: Array.isArray(entity?.allergens_possible_derived)
+      ? entity.allergens_possible_derived
+      : [],
+    storages: Array.isArray(entity?.storages) ? entity.storages : [],
+    apps: Array.isArray(entity?.apps) ? entity.apps : [],
+    items: Array.isArray(entity?.items) ? entity.items : [],
+    all_storages: Array.isArray(response?.all_storages) ? response.all_storages : [],
+    all_items_list: Array.isArray(response?.all_items_list) ? response.all_items_list : [],
+    ref_allergens: Array.isArray(response?.allergens) ? response.allergens : [],
+    ref_categories: Array.isArray(response?.categories) ? response.categories : [],
+    ref_apps: Array.isArray(response?.apps) ? response.apps : [],
+  };
+}
+
+function normalizeProductionSavePayload(draft) {
+  const payload = {
     name: String(draft?.name || "").trim(),
     shelf_life: draft?.shelf_life ?? "",
     date_start: draft?.date_start ?? "",
     date_end: draft?.date_end ?? "",
     ed_izmer_id: draft?.ed_izmer_id ? Number(draft.ed_izmer_id) : null,
+    all_w: draft?.all_w ?? "",
+    all_w_brutto: draft?.all_w_brutto ?? "",
+    all_w_netto: draft?.all_w_netto ?? "",
+    time_min: draft?.time_min ?? "",
+    time_min_dop: draft?.time_min_dop ?? "",
     structure: draft?.structure ?? "",
     show_in_rev: draft?.show_in_rev ? 1 : 0,
     two_user: draft?.two_user ? 1 : 0,
-    allergens: Array.isArray(draft?.allergens) ? draft.allergens : [],
-    allergens_possible: Array.isArray(draft?.allergens_possible) ? draft.allergens_possible : [],
-    categories: Array.isArray(draft?.categories) ? draft.categories : [],
-    storages: Array.isArray(draft?.storages) ? draft.storages : [],
-    apps: Array.isArray(draft?.apps) ? draft.apps : [],
-    items: Array.isArray(draft?.items) ? draft.items : [],
+    is_show: draft?.is_show ? 1 : 0,
+    allergens: normalizeRelationIds(draft?.allergens),
+    allergens_possible: normalizeRelationIds(draft?.allergens_possible),
+    categories: normalizeRelationIds(draft?.categories),
+    storages: normalizeRelationIds(draft?.storages),
+    apps: normalizeRelationIds(draft?.apps),
+    items: normalizeCompositionItems(draft?.items),
   };
+
+  if (draft?.id !== null && draft?.id !== undefined && draft?.id !== "") {
+    payload.id = draft.id;
+  }
+
+  return payload;
 }
 
 function validateProductionDraft(draft) {
@@ -217,13 +292,16 @@ function validateProductionDraft(draft) {
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
-  const { canEdit, canExecute } = useSkladAccess();
+  const { canDelete, canManageProduction } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const shellSections = useSkladStore((state) => state.sections);
   const shellAccess = useSkladStore((state) => state.access);
   const shellUnits = useSkladStore((state) => state.units);
   const categories = useSkladStore((state) => state.categories);
+  const shellAllergens = useSkladStore((state) => state.allergens);
+  const shellStorages = useSkladStore((state) => state.storages);
+  const shellApps = useSkladStore((state) => state.apps);
   const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const entityType = useSkladProductionStore((state) => state.entityType);
@@ -231,6 +309,8 @@ export default function useSkladProductionController({ showAlert }) {
   const search = useSkladProductionStore((state) => state.search);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
   const archiveMode = useSkladProductionStore((state) => state.archiveMode);
+  const page = useSkladProductionStore((state) => state.page);
+  const rowsPerPage = useSkladProductionStore((state) => state.rowsPerPage);
   const modal = useSkladProductionStore((state) => state.modal);
   const detail = useSkladProductionStore((state) => state.detail);
   const draft = useSkladProductionStore((state) => state.draft);
@@ -238,9 +318,9 @@ export default function useSkladProductionController({ showAlert }) {
   const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
 
-  const accessKey = getEntityAccessKey(entityType);
-  const canCreateOrEdit = canEdit(accessKey);
-  const canConvert = canExecute("recipes") || canExecute("semi_finished");
+  const canCreateOrEdit = canManageProduction(entityType);
+  const canConvert = canManageProduction("recipe") || canManageProduction("semi_finished");
+  const canDeleteAction = canDelete();
 
   const categoryOptions = useMemo(() => {
     const sourceAwareCategories = (categories || []).filter(
@@ -255,38 +335,59 @@ export default function useSkladProductionController({ showAlert }) {
     );
   }, [categories]);
 
-  const loadRows = useCallback(async () => {
-    setShellState({ isLoading: true });
+  const loadRows = useCallback(
+    async ({ resetPage = false } = {}) => {
+      setShellState({ isLoading: true });
 
-    try {
-      const payload = {
-        search: String(search || "").trim(),
-        category_id: categoryId ? Number(categoryId) : null,
-        archive_mode: archiveMode,
-      };
+      try {
+        const payload = {
+          search: String(search || "").trim(),
+          category_id: categoryId ? Number(categoryId) : null,
+          archive_mode: archiveMode,
+        };
 
-      const response =
-        entityType === "recipe"
-          ? await api.getRecipes(payload)
-          : await api.getSemiFinished(payload);
+        const response =
+          entityType === "recipe"
+            ? await api.getRecipes(payload)
+            : await api.getSemiFinished(payload);
 
-      if (!response?.st) {
-        throw new Error(response?.text || "Ошибка загрузки списка");
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки списка");
+        }
+
+        setState({
+          rows: Array.isArray(response?.list) ? response.list : [],
+          ...(resetPage ? { page: 0 } : {}),
+        });
+      } catch (error) {
+        showAlert(error?.message || "Ошибка загрузки списка", false);
+      } finally {
+        setShellState({ isLoading: false });
       }
-
-      setState({ rows: Array.isArray(response?.list) ? response.list : [] });
-    } catch (error) {
-      showAlert(error?.message || "Ошибка загрузки списка", false);
-    } finally {
-      setShellState({ isLoading: false });
-    }
-  }, [api, archiveMode, categoryId, entityType, search, setShellState, setState, showAlert]);
+    },
+    [api, archiveMode, categoryId, entityType, search, setShellState, setState, showAlert],
+  );
 
   const sortedRows = useMemo(() => {
     return [...rows].sort((left, right) =>
       String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
     );
   }, [rows]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return sortedRows.slice(start, start + rowsPerPage);
+  }, [page, rowsPerPage, sortedRows]);
+
+  useEffect(() => {
+    const maxPage = sortedRows.length
+      ? Math.max(0, Math.ceil(sortedRows.length / rowsPerPage) - 1)
+      : 0;
+
+    if (page > maxPage) {
+      setState({ page: maxPage });
+    }
+  }, [page, rowsPerPage, setState, sortedRows.length]);
 
   const openHistoryTab = useCallback(
     (row) => {
@@ -368,7 +469,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openDeleteDialog = useCallback(
     (row) => {
-      if (!row?.id) {
+      if (!row?.id || !canDeleteAction) {
         return;
       }
 
@@ -380,7 +481,7 @@ export default function useSkladProductionController({ showAlert }) {
         },
       });
     },
-    [setState],
+    [canDeleteAction, setState],
   );
 
   const confirmDelete = useCallback(async () => {
@@ -401,10 +502,8 @@ export default function useSkladProductionController({ showAlert }) {
 
     try {
       const response = await api.deleteEntity({
-        data: {
-          entity_type: entityType,
-          id: row.id,
-        },
+        entity_type: entityType,
+        id: row.id,
       });
 
       if (!response?.st) {
@@ -457,11 +556,9 @@ export default function useSkladProductionController({ showAlert }) {
 
     try {
       const response = await api.archiveEntity({
-        data: {
-          entity_type: entityType,
-          id: row.id,
-          is_archived: nextArchived,
-        },
+        entity_type: entityType,
+        id: row.id,
+        is_archived: nextArchived,
       });
 
       if (!response?.st) {
@@ -496,7 +593,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const toggleFlag = useCallback(
     async (row, type) => {
-      if (!row?.id || !type) {
+      if (!row?.id || !type || !canCreateOrEdit) {
         return;
       }
 
@@ -515,11 +612,9 @@ export default function useSkladProductionController({ showAlert }) {
 
       try {
         const response = await saveFlag({
-          data: {
-            id: row.id,
-            type,
-            value: nextValue,
-          },
+          id: row.id,
+          type,
+          value: nextValue,
         });
 
         if (!response?.st) {
@@ -534,7 +629,7 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, entityType, loadRows, setShellState, showAlert],
+    [api, canCreateOrEdit, entityType, loadRows, setShellState, showAlert],
   );
 
   const openCreate = useCallback(() => {
@@ -576,9 +671,7 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const response = await saveEntity({
-          data: payload,
-        });
+        const response = await saveEntity(payload);
 
         if (!response?.st) {
           throw new Error(response?.text || "Ошибка сохранения");
@@ -618,27 +711,7 @@ export default function useSkladProductionController({ showAlert }) {
         throw new Error(response?.text || "Ошибка загрузки карточки");
       }
 
-      const entity = response?.entity || {};
-      const units = Array.isArray(response?.units) ? response.units : [];
-
-      return {
-        ...entity,
-        unit_name:
-          units.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ?? "",
-        units,
-        categories: Array.isArray(entity?.categories) ? entity.categories : [],
-        allergens: Array.isArray(entity?.allergens) ? entity.allergens : [],
-        allergens_possible: Array.isArray(entity?.allergens_possible)
-          ? entity.allergens_possible
-          : [],
-        allergens_derived: Array.isArray(entity?.allergens_derived) ? entity.allergens_derived : [],
-        allergens_possible_derived: Array.isArray(entity?.allergens_possible_derived)
-          ? entity.allergens_possible_derived
-          : [],
-        storages: Array.isArray(entity?.storages) ? entity.storages : [],
-        apps: Array.isArray(entity?.apps) ? entity.apps : [],
-        items: Array.isArray(entity?.items) ? entity.items : [],
-      };
+      return normalizeProductionDraft(response?.entity || {}, response);
     },
     [api, entityType],
   );
@@ -765,6 +838,7 @@ export default function useSkladProductionController({ showAlert }) {
                 entityType: value,
                 rows: [],
                 categoryId: "",
+                page: 0,
               });
             }}
             size="small"
@@ -796,7 +870,7 @@ export default function useSkladProductionController({ showAlert }) {
                 label="Поиск"
                 placeholder={`Название ${getEntityLabel(entityType).toLowerCase()}а`}
                 value={search}
-                func={(event) => setState({ search: event.target.value })}
+                func={(event) => setState({ search: event.target.value, page: 0 })}
               />
 
               <MySelect
@@ -804,7 +878,7 @@ export default function useSkladProductionController({ showAlert }) {
                 data={categoryOptions}
                 is_none={false}
                 value={categoryId}
-                func={(event) => setState({ categoryId: event.target.value })}
+                func={(event) => setState({ categoryId: event.target.value, page: 0 })}
               />
 
               <MySelect
@@ -812,7 +886,7 @@ export default function useSkladProductionController({ showAlert }) {
                 data={PRODUCTION_ARCHIVE_MODE_OPTIONS}
                 is_none={false}
                 value={archiveMode}
-                func={(event) => setState({ archiveMode: event.target.value })}
+                func={(event) => setState({ archiveMode: event.target.value, page: 0 })}
               />
             </Stack>
 
@@ -897,7 +971,7 @@ export default function useSkladProductionController({ showAlert }) {
                 История и конвертация
               </Typography>
               <Typography sx={{ fontWeight: 700 }}>
-                {canConvert ? "История и сценарий конвертации доступны" : "История доступна"}
+                {canConvert ? "История и конвертация доступны" : "История доступна"}
               </Typography>
             </Stack>
           </Stack>
@@ -920,7 +994,7 @@ export default function useSkladProductionController({ showAlert }) {
                 <TableCell>Категории</TableCell>
                 <TableCell>Срок годности</TableCell>
                 <TableCell sx={{ width: 220 }}>Действует</TableCell>
-                <TableCell sx={{ minWidth: 260 }}>Статус</TableCell>
+                <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
                 <TableCell
                   align="right"
                   sx={{ width: 240 }}
@@ -931,13 +1005,14 @@ export default function useSkladProductionController({ showAlert }) {
             </TableHead>
 
             <TableBody>
-              {sortedRows.map((row, index) => {
+              {paginatedRows.map((row) => {
                 const canDelete = Boolean(row?.delete_usage?.can_delete);
-                const statusChips = getStatusChips(row);
+                const primaryStatusChip = getPrimaryStatusChip(row);
+                const secondaryStatusChips = getSecondaryStatusChips(row);
 
                 return (
                   <TableRow
-                    key={getRowKey(entityType, row, index)}
+                    key={getRowKey(entityType, row)}
                     hover
                   >
                     <TableCell>
@@ -946,68 +1021,32 @@ export default function useSkladProductionController({ showAlert }) {
 
                     <TableCell>{formatCategories(row?.categories)}</TableCell>
                     <TableCell>{row?.shelf_life || "-"}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>
-                      <Typography
-                        variant="caption"
-                        sx={{ fontSize: 12, lineHeight: 1.35 }}
-                      >
-                        {formatDateRangeCell(row)}
-                      </Typography>
-                    </TableCell>
+                    <TableCell>{formatDateRangeCell(row)}</TableCell>
 
                     <TableCell>
                       <Stack
-                        direction="column"
-                        spacing={1}
+                        direction="row"
+                        spacing={0.75}
+                        useFlexGap
+                        flexWrap="wrap"
+                        alignItems="center"
                       >
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          useFlexGap
-                          flexWrap="wrap"
-                        >
-                          {statusChips.length
-                            ? statusChips.map((chip) => (
-                                <Chip
-                                  key={chip.key}
-                                  label={chip.label}
-                                  size="small"
-                                  color={chip.color}
-                                  variant={chip.color === "default" ? "outlined" : "filled"}
-                                />
-                              ))
-                            : "-"}
-                        </Stack>
-                        {canCreateOrEdit ? (
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            flexWrap="wrap"
-                          >
-                            <Chip
-                              size="small"
-                              clickable
-                              color={getProductionVisibleState(row) ? "success" : "default"}
-                              label={getProductionVisibleState(row) ? "Активен" : "Скрыт"}
-                              onClick={() => toggleFlag(row, "is_show")}
-                            />
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.show_in_rev) === 1 ? "primary" : "default"}
-                              label={Number(row?.show_in_rev) === 1 ? "В ревизии" : "Без ревизии"}
-                              onClick={() => toggleFlag(row, "show_in_rev")}
-                            />
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.two_user) === 1 ? "secondary" : "default"}
-                              label={Number(row?.two_user) === 1 ? "2 сотрудника" : "1 сотрудник"}
-                              onClick={() => toggleFlag(row, "two_user")}
-                            />
-                          </Stack>
-                        ) : null}
+                        <Chip
+                          key={primaryStatusChip.key}
+                          label={primaryStatusChip.label}
+                          size="small"
+                          color={primaryStatusChip.color}
+                          variant={primaryStatusChip.color === "default" ? "outlined" : "filled"}
+                        />
+                        {secondaryStatusChips.map((chip) => (
+                          <Chip
+                            key={chip.key}
+                            label={chip.label}
+                            size="small"
+                            color={chip.color}
+                            variant="outlined"
+                          />
+                        ))}
                       </Stack>
                     </TableCell>
 
@@ -1042,16 +1081,11 @@ export default function useSkladProductionController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={
-                            canConvert
-                              ? "Открыть staged shell конвертации"
-                              : "Недостаточно прав; доступен только staged shell без выполнения"
-                          }
-                        >
+                        <Tooltip title={canConvert ? "Открыть конвертацию" : "Недостаточно прав"}>
                           <span>
                             <IconButton
                               size="small"
+                              disabled={!canConvert}
                               aria-label="Открыть сценарий конвертации"
                               onClick={() => openConvert(row)}
                             >
@@ -1060,7 +1094,7 @@ export default function useSkladProductionController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="Открыть unified History tab">
+                        <Tooltip title="Открыть историю">
                           <span>
                             <IconButton
                               size="small"
@@ -1096,7 +1130,7 @@ export default function useSkladProductionController({ showAlert }) {
                               <IconButton
                                 size="small"
                                 color="error"
-                                disabled={!canCreateOrEdit}
+                                disabled={!canCreateOrEdit || !canDeleteAction}
                                 onClick={() => openDeleteDialog(row)}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
@@ -1133,6 +1167,21 @@ export default function useSkladProductionController({ showAlert }) {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={sortedRows.length}
+          page={page}
+          onPageChange={(_, nextPage) => setState({ page: nextPage })}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) =>
+            setState({
+              page: 0,
+              rowsPerPage: Number(event.target.value) || 25,
+            })
+          }
+          rowsPerPageOptions={[25, 50, 100]}
+          labelRowsPerPage="Строк на странице:"
+        />
       </Stack>
     </Paper>
   );
@@ -1165,12 +1214,17 @@ export default function useSkladProductionController({ showAlert }) {
         <SkladProductionEditorDialog
           open={modal.open && (modal.mode === "edit" || modal.mode === "create")}
           loading={modal.loading}
-          mode={detail?.id ? "edit" : "create"}
+          mode={modal.mode === "edit" ? "edit" : "create"}
           entityLabel={getEntityLabel(entityType)}
           draft={draft}
           units={
             draft?.units?.length ? draft.units : detail?.units?.length ? detail.units : shellUnits
           }
+          categories={detail?.ref_categories?.length ? detail.ref_categories : categories}
+          allergens={detail?.ref_allergens?.length ? detail.ref_allergens : shellAllergens}
+          storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
+          apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
+          allItemsList={detail?.all_items_list || draft?.all_items_list || []}
           isEditable={canCreateOrEdit}
           onSubmit={submitDraft}
           onClose={closeModal}
@@ -1187,7 +1241,7 @@ export default function useSkladProductionController({ showAlert }) {
           loading={deleteDialog.loading}
           title={`Удалить ${getEntityLabel(entityType).toLowerCase()}?`}
           description={`Запись "${deleteDialog?.row?.name || ""}" будет удалена без возможности восстановления.`}
-          warning="Backend повторно проверит usage relations в момент удаления и вернет причину отказа, если запись уже использовалась."
+          warning="Если запись уже использовалась, удаление будет недоступно."
           onClose={closeDeleteDialog}
           onConfirm={confirmDelete}
         />
@@ -1204,7 +1258,7 @@ export default function useSkladProductionController({ showAlert }) {
               ? "снова показана в активных списках"
               : "убрана из активных списков"
           }.`}
-          warning="Backend создаст новую history revision и изменит archive state через canonical entities/archive."
+          warning="Изменение будет отражено в истории."
           confirmLabel={Number(archiveDialog?.row?.is_archived) === 1 ? "Вернуть" : "В архив"}
           onClose={closeArchiveDialog}
           onConfirm={confirmArchive}

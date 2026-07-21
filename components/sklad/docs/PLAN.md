@@ -121,6 +121,7 @@ FE strategy after current backend update:
 - completed for current FE scope
 - `Units` и `Categories` tabs уже работают на canonical API
 - delete-state and source-aware category handling уже выведены в UI
+- July 20, 2026: implementation-facing explanatory alert removed from the implemented `Categories` tab; the tab now stays operational/user-facing only
 
 ### Slice C. Recipes + semi-finished
 
@@ -161,6 +162,9 @@ Contract note:
 - create/save mutations для production family уже подключены на canonical API для текущего FE scope
 - authoritative delete confirmation + server-side delete call для production family уже подключены
 - authoritative archive/unarchive confirmation + server-side archive call для production family уже подключены
+- July 20, 2026: large production lists switched to paged table rendering to reduce tab-open and interaction cost without changing the current API contract
+- July 20, 2026: production list reloads were narrowed to intentional query changes so paged rendering stays stable and no longer loops on callback identity churn
+- July 21, 2026: production editor parity pass now exposes the currently documented production fields in the FE editor/view, keeps the save caller on the strict flat canonical payload path, and leaves unsupported legacy parity documented as BE-confirmed instead of inventing FE-only fields; remaining gaps still need backend contract work for a numeric employee-count field beyond the existing `two_user` flag, explicit production detail contract publication for `all_w` / `all_w_brutto` / `all_w_netto` / `time_min` / `time_min_dop` on `semi-finished/get_one`, and any legacy composition-row fields not yet returned in canonical `items` rows such as a guaranteed loss metric or persisted row totals when absent from current payloads
 
 ### Slice D. Site items
 
@@ -198,6 +202,8 @@ Contract note:
 - tag create/rename actions уже подключены через canonical `site-items/tags/save_new` и `site-items/tags/save_edit`
 - authoritative delete confirmation + server-side delete call для site items уже подключены
 - authoritative archive/unarchive confirmation + server-side archive call для site items уже подключены
+- July 20, 2026: large site-item lists switched to paged table rendering to keep the tab responsive on heavier datasets without changing the current API contract
+- July 20, 2026: site-item list reloads were narrowed to intentional query changes so pagination resets only when filters change and the tab no longer loops on callback/state identity churn
 
 ### Slice E. Unified archive + history
 
@@ -221,6 +227,8 @@ Contract note:
 - site-items row action now hands off into the real History tab with prefilled `entity_type = site_item` + `entity_id`
 - `Архив` tab уже читает canonical archive list for supported entity types
 - archive restore/view flows и domain-specific history presentation consistency остаются следующим pass
+- July 20, 2026: archive/history tables switched to paged table rendering to keep large result sets usable without changing the current API contract
+- July 20, 2026: history/archive reload effects were narrowed to entity-driven refresh triggers so callback identity churn no longer replays API reads
 
 ## 3.1. Documentation roles
 
@@ -709,6 +717,23 @@ Deliverables:
 8. Hardening slice: access matrix, smoke tests, migration leftovers and removal of leftover info stubs / temporary explanatory surfaces before finalization. Status: in progress.
 9. Chrome UX walkthrough slice: open `/sklad_items`, check each working tab step by step, fix runtime/UX regressions found there, then rerun reviewer pass on that chunk. Status: pending.
 
+Latest chunk status:
+
+- shell hardening for the live basic tabs is completed: the implemented tab path no longer relies on placeholder-style final-facing copy, and tab reload effects are aligned with the active controller callbacks
+- July 21, 2026 UI hardening chunk completed:
+  - site-items and production row statuses now render one primary semantic state plus distinct secondary flags, without duplicate status meanings across the same row
+  - site-items list density was tightened toward the legacy module pattern: compact BJU/tag/date cells, denser status controls, and cleaner action alignment
+- July 20, 2026 hardening chunk completed:
+  - module-local access gating now matches shared `handleUserAccess` semantics for section visibility
+  - history/archive request effects no longer depend on unstable callback identity
+  - `ACCESS-MAP.md` now records canonical section flags, legacy action equivalents and unclear/redundant flags for the current FE scope
+- July 21, 2026 reviewer correction:
+  - plain `*_view` access remains strictly read-only; `delete_execute` is kept as destructive-only contour and no longer broadens create/edit/archive controls
+- remaining cleanup decision:
+  - decide whether convert, VK sync, tag mutation and archive restore should receive dedicated canonical action keys from backend docs, or stay intentionally covered by broad section edit/access gating
+- reviewer pass remains mandatory after each implementation chunk
+- final Chrome UX walkthrough across all working tabs remains a required closing step before completion
+
 ## 9. Explicit non-goals for current iteration
 
 - no dedicated warehouse-items CRUD tab inside `sklad_items`
@@ -903,3 +928,17 @@ Mitigation:
 - нарисовать desktop/mobile flows по section-ам
 - согласовать таблицы, модалки, archive/history flows до реализации
 - оставить editable design asset, а не одноразовую картинку
+
+## 13. API contract pass status
+
+Статус на July 21, 2026:
+
+- completed: static contract pass по `components/sklad/**` against `API.md`, `ACCESS.md`, `ACCESS-MAP.md`
+- completed: module mutation callers выровнены под фактический transport rule этого FE wrapper; лишнее вложение payload в `data` убрано из production/site-items/archive actions
+- checked endpoint categories: bootstrap shell, units, categories, production, site-items, history, archive/delete
+- no shared/core edits were required
+
+Remaining gaps:
+
+- не выполнялся широкий live sweep; read contract подтвержден статически по module callers and docs, без массовых endpoint probes
+- `ACCESS-MAP.md` пока не требовал корректировок в этом pass, потому что найденный mismatch был transport-level inside module callers, а не access-map drift

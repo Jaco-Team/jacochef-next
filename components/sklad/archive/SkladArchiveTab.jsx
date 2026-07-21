@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import useSkladArchiveController from "./useSkladArchiveController";
 
 export default function SkladArchiveTab({ showAlert, refreshToken }) {
   const { entityType, loadRows, content } = useSkladArchiveController({ showAlert });
+  const loadRowsRef = useRef(loadRows);
 
   useEffect(() => {
-    loadRows();
-  }, [refreshToken, entityType]);
+    loadRowsRef.current = loadRows;
+  }, [loadRows]);
+
+  useEffect(() => {
+    loadRowsRef.current();
+  }, [entityType, refreshToken]);
 
   return content;
 }

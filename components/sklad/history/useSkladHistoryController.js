@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
@@ -16,12 +16,14 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Typography,
 } from "@mui/material";
 
 import { MySelect, MyTextInput } from "@/ui/Forms";
 
+import { formatDateRangeRU } from "../formatDateRangeRU";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import {
@@ -36,6 +38,10 @@ function formatValue(value, fallback = "-") {
   }
 
   return String(value);
+}
+
+function formatHistoryDateRange(dateStart, dateEnd) {
+  return formatDateRangeRU(dateStart, dateEnd);
 }
 
 function normalizeRows(response) {
@@ -156,6 +162,8 @@ export default function useSkladHistoryController({ showAlert }) {
   const entityType = useSkladHistoryStore((state) => state.entityType);
   const entityId = useSkladHistoryStore((state) => state.entityId);
   const rows = useSkladHistoryStore((state) => state.rows);
+  const page = useSkladHistoryStore((state) => state.page);
+  const rowsPerPage = useSkladHistoryStore((state) => state.rowsPerPage);
   const selectedRevisionKey = useSkladHistoryStore((state) => state.selectedRevisionKey);
   const selectedRevision = useSkladHistoryStore((state) => state.selectedRevision);
   const compareLeftKey = useSkladHistoryStore((state) => state.compareLeftKey);
@@ -173,6 +181,19 @@ export default function useSkladHistoryController({ showAlert }) {
       })),
     );
   }, [rows]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return rows.slice(start, start + rowsPerPage);
+  }, [page, rows, rowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = rows.length ? Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1) : 0;
+
+    if (page > maxPage) {
+      setState({ page: maxPage });
+    }
+  }, [page, rows.length, rowsPerPage, setState]);
 
   const loadRows = useCallback(async () => {
     if (!entityId) {
@@ -193,6 +214,7 @@ export default function useSkladHistoryController({ showAlert }) {
 
       setState({
         rows: nextRows,
+        page: 0,
         selectedRevisionKey: "",
         selectedRevision: null,
         compareLeftKey: nextRows[0]?.revisionKey || "",
@@ -407,15 +429,14 @@ export default function useSkladHistoryController({ showAlert }) {
               <TableRow>
                 <TableCell>Ключ версии</TableCell>
                 <TableCell>Создана</TableCell>
-                <TableCell>Действует с</TableCell>
-                <TableCell>Действует по</TableCell>
+                <TableCell>Действует</TableCell>
                 <TableCell>Операция</TableCell>
                 <TableCell align="right">Действия</TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {rows.map((row) => (
+              {paginatedRows.map((row) => (
                 <TableRow
                   key={row.key}
                   hover
@@ -423,8 +444,7 @@ export default function useSkladHistoryController({ showAlert }) {
                 >
                   <TableCell>{formatValue(row.revisionKey)}</TableCell>
                   <TableCell>{formatValue(row.createdAt)}</TableCell>
-                  <TableCell>{formatValue(row.dateStart)}</TableCell>
-                  <TableCell>{formatValue(row.dateEnd)}</TableCell>
+                  <TableCell>{formatHistoryDateRange(row.dateStart, row.dateEnd)}</TableCell>
                   <TableCell>{formatValue(row.operationType)}</TableCell>
                   <TableCell align="right">
                     <Stack
@@ -464,7 +484,7 @@ export default function useSkladHistoryController({ showAlert }) {
 
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={5}>
                     <Typography color="text.secondary">
                       {entityId
                         ? "По текущим фильтрам ревизии не найдены."
@@ -476,6 +496,21 @@ export default function useSkladHistoryController({ showAlert }) {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={rows.length}
+          page={page}
+          onPageChange={(_, nextPage) => setState({ page: nextPage })}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) =>
+            setState({
+              page: 0,
+              rowsPerPage: Number(event.target.value) || 25,
+            })
+          }
+          rowsPerPageOptions={[25, 50, 100]}
+          labelRowsPerPage="Строк на странице:"
+        />
 
         <Paper
           variant="outlined"
@@ -580,8 +615,7 @@ function GridLikeSnapshot({ snapshot, revision }) {
     ["Источник", revision?.source ?? "-"],
     ["Тип сущности", snapshotEntityType],
     ["Название", snapshot?.name ?? "-"],
-    ["Действует с", snapshot?.date_start ?? "-"],
-    ["Действует по", snapshot?.date_end ?? "-"],
+    ["Действует", formatHistoryDateRange(snapshot?.date_start, snapshot?.date_end)],
   ];
 
   const collections = [

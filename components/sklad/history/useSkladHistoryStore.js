@@ -11,6 +11,8 @@ export const HISTORY_ENTITY_OPTIONS = [
 
 export const HISTORY_INITIAL_STATE = {
   rows: [],
+  page: 0,
+  rowsPerPage: 25,
   selectedRevisionKey: "",
   selectedRevision: null,
   compareLeftKey: "",

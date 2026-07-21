@@ -52,7 +52,14 @@ export const SKLAD_TAB_DEFINITIONS = [
 export function getVisibleSkladTabs({ sections = [], access = {} } = {}) {
   return SKLAD_TAB_DEFINITIONS.filter((tab) => {
     const hasSection = tab.sections.some((section) => sections.includes(section));
-    const canView = tab.accessKeys.some((key) => Number(access[`${key}_view`]) === 1);
+    const canView = tab.accessKeys.some((key) => {
+      const keyBase = String(key || "");
+      return (
+        Number(access[`${keyBase}_view`]) === 1 ||
+        Number(access[`${keyBase}_edit`]) === 1 ||
+        Number(access[`${keyBase}_access`]) === 1
+      );
+    });
 
     return hasSection && canView;
   });

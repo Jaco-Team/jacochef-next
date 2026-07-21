@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
@@ -23,6 +24,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tooltip,
   Typography,
@@ -32,6 +34,7 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { formatDateRangeRU } from "../formatDateRangeRU";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import { useSkladStore } from "../useSkladStore";
 import { getVisibleSkladTabs } from "../skladTabs";
@@ -41,11 +44,7 @@ import SkladSiteItemViewDialog from "./SkladSiteItemViewDialog";
 import { SITE_ITEMS_ARCHIVE_MODE_OPTIONS, useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
 
 function formatDateRange(row) {
-  if (!row?.date_start && !row?.date_end) {
-    return "—";
-  }
-
-  return `${row?.date_start || "—"} - ${row?.date_end || "—"}`;
+  return formatDateRangeRU(row?.date_start, row?.date_end);
 }
 
 function formatBju(row) {
@@ -86,35 +85,44 @@ function getTagNames(row, tags) {
   return [];
 }
 
-function getStatusChips(row) {
-  const chips = [];
-  const isVisible = row?.is_show ?? 0;
+function dedupeChips(chips) {
+  const seen = new Set();
 
+  return chips.filter((chip) => {
+    const key = `${chip?.label || ""}-${chip?.color || ""}`;
+
+    if (!chip?.label || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function getPrimaryStatusChip(row) {
   if (Number(row?.is_archived) === 1) {
-    chips.push({ key: "archived", label: "Архив", color: "default" });
+    return { key: "archived", label: "Архив", color: "default" };
   }
 
-  if (Number(isVisible) === 1) {
-    chips.push({ key: "active", label: "Активен", color: "success" });
+  if (Number(row?.is_show ?? 0) === 1) {
+    return { key: "active", label: "Активен", color: "success" };
   }
 
-  if (Number(row?.show_site) === 1) {
-    chips.push({ key: "show_site", label: "Сайт", color: "primary" });
-  }
+  return { key: "hidden", label: "Скрыт", color: "default" };
+}
 
-  if (Number(row?.show_program) === 1) {
-    chips.push({ key: "show_program", label: "Касса", color: "secondary" });
-  }
-
-  if (Number(row?.is_hit) === 1) {
-    chips.push({ key: "hit", label: "Хит", color: "warning" });
-  }
-
-  if (Number(row?.is_new) === 1) {
-    chips.push({ key: "new", label: "Новинка", color: "info" });
-  }
-
-  return chips;
+function getSecondaryStatusChips(row) {
+  return dedupeChips(
+    [
+      Number(row?.show_site) === 1 ? { key: "show_site", label: "Сайт", color: "primary" } : null,
+      Number(row?.show_program) === 1
+        ? { key: "show_program", label: "Касса", color: "secondary" }
+        : null,
+      Number(row?.is_hit) === 1 ? { key: "hit", label: "Хит", color: "warning" } : null,
+      Number(row?.is_new) === 1 ? { key: "new", label: "Новинка", color: "info" } : null,
+    ].filter(Boolean),
+  );
 }
 
 function getArchiveModeLabel(value) {
@@ -269,7 +277,7 @@ function getDeleteError(response) {
 
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
-  const { canEdit } = useSkladAccess();
+  const { canDelete, canManageSiteItems } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const shellSections = useSkladStore((state) => state.sections);
@@ -283,6 +291,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const categoryId = useSkladSiteItemsStore((state) => state.categoryId);
   const tagId = useSkladSiteItemsStore((state) => state.tagId);
   const archiveMode = useSkladSiteItemsStore((state) => state.archiveMode);
+  const page = useSkladSiteItemsStore((state) => state.page);
+  const rowsPerPage = useSkladSiteItemsStore((state) => state.rowsPerPage);
   const modal = useSkladSiteItemsStore((state) => state.modal);
   const detail = useSkladSiteItemsStore((state) => state.detail);
   const draft = useSkladSiteItemsStore((state) => state.draft);
@@ -290,33 +300,38 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
-  const isEditable = canEdit("site_items");
-  const loadRows = useCallback(async () => {
-    setShellState({ isLoading: true });
+  const isEditable = canManageSiteItems();
+  const canDeleteAction = canDelete();
+  const loadRows = useCallback(
+    async ({ resetPage = false } = {}) => {
+      setShellState({ isLoading: true });
 
-    try {
-      const response = await api.getSiteItems({
-        search: String(search || "").trim(),
-        category_id: categoryId ? Number(categoryId) : null,
-        tag_id: tagId ? Number(tagId) : null,
-        archive_mode: archiveMode,
-      });
+      try {
+        const response = await api.getSiteItems({
+          search: String(search || "").trim(),
+          category_id: categoryId ? Number(categoryId) : null,
+          tag_id: tagId ? Number(tagId) : null,
+          archive_mode: archiveMode,
+        });
 
-      if (!response?.st) {
-        throw new Error(response?.text || "Ошибка загрузки товаров сайта");
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки товаров сайта");
+        }
+
+        setState({
+          rows: Array.isArray(response?.list) ? response.list : [],
+          categories: Array.isArray(response?.categories) ? response.categories : [],
+          tags: Array.isArray(response?.tags) ? response.tags : [],
+          ...(resetPage ? { page: 0 } : {}),
+        });
+      } catch (error) {
+        showAlert(error?.message || "Ошибка загрузки товаров сайта", false);
+      } finally {
+        setShellState({ isLoading: false });
       }
-
-      setState({
-        rows: Array.isArray(response?.list) ? response.list : [],
-        categories: Array.isArray(response?.categories) ? response.categories : [],
-        tags: Array.isArray(response?.tags) ? response.tags : [],
-      });
-    } catch (error) {
-      showAlert(error?.message || "Ошибка загрузки товаров сайта", false);
-    } finally {
-      setShellState({ isLoading: false });
-    }
-  }, [api, archiveMode, categoryId, search, setShellState, setState, showAlert, tagId]);
+    },
+    [api, archiveMode, categoryId, search, setShellState, setState, showAlert, tagId],
+  );
 
   const categoryOptions = useMemo(() => {
     return dedupeSelectOptions(
@@ -339,6 +354,19 @@ export default function useSkladSiteItemsController({ showAlert }) {
       ),
     );
   }, [tags]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return rows.slice(start, start + rowsPerPage);
+  }, [page, rows, rowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = rows.length ? Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1) : 0;
+
+    if (page > maxPage) {
+      setState({ page: maxPage });
+    }
+  }, [page, rows.length, rowsPerPage, setState]);
 
   const openHistoryTab = useCallback(
     (row) => {
@@ -420,7 +448,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const openDeleteDialog = useCallback(
     (row) => {
-      if (!row?.id) {
+      if (!row?.id || !canDeleteAction) {
         return;
       }
 
@@ -432,7 +460,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         },
       });
     },
-    [setState],
+    [canDeleteAction, setState],
   );
 
   const confirmDelete = useCallback(async () => {
@@ -453,10 +481,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
     try {
       const response = await api.deleteEntity({
-        data: {
-          entity_type: "site_item",
-          id: row.id,
-        },
+        entity_type: "site_item",
+        id: row.id,
       });
 
       if (!response?.st) {
@@ -500,11 +526,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
     try {
       const response = await api.archiveEntity({
-        data: {
-          entity_type: "site_item",
-          id: row.id,
-          is_archived: nextArchived,
-        },
+        entity_type: "site_item",
+        id: row.id,
+        is_archived: nextArchived,
       });
 
       if (!response?.st) {
@@ -530,7 +554,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const toggleFlag = useCallback(
     async (row, type) => {
-      if (!row?.id || !type) {
+      if (!row?.id || !type || !isEditable) {
         return;
       }
 
@@ -541,11 +565,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
       try {
         const response = await api.saveSiteItemFlag({
-          data: {
-            id: row.id,
-            type,
-            value: nextValue,
-          },
+          id: row.id,
+          type,
+          value: nextValue,
         });
 
         if (!response?.st) {
@@ -560,7 +582,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, loadRows, setShellState, showAlert],
+    [api, isEditable, loadRows, setShellState, showAlert],
   );
 
   const openCreate = useCallback(() => {
@@ -638,9 +660,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const response = await saveItem({
-          data: payload,
-        });
+        const response = await saveItem(payload);
 
         if (!response?.st) {
           throw new Error(response?.text || "Ошибка сохранения");
@@ -814,10 +834,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
       try {
         const response = await api.uploadSiteItemImage(file, {
-          data: {
-            id: row.id,
-            slot: "main",
-          },
+          id: row.id,
+          slot: "main",
         });
 
         if (!response?.st) {
@@ -870,9 +888,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       }
 
       const response = await api.createSiteItemTag({
-        data: {
-          name: trimmedName,
-        },
+        name: trimmedName,
       });
 
       if (!response?.st) {
@@ -908,10 +924,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
       }
 
       const response = await api.updateSiteItemTag({
-        data: {
-          tag_id: normalizedTagId,
-          name: trimmedName,
-        },
+        tag_id: normalizedTagId,
+        name: trimmedName,
       });
 
       if (!response?.st) {
@@ -947,7 +961,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
               label="Поиск"
               placeholder="Название или короткое название"
               value={search}
-              func={(event) => setState({ search: event.target.value })}
+              func={(event) => setState({ search: event.target.value, page: 0 })}
             />
 
             <MySelect
@@ -955,7 +969,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
               data={categoryOptions}
               is_none={false}
               value={categoryId}
-              func={(event) => setState({ categoryId: event.target.value })}
+              func={(event) => setState({ categoryId: event.target.value, page: 0 })}
             />
 
             <MySelect
@@ -963,7 +977,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
               data={tagOptions}
               is_none={false}
               value={tagId}
-              func={(event) => setState({ tagId: event.target.value })}
+              func={(event) => setState({ tagId: event.target.value, page: 0 })}
             />
 
             <MySelect
@@ -971,7 +985,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
               data={SITE_ITEMS_ARCHIVE_MODE_OPTIONS}
               is_none={false}
               value={archiveMode}
-              func={(event) => setState({ archiveMode: event.target.value })}
+              func={(event) => setState({ archiveMode: event.target.value, page: 0 })}
             />
           </Stack>
 
@@ -1046,9 +1060,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                 Доступные действия
               </Typography>
               <Typography sx={{ fontWeight: 700 }}>
-                {isEditable
-                  ? "Просмотр, создание, редактирование и history handoff"
-                  : "Просмотр и history handoff"}
+                {isEditable ? "Просмотр, создание, редактирование и история" : "Просмотр и история"}
               </Typography>
             </Box>
           </Stack>
@@ -1069,14 +1081,14 @@ export default function useSkladSiteItemsController({ showAlert }) {
               <TableRow>
                 <TableCell>Название</TableCell>
                 <TableCell>Категория</TableCell>
-                <TableCell sx={{ minWidth: 120 }}>Б/Ж/У</TableCell>
+                <TableCell sx={{ width: 128 }}>Б/Ж/У</TableCell>
                 <TableCell sx={{ width: 84 }}>Ккал</TableCell>
-                <TableCell>Теги</TableCell>
+                <TableCell sx={{ minWidth: 180 }}>Теги</TableCell>
                 <TableCell sx={{ width: 188 }}>Действует</TableCell>
-                <TableCell sx={{ minWidth: 280 }}>Статус</TableCell>
+                <TableCell sx={{ minWidth: 240 }}>Статус</TableCell>
                 <TableCell
                   align="right"
-                  sx={{ width: 216 }}
+                  sx={{ width: 248 }}
                 >
                   Действия
                 </TableCell>
@@ -1084,9 +1096,10 @@ export default function useSkladSiteItemsController({ showAlert }) {
             </TableHead>
 
             <TableBody>
-              {rows.map((row) => {
+              {paginatedRows.map((row) => {
                 const rowTagNames = getTagNames(row, tags);
-                const statusChips = getStatusChips(row);
+                const primaryStatusChip = getPrimaryStatusChip(row);
+                const secondaryStatusChips = getSecondaryStatusChips(row);
 
                 return (
                   <TableRow
@@ -1113,7 +1126,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                     <TableCell sx={{ whiteSpace: "nowrap" }}>
                       <Typography
                         variant="caption"
-                        sx={{ fontSize: 12, lineHeight: 1.35 }}
+                        sx={{ fontSize: 12, lineHeight: 1.35, fontVariantNumeric: "tabular-nums" }}
                       >
                         {formatBju(row)}
                       </Typography>
@@ -1121,98 +1134,41 @@ export default function useSkladSiteItemsController({ showAlert }) {
                     <TableCell sx={{ whiteSpace: "nowrap" }}>
                       {row?.kkal_preview ?? row?.kkal ?? "-"}
                     </TableCell>
-                    <TableCell>{rowTagNames.length ? rowTagNames.join(", ") : "-"}</TableCell>
-                    <TableCell sx={{ whiteSpace: "nowrap" }}>
+                    <TableCell>
                       <Typography
                         variant="caption"
+                        color={rowTagNames.length ? "text.primary" : "text.secondary"}
                         sx={{ fontSize: 12, lineHeight: 1.35 }}
                       >
-                        {formatDateRange(row)}
+                        {rowTagNames.length ? rowTagNames.join(", ") : "—"}
                       </Typography>
                     </TableCell>
+                    <TableCell>{formatDateRange(row)}</TableCell>
 
                     <TableCell>
                       <Stack
-                        direction="column"
-                        spacing={1}
+                        direction="row"
+                        spacing={0.75}
+                        useFlexGap
+                        flexWrap="wrap"
+                        alignItems="center"
                       >
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          useFlexGap
-                          flexWrap="wrap"
-                        >
-                          {statusChips.length
-                            ? statusChips.map((chip) => (
-                                <Chip
-                                  key={chip.key}
-                                  label={chip.label}
-                                  size="small"
-                                  color={chip.color}
-                                  variant={chip.color === "default" ? "outlined" : "filled"}
-                                />
-                              ))
-                            : "-"}
-                        </Stack>
-                        {isEditable ? (
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            flexWrap="wrap"
-                          >
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.is_show ?? 0) === 1 ? "success" : "default"}
-                              label={Number(row?.is_show ?? 0) === 1 ? "Активен" : "Скрыт"}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleFlag(row, "is_show");
-                              }}
-                            />
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.show_site) === 1 ? "primary" : "default"}
-                              label={Number(row?.show_site) === 1 ? "Сайт" : "Без сайта"}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleFlag(row, "show_site");
-                              }}
-                            />
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.show_program) === 1 ? "secondary" : "default"}
-                              label={Number(row?.show_program) === 1 ? "Касса" : "Без кассы"}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleFlag(row, "show_program");
-                              }}
-                            />
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.is_hit) === 1 ? "warning" : "default"}
-                              label={Number(row?.is_hit) === 1 ? "Хит" : "Не хит"}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleFlag(row, "is_hit");
-                              }}
-                            />
-                            <Chip
-                              size="small"
-                              clickable
-                              color={Number(row?.is_new) === 1 ? "info" : "default"}
-                              label={Number(row?.is_new) === 1 ? "Новинка" : "Обычный"}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleFlag(row, "is_new");
-                              }}
-                            />
-                          </Stack>
-                        ) : null}
+                        <Chip
+                          key={primaryStatusChip.key}
+                          label={primaryStatusChip.label}
+                          size="small"
+                          color={primaryStatusChip.color}
+                          variant={primaryStatusChip.color === "default" ? "outlined" : "filled"}
+                        />
+                        {secondaryStatusChips.map((chip) => (
+                          <Chip
+                            key={chip.key}
+                            label={chip.label}
+                            size="small"
+                            color={chip.color}
+                            variant="outlined"
+                          />
+                        ))}
                       </Stack>
                     </TableCell>
 
@@ -1237,12 +1193,11 @@ export default function useSkladSiteItemsController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={isEditable ? "Открыть редактор" : "Открыть read-only редактор"}
-                        >
+                        <Tooltip title={isEditable ? "Открыть редактор" : "Недостаточно прав"}>
                           <span>
                             <IconButton
                               size="small"
+                              disabled={!isEditable}
                               aria-label="Редактировать"
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -1321,12 +1276,18 @@ export default function useSkladSiteItemsController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip title={isEditable ? "Удалить" : "Недостаточно прав"}>
+                        <Tooltip
+                          title={
+                            isEditable && canDeleteAction
+                              ? "Удалить"
+                              : "Недостаточно прав для удаления"
+                          }
+                        >
                           <span>
                             <IconButton
                               size="small"
                               color="error"
-                              disabled={!isEditable}
+                              disabled={!isEditable || !canDeleteAction}
                               aria-label="Удалить"
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -1365,6 +1326,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
                               categoryId: "",
                               tagId: "",
                               archiveMode: "active",
+                              page: 0,
                             })
                           }
                         >
@@ -1384,6 +1346,21 @@ export default function useSkladSiteItemsController({ showAlert }) {
             </TableBody>
           </Table>
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={rows.length}
+          page={page}
+          onPageChange={(_, nextPage) => setState({ page: nextPage })}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) =>
+            setState({
+              page: 0,
+              rowsPerPage: Number(event.target.value) || 25,
+            })
+          }
+          rowsPerPageOptions={[25, 50, 100]}
+          labelRowsPerPage="Строк на странице:"
+        />
 
         <SkladSiteItemViewDialog
           open={modal.open && modal.mode === "view"}
@@ -1425,7 +1402,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           loading={deleteDialog.loading}
           title="Удалить товар сайта?"
           description={`Запись "${deleteDialog?.row?.name || ""}" будет удалена без возможности восстановления.`}
-          warning="Backend выполнит authoritative usage-check в момент удаления и вернет причину запрета, если товар уже использовался."
+          warning="Если товар уже использовался, удаление будет недоступно."
           onClose={closeDeleteDialog}
           onConfirm={confirmDelete}
         />
@@ -1442,7 +1419,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
               ? "снова показана в активных списках"
               : "убрана из активных списков"
           }.`}
-          warning="Backend создаст новую history revision и изменит archive state через canonical entities/archive."
+          warning="Изменение будет отражено в истории."
           confirmLabel={Number(archiveDialog?.row?.is_archived) === 1 ? "Вернуть" : "В архив"}
           onClose={closeArchiveDialog}
           onConfirm={confirmArchive}

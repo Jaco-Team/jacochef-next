@@ -19,6 +19,8 @@ export const useSkladProductionStore = create((set) => ({
   search: "",
   categoryId: "",
   archiveMode: "active",
+  page: 0,
+  rowsPerPage: 25,
   modal: {
     open: false,
     mode: "view",

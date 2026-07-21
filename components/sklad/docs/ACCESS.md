@@ -1,219 +1,87 @@
 # ACCESS
 
-Статус: карта access-контура нового модуля `Sklad` и команда синхронизации в `sklad_items`.
+Статус: подтвержденные правила доступа для FE-модуля `components/sklad/**`.
 
-## 1. Главное правило
+## 1. Что считать подтвержденным contract
 
-Для нового backend-модуля `Sklad` access-шаблоны подготавливаются в отдельном модуле реестра `sklad_items`.
+Для этого frontend-модуля подтвержден только runtime access payload из `get_all.access` и текущие routes под `/api/sklad_items/*`.
 
-Это означает:
+Этот документ намеренно не фиксирует:
 
-- API routes нового модуля остаются под `/api/sklad_items/*`
-- команда синхронизации работает с target `jaco_main_rolls.sklad_modules.key_query = 'sklad_items'`
-- этот документ описывает access provisioning и карту флагов, а не runtime middleware binding
+- полный backend provisioning flow
+- предполагаемый состав `appointment_group`
+- неиспользуемые field-level ключи как canonical contract
 
-Важно:
+Если ключ не используется в текущем FE или не описан рядом в `API.md`, он не должен считаться canonical только из-за legacy-именования.
 
-- source-модули не переписываются
-- команда синхронизации пишет только target-модуль `sklad_items` и его template rows
-- legacy-модули `ed_izmer`, `recept_module_new_2`, `sklad_items_module_new`, `site_items_new` остаются источником данных для merge
+## 2. Section-level gating
 
-## 2. Source modules
+Для открытия tab-а FE использует broad section contour:
 
-Access merge собирается из:
+- `*_view`
+- `*_edit`
+- `*_access`
+- совместимые legacy alias-ключи только там, где это уже зашито в module-local helper
 
-- `ed_izmer`
-- `recept_module_new_2`
-- `sklad_items_module_new`
-- `site_items_new`
+Подтвержденные section keys для shell:
 
-## 3. Что FE должно читать
+- `units`
+- `categories`
+- `recipes`
+- `semi_finished`
+- `site_items`
+- `history`
+- `archive`
 
-Есть два слоя прав.
+Практическое правило:
 
-### 3.1. Canonical access map
+- plain view-only доступ открывает раздел, но не включает write actions
+- отсутствие отдельного `*_view = 1` не должно скрывать tab, если backend уже прислал `*_edit = 1` или `*_access = 1`
 
-Это верхнеуровневые флаги, которые backend возвращает в `get_all.access`.
+## 3. Write gating
 
-- `units_view` — можно открывать и использовать раздел единиц измерения
-- `categories_view` — можно открывать и использовать раздел категорий склада
-- `recipes_view` — можно открывать раздел рецептов
-- `semi_finished_view` — можно открывать раздел полуфабрикатов
-- `site_items_view` — можно открывать раздел товаров сайта
-- `history_view` — можно открывать history routes нового модуля
-- `archive_view` — можно открывать архивный контур нового модуля
-- `delete_execute` — можно выполнять destructive delete actions в новом модуле
+Текущий FE различает navigation и write scope.
 
-Правило для FE:
+Подтвержденные write-сценарии:
 
-- для показа/скрытия крупных разделов и действий ориентироваться сначала на canonical map из `get_all.access`
-- не пытаться самостоятельно пересобирать canonical права из legacy флагов
+- `recipes`, `semi_finished` и `site_items` получают write scope по явным `*_edit` / `*_access`
+- transitional action keys могут расширять write controls только в явно используемых module-local сценариях
+- plain `*_view` без подтвержденного full-write contour остается read-only и не включает create/edit/archive/flag-toggle controls
 
-### 3.2. Merged legacy runtime flags
+Совместимые legacy action keys остаются transitional:
 
-Это merged field-level и action-level флаги, которые приходят в `request->upd_access` и используются текущим backend write-side.
-
-Они сохраняются в `sklad_items` как target access contour для нового модуля и текущих backend write-gates.
-
-#### Warehouse items / shared refs
-
-- `form` — доступ к форме warehouse item legacy-модуля
-- `name`
-- `cats`
-- `ed_izmer`
-- `max_count_in_m`
-- `name_for_vendor`
-- `pq`
-- `percent`
-- `vend_percent`
-- `art`
-- `min_count`
-- `pf_list`
-- `allergens`
-- `my_allergens_other`
-- `this_storages`
-- `apps`
-- `time_min_other`
-- `mark_name`
-- `is_show`
-- `show_in_order`
-- `show_in_rev`
-- `honest_sign`
-- `delete_item`
-- `create_new`
-
-#### Recipes / semi-finished
-
-- `name`
-- `shelf_life`
-- `two_user`
-- `show_in_rev`
-- `date_start`
-- `date_end`
-- `time`
-- `dop_time`
-- `rec_apps`
-- `storages`
 - `create_rec`
 - `create_pol`
-- `rev_table`
 - `change_rec_pf`
-- `delete`
-- `items`
-- `allergens`
-- `allergens_diff`
-- `structure`
-- `cats`
-
-#### Site items
-
-- `date_start`
-- `tmp_desc`
-- `marc_desc`
-- `marc_desc_full`
-- `show_program`
-- `is_new`
-- `show_site`
-- `is_hit`
-- `dropzone`
-- `name`
-- `art`
-- `category_id`
-- `count_part`
-- `stol`
-- `weight`
-- `is_price`
-- `is_show`
-- `protein`
-- `fat`
-- `carbohydrates`
-- `time_stage_1`
-- `time_stage_2`
-- `time_stage_3`
-- `mark_name`
+- `create_new`
 - `change_tag`
 - `reload_vk`
-- `new_item`
-- `site_kc`
-- `kassa`
-- `short_name`
-- `marc`
-- `items`
-- `stage`
-- `is_updated`
 
-### 3.3. Как это превращается в runtime keys
+Они допустимы как compatibility signals для текущего FE, но не описываются здесь как canonical backend API contract.
 
-Middleware строит `upd_access` так:
+## 4. Destructive actions
 
-- `param` -> `value`
-- `param_edit` -> `edit`
-- `param_view` -> `view`
-- `param_access` -> `access`
+Подтвержденные правила для destructive действий:
 
-Пример:
+- delete не включается по одному только view или broad section open
+- production/site-item delete требует отдельный delete contour в module-local helper
+- archive restore в архивной вкладке зависит от write scope соответствующей entity family, а не только от общего archive section
+- backend остается authoritative на confirm step для delete/archive endpoints
 
-- если в `appointment_group.param = 'name'`
-- то runtime получит `name`, `name_edit`, `name_view`, `name_access`
+Отдельно подтвержденный delete signal:
 
-Именно эти ключи сейчас используют:
+- `delete_execute`
 
-- `SkladProductionWriteService`
-- `SkladSiteItemWriteService`
-- `SkladAccessService`
+Совместимый legacy delete contour:
 
-## 4. Почему команда безопасна для остальных модулей
+- `delete_item`
 
-Команда синхронизации:
+Если backend позже введет более узкие action keys, этот документ нужно обновить только после подтверждения их runtime payload и фактического использования в FE.
 
-- не меняет `appointment_group` source-модулей
-- не меняет `appointment_template` source-модулей
-- не меняет `appointment_template_group` source-модулей
-- не трогает `left_menu`
-- не трогает чужие `sklad_modules.key_query`
+## 5. FE-facing takeaway
 
-Она делает только это:
+Для текущего `components/sklad/**` модуля:
 
-- создает target-модуль `sklad_items`, если его еще нет
-- upsert-ит `appointment_group` только для target-модуля
-- rebuild-ит `appointment_template` только для target-модуля
-- rebuild-ит `appointment_template_group` только для target-групп target-модуля
-
-## 5. Команда
-
-```bash
-php artisan sklad:sync-access
-```
-
-Опции:
-
-```bash
-php artisan sklad:sync-access --dry-run
-php artisan sklad:sync-access --target-key=sklad_items
-php artisan sklad:sync-access --target-name="Склад"
-```
-
-Рекомендуемый production/apply запуск:
-
-```bash
-php artisan sklad:sync-access --target-key=sklad_items --target-name="Склад"
-```
-
-## 6. Что команда делает
-
-1. Находит source-модули по `key_query`
-2. Создает или находит target-модуль `sklad_items`
-3. Собирает union legacy access groups из source-модулей
-4. Добавляет canonical `Sklad` flags
-5. Пересобирает target `appointment_group`
-6. Пересобирает target `appointment_template` как OR по source module activation
-7. Пересобирает target `appointment_template_group` как merged runtime access contour
-8. Чистит cache `getInfoModule_*` для target module key
-
-## 7. Практическое правило для FE
-
-- новый FE должен открывать `Sklad` через canonical backend contract нового модуля
-- section-level gating брать из `get_all.access`
-- legacy field-level flags считать transitional runtime layer, а не product-contract
-- FE должен ориентироваться на canonical `get_all.access` и на access rollout из этого документа
-- route-space `/api/sklad_items/*` и target module key `sklad_items` — это разные слои: API и module registry provisioning
+- canonical shell decisions читать из `get_all.access`
+- module-local compatibility alias-ы держать только для уже используемых переходных случаев
+- не выдавать undocumented field names за canonical contract

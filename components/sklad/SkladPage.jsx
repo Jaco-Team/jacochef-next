@@ -21,7 +21,6 @@ import MyAlert from "@/ui/MyAlert";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 
-import SkladPlaceholderTab from "./SkladPlaceholderTab";
 import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
 import SkladCategoriesTab from "./categories/SkladCategoriesTab";
@@ -50,6 +49,20 @@ function normalizeBootstrap(response) {
     businessMeta: response?.business_meta || {},
     capabilities: response?.capabilities || {},
   };
+}
+
+function SkladUnavailableTab({ label }) {
+  return (
+    <Paper sx={{ p: 3, borderRadius: 3 }}>
+      <Stack spacing={1}>
+        <Typography sx={{ fontWeight: 600 }}>{label}</Typography>
+        <Typography color="text.secondary">
+          Для этого раздела пока недоступен рабочий экран. Проверь published sections и доступы
+          модуля.
+        </Typography>
+      </Stack>
+    </Paper>
+  );
 }
 
 export default function SkladPage() {
@@ -188,13 +201,7 @@ export default function SkladPage() {
       );
     }
 
-    return (
-      <SkladPlaceholderTab
-        title={item.label}
-        description={item.description}
-        summaryValue={item.summaryKey ? (summary?.[item.summaryKey] ?? 0) : null}
-      />
-    );
+    return <SkladUnavailableTab label={item.label} />;
   };
 
   return (
@@ -228,13 +235,15 @@ export default function SkladPage() {
               <Box>
                 <h1>{moduleName || "Склад"}</h1>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5 }}
-                >
-                  Canonical shell нового модуля на `/api/sklad_items/*`.
-                </Typography>
+                {tabs.length ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    Рабочие разделы: {tabs.length}
+                  </Typography>
+                ) : null}
               </Box>
             </Grid>
 

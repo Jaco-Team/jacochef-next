@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
@@ -15,6 +15,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Typography,
 } from "@mui/material";
@@ -23,6 +24,7 @@ import { MySelect } from "@/ui/Forms";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import useSkladApi from "../useSkladApi";
+import useSkladAccess from "../useSkladAccess";
 import { useSkladStore } from "../useSkladStore";
 import { getVisibleSkladTabs } from "../skladTabs";
 import { HISTORY_INITIAL_STATE, useSkladHistoryStore } from "../history/useSkladHistoryStore";
@@ -114,6 +116,7 @@ function normalizeArchiveDetail(response, entityType) {
 
 export default function useSkladArchiveController({ showAlert }) {
   const api = useSkladApi();
+  const { canManageArchivedEntity, canView } = useSkladAccess();
   const setShellState = useSkladStore((state) => state.setState);
   const shellSections = useSkladStore((state) => state.sections);
   const shellAccess = useSkladStore((state) => state.access);
@@ -121,6 +124,8 @@ export default function useSkladArchiveController({ showAlert }) {
 
   const [entityType, setEntityType] = useState("recipe");
   const [rows, setRows] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [detail, setDetail] = useState(null);
   const [restoreDialog, setRestoreDialog] = useState({
     open: false,
@@ -146,6 +151,7 @@ export default function useSkladArchiveController({ showAlert }) {
       }
 
       setRows(normalizeRows(entityType, response));
+      setPage(0);
     } catch (error) {
       setRows([]);
       showAlert(error?.message || "Ошибка загрузки архива", false);
@@ -154,6 +160,30 @@ export default function useSkladArchiveController({ showAlert }) {
     }
   }, [api, entityType, setShellState, showAlert]);
 
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return rows.slice(start, start + rowsPerPage);
+  }, [page, rows, rowsPerPage]);
+
+  const visibleTabs = useMemo(
+    () =>
+      getVisibleSkladTabs({
+        sections: shellSections,
+        access: shellAccess,
+      }),
+    [shellAccess, shellSections],
+  );
+  const canOpenHistory = canView("history") && visibleTabs.some((item) => item.key === "history");
+  const canRestore = canManageArchivedEntity(entityType);
+
+  useEffect(() => {
+    const maxPage = rows.length ? Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1) : 0;
+
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [page, rows.length, rowsPerPage]);
+
   const openHistoryTab = useCallback(
     (row) => {
       if (!row?.id) {
@@ -161,10 +191,6 @@ export default function useSkladArchiveController({ showAlert }) {
         return;
       }
 
-      const visibleTabs = getVisibleSkladTabs({
-        sections: shellSections,
-        access: shellAccess,
-      });
       const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
 
       if (historyTabIndex === -1) {
@@ -179,7 +205,7 @@ export default function useSkladArchiveController({ showAlert }) {
       });
       setShellState({ tab: historyTabIndex });
     },
-    [setHistoryState, setShellState, shellAccess, shellSections, showAlert],
+    [setHistoryState, setShellState, showAlert, visibleTabs],
   );
 
   const closeModal = useCallback(() => {
@@ -261,17 +287,20 @@ export default function useSkladArchiveController({ showAlert }) {
     [closeModal, loadArchiveDetail, setShellState, showAlert],
   );
 
-  const openRestoreDialog = useCallback((row) => {
-    if (!row?.id) {
-      return;
-    }
+  const openRestoreDialog = useCallback(
+    (row) => {
+      if (!row?.id || !canManageArchivedEntity(row.entityType)) {
+        return;
+      }
 
-    setRestoreDialog({
-      open: true,
-      loading: false,
-      row,
-    });
-  }, []);
+      setRestoreDialog({
+        open: true,
+        loading: false,
+        row,
+      });
+    },
+    [canManageArchivedEntity],
+  );
 
   const confirmRestore = useCallback(async () => {
     const row = restoreDialog?.row;
@@ -289,11 +318,9 @@ export default function useSkladArchiveController({ showAlert }) {
 
     try {
       const response = await api.archiveEntity({
-        data: {
-          entity_type: row.entityType,
-          id: row.id,
-          is_archived: 0,
-        },
+        entity_type: row.entityType,
+        id: row.id,
+        is_archived: 0,
       });
 
       if (!response?.st) {
@@ -394,7 +421,15 @@ export default function useSkladArchiveController({ showAlert }) {
                 >
                   Действия
                 </Typography>
-                <Typography sx={{ fontWeight: 700 }}>Просмотр, восстановление и история</Typography>
+                <Typography sx={{ fontWeight: 700 }}>
+                  {canRestore && canOpenHistory
+                    ? "Просмотр, восстановление и история"
+                    : canRestore
+                      ? "Просмотр и восстановление"
+                      : canOpenHistory
+                        ? "Просмотр и история"
+                        : "Только просмотр"}
+                </Typography>
               </Stack>
             </Stack>
           </Paper>
@@ -418,7 +453,7 @@ export default function useSkladArchiveController({ showAlert }) {
 
               <TableBody>
                 {rows.length ? (
-                  rows.map((row) => (
+                  paginatedRows.map((row) => (
                     <TableRow key={row.key}>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.name}</TableCell>
@@ -449,6 +484,7 @@ export default function useSkladArchiveController({ showAlert }) {
                             size="small"
                             startIcon={<HistoryOutlinedIcon />}
                             onClick={() => openHistoryTab(row)}
+                            disabled={!canOpenHistory}
                           >
                             История
                           </Button>
@@ -457,6 +493,7 @@ export default function useSkladArchiveController({ showAlert }) {
                             color="inherit"
                             startIcon={<UnarchiveOutlinedIcon />}
                             onClick={() => openRestoreDialog(row)}
+                            disabled={!canRestore}
                           >
                             Восстановить
                           </Button>
@@ -483,10 +520,34 @@ export default function useSkladArchiveController({ showAlert }) {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={rows.length}
+            page={page}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(event) => {
+              setPage(0);
+              setRowsPerPage(Number(event.target.value) || 25);
+            }}
+            rowsPerPageOptions={[25, 50, 100]}
+            labelRowsPerPage="Строк на странице:"
+          />
         </Paper>
       </Stack>
     );
-  }, [entityType, openHistoryTab, openRestoreDialog, openView, rows]);
+  }, [
+    canOpenHistory,
+    canRestore,
+    entityType,
+    openHistoryTab,
+    openRestoreDialog,
+    openView,
+    page,
+    paginatedRows,
+    rows,
+    rowsPerPage,
+  ]);
 
   return {
     entityType,
@@ -518,7 +579,7 @@ export default function useSkladArchiveController({ showAlert }) {
           loading={restoreDialog.loading}
           title="Вернуть запись из архива?"
           description={`Запись "${restoreDialog?.row?.name || ""}" снова станет активной.`}
-          warning="Запись будет возвращена в активный список и backend создаст новую запись в истории."
+          warning="Запись снова появится в активном списке и отразится в истории."
           confirmLabel="Восстановить"
           onClose={closeRestoreDialog}
           onConfirm={confirmRestore}

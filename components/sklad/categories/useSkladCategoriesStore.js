@@ -31,6 +31,8 @@ export const useSkladCategoriesStore = create((set) => ({
   rows: [],
   search: "",
   archiveMode: "active",
+  page: 0,
+  rowsPerPage: 25,
   modal: defaultModal,
   draft: defaultDraft,
 

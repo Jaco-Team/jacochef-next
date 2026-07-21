@@ -32,6 +32,7 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
+import { formatDateRangeRU } from "../formatDateRangeRU";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -63,11 +64,7 @@ function formatMarkingType(value) {
 }
 
 function formatDateRange(detail) {
-  if (!detail?.date_start && !detail?.date_end) {
-    return "-";
-  }
-
-  return `${detail?.date_start || "..."} - ${detail?.date_end || "..."}`;
+  return formatDateRangeRU(detail?.date_start, detail?.date_end);
 }
 
 function formatTagNames(tags) {
