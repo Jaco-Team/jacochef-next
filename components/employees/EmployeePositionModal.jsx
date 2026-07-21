@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -297,6 +300,115 @@ function ModuleAccessCard({
   const hasCategories = featureGroups.some((group) => group.name);
   const hasFeatures = (module.features ?? []).length > 0;
 
+  const renderFeatureRows = (items) =>
+    items.map(({ feature, featureIndex }) => (
+      <Grid
+        container
+        key={`${feature.id}-${featureIndex}`}
+        alignItems="center"
+        sx={{
+          minHeight: 44,
+          borderTop: 1,
+          borderColor: "divider",
+          transition: "background-color 120ms ease",
+          "&:hover": { bgcolor: "#f8fafc" },
+        }}
+      >
+        <Grid size={6}>
+          <Typography sx={{ px: 1.5, fontSize: 14, fontWeight: 500 }}>{feature.name}</Typography>
+        </Grid>
+        {PERMISSION_FIELDS.map((field) => (
+          <Grid
+            key={field.key}
+            size={2}
+            sx={{ textAlign: "center" }}
+          >
+            <PermissionCell
+              allowed={Number(feature[`allow_${field.key}`]) === 1}
+              checked={Number(feature[field.key]) === 1}
+              disabled={!canEdit}
+              onChange={() =>
+                onUpdateFeature(featureIndex, field.key, Number(feature[field.key]) !== 1)
+              }
+            />
+          </Grid>
+        ))}
+      </Grid>
+    ));
+
+  const renderPermissionHeader = (items, groupLabel = "параметров") => (
+    <Grid
+      container
+      alignItems="center"
+      sx={{ minHeight: 52, borderTop: 1, borderColor: "divider", bgcolor: "#f8fafc" }}
+    >
+      <Grid size={6}>
+        <Typography sx={{ px: 1.5, color: "text.secondary", fontSize: 12, fontWeight: 700 }}>
+          Параметр
+        </Typography>
+      </Grid>
+      {PERMISSION_FIELDS.map((field) => {
+        const applicable = items.filter(
+          ({ feature }) => Number(feature[`allow_${field.key}`]) === 1,
+        );
+        const enabledCount = applicable.filter(
+          ({ feature }) => Number(feature[field.key]) === 1,
+        ).length;
+        const allEnabled = applicable.length > 0 && enabledCount === applicable.length;
+        const nextAction = allEnabled ? "Отключить" : "Включить";
+
+        return (
+          <Grid
+            key={field.key}
+            size={2}
+            sx={{ textAlign: "center" }}
+          >
+            <Stack
+              direction="row"
+              spacing={0.15}
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Typography
+                sx={{ color: "text.secondary", fontSize: 11, fontWeight: 700, letterSpacing: 0.2 }}
+              >
+                {field.shortLabel}
+              </Typography>
+              <Tooltip
+                title={`${nextAction} «${field.label}» для всех доступных параметров раздела «${groupLabel}»`}
+              >
+                <span>
+                  <Checkbox
+                    size="small"
+                    checked={allEnabled}
+                    indeterminate={enabledCount > 0 && !allEnabled}
+                    disabled={!canEdit || applicable.length === 0}
+                    onChange={() => {
+                      const nextValue = !allEnabled;
+                      applicable.forEach(({ featureIndex }) =>
+                        onUpdateFeature(featureIndex, field.key, nextValue),
+                      );
+                    }}
+                    inputProps={{
+                      "aria-label": `${nextAction} ${field.label} для всех параметров раздела ${groupLabel}`,
+                    }}
+                    sx={{
+                      p: 0.5,
+                      "&.Mui-checked, &.MuiCheckbox-indeterminate": { color: "#d50032" },
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            </Stack>
+            <Typography sx={{ mt: -0.5, color: "text.disabled", fontSize: 10, lineHeight: 1 }}>
+              {enabledCount}/{applicable.length}
+            </Typography>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
+
   return (
     <Paper
       variant="outlined"
@@ -405,80 +517,115 @@ function ModuleAccessCard({
         >
           <Divider />
           <Box sx={{ px: { xs: 1, sm: 1.5 }, py: 1.25 }}>
-            <Grid
-              container
-              alignItems="center"
-              sx={{ pb: 0.5 }}
-            >
-              <Grid size={6} />
-              {PERMISSION_FIELDS.map((field) => (
-                <Grid
-                  key={field.key}
-                  size={2}
-                  sx={{ textAlign: "center" }}
+            {featureGroups.map((group) => {
+              if (!hasCategories) {
+                return (
+                  <Box key={group.key}>
+                    {renderPermissionHeader(group.items, module.name)}
+                    {renderFeatureRows(group.items)}
+                  </Box>
+                );
+              }
+
+              const configured = group.items.filter(({ feature }) =>
+                PERMISSION_FIELDS.some(
+                  (field) =>
+                    Number(feature[`allow_${field.key}`]) === 1 && Number(feature[field.key]) === 1,
+                ),
+              ).length;
+              const total = group.items.length;
+              const status =
+                configured === total
+                  ? { label: "Все настроено", color: "#047857", bgcolor: "#ecfdf5" }
+                  : configured > 0
+                    ? { label: "Настроено частично", color: "#9a6700", bgcolor: "#fff7d6" }
+                    : { label: "Не настроено", color: "#64748b", bgcolor: "#f1f5f9" };
+              const accordionId = `module-${module.modul_id ?? module.key_query ?? "rights"}-${String(
+                group.key,
+              ).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+
+              return (
+                <Accordion
+                  key={group.key}
+                  disableGutters
+                  elevation={0}
+                  slotProps={{
+                    transition: { unmountOnExit: true },
+                    heading: { component: "h4" },
+                  }}
+                  sx={{
+                    mt: 1,
+                    border: "1px solid",
+                    borderColor: "#e2e8f0",
+                    borderRadius: "8px!important",
+                    overflow: "hidden",
+                    "&:before": { display: "none" },
+                    "&.Mui-expanded": {
+                      borderColor: "rgba(213, 0, 50, 0.3)",
+                      boxShadow: "0 6px 18px rgba(15, 23, 42, 0.06)",
+                    },
+                  }}
                 >
-                  <Typography
+                  <AccordionSummary
+                    id={`${accordionId}-header`}
+                    aria-controls={`${accordionId}-content`}
+                    expandIcon={<ExpandMoreIcon />}
                     sx={{
-                      color: "text.secondary",
-                      fontSize: 10,
-                      letterSpacing: 0.4,
+                      px: 1.5,
+                      minHeight: 64,
+                      transition: "background-color 120ms ease",
+                      "&:hover": { bgcolor: "#f8fafc" },
+                      "&.Mui-expanded": {
+                        minHeight: 64,
+                        bgcolor: "#fff",
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                      },
+                      "& .MuiAccordionSummary-content": { my: 1 },
+                      "& .MuiAccordionSummary-content.Mui-expanded": { my: 1 },
                     }}
                   >
-                    {field.shortLabel}
-                  </Typography>
-                </Grid>
-              ))}
-            </Grid>
-            {featureGroups.map((group) => (
-              <Box key={group.key}>
-                {group.name || (hasCategories && group.key === "__plain__") ? (
-                  <Typography
-                    sx={{
-                      px: 0.5,
-                      pt: 1,
-                      pb: 0.5,
-                      color: "text.secondary",
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ width: "100%", pr: 1 }}
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                          {group.name || "Общие права"}
+                        </Typography>
+                        <Typography
+                          sx={{ mt: 0.15, color: status.color, fontSize: 12, fontWeight: 500 }}
+                        >
+                          {status.label}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        size="small"
+                        label={`${configured}/${total}`}
+                        sx={{
+                          height: 24,
+                          flexShrink: 0,
+                          color: status.color,
+                          bgcolor: status.bgcolor,
+                          fontWeight: 700,
+                          "& .MuiChip-label": { px: 1 },
+                        }}
+                      />
+                    </Stack>
+                  </AccordionSummary>
+                  <AccordionDetails
+                    id={`${accordionId}-content`}
+                    sx={{ p: 0 }}
                   >
-                    {group.name || "Общие права"}
-                  </Typography>
-                ) : null}
-                {group.items.map(({ feature, featureIndex }) => (
-                  <Grid
-                    container
-                    key={`${feature.id}-${featureIndex}`}
-                    alignItems="center"
-                    sx={{ minHeight: 40, borderTop: 1, borderColor: "divider" }}
-                  >
-                    <Grid size={6}>
-                      <Typography sx={{ px: 0.5, fontSize: 14 }}>{feature.name}</Typography>
-                    </Grid>
-                    {PERMISSION_FIELDS.map((field) => (
-                      <Grid
-                        key={field.key}
-                        size={2}
-                        sx={{ textAlign: "center" }}
-                      >
-                        <PermissionCell
-                          allowed={Number(feature[`allow_${field.key}`]) === 1}
-                          checked={Number(feature[field.key]) === 1}
-                          disabled={!canEdit}
-                          onChange={() =>
-                            onUpdateFeature(
-                              featureIndex,
-                              field.key,
-                              Number(feature[field.key]) !== 1,
-                            )
-                          }
-                        />
-                      </Grid>
-                    ))}
-                  </Grid>
-                ))}
-              </Box>
-            ))}
+                    {renderPermissionHeader(group.items, group.name || "Общие права")}
+                    {renderFeatureRows(group.items)}
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })}
           </Box>
         </Collapse>
       ) : null}
@@ -905,9 +1052,6 @@ export default function EmployeePositionModal({
               >
                 {position?.id ? position.name || "Должность" : "Новая должность"}
               </Typography>
-              {position?.id ? (
-                <Typography sx={{ color: "#94a3b8", fontSize: 12 }}>ID: {position.id}</Typography>
-              ) : null}
             </Box>
             {dirty ? (
               <Chip
@@ -973,7 +1117,10 @@ export default function EmployeePositionModal({
             </Stack>
           ) : (
             <>
-              <Box sx={{ px: 3, py: 2, backgroundColor: "#f5f5f5" }}>
+              <Box
+                sx={{ px: 3, py: 2, backgroundColor: "#fff" }}
+                style={{ borderBottom: "1px solid #f1f5f9" }}
+              >
                 <Grid
                   container
                   spacing={2}
@@ -1042,7 +1189,7 @@ export default function EmployeePositionModal({
                             updatePosition("is_graph", event.target.checked ? 1 : 0)
                           }
                         />
-                        <Typography sx={{ fontSize: 14 }}>Работа по графику</Typography>
+                        <Typography sx={{ fontSize: 14 }}>Нужен в графике работы</Typography>
                       </Stack>
                       <Stack
                         direction="row"
@@ -1091,30 +1238,30 @@ export default function EmployeePositionModal({
               <Box
                 sx={{
                   minHeight: { xs: "auto", md: "calc(100vh - 280px)" },
-                  backgroundColor: "#f5f5f5",
+                  backgroundColor: "#f8fafc80",
                 }}
               >
                 <Grid container>
                   <Grid
                     size={{ xs: 12, md: 3 }}
                     sx={{
-                      borderRight: { md: 1 },
+                      borderRight: { md: "1px solid #f1f5f9" },
                       borderBottom: { xs: 1, md: 0 },
-                      borderColor: "divider",
+                      borderColor: "#f1f5f9",
                       position: { md: "sticky" },
                       top: { md: 13 },
                       alignSelf: { md: "flex-start" },
                       maxHeight: { md: "calc(100vh - 220px)" },
                       overflowX: { xs: "auto", md: "hidden" },
                       overflowY: { md: "auto" },
-                      backgroundColor: "#f5f5f5",
+                      backgroundColor: "#f8fafc80",
                     }}
                   >
                     <List
                       dense
                       sx={{
                         display: { xs: "flex", md: "block" },
-                        backgroundColor: "#f5f5f5",
+                        backgroundColor: "#f8fafc80",
                         width: { xs: "max-content", md: "auto" },
                       }}
                     >
@@ -1127,15 +1274,24 @@ export default function EmployeePositionModal({
                           py: 0.75,
                           m: 1,
                           borderRadius: "12px",
+                          color: sectionKey === "all" ? "#d50032" : "#45556c",
                           "&.Mui-selected": {
                             bgcolor: "white",
+                            border: "1px solid #e2e8f0",
                             color: "#d50032",
+                            boxShadow:
+                              "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                          },
+                          "&:hover": {
+                            bgcolor: "#fff!important",
+                            borderColor: "#e2e8f0",
+                            boxShadow: "0 2px 7px rgba(15, 23, 42, 0.1)",
                           },
                         }}
                       >
                         <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ fontSize: 14, fontWeight: 600, color: "inherit" }}>
-                            Все разделы
+                          <Typography sx={{ fontSize: 14, fontWeight: 500, color: "inherit" }}>
+                            Все разделы 11
                           </Typography>
                         </Box>
                         <Chip
@@ -1144,7 +1300,7 @@ export default function EmployeePositionModal({
                           sx={{
                             height: 22,
                             borderRadius: "999px",
-                            bgcolor: "#f1f5f9",
+                            bgcolor: sectionKey === "all" ? "#d5003210" : "#f1f5f9",
                             color: sectionKey === "all" ? "#d50032" : "#64748b",
                           }}
                         />
@@ -1160,17 +1316,27 @@ export default function EmployeePositionModal({
                             py: 0.75,
                             m: 1,
                             borderRadius: "12px",
+                            color: sectionKey === section.key ? "#d50032" : "#45556c",
                             "&.Mui-selected": {
                               bgcolor: "transparent",
                               color: "#d50032",
+                              fontSize: "0.875rem!important",
+                              fontWeight: 500,
+                              border: "1px solid #e2e8f0",
+                              boxShadow:
+                                "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
                             },
-                            "&.Mui-selected:hover": { bgcolor: "rgba(213, 0, 50, 0.04)" },
+                            "&:hover": {
+                              bgcolor: "#fff!important",
+                              borderColor: "#e2e8f0",
+                              boxShadow: "0 2px 7px rgba(15, 23, 42, 0.1)",
+                            },
                           }}
                         >
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
                               noWrap
-                              sx={{ fontSize: 14, fontWeight: 600, color: "inherit" }}
+                              sx={{ fontSize: 14, fontWeight: 500, color: "inherit" }}
                             >
                               {section.name}
                             </Typography>
@@ -1181,7 +1347,7 @@ export default function EmployeePositionModal({
                             sx={{
                               height: 22,
                               borderRadius: "999px",
-                              bgcolor: "#f1f5f9",
+                              bgcolor: sectionKey === section.key ? "#d5003210" : "#f1f5f9",
                               color: sectionKey === section.key ? "#d50032" : "#64748b",
                             }}
                           />
@@ -1192,7 +1358,7 @@ export default function EmployeePositionModal({
 
                   <Grid
                     size={{ xs: 12, md: 9 }}
-                    sx={{ backgroundColor: "#f5f5f5" }}
+                    sx={{ backgroundColor: "#fff" }}
                   >
                     <Box
                       ref={accessToolbarRef}
@@ -1200,7 +1366,7 @@ export default function EmployeePositionModal({
                         position: "sticky",
                         top: 0,
                         zIndex: 2,
-                        backgroundColor: "#f5f5f5",
+                        backgroundColor: "#fff",
                         borderBottom: 1,
                         borderColor: "#e2e8f0",
                       }}
