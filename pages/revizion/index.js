@@ -283,7 +283,7 @@ class Revizion_ extends React.Component {
               {this.state.analysisAccess ? (
                 <Tab
                   value="analysis"
-                  label="Анализ по ревизиям"
+                  label="Анализ ревизий"
                 />
               ) : null}
             </Tabs>

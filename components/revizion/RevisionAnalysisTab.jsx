@@ -28,6 +28,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TableRow,
   TableSortLabel,
@@ -75,6 +76,38 @@ const valueColor = (value) => {
   if (Number(value) < 0) return "error.main";
   if (Number(value) > 0) return "success.main";
   return "text.primary";
+};
+
+const reportTableSx = {
+  "& .MuiTableCell-root": {
+    px: 1.25,
+    py: 1.125,
+    borderColor: "divider",
+    whiteSpace: "nowrap",
+  },
+  "& .MuiTableCell-head": {
+    bgcolor: "background.paper",
+    color: "text.secondary",
+    fontWeight: 600,
+    borderBottom: "2px solid",
+    borderBottomColor: "divider",
+  },
+  "& .MuiTableRow-root:hover .MuiTableCell-body": {
+    bgcolor: "action.hover",
+  },
+};
+
+const tableLinkSx = {
+  p: 0,
+  minWidth: 0,
+  color: "text.primary",
+  textTransform: "none",
+  textAlign: "left",
+  fontWeight: 500,
+  "&:hover": {
+    color: "primary.main",
+    bgcolor: "transparent",
+  },
 };
 
 const sourcePositionsLabel = (position) => {
@@ -942,24 +975,23 @@ function SingleCafeReport({ report, scope, onPositionClick, onCalculationClick }
     scope === "food"
       ? [
           ["position_name", "Позиция"],
-          ["start_balance", "Начало"],
-          ["purchases", "Приход"],
+          ["start_balance", "Ост. нач."],
+          ["purchases", "Закупки"],
           ["sales", "Продано"],
           ["writeoffs", "Списано"],
-          ["expected_balance", "Ожидалось"],
-          ["end_balance", "Факт"],
-          ["difference", "Расхождение"],
-          ["unit_price", "Цена"],
-          ["amount", "Сумма"],
+          ["expected_balance", "Ожид. остаток"],
+          ["end_balance", "Факт кон."],
+          ["difference", "Итого"],
+          ["amount", "Сумма, ₽"],
         ]
       : [
           ["position_name", "Позиция"],
-          ["start_balance", "Начало"],
-          ["purchases", "Приход"],
-          ["end_balance", "Конец"],
+          ["start_balance", "Ост. нач."],
+          ["purchases", "Закупки"],
+          ["end_balance", "Ост. кон."],
           ["consumption", "Расход"],
-          ["unit_price", "Цена"],
-          ["amount", "Сумма"],
+          ["unit_price", "Ср. цена, ₽"],
+          ["amount", "Сумма, ₽"],
         ];
 
   return (
@@ -1000,14 +1032,11 @@ function SingleCafeReport({ report, scope, onPositionClick, onCalculationClick }
         </Grid>
       </Grid>
 
-      <TableContainer
-        component={Paper}
-        sx={{ maxWidth: "100%" }}
-      >
+      <TableContainer sx={{ maxWidth: "100%" }}>
         <Table
           stickyHeader
           size="small"
-          sx={{ minWidth: scope === "food" ? 1200 : 850 }}
+          sx={{ ...reportTableSx, minWidth: scope === "food" ? 1120 : 760 }}
         >
           <TableHead>
             <TableRow>
@@ -1049,10 +1078,23 @@ function SingleCafeReport({ report, scope, onPositionClick, onCalculationClick }
                           variant="text"
                           size="small"
                           onClick={() => onPositionClick(row.position_id)}
-                          sx={{ p: 0, minWidth: 0, textTransform: "none", textAlign: "left" }}
+                          sx={tableLinkSx}
                         >
                           {row.position_name}
+                          <Box
+                            component="span"
+                            sx={{ ml: 0.75, color: "text.secondary", fontWeight: 700 }}
+                          >
+                            ›
+                          </Box>
                         </Button>
+                        <Typography
+                          display="block"
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          {row.unit || "—"}
+                        </Typography>
                         {sourcePositionsLabel(row) ? (
                           <Typography
                             display="block"
@@ -1089,7 +1131,7 @@ function SingleCafeReport({ report, scope, onPositionClick, onCalculationClick }
                         </Button>
                       </Tooltip>
                     ) : (
-                      `${formatNumber(row[field])}${field !== "unit_price" ? ` ${row.unit || ""}` : ""}`
+                      formatNumber(row[field])
                     )}
                   </TableCell>
                 ))}
@@ -1103,6 +1145,8 @@ function SingleCafeReport({ report, scope, onPositionClick, onCalculationClick }
 }
 
 function MultiCafeReport({ report, onPositionClick, onPointClick, onCalculationClick }) {
+  const isFood = report.scope === "food";
+  const metricLabel = isFood ? "Итого" : "Расход";
   const rowsByPosition = useMemo(() => {
     const map = new Map();
     for (const position of report.positions || []) map.set(Number(position.id), new Map());
@@ -1113,13 +1157,33 @@ function MultiCafeReport({ report, onPositionClick, onPointClick, onCalculationC
     return map;
   }, [report]);
 
+  const matrixPositions = useMemo(
+    () =>
+      [...(report.positions || [])].sort((left, right) => {
+        const leftRows = rowsByPosition.get(Number(left.id)) || new Map();
+        const rightRows = rowsByPosition.get(Number(right.id)) || new Map();
+        const leftScore = [...leftRows.values()].reduce(
+          (sum, row) => sum + Math.abs(Number(row.amount || 0)),
+          0,
+        );
+        const rightScore = [...rightRows.values()].reduce(
+          (sum, row) => sum + Math.abs(Number(row.amount || 0)),
+          0,
+        );
+
+        return rightScore - leftScore || left.name.localeCompare(right.name, "ru");
+      }),
+    [report.positions, rowsByPosition],
+  );
+
   const pointTotals = useMemo(() => {
     const totals = new Map();
     for (const point of report.points || [])
-      totals.set(Number(point.id), { amount: 0, missing: false });
+      totals.set(Number(point.id), { amount: 0, quantity: 0, missing: false });
     for (const row of report.rows || []) {
       const total = totals.get(Number(row.point_id));
       if (!total) continue;
+      total.quantity += Number(row.quantity || 0);
       if (row.amount === null) total.missing = true;
       else total.amount += Number(row.amount);
     }
@@ -1127,57 +1191,177 @@ function MultiCafeReport({ report, onPositionClick, onPointClick, onCalculationC
   }, [report]);
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer sx={{ isolation: "isolate" }}>
       <Table
-        stickyHeader
         size="small"
-        sx={{ minWidth: Math.max(800, 280 + report.points.length * 180) }}
+        sx={{
+          ...reportTableSx,
+          tableLayout: "auto",
+          borderCollapse: "separate",
+          borderSpacing: 0,
+          minWidth: Math.max(640, 160 + report.points.length * 224),
+          "& .matrixGroupStart": {
+            borderLeft: "1px solid",
+            borderLeftColor: "divider",
+          },
+          "& .matrixPositionCell": {
+            position: "sticky",
+            left: 0,
+            zIndex: 5,
+            width: 150,
+            minWidth: 150,
+            maxWidth: 150,
+            overflow: "hidden",
+            whiteSpace: "normal",
+            bgcolor: "background.paper",
+            borderRight: "1px solid",
+            borderRightColor: "divider",
+            boxShadow: "6px 0 8px -8px rgba(0, 0, 0, 0.45)",
+          },
+          "& .MuiTableHead-root .matrixPositionCell": {
+            zIndex: 8,
+          },
+          "& .MuiTableFooter-root .matrixPositionCell": {
+            zIndex: 7,
+          },
+          "& .MuiTableBody-root .MuiTableRow-root:hover .matrixPositionCell": {
+            bgcolor: "background.paper",
+          },
+          "& .matrixValueCell": {
+            fontSize: 14,
+            fontVariantNumeric: "tabular-nums",
+          },
+          "& .matrixQuantityCell": {
+            width: 82,
+            minWidth: 82,
+          },
+          "& .matrixAmountCell": {
+            width: 142,
+            minWidth: 142,
+          },
+        }}
       >
         <TableHead>
           <TableRow>
-            <TableCell sx={{ minWidth: 260 }}>Позиция</TableCell>
+            <TableCell
+              rowSpan={2}
+              className="matrixPositionCell"
+              sx={{ verticalAlign: "bottom" }}
+            >
+              Позиция
+            </TableCell>
             {report.points.map((point) => (
               <TableCell
                 key={point.id}
-                align="right"
-                sx={{ minWidth: 180 }}
+                colSpan={2}
+                align="center"
+                className="matrixGroupStart"
+                sx={{ minWidth: 224, py: 0.75, borderBottomWidth: "1px !important" }}
               >
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => onPointClick(point.id)}
-                  sx={{ textTransform: "none", textAlign: "right" }}
-                >
-                  {point.name}
-                </Button>
+                <Tooltip title={point.name}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => onPointClick(point.id)}
+                    sx={{
+                      ...tableLinkSx,
+                      maxWidth: 164,
+                      justifyContent: "center",
+                      textAlign: "center",
+                      fontSize: 13,
+                      lineHeight: 1.2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    >
+                      {point.address || point.name}
+                    </Box>
+                  </Button>
+                </Tooltip>
                 <Typography
                   display="block"
                   variant="caption"
                   color="text.secondary"
+                  sx={{ mt: 0.25, lineHeight: 1.2 }}
                 >
-                  {formatDate(point.start_revision?.date)} — {formatDate(point.end_revision?.date)}
+                  {point.city_name}
                 </Typography>
               </TableCell>
             ))}
           </TableRow>
+          <TableRow>
+            {report.points.flatMap((point) => [
+              <TableCell
+                key={`${point.id}-quantity`}
+                align="right"
+                className="matrixGroupStart matrixQuantityCell"
+                sx={{ color: "text.secondary", fontSize: 12, fontWeight: 500 }}
+              >
+                {metricLabel}
+              </TableCell>,
+              <TableCell
+                key={`${point.id}-amount`}
+                align="right"
+                className="matrixAmountCell"
+                sx={{ color: "text.secondary", fontSize: 12, fontWeight: 500 }}
+              >
+                Сумма, ₽
+              </TableCell>,
+            ])}
+          </TableRow>
         </TableHead>
         <TableBody>
-          {report.positions.map((position) => {
+          {matrixPositions.map((position) => {
             const byPoint = rowsByPosition.get(Number(position.id)) || new Map();
             return (
               <TableRow
                 hover
                 key={position.id}
               >
-                <TableCell>
-                  <Button
-                    variant="text"
-                    size="small"
-                    onClick={() => onPositionClick(position.id)}
-                    sx={{ p: 0, minWidth: 0, textTransform: "none", textAlign: "left" }}
-                  >
-                    {position.name}
-                  </Button>
+                <TableCell className="matrixPositionCell">
+                  <Tooltip title={position.name}>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={() => onPositionClick(position.id)}
+                      sx={{
+                        ...tableLinkSx,
+                        width: "100%",
+                        maxWidth: "100%",
+                        justifyContent: "flex-start",
+                        alignItems: "flex-start",
+                        fontSize: 13,
+                        whiteSpace: "normal",
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          lineHeight: 1.25,
+                          overflowWrap: "anywhere",
+                          whiteSpace: "normal",
+                        }}
+                      >
+                        {position.name}
+                      </Box>
+                      <Box
+                        component="span"
+                        sx={{
+                          flex: "0 0 auto",
+                          ml: 0.5,
+                          color: "text.secondary",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ›
+                      </Box>
+                    </Button>
+                  </Tooltip>
                   <Typography
                     display="block"
                     variant="caption"
@@ -1185,75 +1369,93 @@ function MultiCafeReport({ report, onPositionClick, onPointClick, onCalculationC
                   >
                     {position.unit}
                   </Typography>
-                  {sourcePositionsLabel(position) ? (
-                    <Typography
-                      display="block"
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      {sourcePositionsLabel(position)}
-                    </Typography>
-                  ) : null}
                 </TableCell>
                 {report.points.map((point) => {
                   const row = byPoint.get(Number(point.id));
-                  return (
+                  return [
                     <TableCell
-                      key={point.id}
+                      key={`${point.id}-quantity`}
                       align="right"
-                      sx={{ color: valueColor(row?.amount) }}
+                      className="matrixGroupStart matrixQuantityCell matrixValueCell"
+                      sx={{ color: isFood ? valueColor(row?.quantity) : "text.primary" }}
+                    >
+                      {row ? formatNumber(row.quantity) : "—"}
+                    </TableCell>,
+                    <TableCell
+                      key={`${point.id}-amount`}
+                      align="right"
+                      className="matrixAmountCell matrixValueCell"
+                      sx={{ color: isFood ? valueColor(row?.amount) : "text.primary" }}
                     >
                       {row ? (
                         <Tooltip title="Показать полный расчёт">
                           <Button
                             variant="text"
                             size="small"
+                            endIcon={<InfoOutlinedIcon sx={{ fontSize: 14 }} />}
                             aria-label={`Проверить расчёт ${row.position_name}, ${point.name}`}
                             onClick={() => onCalculationClick(row, point)}
-                            sx={{ p: 0.5, minWidth: 0, color: "inherit", textTransform: "none" }}
+                            sx={{
+                              p: 0,
+                              minWidth: 0,
+                              width: "100%",
+                              color: "inherit",
+                              fontSize: "inherit",
+                              fontWeight: "inherit",
+                              lineHeight: "inherit",
+                              textTransform: "none",
+                              textAlign: "right",
+                              justifyContent: "flex-end",
+                              whiteSpace: "nowrap",
+                              "& .MuiButton-endIcon": {
+                                flexShrink: 0,
+                                ml: 0.5,
+                                mr: 0,
+                              },
+                            }}
                           >
-                            <Stack alignItems="flex-end">
-                              <Stack
-                                direction="row"
-                                spacing={0.5}
-                                alignItems="center"
-                              >
-                                <Typography
-                                  component="span"
-                                  variant="body2"
-                                >
-                                  {formatMoney(row.amount)}
-                                </Typography>
-                                <InfoOutlinedIcon sx={{ fontSize: 15 }} />
-                              </Stack>
-                              <Typography
-                                component="span"
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {formatNumber(row.quantity)} {row.unit}
-                              </Typography>
-                            </Stack>
+                            {formatMoney(row.amount)}
                           </Button>
                         </Tooltip>
                       ) : (
                         "—"
                       )}
-                    </TableCell>
-                  );
+                    </TableCell>,
+                  ];
                 })}
               </TableRow>
             );
           })}
-          <TableRow>
-            <TableCell sx={{ fontWeight: 700 }}>Итого</TableCell>
+        </TableBody>
+        <TableFooter>
+          <TableRow
+            sx={{
+              "& .MuiTableCell-root": {
+                color: "text.primary",
+                fontWeight: 700,
+                borderTop: "2px solid",
+                borderTopColor: "divider",
+                borderBottom: 0,
+              },
+            }}
+          >
+            <TableCell className="matrixPositionCell">Итого по кафе</TableCell>
             {report.points.map((point) => {
               const total = pointTotals.get(Number(point.id));
-              return (
+              return [
                 <TableCell
-                  key={point.id}
+                  key={`${point.id}-quantity`}
                   align="right"
-                  sx={{ fontWeight: 700, color: valueColor(total?.amount) }}
+                  className="matrixGroupStart matrixQuantityCell matrixValueCell"
+                  sx={{ color: isFood ? valueColor(total?.quantity) : "text.primary" }}
+                >
+                  {formatNumber(total?.quantity || 0)}
+                </TableCell>,
+                <TableCell
+                  key={`${point.id}-amount`}
+                  align="right"
+                  className="matrixAmountCell matrixValueCell"
+                  sx={{ color: isFood ? valueColor(total?.amount) : "text.primary" }}
                 >
                   {formatMoney(total?.amount || 0)}
                   {total?.missing ? (
@@ -1265,11 +1467,11 @@ function MultiCafeReport({ report, onPositionClick, onPointClick, onCalculationC
                       есть позиции без цены
                     </Typography>
                   ) : null}
-                </TableCell>
-              );
+                </TableCell>,
+              ];
             })}
           </TableRow>
-        </TableBody>
+        </TableFooter>
       </Table>
     </TableContainer>
   );
@@ -1376,6 +1578,25 @@ function Drilldown({ report, drill, onClose, onPointSelect, loadSeries, series, 
     }));
   }, [drill.pointId, metric, position?.unit, series]);
 
+  const cafeRevisionGroups = useMemo(
+    () =>
+      (series?.points || []).map((point) => {
+        const rows = (point.intervals || []).map((interval) => ({
+          key: `${point.id}-${interval.date_start}-${interval.date_end}`,
+          label: `${formatDate(interval.date_start)} — ${formatDate(interval.date_end)}`,
+          value: interval[metric],
+          unit: position?.unit,
+        }));
+
+        return {
+          point,
+          rows,
+          total: rows.reduce((sum, row) => sum + Number(row.value || 0), 0),
+        };
+      }),
+    [metric, position?.unit, series],
+  );
+
   return (
     <Paper
       variant="outlined"
@@ -1467,10 +1688,100 @@ function Drilldown({ report, drill, onClose, onPointSelect, loadSeries, series, 
                 </Select>
               </FormControl>
             ) : null}
+            {!drill.pointId ? (
+              <Box>
+                <Typography variant="subtitle2">Все выбранные кафе</Typography>
+                <Typography
+                  display="block"
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  Дата — конец интервала между ревизиями. Значение — сумма расхождений по кафе, у
+                  которых интервал заканчивается этой датой.
+                </Typography>
+              </Box>
+            ) : null}
             <BarList
               rows={revisionRows}
               metric={metric}
             />
+            {!drill.pointId && cafeRevisionGroups.length > 1 ? (
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">Отдельно по каждому кафе</Typography>
+                {cafeRevisionGroups.map(({ point, rows, total }) => {
+                  const accordionId = `revision-cafe-${point.id}`;
+
+                  return (
+                    <Accordion
+                      key={point.id}
+                      disableGutters
+                      variant="outlined"
+                      slotProps={{ transition: { unmountOnExit: true } }}
+                      sx={{
+                        borderRadius: "4px !important",
+                        "&:before": { display: "none" },
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        id={`${accordionId}-header`}
+                        aria-controls={`${accordionId}-content`}
+                      >
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          spacing={2}
+                          sx={{ width: "100%", pr: 1 }}
+                        >
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="subtitle2">{point.name}</Typography>
+                            <Typography
+                              display="block"
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Интервалов: {rows.length}
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              flexShrink: 0,
+                              color: valueColor(total),
+                              fontVariantNumeric: "tabular-nums",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {metric === "amount"
+                              ? formatMoney(total)
+                              : `${formatNumber(total)} ${position?.unit || ""}`}
+                          </Typography>
+                        </Stack>
+                      </AccordionSummary>
+                      <AccordionDetails
+                        id={`${accordionId}-content`}
+                        sx={{ pt: 0 }}
+                      >
+                        {rows.length ? (
+                          <BarList
+                            rows={rows}
+                            metric={metric}
+                          />
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            Для кафе нет интервалов ревизий в выбранном периоде.
+                          </Typography>
+                        )}
+                      </AccordionDetails>
+                    </Accordion>
+                  );
+                })}
+              </Stack>
+            ) : null}
             <WarningList warnings={series?.warnings} />
           </>
         )}
