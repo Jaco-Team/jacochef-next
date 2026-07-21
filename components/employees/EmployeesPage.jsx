@@ -45,7 +45,12 @@ import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
 import EmployeeHierarchyTab from "@/components/employees/EmployeeHierarchyTab";
 import EmployeePositionFilter from "@/components/employees/EmployeePositionFilter";
-import { api_laravel, api_laravel_local, api_laravel_upload } from "@/src/api_new";
+import {
+  api_laravel,
+  api_laravel_local,
+  api_laravel_local_upload,
+  api_laravel_upload,
+} from "@/src/api_new";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 
 dayjs.locale("ru");
@@ -511,9 +516,10 @@ const getAccess = (data) => {
 const getEmployeePermissions = (access) => {
   const { userCan } = handleUserAccess(access);
   const tab = (key) => {
-    const allowed = userCan("access", key);
+    const view = userCan("view", key);
+    const edit = userCan("edit", key);
 
-    return { view: allowed, edit: allowed };
+    return { view, edit };
   };
   const basicTab = tab("basic_tab");
   const workTab = tab("work_tab");
@@ -535,7 +541,7 @@ const getEmployeePermissions = (access) => {
     phone: basicTab,
     inn: basicTab,
     birthDate: basicTab,
-    employmentDate: workTab,
+    employmentDate: basicTab,
     authCode: basicTab,
     position: workTab,
     positionHierarchy: {
@@ -557,6 +563,7 @@ const hasBasicEmployeeView = (permissions) =>
     permissions.inn,
     permissions.birthDate,
     permissions.authCode,
+    permissions.employmentDate,
   ].some((permission) => permission.view);
 
 const hasBasicEmployeeEdit = (permissions) =>
@@ -566,6 +573,7 @@ const hasBasicEmployeeEdit = (permissions) =>
     permissions.inn,
     permissions.birthDate,
     permissions.authCode,
+    permissions.employmentDate,
   ].some((permission) => permission.edit);
 
 const getDefaultEmployeeTab = (permissions) => {
@@ -1115,6 +1123,7 @@ export default function EmployeesPage() {
     if (hasBasicEmployeeEdit(permissions)) {
       const basicUser = {
         ...employee.user,
+        date_registration: formatDate(employee.user.date_registration, ""),
         date_start_day: dayjs().format("YYYY-MM-DD"),
       };
       const ok = await handleMutation(
@@ -1123,6 +1132,7 @@ export default function EmployeesPage() {
           user_id: employee.user.id,
           user: basicUser,
           employee: basicUser,
+          date_registration: basicUser.date_registration,
           date_start_day: dayjs().format("YYYY-MM-DD"),
         },
         "Данные сотрудника сохранены",
@@ -2250,7 +2260,8 @@ function EmployeeDialog({
     permissions.phone.view ||
     permissions.birthDate.view ||
     permissions.authCode.view ||
-    permissions.inn.view;
+    permissions.inn.view ||
+    permissions.employmentDate.view;
   const healthItems = employee ? getHealthItems(employee) : [];
   const overallHealth = (() => {
     const statuses = healthItems.map((item) => getHealthItemStatus(item));
@@ -2293,6 +2304,7 @@ function EmployeeDialog({
               sx={{ fontWeight: 900 }}
               noWrap
             >
+              {console.log(permissions)}
               {permissions.fullName.view ? joinName(user) : `Сотрудник #${user.id}`}
             </Typography>
             {permissions.workTab.view ? (
@@ -2501,6 +2513,24 @@ function EmployeeDialog({
                       <EmployeeViewField
                         label="ИНН"
                         value={user.inn}
+                      />
+                    )}
+                  </Grid>
+                ) : null}
+                {permissions.employmentDate.view ? (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    {permissions.employmentDate.edit ? (
+                      <MyDatePickerNew
+                        label="Дата трудоустройства"
+                        value={user.date_registration}
+                        func={(value) =>
+                          onUserChange("date_registration", value ? value.format("YYYY-MM-DD") : "")
+                        }
+                      />
+                    ) : (
+                      <EmployeeViewField
+                        label="Дата трудоустройства"
+                        value={formatActivityHistoryDate(user.date_registration)}
                       />
                     )}
                   </Grid>

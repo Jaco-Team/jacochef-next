@@ -27,11 +27,11 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CheckIcon from "@mui/icons-material/Check";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
-import TuneIcon from "@mui/icons-material/Tune";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import useFullScreen from "@/src/hooks/useFullScreen";
 import HistoryLog from "@/ui/history/HistoryLog";
@@ -89,9 +89,9 @@ const LOCKED_MODULE_KEYS = new Set(["lk", "home"]);
 const isLockedModule = (module) => LOCKED_MODULE_KEYS.has(String(module?.key_query ?? ""));
 
 const PERMISSION_FIELDS = [
-  { key: "access", label: "Доступ" },
-  { key: "view", label: "Просмотр" },
-  { key: "edit", label: "Редактирование" },
+  { key: "access", label: "Доступ", shortLabel: "Доступ" },
+  { key: "view", label: "Просмотр", shortLabel: "Просмотр" },
+  { key: "edit", label: "Редактирование", shortLabel: "Ред." },
 ];
 const FILTERS = [
   { id: "all", label: "Все" },
@@ -119,6 +119,28 @@ const permissionCounts = (module) =>
     }),
     {},
   );
+
+const permissionAll = (module) =>
+  PERMISSION_FIELDS.reduce(
+    (counts, field) => ({
+      ...counts,
+      [field.key]: (module?.features ?? []).filter(
+        (feature) => Number(feature[`allow_${field.key}`]) === 1,
+      ).length,
+    }),
+    {},
+  );
+
+const formatRightsCount = (count) => {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return `${count} прав`;
+  if (lastDigit === 1) return `${count} право`;
+  if (lastDigit >= 2 && lastDigit <= 4) return `${count} права`;
+
+  return `${count} прав`;
+};
 
 const groupModuleFeatures = (features = [], moduleKey = "") => {
   if (String(moduleKey) === SITE_ITEMS_NEW_MODULE_KEY) {
@@ -172,24 +194,18 @@ const moduleMatchesFilter = (module, filter) => {
 
 const moduleStatus = (module) => {
   if (isLockedModule(module)) {
-    const granted = grantedCount(module);
-
-    return granted
-      ? { label: `Всегда включён · настроено: ${granted}`, color: "info" }
-      : { label: "Всегда включён", color: "info" };
+    return { label: "всегда включён", color: "info", variant: "outlined" };
   }
 
-  if (!isModuleEnabled(module)) return { label: "Выключен", color: "default" };
+  if (!isModuleEnabled(module)) return { label: "выключен", color: "default", variant: "outlined" };
 
   const granted = grantedCount(module);
 
   if (!granted && (module?.features ?? []).length) {
-    return { label: "Требуются права", color: "warning" };
+    return { label: "требуются права", color: "warning", variant: "filled" };
   }
 
-  return granted
-    ? { label: `Включён · настроено: ${granted}`, color: "success" }
-    : { label: "Включён", color: "success" };
+  return { label: "включён", color: "success", variant: "filled" };
 };
 
 const BufferedPositionInput = React.memo(function BufferedPositionInput({
@@ -217,301 +233,256 @@ const BufferedPositionInput = React.memo(function BufferedPositionInput({
   );
 });
 
-function ModuleRightsDetail({
+function PermissionCell({ allowed, checked, disabled, onChange }) {
+  if (!allowed) {
+    return (
+      <Box
+        aria-label="Недоступно"
+        sx={{
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          bgcolor: "grey.300",
+          mx: "auto",
+        }}
+      />
+    );
+  }
+
+  return (
+    <IconButton
+      size="small"
+      disabled={disabled}
+      aria-label={checked ? "Отключить право" : "Включить право"}
+      onClick={onChange}
+      sx={{
+        width: 28,
+        height: 28,
+        border: 1.5,
+        borderColor: checked ? "#d50032" : "grey.400",
+        borderRadius: "50%",
+        bgcolor: checked ? "#d50032" : "transparent",
+        color: checked ? "#fff" : "transparent",
+        "&:hover": {
+          bgcolor: checked ? "#b4002a" : "action.hover",
+          borderColor: checked ? "#b4002a" : "grey.600",
+        },
+        "&.Mui-disabled": {
+          borderColor: checked ? "#d50032" : "grey.300",
+          bgcolor: checked ? "#d50032" : "transparent",
+          opacity: checked ? 0.55 : 0.7,
+        },
+      }}
+    >
+      {checked ? <CheckIcon sx={{ fontSize: 17 }} /> : null}
+    </IconButton>
+  );
+}
+
+function ModuleAccessCard({
   module,
-  parentIndex,
-  childIndex,
   canEdit,
-  rightsSearch,
-  openCategoryKey,
-  onToggleCategory,
   onToggleModule,
-  onPreset,
-  onSetModulePermission,
   onUpdateFeature,
+  expanded,
+  onToggleExpanded,
 }) {
   const locked = isLockedModule(module);
   const enabled = locked || isModuleEnabled(module);
   const status = moduleStatus(module);
   const rights = permissionCounts(module);
-  const query = rightsSearch.trim().toLowerCase();
-  const featureGroups = groupModuleFeatures(module.features, module.key_query)
-    .map((group) => {
-      const categoryMatches =
-        query &&
-        String(group.name ?? "")
-          .toLowerCase()
-          .includes(query);
-
-      return {
-        ...group,
-        items: categoryMatches
-          ? group.items
-          : group.items.filter(({ feature }) =>
-              String(feature.name ?? "")
-                .toLowerCase()
-                .includes(query),
-            ),
-      };
-    })
-    .filter((group) => group.items.length > 0);
+  const rightsAll = permissionAll(module);
+  const rightsTotal = rights.access + rights.view + rights.edit;
+  const featureGroups = groupModuleFeatures(module.features, module.key_query);
+  const hasCategories = featureGroups.some((group) => group.name);
+  const hasFeatures = (module.features ?? []).length > 0;
 
   return (
-    <Box sx={{ p: { xs: 1.5, md: 2.5 } }}>
-      <Paper
-        variant="outlined"
-        sx={{ borderRadius: 2, overflow: "hidden" }}
+    <Paper
+      variant="outlined"
+      sx={{
+        borderRadius: 2.5,
+        overflow: "hidden",
+        borderColor: expanded ? "rgba(213, 0, 50, 0.2)" : "#e2e8f0",
+        transition: "border-color 150ms ease",
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        sx={{ px: { xs: 1, sm: 1.5 }, py: 1.25, minHeight: 56 }}
       >
         <Stack
-          direction={{ xs: "column", sm: "row" }}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          spacing={1.5}
-          sx={{ px: 2, py: 1.5 }}
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{ flex: 1, minWidth: 0 }}
         >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            sx={{ flex: 1, minWidth: 0 }}
+          <Switch
+            checked={enabled}
+            disabled={!canEdit || locked}
+            onChange={(event) => onToggleModule(event.target.checked, module)}
+            sx={{
+              "& .MuiSwitch-switchBase.Mui-checked": {
+                color: "#d50032",
+                "& + .MuiSwitch-track": { bgcolor: "#d50032" },
+              },
+            }}
+          />
+          <Typography
+            noWrap
+            sx={{ fontWeight: 600, minWidth: 0, fontSize: 15 }}
           >
-            <Switch
-              checked={enabled}
-              disabled={!canEdit || locked}
-              onChange={(event) => onToggleModule(event.target.checked, module)}
-            />
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                noWrap
-                sx={{ fontWeight: 900, fontSize: 18 }}
-              >
-                {module.name}
-              </Typography>
-              <Stack
-                direction="row"
-                spacing={0.75}
-                alignItems="center"
-                sx={{ mt: 0.5, flexWrap: "wrap", gap: 0.5 }}
-              >
-                <Chip
-                  size="small"
-                  label={status.label}
-                  color={status.color}
-                  variant="outlined"
-                />
-                <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
-                  Доступ: {rights.access} · Просмотр: {rights.view} · Редактирование: {rights.edit}
-                </Typography>
-              </Stack>
-            </Box>
-          </Stack>
-
-          {canEdit ? (
-            <Stack
-              direction="row"
-              spacing={0.75}
-              sx={{ flexWrap: "wrap", gap: 0.5 }}
+            {module.name}
+          </Typography>
+          <Chip
+            size="small"
+            label={status.label}
+            sx={{
+              height: 22,
+              fontSize: 10,
+              letterSpacing: 0.35,
+              borderRadius: "999px",
+              bgcolor:
+                status.label === "включён"
+                  ? "#e6f9f1"
+                  : status.label === "выключен"
+                    ? "#f1f5f9"
+                    : status.label === "требуются права"
+                      ? "#fff7e6"
+                      : "#eef6ff",
+              color:
+                status.label === "включён"
+                  ? "#059669"
+                  : status.label === "выключен"
+                    ? "#64748b"
+                    : status.label === "требуются права"
+                      ? "#b45309"
+                      : "#2563eb",
+            }}
+          />
+          {hasFeatures ? (
+            <Typography
+              noWrap
+              sx={{ color: "text.secondary", fontSize: 12, display: { xs: "none", sm: "block" } }}
             >
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => onPreset("view")}
-              >
-                Только просмотр
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => onPreset("full")}
-              >
-                Полный доступ
-              </Button>
-              <Button
-                size="small"
-                color="inherit"
-                onClick={() => onPreset("clear")}
-              >
-                Очистить права
-              </Button>
-            </Stack>
+              • {formatRightsCount(rightsTotal)}
+            </Typography>
           ) : null}
         </Stack>
-
-        {!enabled && canEdit ? (
-          <Alert
-            severity="info"
-            icon={false}
-            sx={{ mx: 2, mb: 1.5, py: 0.25, fontSize: 12 }}
+        {hasFeatures ? (
+          <Button
+            size="small"
+            variant="outlined"
+            color="inherit"
+            endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            onClick={onToggleExpanded}
+            sx={{ flexShrink: 0, borderColor: "#e2e8f0", borderRadius: 2, color: "#475569" }}
           >
-            При выборе любого права модуль включится автоматически.
-          </Alert>
+            {expanded ? "Свернуть" : "Настроить права"}
+          </Button>
         ) : null}
-
-        <Divider />
-
-        <Grid
-          container
-          alignItems="center"
-          sx={{ px: 2, py: 1, bgcolor: "action.hover" }}
+      </Stack>
+      {hasFeatures && grantedCount(module) > 0 ? (
+        <Typography
+          sx={{
+            px: { xs: 1, sm: 1.5 },
+            pb: expanded ? 2 : 1,
+            pl: { xs: 7, sm: 8 },
+            color: "text.secondary",
+            fontSize: 11,
+          }}
         >
-          <Grid size={6}>
-            <Typography sx={{ color: "text.secondary", fontSize: 12, fontWeight: 800 }}>
-              Выбрать все права модуля
-            </Typography>
-          </Grid>
-          {PERMISSION_FIELDS.map((field) => {
-            const allowedFeatures = module.features.filter(
-              (feature) => Number(feature[`allow_${field.key}`]) === 1,
-            );
-            const allChecked =
-              allowedFeatures.length > 0 &&
-              allowedFeatures.every((feature) => Number(feature[field.key]) === 1);
-            const someChecked =
-              !allChecked && allowedFeatures.some((feature) => Number(feature[field.key]) === 1);
-
-            return (
-              <Grid
-                key={field.key}
-                size={2}
-                sx={{ textAlign: "center" }}
-              >
-                <Checkbox
-                  size="small"
-                  checked={allChecked}
-                  indeterminate={someChecked}
-                  disabled={!canEdit || allowedFeatures.length === 0}
-                  onChange={(event) => onSetModulePermission(field.key, event.target.checked)}
-                />
-                <Typography sx={{ color: "text.secondary", fontSize: 11, fontWeight: 700 }}>
-                  {field.label}
-                </Typography>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        <Box sx={{ p: 1.5 }}>
-          {featureGroups.length === 0 ? (
-            <Box sx={{ py: 6, textAlign: "center", color: "text.secondary" }}>
-              <Typography sx={{ fontWeight: 700 }}>Права не найдены</Typography>
-              <Typography sx={{ mt: 0.5, fontSize: 13 }}>Измените или очистите поиск.</Typography>
-            </Box>
-          ) : (
-            <Stack spacing={1}>
-              {featureGroups.map((group) => {
-                const categoryName = group.name || "Общие права";
-                const configured = group.items.filter(({ feature }) =>
-                  PERMISSION_FIELDS.some((field) => Number(feature[field.key]) === 1),
-                ).length;
-                const isOpen = Boolean(query) || openCategoryKey === group.key;
-
-                return (
-                  <Paper
-                    key={group.key}
-                    variant="outlined"
-                    sx={{ borderRadius: 1.5, overflow: "hidden" }}
+          Доступ: {rights.access}/{rightsAll.access} · Просмотр: {rights.view}/{rightsAll.view} ·
+          Редактирование: {rights.edit}/{rightsAll.edit}
+        </Typography>
+      ) : null}
+      {hasFeatures ? (
+        <Collapse
+          in={expanded}
+          unmountOnExit
+        >
+          <Divider />
+          <Box sx={{ px: { xs: 1, sm: 1.5 }, py: 1.25 }}>
+            <Grid
+              container
+              alignItems="center"
+              sx={{ pb: 0.5 }}
+            >
+              <Grid size={6} />
+              {PERMISSION_FIELDS.map((field) => (
+                <Grid
+                  key={field.key}
+                  size={2}
+                  sx={{ textAlign: "center" }}
+                >
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: 10,
+                      letterSpacing: 0.4,
+                    }}
                   >
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      spacing={1}
-                      onClick={() => onToggleCategory(group.key)}
-                      sx={{
-                        px: 1.5,
-                        py: 1,
-                        cursor: "pointer",
-                        bgcolor: isOpen ? "action.selected" : "background.paper",
-                      }}
-                    >
-                      <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 800 }}>{categoryName}</Typography>
-                        <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
-                          Настроено: {configured} из {group.items.length}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        sx={{
-                          transform: isOpen ? "rotate(180deg)" : "none",
-                          transition: "transform 150ms ease",
-                        }}
-                      >
-                        <ExpandMoreIcon />
-                      </IconButton>
-                    </Stack>
-
-                    <Collapse in={isOpen}>
-                      <Divider />
+                    {field.shortLabel}
+                  </Typography>
+                </Grid>
+              ))}
+            </Grid>
+            {featureGroups.map((group) => (
+              <Box key={group.key}>
+                {group.name || (hasCategories && group.key === "__plain__") ? (
+                  <Typography
+                    sx={{
+                      px: 0.5,
+                      pt: 1,
+                      pb: 0.5,
+                      color: "text.secondary",
+                      fontSize: 11,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {group.name || "Общие права"}
+                  </Typography>
+                ) : null}
+                {group.items.map(({ feature, featureIndex }) => (
+                  <Grid
+                    container
+                    key={`${feature.id}-${featureIndex}`}
+                    alignItems="center"
+                    sx={{ minHeight: 40, borderTop: 1, borderColor: "divider" }}
+                  >
+                    <Grid size={6}>
+                      <Typography sx={{ px: 0.5, fontSize: 14 }}>{feature.name}</Typography>
+                    </Grid>
+                    {PERMISSION_FIELDS.map((field) => (
                       <Grid
-                        container
-                        sx={{ px: 1.5, py: 0.75, bgcolor: "action.hover" }}
+                        key={field.key}
+                        size={2}
+                        sx={{ textAlign: "center" }}
                       >
-                        <Grid size={6}>
-                          <Typography
-                            sx={{ color: "text.secondary", fontSize: 11, fontWeight: 700 }}
-                          >
-                            Параметр
-                          </Typography>
-                        </Grid>
-                        {PERMISSION_FIELDS.map((field) => (
-                          <Grid
-                            key={field.key}
-                            size={2}
-                            sx={{ textAlign: "center" }}
-                          >
-                            <Typography
-                              sx={{ color: "text.secondary", fontSize: 11, fontWeight: 700 }}
-                            >
-                              {field.label}
-                            </Typography>
-                          </Grid>
-                        ))}
+                        <PermissionCell
+                          allowed={Number(feature[`allow_${field.key}`]) === 1}
+                          checked={Number(feature[field.key]) === 1}
+                          disabled={!canEdit}
+                          onChange={() =>
+                            onUpdateFeature(
+                              featureIndex,
+                              field.key,
+                              Number(feature[field.key]) !== 1,
+                            )
+                          }
+                        />
                       </Grid>
-                      {group.items.map(({ feature, featureIndex }, rowIndex) => (
-                        <Grid
-                          container
-                          key={`${feature.id}-${featureIndex}`}
-                          alignItems="center"
-                          sx={{
-                            px: 1.5,
-                            py: 0.45,
-                            borderTop: 1,
-                            borderColor: "divider",
-                            bgcolor: rowIndex % 2 ? "rgba(0, 0, 0, 0.015)" : "transparent",
-                            "&:hover": { bgcolor: "action.hover" },
-                          }}
-                        >
-                          <Grid size={6}>
-                            <Typography sx={{ fontSize: 14 }}>{feature.name}</Typography>
-                          </Grid>
-                          {PERMISSION_FIELDS.map((field) => (
-                            <Grid
-                              key={field.key}
-                              size={2}
-                              sx={{ textAlign: "center" }}
-                            >
-                              {Number(feature[`allow_${field.key}`]) === 1 ? (
-                                <Checkbox
-                                  size="small"
-                                  checked={Number(feature[field.key]) === 1}
-                                  disabled={!canEdit}
-                                  onChange={(event) =>
-                                    onUpdateFeature(featureIndex, field.key, event.target.checked)
-                                  }
-                                />
-                              ) : null}
-                            </Grid>
-                          ))}
-                        </Grid>
-                      ))}
-                    </Collapse>
-                  </Paper>
-                );
-              })}
-            </Stack>
-          )}
-        </Box>
-      </Paper>
-    </Box>
+                    ))}
+                  </Grid>
+                ))}
+              </Box>
+            ))}
+          </Box>
+        </Collapse>
+      ) : null}
+    </Paper>
   );
 }
 
@@ -537,9 +508,7 @@ export default function EmployeePositionModal({
   const [sectionKey, setSectionKey] = useState("all");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [selectedModule, setSelectedModule] = useState(null);
-  const [rightsSearch, setRightsSearch] = useState("");
-  const [openCategoryKey, setOpenCategoryKey] = useState(null);
+  const [expandedKeys, setExpandedKeys] = useState(() => new Set());
   const [dirty, setDirty] = useState(false);
   const positionDraftRef = useRef(null);
   const searchRef = useRef(null);
@@ -567,12 +536,14 @@ export default function EmployeePositionModal({
 
   const selectSection = (key) => {
     setSectionKey(key);
+    setExpandedKeys(new Set());
   };
 
   const selectFilter = (value) => {
     if (search.trim()) return;
 
     setFilter(value);
+    setExpandedKeys(new Set());
     requestAnimationFrame(scrollToModuleList);
   };
 
@@ -584,9 +555,7 @@ export default function EmployeePositionModal({
       setDirty(false);
       setSearch("");
       setFilter("all");
-      setSelectedModule(null);
-      setRightsSearch("");
-      setOpenCategoryKey(null);
+      setExpandedKeys(new Set());
       setCloseDialog(false);
       setHistory([]);
       setHistoryDialog(false);
@@ -619,9 +588,7 @@ export default function EmployeePositionModal({
       setCopyName(positionId ? `${response.position?.name || ""} (копия)` : "");
       setDeleteUsers([]);
       setSectionKey("all");
-      setSelectedModule(null);
-      setRightsSearch("");
-      setOpenCategoryKey(null);
+      setExpandedKeys(new Set());
       setDirty(false);
     };
 
@@ -664,6 +631,33 @@ export default function EmployeePositionModal({
   }, [sectionKey, sections]);
 
   const hasSearch = Boolean(search.trim());
+
+  const filterCounts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const modules = [];
+
+    fullMenu.forEach((parent, parentIndex) => {
+      const currentSectionKey = `section-${parent.parent?.id ?? parentIndex}`;
+
+      if (!query && sectionKey !== "all" && currentSectionKey !== sectionKey) {
+        return;
+      }
+
+      (parent.chaild ?? []).forEach((module) => {
+        if (query && !moduleMatchesSearch(module, query)) return;
+        modules.push(module);
+      });
+    });
+
+    return {
+      all: modules.length,
+      enabled: modules.filter(isModuleEnabled).length,
+      with_rights: modules.filter((module) => grantedCount(module) > 0).length,
+      without_rights: modules.filter(
+        (module) => isModuleEnabled(module) && grantedCount(module) === 0,
+      ).length,
+    };
+  }, [fullMenu, search, sectionKey]);
 
   const visibleModules = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -722,42 +716,6 @@ export default function EmployeePositionModal({
     () => sections.reduce((sum, section) => sum + section.total, 0),
     [sections],
   );
-
-  const selectedModuleData = useMemo(() => {
-    if (!selectedModule) return null;
-
-    const module = fullMenu[selectedModule.parentIndex]?.chaild?.[selectedModule.childIndex];
-
-    if (!module) return null;
-
-    return {
-      ...selectedModule,
-      module,
-    };
-  }, [fullMenu, selectedModule]);
-
-  const openModuleDetails = (parentIndex, childIndex, module) => {
-    const firstGroup = groupModuleFeatures(module.features, module.key_query)[0];
-
-    setSelectedModule({ parentIndex, childIndex });
-    setRightsSearch("");
-    setOpenCategoryKey(firstGroup?.key ?? null);
-    requestAnimationFrame(() => {
-      const container = contentScrollRef.current;
-      const toolbar = accessToolbarRef.current;
-
-      if (!container || !toolbar) return;
-
-      container.scrollTo({ top: toolbar.offsetTop, behavior: "auto" });
-    });
-  };
-
-  const closeModuleDetails = () => {
-    setSelectedModule(null);
-    setRightsSearch("");
-    setOpenCategoryKey(null);
-    requestAnimationFrame(scrollToModuleList);
-  };
 
   const updatePosition = (key, value) => {
     positionDraftRef.current = { ...(positionDraftRef.current ?? position), [key]: value };
@@ -832,81 +790,6 @@ export default function EmployeePositionModal({
         }),
       }));
     });
-  };
-
-  const setModuleFeaturePermission = (parentIndex, childIndex, permission, value) => {
-    setDirty(true);
-    setFullMenu((current) =>
-      current.map((parent, currentParentIndex) =>
-        currentParentIndex !== parentIndex
-          ? parent
-          : {
-              ...parent,
-              chaild: parent.chaild.map((module, currentChildIndex) => {
-                if (currentChildIndex !== childIndex) return module;
-
-                const nextModule = {
-                  ...module,
-                  features: module.features.map((feature) =>
-                    Number(feature[`allow_${permission}`]) === 1
-                      ? { ...feature, [permission]: value ? 1 : 0 }
-                      : feature,
-                  ),
-                };
-
-                if (value && Number(module.is_active) !== 1) {
-                  nextModule.is_active = 1;
-                }
-
-                return nextModule;
-              }),
-            },
-      ),
-    );
-  };
-
-  const applyModulePreset = (parentIndex, childIndex, preset) => {
-    setDirty(true);
-    setFullMenu((current) =>
-      current.map((parent, currentParentIndex) =>
-        currentParentIndex !== parentIndex
-          ? parent
-          : {
-              ...parent,
-              chaild: parent.chaild.map((module, currentChildIndex) => {
-                if (currentChildIndex !== childIndex) return module;
-
-                const features = module.features.map((feature) => {
-                  if (preset === "clear") {
-                    return { ...feature, access: 0, view: 0, edit: 0 };
-                  }
-
-                  if (preset === "view") {
-                    return {
-                      ...feature,
-                      access: 0,
-                      view: Number(feature.allow_view) === 1 ? 1 : 0,
-                      edit: 0,
-                    };
-                  }
-
-                  return {
-                    ...feature,
-                    access: Number(feature.allow_access) === 1 ? 1 : 0,
-                    view: Number(feature.allow_view) === 1 ? 1 : 0,
-                    edit: Number(feature.allow_edit) === 1 ? 1 : 0,
-                  };
-                });
-
-                return {
-                  ...module,
-                  is_active: preset === "clear" ? module.is_active : 1,
-                  features,
-                };
-              }),
-            },
-      ),
-    );
   };
 
   const toggleModule = (parentIndex, childIndex, value, module) => {
@@ -993,6 +876,7 @@ export default function EmployeePositionModal({
             height: fullScreen ? "100%" : { xs: "calc(100dvh - 16px)", md: "min(90vh, 860px)" },
             maxHeight: "none",
             overflow: "hidden",
+            borderRadius: fullScreen ? 0 : 3,
           },
         }}
       >
@@ -1003,7 +887,7 @@ export default function EmployeePositionModal({
             justifyContent: "space-between",
             flexShrink: 0,
             borderBottom: 1,
-            borderColor: "divider",
+            borderColor: "#e2e8f0",
           }}
         >
           <Stack
@@ -1012,14 +896,19 @@ export default function EmployeePositionModal({
             alignItems="center"
             sx={{ minWidth: 0 }}
           >
-            <Typography
-              component="span"
-              variant="h6"
-              noWrap
-              sx={{ fontWeight: 900 }}
-            >
-              {position?.id ? position.name || "Должность" : "Новая должность"}
-            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                component="div"
+                variant="h6"
+                noWrap
+                sx={{ fontWeight: 600, color: "#0f172a" }}
+              >
+                {position?.id ? position.name || "Должность" : "Новая должность"}
+              </Typography>
+              {position?.id ? (
+                <Typography sx={{ color: "#94a3b8", fontSize: 12 }}>ID: {position.id}</Typography>
+              ) : null}
+            </Box>
             {dirty ? (
               <Chip
                 color="warning"
@@ -1049,7 +938,12 @@ export default function EmployeePositionModal({
                   variant="outlined"
                   startIcon={<HistoryOutlinedIcon />}
                   onClick={() => setHistoryDialog(true)}
-                  sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                  sx={{
+                    display: { xs: "none", sm: "inline-flex" },
+                    borderColor: "#e2e8f0",
+                    color: "#64748b",
+                    borderRadius: 2,
+                  }}
                 >
                   История
                 </Button>
@@ -1079,25 +973,26 @@ export default function EmployeePositionModal({
             </Stack>
           ) : (
             <>
-              <Box sx={{ px: 3, py: 2 }}>
-                <Typography sx={{ mb: 1.5, fontWeight: 900 }}>Основное</Typography>
+              <Box sx={{ px: 3, py: 2, backgroundColor: "#f5f5f5" }}>
                 <Grid
                   container
                   spacing={2}
                 >
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <BufferedPositionInput
                       field="name"
-                      label="Название"
+                      label="Название должности"
                       value={position.name ?? ""}
                       disabled={!canEdit}
+                      sx={{ backgroundColor: "#fff" }}
                       onDraftChange={updatePositionDraft}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <BufferedPositionInput
                       field="short_name"
                       label="Краткое название"
+                      sx={{ backgroundColor: "#fff" }}
                       value={position.short_name ?? ""}
                       disabled={!canEdit}
                       onDraftChange={updatePositionDraft}
@@ -1106,17 +1001,19 @@ export default function EmployeePositionModal({
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <BufferedPositionInput
                       field="bonus"
-                      label="Норма бонусов"
+                      label="Бонус (₽)"
+                      sx={{ backgroundColor: "#fff" }}
                       type="number"
                       value={position.bonus ?? 0}
                       disabled={!canEdit}
                       onDraftChange={updatePositionDraft}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <MyAutocomplite
                       label="Отдел"
                       data={units}
+                      sx={{ backgroundColor: "#fff" }}
                       value={
                         units.find((unit) => Number(unit.id) === Number(position.unit_id)) || null
                       }
@@ -1125,7 +1022,7 @@ export default function EmployeePositionModal({
                       func={(_, value) => updatePosition("unit_id", value?.id ?? null)}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, md: 5 }}>
+                  <Grid size={{ xs: 12, md: 12 }}>
                     <Stack
                       direction="row"
                       spacing={2}
@@ -1136,25 +1033,27 @@ export default function EmployeePositionModal({
                         spacing={0.25}
                         alignItems="center"
                       >
-                        <Switch
+                        <Checkbox
                           size="small"
                           checked={Number(position.is_graph) === 1}
                           disabled={!canEdit}
+                          sx={{ "&.Mui-checked": { color: "#d50032" } }}
                           onChange={(event) =>
                             updatePosition("is_graph", event.target.checked ? 1 : 0)
                           }
                         />
-                        <Typography sx={{ fontSize: 14 }}>Нужен в графике работы</Typography>
+                        <Typography sx={{ fontSize: 14 }}>Работа по графику</Typography>
                       </Stack>
                       <Stack
                         direction="row"
                         spacing={0.25}
                         alignItems="center"
                       >
-                        <Switch
+                        <Checkbox
                           size="small"
                           checked={Number(position.is_office) === 1}
                           disabled={!canEdit}
+                          sx={{ "&.Mui-checked": { color: "#d50032" } }}
                           onChange={(event) =>
                             updatePosition("is_office", event.target.checked ? 1 : 0)
                           }
@@ -1167,10 +1066,11 @@ export default function EmployeePositionModal({
                           spacing={0.25}
                           alignItems="center"
                         >
-                          <Switch
+                          <Checkbox
                             size="small"
                             checked={Number(position.can_manage_all_employees) === 1}
                             disabled={!canEdit}
+                            sx={{ "&.Mui-checked": { color: "#d50032" } }}
                             onChange={(event) =>
                               updatePosition(
                                 "can_manage_all_employees",
@@ -1189,678 +1089,289 @@ export default function EmployeePositionModal({
               </Box>
 
               <Box
-                ref={accessToolbarRef}
                 sx={{
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 2,
-                  bgcolor: "background.paper",
-                  borderTop: 1,
-                  borderBottom: 1,
-                  borderColor: "divider",
+                  minHeight: { xs: "auto", md: "calc(100vh - 280px)" },
+                  backgroundColor: "#f5f5f5",
                 }}
               >
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  alignItems={{ xs: "flex-start", sm: "center" }}
-                  justifyContent="space-between"
-                  spacing={1}
-                  sx={{ px: 3, py: 1.5 }}
-                >
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1.25}
+                <Grid container>
+                  <Grid
+                    size={{ xs: 12, md: 3 }}
+                    sx={{
+                      borderRight: { md: 1 },
+                      borderBottom: { xs: 1, md: 0 },
+                      borderColor: "divider",
+                      position: { md: "sticky" },
+                      top: { md: 13 },
+                      alignSelf: { md: "flex-start" },
+                      maxHeight: { md: "calc(100vh - 220px)" },
+                      overflowX: { xs: "auto", md: "hidden" },
+                      overflowY: { md: "auto" },
+                      backgroundColor: "#f5f5f5",
+                    }}
                   >
-                    {selectedModuleData ? (
-                      <Button
-                        color="inherit"
-                        variant="outlined"
-                        startIcon={<ArrowBackIcon />}
-                        onClick={closeModuleDetails}
-                        sx={{
-                          flexShrink: 0,
-                          borderColor: "divider",
-                          bgcolor: "action.hover",
-                          fontWeight: 800,
-                        }}
-                      >
-                        К списку модулей
-                      </Button>
-                    ) : null}
-                    <Box>
-                      <Typography sx={{ fontWeight: 900 }}>
-                        {selectedModuleData ? "Права модуля" : "Доступ к модулям"}
-                      </Typography>
-                      <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-                        {selectedModuleData
-                          ? selectedModuleData.module.name
-                          : `Включено модулей: ${enabledTotal} из ${modulesTotal}`}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Box sx={{ width: { xs: "100%", sm: 300 } }}>
-                    <TextField
-                      inputRef={searchRef}
-                      size="small"
-                      fullWidth
-                      placeholder={selectedModuleData ? "Найти право…" : "Поиск по всем разделам…"}
-                      value={selectedModuleData ? rightsSearch : search}
-                      onChange={(event) =>
-                        selectedModuleData
-                          ? setRightsSearch(event.target.value)
-                          : setSearch(event.target.value)
-                      }
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                        endAdornment: (selectedModuleData ? rightsSearch : search) ? (
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label="Очистить поиск"
-                              edge="end"
-                              size="small"
-                              onClick={() =>
-                                selectedModuleData ? setRightsSearch("") : setSearch("")
-                              }
-                            >
-                              <CloseIcon fontSize="small" />
-                            </IconButton>
-                          </InputAdornment>
-                        ) : null,
-                      }}
-                    />
-                  </Box>
-                </Stack>
-
-                {!selectedModuleData ? (
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    sx={{ px: 2, pb: 1.25, flexWrap: "wrap", gap: 1 }}
-                  >
-                    <TuneIcon
-                      fontSize="small"
-                      sx={{ color: "text.secondary" }}
-                    />
-                    {FILTERS.map((item) => (
-                      <Chip
-                        key={item.id}
-                        size="small"
-                        label={item.label}
-                        color={filter === item.id ? "primary" : "default"}
-                        variant={filter === item.id ? "filled" : "outlined"}
-                        disabled={hasSearch}
-                        onClick={() => selectFilter(item.id)}
-                      />
-                    ))}
-                    <Typography sx={{ ml: "auto", color: "text.secondary", fontSize: 12 }}>
-                      {hasSearch
-                        ? `Найдено: ${visibleModules.length}`
-                        : `${selectedSectionName}: ${visibleModules.length}`}
-                    </Typography>
-                  </Stack>
-                ) : null}
-              </Box>
-
-              {selectedModuleData ? (
-                <ModuleRightsDetail
-                  module={selectedModuleData.module}
-                  parentIndex={selectedModuleData.parentIndex}
-                  childIndex={selectedModuleData.childIndex}
-                  canEdit={canEdit}
-                  rightsSearch={rightsSearch}
-                  openCategoryKey={openCategoryKey}
-                  onToggleCategory={(key) =>
-                    setOpenCategoryKey((current) => (current === key ? null : key))
-                  }
-                  onToggleModule={(value, module) =>
-                    toggleModule(
-                      selectedModuleData.parentIndex,
-                      selectedModuleData.childIndex,
-                      value,
-                      module,
-                    )
-                  }
-                  onPreset={(preset) =>
-                    applyModulePreset(
-                      selectedModuleData.parentIndex,
-                      selectedModuleData.childIndex,
-                      preset,
-                    )
-                  }
-                  onSetModulePermission={(permission, value) =>
-                    setModuleFeaturePermission(
-                      selectedModuleData.parentIndex,
-                      selectedModuleData.childIndex,
-                      permission,
-                      value,
-                    )
-                  }
-                  onUpdateFeature={(featureIndex, permission, value) =>
-                    updateFeature(
-                      selectedModuleData.parentIndex,
-                      selectedModuleData.childIndex,
-                      featureIndex,
-                      permission,
-                      value,
-                    )
-                  }
-                />
-              ) : (
-                <Box
-                  ref={modulesAnchorRef}
-                  sx={{
-                    minHeight: { xs: "auto", md: "calc(100vh - 280px)" },
-                  }}
-                >
-                  <Grid container>
-                    <Grid
-                      size={{ xs: 12, md: 3 }}
+                    <List
+                      dense
                       sx={{
-                        borderRight: { md: 1 },
-                        borderBottom: { xs: 1, md: 0 },
-                        borderColor: "divider",
-                        position: { md: "sticky" },
-                        top: { md: 108 },
-                        alignSelf: { md: "flex-start" },
-                        maxHeight: { md: "calc(100vh - 220px)" },
-                        overflowX: { xs: "auto", md: "hidden" },
-                        overflowY: { md: "auto" },
-                        bgcolor: "background.paper",
+                        display: { xs: "flex", md: "block" },
+                        backgroundColor: "#f5f5f5",
+                        width: { xs: "max-content", md: "auto" },
                       }}
                     >
-                      <List
-                        dense
+                      <ListItemButton
+                        selected={sectionKey === "all"}
+                        onClick={() => selectSection("all")}
                         sx={{
-                          display: { xs: "flex", md: "block" },
-                          width: { xs: "max-content", md: "auto" },
+                          flex: { xs: "0 0 auto", md: "initial" },
+                          px: 1.5,
+                          py: 0.75,
+                          m: 1,
+                          borderRadius: "12px",
+                          "&.Mui-selected": {
+                            bgcolor: "white",
+                            color: "#d50032",
+                          },
                         }}
                       >
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ fontSize: 14, fontWeight: 600, color: "inherit" }}>
+                            Все разделы
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          label={`${enabledTotal}/${modulesTotal}`}
+                          sx={{
+                            height: 22,
+                            borderRadius: "999px",
+                            bgcolor: "#f1f5f9",
+                            color: sectionKey === "all" ? "#d50032" : "#64748b",
+                          }}
+                        />
+                      </ListItemButton>
+                      {sections.map((section) => (
                         <ListItemButton
-                          selected={sectionKey === "all"}
-                          onClick={() => selectSection("all")}
+                          key={section.key}
+                          selected={sectionKey === section.key}
+                          onClick={() => selectSection(section.key)}
                           sx={{
                             flex: { xs: "0 0 auto", md: "initial" },
-                            borderLeft: 3,
-                            borderLeftColor: "transparent",
+                            px: 1.5,
+                            py: 0.75,
+                            m: 1,
+                            borderRadius: "12px",
                             "&.Mui-selected": {
-                              bgcolor: "action.selected",
-                              borderLeftColor: "primary.main",
+                              bgcolor: "transparent",
+                              color: "#d50032",
                             },
-                            "&.Mui-selected:hover": { bgcolor: "action.selected" },
+                            "&.Mui-selected:hover": { bgcolor: "rgba(213, 0, 50, 0.04)" },
                           }}
                         >
-                          <Box sx={{ flex: 1 }}>
-                            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                              Все разделы
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              noWrap
+                              sx={{ fontSize: 14, fontWeight: 600, color: "inherit" }}
+                            >
+                              {section.name}
                             </Typography>
                           </Box>
                           <Chip
                             size="small"
-                            variant="outlined"
-                            label={`${enabledTotal}/${modulesTotal}`}
+                            label={`${section.enabled}/${section.total}`}
+                            sx={{
+                              height: 22,
+                              borderRadius: "999px",
+                              bgcolor: "#f1f5f9",
+                              color: sectionKey === section.key ? "#d50032" : "#64748b",
+                            }}
                           />
                         </ListItemButton>
-                        {sections.map((section) => (
-                          <ListItemButton
-                            key={section.key}
-                            selected={sectionKey === section.key}
-                            onClick={() => selectSection(section.key)}
-                            sx={{
-                              flex: { xs: "0 0 auto", md: "initial" },
-                              borderLeft: 3,
-                              borderLeftColor: "transparent",
-                              "&.Mui-selected": {
-                                bgcolor: "action.selected",
-                                borderLeftColor: "primary.main",
-                              },
-                              "&.Mui-selected:hover": { bgcolor: "action.selected" },
-                            }}
-                          >
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography
-                                noWrap
-                                sx={{ fontSize: 14, fontWeight: 700 }}
-                              >
-                                {section.name}
-                              </Typography>
-                            </Box>
-                            <Chip
-                              size="small"
-                              variant="outlined"
-                              label={`${section.enabled}/${section.total}`}
-                            />
-                          </ListItemButton>
-                        ))}
-                      </List>
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 9 }}>
-                      <Box sx={{ p: 2 }}>
-                        {groupedModules.length === 0 ? (
-                          <Box sx={{ py: 6, textAlign: "center", color: "text.secondary" }}>
-                            <Typography sx={{ fontWeight: 700 }}>Ничего не найдено</Typography>
-                            <Typography sx={{ mt: 0.5, fontSize: 13 }}>
-                              {hasSearch
-                                ? "Попробуйте другой запрос или очистите поиск."
-                                : "Измените фильтр или выберите другой раздел."}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Stack spacing={2}>
-                            {groupedModules.map((group) => (
-                              <Box key={`group-${group.sectionKey}`}>
-                                <Stack
-                                  direction="row"
-                                  alignItems="center"
-                                  justifyContent="space-between"
-                                  spacing={1}
-                                  sx={{ mb: 0.75 }}
-                                >
-                                  <Typography
-                                    sx={{ color: "text.secondary", fontSize: 12, fontWeight: 800 }}
-                                  >
-                                    {group.sectionName}
-                                  </Typography>
-                                  {canEdit ? (
-                                    <Stack
-                                      direction="row"
-                                      spacing={0.5}
-                                    >
-                                      <Button
-                                        color="inherit"
-                                        size="small"
-                                        onClick={() => setModulesEnabled(group.rows, true)}
-                                      >
-                                        Включить всё
-                                      </Button>
-                                      <Button
-                                        color="inherit"
-                                        size="small"
-                                        onClick={() => setModulesEnabled(group.rows, false)}
-                                      >
-                                        Выключить всё
-                                      </Button>
-                                    </Stack>
-                                  ) : null}
-                                </Stack>
-
-                                <Stack spacing={1}>
-                                  {group.rows.map(({ parentIndex, childIndex, module }) => {
-                                    const key = `${parentIndex}-${childIndex}`;
-                                    const locked = isLockedModule(module);
-                                    const enabled = locked || isModuleEnabled(module);
-                                    const status = moduleStatus(module);
-                                    const hasFeatures = (module.features ?? []).length > 0;
-                                    const isOpen = false;
-                                    const rights = permissionCounts(module);
-                                    const featureGroups = isOpen
-                                      ? groupModuleFeatures(module.features, module.key_query)
-                                      : [];
-                                    const hasCategories = featureGroups.some((group) => group.name);
-
-                                    return (
-                                      <Paper
-                                        key={`module-${key}-${module.id ?? module.modul_id}`}
-                                        variant="outlined"
-                                        onClick={() =>
-                                          hasFeatures
-                                            ? openModuleDetails(parentIndex, childIndex, module)
-                                            : undefined
-                                        }
-                                        sx={{
-                                          borderRadius: 1.5,
-                                          cursor: hasFeatures ? "pointer" : "default",
-                                          borderColor:
-                                            status.color === "warning"
-                                              ? "warning.light"
-                                              : "divider",
-                                          bgcolor: "background.paper",
-                                          "&:hover": {
-                                            bgcolor: hasFeatures
-                                              ? "action.hover"
-                                              : "background.paper",
-                                          },
-                                        }}
-                                      >
-                                        <Stack
-                                          direction="row"
-                                          alignItems="center"
-                                          spacing={1}
-                                          sx={{ px: 1.5, py: 1 }}
-                                        >
-                                          <Switch
-                                            checked={enabled}
-                                            disabled={!canEdit || locked}
-                                            onClick={(event) => event.stopPropagation()}
-                                            onChange={(event) =>
-                                              toggleModule(
-                                                parentIndex,
-                                                childIndex,
-                                                event.target.checked,
-                                                module,
-                                              )
-                                            }
-                                          />
-                                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                                            <Typography
-                                              noWrap
-                                              sx={{ fontWeight: 700 }}
-                                            >
-                                              {module.name}
-                                            </Typography>
-                                            <Chip
-                                              size="small"
-                                              label={status.label}
-                                              color={status.color}
-                                              variant="outlined"
-                                              sx={{ mt: 0.25, height: 20, fontSize: 11 }}
-                                            />
-                                            {hasFeatures && grantedCount(module) > 0 ? (
-                                              <Typography
-                                                sx={{
-                                                  mt: 0.35,
-                                                  color: "text.secondary",
-                                                  fontSize: 11,
-                                                }}
-                                              >
-                                                Доступ: {rights.access} · Просмотр: {rights.view} ·
-                                                Редактирование: {rights.edit}
-                                              </Typography>
-                                            ) : null}
-                                          </Box>
-                                          {hasFeatures ? (
-                                            <Button
-                                              size="small"
-                                              variant="outlined"
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                openModuleDetails(parentIndex, childIndex, module);
-                                              }}
-                                            >
-                                              Настроить права
-                                            </Button>
-                                          ) : null}
-                                        </Stack>
-
-                                        {hasFeatures && isOpen ? (
-                                          <Collapse
-                                            in={isOpen}
-                                            unmountOnExit
-                                          >
-                                            <Divider />
-                                            <Box sx={{ px: 1.5, py: 1 }}>
-                                              <Stack
-                                                direction={{ xs: "column", sm: "row" }}
-                                                alignItems={{ xs: "flex-start", sm: "center" }}
-                                                spacing={1}
-                                                sx={{ mb: 1 }}
-                                              >
-                                                <Typography
-                                                  sx={{
-                                                    color: "text.secondary",
-                                                    fontSize: 12,
-                                                    fontWeight: 700,
-                                                  }}
-                                                >
-                                                  Быстрые настройки
-                                                </Typography>
-                                                {canEdit ? (
-                                                  <Stack
-                                                    direction="row"
-                                                    spacing={0.5}
-                                                    sx={{ flexWrap: "wrap", gap: 0.5 }}
-                                                  >
-                                                    <Button
-                                                      size="small"
-                                                      variant="outlined"
-                                                      onClick={() =>
-                                                        applyModulePreset(
-                                                          parentIndex,
-                                                          childIndex,
-                                                          "view",
-                                                        )
-                                                      }
-                                                    >
-                                                      Только просмотр
-                                                    </Button>
-                                                    <Button
-                                                      size="small"
-                                                      variant="outlined"
-                                                      onClick={() =>
-                                                        applyModulePreset(
-                                                          parentIndex,
-                                                          childIndex,
-                                                          "full",
-                                                        )
-                                                      }
-                                                    >
-                                                      Полный доступ
-                                                    </Button>
-                                                    <Button
-                                                      size="small"
-                                                      color="inherit"
-                                                      onClick={() =>
-                                                        applyModulePreset(
-                                                          parentIndex,
-                                                          childIndex,
-                                                          "clear",
-                                                        )
-                                                      }
-                                                    >
-                                                      Очистить права
-                                                    </Button>
-                                                  </Stack>
-                                                ) : null}
-                                              </Stack>
-                                              {!enabled && canEdit ? (
-                                                <Alert
-                                                  severity="info"
-                                                  icon={false}
-                                                  sx={{ mb: 1, py: 0.25, fontSize: 12 }}
-                                                >
-                                                  При выборе любого права модуль включится
-                                                  автоматически.
-                                                </Alert>
-                                              ) : null}
-                                              <Grid
-                                                container
-                                                alignItems="center"
-                                                sx={{
-                                                  px: 1,
-                                                  py: 0.75,
-                                                  borderRadius: 1,
-                                                  bgcolor: "action.hover",
-                                                }}
-                                              >
-                                                <Grid size={6}>
-                                                  <Typography
-                                                    sx={{
-                                                      color: "text.secondary",
-                                                      fontSize: 11,
-                                                      fontWeight: 700,
-                                                    }}
-                                                  >
-                                                    Выбрать все
-                                                  </Typography>
-                                                </Grid>
-                                                {PERMISSION_FIELDS.map((field) => {
-                                                  const allowedFeatures = module.features.filter(
-                                                    (feature) =>
-                                                      Number(feature[`allow_${field.key}`]) === 1,
-                                                  );
-                                                  const allChecked =
-                                                    allowedFeatures.length > 0 &&
-                                                    allowedFeatures.every(
-                                                      (feature) => Number(feature[field.key]) === 1,
-                                                    );
-                                                  const someChecked =
-                                                    !allChecked &&
-                                                    allowedFeatures.some(
-                                                      (feature) => Number(feature[field.key]) === 1,
-                                                    );
-
-                                                  return (
-                                                    <Grid
-                                                      key={field.key}
-                                                      size={2}
-                                                      sx={{ textAlign: "center" }}
-                                                    >
-                                                      <Tooltip
-                                                        title={`Установить «${field.label}» для всех`}
-                                                      >
-                                                        <span>
-                                                          <Checkbox
-                                                            size="small"
-                                                            checked={allChecked}
-                                                            indeterminate={someChecked}
-                                                            disabled={
-                                                              !canEdit ||
-                                                              allowedFeatures.length === 0
-                                                            }
-                                                            onChange={(event) =>
-                                                              setModuleFeaturePermission(
-                                                                parentIndex,
-                                                                childIndex,
-                                                                field.key,
-                                                                event.target.checked,
-                                                              )
-                                                            }
-                                                          />
-                                                        </span>
-                                                      </Tooltip>
-                                                      <Typography
-                                                        sx={{
-                                                          color: "text.secondary",
-                                                          fontSize: 11,
-                                                          fontWeight: 700,
-                                                          lineHeight: 1,
-                                                        }}
-                                                      >
-                                                        {field.label}
-                                                      </Typography>
-                                                    </Grid>
-                                                  );
-                                                })}
-                                              </Grid>
-                                              <Stack>
-                                                {featureGroups.map((featureGroup) => (
-                                                  <Box
-                                                    key={`feature-group-${key}-${featureGroup.key}`}
-                                                  >
-                                                    {featureGroup.name ||
-                                                    (hasCategories &&
-                                                      featureGroup.key === "__plain__") ? (
-                                                      <Box
-                                                        sx={{
-                                                          mt: 1,
-                                                          px: 1,
-                                                          py: 0.75,
-                                                          borderLeft: 3,
-                                                          borderColor: "primary.main",
-                                                          bgcolor: "action.selected",
-                                                        }}
-                                                      >
-                                                        <Typography
-                                                          sx={{ fontSize: 13, fontWeight: 800 }}
-                                                        >
-                                                          {featureGroup.name || "Общие права"}
-                                                        </Typography>
-                                                        <Typography
-                                                          sx={{
-                                                            color: "text.secondary",
-                                                            fontSize: 11,
-                                                          }}
-                                                        >
-                                                          Параметров: {featureGroup.items.length}
-                                                        </Typography>
-                                                      </Box>
-                                                    ) : null}
-                                                    {featureGroup.items.map(
-                                                      (
-                                                        { feature, featureIndex },
-                                                        groupFeatureIndex,
-                                                      ) => (
-                                                        <Grid
-                                                          container
-                                                          key={`feature-${key}-${feature.id}-${featureIndex}`}
-                                                          alignItems="center"
-                                                          sx={{
-                                                            px: 1,
-                                                            py: 0.4,
-                                                            borderTop: 1,
-                                                            borderColor: "divider",
-                                                            bgcolor:
-                                                              groupFeatureIndex % 2 === 1
-                                                                ? "rgba(0, 0, 0, 0.015)"
-                                                                : "transparent",
-                                                            transition:
-                                                              "background-color 120ms ease",
-                                                            "&:hover": {
-                                                              bgcolor: "action.hover",
-                                                            },
-                                                          }}
-                                                        >
-                                                          <Grid size={6}>
-                                                            <Typography sx={{ fontSize: 14 }}>
-                                                              {feature.name}
-                                                            </Typography>
-                                                          </Grid>
-                                                          {PERMISSION_FIELDS.map((field) => (
-                                                            <Grid
-                                                              key={field.key}
-                                                              size={2}
-                                                              sx={{ textAlign: "center" }}
-                                                            >
-                                                              {Number(
-                                                                feature[`allow_${field.key}`],
-                                                              ) === 1 ? (
-                                                                <Checkbox
-                                                                  size="small"
-                                                                  checked={
-                                                                    Number(feature[field.key]) === 1
-                                                                  }
-                                                                  disabled={!canEdit}
-                                                                  onChange={(event) =>
-                                                                    updateFeature(
-                                                                      parentIndex,
-                                                                      childIndex,
-                                                                      featureIndex,
-                                                                      field.key,
-                                                                      event.target.checked,
-                                                                    )
-                                                                  }
-                                                                />
-                                                              ) : null}
-                                                            </Grid>
-                                                          ))}
-                                                        </Grid>
-                                                      ),
-                                                    )}
-                                                  </Box>
-                                                ))}
-                                              </Stack>
-                                            </Box>
-                                          </Collapse>
-                                        ) : null}
-                                      </Paper>
-                                    );
-                                  })}
-                                </Stack>
-                              </Box>
-                            ))}
-                          </Stack>
-                        )}
-                      </Box>
-                    </Grid>
+                      ))}
+                    </List>
                   </Grid>
-                </Box>
-              )}
+
+                  <Grid
+                    size={{ xs: 12, md: 9 }}
+                    sx={{ backgroundColor: "#f5f5f5" }}
+                  >
+                    <Box
+                      ref={accessToolbarRef}
+                      sx={{
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 2,
+                        backgroundColor: "#f5f5f5",
+                        borderBottom: 1,
+                        borderColor: "#e2e8f0",
+                      }}
+                    >
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        alignItems={{ xs: "flex-start", sm: "center" }}
+                        justifyContent="space-between"
+                        spacing={1}
+                        sx={{ px: 2, py: 1.5 }}
+                      >
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          sx={{ flexWrap: "wrap", gap: 1 }}
+                        >
+                          {FILTERS.map((item) => (
+                            <Chip
+                              key={item.id}
+                              size="small"
+                              label={`${item.label} (${filterCounts[item.id] ?? 0})`}
+                              disabled={hasSearch}
+                              onClick={() => selectFilter(item.id)}
+                              sx={{
+                                backgroundColor: filter === item.id ? "#d50032" : "#f1f5f9",
+                                border: "none",
+                                color: filter === item.id ? "#fff" : "#64748b",
+                                borderRadius: "999px",
+                                fontWeight: 400,
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                        <Box sx={{ width: { xs: "100%", sm: 250 } }}>
+                          <TextField
+                            inputRef={searchRef}
+                            size="small"
+                            fullWidth
+                            placeholder="Найти модуль..."
+                            value={search}
+                            onChange={(event) => {
+                              setSearch(event.target.value);
+                              setExpandedKeys(new Set());
+                            }}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <SearchIcon fontSize="small" />
+                                </InputAdornment>
+                              ),
+                              endAdornment: search ? (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    aria-label="Очистить поиск"
+                                    edge="end"
+                                    size="small"
+                                    onClick={() => setSearch("")}
+                                  >
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </InputAdornment>
+                              ) : null,
+                            }}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                                bgcolor: "#fff",
+                                "& fieldset": { borderColor: "#e2e8f0" },
+                                "&:hover fieldset": { borderColor: "#cbd5e1" },
+                                "&.Mui-focused fieldset": { borderColor: "#d50032" },
+                              },
+                            }}
+                          />
+                        </Box>
+                      </Stack>
+                    </Box>
+                    <Box
+                      ref={modulesAnchorRef}
+                      sx={{ p: 2 }}
+                    >
+                      {groupedModules.length === 0 ? (
+                        <Box sx={{ py: 6, textAlign: "center", color: "text.secondary" }}>
+                          <Typography sx={{ fontWeight: 700 }}>Ничего не найдено</Typography>
+                          <Typography sx={{ mt: 0.5, fontSize: 13 }}>
+                            {hasSearch
+                              ? "Попробуйте другой запрос или очистите поиск."
+                              : "Измените фильтр или выберите другой раздел."}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Stack spacing={2}>
+                          {groupedModules.map((group) => (
+                            <Box key={`group-${group.sectionKey}`}>
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                justifyContent="space-between"
+                                spacing={1}
+                                sx={{ mb: 0.75 }}
+                              >
+                                <Typography
+                                  sx={{ color: "text.secondary", fontSize: 12, fontWeight: 600 }}
+                                >
+                                  {group.sectionName}
+                                </Typography>
+                                {canEdit ? (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.5}
+                                  >
+                                    <Button
+                                      color="inherit"
+                                      size="small"
+                                      onClick={() => setModulesEnabled(group.rows, true)}
+                                    >
+                                      Включить всё
+                                    </Button>
+                                    <Button
+                                      color="inherit"
+                                      size="small"
+                                      onClick={() => setModulesEnabled(group.rows, false)}
+                                    >
+                                      Выключить всё
+                                    </Button>
+                                  </Stack>
+                                ) : null}
+                              </Stack>
+
+                              <Stack spacing={1}>
+                                {group.rows.map(({ parentIndex, childIndex, module }) => {
+                                  const key = `${parentIndex}-${childIndex}`;
+
+                                  return (
+                                    <ModuleAccessCard
+                                      key={`module-${key}-${module.id ?? module.modul_id}`}
+                                      module={module}
+                                      canEdit={canEdit}
+                                      expanded={expandedKeys.has(key)}
+                                      onToggleExpanded={() =>
+                                        setExpandedKeys((current) => {
+                                          const next = new Set(current);
+                                          if (next.has(key)) next.delete(key);
+                                          else next.add(key);
+                                          return next;
+                                        })
+                                      }
+                                      onToggleModule={(value, currentModule) =>
+                                        toggleModule(parentIndex, childIndex, value, currentModule)
+                                      }
+                                      onUpdateFeature={(featureIndex, permission, value) =>
+                                        updateFeature(
+                                          parentIndex,
+                                          childIndex,
+                                          featureIndex,
+                                          permission,
+                                          value,
+                                        )
+                                      }
+                                    />
+                                  );
+                                })}
+                              </Stack>
+                            </Box>
+                          ))}
+                        </Stack>
+                      )}
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
             </>
           )}
         </DialogContent>
@@ -1870,7 +1381,7 @@ export default function EmployeePositionModal({
             px: 3,
             py: 1.5,
             borderTop: 1,
-            borderColor: "divider",
+            borderColor: "#e2e8f0",
           }}
         >
           {position?.id && canEdit ? (
@@ -1880,23 +1391,31 @@ export default function EmployeePositionModal({
                 startIcon={<DeleteOutlineIcon />}
                 onClick={openDelete}
               >
-                Удалить
+                Удалить должность
               </Button>
               <Button
                 startIcon={<ContentCopyIcon />}
                 onClick={() => setCopyDialog(true)}
+                sx={{ color: "#64748b" }}
               >
                 Копировать
               </Button>
             </>
           ) : null}
           <Box sx={{ flex: 1 }} />
-          <Button onClick={requestClose}>Закрыть</Button>
+          <Button
+            variant="outlined"
+            onClick={requestClose}
+            sx={{ borderColor: "#e2e8f0", borderRadius: 2, color: "#475569" }}
+          >
+            Закрыть
+          </Button>
           {canEdit ? (
             <Button
               variant="contained"
               disabled={!position}
               onClick={save}
+              sx={{ bgcolor: "#d50032", borderRadius: 2, "&:hover": { bgcolor: "#b4002a" } }}
             >
               Сохранить
             </Button>
@@ -1924,7 +1443,7 @@ export default function EmployeePositionModal({
             <Typography
               component="span"
               variant="h6"
-              sx={{ fontWeight: 900 }}
+              sx={{ fontWeight: 600 }}
             >
               История изменений
             </Typography>
