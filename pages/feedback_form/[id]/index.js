@@ -532,6 +532,12 @@ function FeedbackPage() {
   const [rating, setRating] = useState(1);
   const [selectedTags, setSelectedTags] = useState([]);
   const [active, setActive] = useState(false);
+  const [channelsAvailable, setChannelsAvailable] = useState([
+    { value: "client_site", label: "Сайт" },
+    { value: "quality_control", label: "Контроль качества" },
+  ]);
+  const [selectedChannels, setSelectedChannels] = useState([]);
+  const [channelPriority, setChannelPriority] = useState(100);
   const [value, setValue] = useState("view_form");
   const [res, setRes] = useState([]);
   const [points, setPoints] = useState([]);
@@ -568,6 +574,12 @@ function FeedbackPage() {
       setTitle(data.item.name);
       setFormData(JSON.parse(data.item.form_data));
       setActive(data.item.active);
+      const formChannels = Array.isArray(data.item.channels) ? data.item.channels : [];
+      setSelectedChannels(formChannels.map((channel) => channel.channel));
+      setChannelPriority(data.item.channel_priority ?? formChannels[0]?.priority ?? 100);
+      if (Array.isArray(data.channels_available) && data.channels_available.length) {
+        setChannelsAvailable(data.channels_available);
+      }
       const tabsCheck = Object.entries(tabsData).filter(
         ([key]) => parseInt(data.acces?.[key + "_access"]) === 1 || key === "view_form",
       );
@@ -595,6 +607,44 @@ function FeedbackPage() {
   const changeActive = (e) => {
     setActive(e.target.checked);
     getData("set_active", { check: e.target.checked, id });
+  };
+
+  const toggleChannel = (channel) => {
+    setSelectedChannels((current) =>
+      current.includes(channel)
+        ? current.filter((value) => value !== channel)
+        : [...current, channel],
+    );
+  };
+
+  const saveChannels = () => {
+    const priority = Number(channelPriority);
+    if (!selectedChannels.length) {
+      setErrStatus(false);
+      setErrText("Выберите хотя бы один канал показа");
+      setOpenAlert(true);
+      return;
+    }
+    if (!Number.isInteger(priority) || priority < 0 || priority > 1000) {
+      setErrStatus(false);
+      setErrText("Приоритет должен быть целым числом от 0 до 1000");
+      setOpenAlert(true);
+      return;
+    }
+
+    getData("save_channels", {
+      id,
+      channels: selectedChannels,
+      priority,
+    }).then((data) => {
+      setErrStatus(Boolean(data.st));
+      setErrText(data.text || (data.st ? "Каналы формы сохранены" : "Не удалось сохранить каналы"));
+      setOpenAlert(true);
+      if (data.st && Array.isArray(data.channels)) {
+        setSelectedChannels(data.channels.map((channel) => channel.channel));
+        setChannelPriority(data.channels[0]?.priority ?? priority);
+      }
+    });
   };
 
   const getFeedbacks = () => {
@@ -1424,6 +1474,55 @@ function FeedbackPage() {
                 />
               </Grid>
             )}
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+              sx={{ mb: 3 }}
+            >
+              <Typography
+                variant="h6"
+                sx={{ mb: 1 }}
+              >
+                Каналы показа
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+                {channelsAvailable.map((channel) => (
+                  <FormControlLabel
+                    key={channel.value}
+                    control={
+                      <Checkbox
+                        checked={selectedChannels.includes(channel.value)}
+                        disabled={parseInt(full_access?.add_feedback_access) == 0}
+                        onChange={() => toggleChannel(channel.value)}
+                      />
+                    }
+                    label={channel.label}
+                  />
+                ))}
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flexWrap: "wrap" }}>
+                <TextField
+                  label="Приоритет"
+                  type="number"
+                  size="small"
+                  value={channelPriority}
+                  disabled={parseInt(full_access?.add_feedback_access) == 0}
+                  onChange={(event) => setChannelPriority(event.target.value)}
+                  slotProps={{ htmlInput: { min: 0, max: 1000 } }}
+                  helperText="Чем больше число, тем выше форма при одинаковом условии"
+                />
+                {parseInt(full_access?.add_feedback_access) == 0 ? null : (
+                  <Button
+                    variant="contained"
+                    onClick={saveChannels}
+                  >
+                    Сохранить каналы
+                  </Button>
+                )}
+              </Box>
+            </Grid>
             <Grid
               size={{
                 xs: 12,

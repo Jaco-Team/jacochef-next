@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
+import Chip from "@mui/material/Chip";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 
 function FeedbackPage() {
@@ -17,6 +18,7 @@ function FeedbackPage() {
   const [formsActive, setFormsActive] = useState([]);
   const [formsNonActive, setFormsNonActive] = useState([]);
   const [active, setActive] = useState({});
+  const [channelLabels, setChannelLabels] = useState({});
   const router = useRouter();
   const tabsData = {
     add_feedback: "Добавление новой формы",
@@ -27,6 +29,11 @@ function FeedbackPage() {
       document.title = data.module_info.name;
       setModule(data.module_info);
       setFormsActive(data.forms_active);
+      setChannelLabels(
+        Object.fromEntries(
+          (data.channels_available || []).map((channel) => [channel.value, channel.label]),
+        ),
+      );
       const tabsCheck = Object.entries(tabsData).filter(
         ([key]) => parseInt(data.acces[key + "_access"]) === 1,
       );
@@ -45,6 +52,19 @@ function FeedbackPage() {
       setIsLoad(false);
     }
   };
+
+  const renderChannels = (channels) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      {(channels || []).map((channel) => (
+        <Chip
+          key={channel.channel}
+          label={`${channelLabels[channel.channel] || channel.channel} · ${channel.priority}`}
+          size="small"
+          variant="outlined"
+        />
+      ))}
+    </div>
+  );
 
   return (
     <Grid
@@ -102,6 +122,7 @@ function FeedbackPage() {
               <TableCell>Название</TableCell>
               <TableCell>Дата создания</TableCell>
               <TableCell>Создатель</TableCell>
+              <TableCell>Каналы и приоритет</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -116,6 +137,7 @@ function FeedbackPage() {
                 <TableCell>{it.name}</TableCell>
                 <TableCell>{it.date}</TableCell>
                 <TableCell>{it.user_name}</TableCell>
+                <TableCell>{renderChannels(it.channels)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -135,6 +157,7 @@ function FeedbackPage() {
               <TableCell>Название</TableCell>
               <TableCell>Дата создания</TableCell>
               <TableCell>Создатель</TableCell>
+              <TableCell>Каналы и приоритет</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -149,6 +172,7 @@ function FeedbackPage() {
                 <TableCell>{it.name}</TableCell>
                 <TableCell>{it.date}</TableCell>
                 <TableCell>{it.user_name}</TableCell>
+                <TableCell>{renderChannels(it.channels)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

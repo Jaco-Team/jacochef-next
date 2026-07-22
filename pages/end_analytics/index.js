@@ -152,7 +152,7 @@ const StickyTableContainer = styled(Box)(({ theme }) => ({
   overflowX: "auto",
   width: "100%",
   "& .MuiTable-root": {
-    minWidth: 1800,
+    minWidth: 3000,
   },
 }));
 
@@ -167,6 +167,13 @@ const ADDITIVE_METRIC_FIELDS = [
   "repeatOrders",
 ];
 const DERIVED_METRIC_FIELDS = ["conversion", "costPerOrder", "averageCheck", "roi", "drr", "ltv"];
+const ATTRIBUTED_DERIVED_METRIC_FIELDS = [
+  "attributedConversion",
+  "attributedCostPerOrder",
+  "attributedAverageCheck",
+  "attributedRoi",
+  "attributedDrr",
+];
 
 const parseMetric = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -192,6 +199,43 @@ const pickDerivedMetrics = (item) =>
     }
     return acc;
   }, {});
+
+const pickOptionalMetrics = (item) => ({
+  clicks: item.clicks ?? null,
+  clicksAvailable: Boolean(item.clicksAvailable),
+  attributedOrders: item.attributedOrders ?? null,
+  attributedRevenue: item.attributedRevenue ?? null,
+  attributedAvailable: Boolean(item.attributedAvailable),
+  ...ATTRIBUTED_DERIVED_METRIC_FIELDS.reduce((acc, field) => {
+    acc[field] = item[field] ?? null;
+    return acc;
+  }, {}),
+});
+
+const applyOptionalAggregates = (item, rows) => {
+  const sourceRows = rows || [];
+
+  item.clicksAvailable =
+    sourceRows.length > 0 && sourceRows.every((row) => Boolean(row.clicksAvailable));
+  item.clicks = item.clicksAvailable
+    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.clicks), 0)
+    : null;
+
+  item.attributedAvailable =
+    sourceRows.length > 0 && sourceRows.every((row) => Boolean(row.attributedAvailable));
+  item.attributedOrders = item.attributedAvailable
+    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.attributedOrders), 0)
+    : null;
+  item.attributedRevenue = item.attributedAvailable
+    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.attributedRevenue), 0)
+    : null;
+
+  ATTRIBUTED_DERIVED_METRIC_FIELDS.forEach((field) => {
+    delete item[field];
+  });
+
+  return item;
+};
 
 const applyAggregatedRoi = (item, rows) => {
   let roiRevenue = 0;
@@ -247,11 +291,53 @@ const applyDerivedMetrics = (item) => {
     : revenue > 0
       ? (cost / revenue) * 100
       : 0;
+  const customers = item.newClients + item.existingClients;
   item.ltv = hasMetricValue(item, "ltv")
     ? parseMetric(item.ltv)
-    : orders > 0
-      ? revenue / orders
+    : customers > 0
+      ? revenue / customers
       : 0;
+
+  item.clicksAvailable = Boolean(item.clicksAvailable);
+  item.clicks = item.clicksAvailable ? parseMetric(item.clicks) : null;
+  item.attributedAvailable = Boolean(item.attributedAvailable);
+
+  if (item.attributedAvailable) {
+    const attributedOrders = parseMetric(item.attributedOrders);
+    const attributedRevenue = parseMetric(item.attributedRevenue);
+
+    item.attributedOrders = attributedOrders;
+    item.attributedRevenue = attributedRevenue;
+    item.attributedConversion = hasMetricValue(item, "attributedConversion")
+      ? parseMetric(item.attributedConversion)
+      : visits > 0
+        ? (attributedOrders / visits) * 100
+        : 0;
+    item.attributedCostPerOrder = hasMetricValue(item, "attributedCostPerOrder")
+      ? parseMetric(item.attributedCostPerOrder)
+      : attributedOrders > 0
+        ? cost / attributedOrders
+        : 0;
+    item.attributedAverageCheck = hasMetricValue(item, "attributedAverageCheck")
+      ? parseMetric(item.attributedAverageCheck)
+      : attributedOrders > 0
+        ? attributedRevenue / attributedOrders
+        : 0;
+    item.attributedRoi = hasMetricValue(item, "attributedRoi")
+      ? parseMetric(item.attributedRoi)
+      : calculateRoi(attributedRevenue, cost);
+    item.attributedDrr = hasMetricValue(item, "attributedDrr")
+      ? parseMetric(item.attributedDrr)
+      : attributedRevenue > 0
+        ? (cost / attributedRevenue) * 100
+        : 0;
+  } else {
+    item.attributedOrders = null;
+    item.attributedRevenue = null;
+    ATTRIBUTED_DERIVED_METRIC_FIELDS.forEach((field) => {
+      item[field] = null;
+    });
+  }
 
   return item;
 };
@@ -268,6 +354,7 @@ const aggregateTotalRow = (item, rows) => {
   });
 
   item.details = rows || [];
+  applyOptionalAggregates(item, rows);
   applyDerivedMetrics(item);
   return applyAggregatedRoi(item, rows);
 };
@@ -283,6 +370,7 @@ const applyTotalMetricsFromRows = (item, rows) => {
     });
   });
 
+  applyOptionalAggregates(item, rows);
   applyDerivedMetrics(item);
   return applyAggregatedRoi(item, rows);
 };
@@ -304,6 +392,7 @@ const rollupMetricsFromChildren = (item) => {
           item[field] += parseMetric(child[field]);
         });
       });
+      applyOptionalAggregates(item, item[childKey]);
     } else {
       ADDITIVE_METRIC_FIELDS.forEach((field) => {
         item[field] = parseMetric(item[field]);
@@ -347,6 +436,7 @@ function EndPage() {
   const [tableData, setTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [lastUpdate, setLastUpdate] = useState("");
+  const [analyticsMeta, setAnalyticsMeta] = useState(null);
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState("");
@@ -417,6 +507,7 @@ function EndPage() {
       if (data.st) {
         const formattedData = formatApiData(data);
         setTableData(formattedData);
+        setAnalyticsMeta(data.analytics_meta || null);
         setLastUpdate(dayjs().format("HH:mm"));
       } else {
         if (!data.st) {
@@ -431,6 +522,7 @@ function EndPage() {
   const resetFilters = () => {
     setForm(standardForm);
     setTableData([]);
+    setAnalyticsMeta(null);
   };
 
   const refreshData = () => {
@@ -709,6 +801,7 @@ function EndPage() {
       existingClients: 0,
       primaryOrders: 0,
       repeatOrders: 0,
+      ...pickOptionalMetrics(sourceData),
       useServerMetrics: true,
       children: [],
     });
@@ -778,6 +871,7 @@ function EndPage() {
                   orders: parseMetric(campaign.orders),
                   revenue: parseMetric(campaign.revenue),
                   ...pickDerivedMetrics(campaign),
+                  ...pickOptionalMetrics(campaign),
                   newClients: parseMetric(campaign.newClients),
                   existingClients: parseMetric(campaign.existingClients),
                   primaryOrders: parseMetric(campaign.primaryOrders),
@@ -806,7 +900,11 @@ function EndPage() {
 
         addMetrics(group, sourceData);
         addMetrics(detailedSource, sourceData);
-        Object.assign(detailedSource, pickDerivedMetrics(sourceData));
+        Object.assign(
+          detailedSource,
+          pickDerivedMetrics(sourceData),
+          pickOptionalMetrics(sourceData),
+        );
       }
     }
 
@@ -848,6 +946,7 @@ function EndPage() {
       orders: parseMetric(node.orders),
       revenue: parseMetric(node.revenue),
       ...pickDerivedMetrics(node),
+      ...pickOptionalMetrics(node),
       newClients: parseMetric(node.newClients),
       existingClients: parseMetric(node.existingClients),
       primaryOrders: parseMetric(node.primaryOrders),
@@ -878,6 +977,7 @@ function EndPage() {
       orders: parseMetric(child.orders),
       revenue: parseMetric(child.revenue),
       ...pickDerivedMetrics(child),
+      ...pickOptionalMetrics(child),
       newClients: parseMetric(child.newClients),
       existingClients: parseMetric(child.existingClients),
       primaryOrders: parseMetric(child.primaryOrders),
@@ -1016,7 +1116,8 @@ function EndPage() {
           ? Infinity
           : 0;
     total.drr = total.revenue > 0 ? (total.cost / total.revenue) * 100 : 0;
-    total.ltv = total.orders > 0 ? total.revenue / total.orders : 0;
+    const totalCustomers = total.newClients + total.existingClients;
+    total.ltv = totalCustomers > 0 ? total.revenue / totalCustomers : 0;
 
     return total;
   };
@@ -1060,7 +1161,8 @@ function EndPage() {
           ? Infinity
           : 0;
     grandTotal.drr = grandTotal.revenue > 0 ? (grandTotal.cost / grandTotal.revenue) * 100 : 0;
-    grandTotal.ltv = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
+    const grandTotalCustomers = grandTotal.newClients + grandTotal.existingClients;
+    grandTotal.ltv = grandTotalCustomers > 0 ? grandTotal.revenue / grandTotalCustomers : 0;
 
     return grandTotal;
   };
@@ -1098,8 +1200,9 @@ function EndPage() {
             : 0;
       transformedItem.drr =
         transformedItem.revenue > 0 ? (transformedItem.cost / transformedItem.revenue) * 100 : 0;
+      const transformedItemCustomers = transformedItem.newClients + transformedItem.existingClients;
       transformedItem.ltv =
-        transformedItem.orders > 0 ? transformedItem.revenue / transformedItem.orders : 0;
+        transformedItemCustomers > 0 ? transformedItem.revenue / transformedItemCustomers : 0;
       if (value.children && Array.isArray(value.children) && value.children.length > 0) {
         transformedItem.details = transformUtmChildren(value.children, sourceType, key);
       }
@@ -1140,8 +1243,10 @@ function EndPage() {
             : 0;
       transformedChild.drr =
         transformedChild.revenue > 0 ? (transformedChild.cost / transformedChild.revenue) * 100 : 0;
+      const transformedChildCustomers =
+        transformedChild.newClients + transformedChild.existingClients;
       transformedChild.ltv =
-        transformedChild.orders > 0 ? transformedChild.revenue / transformedChild.orders : 0;
+        transformedChildCustomers > 0 ? transformedChild.revenue / transformedChildCustomers : 0;
       if (child.children && Array.isArray(child.children) && child.children.length > 0) {
         transformedChild.details = transformUtmChildren(
           child.children,
@@ -1168,6 +1273,7 @@ function EndPage() {
       orders: parseMetric(item.orders),
       revenue: parseMetric(item.revenue),
       ...pickDerivedMetrics(item),
+      ...pickOptionalMetrics(item),
       newClients: parseMetric(item.newClients),
       existingClients: parseMetric(item.existingClients),
       primaryOrders: parseMetric(item.primaryOrders),
@@ -1207,6 +1313,15 @@ function EndPage() {
     }
     return "0";
   };
+
+  const formatOptionalNumber = (value, available) =>
+    available && value !== null && value !== undefined ? formatNumber(value) : "н/д";
+
+  const formatOptionalCurrency = (value, available) =>
+    available && value !== null && value !== undefined ? formatCurrency(value) : "н/д";
+
+  const formatOptionalPercent = (value, available) =>
+    available && value !== null && value !== undefined ? formatPercent(value) : "н/д";
 
   const getLevelIcon = (level) => {
     switch (level) {
@@ -1303,6 +1418,14 @@ function EndPage() {
             align="right"
             noWrap
           >
+            {formatOptionalNumber(row.clicks, row.clicksAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
             {formatNumber(row.cost)}
           </StyledTableCell>
           <StyledTableCell
@@ -1373,6 +1496,54 @@ function EndPage() {
             align="right"
             noWrap
           >
+            {formatOptionalNumber(row.attributedOrders, row.attributedAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
+            {formatOptionalPercent(row.attributedConversion, row.attributedAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
+            {formatOptionalCurrency(row.attributedCostPerOrder, row.attributedAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
+            {formatOptionalCurrency(row.attributedRevenue, row.attributedAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
+            {formatOptionalCurrency(row.attributedAverageCheck, row.attributedAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
+            {formatOptionalPercent(row.attributedRoi, row.attributedAvailable)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
             {formatNumber(row.newClients)}
           </StyledTableCell>
           <StyledTableCell
@@ -1406,6 +1577,14 @@ function EndPage() {
             noWrap
           >
             {formatPercent(row.drr)}
+          </StyledTableCell>
+          <StyledTableCell
+            isHeader={false}
+            isTotal={isTotalRow}
+            align="right"
+            noWrap
+          >
+            {formatOptionalPercent(row.attributedDrr, row.attributedAvailable)}
           </StyledTableCell>
           <StyledTableCell
             isHeader={false}
@@ -1632,6 +1811,46 @@ function EndPage() {
           <Box sx={{ display: "flex", gap: 1 }}></Box>
         </Box>
       </Grid>
+
+      {analyticsMeta && (
+        <Grid size={{ xs: 12 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              px: 2,
+              py: 1.5,
+              borderRadius: "8px",
+              backgroundColor: "#fafafa",
+              border: "1px solid #eeeeee",
+            }}
+          >
+            <Typography variant="body2">
+              Модель атрибуции: последний значимый клик, cross-device
+            </Typography>
+            <Typography variant="body2">
+              Период данных: {analyticsMeta.effective_date_start} —{" "}
+              {analyticsMeta.effective_date_end}
+            </Typography>
+            <Typography
+              variant="body2"
+              color={analyticsMeta.attributed_orders_available ? "success.main" : "warning.main"}
+            >
+              Атрибуция: {analyticsMeta.attributed_orders_available ? "доступна" : "недоступна"}
+            </Typography>
+            {analyticsMeta.date_was_clamped && (
+              <Typography
+                variant="body2"
+                color="warning.main"
+              >
+                Текущий или будущий день исключён; данные доступны по{" "}
+                {analyticsMeta.complete_through}
+              </Typography>
+            )}
+          </Box>
+        </Grid>
+      )}
 
       <Grid size={{ xs: 12 }}>
         <StyledPaper>
@@ -1871,6 +2090,13 @@ function EndPage() {
                     align="right"
                     noWrap
                   >
+                    КЛИКИ
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
                     РАСХОД (₽)
                   </StyledTableCell>
                   <StyledTableCell
@@ -1920,6 +2146,48 @@ function EndPage() {
                     align="right"
                     noWrap
                   >
+                    АТРИБ. ЗАКАЗЫ
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
+                    АТРИБ. КОНВЕРСИЯ (%)
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
+                    АТРИБ. СТОИМОСТЬ ЗАКАЗА (₽)
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
+                    АТРИБ. ВЫРУЧКА (₽)
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
+                    АТРИБ. СРЕДНИЙ ЧЕК (₽)
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
+                    АТРИБ. ROI (%)
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
                     НОВЫЕ КЛИЕНТЫ
                   </StyledTableCell>
                   <StyledTableCell
@@ -1955,6 +2223,13 @@ function EndPage() {
                     align="right"
                     noWrap
                   >
+                    АТРИБ. ДРР (%)
+                  </StyledTableCell>
+                  <StyledTableCell
+                    isHeader={true}
+                    align="right"
+                    noWrap
+                  >
                     LTV (₽)
                   </StyledTableCell>
                 </TableRow>
@@ -1969,7 +2244,7 @@ function EndPage() {
                 {tableData.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={15}
+                      colSpan={23}
                       align="center"
                       sx={{ py: 6 }}
                     >

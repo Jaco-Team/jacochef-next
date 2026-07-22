@@ -87,6 +87,8 @@ When using Material UI v7, the `Grid` item sizing props changed. Use the `size` 
 
 Update existing `Grid` usages when upgrading to v7 to avoid layout regressions.
 
+MUI Grid rows stretch children to the height of the tallest sibling by default. For independent content panels, set `sx={{ height: "max-content" }}` on the `Grid` child and do not set `height: "100%"` on its nested `Paper` or `Card`. Use full height only when equal-height cards are explicitly intended.
+
 ## Engineering Standards
 
 Always produce senior-level code: avoid inventing field names or making assumptions about API shapes - ask. When consuming external data:

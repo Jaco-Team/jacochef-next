@@ -175,6 +175,11 @@ const PresetModal = ({ open, onClose, onSave }) => {
 function FormBuilderDrag({
   formTitle,
   setFormTitle,
+  channelsAvailable,
+  selectedChannels,
+  onToggleChannel,
+  channelPriority,
+  setChannelPriority,
   formElements,
   handleDragEnd,
   editElement,
@@ -204,6 +209,53 @@ function FormBuilderDrag({
           },
         }}
       />
+
+      <Box
+        sx={{
+          mb: 4,
+          p: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ mb: 1 }}
+        >
+          Где показывать форму
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 2 }}
+        >
+          Можно выбрать несколько каналов. Активность формы управляется отдельно.
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+          {channelsAvailable.map((channel) => (
+            <FormControlLabel
+              key={channel.value}
+              control={
+                <Checkbox
+                  checked={selectedChannels.includes(channel.value)}
+                  onChange={() => onToggleChannel(channel.value)}
+                />
+              }
+              label={channel.label}
+            />
+          ))}
+        </Box>
+        <TextField
+          label="Приоритет"
+          type="number"
+          size="small"
+          value={channelPriority}
+          onChange={(event) => setChannelPriority(event.target.value)}
+          slotProps={{ htmlInput: { min: 0, max: 1000 } }}
+          helperText="Чем больше число, тем выше форма при одинаковом условии"
+        />
+      </Box>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="formElements">
@@ -310,6 +362,12 @@ function FormBuilder() {
   const [presets, setPresets] = useState([]);
   const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState(null);
+  const [channelsAvailable, setChannelsAvailable] = useState([
+    { value: "client_site", label: "Сайт" },
+    { value: "quality_control", label: "Контроль качества" },
+  ]);
+  const [selectedChannels, setSelectedChannels] = useState(["quality_control"]);
+  const [channelPriority, setChannelPriority] = useState(100);
   const [addElementModalOpen, setAddElementModalOpen] = useState(false);
   const [editingNestedElement, setEditingNestedElement] = useState(null);
   const router = useRouter();
@@ -361,21 +419,43 @@ function FormBuilder() {
   };
 
   const saveForm = () => {
+    const priority = Number(channelPriority);
+    if (!selectedChannels.length) {
+      setErrStatus(false);
+      setErrText("Выберите хотя бы один канал показа");
+      setOpenAlert(true);
+      return;
+    }
+    if (!Number.isInteger(priority) || priority < 0 || priority > 1000) {
+      setErrStatus(false);
+      setErrText("Приоритет должен быть целым числом от 0 до 1000");
+      setOpenAlert(true);
+      return;
+    }
+
     const data = {
       name: formTitle,
       form_data: formElements,
+      channels: selectedChannels,
+      priority,
     };
-    getData("save_form", data)
-      .then((data) => {
-        if (!data.st) {
-          setErrStatus(data.st);
-          setErrText(data.text);
-          setOpenAlert(true);
-        } else {
-          router.push("/feedback_form");
-        }
-      })
-      .finally(() => router.push("/feedback_form"));
+    getData("save_form", data).then((data) => {
+      if (!data.st) {
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
+      } else {
+        router.push("/feedback_form");
+      }
+    });
+  };
+
+  const toggleChannel = (channel) => {
+    setSelectedChannels((current) =>
+      current.includes(channel)
+        ? current.filter((value) => value !== channel)
+        : [...current, channel],
+    );
   };
 
   const handleDragEndCheckbox = (result) => {
@@ -457,6 +537,9 @@ function FormBuilder() {
       setAvailableTags(data.tags);
       setCategories(data.categories);
       setPresets(data.presets);
+      if (Array.isArray(data.channels_available) && data.channels_available.length) {
+        setChannelsAvailable(data.channels_available);
+      }
     });
   }, []);
 
@@ -2131,6 +2214,11 @@ function FormBuilder() {
           formElements={formElements}
           setFormTitle={setFormTitle}
           formTitle={formTitle}
+          channelsAvailable={channelsAvailable}
+          selectedChannels={selectedChannels}
+          onToggleChannel={toggleChannel}
+          channelPriority={channelPriority}
+          setChannelPriority={setChannelPriority}
           handleDragEnd={handleDragEnd}
           editElement={editElement}
           deleteElement={deleteElement}
