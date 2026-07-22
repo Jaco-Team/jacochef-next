@@ -6,7 +6,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import {
   Button,
-  Chip,
   IconButton,
   Paper,
   Stack,
@@ -297,7 +296,6 @@ export default function useSkladUnitsController({ showAlert }) {
                 <TableCell align="right">Базовое количество</TableCell>
                 <TableCell align="right">Количество в связке</TableCell>
                 <TableCell>Базовая единица</TableCell>
-                <TableCell>Удаление</TableCell>
                 <TableCell align="right">Действия</TableCell>
               </TableRow>
             </TableHead>
@@ -321,18 +319,6 @@ export default function useSkladUnitsController({ showAlert }) {
                     <TableCell align="right">{row?.main_count ?? "—"}</TableCell>
                     <TableCell align="right">{row?.con_count ?? "—"}</TableCell>
                     <TableCell>{relationUnit?.name || "—"}</TableCell>
-                    <TableCell>
-                      <Tooltip
-                        title={deleteBlocked || !canDeleteAction ? deleteHint : "Можно удалить"}
-                      >
-                        <Chip
-                          label={deleteBlocked ? "Заблокировано" : "Доступно"}
-                          color={deleteBlocked ? "default" : "success"}
-                          variant={deleteBlocked ? "outlined" : "filled"}
-                          size="small"
-                        />
-                      </Tooltip>
-                    </TableCell>
                     <TableCell align="right">
                       <Stack
                         direction="row"
@@ -354,7 +340,7 @@ export default function useSkladUnitsController({ showAlert }) {
                           title={
                             deleteBlocked
                               ? deleteHint
-                              : canDeleteAction
+                              : isEditable && canDeleteAction
                                 ? "Удалить"
                                 : "Недостаточно прав для удаления"
                           }
@@ -362,7 +348,7 @@ export default function useSkladUnitsController({ showAlert }) {
                           <span>
                             <IconButton
                               color="error"
-                              disabled={deleteBlocked || !canDeleteAction}
+                              disabled={deleteBlocked || !isEditable || !canDeleteAction}
                               onClick={withConfirm(
                                 () => deleteUnit(row),
                                 `Удалить единицу "${row?.name || ""}"?`,
@@ -381,7 +367,7 @@ export default function useSkladUnitsController({ showAlert }) {
               {filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={5}
                     align="center"
                   >
                     <Typography color="text.secondary">Ничего не найдено</Typography>

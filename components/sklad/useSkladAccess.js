@@ -75,21 +75,7 @@ export default function useSkladAccess() {
       canEdit("change_rec_pf") ||
       canAny(accessApi, "edit", PRODUCTION_WRITE_KEYS);
     const canManageSiteItems = () => canAny(accessApi, "edit", SITE_ITEM_WRITE_KEYS);
-    const canDelete = (entityType = "production") => {
-      if (entityType === "site_item") {
-        return canEdit("delete_item");
-      }
-
-      if (entityType === "unit") {
-        return canEdit("ed_izmer");
-      }
-
-      if (entityType === "category") {
-        return canEdit("cats");
-      }
-
-      return canEdit("delete");
-    };
+    const canDelete = () => canEdit("delete_execute");
     const canManageArchivedEntity = (entityType) => {
       if (entityType === "recipe" || entityType === "semi_finished") {
         return canEdit("is_show") || canManageProduction(entityType);

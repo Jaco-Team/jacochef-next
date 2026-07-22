@@ -369,7 +369,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   }, [page, rows.length, rowsPerPage, setState]);
 
   const openHistoryTab = useCallback(
-    (row) => {
+    (row, focusArea = "") => {
       if (!row?.id) {
         showAlert("Не удалось определить сущность для открытия истории", false);
         return;
@@ -389,6 +389,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       setHistoryState({
         entityType: "site_item",
         entityId: String(row.id),
+        focusArea,
         ...HISTORY_INITIAL_STATE,
       });
       setShellState({ tab: historyTabIndex });
@@ -1378,6 +1379,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           isEditable={isEditable}
           onEdit={() => (detail?.id ? openEdit(detail) : null)}
           onOpenHistory={() => (detail?.id ? openHistoryTab(detail) : null)}
+          onOpenImageHistory={() => (detail?.id ? openHistoryTab(detail, "image") : null)}
           onUploadImage={(file) => handleUploadImage(detail, file, "image")}
           onSyncVk={handleSyncVk}
           onClose={closeModal}

@@ -51,20 +51,6 @@ function normalizeBootstrap(response) {
   };
 }
 
-function SkladUnavailableTab({ label }) {
-  return (
-    <Paper sx={{ p: 3, borderRadius: 3 }}>
-      <Stack spacing={1}>
-        <Typography sx={{ fontWeight: 600 }}>{label}</Typography>
-        <Typography color="text.secondary">
-          Для этого раздела пока недоступен рабочий экран. Проверь published sections и доступы
-          модуля.
-        </Typography>
-      </Stack>
-    </Paper>
-  );
-}
-
 export default function SkladPage() {
   const api = useSkladApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
@@ -201,7 +187,7 @@ export default function SkladPage() {
       );
     }
 
-    return <SkladUnavailableTab label={item.label} />;
+    return null;
   };
 
   return (

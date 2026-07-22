@@ -216,6 +216,7 @@ export default function SkladProductionEditorDialog({
 }) {
   const [activeTab, setActiveTab] = useState("main");
   const [form, setForm] = useState(() => buildInitialDraft(draft));
+  const [expandedField, setExpandedField] = useState("");
 
   useEffect(() => {
     if (!open) {
@@ -224,6 +225,7 @@ export default function SkladProductionEditorDialog({
 
     setForm(buildInitialDraft(draft));
     setActiveTab("main");
+    setExpandedField("");
   }, [draft, open]);
 
   const unitOptions = useMemo(() => {
@@ -510,10 +512,14 @@ export default function SkladProductionEditorDialog({
                           label="Состав"
                           value={form.structure}
                           multiline
-                          minRows={4}
-                          maxRows={10}
+                          minRows={3}
+                          maxRows={expandedField === "structure" ? 10 : 4}
                           disabled={!isEditable}
                           func={(event) => updateField("structure", event.target.value)}
+                          onFocus={() => setExpandedField("structure")}
+                          onBlur={() =>
+                            setExpandedField((prev) => (prev === "structure" ? "" : prev))
+                          }
                         />
                       </Grid>
                     </Grid>

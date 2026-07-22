@@ -13,6 +13,7 @@ export const HISTORY_INITIAL_STATE = {
   rows: [],
   page: 0,
   rowsPerPage: 25,
+  focusArea: "",
   selectedRevisionKey: "",
   selectedRevision: null,
   compareLeftKey: "",

@@ -169,6 +169,46 @@ function normalizeTagList(tags) {
   });
 }
 
+function parseNutritionNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const normalized = String(value).replace(",", ".").trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatPreviewKkal(value) {
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
+function getLiveKkalPreview(form) {
+  const protein = parseNutritionNumber(form?.protein);
+  const fat = parseNutritionNumber(form?.fat);
+  const carbohydrates = parseNutritionNumber(form?.carbohydrates);
+
+  if (protein === null && fat === null && carbohydrates === null) {
+    return form?.kkal_preview ?? "";
+  }
+
+  const safeProtein = protein ?? 0;
+  const safeFat = fat ?? 0;
+  const safeCarbohydrates = carbohydrates ?? 0;
+
+  return formatPreviewKkal(safeProtein * 4 + safeFat * 9 + safeCarbohydrates * 4);
+}
+
 export default function SkladSiteItemEditorDialog({
   open,
   mode = "edit",
@@ -185,6 +225,7 @@ export default function SkladSiteItemEditorDialog({
 }) {
   const [activeTab, setActiveTab] = useState("main");
   const [form, setForm] = useState(() => buildInitialDraft(draft));
+  const [expandedField, setExpandedField] = useState("");
   const [tagModal, setTagModal] = useState({
     open: false,
     mode: "create",
@@ -200,6 +241,7 @@ export default function SkladSiteItemEditorDialog({
 
     setForm(buildInitialDraft(draft));
     setActiveTab("main");
+    setExpandedField("");
     setTagModal({
       open: false,
       mode: "create",
@@ -248,6 +290,8 @@ export default function SkladSiteItemEditorDialog({
       Array.isArray(form.tags) ? form.tags.map((tag) => String(tag?.id ?? "")).filter(Boolean) : [],
     );
   }, [form.tags]);
+
+  const liveKkalPreview = useMemo(() => getLiveKkalPreview(form), [form]);
 
   const renameTagOptions = useMemo(() => {
     return [{ id: "", name: "Выберите тег" }].concat(
@@ -632,7 +676,7 @@ export default function SkladSiteItemEditorDialog({
                     <Grid size={{ xs: 12, md: 6 }}>
                       <MyTextInput
                         label="Ккал расчет"
-                        value={form.kkal_preview}
+                        value={liveKkalPreview}
                         disabled
                       />
                     </Grid>
@@ -660,6 +704,9 @@ export default function SkladSiteItemEditorDialog({
                         func={(event) => updateField("tmp_desc", event.target.value)}
                         multiline
                         minRows={3}
+                        maxRows={expandedField === "tmp_desc" ? 10 : 4}
+                        onFocus={() => setExpandedField("tmp_desc")}
+                        onBlur={() => setExpandedField((prev) => (prev === "tmp_desc" ? "" : prev))}
                       />
                     </Grid>
                     <Grid size={12}>
@@ -670,6 +717,11 @@ export default function SkladSiteItemEditorDialog({
                         func={(event) => updateField("marc_desc", event.target.value)}
                         multiline
                         minRows={3}
+                        maxRows={expandedField === "marc_desc" ? 8 : 4}
+                        onFocus={() => setExpandedField("marc_desc")}
+                        onBlur={() =>
+                          setExpandedField((prev) => (prev === "marc_desc" ? "" : prev))
+                        }
                       />
                     </Grid>
                     <Grid size={12}>
@@ -679,7 +731,12 @@ export default function SkladSiteItemEditorDialog({
                         disabled={!isEditable}
                         func={(event) => updateField("marc_desc_full", event.target.value)}
                         multiline
-                        minRows={5}
+                        minRows={4}
+                        maxRows={expandedField === "marc_desc_full" ? 12 : 6}
+                        onFocus={() => setExpandedField("marc_desc_full")}
+                        onBlur={() =>
+                          setExpandedField((prev) => (prev === "marc_desc_full" ? "" : prev))
+                        }
                       />
                     </Grid>
                   </Grid>

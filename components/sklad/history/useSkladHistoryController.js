@@ -155,6 +155,22 @@ function getCompositionPreviewRows(snapshot) {
   }));
 }
 
+function getImagePreview(snapshot) {
+  return snapshot?.image && typeof snapshot.image === "object" ? snapshot.image : null;
+}
+
+function getFocusedCompareChanges(compareResult, focusArea) {
+  const changes = Array.isArray(compareResult?.compare?.changes)
+    ? compareResult.compare.changes
+    : [];
+
+  if (focusArea !== "image") {
+    return changes;
+  }
+
+  return changes.filter((change) => String(change?.path || "").startsWith("image"));
+}
+
 export default function useSkladHistoryController({ showAlert }) {
   const api = useSkladApi();
   const setShellState = useSkladStore((state) => state.setState);
@@ -164,6 +180,7 @@ export default function useSkladHistoryController({ showAlert }) {
   const rows = useSkladHistoryStore((state) => state.rows);
   const page = useSkladHistoryStore((state) => state.page);
   const rowsPerPage = useSkladHistoryStore((state) => state.rowsPerPage);
+  const focusArea = useSkladHistoryStore((state) => state.focusArea);
   const selectedRevisionKey = useSkladHistoryStore((state) => state.selectedRevisionKey);
   const selectedRevision = useSkladHistoryStore((state) => state.selectedRevision);
   const compareLeftKey = useSkladHistoryStore((state) => state.compareLeftKey);
@@ -297,9 +314,7 @@ export default function useSkladHistoryController({ showAlert }) {
   ]);
 
   const snapshot = selectedRevision?.snapshot || null;
-  const compareChanges = Array.isArray(compareResult?.compare?.changes)
-    ? compareResult.compare.changes
-    : [];
+  const compareChanges = getFocusedCompareChanges(compareResult, focusArea);
 
   const content = (
     <Paper sx={{ p: 2.5, borderRadius: 3 }}>
@@ -415,13 +430,32 @@ export default function useSkladHistoryController({ showAlert }) {
               <Typography sx={{ fontWeight: 700 }}>
                 {compareResult
                   ? compareResult?.compare?.has_changes
-                    ? `Изменения: ${compareResult?.compare?.changes_count || compareChanges.length}`
+                    ? `Изменения: ${focusArea === "image" ? compareChanges.length : compareResult?.compare?.changes_count || compareChanges.length}`
                     : "Без изменений"
                   : "Не запущен"}
               </Typography>
             </Box>
           </Stack>
         </Paper>
+
+        {focusArea === "image" && entityType === "site_item" ? (
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, borderRadius: 3 }}
+          >
+            <Stack spacing={1}>
+              <Typography sx={{ fontWeight: 700 }}>История изображения</Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Для товара сайта история изображения читается из обычных ревизий. Откройте версию,
+                чтобы увидеть image state этой ревизии, или сравните две версии, чтобы отследить
+                изменения по `image.*`.
+              </Typography>
+            </Stack>
+          </Paper>
+        ) : null}
 
         <TableContainer>
           <Table size="small">
@@ -586,6 +620,7 @@ export default function useSkladHistoryController({ showAlert }) {
 
             {selectedRevision ? (
               <GridLikeSnapshot
+                focusArea={focusArea}
                 snapshot={snapshot}
                 revision={selectedRevision}
               />
@@ -608,8 +643,9 @@ export default function useSkladHistoryController({ showAlert }) {
   };
 }
 
-function GridLikeSnapshot({ snapshot, revision }) {
+function GridLikeSnapshot({ snapshot, revision, focusArea = "" }) {
   const snapshotEntityType = snapshot?.type ?? revision?.entity_type ?? "-";
+  const image = getImagePreview(snapshot);
   const mainFields = [
     ["Ключ версии", revision?.revision_key ?? "-"],
     ["Источник", revision?.source ?? "-"],
@@ -698,6 +734,66 @@ function GridLikeSnapshot({ snapshot, revision }) {
                 </Stack>
               </Stack>
             ))}
+          </Stack>
+        </Paper>
+      ) : null}
+
+      {image ? (
+        <Paper
+          variant="outlined"
+          sx={{ p: 2, borderRadius: 2 }}
+        >
+          <Stack spacing={2}>
+            <Typography sx={{ fontWeight: 700 }}>
+              {focusArea === "image" ? "Изображение выбранной ревизии" : "Состояние изображения"}
+            </Typography>
+            {image?.variants?.webp?.url || image?.variants?.jpg?.url ? (
+              <Box
+                component="img"
+                src={image?.variants?.webp?.url ?? image?.variants?.jpg?.url}
+                alt={snapshot?.name || "Историческое изображение"}
+                sx={{
+                  width: "100%",
+                  maxWidth: 360,
+                  maxHeight: 240,
+                  objectFit: "contain",
+                  borderRadius: 2,
+                  bgcolor: "grey.100",
+                }}
+              />
+            ) : (
+              <Typography color="text.secondary">
+                В этой ревизии изображение не опубликовано.
+              </Typography>
+            )}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
+                gap: 2,
+              }}
+            >
+              <SnapshotField
+                label="WebP"
+                value={formatValue(image?.variants?.webp?.path)}
+              />
+              <SnapshotField
+                label="JPG"
+                value={formatValue(image?.variants?.jpg?.path)}
+              />
+              <SnapshotField
+                label="img_new"
+                value={formatValue(image?.current_fields?.img_new)}
+              />
+              <SnapshotField
+                label="img_new_update"
+                value={formatValue(image?.current_fields?.img_new_update)}
+              />
+              <SnapshotField
+                label="img_app"
+                value={formatValue(image?.current_fields?.img_app)}
+              />
+            </Box>
           </Stack>
         </Paper>
       ) : null}

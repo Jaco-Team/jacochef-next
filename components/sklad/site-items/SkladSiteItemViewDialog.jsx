@@ -263,6 +263,7 @@ export default function SkladSiteItemViewDialog({
   isEditable = false,
   onEdit,
   onOpenHistory,
+  onOpenImageHistory,
   onUploadImage,
   onSyncVk,
   onClose,
@@ -910,9 +911,9 @@ export default function SkladSiteItemViewDialog({
                         <Button
                           variant="outlined"
                           startIcon={<HistoryOutlinedIcon />}
-                          onClick={onOpenHistory}
+                          onClick={onOpenImageHistory || onOpenHistory}
                         >
-                          Открыть историю
+                          История изображения
                         </Button>
                         <Button
                           variant="outlined"

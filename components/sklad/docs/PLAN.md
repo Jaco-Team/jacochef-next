@@ -733,6 +733,12 @@ Latest chunk status:
   - decide whether convert, VK sync, tag mutation and archive restore should receive dedicated canonical action keys from backend docs, or stay intentionally covered by broad section edit/access gating
 - reviewer pass remains mandatory after each implementation chunk
 - final Chrome UX walkthrough across all working tabs remains a required closing step before completion
+- incomplete follow-up from review on July 22, 2026:
+  - site-item editor must show a live calorie preview from the currently entered BJU values instead of only echoing backend-provided `kkal_preview`
+  - site-item editor still needs an operational composition/allergen editing surface or an explicitly documented scope cut if that remains backend-blocked
+  - site-item image flow still needs a clearer image-history UX surface beyond the generic history handoff
+  - final-facing fallback stubs like the unavailable-tab placeholder should be removed or hard-gated before finalization
+  - long-text compact-with-expand behavior should be finalized consistently in the real create/edit forms, not only partially via static multiline sizing
 
 ## 9. Explicit non-goals for current iteration
 

@@ -446,7 +446,11 @@ export default function useSkladCategoriesController({ showAlert }) {
                           </Tooltip>
 
                           {canDelete ? (
-                            <Tooltip title={isEditable ? "Удалить" : "Недостаточно прав"}>
+                            <Tooltip
+                              title={
+                                isEditable && canDeleteAction ? "Удалить" : "Недостаточно прав"
+                              }
+                            >
                               <span>
                                 <IconButton
                                   size="small"
