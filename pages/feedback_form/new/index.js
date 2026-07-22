@@ -1351,7 +1351,7 @@ function FormBuilder() {
               {editingElement.data.condition.type === "orderType" && (
                 <Autocomplete
                   multiple
-                  options={["Доставка", "Самовывоз", "Зал"]}
+                  options={["Доставка", "Самовывоз", "Зал", "Зал с собой"]}
                   getOptionLabel={(option) => {
                     switch (option) {
                       case "delivery":
