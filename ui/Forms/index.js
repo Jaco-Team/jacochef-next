@@ -6,6 +6,7 @@ export * from "./MyAutocomplite";
 export * from "./MyAutocomplite2";
 export * from "./MyAutoCompleteWithAll";
 export * from "./MySelect";
+export * from "./MySearchInput";
 export * from "./MyTextInput";
 export * from "./MyRangeSlider";
 export * from "./MyCheckBox";

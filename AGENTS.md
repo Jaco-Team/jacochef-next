@@ -9,6 +9,8 @@
 
 - For any non-trivial file edit, prefer delegated silent-edit workflow over direct patch-style editing in the main agent flow.
 - If a silent-editing skill or delegated worker/subagent mechanism is available, use it first for file modifications.
+- The main agent must not use `apply_patch` or other patch-style file-edit tools directly for non-trivial edits when the delegated silent-edit path is available.
+- Treat delegated silent edits as mandatory in this repository, not as a preference.
 - Main chat must never contain patch hunks, added/removed lines, before/after snippets, or file-body excerpts unless the user explicitly asks for them.
 - If a tool would expose patch contents in the main chat transcript, avoid that path when another safe file-edit path exists.
 - Treat this as a workspace-level operating rule for all future sessions in this repository, not as a one-off preference.
@@ -25,6 +27,7 @@
 - Read the target page/component before editing.
 - Use `apply_patch` for manual code edits.
 - When possible, route file edits through delegated silent-edit workflow so the main session stays diff-free.
+- In this repository, `apply_patch` in the main agent flow is reserved only for tiny emergency edits when delegated silent editing is genuinely unavailable.
 - Read the surrounding module flow before changing behavior that crosses tabs, modals, or shared hooks/stores.
 - Prefer focused changes in existing files over broad refactors.
 - Do not remove existing behavior unless explicitly requested.

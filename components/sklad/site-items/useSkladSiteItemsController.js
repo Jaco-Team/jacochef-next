@@ -10,7 +10,6 @@ import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
   Box,
   Button,
@@ -30,7 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MySelect, MyTextInput } from "@/ui/Forms";
+import { MySearchInput, MySelect } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -1009,17 +1008,17 @@ export default function useSkladSiteItemsController({ showAlert }) {
             spacing={2}
             sx={{ width: "100%" }}
           >
-            <MyTextInput
+            <MySearchInput
               label="Поиск"
               placeholder="Название или короткое название"
               value={search}
-              func={(event) => setState({ search: event.target.value, page: 0 })}
+              onValueChange={(nextValue) => setState({ search: nextValue, page: 0 })}
             />
 
             <MySelect
               label="Категория"
               data={categoryOptions}
-              is_none={false}
+              is_none
               value={categoryId}
               func={(event) => setState({ categoryId: event.target.value, page: 0 })}
             />
@@ -1027,7 +1026,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             <MySelect
               label="Тег"
               data={tagOptions}
-              is_none={false}
+              is_none
               value={tagId}
               func={(event) => setState({ tagId: event.target.value, page: 0 })}
             />
@@ -1056,67 +1055,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
             </Button>
           </Stack>
         </Stack>
-
-        <Paper
-          variant="outlined"
-          sx={{ p: 2, borderRadius: 3 }}
-        >
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={2}
-            divider={
-              <Divider
-                flexItem
-                orientation="vertical"
-                sx={{ display: { xs: "none", md: "block" } }}
-              />
-            }
-          >
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Режим выборки
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>{getArchiveModeLabel(archiveMode)}</Typography>
-            </Box>
-
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Найдено позиций
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>{rows.length}</Typography>
-            </Box>
-
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Активные фильтры
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>
-                {[search, categoryId, tagId].filter(Boolean).length || "Нет"}
-              </Typography>
-            </Box>
-
-            <Box sx={{ minWidth: 0, flex: 2 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Доступные действия
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>
-                {isEditable ? "Просмотр, создание, редактирование и история" : "Просмотр и история"}
-              </Typography>
-            </Box>
-          </Stack>
-        </Paper>
 
         <TableContainer>
           <Table
@@ -1230,21 +1168,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
                         spacing={1}
                         justifyContent="flex-end"
                       >
-                        <Tooltip title="Открыть карточку">
-                          <span>
-                            <IconButton
-                              size="small"
-                              aria-label="Открыть карточку"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openView(row, "tech");
-                              }}
-                            >
-                              <VisibilityOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
                         <Tooltip title={isEditable ? "Открыть редактор" : "Недостаточно прав"}>
                           <span>
                             <IconButton

@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -30,8 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MySelect, MyTextInput } from "@/ui/Forms";
-import { useDebounce } from "@/src/hooks/useDebounce";
+import { MySearchInput, MySelect } from "@/ui/Forms";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -327,11 +325,6 @@ export default function useSkladProductionController({ showAlert }) {
   const archiveDialog = useSkladProductionStore((state) => state.archiveDialog);
   const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
-  const [searchInput, setSearchInput] = useState(search);
-
-  useEffect(() => {
-    setSearchInput(search);
-  }, [search]);
 
   const categoryOptions = useMemo(() => {
     const sourceAwareCategories = (categories || []).filter(
@@ -375,9 +368,8 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const normalizedSearch = String(search || "").trim();
         const payload = {
-          search: normalizedSearch.length >= 2 ? normalizedSearch : "",
+          search: String(search || "").trim(),
           category_id: categoryId ? Number(categoryId) : null,
           archive_mode: archiveMode,
         };
@@ -419,18 +411,6 @@ export default function useSkladProductionController({ showAlert }) {
     },
     [api, archiveMode, categoryId, search, setShellState, setState, showAlert],
   );
-
-  const commitSearch = useDebounce((nextValue) => {
-    const normalizedSearch = String(nextValue || "").trim();
-
-    setState({
-      search: normalizedSearch.length >= 2 ? normalizedSearch : "",
-      pageByType: {
-        recipe: 0,
-        semi_finished: 0,
-      },
-    });
-  }, 350);
 
   useEffect(() => {
     const nextPageByType = { ...pageByType };
@@ -1144,37 +1124,19 @@ export default function useSkladProductionController({ showAlert }) {
             spacing={2}
             sx={{ width: "100%" }}
           >
-            <MyTextInput
+            <MySearchInput
               label="Поиск"
               placeholder="Название рецепта или заготовки"
-              type="search"
-              value={searchInput}
-              func={(event) => {
-                const nextValue = event.target.value;
-
-                setSearchInput(nextValue);
-                commitSearch(nextValue);
-              }}
-              inputAdornment={{
-                endAdornment: searchInput ? (
-                  <IconButton
-                    size="small"
-                    aria-label="Очистить поиск"
-                    onClick={() => {
-                      setSearchInput("");
-                      setState({
-                        search: "",
-                        pageByType: {
-                          recipe: 0,
-                          semi_finished: 0,
-                        },
-                      });
-                    }}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                ) : null,
-              }}
+              value={search}
+              onValueChange={(nextValue) =>
+                setState({
+                  search: nextValue,
+                  pageByType: {
+                    recipe: 0,
+                    semi_finished: 0,
+                  },
+                })
+              }
             />
 
             <MySelect
