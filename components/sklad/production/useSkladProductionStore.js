@@ -14,12 +14,18 @@ export const PRODUCTION_ARCHIVE_MODE_OPTIONS = [
 ];
 
 export const useSkladProductionStore = create((set) => ({
-  entityType: "semi_finished",
-  rows: [],
+  activeEntityType: "semi_finished",
+  rowsByType: {
+    semi_finished: [],
+    recipe: [],
+  },
   search: "",
   categoryId: "",
   archiveMode: "active",
-  page: 0,
+  pageByType: {
+    semi_finished: 0,
+    recipe: 0,
+  },
   rowsPerPage: 25,
   modal: {
     open: false,

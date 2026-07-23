@@ -16,6 +16,7 @@ export const SKLAD_TAB_DEFINITIONS = [
     accessKeys: ["cats"],
     summaryKey: null,
     description: "Source-aware категории для production family и связанных сущностей.",
+    hidden: true,
   },
   {
     key: "production",
@@ -63,6 +64,10 @@ export function getVisibleSkladTabs({ sections = [], access = {} } = {}) {
   const accessApi = handleUserAccess(access);
 
   return SKLAD_TAB_DEFINITIONS.filter((tab) => {
+    if (tab.hidden) {
+      return false;
+    }
+
     const hasSection = tab.sections.some((section) => sections.includes(section));
     const canView = tab.accessKeys.some((key) => accessApi.userCan("view", key));
 

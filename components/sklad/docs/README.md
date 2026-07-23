@@ -74,6 +74,11 @@
 - Recipes, Semi-finished и Site items уже имеют live read routes
 - это еще не означает завершенный lifecycle управления, потому что write/archive/delete flows остаются planned
 
+Временное решение по FE:
+
+- tab `Категории` в `sklad_items` сейчас скрыт из нового UI
+- это временный шаг перед полным удалением tab-а из нового модуля
+
 ## 2.1. FE product shape
 
 Новый `sklad_items` должен быть не “одной огромной формой”, а unified shell с tab navigation.

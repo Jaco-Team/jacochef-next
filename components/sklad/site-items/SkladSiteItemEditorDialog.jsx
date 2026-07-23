@@ -1074,7 +1074,7 @@ export default function SkladSiteItemEditorDialog({
                     <Grid
                       container
                       spacing={2}
-                      alignItems="flex-start"
+                      alignItems="center"
                     >
                       {imageUrl ? (
                         <Grid size={{ xs: 12, md: 4 }}>
@@ -1098,6 +1098,7 @@ export default function SkladSiteItemEditorDialog({
                                 width: "100%",
                                 maxWidth: 220,
                                 display: "block",
+                                marginInline: "auto",
                               }}
                             />
                           </Box>

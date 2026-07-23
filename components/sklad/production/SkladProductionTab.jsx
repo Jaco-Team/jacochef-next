@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react";
 import useSkladProductionController from "./useSkladProductionController";
 
 export default function SkladProductionTab({ showAlert, refreshToken }) {
-  const { entityType, search, categoryId, archiveMode, loadRows, content } =
-    useSkladProductionController({ showAlert });
+  const { search, categoryId, archiveMode, loadRows, content } = useSkladProductionController({
+    showAlert,
+  });
 
   const loadRowsRef = useRef(loadRows);
 
@@ -15,7 +16,7 @@ export default function SkladProductionTab({ showAlert, refreshToken }) {
 
   useEffect(() => {
     loadRowsRef.current({ resetPage: true });
-  }, [archiveMode, categoryId, entityType, search]);
+  }, [archiveMode, categoryId, search]);
 
   useEffect(() => {
     loadRowsRef.current();

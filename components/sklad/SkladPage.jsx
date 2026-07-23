@@ -6,7 +6,6 @@ import {
   Backdrop,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Grid,
   Paper,
@@ -58,7 +57,6 @@ export default function SkladPage() {
   const isLoading = useSkladStore((state) => state.isLoading);
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
-  const summary = useSkladStore((state) => state.summary);
   const sections = useSkladStore((state) => state.sections);
   const access = useSkladStore((state) => state.access);
   const tab = useSkladStore((state) => state.tab);
@@ -124,13 +122,6 @@ export default function SkladPage() {
       setState({ tab: 0 });
     }
   }, [tab, tabs, setState]);
-
-  const summaryChips = [
-    { key: "recipes_active", label: "Рецепты" },
-    { key: "semi_finished_active", label: "Заготовки" },
-    { key: "site_items_active", label: "Товары сайта" },
-    { key: "archive_total", label: "Архив" },
-  ].filter((item) => summary?.[item.key] !== undefined);
 
   const renderTabContent = (item) => {
     if (item.key === "units") {
@@ -220,16 +211,6 @@ export default function SkladPage() {
             <Grid size={{ xs: 12, md: "grow" }}>
               <Box>
                 <h1>{moduleName || "Склад"}</h1>
-
-                {tabs.length ? (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 0.5 }}
-                  >
-                    Рабочие разделы: {tabs.length}
-                  </Typography>
-                ) : null}
               </Box>
             </Grid>
 
@@ -249,27 +230,6 @@ export default function SkladPage() {
             </Grid>
           </Grid>
         </Grid>
-
-        {summaryChips.length ? (
-          <Grid size={12}>
-            <Paper sx={{ p: 2, borderRadius: 3 }}>
-              <Stack
-                direction="row"
-                spacing={1}
-                useFlexGap
-                flexWrap="wrap"
-              >
-                {summaryChips.map((item) => (
-                  <Chip
-                    key={item.key}
-                    label={`${item.label}: ${summary[item.key]}`}
-                    variant="outlined"
-                  />
-                ))}
-              </Stack>
-            </Paper>
-          </Grid>
-        ) : null}
 
         <Grid size={12}>
           <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>

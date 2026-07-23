@@ -1,18 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Button,
   Chip,
-  Divider,
   IconButton,
   Paper,
   Stack,
@@ -23,13 +26,12 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
 
 import { MySelect, MyTextInput } from "@/ui/Forms";
+import { useDebounce } from "@/src/hooks/useDebounce";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -43,15 +45,16 @@ import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladProductionViewDialog from "./SkladProductionViewDialog";
 import {
   PRODUCTION_ARCHIVE_MODE_OPTIONS,
-  PRODUCTION_ENTITY_OPTIONS,
   useSkladProductionStore,
 } from "./useSkladProductionStore";
 
-function getEntityAccessKey(entityType) {
-  return entityType === "recipe" ? "recipes" : "semi_finished";
-}
+const ENTITY_TYPES = ["recipe", "semi_finished"];
 
 function getEntityLabel(entityType) {
+  return entityType === "recipe" ? "Рецепты" : "Заготовки";
+}
+
+function getEntitySingleLabel(entityType) {
   return entityType === "recipe" ? "Рецепт" : "Заготовка";
 }
 
@@ -65,6 +68,14 @@ function getEntitySaveApi(api, entityType, mode) {
   }
 
   return mode === "create" ? api.createSemiFinished : api.updateSemiFinished;
+}
+
+function getEntityLoadApi(api, entityType) {
+  return entityType === "recipe" ? api.getRecipes : api.getSemiFinished;
+}
+
+function getEntityDetailApi(api, entityType) {
+  return entityType === "recipe" ? api.getRecipe : api.getSemiFinishedOne;
 }
 
 function getProductionVisibleState(row) {
@@ -303,12 +314,12 @@ export default function useSkladProductionController({ showAlert }) {
   const shellApps = useSkladStore((state) => state.apps);
   const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
-  const entityType = useSkladProductionStore((state) => state.entityType);
-  const rows = useSkladProductionStore((state) => state.rows);
+  const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
+  const rowsByType = useSkladProductionStore((state) => state.rowsByType);
   const search = useSkladProductionStore((state) => state.search);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
   const archiveMode = useSkladProductionStore((state) => state.archiveMode);
-  const page = useSkladProductionStore((state) => state.page);
+  const pageByType = useSkladProductionStore((state) => state.pageByType);
   const rowsPerPage = useSkladProductionStore((state) => state.rowsPerPage);
   const modal = useSkladProductionStore((state) => state.modal);
   const detail = useSkladProductionStore((state) => state.detail);
@@ -316,10 +327,11 @@ export default function useSkladProductionController({ showAlert }) {
   const archiveDialog = useSkladProductionStore((state) => state.archiveDialog);
   const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
+  const [searchInput, setSearchInput] = useState(search);
 
-  const canCreateOrEdit = canManageProduction(entityType);
-  const canConvert = canManageProduction("recipe") || canManageProduction("semi_finished");
-  const canDeleteAction = canDelete("production");
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
 
   const categoryOptions = useMemo(() => {
     const sourceAwareCategories = (categories || []).filter(
@@ -334,29 +346,70 @@ export default function useSkladProductionController({ showAlert }) {
     );
   }, [categories]);
 
+  const countsByType = useMemo(() => {
+    return ENTITY_TYPES.reduce((accumulator, entityType) => {
+      const rows = Array.isArray(rowsByType?.[entityType]) ? rowsByType[entityType] : [];
+      accumulator[entityType] = [...rows].sort((left, right) =>
+        String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
+      );
+      return accumulator;
+    }, {});
+  }, [rowsByType]);
+
+  const paginatedRowsByType = useMemo(() => {
+    return ENTITY_TYPES.reduce((accumulator, entityType) => {
+      const sortedRows = countsByType[entityType] || [];
+      const page = pageByType?.[entityType] || 0;
+      const start = page * rowsPerPage;
+
+      accumulator[entityType] = sortedRows.slice(start, start + rowsPerPage);
+      return accumulator;
+    }, {});
+  }, [countsByType, pageByType, rowsPerPage]);
+
+  const canConvert = canManageProduction("recipe") || canManageProduction("semi_finished");
+  const canDeleteAction = canDelete("production");
+
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
       setShellState({ isLoading: true });
 
       try {
+        const normalizedSearch = String(search || "").trim();
         const payload = {
-          search: String(search || "").trim(),
+          search: normalizedSearch.length >= 2 ? normalizedSearch : "",
           category_id: categoryId ? Number(categoryId) : null,
           archive_mode: archiveMode,
         };
 
-        const response =
-          entityType === "recipe"
-            ? await api.getRecipes(payload)
-            : await api.getSemiFinished(payload);
+        const [recipesResponse, semiFinishedResponse] = await Promise.all([
+          getEntityLoadApi(api, "recipe")(payload),
+          getEntityLoadApi(api, "semi_finished")(payload),
+        ]);
 
-        if (!response?.st) {
-          throw new Error(response?.text || "Ошибка загрузки списка");
+        if (!recipesResponse?.st) {
+          throw new Error(recipesResponse?.text || "Ошибка загрузки списка рецептов");
+        }
+
+        if (!semiFinishedResponse?.st) {
+          throw new Error(semiFinishedResponse?.text || "Ошибка загрузки списка заготовок");
         }
 
         setState({
-          rows: Array.isArray(response?.list) ? response.list : [],
-          ...(resetPage ? { page: 0 } : {}),
+          rowsByType: {
+            recipe: Array.isArray(recipesResponse?.list) ? recipesResponse.list : [],
+            semi_finished: Array.isArray(semiFinishedResponse?.list)
+              ? semiFinishedResponse.list
+              : [],
+          },
+          ...(resetPage
+            ? {
+                pageByType: {
+                  recipe: 0,
+                  semi_finished: 0,
+                },
+              }
+            : {}),
         });
       } catch (error) {
         showAlert(error?.message || "Ошибка загрузки списка", false);
@@ -364,32 +417,45 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, archiveMode, categoryId, entityType, search, setShellState, setState, showAlert],
+    [api, archiveMode, categoryId, search, setShellState, setState, showAlert],
   );
 
-  const sortedRows = useMemo(() => {
-    return [...rows].sort((left, right) =>
-      String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
-    );
-  }, [rows]);
+  const commitSearch = useDebounce((nextValue) => {
+    const normalizedSearch = String(nextValue || "").trim();
 
-  const paginatedRows = useMemo(() => {
-    const start = page * rowsPerPage;
-    return sortedRows.slice(start, start + rowsPerPage);
-  }, [page, rowsPerPage, sortedRows]);
+    setState({
+      search: normalizedSearch.length >= 2 ? normalizedSearch : "",
+      pageByType: {
+        recipe: 0,
+        semi_finished: 0,
+      },
+    });
+  }, 350);
 
   useEffect(() => {
-    const maxPage = sortedRows.length
-      ? Math.max(0, Math.ceil(sortedRows.length / rowsPerPage) - 1)
-      : 0;
+    const nextPageByType = { ...pageByType };
+    let changed = false;
 
-    if (page > maxPage) {
-      setState({ page: maxPage });
+    ENTITY_TYPES.forEach((entityType) => {
+      const sortedRows = countsByType[entityType] || [];
+      const currentPage = pageByType?.[entityType] || 0;
+      const maxPage = sortedRows.length
+        ? Math.max(0, Math.ceil(sortedRows.length / rowsPerPage) - 1)
+        : 0;
+
+      if (currentPage > maxPage) {
+        nextPageByType[entityType] = maxPage;
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setState({ pageByType: nextPageByType });
     }
-  }, [page, rowsPerPage, setState, sortedRows.length]);
+  }, [countsByType, pageByType, rowsPerPage, setState]);
 
   const openHistoryTab = useCallback(
-    (row) => {
+    (entityType, row) => {
       if (!row?.id) {
         showAlert("Не удалось определить сущность для открытия истории", false);
         return;
@@ -413,7 +479,7 @@ export default function useSkladProductionController({ showAlert }) {
       });
       setShellState({ tab: historyTabIndex });
     },
-    [entityType, setHistoryState, setShellState, shellAccess, shellSections, showAlert],
+    [setHistoryState, setShellState, shellAccess, shellSections, showAlert],
   );
 
   const closeModal = useCallback(() => {
@@ -435,6 +501,7 @@ export default function useSkladProductionController({ showAlert }) {
         open: false,
         loading: false,
         row: null,
+        entityType: null,
       },
     });
   }, [setState]);
@@ -445,21 +512,24 @@ export default function useSkladProductionController({ showAlert }) {
         open: false,
         loading: false,
         row: null,
+        entityType: null,
       },
     });
   }, [setState]);
 
   const openArchiveDialog = useCallback(
-    (row) => {
+    (entityType, row) => {
       if (!row?.id) {
         return;
       }
 
       setState({
+        activeEntityType: entityType,
         archiveDialog: {
           open: true,
           loading: false,
           row,
+          entityType,
         },
       });
     },
@@ -467,16 +537,18 @@ export default function useSkladProductionController({ showAlert }) {
   );
 
   const openDeleteDialog = useCallback(
-    (row) => {
+    (entityType, row) => {
       if (!row?.id || !canDeleteAction) {
         return;
       }
 
       setState({
+        activeEntityType: entityType,
         deleteDialog: {
           open: true,
           loading: false,
           row,
+          entityType,
         },
       });
     },
@@ -485,8 +557,9 @@ export default function useSkladProductionController({ showAlert }) {
 
   const confirmDelete = useCallback(async () => {
     const row = deleteDialog?.row;
+    const entityType = deleteDialog?.entityType || activeEntityType;
 
-    if (!row?.id) {
+    if (!row?.id || !entityType) {
       return;
     }
 
@@ -495,6 +568,7 @@ export default function useSkladProductionController({ showAlert }) {
         open: true,
         loading: true,
         row,
+        entityType,
       },
     });
     setShellState({ isLoading: true });
@@ -518,6 +592,7 @@ export default function useSkladProductionController({ showAlert }) {
           open: true,
           loading: false,
           row,
+          entityType,
         },
       });
       showAlert(error?.message || "Ошибка удаления", false);
@@ -525,10 +600,11 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: false });
     }
   }, [
+    activeEntityType,
     api,
     closeDeleteDialog,
+    deleteDialog?.entityType,
     deleteDialog?.row,
-    entityType,
     loadRows,
     setShellState,
     setState,
@@ -537,8 +613,9 @@ export default function useSkladProductionController({ showAlert }) {
 
   const confirmArchive = useCallback(async () => {
     const row = archiveDialog?.row;
+    const entityType = archiveDialog?.entityType || activeEntityType;
 
-    if (!row?.id) {
+    if (!row?.id || !entityType) {
       return;
     }
 
@@ -549,6 +626,7 @@ export default function useSkladProductionController({ showAlert }) {
         open: true,
         loading: true,
         row,
+        entityType,
       },
     });
     setShellState({ isLoading: true });
@@ -573,6 +651,7 @@ export default function useSkladProductionController({ showAlert }) {
           open: true,
           loading: false,
           row,
+          entityType,
         },
       });
       showAlert(error?.message || "Ошибка изменения архива", false);
@@ -580,72 +659,36 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: false });
     }
   }, [
+    activeEntityType,
     api,
+    archiveDialog?.entityType,
     archiveDialog?.row,
     closeArchiveDialog,
-    entityType,
     loadRows,
     setShellState,
     setState,
     showAlert,
   ]);
 
-  const toggleFlag = useCallback(
-    async (row, type) => {
-      if (!row?.id || !type || !canCreateOrEdit) {
-        return;
-      }
-
-      const currentValue =
-        type === "is_show"
-          ? getProductionVisibleState(row)
-            ? 1
-            : 0
-          : Number(row?.[type] ?? 0) === 1
-            ? 1
-            : 0;
-      const nextValue = currentValue === 1 ? 0 : 1;
-      const saveFlag = getEntityFlagApi(api, entityType);
-
-      setShellState({ isLoading: true });
-
-      try {
-        const response = await saveFlag({
-          id: row.id,
-          type,
-          value: nextValue,
-        });
-
-        if (!response?.st) {
-          throw new Error(response?.text || "Ошибка изменения флага");
-        }
-
-        showAlert(response?.text || "Успешно сохранено", true);
-        await loadRows();
-      } catch (error) {
-        showAlert(error?.message || "Ошибка изменения флага", false);
-      } finally {
-        setShellState({ isLoading: false });
-      }
+  const openCreate = useCallback(
+    (entityType) => {
+      setState({
+        activeEntityType: entityType,
+        modal: {
+          open: true,
+          mode: "create",
+          loading: false,
+          tab: "main",
+        },
+        detail: null,
+        draft: {
+          ...createEmptyProductionDraft(),
+          units: [],
+        },
+      });
     },
-    [api, canCreateOrEdit, entityType, loadRows, setShellState, showAlert],
+    [setState],
   );
-
-  const openCreate = useCallback(() => {
-    setState({
-      modal: {
-        open: true,
-        mode: "create",
-        loading: false,
-        tab: "main",
-      },
-      detail: null,
-      draft: {
-        ...createEmptyProductionDraft(),
-        units: [],
-      },
-    });
-  }, [setState]);
 
   const submitDraft = useCallback(
     async (nextDraft) => {
@@ -657,7 +700,7 @@ export default function useSkladProductionController({ showAlert }) {
       }
 
       const saveMode = modal.mode === "create" ? "create" : "edit";
-      const saveEntity = getEntitySaveApi(api, entityType, saveMode);
+      const saveEntity = getEntitySaveApi(api, activeEntityType, saveMode);
       const payload = normalizeProductionSavePayload(nextDraft);
 
       setState({
@@ -692,19 +735,16 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, closeModal, entityType, loadRows, modal, setShellState, setState, showAlert],
+    [activeEntityType, api, closeModal, loadRows, modal, setShellState, setState, showAlert],
   );
 
   const loadEntityDetail = useCallback(
-    async (row) => {
+    async (entityType, row) => {
       if (!row?.id) {
         return null;
       }
 
-      const response =
-        entityType === "recipe"
-          ? await api.getRecipe(row.id)
-          : await api.getSemiFinishedOne(row.id);
+      const response = await getEntityDetailApi(api, entityType)(row.id);
 
       if (!response?.st) {
         throw new Error(response?.text || "Ошибка загрузки карточки");
@@ -712,12 +752,13 @@ export default function useSkladProductionController({ showAlert }) {
 
       return normalizeProductionDraft(response?.entity || {}, response);
     },
-    [api, entityType],
+    [api],
   );
 
   const openView = useCallback(
-    async (row, tab = "main") => {
+    async (entityType, row, tab = "main") => {
       setState({
+        activeEntityType: entityType,
         modal: {
           open: true,
           mode: "view",
@@ -730,7 +771,7 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const entity = await loadEntityDetail(row);
+        const entity = await loadEntityDetail(entityType, row);
         setState({
           modal: {
             open: true,
@@ -751,8 +792,9 @@ export default function useSkladProductionController({ showAlert }) {
   );
 
   const openEdit = useCallback(
-    async (row) => {
+    async (entityType, row) => {
       setState({
+        activeEntityType: entityType,
         modal: {
           open: true,
           mode: "edit",
@@ -765,7 +807,7 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const entity = await loadEntityDetail(row);
+        const entity = await loadEntityDetail(entityType, row);
         setState({
           modal: {
             open: true,
@@ -787,8 +829,9 @@ export default function useSkladProductionController({ showAlert }) {
   );
 
   const openConvert = useCallback(
-    async (row) => {
+    async (entityType, row) => {
       setState({
+        activeEntityType: entityType,
         modal: {
           open: true,
           mode: "convert",
@@ -801,7 +844,7 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const entity = await loadEntityDetail(row);
+        const entity = await loadEntityDetail(entityType, row);
         setState({
           modal: {
             open: true,
@@ -821,372 +864,360 @@ export default function useSkladProductionController({ showAlert }) {
     [closeModal, loadEntityDetail, setShellState, setState, showAlert],
   );
 
-  const content = (
-    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
-      <Stack spacing={2}>
-        <Stack spacing={2}>
-          <ToggleButtonGroup
-            exclusive
-            value={entityType}
-            onChange={(_, value) => {
-              if (!value) {
-                return;
-              }
+  const renderSection = (entityType) => {
+    const canCreateOrEdit = canManageProduction(entityType);
+    const sortedRows = countsByType[entityType] || [];
+    const paginatedRows = paginatedRowsByType[entityType] || [];
+    const currentPage = pageByType?.[entityType] || 0;
 
-              setState({
-                entityType: value,
-                rows: [],
-                categoryId: "",
-                page: 0,
-              });
-            }}
-            size="small"
-            color="primary"
-            sx={{ alignSelf: "flex-start", flexWrap: "wrap" }}
-          >
-            {PRODUCTION_ENTITY_OPTIONS.map((option) => (
-              <ToggleButton
-                key={option.id}
-                value={option.id}
-              >
-                {option.name}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-
+    return (
+      <Accordion
+        key={entityType}
+        defaultExpanded
+        disableGutters
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
-            direction={{ xs: "column", xl: "row" }}
-            spacing={2}
-            justifyContent="space-between"
-            alignItems={{ xs: "stretch", xl: "center" }}
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            sx={{ width: "100%" }}
           >
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={2}
-              sx={{ width: "100%" }}
+            <Typography sx={{ fontWeight: 700 }}>{getEntityLabel(entityType)}</Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
             >
-              <MyTextInput
-                label="Поиск"
-                placeholder={`Название ${getEntityLabel(entityType).toLowerCase()}а`}
-                value={search}
-                func={(event) => setState({ search: event.target.value, page: 0 })}
-              />
+              {sortedRows.length}
+            </Typography>
+          </Stack>
+        </AccordionSummary>
 
-              <MySelect
-                label="Категория"
-                data={categoryOptions}
-                is_none={false}
-                value={categoryId}
-                func={(event) => setState({ categoryId: event.target.value, page: 0 })}
-              />
-
-              <MySelect
-                label="Показать"
-                data={PRODUCTION_ARCHIVE_MODE_OPTIONS}
-                is_none={false}
-                value={archiveMode}
-                func={(event) => setState({ archiveMode: event.target.value, page: 0 })}
-              />
-            </Stack>
-
+        <AccordionDetails>
+          <Stack spacing={2}>
             <Stack
               direction="row"
-              spacing={1.5}
-              justifyContent={{ xs: "flex-start", xl: "flex-end" }}
+              justifyContent="flex-start"
             >
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 disabled={!canCreateOrEdit}
-                onClick={openCreate}
+                onClick={() => openCreate(entityType)}
               >
-                Добавить {getEntityLabel(entityType).toLowerCase()}
+                Добавить {getEntitySingleLabel(entityType).toLowerCase()}
               </Button>
             </Stack>
-          </Stack>
-        </Stack>
 
-        <Paper
-          variant="outlined"
-          sx={{ p: 2, borderRadius: 3 }}
+            <TableContainer sx={{ maxHeight: "50dvh", overflow: "auto" }}>
+              <Table
+                size="small"
+                stickyHeader
+                sx={{
+                  "& th": {
+                    whiteSpace: "nowrap",
+                    fontWeight: 700,
+                  },
+                }}
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Название</TableCell>
+                    <TableCell>Категории</TableCell>
+                    <TableCell>Срок годности</TableCell>
+                    <TableCell sx={{ width: 220 }}>Действует</TableCell>
+                    <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ width: 220 }}
+                    >
+                      Действия
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {paginatedRows.map((row) => {
+                    const canDelete = Boolean(row?.delete_usage?.can_delete);
+                    const primaryStatusChip = getPrimaryStatusChip(row);
+                    const secondaryStatusChips = getSecondaryStatusChips(row);
+
+                    return (
+                      <TableRow
+                        key={getRowKey(entityType, row)}
+                        hover
+                      >
+                        <TableCell
+                          onClick={() => openView(entityType, row, "main")}
+                          sx={{ cursor: "pointer" }}
+                        >
+                          <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
+                        </TableCell>
+
+                        <TableCell>{formatCategories(row?.categories)}</TableCell>
+                        <TableCell>{row?.shelf_life || "-"}</TableCell>
+                        <TableCell>{formatDateRangeCell(row)}</TableCell>
+
+                        <TableCell>
+                          <Stack
+                            direction="row"
+                            spacing={0.75}
+                            useFlexGap
+                            flexWrap="wrap"
+                            alignItems="center"
+                          >
+                            <Chip
+                              key={primaryStatusChip.key}
+                              label={primaryStatusChip.label}
+                              size="small"
+                              color={primaryStatusChip.color}
+                              variant={
+                                primaryStatusChip.color === "default" ? "outlined" : "filled"
+                              }
+                            />
+                            {secondaryStatusChips.map((chip) => (
+                              <Chip
+                                key={chip.key}
+                                label={chip.label}
+                                size="small"
+                                color={chip.color}
+                                variant="outlined"
+                              />
+                            ))}
+                          </Stack>
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            justifyContent="flex-end"
+                          >
+                            <Tooltip
+                              title={canCreateOrEdit ? "Открыть редактор" : "Недостаточно прав"}
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={!canCreateOrEdit}
+                                  aria-label="Редактировать"
+                                  onClick={() => openEdit(entityType, row)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            <Tooltip
+                              title={canConvert ? "Открыть конвертацию" : "Недостаточно прав"}
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={!canConvert}
+                                  aria-label="Открыть сценарий конвертации"
+                                  onClick={() => openConvert(entityType, row)}
+                                >
+                                  <SwapHorizIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            <Tooltip title="Открыть историю">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  aria-label="Открыть историю"
+                                  onClick={() => openHistoryTab(entityType, row)}
+                                >
+                                  <HistoryOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            <Tooltip
+                              title={
+                                Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"
+                              }
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={!canCreateOrEdit}
+                                  onClick={() => openArchiveDialog(entityType, row)}
+                                >
+                                  {Number(row?.is_archived) === 1 ? (
+                                    <UnarchiveOutlinedIcon fontSize="small" />
+                                  ) : (
+                                    <ArchiveOutlinedIcon fontSize="small" />
+                                  )}
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            {canDelete ? (
+                              <Tooltip title="Удалить">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    disabled={!canCreateOrEdit || !canDeleteAction}
+                                    onClick={() => openDeleteDialog(entityType, row)}
+                                  >
+                                    <DeleteOutlineIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip title={getDeleteHint(row)}>
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    disabled
+                                  >
+                                    <DeleteOutlineIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+
+                  {sortedRows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6}>
+                        <Typography color="text.secondary">
+                          Ничего не найдено. Измените фильтры или режим показа.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <TablePagination
+              component="div"
+              count={sortedRows.length}
+              page={currentPage}
+              onPageChange={(_, nextPage) =>
+                setState({
+                  pageByType: {
+                    ...pageByType,
+                    [entityType]: nextPage,
+                  },
+                })
+              }
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) =>
+                setState({
+                  rowsPerPage: Number(event.target.value) || 25,
+                  pageByType: {
+                    recipe: 0,
+                    semi_finished: 0,
+                  },
+                })
+              }
+              rowsPerPageOptions={[25, 50, 100]}
+              labelRowsPerPage="Строк на странице:"
+            />
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    );
+  };
+
+  const content = (
+    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
+      <Stack spacing={2}>
+        <Stack
+          direction={{ xs: "column", xl: "row" }}
+          spacing={2}
+          justifyContent="space-between"
+          alignItems={{ xs: "stretch", xl: "center" }}
         >
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
-            divider={
-              <Divider
-                flexItem
-                orientation="vertical"
-                sx={{ display: { xs: "none", md: "block" } }}
-              />
-            }
+            sx={{ width: "100%" }}
           >
-            <Stack
-              spacing={0.5}
-              sx={{ minWidth: 0, flex: 1 }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Текущий тип
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>{getEntityLabel(entityType)}</Typography>
-            </Stack>
-            <Stack
-              spacing={0.5}
-              sx={{ minWidth: 0, flex: 1 }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Найдено позиций
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>{sortedRows.length}</Typography>
-            </Stack>
-            <Stack
-              spacing={0.5}
-              sx={{ minWidth: 0, flex: 1 }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Доступные действия
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>
-                {canCreateOrEdit ? "Просмотр, создание, редактирование" : "Просмотр"}
-              </Typography>
-            </Stack>
-            <Stack
-              spacing={0.5}
-              sx={{ minWidth: 0, flex: 1 }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                История и конвертация
-              </Typography>
-              <Typography sx={{ fontWeight: 700 }}>
-                {canConvert ? "История и конвертация доступны" : "История доступна"}
-              </Typography>
-            </Stack>
-          </Stack>
-        </Paper>
+            <MyTextInput
+              label="Поиск"
+              placeholder="Название рецепта или заготовки"
+              type="search"
+              value={searchInput}
+              func={(event) => {
+                const nextValue = event.target.value;
 
-        <TableContainer>
-          <Table
-            size="small"
-            stickyHeader
-            sx={{
-              "& th": {
-                whiteSpace: "nowrap",
-                fontWeight: 700,
-              },
-            }}
-          >
-            <TableHead>
-              <TableRow>
-                <TableCell>Название</TableCell>
-                <TableCell>Категории</TableCell>
-                <TableCell>Срок годности</TableCell>
-                <TableCell sx={{ width: 220 }}>Действует</TableCell>
-                <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
-                <TableCell
-                  align="right"
-                  sx={{ width: 240 }}
-                >
-                  Действия
-                </TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {paginatedRows.map((row) => {
-                const canDelete = Boolean(row?.delete_usage?.can_delete);
-                const primaryStatusChip = getPrimaryStatusChip(row);
-                const secondaryStatusChips = getSecondaryStatusChips(row);
-
-                return (
-                  <TableRow
-                    key={getRowKey(entityType, row)}
-                    hover
+                setSearchInput(nextValue);
+                commitSearch(nextValue);
+              }}
+              inputAdornment={{
+                endAdornment: searchInput ? (
+                  <IconButton
+                    size="small"
+                    aria-label="Очистить поиск"
+                    onClick={() => {
+                      setSearchInput("");
+                      setState({
+                        search: "",
+                        pageByType: {
+                          recipe: 0,
+                          semi_finished: 0,
+                        },
+                      });
+                    }}
                   >
-                    <TableCell>
-                      <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
-                    </TableCell>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                ) : null,
+              }}
+            />
 
-                    <TableCell>{formatCategories(row?.categories)}</TableCell>
-                    <TableCell>{row?.shelf_life || "-"}</TableCell>
-                    <TableCell>{formatDateRangeCell(row)}</TableCell>
+            <MySelect
+              label="Категория"
+              data={categoryOptions}
+              is_none={false}
+              value={categoryId}
+              func={(event) =>
+                setState({
+                  categoryId: event.target.value,
+                  pageByType: {
+                    recipe: 0,
+                    semi_finished: 0,
+                  },
+                })
+              }
+            />
 
-                    <TableCell>
-                      <Stack
-                        direction="row"
-                        spacing={0.75}
-                        useFlexGap
-                        flexWrap="wrap"
-                        alignItems="center"
-                      >
-                        <Chip
-                          key={primaryStatusChip.key}
-                          label={primaryStatusChip.label}
-                          size="small"
-                          color={primaryStatusChip.color}
-                          variant={primaryStatusChip.color === "default" ? "outlined" : "filled"}
-                        />
-                        {secondaryStatusChips.map((chip) => (
-                          <Chip
-                            key={chip.key}
-                            label={chip.label}
-                            size="small"
-                            color={chip.color}
-                            variant="outlined"
-                          />
-                        ))}
-                      </Stack>
-                    </TableCell>
+            <MySelect
+              label="Показать"
+              data={PRODUCTION_ARCHIVE_MODE_OPTIONS}
+              is_none={false}
+              value={archiveMode}
+              func={(event) =>
+                setState({
+                  archiveMode: event.target.value,
+                  pageByType: {
+                    recipe: 0,
+                    semi_finished: 0,
+                  },
+                })
+              }
+            />
+          </Stack>
+        </Stack>
 
-                    <TableCell align="right">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="flex-end"
-                      >
-                        <Tooltip title="Открыть карточку">
-                          <span>
-                            <IconButton
-                              size="small"
-                              aria-label="Просмотр"
-                              onClick={() => openView(row, "main")}
-                            >
-                              <VisibilityOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        <Tooltip title={canCreateOrEdit ? "Открыть редактор" : "Недостаточно прав"}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={!canCreateOrEdit}
-                              aria-label="Редактировать"
-                              onClick={() => openEdit(row)}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        <Tooltip title={canConvert ? "Открыть конвертацию" : "Недостаточно прав"}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={!canConvert}
-                              aria-label="Открыть сценарий конвертации"
-                              onClick={() => openConvert(row)}
-                            >
-                              <SwapHorizIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        <Tooltip title="Открыть историю">
-                          <span>
-                            <IconButton
-                              size="small"
-                              aria-label="Открыть историю"
-                              onClick={() => openHistoryTab(row)}
-                            >
-                              <HistoryOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        <Tooltip
-                          title={Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"}
-                        >
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={!canCreateOrEdit}
-                              onClick={() => openArchiveDialog(row)}
-                            >
-                              {Number(row?.is_archived) === 1 ? (
-                                <UnarchiveOutlinedIcon fontSize="small" />
-                              ) : (
-                                <ArchiveOutlinedIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        {canDelete ? (
-                          <Tooltip title="Удалить">
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                disabled={!canCreateOrEdit || !canDeleteAction}
-                                onClick={() => openDeleteDialog(row)}
-                              >
-                                <DeleteOutlineIcon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title={getDeleteHint(row)}>
-                            <span>
-                              <IconButton
-                                size="small"
-                                disabled
-                              >
-                                <DeleteOutlineIcon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-
-              {sortedRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <Typography color="text.secondary">
-                      Ничего не найдено. Измените фильтры или режим показа.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={sortedRows.length}
-          page={page}
-          onPageChange={(_, nextPage) => setState({ page: nextPage })}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(event) =>
-            setState({
-              page: 0,
-              rowsPerPage: Number(event.target.value) || 25,
-            })
-          }
-          rowsPerPageOptions={[25, 50, 100]}
-          labelRowsPerPage="Строк на странице:"
-        />
+        {ENTITY_TYPES.map(renderSection)}
       </Stack>
     </Paper>
   );
 
   return {
-    entityType,
+    activeEntityType,
     search,
     categoryId,
     archiveMode,
@@ -1207,14 +1238,14 @@ export default function useSkladProductionController({ showAlert }) {
             })
           }
           detail={detail}
-          entityLabel={getEntityLabel(entityType)}
+          entityLabel={getEntitySingleLabel(activeEntityType)}
           onClose={closeModal}
         />
         <SkladProductionEditorDialog
           open={modal.open && (modal.mode === "edit" || modal.mode === "create")}
           loading={modal.loading}
           mode={modal.mode === "edit" ? "edit" : "create"}
-          entityLabel={getEntityLabel(entityType)}
+          entityLabel={getEntitySingleLabel(activeEntityType)}
           draft={draft}
           units={
             draft?.units?.length ? draft.units : detail?.units?.length ? detail.units : shellUnits
@@ -1224,21 +1255,21 @@ export default function useSkladProductionController({ showAlert }) {
           storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
           apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
           allItemsList={detail?.all_items_list || draft?.all_items_list || []}
-          isEditable={canCreateOrEdit}
+          isEditable={canManageProduction(activeEntityType)}
           onSubmit={submitDraft}
           onClose={closeModal}
         />
         <SkladProductionConvertDialog
           open={modal.open && modal.mode === "convert"}
           detail={detail}
-          entityType={entityType}
+          entityType={activeEntityType}
           canConvert={canConvert}
           onClose={closeModal}
         />
         <SkladDeleteDialog
           open={deleteDialog.open}
           loading={deleteDialog.loading}
-          title={`Удалить ${getEntityLabel(entityType).toLowerCase()}?`}
+          title={`Удалить ${getEntitySingleLabel(deleteDialog?.entityType || activeEntityType).toLowerCase()}?`}
           description={`Запись "${deleteDialog?.row?.name || ""}" будет удалена без возможности восстановления.`}
           warning="Если запись уже использовалась, удаление будет недоступно."
           onClose={closeDeleteDialog}
@@ -1249,8 +1280,8 @@ export default function useSkladProductionController({ showAlert }) {
           loading={archiveDialog.loading}
           title={
             Number(archiveDialog?.row?.is_archived) === 1
-              ? `Вернуть ${getEntityLabel(entityType).toLowerCase()} из архива?`
-              : `Отправить ${getEntityLabel(entityType).toLowerCase()} в архив?`
+              ? `Вернуть ${getEntitySingleLabel(archiveDialog?.entityType || activeEntityType).toLowerCase()} из архива?`
+              : `Отправить ${getEntitySingleLabel(archiveDialog?.entityType || activeEntityType).toLowerCase()} в архив?`
           }
           description={`Запись "${archiveDialog?.row?.name || ""}" будет ${
             Number(archiveDialog?.row?.is_archived) === 1
