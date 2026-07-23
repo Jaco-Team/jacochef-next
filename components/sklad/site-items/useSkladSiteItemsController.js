@@ -129,6 +129,18 @@ function getArchiveModeLabel(value) {
   return SITE_ITEMS_ARCHIVE_MODE_OPTIONS.find((item) => item.id === value)?.name || "Активные";
 }
 
+function getDeleteTooltip(row, isEditable, canDeleteAction) {
+  if (!isEditable || !canDeleteAction) {
+    return "Недостаточно прав для удаления";
+  }
+
+  if (row?.can_delete === false) {
+    return "Удаление заблокировано связями";
+  }
+
+  return "Удалить";
+}
+
 function dedupeSelectOptions(options) {
   const seen = new Set();
 
@@ -195,6 +207,29 @@ function normalizeSiteItemDraft(response, fallbackCategories = []) {
 
 function normalizeSiteItemSavePayload(draft) {
   const marking = draft?.marking || {};
+  const stageRows = draft?.items_stage || {};
+  const toStagePayload = (rows, type) =>
+    (Array.isArray(rows) ? rows : [])
+      .filter((item) => String(item?.type ?? "") === type)
+      .map((item) => ({
+        ...(type === "pf"
+          ? {
+              pf_id: item?.pf_id
+                ? Number(item.pf_id)
+                : Number(String(item?.selected_id || "").split("-")[0] || 0),
+            }
+          : {
+              rec_id: item?.rec_id
+                ? Number(item.rec_id)
+                : Number(String(item?.selected_id || "").split("-")[0] || 0),
+            }),
+        brutto: item?.brutto ?? "",
+        pr_1: item?.pr_1 ?? "",
+        netto: item?.netto ?? "",
+        pr_2: item?.pr_2 ?? "",
+        res: item?.res ?? "",
+      }))
+      .filter((item) => Number(item?.pf_id ?? item?.rec_id ?? 0) > 0);
 
   return {
     id: draft?.id ?? null,
@@ -231,11 +266,27 @@ function normalizeSiteItemSavePayload(draft) {
     time_stage_1: draft?.time_stage_1 ?? "",
     time_stage_2: draft?.time_stage_2 ?? "",
     time_stage_3: draft?.time_stage_3 ?? "",
+    pf_stage_1: toStagePayload(stageRows?.stage_1, "pf"),
+    pf_stage_2: toStagePayload(stageRows?.stage_2, "pf"),
+    pf_stage_3: toStagePayload(stageRows?.stage_3, "pf"),
+    rec_stage_1: toStagePayload(stageRows?.stage_1, "rec"),
+    rec_stage_2: toStagePayload(stageRows?.stage_2, "rec"),
+    rec_stage_3: toStagePayload(stageRows?.stage_3, "rec"),
     composition_source:
       draft?.composition_source || createEmptySiteItemRelations().composition_source,
     composition_derived:
       draft?.composition_derived || createEmptySiteItemRelations().composition_derived,
-    item_items: draft?.item_items || createEmptySiteItemRelations().item_items,
+    item_items: {
+      ...(draft?.item_items || createEmptySiteItemRelations().item_items),
+      this_items: Array.isArray(draft?.item_items?.this_items)
+        ? draft.item_items.this_items
+            .map((item) => ({
+              ...item,
+              item_id: item?.item_id ? Number(item.item_id) : null,
+            }))
+            .filter((item) => Number(item?.item_id) > 0)
+        : [],
+    },
     items_stage: draft?.items_stage || createEmptySiteItemRelations().items_stage,
   };
 }
@@ -1277,18 +1328,14 @@ export default function useSkladSiteItemsController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={
-                            isEditable && canDeleteAction
-                              ? "Удалить"
-                              : "Недостаточно прав для удаления"
-                          }
-                        >
+                        <Tooltip title={getDeleteTooltip(row, isEditable, canDeleteAction)}>
                           <span>
                             <IconButton
                               size="small"
                               color="error"
-                              disabled={!isEditable || !canDeleteAction}
+                              disabled={
+                                !isEditable || !canDeleteAction || row?.can_delete === false
+                              }
                               aria-label="Удалить"
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -1393,6 +1440,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           tags={tags}
           loading={modal.loading}
           isEditable={isEditable}
+          onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "tech")}
           onSubmit={submitDraft}
           onCreateTag={handleCreateTag}
           onRenameTag={handleRenameTag}

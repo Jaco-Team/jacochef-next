@@ -304,9 +304,11 @@ export default function useSkladUnitsController({ showAlert }) {
               {filteredRows.map((row) => {
                 const relationUnit = rows.find((item) => Number(item.id) === Number(row?.con_id));
                 const deleteBlocked = row?.delete_state === "blocked";
-                const deleteHint = canDeleteAction
+                const deleteHint = deleteBlocked
                   ? getDeleteHint(row)
-                  : "Недостаточно прав для удаления";
+                  : isEditable && canDeleteAction
+                    ? "Удалить"
+                    : "Недостаточно прав для удаления";
 
                 return (
                   <TableRow

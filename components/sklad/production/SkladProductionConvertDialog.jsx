@@ -17,7 +17,7 @@ function getTargetType(entityType) {
 }
 
 function getTypeLabel(entityType) {
-  return entityType === "recipe" ? "Рецепт" : "Полуфабрикат";
+  return entityType === "recipe" ? "Рецепт" : "Заготовка";
 }
 
 function InfoCard({ title, description, children }) {

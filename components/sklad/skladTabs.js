@@ -20,7 +20,7 @@ export const SKLAD_TAB_DEFINITIONS = [
   {
     key: "production",
     sections: ["recipes", "semi-finished"],
-    label: "Рецепты и полуфабрикаты",
+    label: "Рецепты и заготовки",
     accessKeys: ["name", "items", "create_rec", "create_pol", "change_rec_pf"],
     summaryKey: "recipes_active",
     description: "Общий production contour для recipes и semi-finished на canonical API.",

@@ -33,6 +33,7 @@ import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
 import { formatDateRangeRU } from "../formatDateRangeRU";
+import { resolveSiteItemImageUrl } from "./siteItemImage";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -134,9 +135,27 @@ function formatLinkedItemRows(itemItems) {
   return items.map((item, index) => ({
     key: `linked-item-${item?.id ?? index}`,
     name: item?.name ?? "-",
+    count: item?.count ?? "-",
     maxCount: item?.max_count ?? "-",
     isAdd: Number(item?.is_add) === 1 ? "Да" : "Нет",
   }));
+}
+
+function formatCompositionText(detail, linkedItemRows) {
+  if (linkedItemRows.length) {
+    const parts = linkedItemRows
+      .map((row) => {
+        const count = Number(row?.count);
+        return Number.isFinite(count) && count > 1 ? `${row.name} x${count}` : row.name;
+      })
+      .filter(Boolean);
+
+    if (parts.length) {
+      return parts.join(", ");
+    }
+  }
+
+  return formatValue(detail?.tmp_desc);
 }
 
 function getStageTimingRows(detail) {
@@ -269,7 +288,7 @@ export default function SkladSiteItemViewDialog({
   onClose,
 }) {
   const fileInputRef = useRef(null);
-  const imageUrl = detail?.image?.variants?.webp?.url ?? detail?.image?.variants?.jpg?.url ?? null;
+  const imageUrl = resolveSiteItemImageUrl(detail?.image, detail?.img_app);
   const isVisible = detail?.is_show ?? 0;
 
   const compositionRows = formatCompositionRows(detail?.composition_source?.pf, "Заготовка").concat(
@@ -282,6 +301,7 @@ export default function SkladSiteItemViewDialog({
   );
   const stageRows = formatStageRows(detail?.items_stage);
   const linkedItemRows = formatLinkedItemRows(detail?.item_items);
+  const compositionText = formatCompositionText(detail, linkedItemRows);
   const stageTimingRows = getStageTimingRows(detail);
   const deletePreviewMeta = getDeletePreviewMeta(detail);
   const imageCurrentFieldRows = getImageCurrentFieldRows(detail?.image);
@@ -448,7 +468,7 @@ export default function SkladSiteItemViewDialog({
                           <Grid size={12}>
                             <InfoField
                               label="Состав"
-                              value={formatValue(detail?.tmp_desc)}
+                              value={compositionText}
                             />
                           </Grid>
                           <Grid size={12}>
@@ -738,8 +758,8 @@ export default function SkladSiteItemViewDialog({
                   </SectionCard>
 
                   <SectionCard
-                    title="Связанные позиции"
-                    subtitle="Позиции, которые связаны с этой карточкой"
+                    title="Позиции состава"
+                    subtitle="Фактический список позиций из текущего payload карточки"
                   >
                     {linkedItemRows.length ? (
                       <TableContainer>
@@ -747,6 +767,7 @@ export default function SkladSiteItemViewDialog({
                           <TableHead>
                             <TableRow>
                               <TableCell>Название</TableCell>
+                              <TableCell>Количество</TableCell>
                               <TableCell>Макс. количество</TableCell>
                               <TableCell>Доп. позиция</TableCell>
                             </TableRow>
@@ -755,6 +776,7 @@ export default function SkladSiteItemViewDialog({
                             {linkedItemRows.map((row) => (
                               <TableRow key={row.key}>
                                 <TableCell>{row.name}</TableCell>
+                                <TableCell>{row.count}</TableCell>
                                 <TableCell>{row.maxCount}</TableCell>
                                 <TableCell>{row.isAdd}</TableCell>
                               </TableRow>
@@ -763,7 +785,7 @@ export default function SkladSiteItemViewDialog({
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Typography color="text.secondary">Связанные позиции не заданы.</Typography>
+                      <Typography color="text.secondary">Позиции состава не заданы.</Typography>
                     )}
                   </SectionCard>
                 </Stack>

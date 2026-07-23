@@ -365,10 +365,10 @@ Request:
 
 Важно:
 
-- `source_type = semi_finished` сейчас означает category space полуфабрикатов
+- `source_type = semi_finished` сейчас означает category space заготовок
 - usage этой категории включает:
-  - сами полуфабрикаты
-  - рецепты, которые в новом модуле отображаются внутри категорий полуфабрикатов
+  - сами заготовки
+  - рецепты, которые в новом модуле отображаются внутри категорий заготовок
 - у `recipe` в новом модуле нет собственной category entity
 - это read model поверх legacy `rec_pf_cats` + usage из `recipes_new` / `polufabricat_new`
 
@@ -426,13 +426,13 @@ Response:
 ```json
 {
   "st": false,
-  "text": "Архив для категорий полуфабрикатов не поддержан: в таблице rec_pf_cats нет archive/visibility persistence",
+  "text": "Архив для категорий заготовок не поддержан: в таблице rec_pf_cats нет archive/visibility persistence",
   "feature": "sklad.categories.archive",
   "status": "unsupported",
   "entity_type": "category",
   "source_type": "semi_finished",
   "supported": false,
-  "reason": "Архив для категорий полуфабрикатов не поддержан: в таблице rec_pf_cats нет archive/visibility persistence"
+  "reason": "Архив для категорий заготовок не поддержан: в таблице rec_pf_cats нет archive/visibility persistence"
 }
 ```
 
@@ -465,7 +465,7 @@ Blocked delete response:
 - dedicated CRUD/list screen для `Item` остается в `sklad_items_module_new`
 - текущий `sklad` публикует для `Item` только read/open routes; write/delete/archive остаются вне этого scope
 - при этом `Item` остается shared upstream-сущностью для `SemiFinished -> Recipe -> SiteItem`
-- новый `sklad_items` вправе использовать `Item` как reference/source layer внутри рецептов, полуфабрикатов, категорий и истории
+- новый `sklad_items` вправе использовать `Item` как reference/source layer внутри рецептов, заготовок, категорий и истории
 
 История:
 
@@ -722,7 +722,7 @@ Response:
 Удаление:
 
 - только через server-side usage check
-- сейчас блокируется, если полуфабрикат участвует в `items_pf_new`, `items_pf_stages_new`, `items_all_pf_new`, `recipe_items_new`, `order_post_rec` или их history-tail
+- сейчас блокируется, если заготовка участвует в `items_pf_new`, `items_pf_stages_new`, `items_all_pf_new`, `recipe_items_new`, `order_post_rec` или их history-tail
 
 ## `history/list` и `history/get_one` для `semi_finished`
 
@@ -780,9 +780,9 @@ Canonical request:
 
 Проверено:
 
-- `semi_finished -> recipe` создает recipe, переносит состав и удаляет исходный полуфабрикат
-- `recipe -> semi_finished` создает полуфабрикат, переносит item-only состав и удаляет исходный рецепт
-- `semi_finished -> recipe` возвращает отказ, если полуфабрикат используется в recipe current composition
+- `semi_finished -> recipe` создает recipe, переносит состав и удаляет исходную заготовку
+- `recipe -> semi_finished` создает заготовку, переносит item-only состав и удаляет исходный рецепт
+- `semi_finished -> recipe` возвращает отказ, если заготовка используется в recipe current composition
 - `recipe -> semi_finished` возвращает отказ, если recipe содержит `pf` component
 - disposable test rows очищены после проверки
 

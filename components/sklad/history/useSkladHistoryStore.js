@@ -4,7 +4,7 @@ import { create } from "zustand";
 
 export const HISTORY_ENTITY_OPTIONS = [
   { id: "recipe", name: "Рецепт" },
-  { id: "semi_finished", name: "Полуфабрикат" },
+  { id: "semi_finished", name: "Заготовка" },
   { id: "site_item", name: "Товар сайта" },
   { id: "item", name: "Складская позиция" },
 ];

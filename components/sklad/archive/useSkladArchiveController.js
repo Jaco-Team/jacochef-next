@@ -33,7 +33,7 @@ import SkladSiteItemViewDialog from "../site-items/SkladSiteItemViewDialog";
 
 const ARCHIVE_ENTITY_OPTIONS = [
   { id: "recipe", name: "Рецепты" },
-  { id: "semi_finished", name: "Полуфабрикаты" },
+  { id: "semi_finished", name: "Заготовки" },
   { id: "site_item", name: "Товары сайта" },
 ];
 

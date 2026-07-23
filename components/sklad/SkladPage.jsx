@@ -127,7 +127,7 @@ export default function SkladPage() {
 
   const summaryChips = [
     { key: "recipes_active", label: "Рецепты" },
-    { key: "semi_finished_active", label: "Полуфабрикаты" },
+    { key: "semi_finished_active", label: "Заготовки" },
     { key: "site_items_active", label: "Товары сайта" },
     { key: "archive_total", label: "Архив" },
   ].filter((item) => summary?.[item.key] !== undefined);

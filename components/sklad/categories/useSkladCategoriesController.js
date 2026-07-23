@@ -81,7 +81,7 @@ function getCategorySourceMeta(sourceType) {
   }
 
   return {
-    label: "Полуфабрикаты и рецепты",
+    label: "Заготовки и рецепты",
     icon: <FolderOutlinedIcon fontSize="small" />,
   };
 }

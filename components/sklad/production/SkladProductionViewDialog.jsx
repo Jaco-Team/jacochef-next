@@ -398,8 +398,8 @@ export default function SkladProductionViewDialog({
                     flexWrap="wrap"
                   >
                     <Chip
-                      label={Number(detail?.is_active) === 1 ? "Активен" : "Скрыт"}
-                      color={Number(detail?.is_active) === 1 ? "success" : "default"}
+                      label={Number(detail?.is_show) === 1 ? "Активен" : "Скрыт"}
+                      color={Number(detail?.is_show) === 1 ? "success" : "default"}
                       size="small"
                     />
                     <Chip

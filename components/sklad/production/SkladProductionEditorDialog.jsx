@@ -30,6 +30,7 @@ import TabPanel from "@mui/lab/TabPanel";
 
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
+import SkladCsvAutocompleteField from "../SkladCsvAutocompleteField";
 
 const TABS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
@@ -70,7 +71,6 @@ function buildInitialDraft(draft) {
     show_in_rev: Number(draft?.show_in_rev ?? 0) === 1,
     two_user: Number(draft?.two_user ?? 0) === 1,
     is_show: Number(draft?.is_show ?? 1) === 1,
-    is_active: Number(draft?.is_active ?? 0) === 1,
     categories: Array.isArray(draft?.categories) ? draft.categories : [],
     allergens: Array.isArray(draft?.allergens) ? draft.allergens : [],
     allergens_possible: Array.isArray(draft?.allergens_possible) ? draft.allergens_possible : [],
@@ -140,12 +140,37 @@ function formatMetricValue(value) {
   return String(value);
 }
 
+function getPrimitiveId(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  const valueType = typeof value;
+
+  if (valueType === "string" || valueType === "number") {
+    return String(value);
+  }
+
+  return "";
+}
+
 function getCompositionRowKey(item, index) {
-  return [item?.item_id ?? item?.id ?? "item", item?.type_rec ?? "type", index].join("-");
+  return [
+    getPrimitiveId(item?.item_id) ||
+      getPrimitiveId(item?.nomenclature_id) ||
+      getPrimitiveId(item?.id) ||
+      "item",
+    item?.type_rec ?? "type",
+    index,
+  ].join("-");
 }
 
 function getCompositionItemId(item) {
-  return String(item?.item_id ?? item?.nomenclature_id ?? item?.id ?? "");
+  return (
+    getPrimitiveId(item?.item_id) ||
+    getPrimitiveId(item?.nomenclature_id) ||
+    getPrimitiveId(item?.id)
+  );
 }
 
 function getCompositionItemName(item) {
@@ -216,7 +241,6 @@ export default function SkladProductionEditorDialog({
 }) {
   const [activeTab, setActiveTab] = useState("main");
   const [form, setForm] = useState(() => buildInitialDraft(draft));
-  const [expandedField, setExpandedField] = useState("");
 
   useEffect(() => {
     if (!open) {
@@ -225,7 +249,6 @@ export default function SkladProductionEditorDialog({
 
     setForm(buildInitialDraft(draft));
     setActiveTab("main");
-    setExpandedField("");
   }, [draft, open]);
 
   const unitOptions = useMemo(() => {
@@ -508,18 +531,12 @@ export default function SkladProductionEditorDialog({
                         />
                       </Grid>
                       <Grid size={12}>
-                        <MyTextInput
+                        <SkladCsvAutocompleteField
                           label="Состав"
                           value={form.structure}
-                          multiline
-                          minRows={3}
-                          maxRows={expandedField === "structure" ? 10 : 4}
                           disabled={!isEditable}
-                          func={(event) => updateField("structure", event.target.value)}
-                          onFocus={() => setExpandedField("structure")}
-                          onBlur={() =>
-                            setExpandedField((prev) => (prev === "structure" ? "" : prev))
-                          }
+                          onChange={(nextValue) => updateField("structure", nextValue)}
+                          placeholder="Введите состав через запятую"
                         />
                       </Grid>
                     </Grid>
@@ -863,9 +880,9 @@ export default function SkladProductionEditorDialog({
                       flexWrap="wrap"
                     >
                       <Chip
-                        label={form.is_active ? "Активен" : "Скрыт"}
+                        label={form.is_show ? "Активен" : "Скрыт"}
                         size="small"
-                        color={form.is_active ? "success" : "default"}
+                        color={form.is_show ? "success" : "default"}
                       />
                       <Chip
                         label={form.is_show ? "Показывается" : "Скрыта"}

@@ -3,7 +3,7 @@
 import { create } from "zustand";
 
 export const PRODUCTION_ENTITY_OPTIONS = [
-  { id: "semi_finished", name: "Полуфабрикаты" },
+  { id: "semi_finished", name: "Заготовки" },
   { id: "recipe", name: "Рецепты" },
 ];
 

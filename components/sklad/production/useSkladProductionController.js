@@ -52,7 +52,7 @@ function getEntityAccessKey(entityType) {
 }
 
 function getEntityLabel(entityType) {
-  return entityType === "recipe" ? "Рецепт" : "Полуфабрикат";
+  return entityType === "recipe" ? "Рецепт" : "Заготовка";
 }
 
 function getEntityFlagApi(api, entityType) {
@@ -173,7 +173,6 @@ function createEmptyProductionDraft() {
     show_in_rev: 0,
     two_user: 0,
     is_show: 1,
-    is_active: 1,
     is_archived: 0,
     categories: [],
     items: [],

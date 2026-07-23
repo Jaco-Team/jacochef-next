@@ -90,10 +90,10 @@ Access merge собирается из:
 | `rec_apps`           | `rec_apps`, `rec_apps_view`, `rec_apps_edit`, `rec_apps_access`                                         | 2    | Должность в кафе для приготовления      | legacy merged       |
 | `storages`           | `storages`, `storages_view`, `storages_edit`, `storages_access`                                         | 2    | Места хранения                          | legacy merged       |
 | `create_rec`         | `create_rec`, `create_rec_view`, `create_rec_edit`, `create_rec_access`                                 | 2    | Создание рецепта                        | legacy merged       |
-| `create_pol`         | `create_pol`, `create_pol_view`, `create_pol_edit`, `create_pol_access`                                 | 2    | Создание полуфабриката                  | legacy merged       |
+| `create_pol`         | `create_pol`, `create_pol_view`, `create_pol_edit`, `create_pol_access`                                 | 2    | Создание заготовки                      | legacy merged       |
 | `rev_table`          | `rev_table`, `rev_table_view`, `rev_table_edit`, `rev_table_access`                                     | 2    | Ревизия в таблице                       | legacy merged       |
-| `change_rec_pf`      | `change_rec_pf`, `change_rec_pf_view`, `change_rec_pf_edit`, `change_rec_pf_access`                     | 2    | Смена рецепта на полуфабрикат и обратно | legacy merged       |
-| `delete`             | `delete`, `delete_view`, `delete_edit`, `delete_access`                                                 | 2    | Удаление рецепта или полуфабриката      | legacy merged       |
+| `change_rec_pf`      | `change_rec_pf`, `change_rec_pf_view`, `change_rec_pf_edit`, `change_rec_pf_access`                     | 2    | Смена рецепта на заготовку и обратно    | legacy merged       |
+| `delete`             | `delete`, `delete_view`, `delete_edit`, `delete_access`                                                 | 2    | Удаление рецепта или заготовки          | legacy merged       |
 | `items`              | `items`, `items_view`, `items_edit`, `items_access`                                                     | 2    | Номенклатура / состав                   | legacy merged       |
 | `allergens`          | `allergens`, `allergens_view`, `allergens_edit`, `allergens_access`                                     | 2    | Аллергены                               | legacy merged       |
 | `allergens_diff`     | `allergens_diff`, `allergens_diff_view`, `allergens_diff_edit`, `allergens_diff_access`                 | 2    | Возможные аллергены                     | legacy merged       |

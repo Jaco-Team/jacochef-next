@@ -17,7 +17,7 @@ const defaultModal = {
 };
 
 export const CATEGORY_SOURCE_OPTIONS = [
-  { id: "semi_finished", name: "Полуфабрикаты и рецепты" },
+  { id: "semi_finished", name: "Заготовки и рецепты" },
   { id: "warehouse_item", name: "Складские категории" },
 ];
 

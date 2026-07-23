@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
@@ -16,8 +18,15 @@ import {
   DialogActions,
   DialogContent,
   Grid,
+  IconButton,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import Tab from "@mui/material/Tab";
@@ -27,6 +36,7 @@ import TabPanel from "@mui/lab/TabPanel";
 
 import { MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
+import { resolveSiteItemImageUrl } from "./siteItemImage";
 
 const EDITOR_SECTIONS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
@@ -41,6 +51,12 @@ const MARKING_OPTIONS = [
   { id: "0", name: "Обычный товар" },
   { id: "1", name: "Вода" },
   { id: "2", name: "Сладкий напиток" },
+];
+
+const STAGE_OPTIONS = [
+  { id: "stage_1", name: "1 этап" },
+  { id: "stage_2", name: "2 этап" },
+  { id: "stage_3", name: "3 этап" },
 ];
 
 function dedupeSelectOptions(options) {
@@ -80,8 +96,112 @@ function createEmptySiteItemRelations() {
   };
 }
 
+function formatDecimalString(value, fallback = "0,000") {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const normalized = String(value).replace(".", ",").trim();
+  return normalized || fallback;
+}
+
+function formatIntegerString(value, fallback = "0") {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const normalized = String(value).trim();
+  return normalized || fallback;
+}
+
+function parseDecimalNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+
+  const parsed = Number(String(value).replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function roundTo(value, digits = 3) {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
+function recalculateCompositionRow(row) {
+  const brutto = parseDecimalNumber(row?.brutto);
+  const pr1 = parseDecimalNumber(row?.pr_1);
+  const pr2 = parseDecimalNumber(row?.pr_2);
+  const netto = roundTo((brutto * (100 - pr1)) / 100, 3);
+  const res = roundTo((netto * (100 - pr2)) / 100, 3);
+
+  return {
+    ...row,
+    netto: formatDecimalString(netto),
+    res: formatDecimalString(res),
+  };
+}
+
+function buildStageOptionLookup(itemsStage) {
+  const list = Array.isArray(itemsStage?.all) ? itemsStage.all : [];
+  const lookup = new Map();
+
+  list.forEach((item) => {
+    const key = String(item?.un_id ?? "");
+
+    if (key) {
+      lookup.set(key, item);
+    }
+  });
+
+  return lookup;
+}
+
+function normalizeStageRow(row, stageKey, lookup) {
+  const inferredType =
+    row?.type === "rec" || row?.type === "recipe"
+      ? "rec"
+      : row?.type === "pf" || row?.type === "semi_finished"
+        ? "pf"
+        : row?.rec_id
+          ? "rec"
+          : "pf";
+  const entityId = row?.rec_id ?? row?.pf_id ?? row?.id ?? "";
+  const selectedId = row?.selected_id ?? row?.un_id ?? `${entityId}-${inferredType}`;
+  const matched = lookup.get(String(selectedId)) ?? null;
+
+  return {
+    selected_id: matched?.un_id ?? String(selectedId),
+    type: matched?.type ?? inferredType,
+    rec_id: inferredType === "rec" ? (row?.rec_id ?? entityId) : "",
+    pf_id: inferredType === "pf" ? (row?.pf_id ?? entityId) : "",
+    name: row?.name ?? matched?.name ?? "-",
+    ei_name: row?.ei_name ?? matched?.ei_name ?? "-",
+    brutto: formatDecimalString(row?.brutto),
+    pr_1: formatIntegerString(row?.pr_1),
+    netto: formatDecimalString(row?.netto),
+    pr_2: formatIntegerString(row?.pr_2),
+    res: formatDecimalString(row?.res),
+    stage: stageKey,
+  };
+}
+
+function normalizeLinkedItemRow(row) {
+  return {
+    item_id: row?.item_id ? String(row.item_id) : "",
+    name: row?.name ?? "-",
+    brutto: formatDecimalString(row?.brutto),
+    pr_1: formatIntegerString(row?.pr_1),
+    netto: formatDecimalString(row?.netto),
+    pr_2: formatIntegerString(row?.pr_2),
+    res: formatDecimalString(row?.res),
+  };
+}
+
 function buildInitialDraft(draft) {
   const emptyRelations = createEmptySiteItemRelations();
+  const itemsStage = draft?.items_stage ?? emptyRelations.items_stage;
+  const stageLookup = buildStageOptionLookup(itemsStage);
 
   return {
     id: draft?.id ?? null,
@@ -118,8 +238,32 @@ function buildInitialDraft(draft) {
     time_stage_3: draft?.time_stage_3 ?? "",
     composition_source: draft?.composition_source ?? emptyRelations.composition_source,
     composition_derived: draft?.composition_derived ?? emptyRelations.composition_derived,
-    item_items: draft?.item_items ?? emptyRelations.item_items,
-    items_stage: draft?.items_stage ?? emptyRelations.items_stage,
+    items_stage: {
+      ...(draft?.items_stage ?? emptyRelations.items_stage),
+      stage_1: Array.isArray(itemsStage?.stage_1)
+        ? itemsStage.stage_1.map((item) =>
+            recalculateCompositionRow(normalizeStageRow(item, "stage_1", stageLookup)),
+          )
+        : [],
+      stage_2: Array.isArray(itemsStage?.stage_2)
+        ? itemsStage.stage_2.map((item) =>
+            recalculateCompositionRow(normalizeStageRow(item, "stage_2", stageLookup)),
+          )
+        : [],
+      stage_3: Array.isArray(itemsStage?.stage_3)
+        ? itemsStage.stage_3.map((item) =>
+            recalculateCompositionRow(normalizeStageRow(item, "stage_3", stageLookup)),
+          )
+        : [],
+    },
+    item_items: {
+      ...(draft?.item_items ?? emptyRelations.item_items),
+      this_items: Array.isArray(draft?.item_items?.this_items)
+        ? draft.item_items.this_items.map((item) =>
+            recalculateCompositionRow(normalizeLinkedItemRow(item)),
+          )
+        : [],
+    },
   };
 }
 
@@ -217,6 +361,7 @@ export default function SkladSiteItemEditorDialog({
   categories = [],
   tags = [],
   isEditable = false,
+  onUploadImage,
   onSubmit,
   onCreateTag,
   onRenameTag,
@@ -233,6 +378,8 @@ export default function SkladSiteItemEditorDialog({
     tagId: "",
     name: "",
   });
+  const fileInputRef = useRef(null);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -249,6 +396,7 @@ export default function SkladSiteItemEditorDialog({
       tagId: "",
       name: "",
     });
+    setImagePreviewOpen(false);
   }, [draft, open]);
 
   const categoryOptions = useMemo(() => {
@@ -292,6 +440,11 @@ export default function SkladSiteItemEditorDialog({
   }, [form.tags]);
 
   const liveKkalPreview = useMemo(() => getLiveKkalPreview(form), [form]);
+  const imageUrl = useMemo(
+    () =>
+      resolveSiteItemImageUrl(form?.image, draft?.img_app || form?.image?.current_fields?.img_app),
+    [draft?.img_app, form?.image],
+  );
 
   const renameTagOptions = useMemo(() => {
     return [{ id: "", name: "Выберите тег" }].concat(
@@ -309,9 +462,302 @@ export default function SkladSiteItemEditorDialog({
     }));
   };
 
-  const compositionSourceCount =
-    (Array.isArray(form?.composition_source?.pf) ? form.composition_source.pf.length : 0) +
-    (Array.isArray(form?.composition_source?.recipes) ? form.composition_source.recipes.length : 0);
+  const openImagePicker = () => {
+    if (!isEditable) {
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
+
+  const isSupportedImageFile = (file) => {
+    if (!file) {
+      return false;
+    }
+
+    const mimeType = String(file.type || "").toLowerCase();
+    const fileName = String(file.name || "").toLowerCase();
+
+    return (
+      mimeType === "image/jpeg" ||
+      mimeType === "image/png" ||
+      fileName.endsWith(".jpg") ||
+      fileName.endsWith(".jpeg") ||
+      fileName.endsWith(".png")
+    );
+  };
+
+  const submitImageFile = async (file) => {
+    if (!file || !draft?.id || !onUploadImage) {
+      return;
+    }
+
+    if (!isSupportedImageFile(file)) {
+      showAlert?.("Допустимы только JPG и PNG", false);
+      return;
+    }
+
+    await onUploadImage(file);
+  };
+
+  const handleImageInputChange = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    await submitImageFile(file);
+    event.target.value = "";
+  };
+
+  const handleImageDrop = async (event) => {
+    event.preventDefault();
+
+    if (!isEditable) {
+      return;
+    }
+
+    const file = event.dataTransfer?.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    await submitImageFile(file);
+  };
+
+  const stagePreparationOptions = useMemo(() => {
+    return dedupeSelectOptions(
+      (Array.isArray(form?.items_stage?.all) ? form.items_stage.all : []).map((item) => ({
+        id: String(item?.un_id ?? ""),
+        name: item?.name ?? String(item?.un_id ?? ""),
+      })),
+    );
+  }, [form?.items_stage?.all]);
+
+  const stagePreparationLookup = useMemo(() => {
+    const lookup = new Map();
+
+    (Array.isArray(form?.items_stage?.all) ? form.items_stage.all : []).forEach((item) => {
+      const key = String(item?.un_id ?? "");
+
+      if (key) {
+        lookup.set(key, item);
+      }
+    });
+
+    return lookup;
+  }, [form?.items_stage?.all]);
+
+  const linkedItemOptions = useMemo(() => {
+    return dedupeSelectOptions(
+      (Array.isArray(form?.item_items?.all_items) ? form.item_items.all_items : []).map((item) => ({
+        id: String(item?.id ?? ""),
+        name: item?.name ?? String(item?.id ?? ""),
+      })),
+    );
+  }, [form?.item_items?.all_items]);
+
+  const linkedItemLookup = useMemo(() => {
+    const lookup = new Map();
+
+    (Array.isArray(form?.item_items?.all_items) ? form.item_items.all_items : []).forEach(
+      (item) => {
+        const key = String(item?.id ?? "");
+
+        if (key) {
+          lookup.set(key, item);
+        }
+      },
+    );
+
+    return lookup;
+  }, [form?.item_items?.all_items]);
+
+  const updateStageRowField = (stageKey, index, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      items_stage: {
+        ...(prev?.items_stage || createEmptySiteItemRelations().items_stage),
+        [stageKey]: (Array.isArray(prev?.items_stage?.[stageKey])
+          ? prev.items_stage[stageKey]
+          : []
+        ).map((item, itemIndex) =>
+          itemIndex === index ? recalculateCompositionRow({ ...item, [field]: value }) : item,
+        ),
+      },
+    }));
+  };
+
+  const updateStageRowSelection = (stageKey, index, selectedId) => {
+    const matched = stagePreparationLookup.get(String(selectedId));
+
+    setForm((prev) => ({
+      ...prev,
+      items_stage: {
+        ...(prev?.items_stage || createEmptySiteItemRelations().items_stage),
+        [stageKey]: (Array.isArray(prev?.items_stage?.[stageKey])
+          ? prev.items_stage[stageKey]
+          : []
+        ).map((item, itemIndex) =>
+          itemIndex === index
+            ? recalculateCompositionRow({
+                ...item,
+                selected_id: String(selectedId),
+                type: matched?.type ?? item?.type ?? "pf",
+                rec_id: matched?.type === "rec" ? String(matched?.id ?? "") : "",
+                pf_id: matched?.type === "pf" ? String(matched?.id ?? "") : "",
+                name: matched?.name ?? item?.name ?? "-",
+                ei_name: matched?.ei_name ?? item?.ei_name ?? "-",
+              })
+            : item,
+        ),
+      },
+    }));
+  };
+
+  const moveStageRow = (fromStageKey, index, toStageKey) => {
+    if (fromStageKey === toStageKey) {
+      updateStageRowField(fromStageKey, index, "stage", toStageKey);
+      return;
+    }
+
+    setForm((prev) => {
+      const sourceRows = Array.isArray(prev?.items_stage?.[fromStageKey])
+        ? prev.items_stage[fromStageKey]
+        : [];
+      const targetRows = Array.isArray(prev?.items_stage?.[toStageKey])
+        ? prev.items_stage[toStageKey]
+        : [];
+      const row = sourceRows[index];
+
+      if (!row) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        items_stage: {
+          ...(prev?.items_stage || createEmptySiteItemRelations().items_stage),
+          [fromStageKey]: sourceRows.filter((_, itemIndex) => itemIndex !== index),
+          [toStageKey]: targetRows.concat({
+            ...row,
+            stage: toStageKey,
+          }),
+        },
+      };
+    });
+  };
+
+  const addStageRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      items_stage: {
+        ...(prev?.items_stage || createEmptySiteItemRelations().items_stage),
+        stage_1: (Array.isArray(prev?.items_stage?.stage_1) ? prev.items_stage.stage_1 : [])
+          .concat({
+            selected_id: "",
+            type: "pf",
+            rec_id: "",
+            pf_id: "",
+            name: "",
+            ei_name: "",
+            brutto: "0,000",
+            pr_1: "0",
+            netto: "0,000",
+            pr_2: "0",
+            res: "0,000",
+            stage: "stage_1",
+          })
+          .map(recalculateCompositionRow),
+      },
+    }));
+  };
+
+  const removeStageRow = (stageKey, index) => {
+    setForm((prev) => ({
+      ...prev,
+      items_stage: {
+        ...(prev?.items_stage || createEmptySiteItemRelations().items_stage),
+        [stageKey]: (Array.isArray(prev?.items_stage?.[stageKey])
+          ? prev.items_stage[stageKey]
+          : []
+        ).filter((_, itemIndex) => itemIndex !== index),
+      },
+    }));
+  };
+
+  const updateLinkedItemField = (index, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      item_items: {
+        ...(prev?.item_items || createEmptySiteItemRelations().item_items),
+        this_items: (Array.isArray(prev?.item_items?.this_items)
+          ? prev.item_items.this_items
+          : []
+        ).map((item, itemIndex) =>
+          itemIndex === index ? recalculateCompositionRow({ ...item, [field]: value }) : item,
+        ),
+      },
+    }));
+  };
+
+  const updateLinkedItemSelection = (index, selectedId) => {
+    const matched = linkedItemLookup.get(String(selectedId));
+
+    setForm((prev) => ({
+      ...prev,
+      item_items: {
+        ...(prev?.item_items || createEmptySiteItemRelations().item_items),
+        this_items: (Array.isArray(prev?.item_items?.this_items)
+          ? prev.item_items.this_items
+          : []
+        ).map((item, itemIndex) =>
+          itemIndex === index
+            ? recalculateCompositionRow({
+                ...item,
+                item_id: String(selectedId),
+                name: matched?.name ?? item?.name ?? "-",
+              })
+            : item,
+        ),
+      },
+    }));
+  };
+
+  const addLinkedItemRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      item_items: {
+        ...(prev?.item_items || createEmptySiteItemRelations().item_items),
+        this_items: (Array.isArray(prev?.item_items?.this_items) ? prev.item_items.this_items : [])
+          .concat({
+            item_id: "",
+            name: "",
+            brutto: "0,000",
+            pr_1: "0",
+            netto: "0,000",
+            pr_2: "0",
+            res: "0,000",
+          })
+          .map(recalculateCompositionRow),
+      },
+    }));
+  };
+
+  const removeLinkedItemRow = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      item_items: {
+        ...(prev?.item_items || createEmptySiteItemRelations().item_items),
+        this_items: (Array.isArray(prev?.item_items?.this_items)
+          ? prev.item_items.this_items
+          : []
+        ).filter((_, itemIndex) => itemIndex !== index),
+      },
+    }));
+  };
 
   const compositionDerivedCount = Array.isArray(form?.composition_derived?.pf_total)
     ? form.composition_derived.pf_total.length
@@ -466,159 +912,249 @@ export default function SkladSiteItemEditorDialog({
                 value="main"
                 sx={{ p: 0, pt: 2 }}
               >
-                <Grid
-                  container
-                  spacing={2}
-                >
-                  <Grid size={{ xs: 12, md: 8 }}>
-                    <InfoCard
-                      title="Основные данные"
-                      description="Базовые поля карточки товара."
-                    >
-                      <Grid
-                        container
-                        spacing={2}
-                      >
-                        <Grid size={{ xs: 12, md: 8 }}>
-                          <MyTextInput
-                            label="Наименование"
-                            value={form.name}
-                            disabled={!isEditable}
-                            func={(event) => updateField("name", event.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <MyTextInput
-                            label="Короткое название"
-                            value={form.short_name}
-                            disabled={!isEditable}
-                            func={(event) => updateField("short_name", event.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <MySelect
-                            label="Категория"
-                            data={categoryOptions}
-                            is_none={false}
-                            value={safeCategoryValue}
-                            disabled={!isEditable}
-                            func={(event) => updateField("category_id", event.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 3 }}>
-                          <MyDatePickerNew
-                            label="Действует с"
-                            value={form.date_start}
-                            disabled={!isEditable}
-                            func={(value) =>
-                              updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
-                            }
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 3 }}>
-                          <MyDatePickerNew
-                            label="Действует по"
-                            value={form.date_end}
-                            disabled={!isEditable}
-                            func={(value) =>
-                              updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
-                            }
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <MyTextInput
-                            label="Код 1С"
-                            value={form.art}
-                            disabled={!isEditable}
-                            func={(event) => updateField("art", event.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <MyTextInput
-                            label="Стол"
-                            value={form.stol}
-                            disabled={!isEditable}
-                            func={(event) => updateField("stol", event.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <MyTextInput
-                            label="Кусочков или размер"
-                            value={form.count_part}
-                            disabled={!isEditable}
-                            func={(event) => updateField("count_part", event.target.value)}
-                          />
-                        </Grid>
-                      </Grid>
-                    </InfoCard>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <Stack spacing={2}>
+                <Stack spacing={2}>
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+                    <Grid size={{ xs: 12, md: 8 }}>
                       <InfoCard
-                        title="Маркировка"
-                        description="Поля маркировки текущей версии."
+                        title="Основные данные"
+                        description="Базовые поля карточки товара."
                       >
                         <Grid
                           container
                           spacing={2}
                         >
-                          <Grid size={12}>
+                          <Grid size={{ xs: 12, md: 8 }}>
+                            <MyTextInput
+                              label="Наименование"
+                              value={form.name}
+                              disabled={!isEditable}
+                              func={(event) => updateField("name", event.target.value)}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <MyTextInput
+                              label="Короткое название"
+                              value={form.short_name}
+                              disabled={!isEditable}
+                              func={(event) => updateField("short_name", event.target.value)}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 6 }}>
                             <MySelect
-                              label="Тип маркировки"
-                              data={MARKING_OPTIONS}
+                              label="Категория"
+                              data={categoryOptions}
                               is_none={false}
-                              value={form.is_mark}
+                              value={safeCategoryValue}
                               disabled={!isEditable}
-                              func={(event) => updateField("is_mark", event.target.value)}
+                              func={(event) => updateField("category_id", event.target.value)}
                             />
                           </Grid>
-                          <Grid size={12}>
-                            <MyTextInput
-                              label="Код маркировки"
-                              value={form.mark_code}
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <MyDatePickerNew
+                              label="Действует с"
+                              value={form.date_start}
                               disabled={!isEditable}
-                              func={(event) => updateField("mark_code", event.target.value)}
+                              func={(value) =>
+                                updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
+                              }
                             />
                           </Grid>
-                          <Grid size={12}>
-                            <MyTextInput
-                              label="Серия"
-                              value={form.series}
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <MyDatePickerNew
+                              label="Действует по"
+                              value={form.date_end}
                               disabled={!isEditable}
-                              func={(event) => updateField("series", event.target.value)}
+                              func={(value) =>
+                                updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
+                              }
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <MyTextInput
+                              label="Код 1С"
+                              value={form.art}
+                              disabled={!isEditable}
+                              func={(event) => updateField("art", event.target.value)}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <MyTextInput
+                              label="Стол"
+                              value={form.stol}
+                              disabled={!isEditable}
+                              func={(event) => updateField("stol", event.target.value)}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <MyTextInput
+                              label="Кусочков или размер"
+                              value={form.count_part}
+                              disabled={!isEditable}
+                              func={(event) => updateField("count_part", event.target.value)}
                             />
                           </Grid>
                         </Grid>
                       </InfoCard>
+                    </Grid>
 
-                      <InfoCard title="Текущее состояние">
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          useFlexGap
-                          flexWrap="wrap"
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Stack spacing={2}>
+                        <InfoCard
+                          title="Маркировка"
+                          description="Поля маркировки текущей версии."
                         >
-                          <Chip
-                            size="small"
-                            color={form.is_show ? "success" : "default"}
-                            label={form.is_show ? "Активен" : "Скрыт"}
-                          />
-                          <Chip
-                            size="small"
-                            color={form.show_site ? "primary" : "default"}
-                            label={form.show_site ? "Сайт" : "Без сайта"}
-                          />
-                          <Chip
-                            size="small"
-                            color={form.show_program ? "secondary" : "default"}
-                            label={form.show_program ? "Касса" : "Без кассы"}
-                          />
-                        </Stack>
-                      </InfoCard>
-                    </Stack>
+                          <Grid
+                            container
+                            spacing={2}
+                          >
+                            <Grid size={12}>
+                              <MySelect
+                                label="Тип маркировки"
+                                data={MARKING_OPTIONS}
+                                is_none={false}
+                                value={form.is_mark}
+                                disabled={!isEditable}
+                                func={(event) => updateField("is_mark", event.target.value)}
+                              />
+                            </Grid>
+                            <Grid size={12}>
+                              <MyTextInput
+                                label="Код маркировки"
+                                value={form.mark_code}
+                                disabled={!isEditable}
+                                func={(event) => updateField("mark_code", event.target.value)}
+                              />
+                            </Grid>
+                            <Grid size={12}>
+                              <MyTextInput
+                                label="Серия"
+                                value={form.series}
+                                disabled={!isEditable}
+                                func={(event) => updateField("series", event.target.value)}
+                              />
+                            </Grid>
+                          </Grid>
+                        </InfoCard>
+
+                        <InfoCard title="Текущее состояние">
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            useFlexGap
+                            flexWrap="wrap"
+                          >
+                            <Chip
+                              size="small"
+                              color={form.is_show ? "success" : "default"}
+                              label={form.is_show ? "Активен" : "Скрыт"}
+                            />
+                            <Chip
+                              size="small"
+                              color={form.show_site ? "primary" : "default"}
+                              label={form.show_site ? "Сайт" : "Без сайта"}
+                            />
+                            <Chip
+                              size="small"
+                              color={form.show_program ? "secondary" : "default"}
+                              label={form.show_program ? "Касса" : "Без кассы"}
+                            />
+                          </Stack>
+                        </InfoCard>
+                      </Stack>
+                    </Grid>
                   </Grid>
-                </Grid>
+
+                  <InfoCard
+                    title="Изображение"
+                    description="Квадратный исходник 1:1. Загрузка JPG или PNG."
+                  >
+                    <Grid
+                      container
+                      spacing={2}
+                      alignItems="flex-start"
+                    >
+                      {imageUrl ? (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Box
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setImagePreviewOpen(true)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setImagePreviewOpen(true);
+                              }
+                            }}
+                            sx={{ cursor: "pointer" }}
+                          >
+                            <Box
+                              component="img"
+                              src={imageUrl}
+                              alt={form.name || "Изображение товара"}
+                              sx={{
+                                width: "100%",
+                                maxWidth: 220,
+                                display: "block",
+                              }}
+                            />
+                          </Box>
+                        </Grid>
+                      ) : null}
+
+                      <Grid size={{ xs: 12, md: imageUrl ? 8 : 12 }}>
+                        <Box
+                          role="button"
+                          tabIndex={isEditable ? 0 : -1}
+                          onClick={openImagePicker}
+                          onKeyDown={(event) => {
+                            if ((event.key === "Enter" || event.key === " ") && isEditable) {
+                              event.preventDefault();
+                              openImagePicker();
+                            }
+                          }}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={handleImageDrop}
+                          sx={{
+                            border: (theme) => `1px dashed ${theme.palette.divider}`,
+                            borderRadius: 1,
+                            minHeight: 180,
+                            px: 3,
+                            py: 4,
+                          }}
+                        >
+                          <Stack
+                            spacing={0.75}
+                            justifyContent="center"
+                            alignItems="center"
+                            sx={{ minHeight: "100%" }}
+                          >
+                            <CloudUploadOutlinedIcon color={isEditable ? "action" : "disabled"} />
+                            <Typography sx={{ fontWeight: 700 }}>
+                              {imageUrl ? "Заменить изображение" : "Загрузить изображение"}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                            >
+                              Перетащите файл сюда или нажмите, чтобы выбрать.
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      </Grid>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        hidden
+                        onChange={handleImageInputChange}
+                      />
+                    </Grid>
+                  </InfoCard>
+                </Stack>
               </TabPanel>
 
               <TabPanel
@@ -915,8 +1451,8 @@ export default function SkladSiteItemEditorDialog({
               >
                 <Stack spacing={2}>
                   <InfoCard
-                    title="Состав технологической карты"
-                    description="Источник состава и этапы приготовления"
+                    title="Тайминги"
+                    description="Время по этапам в формате MM:SS"
                   >
                     <Grid
                       container
@@ -952,22 +1488,278 @@ export default function SkladSiteItemEditorDialog({
                     </Grid>
                   </InfoCard>
 
+                  <InfoCard
+                    title="Заготовки"
+                    description="Состав технологической карты"
+                  >
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Номенклатура</TableCell>
+                            <TableCell>Ед. изм.</TableCell>
+                            <TableCell>Брутто</TableCell>
+                            <TableCell>% потери при ХО</TableCell>
+                            <TableCell>Нетто</TableCell>
+                            <TableCell>% потери при ГО</TableCell>
+                            <TableCell>Выход</TableCell>
+                            <TableCell>Этап</TableCell>
+                            {isEditable ? <TableCell /> : null}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {STAGE_OPTIONS.map((stageOption) => {
+                            const rows = Array.isArray(form?.items_stage?.[stageOption.id])
+                              ? form.items_stage[stageOption.id]
+                              : [];
+
+                            if (!rows.length) {
+                              return null;
+                            }
+
+                            return rows.map((item, index) => (
+                              <TableRow key={`${stageOption.id}-${index}`}>
+                                <TableCell sx={{ minWidth: 260 }}>
+                                  <MySelect
+                                    label=""
+                                    data={stagePreparationOptions}
+                                    is_none={false}
+                                    value={item?.selected_id ?? ""}
+                                    disabled={!isEditable}
+                                    func={(event) =>
+                                      updateStageRowSelection(
+                                        stageOption.id,
+                                        index,
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </TableCell>
+                                <TableCell sx={{ minWidth: 80 }}>
+                                  <MyTextInput
+                                    label=""
+                                    value={item?.ei_name ?? ""}
+                                    disabled
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={item?.brutto ?? ""}
+                                    disabled={!isEditable}
+                                    isDecimalMask
+                                    func={(event) =>
+                                      updateStageRowField(
+                                        stageOption.id,
+                                        index,
+                                        "brutto",
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={item?.pr_1 ?? ""}
+                                    disabled={!isEditable}
+                                    func={(event) =>
+                                      updateStageRowField(
+                                        stageOption.id,
+                                        index,
+                                        "pr_1",
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={item?.netto ?? ""}
+                                    disabled
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={item?.pr_2 ?? ""}
+                                    disabled={!isEditable}
+                                    func={(event) =>
+                                      updateStageRowField(
+                                        stageOption.id,
+                                        index,
+                                        "pr_2",
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <MyTextInput
+                                    label=""
+                                    value={item?.res ?? ""}
+                                    disabled
+                                  />
+                                </TableCell>
+                                <TableCell sx={{ minWidth: 120 }}>
+                                  <MySelect
+                                    label=""
+                                    data={STAGE_OPTIONS}
+                                    is_none={false}
+                                    value={stageOption.id}
+                                    disabled={!isEditable}
+                                    func={(event) =>
+                                      moveStageRow(stageOption.id, index, event.target.value)
+                                    }
+                                  />
+                                </TableCell>
+                                {isEditable ? (
+                                  <TableCell align="right">
+                                    <IconButton
+                                      color="error"
+                                      onClick={() => removeStageRow(stageOption.id, index)}
+                                    >
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    </IconButton>
+                                  </TableCell>
+                                ) : null}
+                              </TableRow>
+                            ));
+                          })}
+                          {isEditable ? (
+                            <TableRow>
+                              <TableCell colSpan={9}>
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<AddOutlinedIcon />}
+                                  onClick={addStageRow}
+                                >
+                                  Добавить заготовку
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </InfoCard>
+
+                  <InfoCard
+                    title="Позиции"
+                    description="Связанные позиции карточки"
+                  >
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Номенклатура</TableCell>
+                            <TableCell>Брутто</TableCell>
+                            <TableCell>% потери при ХО</TableCell>
+                            <TableCell>Нетто</TableCell>
+                            <TableCell>% потери при ГО</TableCell>
+                            <TableCell>Выход</TableCell>
+                            {isEditable ? <TableCell /> : null}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {(Array.isArray(form?.item_items?.this_items)
+                            ? form.item_items.this_items
+                            : []
+                          ).map((item, index) => (
+                            <TableRow key={`linked-item-${index}`}>
+                              <TableCell sx={{ minWidth: 320 }}>
+                                <MySelect
+                                  label=""
+                                  data={linkedItemOptions}
+                                  is_none={false}
+                                  value={item?.item_id ?? ""}
+                                  disabled={!isEditable}
+                                  func={(event) =>
+                                    updateLinkedItemSelection(index, event.target.value)
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  label=""
+                                  value={item?.brutto ?? ""}
+                                  disabled={!isEditable}
+                                  isDecimalMask
+                                  func={(event) =>
+                                    updateLinkedItemField(index, "brutto", event.target.value)
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  label=""
+                                  value={item?.pr_1 ?? ""}
+                                  disabled={!isEditable}
+                                  func={(event) =>
+                                    updateLinkedItemField(index, "pr_1", event.target.value)
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  label=""
+                                  value={item?.netto ?? ""}
+                                  disabled
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  label=""
+                                  value={item?.pr_2 ?? ""}
+                                  disabled={!isEditable}
+                                  func={(event) =>
+                                    updateLinkedItemField(index, "pr_2", event.target.value)
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <MyTextInput
+                                  label=""
+                                  value={item?.res ?? ""}
+                                  disabled
+                                />
+                              </TableCell>
+                              {isEditable ? (
+                                <TableCell align="right">
+                                  <IconButton
+                                    color="error"
+                                    onClick={() => removeLinkedItemRow(index)}
+                                  >
+                                    <DeleteOutlineIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              ) : null}
+                            </TableRow>
+                          ))}
+                          {isEditable ? (
+                            <TableRow>
+                              <TableCell colSpan={7}>
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<AddOutlinedIcon />}
+                                  onClick={addLinkedItemRow}
+                                >
+                                  Добавить позицию
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </InfoCard>
+
                   <Grid
                     container
                     spacing={2}
                   >
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <InfoCard title="Исходные связи">
-                        <Typography sx={{ fontWeight: 700 }}>{compositionSourceCount}</Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          Текущие связи с рецептами и заготовками
-                        </Typography>
-                      </InfoCard>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <InfoCard title="Итоговый состав">
                         <Typography sx={{ fontWeight: 700 }}>{compositionDerivedCount}</Typography>
                         <Typography
@@ -978,7 +1770,7 @@ export default function SkladSiteItemEditorDialog({
                         </Typography>
                       </InfoCard>
                     </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <InfoCard title="Связанные позиции">
                         <Typography sx={{ fontWeight: 700 }}>{linkedItemsCount}</Typography>
                         <Typography
@@ -1006,6 +1798,26 @@ export default function SkladSiteItemEditorDialog({
             {loading ? "Сохраняем..." : mode === "create" ? "Создать товар" : "Сохранить изменения"}
           </Button>
         </DialogActions>
+      </MyModal>
+      <MyModal
+        open={imagePreviewOpen}
+        onClose={() => setImagePreviewOpen(false)}
+        maxWidth="md"
+        title={form.name || "Изображение"}
+      >
+        <DialogContent dividers>
+          {imageUrl ? (
+            <Box
+              component="img"
+              src={imageUrl}
+              alt={form.name || "Изображение товара"}
+              sx={{
+                width: "100%",
+                display: "block",
+              }}
+            />
+          ) : null}
+        </DialogContent>
       </MyModal>
       <MyModal
         open={tagModal.open}

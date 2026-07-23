@@ -452,7 +452,7 @@ Implementation note:
 
 Сделать:
 
-- один tab `Рецепты и полуфабрикаты`
+- один tab `Рецепты и заготовки`
 - shared card/view model
 - category/unit/allergen composition
 - items table editing
@@ -486,7 +486,7 @@ Contract note:
 
 Implementation note:
 
-- old screen with `Добавить рецепт или полуфабрикат` is only business-context reference
+- old screen with `Добавить рецепт или заготовку` is only business-context reference
 - target for new module is not “two visual sections with separate category semantics”
 - target is one production-family category taxonomy reused by both entity types
 
@@ -680,7 +680,7 @@ Deliverables:
 1. Create page shell, bootstrap hook, access hook and tab model. Status: completed.
 2. Build `Units` tab on canonical API and finalize dictionary CRUD pattern. Status: completed.
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
-4. Build `Рецепты и полуфабрикаты` tab list/filter shell. Status: completed.
+4. Build `Рецепты и заготовки` tab list/filter shell. Status: completed.
 5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: completed for canonical basic field editing and create/save flow; composition/category editing remains read-only in current FE scope.
 6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete, canonical list flag toggles and canonical create/save flow within current FE scope.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.

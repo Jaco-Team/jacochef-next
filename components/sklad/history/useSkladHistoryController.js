@@ -24,6 +24,7 @@ import {
 import { MySelect, MyTextInput } from "@/ui/Forms";
 
 import { formatDateRangeRU } from "../formatDateRangeRU";
+import { resolveSiteItemImageUrl } from "../site-items/siteItemImage";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import {
@@ -747,10 +748,10 @@ function GridLikeSnapshot({ snapshot, revision, focusArea = "" }) {
             <Typography sx={{ fontWeight: 700 }}>
               {focusArea === "image" ? "Изображение выбранной ревизии" : "Состояние изображения"}
             </Typography>
-            {image?.variants?.webp?.url || image?.variants?.jpg?.url ? (
+            {resolveSiteItemImageUrl(image) ? (
               <Box
                 component="img"
-                src={image?.variants?.webp?.url ?? image?.variants?.jpg?.url}
+                src={resolveSiteItemImageUrl(image)}
                 alt={snapshot?.name || "Историческое изображение"}
                 sx={{
                   width: "100%",
