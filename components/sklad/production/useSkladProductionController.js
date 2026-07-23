@@ -87,7 +87,6 @@ export default function useSkladProductionController({ showAlert }) {
     [countsByType, pageByType, rowsPerPage],
   );
 
-  const canConvert = canManageProduction("recipe") || canManageProduction("semi_finished");
   const canDeleteAction = canDelete("production");
 
   const loadRows = useCallback(
@@ -535,42 +534,6 @@ export default function useSkladProductionController({ showAlert }) {
     [closeModal, loadEntityDetail, setShellState, setState, showAlert],
   );
 
-  const openConvert = useCallback(
-    async (entityType, row) => {
-      setState({
-        activeEntityType: entityType,
-        modal: {
-          open: true,
-          mode: "convert",
-          loading: true,
-          tab: "main",
-        },
-        detail: null,
-        draft: null,
-      });
-      setShellState({ isLoading: true });
-
-      try {
-        const entity = await loadEntityDetail(entityType, row);
-        setState({
-          modal: {
-            open: true,
-            mode: "convert",
-            loading: false,
-            tab: "main",
-          },
-          detail: entity,
-        });
-      } catch (error) {
-        closeModal();
-        showAlert(error?.message || "Ошибка загрузки карточки для конвертации", false);
-      } finally {
-        setShellState({ isLoading: false });
-      }
-    },
-    [closeModal, loadEntityDetail, setShellState, setState, showAlert],
-  );
-
   return {
     activeEntityType,
     search,
@@ -598,14 +561,12 @@ export default function useSkladProductionController({ showAlert }) {
         shellAllergens={shellAllergens}
         shellStorages={shellStorages}
         shellApps={shellApps}
-        canConvert={canConvert}
         canDeleteAction={canDeleteAction}
         canManageProduction={canManageProduction}
         setState={setState}
         openCreate={openCreate}
         openView={openView}
         openEdit={openEdit}
-        openConvert={openConvert}
         openHistoryTab={openHistoryTab}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}

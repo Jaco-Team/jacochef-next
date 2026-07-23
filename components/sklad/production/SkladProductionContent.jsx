@@ -6,7 +6,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
-import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   Accordion,
@@ -31,7 +30,6 @@ import {
 import { MySearchInput, MySelect } from "@/ui/Forms";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
-import SkladProductionConvertDialog from "./SkladProductionConvertDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladProductionViewDialog from "./SkladProductionViewDialog";
 import {
@@ -67,14 +65,12 @@ export default function SkladProductionContent({
   shellAllergens,
   shellStorages,
   shellApps,
-  canConvert,
   canDeleteAction,
   canManageProduction,
   setState,
   openCreate,
   openView,
   openEdit,
-  openConvert,
   openHistoryTab,
   openArchiveDialog,
   openDeleteDialog,
@@ -225,21 +221,6 @@ export default function SkladProductionContent({
                                   onClick={() => openEdit(entityType, row)}
                                 >
                                   <EditIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-
-                            <Tooltip
-                              title={canConvert ? "Открыть конвертацию" : "Недостаточно прав"}
-                            >
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  disabled={!canConvert}
-                                  aria-label="Открыть сценарий конвертации"
-                                  onClick={() => openConvert(entityType, row)}
-                                >
-                                  <SwapHorizIcon fontSize="small" />
                                 </IconButton>
                               </span>
                             </Tooltip>
@@ -451,13 +432,6 @@ export default function SkladProductionContent({
         allItemsList={detail?.all_items_list || draft?.all_items_list || []}
         isEditable={canManageProduction(activeEntityType)}
         onSubmit={submitDraft}
-        onClose={closeModal}
-      />
-      <SkladProductionConvertDialog
-        open={modal.open && modal.mode === "convert"}
-        detail={detail}
-        entityType={activeEntityType}
-        canConvert={canConvert}
         onClose={closeModal}
       />
       <SkladDeleteDialog
