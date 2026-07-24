@@ -4,7 +4,6 @@ import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
-import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
@@ -67,7 +66,6 @@ export default function SkladSiteItemsContent({
   openCreate,
   openView,
   openEdit,
-  openHistoryTab,
   openArchiveDialog,
   openDeleteDialog,
   closeModal,
@@ -435,8 +433,6 @@ export default function SkladSiteItemsContent({
           detail={detail}
           isEditable={isEditable}
           onEdit={() => (detail?.id ? openEdit(detail) : null)}
-          onOpenHistory={() => (detail?.id ? openHistoryTab(detail) : null)}
-          onOpenImageHistory={() => (detail?.id ? openHistoryTab(detail, "image") : null)}
           onUploadImage={(file) => handleUploadImage(detail, file, "image")}
           onSyncVk={handleSyncVk}
           onClose={closeModal}

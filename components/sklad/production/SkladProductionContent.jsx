@@ -4,7 +4,6 @@ import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
-import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   Button,
@@ -68,7 +67,6 @@ export default function SkladProductionContent({
   openCreate,
   openView,
   openEdit,
-  openHistoryTab,
   openArchiveDialog,
   openDeleteDialog,
   closeModal,
@@ -269,18 +267,6 @@ export default function SkladProductionContent({
                                 onClick={() => openEdit(entityType, row)}
                               >
                                 <EditIcon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-
-                          <Tooltip title="Открыть историю">
-                            <span>
-                              <IconButton
-                                size="small"
-                                aria-label="Открыть историю"
-                                onClick={() => openHistoryTab(entityType, row)}
-                              >
-                                <HistoryOutlinedIcon fontSize="small" />
                               </IconButton>
                             </span>
                           </Tooltip>

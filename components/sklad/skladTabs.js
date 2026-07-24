@@ -43,14 +43,6 @@ export const SKLAD_TAB_DEFINITIONS = [
     description: "Site-facing товарный контур, теги, маркировка, картинки и derived-поля.",
   },
   {
-    key: "history",
-    sections: ["history"],
-    label: "История",
-    accessKeys: ["name", "items", "create_new", "is_show"],
-    summaryKey: null,
-    description: "Unified history browser для canonical entity families.",
-  },
-  {
     key: "archive",
     sections: ["archive"],
     label: "Архив",

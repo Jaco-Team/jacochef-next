@@ -5,8 +5,6 @@ import { useCallback, useEffect, useMemo } from "react";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
-import { getVisibleSkladTabs } from "../skladTabs";
-import { HISTORY_INITIAL_STATE, useSkladHistoryStore } from "../history/useSkladHistoryStore";
 import SkladSiteItemsContent from "./SkladSiteItemsContent";
 import {
   dedupeSelectOptions,
@@ -22,9 +20,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const { canDelete, canManageSiteItems } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
-  const shellSections = useSkladStore((state) => state.sections);
-  const shellAccess = useSkladStore((state) => state.access);
-  const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const rows = useSkladSiteItemsStore((state) => state.rows);
   const categories = useSkladSiteItemsStore((state) => state.categories);
@@ -114,35 +109,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
       setState({ page: maxPage });
     }
   }, [page, rows.length, rowsPerPage, setState]);
-
-  const openHistoryTab = useCallback(
-    (row, focusArea = "") => {
-      if (!row?.id) {
-        showAlert("Не удалось определить сущность для открытия истории", false);
-        return;
-      }
-
-      const visibleTabs = getVisibleSkladTabs({
-        sections: shellSections,
-        access: shellAccess,
-      });
-      const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
-
-      if (historyTabIndex === -1) {
-        showAlert("Вкладка истории недоступна по текущим section/access", false);
-        return;
-      }
-
-      setHistoryState({
-        entityType: "site_item",
-        entityId: String(row.id),
-        focusArea,
-        ...HISTORY_INITIAL_STATE,
-      });
-      setShellState({ tab: historyTabIndex });
-    },
-    [setHistoryState, setShellState, shellAccess, shellSections, showAlert],
-  );
 
   const closeModal = useCallback(() => {
     setState({
@@ -691,7 +657,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
         openCreate={openCreate}
         openView={openView}
         openEdit={openEdit}
-        openHistoryTab={openHistoryTab}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}
         closeModal={closeModal}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
@@ -26,8 +25,6 @@ import SkladDeleteDialog from "../SkladDeleteDialog";
 import useSkladApi from "../useSkladApi";
 import useSkladAccess from "../useSkladAccess";
 import { useSkladStore } from "../useSkladStore";
-import { getVisibleSkladTabs } from "../skladTabs";
-import { HISTORY_INITIAL_STATE, useSkladHistoryStore } from "../history/useSkladHistoryStore";
 import SkladProductionViewDialog from "../production/SkladProductionViewDialog";
 import SkladSiteItemViewDialog from "../site-items/SkladSiteItemViewDialog";
 
@@ -118,9 +115,6 @@ export default function useSkladArchiveController({ showAlert }) {
   const api = useSkladApi();
   const { canManageArchivedEntity, canView } = useSkladAccess();
   const setShellState = useSkladStore((state) => state.setState);
-  const shellSections = useSkladStore((state) => state.sections);
-  const shellAccess = useSkladStore((state) => state.access);
-  const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const [entityType, setEntityType] = useState("recipe");
   const [rows, setRows] = useState([]);
@@ -165,15 +159,6 @@ export default function useSkladArchiveController({ showAlert }) {
     return rows.slice(start, start + rowsPerPage);
   }, [page, rows, rowsPerPage]);
 
-  const visibleTabs = useMemo(
-    () =>
-      getVisibleSkladTabs({
-        sections: shellSections,
-        access: shellAccess,
-      }),
-    [shellAccess, shellSections],
-  );
-  const canOpenHistory = canView("history") && visibleTabs.some((item) => item.key === "history");
   const canRestore = canManageArchivedEntity(entityType);
 
   useEffect(() => {
@@ -183,30 +168,6 @@ export default function useSkladArchiveController({ showAlert }) {
       setPage(maxPage);
     }
   }, [page, rows.length, rowsPerPage]);
-
-  const openHistoryTab = useCallback(
-    (row) => {
-      if (!row?.id) {
-        showAlert("Не удалось определить сущность для открытия истории", false);
-        return;
-      }
-
-      const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
-
-      if (historyTabIndex === -1) {
-        showAlert("Вкладка истории недоступна по текущим section/access", false);
-        return;
-      }
-
-      setHistoryState({
-        entityType: row.entityType,
-        entityId: String(row.id),
-        ...HISTORY_INITIAL_STATE,
-      });
-      setShellState({ tab: historyTabIndex });
-    },
-    [setHistoryState, setShellState, showAlert, visibleTabs],
-  );
 
   const closeModal = useCallback(() => {
     setModal({
@@ -540,7 +501,6 @@ export default function useSkladArchiveController({ showAlert }) {
     canOpenHistory,
     canRestore,
     entityType,
-    openHistoryTab,
     openRestoreDialog,
     openView,
     page,

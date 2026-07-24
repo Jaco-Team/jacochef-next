@@ -5,8 +5,6 @@ import { useCallback, useEffect, useMemo } from "react";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
-import { useSkladHistoryStore, HISTORY_INITIAL_STATE } from "../history/useSkladHistoryStore";
-import { getVisibleSkladTabs } from "../skladTabs";
 import SkladProductionContent from "./SkladProductionContent";
 import {
   createEmptyProductionDraft,
@@ -26,14 +24,11 @@ export default function useSkladProductionController({ showAlert }) {
   const { canDelete, canManageProduction } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
-  const shellSections = useSkladStore((state) => state.sections);
-  const shellAccess = useSkladStore((state) => state.access);
   const shellUnits = useSkladStore((state) => state.units);
   const categories = useSkladStore((state) => state.categories);
   const shellAllergens = useSkladStore((state) => state.allergens);
   const shellStorages = useSkladStore((state) => state.storages);
   const shellApps = useSkladStore((state) => state.apps);
-  const setHistoryState = useSkladHistoryStore((state) => state.setState);
 
   const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
   const rowsByType = useSkladProductionStore((state) => state.rowsByType);
@@ -136,34 +131,6 @@ export default function useSkladProductionController({ showAlert }) {
       setState({ page: maxPage });
     }
   }, [mergedRows.length, page, rowsPerPage, setState]);
-
-  const openHistoryTab = useCallback(
-    (entityType, row) => {
-      if (!row?.id) {
-        showAlert("Не удалось определить сущность для открытия истории", false);
-        return;
-      }
-
-      const visibleTabs = getVisibleSkladTabs({
-        sections: shellSections,
-        access: shellAccess,
-      });
-      const historyTabIndex = visibleTabs.findIndex((item) => item.key === "history");
-
-      if (historyTabIndex === -1) {
-        showAlert("Вкладка истории недоступна по текущим section/access", false);
-        return;
-      }
-
-      setHistoryState({
-        entityType,
-        entityId: String(row.id),
-        ...HISTORY_INITIAL_STATE,
-      });
-      setShellState({ tab: historyTabIndex });
-    },
-    [setHistoryState, setShellState, shellAccess, shellSections, showAlert],
-  );
 
   const closeModal = useCallback(() => {
     setState({
@@ -547,7 +514,6 @@ export default function useSkladProductionController({ showAlert }) {
         openCreate={openCreate}
         openView={openView}
         openEdit={openEdit}
-        openHistoryTab={openHistoryTab}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}
         closeModal={closeModal}
