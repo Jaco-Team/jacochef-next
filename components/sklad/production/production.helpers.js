@@ -253,6 +253,7 @@ export function normalizeProductionDraft(entity, response = {}) {
     ref_allergens: Array.isArray(response?.allergens) ? response.allergens : [],
     ref_categories: Array.isArray(response?.categories) ? response.categories : [],
     ref_apps: Array.isArray(response?.apps) ? response.apps : [],
+    history: response?.history ?? { rows: [], capabilities: {}, meta: {} },
   };
 }
 

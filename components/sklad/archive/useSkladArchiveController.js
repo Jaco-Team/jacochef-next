@@ -383,13 +383,7 @@ export default function useSkladArchiveController({ showAlert }) {
                   Действия
                 </Typography>
                 <Typography sx={{ fontWeight: 700 }}>
-                  {canRestore && canOpenHistory
-                    ? "Просмотр, восстановление и история"
-                    : canRestore
-                      ? "Просмотр и восстановление"
-                      : canOpenHistory
-                        ? "Просмотр и история"
-                        : "Только просмотр"}
+                  {canRestore ? "Просмотр и восстановление" : "Только просмотр"}
                 </Typography>
               </Stack>
             </Stack>
@@ -443,14 +437,6 @@ export default function useSkladArchiveController({ showAlert }) {
                           </Button>
                           <Button
                             size="small"
-                            startIcon={<HistoryOutlinedIcon />}
-                            onClick={() => openHistoryTab(row)}
-                            disabled={!canOpenHistory}
-                          >
-                            История
-                          </Button>
-                          <Button
-                            size="small"
                             color="inherit"
                             startIcon={<UnarchiveOutlinedIcon />}
                             onClick={() => openRestoreDialog(row)}
@@ -497,17 +483,7 @@ export default function useSkladArchiveController({ showAlert }) {
         </Paper>
       </Stack>
     );
-  }, [
-    canOpenHistory,
-    canRestore,
-    entityType,
-    openRestoreDialog,
-    openView,
-    page,
-    paginatedRows,
-    rows,
-    rowsPerPage,
-  ]);
+  }, [canRestore, entityType, openRestoreDialog, openView, page, paginatedRows, rows, rowsPerPage]);
 
   return {
     entityType,

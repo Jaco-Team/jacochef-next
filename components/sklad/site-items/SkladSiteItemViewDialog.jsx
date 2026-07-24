@@ -32,6 +32,10 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
+import {
+  SkladEmbeddedHistoryTable,
+  SkladEmbeddedImageHistoryTable,
+} from "../history/SkladEmbeddedHistoryTable";
 import { formatDateRangeRU } from "../formatDateRangeRU";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
 
@@ -281,9 +285,8 @@ export default function SkladSiteItemViewDialog({
   detail,
   isEditable = false,
   onEdit,
-  onOpenHistory,
-  onOpenImageHistory,
   onUploadImage,
+  onRestoreImage,
   onSyncVk,
   onClose,
 }) {
@@ -788,6 +791,17 @@ export default function SkladSiteItemViewDialog({
                       <Typography color="text.secondary">Позиции состава не заданы.</Typography>
                     )}
                   </SectionCard>
+
+                  <SectionCard
+                    title="История изображения"
+                    subtitle="Встроенная лента изменений изображения с возможностью восстановления"
+                  >
+                    <SkladEmbeddedImageHistoryTable
+                      imageHistory={detail?.image_history}
+                      imageAssetKey={detail?.img_app}
+                      onRestoreImage={onRestoreImage}
+                    />
+                  </SectionCard>
                 </Stack>
               </TabPanel>
 
@@ -851,13 +865,6 @@ export default function SkladSiteItemViewDialog({
                         onClick={onEdit}
                       >
                         Открыть редактор
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<HistoryOutlinedIcon />}
-                        onClick={onOpenHistory}
-                      >
-                        Открыть историю
                       </Button>
                     </Stack>
                   </SectionCard>
@@ -932,13 +939,6 @@ export default function SkladSiteItemViewDialog({
                         </Button>
                         <Button
                           variant="outlined"
-                          startIcon={<HistoryOutlinedIcon />}
-                          onClick={onOpenImageHistory || onOpenHistory}
-                        >
-                          История изображения
-                        </Button>
-                        <Button
-                          variant="outlined"
                           startIcon={<SyncAltOutlinedIcon />}
                           disabled={!isEditable}
                           onClick={onSyncVk}
@@ -958,62 +958,9 @@ export default function SkladSiteItemViewDialog({
                 <Stack spacing={2.5}>
                   <SectionCard
                     title="История карточки"
-                    subtitle="Сводка текущей версии и переход к журналу изменений"
+                    subtitle="Последние ревизии текущей карточки по embedded history contract"
                   >
-                    <Grid
-                      container
-                      spacing={2}
-                    >
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
-                          label="Текущее название"
-                          value={formatValue(detail?.name)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
-                          label="Период действия"
-                          value={formatDateRange(detail)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
-                          label="Статус"
-                          value={Number(isVisible) === 1 ? "Активен" : "Скрыт"}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
-                          label="Удаление"
-                          value={deletePreviewMeta.label}
-                        />
-                      </Grid>
-                    </Grid>
-                  </SectionCard>
-                  <SectionCard
-                    title="Действия истории"
-                    subtitle="Открывает общий журнал изменений модуля"
-                  >
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1}
-                    >
-                      <Button
-                        variant="contained"
-                        startIcon={<HistoryOutlinedIcon />}
-                        onClick={onOpenHistory}
-                      >
-                        Открыть журнал изменений
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        startIcon={<EditOutlinedIcon />}
-                        disabled={!isEditable}
-                        onClick={onEdit}
-                      >
-                        Открыть редактор
-                      </Button>
-                    </Stack>
+                    <SkladEmbeddedHistoryTable history={detail?.history} />
                   </SectionCard>
                 </Stack>
               </TabPanel>

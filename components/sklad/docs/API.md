@@ -21,6 +21,66 @@
 - для `warehouse_item`, `unit`, `category` archive не поддержан
 - `history/*` работает по canonical snapshot, а не по raw legacy row
 
+Общий embedded history contract:
+
+- в detail-эндпоинтах используется embedded block `history`
+- это не полный revision payload, а краткий list slice для правой панели / inline timeline
+- полный revision open/compare идет через canonical `history/*`
+
+Embedded `history` shape:
+
+```json
+{
+  "rows": [
+    {
+      "entity_type": "site_item",
+      "entity_id": 1,
+      "history_id": 100,
+      "revision_key": "100",
+      "revision_label": "2026-07-24",
+      "changed_at": "2026-07-24 10:00:00",
+      "changed_by": "User Name",
+      "source": "jaco_site_rolls.items_hist_new"
+    }
+  ],
+  "capabilities": {
+    "list": true,
+    "get_one": true,
+    "compare": {
+      "supported": true,
+      "reason": null
+    }
+  },
+  "meta": {
+    "entity_type": "site_item",
+    "entity_id": 1,
+    "history_meta": {}
+  }
+}
+```
+
+Embedded history rules:
+
+- `rows` is capped to the latest 20 revisions
+- `revision_key` equals stringified `history_id`
+- `changed_at` comes from historical `date_start`/legacy revision start timestamp
+- entity-specific rows can contain extra summary fields beyond the base meta fields above
+
+Common delete usage shape:
+
+```json
+{
+  "can_delete": false,
+  "active_relations": [
+    {
+      "source": "jaco_site_rolls.items_rec_new",
+      "count": 3
+    }
+  ],
+  "history_relations": []
+}
+```
+
 ## 1. Module Open
 
 ### `POST|ANY /api/sklad_items/get_all`
@@ -319,12 +379,63 @@ Response:
 {
   "st": true,
   "item": {},
+  "history": {
+    "rows": [],
+    "capabilities": {
+      "list": true,
+      "get_one": true,
+      "compare": {
+        "supported": true,
+        "reason": null
+      }
+    },
+    "meta": {
+      "entity_type": "item",
+      "entity_id": 1,
+      "history_meta": {}
+    }
+  },
   "categories": [],
   "apps": [],
   "accounting_systems": [],
   "units": []
 }
 ```
+
+Warehouse item detail rules:
+
+- `item` fields:
+  - `id`
+  - `name`
+  - `name_for_vendor`
+  - `mark_name`
+  - `category_id`
+  - `ed_izmer_id`
+  - `app_id`
+  - `pq`
+  - `percent`
+  - `vend_percent`
+  - `art`
+  - `time_min`
+  - `time_min_other`
+  - `time_dop_min`
+  - `min_count`
+  - `max_count_in_m`
+  - `show_in_order`
+  - `show_in_rev`
+  - `is_show`
+  - `is_archived`
+  - `date_start`
+  - `date_end`
+  - `allergens`
+  - `allergens_possible`
+  - `accounting_systems`
+  - `storages`
+  - `can_delete`
+  - `delete_usage`
+- `history.rows` returns the recent embedded revision list for this item detail
+- embedded detail history is lightweight; full revision open/compare still goes through canonical history endpoints
+- `categories`, `units`, `allergens`, `accounting_systems`, `storages`, `apps` are edit references, not a second entity payload
 
 ## 5. Recipes
 
@@ -411,6 +522,22 @@ Response shape:
       "history_relations": []
     }
   },
+  "history": {
+    "rows": [],
+    "capabilities": {
+      "list": true,
+      "get_one": true,
+      "compare": {
+        "supported": true,
+        "reason": null
+      }
+    },
+    "meta": {
+      "entity_type": "recipe",
+      "entity_id": 1,
+      "history_meta": {}
+    }
+  },
   "allergens": [],
   "categories": [],
   "units": [],
@@ -441,7 +568,51 @@ Composition row fields:
 
 Recipe detail rules:
 
+- top-level response shape:
+  - `entity`
+  - `history`
+  - `allergens`
+  - `categories`
+  - `units`
+  - `all_storages`
+  - `all_items_list`
+  - `apps`
+  - `composition`
+- `entity` fields:
+  - `id`
+  - `type = recipe`
+  - `name`
+  - `shelf_life`
+  - `date_start`
+  - `date_end`
+  - `ed_izmer_id`
+  - `unit_name`
+  - `all_w`
+  - `all_w_brutto`
+  - `all_w_netto`
+  - `time_min`
+  - `time_min_dop`
+  - `show_in_rev`
+  - `two_user`
+  - `allergens`
+  - `allergens_possible`
+  - `allergens_derived`
+  - `allergens_possible_derived`
+  - `categories`
+  - `structure`
+  - `contents`
+  - `text_contents`
+  - `storages`
+  - `apps`
+  - `items`
+  - `composition`
+  - `is_active`
+  - `is_archived`
+  - `can_delete`
+  - `delete_usage`
 - `entity.items` and root `composition` publish the same composition rows
+- `history.rows` returns the recent embedded revision list for this recipe detail
+- embedded detail history is intentionally lightweight: full revision open/compare still goes through canonical history endpoints
 - `contents` and `text_contents` are aliases of `structure`
 - typed keys are preserved as `{id}-item`, `{id}-pf`, `{id}-rec`
 - visibility filtering matches legacy `recept_module_new_2`
@@ -579,6 +750,22 @@ Response:
       "history_relations": []
     }
   },
+  "history": {
+    "rows": [],
+    "capabilities": {
+      "list": true,
+      "get_one": true,
+      "compare": {
+        "supported": true,
+        "reason": null
+      }
+    },
+    "meta": {
+      "entity_type": "semi_finished",
+      "entity_id": 1,
+      "history_meta": {}
+    }
+  },
   "allergens": [],
   "categories": [],
   "units": [],
@@ -593,7 +780,14 @@ Response:
 
 Semi-finished detail rules:
 
+- top-level response shape mirrors `recipes/get_one`, plus root aliases:
+  - `contents`
+  - `text_contents`
+- `entity` fields mirror `recipe`, with:
+  - `type = semi_finished`
 - `entity.items` and root `composition` publish the same composition rows
+- `history.rows` returns the recent embedded revision list for this semi-finished detail
+- embedded detail history is intentionally lightweight: full revision open/compare still goes through canonical history endpoints
 - `contents` and `text_contents` are explicit aliases of `structure`
 - composition rows use primitive `item_id`
 - typed keys are preserved as `{id}-item`
@@ -746,8 +940,113 @@ Response shape:
 
 ### `POST|ANY /api/sklad_items/site-items/get_one`
 
+Response shape:
+
+```json
+{
+  "st": true,
+  "item": {},
+  "history": {},
+  "image_history": {},
+  "can_delete": null,
+  "delete_usage": {},
+  "pf_stage_1": [],
+  "pf_stage_2": [],
+  "pf_stage_3": [],
+  "rec_stage_1": [],
+  "rec_stage_2": [],
+  "rec_stage_3": [],
+  "item_items": {
+    "this_items": [],
+    "all_items": []
+  },
+  "items_stage": {
+    "stage_1": [],
+    "stage_2": [],
+    "stage_3": [],
+    "all": []
+  },
+  "composition_source": {
+    "pf": [],
+    "recipes": []
+  },
+  "composition_derived": {
+    "pf_total": []
+  },
+  "allergens_derived": [],
+  "possible_allergens_derived": [],
+  "cat_list": [],
+  "tags_all": [],
+  "all_pf": [],
+  "all_rec": [],
+  "all_items": []
+}
+```
+
 Main rules:
 
+- `item` fields:
+  - `id`
+  - `name`
+  - `short_name`
+  - `link`
+  - `category_id`
+  - `category_id2`
+  - `art`
+  - `nds`
+  - `time`
+  - `weight`
+  - `size_pizza`
+  - `count_part`
+  - `stol`
+  - `type`
+  - `sort`
+  - `tmp_desc`
+  - `marc_desc`
+  - `marc_desc_full`
+  - `protein`
+  - `fat`
+  - `carbohydrates`
+  - `kkal`
+  - `kkal_preview`
+  - `nutrition_source = persisted|linked_items`
+  - `all_w`
+  - `all_w_brutto`
+  - `all_w_netto`
+  - `date_start`
+  - `date_end`
+  - `is_show`
+  - `is_archived`
+  - `is_price`
+  - `show_site`
+  - `show_program`
+  - `is_new`
+  - `is_hit`
+  - `is_updated`
+  - `time_stage_1`
+  - `time_stage_2`
+  - `time_stage_3`
+  - `time_stage_1_sec`
+  - `time_stage_2_sec`
+  - `time_stage_3_sec`
+  - `full_sec`
+  - `update_item`
+  - `date_update`
+  - `tags`
+  - `img_new`
+  - `img_new_update`
+  - `img_app`
+  - `is_mark`
+  - `mark_code`
+  - `series`
+  - `is_akchis`
+  - `image`
+  - `marking`
+- `history.rows` returns the recent embedded revision list for this site item detail
+- `image_history` is a separate lightweight timeline for image changes
+- `image_history.current.image` is the current live image state
+- `image_history.rows[]` returns changed image revisions with `before_image` and `after_image`
+- `image_history.capabilities.restore = true`
 - `composition_source.pf` = direct `site_item -> pf` links
 - `composition_source.recipes` = direct `site_item -> recipe` links
 - `composition_derived.pf_total` = aggregated derived PF composition
@@ -758,6 +1057,16 @@ Main rules:
   - `img_new_update`
   - `img_app`
 - structured `image` is also returned
+- `image` shape:
+  - `paths`
+  - `asset_key`
+  - `current_fields`
+  - `variants.jpg.path`
+  - `variants.jpg.url`
+  - `variants.webp.path`
+  - `variants.webp.url`
+  - `urls.img_new`
+  - `urls.img_new_update`
 - preview delete data is returned here, not in list
 - if preview delete-check cannot be built:
   - `can_delete = null`
@@ -767,6 +1076,20 @@ Main rules:
 - `item.tags` come from `tags_items`, then fallback to legacy CSV
 - `date_end = null` means open-ended interval
 - `items_stage` and `item_items.this_items` preserve legacy row-level fields used by old `site_items_new`
+- `pf_stage_*` and `rec_stage_*` are convenience slices derived from `items_stage.stage_*`
+- `items_stage.all` / `all_pf` contain mixed stage-selection options: PF + recipe refs
+- `all_rec` contains current recipe options for root references
+- `all_items` contains current site-item options for linked items
+- `image_history.rows[]` fields:
+  - `revision_key`
+  - `history_id`
+  - `changed_at`
+  - `changed_by`
+  - `action = image_initial|image_updated`
+  - `before_image`
+  - `after_image`
+  - `can_restore`
+- `changed_at` in `image_history` is currently derived from historical `date_start`
 
 ### `POST|ANY /api/sklad_items/site-items/get_marking`
 
@@ -854,6 +1177,7 @@ Response:
   "image": {
     "slot": "main",
     "asset_key": "",
+    "version_key": "",
     "history_id": 348,
     "paths": [],
     "variants": {},
@@ -869,9 +1193,57 @@ Image rules:
 - item-bound mutation only
 - accepts only `jpg/jpeg/png`
 - publishes resized assets into existing storage
-- updates current image fields in `jaco_site_rolls.items_new`
-- writes history revision in `jaco_site_rolls.items_hist_new`
+- current row keeps stable public alias naming in `img_app`
+- current row image paths point to current alias files
+- history revision stores immutable versioned image paths in `jaco_site_rolls.items_hist_new`
 - current read and history use the same structured `image` contract
+- `image.asset_key` = stable current key used by the site
+- `image.version_key` = immutable upload version key
+
+### `POST|ANY /api/sklad_items/site-items/restore_image`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 10,
+    "history_id": 348,
+    "slot": "main"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "item_id": 10,
+  "history_id": 349,
+  "restored_from_history_id": 348,
+  "image": {
+    "slot": "main",
+    "asset_key": "",
+    "version_key": null,
+    "history_id": 349,
+    "paths": [],
+    "variants": {},
+    "uploaded": {},
+    "alias_paths": {},
+    "immutable_paths": {}
+  }
+}
+```
+
+Restore rules:
+
+- restores only from this item's own `items_hist_new` row
+- source history row must contain both immutable JPG and WEBP paths
+- restore rewrites current alias files, not public naming
+- restore writes a new current history snapshot after applying the image
 
 ### `POST|ANY /api/sklad_items/site-items/tags/save_new`
 

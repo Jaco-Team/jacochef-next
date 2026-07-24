@@ -66,6 +66,7 @@ export default function SkladSiteItemsContent({
   openCreate,
   openView,
   openEdit,
+  handleRestoreImage,
   openArchiveDialog,
   openDeleteDialog,
   closeModal,
@@ -306,7 +307,7 @@ export default function SkladSiteItemsContent({
                               aria-label="История"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openHistoryTab(row);
+                                openView(row, "history");
                               }}
                             >
                               <HistoryOutlinedIcon fontSize="small" />
@@ -434,6 +435,9 @@ export default function SkladSiteItemsContent({
           isEditable={isEditable}
           onEdit={() => (detail?.id ? openEdit(detail) : null)}
           onUploadImage={(file) => handleUploadImage(detail, file, "image")}
+          onRestoreImage={(historyId) =>
+            detail?.id ? handleRestoreImage(detail, historyId, "image") : null
+          }
           onSyncVk={handleSyncVk}
           onClose={closeModal}
         />
@@ -447,6 +451,9 @@ export default function SkladSiteItemsContent({
           loading={modal.loading}
           isEditable={isEditable}
           onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "tech")}
+          onRestoreImage={(historyId) =>
+            draft?.id ? handleRestoreImage(draft, historyId, "history") : null
+          }
           onSubmit={submitDraft}
           onCreateTag={handleCreateTag}
           onRenameTag={handleRenameTag}

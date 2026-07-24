@@ -542,6 +542,50 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [api, loadRows, modal, refreshOpenDetail, setShellState, setState, showAlert],
   );
 
+  const handleRestoreImage = useCallback(
+    async (row, historyId, section = "image") => {
+      if (!row?.id || !historyId) {
+        return;
+      }
+
+      setState({
+        modal: {
+          ...modal,
+          loading: true,
+          section,
+        },
+      });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.restoreSiteItemImage({
+          id: row.id,
+          history_id: historyId,
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка восстановления изображения");
+        }
+
+        await refreshOpenDetail(row.id, section);
+        showAlert(response?.text || "Изображение восстановлено", true);
+        await loadRows();
+      } catch (error) {
+        setState({
+          modal: {
+            ...modal,
+            loading: false,
+            section,
+          },
+        });
+        showAlert(error?.message || "Ошибка восстановления изображения", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, loadRows, modal, refreshOpenDetail, setShellState, setState, showAlert],
+  );
+
   const handleSyncVk = useCallback(async () => {
     setShellState({ isLoading: true });
 
@@ -657,6 +701,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         openCreate={openCreate}
         openView={openView}
         openEdit={openEdit}
+        handleRestoreImage={handleRestoreImage}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}
         closeModal={closeModal}

@@ -2,13 +2,30 @@
 
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import { Alert, Box, Chip, DialogContent, Grid, Paper, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Chip,
+  DialogContent,
+  Grid,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
+import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import { formatDateRangeRU } from "../formatDateRangeRU";
 
 function formatValue(value, fallback = "-") {
@@ -102,6 +119,7 @@ const TABS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
   { value: "composition", label: "Состав", icon: <Inventory2OutlinedIcon fontSize="small" /> },
   { value: "activity", label: "Статус", icon: <SettingsOutlinedIcon fontSize="small" /> },
+  { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
 ];
 
 export default function SkladProductionViewDialog({
@@ -417,6 +435,19 @@ export default function SkladProductionViewDialog({
                       size="small"
                     />
                   </Stack>
+                </InfoCard>
+              </Stack>
+            </TabPanel>
+            <TabPanel
+              value="history"
+              sx={{ p: 0, pt: 2 }}
+            >
+              <Stack spacing={2}>
+                <InfoCard
+                  title="История изменений"
+                  subtitle="Последние ревизии текущей карточки по embedded history contract"
+                >
+                  <SkladEmbeddedHistoryTable history={detail?.history} />
                 </InfoCard>
               </Stack>
             </TabPanel>

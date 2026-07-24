@@ -157,6 +157,8 @@ export function normalizeSiteItemDraft(response, fallbackCategories = []) {
     delete_usage: response?.delete_usage ?? null,
     item_items: response?.item_items ?? emptyRelations.item_items,
     items_stage: response?.items_stage ?? emptyRelations.items_stage,
+    history: response?.history ?? { rows: [], capabilities: {}, meta: {} },
+    image_history: response?.image_history ?? { rows: [], capabilities: {}, current: {} },
   };
 }
 

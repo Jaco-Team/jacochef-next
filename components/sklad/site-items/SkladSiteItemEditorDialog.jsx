@@ -6,6 +6,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
@@ -36,6 +37,10 @@ import TabPanel from "@mui/lab/TabPanel";
 
 import { MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
+import {
+  SkladEmbeddedHistoryTable,
+  SkladEmbeddedImageHistoryTable,
+} from "../history/SkladEmbeddedHistoryTable";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
 
 const EDITOR_SECTIONS = [
@@ -45,6 +50,7 @@ const EDITOR_SECTIONS = [
   { value: "tags", label: "Теги", icon: <SellOutlinedIcon fontSize="small" /> },
   { value: "activity", label: "Активность", icon: <SettingsOutlinedIcon fontSize="small" /> },
   { value: "composition", label: "Состав", icon: <LocalOfferOutlinedIcon fontSize="small" /> },
+  { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
 ];
 
 const MARKING_OPTIONS = [
@@ -362,6 +368,7 @@ export default function SkladSiteItemEditorDialog({
   tags = [],
   isEditable = false,
   onUploadImage,
+  onRestoreImage,
   onSubmit,
   onCreateTag,
   onRenameTag,
@@ -1783,6 +1790,31 @@ export default function SkladSiteItemEditorDialog({
                       </InfoCard>
                     </Grid>
                   </Grid>
+                </Stack>
+              </TabPanel>
+
+              <TabPanel
+                value="history"
+                sx={{ p: 0, pt: 2 }}
+              >
+                <Stack spacing={2}>
+                  <InfoCard
+                    title="История карточки"
+                    description="Последние ревизии текущей версии."
+                  >
+                    <SkladEmbeddedHistoryTable history={draft?.history} />
+                  </InfoCard>
+
+                  <InfoCard
+                    title="История изображения"
+                    description="Последние изменения изображения с возможностью восстановления."
+                  >
+                    <SkladEmbeddedImageHistoryTable
+                      imageHistory={draft?.image_history}
+                      imageAssetKey={draft?.img_app}
+                      onRestoreImage={onRestoreImage}
+                    />
+                  </InfoCard>
                 </Stack>
               </TabPanel>
             </TabContext>
