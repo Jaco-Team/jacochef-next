@@ -78,6 +78,8 @@
 
 - tab `Категории` в `sklad_items` сейчас скрыт из нового UI
 - это временный шаг перед полным удалением tab-а из нового модуля
+- отдельного top-level tab `История` в новом UI нет
+- история и image-history открываются внутри item-level modal-ов по embedded contract из `get_one`
 
 ## 2.1. FE product shape
 
@@ -90,14 +92,17 @@
 - внутри tab используется новый canonical API, а не legacy route-space
 - глобальные поля и shared dictionaries должны выглядеть одинаково во всех editor flows
 
-Целевые tab-ы первой версии:
+Текущие рабочие tab-ы нового FE:
 
 - `Единицы`
-- `Категории`
 - `Рецепты и заготовки`
 - `Товары сайта`
-- `История`
 - `Архив`
+
+Скрытые / переходные части:
+
+- `Категории` остаются в backend/read contour, но top-level tab скрыт
+- item history живет внутри modal-а сущности, а не в отдельном workspace
 
 Важное ограничение:
 
@@ -111,6 +116,28 @@ UI pattern for tabs:
 - старые layout-ы использовать только как reference данных и сценариев, а не как visual target
 - старые модули можно изучать для понимания flow, field semantics и migration mapping, но новый FE не должен ходить в их API, route-space или runtime helpers
 - все runtime bindings нового FE должны идти только в canonical `/api/sklad_items/*`
+
+## 2.2. FE architecture shape
+
+Текущая FE-структура модуля должна оставаться простой и module-scoped:
+
+- `SkladPage.jsx` — shell, bootstrap, tab switch, shared refs
+- `useSkladStore.js` — shell-level shared state
+- `useSkladAccess.js` — raw access adapter над `handleUserAccess`
+- `useSkladApi.js` — canonical `/api/sklad_items/*` request layer
+- per-tab store/controller/content split:
+  - store: tab-local filter/modal state
+  - controller: requests, mutations, normalization orchestration
+  - content: table/filter/action rendering
+- dialogs и local helpers живут рядом с конкретным slice, а не в shared core
+
+Практические правила по FE-коду:
+
+- не складывать JSX, normalization и mutation-flow в один god-file без причины
+- общие примитивы уровня модуля допустимы только если они реально reused в нескольких slice-ах
+- pure helpers выносить отдельно от dialog JSX
+- top-level controller не должен рендерить крупные куски UI
+- layout для dense forms/table UIs предпочитать через `Grid`, а `Stack` оставлять для локальных inline-групп и action rows
 
 ## 2. Core business need
 

@@ -41,16 +41,25 @@ import {
   SkladEmbeddedHistoryTable,
   SkladEmbeddedImageHistoryTable,
 } from "../history/SkladEmbeddedHistoryTable";
+import SkladSectionCard from "../ui/SkladSectionCard";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
+import {
+  buildInitialDraft,
+  createEmptySiteItemRelations,
+  dedupeSelectOptions,
+  getLiveKkalPreview,
+  normalizeTagList,
+  recalculateCompositionRow,
+} from "./siteItemEditor.helpers";
 
 const EDITOR_SECTIONS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
+  { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
   { value: "nutrition", label: "БЖУ", icon: <RestaurantOutlinedIcon fontSize="small" /> },
   { value: "description", label: "Описание", icon: <TuneOutlinedIcon fontSize="small" /> },
   { value: "tags", label: "Теги", icon: <SellOutlinedIcon fontSize="small" /> },
   { value: "activity", label: "Активность", icon: <SettingsOutlinedIcon fontSize="small" /> },
   { value: "composition", label: "Состав", icon: <LocalOfferOutlinedIcon fontSize="small" /> },
-  { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
 ];
 
 const MARKING_OPTIONS = [
@@ -65,300 +74,6 @@ const STAGE_OPTIONS = [
   { id: "stage_3", name: "3 этап" },
 ];
 
-function dedupeSelectOptions(options) {
-  const seen = new Set();
-
-  return options.filter((option) => {
-    const key = String(option?.id ?? "");
-
-    if (!key || seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  });
-}
-
-function createEmptySiteItemRelations() {
-  return {
-    composition_source: {
-      pf: [],
-      recipes: [],
-    },
-    composition_derived: {
-      pf_total: [],
-    },
-    item_items: {
-      this_items: [],
-      all_items: [],
-    },
-    items_stage: {
-      stage_1: [],
-      stage_2: [],
-      stage_3: [],
-      all: [],
-    },
-  };
-}
-
-function formatDecimalString(value, fallback = "0,000") {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-
-  const normalized = String(value).replace(".", ",").trim();
-  return normalized || fallback;
-}
-
-function formatIntegerString(value, fallback = "0") {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-
-  const normalized = String(value).trim();
-  return normalized || fallback;
-}
-
-function parseDecimalNumber(value) {
-  if (value === null || value === undefined || value === "") {
-    return 0;
-  }
-
-  const parsed = Number(String(value).replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function roundTo(value, digits = 3) {
-  const factor = 10 ** digits;
-  return Math.round(value * factor) / factor;
-}
-
-function recalculateCompositionRow(row) {
-  const brutto = parseDecimalNumber(row?.brutto);
-  const pr1 = parseDecimalNumber(row?.pr_1);
-  const pr2 = parseDecimalNumber(row?.pr_2);
-  const netto = roundTo((brutto * (100 - pr1)) / 100, 3);
-  const res = roundTo((netto * (100 - pr2)) / 100, 3);
-
-  return {
-    ...row,
-    netto: formatDecimalString(netto),
-    res: formatDecimalString(res),
-  };
-}
-
-function buildStageOptionLookup(itemsStage) {
-  const list = Array.isArray(itemsStage?.all) ? itemsStage.all : [];
-  const lookup = new Map();
-
-  list.forEach((item) => {
-    const key = String(item?.un_id ?? "");
-
-    if (key) {
-      lookup.set(key, item);
-    }
-  });
-
-  return lookup;
-}
-
-function normalizeStageRow(row, stageKey, lookup) {
-  const inferredType =
-    row?.type === "rec" || row?.type === "recipe"
-      ? "rec"
-      : row?.type === "pf" || row?.type === "semi_finished"
-        ? "pf"
-        : row?.rec_id
-          ? "rec"
-          : "pf";
-  const entityId = row?.rec_id ?? row?.pf_id ?? row?.id ?? "";
-  const selectedId = row?.selected_id ?? row?.un_id ?? `${entityId}-${inferredType}`;
-  const matched = lookup.get(String(selectedId)) ?? null;
-
-  return {
-    selected_id: matched?.un_id ?? String(selectedId),
-    type: matched?.type ?? inferredType,
-    rec_id: inferredType === "rec" ? (row?.rec_id ?? entityId) : "",
-    pf_id: inferredType === "pf" ? (row?.pf_id ?? entityId) : "",
-    name: row?.name ?? matched?.name ?? "-",
-    ei_name: row?.ei_name ?? matched?.ei_name ?? "-",
-    brutto: formatDecimalString(row?.brutto),
-    pr_1: formatIntegerString(row?.pr_1),
-    netto: formatDecimalString(row?.netto),
-    pr_2: formatIntegerString(row?.pr_2),
-    res: formatDecimalString(row?.res),
-    stage: stageKey,
-  };
-}
-
-function normalizeLinkedItemRow(row) {
-  return {
-    item_id: row?.item_id ? String(row.item_id) : "",
-    name: row?.name ?? "-",
-    brutto: formatDecimalString(row?.brutto),
-    pr_1: formatIntegerString(row?.pr_1),
-    netto: formatDecimalString(row?.netto),
-    pr_2: formatIntegerString(row?.pr_2),
-    res: formatDecimalString(row?.res),
-  };
-}
-
-function buildInitialDraft(draft) {
-  const emptyRelations = createEmptySiteItemRelations();
-  const itemsStage = draft?.items_stage ?? emptyRelations.items_stage;
-  const stageLookup = buildStageOptionLookup(itemsStage);
-
-  return {
-    id: draft?.id ?? null,
-    name: draft?.name ?? "",
-    short_name: draft?.short_name ?? "",
-    category_id: draft?.category_id ? String(draft.category_id) : "",
-    date_start: draft?.date_start ?? "",
-    date_end: draft?.date_end ?? "",
-    art: draft?.art ?? "",
-    stol: draft?.stol ?? "",
-    count_part: draft?.count_part ?? "",
-    weight: draft?.weight ?? "",
-    protein: draft?.protein ?? "",
-    fat: draft?.fat ?? "",
-    carbohydrates: draft?.carbohydrates ?? "",
-    kkal: draft?.kkal ?? "",
-    kkal_preview: draft?.kkal_preview ?? "",
-    image: draft?.image ?? null,
-    tmp_desc: draft?.tmp_desc ?? "",
-    marc_desc: draft?.marc_desc ?? "",
-    marc_desc_full: draft?.marc_desc_full ?? "",
-    is_mark: String(draft?.marking?.is_mark ?? 0),
-    mark_code: draft?.marking?.mark_code ?? "",
-    series: draft?.marking?.series ?? "",
-    is_akchis: Number(draft?.marking?.is_akchis ?? 0) === 1,
-    tags: Array.isArray(draft?.tags) ? draft.tags : [],
-    show_site: Number(draft?.show_site ?? 0) === 1,
-    show_program: Number(draft?.show_program ?? 0) === 1,
-    is_show: Number(draft?.is_show ?? 0) === 1,
-    is_hit: Number(draft?.is_hit ?? 0) === 1,
-    is_new: Number(draft?.is_new ?? 0) === 1,
-    time_stage_1: draft?.time_stage_1 ?? "",
-    time_stage_2: draft?.time_stage_2 ?? "",
-    time_stage_3: draft?.time_stage_3 ?? "",
-    composition_source: draft?.composition_source ?? emptyRelations.composition_source,
-    composition_derived: draft?.composition_derived ?? emptyRelations.composition_derived,
-    items_stage: {
-      ...(draft?.items_stage ?? emptyRelations.items_stage),
-      stage_1: Array.isArray(itemsStage?.stage_1)
-        ? itemsStage.stage_1.map((item) =>
-            recalculateCompositionRow(normalizeStageRow(item, "stage_1", stageLookup)),
-          )
-        : [],
-      stage_2: Array.isArray(itemsStage?.stage_2)
-        ? itemsStage.stage_2.map((item) =>
-            recalculateCompositionRow(normalizeStageRow(item, "stage_2", stageLookup)),
-          )
-        : [],
-      stage_3: Array.isArray(itemsStage?.stage_3)
-        ? itemsStage.stage_3.map((item) =>
-            recalculateCompositionRow(normalizeStageRow(item, "stage_3", stageLookup)),
-          )
-        : [],
-    },
-    item_items: {
-      ...(draft?.item_items ?? emptyRelations.item_items),
-      this_items: Array.isArray(draft?.item_items?.this_items)
-        ? draft.item_items.this_items.map((item) =>
-            recalculateCompositionRow(normalizeLinkedItemRow(item)),
-          )
-        : [],
-    },
-  };
-}
-
-function InfoCard({ title, description, children }) {
-  return (
-    <Paper sx={{ p: 2, borderRadius: 3 }}>
-      <Stack spacing={1.5}>
-        <Box>
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 700 }}
-          >
-            {title}
-          </Typography>
-          {description ? (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.25 }}
-            >
-              {description}
-            </Typography>
-          ) : null}
-        </Box>
-        {children}
-      </Stack>
-    </Paper>
-  );
-}
-
-function normalizeTagList(tags) {
-  if (!Array.isArray(tags)) {
-    return [];
-  }
-
-  const seen = new Set();
-
-  return tags.filter((tag) => {
-    const key = String(tag?.id ?? "");
-
-    if (!key || seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  });
-}
-
-function parseNutritionNumber(value) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  const normalized = String(value).replace(",", ".").trim();
-
-  if (!normalized) {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function formatPreviewKkal(value) {
-  if (!Number.isFinite(value)) {
-    return "";
-  }
-
-  const rounded = Math.round(value * 10) / 10;
-  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
-}
-
-function getLiveKkalPreview(form) {
-  const protein = parseNutritionNumber(form?.protein);
-  const fat = parseNutritionNumber(form?.fat);
-  const carbohydrates = parseNutritionNumber(form?.carbohydrates);
-
-  if (protein === null && fat === null && carbohydrates === null) {
-    return form?.kkal_preview ?? "";
-  }
-
-  const safeProtein = protein ?? 0;
-  const safeFat = fat ?? 0;
-  const safeCarbohydrates = carbohydrates ?? 0;
-
-  return formatPreviewKkal(safeProtein * 4 + safeFat * 9 + safeCarbohydrates * 4);
-}
-
 export default function SkladSiteItemEditorDialog({
   open,
   mode = "edit",
@@ -369,13 +84,14 @@ export default function SkladSiteItemEditorDialog({
   isEditable = false,
   onUploadImage,
   onRestoreImage,
+  initialTab = "main",
   onSubmit,
   onCreateTag,
   onRenameTag,
   showAlert,
   onClose,
 }) {
-  const [activeTab, setActiveTab] = useState("main");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [form, setForm] = useState(() => buildInitialDraft(draft));
   const [expandedField, setExpandedField] = useState("");
   const [tagModal, setTagModal] = useState({
@@ -394,7 +110,7 @@ export default function SkladSiteItemEditorDialog({
     }
 
     setForm(buildInitialDraft(draft));
-    setActiveTab("main");
+    setActiveTab(initialTab);
     setExpandedField("");
     setTagModal({
       open: false,
@@ -404,7 +120,7 @@ export default function SkladSiteItemEditorDialog({
       name: "",
     });
     setImagePreviewOpen(false);
-  }, [draft, open]);
+  }, [draft, initialTab, open]);
 
   const categoryOptions = useMemo(() => {
     const options = [{ id: "", name: "Выберите категорию" }].concat(
@@ -880,6 +596,7 @@ export default function SkladSiteItemEditorDialog({
         open={open}
         onClose={onClose}
         maxWidth="lg"
+        containedDesktopScroll
         title={
           mode === "create"
             ? "Новый товар сайта"
@@ -925,7 +642,7 @@ export default function SkladSiteItemEditorDialog({
                     spacing={2}
                   >
                     <Grid size={{ xs: 12, md: 8 }}>
-                      <InfoCard
+                      <SkladSectionCard
                         title="Основные данные"
                         description="Базовые поля карточки товара."
                       >
@@ -1004,12 +721,12 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                         </Grid>
-                      </InfoCard>
+                      </SkladSectionCard>
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 4 }}>
                       <Stack spacing={2}>
-                        <InfoCard
+                        <SkladSectionCard
                           title="Маркировка"
                           description="Поля маркировки текущей версии."
                         >
@@ -1044,9 +761,9 @@ export default function SkladSiteItemEditorDialog({
                               />
                             </Grid>
                           </Grid>
-                        </InfoCard>
+                        </SkladSectionCard>
 
-                        <InfoCard title="Текущее состояние">
+                        <SkladSectionCard title="Текущее состояние">
                           <Stack
                             direction="row"
                             spacing={1}
@@ -1069,12 +786,12 @@ export default function SkladSiteItemEditorDialog({
                               label={form.show_program ? "Касса" : "Без кассы"}
                             />
                           </Stack>
-                        </InfoCard>
+                        </SkladSectionCard>
                       </Stack>
                     </Grid>
                   </Grid>
 
-                  <InfoCard
+                  <SkladSectionCard
                     title="Изображение"
                     description="Квадратный исходник 1:1. Загрузка JPG или PNG."
                   >
@@ -1161,7 +878,7 @@ export default function SkladSiteItemEditorDialog({
                         onChange={handleImageInputChange}
                       />
                     </Grid>
-                  </InfoCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
 
@@ -1169,7 +886,7 @@ export default function SkladSiteItemEditorDialog({
                 value="nutrition"
                 sx={{ p: 0, pt: 2 }}
               >
-                <InfoCard
+                <SkladSectionCard
                   title="БЖУ"
                   description="Вес, БЖУ и калорийность"
                 >
@@ -1225,14 +942,14 @@ export default function SkladSiteItemEditorDialog({
                       />
                     </Grid>
                   </Grid>
-                </InfoCard>
+                </SkladSectionCard>
               </TabPanel>
 
               <TabPanel
                 value="description"
                 sx={{ p: 0, pt: 2 }}
               >
-                <InfoCard
+                <SkladSectionCard
                   title="Описание"
                   description="Тексты карточки и списка"
                 >
@@ -1284,7 +1001,7 @@ export default function SkladSiteItemEditorDialog({
                       />
                     </Grid>
                   </Grid>
-                </InfoCard>
+                </SkladSectionCard>
               </TabPanel>
 
               <TabPanel
@@ -1292,7 +1009,7 @@ export default function SkladSiteItemEditorDialog({
                 sx={{ p: 0, pt: 2 }}
               >
                 <Stack spacing={2}>
-                  <InfoCard
+                  <SkladSectionCard
                     title="Теги"
                     description="Текущие привязанные теги"
                   >
@@ -1396,7 +1113,7 @@ export default function SkladSiteItemEditorDialog({
                         </Stack>
                       ) : null}
                     </Stack>
-                  </InfoCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
 
@@ -1404,7 +1121,7 @@ export default function SkladSiteItemEditorDialog({
                 value="activity"
                 sx={{ p: 0, pt: 2 }}
               >
-                <InfoCard
+                <SkladSectionCard
                   title="Активность"
                   description="Публикация, продажа и промо-флаги"
                 >
@@ -1450,7 +1167,7 @@ export default function SkladSiteItemEditorDialog({
                       onClick={() => updateField("is_new", !form.is_new)}
                     />
                   </Stack>
-                </InfoCard>
+                </SkladSectionCard>
               </TabPanel>
 
               <TabPanel
@@ -1458,7 +1175,7 @@ export default function SkladSiteItemEditorDialog({
                 sx={{ p: 0, pt: 2 }}
               >
                 <Stack spacing={2}>
-                  <InfoCard
+                  <SkladSectionCard
                     title="Тайминги"
                     description="Время по этапам в формате MM:SS"
                   >
@@ -1494,9 +1211,9 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                     </Grid>
-                  </InfoCard>
+                  </SkladSectionCard>
 
-                  <InfoCard
+                  <SkladSectionCard
                     title="Заготовки"
                     description="Состав технологической карты"
                   >
@@ -1651,9 +1368,9 @@ export default function SkladSiteItemEditorDialog({
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </InfoCard>
+                  </SkladSectionCard>
 
-                  <InfoCard
+                  <SkladSectionCard
                     title="Позиции"
                     description="Связанные позиции карточки"
                   >
@@ -1761,14 +1478,14 @@ export default function SkladSiteItemEditorDialog({
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </InfoCard>
+                  </SkladSectionCard>
 
                   <Grid
                     container
                     spacing={2}
                   >
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoCard title="Итоговый состав">
+                      <SkladSectionCard title="Итоговый состав">
                         <Typography sx={{ fontWeight: 700 }}>{compositionDerivedCount}</Typography>
                         <Typography
                           variant="body2"
@@ -1776,10 +1493,10 @@ export default function SkladSiteItemEditorDialog({
                         >
                           Расчетные строки итогового состава
                         </Typography>
-                      </InfoCard>
+                      </SkladSectionCard>
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoCard title="Связанные позиции">
+                      <SkladSectionCard title="Связанные позиции">
                         <Typography sx={{ fontWeight: 700 }}>{linkedItemsCount}</Typography>
                         <Typography
                           variant="body2"
@@ -1787,7 +1504,7 @@ export default function SkladSiteItemEditorDialog({
                         >
                           Позиции, связанные с карточкой
                         </Typography>
-                      </InfoCard>
+                      </SkladSectionCard>
                     </Grid>
                   </Grid>
                 </Stack>
@@ -1798,14 +1515,14 @@ export default function SkladSiteItemEditorDialog({
                 sx={{ p: 0, pt: 2 }}
               >
                 <Stack spacing={2}>
-                  <InfoCard
+                  <SkladSectionCard
                     title="История карточки"
                     description="Последние ревизии текущей версии."
                   >
                     <SkladEmbeddedHistoryTable history={draft?.history} />
-                  </InfoCard>
+                  </SkladSectionCard>
 
-                  <InfoCard
+                  <SkladSectionCard
                     title="История изображения"
                     description="Последние изменения изображения с возможностью восстановления."
                   >
@@ -1814,7 +1531,7 @@ export default function SkladSiteItemEditorDialog({
                       imageAssetKey={draft?.img_app}
                       onRestoreImage={onRestoreImage}
                     />
-                  </InfoCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
             </TabContext>

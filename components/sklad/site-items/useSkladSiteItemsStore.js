@@ -20,9 +20,9 @@ export const useSkladSiteItemsStore = create((set) => ({
   rowsPerPage: 25,
   modal: {
     open: false,
-    mode: "view",
+    mode: "edit",
     loading: false,
-    section: "tech",
+    section: "main",
   },
   detail: null,
   draft: null,

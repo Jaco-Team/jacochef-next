@@ -17,7 +17,6 @@ import {
   Divider,
   DialogContent,
   Grid,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -37,6 +36,8 @@ import {
   SkladEmbeddedImageHistoryTable,
 } from "../history/SkladEmbeddedHistoryTable";
 import { formatDateRangeRU } from "../formatDateRangeRU";
+import SkladInfoField from "../ui/SkladInfoField";
+import SkladSectionCard from "../ui/SkladSectionCard";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
 
 function formatValue(value, fallback = "-") {
@@ -229,47 +230,6 @@ function getImageCurrentFieldRows(image) {
   ];
 }
 
-function SectionCard({ title, subtitle, children }) {
-  return (
-    <Paper sx={{ p: 2, borderRadius: 3 }}>
-      <Stack spacing={1.5}>
-        <Box>
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 700 }}
-          >
-            {title}
-          </Typography>
-          {subtitle ? (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.25 }}
-            >
-              {subtitle}
-            </Typography>
-          ) : null}
-        </Box>
-        {children}
-      </Stack>
-    </Paper>
-  );
-}
-
-function InfoField({ label, value }) {
-  return (
-    <Stack spacing={0.5}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-      >
-        {label}
-      </Typography>
-      <Typography>{value}</Typography>
-    </Stack>
-  );
-}
-
 const DETAIL_SECTIONS = [
   { value: "tech", label: "Техкарта", icon: <InfoOutlinedIcon fontSize="small" /> },
   { value: "marking", label: "Маркировка", icon: <LocalOfferOutlinedIcon fontSize="small" /> },
@@ -327,6 +287,7 @@ export default function SkladSiteItemViewDialog({
       open={open}
       onClose={onClose}
       maxWidth="lg"
+      containedDesktopScroll
       title={loading ? "Загрузка карточки" : detail?.name || "Товар сайта"}
     >
       <DialogContent dividers>
@@ -400,7 +361,7 @@ export default function SkladSiteItemViewDialog({
                     spacing={2}
                   >
                     <Grid size={{ xs: 12, md: 8 }}>
-                      <SectionCard
+                      <SkladSectionCard
                         title="Техническая карточка"
                         subtitle="Базовые атрибуты, питание и текстовый контент текущей версии"
                       >
@@ -409,90 +370,90 @@ export default function SkladSiteItemViewDialog({
                           spacing={2}
                         >
                           <Grid size={{ xs: 12, md: 6 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Короткое название"
                               value={formatValue(detail?.short_name)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Категория"
                               value={formatValue(detail?.category_name)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Действует"
                               value={formatDateRange(detail)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Вес"
                               value={formatValue(detail?.weight)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Статус удаления"
                               value={deletePreviewMeta.label}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Белки"
                               value={formatValue(detail?.protein)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Жиры"
                               value={formatValue(detail?.fat)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Углеводы"
                               value={formatValue(detail?.carbohydrates)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
-                            <InfoField
+                            <SkladInfoField
                               label="Ккал"
                               value={formatValue(detail?.kkal_preview ?? detail?.kkal)}
                             />
                           </Grid>
                           <Grid size={12}>
-                            <InfoField
+                            <SkladInfoField
                               label="Теги"
                               value={formatTagNames(detail?.tags)}
                             />
                           </Grid>
                           <Grid size={12}>
-                            <InfoField
+                            <SkladInfoField
                               label="Состав"
                               value={compositionText}
                             />
                           </Grid>
                           <Grid size={12}>
-                            <InfoField
+                            <SkladInfoField
                               label="Короткое описание"
                               value={formatValue(detail?.marc_desc)}
                             />
                           </Grid>
                           <Grid size={12}>
-                            <InfoField
+                            <SkladInfoField
                               label="Полное описание"
                               value={formatValue(detail?.marc_desc_full)}
                             />
                           </Grid>
                         </Grid>
-                      </SectionCard>
+                      </SkladSectionCard>
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 4 }}>
                       <Stack spacing={2}>
-                        <SectionCard title="Статусы">
+                        <SkladSectionCard title="Статусы">
                           <Stack spacing={1.5}>
                             <Stack
                               direction="row"
@@ -528,46 +489,46 @@ export default function SkladSiteItemViewDialog({
                               />
                             </Stack>
                           </Stack>
-                        </SectionCard>
+                        </SkladSectionCard>
 
-                        <SectionCard
+                        <SkladSectionCard
                           title="Маркировка"
                           subtitle="Текущие данные маркировки"
                         >
                           <Stack spacing={1}>
-                            <InfoField
+                            <SkladInfoField
                               label="Тип"
                               value={formatMarkingType(detail?.marking?.is_mark)}
                             />
-                            <InfoField
+                            <SkladInfoField
                               label="Код"
                               value={formatValue(detail?.marking?.mark_code)}
                             />
-                            <InfoField
+                            <SkladInfoField
                               label="Серия"
                               value={formatValue(detail?.marking?.series)}
                             />
-                            <InfoField
+                            <SkladInfoField
                               label="Акциз"
                               value={formatBoolean(detail?.marking?.is_akchis)}
                             />
                           </Stack>
-                        </SectionCard>
+                        </SkladSectionCard>
 
-                        <SectionCard title="Аллергены">
+                        <SkladSectionCard title="Аллергены">
                           <Stack spacing={1}>
-                            <InfoField
+                            <SkladInfoField
                               label="Итоговые аллергены"
                               value={formatAllergenNames(detail?.allergens_derived)}
                             />
-                            <InfoField
+                            <SkladInfoField
                               label="Возможные аллергены"
                               value={formatAllergenNames(detail?.possible_allergens_derived)}
                             />
                           </Stack>
-                        </SectionCard>
+                        </SkladSectionCard>
 
-                        <SectionCard title="Изображение">
+                        <SkladSectionCard title="Изображение">
                           <Stack spacing={1}>
                             {imageUrl ? (
                               <Box
@@ -588,7 +549,7 @@ export default function SkladSiteItemViewDialog({
                               </Typography>
                             )}
                           </Stack>
-                        </SectionCard>
+                        </SkladSectionCard>
                       </Stack>
                     </Grid>
                   </Grid>
@@ -598,7 +559,7 @@ export default function SkladSiteItemViewDialog({
                     spacing={2}
                   >
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <SectionCard
+                      <SkladSectionCard
                         title="Этапы по времени"
                         subtitle="Временные интервалы по этапам"
                       >
@@ -611,18 +572,18 @@ export default function SkladSiteItemViewDialog({
                               key={row.key}
                               size={{ xs: 12, sm: 4 }}
                             >
-                              <InfoField
+                              <SkladInfoField
                                 label={row.label}
                                 value={formatValue(row.value)}
                               />
                             </Grid>
                           ))}
                         </Grid>
-                      </SectionCard>
+                      </SkladSectionCard>
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <SectionCard
+                      <SkladSectionCard
                         title="Сводка связей"
                         subtitle="Краткая сводка по связям текущей карточки"
                       >
@@ -637,24 +598,24 @@ export default function SkladSiteItemViewDialog({
                             />
                           }
                         >
-                          <InfoField
+                          <SkladInfoField
                             label="Исходные связи"
                             value={String(compositionRows.length)}
                           />
-                          <InfoField
+                          <SkladInfoField
                             label="Итоговые строки"
                             value={String(derivedRows.length)}
                           />
-                          <InfoField
+                          <SkladInfoField
                             label="Связанные позиции"
                             value={String(linkedItemRows.length)}
                           />
                         </Stack>
-                      </SectionCard>
+                      </SkladSectionCard>
                     </Grid>
                   </Grid>
 
-                  <SectionCard
+                  <SkladSectionCard
                     title="Исходный состав"
                     subtitle="Прямые связи товара сайта с заготовками и рецептами"
                   >
@@ -688,9 +649,9 @@ export default function SkladSiteItemViewDialog({
                     ) : (
                       <Typography color="text.secondary">Связи не заданы.</Typography>
                     )}
-                  </SectionCard>
+                  </SkladSectionCard>
 
-                  <SectionCard
+                  <SkladSectionCard
                     title="Итоговый состав"
                     subtitle="Расчетный состав карточки"
                   >
@@ -722,9 +683,9 @@ export default function SkladSiteItemViewDialog({
                     ) : (
                       <Typography color="text.secondary">Итоговый состав не найден.</Typography>
                     )}
-                  </SectionCard>
+                  </SkladSectionCard>
 
-                  <SectionCard
+                  <SkladSectionCard
                     title="Этапы приготовления"
                     subtitle="Разбивка состава по этапам"
                   >
@@ -758,9 +719,9 @@ export default function SkladSiteItemViewDialog({
                     ) : (
                       <Typography color="text.secondary">Этапы не заданы.</Typography>
                     )}
-                  </SectionCard>
+                  </SkladSectionCard>
 
-                  <SectionCard
+                  <SkladSectionCard
                     title="Позиции состава"
                     subtitle="Фактический список позиций из текущего payload карточки"
                   >
@@ -790,9 +751,9 @@ export default function SkladSiteItemViewDialog({
                     ) : (
                       <Typography color="text.secondary">Позиции состава не заданы.</Typography>
                     )}
-                  </SectionCard>
+                  </SkladSectionCard>
 
-                  <SectionCard
+                  <SkladSectionCard
                     title="История изображения"
                     subtitle="Встроенная лента изменений изображения с возможностью восстановления"
                   >
@@ -801,7 +762,7 @@ export default function SkladSiteItemViewDialog({
                       imageAssetKey={detail?.img_app}
                       onRestoreImage={onRestoreImage}
                     />
-                  </SectionCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
 
@@ -810,7 +771,7 @@ export default function SkladSiteItemViewDialog({
                 sx={{ p: 0 }}
               >
                 <Stack spacing={2.5}>
-                  <SectionCard
+                  <SkladSectionCard
                     title="Маркировка"
                     subtitle="Отдельный раздел маркировки"
                   >
@@ -819,38 +780,38 @@ export default function SkladSiteItemViewDialog({
                       spacing={2}
                     >
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
+                        <SkladInfoField
                           label="Тип"
                           value={formatMarkingType(detail?.marking?.is_mark)}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
+                        <SkladInfoField
                           label="Код"
                           value={formatValue(detail?.marking?.mark_code)}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
+                        <SkladInfoField
                           label="Серия"
                           value={formatValue(detail?.marking?.series)}
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <InfoField
+                        <SkladInfoField
                           label="Акциз"
                           value={formatBoolean(detail?.marking?.is_akchis)}
                         />
                       </Grid>
                       <Grid size={12}>
-                        <InfoField
+                        <SkladInfoField
                           label="Теги"
                           value={formatTagNames(detail?.tags)}
                         />
                       </Grid>
                     </Grid>
-                  </SectionCard>
-                  <SectionCard
+                  </SkladSectionCard>
+                  <SkladSectionCard
                     title="Действия"
                     subtitle="Быстрые переходы к связанным действиям"
                   >
@@ -867,7 +828,7 @@ export default function SkladSiteItemViewDialog({
                         Открыть редактор
                       </Button>
                     </Stack>
-                  </SectionCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
 
@@ -876,7 +837,7 @@ export default function SkladSiteItemViewDialog({
                 sx={{ p: 0 }}
               >
                 <Stack spacing={2.5}>
-                  <SectionCard
+                  <SkladSectionCard
                     title="Изображение товара"
                     subtitle="Текущее изображение и доступные действия"
                   >
@@ -902,13 +863,13 @@ export default function SkladSiteItemViewDialog({
                         spacing={2}
                       >
                         <Grid size={{ xs: 12, md: 6 }}>
-                          <InfoField
+                          <SkladInfoField
                             label="WebP"
                             value={formatValue(detail?.image?.variants?.webp?.path)}
                           />
                         </Grid>
                         <Grid size={{ xs: 12, md: 6 }}>
-                          <InfoField
+                          <SkladInfoField
                             label="JPG"
                             value={formatValue(detail?.image?.variants?.jpg?.path)}
                           />
@@ -918,7 +879,7 @@ export default function SkladSiteItemViewDialog({
                             key={row.key}
                             size={{ xs: 12, md: 4 }}
                           >
-                            <InfoField
+                            <SkladInfoField
                               label={row.label}
                               value={formatValue(row.value)}
                             />
@@ -947,7 +908,7 @@ export default function SkladSiteItemViewDialog({
                         </Button>
                       </Stack>
                     </Stack>
-                  </SectionCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
 
@@ -956,12 +917,12 @@ export default function SkladSiteItemViewDialog({
                 sx={{ p: 0 }}
               >
                 <Stack spacing={2.5}>
-                  <SectionCard
+                  <SkladSectionCard
                     title="История карточки"
                     subtitle="Последние ревизии текущей карточки по embedded history contract"
                   >
                     <SkladEmbeddedHistoryTable history={detail?.history} />
-                  </SectionCard>
+                  </SkladSectionCard>
                 </Stack>
               </TabPanel>
             </Stack>

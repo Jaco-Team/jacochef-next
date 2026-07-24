@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
@@ -28,7 +29,6 @@ import { MySearchInput, MySelect } from "@/ui/Forms";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
-import SkladSiteItemViewDialog from "./SkladSiteItemViewDialog";
 import {
   formatBju,
   formatDateRange,
@@ -181,7 +181,7 @@ export default function SkladSiteItemsContent({
                   <TableRow
                     key={`site-item-${row?.id}`}
                     hover
-                    onClick={() => openView(row)}
+                    onClick={() => openEdit(row, "main")}
                     sx={{ cursor: "pointer" }}
                   >
                     <TableCell>
@@ -254,15 +254,14 @@ export default function SkladSiteItemsContent({
                         spacing={1}
                         justifyContent="flex-end"
                       >
-                        <Tooltip title={isEditable ? "Открыть редактор" : "Недостаточно прав"}>
+                        <Tooltip title={isEditable ? "Открыть редактор" : "Открыть карточку"}>
                           <span>
                             <IconButton
                               size="small"
-                              disabled={!isEditable}
                               aria-label="Редактировать"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openEdit(row);
+                                openEdit(row, "main");
                               }}
                             >
                               <EditIcon fontSize="small" />
@@ -277,7 +276,7 @@ export default function SkladSiteItemsContent({
                               aria-label="Маркировка"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openView(row, "marking");
+                                openEdit(row, "main");
                               }}
                             >
                               <LocalOfferOutlinedIcon fontSize="small" />
@@ -292,7 +291,7 @@ export default function SkladSiteItemsContent({
                               aria-label="Изображения"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openView(row, "image");
+                                openEdit(row, "main");
                               }}
                             >
                               <PhotoOutlinedIcon fontSize="small" />
@@ -307,7 +306,7 @@ export default function SkladSiteItemsContent({
                               aria-label="История"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openView(row, "history");
+                                openEdit(row, "history");
                               }}
                             >
                               <HistoryOutlinedIcon fontSize="small" />
@@ -419,38 +418,16 @@ export default function SkladSiteItemsContent({
           labelRowsPerPage="Строк на странице:"
         />
 
-        <SkladSiteItemViewDialog
-          open={modal.open && modal.mode === "view"}
-          loading={modal.loading}
-          section={modal.section}
-          onSectionChange={(section) =>
-            setState({
-              modal: {
-                ...modal,
-                section,
-              },
-            })
-          }
-          detail={detail}
-          isEditable={isEditable}
-          onEdit={() => (detail?.id ? openEdit(detail) : null)}
-          onUploadImage={(file) => handleUploadImage(detail, file, "image")}
-          onRestoreImage={(historyId) =>
-            detail?.id ? handleRestoreImage(detail, historyId, "image") : null
-          }
-          onSyncVk={handleSyncVk}
-          onClose={closeModal}
-        />
-
         <SkladSiteItemEditorDialog
-          open={modal.open && (modal.mode === "edit" || modal.mode === "create")}
+          open={modal.open}
           mode={modal.mode}
           draft={draft}
           categories={categories}
           tags={tags}
           loading={modal.loading}
           isEditable={isEditable}
-          onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "tech")}
+          initialTab={modal.section}
+          onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "main")}
           onRestoreImage={(historyId) =>
             draft?.id ? handleRestoreImage(draft, historyId, "history") : null
           }

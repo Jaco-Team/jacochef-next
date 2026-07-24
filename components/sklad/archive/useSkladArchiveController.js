@@ -25,8 +25,10 @@ import SkladDeleteDialog from "../SkladDeleteDialog";
 import useSkladApi from "../useSkladApi";
 import useSkladAccess from "../useSkladAccess";
 import { useSkladStore } from "../useSkladStore";
-import SkladProductionViewDialog from "../production/SkladProductionViewDialog";
-import SkladSiteItemViewDialog from "../site-items/SkladSiteItemViewDialog";
+import { normalizeProductionDraft } from "../production/production.helpers";
+import SkladProductionEditorDialog from "../production/SkladProductionEditorDialog";
+import { normalizeSiteItemDraft } from "../site-items/siteItems.helpers";
+import SkladSiteItemEditorDialog from "../site-items/SkladSiteItemEditorDialog";
 
 const ARCHIVE_ENTITY_OPTIONS = [
   { id: "recipe", name: "Рецепты" },
@@ -87,34 +89,15 @@ function normalizeRows(entityType, response) {
   }));
 }
 
-function normalizeArchiveDetail(response, entityType) {
-  if (entityType === "site_item") {
-    return response?.item ?? {};
-  }
-
-  const entity = response?.entity ?? {};
-  const units = Array.isArray(response?.units) ? response.units : [];
-
-  return {
-    ...entity,
-    unit_name: units.find((item) => String(item?.id) === String(entity?.ed_izmer_id))?.name ?? "",
-    categories: Array.isArray(entity?.categories) ? entity.categories : [],
-    allergens: Array.isArray(entity?.allergens) ? entity.allergens : [],
-    allergens_possible: Array.isArray(entity?.allergens_possible) ? entity.allergens_possible : [],
-    allergens_derived: Array.isArray(entity?.allergens_derived) ? entity.allergens_derived : [],
-    allergens_possible_derived: Array.isArray(entity?.allergens_possible_derived)
-      ? entity.allergens_possible_derived
-      : [],
-    storages: Array.isArray(entity?.storages) ? entity.storages : [],
-    apps: Array.isArray(entity?.apps) ? entity.apps : [],
-    items: Array.isArray(entity?.items) ? entity.items : [],
-  };
-}
-
 export default function useSkladArchiveController({ showAlert }) {
   const api = useSkladApi();
   const { canManageArchivedEntity, canView } = useSkladAccess();
   const setShellState = useSkladStore((state) => state.setState);
+  const shellUnits = useSkladStore((state) => state.units);
+  const shellCategories = useSkladStore((state) => state.categories);
+  const shellAllergens = useSkladStore((state) => state.allergens);
+  const shellStorages = useSkladStore((state) => state.storages);
+  const shellApps = useSkladStore((state) => state.apps);
 
   const [entityType, setEntityType] = useState("recipe");
   const [rows, setRows] = useState([]);
@@ -131,7 +114,7 @@ export default function useSkladArchiveController({ showAlert }) {
     loading: false,
     entityType: "recipe",
     tab: "main",
-    section: "tech",
+    section: "main",
   });
 
   const loadRows = useCallback(async () => {
@@ -175,7 +158,7 @@ export default function useSkladArchiveController({ showAlert }) {
       loading: false,
       entityType: "recipe",
       tab: "main",
-      section: "tech",
+      section: "main",
     });
     setDetail(null);
   }, []);
@@ -218,7 +201,7 @@ export default function useSkladArchiveController({ showAlert }) {
         loading: true,
         entityType: row.entityType,
         tab: "main",
-        section: "tech",
+        section: "main",
       });
       setDetail(null);
       setShellState({ isLoading: true });
@@ -230,13 +213,17 @@ export default function useSkladArchiveController({ showAlert }) {
           throw new Error(response?.text || "Ошибка загрузки карточки");
         }
 
-        setDetail(normalizeArchiveDetail(response, row.entityType));
+        setDetail(
+          row.entityType === "site_item"
+            ? normalizeSiteItemDraft(response, [])
+            : normalizeProductionDraft(response?.entity || {}, response),
+        );
         setModal({
           open: true,
           loading: false,
           entityType: row.entityType,
           tab: "main",
-          section: "tech",
+          section: "main",
         });
       } catch (error) {
         closeModal();
@@ -281,7 +268,7 @@ export default function useSkladArchiveController({ showAlert }) {
       const response = await api.archiveEntity({
         entity_type: row.entityType,
         id: row.id,
-        is_archived: 0,
+        value: 0,
       });
 
       if (!response?.st) {
@@ -491,23 +478,39 @@ export default function useSkladArchiveController({ showAlert }) {
     content: (
       <>
         {content}
-        <SkladProductionViewDialog
+        <SkladProductionEditorDialog
           open={
             modal.open && (modal.entityType === "recipe" || modal.entityType === "semi_finished")
           }
           loading={modal.loading}
-          tab={modal.tab}
-          onTabChange={(tab) => setModal((prev) => ({ ...prev, tab }))}
-          detail={detail}
+          mode="edit"
+          entityType={modal.entityType}
           entityLabel={getEntityLabel(modal.entityType)}
+          draft={detail}
+          units={detail?.units?.length ? detail.units : shellUnits}
+          categories={detail?.ref_categories?.length ? detail.ref_categories : shellCategories}
+          allergens={detail?.ref_allergens?.length ? detail.ref_allergens : shellAllergens}
+          storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
+          apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
+          allItemsList={detail?.all_items_list || []}
+          isEditable={false}
+          initialTab={modal.tab}
+          onSubmit={() => {}}
           onClose={closeModal}
         />
-        <SkladSiteItemViewDialog
+        <SkladSiteItemEditorDialog
           open={modal.open && modal.entityType === "site_item"}
+          mode="edit"
           loading={modal.loading}
-          section={modal.section}
-          onSectionChange={(section) => setModal((prev) => ({ ...prev, section }))}
-          detail={detail}
+          draft={detail}
+          categories={[]}
+          tags={[]}
+          isEditable={false}
+          initialTab={modal.section}
+          onSubmit={() => {}}
+          onCreateTag={() => null}
+          onRenameTag={() => null}
+          showAlert={showAlert}
           onClose={closeModal}
         />
         <SkladDeleteDialog

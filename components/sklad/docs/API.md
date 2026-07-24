@@ -21,13 +21,16 @@
 - для `warehouse_item`, `unit`, `category` archive не поддержан
 - `history/*` работает по canonical snapshot, а не по raw legacy row
 
-Общий embedded history contract:
+Общий detail history contract:
 
-- в detail-эндпоинтах используется embedded block `history`
-- это не полный revision payload, а краткий list slice для правой панели / inline timeline
-- полный revision open/compare идет через canonical `history/*`
+- в detail-эндпоинтах используется block `history`
+- для `recipe`, `semi_finished`, `site_item` это full detailed timeline:
+  - каждая row уже содержит expanded `snapshot`
+  - отдельный `history/get_one` для FE detail-screen не нужен
+- для `warehouse_item` history остается lightweight list slice
+- canonical `history/*` остается для cross-screen history tools и compare
 
-Embedded `history` shape:
+Detailed `history` shape:
 
 ```json
 {
@@ -40,7 +43,12 @@ Embedded `history` shape:
       "revision_label": "2026-07-24",
       "changed_at": "2026-07-24 10:00:00",
       "changed_by": "User Name",
-      "source": "jaco_site_rolls.items_hist_new"
+      "source": "jaco_site_rolls.items_hist_new",
+      "snapshot": {},
+      "compare_capability": {
+        "supported": true,
+        "reason": null
+      }
     }
   ],
   "capabilities": {
@@ -59,11 +67,12 @@ Embedded `history` shape:
 }
 ```
 
-Embedded history rules:
+History rules:
 
-- `rows` is capped to the latest 20 revisions
 - `revision_key` equals stringified `history_id`
 - `changed_at` comes from historical `date_start`/legacy revision start timestamp
+- `recipe`, `semi_finished`, `site_item` rows include both list-meta and full revision `snapshot`
+- `warehouse_item` rows stay lightweight and do not include full `snapshot`
 - entity-specific rows can contain extra summary fields beyond the base meta fields above
 
 Common delete usage shape:
@@ -434,7 +443,7 @@ Warehouse item detail rules:
   - `can_delete`
   - `delete_usage`
 - `history.rows` returns the recent embedded revision list for this item detail
-- embedded detail history is lightweight; full revision open/compare still goes through canonical history endpoints
+- warehouse item detail history is lightweight; full revision open/compare still goes through canonical history endpoints
 - `categories`, `units`, `allergens`, `accounting_systems`, `storages`, `apps` are edit references, not a second entity payload
 
 ## 5. Recipes
@@ -611,8 +620,13 @@ Recipe detail rules:
   - `can_delete`
   - `delete_usage`
 - `entity.items` and root `composition` publish the same composition rows
-- `history.rows` returns the recent embedded revision list for this recipe detail
-- embedded detail history is intentionally lightweight: full revision open/compare still goes through canonical history endpoints
+- `history.rows` returns full detailed history rows for this recipe detail
+- every `history.rows[]` already includes expanded `snapshot`
+- `history.rows[].snapshot` for recipe includes:
+  - `unit_name`
+  - `contents`
+  - `text_contents`
+  - `composition`
 - `contents` and `text_contents` are aliases of `structure`
 - typed keys are preserved as `{id}-item`, `{id}-pf`, `{id}-rec`
 - visibility filtering matches legacy `recept_module_new_2`
@@ -786,8 +800,13 @@ Semi-finished detail rules:
 - `entity` fields mirror `recipe`, with:
   - `type = semi_finished`
 - `entity.items` and root `composition` publish the same composition rows
-- `history.rows` returns the recent embedded revision list for this semi-finished detail
-- embedded detail history is intentionally lightweight: full revision open/compare still goes through canonical history endpoints
+- `history.rows` returns full detailed history rows for this semi-finished detail
+- every `history.rows[]` already includes expanded `snapshot`
+- `history.rows[].snapshot` for semi-finished includes:
+  - `unit_name`
+  - `contents`
+  - `text_contents`
+  - `composition`
 - `contents` and `text_contents` are explicit aliases of `structure`
 - composition rows use primitive `item_id`
 - typed keys are preserved as `{id}-item`
@@ -1042,7 +1061,19 @@ Main rules:
   - `is_akchis`
   - `image`
   - `marking`
-- `history.rows` returns the recent embedded revision list for this site item detail
+- `history.rows` returns full detailed history rows for this site item detail
+- every `history.rows[]` already includes expanded `snapshot`
+- `history.rows[].snapshot` for site item includes:
+  - `category_name`
+  - `img_new`
+  - `img_new_update`
+  - `img_app`
+  - `tags`
+  - `image`
+  - `item_items.this_items`
+  - `items_stage.stage_1`
+  - `items_stage.stage_2`
+  - `items_stage.stage_3`
 - `image_history` is a separate lightweight timeline for image changes
 - `image_history.current.image` is the current live image state
 - `image_history.rows[]` returns changed image revisions with `before_image` and `after_image`
@@ -1227,7 +1258,7 @@ Response:
   "image": {
     "slot": "main",
     "asset_key": "",
-    "version_key": null,
+    "version_key": "",
     "history_id": 349,
     "paths": [],
     "variants": {},

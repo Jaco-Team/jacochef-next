@@ -28,7 +28,6 @@ import { MySearchInput, MySelect } from "@/ui/Forms";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
-import SkladProductionViewDialog from "./SkladProductionViewDialog";
 import {
   formatCategories,
   formatDateRangeCell,
@@ -213,7 +212,7 @@ export default function SkladProductionContent({
                       hover
                     >
                       <TableCell
-                        onClick={() => openView(entityType, row, "main")}
+                        onClick={() => openEdit(entityType, row, "main")}
                         sx={{ cursor: "pointer" }}
                       >
                         <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
@@ -258,14 +257,13 @@ export default function SkladProductionContent({
                           justifyContent="flex-end"
                         >
                           <Tooltip
-                            title={canCreateOrEdit ? "Открыть редактор" : "Недостаточно прав"}
+                            title={canCreateOrEdit ? "Открыть редактор" : "Открыть карточку"}
                           >
                             <span>
                               <IconButton
                                 size="small"
-                                disabled={!canCreateOrEdit}
                                 aria-label="Редактировать"
-                                onClick={() => openEdit(entityType, row)}
+                                onClick={() => openEdit(entityType, row, "main")}
                               >
                                 <EditIcon fontSize="small" />
                               </IconButton>
@@ -277,7 +275,7 @@ export default function SkladProductionContent({
                               <IconButton
                                 size="small"
                                 aria-label="Открыть историю"
-                                onClick={() => openView(entityType, row, "history")}
+                                onClick={() => openEdit(entityType, row, "history")}
                               >
                                 <HistoryOutlinedIcon fontSize="small" />
                               </IconButton>
@@ -364,30 +362,14 @@ export default function SkladProductionContent({
         </Stack>
       </Paper>
 
-      <SkladProductionViewDialog
-        open={modal.open && modal.mode === "view"}
-        loading={modal.loading}
-        tab={modal.tab}
-        onTabChange={(tab) =>
-          setState({
-            modal: {
-              ...modal,
-              tab,
-            },
-          })
-        }
-        detail={detail}
-        entityType={activeEntityType}
-        entityLabel={getEntitySingleLabel(activeEntityType)}
-        onClose={closeModal}
-      />
       <SkladProductionEditorDialog
-        open={modal.open && (modal.mode === "edit" || modal.mode === "create")}
+        open={modal.open}
         loading={modal.loading}
         mode={modal.mode === "edit" ? "edit" : "create"}
         entityType={activeEntityType}
         entityLabel={getEntitySingleLabel(activeEntityType)}
         draft={draft}
+        initialTab={modal.tab}
         units={
           draft?.units?.length ? draft.units : detail?.units?.length ? detail.units : shellUnits
         }

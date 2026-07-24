@@ -114,9 +114,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
     setState({
       modal: {
         open: false,
-        mode: "view",
+        mode: "edit",
         loading: false,
-        section: "tech",
+        section: "main",
       },
       detail: null,
       draft: null,
@@ -242,7 +242,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       const response = await api.archiveEntity({
         entity_type: "site_item",
         id: row.id,
-        is_archived: nextArchived,
+        value: nextArchived,
       });
 
       if (!response?.st) {
@@ -272,7 +272,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         open: true,
         mode: "create",
         loading: true,
-        section: "tech",
+        section: "main",
       },
       detail: null,
       draft: null,
@@ -295,7 +295,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             open: true,
             mode: "create",
             loading: false,
-            section: "tech",
+            section: "main",
           },
           detail: normalizedDraft,
           draft: normalizedDraft,
@@ -305,9 +305,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setState({
           modal: {
             open: false,
-            mode: "view",
+            mode: "edit",
             loading: false,
-            section: "tech",
+            section: "main",
           },
           detail: null,
           draft: null,
@@ -367,7 +367,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
 
   const openEdit = useCallback(
-    async (row) => {
+    async (row, section = "main") => {
       if (!row?.id) {
         return;
       }
@@ -377,7 +377,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           open: true,
           mode: "edit",
           loading: true,
-          section: "tech",
+          section,
         },
         detail: null,
         draft: null,
@@ -398,7 +398,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             open: true,
             mode: "edit",
             loading: false,
-            section: "tech",
+            section,
           },
           detail: normalizedDraft,
           draft: normalizedDraft,
@@ -407,9 +407,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setState({
           modal: {
             open: false,
-            mode: "view",
+            mode: "edit",
             loading: false,
-            section: "tech",
+            section: "main",
           },
           detail: null,
           draft: null,
@@ -423,58 +423,14 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
 
   const openView = useCallback(
-    async (row, section = "tech") => {
-      if (!row?.id) {
-        return;
-      }
-
-      setState({
-        modal: {
-          open: true,
-          mode: "view",
-          loading: true,
-          section,
-        },
-        detail: null,
-      });
-      setShellState({ isLoading: true });
-
-      try {
-        const response = await api.getSiteItem(row.id);
-
-        if (!response?.st) {
-          throw new Error(response?.text || "Ошибка загрузки товара");
-        }
-
-        setState({
-          modal: {
-            open: true,
-            mode: "view",
-            loading: false,
-            section,
-          },
-          detail: normalizeSiteItemDraft(response, categories),
-        });
-      } catch (error) {
-        setState({
-          modal: {
-            open: false,
-            mode: "view",
-            loading: false,
-            section: "tech",
-          },
-          detail: null,
-        });
-        showAlert(error?.message || "Ошибка загрузки товара", false);
-      } finally {
-        setShellState({ isLoading: false });
-      }
+    async (row, section = "main") => {
+      return openEdit(row, section);
     },
-    [api, categories, setShellState, setState, showAlert],
+    [openEdit],
   );
 
   const refreshOpenDetail = useCallback(
-    async (id, section = "tech") => {
+    async (id, section = "main") => {
       if (!id) {
         return;
       }
@@ -485,21 +441,24 @@ export default function useSkladSiteItemsController({ showAlert }) {
         throw new Error(response?.text || "Ошибка загрузки товара");
       }
 
+      const normalizedDraft = normalizeSiteItemDraft(response, categories);
+
       setState({
         modal: {
           open: true,
-          mode: "view",
+          mode: "edit",
           loading: false,
           section,
         },
-        detail: normalizeSiteItemDraft(response, categories),
+        detail: normalizedDraft,
+        draft: normalizedDraft,
       });
     },
     [api, categories, setState],
   );
 
   const handleUploadImage = useCallback(
-    async (row, file, section = "image") => {
+    async (row, file, section = "main") => {
       if (!row?.id || !file) {
         return;
       }
@@ -543,7 +502,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
 
   const handleRestoreImage = useCallback(
-    async (row, historyId, section = "image") => {
+    async (row, historyId, section = "history") => {
       if (!row?.id || !historyId) {
         return;
       }
@@ -561,6 +520,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         const response = await api.restoreSiteItemImage({
           id: row.id,
           history_id: historyId,
+          slot: "main",
         });
 
         if (!response?.st) {

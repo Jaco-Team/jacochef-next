@@ -6,11 +6,9 @@ import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
   Alert,
-  Box,
   Chip,
   DialogContent,
   Grid,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -27,6 +25,8 @@ import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import { formatDateRangeRU } from "../formatDateRangeRU";
+import SkladInfoField from "../ui/SkladInfoField";
+import SkladSectionCard from "../ui/SkladSectionCard";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -74,47 +74,6 @@ function getCompositionOutput(item) {
   return pickFirstDefined(item?.res, item?.output, item?.all_w, item?.weight_out);
 }
 
-function InfoCard({ title, subtitle, children }) {
-  return (
-    <Paper sx={{ p: 2, borderRadius: 3 }}>
-      <Stack spacing={1.5}>
-        <Box>
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 700 }}
-          >
-            {title}
-          </Typography>
-          {subtitle ? (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.25 }}
-            >
-              {subtitle}
-            </Typography>
-          ) : null}
-        </Box>
-        {children}
-      </Stack>
-    </Paper>
-  );
-}
-
-function InfoField({ label, value }) {
-  return (
-    <Stack spacing={0.5}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-      >
-        {label}
-      </Typography>
-      <Typography>{value}</Typography>
-    </Stack>
-  );
-}
-
 const TABS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
   { value: "composition", label: "Состав", icon: <Inventory2OutlinedIcon fontSize="small" /> },
@@ -143,6 +102,7 @@ export default function SkladProductionViewDialog({
       open={open}
       onClose={onClose}
       maxWidth="lg"
+      containedDesktopScroll
       title={
         loading
           ? `Загрузка ${entityLabel.toLowerCase()}...`
@@ -190,7 +150,7 @@ export default function SkladProductionViewDialog({
               sx={{ p: 0, pt: 2 }}
             >
               <Stack spacing={2}>
-                <InfoCard
+                <SkladSectionCard
                   title="Основная карточка"
                   subtitle="Основные поля и срок действия текущей карточки"
                 >
@@ -199,93 +159,93 @@ export default function SkladProductionViewDialog({
                     spacing={2}
                   >
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Название"
                         value={formatValue(detail?.name)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Тип"
                         value={entityLabel}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Срок годности"
                         value={formatValue(detail?.shelf_life)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Действует"
                         value={formatDateRangeValue(detail)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Время приготовления"
                         value={formatMetricValue(detail?.time_min)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Доп. время"
                         value={formatMetricValue(detail?.time_min_dop)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Единица"
                         value={formatValue(detail?.unit_name || detail?.ed_izmer_id)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 2 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Выход"
                         value={formatMetricValue(detail?.all_w)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 2 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Брутто"
                         value={formatMetricValue(detail?.all_w_brutto)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 2 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Нетто"
                         value={formatMetricValue(detail?.all_w_netto)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Категории"
                         value={categoryNames.length ? categoryNames.join(", ") : "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Места хранения"
                         value={formatTags(detail?.storages).join(", ") || "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Позиции кафе"
                         value={formatTags(detail?.apps).join(", ") || "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Структура"
                         value={formatValue(detail?.structure)}
                       />
                     </Grid>
                   </Grid>
-                </InfoCard>
+                </SkladSectionCard>
 
-                <InfoCard
+                <SkladSectionCard
                   title="Аллергены"
                   subtitle="Исходные и производные аллергены карточки"
                 >
@@ -294,13 +254,13 @@ export default function SkladProductionViewDialog({
                     spacing={2}
                   >
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Исходные аллергены"
                         value={allergenNames.length ? allergenNames.join(", ") : "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Возможные исходные аллергены"
                         value={
                           possibleAllergenNames.length ? possibleAllergenNames.join(", ") : "-"
@@ -308,13 +268,13 @@ export default function SkladProductionViewDialog({
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Итоговые аллергены"
                         value={derivedAllergenNames.length ? derivedAllergenNames.join(", ") : "-"}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <InfoField
+                      <SkladInfoField
                         label="Возможные итоговые аллергены"
                         value={
                           derivedPossibleAllergenNames.length
@@ -324,7 +284,7 @@ export default function SkladProductionViewDialog({
                       />
                     </Grid>
                   </Grid>
-                </InfoCard>
+                </SkladSectionCard>
               </Stack>
             </TabPanel>
 
@@ -333,7 +293,7 @@ export default function SkladProductionViewDialog({
               sx={{ p: 0, pt: 2 }}
             >
               <Stack spacing={2}>
-                <InfoCard
+                <SkladSectionCard
                   title="Состав"
                   subtitle="Связанные позиции текущей карточки"
                 >
@@ -350,7 +310,7 @@ export default function SkladProductionViewDialog({
                             spacing={2}
                           >
                             <Grid size={{ xs: 12, md: 5 }}>
-                              <InfoField
+                              <SkladInfoField
                                 label="Позиция"
                                 value={formatValue(
                                   item?.name || item?.item_name || item?.item?.name,
@@ -358,7 +318,7 @@ export default function SkladProductionViewDialog({
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 1.5 }}>
-                              <InfoField
+                              <SkladInfoField
                                 label="Ед."
                                 value={formatValue(
                                   item?.unit_name || item?.ed_izmer_name || item?.unit?.name,
@@ -366,25 +326,25 @@ export default function SkladProductionViewDialog({
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 2 }}>
-                              <InfoField
+                              <SkladInfoField
                                 label="Брутто"
                                 value={formatValue(item?.brutto)}
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 1.5 }}>
-                              <InfoField
+                              <SkladInfoField
                                 label="Потери"
                                 value={formatValue(getCompositionLoss(item))}
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 2 }}>
-                              <InfoField
+                              <SkladInfoField
                                 label="Нетто"
                                 value={formatValue(item?.netto)}
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 1.5 }}>
-                              <InfoField
+                              <SkladInfoField
                                 label="Выход"
                                 value={formatValue(getCompositionOutput(item))}
                               />
@@ -396,7 +356,7 @@ export default function SkladProductionViewDialog({
                   ) : (
                     <Typography color="text.secondary">Состав пока не заполнен.</Typography>
                   )}
-                </InfoCard>
+                </SkladSectionCard>
               </Stack>
             </TabPanel>
 
@@ -405,7 +365,7 @@ export default function SkladProductionViewDialog({
               sx={{ p: 0, pt: 2 }}
             >
               <Stack spacing={2}>
-                <InfoCard
+                <SkladSectionCard
                   title="Статусы и операции"
                   subtitle="Текущее состояние карточки"
                 >
@@ -435,7 +395,7 @@ export default function SkladProductionViewDialog({
                       size="small"
                     />
                   </Stack>
-                </InfoCard>
+                </SkladSectionCard>
               </Stack>
             </TabPanel>
             <TabPanel
@@ -443,12 +403,12 @@ export default function SkladProductionViewDialog({
               sx={{ p: 0, pt: 2 }}
             >
               <Stack spacing={2}>
-                <InfoCard
+                <SkladSectionCard
                   title="История изменений"
                   subtitle="Последние ревизии текущей карточки по embedded history contract"
                 >
                   <SkladEmbeddedHistoryTable history={detail?.history} />
-                </InfoCard>
+                </SkladSectionCard>
               </Stack>
             </TabPanel>
           </TabContext>

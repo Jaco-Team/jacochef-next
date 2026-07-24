@@ -28,7 +28,7 @@ export const useSkladProductionStore = create((set) => ({
   rowsPerPage: 25,
   modal: {
     open: false,
-    mode: "view",
+    mode: "edit",
     loading: false,
     tab: "main",
   },

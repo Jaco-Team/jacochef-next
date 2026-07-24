@@ -136,7 +136,7 @@ export default function useSkladProductionController({ showAlert }) {
     setState({
       modal: {
         open: false,
-        mode: "view",
+        mode: "edit",
         loading: false,
         tab: "main",
       },
@@ -285,7 +285,7 @@ export default function useSkladProductionController({ showAlert }) {
       const response = await api.archiveEntity({
         entity_type: entityType,
         id: row.id,
-        is_archived: nextArchived,
+        value: nextArchived,
       });
 
       if (!response?.st) {
@@ -411,7 +411,7 @@ export default function useSkladProductionController({ showAlert }) {
         activeEntityType: entityType,
         modal: {
           open: true,
-          mode: "view",
+          mode: "edit",
           loading: true,
           tab,
         },
@@ -425,11 +425,12 @@ export default function useSkladProductionController({ showAlert }) {
         setState({
           modal: {
             open: true,
-            mode: "view",
+            mode: "edit",
             loading: false,
             tab,
           },
           detail: entity,
+          draft: entity,
         });
       } catch (error) {
         closeModal();
@@ -442,14 +443,14 @@ export default function useSkladProductionController({ showAlert }) {
   );
 
   const openEdit = useCallback(
-    async (entityType, row) => {
+    async (entityType, row, tab = "main") => {
       setState({
         activeEntityType: entityType,
         modal: {
           open: true,
           mode: "edit",
           loading: true,
-          tab: "main",
+          tab,
         },
         detail: null,
         draft: null,
@@ -463,7 +464,7 @@ export default function useSkladProductionController({ showAlert }) {
             open: true,
             mode: "edit",
             loading: false,
-            tab: "main",
+            tab,
           },
           detail: entity,
           draft: entity,
