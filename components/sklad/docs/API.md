@@ -1,117 +1,36 @@
 # API
 
-Статус: целевой API contract нового модуля `sklad_items`.
-
-Статус текущей итерации:
-
-- implemented now: `get_all`, `units/list`, `units/get_one`, `units/options`, `units/save_new`, `units/save_edit`, `units/delete`, `categories/list`, `categories/get_one`, `categories/save_new`, `categories/save_edit`, `categories/delete`, `items/list`, `items/get_all_for_new`, `items/get_one`, `recipes/list`, `recipes/get_one`, `recipes/save_new`, `recipes/save_edit`, `recipes/save_flag`, `recipes/archive`, `recipes/delete`, `semi-finished/list`, `semi-finished/get_one`, `semi-finished/save_new`, `semi-finished/save_edit`, `semi-finished/save_flag`, `semi-finished/archive`, `semi-finished/delete`, `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one`, `site-items/get_marking`, `site-items/save_new`, `site-items/save_edit`, `site-items/save_flag`, `site-items/tags/save_new`, `site-items/tags/save_edit`, `site-items/sync_vk`, `site-items/upload_image`, `site-items/archive`, `site-items/delete`, `history/list`, `history/get_one`, `history/compare`, `entities/archive`, `entities/archive_list`
-- implemented and verified on local disposable data: `entities/convert_type`
-- published unsupported route: `categories/archive`
-- `Item` остается shared source entity; в текущем scope новый модуль уже публикует для него read/open routes `/api/sklad_items/items/*`, но не публикует write/delete/archive
-- `get_all` теперь возвращает `capabilities.archive.entities`, чтобы FE заранее видел supported/unsupported archive actions
-
-Правило чтения этого документа:
-
-- разделы с live read routes описывают то, что уже опубликовано в `routes/api.php`
-- planned write/archive sections ниже не являются текущим FE contract для этой итерации
-
-Важно:
-
-- это canonical contract нового модуля
-- FE должен строить новые вызовы только по этому документу
-- route-space нового backend-модуля остается `/api/sklad_items/*`
-- access provisioning для нового модуля документируется отдельно в `ACCESS.md`; этот документ не задает `sklad_modules.key_query`
-- `FE-MIGRATION-MAP.md` нужен как расшифровка старых модулей, а не как источник runtime aliases
-- старые route-prefix остаются только migration reference
-- новый модуль работает на существующей БД, но не зависит runtime-ом от старых module classes
-- canonical business entities для этого API должны быть shared models, а не module-local wrappers
-- migration map указан в [PLAN.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/PLAN.md)
-- legacy route/payload evolution для FE вынесена в [FE-MIGRATION-MAP.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/FE-MIGRATION-MAP.md)
-- незакрытые backend-пункты зафиксированы в [INCOMPLETENESS.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/INCOMPLETENESS.md)
+Целевой runtime contract модуля `sklad_items`.
 
 Базовый prefix:
 
 - `/api/sklad_items`
 
-Общий формат ответа:
+Общий transport:
 
-- success: `{'st': true, ...}`
-- error: `{'st': false, 'text': '...'}`
+- входной payload передается через `data`
+- success: `{"st": true, ...}`
+- error: `{"st": false, "text": "..."}`
 
-Transport:
+Общие правила:
 
-- по проектному стандарту входной payload передается через `data`
+- документ описывает только текущее live-состояние
+- legacy route names и migration notes сюда не входят
+- `access` возвращается как raw `upd_access`
+- для `recipe`, `semi_finished`, `site_item` archive реализован через toggle `is_show` + history snapshot
+- для `warehouse_item`, `unit`, `category` archive не поддержан
+- `history/*` работает по canonical snapshot, а не по raw legacy row
 
----
+## 1. Module Open
 
-## 1. API principles
-
-### 1.1. Canonical vs compatibility
-
-В новом модуле есть:
-
-- canonical routes
-- canonical payloads
-
-Важное правило:
-
-- canonical contract для новой FE фиксируется здесь, в `API.md`
-- legacy route/payload reference и migration semantics должны документироваться отдельно в `FE-MIGRATION-MAP.md`, а не смешиваться с целевым API
-
-### 1.2. Shared entity rule
-
-Если сущность уже используется в нескольких бизнес-процессах проекта, новый API должен опираться на нее как на shared business entity.
-
-Для текущего scope это в первую очередь:
-
-- `SiteItem`
-- `Item`
-- `Recipe`
-- `SemiFinished`
-- `Unit`
-- `SkladCategory`
-
-### 1.3. Lightweight shell
-
-`get_all` не должен быть giant payload на все сущности.
-
-Его задача:
-
-- открыть модуль
-- вернуть доступы
-- вернуть counters / summary
-- вернуть high-level shell
-- вернуть общие справочники, которые нужны большинству экранов модуля
-
-Полные списки сущностей должны грузиться отдельными list endpoint-ами.
-
-### 1.4. Source vs derived contract
-
-Новый модуль должен явно разделять:
-
-- source fields
-- derived fields
-- manual override fields, если они будут оставлены бизнесом
-
-Особенно это касается:
-
-- состава
-- итоговых аллергенов
-- возможных аллергенов
-- `kkal`
-
----
-
-## 2. Open module
-
-## `POST|ANY /api/sklad_items/get_all`
+### `POST|ANY /api/sklad_items/get_all`
 
 Назначение:
 
 - открыть модуль
 - вернуть access map
-- вернуть summary counters
-- вернуть список доступных разделов
+- вернуть summary/capabilities
+- вернуть shared refs для shell
 
 Request:
 
@@ -123,21 +42,13 @@ Request:
 }
 ```
 
-Response:
+Response shape:
 
 ```json
 {
   "st": true,
   "module_info": {},
-  "access": {
-    "ed_izmer_view": 1,
-    "ed_izmer_edit": 1,
-    "cats_view": 1,
-    "cats_edit": 1,
-    "name_edit": 1,
-    "items_edit": 1,
-    "delete_edit": 0
-  },
+  "access": {},
   "summary": {
     "recipes_active": 0,
     "semi_finished_active": 0,
@@ -151,58 +62,13 @@ Response:
   "apps": [],
   "tags": [],
   "accounting_systems": [],
-  "ui_meta": {
-    "supports_tooltips_for_long_labels": true,
-    "supports_date_end": true,
-    "supports_archive": true
-  },
+  "sections": [],
   "capabilities": {
     "archive": {
       "supported_entity_types": ["recipe", "semi_finished", "site_item"],
-      "entities": {
-        "warehouse_item": {
-          "supported": false,
-          "mode": "unavailable",
-          "reason": "Archive persistence is not defined for this entity type in the current DB schema"
-        },
-        "unit": {
-          "supported": false,
-          "mode": "unavailable",
-          "reason": "Archive persistence is not defined for this entity type in the current DB schema"
-        },
-        "category": {
-          "supported": false,
-          "mode": "unavailable",
-          "reason": "Category archive is unavailable because category tables do not have archive or visibility persistence fields"
-        },
-        "recipe": {
-          "supported": true,
-          "mode": "is_show_toggle_with_history",
-          "reason": null
-        },
-        "semi_finished": {
-          "supported": true,
-          "mode": "is_show_toggle_with_history",
-          "reason": null
-        },
-        "site_item": {
-          "supported": true,
-          "mode": "is_show_toggle_with_history",
-          "reason": null
-        }
-      }
+      "entities": {}
     }
   },
-  "sections": [
-    "units",
-    "categories",
-    "recipes",
-    "semi-finished",
-    "site-items",
-    "history",
-    "archive"
-  ],
-  "planned_sections": [],
   "business_meta": {
     "composition_chain": ["item", "semi_finished", "recipe", "site_item"],
     "site_item_allergens_mode": "derived_from_composition",
@@ -211,46 +77,32 @@ Response:
 }
 ```
 
-Уточнение текущей итерации:
+Примечания:
 
-- `sections` описывает реально опубликованные разделы
-- `planned_sections` сейчас пуст, потому что archive contour уже опубликован и должен считаться live section модуля
-- `access` и `summary` могут содержать данные и по unsupported entity actions, но это не означает, что любой archive/delete flow разрешен для каждого entity type
-- `capabilities.archive.entities` заранее показывает FE, какие entity types поддерживают реальный archive flow, а какие остаются unsupported
-- `get_all` в этом модуле intentionally совмещает shell + shared refs по repo-pattern, вместо отдельного `/bootstrap`
-- `site-items/get_all_for_new` и аналогичный внутренний pattern для warehouse item считаются compatibility naming на уровне формы открытия, а не архитектурной опорой нового модуля
-- access bootstrap для FE надо читать как `get_all.access`; migration/sync details для module registry вынесены в `ACCESS.md`
+- `sections` содержит только реально опубликованные разделы
+- `capabilities.archive.entities` нужен для FE pre-check supported/unsupported archive actions
 
----
+## 2. Units
 
-## 3. Units
-
-## `POST|ANY /api/sklad_items/units/list`
+### `POST|ANY /api/sklad_items/units/list`
 
 Response:
 
 ```json
 {
   "st": true,
-  "list": [
-    {
-      "id": 1,
-      "name": "кг",
-      "con_id": 0,
-      "main_count": 1,
-      "con_count": 1,
-      "delete_state": "blocked",
-      "delete_usage": {
-        "can_delete": false,
-        "active_relations": [],
-        "history_relations": []
-      }
-    }
-  ]
+  "list": []
 }
 ```
 
-## `POST|ANY /api/sklad_items/units/get_one`
+Row fields:
+
+- `id`
+- `name`
+- `can_delete`
+- `delete_usage`
+
+### `POST|ANY /api/sklad_items/units/get_one`
 
 Request:
 
@@ -262,234 +114,221 @@ Request:
 }
 ```
 
-## `POST|ANY /api/sklad_items/units/options`
-
-Назначение:
-
-- compact list для селектов
-
-## `POST|ANY /api/sklad_items/units/save_new`
-
-Request:
+Response:
 
 ```json
 {
-  "data": {
-    "name": "упак",
-    "con_id": 1,
-    "main_count": 1,
-    "con_count": 20
+  "st": true,
+  "entity": {
+    "id": 1,
+    "name": ""
   }
 }
 ```
 
-## `POST|ANY /api/sklad_items/units/save_edit`
-
-Request:
-
-```json
-{
-  "data": {
-    "id": 5,
-    "name": "упак",
-    "con_id": 1,
-    "main_count": 1,
-    "con_count": 25
-  }
-}
-```
-
-## `POST|ANY /api/sklad_items/units/delete`
-
-Удаление:
-
-- только через server-side usage check
-
----
-
-## 4. Categories
-
-## `POST|ANY /api/sklad_items/categories/list`
-
-Request:
-
-```json
-{
-  "data": {
-    "search": "",
-    "archive_mode": "active"
-  }
-}
-```
+### `POST|ANY /api/sklad_items/units/options`
 
 Response:
 
 ```json
 {
   "st": true,
-  "list": [
-    {
-      "id": 12,
-      "category_key": "semi_finished:12",
-      "name": "Соусы",
-      "source_type": "semi_finished",
-      "warehouse_items_count": 0,
-      "recipes_count": 4,
-      "semi_finished_count": 2,
-      "total_usage_count": 6,
-      "is_archived": 0,
-      "delete_state": "blocked",
-      "delete_usage": {
-        "can_delete": false,
-        "active_relations": [],
-        "history_relations": []
-      },
-      "parent_id": null,
-      "parent_name": null
-    }
-  ]
+  "list": []
 }
 ```
 
-## `POST|ANY /api/sklad_items/categories/get_one`
+### `POST|ANY /api/sklad_items/units/save_new`
 
-Request:
+### `POST|ANY /api/sklad_items/units/save_edit`
 
-```json
-{
-  "data": {
-    "category_key": "semi_finished:4"
-  }
-}
-```
+Request fields:
 
-Важно:
-
-- `source_type = semi_finished` сейчас означает category space заготовок
-- usage этой категории включает:
-  - сами заготовки
-  - рецепты, которые в новом модуле отображаются внутри категорий заготовок
-- у `recipe` в новом модуле нет собственной category entity
-- это read model поверх legacy `rec_pf_cats` + usage из `recipes_new` / `polufabricat_new`
-
-## `POST|ANY /api/sklad_items/categories/save_new`
-
-Request:
-
-```json
-{
-  "data": {
-    "source_type": "semi_finished",
-    "name": "Соусы"
-  }
-}
-```
-
-Для `warehouse_item` дополнительно:
-
-- передается только canonical `parent_id`
-- без родительской категории create/edit не разрешается
-- `parent_id` должен указывать на корневую складскую категорию
-
-## `POST|ANY /api/sklad_items/categories/save_edit`
-
-Request:
-
-```json
-{
-  "data": {
-    "id": 12,
-    "source_type": "semi_finished",
-    "name": "Соусы обновленные"
-  }
-}
-```
-
-## `POST|ANY /api/sklad_items/categories/archive`
-
-Статус:
-
-- published as explicit unsupported route
-
-Назначение:
-
-- route опубликован не для real archive flow
-- route нужен, чтобы FE получал честный machine-readable ответ о том, что archive для category пока невозможен на текущей persistence-модели
-
-Причина:
-
-- `items_cat` и `rec_pf_cats` не имеют archive/visibility полей
-- поэтому backend не эмулирует archive и не маскирует отсутствие persistence под success-response
+- `name`
+- `id` for `save_edit`
 
 Response:
 
 ```json
 {
-  "st": false,
-  "text": "Архив для категорий заготовок не поддержан: в таблице rec_pf_cats нет archive/visibility persistence",
-  "feature": "sklad.categories.archive",
-  "status": "unsupported",
-  "entity_type": "category",
-  "source_type": "semi_finished",
-  "supported": false,
-  "reason": "Архив для категорий заготовок не поддержан: в таблице rec_pf_cats нет archive/visibility persistence"
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 1
 }
 ```
 
-Уточнение контракта:
+### `POST|ANY /api/sklad_items/units/delete`
 
-- `source_type` опционален и нужен, если FE уже знает family категории
-- если `source_type` не передан, backend все равно возвращает `entity_type = category` и общую причину недоступности archive
-
-## `POST|ANY /api/sklad_items/categories/delete`
-
-Blocked delete response:
+Success:
 
 ```json
 {
-  "st": false,
-  "text": "Позиция используется или использовалась ранее, удаление запрещено",
+  "st": true,
+  "text": "Успешное удаление",
   "usage": {
+    "can_delete": true,
     "active_relations": [],
     "history_relations": []
   }
 }
 ```
 
----
+Blocked:
 
-## 6. Items
+```json
+{
+  "st": false,
+  "text": "Позиция используется или использовалась ранее, удаление запрещено",
+  "usage": {
+    "can_delete": false,
+    "active_relations": [],
+    "history_relations": []
+  }
+}
+```
 
-Текущее уточнение scope:
+## 3. Categories
 
-- dedicated CRUD/list screen для `Item` остается в `sklad_items_module_new`
-- текущий `sklad` публикует для `Item` только read/open routes; write/delete/archive остаются вне этого scope
-- при этом `Item` остается shared upstream-сущностью для `SemiFinished -> Recipe -> SiteItem`
-- новый `sklad_items` вправе использовать `Item` как reference/source layer внутри рецептов, заготовок, категорий и истории
+### `POST|ANY /api/sklad_items/categories/list`
 
-История:
+Request:
 
-- generic `history/list` и `history/get_one` уже поддерживают `entity_type = item`
-- это не означает, что в текущем FE scope есть отдельный экран управления `Item` внутри `sklad`
+```json
+{
+  "data": {
+    "source_type": "warehouse_item"
+  }
+}
+```
 
----
+Supported `source_type`:
 
-## 7. Recipes
+- `warehouse_item`
+- `semi_finished`
 
-Статус:
+Response:
 
-- implemented now
-- published routes: `recipes/list`, `recipes/get_one`, `recipes/save_new`, `recipes/save_edit`, `recipes/save_flag`, `recipes/delete`
+```json
+{
+  "st": true,
+  "list": []
+}
+```
 
-### Live Read Routes
+Row fields:
 
-## `POST|ANY /api/sklad_items/recipes/list`
+- `id`
+- `name`
+- `parent_id`
+- `source_type`
+- `usage_counts`
+- `can_delete`
+- `delete_usage`
 
-Текущее правило выбора history head для list/current read:
+### `POST|ANY /api/sklad_items/categories/get_one`
 
-- latest revision выбирается канонически по `(date_start DESC, id DESC)`
-- это синхронизировано с detail/history-open semantics
-- больше не используется `MAX(date_start)` без tie-break и не допускаются дубли строк при одинаковом `date_start`
+Request fields:
+
+- `id`
+- `source_type`
+
+### `POST|ANY /api/sklad_items/categories/save_new`
+
+### `POST|ANY /api/sklad_items/categories/save_edit`
+
+Request fields:
+
+- `name`
+- `parent_id`
+- `source_type`
+- `id` for `save_edit`
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 1
+}
+```
+
+### `POST|ANY /api/sklad_items/categories/archive`
+
+Всегда unsupported.
+
+Response:
+
+```json
+{
+  "st": false,
+  "text": "",
+  "feature": "sklad.categories.archive",
+  "status": "unsupported",
+  "entity_type": "category",
+  "source_type": "semi_finished",
+  "supported": false,
+  "reason": ""
+}
+```
+
+### `POST|ANY /api/sklad_items/categories/delete`
+
+Формат success/blocked такой же, как у `units/delete`.
+
+## 4. Warehouse Items
+
+Scope:
+
+- в `sklad_items` опубликован только read/open contour
+- write/delete/archive для warehouse items в этом модуле не опубликованы
+
+### `POST|ANY /api/sklad_items/items/list`
+
+Response:
+
+```json
+{
+  "st": true,
+  "categories": [],
+  "apps": [],
+  "accounting_systems": [],
+  "list": []
+}
+```
+
+### `POST|ANY /api/sklad_items/items/get_all_for_new`
+
+Response:
+
+```json
+{
+  "st": true,
+  "item": {},
+  "categories": [],
+  "apps": [],
+  "accounting_systems": [],
+  "units": []
+}
+```
+
+### `POST|ANY /api/sklad_items/items/get_one`
+
+Response:
+
+```json
+{
+  "st": true,
+  "item": {},
+  "categories": [],
+  "apps": [],
+  "accounting_systems": [],
+  "units": []
+}
+```
+
+## 5. Recipes
+
+### `POST|ANY /api/sklad_items/recipes/list`
 
 Request:
 
@@ -503,9 +342,34 @@ Request:
 }
 ```
 
-## `POST|ANY /api/sklad_items/recipes/get_one`
-
 Response:
+
+```json
+{
+  "st": true,
+  "list": []
+}
+```
+
+List row fields:
+
+- `id`
+- `type = recipe`
+- `name`
+- `categories`
+- `ed_izmer_id`
+- `ed_izmer_name`
+- `date_start`
+- `date_end`
+- `is_active`
+- `is_archived`
+- `show_in_rev`
+- `delete_state`
+- `delete_usage`
+
+### `POST|ANY /api/sklad_items/recipes/get_one`
+
+Response shape:
 
 ```json
 {
@@ -518,15 +382,26 @@ Response:
     "date_start": "",
     "date_end": null,
     "ed_izmer_id": null,
+    "unit_name": null,
+    "all_w": 0,
+    "all_w_brutto": 0,
+    "all_w_netto": 0,
+    "time_min": "",
+    "time_min_dop": "",
+    "show_in_rev": 0,
+    "two_user": 0,
     "allergens": [],
     "allergens_possible": [],
     "allergens_derived": [],
     "allergens_possible_derived": [],
     "categories": [],
     "structure": "",
+    "contents": "",
+    "text_contents": "",
     "storages": [],
     "apps": [],
     "items": [],
+    "composition": [],
     "is_active": 1,
     "is_archived": 0,
     "can_delete": false,
@@ -541,32 +416,46 @@ Response:
   "units": [],
   "all_storages": [],
   "all_items_list": [],
-  "apps": []
+  "apps": [],
+  "composition": []
 }
 ```
 
-Контракт:
+Composition row fields:
 
-- `allergens` и `allergens_possible` — source/manual layer, если бизнес сохраняет ручной ввод
-- `allergens_derived` и `allergens_possible_derived` — расчетный слой от доступной composition chain текущего scope
-- `can_delete` и `delete_usage` уже рассчитываются server-side от реальных usage relations, чтобы FE мог честно блокировать удаление
-- `units` в detail response сейчас возвращается полным справочником `ed_izmer`, чтобы FE всегда видел текущую привязанную единицу
-- текущая read-semantics не вводит отдельный archive filter для `recipe`
+- `id`
+- `name`
+- `item_id` as primitive numeric id
+- `item_ref`
+- `type_rec`
+- `type`
+- `id_name`
+- `un_id`
+- `brutto`
+- `pr_1`
+- `netto`
+- `pr_2`
+- `res`
+- `ei_name`
+- `unit_name`
 
-## `POST|ANY /api/sklad_items/recipes/save_new`
+Recipe detail rules:
 
-Статус:
+- `entity.items` and root `composition` publish the same composition rows
+- `contents` and `text_contents` are aliases of `structure`
+- typed keys are preserved as `{id}-item`, `{id}-pf`, `{id}-rec`
+- visibility filtering matches legacy `recept_module_new_2`
+- `pf` rows are shown only for active `polufabricat_new.is_show = 1`
+- `item` rows are shown only for active `items_new.is_show = 1`
+- `rec` rows stay visible without extra `is_show` filter
 
-- implemented now
+### `POST|ANY /api/sklad_items/recipes/save_new`
 
-## `POST|ANY /api/sklad_items/recipes/save_edit`
+### `POST|ANY /api/sklad_items/recipes/save_edit`
 
-Статус:
+Request fields:
 
-- implemented now
-
-Важные поля:
-
+- `id` for `save_edit`
 - `name`
 - `shelf_life`
 - `date_start`
@@ -587,171 +476,162 @@ Response:
 - `apps`
 - `items`
 
-Поведение:
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "history_id": 100
+}
+```
+
+Write rules:
+
+- `save_new` and `save_edit` accept canonical payload only
+- `save_edit` writes current row immediately only when `date_start <= today`
+- future-dated edit writes a new history revision without immediate current-row replacement
+
+### `POST|ANY /api/sklad_items/recipes/save_flag`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 10,
+    "type": "show_in_rev",
+    "value": 1
+  }
+}
+```
+
+Supported flags:
+
+- `show_in_rev`
+- `is_show`
+- `two_user`
+
+### `POST|ANY /api/sklad_items/recipes/archive`
+
+Thin alias over `entities/archive` with `entity_type = recipe`.
+
+### `POST|ANY /api/sklad_items/recipes/delete`
+
+Delete is blocked if recipe participates in:
+
+- `items_rec_new`
+- `items_rec_stages_new`
+- `items_rec_stages_hist_new`
+
+Success/blocked format follows the common delete contract.
+
+## 6. Semi-finished
+
+### `POST|ANY /api/sklad_items/semi-finished/list`
+
+Request shape is the same as `recipes/list`.
+
+List row fields are the same as `recipes/list`, with `type = semi_finished`.
+
+### `POST|ANY /api/sklad_items/semi-finished/get_one`
+
+Response:
+
+```json
+{
+  "st": true,
+  "entity": {
+    "id": 1,
+    "type": "semi_finished",
+    "name": "",
+    "shelf_life": "",
+    "date_start": "",
+    "date_end": null,
+    "ed_izmer_id": null,
+    "unit_name": null,
+    "all_w": 0,
+    "all_w_brutto": 0,
+    "all_w_netto": 0,
+    "time_min": "",
+    "time_min_dop": "",
+    "show_in_rev": 0,
+    "two_user": 0,
+    "allergens": [],
+    "allergens_possible": [],
+    "allergens_derived": [],
+    "allergens_possible_derived": [],
+    "categories": [],
+    "structure": "",
+    "contents": "",
+    "text_contents": "",
+    "storages": [],
+    "apps": [],
+    "items": [],
+    "composition": [],
+    "is_active": 1,
+    "is_archived": 0,
+    "can_delete": false,
+    "delete_usage": {
+      "can_delete": false,
+      "active_relations": [],
+      "history_relations": []
+    }
+  },
+  "allergens": [],
+  "categories": [],
+  "units": [],
+  "all_storages": [],
+  "all_items_list": [],
+  "apps": [],
+  "composition": [],
+  "contents": "",
+  "text_contents": ""
+}
+```
 
-- `save_new` и `save_edit` принимают только canonical payload в `data`
-- `save_edit` для `recipe` сохраняет current row только если `date_start <= today`; при future date пишет новую history revision без немедленного изменения current row
-- linked `storages`, `apps`, `items` пересобираются в новом сервисе, а history snapshot пишется отдельно
-- в ответе backend возвращает `id` и `history_id`
-- runtime-calls в legacy controllers/modules нет; write flow живет в `SkladProductionWriteService`
+Semi-finished detail rules:
 
-## `POST|ANY /api/sklad_items/recipes/save_flag`
+- `entity.items` and root `composition` publish the same composition rows
+- `contents` and `text_contents` are explicit aliases of `structure`
+- composition rows use primitive `item_id`
+- typed keys are preserved as `{id}-item`
+- only active `items_new.is_show = 1` rows are returned
+- orphaned/inactive warehouse-item links are suppressed
 
-Статус:
+### `POST|ANY /api/sklad_items/semi-finished/save_new`
 
-- implemented now
+### `POST|ANY /api/sklad_items/semi-finished/save_edit`
 
-Текущий scope:
+Request and response format mirror `recipes/save_*`.
 
-- поддерживаются `show_in_rev`, `is_show`, `two_user`
-- после изменения флага backend сразу пишет history revision текущего состояния
+### `POST|ANY /api/sklad_items/semi-finished/save_flag`
 
-## `POST|ANY /api/sklad_items/recipes/archive`
+Supported flags:
 
-Статус:
+- `show_in_rev`
+- `is_show`
+- `two_user`
 
-- implemented now
+### `POST|ANY /api/sklad_items/semi-finished/archive`
 
-Контракт:
+Thin alias over `entities/archive` with `entity_type = semi_finished`.
 
-- route уже опубликован
-- route является thin alias над `entities/archive` с `entity_type = recipe`
-- archive state сейчас честно маппится на existing `recipes_new.is_show`
-- при archive toggle backend пишет новую history revision через `SkladProductionWriteService`
+### `POST|ANY /api/sklad_items/semi-finished/delete`
 
-## `POST|ANY /api/sklad_items/recipes/delete`
+Delete is blocked if semi-finished participates in:
 
-Статус:
+- `items_pf_new`
+- `items_pf_stages_new`
+- `items_all_pf_new`
+- `recipe_items_new`
+- `order_post_rec`
+- related history-tail usage
 
-- implemented now
+## 7. Convert Recipe <-> Semi-finished
 
-Удаление:
-
-- только через server-side usage check
-- сейчас блокируется, если рецепт участвует в `items_rec_new`, `items_rec_stages_new` или их history-tail `items_rec_stages_hist_new`
-- `recipes/list` уже возвращает `delete_state` и `delete_usage`, чтобы FE мог блокировать delete action еще на списке
-
-## `history/list` и `history/get_one` для `recipe`
-
-Статус:
-
-- implemented now
-- используется через generic history routes с `entity_type = recipe`
-
----
-
-## 8. Semi-finished
-
-Статус:
-
-- implemented now
-- published routes: `semi-finished/list`, `semi-finished/get_one`, `semi-finished/save_new`, `semi-finished/save_edit`, `semi-finished/save_flag`, `semi-finished/delete`
-
-### Live Read Routes
-
-## `POST|ANY /api/sklad_items/semi-finished/list`
-
-Текущее правило выбора history head для list/current read:
-
-- latest revision выбирается канонически по `(date_start DESC, id DESC)`
-- это убирает duplicate rows в `semi-finished/list`, когда в history есть несколько записей с одинаковым `date_start`
-- `date_start`/`date_end` теперь берутся из той же effective revision, что и detail/history-open semantics
-
-## `POST|ANY /api/sklad_items/semi-finished/get_one`
-
-Контракт сущности:
-
-- `composition` строится из `Item`
-- `allergens_derived` и `allergens_possible_derived` считаются по ingredient chain
-- если legacy-ручной ввод аллергенов сохраняется, он должен быть отделен от derived layer
-- `can_delete` и `delete_usage` уже рассчитываются server-side от реальных usage relations
-- `semi-finished/list` уже возвращает `delete_state` и `delete_usage`, чтобы FE мог блокировать delete action еще на списке
-- `units` в detail response сейчас возвращается полным справочником `ed_izmer`
-- `archive_mode = active|archive|all` уже поддержан на list route и честно опирается на `is_show`
-
-## `POST|ANY /api/sklad_items/semi-finished/save_new`
-
-Статус:
-
-- implemented now
-
-## `POST|ANY /api/sklad_items/semi-finished/save_edit`
-
-Статус:
-
-- implemented now
-
-## `POST|ANY /api/sklad_items/semi-finished/save_flag`
-
-Статус:
-
-- implemented now
-
-Текущий scope:
-
-- поддерживаются `show_in_rev`, `is_show`, `two_user`
-- после изменения флага backend сразу пишет history revision текущего состояния
-
-Поведение write-side:
-
-- `save_new` и `save_edit` принимают только canonical payload в `data`
-- `semi_finished/save_edit` обновляет current row сразу, затем пишет history snapshot
-- linked `storages`, `apps`, `items` пересобираются в новом сервисе
-- в ответе backend возвращает `id` и `history_id`
-- runtime-calls в legacy controllers/modules нет; write flow живет в `SkladProductionWriteService`
-
-## `POST|ANY /api/sklad_items/semi-finished/archive`
-
-Статус:
-
-- implemented now
-
-Контракт:
-
-- route уже опубликован
-- route является thin alias над `entities/archive` с `entity_type = semi_finished`
-- archive state сейчас честно маппится на existing `polufabricat_new.is_show`
-- при archive toggle backend пишет новую history revision через `SkladProductionWriteService`
-
-## `POST|ANY /api/sklad_items/semi-finished/delete`
-
-Статус:
-
-- implemented now
-
-Удаление:
-
-- только через server-side usage check
-- сейчас блокируется, если заготовка участвует в `items_pf_new`, `items_pf_stages_new`, `items_all_pf_new`, `recipe_items_new`, `order_post_rec` или их history-tail
-
-## `history/list` и `history/get_one` для `semi_finished`
-
-Статус:
-
-- implemented now
-- используется через generic history routes с `entity_type = semi_finished`
-
-Контракт:
-
-- аналогичен `recipes`
-- `type = semi_finished`
-
----
-
-## 9. Convert recipe <-> semi-finished
-
-Статус:
-
-- implemented now
-- verified on local disposable data
-- route опубликован
-
-## `POST|ANY /api/sklad_items/entities/convert_type`
-
-Статус:
-
-- implemented now
-- successful and blocked flows verified on local disposable data
+### `POST|ANY /api/sklad_items/entities/convert_type`
 
 Request:
 
@@ -765,199 +645,25 @@ Request:
 }
 ```
 
-Canonical request:
-
-- `id`
-- `from_type`
-- `to_type`
-
-Бизнес-правила:
-
-- конвертация всегда создает новую сущность целевого типа и удаляет исходную
-- конвертация разрешена только если исходная сущность сейчас не используется и не участвовала в связанных контурах, иначе вернется ошибка
-- `semi_finished -> recipe` переносит состав как `item`-компоненты рецепта
-- `recipe -> semi_finished` разрешена только для item-based рецептов, потому что текущая схема `polufabricat_items_new` умеет хранить только товары склада и не может без потери смысла принять `pf/rec`-компоненты
-
-Проверено:
-
-- `semi_finished -> recipe` создает recipe, переносит состав и удаляет исходную заготовку
-- `recipe -> semi_finished` создает заготовку, переносит item-only состав и удаляет исходный рецепт
-- `semi_finished -> recipe` возвращает отказ, если заготовка используется в recipe current composition
-- `recipe -> semi_finished` возвращает отказ, если recipe содержит `pf` component
-- disposable test rows очищены после проверки
-
-Переходная legacy-compatible форма запроса вынесена в:
-
-- [FE-MIGRATION-MAP.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/FE-MIGRATION-MAP.md)
-
 Response:
 
 ```json
 {
   "st": true,
   "text": "Успешно сохранено",
-  "new_id": 55,
-  "new_type": "semi_finished",
-  "old_id": 10,
-  "old_type": "recipe",
-  "history_id": 120
+  "id": 10,
+  "history_id": 100
 }
 ```
 
----
+Rules:
 
-## 10. Site items
+- supported only for `recipe <-> semi_finished`
+- blocked when current usage makes conversion unsafe
 
-Статус:
+## 8. Site Items
 
-- implemented now
-- published routes: `site-items/list`, `site-items/get_all_for_new`, `site-items/get_one`, `site-items/get_marking`, `site-items/save_new`, `site-items/save_edit`, `site-items/save_flag`, `site-items/tags/save_new`, `site-items/tags/save_edit`, `site-items/sync_vk`, `site-items/upload_image`
-
-### Live Read Routes
-
-## `POST|ANY /api/sklad_items/items/list`
-
-Опубликованный read-only slice для `warehouse_item` внутри нового модуля `sklad`.
-
-Замысел текущего этапа:
-
-- `Sklad` уже умеет открывать и читать warehouse item
-- отдельный legacy CRUD-экран `sklad_items_module_new` пока остается основным write-модулем
-- новый API не проксирует старый модуль runtime-ом, а читает ту же БД собственным service-layer
-
-Request:
-
-```json
-{
-  "search": "мука",
-  "category_id": 12
-}
-```
-
-Response:
-
-```json
-{
-  "list": [
-    {
-      "id": 1,
-      "name": "Мука",
-      "category_id": 12,
-      "category_name": "Бакалея",
-      "ed_izmer_id": 3,
-      "ed_izmer_name": "кг",
-      "date_start": "2026-07-01",
-      "date_end": null,
-      "is_active": 1,
-      "is_archived": 0,
-      "delete_state": "blocked",
-      "delete_usage": {
-        "can_delete": false,
-        "active_relations": [],
-        "history_relations": []
-      }
-    }
-  ]
-}
-```
-
-Примечания:
-
-- route опубликован как read-only opening/list contract
-- write/delete/archive для warehouse items в `sklad` пока не публикуются
-- `date_start/date_end` читаются из latest persisted revision в `items_hist_new`
-- `items/list` уже возвращает `delete_state` и `delete_usage` по реальным production/history relations, даже несмотря на то что отдельный delete route для `Item` в новом модуле пока не опубликован
-
-## `POST|ANY /api/sklad_items/items/get_all_for_new`
-
-Request body не обязателен.
-
-Response:
-
-```json
-{
-  "item": {
-    "id": null,
-    "name": "",
-    "category_id": null,
-    "ed_izmer_id": null,
-    "app_id": null,
-    "date_start": "",
-    "date_end": null,
-    "allergens": [],
-    "allergens_possible": [],
-    "accounting_systems": [],
-    "storages": []
-  },
-  "categories": [],
-  "units": [],
-  "allergens": [],
-  "accounting_systems": [],
-  "storages": [],
-  "apps": []
-}
-```
-
-Примечания:
-
-- это новый form-open contract для warehouse item внутри `sklad`
-- naming `get_all_for_new` сохранен как repo-compatible opening pattern
-
-## `POST|ANY /api/sklad_items/items/get_one`
-
-Request:
-
-```json
-{
-  "id": 1
-}
-```
-
-Response:
-
-```json
-{
-  "item": {
-    "id": 1,
-    "name": "Мука",
-    "category_id": 12,
-    "ed_izmer_id": 3,
-    "app_id": 5,
-    "date_start": "2026-07-01",
-    "date_end": null,
-    "can_delete": false,
-    "delete_usage": {
-      "can_delete": false,
-      "active_relations": [],
-      "history_relations": []
-    },
-    "allergens": [],
-    "allergens_possible": [],
-    "accounting_systems": [],
-    "storages": []
-  },
-  "categories": [],
-  "units": [],
-  "allergens": [],
-  "accounting_systems": [],
-  "storages": [],
-  "apps": []
-}
-```
-
-Примечания:
-
-- detail payload собирается новым `SkladItemsService`, без runtime-зависимости от `sklad_items_module_new`
-- отдельные legacy-shaped fields сохранены там, где они уже существуют в текущей БД и форме
-- usage check для `Item` учитывает не только current production chain (`polufabricat_items_new`, `recipe_items_new`, `order_post_rec`), но и historical/operational tails вроде history tables, billing и write-off journals по schema-per-point базам
-
-## `POST|ANY /api/sklad_items/site-items/list`
-
-Текущее правило выбора history head для list/current read:
-
-- latest revision выбирается канонически по `(date_start DESC, id DESC)`
-- больше не используется `MAX(id)` как отдельное правило latest revision
-- `date_start`/`date_end` в current list синхронизированы с detail/history-open semantics
+### `POST|ANY /api/sklad_items/site-items/list`
 
 Response:
 
@@ -970,24 +676,27 @@ Response:
 }
 ```
 
-Текущее уточнение:
+Site item list rules:
 
-- `site-items/list` intentionally остается lightweight read endpoint
-- active/archive filter на list route опирается на `items_new.is_show`
-- list row включает backward-compatible status flags: `is_show`, `show_site`, `show_program`, `is_hit`, `is_new`, `is_price`, плюс existing `is_active` и `is_archived`
-- list row не содержит `delete_state` и `delete_usage`
-- `protein`, `fat`, `carbohydrates`, `kkal` обычно берутся из persisted `items_new`; если persisted БЖУ/ккал пустые или нулевые, а у товара есть linked site items в `items_items_new`, backend возвращает effective nutrition, рассчитанный суммой child items
-- nutrition fallback общий для всех строк: backend не использует id-specific exclusions и не придумывает special-case source logic
-- `nutrition_source = persisted|linked_items` показывает, откуда взяты БЖУ/ккал в текущем read payload
-- row-level `tags` читаются из canonical relation table `jaco_site_rolls.tags_items`; legacy CSV `items_new.tags` используется только как fallback
-- top-level `tags` в `site-items/list` остается справочником `tags_all` для фильтров/селектов, а не row-level tag source
-- фильтр `tag_id` применяет тот же порядок источников: `tags_items`, затем fallback на `items_new.tags`
-- authoritative delete guard выполняется на `site-items/delete`
-- если FE нужен blocked reason до клика по delete, его надо брать из `site-items/get_one`
+- list is lightweight
+- `archive_mode` filter uses `items_new.is_show`
+- row includes backward-compatible flags:
+  - `is_show`
+  - `show_site`
+  - `show_program`
+  - `is_hit`
+  - `is_new`
+  - `is_price`
+  - `is_active`
+  - `is_archived`
+- row does not include `delete_state` or `delete_usage`
+- nutrition can come from persisted item fields or linked child-item fallback
+- `nutrition_source = persisted|linked_items`
+- row `tags` use `tags_items`, then fallback to legacy CSV `items_new.tags`
 
-## `POST|ANY /api/sklad_items/site-items/get_all_for_new`
+### `POST|ANY /api/sklad_items/site-items/get_all_for_new`
 
-Response:
+Response shape:
 
 ```json
 {
@@ -1035,68 +744,39 @@ Response:
 }
 ```
 
-Текущее уточнение:
+### `POST|ANY /api/sklad_items/site-items/get_one`
 
-- `get_all_for_new` уже возвращает пустые `item_items`, `items_stage`, `composition_source` и `composition_derived`, чтобы create-form жила на том же shape, что и `get_one`
-- derived allergens и delete preview появляются только в `site-items/get_one`
+Main rules:
 
-## `POST|ANY /api/sklad_items/site-items/get_one`
+- `composition_source.pf` = direct `site_item -> pf` links
+- `composition_source.recipes` = direct `site_item -> recipe` links
+- `composition_derived.pf_total` = aggregated derived PF composition
+- `allergens_derived` and `possible_allergens_derived` are calculated from final composition chain
+- `marking` is part of `get_one`
+- legacy flat image fields remain:
+  - `img_new`
+  - `img_new_update`
+  - `img_app`
+- structured `image` is also returned
+- preview delete data is returned here, not in list
+- if preview delete-check cannot be built:
+  - `can_delete = null`
+  - `delete_usage.status = unavailable`
+  - `delete_usage.is_available = false`
+- linked inactive refs already attached to the item can be included so FE does not lose persisted relations
+- `item.tags` come from `tags_items`, then fallback to legacy CSV
+- `date_end = null` means open-ended interval
+- `items_stage` and `item_items.this_items` preserve legacy row-level fields used by old `site_items_new`
 
-Контракт:
+### `POST|ANY /api/sklad_items/site-items/get_marking`
 
-- `composition_source.pf` = прямые связи `site_item -> pf`
-- `composition_source.recipes` = прямые связи `site_item -> recipe`
-- `composition_derived.pf_total` = развёрнутый состав по всем заготовкам с учетом рецептов, уже агрегированный по `pf_id`, без raw-дублей из `items_all_pf_new`
-- `allergens_derived` и `possible_allergens_derived` считаются по итоговой composition chain
+Returns marking/tag slice only.
 
-Текущее уточнение:
+### `POST|ANY /api/sklad_items/site-items/save_new`
 
-- в этом slice опубликован technical read contour
-- `marking` возвращается как часть `get_one`
-- image state возвращается только через structured `image`
-- `image.current_fields` возвращает текущие persisted `img_new`, `img_new_update`, `img_app`
-- `image.variants.jpg|webp` содержат path/url пары для текущих published asset variants
-- `site-items/list` intentionally не рассчитывает `delete_state` и `delete_usage`, чтобы list не платил тяжелый runtime cost на каждом чтении
-- reference datasets по умолчанию показывают active rows, но для `get_one` backend дополнительно включает уже привязанные inactive rows, чтобы FE не терял текущие связи в payload
-- `get_one` возвращает preview `can_delete` и `delete_usage`, но detail payload не должен падать, если preview delete-check временно недоступен
-- если preview check временно недоступен, backend возвращает `can_delete = null`, `delete_usage.status = unavailable`, `delete_usage.is_available = false`, а не fake-blocked ответ
-- `site-items/delete` делает authoritative blocked check на момент попытки удаления и возвращает usage reason при запрете
-- для set/combo товаров `get_one.item.protein/fat/carbohydrates/kkal` использует тот же effective nutrition fallback, что и `site-items/list`: persisted значения остаются приоритетом, linked-item расчет включается только когда persisted БЖУ/ккал пустые или нулевые
-- `get_one.item.tags` читается из `tags_items`; legacy CSV `items_new.tags` используется только как fallback
-- `date_end = null` означает canonical open-ended source value: backend не подставляет derived/fake дату, если в latest history row `date_end` пустой или `NULL`
+### `POST|ANY /api/sklad_items/site-items/save_edit`
 
-## `POST|ANY /api/sklad_items/site-items/get_marking`
-
-Response shape:
-
-```json
-{
-  "st": true,
-  "item": {
-    "id": 10,
-    "name": "Филадельфия",
-    "short_name": "Фила",
-    "tags": [],
-    "marking": {
-      "is_mark": 1,
-      "mark_code": "ABC123",
-      "series": "ABC123",
-      "is_akchis": 0
-    }
-  },
-  "tags_all": []
-}
-```
-
-Текущее уточнение:
-
-- dedicated marking read route уже опубликован
-- `item.tags` читается из `tags_items`; legacy CSV `items_new.tags` используется только как fallback
-- route возвращает только marking/tag slice и не дублирует technical composition payload из `get_one`
-
-## `POST|ANY /api/sklad_items/site-items/save_new`
-
-Response shape:
+Response:
 
 ```json
 {
@@ -1107,175 +787,48 @@ Response shape:
 }
 ```
 
-Текущее уточнение:
+Write rules:
 
-- route уже опубликован
-- write flow использует новый `SkladSiteItemWriteService`, а не legacy controller
-- используется текущий compatibility-contract по `upd_access`, чтобы не ломать существующий FE edit gating
-- при сохранении backend:
-  - нормализует БЖУ и stage-time поля
-  - считает `kkal`
-  - пересобирает source composition links
-  - пересобирает derived PF links для списаний
-  - пишет unified history snapshot
-- payload id в `save_new` не обязателен; canonical id возвращается в ответе
+- write flow lives in `SkladSiteItemWriteService`
+- uses raw `upd_access` compatibility contract
+- normalizes BJU and stage-time fields
+- calculates `kkal`
+- rebuilds source composition links
+- rebuilds derived PF links for списания
+- writes unified history snapshot
+- `save_edit` requires `data.id`
+- `kkal_preview` is derived from current `protein`, `fat`, `carbohydrates`
 
-Request notes:
+### `POST|ANY /api/sklad_items/site-items/save_flag`
 
-- ожидается тот же form payload, что и у `get_one/get_all_for_new`
-- для staged composition backend читает:
-  - `pf_stage_1/2/3`
-  - `rec_stage_1/2/3`
-  - `item_items.this_items`
+Supported flags:
 
-## `POST|ANY /api/sklad_items/site-items/save_edit`
+- `is_show`
+- `show_site`
+- `show_program`
+- `is_new`
+- `is_updated`
+- `is_price`
+- `is_mark`
+- `is_hit`
+- `is_akchis`
 
-Response shape:
+### `POST|ANY /api/sklad_items/site-items/archive`
 
-```json
-{
-  "st": true,
-  "text": "Успешно сохранено",
-  "id": 10,
-  "history_id": 346
-}
-```
+Thin alias over `entities/archive` with `entity_type = site_item`.
 
-Текущее уточнение:
+### `POST|ANY /api/sklad_items/site-items/delete`
 
-- route уже опубликован
-- требуется `data.id`
-- update current row зависит от текущего compatibility-contract по `upd_access`
-- если `items_edit` включен, backend пересобирает PF/recipe source chain
-- если `stage_edit` включен, backend пересобирает linked-item graph и пересчитывает `full_sec` для связанных type=2 items
+Delete checks:
 
-Важные правила:
+- current links in `jaco_site_rolls`
+- historical links in `jaco_site_rolls`
+- sales usage in `jaco_rolls_*` databases where `order_items` exists
+- historical sales usage where `order_items_full_log` exists
 
-- `kkal_preview` возвращается как derived-значение от текущих `protein`, `fat`, `carbohydrates`
-- `kkal` сохраняется как persisted field по текущей бизнес-логике
-- формула `kkal_preview` и persisted `kkal` в новом модуле теперь централизована в одном `Sklad` service, чтобы read/write/history не разъезжались
-- current read для set/combo товаров может показать effective БЖУ/ккал из linked child items, если persisted поля равны нулю; это read fallback, он не backfill-ит `items_new`
-- staged composition является source layer
-- после сохранения обязателен пересчет flat composition links
-- после сохранения обязателен пересчет агрегата для списаний
-- после сохранения обязателен пересчет derived allergens / possible allergens
+Response format follows the common delete contract.
 
-## `POST|ANY /api/sklad_items/site-items/save_flag`
-
-Response shape:
-
-```json
-{
-  "st": true,
-  "text": "Успешно сохранено",
-  "id": 10,
-  "history_id": 347
-}
-```
-
-Контракт:
-
-- route уже опубликован
-- поддерживаются только canonical flag fields:
-  - `is_show`
-  - `show_site`
-  - `show_program`
-  - `is_new`
-  - `is_updated`
-  - `is_price`
-  - `is_mark`
-  - `is_hit`
-  - `is_akchis`
-- после toggle backend пишет history snapshot текущего состояния item
-
-Request:
-
-```json
-{
-  "data": {
-    "id": 10,
-    "type": "is_show",
-    "value": 1
-  }
-}
-```
-
-## `POST|ANY /api/sklad_items/site-items/archive`
-
-Статус:
-
-- implemented now
-
-Контракт:
-
-- route уже опубликован
-- route является thin alias над `entities/archive` с `entity_type = site_item`
-- archive state сейчас честно маппится на existing `items_new.is_show`
-- при archive toggle backend пишет новую history revision через `SkladSiteItemWriteService`
-
-## `POST|ANY /api/sklad_items/site-items/delete`
-
-Контракт:
-
-- route уже опубликован
-- backend делает server-side usage check перед удалением
-- проверяются:
-  - текущие связи в `jaco_site_rolls`
-  - исторические связи в `jaco_site_rolls`
-  - продажи/использование по всем базам `jaco_rolls_*`, где существует `order_items`
-  - исторические продажи по всем базам `jaco_rolls_*`, где существует `order_items_full_log`
-- удаление разрешено только если позиция нигде не участвует сейчас и не участвовала ранее
-- при успешном удалении backend удаляет только item-owned rows нового `site_item` контура
-- delete guard не является архивом и не подменяет archive flow
-
-Response success:
-
-```json
-{
-  "st": true,
-  "text": "Успешное удаление",
-  "usage": {
-    "can_delete": true,
-    "active_relations": [],
-    "history_relations": []
-  }
-}
-```
-
-Response blocked:
-
-```json
-{
-  "st": false,
-  "text": "Позиция используется или использовалась ранее, удаление запрещено",
-  "usage": {
-    "can_delete": false,
-    "active_relations": [],
-    "history_relations": []
-  }
-}
-```
-
-Detail preview note:
-
-- `site-items/get_one` использует preview-only delete check
-- preview payload может вернуть `status = ready|unavailable`
-- `is_available = false` означает, что preview не удалось собрать; authoritative delete-check при `site-items/delete` все равно выполняется отдельно и не опирается на preview result
-
-## `POST|ANY /api/sklad_items/site-items/upload_image`
-
-Контракт:
-
-- route уже опубликован
-- route является item-bound mutation, а не free asset upload
-- controller не содержит image-processing логики и делегирует mutation в `SkladSiteItemWriteService` / `SkladSiteItemImageService`
-- backend принимает только `jpg/jpeg/png`
-- backend публикует resized assets в существующие image buckets
-- backend обновляет current image fields в `jaco_site_rolls.items_new`
-- backend пишет новую revision в `jaco_site_rolls.items_hist_new`
-- image history после upload доступна через canonical `history/list` и `history/get_one`
-- current read payload (`site-items/list`, `site-items/get_one`) берет `date_start/date_end` из последней persisted revision, а не из просто максимальной даты дня
-- пустой/`null` `date_end` означает open-ended source interval latest history revision; backend не подставляет invented fallback end date
+### `POST|ANY /api/sklad_items/site-items/upload_image`
 
 Request:
 
@@ -1300,43 +853,31 @@ Response:
   "history_id": 348,
   "image": {
     "slot": "main",
-    "asset_key": "site_item_10_20260713_154512",
+    "asset_key": "",
     "history_id": 348,
-    "paths": ["site_item_10_2000x2000.jpg", "site_item_10_2000x2000.webp"],
-    "variants": {
-      "jpg": {
-        "path": "site_item_10_2000x2000.jpg",
-        "url": "https://.../site_item_10_2000x2000.jpg"
-      },
-      "webp": {
-        "path": "site_item_10_2000x2000.webp",
-        "url": "https://.../site_item_10_2000x2000.webp"
-      }
-    },
-    "uploaded": {
-      "jpg": [],
-      "webp": []
-    },
-    "alias_paths": {
-      "jpg": [],
-      "webp": []
-    },
-    "immutable_paths": {
-      "jpg": [],
-      "webp": []
-    }
+    "paths": [],
+    "variants": {},
+    "uploaded": {},
+    "alias_paths": {},
+    "immutable_paths": {}
   }
 }
 ```
 
-Уточнение текущей итерации:
+Image rules:
 
-- upload response возвращает structured `image` с variant metadata, ready-to-render URL pointers и asset-path groups
-- current read/history payloads для `site_item` используют тот же structured `image`, без параллельных legacy image fields
+- item-bound mutation only
+- accepts only `jpg/jpeg/png`
+- publishes resized assets into existing storage
+- updates current image fields in `jaco_site_rolls.items_new`
+- writes history revision in `jaco_site_rolls.items_hist_new`
+- current read and history use the same structured `image` contract
 
-## `POST|ANY /api/sklad_items/site-items/tags/save_new`
+### `POST|ANY /api/sklad_items/site-items/tags/save_new`
 
-Response shape:
+### `POST|ANY /api/sklad_items/site-items/tags/save_edit`
+
+Response:
 
 ```json
 {
@@ -1347,52 +888,16 @@ Response shape:
 }
 ```
 
-Контракт:
+### `POST|ANY /api/sklad_items/site-items/sync_vk`
 
-- route уже опубликован
-- создает запись в `jaco_site_rolls.tags_all`
-- возвращает новый `id` и полный обновленный `tags_all`
+Rule:
 
-## `POST|ANY /api/sklad_items/site-items/tags/save_edit`
+- sets `jaco_main_rolls.settings.type = vk_update_goods`
+- does not mutate `site_item` row directly
 
-Response shape:
+## 9. Archive
 
-```json
-{
-  "st": true,
-  "text": "Успешно изменено!",
-  "tags_all": []
-}
-```
-
-Контракт:
-
-- route уже опубликован
-- принимает только canonical `tag_id`
-- возвращает полный обновленный `tags_all`
-
-## `POST|ANY /api/sklad_items/site-items/sync_vk`
-
-Контракт:
-
-- route уже опубликован
-- поднимает флаг `jaco_main_rolls.settings.type = vk_update_goods`
-- не меняет данные `site_item` напрямую
-
----
-
-## 11. Archive
-
-Статус:
-
-- implemented now для `recipe`, `semi_finished`, `site_item`
-- unsupported entity types возвращают honest validation error
-
-## `POST|ANY /api/sklad_items/entities/archive`
-
-Статус:
-
-- implemented now
+### `POST|ANY /api/sklad_items/entities/archive`
 
 Request:
 
@@ -1400,23 +905,17 @@ Request:
 {
   "data": {
     "entity_type": "recipe",
-    "id": 1,
-    "is_archived": 1
+    "id": 10,
+    "value": 0
   }
 }
 ```
 
-Поддержано сейчас:
+Supported `entity_type`:
 
 - `recipe`
 - `semi_finished`
 - `site_item`
-
-Не поддержано в этой итерации:
-
-- `warehouse_item`
-- `unit`
-- `category`
 
 Response:
 
@@ -1424,55 +923,20 @@ Response:
 {
   "st": true,
   "text": "Успешно сохранено",
-  "entity_type": "recipe",
-  "id": 1,
-  "history_id": 100,
-  "is_archived": true
+  "id": 10,
+  "history_id": 100
 }
 ```
 
-## `POST|ANY /api/sklad_items/entities/archive_list`
+Unsupported entity types return honest error/unsupported response.
 
-Статус:
+### `POST|ANY /api/sklad_items/entities/archive_list`
 
-- implemented now
+Returns archive list by `entity_type`.
 
-Назначение:
+## 10. Delete
 
-- единый список архивных позиций по целевым сущностям
-
-Текущее покрытие:
-
-- возвращает архивные rows для `recipe`, `semi_finished`, `site_item`
-- использует те же read services и `archive_mode = archive`
-- если запросить unsupported `entity_type`, backend возвращает validation error, а не пустой fake-result
-
----
-
-## 12. Delete
-
-Статус:
-
-- implemented now
-- единый delete orchestration flow dispatch-ит в существующие entity-specific delete services
-
-## `POST|ANY /api/sklad_items/entities/delete`
-
-Статус:
-
-- implemented now
-
-Унифицированный endpoint для сущностей:
-
-- `unit`
-- `category`
-- `recipe`
-- `semi_finished`
-- `site_item`
-
-Не поддержано в этой итерации:
-
-- `warehouse_item`
+### `POST|ANY /api/sklad_items/entities/delete`
 
 Request:
 
@@ -1480,65 +944,57 @@ Request:
 {
   "data": {
     "entity_type": "recipe",
-    "id": 15
+    "id": 10
   }
 }
 ```
 
-Для `entity_type = category` дополнительно:
-
-- обязателен `source_type = warehouse_item|semi_finished`
-- либо передается `category_key`, из которого backend восстановит `source_type`
-
-Response success:
+Success:
 
 ```json
 {
   "st": true,
   "text": "Успешное удаление",
-  "entity_type": "recipe"
-}
-```
-
-Response blocked:
-
-```json
-{
-  "st": false,
-  "text": "Позиция используется или использовалась ранее, удаление запрещено",
   "usage": {
+    "can_delete": true,
     "active_relations": [],
     "history_relations": []
   }
 }
 ```
 
----
+Blocked:
 
-## 13. History
+```json
+{
+  "st": false,
+  "text": "Позиция используется или использовалась ранее, удаление запрещено",
+  "usage": {
+    "can_delete": false,
+    "active_relations": [],
+    "history_relations": []
+  }
+}
+```
 
-Общий принцип:
+## 11. History
 
-- history read должен быть unified
-- history storage пока опирается на существующие history tables
-- новый модуль сам строит canonical history response
-- `App\\Services\\History\\HistoryService` используется как общий audit-event layer, но не как единственный источник revision state для складских сущностей
+### `POST|ANY /api/sklad_items/history/list`
 
-Требование FE:
+Request:
 
-- history должна позволять не только список событий
-- но и список версий сущности
-- и открытие полного состояния revision для compare flow
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "entity_id": 10
+  }
+}
+```
 
-Архитектурное правило:
+Returns revision list for supported entity type.
 
-- `history/list` возвращает version list
-- `history/get_one` возвращает canonical revision snapshot
-- `history/compare` возвращает compare-ready payload между двумя revision
-- event-log из `change_events` может дополнять revision, но не заменяет его
-- каждый history response теперь дополнительно публикует `history_meta`: source of truth, policy `revision_key`, reconstruction mode и accepted dictionary fallback rules
-
-## `POST|ANY /api/sklad_items/history/get_one`
+### `POST|ANY /api/sklad_items/history/get_one`
 
 Request:
 
@@ -1552,7 +1008,7 @@ Request:
 }
 ```
 
-Response:
+Response shape:
 
 ```json
 {
@@ -1564,7 +1020,7 @@ Response:
     "entity_id": 10,
     "history_id": 100,
     "revision_key": "100",
-    "source": "jaco_main_rolls.recipes_hist_new",
+    "source": "",
     "compare_capability": {
       "supported": true,
       "reason": null
@@ -1581,7 +1037,7 @@ Response:
   },
   "history_meta": {
     "entity_type": "recipe",
-    "source": "jaco_main_rolls.recipes_hist_new",
+    "source": "",
     "revision_key_policy": "history_id",
     "reconstruction": {
       "mode": "legacy_history_head_with_child_links",
@@ -1597,21 +1053,15 @@ Response:
 }
 ```
 
-Текущее уточнение:
+History rules:
 
-- unified history read для `entity_type = site_item` уже реализован через `history/list` и `history/get_one`
-- snapshot покрывает запрошенную revision: linked items, staged PF/recipe composition, tags, marking, image paths, timing, nutrition, весовые поля и текстовые описания из соответствующей history row
-- snapshot теперь также публикует business-layer поля `composition_source`, `composition_derived`, `allergens_derived`, `possible_allergens_derived`, чтобы history compare шел по тому же доменному слою, что и current read
-- canonical `snapshot.type` для `site_item` остается `site_item`, а persisted legacy subtype из `items_hist_new.type` публикуется отдельно как `snapshot.item_type`
-- image timeline для `site_item` теперь читается через existing `items_hist_new` revisions
-- linked `site_item` / `semi_finished` / `recipe` labels inside `site_item` history now resolved against the nearest historical revision at or before the `site_item` revision date, instead of leaking only current names into old revisions
-- derived PF composition inside `site_item` history now expands recipe links through the nearest historical recipe revision for the same date, so old revisions compare against period-correct composition labels and quantities
-- поля, которых физически нет в existing `items_hist_new` (`is_updated`, `is_price`), не эмулируются в canonical history snapshot и остаются accepted persistence limitation
-- generic `history/*` и entity-scoped `history/site-item*` routes обслуживаются одним и тем же canonical history service
-- canonical compare flow уже опубликован через `history/compare`
-- отдельная image-history persistence вне existing `items_hist_new` в текущем scope не добавляется, потому что текущий documented business process использует existing revision table как source of truth
+- `history/list` returns version list
+- `history/get_one` returns canonical snapshot
+- `history/compare` compares canonical snapshots
+- `site_item` snapshot includes composition, tags, marking, images, timing, nutrition and text fields
+- some dictionary labels may resolve from current tables when historical dictionary snapshots do not exist
 
-## `POST|ANY /api/sklad_items/history/compare`
+### `POST|ANY /api/sklad_items/history/compare`
 
 Request:
 
@@ -1626,7 +1076,7 @@ Request:
 }
 ```
 
-Response shape:
+Response:
 
 ```json
 {
@@ -1648,44 +1098,15 @@ Response shape:
       "reason": null
     }
   },
-  "history_meta": {
-    "entity_type": "recipe",
-    "source": "jaco_main_rolls.recipes_hist_new",
-    "revision_key_policy": "history_id",
-    "reconstruction": {
-      "mode": "legacy_history_head_with_child_links",
-      "uses_nearest_revision_by_date_for_linked_entities": true
-    },
-    "dictionary_name_policy": {
-      "mode": "mixed",
-      "historical_where_available": true,
-      "current_dictionary_fallback_for_names": true,
-      "fallback_entities": ["unit", "tag", "category", "allergen"]
-    }
-  }
+  "history_meta": {}
 }
 ```
 
-Контракт:
+## 12. Access Contract
 
-- route уже опубликован
-- работает для всех entity types, у которых published `history/get_one` уже умеет собирать canonical snapshot
-- compare строится по canonical snapshot, а не по raw legacy rows
-- для части справочников legacy БД не хранит собственные historical snapshots; поэтому названия `unit`, `tag`, `category`, `allergen` в history payload могут резолвиться по текущим dictionary tables, тогда как entity state и composition already читаются по historical rows там, где они существуют
-- это ограничение теперь публикуется и в runtime response через `history_meta.dictionary_name_policy`, чтобы FE не ожидал невозможной historical точности от dictionary labels
-- `changes[].path` использует dot-path внутри `snapshot`
-- для `site_item` compare теперь опирается на более полный canonical snapshot: timing, marking text, size/count, nutrition и image state сравниваются тем же unified diff flow
-- `capabilities.compare.supported = true` в этой итерации означает именно поддержку snapshot-diff на canonical payload, а не отдельный domain-specific compare UI или image-diff
+`get_all.access` returns raw middleware keys.
 
----
-
-## 14. Access contract
-
-Новый модуль должен возвращать:
-
-- raw middleware access map в `access`, чтобы совпадать с existing module pattern
-
-Пример:
+Example:
 
 ```json
 {
@@ -1701,34 +1122,22 @@ Response shape:
 }
 ```
 
-Важное правило:
+Rules:
 
-- `access` сохраняет raw `upd_access`, как `Vendors` / `Ads`; `Site_clients` возвращает тот же смысл под legacy typo-key `acces`
-- FE должен использовать `access` для field-level write/read controls: `*_view`, `*_edit`, `*_access`
-- backend authorization в mutation endpoints опирается на raw `upd_access` keys
+- FE should use `*_view`, `*_edit`, `*_access`
+- backend authorization on mutation paths also uses raw `upd_access`
 
----
+## 13. Validation Rules
 
-## 15. Validation rules
+- `date_start` is required where applicable
+- if `date_end` is set, it must be `>= date_start`
+- empty `date_end` or `null` means open-ended interval
+- delete is allowed only with no current or historical usage
+- archive must keep history valid
+- `kkal_preview` is calculated on backend
+- image history uses existing site-item history persistence
 
-Обязательные правила:
+## 14. Compatibility Policy
 
-- `date_start` обязательно для целевых сущностей, где применимо
-- `date_end`, если задано, должно быть валидной датой и `>= date_start`; пустое значение/`null` означает open-ended source interval latest history revision, без invented fallback date
-- для `site_item`, если `date_start` не передан, effective start date берется как `today`, и `date_end` валидируется уже относительно этой даты
-- delete разрешен только при отсутствии current и historical usage
-- archive не должен ломать history и связанные сущности
-- `kkal_preview` должен считаться backend-ом по той же формуле, что и persisted `kkal`
-- image history capability должна быть либо реально поддержана существующей persistence, либо явно помечена как follow-up gap
-
----
-
-## 16. Compatibility policy
-
-Runtime compatibility aliases в новом `sklad` больше не поддерживаются.
-
-Важно:
-
-- backend публикует только canonical request/response contract
-- любые legacy route names и migration notes сохраняются только в документации как reference
-- новая FE должна строиться строго по canonical API из этого документа
+- runtime aliases are not part of this contract
+- FE should use only canonical routes and canonical payloads from this file

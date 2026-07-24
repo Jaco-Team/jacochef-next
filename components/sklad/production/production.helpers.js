@@ -29,7 +29,7 @@ export function getEntityDetailApi(api, entityType) {
 }
 
 export function getProductionVisibleState(row) {
-  return Number(row?.is_show ?? 0) === 1;
+  return Number(row?.is_active ?? 0) === 1;
 }
 
 export function getDeleteHint(row) {
@@ -157,20 +157,68 @@ function normalizeRelationIds(list) {
     .map((id) => ({ id }));
 }
 
+function getRelationId(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return value?.id ?? "";
+  }
+
+  return value;
+}
+
+function getCompositionType(item, itemRef = null) {
+  return item?.type_rec ?? itemRef?.type_rec ?? itemRef?.type ?? item?.type ?? "item";
+}
+
+function getCompositionOptionKey(item, itemRef = null) {
+  const typedKey = item?.id_name ?? item?.un_id ?? itemRef?.id_name ?? itemRef?.un_id;
+
+  if (typedKey) {
+    return String(typedKey);
+  }
+
+  const itemId =
+    getRelationId(item?.item_id) || getRelationId(item?.nomenclature_id) || getRelationId(item?.id);
+  if (!itemId) {
+    return "";
+  }
+
+  return `${itemId}-${getCompositionType(item, itemRef)}`;
+}
+
 function normalizeCompositionItems(items) {
   if (!Array.isArray(items)) {
     return [];
   }
 
-  return items.map((item) => ({
-    item_id: item?.item_id ?? item?.nomenclature_id ?? item?.id ?? "",
-    type_rec: item?.type_rec ?? item?.type ?? "item",
-    brutto: item?.brutto ?? "",
-    pr_1: item?.pr_1 ?? item?.loss ?? item?.waste ?? item?.proc_loss ?? item?.loss_percent ?? "",
-    netto: item?.netto ?? "",
-    pr_2: item?.pr_2 ?? "",
-    res: item?.res ?? item?.output ?? item?.all_w ?? item?.weight_out ?? "",
-  }));
+  return items.map((item) => {
+    const itemRef =
+      item?.item_ref || (item?.item_id && typeof item.item_id === "object" ? item.item_id : null);
+    const typeRec = getCompositionType(item, itemRef);
+
+    return {
+      ...item,
+      id: item?.id ?? itemRef?.id ?? null,
+      name: item?.name ?? itemRef?.name ?? item?.item_name ?? item?.nomenclature_name ?? "",
+      item_id:
+        getRelationId(item?.item_id) ||
+        getRelationId(item?.nomenclature_id) ||
+        getRelationId(item?.id),
+      item_option_key: getCompositionOptionKey(item, itemRef),
+      item_ref: itemRef,
+      type_rec: typeRec,
+      unit_name: item?.unit_name ?? item?.ei_name ?? item?.ed_izmer_name ?? item?.unit?.name ?? "",
+      ei_name: item?.ei_name ?? item?.unit_name ?? item?.ed_izmer_name ?? item?.unit?.name ?? "",
+      brutto: item?.brutto ?? "",
+      pr_1: item?.pr_1 ?? item?.loss ?? item?.waste ?? item?.proc_loss ?? item?.loss_percent ?? "",
+      netto: item?.netto ?? "",
+      pr_2: item?.pr_2 ?? "",
+      res: item?.res ?? item?.output ?? item?.all_w ?? item?.weight_out ?? "",
+    };
+  });
 }
 
 export function normalizeProductionDraft(entity, response = {}) {
@@ -193,7 +241,13 @@ export function normalizeProductionDraft(entity, response = {}) {
       : [],
     storages: Array.isArray(entity?.storages) ? entity.storages : [],
     apps: Array.isArray(entity?.apps) ? entity.apps : [],
-    items: Array.isArray(entity?.items) ? entity.items : [],
+    items: normalizeCompositionItems(
+      Array.isArray(entity?.items)
+        ? entity.items
+        : Array.isArray(response?.composition)
+          ? response.composition
+          : [],
+    ),
     all_storages: Array.isArray(response?.all_storages) ? response.all_storages : [],
     all_items_list: Array.isArray(response?.all_items_list) ? response.all_items_list : [],
     ref_allergens: Array.isArray(response?.allergens) ? response.allergens : [],
@@ -223,7 +277,15 @@ export function normalizeProductionSavePayload(draft) {
     categories: normalizeRelationIds(draft?.categories),
     storages: normalizeRelationIds(draft?.storages),
     apps: normalizeRelationIds(draft?.apps),
-    items: normalizeCompositionItems(draft?.items),
+    items: normalizeCompositionItems(draft?.items).map((item) => ({
+      item_id: item?.item_id ? Number(item.item_id) : null,
+      type_rec: item?.type_rec ?? "item",
+      brutto: item?.brutto ?? "",
+      pr_1: item?.pr_1 ?? item?.loss ?? item?.waste ?? item?.proc_loss ?? item?.loss_percent ?? "",
+      netto: item?.netto ?? "",
+      pr_2: item?.pr_2 ?? "",
+      res: item?.res ?? item?.output ?? item?.all_w ?? item?.weight_out ?? "",
+    })),
   };
 
   if (draft?.id !== null && draft?.id !== undefined && draft?.id !== "") {

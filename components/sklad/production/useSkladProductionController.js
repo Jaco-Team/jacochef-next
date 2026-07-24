@@ -19,7 +19,7 @@ import {
   normalizeProductionSavePayload,
   validateProductionDraft,
 } from "./production.helpers";
-import { useSkladProductionStore } from "./useSkladProductionStore";
+import { PRODUCTION_ENTITY_OPTIONS, useSkladProductionStore } from "./useSkladProductionStore";
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
@@ -38,9 +38,10 @@ export default function useSkladProductionController({ showAlert }) {
   const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
   const rowsByType = useSkladProductionStore((state) => state.rowsByType);
   const search = useSkladProductionStore((state) => state.search);
+  const entityFilter = useSkladProductionStore((state) => state.entityFilter);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
   const archiveMode = useSkladProductionStore((state) => state.archiveMode);
-  const pageByType = useSkladProductionStore((state) => state.pageByType);
+  const page = useSkladProductionStore((state) => state.page);
   const rowsPerPage = useSkladProductionStore((state) => state.rowsPerPage);
   const modal = useSkladProductionStore((state) => state.modal);
   const detail = useSkladProductionStore((state) => state.detail);
@@ -62,30 +63,25 @@ export default function useSkladProductionController({ showAlert }) {
     );
   }, [categories]);
 
-  const countsByType = useMemo(
-    () =>
-      ENTITY_TYPES.reduce((accumulator, entityType) => {
-        const rows = Array.isArray(rowsByType?.[entityType]) ? rowsByType[entityType] : [];
-        accumulator[entityType] = [...rows].sort((left, right) =>
-          String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
-        );
-        return accumulator;
-      }, {}),
-    [rowsByType],
-  );
+  const mergedRows = useMemo(() => {
+    return ENTITY_TYPES.flatMap((entityType) => {
+      const rows = Array.isArray(rowsByType?.[entityType]) ? rowsByType[entityType] : [];
 
-  const paginatedRowsByType = useMemo(
-    () =>
-      ENTITY_TYPES.reduce((accumulator, entityType) => {
-        const sortedRows = countsByType[entityType] || [];
-        const page = pageByType?.[entityType] || 0;
-        const start = page * rowsPerPage;
+      return rows.map((row) => ({
+        ...row,
+        entityType,
+      }));
+    })
+      .filter((row) => !entityFilter || row?.entityType === entityFilter)
+      .sort((left, right) =>
+        String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
+      );
+  }, [entityFilter, rowsByType]);
 
-        accumulator[entityType] = sortedRows.slice(start, start + rowsPerPage);
-        return accumulator;
-      }, {}),
-    [countsByType, pageByType, rowsPerPage],
-  );
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return mergedRows.slice(start, start + rowsPerPage);
+  }, [mergedRows, page, rowsPerPage]);
 
   const canDeleteAction = canDelete("production");
 
@@ -120,14 +116,7 @@ export default function useSkladProductionController({ showAlert }) {
               ? semiFinishedResponse.list
               : [],
           },
-          ...(resetPage
-            ? {
-                pageByType: {
-                  recipe: 0,
-                  semi_finished: 0,
-                },
-              }
-            : {}),
+          ...(resetPage ? { page: 0 } : {}),
         });
       } catch (error) {
         showAlert(error?.message || "Ошибка загрузки списка", false);
@@ -139,26 +128,14 @@ export default function useSkladProductionController({ showAlert }) {
   );
 
   useEffect(() => {
-    const nextPageByType = { ...pageByType };
-    let changed = false;
+    const maxPage = mergedRows.length
+      ? Math.max(0, Math.ceil(mergedRows.length / rowsPerPage) - 1)
+      : 0;
 
-    ENTITY_TYPES.forEach((entityType) => {
-      const sortedRows = countsByType[entityType] || [];
-      const currentPage = pageByType?.[entityType] || 0;
-      const maxPage = sortedRows.length
-        ? Math.max(0, Math.ceil(sortedRows.length / rowsPerPage) - 1)
-        : 0;
-
-      if (currentPage > maxPage) {
-        nextPageByType[entityType] = maxPage;
-        changed = true;
-      }
-    });
-
-    if (changed) {
-      setState({ pageByType: nextPageByType });
+    if (page > maxPage) {
+      setState({ page: maxPage });
     }
-  }, [countsByType, pageByType, rowsPerPage, setState]);
+  }, [mergedRows.length, page, rowsPerPage, setState]);
 
   const openHistoryTab = useCallback(
     (entityType, row) => {
@@ -537,6 +514,7 @@ export default function useSkladProductionController({ showAlert }) {
   return {
     activeEntityType,
     search,
+    entityFilter,
     categoryId,
     archiveMode,
     loadRows,
@@ -544,12 +522,14 @@ export default function useSkladProductionController({ showAlert }) {
       <SkladProductionContent
         activeEntityType={activeEntityType}
         search={search}
+        entityFilter={entityFilter}
+        entityOptions={PRODUCTION_ENTITY_OPTIONS}
         categoryId={categoryId}
         archiveMode={archiveMode}
         categoryOptions={categoryOptions}
-        countsByType={countsByType}
-        paginatedRowsByType={paginatedRowsByType}
-        pageByType={pageByType}
+        mergedRows={mergedRows}
+        paginatedRows={paginatedRows}
+        page={page}
         rowsPerPage={rowsPerPage}
         modal={modal}
         detail={detail}

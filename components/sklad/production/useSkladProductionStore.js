@@ -3,8 +3,9 @@
 import { create } from "zustand";
 
 export const PRODUCTION_ENTITY_OPTIONS = [
-  { id: "semi_finished", name: "Заготовки" },
+  { id: "", name: "Все" },
   { id: "recipe", name: "Рецепты" },
+  { id: "semi_finished", name: "Заготовки" },
 ];
 
 export const PRODUCTION_ARCHIVE_MODE_OPTIONS = [
@@ -20,12 +21,10 @@ export const useSkladProductionStore = create((set) => ({
     recipe: [],
   },
   search: "",
+  entityFilter: "",
   categoryId: "",
   archiveMode: "active",
-  pageByType: {
-    semi_finished: 0,
-    recipe: 0,
-  },
+  page: 0,
   rowsPerPage: 25,
   modal: {
     open: false,
