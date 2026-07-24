@@ -1,0 +1,79 @@
+import React from "react";
+
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+
+import { REPORT_SALES_TOGGLEABLE_COLUMNS } from "@/components/reports/reportSalesColumns";
+
+export default function ReportSalesColumnsDialog({
+  open,
+  onClose,
+  isColumnVisible,
+  setAllColumns,
+  toggleColumn,
+}) {
+  const allColumnsVisible = REPORT_SALES_TOGGLEABLE_COLUMNS.every((item) =>
+    isColumnVisible(item.key),
+  );
+  const hasVisibleColumns = REPORT_SALES_TOGGLEABLE_COLUMNS.some((item) =>
+    isColumnVisible(item.key),
+  );
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>Колонки таблицы</DialogTitle>
+      <DialogContent>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={allColumnsVisible}
+              indeterminate={hasVisibleColumns && !allColumnsVisible}
+              onChange={(event) => setAllColumns(event.target.checked)}
+            />
+          }
+          label="Все колонки"
+        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr",
+            gap: 4,
+            marginTop: 8,
+          }}
+        >
+          {REPORT_SALES_TOGGLEABLE_COLUMNS.map((item) => (
+            <FormControlLabel
+              key={item.key}
+              control={
+                <Checkbox
+                  checked={isColumnVisible(item.key)}
+                  onChange={() => toggleColumn(item.key)}
+                />
+              }
+              label={item.label}
+            />
+          ))}
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setAllColumns(true)}>Сбросить</Button>
+        <Button
+          variant="contained"
+          onClick={onClose}
+        >
+          Готово
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
