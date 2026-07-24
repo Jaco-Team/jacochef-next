@@ -50,7 +50,7 @@ import { ModalAccept } from "@/components/general/ModalAccept";
 import SkladItemsCategoriesTab, {
   flattenSkladCategories,
   getSkladCategoryUsageCount,
-} from "@/components/sklad/SkladItemsCategoriesTab";
+} from "@/components/sklad_items_module_new/SkladItemsCategoriesTab";
 
 class SkladItemsModule_Modal_History_View extends React.Component {
   constructor(props) {

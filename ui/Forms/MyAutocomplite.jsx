@@ -377,14 +377,11 @@ export function MyAutocomplite(props) {
         renderOption={
           props.renderOption
             ? props.renderOption
-            : (params, option) => (
-                <li
-                  {...params}
-                  key={props.optionKey ? option[`${props.optionKey}`] : resolveOptionKey(option)}
-                >
-                  {option.name}
-                </li>
-              )
+            : (params, option) => {
+                const { key, ...optionProps } = params;
+
+                return <li {...optionProps}>{option.name}</li>;
+              }
         }
       />
     </Stack>
