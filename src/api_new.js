@@ -84,6 +84,10 @@ export function api_laravel(module = "", method = "", data = {}, dop_type = {}) 
       if (error?.response?.status == 403) {
         window.location = "/";
       }
+
+      if (dop_type?.throwErrors) {
+        throw error;
+      }
     });
 }
 
