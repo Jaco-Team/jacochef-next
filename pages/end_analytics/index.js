@@ -27,7 +27,14 @@ import dayjs from "dayjs";
 import { MyAutocomplite, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
+import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
+import {
+  DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
+  END_ANALYTICS_COLUMNS,
+  END_ANALYTICS_COLUMNS_STORAGE_KEY,
+} from "@/components/end_analytics/endAnalyticsColumns";
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
@@ -147,12 +154,14 @@ const StyledTableRow = styled(TableRow, {
   },
 }));
 
-const StickyTableContainer = styled(Box)(({ theme }) => ({
+const StickyTableContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "tableMinWidth",
+})(({ tableMinWidth }) => ({
   position: "relative",
   overflowX: "auto",
   width: "100%",
   "& .MuiTable-root": {
-    minWidth: 3000,
+    minWidth: tableMinWidth,
   },
 }));
 
@@ -443,6 +452,8 @@ function EndPage() {
   const [customCostDialogOpen, setCustomCostDialogOpen] = useState(false);
   const [customCosts, setCustomCosts] = useState([]);
   const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
+  const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -452,6 +463,65 @@ function EndPage() {
       setLastUpdate(dayjs().format("HH:mm"));
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const savedColumns = JSON.parse(
+        window.localStorage.getItem(END_ANALYTICS_COLUMNS_STORAGE_KEY),
+      );
+      if (savedColumns && typeof savedColumns === "object" && !Array.isArray(savedColumns)) {
+        setVisibleColumns({
+          ...DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
+          ...savedColumns,
+        });
+      }
+    } catch (_) {
+      window.localStorage.removeItem(END_ANALYTICS_COLUMNS_STORAGE_KEY);
+      setVisibleColumns(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
+    }
+  }, []);
+
+  const saveVisibleColumns = (columns) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(END_ANALYTICS_COLUMNS_STORAGE_KEY, JSON.stringify(columns));
+    }
+  };
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((current) => {
+      const next = {
+        ...current,
+        [key]: current[key] === false,
+      };
+      saveVisibleColumns(next);
+      return next;
+    });
+  };
+
+  const setAllColumns = (value) => {
+    const next = END_ANALYTICS_COLUMNS.reduce((result, column) => {
+      result[column.key] = value;
+      return result;
+    }, {});
+    saveVisibleColumns(next);
+    setVisibleColumns(next);
+  };
+
+  const resetColumns = () => {
+    const next = { ...DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS };
+    saveVisibleColumns(next);
+    setVisibleColumns(next);
+  };
+
+  const visibleColumnDefinitions = END_ANALYTICS_COLUMNS.filter(
+    (column) => visibleColumns[column.key] !== false,
+  );
+  const tableMinWidth =
+    300 + visibleColumnDefinitions.reduce((total, column) => total + (column.width || 120), 0);
 
   const getData = async (method, data = {}) => {
     setIsLoad(true);
@@ -1323,6 +1393,77 @@ function EndPage() {
   const formatOptionalPercent = (value, available) =>
     available && value !== null && value !== undefined ? formatPercent(value) : "н/д";
 
+  const getAttributionModelLabel = (model) => {
+    const labels = {
+      cross_device_last_significant: "последний значимый клик, cross-device",
+      legacy: "legacy",
+    };
+
+    return labels[model] || model || "не указана";
+  };
+
+  const formatIssuePeriod = (issue) => {
+    const start = dayjs(issue.date_start).format("DD.MM.YYYY");
+    const end = dayjs(issue.date_end).format("DD.MM.YYYY");
+    return start === end ? start : `${start}–${end}`;
+  };
+
+  const renderMetricValue = (key, row, isTotalRow) => {
+    switch (key) {
+      case "visits":
+      case "cost":
+      case "orders":
+      case "revenue":
+      case "newClients":
+      case "existingClients":
+      case "primaryOrders":
+      case "repeatOrders":
+        return formatNumber(row[key]);
+      case "clicks":
+        return formatOptionalNumber(row.clicks, row.clicksAvailable);
+      case "conversion":
+        return (
+          <Typography
+            variant="body2"
+            color={row.conversion > 5 ? "success.main" : "inherit"}
+            fontWeight={isTotalRow ? 700 : 400}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            {formatPercent(row.conversion)}
+          </Typography>
+        );
+      case "costPerOrder":
+      case "averageCheck":
+      case "ltv":
+        return formatCurrency(row[key]);
+      case "roi":
+        return (
+          <Typography
+            variant="body2"
+            color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
+            fontWeight={isTotalRow ? 700 : 400}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            {formatPercent(row.roi)}
+          </Typography>
+        );
+      case "attributedOrders":
+        return formatOptionalNumber(row.attributedOrders, row.attributedAvailable);
+      case "attributedConversion":
+      case "attributedRoi":
+      case "attributedDrr":
+        return formatOptionalPercent(row[key], row.attributedAvailable);
+      case "attributedCostPerOrder":
+      case "attributedRevenue":
+      case "attributedAverageCheck":
+        return formatOptionalCurrency(row[key], row.attributedAvailable);
+      case "drr":
+        return formatPercent(row.drr);
+      default:
+        return "—";
+    }
+  };
+
   const getLevelIcon = (level) => {
     switch (level) {
       case "src_source_group":
@@ -1404,196 +1545,17 @@ function EndPage() {
               </Box>
             </Box>
           </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.visits)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalNumber(row.clicks, row.clicksAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.cost)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.orders)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            <Typography
-              variant="body2"
-              color={row.conversion > 5 ? "success.main" : "inherit"}
-              fontWeight={isTotalRow ? 700 : 400}
-              sx={{ whiteSpace: "nowrap" }}
+          {visibleColumnDefinitions.map((column) => (
+            <StyledTableCell
+              key={column.key}
+              isHeader={false}
+              isTotal={isTotalRow}
+              align="right"
+              noWrap
             >
-              {formatPercent(row.conversion)}
-            </Typography>
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatCurrency(row.costPerOrder)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.revenue)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatCurrency(row.averageCheck)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            <Typography
-              variant="body2"
-              color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
-              fontWeight={isTotalRow ? 700 : 400}
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              {formatPercent(row.roi)}
-            </Typography>
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalNumber(row.attributedOrders, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalPercent(row.attributedConversion, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalCurrency(row.attributedCostPerOrder, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalCurrency(row.attributedRevenue, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalCurrency(row.attributedAverageCheck, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalPercent(row.attributedRoi, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.newClients)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.existingClients)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.primaryOrders)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatNumber(row.repeatOrders)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatPercent(row.drr)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatOptionalPercent(row.attributedDrr, row.attributedAvailable)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            noWrap
-          >
-            {formatCurrency(row.ltv)}
-          </StyledTableCell>
+              {renderMetricValue(column.key, row, isTotalRow)}
+            </StyledTableCell>
+          ))}
         </StyledTableRow>
         {hasChildren &&
           isExpanded &&
@@ -1627,6 +1589,14 @@ function EndPage() {
         onClose={() => setOpenAlert(false)}
         status={errStatus}
         text={errText}
+      />
+      <EndAnalyticsColumnsDialog
+        open={columnsDialogOpen}
+        visibleColumns={visibleColumns}
+        onClose={() => setColumnsDialogOpen(false)}
+        onToggle={toggleColumn}
+        onSetAll={setAllColumns}
+        onReset={resetColumns}
       />
       <Dialog
         open={customCostDialogOpen}
@@ -1827,7 +1797,7 @@ function EndPage() {
             }}
           >
             <Typography variant="body2">
-              Модель атрибуции: последний значимый клик, cross-device
+              Модель атрибуции: {getAttributionModelLabel(analyticsMeta.attribution_model)}
             </Typography>
             <Typography variant="body2">
               Период данных: {analyticsMeta.effective_date_start} —{" "}
@@ -1848,6 +1818,22 @@ function EndPage() {
                 {analyticsMeta.complete_through}
               </Typography>
             )}
+            {!analyticsMeta.attributed_orders_available &&
+              (analyticsMeta.attribution_issues || []).length > 0 && (
+                <Box sx={{ width: "100%" }}>
+                  {(analyticsMeta.attribution_issues || []).map((issue, index) => (
+                    <Typography
+                      key={`${issue.city_id}_${issue.code}_${issue.date_start}_${index}`}
+                      variant="caption"
+                      color="warning.main"
+                      sx={{ display: "block" }}
+                    >
+                      {issue.city_name || `Город ${issue.city_id}`}, {formatIssuePeriod(issue)}:{" "}
+                      {issue.message}
+                    </Typography>
+                  ))}
+                </Box>
+              )}
           </Box>
         </Grid>
       )}
@@ -2073,165 +2059,30 @@ function EndPage() {
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
           }}
         >
-          <StickyTableContainer>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", px: 2, py: 1.5 }}>
+            <StyledButton
+              variant="outlined"
+              startIcon={<ViewColumnIcon />}
+              onClick={() => setColumnsDialogOpen(true)}
+            >
+              Колонки
+            </StyledButton>
+          </Box>
+          <StickyTableContainer tableMinWidth={tableMinWidth}>
             <Table>
               <TableHead>
                 <TableRow>
                   <StyledTableCell isHeader={true}>ИСТОЧНИК ТРАФИКА</StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ВИЗИТЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    КЛИКИ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    РАСХОД (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    КОНВЕРСИЯ (%)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    СТОИМОСТЬ ЗАКАЗА (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    СУММА ЗАКАЗОВ (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    СРЕДНИЙ ЧЕК (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ROI (%)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. КОНВЕРСИЯ (%)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. СТОИМОСТЬ ЗАКАЗА (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. ВЫРУЧКА (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. СРЕДНИЙ ЧЕК (₽)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. ROI (%)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    НОВЫЕ КЛИЕНТЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ДЕЙСТВУЮЩИЕ КЛИЕНТЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ПЕРВИЧНЫЕ ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ПОВТОРНЫЕ ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    ДРР (%)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    АТРИБ. ДРР (%)
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                    noWrap
-                  >
-                    LTV (₽)
-                  </StyledTableCell>
+                  {visibleColumnDefinitions.map((column) => (
+                    <StyledTableCell
+                      key={column.key}
+                      isHeader={true}
+                      align="right"
+                      noWrap
+                    >
+                      {column.label}
+                    </StyledTableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -2244,7 +2095,7 @@ function EndPage() {
                 {tableData.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={23}
+                      colSpan={visibleColumnDefinitions.length + 1}
                       align="center"
                       sx={{ py: 6 }}
                     >
