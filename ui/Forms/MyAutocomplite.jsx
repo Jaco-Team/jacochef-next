@@ -379,7 +379,14 @@ export function MyAutocomplite(props) {
             : (params, option) => {
                 const { key, ...optionProps } = params;
 
-                return <li {...optionProps}>{option.name}</li>;
+                return (
+                  <li
+                    {...optionProps}
+                    key={key ?? resolveOptionKey(option)}
+                  >
+                    {option.name}
+                  </li>
+                );
               }
         }
       />

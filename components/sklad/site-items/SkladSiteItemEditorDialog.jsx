@@ -8,10 +8,7 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import RestaurantOutlinedIcon from "@mui/icons-material/RestaurantOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import {
   Box,
   Button,
@@ -42,7 +39,7 @@ import {
   SkladEmbeddedImageHistoryTable,
 } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
-import { resolveSiteItemImageUrl } from "./siteItemImage";
+import { resolveSiteItemImagePreviewUrl, resolveSiteItemImageUrl } from "./siteItemImage";
 import {
   buildInitialDraft,
   createEmptySiteItemRelations,
@@ -54,12 +51,9 @@ import {
 
 const EDITOR_SECTIONS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
-  { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
-  { value: "nutrition", label: "БЖУ", icon: <RestaurantOutlinedIcon fontSize="small" /> },
-  { value: "description", label: "Описание", icon: <TuneOutlinedIcon fontSize="small" /> },
-  { value: "tags", label: "Теги", icon: <SellOutlinedIcon fontSize="small" /> },
-  { value: "activity", label: "Активность", icon: <SettingsOutlinedIcon fontSize="small" /> },
   { value: "composition", label: "Состав", icon: <LocalOfferOutlinedIcon fontSize="small" /> },
+  { value: "tags", label: "Теги", icon: <SellOutlinedIcon fontSize="small" /> },
+  { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
 ];
 
 const MARKING_OPTIONS = [
@@ -166,6 +160,14 @@ export default function SkladSiteItemEditorDialog({
   const imageUrl = useMemo(
     () =>
       resolveSiteItemImageUrl(form?.image, draft?.img_app || form?.image?.current_fields?.img_app),
+    [draft?.img_app, form?.image],
+  );
+  const imagePreviewUrl = useMemo(
+    () =>
+      resolveSiteItemImagePreviewUrl(
+        form?.image,
+        draft?.img_app || form?.image?.current_fields?.img_app,
+      ),
     [draft?.img_app, form?.image],
   );
 
@@ -762,31 +764,6 @@ export default function SkladSiteItemEditorDialog({
                             </Grid>
                           </Grid>
                         </SkladSectionCard>
-
-                        <SkladSectionCard title="Текущее состояние">
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            flexWrap="wrap"
-                          >
-                            <Chip
-                              size="small"
-                              color={form.is_show ? "success" : "default"}
-                              label={form.is_show ? "Активен" : "Скрыт"}
-                            />
-                            <Chip
-                              size="small"
-                              color={form.show_site ? "primary" : "default"}
-                              label={form.show_site ? "Сайт" : "Без сайта"}
-                            />
-                            <Chip
-                              size="small"
-                              color={form.show_program ? "secondary" : "default"}
-                              label={form.show_program ? "Касса" : "Без кассы"}
-                            />
-                          </Stack>
-                        </SkladSectionCard>
                       </Stack>
                     </Grid>
                   </Grid>
@@ -879,129 +856,169 @@ export default function SkladSiteItemEditorDialog({
                       />
                     </Grid>
                   </SkladSectionCard>
+
+                  <SkladSectionCard
+                    title="БЖУ"
+                    description="Вес, БЖУ и калорийность"
+                  >
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <MyTextInput
+                          label="Вес"
+                          value={form.weight}
+                          disabled={!isEditable}
+                          func={(event) => updateField("weight", event.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <MyTextInput
+                          label="Белки"
+                          value={form.protein}
+                          disabled={!isEditable}
+                          func={(event) => updateField("protein", event.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <MyTextInput
+                          label="Жиры"
+                          value={form.fat}
+                          disabled={!isEditable}
+                          func={(event) => updateField("fat", event.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <MyTextInput
+                          label="Углеводы"
+                          value={form.carbohydrates}
+                          disabled={!isEditable}
+                          func={(event) => updateField("carbohydrates", event.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <MyTextInput
+                          label="Ккал"
+                          value={form.kkal}
+                          disabled={!isEditable}
+                          func={(event) => updateField("kkal", event.target.value)}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <MyTextInput
+                          label="Ккал расчет"
+                          value={liveKkalPreview}
+                          disabled
+                        />
+                      </Grid>
+                    </Grid>
+                  </SkladSectionCard>
+
+                  <SkladSectionCard
+                    title="Активность"
+                    description="Публикация, продажа и промо-флаги"
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      useFlexGap
+                      flexWrap="wrap"
+                    >
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_show ? "success" : "default"}
+                        label={form.is_show ? "Активен" : "Скрыт"}
+                        onClick={() => updateField("is_show", !form.is_show)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.show_site ? "primary" : "default"}
+                        label={form.show_site ? "Показывать на сайте" : "Скрыт на сайте"}
+                        onClick={() => updateField("show_site", !form.show_site)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.show_program ? "secondary" : "default"}
+                        label={form.show_program ? "Показывать на кассе" : "Скрыт на кассе"}
+                        onClick={() => updateField("show_program", !form.show_program)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_hit ? "warning" : "default"}
+                        label={form.is_hit ? "Хит" : "Не хит"}
+                        onClick={() => updateField("is_hit", !form.is_hit)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_new ? "info" : "default"}
+                        label={form.is_new ? "Новинка" : "Обычный"}
+                        onClick={() => updateField("is_new", !form.is_new)}
+                      />
+                    </Stack>
+                  </SkladSectionCard>
+
+                  <SkladSectionCard
+                    title="Описание"
+                    description="Тексты карточки и списка"
+                  >
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={12}>
+                        <MyTextInput
+                          label="Состав"
+                          value={form.tmp_desc}
+                          disabled={!isEditable}
+                          func={(event) => updateField("tmp_desc", event.target.value)}
+                          multiline
+                          minRows={3}
+                          maxRows={expandedField === "tmp_desc" ? 10 : 4}
+                          onFocus={() => setExpandedField("tmp_desc")}
+                          onBlur={() =>
+                            setExpandedField((prev) => (prev === "tmp_desc" ? "" : prev))
+                          }
+                        />
+                      </Grid>
+                      <Grid size={12}>
+                        <MyTextInput
+                          label="Короткое описание"
+                          value={form.marc_desc}
+                          disabled={!isEditable}
+                          func={(event) => updateField("marc_desc", event.target.value)}
+                          multiline
+                          minRows={3}
+                          maxRows={expandedField === "marc_desc" ? 8 : 4}
+                          onFocus={() => setExpandedField("marc_desc")}
+                          onBlur={() =>
+                            setExpandedField((prev) => (prev === "marc_desc" ? "" : prev))
+                          }
+                        />
+                      </Grid>
+                      <Grid size={12}>
+                        <MyTextInput
+                          label="Полное описание"
+                          value={form.marc_desc_full}
+                          disabled={!isEditable}
+                          func={(event) => updateField("marc_desc_full", event.target.value)}
+                          multiline
+                          minRows={4}
+                          maxRows={expandedField === "marc_desc_full" ? 12 : 6}
+                          onFocus={() => setExpandedField("marc_desc_full")}
+                          onBlur={() =>
+                            setExpandedField((prev) => (prev === "marc_desc_full" ? "" : prev))
+                          }
+                        />
+                      </Grid>
+                    </Grid>
+                  </SkladSectionCard>
                 </Stack>
-              </TabPanel>
-
-              <TabPanel
-                value="nutrition"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <SkladSectionCard
-                  title="БЖУ"
-                  description="Вес, БЖУ и калорийность"
-                >
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <MyTextInput
-                        label="Вес"
-                        value={form.weight}
-                        disabled={!isEditable}
-                        func={(event) => updateField("weight", event.target.value)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <MyTextInput
-                        label="Белки"
-                        value={form.protein}
-                        disabled={!isEditable}
-                        func={(event) => updateField("protein", event.target.value)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <MyTextInput
-                        label="Жиры"
-                        value={form.fat}
-                        disabled={!isEditable}
-                        func={(event) => updateField("fat", event.target.value)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <MyTextInput
-                        label="Углеводы"
-                        value={form.carbohydrates}
-                        disabled={!isEditable}
-                        func={(event) => updateField("carbohydrates", event.target.value)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <MyTextInput
-                        label="Ккал"
-                        value={form.kkal}
-                        disabled={!isEditable}
-                        func={(event) => updateField("kkal", event.target.value)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <MyTextInput
-                        label="Ккал расчет"
-                        value={liveKkalPreview}
-                        disabled
-                      />
-                    </Grid>
-                  </Grid>
-                </SkladSectionCard>
-              </TabPanel>
-
-              <TabPanel
-                value="description"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <SkladSectionCard
-                  title="Описание"
-                  description="Тексты карточки и списка"
-                >
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={12}>
-                      <MyTextInput
-                        label="Состав"
-                        value={form.tmp_desc}
-                        disabled={!isEditable}
-                        func={(event) => updateField("tmp_desc", event.target.value)}
-                        multiline
-                        minRows={3}
-                        maxRows={expandedField === "tmp_desc" ? 10 : 4}
-                        onFocus={() => setExpandedField("tmp_desc")}
-                        onBlur={() => setExpandedField((prev) => (prev === "tmp_desc" ? "" : prev))}
-                      />
-                    </Grid>
-                    <Grid size={12}>
-                      <MyTextInput
-                        label="Короткое описание"
-                        value={form.marc_desc}
-                        disabled={!isEditable}
-                        func={(event) => updateField("marc_desc", event.target.value)}
-                        multiline
-                        minRows={3}
-                        maxRows={expandedField === "marc_desc" ? 8 : 4}
-                        onFocus={() => setExpandedField("marc_desc")}
-                        onBlur={() =>
-                          setExpandedField((prev) => (prev === "marc_desc" ? "" : prev))
-                        }
-                      />
-                    </Grid>
-                    <Grid size={12}>
-                      <MyTextInput
-                        label="Полное описание"
-                        value={form.marc_desc_full}
-                        disabled={!isEditable}
-                        func={(event) => updateField("marc_desc_full", event.target.value)}
-                        multiline
-                        minRows={4}
-                        maxRows={expandedField === "marc_desc_full" ? 12 : 6}
-                        onFocus={() => setExpandedField("marc_desc_full")}
-                        onBlur={() =>
-                          setExpandedField((prev) => (prev === "marc_desc_full" ? "" : prev))
-                        }
-                      />
-                    </Grid>
-                  </Grid>
-                </SkladSectionCard>
               </TabPanel>
 
               <TabPanel
@@ -1115,59 +1132,6 @@ export default function SkladSiteItemEditorDialog({
                     </Stack>
                   </SkladSectionCard>
                 </Stack>
-              </TabPanel>
-
-              <TabPanel
-                value="activity"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <SkladSectionCard
-                  title="Активность"
-                  description="Публикация, продажа и промо-флаги"
-                >
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    useFlexGap
-                    flexWrap="wrap"
-                  >
-                    <Chip
-                      clickable
-                      disabled={!isEditable}
-                      color={form.is_show ? "success" : "default"}
-                      label={form.is_show ? "Активен" : "Скрыт"}
-                      onClick={() => updateField("is_show", !form.is_show)}
-                    />
-                    <Chip
-                      clickable
-                      disabled={!isEditable}
-                      color={form.show_site ? "primary" : "default"}
-                      label={form.show_site ? "Показывать на сайте" : "Скрыт на сайте"}
-                      onClick={() => updateField("show_site", !form.show_site)}
-                    />
-                    <Chip
-                      clickable
-                      disabled={!isEditable}
-                      color={form.show_program ? "secondary" : "default"}
-                      label={form.show_program ? "Показывать на кассе" : "Скрыт на кассе"}
-                      onClick={() => updateField("show_program", !form.show_program)}
-                    />
-                    <Chip
-                      clickable
-                      disabled={!isEditable}
-                      color={form.is_hit ? "warning" : "default"}
-                      label={form.is_hit ? "Хит" : "Не хит"}
-                      onClick={() => updateField("is_hit", !form.is_hit)}
-                    />
-                    <Chip
-                      clickable
-                      disabled={!isEditable}
-                      color={form.is_new ? "info" : "default"}
-                      label={form.is_new ? "Новинка" : "Обычный"}
-                      onClick={() => updateField("is_new", !form.is_new)}
-                    />
-                  </Stack>
-                </SkladSectionCard>
               </TabPanel>
 
               <TabPanel
@@ -1559,7 +1523,7 @@ export default function SkladSiteItemEditorDialog({
           {imageUrl ? (
             <Box
               component="img"
-              src={imageUrl}
+              src={imagePreviewUrl || imageUrl}
               alt={form.name || "Изображение товара"}
               sx={{
                 width: "100%",

@@ -2,6 +2,7 @@
 
 const SITE_ITEM_IMAGE_BASE_URL = "https://storage.yandexcloud.net/site-img";
 const SITE_ITEM_IMAGE_SIZE = "366x366";
+const SITE_ITEM_IMAGE_PREVIEW_SIZE = "1168x1168";
 
 function normalizeValue(value) {
   if (value === null || value === undefined) {
@@ -48,4 +49,17 @@ export function resolveSiteItemImageUrl(image, fallbackAssetKey = "") {
     normalizeValue(image?.asset_key);
 
   return buildSiteItemStorageImageUrl(assetKey, SITE_ITEM_IMAGE_SIZE, "webp");
+}
+
+export function resolveSiteItemImagePreviewUrl(image, fallbackAssetKey = "") {
+  const assetKey =
+    normalizeValue(image?.current_fields?.img_app) ||
+    normalizeValue(fallbackAssetKey) ||
+    normalizeValue(image?.asset_key);
+
+  if (assetKey) {
+    return buildSiteItemStorageImageUrl(assetKey, SITE_ITEM_IMAGE_PREVIEW_SIZE, "webp");
+  }
+
+  return resolveSiteItemImageUrl(image, fallbackAssetKey);
 }

@@ -337,12 +337,13 @@ export default function SkladCsvAutocompleteField({
           renderOption={(props, option) => {
             const isSelected = selectedValues.some((item) => isSameValue(item, option.value));
             const { key, ...optionProps } = props;
+            const optionKey = key ?? `csv-option-${option.value}`;
 
             return (
               <Box
                 component="li"
                 {...optionProps}
-                key={key ?? option.value}
+                key={optionKey}
                 sx={{
                   display: "flex",
                   alignItems: "center",
