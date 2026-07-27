@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -6,6 +6,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
@@ -197,8 +198,35 @@ export default function ReportDishesTable({
   isColumnVisible,
   onItemClick,
 }) {
+  const [priceOrder, setPriceOrder] = useState(null);
   const columns = getVisibleColumns(isColumnVisible);
   const colSpan = columns.length || 1;
+
+  const sortedItems = useMemo(() => {
+    if (!priceOrder) {
+      return items;
+    }
+
+    return [...items].sort((a, b) => {
+      const aVal = Number(a?.total?.price);
+      const bVal = Number(b?.total?.price);
+      const aNum = Number.isNaN(aVal) ? null : aVal;
+      const bNum = Number.isNaN(bVal) ? null : bVal;
+
+      if (aNum == null && bNum == null) return 0;
+      if (aNum == null) return 1;
+      if (bNum == null) return -1;
+
+      return priceOrder === "asc" ? aNum - bNum : bNum - aNum;
+    });
+  }, [items, priceOrder]);
+
+  const handlePriceSort = () => {
+    setPriceOrder((prev) => {
+      if (prev === "desc") return "asc";
+      return "desc";
+    });
+  };
 
   return (
     <Paper
@@ -242,6 +270,7 @@ export default function ReportDishesTable({
               {columns.map((column) => (
                 <TableCell
                   key={`label-${column.key}`}
+                  sortDirection={column.key === "price" && priceOrder ? priceOrder : false}
                   sx={{
                     ...headCellSx,
                     minWidth: getColumnMinWidth(column.key),
@@ -249,13 +278,35 @@ export default function ReportDishesTable({
                     textAlign: column.key === "name" || column.key === "num" ? "left" : "right",
                   }}
                 >
-                  {column.label}
+                  {column.key === "price" ? (
+                    <TableSortLabel
+                      active={Boolean(priceOrder)}
+                      direction={priceOrder || "desc"}
+                      onClick={handlePriceSort}
+                      sx={{
+                        fontFamily: FONT,
+                        fontWeight: 700,
+                        fontSize: "12px !important",
+                        color: "#374151 !important",
+                        justifyContent: "flex-end",
+                        width: "100%",
+                        "& .MuiTableSortLabel-icon": {
+                          marginLeft: 0.5,
+                          marginRight: 0,
+                        },
+                      }}
+                    >
+                      {column.label}
+                    </TableSortLabel>
+                  ) : (
+                    column.label
+                  )}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {items.map((item, index) => {
+            {sortedItems.map((item, index) => {
               const total = item?.total || {};
               const rowNum = item?.num ?? index + 1;
 
@@ -379,7 +430,7 @@ export default function ReportDishesTable({
               </TableRow>
             ) : null}
 
-            {!items.length ? (
+            {!sortedItems.length ? (
               <TableRow>
                 <TableCell
                   colSpan={colSpan}

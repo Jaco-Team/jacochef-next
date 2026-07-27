@@ -14,6 +14,7 @@ import { formatDate } from "@/src/helpers/ui/formatDate";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import ReportSalesResult from "@/components/reports/ReportSalesResult";
 import ReportDishesResult from "@/components/reports/ReportDishesResult";
+import { downloadBlobFile } from "@/components/reports/reportExport";
 import dayjs from "dayjs";
 import MyAlert from "@/ui/MyAlert";
 
@@ -195,13 +196,55 @@ function FeedbackPage() {
   };
 
   const getCostDetail = async (payload) => {
-    const result = await api_laravel_local("reports", "get_cost_detail", payload);
+    const result = await api_laravel("reports", "get_cost_detail", payload);
     return result.data;
   };
 
   const getDishesCostDetail = async (payload) => {
-    const result = await api_laravel_local("reports", "get_cost_detail_dishes", payload);
+    const result = await api_laravel("reports", "get_cost_detail_dishes", payload);
     return result.data;
+  };
+
+  const downloadExcel = async (method, payload, fileName) => {
+    setIsLoad(true);
+
+    try {
+      const blob = await api_laravel("reports", method, payload, {
+        responseType: "blob",
+      });
+
+      if (!(blob instanceof Blob)) {
+        return;
+      }
+
+      if (blob.type && blob.type.includes("application/json")) {
+        return;
+      }
+
+      downloadBlobFile(blob, fileName);
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
+  const exportSalesExcel = async (payload) => {
+    const dateStart = payload?.dateStart || "start";
+    const dateEnd = payload?.dateEnd || "end";
+    await downloadExcel(
+      "export_file_xls",
+      payload,
+      `Отчет_продажи_товаров_${dateStart}_${dateEnd}.xlsx`,
+    );
+  };
+
+  const exportDishesExcel = async (payload) => {
+    const dateStart = payload?.dateStart || "start";
+    const dateEnd = payload?.dateEnd || "end";
+    await downloadExcel(
+      "export_file_xls_dishes",
+      payload,
+      `Отчет_производство_блюд_${dateStart}_${dateEnd}.xlsx`,
+    );
   };
 
   const handleChange = (event, newValue) => {
@@ -433,6 +476,7 @@ function FeedbackPage() {
               data={reportData}
               filters={reportFilters}
               onFetchCostDetail={getCostDetail}
+              onExportExcel={exportSalesExcel}
             />
           </TabPanel>
 
@@ -525,6 +569,7 @@ function FeedbackPage() {
               data={dishesReportData}
               filters={dishesReportFilters}
               onFetchCostDetail={getDishesCostDetail}
+              onExportExcel={exportDishesExcel}
             />
           </TabPanel>
         </TabContext>

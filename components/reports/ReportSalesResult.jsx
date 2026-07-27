@@ -13,12 +13,14 @@ import ReportSalesTable from "@/components/reports/ReportSalesTable";
 import ReportSalesKpiCards from "@/components/reports/ReportSalesKpiCards";
 import ReportSalesColumnsDialog from "@/components/reports/ReportSalesColumnsDialog";
 import ReportCostDetailModal from "@/components/reports/ReportCostDetailModal";
+import ExcelIcon from "@/ui/ExcelIcon";
 import {
   DEFAULT_REPORT_SALES_VISIBLE_COLUMNS,
   REPORT_SALES_COLUMNS_STORAGE_KEY,
   REPORT_SALES_COLUMN_OPTIONS,
   REPORT_SALES_TOGGLEABLE_COLUMNS,
 } from "@/components/reports/reportSalesColumns";
+import { buildReportExportPayload } from "@/components/reports/reportExport";
 
 function normalizePoint(point) {
   if (!point) {
@@ -33,7 +35,7 @@ function normalizePoint(point) {
   };
 }
 
-export default function ReportSalesResult({ data, filters, onFetchCostDetail }) {
+export default function ReportSalesResult({ data, filters, onFetchCostDetail, onExportExcel }) {
   const [tab, setTab] = useState("total");
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_REPORT_SALES_VISIBLE_COLUMNS);
@@ -42,6 +44,7 @@ export default function ReportSalesResult({ data, filters, onFetchCostDetail }) 
   const [costDetailError, setCostDetailError] = useState(null);
   const [costDetailData, setCostDetailData] = useState(null);
   const [costDetailCafeLabel, setCostDetailCafeLabel] = useState("Все выбранные кафе");
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -111,6 +114,27 @@ export default function ReportSalesResult({ data, filters, onFetchCostDetail }) 
   const closeCostDetail = () => {
     setCostDetailOpen(false);
     setCostDetailError(null);
+  };
+
+  const handleExportExcel = async () => {
+    if (typeof onExportExcel !== "function" || exportLoading) {
+      return;
+    }
+
+    const payload = buildReportExportPayload({
+      filters,
+      columnOptions: REPORT_SALES_COLUMN_OPTIONS,
+      isColumnVisible,
+      data,
+    });
+
+    setExportLoading(true);
+
+    try {
+      await onExportExcel(payload);
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   const handleItemClick = async (item, pointContext = null) => {
@@ -233,26 +257,49 @@ export default function ReportSalesResult({ data, filters, onFetchCostDetail }) 
             </Tabs>
           </Paper>
 
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<ViewColumnIcon />}
-            onClick={() => setColumnsDialogOpen(true)}
-            sx={{
-              color: "#d50032",
-              borderColor: "#d50032",
-              fontWeight: 600,
-              textTransform: "none",
-              borderRadius: 1.5,
-              px: 1.5,
-              "&:hover": {
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ExcelIcon sx={{ fontSize: 18 }} />}
+              onClick={handleExportExcel}
+              disabled={exportLoading}
+              sx={{
+                color: "#d50032",
                 borderColor: "#d50032",
-                backgroundColor: "rgba(213, 0, 50, 0.04)",
-              },
-            }}
-          >
-            Колонки
-          </Button>
+                fontWeight: 600,
+                textTransform: "none",
+                borderRadius: 1.5,
+                px: 1.5,
+                "&:hover": {
+                  borderColor: "#d50032",
+                  backgroundColor: "rgba(213, 0, 50, 0.04)",
+                },
+              }}
+            >
+              {exportLoading ? "Экспорт..." : "Экспорт в Excel"}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ViewColumnIcon />}
+              onClick={() => setColumnsDialogOpen(true)}
+              sx={{
+                color: "#d50032",
+                borderColor: "#d50032",
+                fontWeight: 600,
+                textTransform: "none",
+                borderRadius: 1.5,
+                px: 1.5,
+                "&:hover": {
+                  borderColor: "#d50032",
+                  backgroundColor: "rgba(213, 0, 50, 0.04)",
+                },
+              }}
+            >
+              Колонки
+            </Button>
+          </Box>
         </Box>
       </Grid>
 
