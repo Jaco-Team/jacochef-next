@@ -386,26 +386,28 @@ export default function SkladCsvAutocompleteField({
               label={label}
               placeholder={selectedValues.length ? "Фильтр или новое значение" : placeholder}
               inputRef={inputRef}
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {canAddInput ? (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          color="success"
-                          aria-label="Добавить значение"
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => addValue(inputValue)}
-                        >
-                          <AddCircleRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ) : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
+              slotProps={{
+                input: {
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {canAddInput ? (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            color="success"
+                            aria-label="Добавить значение"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => addValue(inputValue)}
+                          >
+                            <AddCircleRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                },
               }}
             />
           )}

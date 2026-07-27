@@ -67,7 +67,6 @@ export default function useSkladAccess() {
     const canView = (key) => accessApi.userCan("view", key);
     const canEdit = (key) => accessApi.userCan("edit", key);
     const canAccess = (key) => accessApi.userCan("access", key);
-    const canExecute = (key) => accessApi.userCan("access", key);
     const canCreateProduction = (entityType) =>
       entityType === "recipe" ? canEdit("create_rec") : canEdit("create_pol");
     const canManageProduction = (entityType) =>
@@ -94,7 +93,6 @@ export default function useSkladAccess() {
       canView,
       canEdit,
       canAccess,
-      canExecute,
       canCreateProduction,
       canDelete,
       canManageProduction,

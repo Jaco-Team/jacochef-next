@@ -38,7 +38,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canManageSiteItems();
-  const canDeleteAction = canDelete("site_item");
+  const canDeleteAction = canDelete();
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {

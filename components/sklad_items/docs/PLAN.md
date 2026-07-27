@@ -20,7 +20,7 @@ Pinned execution rule:
 - raw scope: `TASK.md`
 - существующие FE reference points: `recept_module_new_2`, `site_items_new`, newer modules pattern
 - local schema check on `127.0.0.1:3307`
-- 1C reference screenshot: [1c-history-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad/docs/assets/1c-history-reference.png)
+- 1C reference screenshot: [1c-history-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad_items/docs/assets/1c-history-reference.png)
 
 ## 1. Delivery goal
 
@@ -64,7 +64,7 @@ FE strategy after current backend update:
 - каждый tab соответствует legacy business area, а не backend table
 - shared/global fields и dictionaries живут в module-level adapters and scoped lib
 - MUI v7 используем как базовый UI-kit
-- existing shared form controls reused as-is; если нужна адаптация, она делается только в `components/sklad_items/lib/*`
+- existing shared form controls reused as-is; если нужна адаптация, она делается только внутри `components/sklad_items`
 - legacy modules используются только как analytical reference for flows and field meaning
 - new FE runtime integration binds only to canonical `/api/sklad_items/*`, never directly to legacy module APIs
 
@@ -793,7 +793,7 @@ Mobile:
 
 Reference:
 
-- [long-structure-field-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad/docs/assets/long-structure-field-reference.png)
+- [long-structure-field-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad_items/docs/assets/long-structure-field-reference.png)
 
 Clarification:
 
@@ -939,7 +939,7 @@ Mitigation:
 
 Статус на July 21, 2026:
 
-- completed: static contract pass по `components/sklad/**` against `API.md`, `ACCESS.md`, `ACCESS-MAP.md`
+- completed: static contract pass по `components/sklad_items/**` against `API.md`, `ACCESS.md`, `ACCESS-MAP.md`
 - completed: module mutation callers выровнены под фактический transport rule этого FE wrapper; лишнее вложение payload в `data` убрано из production/site-items/archive actions
 - checked endpoint categories: bootstrap shell, units, categories, production, site-items, history, archive/delete
 - no shared/core edits were required

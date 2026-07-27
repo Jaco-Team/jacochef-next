@@ -45,7 +45,7 @@ Follow-up по рецептам и заготовкам:
 
 Reference screenshot:
 
-- [recipe-pf-category-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad/docs/assets/recipe-pf-category-reference.png)
+- [recipe-pf-category-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad_items/docs/assets/recipe-pf-category-reference.png)
 
 Важно:
 
@@ -110,7 +110,7 @@ Reference screenshot:
 
 Reference screenshot:
 
-- [long-structure-field-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad/docs/assets/long-structure-field-reference.png)
+- [long-structure-field-reference.png](/home/ted/JACO/git/jacochef-next/components/sklad_items/docs/assets/long-structure-field-reference.png)
 
 Важно:
 

@@ -78,7 +78,7 @@ export default function useSkladProductionController({ showAlert }) {
     return mergedRows.slice(start, start + rowsPerPage);
   }, [mergedRows, page, rowsPerPage]);
 
-  const canDeleteAction = canDelete("production");
+  const canDeleteAction = canDelete();
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {

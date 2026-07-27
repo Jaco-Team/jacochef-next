@@ -85,7 +85,7 @@ export default function useSkladUnitsController({ showAlert }) {
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
 
   const isEditable = canEdit("ed_izmer");
-  const canDeleteAction = canDelete("unit");
+  const canDeleteAction = canDelete();
 
   const loadUnits = useCallback(async () => {
     setShellState({ isLoading: true });
