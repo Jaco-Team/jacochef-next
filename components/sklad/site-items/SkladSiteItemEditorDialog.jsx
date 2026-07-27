@@ -8,7 +8,8 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   Box,
   Button,
@@ -32,7 +33,7 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-import { MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
 import {
   SkladEmbeddedHistoryTable,
@@ -52,7 +53,6 @@ import {
 const EDITOR_SECTIONS = [
   { value: "main", label: "Основные", icon: <InfoOutlinedIcon fontSize="small" /> },
   { value: "composition", label: "Состав", icon: <LocalOfferOutlinedIcon fontSize="small" /> },
-  { value: "tags", label: "Теги", icon: <SellOutlinedIcon fontSize="small" /> },
   { value: "history", label: "История", icon: <HistoryOutlinedIcon fontSize="small" /> },
 ];
 
@@ -82,6 +82,7 @@ export default function SkladSiteItemEditorDialog({
   onSubmit,
   onCreateTag,
   onRenameTag,
+  onArchive,
   showAlert,
   onClose,
 }) {
@@ -144,17 +145,8 @@ export default function SkladSiteItemEditorDialog({
       : "";
   }, [categoryOptions, form.category_id]);
 
-  const tagNames = useMemo(() => {
-    return Array.isArray(form.tags) ? form.tags.map((tag) => tag?.name).filter(Boolean) : [];
-  }, [form.tags]);
-
   const availableTags = useMemo(() => normalizeTagList(tags), [tags]);
-
-  const assignedTagIds = useMemo(() => {
-    return new Set(
-      Array.isArray(form.tags) ? form.tags.map((tag) => String(tag?.id ?? "")).filter(Boolean) : [],
-    );
-  }, [form.tags]);
+  const selectedTags = useMemo(() => normalizeTagList(form.tags), [form.tags]);
 
   const liveKkalPreview = useMemo(() => getLiveKkalPreview(form), [form]);
   const imageUrl = useMemo(
@@ -492,29 +484,6 @@ export default function SkladSiteItemEditorDialog({
     ? form.item_items.this_items.length
     : 0;
 
-  const toggleTag = (tag) => {
-    const tagId = String(tag?.id ?? "");
-
-    if (!tagId) {
-      return;
-    }
-
-    setForm((prev) => {
-      const current = Array.isArray(prev.tags) ? prev.tags : [];
-      const exists = current.some((item) => String(item?.id ?? "") === tagId);
-
-      return {
-        ...prev,
-        tags: exists
-          ? current.filter((item) => String(item?.id ?? "") !== tagId)
-          : current.concat({
-              id: tag.id,
-              name: tag.name,
-            }),
-      };
-    });
-  };
-
   const openCreateTagModal = () => {
     setTagModal({
       open: true,
@@ -769,6 +738,68 @@ export default function SkladSiteItemEditorDialog({
                   </Grid>
 
                   <SkladSectionCard
+                    title="Активность"
+                    description="Публикация, продажа, промо и архив"
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      useFlexGap
+                      flexWrap="wrap"
+                    >
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_show ? "success" : "default"}
+                        label={form.is_show ? "Активен" : "Скрыт"}
+                        onClick={() => updateField("is_show", !form.is_show)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.show_site ? "primary" : "default"}
+                        label={form.show_site ? "Показывать на сайте" : "Скрыт на сайте"}
+                        onClick={() => updateField("show_site", !form.show_site)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.show_program ? "secondary" : "default"}
+                        label={form.show_program ? "Показывать на кассе" : "Скрыт на кассе"}
+                        onClick={() => updateField("show_program", !form.show_program)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_hit ? "warning" : "default"}
+                        label={form.is_hit ? "Хит" : "Не хит"}
+                        onClick={() => updateField("is_hit", !form.is_hit)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_new ? "info" : "default"}
+                        label={form.is_new ? "Новинка" : "Обычный"}
+                        onClick={() => updateField("is_new", !form.is_new)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable || !form.id || !onArchive}
+                        color={Number(form.is_archived) === 1 ? "default" : "warning"}
+                        icon={
+                          Number(form.is_archived) === 1 ? (
+                            <UnarchiveOutlinedIcon />
+                          ) : (
+                            <ArchiveOutlinedIcon />
+                          )
+                        }
+                        label={Number(form.is_archived) === 1 ? "В архиве" : "В архив"}
+                        onClick={() => onArchive(form)}
+                      />
+                    </Stack>
+                  </SkladSectionCard>
+
+                  <SkladSectionCard
                     title="Изображение"
                     description="Квадратный исходник 1:1. Загрузка JPG или PNG."
                   >
@@ -858,6 +889,43 @@ export default function SkladSiteItemEditorDialog({
                   </SkladSectionCard>
 
                   <SkladSectionCard
+                    title="Теги"
+                    description="Теги карточки и промо-маркеры"
+                  >
+                    <MyAutocomplite
+                      multiple
+                      label="Теги"
+                      data={availableTags}
+                      value={selectedTags}
+                      disabled={!isEditable}
+                      func={(_, value) => updateField("tags", normalizeTagList(value))}
+                    />
+                    {isEditable ? (
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1}
+                        sx={{ mt: 2 }}
+                      >
+                        <Button
+                          variant="outlined"
+                          startIcon={<AddOutlinedIcon />}
+                          onClick={openCreateTagModal}
+                        >
+                          Новый тег
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<EditOutlinedIcon />}
+                          disabled={!availableTags.length}
+                          onClick={openRenameTagModal}
+                        >
+                          Переименовать тег
+                        </Button>
+                      </Stack>
+                    ) : null}
+                  </SkladSectionCard>
+
+                  <SkladSectionCard
                     title="БЖУ"
                     description="Вес, БЖУ и калорийность"
                   >
@@ -916,54 +984,6 @@ export default function SkladSiteItemEditorDialog({
                   </SkladSectionCard>
 
                   <SkladSectionCard
-                    title="Активность"
-                    description="Публикация, продажа и промо-флаги"
-                  >
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      useFlexGap
-                      flexWrap="wrap"
-                    >
-                      <Chip
-                        clickable
-                        disabled={!isEditable}
-                        color={form.is_show ? "success" : "default"}
-                        label={form.is_show ? "Активен" : "Скрыт"}
-                        onClick={() => updateField("is_show", !form.is_show)}
-                      />
-                      <Chip
-                        clickable
-                        disabled={!isEditable}
-                        color={form.show_site ? "primary" : "default"}
-                        label={form.show_site ? "Показывать на сайте" : "Скрыт на сайте"}
-                        onClick={() => updateField("show_site", !form.show_site)}
-                      />
-                      <Chip
-                        clickable
-                        disabled={!isEditable}
-                        color={form.show_program ? "secondary" : "default"}
-                        label={form.show_program ? "Показывать на кассе" : "Скрыт на кассе"}
-                        onClick={() => updateField("show_program", !form.show_program)}
-                      />
-                      <Chip
-                        clickable
-                        disabled={!isEditable}
-                        color={form.is_hit ? "warning" : "default"}
-                        label={form.is_hit ? "Хит" : "Не хит"}
-                        onClick={() => updateField("is_hit", !form.is_hit)}
-                      />
-                      <Chip
-                        clickable
-                        disabled={!isEditable}
-                        color={form.is_new ? "info" : "default"}
-                        label={form.is_new ? "Новинка" : "Обычный"}
-                        onClick={() => updateField("is_new", !form.is_new)}
-                      />
-                    </Stack>
-                  </SkladSectionCard>
-
-                  <SkladSectionCard
                     title="Описание"
                     description="Тексты карточки и списка"
                   >
@@ -1017,119 +1037,6 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                     </Grid>
-                  </SkladSectionCard>
-                </Stack>
-              </TabPanel>
-
-              <TabPanel
-                value="tags"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <Stack spacing={2}>
-                  <SkladSectionCard
-                    title="Теги"
-                    description="Текущие привязанные теги"
-                  >
-                    <Stack spacing={2}>
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Назначенные теги
-                        </Typography>
-                        {tagNames.length ? (
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            flexWrap="wrap"
-                            sx={{ mt: 1 }}
-                          >
-                            {form.tags.map((tag) => (
-                              <Chip
-                                key={`assigned-${tag?.id}`}
-                                label={tag?.name ?? String(tag?.id ?? "")}
-                                color="primary"
-                                variant="filled"
-                                clickable={isEditable}
-                                onClick={() => (isEditable ? toggleTag(tag) : null)}
-                              />
-                            ))}
-                          </Stack>
-                        ) : (
-                          <Typography
-                            color="text.secondary"
-                            sx={{ mt: 1 }}
-                          >
-                            Теги пока не назначены.
-                          </Typography>
-                        )}
-                      </Box>
-
-                      <Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Доступные теги
-                        </Typography>
-                        {availableTags.length ? (
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            useFlexGap
-                            flexWrap="wrap"
-                            sx={{ mt: 1 }}
-                          >
-                            {availableTags.map((tag) => {
-                              const isAssigned = assignedTagIds.has(String(tag?.id ?? ""));
-
-                              return (
-                                <Chip
-                                  key={`available-${tag?.id}`}
-                                  label={tag?.name ?? String(tag?.id ?? "")}
-                                  color={isAssigned ? "primary" : "default"}
-                                  variant={isAssigned ? "filled" : "outlined"}
-                                  clickable={isEditable}
-                                  onClick={() => (isEditable ? toggleTag(tag) : null)}
-                                />
-                              );
-                            })}
-                          </Stack>
-                        ) : (
-                          <Typography
-                            color="text.secondary"
-                            sx={{ mt: 1 }}
-                          >
-                            Справочник тегов пуст.
-                          </Typography>
-                        )}
-                      </Box>
-
-                      {isEditable ? (
-                        <Stack
-                          direction={{ xs: "column", sm: "row" }}
-                          spacing={1}
-                        >
-                          <Button
-                            variant="outlined"
-                            startIcon={<AddOutlinedIcon />}
-                            onClick={openCreateTagModal}
-                          >
-                            Новый тег
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            startIcon={<EditOutlinedIcon />}
-                            disabled={!availableTags.length}
-                            onClick={openRenameTagModal}
-                          >
-                            Переименовать тег
-                          </Button>
-                        </Stack>
-                      ) : null}
-                    </Stack>
                   </SkladSectionCard>
                 </Stack>
               </TabPanel>

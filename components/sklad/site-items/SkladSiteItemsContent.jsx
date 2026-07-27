@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
+
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import PhotoOutlinedIcon from "@mui/icons-material/PhotoOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   Button,
+  Box,
   Chip,
+  DialogContent,
   IconButton,
   Paper,
   Stack,
@@ -26,6 +29,7 @@ import {
 } from "@mui/material";
 
 import { MySearchInput, MySelect } from "@/ui/Forms";
+import MyModal from "@/ui/MyModal";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
@@ -39,6 +43,7 @@ import {
   getTagNames,
 } from "./siteItems.helpers";
 import { SITE_ITEMS_ARCHIVE_MODE_OPTIONS } from "./useSkladSiteItemsStore";
+import { resolveSiteItemImagePreviewUrl } from "./siteItemImage";
 
 export default function SkladSiteItemsContent({
   search,
@@ -80,6 +85,7 @@ export default function SkladSiteItemsContent({
   handleRenameTag,
   submitDraft,
 }) {
+  const [imagePreviewRow, setImagePreviewRow] = useState(null);
   return (
     <Paper sx={{ p: 2.5, borderRadius: 3 }}>
       <Stack spacing={2}>
@@ -176,6 +182,13 @@ export default function SkladSiteItemsContent({
                 const rowTagNames = getTagNames(row);
                 const primaryStatusChip = getPrimaryStatusChip(row);
                 const secondaryStatusChips = getSecondaryStatusChips(row);
+                const hasImage = Boolean(
+                  row?.img_app ||
+                  row?.image?.asset_key ||
+                  row?.image?.current_fields?.img_app ||
+                  row?.image?.variants?.webp?.url ||
+                  row?.image?.variants?.jpg?.url,
+                );
 
                 return (
                   <TableRow
@@ -269,29 +282,17 @@ export default function SkladSiteItemsContent({
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="Открыть вкладку маркировки">
+                        <Tooltip
+                          title={hasImage ? "Открыть изображение" : "Изображение отсутствует"}
+                        >
                           <span>
                             <IconButton
                               size="small"
-                              aria-label="Маркировка"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openEdit(row, "main");
-                              }}
-                            >
-                              <LocalOfferOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-
-                        <Tooltip title="Открыть вкладку изображения">
-                          <span>
-                            <IconButton
-                              size="small"
+                              disabled={!hasImage}
                               aria-label="Изображения"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                openEdit(row, "main");
+                                setImagePreviewRow(row);
                               }}
                             >
                               <PhotoOutlinedIcon fontSize="small" />
@@ -434,9 +435,32 @@ export default function SkladSiteItemsContent({
           onSubmit={submitDraft}
           onCreateTag={handleCreateTag}
           onRenameTag={handleRenameTag}
+          onArchive={openArchiveDialog}
           showAlert={showAlert}
           onClose={closeModal}
         />
+        <MyModal
+          open={Boolean(imagePreviewRow)}
+          onClose={() => setImagePreviewRow(null)}
+          maxWidth="lg"
+          title={imagePreviewRow?.name || "Изображение"}
+        >
+          <DialogContent dividers>
+            {imagePreviewRow ? (
+              <Box
+                component="img"
+                src={resolveSiteItemImagePreviewUrl(imagePreviewRow.image, imagePreviewRow.img_app)}
+                alt={imagePreviewRow.name || "Изображение товара"}
+                sx={{
+                  width: "100%",
+                  maxHeight: "75dvh",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            ) : null}
+          </DialogContent>
+        </MyModal>
         <SkladDeleteDialog
           open={deleteDialog.open}
           loading={deleteDialog.loading}
