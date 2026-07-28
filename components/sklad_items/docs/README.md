@@ -8,6 +8,7 @@
 - исходный сырой scope: `TASK.md`
 - план реализации: `PLAN.md`
 - migration map старых модулей: `FE-MIGRATION-MAP.md`
+- target access tree for appointment configuration: `ACCESS-NEW.md`
 
 Рабочий набор документов для реализации должен оставаться минимальным:
 
@@ -16,6 +17,7 @@
 - `PLAN.md` — реализационная дорожная карта
 - `TASK.md` — исходные follow-up требования из чата
 - `FE-MIGRATION-MAP.md` — справка для чтения legacy-кода и переноса flow
+- `ACCESS-NEW.md` — role-oriented access tree and proposed new gates
 
 Дополнительные research/reference docs допустимы, но не должны спорить с этими файлами:
 

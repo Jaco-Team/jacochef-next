@@ -1,3 +1,108 @@
+# Access tree for `sklad_items`
+
+Target access contract for the new FE, prepared from the authenticated
+appointment payload for `Программист`.
+
+Notation:
+
+- `existing:` key already exists in the current access payload.
+- `add:` key must be added by the backend/appointment system.
+- An `*_edit` grant also permits reading the field in the current access
+  helper, so separate `*_view` entries are listed only where read-only access
+  is useful.
+- Delete also depends on the entity API usage check. Access rules alone must
+  not override a `delete_usage` blocker.
+
+## Target tree
+
+```text
+Склад
+├── Рецепты и заготовки
+│   ├── Просмотр раздела                         existing: recipes_view, semi_finished_view
+│   ├── Просмотр списка                          add: production_list_view
+│   ├── Создать рецепт                           existing: create_rec_access
+│   ├── Создать заготовку                        existing: create_pol_access
+│   ├── Редактировать основные данные            existing: name_edit, shelf_life_edit,
+│   │                                             date_start_edit, date_end_edit, time_edit,
+│   │                                             dop_time_edit, rec_apps_edit, storages_edit,
+│   │                                             show_in_rev_edit, two_user_edit
+│   ├── Номенклатура                             existing: items_edit
+│   ├── Аллергены                                existing: allergens_edit, allergens_diff_edit
+│   ├── Состав заготовки                         existing: structure_edit
+│   ├── Категории                                existing: cats_edit
+│   ├── Просмотр без редактирования              existing: items_view, structure_view
+│   ├── Удалить рецепт или заготовку             existing: delete_access + edit access
+│   └── Смена рецепта и заготовки                existing: change_rec_pf_access
+│
+├── Товары сайта
+│   ├── Просмотр раздела                         existing: site_items_view
+│   ├── Просмотр списка                          add: site_item_list_view
+│   ├── Создать товар                            existing: create_new_access
+│   ├── Редактировать основные данные            existing: name_edit, short_name_edit,
+│   │                                             category_id_edit, art_edit, stol_edit,
+│   │                                             count_part_edit, weight_edit
+│   ├── Активность и публикация                  existing: is_show_edit, show_site_edit,
+│   │                                             show_program_edit, is_new_edit, is_hit_edit
+│   ├── БЖУ                                      existing: protein_edit, fat_edit, carbohydrates_edit
+│   ├── Состав и описания                        existing: tmp_desc_edit, marc_desc_edit,
+│   │                                             marc_desc_full_edit
+│   ├── Изображение                              existing: dropzone_edit
+│   ├── Позиции и заготовки                      existing: items_edit, stage_edit
+│   ├── Тайминги этапов                          existing: time_stage_1_edit, time_stage_2_edit,
+│   │                                             time_stage_3_edit
+│   ├── Системы учета                            existing: honest_sign_edit
+│   ├── Просмотр без редактирования              existing: name_view, tmp_desc_view
+│   ├── Теги                                     existing: change_tag_access
+│   ├── Обновить товары VK                       existing: reload_vk_access
+│   └── Удалить товар                            existing: delete_item_access
+│
+├── Единицы измерения
+│   ├── Просмотр раздела                         existing: units_view
+│   ├── Просмотр списка                          add: unit_list_view
+│   ├── Создать единицу                          add: unit_create_access
+│   ├── Просмотр и редактирование                existing: ed_izmer_view, ed_izmer_edit
+│   ├── Просмотр использований                   add: unit_usage_view
+│   └── Удалить единицу                          existing: delete_execute + ed_izmer_edit
+│
+├── Категории
+│   ├── Просмотр раздела                         existing: categories_view
+│   ├── Просмотр списка                          add: category_list_view
+│   ├── Создать категорию                        add: category_create_access
+│   ├── Просмотр и редактирование                existing: cats_view, cats_edit
+│   └── Удалить категорию                        existing: delete_execute + cats_edit
+│
+├── Архив
+│   ├── Просмотр раздела                         existing: archive_view
+│   ├── Просмотр списка                          add: archive_list_view
+│   └── Восстановить запись                      existing: is_show_edit + entity edit access
+│
+└── История
+    ├── Просмотр истории                         existing: history_view
+    ├── История рецептов и заготовок             add: production_history_view
+    ├── История товаров сайта                    add: site_item_history_view
+    └── История единиц измерения                 add: unit_history_view
+```
+
+## Backend additions
+
+```text
+production_list_view
+site_item_list_view
+unit_list_view
+unit_create_access
+unit_usage_view
+category_list_view
+category_create_access
+archive_list_view
+production_history_view
+site_item_history_view
+unit_history_view
+```
+
+The existing raw keys not shown as separate nodes are intentionally not
+additional FE rules for this module. They are legacy table columns or fields
+not rendered by the current new UI.
+
 # ACCESS
 
 Статус: карта access-контура нового модуля `Sklad` и команда синхронизации в `sklad_items`.
@@ -17,6 +122,7 @@
 - source-модули не переписываются
 - команда синхронизации пишет только target-модуль `sklad_items` и его template rows
 - legacy-модули `ed_izmer`, `recept_module_new_2`, `sklad_items_module_new`, `site_items_new` остаются источником данных для merge
+- `Sklad canonical` не является бизнес-категорией и не используется в target-модуле
 
 ## 2. Source modules
 
@@ -53,16 +159,50 @@ Access merge собирается из:
 - FE должен читать конкретные ключи из `get_all.access`
 - для единиц измерения использовать `ed_izmer`, `ed_izmer_view`, `ed_izmer_edit`, `ed_izmer_access`
 - для категорий использовать `cats`, `cats_view`, `cats_edit`, `cats_access`
-- глобальное право удаления в новом FE — raw `delete_execute`
-- действие удаления дополнительно требует edit-доступа к соответствующей сущности: `ed_izmer` для единиц, production edit keys для recipes/semi-finished, `SITE_ITEM_WRITE_KEYS` для site items и `cats` для категорий
-- legacy keys `delete` и `delete_item` остаются в payload для совместимости, но новым `sklad_items` FE не используются как gate удаления
+- для удаления recipes/semi-finished использовать `delete`, `delete_view`, `delete_edit`, `delete_access`
+- для удаления site items использовать `delete_item`, `delete_item_view`, `delete_item_edit`, `delete_item_access`
 - для полей карточек использовать соответствующие field-level keys из таблицы ниже
 
 Правило совместимости:
 
-- backend публикует `delete_execute` как отдельный raw global key без обязательных suffixed variants
-- `units_edit` и `categories_edit` не являются runtime keys; FE использует `ed_izmer` и `cats`
+- backend не публикует synthetic keys `units_edit`, `categories_edit`
+- `delete_execute` остается raw target-флагом для общего действия удаления и не отменяет entity-specific usage checks
+- если FE уже успел завязаться на них, их надо заменить на raw keys из `access`
 - серверные endpoints все равно проверяют raw keys, поэтому FE должен показывать то же, что реально примет backend
+
+### 3.1.1. FE handoff: section and action keys
+
+Для нового FE использовать следующие exact keys из `get_all.access`:
+
+| UI contour                           | Access key                              |
+| ------------------------------------ | --------------------------------------- |
+| Открыть раздел рецептов и заготовок  | `recipes_view` или `semi_finished_view` |
+| Показать список рецептов и заготовок | `production_list_view`                  |
+| Создать рецепт                       | `create_rec_access`                     |
+| Создать заготовку                    | `create_pol_access`                     |
+| Открыть раздел товаров сайта         | `site_items_view`                       |
+| Показать список товаров сайта        | `site_item_list_view`                   |
+| Создать товар сайта                  | `create_new_access`                     |
+| Открыть раздел единиц                | `units_view`                            |
+| Показать список единиц               | `unit_list_view`                        |
+| Создать единицу                      | `unit_create_access`                    |
+| Показать использования единицы       | `unit_usage_view`                       |
+| Открыть раздел категорий             | `categories_view`                       |
+| Показать список категорий            | `category_list_view`                    |
+| Создать категорию                    | `category_create_access`                |
+| Открыть архив                        | `archive_view`                          |
+| Показать список архива               | `archive_list_view`                     |
+| Открыть общую историю                | `history_view`                          |
+| История рецептов и заготовок         | `production_history_view`               |
+| История товаров сайта                | `site_item_history_view`                |
+| История единиц                       | `unit_history_view`                     |
+| Общее право удаления                 | `delete_execute`                        |
+
+Для редактирования FE должен использовать только соответствующий field-level key с суффиксом `_edit`. Наличие section/list/history key не выдаёт право редактировать сущность.
+
+Удаление разрешается показывать только при одновременном выполнении access-проверки и успешном `delete_usage.can_delete`. `delete_execute` не отменяет блокировку активными или историческими связями.
+
+`get_all.access` не содержит вложенного JSON-дерева. Дерево appointment является административным представлением; runtime-контракт FE — плоский объект raw keys.
 
 ### 3.2. Full target rule map
 
@@ -91,10 +231,10 @@ Access merge собирается из:
 | `rec_apps`           | `rec_apps`, `rec_apps_view`, `rec_apps_edit`, `rec_apps_access`                                         | 2    | Должность в кафе для приготовления      | legacy merged       |
 | `storages`           | `storages`, `storages_view`, `storages_edit`, `storages_access`                                         | 2    | Места хранения                          | legacy merged       |
 | `create_rec`         | `create_rec`, `create_rec_view`, `create_rec_edit`, `create_rec_access`                                 | 2    | Создание рецепта                        | legacy merged       |
-| `create_pol`         | `create_pol`, `create_pol_view`, `create_pol_edit`, `create_pol_access`                                 | 2    | Создание заготовки                      | legacy merged       |
+| `create_pol`         | `create_pol`, `create_pol_view`, `create_pol_edit`, `create_pol_access`                                 | 2    | Создание полуфабриката                  | legacy merged       |
 | `rev_table`          | `rev_table`, `rev_table_view`, `rev_table_edit`, `rev_table_access`                                     | 2    | Ревизия в таблице                       | legacy merged       |
-| `change_rec_pf`      | `change_rec_pf`, `change_rec_pf_view`, `change_rec_pf_edit`, `change_rec_pf_access`                     | 2    | Смена рецепта на заготовку и обратно    | legacy merged       |
-| `delete`             | `delete`, `delete_view`, `delete_edit`, `delete_access`                                                 | 2    | Удаление рецепта или заготовки          | legacy merged       |
+| `change_rec_pf`      | `change_rec_pf`, `change_rec_pf_view`, `change_rec_pf_edit`, `change_rec_pf_access`                     | 2    | Смена рецепта на полуфабрикат и обратно | legacy merged       |
+| `delete`             | `delete`, `delete_view`, `delete_edit`, `delete_access`                                                 | 2    | Удаление рецепта или полуфабриката      | legacy merged       |
 | `items`              | `items`, `items_view`, `items_edit`, `items_access`                                                     | 2    | Номенклатура / состав                   | legacy merged       |
 | `allergens`          | `allergens`, `allergens_view`, `allergens_edit`, `allergens_access`                                     | 2    | Аллергены                               | legacy merged       |
 | `allergens_diff`     | `allergens_diff`, `allergens_diff_view`, `allergens_diff_edit`, `allergens_diff_access`                 | 2    | Возможные аллергены                     | legacy merged       |
@@ -151,6 +291,22 @@ Access merge собирается из:
 | `stage`              | `stage`, `stage_view`, `stage_edit`, `stage_access`                                                     | 2    | Заготовки                               | legacy merged       |
 | `is_updated`         | `is_updated`, `is_updated_view`, `is_updated_edit`, `is_updated_access`                                 | 2    | Обновлено                               | legacy merged       |
 
+Дополнительные target-флаги нового FE:
+
+| param                     | runtime key               | category            |
+| ------------------------- | ------------------------- | ------------------- |
+| `production_list_view`    | `production_list_view`    | Рецепты и заготовки |
+| `site_item_list_view`     | `site_item_list_view`     | Товары сайта        |
+| `unit_list_view`          | `unit_list_view`          | Единицы измерения   |
+| `unit_create_access`      | `unit_create_access`      | Единицы измерения   |
+| `unit_usage_view`         | `unit_usage_view`         | Единицы измерения   |
+| `category_list_view`      | `category_list_view`      | Категории           |
+| `category_create_access`  | `category_create_access`  | Категории           |
+| `archive_list_view`       | `archive_list_view`       | Архив               |
+| `production_history_view` | `production_history_view` | История             |
+| `site_item_history_view`  | `site_item_history_view`  | История             |
+| `unit_history_view`       | `unit_history_view`       | История             |
+
 ### 3.3. Как это превращается в runtime keys
 
 Middleware строит `upd_access` так:
@@ -186,31 +342,34 @@ Middleware строит `upd_access` так:
 - upsert-ит `appointment_group` только для target-модуля
 - rebuild-ит `appointment_template` только для target-модуля
 - rebuild-ит `appointment_template_group` только для target-групп target-модуля
+- сохраняет существующие значения target-групп для ролей
+- удаляет устаревшие target-группы только при явном `--apply`
 
 ## 5. Команда
 
 ```bash
-php artisan sklad:sync-access
+php artisan sklad:sync-access --dry-run
 ```
 
 Опции:
 
 ```bash
 php artisan sklad:sync-access --dry-run
-php artisan sklad:sync-access --target-key=sklad_items
-php artisan sklad:sync-access --target-name="Склад"
+php artisan sklad:sync-access --target-key=sklad_items --appointment-id=1 --dry-run
+php artisan sklad:sync-access --target-key=sklad_items --apply
+php artisan sklad:sync-access --target-key=sklad_items --appointment-id=1 --apply
 ```
 
-Рекомендуемый production/apply запуск:
+Без `--apply` команда ничего не записывает. Рекомендуемый production/apply запуск после проверки dry-run:
 
 ```bash
-php artisan sklad:sync-access --target-key=sklad_items --target-name="Склад"
+php artisan sklad:sync-access --target-key=sklad_items --target-name="Товары склада" --apply
 ```
 
 ## 6. Что команда делает
 
 1. Находит source-модули по `key_query`
-2. Создает или находит target-модуль `sklad_items`
+2. Создает или находит target-модуль `sklad_items` только при `--apply`
 3. Собирает union legacy access groups из source-модулей
 4. Пересобирает target `appointment_group`
 5. Пересобирает target `appointment_template` как OR по source module activation

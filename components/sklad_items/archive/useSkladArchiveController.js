@@ -91,7 +91,7 @@ function normalizeRows(entityType, response) {
 
 export default function useSkladArchiveController({ showAlert }) {
   const api = useSkladApi();
-  const { canManageArchivedEntity, canView } = useSkladAccess();
+  const { canManageArchivedEntity } = useSkladAccess();
   const setShellState = useSkladStore((state) => state.setState);
   const shellUnits = useSkladStore((state) => state.units);
   const shellCategories = useSkladStore((state) => state.categories);
@@ -190,7 +190,7 @@ export default function useSkladArchiveController({ showAlert }) {
     [api],
   );
 
-  const openView = useCallback(
+  const openEditor = useCallback(
     async (row) => {
       if (!row?.id) {
         return;
@@ -418,7 +418,7 @@ export default function useSkladArchiveController({ showAlert }) {
                             size="small"
                             variant="outlined"
                             startIcon={<VisibilityOutlinedIcon />}
-                            onClick={() => openView(row)}
+                            onClick={() => openEditor(row)}
                           >
                             Открыть
                           </Button>
@@ -470,7 +470,16 @@ export default function useSkladArchiveController({ showAlert }) {
         </Paper>
       </Stack>
     );
-  }, [canRestore, entityType, openRestoreDialog, openView, page, paginatedRows, rows, rowsPerPage]);
+  }, [
+    canRestore,
+    entityType,
+    openEditor,
+    openRestoreDialog,
+    page,
+    paginatedRows,
+    rows,
+    rowsPerPage,
+  ]);
 
   return {
     entityType,

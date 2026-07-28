@@ -65,7 +65,6 @@ export default function SkladProductionContent({
   canManageProduction,
   setState,
   openCreate,
-  openView,
   openEdit,
   openArchiveDialog,
   openDeleteDialog,

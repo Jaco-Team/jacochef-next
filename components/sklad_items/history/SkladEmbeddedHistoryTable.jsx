@@ -615,10 +615,11 @@ export function SkladEmbeddedImageHistoryTable({
       {rows.map((row, index) => {
         const beforeUrl = resolveHistoryImageUrl(row?.before_image, imageAssetKey);
         const afterUrl = resolveHistoryImageUrl(row?.after_image, imageAssetKey);
+        const rowKey = `${row?.history_id ?? row?.revision_key ?? "history"}-${index}`;
 
         return (
           <Accordion
-            key={`${row?.history_id ?? row?.revision_key ?? index}`}
+            key={rowKey}
             component={Paper}
             variant="outlined"
             disableGutters

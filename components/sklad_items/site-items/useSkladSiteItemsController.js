@@ -422,13 +422,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [api, categories, setShellState, setState, showAlert],
   );
 
-  const openView = useCallback(
-    async (row, section = "main") => {
-      return openEdit(row, section);
-    },
-    [openEdit],
-  );
-
   const refreshOpenDetail = useCallback(
     async (id, section = "main") => {
       if (!id) {
@@ -659,7 +652,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setState={setState}
         loadRows={loadRows}
         openCreate={openCreate}
-        openView={openView}
         openEdit={openEdit}
         handleRestoreImage={handleRestoreImage}
         openArchiveDialog={openArchiveDialog}

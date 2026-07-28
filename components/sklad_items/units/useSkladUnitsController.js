@@ -73,7 +73,7 @@ function buildSavePayload(draft) {
 export default function useSkladUnitsController({ showAlert }) {
   const api = useSkladApi();
   const { ConfirmDialog, withConfirm } = useConfirm();
-  const { canEdit, canDelete } = useSkladAccess();
+  const { canEdit, canDelete, canCreateUnit, canViewUnitUsage } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const rows = useSkladUnitsStore((state) => state.rows);
@@ -85,6 +85,8 @@ export default function useSkladUnitsController({ showAlert }) {
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
 
   const isEditable = canEdit("ed_izmer");
+  const canCreate = canCreateUnit();
+  const canShowUsage = canViewUnitUsage();
   const canDeleteAction = canDelete();
 
   const loadUnits = useCallback(async () => {
@@ -109,7 +111,7 @@ export default function useSkladUnitsController({ showAlert }) {
   }, [api, setShellState, setState, showAlert]);
 
   const openCreate = useCallback(() => {
-    if (!isEditable) {
+    if (!canCreate) {
       return;
     }
 
@@ -120,7 +122,7 @@ export default function useSkladUnitsController({ showAlert }) {
         mode: "create",
       },
     });
-  }, [isEditable, setState]);
+  }, [canCreate, setState]);
 
   const openEdit = useCallback(
     (row) => {
@@ -135,6 +137,7 @@ export default function useSkladUnitsController({ showAlert }) {
           con_id: row?.con_id ?? 0,
           main_count: row?.main_count ?? 1,
           con_count: row?.con_count ?? 1,
+          delete_usage: row?.delete_usage ?? null,
         },
         modal: {
           open: true,
@@ -150,7 +153,9 @@ export default function useSkladUnitsController({ showAlert }) {
   }, [resetDraft]);
 
   const saveUnit = useCallback(async () => {
-    if (!isEditable) {
+    const canSave = modal.mode === "create" ? canCreate : isEditable;
+
+    if (!canSave) {
       showAlert("Недостаточно прав", false);
       return;
     }
@@ -188,7 +193,17 @@ export default function useSkladUnitsController({ showAlert }) {
     } finally {
       setShellState({ isLoading: false });
     }
-  }, [api, closeModal, draft, isEditable, loadUnits, modal.mode, setShellState, showAlert]);
+  }, [
+    api,
+    canCreate,
+    closeModal,
+    draft,
+    isEditable,
+    loadUnits,
+    modal.mode,
+    setShellState,
+    showAlert,
+  ]);
 
   const deleteUnit = useCallback(
     async (row) => {
@@ -236,12 +251,21 @@ export default function useSkladUnitsController({ showAlert }) {
   const unitOptions = useMemo(() => {
     const baseOptions = [{ id: 0, name: "Без привязки" }];
     const currentId = draft?.id;
+    const selectedId = normalizeNumber(draft?.con_id, 0);
+    const selectedRelation = rows.find((row) => Number(row?.id) === selectedId);
     const nextOptions = rows
       .filter((row) => Number(row?.id) !== Number(currentId))
       .map((row) => ({
         id: row.id,
         name: row.name,
       }));
+
+    if (selectedId && !nextOptions.some((option) => Number(option.id) === selectedId)) {
+      nextOptions.unshift({
+        id: selectedId,
+        name: selectedRelation?.name || `Недоступная единица (${selectedId})`,
+      });
+    }
 
     return [...baseOptions, ...nextOptions];
   }, [draft?.id, rows]);
@@ -281,7 +305,7 @@ export default function useSkladUnitsController({ showAlert }) {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={openCreate}
-              disabled={!isEditable}
+              disabled={!canCreate}
             >
               Новая единица
             </Button>
@@ -390,6 +414,7 @@ export default function useSkladUnitsController({ showAlert }) {
         onFieldChange={(key, value) => setDraft({ [key]: value })}
         onSave={saveUnit}
         isSaveDisabled={isSaveDisabled}
+        showUsage={canShowUsage}
       />
 
       <ConfirmDialog />

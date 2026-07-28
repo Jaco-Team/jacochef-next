@@ -1,8 +1,13 @@
 "use client";
 
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -10,6 +15,7 @@ import {
   Grid,
   IconButton,
   Stack,
+  Typography,
 } from "@mui/material";
 
 import useFullScreen from "@/src/hooks/useFullScreen";
@@ -32,8 +38,16 @@ export default function SkladUnitDialog({
   onFieldChange,
   onSave,
   isSaveDisabled,
+  showUsage = false,
 }) {
   const fullScreen = useFullScreen();
+  const activeRelations = Array.isArray(draft?.delete_usage?.active_relations)
+    ? draft.delete_usage.active_relations
+    : [];
+  const usageCount = activeRelations.reduce(
+    (total, relation) => total + (Number(relation?.count) || 0),
+    0,
+  );
 
   return (
     <Dialog
@@ -95,6 +109,62 @@ export default function SkladUnitDialog({
             />
           </Grid>
         </Grid>
+
+        {showUsage && mode === "edit" && draft?.delete_usage ? (
+          <Accordion
+            disableGutters
+            sx={{ mt: 2, border: 1, borderColor: "divider", borderRadius: 1 }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+              >
+                <Typography sx={{ fontWeight: 600 }}>Использования</Typography>
+                <Chip
+                  size="small"
+                  label={usageCount}
+                />
+              </Stack>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={1.25}>
+                {activeRelations.map((relation, relationIndex) => (
+                  <Stack
+                    key={`active-${relation?.source || "relation"}-${relationIndex}`}
+                    spacing={0.5}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {relation?.label || "Использование"} ({relation?.count || 0})
+                    </Typography>
+                    {(relation?.items || []).map((item, itemIndex) => (
+                      <Typography
+                        key={`active-item-${item?.id ?? itemIndex}`}
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ pl: 1.5 }}
+                      >
+                        {item?.name || "Без названия"}
+                      </Typography>
+                    ))}
+                  </Stack>
+                ))}
+                {!activeRelations.length ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    Активных использований нет.
+                  </Typography>
+                ) : null}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        ) : null}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>

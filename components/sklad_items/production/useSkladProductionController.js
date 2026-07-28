@@ -405,43 +405,6 @@ export default function useSkladProductionController({ showAlert }) {
     [api],
   );
 
-  const openView = useCallback(
-    async (entityType, row, tab = "main") => {
-      setState({
-        activeEntityType: entityType,
-        modal: {
-          open: true,
-          mode: "edit",
-          loading: true,
-          tab,
-        },
-        detail: null,
-        draft: null,
-      });
-      setShellState({ isLoading: true });
-
-      try {
-        const entity = await loadEntityDetail(entityType, row);
-        setState({
-          modal: {
-            open: true,
-            mode: "edit",
-            loading: false,
-            tab,
-          },
-          detail: entity,
-          draft: entity,
-        });
-      } catch (error) {
-        closeModal();
-        showAlert(error?.message || "Ошибка загрузки карточки", false);
-      } finally {
-        setShellState({ isLoading: false });
-      }
-    },
-    [closeModal, loadEntityDetail, setShellState, setState, showAlert],
-  );
-
   const openEdit = useCallback(
     async (entityType, row, tab = "main") => {
       setState({
@@ -513,7 +476,6 @@ export default function useSkladProductionController({ showAlert }) {
         canManageProduction={canManageProduction}
         setState={setState}
         openCreate={openCreate}
-        openView={openView}
         openEdit={openEdit}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}

@@ -67,6 +67,12 @@ export default function useSkladAccess() {
     const canView = (key) => accessApi.userCan("view", key);
     const canEdit = (key) => accessApi.userCan("edit", key);
     const canAccess = (key) => accessApi.userCan("access", key);
+    const canViewProductionHistory = () => canView("production_history_view");
+    const canViewSiteItemHistory = () => canView("site_item_history_view");
+    const canViewUnitHistory = () => canView("unit_history_view");
+    const canViewUnitUsage = () => canView("unit_usage_view");
+    const canCreateUnit = () => canAccess("unit_create_access");
+    const canCreateCategory = () => canAccess("category_create_access");
     const canCreateProduction = (entityType) =>
       entityType === "recipe" ? canEdit("create_rec") : canEdit("create_pol");
     const canManageProduction = (entityType) =>
@@ -74,7 +80,7 @@ export default function useSkladAccess() {
       canEdit("change_rec_pf") ||
       canAny(accessApi, "edit", PRODUCTION_WRITE_KEYS);
     const canManageSiteItems = () => canAny(accessApi, "edit", SITE_ITEM_WRITE_KEYS);
-    const canDelete = () => canEdit("delete_execute");
+    const canDelete = () => Number(access?.delete_execute) === 1;
     const canManageArchivedEntity = (entityType) => {
       if (entityType === "recipe" || entityType === "semi_finished") {
         return canEdit("is_show") || canManageProduction(entityType);
@@ -93,6 +99,12 @@ export default function useSkladAccess() {
       canView,
       canEdit,
       canAccess,
+      canViewProductionHistory,
+      canViewSiteItemHistory,
+      canViewUnitHistory,
+      canViewUnitUsage,
+      canCreateUnit,
+      canCreateCategory,
       canCreateProduction,
       canDelete,
       canManageProduction,

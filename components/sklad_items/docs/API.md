@@ -171,6 +171,22 @@ Row fields:
 - `can_delete`
 - `delete_usage`
 
+`delete_usage.active_relations` shape for units:
+
+- `source`
+- `label`
+- `count`
+- `items`
+  - `id`
+  - `name`
+  - `entity_type`
+
+Notes:
+
+- `items` is returned for active unit blockers in both `units/list` and `units/get_one`
+- `items` is a compact preview, capped on backend side
+- `history_relations` remains count-only
+
 ### `POST|ANY /api/sklad_items/units/get_one`
 
 Request:
@@ -249,11 +265,30 @@ Blocked:
   "text": "Позиция используется или использовалась ранее, удаление запрещено",
   "usage": {
     "can_delete": false,
-    "active_relations": [],
+    "active_relations": [
+      {
+        "source": "recipes_new",
+        "label": "Рецепты",
+        "count": 20,
+        "items": [
+          {
+            "id": 10,
+            "name": "Соус спайси",
+            "entity_type": "recipe"
+          }
+        ]
+      }
+    ],
     "history_relations": []
   }
 }
 ```
+
+Usage notes:
+
+- `active_relations[].items` is returned only for unit live blockers
+- it is a compact preview list for FE confirmation/warning rendering
+- `history_relations` stays count-only
 
 ## 3. Categories
 
@@ -1335,7 +1370,26 @@ Unsupported entity types return honest error/unsupported response.
 
 ### `POST|ANY /api/sklad_items/entities/archive_list`
 
-Returns archive list by `entity_type`.
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "search": ""
+  }
+}
+```
+
+Also accepted:
+
+- `entity_types: ["recipe", "semi_finished", "site_item"]`
+
+Rules:
+
+- singular `entity_type` and plural `entity_types` are both accepted
+- when omitted, backend returns all supported archived entity types
+- result is merged and sorted by `date_start` desc, then `entity_type`, then `name`
 
 ## 10. Delete
 

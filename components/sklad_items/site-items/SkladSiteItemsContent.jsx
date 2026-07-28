@@ -69,7 +69,6 @@ export default function SkladSiteItemsContent({
   setState,
   loadRows,
   openCreate,
-  openView,
   openEdit,
   handleRestoreImage,
   openArchiveDialog,
