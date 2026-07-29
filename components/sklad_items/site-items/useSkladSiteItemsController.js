@@ -8,17 +8,17 @@ import { useSkladStore } from "../useSkladStore";
 import SkladSiteItemsContent from "./SkladSiteItemsContent";
 import useSkladTableSort from "../table/useSkladTableSort";
 import {
-  dedupeSelectOptions,
   getDeleteError,
   normalizeSiteItemDraft,
   normalizeSiteItemSavePayload,
   validateSiteItemDraft,
 } from "./siteItems.helpers";
+import { dedupeSelectOptions } from "./siteItemEditor.helpers";
 import { useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
 
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
-  const { canDelete, canManageSiteItems } = useSkladAccess();
+  const { canArchive, canDelete, canManageSiteItems } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
 
@@ -39,6 +39,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canManageSiteItems();
+  const canArchiveAction = canArchive();
   const canDeleteAction = canDelete();
 
   const loadRows = useCallback(
@@ -154,7 +155,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (row) => {
-      if (!row?.id) {
+      if (!row?.id || !canArchiveAction) {
         return;
       }
 
@@ -166,7 +167,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         },
       });
     },
-    [setState],
+    [canArchiveAction, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -189,7 +190,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const confirmDelete = useCallback(async () => {
     const row = deleteDialog?.row;
 
-    if (!row?.id) {
+    if (!row?.id || !canArchiveAction) {
       return;
     }
 
@@ -273,7 +274,16 @@ export default function useSkladSiteItemsController({ showAlert }) {
     } finally {
       setShellState({ isLoading: false });
     }
-  }, [api, archiveDialog?.row, closeArchiveDialog, loadRows, setShellState, setState, showAlert]);
+  }, [
+    api,
+    archiveDialog?.row,
+    canArchiveAction,
+    closeArchiveDialog,
+    loadRows,
+    setShellState,
+    setState,
+    showAlert,
+  ]);
 
   const openCreate = useCallback(() => {
     setState({
@@ -659,6 +669,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         deleteDialog={deleteDialog}
         archiveDialog={archiveDialog}
         isEditable={isEditable}
+        canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
         showAlert={showAlert}
         setState={setState}

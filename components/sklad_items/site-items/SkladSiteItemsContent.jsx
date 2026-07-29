@@ -68,6 +68,7 @@ export default function SkladSiteItemsContent({
   deleteDialog,
   archiveDialog,
   isEditable,
+  canArchiveAction,
   canDeleteAction,
   showAlert,
   setState,
@@ -113,17 +114,27 @@ export default function SkladSiteItemsContent({
             <MySelect
               label="Категория"
               data={categoryOptions}
-              is_none
-              value={categoryId}
-              func={(event) => setState({ categoryId: event.target.value, page: 0 })}
+              is_none={false}
+              value={categoryId === "none" ? "" : categoryId}
+              func={(event) =>
+                setState({
+                  categoryId: event.target.value === "none" ? "" : event.target.value,
+                  page: 0,
+                })
+              }
             />
 
             <MySelect
               label="Тег"
               data={tagOptions}
-              is_none
-              value={tagId}
-              func={(event) => setState({ tagId: event.target.value, page: 0 })}
+              is_none={false}
+              value={tagId === "none" ? "" : tagId}
+              func={(event) =>
+                setState({
+                  tagId: event.target.value === "none" ? "" : event.target.value,
+                  page: 0,
+                })
+              }
             />
 
             <MySelect
@@ -143,15 +154,16 @@ export default function SkladSiteItemsContent({
             <Button
               variant="contained"
               startIcon={<AddIcon />}
+              sx={{ whiteSpace: "nowrap" }}
               disabled={!isEditable}
               onClick={openCreate}
             >
-              Добавить товар
+              Добавить
             </Button>
           </Stack>
         </Stack>
 
-        <TableContainer>
+        <TableContainer sx={{ maxHeight: "50dvh", overflow: "auto" }}>
           <Table
             size="small"
             stickyHeader
@@ -356,27 +368,29 @@ export default function SkladSiteItemsContent({
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"}
-                        >
-                          <span>
-                            <IconButton
-                              size="small"
-                              disabled={!isEditable}
-                              aria-label="Архив"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openArchiveDialog(row);
-                              }}
-                            >
-                              {Number(row?.is_archived) === 1 ? (
-                                <UnarchiveOutlinedIcon fontSize="small" />
-                              ) : (
-                                <ArchiveOutlinedIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        {canArchiveAction ? (
+                          <Tooltip
+                            title={Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"}
+                          >
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={!isEditable}
+                                aria-label="Архив"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openArchiveDialog(row);
+                                }}
+                              >
+                                {Number(row?.is_archived) === 1 ? (
+                                  <UnarchiveOutlinedIcon fontSize="small" />
+                                ) : (
+                                  <ArchiveOutlinedIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
 
                         <Tooltip title={getDeleteTooltip(row, isEditable, canDeleteAction)}>
                           <span>
@@ -468,6 +482,7 @@ export default function SkladSiteItemsContent({
           tags={tags}
           loading={modal.loading}
           isEditable={isEditable}
+          canArchiveAction={canArchiveAction}
           initialTab={modal.section}
           onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "main")}
           onRestoreImage={(historyId) =>

@@ -8,6 +8,7 @@ export * from "./MyAutoCompleteWithAll";
 export * from "./MySelect";
 export * from "./MySearchInput";
 export * from "./MyTextInput";
+export * from "./MyTimeInput";
 export * from "./MyRangeSlider";
 export * from "./MyCheckBox";
 export * from "./MyTimePicker";

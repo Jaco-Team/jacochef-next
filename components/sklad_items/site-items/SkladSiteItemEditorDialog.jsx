@@ -76,6 +76,7 @@ export default function SkladSiteItemEditorDialog({
   categories = [],
   tags = [],
   isEditable = false,
+  canArchiveAction = false,
   onUploadImage,
   onRestoreImage,
   initialTab = "main",
@@ -784,7 +785,7 @@ export default function SkladSiteItemEditorDialog({
                       />
                       <Chip
                         clickable
-                        disabled={!isEditable || !form.id || !onArchive}
+                        disabled={!isEditable || !canArchiveAction || !form.id || !onArchive}
                         color={Number(form.is_archived) === 1 ? "default" : "warning"}
                         icon={
                           Number(form.is_archived) === 1 ? (

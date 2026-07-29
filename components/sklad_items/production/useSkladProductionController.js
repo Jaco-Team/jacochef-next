@@ -23,7 +23,7 @@ import { PRODUCTION_ENTITY_OPTIONS, useSkladProductionStore } from "./useSkladPr
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
-  const { canDelete, canManageProduction } = useSkladAccess();
+  const { canArchive, canDelete, canManageProduction } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const shellUnits = useSkladStore((state) => state.units);
@@ -86,6 +86,7 @@ export default function useSkladProductionController({ showAlert }) {
     return mergedRows.slice(start, start + rowsPerPage);
   }, [mergedRows, page, rowsPerPage]);
 
+  const canArchiveAction = canArchive();
   const canDeleteAction = canDelete();
 
   const loadRows = useCallback(
@@ -177,7 +178,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (entityType, row) => {
-      if (!row?.id) {
+      if (!row?.id || !canArchiveAction) {
         return;
       }
 
@@ -191,7 +192,7 @@ export default function useSkladProductionController({ showAlert }) {
         },
       });
     },
-    [setState],
+    [canArchiveAction, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -217,7 +218,7 @@ export default function useSkladProductionController({ showAlert }) {
     const row = deleteDialog?.row;
     const entityType = deleteDialog?.entityType || activeEntityType;
 
-    if (!row?.id || !entityType) {
+    if (!row?.id || !entityType || !canArchiveAction) {
       return;
     }
 
@@ -321,6 +322,7 @@ export default function useSkladProductionController({ showAlert }) {
     api,
     archiveDialog?.entityType,
     archiveDialog?.row,
+    canArchiveAction,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -483,6 +485,7 @@ export default function useSkladProductionController({ showAlert }) {
         shellAllergens={shellAllergens}
         shellStorages={shellStorages}
         shellApps={shellApps}
+        canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
         canManageProduction={canManageProduction}
         setState={setState}

@@ -29,7 +29,14 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import {
+  MyAutocomplite,
+  MyCheckBox,
+  MyDatePickerNew,
+  MySelect,
+  MyTextInput,
+  MyTimeInput,
+} from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
 import SkladCsvAutocompleteField from "../SkladCsvAutocompleteField";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
@@ -368,7 +375,7 @@ export default function SkladProductionEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTextInput
+                        <MyTimeInput
                           label="Время приготовления"
                           value={form.time_min}
                           disabled={!isEditable}
@@ -376,7 +383,7 @@ export default function SkladProductionEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTextInput
+                        <MyTimeInput
                           label="Доп. время"
                           value={form.time_min_dop}
                           disabled={!isEditable}

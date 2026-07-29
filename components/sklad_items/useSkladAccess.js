@@ -73,6 +73,7 @@ export default function useSkladAccess() {
     const canViewUnitUsage = () => canView("unit_usage_view");
     const canCreateUnit = () => canAccess("unit_create_access");
     const canCreateCategory = () => canAccess("category_create_access");
+    const canArchive = () => canView("archive_list_view");
     const canCreateProduction = (entityType) =>
       entityType === "recipe" ? canEdit("create_rec") : canEdit("create_pol");
     const canManageProduction = (entityType) =>
@@ -105,6 +106,7 @@ export default function useSkladAccess() {
       canViewUnitUsage,
       canCreateUnit,
       canCreateCategory,
+      canArchive,
       canCreateProduction,
       canDelete,
       canManageProduction,

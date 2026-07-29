@@ -304,10 +304,11 @@ export default function useSkladUnitsController({ showAlert }) {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
+              sx={{ whiteSpace: "nowrap" }}
               onClick={openCreate}
               disabled={!canCreate}
             >
-              Новая единица
+              Добавить
             </Button>
           </Stack>
         </Stack>

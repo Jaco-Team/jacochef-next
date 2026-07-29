@@ -65,6 +65,7 @@ export default function SkladProductionContent({
   shellAllergens,
   shellStorages,
   shellApps,
+  canArchiveAction,
   canDeleteAction,
   canManageProduction,
   setState,
@@ -330,23 +331,27 @@ export default function SkladProductionContent({
                             </span>
                           </Tooltip>
 
-                          <Tooltip
-                            title={Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                disabled={!canCreateOrEdit}
-                                onClick={() => openArchiveDialog(entityType, row)}
-                              >
-                                {Number(row?.is_archived) === 1 ? (
-                                  <UnarchiveOutlinedIcon fontSize="small" />
-                                ) : (
-                                  <ArchiveOutlinedIcon fontSize="small" />
-                                )}
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                          {canArchiveAction ? (
+                            <Tooltip
+                              title={
+                                Number(row?.is_archived) === 1 ? "Вернуть из архива" : "В архив"
+                              }
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={!canCreateOrEdit}
+                                  onClick={() => openArchiveDialog(entityType, row)}
+                                >
+                                  {Number(row?.is_archived) === 1 ? (
+                                    <UnarchiveOutlinedIcon fontSize="small" />
+                                  ) : (
+                                    <ArchiveOutlinedIcon fontSize="small" />
+                                  )}
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
 
                           {canDelete ? (
                             <Tooltip title="Удалить">
