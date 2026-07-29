@@ -1,40 +1,130 @@
 import React, { useState } from "react";
 
-import Avatar from "@mui/material/Avatar";
 import TextField from "@mui/material/TextField";
-import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
-
-import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
-
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-
 import Link from "next/link";
 
 import api from "@/src/api";
-import { api_laravel_local, api_laravel } from "@/src/api_new";
+import { api_laravel } from "@/src/api_new";
 
 import Cookies from "js-cookie";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
-import MyAlert from "@/ui/MyAlert";
+
+const AUTH_RED = "#a30021";
+const AUTH_TEXT = "#1a1a1a";
+const AUTH_MUTED = "#8b8b8b";
+const AUTH_BORDER = "#e6e6e6";
+
+const STEPS = ["Телефон", "Подтверждение"];
+
+const fieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "14px",
+    backgroundColor: "#fff",
+    "& fieldset": {
+      borderColor: AUTH_BORDER,
+    },
+    "&:hover fieldset": {
+      borderColor: "#d0d0d0",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: AUTH_RED,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiInputLabel-root": {
+    color: AUTH_MUTED,
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: AUTH_RED,
+  },
+  "& .MuiOutlinedInput-input": {
+    py: 1.6,
+  },
+};
+
+function StepIndicator({ activeStep }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        mb: 3,
+        px: 1,
+      }}
+    >
+      {STEPS.map((label, index) => {
+        const isActive = index === activeStep;
+        const isDone = index < activeStep;
+
+        return (
+          <React.Fragment key={label}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                minWidth: 88,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#fff",
+                  backgroundColor: isActive || isDone ? AUTH_RED : "#d1d5db",
+                  mb: 0.75,
+                }}
+              >
+                {index + 1}
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive || isDone ? AUTH_RED : AUTH_MUTED,
+                }}
+              >
+                {label}
+              </Typography>
+            </Box>
+
+            {index < STEPS.length - 1 ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 2,
+                  mt: "13px",
+                  mx: 1,
+                  backgroundColor: isDone ? AUTH_RED : "#e5e7eb",
+                  borderRadius: 1,
+                  maxWidth: 120,
+                }}
+              />
+            ) : null}
+          </React.Fragment>
+        );
+      })}
+    </Box>
+  );
+}
 
 export default function Registration() {
-  const steps = ["Телефон", "Подтверждение", "Новый пароль"];
-
   const [isLoad, setIsLoad] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,17 +132,23 @@ export default function Registration() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
-
-  const [openAlert, setOpenAlert] = useState(false);
-  const [errText, setErrText] = useState("");
+  const [formError, setFormError] = useState("");
 
   const isMinLength = password.length >= 8;
   const hasNumber = /\d/.test(password);
   const hasMixedCase = /(?=.*[a-z])(?=.*[A-Z])/.test(password);
-  const isPasswordValid = activeStep === 2 ? isMinLength && hasNumber && hasMixedCase : true;
+  const isPasswordValid = isMinLength && hasNumber && hasMixedCase;
+
+  const isPhoneValid =
+    !!phone &&
+    ((phone.startsWith("+7") && phone.length === 12) ||
+      (phone.startsWith("8") && phone.length === 11));
 
   const handlePasswordChange = (event) => {
     setPassword(event.target.value.replaceAll(" ", ""));
+    if (formError) {
+      setFormError("");
+    }
   };
 
   const checkPhone = (event) => {
@@ -68,359 +164,386 @@ export default function Registration() {
     }
 
     setPhone(v);
+    if (formError) {
+      setFormError("");
+    }
   };
 
   const handleSetCode = (event) => {
     const newCode = event.target.value.replaceAll(" ", "");
     setCode(newCode);
+    if (formError) {
+      setFormError("");
+    }
 
     if (activeStep === 1 && newCode.length === 4) {
       nextStep(newCode);
     }
   };
 
-  const handleNextStep = () => {
-    if (activeStep === 1) {
-      nextStep(code);
-    } else {
-      nextStep();
-    }
-  };
-
   async function nextStep(currentCode = "") {
     setIsLoad(true);
+    setFormError("");
 
     try {
       if (activeStep === 0) {
-        if (
-          !phone ||
-          (phone.startsWith("+7") && phone.length < 12) ||
-          (phone.startsWith("8") && phone.length < 11)
-        ) {
-          setErrText("Введите корректный номер телефона");
-          setOpenAlert(true);
+        if (!isPhoneValid) {
+          setFormError("Введите корректный номер телефона");
           return;
         }
 
-        let data = { login: phone };
-        let res = await api_laravel("auth", "check_phone", data);
+        if (!isPasswordValid) {
+          setFormError("Пароль: не менее 8 символов, цифры, буквы верхнего и нижнего регистра");
+          return;
+        }
+
+        let res = await api_laravel("auth", "check_phone", { login: phone });
         res = res.data;
 
         if (res.st === false) {
-          setErrText(res.text);
-          setOpenAlert(true);
+          setFormError(res.text || "Не удалось отправить код");
         } else {
-          setActiveStep((prev) => prev + 1);
+          setActiveStep(1);
         }
       } else if (activeStep === 1) {
         if (currentCode.length !== 4) {
-          setErrText("Код должен состоять ровно из 4 символов");
-          setOpenAlert(true);
+          setFormError("Код должен состоять ровно из 4 символов");
           return;
         }
 
-        let data = { login: phone, code: currentCode };
-        let res = await api("auth", "check_code", data);
+        const codeRes = await api("auth", "check_code", {
+          login: phone,
+          code: currentCode,
+        });
 
-        if (res.st === false) {
-          setErrText(res.text);
-          setOpenAlert(true);
-        } else {
-          setActiveStep((prev) => prev + 1);
+        if (codeRes.st === false) {
+          setFormError(codeRes.text || "Неверный код подтверждения");
+          return;
         }
-      } else if (activeStep === 2) {
-        let data = { login: phone, code: code, pwd: password };
-        let res = await api("auth", "save_new_pwd", data);
 
-        if (res.st === false) {
-          setErrText(res.text);
-          setOpenAlert(true);
+        let saveRes = await api_laravel("auth", "save_new_pwd", {
+          login: phone,
+          code: currentCode,
+          pwd: password,
+        });
+        saveRes = saveRes.data;
+
+        if (saveRes.st === false) {
+          setFormError(saveRes.text || "Не удалось сохранить пароль");
         } else {
-          localStorage.setItem("token", res.token);
-          Cookies.set("token", res.token, { expires: 60 });
-
+          localStorage.setItem("token", saveRes.token);
+          Cookies.set("token", saveRes.token, { expires: 60 });
+          localStorage.setItem("auth_expires_at", saveRes.expires_at);
           setTimeout(() => {
             window.location.pathname = "/";
           }, 300);
         }
       }
     } catch (error) {
-      setErrText("Произошла ошибка. Попробуйте позже.");
-      setOpenAlert(true);
+      setFormError("Произошла ошибка. Попробуйте позже.");
     } finally {
       setIsLoad(false);
     }
   }
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    nextStep(code);
+  };
+
   const isButtonDisabled = () => {
-    if (activeStep === 0) {
-      if (phone.startsWith("+7")) {
-        return phone.length !== 12;
-      } else if (phone.startsWith("8")) {
-        return phone.length !== 11;
-      }
+    if (isLoad) {
       return true;
-    } else if (activeStep === 1) {
-      return code.length !== 4;
-    } else if (activeStep === 2) {
-      return !isPasswordValid;
     }
+
+    if (activeStep === 0) {
+      return !isPhoneValid || !isPasswordValid;
+    }
+
+    if (activeStep === 1) {
+      return code.length !== 4;
+    }
+
     return true;
   };
 
   return (
     <>
       <Backdrop
-        style={{ zIndex: 99 }}
+        sx={{ zIndex: 99, color: "#fff" }}
         open={isLoad}
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-      <MyAlert
-        isOpen={openAlert}
-        onClose={() => setOpenAlert(false)}
-        status={false}
-        text={errText}
-      />
-      <Grid
-        container
-        spacing={3}
-        direction="row"
+
+      <Box
         sx={{
-          justifyContent: "center",
+          minHeight: "100vh",
+          display: "flex",
           alignItems: "center",
+          justifyContent: "center",
+          px: 2,
+          py: 4,
+          background: `
+            radial-gradient(ellipse 90% 70% at 0% 0%, rgba(255, 214, 220, 0.95) 0%, transparent 55%),
+            radial-gradient(ellipse 80% 65% at 100% 100%, rgba(255, 228, 232, 0.9) 0%, transparent 55%),
+            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(255, 240, 242, 0.85) 0%, transparent 50%),
+            linear-gradient(160deg, #ffe8ec 0%, #fff5f6 35%, #ffffff 70%, #fffafa 100%)
+          `,
         }}
       >
-        <Grid
-          size={{
-            xs: 12,
-            sm: 6,
-            md: 6,
-            lg: 4,
-            xl: 3,
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: 420,
+            borderRadius: "28px",
+            px: { xs: 3, sm: 4 },
+            py: { xs: 3.5, sm: 4.5 },
+            boxShadow: "0 18px 50px rgba(15, 23, 42, 0.08)",
+            backgroundColor: "#fff",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <Avatar
-              style={{
-                borderRadius: 0,
-                width: "100%",
-                height: 150,
-                margin: 0,
-                backgroundColor: "#fff",
-                marginBottom: 20,
-              }}
-            >
-              <img
-                alt="Жако доставка роллов и пиццы"
-                src="/Favikon.png"
-                style={{ height: "100%" }}
-              />
-            </Avatar>
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: "18px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2.5,
+              mx: "auto",
+              backgroundColor: "#fff",
+              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              component="img"
+              alt="Жако"
+              src="/Favikon.png"
+              sx={{ width: 48, height: 48, objectFit: "contain" }}
+            />
+          </Box>
 
-            <Stepper
-              activeStep={activeStep}
-              alternativeLabel
-              style={{ width: "100%" }}
-            >
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+          <Typography
+            sx={{
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              fontWeight: 600,
+              color: AUTH_MUTED,
+              textTransform: "uppercase",
+              textAlign: "center",
+              mb: 1,
+            }}
+          >
+            Восстановление пароля
+          </Typography>
 
-            <div style={{ width: "100%" }}>
-              {activeStep === 0 && (
+          <Typography
+            component="h1"
+            sx={{
+              fontSize: { xs: 26, sm: 30 },
+              fontWeight: 700,
+              color: AUTH_TEXT,
+              lineHeight: 1.15,
+              textAlign: "center",
+              mb: 1,
+            }}
+          >
+            Восстановление доступа
+          </Typography>
+
+          <Typography
+            sx={{
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: AUTH_MUTED,
+              textAlign: "center",
+              mb: 3,
+            }}
+          >
+            {activeStep === 0
+              ? "Укажите номер телефона и новый пароль. После этого мы отправим код подтверждения."
+              : "Введите код из SMS, чтобы подтвердить номер и сохранить новый пароль."}
+          </Typography>
+
+          <StepIndicator activeStep={activeStep} />
+
+          <Box
+            component="form"
+            noValidate
+            onSubmit={handleSubmit}
+          >
+            {activeStep === 0 ? (
+              <>
                 <TextField
                   variant="outlined"
-                  margin="normal"
-                  size="small"
                   fullWidth
                   label="Номер телефона"
                   name="phone"
-                  autoComplete="phone"
+                  autoComplete="tel"
                   autoFocus
                   value={phone}
                   onChange={checkPhone}
+                  sx={{ ...fieldSx, mb: 2 }}
                 />
-              )}
 
-              {activeStep === 1 && (
                 <TextField
                   variant="outlined"
-                  margin="normal"
-                  size="small"
                   fullWidth
-                  label="Код из смс"
-                  name="code"
-                  autoComplete="code"
-                  autoFocus
-                  value={code}
-                  onChange={handleSetCode}
+                  name="password"
+                  label="Новый пароль"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  sx={{ ...fieldSx, mb: 2 }}
                   slotProps={{
-                    htmlInput: { maxLength: 4 },
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                            disableRipple
+                          >
+                            {showPassword ? (
+                              <EyeShow style={{ fontSize: 26 }} />
+                            ) : (
+                              <EyeHide style={{ fontSize: 26 }} />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
-              )}
-
-              {activeStep === 2 && (
-                <>
-                  <TextField
-                    variant="outlined"
-                    margin="normal"
-                    size="small"
-                    fullWidth
-                    name="password"
-                    label="Пароль"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              size="small"
-                              onClick={() => setShowPassword(!showPassword)}
-                              disableRipple
-                              disableFocusRipple
-                            >
-                              {showPassword ? (
-                                <EyeShow style={{ fontSize: 30 }} />
-                              ) : (
-                                <EyeHide style={{ fontSize: 30 }} />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mt: 1, fontSize: "0.8rem !important", ml: 1 }}
-                  >
-                    Пароль должен содержать:
-                  </Typography>
-                  <List
-                    dense
-                    sx={{ ml: 1 }}
-                  >
-                    <ListItem
-                      disablePadding
-                      sx={{ height: "20px !important", py: 0, mb: 0 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 20, m: 0 }}>
-                        <FiberManualRecordIcon
-                          style={{ fontSize: 10, color: isMinLength ? "#c03" : "#bbb" }}
-                          color="disabled"
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Не менее 8 символов"
-                        slotProps={{
-                          primary: {
-                            variant: "caption",
-                            sx: {
-                              fontSize: "0.8rem !important",
-                              m: 0,
-                              p: 0,
-                              color: isMinLength ? "#c03" : "text.secondary",
-                            },
-                          },
-                        }}
-                      />
-                    </ListItem>
-                    <ListItem
-                      disablePadding
-                      sx={{ height: "20px !important", py: 0, mb: 0 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 20, m: 0 }}>
-                        <FiberManualRecordIcon
-                          style={{ fontSize: 10, color: hasNumber ? "#c03" : "#bbb" }}
-                          color="disabled"
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Цифры"
-                        slotProps={{
-                          primary: {
-                            variant: "caption",
-                            sx: {
-                              fontSize: "0.8rem !important",
-                              m: 0,
-                              p: 0,
-                              color: hasNumber ? "#c03" : "text.secondary",
-                            },
-                          },
-                        }}
-                      />
-                    </ListItem>
-                    <ListItem
-                      disablePadding
-                      sx={{ height: "20px !important", py: 0, mb: 0 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 20, m: 0 }}>
-                        <FiberManualRecordIcon
-                          style={{ fontSize: 10, color: hasMixedCase ? "#c03" : "#bbb" }}
-                          color="disabled"
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Буквы верхнего и нижнего регистра"
-                        slotProps={{
-                          primary: {
-                            variant: "caption",
-                            sx: {
-                              fontSize: "0.8rem !important",
-                              m: 0,
-                              p: 0,
-                              color: hasMixedCase ? "#c03" : "text.secondary",
-                            },
-                          },
-                        }}
-                      />
-                    </ListItem>
-                  </List>
-                </>
-              )}
-
-              <Button
+              </>
+            ) : (
+              <TextField
+                variant="outlined"
                 fullWidth
-                variant={isButtonDisabled() ? "outlined" : "contained"}
-                color="primary"
-                style={{ marginTop: 10, marginBottom: 10 }}
-                onClick={handleNextStep}
-                disabled={isButtonDisabled()}
-              >
-                Дальше
-              </Button>
+                label="Код из SMS"
+                name="code"
+                autoComplete="one-time-code"
+                autoFocus
+                value={code}
+                onChange={handleSetCode}
+                sx={{ ...fieldSx, mb: 2 }}
+                slotProps={{
+                  htmlInput: { maxLength: 4 },
+                }}
+              />
+            )}
 
-              <Grid
-                container
-                style={{ marginTop: 10 }}
+            {formError ? (
+              <Box
+                sx={{
+                  mb: 2.5,
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: "14px",
+                  backgroundColor: "#f8ebe6",
+                  textAlign: "center",
+                }}
               >
-                <Grid>
-                  <Link
-                    href="/auth"
-                    style={{ color: "#c03" }}
-                  >
-                    Вернуться к авторизации
-                  </Link>
-                </Grid>
-              </Grid>
-            </div>
-          </div>
-        </Grid>
-      </Grid>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    lineHeight: 1.4,
+                    color: "#7a3b2e",
+                    fontWeight: 500,
+                  }}
+                >
+                  {formError}
+                </Typography>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  mb: 2.5,
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: "14px",
+                  backgroundColor: "#f3f4f6",
+                  textAlign: "center",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    lineHeight: 1.4,
+                    color: AUTH_MUTED,
+                  }}
+                >
+                  {activeStep === 0
+                    ? "Пароль лучше задать новый, чтобы сразу обновить доступ к аккаунту."
+                    : "Код действителен короткое время. Если не пришёл — вернитесь и запросите снова."}
+                </Typography>
+              </Box>
+            )}
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={isButtonDisabled()}
+              sx={{
+                py: 1.5,
+                borderRadius: "14px",
+                textTransform: "none",
+                fontSize: 16,
+                fontWeight: 700,
+                backgroundColor: AUTH_RED,
+                boxShadow: "0 10px 24px rgba(163, 0, 33, 0.28)",
+                "&:hover": {
+                  backgroundColor: "#8c001c",
+                  boxShadow: "0 12px 28px rgba(163, 0, 33, 0.34)",
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "#d7a8b2",
+                  color: "#fff",
+                  boxShadow: "none",
+                },
+              }}
+            >
+              {activeStep === 0 ? "Получить код" : "Подтвердить"}
+            </Button>
+
+            <Box sx={{ mt: 3, textAlign: "center" }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  color: AUTH_MUTED,
+                  mb: 0.5,
+                }}
+              >
+                Вспомнили пароль?
+              </Typography>
+              <Link
+                href="/auth"
+                style={{
+                  color: AUTH_RED,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  textUnderlineOffset: "3px",
+                }}
+              >
+                Вернуться к авторизации
+              </Link>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
     </>
   );
 }
 
-export async function getServerSideProps({ req, res, query }) {
+export async function getServerSideProps({ req, res }) {
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(

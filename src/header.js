@@ -234,6 +234,7 @@ export default function Header() {
   function logOut() {
     localStorage.removeItem("token");
     Cookies.remove("token");
+    localStorage.removeItem("auth_expires_at");
     window.location.href = "/auth";
   }
 
