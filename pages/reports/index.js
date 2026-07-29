@@ -368,11 +368,11 @@ function FeedbackPage() {
               }}
             >
               <Tab
-                label={"Продажи товаров"}
+                label={"Отчет о розничных продажах"}
                 value={"things"}
               />
               <Tab
-                label={"Производство и продажи блюд"}
+                label={"Отчет производства и продаж"}
                 value={"sells"}
               />
             </Tabs>

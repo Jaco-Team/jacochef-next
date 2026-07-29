@@ -7,7 +7,11 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import ReportDishesTable from "@/components/reports/ReportDishesTable";
 import ReportDishesKpiCards from "@/components/reports/ReportDishesKpiCards";
@@ -317,23 +321,59 @@ export default function ReportDishesResult({ data, filters, onFetchCostDetail, o
         {tab === "points" ? (
           points.length ? (
             points.map((point) => (
-              <Box
+              <Accordion
                 key={point?.id ?? point?.base ?? point?.name}
-                sx={{ mb: 1 }}
+                disableGutters
+                elevation={0}
+                slotProps={{ transition: { unmountOnExit: true } }}
+                sx={{
+                  mb: 1,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "6px !important",
+                  overflow: "hidden",
+                  backgroundColor: "#fff",
+                  "&:before": { display: "none" },
+                }}
               >
-                {point?.totals ? (
-                  <Box sx={{ mb: 1.5 }}>
-                    <ReportDishesKpiCards totals={point.totals} />
-                  </Box>
-                ) : null}
-                <ReportDishesTable
-                  title={point?.name || "Кафе"}
-                  items={point?.items || []}
-                  totals={point?.totals || null}
-                  isColumnVisible={isColumnVisible}
-                  onItemClick={(item) => handleItemClick(item, point)}
-                />
-              </Box>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  sx={{
+                    minHeight: 54,
+                    px: 2.5,
+                    "&.Mui-expanded": { minHeight: 54 },
+                    "& .MuiAccordionSummary-content": { my: 1.25 },
+                    "& .MuiAccordionSummary-content.Mui-expanded": { my: 1.25 },
+                  }}
+                >
+                  <Typography sx={{ fontWeight: 700, color: "#374151" }}>
+                    {point?.name || "Кафе"}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails
+                  sx={{
+                    p: 0,
+                    borderTop: "1px solid #edf0f4",
+                    "& > .MuiPaper-root": {
+                      mb: 0,
+                      border: 0,
+                      borderRadius: 0,
+                    },
+                  }}
+                >
+                  {point?.totals ? (
+                    <Box sx={{ p: 2, pb: 1.5, backgroundColor: "#f9fafb" }}>
+                      <ReportDishesKpiCards totals={point.totals} />
+                    </Box>
+                  ) : null}
+                  <ReportDishesTable
+                    title={null}
+                    items={point?.items || []}
+                    totals={point?.totals || null}
+                    isColumnVisible={isColumnVisible}
+                    onItemClick={(item) => handleItemClick(item, point)}
+                  />
+                </AccordionDetails>
+              </Accordion>
             ))
           ) : (
             <Typography

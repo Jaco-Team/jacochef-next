@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
@@ -18,6 +18,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import CloseIcon from "@mui/icons-material/Close";
 
 const FONT =
@@ -265,6 +267,40 @@ function resolvePricePeriodLabel(pricePeriod) {
   return null;
 }
 
+function getPointScopeValue(point, index) {
+  return `point:${point?.point_id ?? point?.base ?? index}`;
+}
+
+function buildPointDetail(data, point) {
+  if (!point) {
+    return data;
+  }
+
+  return {
+    ...data,
+    item: {
+      ...data?.item,
+      id: point.item_id ?? data?.item?.id,
+      name: point.item_name ?? data?.item?.name,
+      weight: point.item_weight ?? data?.item?.weight,
+    },
+    filters: {
+      ...data?.filters,
+      points_label: point.point_name || "Кафе",
+      price_period: point.price_period ?? data?.filters?.price_period,
+    },
+    period_stats: point.period_stats ?? {},
+    unit_cost: point.unit_cost,
+    known_cost: point.known_cost,
+    cost_complete: point.cost_complete,
+    formula: point.formula,
+    tree: point.tree,
+    ingredients: point.ingredients,
+    warnings: point.warnings,
+    aggregation: null,
+  };
+}
+
 function formatLoss(value) {
   if (value === null || value === undefined || value === "") {
     return "0%";
@@ -405,14 +441,28 @@ function ReportCostDetailModal({
   dateStart,
   dateEnd,
 }) {
-  const item = data?.item || {};
-  const filters = data?.filters || {};
-  const periodStats = data?.period_stats || {};
-  const formula = data?.formula || {};
-  const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
-  const tree = Array.isArray(data?.tree) ? data.tree : [];
+  const [selectedScope, setSelectedScope] = useState("all");
+  const points = Array.isArray(data?.points) ? data.points : [];
+
+  useEffect(() => {
+    if (open) {
+      setSelectedScope("all");
+    }
+  }, [open, data]);
+
+  const selectedPointIndex = points.findIndex(
+    (point, index) => getPointScopeValue(point, index) === selectedScope,
+  );
+  const selectedPoint = selectedPointIndex >= 0 ? points[selectedPointIndex] : null;
+  const activeData = buildPointDetail(data, selectedPoint);
+  const item = activeData?.item || {};
+  const filters = activeData?.filters || {};
+  const periodStats = activeData?.period_stats || {};
+  const formula = activeData?.formula || {};
+  const warnings = Array.isArray(activeData?.warnings) ? activeData.warnings : [];
+  const tree = Array.isArray(activeData?.tree) ? activeData.tree : [];
   const calcRows = collectCalcRows(tree);
-  const totalAmount = data?.unit_cost ?? formula.result ?? null;
+  const totalAmount = activeData?.unit_cost ?? formula.result ?? null;
 
   return (
     <Dialog
@@ -482,13 +532,65 @@ function ReportCostDetailModal({
             >
               <MetaChip label={filters.points_label || cafeLabel} />
               <MetaChip label={resolvePeriodLabel(filters, dateStart, dateEnd)} />
-              <MetaChip
-                label={filters.production_type}
-                accent
-              />
+              <MetaChip label={filters.production_type} />
               <MetaChip label={resolvePricePeriodLabel(filters.price_period)} />
               {item.weight != null ? <MetaChip label={`Выход: ${item.weight}`} /> : null}
             </Stack>
+
+            {points.length > 1 ? (
+              <Box
+                sx={{
+                  width: "100%",
+                  overflowX: "auto",
+                  pb: 0.5,
+                }}
+              >
+                <ToggleButtonGroup
+                  exclusive
+                  value={selectedScope}
+                  onChange={(event, value) => {
+                    if (value !== null) {
+                      setSelectedScope(value);
+                    }
+                  }}
+                  aria-label="Выбор кафе для расчёта себестоимости"
+                  sx={{
+                    minWidth: "max-content",
+                    "& .MuiToggleButton-root": {
+                      fontFamily: FONT,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      textTransform: "none",
+                      color: "#374151",
+                      borderColor: "#d1d5db",
+                      whiteSpace: "nowrap",
+                      px: 1.5,
+                      py: 1,
+                    },
+                    "& .MuiToggleButton-root.Mui-selected": {
+                      color: "#d50032",
+                      backgroundColor: "rgba(213, 0, 50, 0.08)",
+                    },
+                    "& .MuiToggleButton-root.Mui-selected:hover": {
+                      backgroundColor: "rgba(213, 0, 50, 0.12)",
+                    },
+                  }}
+                >
+                  <ToggleButton value="all">
+                    Все выбранные кафе · {formatMoney(data?.unit_cost)}
+                  </ToggleButton>
+                  {points.map((point, index) => (
+                    <ToggleButton
+                      key={getPointScopeValue(point, index)}
+                      value={getPointScopeValue(point, index)}
+                    >
+                      {point?.point_name || "Кафе"} · {formatMoney(point?.unit_cost)}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </Box>
+            ) : null}
 
             <Box>
               <SectionTitle>Показатели периода</SectionTitle>

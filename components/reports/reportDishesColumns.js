@@ -16,20 +16,20 @@ export const REPORT_DISHES_COLUMN_OPTIONS = [
     label: "Общая себестоимость изготовленных блюд за выбранный период",
   },
   {
-    key: "sold_count",
-    label: "Продано",
-  },
-  {
-    key: "sold_cost",
-    label: "Себестоимость продаж, ₽",
-  },
-  {
     key: "write_off_count",
     label: "Списано",
   },
   {
     key: "write_off_cost",
     label: "Себестоимость списаний, ₽",
+  },
+  {
+    key: "sold_cost",
+    label: "Себестоимость продаж, ₽",
+  },
+  {
+    key: "sold_count",
+    label: "Продано",
   },
   {
     key: "avg_price",

@@ -77,6 +77,11 @@ const totalNameCellSx = {
 };
 
 const TREND_COLUMNS = new Set(["gross_profit", "markup_percent", "margin_percent"]);
+const TEXT_COLUMNS = new Set(["name"]);
+const collator = new Intl.Collator("ru", {
+  numeric: true,
+  sensitivity: "base",
+});
 
 function formatValue(value, { digits = 0, empty = "—" } = {}) {
   if (value === null || value === undefined || value === "") {
@@ -115,6 +120,50 @@ function getTrendColor(value) {
   }
 
   return num > 0 ? ACCENT_GREEN : ACCENT_RED;
+}
+
+function getDefaultSortDirection(key) {
+  return key === "num" || TEXT_COLUMNS.has(key) ? "asc" : "desc";
+}
+
+function getSortValue(item, key, index) {
+  if (key === "num") {
+    return item?.num ?? index + 1;
+  }
+
+  if (key === "name") {
+    return item?.name;
+  }
+
+  return item?.total?.[key];
+}
+
+function compareValues(left, right, key, direction) {
+  const leftEmpty = left === null || left === undefined || left === "";
+  const rightEmpty = right === null || right === undefined || right === "";
+
+  if (leftEmpty && rightEmpty) return 0;
+  if (leftEmpty) return 1;
+  if (rightEmpty) return -1;
+
+  let result;
+
+  if (TEXT_COLUMNS.has(key)) {
+    result = collator.compare(String(left), String(right));
+  } else {
+    const leftNumber = Number(left);
+    const rightNumber = Number(right);
+    const leftInvalid = Number.isNaN(leftNumber);
+    const rightInvalid = Number.isNaN(rightNumber);
+
+    if (leftInvalid && rightInvalid) return 0;
+    if (leftInvalid) return 1;
+    if (rightInvalid) return -1;
+
+    result = leftNumber - rightNumber;
+  }
+
+  return direction === "asc" ? result : -result;
 }
 
 function TrendValue({ value, formatted }) {
@@ -198,33 +247,43 @@ export default function ReportSalesTable({
   isColumnVisible,
   onItemClick,
 }) {
-  const [priceOrder, setPriceOrder] = useState(null);
+  const [sort, setSort] = useState({ key: null, direction: "asc" });
   const columns = getVisibleColumns(isColumnVisible);
   const colSpan = columns.length || 1;
 
   const sortedItems = useMemo(() => {
-    if (!priceOrder) {
+    if (!sort.key) {
       return items;
     }
 
-    return [...items].sort((a, b) => {
-      const aVal = Number(a?.total?.price);
-      const bVal = Number(b?.total?.price);
-      const aNum = Number.isNaN(aVal) ? null : aVal;
-      const bNum = Number.isNaN(bVal) ? null : bVal;
+    return items
+      .map((item, index) => ({ item, index }))
+      .sort((left, right) => {
+        const result = compareValues(
+          getSortValue(left.item, sort.key, left.index),
+          getSortValue(right.item, sort.key, right.index),
+          sort.key,
+          sort.direction,
+        );
 
-      if (aNum == null && bNum == null) return 0;
-      if (aNum == null) return 1;
-      if (bNum == null) return -1;
+        return result || left.index - right.index;
+      })
+      .map(({ item }) => item);
+  }, [items, sort]);
 
-      return priceOrder === "asc" ? aNum - bNum : bNum - aNum;
-    });
-  }, [items, priceOrder]);
+  const handleSort = (key) => {
+    setSort((current) => {
+      if (current.key === key) {
+        return {
+          key,
+          direction: current.direction === "asc" ? "desc" : "asc",
+        };
+      }
 
-  const handlePriceSort = () => {
-    setPriceOrder((prev) => {
-      if (prev === "desc") return "asc";
-      return "desc";
+      return {
+        key,
+        direction: getDefaultSortDirection(key),
+      };
     });
   };
 
@@ -239,25 +298,27 @@ export default function ReportSalesTable({
         backgroundColor: "#fff",
       }}
     >
-      <Box
-        sx={{
-          px: 2.5,
-          py: 1.5,
-          borderBottom: "1px solid #edf0f4",
-          backgroundColor: "#fff",
-        }}
-      >
-        <Typography
+      {title ? (
+        <Box
           sx={{
-            fontFamily: FONT,
-            fontSize: 13,
-            fontWeight: 500,
-            color: "#9ca3af",
+            px: 2.5,
+            py: 1.5,
+            borderBottom: "1px solid #edf0f4",
+            backgroundColor: "#fff",
           }}
         >
-          {title}
-        </Typography>
-      </Box>
+          <Typography
+            sx={{
+              fontFamily: FONT,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#9ca3af",
+            }}
+          >
+            {title}
+          </Typography>
+        </Box>
+      ) : null}
 
       <TableContainer sx={{ overflowX: "auto" }}>
         <Table
@@ -270,7 +331,7 @@ export default function ReportSalesTable({
               {columns.map((column) => (
                 <TableCell
                   key={`label-${column.key}`}
-                  sortDirection={column.key === "price" && priceOrder ? priceOrder : false}
+                  sortDirection={sort.key === column.key ? sort.direction : false}
                   sx={{
                     ...headCellSx,
                     minWidth: getColumnMinWidth(column.key),
@@ -278,29 +339,28 @@ export default function ReportSalesTable({
                     textAlign: column.key === "name" || column.key === "num" ? "left" : "right",
                   }}
                 >
-                  {column.key === "price" ? (
-                    <TableSortLabel
-                      active={Boolean(priceOrder)}
-                      direction={priceOrder || "desc"}
-                      onClick={handlePriceSort}
-                      sx={{
-                        fontFamily: FONT,
-                        fontWeight: 700,
-                        fontSize: "12px !important",
-                        color: "#374151 !important",
-                        justifyContent: "flex-end",
-                        width: "100%",
-                        "& .MuiTableSortLabel-icon": {
-                          marginLeft: 0.5,
-                          marginRight: 0,
-                        },
-                      }}
-                    >
-                      {column.label}
-                    </TableSortLabel>
-                  ) : (
-                    column.label
-                  )}
+                  <TableSortLabel
+                    active={sort.key === column.key}
+                    direction={
+                      sort.key === column.key ? sort.direction : getDefaultSortDirection(column.key)
+                    }
+                    onClick={() => handleSort(column.key)}
+                    sx={{
+                      fontFamily: FONT,
+                      fontWeight: 700,
+                      fontSize: "12px !important",
+                      color: "#374151 !important",
+                      justifyContent:
+                        column.key === "name" || column.key === "num" ? "flex-start" : "flex-end",
+                      width: "100%",
+                      "& .MuiTableSortLabel-icon": {
+                        marginLeft: 0.5,
+                        marginRight: 0,
+                      },
+                    }}
+                  >
+                    {column.label}
+                  </TableSortLabel>
                 </TableCell>
               ))}
             </TableRow>
