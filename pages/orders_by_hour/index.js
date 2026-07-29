@@ -913,7 +913,15 @@ function OrdersPage() {
     ]);
   };
 
+  const filtersAreValid =
+    point.length > 0 &&
+    dayjs(dateStart).isValid() &&
+    dayjs(dateEnd).isValid() &&
+    !dayjs(dateEnd).isBefore(dayjs(dateStart), "day");
+
   const getOrders = () => {
+    if (!filtersAreValid) return;
+
     const data = {
       start_date: dayjs(dateStart).format("YYYY-MM-DD"),
       end_date: dayjs(dateEnd).format("YYYY-MM-DD"),
@@ -1007,14 +1015,14 @@ function OrdersPage() {
                 <MyDatePickerNew
                   label="Дата от"
                   value={dateStart}
-                  func={(e) => setDateStart(formatDate(e))}
+                  func={(e) => setDateStart(e && dayjs(e).isValid() ? formatDate(e) : null)}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
                 <MyDatePickerNew
                   label="Дата до"
                   value={dateEnd}
-                  func={(e) => setDateEnd(formatDate(e))}
+                  func={(e) => setDateEnd(e && dayjs(e).isValid() ? formatDate(e) : null)}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -1046,6 +1054,7 @@ function OrdersPage() {
                   onClick={() => getOrders()}
                   variant="contained"
                   fullWidth
+                  disabled={!filtersAreValid || isLoad}
                 >
                   Обновить
                 </Button>
