@@ -1,6 +1,109 @@
 # ACCESS
 
-Статус: карта access-контура нового модуля `Sklad` и команда синхронизации в `sklad_items`.
+Статус: canonical access document для нового модуля `Sklad` в `sklad_items`.
+
+## Target access tree for the new FE
+
+Target access contract for the new FE, prepared from the authenticated
+appointment payload for `Программист`.
+
+Notation:
+
+- `existing:` key already exists in the current access payload.
+- `add:` key must be added by the backend/appointment system.
+- An `*_edit` grant also permits reading the field in the current access
+  helper, so separate `*_view` entries are listed only where read-only access
+  is useful.
+- Delete also depends on the entity API usage check. Access rules alone must
+  not override a `delete_usage` blocker.
+
+```text
+Склад
+├── Рецепты и заготовки
+│   ├── Просмотр раздела                         existing: recipes_view, semi_finished_view
+│   ├── Просмотр списка                          add: production_list_view
+│   ├── Создать рецепт                           existing: create_rec_access
+│   ├── Создать заготовку                        existing: create_pol_access
+│   ├── Редактировать основные данные            existing: name_edit, shelf_life_edit,
+│   │                                             date_start_edit, date_end_edit, time_edit,
+│   │                                             dop_time_edit, rec_apps_edit, storages_edit,
+│   │                                             show_in_rev_edit, two_user_edit
+│   ├── Номенклатура                             existing: items_edit
+│   ├── Аллергены                                existing: allergens_edit, allergens_diff_edit
+│   ├── Состав заготовки                         existing: structure_edit
+│   ├── Категории                                existing: cats_edit
+│   ├── Просмотр без редактирования              existing: items_view, structure_view
+│   ├── Удалить рецепт или заготовку             existing: delete_access + edit access
+│   └── Смена рецепта и заготовки                existing: change_rec_pf_access
+│
+├── Товары сайта
+│   ├── Просмотр раздела                         existing: site_items_view
+│   ├── Просмотр списка                          add: site_item_list_view
+│   ├── Создать товар                            existing: create_new_access
+│   ├── Редактировать основные данные            existing: name_edit, short_name_edit,
+│   │                                             category_id_edit, art_edit, stol_edit,
+│   │                                             count_part_edit, weight_edit
+│   ├── Активность и публикация                  existing: is_show_edit, show_site_edit,
+│   │                                             show_program_edit, is_new_edit, is_hit_edit
+│   ├── БЖУ                                      existing: protein_edit, fat_edit, carbohydrates_edit
+│   ├── Состав и описания                        existing: tmp_desc_edit, marc_desc_edit,
+│   │                                             marc_desc_full_edit
+│   ├── Изображение                              existing: dropzone_edit
+│   ├── Позиции и заготовки                      existing: items_edit, stage_edit
+│   ├── Тайминги этапов                          existing: time_stage_1_edit, time_stage_2_edit,
+│   │                                             time_stage_3_edit
+│   ├── Системы учета                            existing: honest_sign_edit
+│   ├── Просмотр без редактирования              existing: name_view, tmp_desc_view
+│   ├── Теги                                     existing: change_tag_access
+│   ├── Обновить товары VK                       existing: reload_vk_access
+│   └── Удалить товар                            existing: delete_item_access
+│
+├── Единицы измерения
+│   ├── Просмотр раздела                         existing: units_view
+│   ├── Просмотр списка                          add: unit_list_view
+│   ├── Создать единицу                          add: unit_create_access
+│   ├── Просмотр и редактирование                existing: ed_izmer_view, ed_izmer_edit
+│   ├── Просмотр использований                   add: unit_usage_view
+│   └── Удалить единицу                          existing: delete_execute + ed_izmer_edit
+│
+├── Категории
+│   ├── Просмотр раздела                         existing: categories_view
+│   ├── Просмотр списка                          add: category_list_view
+│   ├── Создать категорию                        add: category_create_access
+│   ├── Просмотр и редактирование                existing: cats_view, cats_edit
+│   └── Удалить категорию                        existing: delete_execute + cats_edit
+│
+├── Архив
+│   ├── Просмотр раздела                         existing: archive_view
+│   ├── Просмотр списка                          add: archive_list_view
+│   └── Восстановить запись                      existing: is_show_edit + entity edit access
+│
+└── История
+    ├── Просмотр истории                         existing: history_view
+    ├── История рецептов и заготовок             add: production_history_view
+    ├── История товаров сайта                    add: site_item_history_view
+    └── История единиц измерения                 add: unit_history_view
+```
+
+## Backend additions for appointment configuration
+
+```text
+production_list_view
+site_item_list_view
+unit_list_view
+unit_create_access
+unit_usage_view
+category_list_view
+category_create_access
+archive_list_view
+production_history_view
+site_item_history_view
+unit_history_view
+```
+
+The existing raw keys not shown as separate nodes are intentionally not
+additional FE rules for this module. They are legacy table columns or fields
+not rendered by the current new UI.
 
 ## 1. Главное правило
 

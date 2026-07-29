@@ -240,7 +240,6 @@ Contract note:
 - `TASK.md` — исходные и follow-up требования
 - `FE-MIGRATION-MAP.md` — legacy-to-canonical reference
 - `BUSINESS-PROCESSES.md` и `SITE-ITEM-IMAGE-VERSIONING.md` — backend/business research context
-- `SUGGESTIONS.md` — future-looking notes, не обязательные для первой FE-реализации
 
 ## 4. Recommended backend architecture
 
