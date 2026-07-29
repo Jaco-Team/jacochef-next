@@ -6,6 +6,7 @@ import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import SkladSiteItemsContent from "./SkladSiteItemsContent";
+import useSkladTableSort from "../table/useSkladTableSort";
 import {
   dedupeSelectOptions,
   getDeleteError,
@@ -97,10 +98,18 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [tags],
   );
 
+  const siteItemSort = useSkladTableSort(rows, {
+    name: (row) => row?.name,
+    category: (row) => row?.category_name,
+    kkal: (row) => row?.kkal_preview ?? row?.kkal,
+    dateStart: (row) => row?.date_start,
+    dateEnd: (row) => row?.date_end,
+  });
+
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
-    return rows.slice(start, start + rowsPerPage);
-  }, [page, rows, rowsPerPage]);
+    return siteItemSort.sortedRows.slice(start, start + rowsPerPage);
+  }, [page, rowsPerPage, siteItemSort.sortedRows]);
 
   useEffect(() => {
     const maxPage = rows.length ? Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1) : 0;
@@ -637,6 +646,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
         tagOptions={tagOptions}
         rows={rows}
         paginatedRows={paginatedRows}
+        sortBy={siteItemSort.sortBy}
+        sortDirection={siteItemSort.sortDirection}
+        onSort={siteItemSort.requestSort}
         page={page}
         rowsPerPage={rowsPerPage}
         modal={modal}

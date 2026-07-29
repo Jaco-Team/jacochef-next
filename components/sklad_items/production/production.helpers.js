@@ -1,7 +1,5 @@
 "use client";
 
-import { formatDateRangeRU } from "../formatDateRangeRU";
-
 export const ENTITY_TYPES = ["recipe", "semi_finished"];
 
 export function getEntityLabel(entityType) {
@@ -74,10 +72,6 @@ export function formatCategories(categories) {
 
   const names = categories.map((item) => item?.name ?? "").filter(Boolean);
   return names.length ? names.join(", ") : "-";
-}
-
-export function formatDateRangeCell(row) {
-  return formatDateRangeRU(row?.date_start, row?.date_end);
 }
 
 export function getPrimaryStatusChip(row) {

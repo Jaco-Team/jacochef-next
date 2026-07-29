@@ -33,9 +33,10 @@ import MyModal from "@/ui/MyModal";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
+import SkladSortableHeader from "../table/SkladSortableHeader";
+import { formatDateRU } from "../formatDateRangeRU";
 import {
   formatBju,
-  formatDateRange,
   getCategoryName,
   getDeleteTooltip,
   getPrimaryStatusChip,
@@ -54,6 +55,9 @@ export default function SkladSiteItemsContent({
   tagOptions,
   rows,
   paginatedRows,
+  sortBy,
+  sortDirection,
+  onSort,
   page,
   rowsPerPage,
   modal,
@@ -160,12 +164,49 @@ export default function SkladSiteItemsContent({
           >
             <TableHead>
               <TableRow>
-                <TableCell>Название</TableCell>
-                <TableCell>Категория</TableCell>
+                <SkladSortableHeader
+                  sortKey="name"
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  onSort={onSort}
+                >
+                  Название
+                </SkladSortableHeader>
+                <SkladSortableHeader
+                  sortKey="category"
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  onSort={onSort}
+                >
+                  Категория
+                </SkladSortableHeader>
                 <TableCell sx={{ width: 128 }}>Б/Ж/У</TableCell>
-                <TableCell sx={{ width: 84 }}>Ккал</TableCell>
+                <SkladSortableHeader
+                  sortKey="kkal"
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  onSort={onSort}
+                  sx={{ width: 84 }}
+                >
+                  Ккал
+                </SkladSortableHeader>
                 <TableCell sx={{ minWidth: 180 }}>Теги</TableCell>
-                <TableCell sx={{ width: 188 }}>Действует</TableCell>
+                <SkladSortableHeader
+                  sortKey="dateStart"
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  onSort={onSort}
+                >
+                  Действует с
+                </SkladSortableHeader>
+                <SkladSortableHeader
+                  sortKey="dateEnd"
+                  sortBy={sortBy}
+                  sortDirection={sortDirection}
+                  onSort={onSort}
+                >
+                  Действует до
+                </SkladSortableHeader>
                 <TableCell sx={{ minWidth: 240 }}>Статус</TableCell>
                 <TableCell
                   align="right"
@@ -231,7 +272,8 @@ export default function SkladSiteItemsContent({
                         {rowTagNames.length ? rowTagNames.join(", ") : "—"}
                       </Typography>
                     </TableCell>
-                    <TableCell>{formatDateRange(row)}</TableCell>
+                    <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
+                    <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
 
                     <TableCell>
                       <Stack
@@ -362,7 +404,7 @@ export default function SkladSiteItemsContent({
 
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8}>
+                  <TableCell colSpan={9}>
                     <Stack
                       spacing={1.5}
                       sx={{ py: 2 }}

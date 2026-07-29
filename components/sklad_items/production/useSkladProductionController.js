@@ -6,6 +6,7 @@ import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import SkladProductionContent from "./SkladProductionContent";
+import useSkladTableSort from "../table/useSkladTableSort";
 import {
   createEmptyProductionDraft,
   ENTITY_TYPES,
@@ -58,7 +59,7 @@ export default function useSkladProductionController({ showAlert }) {
     );
   }, [categories]);
 
-  const mergedRows = useMemo(() => {
+  const filteredRows = useMemo(() => {
     return ENTITY_TYPES.flatMap((entityType) => {
       const rows = Array.isArray(rowsByType?.[entityType]) ? rowsByType[entityType] : [];
 
@@ -66,12 +67,18 @@ export default function useSkladProductionController({ showAlert }) {
         ...row,
         entityType,
       }));
-    })
-      .filter((row) => !entityFilter || row?.entityType === entityFilter)
-      .sort((left, right) =>
-        String(left?.name || "").localeCompare(String(right?.name || ""), "ru"),
-      );
+    }).filter((row) => !entityFilter || row?.entityType === entityFilter);
   }, [entityFilter, rowsByType]);
+
+  const productionSort = useSkladTableSort(filteredRows, {
+    name: (row) => row?.name,
+    entityType: (row) => getEntitySingleLabel(row?.entityType),
+    categories: (row) => (row?.categories || []).map((item) => item?.name).join(", "),
+    shelfLife: (row) => row?.shelf_life,
+    dateStart: (row) => row?.date_start,
+    dateEnd: (row) => row?.date_end,
+  });
+  const mergedRows = productionSort.sortedRows;
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -460,6 +467,9 @@ export default function useSkladProductionController({ showAlert }) {
         categoryOptions={categoryOptions}
         mergedRows={mergedRows}
         paginatedRows={paginatedRows}
+        sortBy={productionSort.sortBy}
+        sortDirection={productionSort.sortDirection}
+        onSort={productionSort.requestSort}
         page={page}
         rowsPerPage={rowsPerPage}
         modal={modal}

@@ -28,9 +28,10 @@ import { MySearchInput, MySelect } from "@/ui/Forms";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
+import SkladSortableHeader from "../table/SkladSortableHeader";
+import { formatDateRU } from "../formatDateRangeRU";
 import {
   formatCategories,
-  formatDateRangeCell,
   getDeleteHint,
   getEntitySingleLabel,
   getPrimaryStatusChip,
@@ -49,6 +50,9 @@ export default function SkladProductionContent({
   categoryOptions,
   mergedRows,
   paginatedRows,
+  sortBy,
+  sortDirection,
+  onSort,
   page,
   rowsPerPage,
   modal,
@@ -182,11 +186,55 @@ export default function SkladProductionContent({
             >
               <TableHead>
                 <TableRow>
-                  <TableCell>Название</TableCell>
-                  <TableCell sx={{ width: 140 }}>Тип</TableCell>
-                  <TableCell>Категории</TableCell>
-                  <TableCell>Срок годности</TableCell>
-                  <TableCell sx={{ width: 220 }}>Действует</TableCell>
+                  <SkladSortableHeader
+                    sortKey="name"
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
+                  >
+                    Название
+                  </SkladSortableHeader>
+                  <SkladSortableHeader
+                    sortKey="entityType"
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
+                    sx={{ width: 140 }}
+                  >
+                    Тип
+                  </SkladSortableHeader>
+                  <SkladSortableHeader
+                    sortKey="categories"
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
+                  >
+                    Категории
+                  </SkladSortableHeader>
+                  <SkladSortableHeader
+                    sortKey="shelfLife"
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
+                  >
+                    Срок годности
+                  </SkladSortableHeader>
+                  <SkladSortableHeader
+                    sortKey="dateStart"
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
+                  >
+                    Действует с
+                  </SkladSortableHeader>
+                  <SkladSortableHeader
+                    sortKey="dateEnd"
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={onSort}
+                  >
+                    Действует до
+                  </SkladSortableHeader>
                   <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
                   <TableCell
                     align="right"
@@ -220,7 +268,8 @@ export default function SkladProductionContent({
                       <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
                       <TableCell>{formatCategories(row?.categories)}</TableCell>
                       <TableCell>{row?.shelf_life || "-"}</TableCell>
-                      <TableCell>{formatDateRangeCell(row)}</TableCell>
+                      <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
+                      <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
 
                       <TableCell>
                         <Stack
@@ -332,7 +381,7 @@ export default function SkladProductionContent({
 
                 {mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <Typography color="text.secondary">
                         Ничего не найдено. Измените фильтры или режим показа.
                       </Typography>

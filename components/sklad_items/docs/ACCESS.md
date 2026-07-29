@@ -17,6 +17,8 @@
 - source-модули не переписываются
 - команда синхронизации пишет только target-модуль `sklad_items` и его template rows
 - legacy-модули `ed_izmer`, `recept_module_new_2`, `sklad_items_module_new`, `site_items_new` остаются источником данных для merge
+- `Sklad canonical` не является бизнес-категорией и не используется в target-модуле
+- field-level права, относящиеся только к старому экрану `sklad_items_module_new`, не переносятся в новый target
 
 ## 2. Source modules
 
@@ -53,16 +55,51 @@ Access merge собирается из:
 - FE должен читать конкретные ключи из `get_all.access`
 - для единиц измерения использовать `ed_izmer`, `ed_izmer_view`, `ed_izmer_edit`, `ed_izmer_access`
 - для категорий использовать `cats`, `cats_view`, `cats_edit`, `cats_access`
-- глобальное право удаления в новом FE — raw `delete_execute`
-- действие удаления дополнительно требует edit-доступа к соответствующей сущности: `ed_izmer` для единиц, production edit keys для recipes/semi-finished, `SITE_ITEM_WRITE_KEYS` для site items и `cats` для категорий
-- legacy keys `delete` и `delete_item` остаются в payload для совместимости, но новым `sklad_items` FE не используются как gate удаления
+- для удаления recipes/semi-finished использовать `delete`, `delete_view`, `delete_edit`, `delete_access`
+- для удаления site items использовать `delete_item`, `delete_item_view`, `delete_item_edit`, `delete_item_access`
 - для полей карточек использовать соответствующие field-level keys из таблицы ниже
+- `Товары склада` не является категорией нового access tree; управление этой сущностью остается в `sklad_items_module_new`
 
 Правило совместимости:
 
-- backend публикует `delete_execute` как отдельный raw global key без обязательных suffixed variants
-- `units_edit` и `categories_edit` не являются runtime keys; FE использует `ed_izmer` и `cats`
+- backend не публикует synthetic keys `units_edit`, `categories_edit`
+- `delete_execute` остается raw target-флагом для общего действия удаления и не отменяет entity-specific usage checks
+- если FE уже успел завязаться на них, их надо заменить на raw keys из `access`
 - серверные endpoints все равно проверяют raw keys, поэтому FE должен показывать то же, что реально примет backend
+
+### 3.1.1. FE handoff: section and action keys
+
+Для нового FE использовать следующие exact keys из `get_all.access`:
+
+| UI contour                           | Access key                              |
+| ------------------------------------ | --------------------------------------- |
+| Открыть раздел рецептов и заготовок  | `recipes_view` или `semi_finished_view` |
+| Показать список рецептов и заготовок | `production_list_view`                  |
+| Создать рецепт                       | `create_rec_access`                     |
+| Создать заготовку                    | `create_pol_access`                     |
+| Открыть раздел товаров сайта         | `site_items_view`                       |
+| Показать список товаров сайта        | `site_item_list_view`                   |
+| Создать товар сайта                  | `create_new_access`                     |
+| Открыть раздел единиц                | `units_view`                            |
+| Показать список единиц               | `unit_list_view`                        |
+| Создать единицу                      | `unit_create_access`                    |
+| Показать использования единицы       | `unit_usage_view`                       |
+| Открыть раздел категорий             | `categories_view`                       |
+| Показать список категорий            | `category_list_view`                    |
+| Создать категорию                    | `category_create_access`                |
+| Открыть архив                        | `archive_view`                          |
+| Показать список архива               | `archive_list_view`                     |
+| Открыть общую историю                | `history_view`                          |
+| История рецептов и заготовок         | `production_history_view`               |
+| История товаров сайта                | `site_item_history_view`                |
+| История единиц                       | `unit_history_view`                     |
+| Общее право удаления                 | `delete_execute`                        |
+
+Для редактирования FE должен использовать только соответствующий field-level key с суффиксом `_edit`. Наличие section/list/history key не выдаёт право редактировать сущность.
+
+Удаление разрешается показывать только при одновременном выполнении access-проверки и успешном `delete_usage.can_delete`. `delete_execute` не отменяет блокировку активными или историческими связями.
+
+`get_all.access` не содержит вложенного JSON-дерева. Дерево appointment является административным представлением; runtime-контракт FE — плоский объект raw keys.
 
 ### 3.2. Full target rule map
 
@@ -91,10 +128,10 @@ Access merge собирается из:
 | `rec_apps`           | `rec_apps`, `rec_apps_view`, `rec_apps_edit`, `rec_apps_access`                                         | 2    | Должность в кафе для приготовления      | legacy merged       |
 | `storages`           | `storages`, `storages_view`, `storages_edit`, `storages_access`                                         | 2    | Места хранения                          | legacy merged       |
 | `create_rec`         | `create_rec`, `create_rec_view`, `create_rec_edit`, `create_rec_access`                                 | 2    | Создание рецепта                        | legacy merged       |
-| `create_pol`         | `create_pol`, `create_pol_view`, `create_pol_edit`, `create_pol_access`                                 | 2    | Создание заготовки                      | legacy merged       |
+| `create_pol`         | `create_pol`, `create_pol_view`, `create_pol_edit`, `create_pol_access`                                 | 2    | Создание полуфабриката                  | legacy merged       |
 | `rev_table`          | `rev_table`, `rev_table_view`, `rev_table_edit`, `rev_table_access`                                     | 2    | Ревизия в таблице                       | legacy merged       |
-| `change_rec_pf`      | `change_rec_pf`, `change_rec_pf_view`, `change_rec_pf_edit`, `change_rec_pf_access`                     | 2    | Смена рецепта на заготовку и обратно    | legacy merged       |
-| `delete`             | `delete`, `delete_view`, `delete_edit`, `delete_access`                                                 | 2    | Удаление рецепта или заготовки          | legacy merged       |
+| `change_rec_pf`      | `change_rec_pf`, `change_rec_pf_view`, `change_rec_pf_edit`, `change_rec_pf_access`                     | 2    | Смена рецепта на полуфабрикат и обратно | legacy merged       |
+| `delete`             | `delete`, `delete_view`, `delete_edit`, `delete_access`                                                 | 2    | Удаление рецепта или полуфабриката      | legacy merged       |
 | `items`              | `items`, `items_view`, `items_edit`, `items_access`                                                     | 2    | Номенклатура / состав                   | legacy merged       |
 | `allergens`          | `allergens`, `allergens_view`, `allergens_edit`, `allergens_access`                                     | 2    | Аллергены                               | legacy merged       |
 | `allergens_diff`     | `allergens_diff`, `allergens_diff_view`, `allergens_diff_edit`, `allergens_diff_access`                 | 2    | Возможные аллергены                     | legacy merged       |
@@ -151,6 +188,22 @@ Access merge собирается из:
 | `stage`              | `stage`, `stage_view`, `stage_edit`, `stage_access`                                                     | 2    | Заготовки                               | legacy merged       |
 | `is_updated`         | `is_updated`, `is_updated_view`, `is_updated_edit`, `is_updated_access`                                 | 2    | Обновлено                               | legacy merged       |
 
+Дополнительные target-флаги нового FE:
+
+| param                | runtime key               | category            |
+| -------------------- | ------------------------- | ------------------- |
+| `production_list`    | `production_list_view`    | Рецепты и заготовки |
+| `site_item_list`     | `site_item_list_view`     | Товары сайта        |
+| `unit_list`          | `unit_list_view`          | Единицы измерения   |
+| `unit_create`        | `unit_create_access`      | Единицы измерения   |
+| `unit_usage`         | `unit_usage_view`         | Единицы измерения   |
+| `category_list`      | `category_list_view`      | Категории           |
+| `category_create`    | `category_create_access`  | Категории           |
+| `archive_list`       | `archive_list_view`       | Архив               |
+| `production_history` | `production_history_view` | История             |
+| `site_item_history`  | `site_item_history_view`  | История             |
+| `unit_history`       | `unit_history_view`       | История             |
+
 ### 3.3. Как это превращается в runtime keys
 
 Middleware строит `upd_access` так:
@@ -186,31 +239,35 @@ Middleware строит `upd_access` так:
 - upsert-ит `appointment_group` только для target-модуля
 - rebuild-ит `appointment_template` только для target-модуля
 - rebuild-ит `appointment_template_group` только для target-групп target-модуля
+- сохраняет существующие значения target-групп для ролей
+- не переносит warehouse-only groups старого `sklad_items_module_new` (`ed_izmer`, `pf_list`, `this_storages` и связанные поля)
+- удаляет устаревшие target-группы только при явном `--apply`
 
 ## 5. Команда
 
 ```bash
-php artisan sklad:sync-access
+php artisan sklad:sync-access --dry-run
 ```
 
 Опции:
 
 ```bash
 php artisan sklad:sync-access --dry-run
-php artisan sklad:sync-access --target-key=sklad_items
-php artisan sklad:sync-access --target-name="Склад"
+php artisan sklad:sync-access --target-key=sklad_items --appointment-id=1 --dry-run
+php artisan sklad:sync-access --target-key=sklad_items --apply
+php artisan sklad:sync-access --target-key=sklad_items --appointment-id=1 --apply
 ```
 
-Рекомендуемый production/apply запуск:
+Без `--apply` команда ничего не записывает. Рекомендуемый production/apply запуск после проверки dry-run:
 
 ```bash
-php artisan sklad:sync-access --target-key=sklad_items --target-name="Склад"
+php artisan sklad:sync-access --target-key=sklad_items --target-name="Товары склада" --apply
 ```
 
 ## 6. Что команда делает
 
 1. Находит source-модули по `key_query`
-2. Создает или находит target-модуль `sklad_items`
+2. Создает или находит target-модуль `sklad_items` только при `--apply`
 3. Собирает union legacy access groups из source-модулей
 4. Пересобирает target `appointment_group`
 5. Пересобирает target `appointment_template` как OR по source module activation
@@ -225,3 +282,18 @@ php artisan sklad:sync-access --target-key=sklad_items --target-name="Склад
 - raw field-level flags не transitional layer; это project pattern для middleware access payload
 - FE должен ориентироваться на raw `get_all.access`; отдельной сокращенной access-карты backend не публикует
 - route-space `/api/sklad_items/*` и target module key `sklad_items` — это разные слои: API и module registry provisioning
+
+## 8. Production migration safety
+
+Команда изменяет только target `sklad_items`. Она не переписывает source-модули и не меняет их роли напрямую.
+
+Без `--apply` выполняется только dry-run. Для production рекомендуется:
+
+1. Проверить host, port и database приложения.
+2. Запустить `--dry-run` без `--appointment-id` и проверить общий объём.
+3. Запустить dry-run для одной роли.
+4. Применить `--appointment-id=<ID> --apply`.
+5. Проверить appointment payload и `/api/sklad_items/get_all`.
+6. Применить `--apply` для остальных ролей.
+
+Повторный apply идемпотентен. Существующие target-значения ролей сохраняются. Устаревшая категория `Sklad canonical` не переносится: её section/action параметры остаются как raw keys, но получают читаемые категории. Warehouse-only groups старого `sklad_items_module_new` в новый target не входят.

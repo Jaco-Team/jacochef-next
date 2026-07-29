@@ -2,7 +2,7 @@
 
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
-function formatSingleDateRU(value) {
+export function formatDateRU(value) {
   if (!value || value === "0000-00-00") {
     return "";
   }
@@ -17,8 +17,8 @@ function formatSingleDateRU(value) {
 }
 
 export function formatDateRangeRU(dateStart, dateEnd, fallback = "—") {
-  const start = formatSingleDateRU(dateStart);
-  const end = formatSingleDateRU(dateEnd);
+  const start = formatDateRU(dateStart);
+  const end = formatDateRU(dateEnd);
 
   if (!start && !end) {
     return fallback;

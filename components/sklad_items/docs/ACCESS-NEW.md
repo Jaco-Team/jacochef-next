@@ -293,19 +293,19 @@ Access merge собирается из:
 
 Дополнительные target-флаги нового FE:
 
-| param                     | runtime key               | category            |
-| ------------------------- | ------------------------- | ------------------- |
-| `production_list_view`    | `production_list_view`    | Рецепты и заготовки |
-| `site_item_list_view`     | `site_item_list_view`     | Товары сайта        |
-| `unit_list_view`          | `unit_list_view`          | Единицы измерения   |
-| `unit_create_access`      | `unit_create_access`      | Единицы измерения   |
-| `unit_usage_view`         | `unit_usage_view`         | Единицы измерения   |
-| `category_list_view`      | `category_list_view`      | Категории           |
-| `category_create_access`  | `category_create_access`  | Категории           |
-| `archive_list_view`       | `archive_list_view`       | Архив               |
-| `production_history_view` | `production_history_view` | История             |
-| `site_item_history_view`  | `site_item_history_view`  | История             |
-| `unit_history_view`       | `unit_history_view`       | История             |
+| param                | runtime key               | category            |
+| -------------------- | ------------------------- | ------------------- |
+| `production_list`    | `production_list_view`    | Рецепты и заготовки |
+| `site_item_list`     | `site_item_list_view`     | Товары сайта        |
+| `unit_list`          | `unit_list_view`          | Единицы измерения   |
+| `unit_create`        | `unit_create_access`      | Единицы измерения   |
+| `unit_usage`         | `unit_usage_view`         | Единицы измерения   |
+| `category_list`      | `category_list_view`      | Категории           |
+| `category_create`    | `category_create_access`  | Категории           |
+| `archive_list`       | `archive_list_view`       | Архив               |
+| `production_history` | `production_history_view` | История             |
+| `site_item_history`  | `site_item_history_view`  | История             |
+| `unit_history`       | `unit_history_view`       | История             |
 
 ### 3.3. Как это превращается в runtime keys
 
