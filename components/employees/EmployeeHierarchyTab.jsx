@@ -44,15 +44,32 @@ const getUnitPayloadItems = (items) =>
     parent_group_key: item.parent_group_key ? String(item.parent_group_key) : null,
   }));
 
-const getAppointmentPayloadItems = (items) =>
-  items.map((item) => ({
-    id: Number(item.id),
-    group_key: String(item.group_key || ""),
-    parent_group_key: item.parent_group_key ? String(item.parent_group_key) : null,
-    group_sort: Number(item.group_sort ?? 0),
-    sort: Number(item.sort ?? 0),
-    is_office: item.is_office ?? null,
-  }));
+const getAppointmentPayloadItems = (items) => {
+  const groupsByUnit = new Map();
+
+  items.forEach((item) => {
+    const unitKey =
+      item.unit_id === null || item.unit_id === undefined ? "without_unit" : String(item.unit_id);
+    if (!groupsByUnit.has(unitKey)) groupsByUnit.set(unitKey, new Set());
+    groupsByUnit.get(unitKey).add(String(item.group_key || ""));
+  });
+
+  return items.map((item) => {
+    const unitKey =
+      item.unit_id === null || item.unit_id === undefined ? "without_unit" : String(item.unit_id);
+    const parentGroupKey = item.parent_group_key ? String(item.parent_group_key) : null;
+    const parentExists = parentGroupKey === null || groupsByUnit.get(unitKey)?.has(parentGroupKey);
+
+    return {
+      id: Number(item.id),
+      group_key: String(item.group_key || ""),
+      parent_group_key: parentExists ? parentGroupKey : null,
+      group_sort: Number(item.group_sort ?? 0),
+      sort: Number(item.sort ?? 0),
+      is_office: item.is_office ?? null,
+    };
+  });
+};
 
 export default function EmployeeHierarchyTab({ request, showAlert }) {
   const [units, setUnits] = useState([]);
