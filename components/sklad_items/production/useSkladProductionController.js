@@ -12,6 +12,7 @@ import {
   ENTITY_TYPES,
   getDeleteError,
   getEntityDetailApi,
+  getEntitySingleLabel,
   getEntityLoadApi,
   getEntitySaveApi,
   normalizeProductionDraft,

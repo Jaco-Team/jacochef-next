@@ -36,10 +36,6 @@ function formatValue(value, fallback = "-") {
   return String(value);
 }
 
-function formatDateRangeValue(detail) {
-  return formatDateRangeRU(detail?.date_start, detail?.date_end);
-}
-
 function formatTags(items) {
   if (!Array.isArray(items) || !items.length) {
     return [];
@@ -179,7 +175,7 @@ export default function SkladProductionViewDialog({
                     <Grid size={{ xs: 12, md: 6 }}>
                       <SkladInfoField
                         label="Действует"
-                        value={formatDateRangeValue(detail)}
+                        value={formatDateRangeRU(detail?.date_start, detail?.date_end)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>

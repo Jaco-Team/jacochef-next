@@ -69,10 +69,6 @@ function formatMarkingType(value) {
   }
 }
 
-function formatDateRange(detail) {
-  return formatDateRangeRU(detail?.date_start, detail?.date_end);
-}
-
 function formatTagNames(tags) {
   if (!Array.isArray(tags) || !tags.length) {
     return "-";
@@ -384,7 +380,7 @@ export default function SkladSiteItemViewDialog({
                           <Grid size={{ xs: 12, md: 6 }}>
                             <SkladInfoField
                               label="Действует"
-                              value={formatDateRange(detail)}
+                              value={formatDateRangeRU(detail?.date_start, detail?.date_end)}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>

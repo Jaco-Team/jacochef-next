@@ -1,10 +1,6 @@
 "use client";
 
-import { formatDateRangeRU } from "../formatDateRangeRU";
-
-export function formatDateRange(row) {
-  return formatDateRangeRU(row?.date_start, row?.date_end);
-}
+import { createEmptySiteItemRelations } from "./siteItemEditor.helpers";
 
 export function formatBju(row) {
   const parts = [
@@ -94,43 +90,6 @@ export function getDeleteTooltip(row, isEditable, canDeleteAction) {
   }
 
   return "Удалить";
-}
-
-export function dedupeSelectOptions(options) {
-  const seen = new Set();
-
-  return options.filter((option) => {
-    const key = String(option?.id ?? "");
-
-    if (!key || seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  });
-}
-
-export function createEmptySiteItemRelations() {
-  return {
-    item_items: {
-      this_items: [],
-      all_items: [],
-    },
-    items_stage: {
-      stage_1: [],
-      stage_2: [],
-      stage_3: [],
-      all: [],
-    },
-    composition_source: {
-      pf: [],
-      recipes: [],
-    },
-    composition_derived: {
-      pf_total: [],
-    },
-  };
 }
 
 export function normalizeSiteItemDraft(response, fallbackCategories = []) {
