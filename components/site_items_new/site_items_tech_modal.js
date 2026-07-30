@@ -120,6 +120,7 @@ export class SiteItemsModalTech extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: "",
+      isSaving: false,
     };
   }
 
@@ -811,8 +812,16 @@ export class SiteItemsModalTech extends React.Component {
 
       if (!check_img) {
         setTimeout(() => {
+          this.setState({ isSaving: false });
           this.onClose(true);
         }, 1000);
+      } else {
+        this.setState({
+          isSaving: false,
+          openAlert: true,
+          err_status: false,
+          err_text: "Не удалось загрузить изображение",
+        });
       }
 
       this.isInit = false;
@@ -1369,7 +1378,11 @@ export class SiteItemsModalTech extends React.Component {
     this.setState(this.getWeightState(items_stage, item_items));
   }
 
-  save() {
+  async save() {
+    if (this.state.isSaving) {
+      return;
+    }
+
     const items_stage = this.state.items_stage;
     if (items_stage?.not_stage?.length) {
       this.setState({
@@ -1441,65 +1454,53 @@ export class SiteItemsModalTech extends React.Component {
       item_items: new_obj_item_items,
     };
 
-    const resp = this.props.save(data);
-    let idGet = 0;
-    if (resp.id && resp.st) {
-      idGet = resp.id;
-    }
-    resp.then((data) => {
-      let idGet = 0;
-      if (data.id && data.st) {
-        idGet = data.id;
+    this.setState({ isSaving: true });
+
+    try {
+      const response = await this.props.save(data);
+
+      if (!response?.st) {
+        this.setState({ isSaving: false });
+        return;
       }
+
+      const idGet = response.id || 0;
       if (
         this.myDropzone &&
         this.myDropzone["files"]?.length > 0 &&
         (this.props.item?.id || idGet)
       ) {
-        if (this.myDropzone["files"].length > 0 && this.isInit === false) {
+        if (this.isInit === false) {
           this.isInit = true;
 
-          let name = this.state.name,
-            id = this.props.item?.id ? this.props.item.id : idGet,
-            historyId = data.history_id;
-          this.myDropzone.on("sending", (file, xhr, data) => {
-            let file_type = file.name.split(".");
-            file_type = file_type[file_type.length - 1];
-            file_type = file_type.toLowerCase();
-
-            data.append("type", "site_items");
-            data.append("name", name + "site_items");
-            data.append("login", localStorage.getItem("token"));
-            data.append("id", id);
+          const name = this.state.name;
+          const id = this.props.item?.id ? this.props.item.id : idGet;
+          const historyId = response.history_id;
+          this.myDropzone.on("sending", (file, xhr, uploadData) => {
+            uploadData.append("type", "site_items");
+            uploadData.append("name", name + "site_items");
+            uploadData.append("login", localStorage.getItem("token"));
+            uploadData.append("id", id);
             if (historyId) {
-              data.append("history_id", historyId);
+              uploadData.append("history_id", historyId);
             }
-          });
-
-          this.myDropzone.on("queuecomplete", (data) => {
-            var check_img = false;
-
-            this.myDropzone["files"].map((item, key) => {
-              if (item["status"] == "error") {
-                check_img = true;
-              }
-            });
-
-            if (!check_img) {
-              setTimeout(() => {
-                this.onClose(true);
-              }, 1000);
-            }
-
-            this.isInit = false;
           });
         }
 
         this.myDropzone.processQueue();
-      } else {
-        this.onClose(true);
+        return;
       }
-    });
+
+      this.setState({ isSaving: false });
+      this.onClose(true);
+    } catch (error) {
+      this.setState({
+        isSaving: false,
+        openAlert: true,
+        err_status: false,
+        err_text: "Не удалось сохранить изменения",
+      });
+    }
   }
 
   openNewTag() {
@@ -1517,6 +1518,7 @@ export class SiteItemsModalTech extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: "",
+      isSaving: false,
     });
 
     this.props.onClose();
@@ -1598,10 +1600,12 @@ export class SiteItemsModalTech extends React.Component {
 
     const dialogPaperSx = fullScreen
       ? {
+          position: "relative",
           borderRadius: 0,
           boxShadow: "none",
         }
       : {
+          position: "relative",
           width: "100%",
           maxWidth: {
             xs: "calc(100vw - 20px)",
@@ -2349,7 +2353,11 @@ export class SiteItemsModalTech extends React.Component {
         <Dialog
           open={open}
           maxWidth={false}
-          onClose={this.onClose.bind(this)}
+          onClose={() => {
+            if (!this.state.isSaving) {
+              this.onClose();
+            }
+          }}
           fullScreen={fullScreen}
           slotProps={{
             paper: {
@@ -2362,6 +2370,21 @@ export class SiteItemsModalTech extends React.Component {
             },
           }}
         >
+          {this.state.isSaving ? (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255,255,255,0.72)",
+              }}
+            >
+              <CircularProgress sx={{ color: brandRed }} />
+            </Box>
+          ) : null}
           <DialogTitle
             sx={{
               px: {
@@ -3648,6 +3671,7 @@ export class SiteItemsModalTech extends React.Component {
           >
             <Button
               onClick={this.onClose.bind(this)}
+              disabled={this.state.isSaving}
               sx={{
                 minHeight: 44,
                 px: 2,
@@ -3667,7 +3691,7 @@ export class SiteItemsModalTech extends React.Component {
             <Button
               variant="contained"
               onClick={this.save.bind(this)}
-              disabled={!canSave}
+              disabled={!canSave || this.state.isSaving}
               sx={{
                 minHeight: 44,
                 px: 2.5,

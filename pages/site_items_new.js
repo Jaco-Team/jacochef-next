@@ -1881,17 +1881,22 @@ class SiteItems_ extends React.Component {
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
+  getData = (method, data = {}, options = {}) => {
+    const showLoading = options.showLoading !== false;
+    if (showLoading) {
+      this.setState({
+        is_load: true,
+      });
+    }
 
     let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
-        this.setState({
-          is_load: false,
-        });
+        if (showLoading) {
+          this.setState({
+            is_load: false,
+          });
+        }
       });
 
     return res;
@@ -2187,9 +2192,9 @@ class SiteItems_ extends React.Component {
     let res;
 
     if (method === "Новое блюдо") {
-      res = await this.getData("save_new", data);
+      res = await this.getData("save_new", data, { showLoading: false });
     } else {
-      res = await this.getData("save_edit", data);
+      res = await this.getData("save_edit", data, { showLoading: false });
     }
 
     if (res.st) {
@@ -2197,8 +2202,6 @@ class SiteItems_ extends React.Component {
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
-        modalDialogTech: false,
-        itemTech: null,
       });
 
       setTimeout(async () => {
