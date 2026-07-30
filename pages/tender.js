@@ -125,7 +125,7 @@ class Tender_ extends React.Component {
   //   });
 
   //   return fetch('https://jacochef.ru/api/index_new.php', {
-  //     method: 'POST',
+  //     method: "POST",
   //     headers: {
   //       'Content-Type': 'application/x-www-form-urlencoded',
   //     },

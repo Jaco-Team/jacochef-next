@@ -3,8 +3,12 @@ import queryString from "query-string";
 import { api_laravel as api_fallback } from "../api_new";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/",
   timeout: 300_000, // ms
+  withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
   headers: {
     "Content-Type": "application/x-www-form-urlencoded",
   },
@@ -30,7 +34,7 @@ apiClient.interceptors.response.use(
 /**
  * NEW api_laravel wrapper (v2)
  *
- * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://127.0.0.1/8000/api/
+ * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://localhost:8000/api
  *
  * ⚠️ WARNING:
  * Same name as legacy src/api_new api_laravel.
@@ -56,7 +60,6 @@ export default function useApi(module) {
       method,
       module,
       version: 2,
-      login: localStorage.getItem("token"),
       data: JSON.stringify(data),
     });
 
@@ -79,7 +82,6 @@ export default function useApi(module) {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("method", method);
-    formData.append("login", localStorage.getItem("token"));
     formData.append("module", module);
     formData.append("version", 2);
     formData.append("data", JSON.stringify(extraData));

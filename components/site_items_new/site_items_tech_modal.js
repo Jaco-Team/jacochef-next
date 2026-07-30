@@ -1469,7 +1469,6 @@ export class SiteItemsModalTech extends React.Component {
 
             data.append("type", "site_items");
             data.append("name", name + "site_items");
-            data.append("login", localStorage.getItem("token"));
             data.append("id", id);
             if (historyId) {
               data.append("history_id", historyId);

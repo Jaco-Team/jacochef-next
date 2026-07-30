@@ -183,8 +183,6 @@ function LkPage() {
     getData("save_password", { password, resetPassword }).then((data) => {
       if (data.st) {
         showAlert(data.st, data.text);
-        localStorage.setItem("token", data.token);
-        Cookies.set("token", data.token, { expires: 60 });
         setOpenPassword(false);
         getData("get_all").then((data) => {
           setMy(data.my);

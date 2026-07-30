@@ -1103,7 +1103,6 @@ class ListFakeUsers_ extends React.Component {
         method: method,
         module: module,
         version: 2,
-        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })

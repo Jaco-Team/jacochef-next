@@ -9,6 +9,7 @@ import TabPanel from "@/ui/TabPanel/TabPanel";
 import DownloadButton from "@/ui/DownloadButton";
 import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import axios from "axios";
+import { credentialsConfig } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 // ---------- Таб Динамика ----------
@@ -70,10 +71,10 @@ class StatSale_Tab_Dynamic extends React.Component {
             method: "export_data_dynamics",
             module: "orders_by_hour",
             version: 2,
-            login: localStorage.getItem("token"),
             data: this.state.res,
           },
           {
+            ...credentialsConfig,
             responseType: "blob",
             headers: {
               "Content-Type": "application/json",

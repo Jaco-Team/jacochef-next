@@ -231,8 +231,6 @@ export default function Registration() {
         if (saveRes.st === false) {
           setFormError(saveRes.text || "Не удалось сохранить пароль");
         } else {
-          localStorage.setItem("token", saveRes.token);
-          Cookies.set("token", saveRes.token, { expires: 60 });
           localStorage.setItem("auth_expires_at", saveRes.expires_at);
           setTimeout(() => {
             window.location.pathname = "/";

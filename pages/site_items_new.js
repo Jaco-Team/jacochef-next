@@ -295,7 +295,6 @@ class SiteItems_Modal_Mark extends React.Component {
 
               data.append("type", "mini");
               data.append("name", name + "site_items");
-              data.append("login", localStorage.getItem("token"));
               data.append("id", id);
             });
 

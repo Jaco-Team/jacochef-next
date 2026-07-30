@@ -15,7 +15,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, sanctum } from "@/src/api_new";
 
 const SmartCaptcha = dynamic(
   () => import("@yandex/smart-captcha").then((mod) => mod.SmartCaptcha),
@@ -120,25 +120,42 @@ export default function Auth() {
       login: phone,
       pwd: password,
       captcha_token: captchaToken,
+      auth_mode: "session",
     };
 
-    let res = await api_laravel("auth", "auth", data);
-    res = res?.data;
+    try {
+      await sanctum();
+      const res = await api_laravel("auth", "auth", data, { throwErrors: true });
+      const payload = res?.data ?? res;
 
-    if (!res || res.st === false) {
-      setTimeout(() => {
-        setFormError(res?.text || "Пользователь не найден или не имеет доступа");
-        setIsLoad(false);
+      if (!payload || payload.st === false) {
+        setFormError(payload?.text || "Пользователь не найден или не имеет доступа");
         resetCaptcha();
-      }, 500);
-    } else {
-      localStorage.setItem("token", res.token);
-      Cookies.set("token", res.token, { expires: 60 });
-      localStorage.setItem("auth_expires_at", res.expires_at);
-      setTimeout(() => {
-        setIsLoad(false);
-        window.location.pathname = "/";
-      }, 300);
+        return;
+      }
+
+      if (payload.token) {
+        localStorage.setItem("token", payload.token);
+        Cookies.set("token", payload.token, { expires: 60 });
+      }
+
+      if (payload.expires_at) {
+        localStorage.setItem("auth_expires_at", payload.expires_at);
+      }
+
+      window.location.pathname = "/";
+    } catch (error) {
+      const status = error?.response?.status;
+      if (status === 419) {
+        setFormError("Сессия устарела. Обновите страницу и попробуйте снова.");
+      } else {
+        setFormError(
+          error?.response?.data?.text || error?.response?.data?.message || "Ошибка авторизации",
+        );
+      }
+      resetCaptcha();
+    } finally {
+      setIsLoad(false);
     }
   }
 
