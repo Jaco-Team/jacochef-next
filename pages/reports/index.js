@@ -4,6 +4,7 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
+// import { api_laravel_local as api_laravel } from "@/src/api_new";
 import Paper from "@mui/material/Paper";
 import TabContext from "@mui/lab/TabContext";
 import Tabs from "@mui/material/Tabs";
@@ -41,7 +42,6 @@ function FeedbackPage() {
   const [errText, setErrText] = useState("");
 
   const [points, setPoints] = useState([]);
-  const [cats, setCats] = useState([]);
   const [pos, setPos] = useState([]);
   const [reportData, setReportData] = useState(null);
   const [forms, setForms] = useState(createEmptyForms);
@@ -52,16 +52,6 @@ function FeedbackPage() {
   const [dishesReportData, setDishesReportData] = useState(null);
   const [dishesForms, setDishesForms] = useState(createEmptyForms);
   const [dishesAllLoaded, setDishesAllLoaded] = useState(false);
-
-  const filteredPositions = useMemo(() => {
-    if (!forms.categories?.length) {
-      return pos;
-    }
-
-    const selectedCategoryIds = new Set(forms.categories.map((category) => String(category?.id)));
-
-    return pos.filter((item) => selectedCategoryIds.has(String(getItemCategoryId(item))));
-  }, [forms.categories, pos]);
 
   const filteredDishesPositions = useMemo(() => {
     if (!dishesForms.categories?.length) {
@@ -137,7 +127,6 @@ function FeedbackPage() {
 
       setPoints(salesData.points || []);
       setPos(salesData.items || []);
-      setCats(salesData.cats || []);
       if (salesData.module_info) {
         document.title = salesData.module_info.name;
         setModule(salesData.module_info);
@@ -412,25 +401,14 @@ function FeedbackPage() {
                     points={points}
                     value={forms.points}
                     onChange={(v) => handleChangeForms("points", v)}
-                    withAll
-                    withAllSelected
+                    singleCityOnly
+                    withOrganizationMode={false}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 3 }}>
                   <MyAutocomplite
-                    label="Категории"
-                    data={cats}
-                    multiple={true}
-                    value={forms.categories}
-                    func={(event, data) => {
-                      handleChangeForms("categories", data);
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                  <MyAutocomplite
                     label="Позиции"
-                    data={filteredPositions}
+                    data={pos}
                     multiple={true}
                     value={forms.positions}
                     func={(event, data) => {
@@ -453,7 +431,7 @@ function FeedbackPage() {
                   />
                 </Grid>
                 <Grid
-                  size={{ xs: 12, md: 12 }}
+                  size={{ xs: 12, md: 2 }}
                   sx={{
                     display: "flex",
                     justifyContent: "flex-end",
@@ -477,6 +455,7 @@ function FeedbackPage() {
               filters={reportFilters}
               onFetchCostDetail={getCostDetail}
               onExportExcel={exportSalesExcel}
+              showExcelExport={false}
             />
           </TabPanel>
 
@@ -505,8 +484,8 @@ function FeedbackPage() {
                     points={dishesPoints}
                     value={dishesForms.points}
                     onChange={(v) => handleChangeDishesForms("points", v)}
-                    withAll
-                    withAllSelected
+                    singleCityOnly
+                    withOrganizationMode={false}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4, md: 3 }}>
@@ -570,6 +549,7 @@ function FeedbackPage() {
               filters={dishesReportFilters}
               onFetchCostDetail={getDishesCostDetail}
               onExportExcel={exportDishesExcel}
+              showExcelExport={false}
             />
           </TabPanel>
         </TabContext>

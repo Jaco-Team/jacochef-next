@@ -39,7 +39,13 @@ function normalizePoint(point) {
   };
 }
 
-export default function ReportDishesResult({ data, filters, onFetchCostDetail, onExportExcel }) {
+export default function ReportDishesResult({
+  data,
+  filters,
+  onFetchCostDetail,
+  onExportExcel,
+  showExcelExport = true,
+}) {
   const [tab, setTab] = useState("total");
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_REPORT_DISHES_VISIBLE_COLUMNS);
@@ -262,27 +268,29 @@ export default function ReportDishesResult({ data, filters, onFetchCostDetail, o
           </Paper>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<ExcelIcon sx={{ fontSize: 18 }} />}
-              onClick={handleExportExcel}
-              disabled={exportLoading}
-              sx={{
-                color: "#d50032",
-                borderColor: "#d50032",
-                fontWeight: 600,
-                textTransform: "none",
-                borderRadius: 1.5,
-                px: 1.5,
-                "&:hover": {
+            {showExcelExport ? (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ExcelIcon sx={{ fontSize: 18 }} />}
+                onClick={handleExportExcel}
+                disabled={exportLoading}
+                sx={{
+                  color: "#d50032",
                   borderColor: "#d50032",
-                  backgroundColor: "rgba(213, 0, 50, 0.04)",
-                },
-              }}
-            >
-              {exportLoading ? "Экспорт..." : "Экспорт в Excel"}
-            </Button>
+                  fontWeight: 600,
+                  textTransform: "none",
+                  borderRadius: 1.5,
+                  px: 1.5,
+                  "&:hover": {
+                    borderColor: "#d50032",
+                    backgroundColor: "rgba(213, 0, 50, 0.04)",
+                  },
+                }}
+              >
+                {exportLoading ? "Экспорт..." : "Экспорт в Excel"}
+              </Button>
+            ) : null}
             <Button
               variant="outlined"
               size="small"

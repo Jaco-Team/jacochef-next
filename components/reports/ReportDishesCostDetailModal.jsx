@@ -88,6 +88,92 @@ function formatQty(value, unit, { digits = 6 } = {}) {
   return unit ? `${formatted} ${unit}` : formatted;
 }
 
+function formatVolume(value, unit) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const num = Number(value);
+
+  if (Number.isNaN(num)) {
+    return "—";
+  }
+
+  const valueInKg = isGramUnit(unit) ? num / 1000 : num;
+  const displayUnit = isGramUnit(unit) || isKgUnit(unit) ? "кг" : unit;
+
+  if (displayUnit === "кг" && valueInKg !== 0 && Math.abs(valueInKg) < 0.000001) {
+    return "< 0,000001 кг";
+  }
+
+  return formatQty(valueInKg, displayUnit, { digits: 6 });
+}
+
+function formatPurchasePrice(value, unit) {
+  const price = formatQty(value, "", { digits: 4 });
+
+  if (price === "—") {
+    return price;
+  }
+
+  const normalizedUnit = String(unit || "").replace(/\.$/, "") || "ед.";
+
+  return `${price} ₽/${normalizedUnit}`;
+}
+
+function formatFormulaNumber(value, digits = 6) {
+  return formatNumber(value, { digits }).replace(/,?0+$/, "");
+}
+
+function formatFormulaQuantity(value, unit) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const num = Number(value);
+
+  if (Number.isNaN(num)) {
+    return "—";
+  }
+
+  const valueInKg = isGramUnit(unit) ? num / 1000 : num;
+  const displayUnit = isGramUnit(unit) || isKgUnit(unit) ? "кг" : unit;
+
+  return `${formatFormulaNumber(valueInKg)}${displayUnit ? ` ${displayUnit}` : ""}`;
+}
+
+function buildRowFormula(row) {
+  const lines = [];
+
+  if (
+    row.outputQuantity != null &&
+    row.quantity != null &&
+    row.bruttoQuantity != null &&
+    row.writeOff != null
+  ) {
+    lines.push(
+      `Пересчёт объёма: ${formatFormulaQuantity(row.quantity, row.quantityUnit)} состава / ` +
+        `${formatFormulaQuantity(row.outputQuantity, row.quantityUnit)} выхода × ` +
+        `${formatFormulaQuantity(row.bruttoQuantity, row.writeOffUnit)} brutto = ` +
+        `${formatFormulaQuantity(row.writeOff, row.writeOffUnit)} товара`,
+    );
+  } else if (row.writeOff != null) {
+    lines.push(
+      `Объём без преобразования: ${formatFormulaQuantity(row.writeOff, row.writeOffUnit)}`,
+    );
+  }
+
+  if (row.writeOff != null && row.unitPrice != null) {
+    const priceUnit = String(row.writeOffUnit || "").replace(/\.$/, "") || "ед.";
+    lines.push(
+      `Стоимость: ${formatFormulaQuantity(row.writeOff, row.writeOffUnit)} × ` +
+        `${formatFormulaNumber(row.unitPrice, 4)} ₽/${priceUnit} = ${formatMoney(row.cost)}`,
+    );
+  }
+
+  return lines;
+}
+
 function SectionTitle({ children }) {
   return (
     <Typography
@@ -170,7 +256,11 @@ function resolveSourceQuantity(prepParent, itemNode) {
     return { value: quantity, unit: "шт" };
   }
 
-  if (isKgUnit(itemUnit) || isGramUnit(itemUnit)) {
+  if (isKgUnit(itemUnit)) {
+    return { value: quantity, unit: "кг" };
+  }
+
+  if (isGramUnit(itemUnit)) {
     return { value: quantity, unit: "г" };
   }
 
@@ -225,7 +315,9 @@ function collectCalcRows(nodes, prepParent = null, rows = []) {
         // Сколько списать — purchase_quantity (г → кг)
         writeOff: writeOff.value,
         writeOffUnit: writeOff.unit,
-        lossPercent: node.loss_percent,
+        outputQuantity: prepParent?.output_quantity ?? null,
+        bruttoQuantity: node.brutto_quantity ?? null,
+        unitPrice: node.unit_price,
         cost: node.amount ?? amountFromFormula,
       });
     }
@@ -301,20 +393,6 @@ function buildPointDetail(data, point) {
   };
 }
 
-function formatLoss(value) {
-  if (value === null || value === undefined || value === "") {
-    return "0%";
-  }
-
-  const num = Number(value);
-
-  if (Number.isNaN(num)) {
-    return "0%";
-  }
-
-  return `${formatNumber(num, { digits: num % 1 === 0 ? 0 : 1 })}%`;
-}
-
 function CostCalcTable({ rows, totalAmount }) {
   return (
     <TableContainer
@@ -323,25 +401,35 @@ function CostCalcTable({ rows, totalAmount }) {
       sx={{
         border: "1px solid #e5e7eb",
         borderRadius: 1.5,
-        overflow: "hidden",
+        overflowX: "auto",
       }}
     >
       <Table
         size="small"
-        sx={{ minWidth: 860 }}
+        sx={{ minWidth: 1060, width: "100%", tableLayout: "fixed" }}
       >
         <TableHead>
           <TableRow>
-            <TableCell sx={{ ...headCellSx, textAlign: "left", minWidth: 180 }}>
+            <TableCell sx={{ ...headCellSx, textAlign: "left", width: "16%" }}>
               Исходный состав
             </TableCell>
-            <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Количество</TableCell>
-            <TableCell sx={{ ...headCellSx, textAlign: "left", minWidth: 180 }}>
-              Во что преобразовалось
+            <TableCell sx={{ ...headCellSx, textAlign: "left", width: "16%" }}>
+              Состав в товаре
             </TableCell>
-            <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Сколько списать</TableCell>
-            <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Потери</TableCell>
-            <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Стоимость</TableCell>
+            <TableCell sx={{ ...headCellSx, textAlign: "right", width: "8%" }}>
+              Объём закупки
+            </TableCell>
+            <TableCell sx={{ ...headCellSx, textAlign: "right", width: "12%" }}>
+              Стоимость закупки
+            </TableCell>
+            <TableCell sx={{ ...headCellSx, textAlign: "left", width: "38%" }}>
+              Формула расчёта
+            </TableCell>
+            <TableCell
+              sx={{ ...headCellSx, textAlign: "right", width: "10%", whiteSpace: "normal" }}
+            >
+              Итоговая стоимость
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -354,19 +442,36 @@ function CostCalcTable({ rows, totalAmount }) {
               }}
             >
               <TableCell sx={{ ...bodyCellSx, textAlign: "left", whiteSpace: "normal" }}>
-                {row.sourceName}
-              </TableCell>
-              <TableCell sx={{ ...bodyCellSx, textAlign: "right", whiteSpace: "nowrap" }}>
-                {formatQty(row.quantity, row.quantityUnit, { digits: 3 })}
+                <Typography sx={{ fontFamily: FONT, fontSize: 13 }}>{row.sourceName}</Typography>
+                <Typography sx={{ fontFamily: FONT, fontSize: 11, color: "#6b7280", mt: 0.25 }}>
+                  В составе: {formatVolume(row.quantity, row.quantityUnit)}
+                </Typography>
               </TableCell>
               <TableCell sx={{ ...bodyCellSx, textAlign: "left", whiteSpace: "normal" }}>
                 {row.transformedName}
               </TableCell>
               <TableCell sx={{ ...bodyCellSx, textAlign: "right", whiteSpace: "nowrap" }}>
-                {formatQty(row.writeOff, row.writeOffUnit, { digits: 6 })}
+                {formatVolume(row.writeOff, row.writeOffUnit)}
               </TableCell>
               <TableCell sx={{ ...bodyCellSx, textAlign: "right", whiteSpace: "nowrap" }}>
-                {formatLoss(row.lossPercent)}
+                {formatPurchasePrice(row.unitPrice, row.writeOffUnit)}
+              </TableCell>
+              <TableCell sx={{ ...bodyCellSx, textAlign: "left", whiteSpace: "normal" }}>
+                {buildRowFormula(row).map((line, lineIndex) => (
+                  <Typography
+                    key={`${line}-${lineIndex}`}
+                    sx={{
+                      fontFamily: FONT,
+                      fontSize: 11,
+                      color: lineIndex === 0 ? "#4b5563" : "#111827",
+                      whiteSpace: "normal",
+                      overflowWrap: "anywhere",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {line}
+                  </Typography>
+                ))}
               </TableCell>
               <TableCell
                 sx={{
@@ -469,13 +574,15 @@ function ReportDishesCostDetailModal({
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth="lg"
+      maxWidth={false}
       scroll="paper"
       PaperProps={{
         sx: {
           borderRadius: 2,
           fontFamily: FONT,
           maxHeight: "90vh",
+          width: "calc(100vw - 32px)",
+          maxWidth: "1800px",
         },
       }}
     >
