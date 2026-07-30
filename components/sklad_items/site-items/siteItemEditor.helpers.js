@@ -179,6 +179,7 @@ export function buildInitialDraft(draft) {
     time_stage_3: draft?.time_stage_3 ?? "",
     composition_source: draft?.composition_source ?? emptyRelations.composition_source,
     composition_derived: draft?.composition_derived ?? emptyRelations.composition_derived,
+    calculated_allergens: draft?.calculated_allergens ?? null,
     items_stage: {
       ...(draft?.items_stage ?? emptyRelations.items_stage),
       stage_1: Array.isArray(itemsStage?.stage_1)

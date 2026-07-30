@@ -134,6 +134,7 @@ export function createEmptyProductionDraft() {
     allergens_possible: [],
     allergens_derived: [],
     allergens_possible_derived: [],
+    calculated_allergens: null,
     storages: [],
     apps: [],
     units: [],
@@ -233,6 +234,7 @@ export function normalizeProductionDraft(entity, response = {}) {
     allergens_possible_derived: Array.isArray(entity?.allergens_possible_derived)
       ? entity.allergens_possible_derived
       : [],
+    calculated_allergens: entity?.calculated_allergens ?? response?.calculated_allergens ?? null,
     storages: Array.isArray(entity?.storages) ? entity.storages : [],
     apps: Array.isArray(entity?.apps) ? entity.apps : [],
     items: normalizeCompositionItems(

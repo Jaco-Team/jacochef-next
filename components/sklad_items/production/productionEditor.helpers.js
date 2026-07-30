@@ -39,6 +39,7 @@ export function buildInitialDraft(draft) {
     allergens_possible_derived: Array.isArray(draft?.allergens_possible_derived)
       ? draft.allergens_possible_derived
       : [],
+    calculated_allergens: draft?.calculated_allergens ?? null,
     storages: Array.isArray(draft?.storages) ? draft.storages : [],
     apps: Array.isArray(draft?.apps) ? draft.apps : [],
     items: Array.isArray(draft?.items) ? draft.items : [],
@@ -169,4 +170,22 @@ export function getCompositionItemName(item) {
 
 export function getCompositionUnitName(item) {
   return item?.unit_name || item?.ei_name || item?.ed_izmer_name || item?.unit?.name || "-";
+}
+
+function pickFirstDefined(...values) {
+  for (const value of values) {
+    if (value !== null && value !== undefined && value !== "") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+export function getCompositionLoss(item) {
+  return pickFirstDefined(item?.loss, item?.waste, item?.proc_loss, item?.loss_percent);
+}
+
+export function getCompositionOutput(item) {
+  return pickFirstDefined(item?.res, item?.output, item?.all_w, item?.weight_out);
 }

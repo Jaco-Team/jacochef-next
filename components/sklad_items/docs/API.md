@@ -185,6 +185,8 @@ Notes:
 
 - `items` is returned for active unit blockers in both `units/list` and `units/get_one`
 - `items` is a compact preview, capped on backend side
+- active warehouse-item usage includes both `jaco_main_rolls.items` (managed by `sklad_items_module_new`) and `jaco_main_rolls.items_new`
+- historical warehouse-item usage includes both `jaco_main_rolls.items_hist` and `jaco_main_rolls.items_hist_new`
 - `history_relations` remains count-only
 
 ### `POST|ANY /api/sklad_items/units/get_one`
@@ -480,6 +482,12 @@ Warehouse item detail rules:
 - `history.rows` returns the recent embedded revision list for this item detail
 - warehouse item detail history is lightweight; full revision open/compare still goes through canonical history endpoints
 - `categories`, `units`, `allergens`, `accounting_systems`, `storages`, `apps` are edit references, not a second entity payload
+- `calculated_allergens` is a read-only precaution calculation from the current composition graph; it does not change manual allergen fields
+- `calculated_allergens.allergens` contains definite allergens found in direct links, manual declarations, or nested composition
+- `calculated_allergens.possible_allergens` contains possible/trace allergens from the same graph
+- `calculated_allergens.precaution` is the union of both arrays for warning display
+- `calculated_allergens.provenance` identifies the entity and source table that contributed each allergen
+- `calculated_allergens.warnings` reports composition cycles, unsupported component types, and stored PF allergens without current PF composition
 
 ## 5. Recipes
 
@@ -603,6 +611,16 @@ Composition row fields:
 - `id_name`
 - `un_id`
 - `brutto`
+
+Production detail rules:
+
+- `calculated_allergens` is returned at the top level for the current recipe.
+- `calculated_allergens.source = composition` and `calculation_mode = composition_graph`.
+- `calculated_allergens.allergens` and `calculated_allergens.possible_allergens` are named `{id,name}` arrays for visual display.
+- `calculated_allergens.precaution` is the union of definite and possible named allergen arrays.
+- `calculated_allergens.provenance` and `calculated_allergens.warnings` explain the calculation sources and incomplete graph data.
+- The block is read-only and does not replace or update manual `allergens` fields.
+- PF components are traversed through current PF ingredients, manual PF declarations, and stored PF allergen links.
 - `pr_1`
 - `netto`
 - `pr_2`
@@ -847,6 +865,9 @@ Semi-finished detail rules:
 - typed keys are preserved as `{id}-item`
 - only active `items_new.is_show = 1` rows are returned
 - orphaned/inactive warehouse-item links are suppressed
+- `calculated_allergens` is returned at the top level with `source`, `calculation_mode`, `allergens`, `possible_allergens`, `precaution`, `provenance`, and `warnings`.
+- It traverses current PF ingredients and also preserves manual/stored PF allergen declarations as precaution evidence.
+- It is read-only and does not update manual allergen fields.
 
 ### `POST|ANY /api/sklad_items/semi-finished/save_new`
 
@@ -1117,6 +1138,9 @@ Main rules:
 - `composition_source.recipes` = direct `site_item -> recipe` links
 - `composition_derived.pf_total` = aggregated derived PF composition
 - `allergens_derived` and `possible_allergens_derived` are calculated from final composition chain
+- `calculated_allergens` is returned at the top level with `source`, `calculation_mode`, `allergens`, `possible_allergens`, `precaution`, `provenance`, and `warnings`.
+- It traverses stage PFs, stage recipes, linked site items, and the persisted PF aggregate as a compatibility fallback.
+- It is read-only and does not update persisted site-item allergen fields.
 - `marking` is part of `get_one`
 - legacy flat image fields remain:
   - `img_new`
@@ -1517,6 +1541,23 @@ History rules:
 - `history/compare` compares canonical snapshots
 - `site_item` snapshot includes composition, tags, marking, images, timing, nutrition and text fields
 - some dictionary labels may resolve from current tables when historical dictionary snapshots do not exist
+
+Entity-specific history routes are compatibility aliases over the same history service:
+
+- `/api/sklad_items/history/item`
+- `/api/sklad_items/history/item/get_one`
+- `/api/sklad_items/history/item/compare`
+- `/api/sklad_items/history/recipe`
+- `/api/sklad_items/history/recipe/get_one`
+- `/api/sklad_items/history/recipe/compare`
+- `/api/sklad_items/history/semi-finished`
+- `/api/sklad_items/history/semi-finished/get_one`
+- `/api/sklad_items/history/semi-finished/compare`
+- `/api/sklad_items/history/site-item`
+- `/api/sklad_items/history/site-item/get_one`
+- `/api/sklad_items/history/site-item/compare`
+
+They accept the same payload fields as the generic routes and inject the corresponding `entity_type`.
 
 ### `POST|ANY /api/sklad_items/history/compare`
 

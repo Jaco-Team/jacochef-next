@@ -47,6 +47,8 @@ import {
   formatTagNames,
   getCompositionItemId,
   getCompositionItemName,
+  getCompositionLoss,
+  getCompositionOutput,
   getCompositionRowKey,
   getCompositionUnitName,
   normalizeItemOptions,
@@ -60,6 +62,14 @@ function formatMetricValue(value) {
   }
 
   return String(value);
+}
+
+function formatCalculatedAllergenNameList(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => item?.name ?? "").filter(Boolean);
 }
 
 export default function SkladProductionEditorDialog({
@@ -155,6 +165,24 @@ export default function SkladProductionEditorDialog({
     () => formatTagNames(form.allergens_possible_derived),
     [form.allergens_possible_derived],
   );
+  const calculatedAllergenNames = useMemo(() => {
+    const calculated = form?.calculated_allergens;
+
+    if (Array.isArray(calculated?.allergens)) {
+      return formatCalculatedAllergenNameList(calculated.allergens);
+    }
+
+    return derivedAllergenNames;
+  }, [derivedAllergenNames, form?.calculated_allergens]);
+  const calculatedPossibleAllergenNames = useMemo(() => {
+    const calculated = form?.calculated_allergens;
+
+    if (Array.isArray(calculated?.possible_allergens)) {
+      return formatCalculatedAllergenNameList(calculated.possible_allergens);
+    }
+
+    return derivedPossibleAllergenNames;
+  }, [derivedPossibleAllergenNames, form?.calculated_allergens]);
 
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -525,8 +553,8 @@ export default function SkladProductionEditorDialog({
                           Аллергены по составу
                         </Typography>
                         <Typography>
-                          {derivedAllergenNames.length
-                            ? derivedAllergenNames.join(", ")
+                          {calculatedAllergenNames.length
+                            ? calculatedAllergenNames.join(", ")
                             : "Нет расчетных аллергенов."}
                         </Typography>
                       </Grid>
@@ -538,8 +566,8 @@ export default function SkladProductionEditorDialog({
                           Возможные аллергены по составу
                         </Typography>
                         <Typography>
-                          {derivedPossibleAllergenNames.length
-                            ? derivedPossibleAllergenNames.join(", ")
+                          {calculatedPossibleAllergenNames.length
+                            ? calculatedPossibleAllergenNames.join(", ")
                             : "Нет расчетных возможных аллергенов."}
                         </Typography>
                       </Grid>

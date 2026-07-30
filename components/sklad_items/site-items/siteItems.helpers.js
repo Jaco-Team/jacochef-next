@@ -110,6 +110,7 @@ export function normalizeSiteItemDraft(response, fallbackCategories = []) {
     possible_allergens_derived: Array.isArray(response?.possible_allergens_derived)
       ? response.possible_allergens_derived
       : [],
+    calculated_allergens: response?.calculated_allergens ?? null,
     image: response?.image ?? null,
     marking: response?.marking ?? {},
     can_delete: typeof response?.can_delete === "boolean" ? response.can_delete : null,

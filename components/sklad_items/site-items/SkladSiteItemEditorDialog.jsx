@@ -45,8 +45,8 @@ import {
   buildInitialDraft,
   createEmptySiteItemRelations,
   dedupeSelectOptions,
-  getLiveKkalPreview,
   normalizeTagList,
+  getLiveKkalPreview,
   recalculateCompositionRow,
 } from "./siteItemEditor.helpers";
 
@@ -67,6 +67,14 @@ const STAGE_OPTIONS = [
   { id: "stage_2", name: "2 этап" },
   { id: "stage_3", name: "3 этап" },
 ];
+
+function formatCalculatedAllergenNameList(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => item?.name ?? "").filter(Boolean);
+}
 
 export default function SkladSiteItemEditorDialog({
   open,
@@ -150,6 +158,12 @@ export default function SkladSiteItemEditorDialog({
   const selectedTags = useMemo(() => normalizeTagList(form.tags), [form.tags]);
 
   const liveKkalPreview = useMemo(() => getLiveKkalPreview(form), [form]);
+  const calculatedAllergenNames = useMemo(() => {
+    return formatCalculatedAllergenNameList(form?.calculated_allergens?.allergens);
+  }, [form?.calculated_allergens]);
+  const calculatedPossibleAllergenNames = useMemo(() => {
+    return formatCalculatedAllergenNameList(form?.calculated_allergens?.possible_allergens);
+  }, [form?.calculated_allergens]);
   const imageUrl = useMemo(
     () =>
       resolveSiteItemImageUrl(form?.image, draft?.img_app || form?.image?.current_fields?.img_app),
@@ -980,6 +994,40 @@ export default function SkladSiteItemEditorDialog({
                           value={liveKkalPreview}
                           disabled
                         />
+                      </Grid>
+                    </Grid>
+                  </SkladSectionCard>
+
+                  <SkladSectionCard title="Аллергены">
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          Аллергены по составу
+                        </Typography>
+                        <Typography>
+                          {calculatedAllergenNames.length
+                            ? calculatedAllergenNames.join(", ")
+                            : "Нет расчетных аллергенов."}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          Возможные аллергены по составу
+                        </Typography>
+                        <Typography>
+                          {calculatedPossibleAllergenNames.length
+                            ? calculatedPossibleAllergenNames.join(", ")
+                            : "Нет расчетных возможных аллергенов."}
+                        </Typography>
                       </Grid>
                     </Grid>
                   </SkladSectionCard>
