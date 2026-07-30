@@ -2078,6 +2078,7 @@ export class SiteItemsModalTech extends React.Component {
                   <MyTextInput
                     value={item.pr_1}
                     type={"number"}
+                    onWheel={(e) => e.target.blur()}
                     func={this.changeItemList.bind(this, "pr_1", key, stageKey)}
                   />
                 </TableCell>
@@ -2093,6 +2094,7 @@ export class SiteItemsModalTech extends React.Component {
                   <MyTextInput
                     value={item.pr_2}
                     type={"number"}
+                    onWheel={(e) => e.target.blur()}
                     func={this.changeItemList.bind(this, "pr_2", key, stageKey)}
                   />
                 </TableCell>
@@ -2164,6 +2166,7 @@ export class SiteItemsModalTech extends React.Component {
               <MyTextInput
                 value={item.pr_1}
                 type={"number"}
+                onWheel={(e) => e.target.blur()}
                 func={this.changeItemList.bind(this, "pr_1", key, "this_items")}
               />
             </TableCell>
@@ -2179,6 +2182,7 @@ export class SiteItemsModalTech extends React.Component {
               <MyTextInput
                 value={item.pr_2}
                 type={"number"}
+                onWheel={(e) => e.target.blur()}
                 func={this.changeItemList.bind(this, "pr_2", key, "this_items")}
               />
             </TableCell>
