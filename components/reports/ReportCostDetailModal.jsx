@@ -69,7 +69,7 @@ function formatMoney(value) {
   return formatted === "—" ? formatted : `${formatted} ₽`;
 }
 
-function formatQty(value, unit, { digits = 6 } = {}) {
+function formatQty(value, unit, { digits = 3 } = {}) {
   if (value === null || value === undefined || value === "") {
     return "—";
   }
@@ -102,15 +102,11 @@ function formatVolume(value, unit) {
   const valueInKg = isGramUnit(unit) ? num / 1000 : num;
   const displayUnit = isGramUnit(unit) || isKgUnit(unit) ? "кг" : unit;
 
-  if (displayUnit === "кг" && valueInKg !== 0 && Math.abs(valueInKg) < 0.000001) {
-    return "< 0,000001 кг";
-  }
-
-  return formatQty(valueInKg, displayUnit, { digits: 6 });
+  return formatQty(valueInKg, displayUnit, { digits: 3 });
 }
 
 function formatPurchasePrice(value, unit) {
-  const price = formatQty(value, "", { digits: 4 });
+  const price = formatQty(value, "", { digits: 3 });
 
   if (price === "—") {
     return price;
@@ -121,7 +117,7 @@ function formatPurchasePrice(value, unit) {
   return `${price} ₽/${normalizedUnit}`;
 }
 
-function formatFormulaNumber(value, digits = 6) {
+function formatFormulaNumber(value, digits = 3) {
   return formatNumber(value, { digits }).replace(/,?0+$/, "");
 }
 
@@ -167,7 +163,7 @@ function buildRowFormula(row) {
     const priceUnit = String(row.writeOffUnit || "").replace(/\.$/, "") || "ед.";
     lines.push(
       `Стоимость: ${formatFormulaQuantity(row.writeOff, row.writeOffUnit)} × ` +
-        `${formatFormulaNumber(row.unitPrice, 4)} ₽/${priceUnit} = ${formatMoney(row.cost)}`,
+        `${formatFormulaNumber(row.unitPrice, 3)} ₽/${priceUnit} = ${formatMoney(row.cost)}`,
     );
   }
 

@@ -11,7 +11,6 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import TabPanel from "@mui/lab/TabPanel";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
-import { formatDate } from "@/src/helpers/ui/formatDate";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import ReportSalesResult from "@/components/reports/ReportSalesResult";
 import ReportDishesResult from "@/components/reports/ReportDishesResult";
@@ -31,6 +30,19 @@ function createEmptyForms() {
     categories: [],
     positions: [],
   };
+}
+
+function normalizeReportDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = dayjs(value);
+  return date.isValid() ? date : null;
+}
+
+function formatReportDate(value) {
+  return normalizeReportDate(value)?.format("YYYY-MM-DD") ?? null;
 }
 
 function FeedbackPage() {
@@ -157,10 +169,19 @@ function FeedbackPage() {
   }, [value, dishesAllLoaded, module?.name]);
 
   const getDataTable = () => {
+    const dateStart = formatReportDate(forms.dateStart);
+    const dateEnd = formatReportDate(forms.dateEnd);
+
+    if (!dateStart || !dateEnd || dayjs(dateEnd).isBefore(dateStart, "day")) {
+      setErrText("Укажите корректный период: дата окончания не может быть раньше даты начала");
+      setOpenAlert(true);
+      return;
+    }
+
     getData("get_data", {
       ...forms,
-      dateStart: dayjs(forms.dateStart).format("YYYY-MM-DD"),
-      dateEnd: dayjs(forms.dateEnd).format("YYYY-MM-DD"),
+      dateStart,
+      dateEnd,
     }).then((data) => {
       if (data?.st) {
         setReportData(data);
@@ -171,10 +192,19 @@ function FeedbackPage() {
   };
 
   const getDishesDataTable = () => {
+    const dateStart = formatReportDate(dishesForms.dateStart);
+    const dateEnd = formatReportDate(dishesForms.dateEnd);
+
+    if (!dateStart || !dateEnd || dayjs(dateEnd).isBefore(dateStart, "day")) {
+      setErrText("Укажите корректный период: дата окончания не может быть раньше даты начала");
+      setOpenAlert(true);
+      return;
+    }
+
     getData("get_data_dishes", {
       ...dishesForms,
-      dateStart: dayjs(dishesForms.dateStart).format("YYYY-MM-DD"),
-      dateEnd: dayjs(dishesForms.dateEnd).format("YYYY-MM-DD"),
+      dateStart,
+      dateEnd,
     }).then((data) => {
       if (data?.st) {
         setDishesReportData(data);
@@ -258,14 +288,14 @@ function FeedbackPage() {
 
   const reportFilters = {
     points: forms.points,
-    dateStart: forms.dateStart ? dayjs(forms.dateStart).format("YYYY-MM-DD") : null,
-    dateEnd: forms.dateEnd ? dayjs(forms.dateEnd).format("YYYY-MM-DD") : null,
+    dateStart: formatReportDate(forms.dateStart),
+    dateEnd: formatReportDate(forms.dateEnd),
   };
 
   const dishesReportFilters = {
     points: dishesForms.points,
-    dateStart: dishesForms.dateStart ? dayjs(dishesForms.dateStart).format("YYYY-MM-DD") : null,
-    dateEnd: dishesForms.dateEnd ? dayjs(dishesForms.dateEnd).format("YYYY-MM-DD") : null,
+    dateStart: formatReportDate(dishesForms.dateStart),
+    dateEnd: formatReportDate(dishesForms.dateEnd),
   };
 
   const filterButtonSx = {
@@ -420,14 +450,14 @@ function FeedbackPage() {
                   <MyDatePickerNew
                     label="Дата с"
                     value={forms.dateStart}
-                    func={(e) => handleChangeForms("dateStart", formatDate(e))}
+                    func={(e) => handleChangeForms("dateStart", normalizeReportDate(e))}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <MyDatePickerNew
                     label="Дата до"
                     value={forms.dateEnd}
-                    func={(e) => handleChangeForms("dateEnd", formatDate(e))}
+                    func={(e) => handleChangeForms("dateEnd", normalizeReportDate(e))}
                   />
                 </Grid>
                 <Grid
@@ -514,14 +544,14 @@ function FeedbackPage() {
                   <MyDatePickerNew
                     label="Дата с"
                     value={dishesForms.dateStart}
-                    func={(e) => handleChangeDishesForms("dateStart", formatDate(e))}
+                    func={(e) => handleChangeDishesForms("dateStart", normalizeReportDate(e))}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <MyDatePickerNew
                     label="Дата до"
                     value={dishesForms.dateEnd}
-                    func={(e) => handleChangeDishesForms("dateEnd", formatDate(e))}
+                    func={(e) => handleChangeDishesForms("dateEnd", normalizeReportDate(e))}
                   />
                 </Grid>
                 <Grid
