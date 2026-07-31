@@ -47,6 +47,14 @@ export default function MyApp(props) {
               name="viewport"
               content="initial-scale=1, width=device-width"
             />
+            <meta
+              name="robots"
+              content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+            />
+            <meta
+              name="googlebot"
+              content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+            />
           </Head>
           {isHeader && <Header suppressHydrationWarning />}
 
