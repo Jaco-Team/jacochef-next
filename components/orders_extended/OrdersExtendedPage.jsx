@@ -1,27 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import dayjs from "dayjs";
-import DownloadIcon from "@mui/icons-material/Download";
-import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ExpandMore } from "@mui/icons-material";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Backdrop,
-  Button,
-  Collapse,
   CircularProgress,
   Grid,
-  IconButton,
-  Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableFooter,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TableSortLabel,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -29,13 +18,11 @@ import {
 import useApi from "@/src/hooks/useApi";
 import useMyAlert from "@/src/hooks/useMyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
-import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
-import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
-import ModalOrderWithFeedback from "@/components/site_clients/ModalOrderWithFeedback";
-import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
-import { formatNumber, formatRUR } from "@/src/helpers/utils/i18n";
-import { PARAM_OPTIONS, useOrdersExtendedStore } from "./useOrdersExtendedStore";
+import OrdersExtendedFilters from "./OrdersExtendedFilters";
+import OrdersExtendedOrderModal from "./OrdersExtendedOrderModal";
+import OrdersExtendedTable from "./OrdersExtendedTable";
+import { useOrdersExtendedStore } from "./useOrdersExtendedStore";
 
 export default function OrdersExtendedPage() {
   const { api_laravel } = useApi("orders_extended");
@@ -73,6 +60,7 @@ export default function OrdersExtendedPage() {
     openOrderModal,
     setOrderModalOrder,
     closeOrderModal,
+    clearPersistedFilters,
   } = useOrdersExtendedStore();
 
   const apiRef = useRef(api_laravel);
@@ -81,7 +69,7 @@ export default function OrdersExtendedPage() {
   const bootstrapRequestRef = useRef(0);
   const reportRequestRef = useRef(0);
   const orderRequestRef = useRef(0);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const reportCacheRef = useRef(new Map());
 
   apiRef.current = api_laravel;
   showAlertRef.current = showAlert;
@@ -268,17 +256,43 @@ export default function OrdersExtendedPage() {
     }
 
     const requestId = ++reportRequestRef.current;
+    const payload = buildReportPayload(
+      currentFilters,
+      nextPage,
+      nextPerPage,
+      nextSortBy,
+      nextSortDir,
+    );
+    const cacheKey = JSON.stringify(payload);
     setSearchRequestId(requestId);
     setLoading("search", true);
     if (!preserveRows) clearReport();
 
+    const cachedResponse = reportCacheRef.current.get(cacheKey);
+    if (cachedResponse) {
+      if (mountedRef.current && requestId === reportRequestRef.current) {
+        setReport({
+          rows: cachedResponse.orders,
+          total: cachedResponse.total,
+          totals: cachedResponse.totals,
+          exportUrl: cachedResponse.url || "",
+          page: nextPage,
+          perPage: nextPerPage,
+          requestId,
+        });
+        setLoading("search", false);
+      }
+      return true;
+    }
+
     try {
-      const response = await apiRef.current(
-        "get_orders_more",
-        buildReportPayload(currentFilters, nextPage, nextPerPage, nextSortBy, nextSortDir),
-      );
+      const response = await apiRef.current("get_orders_more", payload);
       if (!mountedRef.current || requestId !== reportRequestRef.current) return false;
       if (!response?.orders) throw new Error(response?.text || "Не найдено заказов");
+      reportCacheRef.current.set(cacheKey, response);
+      if (reportCacheRef.current.size > 50) {
+        reportCacheRef.current.delete(reportCacheRef.current.keys().next().value);
+      }
       setReport({
         rows: response.orders,
         total: response.total,
@@ -288,9 +302,6 @@ export default function OrdersExtendedPage() {
         perPage: nextPerPage,
         requestId,
       });
-      if (response.orders.length > 0) {
-        setFiltersOpen(false);
-      }
       return true;
     } catch (error) {
       if (!mountedRef.current || requestId !== reportRequestRef.current) return false;
@@ -412,306 +423,15 @@ export default function OrdersExtendedPage() {
     handleSearchSubmit(event);
   };
 
-  const renderFilterFields = () => (
-    <Grid
-      container
-      spacing={{ xs: 2, md: 1.5 }}
-    >
-      <Grid
-        container
-        spacing={{ xs: 2, md: 1.5 }}
-        size={{ xs: 12, md: 9 }}
-      >
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyDatePickerNew
-            label="Делал заказ от"
-            value={filters.date_start_true}
-            maxDate={filters.date_end_true ? dayjs(filters.date_end_true) : dayjs()}
-            func={(value) => updateFilter("date_start_true", value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyDatePickerNew
-            label="Делал заказ до"
-            value={filters.date_end_true}
-            minDate={filters.date_start_true ? dayjs(filters.date_start_true) : undefined}
-            maxDate={dayjs()}
-            func={(value) => updateFilter("date_end_true", value)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyDatePickerNew
-            label="Не заказывал от"
-            disabled={filters.param?.id === "new"}
-            value={filters.date_start_false}
-            func={(value) => updateFilter("date_start_false", value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyDatePickerNew
-            label="Не заказывал до"
-            disabled={filters.param?.id === "new"}
-            value={filters.date_end_false}
-            func={(value) => updateFilter("date_end_false", value)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Количество заказов от"
-            type="number"
-            min={0}
-            value={filters.count_orders_min}
-            func={(event) => updateFilter("count_orders_min", event)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Количество заказов до"
-            type="number"
-            min={0}
-            value={filters.count_orders_max}
-            func={(event) => updateFilter("count_orders_max", event)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Сумма заказа от"
-            type="number"
-            min={0}
-            value={filters.min_summ}
-            func={(event) => updateFilter("min_summ", event)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Сумма заказа до"
-            type="number"
-            min={0}
-            value={filters.max_summ}
-            func={(event) => updateFilter("max_summ", event)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Средний чек от"
-            type="number"
-            min={0}
-            value={filters.avg_check_min}
-            func={(event) => updateFilter("avg_check_min", event)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Средний чек до"
-            type="number"
-            min={0}
-            value={filters.avg_check_max}
-            func={(event) => updateFilter("avg_check_max", event)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            label="Пользователи"
-            disableClearable
-            data={PARAM_OPTIONS}
-            value={filters.param}
-            func={(_, value) => updateFilter("param", value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            label="Позиции в заказе"
-            multiple
-            data={allItems}
-            value={filters.item}
-            func={(_, value) => updateFilter("item", value)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            label="Категории в заказе"
-            multiple
-            data={categories}
-            value={filters.category_ids}
-            func={(_, value) => updateFilter("category_ids", value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            label="Способ заказа"
-            multiple
-            data={sources}
-            value={filters.source_ids}
-            func={(_, value) => updateFilter("source_ids", value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            label="Тип заказа"
-            multiple
-            data={orderTypes}
-            value={filters.order_type_ids}
-            func={(_, value) => updateFilter("order_type_ids", value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            label="Способ оплаты"
-            multiple
-            data={paymentTypes}
-            value={filters.payment_type_ids}
-            func={(_, value) => updateFilter("payment_type_ids", value)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <CityCafeAutocomplete2
-            points={points}
-            value={filters.point}
-            onChange={(value) => updateFilter("point", value)}
-            label="Кафе"
-            withAll
-            withAllSelected
-            withOrganizationMode={false}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Телефон"
-            type="text"
-            value={filters.number}
-            slotProps={{
-              input: {
-                endAdornment: filters.number ? (
-                  <IconButton
-                    type="button"
-                    onClick={() => updateFilter("number", { target: { value: "" } })}
-                  >
-                    <Close />
-                  </IconButton>
-                ) : null,
-              },
-            }}
-            func={(event) => updateFilter("number", event)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyTextInput
-            label="Промокод"
-            value={filters.promo}
-            disabled={Boolean(filters.no_promo)}
-            slotProps={{
-              input: {
-                endAdornment: filters.promo ? (
-                  <IconButton
-                    type="button"
-                    onClick={() => updateFilter("promo", { target: { value: "" } })}
-                  >
-                    <Close />
-                  </IconButton>
-                ) : null,
-              },
-            }}
-            func={(event) => updateFilter("promo", event)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            useFlexGap
-            flexWrap="wrap"
-            sx={{ minHeight: "100%", alignItems: "center" }}
-          >
-            <MyCheckBox
-              label="Показывать без промокода"
-              value={filters.no_promo}
-              func={(event) => updateFilter("no_promo", event)}
-            />
-            <MyCheckBox
-              label="Показывать с промокодом"
-              value={filters.with_promo}
-              func={(event) => updateFilter("with_promo", event)}
-            />
-          </Stack>
-        </Grid>
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 3 }}>
-        <Stack spacing={1}>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => applyPreset("returned")}
-          >
-            Вернувшиеся
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => applyPreset("missed_90_days")}
-          >
-            Не делал заказ 90 дней
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => applyPreset("new_week")}
-          >
-            Новые за неделю
-          </Button>
-          <MyCheckBox
-            label="Была оформлена ошибка на заказ"
-            value={filters.is_show_claim}
-            func={(event) => updateFilter("is_show_claim", event)}
-          />
-          <MyCheckBox
-            label="Была оформлена ошибка на последний заказ"
-            value={filters.is_show_claim_last}
-            func={(event) => updateFilter("is_show_claim_last", event)}
-          />
-          <MyCheckBox
-            label="Подписка на рекламную рассылку"
-            value={filters.is_show_marketing}
-            func={(event) => updateFilter("is_show_marketing", event)}
-          />
-          <Stack
-            direction="row"
-            spacing={1}
-          >
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading.search || loading.bootstrap}
-              sx={{ flexGrow: 1 }}
-            >
-              Получить список заказов
-            </Button>
-            {canAccess("export_items") ? (
-              <Button
-                type="button"
-                variant="contained"
-                disabled={!rows.length || loading.export || loading.search}
-                onClick={runExport}
-                sx={{ backgroundColor: exportUrl ? "#3cb623ff" : "#ffcc00", minWidth: 48 }}
-              >
-                <DownloadIcon />
-              </Button>
-            ) : null}
-          </Stack>
-        </Stack>
-      </Grid>
-    </Grid>
-  );
+  const handleResetFilters = () => {
+    reportCacheRef.current.clear();
+    clearPersistedFilters();
+    setPage(0);
+    setPerPage(10);
+    setSort("id", "desc");
+    setExportUrl("");
+    clearReport();
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -736,24 +456,14 @@ export default function OrdersExtendedPage() {
         status={alertStatus}
         text={alertMessage}
       />
-      {orderModal.open && orderModal.order ? (
-        canAccess("send_feedback") ? (
-          <ModalOrderWithFeedback
-            open={orderModal.open}
-            onClose={handleOrderModalClose}
-            order={orderModal.order}
-            getData={(method, payload) => apiRef.current(method, payload)}
-            showAlert={showAlert}
-            openOrder={(pointId, orderId) => runOpenOrder(pointId, orderId, orderModal.row)}
-          />
-        ) : (
-          <OrderDetailsModal
-            open={orderModal.open}
-            onClose={handleOrderModalClose}
-            order={orderModal.order}
-          />
-        )
-      ) : null}
+      <OrdersExtendedOrderModal
+        orderModal={orderModal}
+        canSendFeedback={canAccess("send_feedback")}
+        getData={(method, payload) => apiRef.current(method, payload)}
+        showAlert={showAlert}
+        onClose={handleOrderModalClose}
+        onOpenOrder={runOpenOrder}
+      />
       <Grid
         container
         spacing={3}
@@ -766,143 +476,88 @@ export default function OrdersExtendedPage() {
           <h1>{moduleName || "Заказы"}</h1>
         </Grid>
         <Grid size={12}>
-          <Stack spacing={2}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
+          {isDesktop ? (
+            <Stack spacing={2}>
               <h3 style={{ margin: 0 }}>Фильтры</h3>
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                endIcon={filtersOpen ? <ExpandLess /> : <ExpandMore />}
-                onClick={() => setFiltersOpen((prev) => !prev)}
-              >
-                {filtersOpen ? "Свернуть" : "Развернуть"}
-              </Button>
-            </Stack>
-
-            <Collapse
-              in={filtersOpen}
-              timeout="auto"
-              unmountOnExit
-            >
-              <Paper
-                component="form"
+              <OrdersExtendedFilters
+                filters={filters}
+                points={points}
+                allItems={allItems}
+                categories={categories}
+                sources={sources}
+                orderTypes={orderTypes}
+                paymentTypes={paymentTypes}
+                rows={rows}
+                loading={loading}
+                exportUrl={exportUrl}
+                isDesktop={isDesktop}
+                canExport={canAccess("export_items")}
                 onSubmit={handleSearchSubmit}
                 onKeyDown={handleDesktopFormKeyDown}
-                sx={{
-                  p: 2,
-                  maxHeight: { xs: "70vh", md: "50vh" },
-                  overflowY: "auto",
-                }}
-              >
-                {renderFilterFields()}
-              </Paper>
-            </Collapse>
-          </Stack>
+                onUpdateFilter={updateFilter}
+                onApplyPreset={applyPreset}
+                onReset={handleResetFilters}
+                onExport={runExport}
+              />
+            </Stack>
+          ) : (
+            <Accordion
+              defaultExpanded
+              disableGutters
+            >
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <h3 style={{ margin: 0 }}>Фильтры</h3>
+              </AccordionSummary>
+              <AccordionDetails sx={{ p: 0 }}>
+                <OrdersExtendedFilters
+                  filters={filters}
+                  points={points}
+                  allItems={allItems}
+                  categories={categories}
+                  sources={sources}
+                  orderTypes={orderTypes}
+                  paymentTypes={paymentTypes}
+                  rows={rows}
+                  loading={loading}
+                  exportUrl={exportUrl}
+                  isDesktop={isDesktop}
+                  canExport={canAccess("export_items")}
+                  onSubmit={handleSearchSubmit}
+                  onKeyDown={handleDesktopFormKeyDown}
+                  onUpdateFilter={updateFilter}
+                  onApplyPreset={applyPreset}
+                  onReset={handleResetFilters}
+                  onExport={runExport}
+                  mobile
+                />
+              </AccordionDetails>
+            </Accordion>
+          )}
         </Grid>
 
-        {!rows.length ? null : (
-          <Grid size={12}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>#</TableCell>
-                    {[
-                      ["source", "Источник трафика"],
-                      ["type_user", "Оформил"],
-                      ["address", "Адрес доставки"],
-                      ["type_order", "Тип"],
-                      ["status", "Статус"],
-                      ["order_price", "Сумма"],
-                      ["avg_check", "Средний чек"],
-                      ["promo_name", "Промокод"],
-                      ["type_pay", "Оплата"],
-                      ["driver", "Курьер"],
-                    ].map(([field, label]) => (
-                      <TableCell
-                        key={field}
-                        sortDirection={sortBy === field ? sortDir : false}
-                      >
-                        <TableSortLabel
-                          active={sortBy === field}
-                          direction={sortBy === field ? sortDir : "asc"}
-                          onClick={() => handleSort(field)}
-                        >
-                          {label}
-                        </TableSortLabel>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.map((item, index) => {
-                    return (
-                      <TableRow
-                        key={`${item.source ?? "source"}-${item.driver ?? "driver"}-${index}`}
-                        hover
-                        onClick={() => handleOrderRowClick(item)}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <TableCell>{page * perPage + index + 1}</TableCell>
-                        <TableCell>{item.source}</TableCell>
-                        <TableCell>{item.type_user}</TableCell>
-                        <TableCell>{item.address}</TableCell>
-                        <TableCell>{item.type_order}</TableCell>
-                        <TableCell>{item.status}</TableCell>
-                        <TableCell>{formatRUR(item.order_price, false)}</TableCell>
-                        <TableCell>{formatRUR(item.avg_check, false)}</TableCell>
-                        <TableCell>{item.promo_name}</TableCell>
-                        <TableCell>{item.type_pay}</TableCell>
-                        <TableCell>{item.driver}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell>
-                      <strong>Итого: {formatNumber(totals.count, 0, 0)}</strong>
-                    </TableCell>
-                    <TableCell colSpan={5} />
-                    <TableCell>
-                      <strong>{formatRUR(totals.order_price_sum, false)}</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>{formatRUR(totals.avg_check_avg, false)}</strong>
-                    </TableCell>
-                    <TableCell />
-                    <TableCell />
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[10, 50, 100]}
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
-              labelRowsPerPage="Записей на странице:"
-              component="div"
-              count={total}
-              rowsPerPage={perPage}
-              page={page}
-              onPageChange={(_, nextPage) => {
-                setPage(nextPage);
-                runSearch({ nextPage, nextPerPage: perPage, preserveRows: true });
-              }}
-              onRowsPerPageChange={(event) => {
-                const nextPerPage = parseInt(event.target.value, 10);
-                setPerPage(nextPerPage);
-                setPage(0);
-                runSearch({ nextPage: 0, nextPerPage, preserveRows: true });
-              }}
-            />
-          </Grid>
-        )}
+        <Grid size={12}>
+          <OrdersExtendedTable
+            rows={rows}
+            totals={totals}
+            total={total}
+            page={page}
+            perPage={perPage}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSort={handleSort}
+            onRowClick={handleOrderRowClick}
+            onPageChange={(_, nextPage) => {
+              setPage(nextPage);
+              runSearch({ nextPage, nextPerPage: perPage, preserveRows: true });
+            }}
+            onRowsPerPageChange={(event) => {
+              const nextPerPage = parseInt(event.target.value, 10);
+              setPerPage(nextPerPage);
+              setPage(0);
+              runSearch({ nextPage: 0, nextPerPage, preserveRows: true });
+            }}
+          />
+        </Grid>
       </Grid>
     </>
   );
