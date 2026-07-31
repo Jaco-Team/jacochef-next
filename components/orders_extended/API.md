@@ -25,7 +25,7 @@ Form-поля формируются общим helper: `method`, `module=orders
 - `acces` — raw access payload middleware;
 - `points` — доступные пользователю точки;
 - `all_items` — позиции для фильтра старого отчёта;
-- `items` — дополнительный legacy список позиций.
+- `items` — дополнительный список позиций текущего контракта.
 - `categories` — видимые категории;
 - `sources` — `0: Кафе`, `1: КЦ`, `2: Сайт`;
 - `order_types` — `1: Доставка`, `2: Самовывоз`, `3: Зал`, `4: Зал с собой`;
@@ -41,7 +41,7 @@ FE не переименовывает поля raw access и используе
 
 ## `get_orders_more`
 
-Метод сохраняет legacy payload и принимает расширенные поля нового модуля.
+Метод сохраняет текущий payload и принимает расширенные поля нового модуля.
 
 ```json
 {
@@ -80,7 +80,7 @@ FE не переименовывает поля raw access и используе
 
 Успешный ответ:
 
-- `orders` — строки legacy отчёта;
+- `orders` — строки текущего отчёта;
 - `total` — общее число строк;
 - `url` — URL export-файла либо пустая строка.
 - New row fields: `avg_check` and `promo_name`.
@@ -99,15 +99,15 @@ FE не переименовывает поля raw access и используе
 { "point_id": 1, "order_id": 123 }
 ```
 
-Ответ сохраняет legacy поля заказа, позиций и ошибки заказа. Метод используется строковым modal flow.
+Ответ сохраняет текущие поля заказа, позиций и ошибки заказа. Метод используется строковым modal flow.
 
 ## `save_feedbacks`
 
-Метод сохраняет legacy request/response shape `site_clients/save_feedbacks`. Вызывать только при `send_feedback`.
+Метод сохраняет текущий request/response shape `site_clients/save_feedbacks`. Вызывать только при `send_feedback`.
 
 ## Семантика расширенных фильтров
 
-- `avg_check_min/max`: `SUM(site_orders_new.summ) / COUNT(*)` по номеру клиента, выбранным точкам и периоду `date_start_true..date_end_true`.
+- `avg_check_min/max`: `SUM(site_orders_new.summ) / COUNT(*)` по номеру клиента, выбранным точкам и периоду `date_start_true..date_end_true`; `0` и `null` отключают соответствующую границу.
 - `category_ids` и `item`: внутри каждого списка совпадает любое значение; если заданы оба списка, одна позиция заказа должна соответствовать и категории, и item.
 - `source_ids`: точные `site_orders_new.is_client` IDs `0/1/2`.
 - `order_type_ids`: точные `orders.type_order` IDs `1..4`.
@@ -115,4 +115,4 @@ FE не переименовывает поля raw access и используе
 - `promo`: точное имя промокода; `no_promo`: `promo_id=0`; `with_promo`: `promo_id>0`. Включённые фильтры объединяются через `AND`; `no_promo` с `promo`/`with_promo` не даёт строк.
 - `param.id=lost`: предыдущий qualifying order в 90 дней до периода, qualifying order в выбранном периоде и отсутствие qualifying delivery/self-pickup order в 90 дней после периода. Qualifying order: `type_order IN (1,2)`, `client_id != 0`.
 
-DOCX table fields: `source`, `type_user`, address, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`. Legacy fields excluded by the DOCX remain in JSON for compatibility.
+DOCX table fields: `source`, `type_user`, address, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`. Fields excluded by the DOCX remain in JSON for compatibility.
