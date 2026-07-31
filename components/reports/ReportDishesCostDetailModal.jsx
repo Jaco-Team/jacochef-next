@@ -81,7 +81,7 @@ function formatQty(value, unit, { digits = 3 } = {}) {
   }
 
   const formatted = new Intl.NumberFormat("ru-RU", {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(num);
 
@@ -106,7 +106,7 @@ function formatVolume(value, unit) {
 }
 
 function formatPurchasePrice(value, unit) {
-  const price = formatQty(value, "", { digits: 3 });
+  const price = formatNumber(value, { digits: 2 });
 
   if (price === "—") {
     return price;
@@ -118,7 +118,7 @@ function formatPurchasePrice(value, unit) {
 }
 
 function formatFormulaNumber(value, digits = 3) {
-  return formatNumber(value, { digits }).replace(/,?0+$/, "");
+  return formatNumber(value, { digits });
 }
 
 function formatFormulaQuantity(value, unit) {
@@ -163,7 +163,7 @@ function buildRowFormula(row) {
     const priceUnit = String(row.writeOffUnit || "").replace(/\.$/, "") || "ед.";
     lines.push(
       `Стоимость: ${formatFormulaQuantity(row.writeOff, row.writeOffUnit)} × ` +
-        `${formatFormulaNumber(row.unitPrice, 3)} ₽/${priceUnit} = ${formatMoney(row.cost)}`,
+        `${formatFormulaNumber(row.unitPrice, 2)} ₽/${priceUnit} = ${formatMoney(row.cost)}`,
     );
   }
 

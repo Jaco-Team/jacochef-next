@@ -11,6 +11,7 @@
 - Prefer existing project patterns over introducing new abstractions.
 - When a page already has an established visual language, preserve it instead of redesigning it.
 - Prefer focused changes inside the current module over broad refactors.
+- In Reports cost breakdowns, display product volumes with exactly three decimal places and all monetary values, including purchase prices, with exactly two.
 
 ## Workflow
 
