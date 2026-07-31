@@ -24,8 +24,8 @@ Form-поля формируются общим helper: `method`, `module=orders
 - `module_info` — registry-информация модуля;
 - `acces` — raw access payload middleware;
 - `points` — доступные пользователю точки;
-- `all_items` — позиции для фильтра старого отчёта;
-- `items` — дополнительный список позиций текущего контракта.
+- `all_items` — позиции для фильтра отчёта;
+- `items` — дополнительный список позиций контракта.
 - `categories` — видимые категории;
 - `sources` — `0: Кафе`, `1: КЦ`, `2: Сайт`;
 - `order_types` — `1: Доставка`, `2: Самовывоз`, `3: Зал`, `4: Зал с собой`;
@@ -41,7 +41,7 @@ FE не переименовывает поля raw access и используе
 
 ## `get_orders_more`
 
-Метод сохраняет текущий payload и принимает расширенные поля нового модуля.
+Метод принимает расширенные поля модуля.
 
 ```json
 {
@@ -70,7 +70,9 @@ FE не переименовывает поля raw access и используе
   "with_promo": false,
   "number": null,
   "page": 1,
-  "perPage": 10
+  "perPage": 10,
+  "sort_by": "id",
+  "sort_dir": "desc"
 }
 ```
 
@@ -80,8 +82,12 @@ FE не переименовывает поля raw access и используе
 
 Успешный ответ:
 
-- `orders` — строки текущего отчёта;
+- `orders` — строки отчёта;
 - `total` — общее число строк;
+- `totals` — totals for the complete filtered result set, independent of pagination:
+  - `count` — number of filtered order rows;
+  - `order_price_sum` — sum of `order_price`;
+  - `avg_check_avg` — arithmetic average of `avg_check`;
 - `url` — URL export-файла либо пустая строка.
 - New row fields: `avg_check` and `promo_name`.
 
@@ -99,11 +105,11 @@ FE не переименовывает поля raw access и используе
 { "point_id": 1, "order_id": 123 }
 ```
 
-Ответ сохраняет текущие поля заказа, позиций и ошибки заказа. Метод используется строковым modal flow.
+Ответ содержит поля заказа, позиций и ошибки заказа. Метод используется строковым modal flow.
 
 ## `save_feedbacks`
 
-Метод сохраняет текущий request/response shape `site_clients/save_feedbacks`. Вызывать только при `send_feedback`.
+Метод использует request/response shape `site_clients/save_feedbacks`. Вызывать только при `send_feedback`.
 
 ## Семантика расширенных фильтров
 
@@ -112,6 +118,7 @@ FE не переименовывает поля raw access и используе
 - `source_ids`: точные `site_orders_new.is_client` IDs `0/1/2`.
 - `order_type_ids`: точные `orders.type_order` IDs `1..4`.
 - `payment_type_ids`: `1` — `orders.type_pay=1` (`Нал`), `2` — `orders.type_pay!=1` (`Безнал`).
+- Sorting is server-side before pagination. Allowed `sort_by`: `id`, `source`, `type_user`, `address`, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`; `sort_dir`: `asc` or `desc`.
 - `promo`: точное имя промокода; `no_promo`: `promo_id=0`; `with_promo`: `promo_id>0`. Включённые фильтры объединяются через `AND`; `no_promo` с `promo`/`with_promo` не даёт строк.
 - `param.id=lost`: предыдущий qualifying order в 90 дней до периода, qualifying order в выбранном периоде и отсутствие qualifying delivery/self-pickup order в 90 дней после периода. Qualifying order: `type_order IN (1,2)`, `client_id != 0`.
 

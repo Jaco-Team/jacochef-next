@@ -1,23 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import DownloadIcon from "@mui/icons-material/Download";
-import { Close } from "@mui/icons-material";
+import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 import {
   Backdrop,
   Button,
+  Collapse,
   CircularProgress,
   Grid,
   IconButton,
+  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TablePagination,
   TableRow,
+  TableSortLabel,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
 import useApi from "@/src/hooks/useApi";
@@ -28,6 +34,7 @@ import MyAlert from "@/ui/MyAlert";
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import ModalOrderWithFeedback from "@/components/site_clients/ModalOrderWithFeedback";
 import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
+import { formatNumber, formatRUR } from "@/src/helpers/utils/i18n";
 import { PARAM_OPTIONS, useOrdersExtendedStore } from "./useOrdersExtendedStore";
 
 export default function OrdersExtendedPage() {
@@ -45,8 +52,11 @@ export default function OrdersExtendedPage() {
     filters,
     rows,
     total,
+    totals,
     page,
     perPage,
+    sortBy,
+    sortDir,
     loading,
     exportUrl,
     orderModal,
@@ -57,6 +67,7 @@ export default function OrdersExtendedPage() {
     clearReport,
     setPage,
     setPerPage,
+    setSort,
     setExportUrl,
     setSearchRequestId,
     openOrderModal,
@@ -70,9 +81,12 @@ export default function OrdersExtendedPage() {
   const bootstrapRequestRef = useRef(0);
   const reportRequestRef = useRef(0);
   const orderRequestRef = useRef(0);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   apiRef.current = api_laravel;
   showAlertRef.current = showAlert;
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
   const accessHandler = useMemo(() => handleUserAccess(rawAccess ?? {}), [rawAccess]);
   const canAccess = (property) => {
@@ -92,7 +106,13 @@ export default function OrdersExtendedPage() {
     return Boolean(response.module_info);
   };
 
-  const buildReportPayload = (currentFilters, nextPage = page, nextPerPage = perPage) => ({
+  const buildReportPayload = (
+    currentFilters,
+    nextPage = page,
+    nextPerPage = perPage,
+    nextSortBy = sortBy,
+    nextSortDir = sortDir,
+  ) => ({
     date_start_true: formatDateForApi(currentFilters.date_start_true),
     date_end_true: formatDateForApi(currentFilters.date_end_true),
     date_start_false: formatDateForApi(currentFilters.date_start_false),
@@ -119,6 +139,8 @@ export default function OrdersExtendedPage() {
     number: currentFilters.number || null,
     page: nextPage + 1,
     perPage: nextPerPage,
+    sort_by: nextSortBy,
+    sort_dir: nextSortDir,
   });
 
   const normalizeFilterValue = (name, value) => {
@@ -234,6 +256,8 @@ export default function OrdersExtendedPage() {
   const runSearch = async ({
     nextPage = page,
     nextPerPage = perPage,
+    nextSortBy = sortBy,
+    nextSortDir = sortDir,
     currentFilters = filters,
     preserveRows = true,
   } = {}) => {
@@ -251,18 +275,22 @@ export default function OrdersExtendedPage() {
     try {
       const response = await apiRef.current(
         "get_orders_more",
-        buildReportPayload(currentFilters, nextPage, nextPerPage),
+        buildReportPayload(currentFilters, nextPage, nextPerPage, nextSortBy, nextSortDir),
       );
       if (!mountedRef.current || requestId !== reportRequestRef.current) return false;
       if (!response?.orders) throw new Error(response?.text || "Не найдено заказов");
       setReport({
         rows: response.orders,
         total: response.total,
+        totals: response.totals,
         exportUrl: response.url || "",
         page: nextPage,
         perPage: nextPerPage,
         requestId,
       });
+      if (response.orders.length > 0) {
+        setFiltersOpen(false);
+      }
       return true;
     } catch (error) {
       if (!mountedRef.current || requestId !== reportRequestRef.current) return false;
@@ -272,6 +300,18 @@ export default function OrdersExtendedPage() {
       if (!mountedRef.current || requestId !== reportRequestRef.current) return;
       setLoading("search", false);
     }
+  };
+
+  const handleSort = (field) => {
+    const nextSortDir = sortBy === field && sortDir === "asc" ? "desc" : "asc";
+    setSort(field, nextSortDir);
+    runSearch({
+      nextPage: 0,
+      nextPerPage: perPage,
+      nextSortBy: field,
+      nextSortDir,
+      preserveRows: true,
+    });
   };
 
   const runExport = async () => {
@@ -355,6 +395,324 @@ export default function OrdersExtendedPage() {
     closeOrderModal();
   };
 
+  const handleSearchSubmit = async (event) => {
+    event?.preventDefault();
+    await runSearch({
+      nextPage: 0,
+      nextPerPage: perPage,
+      preserveRows: true,
+    });
+  };
+
+  const handleDesktopFormKeyDown = (event) => {
+    if (!isDesktop || event.key !== "Enter") return;
+    const targetTagName = event.target?.tagName?.toLowerCase();
+    if (targetTagName === "textarea") return;
+    event.preventDefault();
+    handleSearchSubmit(event);
+  };
+
+  const renderFilterFields = () => (
+    <Grid
+      container
+      spacing={{ xs: 2, md: 1.5 }}
+    >
+      <Grid
+        container
+        spacing={{ xs: 2, md: 1.5 }}
+        size={{ xs: 12, md: 9 }}
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyDatePickerNew
+            label="Делал заказ от"
+            value={filters.date_start_true}
+            maxDate={filters.date_end_true ? dayjs(filters.date_end_true) : dayjs()}
+            func={(value) => updateFilter("date_start_true", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyDatePickerNew
+            label="Делал заказ до"
+            value={filters.date_end_true}
+            minDate={filters.date_start_true ? dayjs(filters.date_start_true) : undefined}
+            maxDate={dayjs()}
+            func={(value) => updateFilter("date_end_true", value)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyDatePickerNew
+            label="Не заказывал от"
+            disabled={filters.param?.id === "new"}
+            value={filters.date_start_false}
+            func={(value) => updateFilter("date_start_false", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyDatePickerNew
+            label="Не заказывал до"
+            disabled={filters.param?.id === "new"}
+            value={filters.date_end_false}
+            func={(value) => updateFilter("date_end_false", value)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Количество заказов от"
+            type="number"
+            min={0}
+            value={filters.count_orders_min}
+            func={(event) => updateFilter("count_orders_min", event)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Количество заказов до"
+            type="number"
+            min={0}
+            value={filters.count_orders_max}
+            func={(event) => updateFilter("count_orders_max", event)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Сумма заказа от"
+            type="number"
+            min={0}
+            value={filters.min_summ}
+            func={(event) => updateFilter("min_summ", event)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Сумма заказа до"
+            type="number"
+            min={0}
+            value={filters.max_summ}
+            func={(event) => updateFilter("max_summ", event)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Средний чек от"
+            type="number"
+            min={0}
+            value={filters.avg_check_min}
+            func={(event) => updateFilter("avg_check_min", event)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Средний чек до"
+            type="number"
+            min={0}
+            value={filters.avg_check_max}
+            func={(event) => updateFilter("avg_check_max", event)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
+            label="Пользователи"
+            disableClearable
+            data={PARAM_OPTIONS}
+            value={filters.param}
+            func={(_, value) => updateFilter("param", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
+            label="Позиции в заказе"
+            multiple
+            data={allItems}
+            value={filters.item}
+            func={(_, value) => updateFilter("item", value)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
+            label="Категории в заказе"
+            multiple
+            data={categories}
+            value={filters.category_ids}
+            func={(_, value) => updateFilter("category_ids", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
+            label="Способ заказа"
+            multiple
+            data={sources}
+            value={filters.source_ids}
+            func={(_, value) => updateFilter("source_ids", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
+            label="Тип заказа"
+            multiple
+            data={orderTypes}
+            value={filters.order_type_ids}
+            func={(_, value) => updateFilter("order_type_ids", value)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
+            label="Способ оплаты"
+            multiple
+            data={paymentTypes}
+            value={filters.payment_type_ids}
+            func={(_, value) => updateFilter("payment_type_ids", value)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <CityCafeAutocomplete2
+            points={points}
+            value={filters.point}
+            onChange={(value) => updateFilter("point", value)}
+            label="Кафе"
+            withAll
+            withAllSelected
+            withOrganizationMode={false}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Телефон"
+            type="text"
+            value={filters.number}
+            slotProps={{
+              input: {
+                endAdornment: filters.number ? (
+                  <IconButton
+                    type="button"
+                    onClick={() => updateFilter("number", { target: { value: "" } })}
+                  >
+                    <Close />
+                  </IconButton>
+                ) : null,
+              },
+            }}
+            func={(event) => updateFilter("number", event)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyTextInput
+            label="Промокод"
+            value={filters.promo}
+            disabled={Boolean(filters.no_promo)}
+            slotProps={{
+              input: {
+                endAdornment: filters.promo ? (
+                  <IconButton
+                    type="button"
+                    onClick={() => updateFilter("promo", { target: { value: "" } })}
+                  >
+                    <Close />
+                  </IconButton>
+                ) : null,
+              },
+            }}
+            func={(event) => updateFilter("promo", event)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            useFlexGap
+            flexWrap="wrap"
+            sx={{ minHeight: "100%", alignItems: "center" }}
+          >
+            <MyCheckBox
+              label="Показывать без промокода"
+              value={filters.no_promo}
+              func={(event) => updateFilter("no_promo", event)}
+            />
+            <MyCheckBox
+              label="Показывать с промокодом"
+              value={filters.with_promo}
+              func={(event) => updateFilter("with_promo", event)}
+            />
+          </Stack>
+        </Grid>
+      </Grid>
+
+      <Grid size={{ xs: 12, md: 3 }}>
+        <Stack spacing={1}>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => applyPreset("returned")}
+          >
+            Вернувшиеся
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => applyPreset("missed_90_days")}
+          >
+            Не делал заказ 90 дней
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => applyPreset("new_week")}
+          >
+            Новые за неделю
+          </Button>
+          <MyCheckBox
+            label="Была оформлена ошибка на заказ"
+            value={filters.is_show_claim}
+            func={(event) => updateFilter("is_show_claim", event)}
+          />
+          <MyCheckBox
+            label="Была оформлена ошибка на последний заказ"
+            value={filters.is_show_claim_last}
+            func={(event) => updateFilter("is_show_claim_last", event)}
+          />
+          <MyCheckBox
+            label="Подписка на рекламную рассылку"
+            value={filters.is_show_marketing}
+            func={(event) => updateFilter("is_show_marketing", event)}
+          />
+          <Stack
+            direction="row"
+            spacing={1}
+          >
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading.search || loading.bootstrap}
+              sx={{ flexGrow: 1 }}
+            >
+              Получить список заказов
+            </Button>
+            {canAccess("export_items") ? (
+              <Button
+                type="button"
+                variant="contained"
+                disabled={!rows.length || loading.export || loading.search}
+                onClick={runExport}
+                sx={{ backgroundColor: exportUrl ? "#3cb623ff" : "#ffcc00", minWidth: 48 }}
+              >
+                <DownloadIcon />
+              </Button>
+            ) : null}
+          </Stack>
+        </Stack>
+      </Grid>
+    </Grid>
+  );
+
   useEffect(() => {
     mountedRef.current = true;
     runBootstrap();
@@ -407,306 +765,44 @@ export default function OrdersExtendedPage() {
         >
           <h1>{moduleName || "Заказы"}</h1>
         </Grid>
-        <Grid
-          container
-          size={12}
-          spacing={3}
-        >
-          <Grid
-            container
-            size={{ xs: 12, sm: 8 }}
-            spacing={3}
-          >
-            <Grid size={6}>
-              <MyDatePickerNew
-                label="Делал заказ от"
-                value={filters.date_start_true}
-                maxDate={filters.date_end_true ? dayjs(filters.date_end_true) : dayjs()}
-                func={(value) => updateFilter("date_start_true", value)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyDatePickerNew
-                label="Делал заказ до"
-                value={filters.date_end_true}
-                minDate={filters.date_start_true ? dayjs(filters.date_start_true) : undefined}
-                maxDate={dayjs()}
-                func={(value) => updateFilter("date_end_true", value)}
-              />
-            </Grid>
-
-            <Grid size={6}>
-              <MyDatePickerNew
-                label="Не заказывал от"
-                disabled={filters.param?.id === "new"}
-                value={filters.date_start_false}
-                func={(value) => updateFilter("date_start_false", value)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyDatePickerNew
-                label="Не заказывал до"
-                disabled={filters.param?.id === "new"}
-                value={filters.date_end_false}
-                func={(value) => updateFilter("date_end_false", value)}
-              />
-            </Grid>
-
-            <Grid size={6}>
-              <MyTextInput
-                label="Количество заказов от"
-                type="number"
-                min={0}
-                value={filters.count_orders_min}
-                func={(event) => updateFilter("count_orders_min", event)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyTextInput
-                label="Количество заказов до"
-                type="number"
-                min={0}
-                value={filters.count_orders_max}
-                func={(event) => updateFilter("count_orders_max", event)}
-              />
-            </Grid>
-
-            <Grid size={6}>
-              <MyTextInput
-                label="Сумма заказа от"
-                type="number"
-                min={0}
-                value={filters.min_summ}
-                func={(event) => updateFilter("min_summ", event)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyTextInput
-                label="Сумма заказа до"
-                type="number"
-                min={0}
-                value={filters.max_summ}
-                func={(event) => updateFilter("max_summ", event)}
-              />
-            </Grid>
-
-            <Grid size={6}>
-              <MyTextInput
-                label="Средний чек от"
-                type="number"
-                min={0}
-                value={filters.avg_check_min}
-                func={(event) => updateFilter("avg_check_min", event)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyTextInput
-                label="Средний чек до"
-                type="number"
-                min={0}
-                value={filters.avg_check_max}
-                func={(event) => updateFilter("avg_check_max", event)}
-              />
-            </Grid>
-
-            <Grid size={6}>
-              <MyAutocomplite
-                label="Пользователи"
-                disableClearable
-                data={PARAM_OPTIONS}
-                value={filters.param}
-                func={(_, value) => updateFilter("param", value)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyAutocomplite
-                label="Позиции в заказе"
-                multiple
-                data={allItems}
-                value={filters.item}
-                func={(_, value) => updateFilter("item", value)}
-              />
-            </Grid>
-
-            <Grid size={6}>
-              <MyAutocomplite
-                label="Категории в заказе"
-                multiple
-                data={categories}
-                value={filters.category_ids}
-                func={(_, value) => updateFilter("category_ids", value)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyAutocomplite
-                label="Способ заказа"
-                multiple
-                data={sources}
-                value={filters.source_ids}
-                func={(_, value) => updateFilter("source_ids", value)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyAutocomplite
-                label="Тип заказа"
-                multiple
-                data={orderTypes}
-                value={filters.order_type_ids}
-                func={(_, value) => updateFilter("order_type_ids", value)}
-              />
-            </Grid>
-            <Grid size={6}>
-              <MyAutocomplite
-                label="Способ оплаты"
-                multiple
-                data={paymentTypes}
-                value={filters.payment_type_ids}
-                func={(_, value) => updateFilter("payment_type_ids", value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <CityCafeAutocomplete2
-                points={points}
-                value={filters.point}
-                onChange={(value) => updateFilter("point", value)}
-                label="Кафе"
-                withAll
-                withAllSelected
-                withOrganizationMode={false}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <MyTextInput
-                label="Телефон"
-                type="text"
-                value={filters.number}
-                slotProps={{
-                  input: {
-                    endAdornment: filters.number ? (
-                      <IconButton onClick={() => updateFilter("number", { target: { value: "" } })}>
-                        <Close />
-                      </IconButton>
-                    ) : null,
-                  },
-                }}
-                func={(event) => updateFilter("number", event)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <MyTextInput
-                label="Промокод"
-                value={filters.promo}
-                disabled={Boolean(filters.no_promo)}
-                slotProps={{
-                  input: {
-                    endAdornment: filters.promo ? (
-                      <IconButton onClick={() => updateFilter("promo", { target: { value: "" } })}>
-                        <Close />
-                      </IconButton>
-                    ) : null,
-                  },
-                }}
-                func={(event) => updateFilter("promo", event)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <MyCheckBox
-                label="Заказ без промокода"
-                value={filters.no_promo}
-                func={(event) => updateFilter("no_promo", event)}
-              />
-            </Grid>
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <MyCheckBox
-                label="Заказ с промокодом"
-                value={filters.with_promo}
-                func={(event) => updateFilter("with_promo", event)}
-              />
-            </Grid>
-          </Grid>
-
-          <Grid
-            container
-            size={{ xs: 12, sm: 4 }}
-            spacing={2}
-          >
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                alignItems: { sm: "flex-start", xs: "normal" },
-              }}
+        <Grid size={12}>
+          <Stack spacing={2}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
             >
+              <h3 style={{ margin: 0 }}>Фильтры</h3>
               <Button
-                variant="contained"
-                onClick={() => applyPreset("returned")}
+                type="button"
+                variant="outlined"
+                size="small"
+                endIcon={filtersOpen ? <ExpandLess /> : <ExpandMore />}
+                onClick={() => setFiltersOpen((prev) => !prev)}
               >
-                Вернувшиеся
+                {filtersOpen ? "Свернуть" : "Развернуть"}
               </Button>
-              <Button
-                variant="contained"
-                onClick={() => applyPreset("missed_90_days")}
-              >
-                Не делал заказ 90 дней
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => applyPreset("new_week")}
-              >
-                Новые за неделю
-              </Button>
-              <MyCheckBox
-                label="Была оформлена ошибка на заказ"
-                value={filters.is_show_claim}
-                func={(event) => updateFilter("is_show_claim", event)}
-              />
-              <MyCheckBox
-                label="Была оформлена ошибка на последний заказ"
-                value={filters.is_show_claim_last}
-                func={(event) => updateFilter("is_show_claim_last", event)}
-              />
-              <MyCheckBox
-                label="Подписка на рекламную рассылку"
-                value={filters.is_show_marketing}
-                func={(event) => updateFilter("is_show_marketing", event)}
-              />
-              <Stack
+            </Stack>
+
+            <Collapse
+              in={filtersOpen}
+              timeout="auto"
+              unmountOnExit
+            >
+              <Paper
+                component="form"
+                onSubmit={handleSearchSubmit}
+                onKeyDown={handleDesktopFormKeyDown}
                 sx={{
-                  mt: 2,
-                  gap: 1,
-                  alignSelf: { xs: "center", sm: "flex-end" },
-                  alignItems: "center",
-                  flexDirection: { xs: "row-reverse", sm: "row" },
+                  p: 2,
+                  maxHeight: { xs: "70vh", md: "50vh" },
+                  overflowY: "auto",
                 }}
               >
-                <Button
-                  variant="contained"
-                  disabled={loading.search || loading.bootstrap}
-                  onClick={() =>
-                    runSearch({ nextPage: 0, nextPerPage: perPage, preserveRows: true })
-                  }
-                >
-                  Получить список заказов
-                </Button>
-                {canAccess("export_items") ? (
-                  <Button
-                    variant="contained"
-                    disabled={!rows.length || loading.export || loading.search}
-                    onClick={runExport}
-                    sx={{ backgroundColor: exportUrl ? "#3cb623ff" : "#ffcc00" }}
-                  >
-                    <DownloadIcon />
-                  </Button>
-                ) : null}
-              </Stack>
-            </Grid>
-          </Grid>
+                {renderFilterFields()}
+              </Paper>
+            </Collapse>
+          </Stack>
         </Grid>
 
         {!rows.length ? null : (
@@ -716,16 +812,31 @@ export default function OrdersExtendedPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
-                    <TableCell>Источник трафика</TableCell>
-                    <TableCell>Оформил</TableCell>
-                    <TableCell>Адрес доставки</TableCell>
-                    <TableCell>Тип</TableCell>
-                    <TableCell>Статус</TableCell>
-                    <TableCell>Сумма</TableCell>
-                    <TableCell>Средний чек</TableCell>
-                    <TableCell>Промокод</TableCell>
-                    <TableCell>Оплата</TableCell>
-                    <TableCell>Курьер</TableCell>
+                    {[
+                      ["source", "Источник трафика"],
+                      ["type_user", "Оформил"],
+                      ["address", "Адрес доставки"],
+                      ["type_order", "Тип"],
+                      ["status", "Статус"],
+                      ["order_price", "Сумма"],
+                      ["avg_check", "Средний чек"],
+                      ["promo_name", "Промокод"],
+                      ["type_pay", "Оплата"],
+                      ["driver", "Курьер"],
+                    ].map(([field, label]) => (
+                      <TableCell
+                        key={field}
+                        sortDirection={sortBy === field ? sortDir : false}
+                      >
+                        <TableSortLabel
+                          active={sortBy === field}
+                          direction={sortBy === field ? sortDir : "asc"}
+                          onClick={() => handleSort(field)}
+                        >
+                          {label}
+                        </TableSortLabel>
+                      </TableCell>
+                    ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -743,8 +854,8 @@ export default function OrdersExtendedPage() {
                         <TableCell>{item.address}</TableCell>
                         <TableCell>{item.type_order}</TableCell>
                         <TableCell>{item.status}</TableCell>
-                        <TableCell>{item.order_price}</TableCell>
-                        <TableCell>{item.avg_check}</TableCell>
+                        <TableCell>{formatRUR(item.order_price, false)}</TableCell>
+                        <TableCell>{formatRUR(item.avg_check, false)}</TableCell>
                         <TableCell>{item.promo_name}</TableCell>
                         <TableCell>{item.type_pay}</TableCell>
                         <TableCell>{item.driver}</TableCell>
@@ -752,6 +863,23 @@ export default function OrdersExtendedPage() {
                     );
                   })}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell>
+                      <strong>Итого: {formatNumber(totals.count, 0, 0)}</strong>
+                    </TableCell>
+                    <TableCell colSpan={5} />
+                    <TableCell>
+                      <strong>{formatRUR(totals.order_price_sum, false)}</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>{formatRUR(totals.avg_check_avg, false)}</strong>
+                    </TableCell>
+                    <TableCell />
+                    <TableCell />
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableFooter>
               </Table>
             </TableContainer>
             <TablePagination

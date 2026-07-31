@@ -51,8 +51,15 @@ const DEFAULT_STATE = {
   filters: DEFAULT_FILTERS,
   rows: [],
   total: 0,
+  totals: {
+    count: 0,
+    order_price_sum: 0,
+    avg_check_avg: 0,
+  },
   page: 0,
   perPage: 10,
+  sortBy: "id",
+  sortDir: "desc",
   loading: {
     bootstrap: false,
     search: false,
@@ -128,6 +135,7 @@ export const useOrdersExtendedStore = create((set) => ({
     set((state) => ({
       rows: payload.rows ?? [],
       total: Number(payload.total ?? 0),
+      totals: payload.totals ?? state.totals,
       exportUrl: payload.exportUrl ?? state.exportUrl ?? "",
       page: payload.page ?? state.page,
       perPage: payload.perPage ?? state.perPage,
@@ -140,7 +148,12 @@ export const useOrdersExtendedStore = create((set) => ({
   },
 
   clearReport() {
-    set({ rows: [], total: 0, exportUrl: "" });
+    set({
+      rows: [],
+      total: 0,
+      totals: { count: 0, order_price_sum: 0, avg_check_avg: 0 },
+      exportUrl: "",
+    });
   },
 
   setPage(page) {
@@ -149,6 +162,10 @@ export const useOrdersExtendedStore = create((set) => ({
 
   setPerPage(perPage) {
     set({ perPage });
+  },
+
+  setSort(sortBy, sortDir) {
+    set({ sortBy, sortDir });
   },
 
   setExportUrl(exportUrl = "") {

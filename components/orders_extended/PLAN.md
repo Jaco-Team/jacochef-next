@@ -3,7 +3,7 @@
 ## Current status
 
 - The Bitrix task scope is to create a separate module `Заказы` under `Статистика пользователей`, using the current `ПОИСК ЗАКАЗОВ РАСШИРЕННЫЙ` flow from `site_clients` as the migration source.
-- The current local runtime at `http://localhost:3000/site_clients` confirms the current FE reference still exposes:
+- The local runtime at `http://localhost:3000/site_clients` confirms the report reference exposes:
   - true/false date fields;
   - order count min/max;
   - order sum min/max;
@@ -23,6 +23,9 @@
   - client segment `lost`;
   - filters `avg_check_min`, `avg_check_max`, `category_ids`, `source_ids`, `order_type_ids`, `payment_type_ids`, `with_promo`;
   - report columns `source`, `type_user`, `address`, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`.
+- Result-table sorting is server-side through `sort_by`/`sort_dir`, with deterministic pagination.
+- The result table renders a totals footer for filtered row count, order-price sum, and average check average.
+- Money values use the shared `formatRUR` helper with two decimal places; counts use shared `formatNumber`.
 - This document is FE planning only. It does not authorize backend changes, `site_clients` changes, shared helper rewrites, or speculative data contracts.
 
 ## Locked scope and rules
