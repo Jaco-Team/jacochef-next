@@ -26,6 +26,8 @@ import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyAlert from "@/ui/MyAlert";
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
+import ModalOrderWithFeedback from "@/components/site_clients/ModalOrderWithFeedback";
+import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
 import { PARAM_OPTIONS, useOrdersExtendedStore } from "./useOrdersExtendedStore";
 
 export default function OrdersExtendedPage() {
@@ -36,6 +38,10 @@ export default function OrdersExtendedPage() {
     moduleName,
     points,
     allItems,
+    categories,
+    sources,
+    orderTypes,
+    paymentTypes,
     filters,
     rows,
     total,
@@ -43,6 +49,7 @@ export default function OrdersExtendedPage() {
     perPage,
     loading,
     exportUrl,
+    orderModal,
     setLoading,
     setBootstrap,
     setFilters,
@@ -52,6 +59,9 @@ export default function OrdersExtendedPage() {
     setPerPage,
     setExportUrl,
     setSearchRequestId,
+    openOrderModal,
+    setOrderModalOrder,
+    closeOrderModal,
   } = useOrdersExtendedStore();
 
   const apiRef = useRef(api_laravel);
@@ -59,6 +69,7 @@ export default function OrdersExtendedPage() {
   const mountedRef = useRef(false);
   const bootstrapRequestRef = useRef(0);
   const reportRequestRef = useRef(0);
+  const orderRequestRef = useRef(0);
 
   apiRef.current = api_laravel;
   showAlertRef.current = showAlert;
@@ -93,11 +104,18 @@ export default function OrdersExtendedPage() {
     count_orders_max: currentFilters.count_orders_max,
     min_summ: currentFilters.min_summ,
     max_summ: currentFilters.max_summ,
+    avg_check_min: currentFilters.avg_check_min,
+    avg_check_max: currentFilters.avg_check_max,
     promo: currentFilters.promo,
     no_promo: Boolean(currentFilters.no_promo),
+    with_promo: Boolean(currentFilters.with_promo),
     param: currentFilters.param,
     point: currentFilters.point,
     item: currentFilters.item,
+    category_ids: currentFilters.category_ids,
+    source_ids: currentFilters.source_ids,
+    order_type_ids: currentFilters.order_type_ids,
+    payment_type_ids: currentFilters.payment_type_ids,
     number: currentFilters.number || null,
     page: nextPage + 1,
     perPage: nextPerPage,
@@ -109,7 +127,8 @@ export default function OrdersExtendedPage() {
       name === "is_show_claim" ||
       name === "is_show_claim_last" ||
       name === "is_show_marketing" ||
-      name === "no_promo"
+      name === "no_promo" ||
+      name === "with_promo"
     ) {
       return Boolean(value?.target?.checked);
     }
@@ -120,7 +139,11 @@ export default function OrdersExtendedPage() {
       name === "date_end_false" ||
       name === "point" ||
       name === "item" ||
-      name === "param"
+      name === "param" ||
+      name === "category_ids" ||
+      name === "source_ids" ||
+      name === "order_type_ids" ||
+      name === "payment_type_ids"
     ) {
       return value;
     }
@@ -137,6 +160,11 @@ export default function OrdersExtendedPage() {
 
     if (name === "no_promo" && nextValue) {
       patch.promo = "";
+      patch.with_promo = false;
+    }
+
+    if (name === "with_promo" && nextValue) {
+      patch.no_promo = false;
     }
 
     if (name === "param" && nextValue?.id === "new") {
@@ -279,6 +307,54 @@ export default function OrdersExtendedPage() {
     }
   };
 
+  const runOpenOrder = async (pointId, orderId, row = null) => {
+    if (!pointId || !orderId) {
+      showAlertRef.current("Не удалось открыть заказ: отсутствует идентификатор заказа или точки");
+      return false;
+    }
+
+    const requestId = ++orderRequestRef.current;
+    openOrderModal(row);
+    setOrderModalOrder(null);
+    setLoading("search", true);
+
+    try {
+      const response = await apiRef.current("get_order_orders", {
+        point_id: pointId,
+        order_id: orderId,
+      });
+      if (!mountedRef.current || requestId !== orderRequestRef.current) return false;
+      if (!response?.order) throw new Error(response?.text || "Не удалось загрузить детали заказа");
+      setOrderModalOrder(response);
+      return true;
+    } catch (error) {
+      if (!mountedRef.current || requestId !== orderRequestRef.current) return false;
+      closeOrderModal();
+      showAlertRef.current(error?.message || "Ошибка получения заказа");
+      return false;
+    } finally {
+      if (!mountedRef.current || requestId !== orderRequestRef.current) return;
+      setLoading("search", false);
+    }
+  };
+
+  const handleOrderRowClick = (row) => {
+    const pointId = row?.point_id;
+    const orderId = row?.id;
+
+    if (!pointId || !orderId) {
+      showAlertRef.current("Не удалось открыть заказ: в строке нет point_id или id");
+      return;
+    }
+
+    runOpenOrder(pointId, orderId, row);
+  };
+
+  const handleOrderModalClose = () => {
+    orderRequestRef.current += 1;
+    closeOrderModal();
+  };
+
   useEffect(() => {
     mountedRef.current = true;
     runBootstrap();
@@ -302,6 +378,24 @@ export default function OrdersExtendedPage() {
         status={alertStatus}
         text={alertMessage}
       />
+      {orderModal.open && orderModal.order ? (
+        canAccess("send_feedback") ? (
+          <ModalOrderWithFeedback
+            open={orderModal.open}
+            onClose={handleOrderModalClose}
+            order={orderModal.order}
+            getData={(method, payload) => apiRef.current(method, payload)}
+            showAlert={showAlert}
+            openOrder={(pointId, orderId) => runOpenOrder(pointId, orderId, orderModal.row)}
+          />
+        ) : (
+          <OrderDetailsModal
+            open={orderModal.open}
+            onClose={handleOrderModalClose}
+            order={orderModal.order}
+          />
+        )
+      ) : null}
       <Grid
         container
         spacing={3}
@@ -397,6 +491,25 @@ export default function OrdersExtendedPage() {
             </Grid>
 
             <Grid size={6}>
+              <MyTextInput
+                label="Средний чек от"
+                type="number"
+                min={0}
+                value={filters.avg_check_min}
+                func={(event) => updateFilter("avg_check_min", event)}
+              />
+            </Grid>
+            <Grid size={6}>
+              <MyTextInput
+                label="Средний чек до"
+                type="number"
+                min={0}
+                value={filters.avg_check_max}
+                func={(event) => updateFilter("avg_check_max", event)}
+              />
+            </Grid>
+
+            <Grid size={6}>
               <MyAutocomplite
                 label="Пользователи"
                 disableClearable
@@ -412,6 +525,43 @@ export default function OrdersExtendedPage() {
                 data={allItems}
                 value={filters.item}
                 func={(_, value) => updateFilter("item", value)}
+              />
+            </Grid>
+
+            <Grid size={6}>
+              <MyAutocomplite
+                label="Категории в заказе"
+                multiple
+                data={categories}
+                value={filters.category_ids}
+                func={(_, value) => updateFilter("category_ids", value)}
+              />
+            </Grid>
+            <Grid size={6}>
+              <MyAutocomplite
+                label="Способ заказа"
+                multiple
+                data={sources}
+                value={filters.source_ids}
+                func={(_, value) => updateFilter("source_ids", value)}
+              />
+            </Grid>
+            <Grid size={6}>
+              <MyAutocomplite
+                label="Тип заказа"
+                multiple
+                data={orderTypes}
+                value={filters.order_type_ids}
+                func={(_, value) => updateFilter("order_type_ids", value)}
+              />
+            </Grid>
+            <Grid size={6}>
+              <MyAutocomplite
+                label="Способ оплаты"
+                multiple
+                data={paymentTypes}
+                value={filters.payment_type_ids}
+                func={(_, value) => updateFilter("payment_type_ids", value)}
               />
             </Grid>
 
@@ -468,6 +618,13 @@ export default function OrdersExtendedPage() {
                 label="Заказ без промокода"
                 value={filters.no_promo}
                 func={(event) => updateFilter("no_promo", event)}
+              />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <MyCheckBox
+                label="Заказ с промокодом"
+                value={filters.with_promo}
+                func={(event) => updateFilter("with_promo", event)}
               />
             </Grid>
           </Grid>
@@ -559,91 +716,38 @@ export default function OrdersExtendedPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
-                    <TableCell>Заказ</TableCell>
-                    <TableCell>Точка</TableCell>
                     <TableCell>Источник трафика</TableCell>
                     <TableCell>Оформил</TableCell>
-                    <TableCell>Номер клиента</TableCell>
                     <TableCell>Адрес доставки</TableCell>
-                    <TableCell>Время открытия заказа</TableCell>
-                    <TableCell>Ко времени</TableCell>
-                    <TableCell>Закрыт на кухне</TableCell>
-                    <TableCell>Получен клиентом</TableCell>
-                    <TableCell>Время обещ</TableCell>
                     <TableCell>Тип</TableCell>
+                    <TableCell>Статус</TableCell>
                     <TableCell>Сумма</TableCell>
+                    <TableCell>Средний чек</TableCell>
+                    <TableCell>Промокод</TableCell>
                     <TableCell>Оплата</TableCell>
+                    <TableCell>Курьер</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {rows.map((item, index) => {
-                    const rowStyle =
-                      parseInt(item.is_delete, 10) === 1
-                        ? { backgroundColor: "red", color: "#fff", fontWeight: "bold" }
-                        : {};
-                    const orderCellStyle =
-                      parseInt(item.dist, 10) >= 0
-                        ? { backgroundColor: "yellow", color: "#000", fontWeight: "inherit" }
-                        : { color: "inherit", fontWeight: "inherit" };
-
                     return (
                       <TableRow
-                        key={`${item.point_id ?? "point"}-${item.id ?? index}`}
+                        key={`${item.source ?? "source"}-${item.driver ?? "driver"}-${index}`}
                         hover
-                        style={rowStyle}
+                        onClick={() => handleOrderRowClick(item)}
+                        sx={{ cursor: "pointer" }}
                       >
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {page * perPage + index + 1}
-                        </TableCell>
-                        <TableCell style={orderCellStyle}>{item.id}</TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.point_addr}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.source}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.type_user}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.number}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.street} {item.home}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.date_time_order}
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            color: "inherit",
-                            fontWeight: "inherit",
-                            backgroundColor:
-                              parseInt(item.is_preorder, 10) === 1 ? "#bababa" : "inherit",
-                          }}
-                        >
-                          {item.need_time}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.give_data_time === "00:00:00" ? "" : item.give_data_time}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.close_order}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.unix_time_to_client === "0" || parseInt(item.is_preorder, 10) === 1
-                            ? ""
-                            : item.unix_time_to_client}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.type_order}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.order_price}
-                        </TableCell>
-                        <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
-                          {item.type_pay}
-                        </TableCell>
+                        <TableCell>{page * perPage + index + 1}</TableCell>
+                        <TableCell>{item.source}</TableCell>
+                        <TableCell>{item.type_user}</TableCell>
+                        <TableCell>{item.address}</TableCell>
+                        <TableCell>{item.type_order}</TableCell>
+                        <TableCell>{item.status}</TableCell>
+                        <TableCell>{item.order_price}</TableCell>
+                        <TableCell>{item.avg_check}</TableCell>
+                        <TableCell>{item.promo_name}</TableCell>
+                        <TableCell>{item.type_pay}</TableCell>
+                        <TableCell>{item.driver}</TableCell>
                       </TableRow>
                     );
                   })}

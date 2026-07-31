@@ -18,7 +18,7 @@ Form-поля формируются общим helper: `method`, `module=orders
 {}
 ```
 
-Ответ первого переноса содержит:
+Ответ содержит:
 
 - `st` — успешность ответа;
 - `module_info` — registry-информация модуля;
@@ -26,6 +26,10 @@ Form-поля формируются общим helper: `method`, `module=orders
 - `points` — доступные пользователю точки;
 - `all_items` — позиции для фильтра старого отчёта;
 - `items` — дополнительный legacy список позиций.
+- `categories` — видимые категории;
+- `sources` — `0: Кафе`, `1: КЦ`, `2: Сайт`;
+- `order_types` — `1: Доставка`, `2: Самовывоз`, `3: Зал`, `4: Зал с собой`;
+- `payment_types` — `1: Нал`, `2: Безнал`.
 
 Права:
 
@@ -37,7 +41,7 @@ FE не переименовывает поля raw access и используе
 
 ## `get_orders_more`
 
-Метод временно сохраняет payload старого `site_clients/get_orders_more`.
+Метод сохраняет legacy payload и принимает расширенные поля нового модуля.
 
 ```json
 {
@@ -50,6 +54,8 @@ FE не переименовывает поля raw access и используе
   "is_show_marketing": false,
   "count_orders_min": 0,
   "count_orders_max": 0,
+  "avg_check_min": 0,
+  "avg_check_max": 0,
   "min_summ": 0,
   "max_summ": 0,
   "promo": "",
@@ -57,25 +63,33 @@ FE не переименовывает поля raw access и используе
   "param": { "id": "all", "name": "Найти всех" },
   "point": [{ "id": 1, "name": "..." }],
   "item": [{ "id": 1, "name": "..." }],
+  "category_ids": [1, 2],
+  "source_ids": [0, 2],
+  "order_type_ids": [1, 2],
+  "payment_type_ids": [2],
+  "with_promo": false,
   "number": null,
   "page": 1,
   "perPage": 10
 }
 ```
 
-Допустимые текущие значения `param.id`: `all`, `new`, `current`.
+`point` остаётся массивом выбранных объектов `CityCafeAutocomplete2`; при выборе города со всеми кафе FE передаёт все выбранные point objects.
+
+Допустимые значения `param.id`: `all`, `new`, `current`, `lost`.
 
 Успешный ответ:
 
 - `orders` — строки legacy отчёта;
 - `total` — общее число строк;
 - `url` — URL export-файла либо пустая строка.
+- New row fields: `avg_check` and `promo_name`.
 
 Ошибка: `st=false`, `text` содержит причину (`Выберите даты`, `Выберите точку`, `Не найдено заказов`).
 
 ## `get_orders_more_files`
 
-Принимает тот же фильтр без pagination-ограничения. Возвращает `url`. Вызывать только при `export_items`.
+Принимает тот же расширенный фильтр без pagination-ограничения. Возвращает `url`. Вызывать только при `export_items`.
 
 ## `get_order_orders`
 
@@ -91,6 +105,14 @@ FE не переименовывает поля raw access и используе
 
 Метод сохраняет legacy request/response shape `site_clients/save_feedbacks`. Вызывать только при `send_feedback`.
 
-## Отложенный контракт
+## Семантика расширенных фильтров
 
-Следующий backend/FE этап должен отдельно согласовать нормализованные поля задачи: `avg_check`, `category_ids`, `source_ids`, `order_type_ids`, `payment_type_ids`, `with_promo`, а также точную семантику клиента `Ушедшие`. До этого FE не должен отправлять эти поля как новый контракт и не должен делать предположений о колонках таблицы.
+- `avg_check_min/max`: `SUM(site_orders_new.summ) / COUNT(*)` по номеру клиента, выбранным точкам и периоду `date_start_true..date_end_true`.
+- `category_ids` и `item`: внутри каждого списка совпадает любое значение; если заданы оба списка, одна позиция заказа должна соответствовать и категории, и item.
+- `source_ids`: точные `site_orders_new.is_client` IDs `0/1/2`.
+- `order_type_ids`: точные `orders.type_order` IDs `1..4`.
+- `payment_type_ids`: `1` — `orders.type_pay=1` (`Нал`), `2` — `orders.type_pay!=1` (`Безнал`).
+- `promo`: точное имя промокода; `no_promo`: `promo_id=0`; `with_promo`: `promo_id>0`. Включённые фильтры объединяются через `AND`; `no_promo` с `promo`/`with_promo` не даёт строк.
+- `param.id=lost`: предыдущий qualifying order в 90 дней до периода, qualifying order в выбранном периоде и отсутствие qualifying delivery/self-pickup order в 90 дней после периода. Qualifying order: `type_order IN (1,2)`, `client_id != 0`.
+
+DOCX table fields: `source`, `type_user`, address, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`. Legacy fields excluded by the DOCX remain in JSON for compatibility.

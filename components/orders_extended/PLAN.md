@@ -2,8 +2,8 @@
 
 ## Current status
 
-- The Bitrix task scope is to create a separate module `Заказы` under `Статистика пользователей`, using only the legacy `ПОИСК ЗАКАЗОВ РАСШИРЕННЫЙ` flow from `site_clients` as the migration source.
-- The current local runtime at `http://localhost:3000/site_clients` confirms the legacy FE reference still exposes:
+- The Bitrix task scope is to create a separate module `Заказы` under `Статистика пользователей`, using the current `ПОИСК ЗАКАЗОВ РАСШИРЕННЫЙ` flow from `site_clients` as the migration source.
+- The current local runtime at `http://localhost:3000/site_clients` confirms the current FE reference still exposes:
   - true/false date fields;
   - order count min/max;
   - order sum min/max;
@@ -17,7 +17,12 @@
   - preset buttons;
   - get-orders action;
   - export action.
-- The current `orders_extended` FE scaffold is not a finished module. It still needs its own store, lifecycle ownership, and module-specific orchestration.
+- The current `orders_extended` FE module already owns its store, lifecycle, and module-specific orchestration; remaining work is limited to the still-open phases and verified blockers below.
+- The confirmed `orders_extended` runtime/API scope now also covers:
+  - bootstrap dictionaries `categories`, `sources`, `order_types`, `payment_types`;
+  - client segment `lost`;
+  - filters `avg_check_min`, `avg_check_max`, `category_ids`, `source_ids`, `order_type_ids`, `payment_type_ids`, `with_promo`;
+  - report columns `source`, `type_user`, `address`, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`.
 - This document is FE planning only. It does not authorize backend changes, `site_clients` changes, shared helper rewrites, or speculative data contracts.
 
 ## Locked scope and rules
@@ -25,8 +30,8 @@
 - Build a standalone `orders_extended` page/module. Do not modify `site_clients` behavior as part of this task.
 - Use the known API contract from `components/orders_extended/API.md` only:
   - `useApi("orders_extended")`
-  - `get_all`
-  - `get_orders_more`
+  - `get_all` with `st: true` and confirmed dictionaries;
+  - `get_orders_more` with the expanded filter contract;
   - `get_orders_more_files`
   - `get_order_orders`
   - `save_feedbacks`
@@ -46,10 +51,10 @@
 
 ## Verified migration source vs new module target
 
-### What must be migrated from the legacy tab
+### What must be migrated from the current tab
 
 - The new module should reproduce the extended-order-search flow as a dedicated page, not as another `site_clients` tab.
-- The local runtime confirms the current legacy surface already available to migrate:
+- The local runtime confirms the current surface already available to migrate:
   - date period fields tied to the current `get_orders_more` contract;
   - count range;
   - sum range;
@@ -58,7 +63,7 @@
   - item selector;
   - phone and promo filters;
   - no-promo checkbox;
-  - error/subscription-related checkboxes present in legacy FE;
+  - error/subscription-related checkboxes present in the current FE;
   - result table;
   - pagination;
   - export;
@@ -89,8 +94,8 @@
 - The Bitrix/Google Doc list defines target business scope.
 - The current local `site_clients` tab defines the verified FE behavior/reference that can be migrated now.
 - The new module plan must therefore split work into:
-  - confirmed legacy fields/flows that can be implemented against the current API now;
-  - deferred task fields that stay blocked until backend confirms payload names, allowed values, response semantics, and any required bootstrap data.
+  - confirmed current fields/flows that can be implemented against the current API now;
+  - remaining task fields and flows that still depend on the blockers documented below.
 
 ## API contract gates
 
@@ -102,7 +107,7 @@
   - points;
   - `all_items`;
   - `items`.
-- `get_orders_more` currently accepts the legacy payload shape with:
+- `get_orders_more` currently accepts the established payload shape with:
   - `date_start_true`
   - `date_end_true`
   - `date_start_false`
@@ -122,21 +127,21 @@
   - `number`
   - `page`
   - `perPage`
-- Confirmed current `param.id` values: `all`, `new`, `current`.
+- Confirmed `param.id` values: `all`, `new`, `current`, `lost`.
 - `get_orders_more_files` uses the same filter contract without paging.
 - `get_order_orders` supports order details modal flow.
-- `save_feedbacks` supports legacy feedback flow.
+- `save_feedbacks` supports the current feedback flow.
 
-### Explicitly blocked until backend confirms
+### Confirmed backend additions
 
-- `avg_check`
-- `category_ids`
-- `source_ids`
-- `order_type_ids`
-- `payment_type_ids`
+- `avg_check_min`, `avg_check_max`
+- `category_ids`, `source_ids`, `order_type_ids`, `payment_type_ids`
 - `with_promo`
-- client segment semantics for `lost` / `Ушедшие`
-- any new table columns implied by the task but not confirmed in current responses
+- `param.id=lost` with the documented 90-day semantics
+- `avg_check` and `promo_name` result fields
+- bootstrap `categories`, `sources`, `order_types`, `payment_types`
+
+Status: implemented in FE
 
 ## Planned module structure and responsibilities
 
@@ -202,7 +207,7 @@
 
 ### Phase 1 — replace the scaffold with module-owned bootstrap
 
-- Read the current scaffold and remove reliance on directly mounting legacy page ownership.
+- Read the current scaffold and remove reliance on directly mounting the existing page ownership.
 - Create `orders_extended` page/container ownership around `useApi("orders_extended")`.
 - Add a dedicated Zustand store for module state.
 - Implement `get_all` bootstrap through the new module prefix only.
@@ -218,12 +223,12 @@
 
 Status: complete
 
-### Phase 2 — migrate the confirmed legacy filter/report flow
+### Phase 2 — migrate the confirmed current filter/report flow
 
-- Move the legacy extended-search form into `orders_extended` ownership.
+- Move the current extended-search form into `orders_extended` ownership.
 - Keep only currently confirmed request fields wired to `get_orders_more`.
 - Implement form state in the dedicated module store or a module-owned local slice with stable ownership.
-- Preserve current working legacy behavior for:
+- Preserve current working behavior for:
   - true/false date fields;
   - count min/max;
   - sum min/max;
@@ -233,15 +238,15 @@ Status: complete
   - phone input;
   - promo input;
   - no-promo checkbox;
-  - currently available legacy error/subscription checkboxes.
-- Keep legacy validation behavior only where already proven by current flow or API errors.
+  - currently available error/subscription checkboxes.
+- Keep current validation behavior only where already proven by the current flow or API errors.
 - Do not introduce deferred task fields yet.
 
 #### Phase 2 acceptance
 
 - A valid report request calls `orders_extended/get_orders_more` with only confirmed fields.
 - Invalid states show current-style alerts rather than silent failure.
-- The new module reproduces the current legacy search flow without depending on `site_clients` runtime ownership.
+- The new module reproduces the current search flow without depending on `site_clients` runtime ownership.
 
 Status: complete
 
@@ -275,50 +280,50 @@ Status: complete
 - Feedback save uses `orders_extended/save_feedbacks` only when `send_feedback` access is present.
 - No reused modal secretly depends on `site_clients` lifecycle ownership.
 
-Status: deferred
+Status: complete
 
-### Phase 5 — task-expansion gates for deferred fields
+### Phase 5 — confirmed task-expansion filters/table
 
-- Review backend readiness for the Google Doc fields not covered by the current API.
-- Add only fields whose payload names, bootstrap data, value domains, and result semantics are explicitly confirmed.
-- Keep unsupported fields documented as blocked rather than approximated.
-- Tabs remain unnecessary unless a later confirmed API/task requires separate subviews.
+- Store and render the confirmed bootstrap dictionaries from `get_all`.
+- Extend `get_orders_more` and `get_orders_more_files` with only the confirmed new fields.
+- Add the confirmed average-check, category, source, order-type, payment-type, `lost`, and `with_promo` UI controls.
+- Replace the current table columns with the confirmed DOCX/API response fields only.
 
 #### Phase 5 acceptance
 
-- Every newly added field is backed by confirmed backend semantics.
+- Every added field is backed by confirmed backend semantics.
 - No speculative client mapping, option list, or column logic enters FE.
+- Export reuses the same expanded filter payload without paging fields.
 
-Status: deferred
+Status: complete
 
-## Legacy-to-new migration mapping
+## Current-to-new migration mapping
 
 ### Migrate now
 
 - `date_start_true` / `date_end_true` -> main date period fields
-- `date_start_false` / `date_end_false` -> secondary/false-date legacy fields as currently supported
+- `date_start_false` / `date_end_false` -> secondary/false-date fields as currently supported
 - `count_orders_min` / `count_orders_max` -> orders-in-period min/max
 - `min_summ` / `max_summ` -> order-sum min/max
 - `param` with `all/new/current` -> current confirmed client segment selector
+- `param` with `lost` -> confirmed departed-client selector
 - `point` -> current point/cafe selector using bootstrap-provided options and the CRM-style grouped `CityCafeAutocomplete2` UI
 - `item` -> items-in-order selector using bootstrap-provided options
 - `number` -> phone input
 - `promo` -> promo code input
 - `no_promo` -> no-promo checkbox
+- `with_promo` -> confirmed promo-presence checkbox
+- `avg_check_min` / `avg_check_max` -> confirmed average-check range
+- `category_ids` -> confirmed categories-in-order selector
+- `source_ids` -> confirmed order-source selector
+- `order_type_ids` -> confirmed order-type selector
+- `payment_type_ids` -> confirmed payment-type selector
 - `is_show_claim`
 - `is_show_claim_last`
 - `is_show_marketing`
-- legacy preset behavior only if the current scaffold proves it is still part of the migrated UX and supported by module-owned state
+- current preset behavior only if the scaffold proves it is still part of the migrated UX and supported by module-owned state
 
-### Do not migrate as confirmed business semantics yet
-
-- `lost` client segment
-- average check filters
-- category filters
-- with-promo filter
-- explicit order source selector
-- explicit order type selector
-- explicit payment type selector
+### Still deferred
 
 ## Access behavior
 
@@ -334,7 +339,7 @@ Status: deferred
 - Reuse current repo modal patterns and `MyAlert`.
 - Use MUI v7 `Grid` with `size`.
 - Prefer the established module-page structure seen in `vendors` and `ads`: page title, loading overlay, alert, main content block.
-- Preserve the legacy report workflow visually enough for operator continuity, but keep the new module isolated from `site_clients`.
+- Preserve the current report workflow visually enough for operator continuity, but keep the new module isolated from `site_clients`.
 - Do not redesign `site_clients`. Do not introduce extra tabs into `orders_extended` unless later required.
 
 ## Verification plan
@@ -347,7 +352,7 @@ Status: deferred
   - points/items bootstrap data arrives as expected.
 - Verify one happy-path search:
   - confirmed filters entered;
-  - `orders_extended/get_orders_more` payload contains only confirmed fields;
+  - `orders_extended/get_orders_more` payload contains only confirmed fields, including the newly confirmed expansion fields;
   - rows and total render correctly.
 - Verify one validation/error case from current contract:
   - missing/invalid required input or API `st=false`;
@@ -367,10 +372,11 @@ Status: deferred
 
 - A standalone `orders_extended` page exists with its own lifecycle and state ownership.
 - The page bootstraps through `useApi("orders_extended")` and `get_all` only.
-- The confirmed legacy extended-order-search flow is available without depending on `site_clients` page ownership.
+- The confirmed current extended-order-search flow is available without depending on `site_clients` page ownership.
 - Search, pagination, export, details, and feedback use only the known `orders_extended` contract.
+- The confirmed expanded filter/table scope is implemented without touching unconfirmed details/feedback slices.
 - Raw access is handled through `handleUserAccess` without renaming.
-- No `site_clients` API or shared legacy behavior is changed.
+- No `site_clients` API or shared current behavior is changed.
 - No module-prefix fallback exists.
 - No guessed fields or semantics are implemented.
 - No tabs are introduced unless a later confirmed requirement needs them.
@@ -378,22 +384,13 @@ Status: deferred
 
 ## Blockers
 
-- Backend has not yet confirmed payload/semantics for:
-  - average check;
-  - categories in order;
-  - with-promo;
-  - lost clients;
-  - order source;
-  - order type;
-  - payment type;
-  - any new related bootstrap dictionaries.
-- Shared order/feedback modal reuse may be blocked if those components still rely on `site_clients` store state or prefix assumptions.
+- No confirmed FE blockers remain inside the implemented scope. Any further work depends on new task/API scope beyond the current module contract.
 
 ## Definition of done
 
 - The rewritten FE module plan is implemented phase-by-phase without changing `site_clients`.
 - `orders_extended` owns bootstrap, state, access, and report orchestration.
-- The currently confirmed legacy search flow works through the new module prefix.
+- The currently confirmed search flow works through the new module prefix.
 - Async bootstrap/report flows use stable lifecycle ownership with cancellation/unmount safety.
 - Export/details/feedback work only through confirmed `orders_extended` methods and access gates.
-- Deferred task fields remain documented as blocked until backend confirmation instead of being guessed in FE.
+- Remaining blocked items stay documented in the blocker section below instead of being guessed in FE.

@@ -6,6 +6,7 @@ export const PARAM_OPTIONS = [
   { id: "all", name: "Найти всех" },
   { id: "new", name: "Только новые" },
   { id: "current", name: "Только текущих" },
+  { id: "lost", name: "Ушедшие" },
 ];
 
 export const DEFAULT_FILTERS = {
@@ -20,11 +21,18 @@ export const DEFAULT_FILTERS = {
   count_orders_max: 0,
   min_summ: 0,
   max_summ: 0,
+  avg_check_min: 0,
+  avg_check_max: 0,
   promo: "",
   no_promo: false,
+  with_promo: false,
   param: PARAM_OPTIONS[0],
   point: [],
   item: [],
+  category_ids: [],
+  source_ids: [],
+  order_type_ids: [],
+  payment_type_ids: [],
   number: "",
   preset: "",
 };
@@ -36,6 +44,10 @@ const DEFAULT_STATE = {
   points: [],
   allItems: [],
   items: [],
+  categories: [],
+  sources: [],
+  orderTypes: [],
+  paymentTypes: [],
   filters: DEFAULT_FILTERS,
   rows: [],
   total: 0,
@@ -52,6 +64,11 @@ const DEFAULT_STATE = {
     lastResolvedSearchRequestId: 0,
   },
   exportUrl: "",
+  orderModal: {
+    open: false,
+    order: null,
+    row: null,
+  },
 };
 
 export const useOrdersExtendedStore = create((set) => ({
@@ -73,10 +90,18 @@ export const useOrdersExtendedStore = create((set) => ({
       points: payload.points ?? [],
       allItems: payload.all_items ?? [],
       items: payload.items ?? [],
+      categories: payload.categories ?? [],
+      sources: payload.sources ?? [],
+      orderTypes: payload.order_types ?? [],
+      paymentTypes: payload.payment_types ?? [],
       filters: {
         ...state.filters,
         point: state.filters.point,
         item: state.filters.item,
+        category_ids: state.filters.category_ids,
+        source_ids: state.filters.source_ids,
+        order_type_ids: state.filters.order_type_ids,
+        payment_type_ids: state.filters.payment_type_ids,
         param: state.filters.param ?? PARAM_OPTIONS[0],
       },
       requestState: {
@@ -137,5 +162,34 @@ export const useOrdersExtendedStore = create((set) => ({
         lastSearchRequestId: requestId,
       },
     }));
+  },
+
+  openOrderModal(row) {
+    set((state) => ({
+      orderModal: {
+        ...state.orderModal,
+        open: true,
+        row: row ?? null,
+      },
+    }));
+  },
+
+  setOrderModalOrder(order) {
+    set((state) => ({
+      orderModal: {
+        ...state.orderModal,
+        order: order ?? null,
+      },
+    }));
+  },
+
+  closeOrderModal() {
+    set({
+      orderModal: {
+        open: false,
+        order: null,
+        row: null,
+      },
+    });
   },
 }));
