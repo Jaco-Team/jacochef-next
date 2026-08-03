@@ -658,7 +658,7 @@ class SiteItems_ extends React.Component {
   chooseStage(stage) {
     const item = this.state.openMenuitem;
     const type = item.type || (item.storage_id ? "pf" : "rec");
-    const itemId = type == "rec" ? item.rec_id : item.id;
+    const itemId = item.id;
 
     // правка от 13.11.22, убрал if this.state.openMenuitem.type == 'pf'
     //if( this.state.openMenuitem.type == 'pf' ){
