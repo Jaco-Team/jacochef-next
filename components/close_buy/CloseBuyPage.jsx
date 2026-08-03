@@ -16,7 +16,6 @@ import useCloseBuyApi from "./useCloseBuyApi";
 import { useCloseBuyStore } from "./useCloseBuyStore";
 
 export default function CloseBuyPage() {
-  const module = useCloseBuyStore((state) => state.module);
   const moduleName = useCloseBuyStore((state) => state.moduleName);
   const points = useCloseBuyStore((state) => state.points);
   const selectedPointId = useCloseBuyStore((state) => state.selectedPointId);
@@ -51,7 +50,7 @@ export default function CloseBuyPage() {
   const getVisibleCategoryItems = useCloseBuyStore((state) => state.getVisibleCategoryItems);
 
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
-  const api = useCloseBuyApi(module);
+  const api = useCloseBuyApi();
   const showAlertRef = useRef(showAlert);
   const shownErrorsRef = useRef({
     bootstrap: "",
