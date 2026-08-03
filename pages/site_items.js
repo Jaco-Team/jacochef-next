@@ -51,6 +51,8 @@ import queryString from "query-string";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
+const normalizeRecipeId = (id) => (String(id) === "0" ? "56" : id);
+
 class TableStages extends React.Component {
   render() {
     return (
@@ -423,7 +425,7 @@ class SiteItems_ extends React.Component {
         // правка от 30.09.22
         if (item["type"] == "rec") {
           items_pf_stages_1.push({
-            item_id: item["rec_id"],
+            item_id: normalizeRecipeId(item["rec_id"]),
             name: item["name"],
             count: item["count"],
             sort: item["sort"],
@@ -448,7 +450,7 @@ class SiteItems_ extends React.Component {
         // правка от 30.09.22
         if (item["type"] == "rec") {
           items_pf_stages_2.push({
-            item_id: item["rec_id"],
+            item_id: normalizeRecipeId(item["rec_id"]),
             name: item["name"],
             count: item["count"],
             sort: item["sort"],
@@ -472,7 +474,7 @@ class SiteItems_ extends React.Component {
         // правка от 30.09.22
         if (item["type"] == "rec") {
           items_pf_stages_3.push({
-            item_id: item["rec_id"],
+            item_id: normalizeRecipeId(item["rec_id"]),
             name: item["name"],
             count: item["count"],
             sort: item["sort"],
@@ -658,7 +660,7 @@ class SiteItems_ extends React.Component {
   chooseStage(stage) {
     const item = this.state.openMenuitem;
     const type = item.type || (item.storage_id ? "pf" : "rec");
-    const itemId = item.id;
+    const itemId = type == "rec" ? normalizeRecipeId(item.id) : item.id;
 
     // правка от 13.11.22, убрал if this.state.openMenuitem.type == 'pf'
     //if( this.state.openMenuitem.type == 'pf' ){
