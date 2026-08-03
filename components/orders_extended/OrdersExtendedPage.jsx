@@ -427,7 +427,7 @@ export default function OrdersExtendedPage() {
     reportCacheRef.current.clear();
     clearPersistedFilters();
     setPage(0);
-    setPerPage(10);
+    setPerPage(50);
     setSort("id", "desc");
     setExportUrl("");
     clearReport();

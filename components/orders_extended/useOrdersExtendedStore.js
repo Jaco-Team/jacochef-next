@@ -109,7 +109,7 @@ const DEFAULT_STATE = {
     avg_check_avg: 0,
   },
   page: 0,
-  perPage: 10,
+  perPage: 50,
   sortBy: "id",
   sortDir: "desc",
   loading: {

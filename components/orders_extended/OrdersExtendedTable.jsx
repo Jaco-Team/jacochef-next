@@ -109,7 +109,7 @@ export default function OrdersExtendedTable({
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[10, 50, 100]}
+        rowsPerPageOptions={[25, 50, 100, 300]}
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
         labelRowsPerPage="Записей на странице:"
         component="div"
