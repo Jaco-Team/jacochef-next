@@ -214,9 +214,9 @@ export default function CloseBuyPage() {
         <Box className="container_first_child">
           <Typography
             variant="h4"
-            sx={{ mb: 3, fontWeight: 700 }}
+            sx={{ mb: 3, fontWeight: 700, fontSize: { xs: "1.75rem", md: "2.125rem" } }}
           >
-            {moduleName}
+            {activeTab === CLOSE_BUY_TABS.history ? "История изменений" : moduleName}
           </Typography>
 
           {errors.bootstrap ? null : (
@@ -261,16 +261,20 @@ export default function CloseBuyPage() {
                   onSelectCategory={setSelectedCategoryId}
                   onRetry={handleRetryManagement}
                   onCategoryAction={handleCategoryAction}
+                  onOpenCategoryActions={openCategoryActions}
                   onToggleItem={(payload) => saveItem(payload, api)}
                 />
               ) : (
                 <CloseBuyHistory
+                  points={points}
+                  selectedPointId={selectedPointId}
                   categories={categories}
                   filters={historyFilters}
                   pagination={historyPagination}
                   history={history}
                   loading={loading.history}
                   onFiltersChange={setHistoryFilters}
+                  onPointChange={handlePointChange}
                   onPageChange={setHistoryPage}
                 />
               )}

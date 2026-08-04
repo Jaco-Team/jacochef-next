@@ -1,21 +1,26 @@
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
   ButtonGroup,
+  DialogContent,
   Paper,
   Skeleton,
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
 import { MySelect } from "@/ui/Forms";
+import MyModal from "@/ui/MyModal";
 
 import CategoryCard from "./CategoryCard";
 import CloseBuyCategory from "./CloseBuyCategory";
-import { CLOSE_BUY_STATUS_FILTERS } from "./closeBuyUtils";
+import { CLOSE_BUY_STATUS_FILTERS, filterCategoryItems } from "./closeBuyUtils";
 
 function SummaryCard({ label, value }) {
   return (
@@ -54,8 +59,38 @@ export default function CloseBuyManagement({
   onSelectCategory,
   onRetry,
   onCategoryAction,
+  onOpenCategoryActions,
   onToggleItem,
 }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [mobileCategoryId, setMobileCategoryId] = useState(null);
+  const [mobileCategorySearch, setMobileCategorySearch] = useState("");
+  const mobileCategory = categories.find((category) => category.id === mobileCategoryId) || null;
+  const mobileCategoryItems = mobileCategory
+    ? filterCategoryItems(mobileCategory.items, mobileCategorySearch)
+    : [];
+
+  const handleCloseCategoryModal = () => {
+    setMobileCategoryId(null);
+    setMobileCategorySearch("");
+  };
+
+  const handleSelectCategory = (categoryId) => {
+    onSelectCategory?.(categoryId);
+
+    if (isMobile) {
+      setMobileCategoryId(categoryId);
+      setMobileCategorySearch("");
+    }
+  };
+
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileCategoryId(null);
+    }
+  }, [isMobile]);
+
   return (
     <Stack spacing={3}>
       <Grid
@@ -64,12 +99,11 @@ export default function CloseBuyManagement({
       >
         <Grid size={{ xs: 12, md: 4 }}>
           <MySelect
-            is_none={false}
+            is_none={true}
             data={points}
             value={selectedPointId}
             func={onPointChange}
             label="Кафе"
-            unifiedPopup
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
@@ -119,29 +153,50 @@ export default function CloseBuyManagement({
       </ButtonGroup>
 
       {summary ? (
-        <Grid
-          container
-          spacing={2}
-        >
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <SummaryCard
-              label="Открытые категории"
-              value={summary.open_categories}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <SummaryCard
-              label="Закрытые категории"
-              value={summary.closed_categories}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <SummaryCard
-              label="Смешанные категории"
-              value={summary.mixed_categories}
-            />
-          </Grid>
-        </Grid>
+        <>
+          {isMobile ? (
+            <Paper
+              sx={{
+                px: 2,
+                py: 1.25,
+                borderRadius: "12px",
+                bgcolor: "rgba(204, 0, 51, 0.06)",
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ color: "#c03", fontWeight: 600 }}
+              >
+                {summary.open_categories} открыто • {summary.closed_categories} закрыто •{" "}
+                {summary.mixed_categories} смешано
+              </Typography>
+            </Paper>
+          ) : (
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <SummaryCard
+                  label="Открытые категории"
+                  value={summary.open_categories}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <SummaryCard
+                  label="Закрытые категории"
+                  value={summary.closed_categories}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <SummaryCard
+                  label="Смешанные категории"
+                  value={summary.mixed_categories}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </>
       ) : null}
 
       {loading ? (
@@ -184,25 +239,27 @@ export default function CloseBuyManagement({
                 <CategoryCard
                   key={category.id}
                   category={category}
-                  selected={selectedCategory?.id === category.id}
+                  selected={!isMobile && selectedCategory?.id === category.id}
                   disabled={pendingCategoryId === category.id}
-                  onSelect={onSelectCategory}
+                  onSelect={isMobile ? handleSelectCategory : onSelectCategory}
                   onAction={onCategoryAction}
                 />
               ))}
             </Stack>
           </Grid>
-          <Grid
-            size={{ xs: 12, md: 7 }}
-            sx={{ height: "max-content" }}
-          >
-            <CloseBuyCategory
-              category={selectedCategory}
-              items={visibleCategoryItems}
-              pendingItemId={pendingItemId}
-              onToggleItem={onToggleItem}
-            />
-          </Grid>
+          {isMobile ? null : (
+            <Grid
+              size={{ xs: 12, md: 7 }}
+              sx={{ height: "max-content" }}
+            >
+              <CloseBuyCategory
+                category={selectedCategory}
+                items={visibleCategoryItems}
+                pendingItemId={pendingItemId}
+                onToggleItem={onToggleItem}
+              />
+            </Grid>
+          )}
         </Grid>
       ) : (
         <Paper sx={{ p: 4, borderRadius: "20px", border: "1px dashed #DADADA" }}>
@@ -215,6 +272,49 @@ export default function CloseBuyManagement({
           </Typography>
         </Paper>
       )}
+
+      {isMobile ? (
+        <MyModal
+          open={Boolean(mobileCategory)}
+          onClose={handleCloseCategoryModal}
+          title={mobileCategory ? `Категория: ${mobileCategory.name}` : "Категория"}
+          maxWidth="sm"
+        >
+          <DialogContent sx={{ px: 2, pb: 2 }}>
+            <CloseBuyCategory
+              category={mobileCategory}
+              items={
+                mobileCategory && mobileCategory.id === selectedCategory?.id
+                  ? filterCategoryItems(visibleCategoryItems, mobileCategorySearch)
+                  : mobileCategoryItems
+              }
+              pendingItemId={pendingItemId}
+              onToggleItem={onToggleItem}
+              categoryAction={
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => onOpenCategoryActions?.(mobileCategory?.id)}
+                  disabled={pendingCategoryId === mobileCategory?.id}
+                  sx={{ minHeight: 40, borderRadius: "12px", borderColor: "#777", color: "#222" }}
+                >
+                  Действия со всей категорией
+                </Button>
+              }
+              itemsFilter={
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="search"
+                  label="Поиск в категории"
+                  value={mobileCategorySearch}
+                  onChange={(event) => setMobileCategorySearch(event.target.value)}
+                />
+              }
+            />
+          </DialogContent>
+        </MyModal>
+      ) : null}
     </Stack>
   );
 }

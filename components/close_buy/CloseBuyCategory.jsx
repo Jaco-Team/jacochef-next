@@ -2,7 +2,14 @@ import { Paper, Stack, Typography } from "@mui/material";
 
 import ItemRow from "./ItemRow";
 
-export default function CloseBuyCategory({ category, items, pendingItemId, onToggleItem }) {
+export default function CloseBuyCategory({
+  category,
+  items,
+  pendingItemId,
+  onToggleItem,
+  categoryAction,
+  itemsFilter,
+}) {
   if (!category) {
     return (
       <Paper sx={{ p: 3, borderRadius: "20px", border: "1px solid #EAEAEA" }}>
@@ -30,6 +37,9 @@ export default function CloseBuyCategory({ category, items, pendingItemId, onTog
             Открыто {category.open_count} из {category.count}
           </Typography>
         </Stack>
+
+        {categoryAction}
+        {itemsFilter}
 
         {items.length ? (
           <Stack spacing={1.25}>

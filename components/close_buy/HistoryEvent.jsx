@@ -10,7 +10,7 @@ import {
 
 import { getHistoryEventTitle, getItemStatusLabel } from "./closeBuyUtils";
 
-export default function HistoryEvent({ event }) {
+export default function HistoryEvent({ event, pointName }) {
   return (
     <Accordion
       disableGutters
@@ -40,7 +40,7 @@ export default function HistoryEvent({ event }) {
             variant="body2"
             sx={{ color: "#8A8A8A" }}
           >
-            Точка ID: {event.point_id}
+            Кафе: {pointName || "Не указано"}
           </Typography>
         </Stack>
       </AccordionSummary>

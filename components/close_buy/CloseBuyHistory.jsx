@@ -1,5 +1,6 @@
 import { Button, Paper, Stack, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import dayjs from "dayjs";
 
 import { MyDatePickerNew, MySelect } from "@/ui/Forms";
 
@@ -7,19 +8,40 @@ import HistoryEvent from "./HistoryEvent";
 import { groupHistoryByDate } from "./closeBuyUtils";
 
 export default function CloseBuyHistory({
+  points = [],
+  selectedPointId,
   categories,
   filters,
   pagination,
   history,
   loading,
   onFiltersChange,
+  onPointChange,
   onPageChange,
 }) {
   const groupedHistory = groupHistoryByDate(history);
   const categoryOptions = [{ id: "all", name: "Все категории" }, ...categories];
+  const today = dayjs();
+  const dateFrom = filters.date_from ? dayjs(filters.date_from) : null;
+  const dateTo = filters.date_to ? dayjs(filters.date_to) : null;
+  const pointNames = new Map(points.map((point) => [String(point.id), point.name]));
 
   return (
     <Stack spacing={3}>
+      <Grid
+        container
+        justifyContent="flex-end"
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <MySelect
+            is_none={true}
+            data={points}
+            value={selectedPointId}
+            func={onPointChange}
+            label="Кафе"
+          />
+        </Grid>
+      </Grid>
       <Grid
         container
         spacing={2}
@@ -30,13 +52,13 @@ export default function CloseBuyHistory({
             value={filters.category_id}
             func={(event) => onFiltersChange({ category_id: event.target.value })}
             label="Категория"
-            unifiedPopup
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <MyDatePickerNew
             label="Дата от"
             value={filters.date_from}
+            maxDate={dateTo || today}
             func={(value) =>
               onFiltersChange({ date_from: value ? value.format("YYYY-MM-DD") : null })
             }
@@ -46,6 +68,8 @@ export default function CloseBuyHistory({
           <MyDatePickerNew
             label="Дата до"
             value={filters.date_to}
+            minDate={dateFrom || undefined}
+            maxDate={today}
             func={(value) =>
               onFiltersChange({ date_to: value ? value.format("YYYY-MM-DD") : null })
             }
@@ -77,6 +101,7 @@ export default function CloseBuyHistory({
                   <HistoryEvent
                     key={event.id}
                     event={event}
+                    pointName={pointNames.get(String(event.point_id))}
                   />
                 ))}
               </Stack>
