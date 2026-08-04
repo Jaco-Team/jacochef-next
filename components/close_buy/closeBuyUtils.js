@@ -143,21 +143,47 @@ export function getVisibleSelectedCategory(categories, selectedCategoryId) {
 export function normalizeHistoryEvent(event) {
   const items = Array.isArray(event?.items)
     ? event.items.map((item, index) => ({
-        id: `${event?.history_id || event?.id || "history"}-${index}-${item?.item_id || "item"}`,
+        id: `${event?.id || "history"}-${index}-${item?.item_id || "item"}`,
         item_id: Number(item?.item_id) || 0,
         name: String(item?.item_name || ""),
+        category_id: Number(item?.category_id) || null,
+        category_name: String(item?.category_name || ""),
         old_is_active: normalizeIsActive(item?.is_active_old),
+        old_status_label: String(item?.old_status_label || getItemStatusLabel(item?.is_active_old)),
         new_is_active: normalizeIsActive(item?.is_active_new),
+        new_status_label: String(item?.new_status_label || getItemStatusLabel(item?.is_active_new)),
+        sort: Number(item?.sort) || index,
       }))
     : [];
 
   return {
-    id: Number(event?.history_id ?? event?.id) || Date.now(),
+    id: String(event?.id || `legacy:${event?.history_id || Date.now()}`),
     date: String(event?.date || ""),
     time: String(event?.time || ""),
+    user_id: event?.user_id ?? null,
     user_name: String(event?.user_name || ""),
     point_id: Number(event?.point_id) || 0,
-    item_count: Number(event?.item_count) || items.length,
+    point_name: String(event?.point_name || ""),
+    category_id: Number(event?.category_id) || null,
+    category_name: String(event?.category_name || ""),
+    event_type: String(event?.event_type || "legacy_change"),
+    title: String(event?.title || "Изменение"),
+    description: event?.description ? String(event.description) : "",
+    comment: event?.comment ? String(event.comment) : "",
+    request_id: event?.request_id ? String(event.request_id) : "",
+    operation_id: event?.operation_id ? String(event.operation_id) : "",
+    transaction_id: event?.transaction_id ? String(event.transaction_id) : "",
+    item_count: event?.item_count != null ? Number(event.item_count) || 0 : items.length,
+    changed_item_count:
+      event?.changed_item_count != null ? Number(event.changed_item_count) || 0 : items.length,
+    card_variant: event?.card_variant === "legacy" ? "legacy" : "standard",
+    details_available: event?.details_available !== false,
+    restore_available: event?.restore_available === true,
+    transaction_status: String(event?.transaction_status || "unknown"),
+    legacy_reason: event?.legacy_reason ? String(event.legacy_reason) : "",
+    timezone: event?.timezone ? String(event.timezone) : "",
+    snapshot_version: Number(event?.snapshot_version) || 0,
+    meta: event?.meta && typeof event.meta === "object" ? event.meta : {},
     items,
   };
 }
@@ -172,6 +198,7 @@ export function groupHistoryByDate(history) {
 }
 
 export function getHistoryEventTitle(event) {
+  if (event?.title) return event.title;
   if (event.item_count === 1) return "Изменён 1 товар";
   return `Изменено товаров: ${event.item_count}`;
 }

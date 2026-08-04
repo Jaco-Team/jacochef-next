@@ -86,8 +86,14 @@ export default function CategoryActionsSheet({
       onClose={handleMobileClose}
       onOpen={handleMobileOpen}
       disableSwipeToOpen={pending}
+      ModalProps={{
+        sx: { zIndex: (theme) => theme.zIndex.modal + 2 },
+      }}
+      PaperProps={{
+        sx: { width: "100%", maxWidth: "100vw", boxSizing: "border-box" },
+      }}
     >
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, width: "100%", boxSizing: "border-box" }}>
         <Typography
           variant="h6"
           sx={{ mb: 2, fontWeight: 700 }}

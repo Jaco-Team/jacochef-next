@@ -197,24 +197,24 @@
   "date_from": "2026-06-01",
   "date_to": "2026-06-30",
   "search": "суши",
-  "action": "close",
+  "action": "category_close",
   "author": "Мария",
   "page": 1,
   "per_page": 20
 }
 ```
 
-| Поле          | Тип     | Обязательность | Правило                                              |
-| ------------- | ------- | -------------- | ---------------------------------------------------- |
-| `point_id`    | integer | required       | Доступная точка.                                     |
-| `category_id` | integer | optional       | Фильтр по категории события или его товарам.         |
-| `date_from`   | date    | optional       | Формат `Y-m-d`, включительно.                        |
-| `date_to`     | date    | optional       | Формат `Y-m-d`, включительно; не раньше `date_from`. |
-| `search`      | string  | optional       | Поиск по заголовку, описанию и автору; максимум 255. |
-| `action`      | string  | optional       | `close`, `open`, `change`.                           |
-| `author`      | string  | optional       | Поиск по snapshot имени автора; максимум 255.        |
-| `page`        | integer | optional       | От `1`, по умолчанию `1`.                            |
-| `per_page`    | integer | optional       | От `1` до `100`, по умолчанию `20`.                  |
+| Поле          | Тип     | Обязательность | Правило                                                                        |
+| ------------- | ------- | -------------- | ------------------------------------------------------------------------------ |
+| `point_id`    | integer | required       | Доступная точка.                                                               |
+| `category_id` | integer | optional       | Фильтр по категории события или его товарам.                                   |
+| `date_from`   | date    | optional       | Формат `Y-m-d`, включительно.                                                  |
+| `date_to`     | date    | optional       | Формат `Y-m-d`, включительно; не раньше `date_from`.                           |
+| `search`      | string  | optional       | Поиск по заголовку, описанию и автору; максимум 255.                           |
+| `action`      | string  | optional       | `category_open`, `category_close`, `item_open`, `item_close`, `legacy_change`. |
+| `author`      | string  | optional       | Поиск по snapshot имени автора; максимум 255.                                  |
+| `page`        | integer | optional       | От `1`, по умолчанию `1`.                                                      |
+| `per_page`    | integer | optional       | От `1` до `100`, по умолчанию `20`.                                            |
 
 ### Response
 
@@ -233,7 +233,7 @@
       "point_name": "Точка Центр",
       "category_id": 10,
       "category_name": "Суши и роллы",
-      "event_type": "close",
+      "event_type": "category_close",
       "title": "Закрыта категория",
       "description": "Мария Иванова закрыл категорию «Суши и роллы». Фактически состояние изменилось у 5 товаров.",
       "comment": null,
@@ -274,7 +274,7 @@
       "point_name": "Точка Парк",
       "category_id": null,
       "category_name": null,
-      "event_type": "close",
+      "event_type": "legacy_change",
       "title": "Изменение",
       "description": "Контекст старой записи неполный",
       "item_count": 223,
@@ -301,29 +301,29 @@
 
 ### History event fields
 
-| Поле                                           | Тип                       | Описание                                                                               |
-| ---------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| `id`                                           | string                    | `event:<new-table-id>` или `legacy:<old-head-id>`.                                     |
-| `date`, `time`                                 | string                    | Время события в локальном формате проекта.                                             |
-| `user_id`, `user_name`                         | integer/null, string/null | Snapshot автора. Старые записи могут быть без автора.                                  |
-| `point_id`, `point_name`                       | integer, string/null      | Snapshot точки события.                                                                |
-| `category_id`, `category_name`                 | integer/string/null       | Snapshot категории, если событие было массовым.                                        |
-| `event_type`                                   | string                    | `close`, `open` или `change`.                                                          |
-| `title`                                        | string                    | Готовый заголовок карточки.                                                            |
-| `description`                                  | string/null               | Готовое описание события.                                                              |
-| `comment`                                      | string/null               | Комментарий операции, если был сохранён.                                               |
-| `request_id`, `operation_id`, `transaction_id` | string/null               | Идентификаторы запроса, операции и транзакции.                                         |
-| `item_count`                                   | integer                   | Все строки исходного события. Для старых записей может включать неизменившиеся строки. |
-| `changed_item_count`                           | integer                   | Только фактически изменившиеся товары.                                                 |
-| `card_variant`                                 | string                    | `standard` для новых событий, `legacy` для старых.                                     |
-| `details_available`                            | boolean                   | Есть ли детализация, которую можно показать.                                           |
-| `restore_available`                            | boolean                   | Возможность восстановления. Для старых записей `false`.                                |
-| `transaction_status`                           | string                    | `committed` для новых операций, `unknown` для старых записей.                          |
-| `legacy_reason`                                | string/null               | Причина ограниченного отображения старой записи.                                       |
-| `timezone`                                     | string/null               | Timezone формирования snapshot.                                                        |
-| `snapshot_version`                             | integer                   | Версия структуры snapshot.                                                             |
-| `meta`                                         | object                    | Дополнительные данные модуля; не используется как основной фильтр.                     |
-| `items`                                        | array                     | Только товары с различающимися old/new состояниями.                                    |
+| Поле                                           | Тип                       | Описание                                                                                    |
+| ---------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+| `id`                                           | string                    | `event:<new-table-id>` или `legacy:<old-head-id>`.                                          |
+| `date`, `time`                                 | string                    | Время события в локальном формате проекта.                                                  |
+| `user_id`, `user_name`                         | integer/null, string/null | Snapshot автора. Старые записи могут быть без автора.                                       |
+| `point_id`, `point_name`                       | integer, string/null      | Snapshot точки события.                                                                     |
+| `category_id`, `category_name`                 | integer/string/null       | Snapshot категории, если событие было массовым.                                             |
+| `event_type`                                   | string                    | `category_open`, `category_close`, `item_open`, `item_close`; old rows use `legacy_change`. |
+| `title`                                        | string                    | Готовый заголовок карточки.                                                                 |
+| `description`                                  | string/null               | Готовое описание события.                                                                   |
+| `comment`                                      | string/null               | Комментарий операции, если был сохранён.                                                    |
+| `request_id`, `operation_id`, `transaction_id` | string/null               | Идентификаторы запроса, операции и транзакции.                                              |
+| `item_count`                                   | integer                   | Все строки исходного события. Для старых записей может включать неизменившиеся строки.      |
+| `changed_item_count`                           | integer                   | Только фактически изменившиеся товары.                                                      |
+| `card_variant`                                 | string                    | `standard` для новых событий, `legacy` для старых.                                          |
+| `details_available`                            | boolean                   | Есть ли детализация, которую можно показать.                                                |
+| `restore_available`                            | boolean                   | Возможность восстановления. Для старых записей `false`.                                     |
+| `transaction_status`                           | string                    | `committed` для новых операций, `unknown` для старых записей.                               |
+| `legacy_reason`                                | string/null               | Причина ограниченного отображения старой записи.                                            |
+| `timezone`                                     | string/null               | Timezone формирования snapshot.                                                             |
+| `snapshot_version`                             | integer                   | Версия структуры snapshot.                                                                  |
+| `meta`                                         | object                    | Дополнительные данные модуля; не используется как основной фильтр.                          |
+| `items`                                        | array                     | Только товары с различающимися old/new состояниями.                                         |
 
 Поля `items[]`: `item_id`, `item_name`, `category_id`, `category_name`, `is_active_old`, `old_status_label`, `is_active_new`, `new_status_label`, `sort`.
 

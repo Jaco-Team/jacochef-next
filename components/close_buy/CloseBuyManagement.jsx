@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
-import { MySelect } from "@/ui/Forms";
+import { MySelect, MyTextInput } from "@/ui/Forms";
 import MyModal from "@/ui/MyModal";
 
 import CategoryCard from "./CategoryCard";
@@ -63,7 +63,7 @@ export default function CloseBuyManagement({
   onToggleItem,
 }) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
   const [mobileCategoryId, setMobileCategoryId] = useState(null);
   const [mobileCategorySearch, setMobileCategorySearch] = useState("");
   const mobileCategory = categories.find((category) => category.id === mobileCategoryId) || null;
@@ -107,12 +107,14 @@ export default function CloseBuyManagement({
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <TextField
+          <MyTextInput
             fullWidth
             size="small"
+            type="search"
             label="Поиск по товарам и категориям"
             value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
+            inputProps={{ minLength: 2 }}
+            func={(event) => onSearchChange(event.target.value)}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>

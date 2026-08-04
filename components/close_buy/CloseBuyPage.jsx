@@ -11,7 +11,7 @@ import CategoryActionsSheet from "./CategoryActionsSheet";
 import CloseBuyHistory from "./CloseBuyHistory";
 import CloseBuyManagement from "./CloseBuyManagement";
 import CloseConfirmationSheet from "./CloseConfirmationSheet";
-import { CLOSE_BUY_TABS } from "./closeBuyUtils";
+import { CLOSE_BUY_TABS, filterCategoryItems, getVisibleSelectedCategory } from "./closeBuyUtils";
 import useCloseBuyApi from "./useCloseBuyApi";
 import { useCloseBuyStore } from "./useCloseBuyStore";
 
@@ -24,6 +24,7 @@ export default function CloseBuyPage() {
   const statusFilter = useCloseBuyStore((state) => state.statusFilter);
   const categories = useCloseBuyStore((state) => state.categories);
   const summary = useCloseBuyStore((state) => state.summary);
+  const selectedCategoryId = useCloseBuyStore((state) => state.selectedCategoryId);
   const history = useCloseBuyStore((state) => state.history);
   const historyPagination = useCloseBuyStore((state) => state.historyPagination);
   const historyFilters = useCloseBuyStore((state) => state.historyFilters);
@@ -46,8 +47,6 @@ export default function CloseBuyPage() {
   const openCloseConfirmation = useCloseBuyStore((state) => state.openCloseConfirmation);
   const closeCloseConfirmation = useCloseBuyStore((state) => state.closeCloseConfirmation);
   const clearSuccessMessage = useCloseBuyStore((state) => state.clearSuccessMessage);
-  const getSelectedCategory = useCloseBuyStore((state) => state.getSelectedCategory);
-  const getVisibleCategoryItems = useCloseBuyStore((state) => state.getVisibleCategoryItems);
 
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
   const api = useCloseBuyApi();
@@ -60,8 +59,10 @@ export default function CloseBuyPage() {
 
   showAlertRef.current = showAlert;
 
-  const selectedCategory = getSelectedCategory();
-  const visibleCategoryItems = getVisibleCategoryItems();
+  const selectedCategory = getVisibleSelectedCategory(categories, selectedCategoryId);
+  const visibleCategoryItems = selectedCategory
+    ? filterCategoryItems(selectedCategory.items, search)
+    : [];
   const actionsCategory =
     categories.find((category) => category.id === sheets.categoryActions.categoryId) || null;
   const confirmCategory =
@@ -110,6 +111,9 @@ export default function CloseBuyPage() {
     historyFilters.category_id,
     historyFilters.date_from,
     historyFilters.date_to,
+    historyFilters.search,
+    historyFilters.action,
+    historyFilters.author,
     historyPagination.page,
     historyPagination.per_page,
   ]);
@@ -117,9 +121,15 @@ export default function CloseBuyPage() {
   useEffect(() => {
     if (!selectedPointId || activeTab !== CLOSE_BUY_TABS.management) return undefined;
 
-    const timeoutId = window.setTimeout(() => {
-      useCloseBuyStore.getState().loadManagement(api, { resetSelection: false });
-    }, 300);
+    const trimmedSearch = search.trim();
+    if (trimmedSearch && trimmedSearch.length < 2) return undefined;
+
+    const timeoutId = window.setTimeout(
+      () => {
+        useCloseBuyStore.getState().loadManagement(api, { resetSelection: false });
+      },
+      trimmedSearch ? 300 : 0,
+    );
 
     return () => window.clearTimeout(timeoutId);
   }, [activeTab, api, search, selectedPointId, statusFilter]);
@@ -209,9 +219,15 @@ export default function CloseBuyPage() {
 
       <Container
         maxWidth="xl"
-        sx={{ py: 3 }}
+        sx={{
+          px: { xs: 2, sm: 2, md: 3 },
+          py: { xs: 1.5, md: 3 },
+        }}
       >
-        <Box className="container_first_child">
+        <Box
+          className="container_first_child"
+          style={{ paddingInline: 0 }}
+        >
           <Typography
             variant="h4"
             sx={{ mb: 3, fontWeight: 700, fontSize: { xs: "1.75rem", md: "2.125rem" } }}

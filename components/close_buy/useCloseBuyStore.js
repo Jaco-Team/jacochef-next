@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import dayjs from "dayjs";
 
 import {
   CLOSE_BUY_TABS,
@@ -14,11 +15,14 @@ const defaultPagination = {
   last_page: 1,
 };
 
-const defaultHistoryFilters = {
+const getDefaultHistoryFilters = () => ({
   category_id: "all",
-  date_from: null,
-  date_to: null,
-};
+  date_from: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
+  date_to: dayjs().format("YYYY-MM-DD"),
+  search: "",
+  action: "all",
+  author: "",
+});
 
 const defaultSheets = {
   categoryActions: { open: false, categoryId: null },
@@ -51,7 +55,7 @@ export const useCloseBuyStore = create((set, get) => ({
   },
   history: [],
   historyPagination: defaultPagination,
-  historyFilters: defaultHistoryFilters,
+  historyFilters: getDefaultHistoryFilters(),
   sheets: defaultSheets,
   successMessage: "",
   requestIds: {
@@ -184,7 +188,7 @@ export const useCloseBuyStore = create((set, get) => ({
       categories: [],
       summary: null,
       history: [],
-      historyFilters: defaultHistoryFilters,
+      historyFilters: getDefaultHistoryFilters(),
       historyPagination: defaultPagination,
       sheets: defaultSheets,
       errors: { ...state.errors, management: "", history: "" },
@@ -267,6 +271,9 @@ export const useCloseBuyStore = create((set, get) => ({
             : undefined,
         date_from: historyFilters.date_from || undefined,
         date_to: historyFilters.date_to || undefined,
+        search: historyFilters.search.trim() || undefined,
+        action: historyFilters.action !== "all" ? historyFilters.action : undefined,
+        author: historyFilters.author.trim() || undefined,
         page: historyPagination.page,
         per_page: historyPagination.per_page,
       });

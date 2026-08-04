@@ -1,77 +1,78 @@
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Chip, Paper, Stack, Typography } from "@mui/material";
 
-import { getHistoryEventTitle, getItemStatusLabel } from "./closeBuyUtils";
+import { getHistoryEventTitle } from "./closeBuyUtils";
 
-export default function HistoryEvent({ event, pointName }) {
+const actionLabels = {
+  category_close: "Закрытие категории",
+  category_open: "Открытие категории",
+  item_close: "Закрытие товара",
+  item_open: "Открытие товара",
+  legacy_change: "Старая запись",
+};
+
+export default function HistoryEvent({ event, selected, onClick }) {
   return (
-    <Accordion
-      disableGutters
+    <Paper
+      component="button"
+      type="button"
+      onClick={onClick}
       sx={{
-        border: "1px solid #E5E5E5",
-        borderRadius: "18px !important",
-        overflow: "hidden",
+        width: "100%",
+        p: 1.5,
+        textAlign: "left",
+        cursor: "pointer",
+        border: selected ? "1px solid #c03" : "1px solid #E5E5E5",
+        borderRadius: "14px",
+        bgcolor: selected ? "rgba(204, 0, 51, 0.04)" : "#fff",
         boxShadow: "none",
-        "&:before": { display: "none" },
       }}
     >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <Stack spacing={0.5}>
         <Stack
-          spacing={0.5}
-          sx={{ minWidth: 0 }}
+          direction="row"
+          justifyContent="space-between"
+          spacing={1}
         >
           <Typography sx={{ fontWeight: 700, color: "#2B2B2B" }}>
             {getHistoryEventTitle(event)}
           </Typography>
           <Typography
-            variant="body2"
-            sx={{ color: "#6B6B6B" }}
+            variant="caption"
+            sx={{ color: "#6B6B6B", whiteSpace: "nowrap" }}
           >
-            {event.time || "Без времени"} • {event.user_name || "Неизвестный пользователь"}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: "#8A8A8A" }}
-          >
-            Кафе: {pointName || "Не указано"}
+            {event.time || "—"}
           </Typography>
         </Stack>
-      </AccordionSummary>
-
-      <AccordionDetails sx={{ pt: 0 }}>
-        <Stack spacing={1.25}>
-          {event.items.map((item) => (
-            <Paper
-              key={item.id}
-              variant="outlined"
-              sx={{ p: 1.25, borderRadius: "14px", borderColor: "#F0F0F0" }}
-            >
-              <Typography sx={{ fontWeight: 600 }}>
-                {item.name || `Товар ${item.item_id}`}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "#6B6B6B" }}
-              >
-                ID: {item.item_id}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "#6B6B6B" }}
-              >
-                {getItemStatusLabel(item.old_is_active)} → {getItemStatusLabel(item.new_is_active)}
-              </Typography>
-            </Paper>
-          ))}
+        <Typography
+          variant="body2"
+          sx={{ color: "#6B6B6B" }}
+          noWrap
+        >
+          {event.category_name || event.description || "Контекст события недоступен"}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ color: "#c03" }}
+          noWrap
+        >
+          {event.user_name || "Автор не указан"} • {event.point_name || "Кафе не указано"}
+        </Typography>
+        <Stack
+          direction="row"
+          spacing={0.75}
+        >
+          <Chip
+            size="small"
+            label={actionLabels[event.event_type] || "Изменение"}
+          />
+          {event.card_variant === "legacy" ? (
+            <Chip
+              size="small"
+              label="Legacy"
+            />
+          ) : null}
         </Stack>
-      </AccordionDetails>
-    </Accordion>
+      </Stack>
+    </Paper>
   );
 }
