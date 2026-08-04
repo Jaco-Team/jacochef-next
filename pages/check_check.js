@@ -57,6 +57,7 @@ import { formatDateReverse } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { Close } from "@mui/icons-material";
 import ExcelCompareSummary from "@/components/check_check/ExcelCompareSummary";
+import MismatchDiagnostics from "@/components/check_check/MismatchDiagnostics";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 
@@ -287,9 +288,11 @@ class CheckCheck_Accordion extends React.Component {
       comment: "",
       activeTab: 0,
       activeKassaTab: 0,
-      mismatchOrders: [],
-      corrConfirmOpen: false,
-      corrOrder: null,
+      mismatchDiagnostics: null,
+      selectedReceiptId: "",
+      selectedOrderId: "",
+      resolutionConfirmOpen: false,
+      pendingAction: null,
     };
   }
 
@@ -488,108 +491,55 @@ class CheckCheck_Accordion extends React.Component {
     return result;
   };
 
-  getMismatchOrders = async (ctx) => {
+  getMismatchDiagnostics = async (ctx) => {
     const { point, getData } = this.props;
 
-    if (!ctx?.kassaId || Number(ctx.kassaId) === 2) return [];
-    if (!point?.base) return [];
-
-    const summ = Math.abs((Number(ctx?.ofd) || 0) - (Number(ctx?.chef) || 0));
-    if (summ <= 0) return [];
+    if (!ctx?.date || !ctx?.kassaId || !ctx?.payType || !point?.base) return null;
 
     const data = {
       point,
       date: ctx.date,
-      summ,
-      kassaId: ctx.kassaId,
+      kassa: ctx.kassaId,
+      pay_type: ctx.payType,
+      scope: ctx.scope,
     };
 
-    const res = await getData("get_mismatch_orders", data);
+    if (ctx.scope === "smena" && ctx.smena) data.smena = ctx.smena;
 
-    return res?.orders || [];
-  };
+    const res = await getData("diagnose_mismatch", data);
+    if (!res?.st) return res || null;
 
-  openCorrConfirm = (order) => {
-    this.setState({
-      corrConfirmOpen: true,
-      corrOrder: order,
-    });
-  };
-
-  closeCorrConfirm = () => {
-    this.setState({
-      corrConfirmOpen: false,
-      corrOrder: null,
-    });
-  };
-
-  sendCorrReturn = async () => {
-    const { point, getData, openAlert, refreshOrders } = this.props;
-    const { mismatchCtx, corrOrder } = this.state;
-
-    if (!point?.base) return;
-    if (!mismatchCtx?.date) return;
-    if (!mismatchCtx?.kassaId || Number(mismatchCtx.kassaId) === 2) return;
-    if (!corrOrder?.id) return;
-
-    const data = {
-      point,
-      date: mismatchCtx.date,
-      kassaId: mismatchCtx.kassaId,
-      smena_list: mismatchCtx.smena_list || "",
-      order_id: corrOrder.id,
-    };
-
-    const res = await getData("correction_return", data);
-
-    openAlert?.(res?.st, res?.text || "");
-    // console.log("correction_return res", res);
-
-    if (res?.st) {
-      this.setState(
-        {
-          corrConfirmOpen: false,
-          corrOrder: null,
-          mismatchOpen: false,
-          mismatchCtx: null,
-          mismatchOrders: [],
-          comment: "",
-        },
-        () => {
-          setTimeout(() => {
-            refreshOrders?.();
-          }, 500);
-        },
-      );
-      return;
-    }
-
-    this.setState({
-      corrConfirmOpen: false,
-      corrOrder: null,
-    });
+    return res.diagnostics || res;
   };
 
   openMismatch = async (ctx) => {
-    if (!(ctx?.scope === "kassa_day" || ctx?.scope === "smena")) {
-      this.setState({
-        mismatchOpen: true,
-        mismatchCtx: ctx,
-        comment: ctx?.comment ?? "",
-        mismatchOrders: [],
-      });
-
-      return;
-    }
-
-    const orders = await this.getMismatchOrders(ctx);
-
     this.setState({
       mismatchOpen: true,
       mismatchCtx: ctx,
       comment: ctx?.comment ?? "",
-      mismatchOrders: orders,
+      mismatchDiagnostics: null,
+      selectedReceiptId: "",
+      selectedOrderId: "",
+      resolutionConfirmOpen: false,
+      pendingAction: null,
     });
+
+    if (!(ctx?.scope === "kassa_day" || ctx?.scope === "smena")) return;
+
+    const diagnostics = await this.getMismatchDiagnostics(ctx);
+
+    if (diagnostics?.st === false) {
+      this.props.openAlert?.(false, diagnostics.text || "Не удалось выполнить диагностику");
+      return;
+    }
+
+    if (diagnostics?.resolved) {
+      this.closeMismatch();
+      this.props.openAlert?.(true, diagnostics.text || "Расхождение уже устранено");
+      return;
+    }
+
+    this.setState({ mismatchDiagnostics: diagnostics });
   };
 
   closeMismatch = () =>
@@ -597,8 +547,94 @@ class CheckCheck_Accordion extends React.Component {
       mismatchOpen: false,
       mismatchCtx: null,
       comment: "",
-      mismatchOrders: [],
+      mismatchDiagnostics: null,
+      selectedReceiptId: "",
+      selectedOrderId: "",
+      resolutionConfirmOpen: false,
+      pendingAction: null,
     });
+
+  goToMismatchDetails = () => {
+    const { mismatchCtx } = this.state;
+
+    this.setState((prev) => ({
+      activeTab: 0,
+      openRows: mismatchCtx?.date ? { ...prev.openRows, [mismatchCtx.date]: true } : prev.openRows,
+      mismatchOpen: false,
+      mismatchCtx: null,
+      comment: "",
+      mismatchDiagnostics: null,
+    }));
+  };
+
+  openResolutionConfirm = (action) => {
+    this.setState({
+      resolutionConfirmOpen: true,
+      pendingAction: action,
+    });
+  };
+
+  closeResolutionConfirm = () => {
+    this.setState({
+      resolutionConfirmOpen: false,
+      pendingAction: null,
+    });
+  };
+
+  resolveMismatch = async () => {
+    const { getData, openAlert, refreshOrders } = this.props;
+    const {
+      mismatchCtx,
+      mismatchDiagnostics,
+      pendingAction,
+      selectedReceiptId,
+      selectedOrderId,
+      comment,
+    } = this.state;
+
+    if (!mismatchCtx || !mismatchDiagnostics?.case_id || !pendingAction?.type) return;
+
+    const data = {
+      case_id: mismatchDiagnostics.case_id,
+      version: mismatchDiagnostics.version,
+      action: pendingAction.type,
+      receipt_id: selectedReceiptId || null,
+      order_id: selectedOrderId || null,
+      comment: comment.trim(),
+    };
+
+    const res = await getData("resolve_mismatch", data);
+
+    if (!res?.st) {
+      this.closeResolutionConfirm();
+      openAlert?.(false, res?.text || "Не удалось применить решение");
+      return;
+    }
+
+    this.setState({
+      resolutionConfirmOpen: false,
+      pendingAction: null,
+      selectedReceiptId: "",
+      selectedOrderId: "",
+    });
+
+    openAlert?.(true, res.text || "Решение применено");
+    await refreshOrders?.();
+
+    if (res.resolved) {
+      this.closeMismatch();
+      return;
+    }
+
+    const diagnostics = res.diagnostics || (await this.getMismatchDiagnostics(mismatchCtx));
+
+    if (!diagnostics || diagnostics.st === false || diagnostics.resolved) {
+      this.closeMismatch();
+      return;
+    }
+
+    this.setState({ mismatchDiagnostics: diagnostics });
+  };
 
   handleCommentChange = (e) => this.setState({ comment: e.target.value });
 
@@ -656,7 +692,7 @@ class CheckCheck_Accordion extends React.Component {
   };
 
   render() {
-    const { summ_ofd, summ_chef, acces_comment, excelCompare } = this.props;
+    const { summ_ofd, summ_chef, acces_comment, acces_resolve, excelCompare } = this.props;
     const {
       openRows,
       openSummary,
@@ -665,9 +701,11 @@ class CheckCheck_Accordion extends React.Component {
       comment,
       activeTab,
       activeKassaTab,
-      mismatchOrders,
-      corrConfirmOpen,
-      corrOrder,
+      mismatchDiagnostics,
+      selectedReceiptId,
+      selectedOrderId,
+      resolutionConfirmOpen,
+      pendingAction,
     } = this.state;
 
     const daysMerged = this.getPreparedDays(summ_ofd, summ_chef);
@@ -732,6 +770,7 @@ class CheckCheck_Accordion extends React.Component {
     if (hasBankMismatchInside) colorAllBank = "red";
 
     const canEdit = Number(acces_comment) === 1;
+    const canResolve = Number(acces_resolve) === 1;
 
     return (
       <Box>
@@ -1348,6 +1387,7 @@ class CheckCheck_Accordion extends React.Component {
                                                   scope: "kassa_day",
                                                   date,
                                                   kassaId,
+                                                  payType: "cash",
                                                   label: "Наличные (касса/день)",
                                                   ofd: ofdKassa.summ_cash,
                                                   chef: chefKassa.summ_cash,
@@ -1383,6 +1423,7 @@ class CheckCheck_Accordion extends React.Component {
                                                   scope: "kassa_day",
                                                   date,
                                                   kassaId,
+                                                  payType: "bank",
                                                   label: "Безнал (касса/день)",
                                                   ofd: ofdKassa.summ_bank,
                                                   chef: chefKassa.summ_bank,
@@ -1592,6 +1633,7 @@ class CheckCheck_Accordion extends React.Component {
                                               date: row.date,
                                               kassaId,
                                               smena: row.smena,
+                                              payType: "cash",
                                               smena_list: row.smenaLabel,
                                               label: "Наличные (смена)",
                                               ofd: row.ofdCash,
@@ -1630,6 +1672,7 @@ class CheckCheck_Accordion extends React.Component {
                                             date: row.date,
                                             kassaId,
                                             smena: row.smena,
+                                            payType: "bank",
                                             smena_list: row.smenaLabel,
                                             label: "Безнал (смена)",
                                             ofd: row.ofdBank,
@@ -1800,17 +1843,24 @@ class CheckCheck_Accordion extends React.Component {
                     </Typography>
                   </Box>
 
-                  {(c.scope === "kassa_day" || c.scope === "smena") &&
-                    Number(c.kassaId) !== 2 &&
-                    mismatchOrders?.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <CheckCheck_Accordion_online
-                          title="Заказы по расхождению (разнице) сумм"
-                          orders={mismatchOrders}
-                          onCorrection={this.openCorrConfirm}
-                        />
-                      </Box>
-                    )}
+                  {(c.scope === "kassa_day" || c.scope === "smena") && (
+                    <MismatchDiagnostics
+                      diagnostics={mismatchDiagnostics}
+                      selectedReceiptId={selectedReceiptId}
+                      selectedOrderId={selectedOrderId}
+                      onSelectReceipt={(id) => this.setState({ selectedReceiptId: id })}
+                      onSelectOrder={(id) => this.setState({ selectedOrderId: id })}
+                      onAction={this.openResolutionConfirm}
+                      canResolve={canResolve}
+                      formatNumber={formatNumber}
+                    />
+                  )}
+
+                  {c.scope !== "kassa_day" && c.scope !== "smena" && (
+                    <Typography color="text.secondary">
+                      Подробный разбор доступен в красной строке конкретной кассы за день или смены.
+                    </Typography>
+                  )}
 
                   {c.scope === "day" && dayCommentRows.length > 0 && (
                     <TableContainer component={Paper}>
@@ -1850,8 +1900,8 @@ class CheckCheck_Accordion extends React.Component {
                         func={this.handleCommentChange}
                         multiline
                         maxRows={6}
-                        disabled={!canEdit}
-                        className={!canEdit ? "disabled_input" : undefined}
+                        disabled={!canEdit && !canResolve}
+                        className={!canEdit && !canResolve ? "disabled_input" : undefined}
                       />
                     </Box>
                   )}
@@ -1861,6 +1911,15 @@ class CheckCheck_Accordion extends React.Component {
           </DialogContent>
 
           <DialogActions>
+            {mismatchCtx && mismatchCtx.scope !== "kassa_day" && mismatchCtx.scope !== "smena" && (
+              <Button
+                onClick={this.goToMismatchDetails}
+                variant="contained"
+                color="info"
+              >
+                К детализации
+              </Button>
+            )}
             {mismatchCtx &&
               (mismatchCtx.scope === "kassa_day" || mismatchCtx.scope === "smena") &&
               canEdit && (
@@ -1869,7 +1928,7 @@ class CheckCheck_Accordion extends React.Component {
                   variant="contained"
                   color="success"
                 >
-                  Сохранить
+                  Сохранить комментарий
                 </Button>
               )}
             <Button
@@ -1881,28 +1940,60 @@ class CheckCheck_Accordion extends React.Component {
           </DialogActions>
         </Dialog>
 
-        {/* Подтверждение коррекции возврата */}
+        {/* Подтверждение выбранного решения */}
         <Dialog
-          open={corrConfirmOpen}
-          onClose={this.closeCorrConfirm}
+          open={resolutionConfirmOpen}
+          onClose={this.closeResolutionConfirm}
+          maxWidth="sm"
+          fullWidth
         >
           <DialogTitle>Подтвердите действие</DialogTitle>
 
           <DialogContent dividers>
-            Коррекция возврата по заказу <b>{corrOrder?.id}</b> ?
+            <Typography sx={{ mb: 1 }}>
+              Решение: <b>{pendingAction?.label}</b>
+            </Typography>
+            {pendingAction?.description && (
+              <Typography sx={{ mb: 1 }}>{pendingAction.description}</Typography>
+            )}
+            {pendingAction?.expected_effect && (
+              <Typography sx={{ mb: 1 }}>
+                Ожидаемый результат: <b>{pendingAction.expected_effect}</b>
+              </Typography>
+            )}
+            {selectedReceiptId && (
+              <Typography>
+                Чек ОФД: <b>{selectedReceiptId}</b>
+              </Typography>
+            )}
+            {selectedOrderId && (
+              <Typography>
+                Заказ: <b>{selectedOrderId}</b>
+              </Typography>
+            )}
+            <Box sx={{ mt: 2 }}>
+              <MyTextInput
+                label="Комментарий"
+                value={comment}
+                func={this.handleCommentChange}
+                multiline
+                maxRows={6}
+              />
+            </Box>
           </DialogContent>
 
           <DialogActions>
             <Button
               variant="contained"
               style={{ color: "#fff", backgroundColor: "#000" }}
-              onClick={this.closeCorrConfirm}
+              onClick={this.closeResolutionConfirm}
             >
               Отмена
             </Button>
             <Button
               variant="contained"
-              onClick={this.sendCorrReturn}
+              color={pendingAction?.type?.startsWith("correction_") ? "error" : "success"}
+              onClick={this.resolveMismatch}
             >
               Подтвердить
             </Button>
@@ -2956,7 +3047,8 @@ class CheckCheck_ extends React.Component {
                 summ_ofd={summ_ofd}
                 summ_chef={summ_chef}
                 save_comment={this.save_comment}
-                acces_comment={acces.comment_access}
+                acces_comment={acces?.comment_access}
+                acces_resolve={acces?.resolve_access}
                 point={point}
                 getData={this.getData}
                 openAlert={this.openAlert}
