@@ -2,7 +2,7 @@
 
 import dayjs from "dayjs";
 import { Close } from "@mui/icons-material";
-import { Button, Grid, IconButton, Paper, Stack } from "@mui/material";
+import { Button, CircularProgress, Grid, IconButton, Paper, Stack, Tooltip } from "@mui/material";
 
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import ExcelIcon from "@/ui/ExcelIcon";
@@ -19,7 +19,6 @@ export default function OrdersExtendedFilters({
   paymentTypes,
   rows,
   loading,
-  exportUrl,
   isDesktop,
   canExport,
   onSubmit,
@@ -195,7 +194,7 @@ export default function OrdersExtendedFilters({
               func={(_, value) => onUpdateFilter("payment_type_ids", value)}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
             <CityCafeAutocomplete2
               points={points}
               value={filters.point || []}
@@ -254,12 +253,12 @@ export default function OrdersExtendedFilters({
               sx={{ minHeight: "100%", alignItems: "center" }}
             >
               <MyCheckBox
-                label="Показывать без промокода"
+                label="Заказ без промокода"
                 value={filters.no_promo}
                 func={(event) => onUpdateFilter("no_promo", event)}
               />
               <MyCheckBox
-                label="Показывать с промокодом"
+                label="Заказы с промокодом"
                 value={filters.with_promo}
                 func={(event) => onUpdateFilter("with_promo", event)}
               />
@@ -318,32 +317,41 @@ export default function OrdersExtendedFilters({
               >
                 Сбросить
               </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={loading.search || loading.bootstrap}
+              <Stack
+                direction="row"
+                spacing={1}
                 sx={{ flexGrow: 1 }}
               >
-                Получить список заказов
-              </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={loading.search || loading.bootstrap}
+                  sx={{ flexGrow: 1 }}
+                >
+                  Применить
+                </Button>
+                {canExport && rows.length > 0 ? (
+                  <Tooltip title="Скачать Excel">
+                    <span>
+                      <IconButton
+                        type="button"
+                        onClick={onExport}
+                        disabled={loading.export || loading.search}
+                        aria-label="Скачать Excel"
+                        sx={{
+                          flexShrink: 0,
+                          width: 46,
+                          height: 46,
+                          borderRadius: 1,
+                        }}
+                      >
+                        {loading.export ? <CircularProgress size={22} /> : <ExcelIcon />}
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                ) : null}
+              </Stack>
             </Stack>
-            {canExport && rows.length > 0 ? (
-              <Button
-                type="button"
-                variant="contained"
-                disabled={!rows.length || loading.export || loading.search}
-                onClick={onExport}
-                startIcon={<ExcelIcon sx={{ fontSize: 18 }} />}
-                aria-label="Скачать Excel"
-                sx={{
-                  backgroundColor: exportUrl ? "#3cb623ff" : "#1D6F42",
-                  textTransform: "none",
-                  "&:hover": { backgroundColor: "#155c36" },
-                }}
-              >
-                {loading.export ? "Экспорт..." : "Скачать Excel"}
-              </Button>
-            ) : null}
           </Stack>
         </Grid>
       </Grid>

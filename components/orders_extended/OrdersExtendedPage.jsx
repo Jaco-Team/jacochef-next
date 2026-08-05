@@ -489,7 +489,6 @@ export default function OrdersExtendedPage() {
                 paymentTypes={paymentTypes}
                 rows={rows}
                 loading={loading}
-                exportUrl={exportUrl}
                 isDesktop={isDesktop}
                 canExport={canAccess("export_items")}
                 onSubmit={handleSearchSubmit}
@@ -519,7 +518,6 @@ export default function OrdersExtendedPage() {
                   paymentTypes={paymentTypes}
                   rows={rows}
                   loading={loading}
-                  exportUrl={exportUrl}
                   isDesktop={isDesktop}
                   canExport={canAccess("export_items")}
                   onSubmit={handleSearchSubmit}
