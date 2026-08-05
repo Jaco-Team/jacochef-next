@@ -8,9 +8,7 @@ const defaultState = {
   isLoading: false,
   refreshToken: 0,
   access: {},
-  summary: {},
   sections: [],
-  plannedSections: [],
   units: [],
   categories: [],
   allergens: [],
@@ -18,9 +16,6 @@ const defaultState = {
   apps: [],
   tags: [],
   accountingSystems: [],
-  uiMeta: {},
-  businessMeta: {},
-  capabilities: {},
   tab: 0,
 };
 
@@ -39,9 +34,7 @@ export const useSkladStore = create((set) => ({
     set({
       moduleName: payload.moduleName ?? "",
       access: payload.access ?? {},
-      summary: payload.summary ?? {},
       sections: payload.sections ?? [],
-      plannedSections: payload.plannedSections ?? [],
       units: payload.units ?? [],
       categories: payload.categories ?? [],
       allergens: payload.allergens ?? [],
@@ -49,9 +42,6 @@ export const useSkladStore = create((set) => ({
       apps: payload.apps ?? [],
       tags: payload.tags ?? [],
       accountingSystems: payload.accountingSystems ?? [],
-      uiMeta: payload.uiMeta ?? {},
-      businessMeta: payload.businessMeta ?? {},
-      capabilities: payload.capabilities ?? {},
       tab: payload.tab ?? defaultState.tab,
     });
   },

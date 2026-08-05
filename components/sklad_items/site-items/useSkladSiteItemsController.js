@@ -18,7 +18,7 @@ import { useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
 
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canManageSiteItems } = useSkladAccess();
+  const { canArchive, canDelete, canCreateSiteItem, canManageSiteItems } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
 
@@ -39,8 +39,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
   const isEditable = canManageSiteItems();
+  const canCreate = canCreateSiteItem();
   const canArchiveAction = canArchive();
-  const canDeleteAction = canDelete();
+  const canDeleteAction = canDelete("site_item");
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
@@ -190,7 +191,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const confirmDelete = useCallback(async () => {
     const row = deleteDialog?.row;
 
-    if (!row?.id || !canArchiveAction) {
+    if (!row?.id || !canDelete("site_item")) {
       return;
     }
 
@@ -228,7 +229,16 @@ export default function useSkladSiteItemsController({ showAlert }) {
     } finally {
       setShellState({ isLoading: false });
     }
-  }, [api, closeDeleteDialog, deleteDialog?.row, loadRows, setShellState, setState, showAlert]);
+  }, [
+    api,
+    canDelete,
+    closeDeleteDialog,
+    deleteDialog?.row,
+    loadRows,
+    setShellState,
+    setState,
+    showAlert,
+  ]);
 
   const confirmArchive = useCallback(async () => {
     const row = archiveDialog?.row;
@@ -669,6 +679,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         deleteDialog={deleteDialog}
         archiveDialog={archiveDialog}
         isEditable={isEditable}
+        canCreate={canCreate}
         canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
         showAlert={showAlert}

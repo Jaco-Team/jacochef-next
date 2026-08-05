@@ -46,7 +46,8 @@
 
 - read contour уже частично опубликован
 - `get_all` в текущей итерации совмещает shell payload и shared references
-- write/archive/delete/convert контур остается следующей фазой
+- write/archive/delete/convert для текущих production и site-item slices подключены в FE
+- warehouse-item full CRUD остается в `sklad_items_module_new` и не входит в этот FE scope
 
 ## 1. Зачем нужен модуль
 
@@ -72,14 +73,13 @@
 
 Текущее состояние внедрения:
 
-- Units и Categories уже доступны на read layer
+- Units доступны в текущем FE scope; категории остаются shared references и backend API contract без отдельного FE CRUD tab
 - Recipes, Semi-finished и Site items уже имеют live read routes
-- это еще не означает завершенный lifecycle управления, потому что write/archive/delete flows остаются planned
+- write, archive, delete и history flows покрыты в пределах опубликованного current FE scope
 
 Временное решение по FE:
 
-- tab `Категории` в `sklad_items` сейчас скрыт из нового UI
-- это временный шаг перед полным удалением tab-а из нового модуля
+- отдельного top-level CRUD tab `Категории` в новом UI нет; категории используются как shared references
 - отдельного top-level tab `История` в новом UI нет
 - история и image-history открываются внутри item-level modal-ов по embedded contract из `get_one`
 
@@ -103,7 +103,7 @@
 
 Скрытые / переходные части:
 
-- `Категории` остаются в backend/read contour, но top-level tab скрыт
+- категории остаются в backend/read contour и shared bootstrap references, но отдельного top-level CRUD tab нет
 - item history живет внутри modal-а сущности, а не в отдельном workspace
 
 Важное ограничение:
@@ -435,11 +435,11 @@ Schema confirmation:
 - section-level edit
 - archive visibility/edit
 - delete visibility/execute
-- optional temporary legacy aliases только как migration bridge
+- raw middleware access keys без synthetic aliases и runtime fallbacks
 
 Право `delete_execute` должно быть отдельным и редким.
 
-`legacy_access` допустим только как временный compatibility слой. Он не должен определять ни backend authorization, ни структуру нового UI.
+Legacy access names используются только как documented source references; они не определяют runtime authorization или структуру нового UI.
 
 ## 8. Operational rules that matter to implementation
 

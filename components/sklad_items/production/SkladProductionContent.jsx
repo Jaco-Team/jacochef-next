@@ -67,6 +67,7 @@ export default function SkladProductionContent({
   shellApps,
   canArchiveAction,
   canDeleteAction,
+  canCreateProduction,
   canManageProduction,
   setState,
   openCreate,
@@ -157,7 +158,7 @@ export default function SkladProductionContent({
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  disabled={!canManageProduction("recipe")}
+                  disabled={!canCreateProduction("recipe")}
                   onClick={() => openCreate("recipe")}
                 >
                   Добавить рецепт
@@ -165,7 +166,7 @@ export default function SkladProductionContent({
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  disabled={!canManageProduction("semi_finished")}
+                  disabled={!canCreateProduction("semi_finished")}
                   onClick={() => openCreate("semi_finished")}
                 >
                   Добавить заготовку
@@ -431,7 +432,11 @@ export default function SkladProductionContent({
         storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
         apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
         allItemsList={detail?.all_items_list || draft?.all_items_list || []}
-        isEditable={canManageProduction(activeEntityType)}
+        isEditable={
+          modal.mode === "create"
+            ? canCreateProduction(activeEntityType)
+            : canManageProduction(activeEntityType)
+        }
         onSubmit={submitDraft}
         onClose={closeModal}
       />

@@ -23,7 +23,7 @@ import { PRODUCTION_ENTITY_OPTIONS, useSkladProductionStore } from "./useSkladPr
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canManageProduction } = useSkladAccess();
+  const { canArchive, canDelete, canCreateProduction, canManageProduction } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const shellUnits = useSkladStore((state) => state.units);
@@ -87,7 +87,7 @@ export default function useSkladProductionController({ showAlert }) {
   }, [mergedRows, page, rowsPerPage]);
 
   const canArchiveAction = canArchive();
-  const canDeleteAction = canDelete();
+  const canDeleteAction = canDelete("recipe");
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
@@ -218,7 +218,7 @@ export default function useSkladProductionController({ showAlert }) {
     const row = deleteDialog?.row;
     const entityType = deleteDialog?.entityType || activeEntityType;
 
-    if (!row?.id || !entityType || !canArchiveAction) {
+    if (!row?.id || !entityType || !canDelete(entityType)) {
       return;
     }
 
@@ -261,6 +261,7 @@ export default function useSkladProductionController({ showAlert }) {
   }, [
     activeEntityType,
     api,
+    canDelete,
     closeDeleteDialog,
     deleteDialog?.entityType,
     deleteDialog?.row,
@@ -487,6 +488,7 @@ export default function useSkladProductionController({ showAlert }) {
         shellApps={shellApps}
         canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
+        canCreateProduction={canCreateProduction}
         canManageProduction={canManageProduction}
         setState={setState}
         openCreate={openCreate}

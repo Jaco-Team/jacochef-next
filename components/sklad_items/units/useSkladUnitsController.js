@@ -87,7 +87,7 @@ export default function useSkladUnitsController({ showAlert }) {
   const isEditable = canEdit("ed_izmer");
   const canCreate = canCreateUnit();
   const canShowUsage = canViewUnitUsage();
-  const canDeleteAction = canDelete();
+  const canDeleteAction = canDelete("unit");
 
   const loadUnits = useCallback(async () => {
     setShellState({ isLoading: true });

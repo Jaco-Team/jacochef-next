@@ -21,10 +21,6 @@ export default function useSkladApi() {
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
       deleteUnit: (id) => request("units/delete", { id }),
-      getCategories: (payload = {}) => request("categories/list", payload),
-      createCategory: (payload) => request("categories/save_new", payload),
-      updateCategory: (payload) => request("categories/save_edit", payload),
-      deleteCategory: (id) => request("categories/delete", { id }),
       getRecipes: (payload = {}) => request("recipes/list", payload),
       getRecipe: (id) => request("recipes/get_one", { id }),
       createRecipe: (payload) => request("recipes/save_new", payload),
@@ -50,7 +46,6 @@ export default function useSkladApi() {
       historyGetOne: (payload = {}) => request("history/get_one", payload),
       historyCompare: (payload = {}) => request("history/compare", payload),
       getArchiveList: (payload = {}) => request("entities/archive_list", payload),
-      archiveList: (payload = {}) => request("entities/archive_list", payload),
       archiveEntity: (payload) => request("entities/archive", payload),
       deleteEntity: (payload) => request("entities/delete", payload),
     };

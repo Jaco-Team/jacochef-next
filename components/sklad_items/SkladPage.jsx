@@ -22,7 +22,6 @@ import a11yProps from "@/ui/TabPanel/a11yProps";
 
 import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
-import SkladCategoriesTab from "./categories/SkladCategoriesTab";
 import SkladProductionTab from "./production/SkladProductionTab";
 import SkladSiteItemsTab from "./site-items/SkladSiteItemsTab";
 import { getVisibleSkladTabs } from "./skladTabs";
@@ -33,9 +32,7 @@ function normalizeBootstrap(response) {
   return {
     moduleName: response?.module_info?.name || "Склад",
     access: response?.access || {},
-    summary: response?.summary || {},
     sections: response?.sections || [],
-    plannedSections: response?.planned_sections || [],
     units: response?.units || [],
     categories: response?.categories || [],
     allergens: response?.allergens || [],
@@ -43,9 +40,6 @@ function normalizeBootstrap(response) {
     apps: response?.apps || [],
     tags: response?.tags || [],
     accountingSystems: response?.accounting_systems || [],
-    uiMeta: response?.ui_meta || {},
-    businessMeta: response?.business_meta || {},
-    capabilities: response?.capabilities || {},
   };
 }
 
@@ -126,15 +120,6 @@ export default function SkladPage() {
     if (item.key === "units") {
       return (
         <SkladUnitsTab
-          showAlert={showAlert}
-          refreshToken={refreshToken}
-        />
-      );
-    }
-
-    if (item.key === "categories") {
-      return (
-        <SkladCategoriesTab
           showAlert={showAlert}
           refreshToken={refreshToken}
         />

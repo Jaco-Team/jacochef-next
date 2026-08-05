@@ -119,9 +119,9 @@ FE strategy after current backend update:
 Текущий статус:
 
 - completed for current FE scope
-- `Units` и `Categories` tabs уже работают на canonical API
-- delete-state and source-aware category handling уже выведены в UI
-- July 20, 2026: implementation-facing explanatory alert removed from the implemented `Categories` tab; the tab now stays operational/user-facing only
+- `Units` работают на canonical API
+- категории остаются shared references для production/site-item flows; отдельный CRUD tab удален из FE scope
+- delete-state and source-aware category handling используются там, где категории являются частью entity flow
 
 ### Slice C. Recipes + semi-finished
 
@@ -133,7 +133,7 @@ FE strategy after current backend update:
 
 - shared tab with split list/filtering and one editor family
 - live read routes
-- planned save/archive/delete/history write lifecycle
+- canonical save/archive/delete/history write lifecycle for the current FE scope
 - convert type flow
 - composition/items rows
 - allergens and possible allergens
@@ -226,7 +226,7 @@ Contract note:
 - production row action now hands off into the real History tab with prefilled `entity_type` + `entity_id`
 - site-items row action now hands off into the real History tab with prefilled `entity_type = site_item` + `entity_id`
 - `Архив` tab уже читает canonical archive list for supported entity types
-- archive restore/view flows и domain-specific history presentation consistency остаются следующим pass
+- archive restore/view flows подключены; domain-specific history presentation consistency остается hardening follow-up
 - July 20, 2026: archive/history tables switched to paged table rendering to keep large result sets usable without changing the current API contract
 - July 20, 2026: history/archive reload effects were narrowed to entity-driven refresh triggers so callback identity churn no longer replays API reads
 
@@ -648,7 +648,7 @@ Deliverables:
 - section visibility и edit separated
 - archive and delete separated
 - backend checks canonical access only
-- `legacy_access` only as temporary FE bridge
+- legacy access names are source references only; no runtime compatibility bridge is required
 
 ### 7.2. Validation
 
@@ -708,7 +708,7 @@ Deliverables:
 
 1. Shell foundation: page route, bootstrap load, access adapter, tab registry, section placeholders. Status: completed.
 2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`, with its own tab-scoped state/controller on top of the global shell store. Status: completed.
-3. Categories slice: source-aware list/tree + modal CRUD on canonical `categories/*`. Status: completed.
+3. Categories slice: shared category references on canonical bootstrap/detail payloads. Status: completed for current FE scope; dedicated CRUD tab is out of scope.
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
 6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: completed for current FE scope; canonical create/edit, tag mutation, image upload, VK sync, history handoff, archive/delete flows and strict current API binding are in place, while deeper composition editing remains backend follow-up.
@@ -727,17 +727,25 @@ Latest chunk status:
   - history/archive request effects no longer depend on unstable callback identity
   - `ACCESS-MAP.md` now records canonical section flags, legacy action equivalents and unclear/redundant flags for the current FE scope
 - July 21, 2026 reviewer correction:
-  - plain `*_view` access remains strictly read-only; destructive actions now use raw middleware delete keys (`delete_*` / `delete_item_*`) instead of synthetic `delete_execute`
+  - plain `*_view` access remains strictly read-only; production and site-item destructive actions use their documented raw delete keys, while Units/Categories retain the documented `delete_execute` plus field-edit gate
 - remaining cleanup decision:
   - decide whether convert, VK sync, tag mutation and archive restore should receive dedicated canonical action keys from backend docs, or stay intentionally covered by broad section edit/access gating
 - reviewer pass remains mandatory after each implementation chunk
 - final Chrome UX walkthrough across all working tabs remains a required closing step before completion
-- incomplete follow-up from review on July 22, 2026:
-  - site-item editor must show a live calorie preview from the currently entered BJU values instead of only echoing backend-provided `kkal_preview`
-  - site-item editor still needs an operational composition/allergen editing surface or an explicitly documented scope cut if that remains backend-blocked
+- remaining follow-up from review on July 22, 2026:
   - site-item image flow still needs a clearer image-history UX surface beyond the generic history handoff
-  - final-facing fallback stubs like the unavailable-tab placeholder should be removed or hard-gated before finalization
-  - long-text compact-with-expand behavior should be finalized consistently in the real create/edit forms, not only partially via static multiline sizing
+  - final Chrome walkthrough and focused accessibility pass remain pending
+  - long-text compact-with-expand behavior should be checked consistently across the real create/edit forms
+
+## 8.0. Current cleanup pass
+
+- completed: leave the legacy `src/api_new.js` transport untouched
+- completed: remove the new API hook fallback and require configured `NEXT_PUBLIC_API_URL`
+- completed: keep one response boundary in `useApi` and one upload path
+- completed: align FE access checks with the raw keys documented by the backend access contract
+- completed: remove unreachable Categories UI, duplicate archive API method and unused shell metadata
+- completed: correct delete confirmation checks to use the entity-specific delete permission
+- remaining: run the focused module smoke pass after the transport and access cleanup
 
 ## 9. Explicit non-goals for current iteration
 
@@ -965,5 +973,5 @@ Medium priority:
 
 Low priority:
 
-- pending: replace archive row fallback status “Неизвестно” with a business-meaningful anomaly state or remove it from normal archive rows.
+- pending: replace archive row unknown status “Неизвестно” with a business-meaningful anomaly state or remove it from normal archive rows.
 - pending: remove or rewrite remaining implementation-facing wording that leaks into visible UI metadata.

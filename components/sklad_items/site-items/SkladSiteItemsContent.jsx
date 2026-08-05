@@ -68,6 +68,7 @@ export default function SkladSiteItemsContent({
   deleteDialog,
   archiveDialog,
   isEditable,
+  canCreate,
   canArchiveAction,
   canDeleteAction,
   showAlert,
@@ -155,7 +156,7 @@ export default function SkladSiteItemsContent({
               variant="contained"
               startIcon={<AddIcon />}
               sx={{ whiteSpace: "nowrap" }}
-              disabled={!isEditable}
+              disabled={!canCreate}
               onClick={openCreate}
             >
               Добавить
@@ -481,7 +482,7 @@ export default function SkladSiteItemsContent({
           categories={categories}
           tags={tags}
           loading={modal.loading}
-          isEditable={isEditable}
+          isEditable={modal.mode === "create" ? canCreate : isEditable}
           canArchiveAction={canArchiveAction}
           initialTab={modal.section}
           onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "main")}
