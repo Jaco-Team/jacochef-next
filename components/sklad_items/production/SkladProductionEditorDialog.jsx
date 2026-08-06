@@ -86,11 +86,12 @@ export default function SkladProductionEditorDialog({
   apps = [],
   allItemsList = [],
   isEditable = false,
+  canViewHistory = false,
   initialTab = "main",
   onSubmit,
   onClose,
 }) {
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(canViewHistory ? initialTab : "main");
   const [form, setForm] = useState(() => buildInitialDraft(draft));
 
   const isRecipe = entityType === "recipe";
@@ -101,8 +102,8 @@ export default function SkladProductionEditorDialog({
     }
 
     setForm(buildInitialDraft(draft));
-    setActiveTab(initialTab);
-  }, [draft, initialTab, open]);
+    setActiveTab(canViewHistory ? initialTab : "main");
+  }, [canViewHistory, draft, initialTab, open]);
 
   const unitOptions = useMemo(() => {
     const options = [{ id: "", name: "Выберите единицу" }].concat(
@@ -332,12 +333,14 @@ export default function SkladProductionEditorDialog({
                   iconPosition="start"
                   label="Карточка"
                 />
-                <Tab
-                  value="history"
-                  icon={<HistoryOutlinedIcon fontSize="small" />}
-                  iconPosition="start"
-                  label="История"
-                />
+                {canViewHistory ? (
+                  <Tab
+                    value="history"
+                    icon={<HistoryOutlinedIcon fontSize="small" />}
+                    iconPosition="start"
+                    label="История"
+                  />
+                ) : null}
               </TabList>
 
               <TabPanel
@@ -788,18 +791,20 @@ export default function SkladProductionEditorDialog({
                 </Stack>
               </TabPanel>
 
-              <TabPanel
-                value="history"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <SkladSectionCard
-                  icon={<HistoryOutlinedIcon fontSize="small" />}
-                  title="История"
-                  description="Последние изменения текущей карточки."
+              {canViewHistory ? (
+                <TabPanel
+                  value="history"
+                  sx={{ p: 0, pt: 2 }}
                 >
-                  <SkladEmbeddedHistoryTable history={form.history} />
-                </SkladSectionCard>
-              </TabPanel>
+                  <SkladSectionCard
+                    icon={<HistoryOutlinedIcon fontSize="small" />}
+                    title="История"
+                    description="Последние изменения текущей карточки."
+                  >
+                    <SkladEmbeddedHistoryTable history={form.history} />
+                  </SkladSectionCard>
+                </TabPanel>
+              ) : null}
             </TabContext>
           )}
         </Stack>

@@ -18,7 +18,8 @@ import { useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
 
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canCreateSiteItem, canManageSiteItems } = useSkladAccess();
+  const { canArchive, canDelete, canCreateSiteItem, canManageSiteItems, canViewHistory } =
+    useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
 
@@ -38,9 +39,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
 
-  const isEditable = canManageSiteItems();
-  const canCreate = canCreateSiteItem();
-  const canArchiveAction = canArchive();
+  const isEditable = canManageSiteItems;
+  const canCreate = canCreateSiteItem;
   const canDeleteAction = canDelete("site_item");
 
   const loadRows = useCallback(
@@ -156,7 +156,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (row) => {
-      if (!row?.id || !canArchiveAction) {
+      if (!row?.id || !canArchive) {
         return;
       }
 
@@ -168,7 +168,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         },
       });
     },
-    [canArchiveAction, setState],
+    [canArchive, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -287,7 +287,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   }, [
     api,
     archiveDialog?.row,
-    canArchiveAction,
+    canArchive,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -680,8 +680,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
         archiveDialog={archiveDialog}
         isEditable={isEditable}
         canCreate={canCreate}
-        canArchiveAction={canArchiveAction}
+        canArchiveAction={canArchive}
         canDeleteAction={canDeleteAction}
+        canViewHistory={canViewHistory}
         showAlert={showAlert}
         setState={setState}
         loadRows={loadRows}

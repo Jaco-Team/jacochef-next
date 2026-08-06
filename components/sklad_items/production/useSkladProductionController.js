@@ -23,7 +23,8 @@ import { PRODUCTION_ENTITY_OPTIONS, useSkladProductionStore } from "./useSkladPr
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canCreateProduction, canManageProduction } = useSkladAccess();
+  const { canArchive, canDelete, canCreateProduction, canManageProduction, canViewHistory } =
+    useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const shellUnits = useSkladStore((state) => state.units);
@@ -86,7 +87,6 @@ export default function useSkladProductionController({ showAlert }) {
     return mergedRows.slice(start, start + rowsPerPage);
   }, [mergedRows, page, rowsPerPage]);
 
-  const canArchiveAction = canArchive();
   const canDeleteAction = canDelete("recipe");
 
   const loadRows = useCallback(
@@ -178,7 +178,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (entityType, row) => {
-      if (!row?.id || !canArchiveAction) {
+      if (!row?.id || !canArchive) {
         return;
       }
 
@@ -192,7 +192,7 @@ export default function useSkladProductionController({ showAlert }) {
         },
       });
     },
-    [canArchiveAction, setState],
+    [canArchive, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -323,7 +323,7 @@ export default function useSkladProductionController({ showAlert }) {
     api,
     archiveDialog?.entityType,
     archiveDialog?.row,
-    canArchiveAction,
+    canArchive,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -486,10 +486,11 @@ export default function useSkladProductionController({ showAlert }) {
         shellAllergens={shellAllergens}
         shellStorages={shellStorages}
         shellApps={shellApps}
-        canArchiveAction={canArchiveAction}
+        canArchiveAction={canArchive}
         canDeleteAction={canDeleteAction}
         canCreateProduction={canCreateProduction}
         canManageProduction={canManageProduction}
+        canViewHistory={canViewHistory}
         setState={setState}
         openCreate={openCreate}
         openEdit={openEdit}

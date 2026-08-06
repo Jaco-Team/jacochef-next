@@ -85,8 +85,8 @@ export default function useSkladUnitsController({ showAlert }) {
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
 
   const isEditable = canEdit("units");
-  const canCreate = canCreateUnit();
-  const canShowUsage = canViewUnitUsage();
+  const canCreate = canCreateUnit;
+  const canShowUsage = canViewUnitUsage;
   const canDeleteAction = canDelete("unit");
 
   const loadUnits = useCallback(async () => {

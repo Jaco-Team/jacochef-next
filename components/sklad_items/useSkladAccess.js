@@ -3,30 +3,27 @@
 import { useMemo } from "react";
 import { useSkladStore } from "./useSkladStore";
 
-function isGranted(access, key) {
-  return Number(access?.[key]) === 1 || access?.[key] === true;
-}
-
 export default function useSkladAccess() {
   const access = useSkladStore((state) => state.access);
 
   return useMemo(() => {
-    const canEdit = (group) => isGranted(access, `${group}_edit`);
-    const canView = (group) => isGranted(access, `${group}_view`) || canEdit(group);
-    const canAccess = (action) => isGranted(access, action);
+    const canEdit = (group) => Number(access?.[`${group}_edit`]) === 1;
+    const canView = (group) => Number(access?.[`${group}_view`]) === 1 || canEdit(group);
+    const canAccess = (action) => Number(access?.[action]) === 1;
 
     return {
       access,
       canView,
       canEdit,
       canAccess,
-      canViewUnitUsage: () => canView("units"),
-      canCreateUnit: () => canAccess("units_create"),
-      canArchive: () => canView("archive"),
-      canCreateProduction: () => canAccess("production_create"),
-      canManageProduction: () => canEdit("production"),
-      canManageSiteItems: () => canEdit("site_items"),
-      canCreateSiteItem: () => canAccess("site_items_create"),
+      canViewUnitUsage: canView("units"),
+      canViewHistory: Number(access?.history_view) === 1,
+      canCreateUnit: canAccess("units_create"),
+      canArchive: canView("archive"),
+      canCreateProduction: canAccess("production_create"),
+      canManageProduction: canEdit("production"),
+      canManageSiteItems: canEdit("site_items"),
+      canCreateSiteItem: canAccess("site_items_create"),
       canDelete: (entityType) => {
         if (entityType === "recipe" || entityType === "semi_finished") {
           return canAccess("production_delete");
@@ -42,7 +39,7 @@ export default function useSkladAccess() {
 
         return false;
       },
-      canManageArchivedEntity: () => canEdit("archive"),
+      canManageArchivedEntity: canEdit("archive"),
     };
   }, [access]);
 }

@@ -69,6 +69,7 @@ export default function SkladProductionContent({
   canDeleteAction,
   canCreateProduction,
   canManageProduction,
+  canViewHistory,
   setState,
   openCreate,
   openEdit,
@@ -158,7 +159,7 @@ export default function SkladProductionContent({
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  disabled={!canCreateProduction("recipe")}
+                  disabled={!canCreateProduction}
                   onClick={() => openCreate("recipe")}
                 >
                   Добавить рецепт
@@ -166,7 +167,7 @@ export default function SkladProductionContent({
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  disabled={!canCreateProduction("semi_finished")}
+                  disabled={!canCreateProduction}
                   onClick={() => openCreate("semi_finished")}
                 >
                   Добавить заготовку
@@ -250,7 +251,7 @@ export default function SkladProductionContent({
               <TableBody>
                 {paginatedRows.map((row) => {
                   const entityType = row?.entityType || "semi_finished";
-                  const canCreateOrEdit = canManageProduction(entityType);
+                  const canCreateOrEdit = canManageProduction;
                   const canDelete = Boolean(row?.delete_usage?.can_delete);
                   const primaryStatusChip = getPrimaryStatusChip(row);
                   const secondaryStatusChips = getSecondaryStatusChips(row);
@@ -320,17 +321,19 @@ export default function SkladProductionContent({
                             </span>
                           </Tooltip>
 
-                          <Tooltip title="Открыть вкладку истории">
-                            <span>
-                              <IconButton
-                                size="small"
-                                aria-label="Открыть историю"
-                                onClick={() => openEdit(entityType, row, "history")}
-                              >
-                                <HistoryOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                          {canViewHistory ? (
+                            <Tooltip title="Открыть вкладку истории">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  aria-label="Открыть историю"
+                                  onClick={() => openEdit(entityType, row, "history")}
+                                >
+                                  <HistoryOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
 
                           {canArchiveAction ? (
                             <Tooltip
@@ -434,11 +437,8 @@ export default function SkladProductionContent({
         storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
         apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
         allItemsList={detail?.all_items_list || draft?.all_items_list || []}
-        isEditable={
-          modal.mode === "create"
-            ? canCreateProduction(activeEntityType)
-            : canManageProduction(activeEntityType)
-        }
+        isEditable={modal.mode === "create" ? canCreateProduction : canManageProduction}
+        canViewHistory={canViewHistory}
         onSubmit={submitDraft}
         onClose={closeModal}
       />

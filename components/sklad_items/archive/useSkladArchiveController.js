@@ -91,7 +91,7 @@ function normalizeRows(entityType, response) {
 
 export default function useSkladArchiveController({ showAlert }) {
   const api = useSkladApi();
-  const { canManageArchivedEntity } = useSkladAccess();
+  const { canManageArchivedEntity, canViewHistory } = useSkladAccess();
   const setShellState = useSkladStore((state) => state.setState);
   const shellUnits = useSkladStore((state) => state.units);
   const shellCategories = useSkladStore((state) => state.categories);
@@ -142,7 +142,7 @@ export default function useSkladArchiveController({ showAlert }) {
     return rows.slice(start, start + rowsPerPage);
   }, [page, rows, rowsPerPage]);
 
-  const canRestore = canManageArchivedEntity(entityType);
+  const canRestore = canManageArchivedEntity;
 
   useEffect(() => {
     const maxPage = rows.length ? Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1) : 0;
@@ -237,7 +237,7 @@ export default function useSkladArchiveController({ showAlert }) {
 
   const openRestoreDialog = useCallback(
     (row) => {
-      if (!row?.id || !canManageArchivedEntity(row.entityType)) {
+      if (!row?.id || !canManageArchivedEntity) {
         return;
       }
 
@@ -503,6 +503,7 @@ export default function useSkladArchiveController({ showAlert }) {
           apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
           allItemsList={detail?.all_items_list || []}
           isEditable={false}
+          canViewHistory={canViewHistory}
           initialTab={modal.tab}
           onSubmit={() => {}}
           onClose={closeModal}
@@ -515,6 +516,7 @@ export default function useSkladArchiveController({ showAlert }) {
           categories={[]}
           tags={[]}
           isEditable={false}
+          canViewHistory={canViewHistory}
           initialTab={modal.section}
           onSubmit={() => {}}
           onCreateTag={() => null}

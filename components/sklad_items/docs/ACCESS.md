@@ -33,7 +33,19 @@ Source of truth:
 - `*_delete` управляет контролами удаления.
 - `archive_edit` управляет восстановлением из архива.
 - `history_view` покрывает встроенные history-блоки и history-вкладки, где они используются в новом UI.
+- Значение access-флага трактуется как boolean: `1` разрешает действие, `0` запрещает.
+- Compact payload содержит весь фиксированный набор ключей, включая ключи со значением `0`.
 - Отдельного field-level gating в новом FE нет.
+
+## Runtime naming boundary
+
+Ключи выше — публичные FE-ключи. Они не являются `appointment_group.param` в БД.
+
+- section DB param `production` дает runtime `production_view` и `production_edit`;
+- action DB param `production_create` дает middleware runtime `production_create_access`, а backend публикует FE-ключ `production_create`;
+- аналогично работают `site_items`, `units`, `archive` и остальные action-группы.
+
+FE использует только compact keys из этого документа и не добавляет `_access` самостоятельно.
 
 ## Что не должен делать FE
 

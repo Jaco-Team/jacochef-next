@@ -71,6 +71,7 @@ export default function SkladSiteItemsContent({
   canCreate,
   canArchiveAction,
   canDeleteAction,
+  canViewHistory,
   showAlert,
   setState,
   loadRows,
@@ -354,20 +355,22 @@ export default function SkladSiteItemsContent({
                           </span>
                         </Tooltip>
 
-                        <Tooltip title="Открыть вкладку истории">
-                          <span>
-                            <IconButton
-                              size="small"
-                              aria-label="История"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openEdit(row, "history");
-                              }}
-                            >
-                              <HistoryOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        {canViewHistory ? (
+                          <Tooltip title="Открыть вкладку истории">
+                            <span>
+                              <IconButton
+                                size="small"
+                                aria-label="История"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openEdit(row, "history");
+                                }}
+                              >
+                                <HistoryOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
 
                         {canArchiveAction ? (
                           <Tooltip
@@ -484,6 +487,7 @@ export default function SkladSiteItemsContent({
           loading={modal.loading}
           isEditable={modal.mode === "create" ? canCreate : isEditable}
           canArchiveAction={canArchiveAction}
+          canViewHistory={canViewHistory}
           initialTab={modal.section}
           onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "main")}
           onRestoreImage={(historyId) =>

@@ -16,7 +16,9 @@
 
 - документ описывает только текущее live-состояние
 - legacy route names и migration notes сюда не входят
-- `access` возвращается как raw `upd_access`
+- `get_all.access` возвращается как compact FE access contract из фиксированного набора ключей в `ACCESS.md`
+- `get_all.access` может содержать ключи со значением `0`; отсутствие permission не означает отсутствие ключа
+- middleware/runtime suffixes (`_view`, `_edit`, `_access`) и legacy field-level keys не являются FE contract
 - для `recipe`, `semi_finished`, `site_item` archive реализован через toggle `is_show` + history snapshot
 - для `warehouse_item`, `unit`, `category` archive не поддержан
 - `history/*` работает по canonical snapshot, а не по raw legacy row
@@ -124,7 +126,23 @@ Response shape:
 {
   "st": true,
   "module_info": {},
-  "access": {},
+  "access": {
+    "production_view": 1,
+    "production_edit": 1,
+    "production_create": 1,
+    "production_delete": 1,
+    "site_items_view": 1,
+    "site_items_edit": 1,
+    "site_items_create": 1,
+    "site_items_delete": 1,
+    "units_view": 1,
+    "units_edit": 1,
+    "units_create": 1,
+    "units_delete": 0,
+    "archive_view": 1,
+    "archive_edit": 0,
+    "history_view": 1
+  },
   "summary": {
     "recipes_active": 0,
     "semi_finished_active": 0,
@@ -156,6 +174,8 @@ Response shape:
 Примечания:
 
 - `sections` содержит только реально опубликованные разделы
+- FE должен фильтровать вкладки через compact `access`: раздел доступен, если соответствующий `*_view` или `*_edit` равен `1`
+- `production_create`, `production_delete`, `site_items_create`, `site_items_delete`, `units_create` и `units_delete` управляют action controls, а не видимостью вкладки
 - `capabilities.archive.entities` нужен для FE pre-check supported/unsupported archive actions
 
 ## 2. Units
@@ -1203,7 +1223,7 @@ Response:
 Write rules:
 
 - write flow lives in `SkladSiteItemWriteService`
-- uses raw `upd_access` compatibility contract
+- backend uses an internal compatibility map; FE sends no legacy access keys
 - normalizes BJU and stage-time fields
 - calculates `kkal`
 - rebuilds source composition links

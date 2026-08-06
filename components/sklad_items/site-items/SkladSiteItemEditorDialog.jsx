@@ -85,6 +85,7 @@ export default function SkladSiteItemEditorDialog({
   tags = [],
   isEditable = false,
   canArchiveAction = false,
+  canViewHistory = false,
   onUploadImage,
   onRestoreImage,
   initialTab = "main",
@@ -95,7 +96,7 @@ export default function SkladSiteItemEditorDialog({
   showAlert,
   onClose,
 }) {
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(canViewHistory ? initialTab : "main");
   const [form, setForm] = useState(() => buildInitialDraft(draft));
   const [expandedField, setExpandedField] = useState("");
   const [tagModal, setTagModal] = useState({
@@ -114,7 +115,7 @@ export default function SkladSiteItemEditorDialog({
     }
 
     setForm(buildInitialDraft(draft));
-    setActiveTab(initialTab);
+    setActiveTab(canViewHistory ? initialTab : "main");
     setExpandedField("");
     setTagModal({
       open: false,
@@ -124,7 +125,7 @@ export default function SkladSiteItemEditorDialog({
       name: "",
     });
     setImagePreviewOpen(false);
-  }, [draft, initialTab, open]);
+  }, [canViewHistory, draft, initialTab, open]);
 
   const categoryOptions = useMemo(() => {
     const options = [{ id: "", name: "Выберите категорию" }].concat(
@@ -607,7 +608,9 @@ export default function SkladSiteItemEditorDialog({
                   },
                 }}
               >
-                {EDITOR_SECTIONS.map((section) => (
+                {EDITOR_SECTIONS.filter(
+                  (section) => section.value !== "history" || canViewHistory,
+                ).map((section) => (
                   <Tab
                     key={section.value}
                     value={section.value}
@@ -1430,30 +1433,32 @@ export default function SkladSiteItemEditorDialog({
                 </Stack>
               </TabPanel>
 
-              <TabPanel
-                value="history"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <Stack spacing={2}>
-                  <SkladSectionCard
-                    title="История карточки"
-                    description="Последние ревизии текущей версии."
-                  >
-                    <SkladEmbeddedHistoryTable history={draft?.history} />
-                  </SkladSectionCard>
+              {canViewHistory ? (
+                <TabPanel
+                  value="history"
+                  sx={{ p: 0, pt: 2 }}
+                >
+                  <Stack spacing={2}>
+                    <SkladSectionCard
+                      title="История карточки"
+                      description="Последние ревизии текущей версии."
+                    >
+                      <SkladEmbeddedHistoryTable history={draft?.history} />
+                    </SkladSectionCard>
 
-                  <SkladSectionCard
-                    title="История изображения"
-                    description="Последние изменения изображения с возможностью восстановления."
-                  >
-                    <SkladEmbeddedImageHistoryTable
-                      imageHistory={draft?.image_history}
-                      imageAssetKey={draft?.img_app}
-                      onRestoreImage={onRestoreImage}
-                    />
-                  </SkladSectionCard>
-                </Stack>
-              </TabPanel>
+                    <SkladSectionCard
+                      title="История изображения"
+                      description="Последние изменения изображения с возможностью восстановления."
+                    >
+                      <SkladEmbeddedImageHistoryTable
+                        imageHistory={draft?.image_history}
+                        imageAssetKey={draft?.img_app}
+                        onRestoreImage={onRestoreImage}
+                      />
+                    </SkladSectionCard>
+                  </Stack>
+                </TabPanel>
+              ) : null}
             </TabContext>
           </Stack>
         </DialogContent>
