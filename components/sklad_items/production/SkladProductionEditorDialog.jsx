@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AddIcon from "@mui/icons-material/Add";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
@@ -87,7 +88,9 @@ export default function SkladProductionEditorDialog({
   allItemsList = [],
   isEditable = false,
   canViewHistory = false,
+  canCreateCategory = false,
   initialTab = "main",
+  onCreateCategory,
   onSubmit,
   onClose,
 }) {
@@ -509,14 +512,31 @@ export default function SkladProductionEditorDialog({
                       spacing={1.5}
                     >
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <MyAutocomplite
-                          multiple
-                          label="Категории"
-                          data={categoryOptions}
-                          value={selectedCategories}
-                          disabled={!isEditable}
-                          func={(_, value) => updateRelationField("categories", value)}
-                        />
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
+                          <Stack sx={{ minWidth: 0, flex: 1 }}>
+                            <MyAutocomplite
+                              multiple
+                              label="Категории"
+                              data={categoryOptions}
+                              value={selectedCategories}
+                              disabled={!isEditable}
+                              func={(_, value) => updateRelationField("categories", value)}
+                            />
+                          </Stack>
+                          {canCreateCategory && isEditable ? (
+                            <IconButton
+                              size="small"
+                              aria-label="Добавить категорию"
+                              onClick={onCreateCategory}
+                            >
+                              <AddIcon fontSize="small" />
+                            </IconButton>
+                          ) : null}
+                        </Stack>
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
                         <MyAutocomplite

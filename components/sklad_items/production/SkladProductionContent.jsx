@@ -461,6 +461,8 @@ export default function SkladProductionContent({
         allItemsList={detail?.all_items_list || draft?.all_items_list || []}
         isEditable={modal.mode === "create" ? canCreateProduction : canManageProduction}
         canViewHistory={canViewHistory}
+        canCreateCategory={canCreateCategory}
+        onCreateCategory={onCreateCategory}
         onSubmit={submitDraft}
         onClose={closeModal}
       />

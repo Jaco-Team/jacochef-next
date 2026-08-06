@@ -519,6 +519,8 @@ export default function SkladSiteItemsContent({
           isEditable={modal.mode === "create" ? canCreate : isEditable}
           canArchiveAction={canArchiveAction}
           canViewHistory={canViewHistory}
+          canCreateCategory={canCreateCategory}
+          onCreateCategory={onCreateCategory}
           initialTab={modal.section}
           onUploadImage={(file) => handleUploadImage(draft, file, modal.section || "main")}
           onRestoreImage={(historyId) =>

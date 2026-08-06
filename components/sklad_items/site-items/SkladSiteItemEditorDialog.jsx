@@ -86,6 +86,7 @@ export default function SkladSiteItemEditorDialog({
   isEditable = false,
   canArchiveAction = false,
   canViewHistory = false,
+  canCreateCategory = false,
   onUploadImage,
   onRestoreImage,
   initialTab = "main",
@@ -93,6 +94,7 @@ export default function SkladSiteItemEditorDialog({
   onCreateTag,
   onRenameTag,
   onArchive,
+  onCreateCategory,
   showAlert,
   onClose,
 }) {
@@ -656,14 +658,31 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 6 }}>
-                            <MySelect
-                              label="Категория"
-                              data={categoryOptions}
-                              is_none={false}
-                              value={safeCategoryValue}
-                              disabled={!isEditable}
-                              func={(event) => updateField("category_id", event.target.value)}
-                            />
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              alignItems="center"
+                            >
+                              <Stack sx={{ minWidth: 0, flex: 1 }}>
+                                <MySelect
+                                  label="Категория"
+                                  data={categoryOptions}
+                                  is_none={false}
+                                  value={safeCategoryValue}
+                                  disabled={!isEditable}
+                                  func={(event) => updateField("category_id", event.target.value)}
+                                />
+                              </Stack>
+                              {canCreateCategory && isEditable ? (
+                                <IconButton
+                                  size="small"
+                                  aria-label="Добавить категорию"
+                                  onClick={onCreateCategory}
+                                >
+                                  <AddOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              ) : null}
+                            </Stack>
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
                             <MyDatePickerNew
