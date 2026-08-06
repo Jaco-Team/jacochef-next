@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import SkladProductionContent from "./SkladProductionContent";
+import SkladProductionCategoryDialog from "./SkladProductionCategoryDialog";
 import useSkladTableSort from "../table/useSkladTableSort";
 import {
   createEmptyProductionDraft,
@@ -47,6 +48,7 @@ export default function useSkladProductionController({ showAlert }) {
   const archiveDialog = useSkladProductionStore((state) => state.archiveDialog);
   const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
+  const [categoryDialog, setCategoryDialog] = useState({ open: false, loading: false });
 
   const categoryOptions = useMemo(() => {
     const sourceAwareCategories = (categories || []).filter(
@@ -57,6 +59,9 @@ export default function useSkladProductionController({ showAlert }) {
       sourceAwareCategories.map((item) => ({
         id: String(item.id),
         name: item.name,
+        items_count: item?.items_count,
+        recipes_count: item?.recipes_count,
+        semi_finished_count: item?.semi_finished_count,
       })),
     );
   }, [categories]);
@@ -88,6 +93,57 @@ export default function useSkladProductionController({ showAlert }) {
   }, [mergedRows, page, rowsPerPage]);
 
   const canDeleteAction = canDelete("recipe");
+
+  const openCategoryDialog = useCallback(() => {
+    if (canCreateProduction) {
+      setCategoryDialog({ open: true, loading: false });
+    }
+  }, [canCreateProduction]);
+
+  const closeCategoryDialog = useCallback(() => {
+    setCategoryDialog({ open: false, loading: false });
+  }, []);
+
+  const refreshProductionCategories = useCallback(async () => {
+    const response = await api.getCategories("semi_finished");
+
+    if (!response?.st) {
+      throw new Error(response?.text || "Ошибка обновления категорий");
+    }
+
+    const nextCategories = Array.isArray(response?.list) ? response.list : [];
+    setShellState({
+      categories: [
+        ...(categories || []).filter((item) => item?.source_type !== "semi_finished"),
+        ...nextCategories,
+      ],
+    });
+  }, [api, categories, setShellState]);
+
+  const createCategory = useCallback(
+    async (name) => {
+      setCategoryDialog({ open: true, loading: true });
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.createProductionCategory(name);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка создания категории");
+        }
+
+        await refreshProductionCategories();
+        closeCategoryDialog();
+        showAlert(response?.text || "Категория создана", true);
+      } catch (error) {
+        setCategoryDialog({ open: true, loading: false });
+        showAlert(error?.message || "Ошибка создания категории", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, closeCategoryDialog, refreshProductionCategories, setShellState, showAlert],
+  );
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
@@ -461,48 +517,58 @@ export default function useSkladProductionController({ showAlert }) {
     archiveMode,
     loadRows,
     content: (
-      <SkladProductionContent
-        activeEntityType={activeEntityType}
-        search={search}
-        entityFilter={entityFilter}
-        entityOptions={PRODUCTION_ENTITY_OPTIONS}
-        categoryId={categoryId}
-        archiveMode={archiveMode}
-        categoryOptions={categoryOptions}
-        mergedRows={mergedRows}
-        paginatedRows={paginatedRows}
-        sortBy={productionSort.sortBy}
-        sortDirection={productionSort.sortDirection}
-        onSort={productionSort.requestSort}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        modal={modal}
-        detail={detail}
-        draft={draft}
-        deleteDialog={deleteDialog}
-        archiveDialog={archiveDialog}
-        shellUnits={shellUnits}
-        categories={categories}
-        shellAllergens={shellAllergens}
-        shellStorages={shellStorages}
-        shellApps={shellApps}
-        canArchiveAction={canArchive}
-        canDeleteAction={canDeleteAction}
-        canCreateProduction={canCreateProduction}
-        canManageProduction={canManageProduction}
-        canViewHistory={canViewHistory}
-        setState={setState}
-        openCreate={openCreate}
-        openEdit={openEdit}
-        openArchiveDialog={openArchiveDialog}
-        openDeleteDialog={openDeleteDialog}
-        closeModal={closeModal}
-        closeDeleteDialog={closeDeleteDialog}
-        closeArchiveDialog={closeArchiveDialog}
-        submitDraft={submitDraft}
-        confirmDelete={confirmDelete}
-        confirmArchive={confirmArchive}
-      />
+      <>
+        <SkladProductionContent
+          activeEntityType={activeEntityType}
+          search={search}
+          entityFilter={entityFilter}
+          entityOptions={PRODUCTION_ENTITY_OPTIONS}
+          categoryId={categoryId}
+          archiveMode={archiveMode}
+          categoryOptions={categoryOptions}
+          mergedRows={mergedRows}
+          paginatedRows={paginatedRows}
+          sortBy={productionSort.sortBy}
+          sortDirection={productionSort.sortDirection}
+          onSort={productionSort.requestSort}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          modal={modal}
+          detail={detail}
+          draft={draft}
+          deleteDialog={deleteDialog}
+          archiveDialog={archiveDialog}
+          shellUnits={shellUnits}
+          categories={categories}
+          shellAllergens={shellAllergens}
+          shellStorages={shellStorages}
+          shellApps={shellApps}
+          canArchiveAction={canArchive}
+          canDeleteAction={canDeleteAction}
+          canCreateProduction={canCreateProduction}
+          canManageProduction={canManageProduction}
+          canViewHistory={canViewHistory}
+          canCreateCategory={canCreateProduction}
+          onCreateCategory={openCategoryDialog}
+          setState={setState}
+          openCreate={openCreate}
+          openEdit={openEdit}
+          openArchiveDialog={openArchiveDialog}
+          openDeleteDialog={openDeleteDialog}
+          closeModal={closeModal}
+          closeDeleteDialog={closeDeleteDialog}
+          closeArchiveDialog={closeArchiveDialog}
+          submitDraft={submitDraft}
+          confirmDelete={confirmDelete}
+          confirmArchive={confirmArchive}
+        />
+        <SkladProductionCategoryDialog
+          open={categoryDialog.open}
+          loading={categoryDialog.loading}
+          onClose={closeCategoryDialog}
+          onSubmit={createCategory}
+        />
+      </>
     ),
   };
 }

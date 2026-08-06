@@ -6,7 +6,6 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
   Button,
   Chip,
-  Divider,
   Paper,
   Stack,
   Table,
@@ -320,63 +319,7 @@ export default function useSkladArchiveController({ showAlert }) {
             />
           </Stack>
 
-          <Paper
-            variant="outlined"
-            sx={{ p: 2, borderRadius: 2, mb: 2 }}
-          >
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={2}
-              divider={
-                <Divider
-                  flexItem
-                  orientation="vertical"
-                  sx={{ display: { xs: "none", md: "block" } }}
-                />
-              }
-            >
-              <Stack
-                spacing={0.5}
-                sx={{ minWidth: 0, flex: 1 }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  Тип сущности
-                </Typography>
-                <Typography sx={{ fontWeight: 700 }}>{getEntityLabel(entityType)}</Typography>
-              </Stack>
-              <Stack
-                spacing={0.5}
-                sx={{ minWidth: 0, flex: 1 }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  Архивных записей
-                </Typography>
-                <Typography sx={{ fontWeight: 700 }}>{rows.length}</Typography>
-              </Stack>
-              <Stack
-                spacing={0.5}
-                sx={{ minWidth: 0, flex: 1 }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  Действия
-                </Typography>
-                <Typography sx={{ fontWeight: 700 }}>
-                  {canRestore ? "Просмотр и восстановление" : "Только просмотр"}
-                </Typography>
-              </Stack>
-            </Stack>
-          </Paper>
-
-          <TableContainer>
+          <TableContainer sx={{ mt: 2 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>

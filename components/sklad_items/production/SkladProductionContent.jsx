@@ -30,6 +30,7 @@ import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladSortableHeader from "../table/SkladSortableHeader";
 import { formatDateRU } from "../formatDateRangeRU";
+import SkladCategorySelect from "../ui/SkladCategorySelect";
 import {
   formatCategories,
   getDeleteHint,
@@ -70,8 +71,10 @@ export default function SkladProductionContent({
   canCreateProduction,
   canManageProduction,
   canViewHistory,
+  canCreateCategory,
   setState,
   openCreate,
+  onCreateCategory,
   openEdit,
   openArchiveDialog,
   openDeleteDialog,
@@ -121,18 +124,37 @@ export default function SkladProductionContent({
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }}>
-              <MySelect
-                label="Категория"
-                data={categoryOptions}
-                is_none={false}
-                value={categoryId}
-                func={(event) =>
-                  setState({
-                    categoryId: event.target.value,
-                    page: 0,
-                  })
-                }
-              />
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+              >
+                <Stack sx={{ minWidth: 0, flex: 1 }}>
+                  <SkladCategorySelect
+                    label="Категория"
+                    data={categoryOptions}
+                    is_none={false}
+                    value={categoryId}
+                    func={(event) =>
+                      setState({
+                        categoryId: event.target.value,
+                        page: 0,
+                      })
+                    }
+                  />
+                </Stack>
+                {canCreateCategory ? (
+                  <Tooltip title="Добавить категорию">
+                    <IconButton
+                      size="small"
+                      aria-label="Добавить категорию"
+                      onClick={onCreateCategory}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null}
+              </Stack>
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }}>

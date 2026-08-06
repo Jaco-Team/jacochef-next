@@ -14,6 +14,7 @@ import {
   Box,
   Chip,
   DialogContent,
+  Grid,
   IconButton,
   Paper,
   Stack,
@@ -35,6 +36,7 @@ import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemEditorDialog from "./SkladSiteItemEditorDialog";
 import SkladSortableHeader from "../table/SkladSortableHeader";
 import { formatDateRU } from "../formatDateRangeRU";
+import SkladCategorySelect from "../ui/SkladCategorySelect";
 import {
   formatBju,
   getCategoryName,
@@ -72,10 +74,12 @@ export default function SkladSiteItemsContent({
   canArchiveAction,
   canDeleteAction,
   canViewHistory,
+  canCreateCategory,
   showAlert,
   setState,
   loadRows,
   openCreate,
+  onCreateCategory,
   openEdit,
   handleRestoreImage,
   openArchiveDialog,
@@ -101,52 +105,79 @@ export default function SkladSiteItemsContent({
           justifyContent="space-between"
           alignItems={{ xs: "stretch", xl: "center" }}
         >
-          <Stack
-            direction={{ xs: "column", md: "row" }}
+          <Grid
+            container
             spacing={2}
-            sx={{ width: "100%" }}
+            alignItems="stretch"
           >
-            <MySearchInput
-              label="Поиск"
-              placeholder="Название или короткое название"
-              value={search}
-              onValueChange={(nextValue) => setState({ search: nextValue, page: 0 })}
-            />
+            <Grid size={{ xs: 12, md: 3 }}>
+              <MySearchInput
+                label="Поиск"
+                placeholder="Название или короткое название"
+                value={search}
+                onValueChange={(nextValue) => setState({ search: nextValue, page: 0 })}
+              />
+            </Grid>
 
-            <MySelect
-              label="Категория"
-              data={categoryOptions}
-              is_none={false}
-              value={categoryId === "none" ? "" : categoryId}
-              func={(event) =>
-                setState({
-                  categoryId: event.target.value === "none" ? "" : event.target.value,
-                  page: 0,
-                })
-              }
-            />
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+              >
+                <Stack sx={{ minWidth: 0, flex: 1 }}>
+                  <SkladCategorySelect
+                    label="Категория"
+                    data={categoryOptions}
+                    is_none={false}
+                    value={categoryId === "none" ? "" : categoryId}
+                    func={(event) =>
+                      setState({
+                        categoryId: event.target.value === "none" ? "" : event.target.value,
+                        page: 0,
+                      })
+                    }
+                  />
+                </Stack>
+                {canCreateCategory ? (
+                  <Tooltip title="Добавить категорию">
+                    <IconButton
+                      size="small"
+                      aria-label="Добавить категорию"
+                      onClick={onCreateCategory}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null}
+              </Stack>
+            </Grid>
 
-            <MySelect
-              label="Тег"
-              data={tagOptions}
-              is_none={false}
-              value={tagId === "none" ? "" : tagId}
-              func={(event) =>
-                setState({
-                  tagId: event.target.value === "none" ? "" : event.target.value,
-                  page: 0,
-                })
-              }
-            />
+            <Grid size={{ xs: 12, md: 3 }}>
+              <MySelect
+                label="Тег"
+                data={tagOptions}
+                is_none={false}
+                value={tagId === "none" ? "" : tagId}
+                func={(event) =>
+                  setState({
+                    tagId: event.target.value === "none" ? "" : event.target.value,
+                    page: 0,
+                  })
+                }
+              />
+            </Grid>
 
-            <MySelect
-              label="Показать"
-              data={SITE_ITEMS_ARCHIVE_MODE_OPTIONS}
-              is_none={false}
-              value={archiveMode}
-              func={(event) => setState({ archiveMode: event.target.value, page: 0 })}
-            />
-          </Stack>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <MySelect
+                label="Показать"
+                data={SITE_ITEMS_ARCHIVE_MODE_OPTIONS}
+                is_none={false}
+                value={archiveMode}
+                func={(event) => setState({ archiveMode: event.target.value, page: 0 })}
+              />
+            </Grid>
+          </Grid>
 
           <Stack
             direction="row"

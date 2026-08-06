@@ -747,6 +747,24 @@ Latest chunk status:
 - completed: correct delete confirmation checks to use the entity-specific delete permission
 - remaining: run the focused module smoke pass after the transport and access cleanup
 
+## 8.1. Category filter counts and create flows
+
+Current task:
+
+- render backend-provided category counts as compact chips in the production and site-item category filter menus
+- do not recalculate counts from entity lists; use `items_count`, plus production `recipes_count` and `semi_finished_count` where useful
+- production category creation uses `categories/save_new` with `source_type: "semi_finished"` and `name`; the category space is flat
+- site-item category creation uses `site-items/categories/save_new` with `name` and `parent_id`; root creation uses `parent_id: 0`
+- keep the two create dialogs and API methods separate because the contracts and category ownership differ
+- use `production_create` for production category creation and `site_items_create` for site category creation
+- refresh the affected category reference list after successful creation so the new category is immediately usable in the filter/editor
+
+Contract boundary:
+
+- the published site-item reference lists contain selectable leaf categories, not a documented full parent-category tree
+- do not invent a parent source or reuse production categories for site parents
+- site parent selection requires an explicit site-category tree in the API payload; until that payload is documented/present, the modal may create only root categories with `parent_id: 0` and must not pretend leaf options are the complete tree
+
 ## 9. Explicit non-goals for current iteration
 
 - no dedicated warehouse-items CRUD tab inside `sklad_items`

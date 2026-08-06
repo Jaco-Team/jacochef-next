@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import SkladSiteItemsContent from "./SkladSiteItemsContent";
+import SkladSiteCategoryDialog from "./SkladSiteCategoryDialog";
 import useSkladTableSort from "../table/useSkladTableSort";
 import {
   getDeleteError,
@@ -38,6 +39,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const archiveDialog = useSkladSiteItemsStore((state) => state.archiveDialog);
   const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
+  const [categoryDialog, setCategoryDialog] = useState({ open: false, loading: false });
 
   const isEditable = canManageSiteItems;
   const canCreate = canCreateSiteItem;
@@ -76,15 +78,59 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const categoryOptions = useMemo(
     () =>
-      dedupeSelectOptions(
-        [{ id: "", name: "Все категории" }].concat(
-          (categories || []).map((item) => ({
-            id: String(item?.id ?? ""),
-            name: item?.name || String(item?.id || ""),
+      [{ id: "", name: "Все категории" }].concat(
+        (categories || [])
+          .filter((item) => item?.id != null && item?.id !== "")
+          .map((item) => ({
+            id: String(item.id),
+            name: item?.name || String(item.id),
+            items_count: item?.items_count,
           })),
-        ),
       ),
     [categories],
+  );
+
+  const parentOptions = useMemo(
+    () =>
+      dedupeSelectOptions(
+        (categories || []).map((item) => ({
+          id: String(item?.id ?? ""),
+          name: item?.name || String(item?.id || ""),
+        })),
+      ),
+    [categories],
+  );
+
+  const openCategoryDialog = useCallback(() => {
+    if (canCreate) {
+      setCategoryDialog({ open: true, loading: false });
+    }
+  }, [canCreate]);
+
+  const closeCategoryDialog = useCallback(() => {
+    setCategoryDialog({ open: false, loading: false });
+  }, []);
+
+  const createCategory = useCallback(
+    async (payload) => {
+      setCategoryDialog({ open: true, loading: true });
+
+      try {
+        const response = await api.createSiteCategory(payload);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка создания категории");
+        }
+
+        await loadRows();
+        closeCategoryDialog();
+        showAlert(response?.text || "Категория создана", true);
+      } catch (error) {
+        setCategoryDialog({ open: true, loading: false });
+        showAlert(error?.message || "Ошибка создания категории", false);
+      }
+    },
+    [api, closeCategoryDialog, loadRows, showAlert],
   );
 
   const tagOptions = useMemo(
@@ -657,51 +703,62 @@ export default function useSkladSiteItemsController({ showAlert }) {
     archiveMode,
     loadRows,
     content: (
-      <SkladSiteItemsContent
-        search={search}
-        categoryId={categoryId}
-        tagId={tagId}
-        archiveMode={archiveMode}
-        categoryOptions={categoryOptions}
-        tagOptions={tagOptions}
-        rows={rows}
-        paginatedRows={paginatedRows}
-        sortBy={siteItemSort.sortBy}
-        sortDirection={siteItemSort.sortDirection}
-        onSort={siteItemSort.requestSort}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        modal={modal}
-        detail={detail}
-        draft={draft}
-        categories={categories}
-        tags={tags}
-        deleteDialog={deleteDialog}
-        archiveDialog={archiveDialog}
-        isEditable={isEditable}
-        canCreate={canCreate}
-        canArchiveAction={canArchive}
-        canDeleteAction={canDeleteAction}
-        canViewHistory={canViewHistory}
-        showAlert={showAlert}
-        setState={setState}
-        loadRows={loadRows}
-        openCreate={openCreate}
-        openEdit={openEdit}
-        handleRestoreImage={handleRestoreImage}
-        openArchiveDialog={openArchiveDialog}
-        openDeleteDialog={openDeleteDialog}
-        closeModal={closeModal}
-        closeDeleteDialog={closeDeleteDialog}
-        closeArchiveDialog={closeArchiveDialog}
-        confirmDelete={confirmDelete}
-        confirmArchive={confirmArchive}
-        handleUploadImage={handleUploadImage}
-        handleSyncVk={handleSyncVk}
-        handleCreateTag={handleCreateTag}
-        handleRenameTag={handleRenameTag}
-        submitDraft={submitDraft}
-      />
+      <>
+        <SkladSiteItemsContent
+          search={search}
+          categoryId={categoryId}
+          tagId={tagId}
+          archiveMode={archiveMode}
+          categoryOptions={categoryOptions}
+          tagOptions={tagOptions}
+          rows={rows}
+          paginatedRows={paginatedRows}
+          sortBy={siteItemSort.sortBy}
+          sortDirection={siteItemSort.sortDirection}
+          onSort={siteItemSort.requestSort}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          modal={modal}
+          detail={detail}
+          draft={draft}
+          categories={categories}
+          tags={tags}
+          deleteDialog={deleteDialog}
+          archiveDialog={archiveDialog}
+          isEditable={isEditable}
+          canCreate={canCreate}
+          canArchiveAction={canArchive}
+          canDeleteAction={canDeleteAction}
+          canViewHistory={canViewHistory}
+          canCreateCategory={canCreate}
+          showAlert={showAlert}
+          setState={setState}
+          loadRows={loadRows}
+          openCreate={openCreate}
+          onCreateCategory={openCategoryDialog}
+          openEdit={openEdit}
+          handleRestoreImage={handleRestoreImage}
+          openArchiveDialog={openArchiveDialog}
+          openDeleteDialog={openDeleteDialog}
+          closeModal={closeModal}
+          closeDeleteDialog={closeDeleteDialog}
+          closeArchiveDialog={closeArchiveDialog}
+          confirmDelete={confirmDelete}
+          confirmArchive={confirmArchive}
+          handleUploadImage={handleUploadImage}
+          handleSyncVk={handleSyncVk}
+          handleCreateTag={handleCreateTag}
+          handleRenameTag={handleRenameTag}
+          submitDraft={submitDraft}
+        />
+        <SkladSiteCategoryDialog
+          open={categoryDialog.open}
+          loading={categoryDialog.loading}
+          parentOptions={parentOptions}
+          onClose={closeCategoryDialog}
+          onSubmit={createCategory}
+        />
+      </>
     ),
   };
 }

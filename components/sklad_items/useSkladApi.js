@@ -18,6 +18,10 @@ export default function useSkladApi() {
     return {
       getBootstrap: (payload = {}) => request("get_all", payload),
       getUnits: () => request("units/list"),
+      getCategories: (sourceType) => request("categories/list", { source_type: sourceType }),
+      createProductionCategory: (name) =>
+        request("categories/save_new", { source_type: "semi_finished", name }),
+      createSiteCategory: (payload) => request("site-items/categories/save_new", payload),
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
       deleteUnit: (id) => request("units/delete", { id }),

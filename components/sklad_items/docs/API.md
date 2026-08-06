@@ -357,6 +357,23 @@ Row fields:
 - `can_delete`
 - `delete_usage`
 
+Category option counts:
+
+- bootstrap `categories`, production detail `categories`, and site-item `categories`/`cat_list` are backend-calculated reference lists
+- every category option includes `items_count`, counting active/current entities assigned to that category
+- production options additionally include `recipes_count` and `semi_finished_count`; `items_count` is their sum
+- site-item options additionally include `parent_id`, `parent_name`, `is_leaf`, and `source_type=site_item`; `items_count` counts active rows in `jaco_site_rolls.items_new`
+- site-item options contain leaf categories only, because only leaf categories are assignable to `items_new`
+- FE must render these values and must not recalculate them from entity lists or CSV fields
+
+### `POST|ANY /api/sklad_items/site-items/categories/list`
+
+Returns the complete site-item category tree for category administration and parent selection.
+
+The response is `{"st": true, "list": []}`. Each row contains `id`, `category_key`, `name`, `source_type=site_item`, `items_count`, `parent_id`, `parent_name`, and `is_leaf`.
+
+This endpoint includes both parent and leaf categories. `items_count` is the direct count of active site items assigned to that exact category; it does not include descendant categories. Creating a category requires `site_items_create`.
+
 ### `POST|ANY /api/sklad_items/categories/get_one`
 
 Request fields:
@@ -368,12 +385,26 @@ Request fields:
 
 ### `POST|ANY /api/sklad_items/categories/save_edit`
 
-Request fields:
+Production-category contract:
 
-- `name`
-- `parent_id`
-- `source_type`
-- `id` for `save_edit`
+- `source_type` must be `semi_finished`
+- `name` is required
+- `parent_id` is not used; this category space is flat
+- `recipe` and `semi_finished` entities share this category space
+- the action requires `production_create`
+
+Request:
+
+```json
+{
+  "data": {
+    "source_type": "semi_finished",
+    "name": "Соусы"
+  }
+}
+```
+
+`save_edit` additionally requires `id` and `production_edit` for `semi_finished`. The existing `warehouse_item` source remains supported by this endpoint and requires `parent_id`.
 
 Response:
 
@@ -381,9 +412,67 @@ Response:
 {
   "st": true,
   "text": "Успешно сохранено",
-  "id": 1
+  "id": 3,
+  "item": {
+    "id": 3,
+    "category_key": "semi_finished:3",
+    "name": "Соусы",
+    "source_type": "semi_finished",
+    "parent_id": null,
+    "parent_name": null
+  }
 }
 ```
+
+### `POST|ANY /api/sklad_items/site-items/categories/save_new`
+
+Creates a category in the independent site-item category tree stored in `jaco_site_rolls.category_new`.
+
+Request:
+
+```json
+{
+  "data": {
+    "name": "Поке",
+    "parent_id": 0
+  }
+}
+```
+
+Rules:
+
+- the action requires `site_items_create`
+- `name` is required and limited to 255 characters
+- `parent_id` defaults to `0` and creates a root category
+- a positive `parent_id` must reference an existing site category
+- the same name is not allowed under the same parent
+- site categories may be nested; only leaf categories are returned as selectable site-item category options
+- this endpoint does not create or modify production categories
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 23,
+  "item": {
+    "id": 23,
+    "category_key": "site_item:23",
+    "name": "Поке",
+    "source_type": "site_item",
+    "parent_id": 0,
+    "parent_name": null,
+    "sort": 14,
+    "sort_app": 14,
+    "is_show": 1,
+    "is_leaf": true,
+    "items_count": 0
+  }
+}
+```
+
+The endpoint clears Sklad reference caches after a successful insert. The response uses a source-qualified `category_key`; numeric IDs must not be shared with `semi_finished` categories.
 
 ### `POST|ANY /api/sklad_items/categories/archive`
 

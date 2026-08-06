@@ -1141,11 +1141,18 @@ export default function SkladSiteItemEditorDialog({
                     description="Состав технологической карты"
                   >
                     <TableContainer>
-                      <Table size="small">
+                      <Table
+                        size="small"
+                        sx={{
+                          width: "100%",
+                          tableLayout: "fixed",
+                          "& th, & td": { minWidth: 0, wordBreak: "break-word" },
+                        }}
+                      >
                         <TableHead>
                           <TableRow>
-                            <TableCell>Номенклатура</TableCell>
-                            <TableCell>Ед. изм.</TableCell>
+                            <TableCell sx={{ width: "30%" }}>Номенклатура</TableCell>
+                            <TableCell sx={{ width: "8%" }}>Ед. изм.</TableCell>
                             <TableCell>Брутто</TableCell>
                             <TableCell>% потери при ХО</TableCell>
                             <TableCell>Нетто</TableCell>
@@ -1167,7 +1174,7 @@ export default function SkladSiteItemEditorDialog({
 
                             return rows.map((item, index) => (
                               <TableRow key={`${stageOption.id}-${index}`}>
-                                <TableCell sx={{ minWidth: 260 }}>
+                                <TableCell>
                                   <MySelect
                                     label=""
                                     data={stagePreparationOptions}
@@ -1183,7 +1190,7 @@ export default function SkladSiteItemEditorDialog({
                                     }
                                   />
                                 </TableCell>
-                                <TableCell sx={{ minWidth: 80 }}>
+                                <TableCell>
                                   <MyTextInput
                                     label=""
                                     value={item?.ei_name ?? ""}
@@ -1250,7 +1257,7 @@ export default function SkladSiteItemEditorDialog({
                                     disabled
                                   />
                                 </TableCell>
-                                <TableCell sx={{ minWidth: 120 }}>
+                                <TableCell sx={{ width: "12%" }}>
                                   <MySelect
                                     label=""
                                     data={STAGE_OPTIONS}
@@ -1298,7 +1305,14 @@ export default function SkladSiteItemEditorDialog({
                     description="Связанные позиции карточки"
                   >
                     <TableContainer>
-                      <Table size="small">
+                      <Table
+                        size="small"
+                        sx={{
+                          width: "100%",
+                          tableLayout: "fixed",
+                          "& th, & td": { minWidth: 0, wordBreak: "break-word" },
+                        }}
+                      >
                         <TableHead>
                           <TableRow>
                             <TableCell>Номенклатура</TableCell>
@@ -1316,7 +1330,7 @@ export default function SkladSiteItemEditorDialog({
                             : []
                           ).map((item, index) => (
                             <TableRow key={`linked-item-${index}`}>
-                              <TableCell sx={{ minWidth: 320 }}>
+                              <TableCell sx={{ width: "30%" }}>
                                 <MySelect
                                   label=""
                                   data={linkedItemOptions}
