@@ -32,7 +32,6 @@ function normalizeBootstrap(response) {
   return {
     moduleName: response?.module_info?.name || "Склад",
     access: response?.access || {},
-    sections: response?.sections || [],
     units: response?.units || [],
     categories: response?.categories || [],
     allergens: response?.allergens || [],
@@ -50,14 +49,13 @@ export default function SkladPage() {
   const isLoading = useSkladStore((state) => state.isLoading);
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
-  const sections = useSkladStore((state) => state.sections);
   const access = useSkladStore((state) => state.access);
   const tab = useSkladStore((state) => state.tab);
   const setBootstrap = useSkladStore((state) => state.setBootstrap);
   const setState = useSkladStore((state) => state.setState);
   const requestRefresh = useSkladStore((state) => state.requestRefresh);
 
-  const tabs = useMemo(() => getVisibleSkladTabs({ sections, access }), [sections, access]);
+  const tabs = useMemo(() => getVisibleSkladTabs({ access }), [access]);
 
   useEffect(() => {
     let isMounted = true;
@@ -77,14 +75,10 @@ export default function SkladPage() {
         }
 
         const nextState = normalizeBootstrap(response);
-        const nextTabs = getVisibleSkladTabs({
-          sections: nextState.sections,
-          access: nextState.access,
-        });
 
         setBootstrap({
           ...nextState,
-          tab: nextTabs.length ? 0 : 0,
+          tab: 0,
         });
 
         document.title = nextState.moduleName || "Склад";
@@ -246,7 +240,7 @@ export default function SkladPage() {
                 <Paper sx={{ p: 3, borderRadius: 3 }}>
                   <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
                   <Typography color="text.secondary">
-                    Проверь права доступа и published sections в `sklad_items/get_all`.
+                    Проверь права доступа в `sklad_items/get_all`.
                   </Typography>
                 </Paper>
               )}

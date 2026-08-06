@@ -21,6 +21,13 @@
 - для `warehouse_item`, `unit`, `category` archive не поддержан
 - `history/*` работает по canonical snapshot, а не по raw legacy row
 
+Calculated allergen inference rules:
+
+- possible markers apply only to the matching alias that follows the marker within the same local text window
+- negated phrases such as `без ...` and `не содержит ...` are excluded
+- short aliases are matched as standalone words to avoid false positives inside longer words
+- when the same allergen is found as both definite and possible, the definite result takes precedence
+
 Общий detail history contract:
 
 - в detail-эндпоинтах используется block `history`
@@ -483,11 +490,7 @@ Warehouse item detail rules:
 - warehouse item detail history is lightweight; full revision open/compare still goes through canonical history endpoints
 - `categories`, `units`, `allergens`, `accounting_systems`, `storages`, `apps` are edit references, not a second entity payload
 - `calculated_allergens` is a read-only precaution calculation from the current composition graph; it does not change manual allergen fields
-- `calculated_allergens.allergens` contains definite allergens found in direct links, manual declarations, or nested composition
-- `calculated_allergens.possible_allergens` contains possible/trace allergens from the same graph
-- `calculated_allergens.precaution` is the union of both arrays for warning display
-- `calculated_allergens.provenance` identifies the entity and source table that contributed each allergen
-- `calculated_allergens.warnings` reports composition cycles, unsupported component types, and stored PF allergens without current PF composition
+- `calculated_allergens` contains only two named lists: `allergens` and `possible_allergens`
 
 ## 5. Recipes
 
@@ -615,10 +618,7 @@ Composition row fields:
 Production detail rules:
 
 - `calculated_allergens` is returned at the top level for the current recipe.
-- `calculated_allergens.source = composition` and `calculation_mode = composition_graph`.
-- `calculated_allergens.allergens` and `calculated_allergens.possible_allergens` are named `{id,name}` arrays for visual display.
-- `calculated_allergens.precaution` is the union of definite and possible named allergen arrays.
-- `calculated_allergens.provenance` and `calculated_allergens.warnings` explain the calculation sources and incomplete graph data.
+- `calculated_allergens.allergens` and `calculated_allergens.possible_allergens` are the only returned fields and contain named `{id,name}` arrays for visual display.
 - The block is read-only and does not replace or update manual `allergens` fields.
 - PF components are traversed through current PF ingredients, manual PF declarations, and stored PF allergen links.
 - `pr_1`
@@ -865,7 +865,7 @@ Semi-finished detail rules:
 - typed keys are preserved as `{id}-item`
 - only active `items_new.is_show = 1` rows are returned
 - orphaned/inactive warehouse-item links are suppressed
-- `calculated_allergens` is returned at the top level with `source`, `calculation_mode`, `allergens`, `possible_allergens`, `precaution`, `provenance`, and `warnings`.
+- `calculated_allergens` is returned at the top level with only `allergens` and `possible_allergens` named arrays.
 - It traverses current PF ingredients and also preserves manual/stored PF allergen declarations as precaution evidence.
 - It is read-only and does not update manual allergen fields.
 
@@ -1138,7 +1138,7 @@ Main rules:
 - `composition_source.recipes` = direct `site_item -> recipe` links
 - `composition_derived.pf_total` = aggregated derived PF composition
 - `allergens_derived` and `possible_allergens_derived` are calculated from final composition chain
-- `calculated_allergens` is returned at the top level with `source`, `calculation_mode`, `allergens`, `possible_allergens`, `precaution`, `provenance`, and `warnings`.
+- `calculated_allergens` is returned at the top level with only `allergens` and `possible_allergens` named arrays.
 - It traverses stage PFs, stage recipes, linked site items, and the persisted PF aggregate as a compatibility fallback.
 - It is read-only and does not update persisted site-item allergen fields.
 - `marking` is part of `get_one`
@@ -1602,28 +1602,36 @@ Response:
 
 ## 12. Access Contract
 
-`get_all.access` returns raw middleware keys.
+`get_all.access` returns the compact FE access contract. Legacy middleware keys are used only inside backend compatibility mapping.
 
 Example:
 
 ```json
 {
   "access": {
-    "ed_izmer_view": 1,
-    "ed_izmer_edit": 1,
-    "cats_view": 1,
-    "cats_edit": 1,
-    "name_edit": 1,
-    "items_edit": 1,
-    "delete_edit": 0
+    "production_view": 1,
+    "production_edit": 1,
+    "production_create": 1,
+    "production_delete": 1,
+    "site_items_view": 1,
+    "site_items_edit": 1,
+    "site_items_create": 1,
+    "site_items_delete": 1,
+    "units_view": 1,
+    "units_edit": 1,
+    "units_create": 1,
+    "units_delete": 0,
+    "archive_view": 1,
+    "archive_edit": 0,
+    "history_view": 1
   }
 }
 ```
 
 Rules:
 
-- FE should use `*_view`, `*_edit`, `*_access`
-- backend authorization on mutation paths also uses raw `upd_access`
+- FE should use the exact compact keys from `ACCESS.md`
+- backend mutation services receive an internal compatibility map built from compact permissions
 
 ## 13. Validation Rules
 

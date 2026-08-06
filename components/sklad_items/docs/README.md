@@ -125,7 +125,7 @@ UI pattern for tabs:
 
 - `SkladPage.jsx` — shell, bootstrap, tab switch, shared refs
 - `useSkladStore.js` — shell-level shared state
-- `useSkladAccess.js` — raw access adapter над `handleUserAccess`
+- `useSkladAccess.js` — compact access adapter для FE contract groups
 - `useSkladApi.js` — canonical `/api/sklad_items/*` request layer
 - per-tab store/controller/content split:
   - store: tab-local filter/modal state
@@ -435,9 +435,9 @@ Schema confirmation:
 - section-level edit
 - archive visibility/edit
 - delete visibility/execute
-- raw middleware access keys без synthetic aliases и runtime fallbacks
+- compact FE access groups: `*_view`, `*_edit`, `*_create`, `*_delete`
 
-Право `delete_execute` должно быть отдельным и редким.
+Права создания и удаления являются отдельными group-level access flags.
 
 Legacy access names используются только как documented source references; они не определяют runtime authorization или структуру нового UI.
 

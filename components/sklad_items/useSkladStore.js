@@ -8,7 +8,6 @@ const defaultState = {
   isLoading: false,
   refreshToken: 0,
   access: {},
-  sections: [],
   units: [],
   categories: [],
   allergens: [],
@@ -34,7 +33,6 @@ export const useSkladStore = create((set) => ({
     set({
       moduleName: payload.moduleName ?? "",
       access: payload.access ?? {},
-      sections: payload.sections ?? [],
       units: payload.units ?? [],
       categories: payload.categories ?? [],
       allergens: payload.allergens ?? [],

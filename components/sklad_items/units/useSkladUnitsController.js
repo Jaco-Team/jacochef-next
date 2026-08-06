@@ -84,7 +84,7 @@ export default function useSkladUnitsController({ showAlert }) {
   const setDraft = useSkladUnitsStore((state) => state.setDraft);
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
 
-  const isEditable = canEdit("ed_izmer");
+  const isEditable = canEdit("units");
   const canCreate = canCreateUnit();
   const canShowUsage = canViewUnitUsage();
   const canDeleteAction = canDelete("unit");
@@ -363,28 +363,30 @@ export default function useSkladUnitsController({ showAlert }) {
                           </span>
                         </Tooltip>
 
-                        <Tooltip
-                          title={
-                            deleteBlocked
-                              ? deleteHint
-                              : isEditable && canDeleteAction
-                                ? "Удалить"
-                                : "Недостаточно прав для удаления"
-                          }
-                        >
-                          <span>
-                            <IconButton
-                              color="error"
-                              disabled={deleteBlocked || !isEditable || !canDeleteAction}
-                              onClick={withConfirm(
-                                () => deleteUnit(row),
-                                `Удалить единицу "${row?.name || ""}"?`,
-                              )}
-                            >
-                              <DeleteOutlineIcon />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        {canDeleteAction ? (
+                          <Tooltip
+                            title={
+                              deleteBlocked
+                                ? deleteHint
+                                : isEditable
+                                  ? "Удалить"
+                                  : "Недостаточно прав для удаления"
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                color="error"
+                                disabled={deleteBlocked || !isEditable}
+                                onClick={withConfirm(
+                                  () => deleteUnit(row),
+                                  `Удалить единицу "${row?.name || ""}"?`,
+                                )}
+                              >
+                                <DeleteOutlineIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
                       </Stack>
                     </TableCell>
                   </TableRow>

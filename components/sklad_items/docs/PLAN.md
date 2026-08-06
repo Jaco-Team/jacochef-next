@@ -718,16 +718,16 @@ Deliverables:
 
 Latest chunk status:
 
-- shell hardening for the live basic tabs is completed: the implemented tab path no longer relies on placeholder-style final-facing copy, and tab reload effects are aligned with the active controller callbacks
+- shell hardening for the live basic tabs is completed: tab visibility now uses the compact `*_view` / `*_edit` contract and tab reload effects are aligned with the active controller callbacks
 - July 21, 2026 UI hardening chunk completed:
   - site-items and production row statuses now render one primary semantic state plus distinct secondary flags, without duplicate status meanings across the same row
   - site-items list density was tightened toward the legacy module pattern: compact BJU/tag/date cells, denser status controls, and cleaner action alignment
 - July 20, 2026 hardening chunk completed:
-  - module-local access gating now matches shared `handleUserAccess` semantics for section visibility
+  - module-local access gating now uses the compact API access groups directly
   - history/archive request effects no longer depend on unstable callback identity
   - `ACCESS-MAP.md` now records canonical section flags, legacy action equivalents and unclear/redundant flags for the current FE scope
 - July 21, 2026 reviewer correction:
-  - plain `*_view` access remains strictly read-only; production and site-item destructive actions use their documented raw delete keys, while Units/Categories retain the documented `delete_execute` plus field-edit gate
+  - `*_view` keeps the tab and modal readable, `*_edit` enables the whole form, and create/delete actions use their group-level access keys
 - remaining cleanup decision:
   - decide whether convert, VK sync, tag mutation and archive restore should receive dedicated canonical action keys from backend docs, or stay intentionally covered by broad section edit/access gating
 - reviewer pass remains mandatory after each implementation chunk
@@ -742,7 +742,7 @@ Latest chunk status:
 - completed: leave the legacy `src/api_new.js` transport untouched
 - completed: remove the new API hook fallback and require configured `NEXT_PUBLIC_API_URL`
 - completed: keep one response boundary in `useApi` and one upload path
-- completed: align FE access checks with the raw keys documented by the backend access contract
+- completed: align FE access checks with the compact keys documented by the backend access contract
 - completed: remove unreachable Categories UI, duplicate archive API method and unused shell metadata
 - completed: correct delete confirmation checks to use the entity-specific delete permission
 - remaining: run the focused module smoke pass after the transport and access cleanup
@@ -962,12 +962,12 @@ Status: active remediation list from July 21, 2026 senior review. Keep this sect
 
 High priority:
 
-- completed: consolidate module tab visibility with raw `handleUserAccess` semantics used by action gating, so section navigation does not drift from middleware access.
-- completed: gate Units create/edit/delete actions through raw `ed_izmer_*` access rules.
+- completed: consolidate module tab visibility with the compact FE access contract, so section navigation does not drift from action gating.
+- completed: gate Units create/edit/delete actions through compact access groups.
 
 Medium priority:
 
-- completed: align Categories create/edit/delete gating with raw `cats_*` access rules.
+- completed: align Categories create/edit/delete gating with compact access groups.
 - pending: clean remaining negative/mirror status chips from detail/editor where they do not add business value.
 - pending: address Chrome accessibility issues for unlabeled/unnamed form fields without touching shared controls unless explicitly approved.
 

@@ -354,31 +354,33 @@ export default function SkladProductionContent({
                             </Tooltip>
                           ) : null}
 
-                          {canDelete ? (
-                            <Tooltip title="Удалить">
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  disabled={!canCreateOrEdit || !canDeleteAction}
-                                  onClick={() => openDeleteDialog(entityType, row)}
-                                >
-                                  <DeleteOutlineIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip title={getDeleteHint(row)}>
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  disabled
-                                >
-                                  <DeleteOutlineIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          )}
+                          {canDeleteAction ? (
+                            canDelete ? (
+                              <Tooltip title="Удалить">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    disabled={!canCreateOrEdit}
+                                    onClick={() => openDeleteDialog(entityType, row)}
+                                  >
+                                    <DeleteOutlineIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip title={getDeleteHint(row)}>
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    disabled
+                                  >
+                                    <DeleteOutlineIcon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            )
+                          ) : null}
                         </Stack>
                       </TableCell>
                     </TableRow>

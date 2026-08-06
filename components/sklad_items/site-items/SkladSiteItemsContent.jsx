@@ -393,24 +393,24 @@ export default function SkladSiteItemsContent({
                           </Tooltip>
                         ) : null}
 
-                        <Tooltip title={getDeleteTooltip(row, isEditable, canDeleteAction)}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              disabled={
-                                !isEditable || !canDeleteAction || row?.can_delete === false
-                              }
-                              aria-label="Удалить"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openDeleteDialog(row);
-                              }}
-                            >
-                              <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        {canDeleteAction ? (
+                          <Tooltip title={getDeleteTooltip(row, isEditable, canDeleteAction)}>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                disabled={!isEditable || row?.can_delete === false}
+                                aria-label="Удалить"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openDeleteDialog(row);
+                                }}
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
                       </Stack>
                     </TableCell>
                   </TableRow>
