@@ -10,25 +10,31 @@ export function useDebounce(fn, delay = 300) {
     fnRef.current = fn;
   }, [fn]);
 
+  const cancel = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   const debouncedFn = useCallback(
     (...args) => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      cancel();
       timerRef.current = setTimeout(() => {
+        timerRef.current = null;
         fnRef.current(...args);
       }, delay);
     },
-    [delay],
+    [cancel, delay],
   );
+
+  debouncedFn.cancel = cancel;
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      cancel();
     };
-  }, []);
+  }, [cancel]);
 
   return debouncedFn;
 }

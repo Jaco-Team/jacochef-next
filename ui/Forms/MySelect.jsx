@@ -390,6 +390,14 @@ export function MySelect(props) {
     ? normalizedData.filter((item) => normalizedValue.includes(item.id))
     : (normalizedData.find((item) => item.id === normalizedValue) ?? null);
 
+  const renderItemContent = (item) => {
+    if (typeof props.renderItem === "function") {
+      return props.renderItem(item);
+    }
+
+    return item?.name;
+  };
+
   if (isUnifiedPopup) {
     return (
       <NoSsr>
@@ -442,7 +450,7 @@ export function MySelect(props) {
                 color: option?.color || optionProps.style?.color,
               }}
             >
-              {option.name}
+              {renderItemContent(option)}
             </li>
           )}
           renderInput={(params) => (
@@ -530,7 +538,7 @@ export function MySelect(props) {
               value={item.id}
               sx={{ color: item?.color ? item.color : null }}
             >
-              {item.name}
+              {renderItemContent(item)}
             </MenuItem>
           ))}
         </Select>

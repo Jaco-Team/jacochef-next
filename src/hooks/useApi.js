@@ -1,9 +1,14 @@
 import axios from "axios";
 import queryString from "query-string";
-import { api_laravel as api_fallback } from "../api_new";
+
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+if (!apiBaseUrl) {
+  throw new Error("Config API_URL is required");
+}
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/",
+  baseURL: apiBaseUrl,
   timeout: 300_000, // ms
   headers: {
     "Content-Type": "application/x-www-form-urlencoded",
@@ -28,29 +33,10 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * NEW api_laravel wrapper (v2)
- *
- * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://127.0.0.1/8000/api/
- *
- * ⚠️ WARNING:
- * Same name as legacy src/api_new api_laravel.
- * NOT fully backward compatible and may fail on old code
+ * Canonical API wrapper for module-scoped v2 requests.
  */
 
 export default function useApi(module) {
-  // FALLBACK
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    const fallback_laravel = (...args) => {
-      console.log("api_laravel fallback mode. Missing .env config");
-      return api_fallback(module, ...args);
-    };
-    const fallback_upload = () => console.log("api_upload fallback mode. Missing .env config");
-    return {
-      api_laravel: fallback_laravel,
-      api_upload: fallback_upload,
-    };
-  }
-
   async function api_laravel(method, data = {}, options = {}) {
     const payload = queryString.stringify({
       method,
