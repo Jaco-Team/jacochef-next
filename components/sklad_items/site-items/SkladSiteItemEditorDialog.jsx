@@ -724,6 +724,8 @@ export default function SkladSiteItemEditorDialog({
                             <MyTextInput
                               label="Кусочков или размер"
                               value={form.count_part}
+                              type="number"
+                              step={0.1}
                               disabled={!isEditable}
                               func={(event) => updateField("count_part", event.target.value)}
                             />
@@ -974,6 +976,8 @@ export default function SkladSiteItemEditorDialog({
                         <MyTextInput
                           label="Вес"
                           value={form.weight}
+                          type="number"
+                          step={0.1}
                           disabled={!isEditable}
                           func={(event) => updateField("weight", event.target.value)}
                         />
@@ -982,6 +986,8 @@ export default function SkladSiteItemEditorDialog({
                         <MyTextInput
                           label="Белки"
                           value={form.protein}
+                          type="number"
+                          step={0.1}
                           disabled={!isEditable}
                           func={(event) => updateField("protein", event.target.value)}
                         />
@@ -990,6 +996,8 @@ export default function SkladSiteItemEditorDialog({
                         <MyTextInput
                           label="Жиры"
                           value={form.fat}
+                          type="number"
+                          step={0.1}
                           disabled={!isEditable}
                           func={(event) => updateField("fat", event.target.value)}
                         />
@@ -998,6 +1006,8 @@ export default function SkladSiteItemEditorDialog({
                         <MyTextInput
                           label="Углеводы"
                           value={form.carbohydrates}
+                          type="number"
+                          step={0.1}
                           disabled={!isEditable}
                           func={(event) => updateField("carbohydrates", event.target.value)}
                         />
@@ -1006,6 +1016,8 @@ export default function SkladSiteItemEditorDialog({
                         <MyTextInput
                           label="Ккал"
                           value={form.kkal}
+                          type="number"
+                          step={0.1}
                           disabled={!isEditable}
                           func={(event) => updateField("kkal", event.target.value)}
                         />
@@ -1014,6 +1026,8 @@ export default function SkladSiteItemEditorDialog({
                         <MyTextInput
                           label="Ккал расчет"
                           value={liveKkalPreview}
+                          type="number"
+                          step={0.1}
                           disabled
                         />
                       </Grid>
