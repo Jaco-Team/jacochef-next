@@ -102,8 +102,16 @@ export default function CloseBuyPage() {
 
   useEffect(() => {
     if (activeTab === CLOSE_BUY_TABS.history && selectedPointId) {
-      useCloseBuyStore.getState().loadHistory(api);
+      const hasTextFilter = historyFilters.search.trim() || historyFilters.author.trim();
+      const timeoutId = window.setTimeout(
+        () => useCloseBuyStore.getState().loadHistory(api),
+        hasTextFilter ? 300 : 0,
+      );
+
+      return () => window.clearTimeout(timeoutId);
     }
+
+    return undefined;
   }, [
     activeTab,
     api,
