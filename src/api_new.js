@@ -1,8 +1,8 @@
 import queryString from "query-string";
 import axios from "axios";
 
-// const PROD_API_BASE_URL = "https://apichef.jacochef.ru/api";
-const PROD_API_BASE_URL = "http://localhost:8000/api";
+const PROD_API_BASE_URL = "https://apichef.jacochef.ru/api";
+// const PROD_API_BASE_URL = "http://localhost:8000/api";
 const LOCAL_API_BASE_URL = "http://localhost:8000/api";
 
 function getApiOrigin(apiBaseUrl) {
