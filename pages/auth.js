@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 import TextField from "@mui/material/TextField";
@@ -15,7 +15,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
-import { api_laravel, api_laravel_local, sanctum } from "@/src/api_new";
+import { api_laravel, sanctum } from "@/src/api_new";
 
 const SmartCaptcha = dynamic(
   () => import("@yandex/smart-captcha").then((mod) => mod.SmartCaptcha),
@@ -31,6 +31,8 @@ const AUTH_BORDER = "#e6e6e6";
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
+    height: 56,
+    alignItems: "center",
     borderRadius: "14px",
     backgroundColor: "#fff",
     "& fieldset": {
@@ -50,8 +52,14 @@ const fieldSx = {
   "& .MuiInputLabel-root.Mui-focused": {
     color: AUTH_RED,
   },
+  "& .MuiInputLabel-root:not(.MuiInputLabel-shrink)": {
+    top: "50%",
+    transform: "translate(14px, -50%) scale(1)",
+  },
   "& .MuiOutlinedInput-input": {
-    py: 1.6,
+    height: "100%",
+    boxSizing: "border-box",
+    py: 0,
   },
 };
 
@@ -63,10 +71,35 @@ export default function Auth() {
   const [formError, setFormError] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [retryAfter, setRetryAfter] = useState(0);
+
+  useEffect(() => {
+    if (retryAfter <= 0) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setRetryAfter((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [retryAfter]);
 
   const resetCaptcha = () => {
     setCaptchaToken("");
     setCaptchaResetKey((prev) => prev + 1);
+  };
+
+  const applySecurityState = (payload, retryAfterHeader = 0) => {
+    if (payload?.captcha_required) {
+      setCaptchaRequired(true);
+    }
+
+    const seconds = Number(payload?.retry_after || retryAfterHeader || 0);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      setRetryAfter(Math.ceil(seconds));
+    }
   };
 
   const checkPhone = (event) => {
@@ -106,8 +139,16 @@ export default function Auth() {
       return;
     }
 
-    if (!captchaToken) {
-      setFormError("Пожалуйста, подтвердите, что вы не робот");
+    if (captchaRequired && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken)) {
+      setFormError(
+        SMARTCAPTCHA_CLIENT_KEY
+          ? "Пожалуйста, подтвердите, что вы не робот"
+          : "Защита CAPTCHA временно недоступна. Обратитесь к администратору.",
+      );
+      return;
+    }
+
+    if (retryAfter > 0) {
       return;
     }
 
@@ -129,14 +170,20 @@ export default function Auth() {
       const payload = res?.data ?? res;
 
       if (!payload || payload.st === false) {
+        applySecurityState(payload);
         setFormError(payload?.text || "Пользователь не найден или не имеет доступа");
         resetCaptcha();
         return;
       }
 
-      if (payload.token) {
-        localStorage.setItem("token", payload.token);
-        Cookies.set("token", payload.token, { expires: 60 });
+      const legacyToken = payload.legacy_token || payload.token;
+      if (legacyToken) {
+        localStorage.setItem("token", legacyToken);
+        Cookies.set("token", legacyToken, {
+          expires: 60,
+          sameSite: "lax",
+          secure: window.location.protocol === "https:",
+        });
       }
 
       if (payload.expires_at) {
@@ -146,12 +193,16 @@ export default function Auth() {
       window.location.pathname = "/";
     } catch (error) {
       const status = error?.response?.status;
+      const payload = error?.response?.data?.data ?? error?.response?.data;
+      const retryAfterHeader = error?.response?.headers?.["retry-after"];
+      applySecurityState(payload, retryAfterHeader);
+
       if (status === 419) {
         setFormError("Сессия устарела. Обновите страницу и попробуйте снова.");
+      } else if (status === 429) {
+        setFormError("Слишком много запросов. Попробуйте немного позже.");
       } else {
-        setFormError(
-          error?.response?.data?.text || error?.response?.data?.message || "Ошибка авторизации",
-        );
+        setFormError(payload?.text || payload?.message || "Ошибка авторизации");
       }
       resetCaptcha();
     } finally {
@@ -182,10 +233,10 @@ export default function Auth() {
           px: 2,
           py: 4,
           background: `
-            radial-gradient(ellipse 90% 70% at 0% 0%, rgba(255, 214, 220, 0.95) 0%, transparent 55%),
-            radial-gradient(ellipse 80% 65% at 100% 100%, rgba(255, 228, 232, 0.9) 0%, transparent 55%),
-            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(255, 240, 242, 0.85) 0%, transparent 50%),
-            linear-gradient(160deg, #ffe8ec 0%, #fff5f6 35%, #ffffff 70%, #fffafa 100%)
+            radial-gradient(ellipse 90% 70% at 0% 0%, rgba(219, 234, 254, 0.82) 0%, transparent 56%),
+            radial-gradient(ellipse 80% 65% at 100% 100%, rgba(226, 232, 240, 0.78) 0%, transparent 58%),
+            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(240, 249, 255, 0.9) 0%, transparent 52%),
+            linear-gradient(160deg, #eef4f9 0%, #f6f9fc 38%, #ffffff 72%, #f8fafc 100%)
           `,
         }}
       >
@@ -309,7 +360,7 @@ export default function Auth() {
               }}
             />
 
-            {SMARTCAPTCHA_CLIENT_KEY ? (
+            {SMARTCAPTCHA_CLIENT_KEY && captchaRequired ? (
               <Box sx={{ mb: 2 }}>
                 <SmartCaptcha
                   key={captchaResetKey}
@@ -343,34 +394,17 @@ export default function Auth() {
                   {formError}
                 </Typography>
               </Box>
-            ) : (
-              <Box
-                sx={{
-                  mb: 2.5,
-                  px: 2,
-                  py: 1.5,
-                  borderRadius: "14px",
-                  backgroundColor: "#f3f4f6",
-                  textAlign: "center",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    lineHeight: 1.4,
-                    color: AUTH_MUTED,
-                  }}
-                >
-                  Используйте номер телефона, указанный в вашем рабочем аккаунте.
-                </Typography>
-              </Box>
-            )}
+            ) : null}
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              disabled={!captchaToken || !SMARTCAPTCHA_CLIENT_KEY || isLoad}
+              disabled={
+                isLoad ||
+                retryAfter > 0 ||
+                (captchaRequired && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken))
+              }
               sx={{
                 py: 1.5,
                 borderRadius: "14px",
@@ -390,7 +424,7 @@ export default function Auth() {
                 },
               }}
             >
-              Войти
+              {retryAfter > 0 ? "Попробуйте позже" : "Войти"}
             </Button>
 
             <Box sx={{ mt: 3, textAlign: "center" }}>

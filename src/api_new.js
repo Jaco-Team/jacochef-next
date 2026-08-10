@@ -1,17 +1,12 @@
 import queryString from "query-string";
 import axios from "axios";
 
-/**
- * Keep FE and API on the same hostname (localhost vs 127.0.0.1 are different sites).
- * Cross-port (3000 → 8000) needs withCredentials + withXSRFToken so Axios sends X-XSRF-TOKEN.
- */
-function getApiBaseUrl() {
-  const fromEnv = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-  return fromEnv.replace(/\/?$/, "");
-}
+// const PROD_API_BASE_URL = "https://apichef.jacochef.ru/api";
+const PROD_API_BASE_URL = "http://localhost:8000/api";
+const LOCAL_API_BASE_URL = "http://localhost:8000/api";
 
-function getApiOrigin() {
-  return getApiBaseUrl().replace(/\/api$/i, "") || "http://localhost:8000";
+function getApiOrigin(apiBaseUrl) {
+  return apiBaseUrl.replace(/\/api$/i, "");
 }
 
 export const credentialsConfig = {
@@ -62,8 +57,8 @@ export function api(module = "", method = "", data = {}, dop_type = {}) {
     });
 }
 
-export function sanctum(dop_type = {}) {
-  const urlApi_dev = `${getApiOrigin()}/sanctum/csrf-cookie`;
+function requestSanctum(apiBaseUrl, dop_type = {}) {
+  const urlApi_dev = `${getApiOrigin(apiBaseUrl)}/sanctum/csrf-cookie`;
 
   return axios
     .get(urlApi_dev, {
@@ -77,8 +72,16 @@ export function sanctum(dop_type = {}) {
     });
 }
 
+export function sanctum(dop_type = {}) {
+  return requestSanctum(PROD_API_BASE_URL, dop_type);
+}
+
+export function sanctum_local(dop_type = {}) {
+  return requestSanctum(LOCAL_API_BASE_URL, dop_type);
+}
+
 export function api_laravel(module = "", method = "", data = {}, dop_type = {}) {
-  const urlApi_dev = `${getApiBaseUrl()}/${module}/${method}`;
+  const urlApi_dev = `${PROD_API_BASE_URL}/${module}/${method}`;
 
   const this_data = queryString.stringify({
     method: method,
@@ -121,7 +124,7 @@ export function api_laravel(module = "", method = "", data = {}, dop_type = {}) 
 }
 
 export function api_laravel_local(module = "", method = "", data = {}, dop_type = {}) {
-  const urlApi_dev = `${getApiBaseUrl()}/${module}/${method}`;
+  const urlApi_dev = `${LOCAL_API_BASE_URL}/${module}/${method}`;
 
   const this_data = queryString.stringify({
     method: method,
@@ -163,7 +166,7 @@ export function api_laravel_local(module = "", method = "", data = {}, dop_type 
 }
 
 export function api_laravel_local_upload(module = "", method = "", file, data = {}, dop_type = {}) {
-  const urlApi_dev = `${getApiBaseUrl()}/${module}/${method}`;
+  const urlApi_dev = `${LOCAL_API_BASE_URL}/${module}/${method}`;
   const formData = new FormData();
 
   formData.append("file", file);
@@ -202,8 +205,7 @@ export function api_laravel_local_upload(module = "", method = "", file, data = 
 }
 
 export function api_laravel_upload(module = "", method = "", file, data = {}, dop_type = {}) {
-  const apiUrl = "https://apichef.jacochef.ru/api/";
-  const url = `${apiUrl.replace(/\/$/, "")}/${module}/${method}`;
+  const url = `${PROD_API_BASE_URL}/${module}/${method}`;
   const formData = new FormData();
 
   formData.append("file", file);

@@ -191,6 +191,10 @@ export default function Header() {
       const response = await api_laravel("header", "get_all", {}, { throwErrors: true });
 
       if (response?.data?.st === true) {
+        if (response.data.legacy_token) {
+          localStorage.setItem("token", response.data.legacy_token);
+          Cookies.set("token", response.data.legacy_token, { expires: 60 });
+        }
         setCatMenu(response?.data?.left_menu);
         setMy(response?.data?.my);
         setFullMenu(

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -11,12 +12,18 @@ import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Link from "next/link";
 
-import api from "@/src/api";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, sanctum } from "@/src/api_new";
 
 import Cookies from "js-cookie";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
+
+const SmartCaptcha = dynamic(
+  () => import("@yandex/smart-captcha").then((mod) => mod.SmartCaptcha),
+  { ssr: false },
+);
+
+const SMARTCAPTCHA_CLIENT_KEY = process.env.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY || "";
 
 const AUTH_RED = "#a30021";
 const AUTH_TEXT = "#1a1a1a";
@@ -27,6 +34,8 @@ const STEPS = ["Телефон", "Подтверждение"];
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
+    height: 56,
+    alignItems: "center",
     borderRadius: "14px",
     backgroundColor: "#fff",
     "& fieldset": {
@@ -46,8 +55,14 @@ const fieldSx = {
   "& .MuiInputLabel-root.Mui-focused": {
     color: AUTH_RED,
   },
+  "& .MuiInputLabel-root:not(.MuiInputLabel-shrink)": {
+    top: "50%",
+    transform: "translate(14px, -50%) scale(1)",
+  },
   "& .MuiOutlinedInput-input": {
-    py: 1.6,
+    height: "100%",
+    boxSizing: "border-box",
+    py: 0,
   },
 };
 
@@ -133,11 +148,54 @@ export default function Registration() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const [retryAfter, setRetryAfter] = useState(0);
+  const [resendAfter, setResendAfter] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
-  const isMinLength = password.length >= 8;
-  const hasNumber = /\d/.test(password);
-  const hasMixedCase = /(?=.*[a-z])(?=.*[A-Z])/.test(password);
-  const isPasswordValid = isMinLength && hasNumber && hasMixedCase;
+  useEffect(() => {
+    if (retryAfter <= 0) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setRetryAfter((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [retryAfter]);
+
+  useEffect(() => {
+    if (resendAfter <= 0) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setResendAfter((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [resendAfter]);
+
+  const resetCaptcha = () => {
+    setCaptchaToken("");
+    setCaptchaResetKey((key) => key + 1);
+  };
+
+  const applyRetryAfter = (payload, retryAfterHeader = 0) => {
+    const seconds = Number(payload?.retry_after || retryAfterHeader || 0);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      setRetryAfter(Math.ceil(seconds));
+    }
+  };
+
+  const passwordRequirements = [
+    { label: "Не менее 8 символов", met: password.length >= 8 },
+    { label: "Хотя бы одна цифра", met: /\d/.test(password) },
+    { label: "Строчная латинская буква", met: /[a-z]/.test(password) },
+    { label: "Заглавная латинская буква", met: /[A-Z]/.test(password) },
+  ];
+  const isPasswordValid = passwordRequirements.every((requirement) => requirement.met);
 
   const isPhoneValid =
     !!phone &&
@@ -164,28 +222,31 @@ export default function Registration() {
     }
 
     setPhone(v);
+    setRetryAfter(0);
     if (formError) {
       setFormError("");
     }
   };
 
   const handleSetCode = (event) => {
-    const newCode = event.target.value.replaceAll(" ", "");
+    const newCode = event.target.value.replace(/\D/g, "").slice(0, 6);
     setCode(newCode);
     if (formError) {
       setFormError("");
     }
-
-    if (activeStep === 1 && newCode.length === 4) {
-      nextStep(newCode);
-    }
   };
 
   async function nextStep(currentCode = "") {
+    if (retryAfter > 0) {
+      return;
+    }
+
     setIsLoad(true);
     setFormError("");
 
     try {
+      await sanctum();
+
       if (activeStep === 0) {
         if (!isPhoneValid) {
           setFormError("Введите корректный номер телефона");
@@ -197,49 +258,142 @@ export default function Registration() {
           return;
         }
 
-        let res = await api_laravel("auth", "check_phone", { login: phone });
-        res = res.data;
+        if (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken) {
+          setFormError(
+            SMARTCAPTCHA_CLIENT_KEY
+              ? "Пожалуйста, подтвердите, что вы не робот"
+              : "Защита CAPTCHA временно недоступна. Обратитесь к администратору.",
+          );
+          return;
+        }
+
+        let res = await api_laravel(
+          "auth",
+          "check_phone",
+          { login: phone, captcha_token: captchaToken },
+          { throwErrors: true },
+        );
+        res = res?.data ?? res;
 
         if (res.st === false) {
+          applyRetryAfter(res);
           setFormError(res.text || "Не удалось отправить код");
         } else {
+          setResendAfter(Number(res.resend_after) || 60);
           setActiveStep(1);
         }
+        resetCaptcha();
       } else if (activeStep === 1) {
-        if (currentCode.length !== 4) {
-          setFormError("Код должен состоять ровно из 4 символов");
+        if (currentCode.length !== 6) {
+          setFormError("Код должен состоять ровно из 6 цифр");
           return;
         }
 
-        const codeRes = await api("auth", "check_code", {
-          login: phone,
-          code: currentCode,
-        });
-
-        if (codeRes.st === false) {
-          setFormError(codeRes.text || "Неверный код подтверждения");
-          return;
-        }
-
-        let saveRes = await api_laravel("auth", "save_new_pwd", {
-          login: phone,
-          code: currentCode,
-          pwd: password,
-        });
-        saveRes = saveRes.data;
+        let saveRes = await api_laravel(
+          "auth",
+          "save_new_pwd",
+          {
+            login: phone,
+            code: currentCode,
+            pwd: password,
+          },
+          { throwErrors: true },
+        );
+        saveRes = saveRes?.data ?? saveRes;
 
         if (saveRes.st === false) {
+          applyRetryAfter(saveRes);
           setFormError(saveRes.text || "Не удалось сохранить пароль");
         } else {
-          localStorage.setItem("auth_expires_at", saveRes.expires_at);
+          const legacyToken = saveRes.legacy_token || saveRes.token;
+          if (legacyToken) {
+            localStorage.setItem("token", legacyToken);
+            Cookies.set("token", legacyToken, {
+              expires: 60,
+              sameSite: "lax",
+              secure: window.location.protocol === "https:",
+            });
+          }
+          if (saveRes.expires_at) {
+            localStorage.setItem("auth_expires_at", saveRes.expires_at);
+          }
           setTimeout(() => {
             window.location.pathname = "/";
           }, 300);
         }
       }
     } catch (error) {
-      setFormError("Произошла ошибка. Попробуйте позже.");
+      const status = error?.response?.status;
+      const payload = error?.response?.data?.data ?? error?.response?.data;
+      applyRetryAfter(payload, error?.response?.headers?.["retry-after"]);
+
+      if (status === 419) {
+        setFormError("Сессия устарела. Обновите страницу и попробуйте снова.");
+      } else if (status === 429) {
+        setFormError("Слишком много запросов. Попробуйте немного позже.");
+      } else {
+        setFormError(payload?.text || payload?.message || "Произошла ошибка. Попробуйте позже.");
+      }
+      if (activeStep === 0) {
+        resetCaptcha();
+      }
     } finally {
+      setIsLoad(false);
+    }
+  }
+
+  async function resendCode() {
+    if (isLoad || resendAfter > 0) {
+      return;
+    }
+
+    if (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken) {
+      setFormError(
+        SMARTCAPTCHA_CLIENT_KEY
+          ? "Пожалуйста, подтвердите, что вы не робот"
+          : "Защита CAPTCHA временно недоступна. Обратитесь к администратору.",
+      );
+      return;
+    }
+
+    setIsLoad(true);
+    setFormError("");
+
+    try {
+      await sanctum();
+      let res = await api_laravel(
+        "auth",
+        "check_phone",
+        { login: phone, captcha_token: captchaToken },
+        { throwErrors: true },
+      );
+      res = res?.data ?? res;
+
+      if (res.st === false) {
+        const seconds = Number(res.retry_after || 0);
+        if (Number.isFinite(seconds) && seconds > 0) {
+          setResendAfter(Math.ceil(seconds));
+        }
+        setFormError(res.text || "Не удалось отправить код");
+      } else {
+        setResendAfter(Number(res.resend_after) || 60);
+      }
+    } catch (error) {
+      const status = error?.response?.status;
+      const payload = error?.response?.data?.data ?? error?.response?.data;
+      const seconds = Number(
+        payload?.retry_after || error?.response?.headers?.["retry-after"] || 0,
+      );
+      if (Number.isFinite(seconds) && seconds > 0) {
+        setResendAfter(Math.ceil(seconds));
+      }
+      setFormError(
+        status === 429
+          ? "Слишком много запросов. Попробуйте немного позже."
+          : payload?.text || payload?.message || "Произошла ошибка. Попробуйте позже.",
+      );
+    } finally {
+      resetCaptcha();
       setIsLoad(false);
     }
   }
@@ -254,12 +408,16 @@ export default function Registration() {
       return true;
     }
 
+    if (retryAfter > 0) {
+      return true;
+    }
+
     if (activeStep === 0) {
-      return !isPhoneValid || !isPasswordValid;
+      return !isPhoneValid || !isPasswordValid || !SMARTCAPTCHA_CLIENT_KEY || !captchaToken;
     }
 
     if (activeStep === 1) {
-      return code.length !== 4;
+      return code.length !== 6;
     }
 
     return true;
@@ -283,10 +441,10 @@ export default function Registration() {
           px: 2,
           py: 4,
           background: `
-            radial-gradient(ellipse 90% 70% at 0% 0%, rgba(255, 214, 220, 0.95) 0%, transparent 55%),
-            radial-gradient(ellipse 80% 65% at 100% 100%, rgba(255, 228, 232, 0.9) 0%, transparent 55%),
-            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(255, 240, 242, 0.85) 0%, transparent 50%),
-            linear-gradient(160deg, #ffe8ec 0%, #fff5f6 35%, #ffffff 70%, #fffafa 100%)
+            radial-gradient(ellipse 90% 70% at 0% 0%, rgba(219, 234, 254, 0.82) 0%, transparent 56%),
+            radial-gradient(ellipse 80% 65% at 100% 100%, rgba(226, 232, 240, 0.78) 0%, transparent 58%),
+            radial-gradient(ellipse 60% 50% at 85% 15%, rgba(240, 249, 255, 0.9) 0%, transparent 52%),
+            linear-gradient(160deg, #eef4f9 0%, #f6f9fc 38%, #ffffff 72%, #f8fafc 100%)
           `,
         }}
       >
@@ -397,7 +555,7 @@ export default function Registration() {
                   autoComplete="new-password"
                   value={password}
                   onChange={handlePasswordChange}
-                  sx={{ ...fieldSx, mb: 2 }}
+                  sx={{ ...fieldSx, mb: 1.5 }}
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -419,22 +577,122 @@ export default function Registration() {
                     },
                   }}
                 />
+
+                <Box sx={{ mb: 2.5, px: 0.25 }}>
+                  <Typography
+                    sx={{
+                      mb: 1,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: AUTH_MUTED,
+                    }}
+                  >
+                    Пароль должен содержать:
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                      gap: 0.75,
+                    }}
+                  >
+                    {passwordRequirements.map((requirement) => (
+                      <Box
+                        key={requirement.label}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.75,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 18,
+                            height: 18,
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "50%",
+                            border: `1px solid ${requirement.met ? "#2e7d32" : "#cbd5e1"}`,
+                            backgroundColor: requirement.met ? "#e8f5e9" : "#fff",
+                            color: "#2e7d32",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {requirement.met ? "✓" : ""}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            lineHeight: 1.3,
+                            color: requirement.met ? "#2e7d32" : AUTH_MUTED,
+                          }}
+                        >
+                          {requirement.label}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+
+                {SMARTCAPTCHA_CLIENT_KEY ? (
+                  <Box sx={{ mb: 2 }}>
+                    <SmartCaptcha
+                      key={captchaResetKey}
+                      sitekey={SMARTCAPTCHA_CLIENT_KEY}
+                      language="ru"
+                      onSuccess={setCaptchaToken}
+                      onTokenExpired={resetCaptcha}
+                    />
+                  </Box>
+                ) : null}
               </>
             ) : (
-              <TextField
-                variant="outlined"
-                fullWidth
-                label="Код из SMS"
-                name="code"
-                autoComplete="one-time-code"
-                autoFocus
-                value={code}
-                onChange={handleSetCode}
-                sx={{ ...fieldSx, mb: 2 }}
-                slotProps={{
-                  htmlInput: { maxLength: 4 },
-                }}
-              />
+              <>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  label="Код из SMS"
+                  name="code"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  value={code}
+                  onChange={handleSetCode}
+                  sx={{ ...fieldSx, mb: 1 }}
+                  slotProps={{
+                    htmlInput: { maxLength: 6, inputMode: "numeric" },
+                  }}
+                />
+
+                {resendAfter <= 0 && SMARTCAPTCHA_CLIENT_KEY ? (
+                  <Box sx={{ mt: 1.5, mb: 1 }}>
+                    <SmartCaptcha
+                      key={captchaResetKey}
+                      sitekey={SMARTCAPTCHA_CLIENT_KEY}
+                      language="ru"
+                      onSuccess={setCaptchaToken}
+                      onTokenExpired={resetCaptcha}
+                    />
+                  </Box>
+                ) : null}
+
+                <Button
+                  type="button"
+                  fullWidth
+                  variant="text"
+                  onClick={resendCode}
+                  disabled={isLoad || resendAfter > 0 || !SMARTCAPTCHA_CLIENT_KEY || !captchaToken}
+                  sx={{ mb: 2, textTransform: "none", color: AUTH_RED }}
+                >
+                  {resendAfter > 0
+                    ? `Повторная отправка через ${resendAfter} с`
+                    : "Отправить код повторно"}
+                </Button>
+              </>
             )}
 
             {formError ? (
@@ -459,30 +717,7 @@ export default function Registration() {
                   {formError}
                 </Typography>
               </Box>
-            ) : (
-              <Box
-                sx={{
-                  mb: 2.5,
-                  px: 2,
-                  py: 1.5,
-                  borderRadius: "14px",
-                  backgroundColor: "#f3f4f6",
-                  textAlign: "center",
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    lineHeight: 1.4,
-                    color: AUTH_MUTED,
-                  }}
-                >
-                  {activeStep === 0
-                    ? "Пароль лучше задать новый, чтобы сразу обновить доступ к аккаунту."
-                    : "Код действителен короткое время. Если не пришёл — вернитесь и запросите снова."}
-                </Typography>
-              </Box>
-            )}
+            ) : null}
 
             <Button
               type="submit"
@@ -508,7 +743,11 @@ export default function Registration() {
                 },
               }}
             >
-              {activeStep === 0 ? "Получить код" : "Подтвердить"}
+              {retryAfter > 0
+                ? "Попробуйте позже"
+                : activeStep === 0
+                  ? "Получить код"
+                  : "Подтвердить"}
             </Button>
 
             <Box sx={{ mt: 3, textAlign: "center" }}>

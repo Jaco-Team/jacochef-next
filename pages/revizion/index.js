@@ -105,6 +105,7 @@ class Revizion_ extends React.Component {
         method: method,
         module: this.state.module,
         version: 2,
+        login: localStorage.getItem("token"),
         data: JSON.stringify(data),
       }),
     })
