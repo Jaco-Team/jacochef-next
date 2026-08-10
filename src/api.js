@@ -1,6 +1,8 @@
 import queryString from "query-string";
 
 export default function api(module = "", method = "", data = {}) {
+  // Legacy jacochef.ru API returns Access-Control-Allow-Origin: *.
+  // Do NOT use credentials: "include" here — browsers reject * + credentials.
   return fetch("https://jacochef.ru/api/index_new.php", {
     method: "POST",
     headers: {
@@ -10,7 +12,6 @@ export default function api(module = "", method = "", data = {}) {
       method: method,
       module: module,
       version: 2,
-      login: localStorage.getItem("token"),
       data: JSON.stringify(data),
     }),
   })

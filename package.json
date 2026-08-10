@@ -37,6 +37,7 @@
     "@sentry/cli": "^3.6.2",
     "@sentry/react": "^10.69.0",
     "@tinymce/tinymce-react": "^6.3.0",
+    "@yandex/smart-captcha": "^2.9.1",
     "axios": "^1.19.0",
     "childprocess": "^2.0.2",
     "common-es": "^1.1.0",

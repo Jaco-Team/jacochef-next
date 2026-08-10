@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, credentialsConfig } from "@/src/api_new";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import dayjs from "dayjs";
@@ -857,7 +857,6 @@ function OrdersPage() {
           method: "exportExcel",
           module: "orders_by_hour",
           version: 2,
-          login: localStorage.getItem("token"),
           data: {
             differences: tableData,
             date_start:
@@ -870,7 +869,11 @@ function OrdersPage() {
                 : dayjs(dateEnd).format("YYYY-MM-DD"),
           },
         }),
-        { responseType: "blob", headers: { "Content-Type": "application/json" } },
+        {
+          ...credentialsConfig,
+          responseType: "blob",
+          headers: { "Content-Type": "application/json" },
+        },
       );
       const blob = response.data;
       const urlBlob = window.URL.createObjectURL(blob);

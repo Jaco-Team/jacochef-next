@@ -15,7 +15,6 @@ export default function useSaveBanner(showAlert, getData, onClose) {
         formData.append("name", bannerName);
         formData.append("id", bannerId);
         formData.append("type", type);
-        formData.append("login", localStorage.getItem("token"));
         formData.append("city_id", cityId);
       });
 

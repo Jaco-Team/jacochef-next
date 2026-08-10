@@ -32,7 +32,7 @@ import api from "@/src/api";
 import Cookies from "js-cookie";
 
 import { font } from "@/src/theme";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, sanctum } from "@/src/api_new";
 import { AccountCircle, Attachment, Dashboard, ExitToApp, Person } from "@mui/icons-material";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -187,30 +187,51 @@ export default function Header() {
   }
 
   async function loadMenu() {
-    const response = await api_laravel("header", "get_all");
+    try {
+      const response = await api_laravel("header", "get_all", {}, { throwErrors: true });
 
-    if (response?.data?.st === true) {
-      setCatMenu(response?.data?.left_menu);
-      setMy(response?.data?.my);
-      setFullMenu(
-        response?.data?.full_menu.filter(
-          (item, index, self) => index === self.findIndex((t) => t.name === item.name),
-        ),
-      );
+      if (response?.data?.st === true) {
+        if (response.data.legacy_token) {
+          localStorage.setItem("token", response.data.legacy_token);
+          Cookies.set("token", response.data.legacy_token, { expires: 60 });
+        }
+        setCatMenu(response?.data?.left_menu);
+        setMy(response?.data?.my);
+        setFullMenu(
+          response?.data?.full_menu.filter(
+            (item, index, self) => index === self.findIndex((t) => t.name === item.name),
+          ),
+        );
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      if (error?.response?.status === 401 || error?.response?.status === 419) {
+        return false;
+      }
+
+      // Network / temporary errors: keep the page, don't bounce to /auth
+      console.log(error);
+      return true;
     }
   }
 
   useEffect(() => {
-    if (!localStorage.getItem("token") || localStorage.getItem("token").length == 0) {
-      if (window.location.pathname == "/auth" || window.location.pathname == "/registration") {
-      } else {
-        // если не авторизованы и в каком-то модуле
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const path = window.location.pathname;
+    if (path === "/auth" || path === "/registration") {
+      return;
+    }
+
+    loadMenu().then((isAuthenticated) => {
+      if (!isAuthenticated) {
         window.location.href = "/auth";
       }
-    } else {
-      // если авторизованы
-      loadMenu();
-    }
+    });
   }, []);
 
   useEffect(() => {
@@ -231,9 +252,17 @@ export default function Header() {
     };
   }, [isRevizionAnalysisV2]);
 
-  function logOut() {
+  async function logOut() {
+    try {
+      await sanctum();
+      await api_laravel("auth", "logout", {}, { throwErrors: true });
+    } catch (_) {
+      // Still clear local leftovers and leave the app even if logout request fails
+    }
+
     localStorage.removeItem("token");
     Cookies.remove("token");
+    localStorage.removeItem("auth_expires_at");
     window.location.href = "/auth";
   }
 

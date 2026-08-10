@@ -1,5 +1,6 @@
 import React from "react";
 import axios from "axios";
+import { credentialsConfig } from "@/src/api_new";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -2390,7 +2391,6 @@ class CheckCheck_ extends React.Component {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("data", JSON.stringify(data));
-    formData.append("login", localStorage.getItem("token"));
     formData.append("method", "upload_excel");
     formData.append("module", "check_check");
     formData.append("version", 2);
@@ -2399,6 +2399,7 @@ class CheckCheck_ extends React.Component {
 
     try {
       const response = await axios.post(getCheckCheckApiUrl("upload_excel"), formData, {
+        ...credentialsConfig,
         headers: { "Content-Type": "multipart/form-data" },
       });
 

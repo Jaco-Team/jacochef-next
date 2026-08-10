@@ -34,7 +34,7 @@ import { ExlIcon } from "@/ui/icons";
 import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, credentialsConfig } from "@/src/api_new";
 
 import axios from "axios";
 import dayjs from "dayjs";
@@ -806,12 +806,12 @@ class SitePriceLevel_Tab_Level extends React.Component {
     const urlApi_dev = "https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls";
 
     formData.append("file", file);
-    formData.append("login", localStorage.getItem("token"));
     formData.append("method", "import_file_xls");
     formData.append("module", "site_price_lavel");
 
     try {
       const response = await axios.post(urlApi_dev, formData, {
+        ...credentialsConfig,
         headers: { "Content-Type": "multipart/form-data" },
       });
 

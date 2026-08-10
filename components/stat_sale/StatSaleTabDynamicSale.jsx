@@ -24,6 +24,7 @@ import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import ProgressTimeline from "@/components/stat_sale/ProgressTimeline";
 import axios from "axios";
+import { credentialsConfig } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
 
@@ -116,10 +117,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
             method: "export_data_dynamics",
             module: "orders_by_hour",
             version: 2,
-            login: localStorage.getItem("token"),
             data: this.state.res,
           },
           {
+            ...credentialsConfig,
             responseType: "blob",
             headers: {
               "Content-Type": "application/json",
