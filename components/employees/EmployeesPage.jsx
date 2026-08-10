@@ -671,6 +671,52 @@ const getSelectableCafes = (points) => asArray(points).filter(isSelectableCafe);
 
 const getRealCafes = (points) => asArray(points).filter((point) => parseInt(point?.id) > 0);
 
+const normalizeEmployeeBootstrap = (response) => {
+  const cities = normalizeOptions(response.cities);
+  const points = normalizeOptions(response.points);
+  const apps = normalizeOptions(response.apps);
+  const hireableApps = normalizeOptions(response.hireable_apps ?? response.apps)
+    .filter((app) => Number(app.id) > 0)
+    .map((app) => (app.unit_name ? { ...app, name: `${app.unit_name} — ${app.name}` } : app));
+
+  return {
+    cities,
+    points,
+    apps,
+    hireableApps,
+    cloth: normalizeOptions(response.cloth ?? response.cloth_list),
+    access: getAccess(response),
+    viewerId: response.viewer?.user_id ?? null,
+    viewerIsSuperPosition: Boolean(response.viewer?.is_super_position),
+  };
+};
+
+const defaultCityId = (cities) =>
+  cities.length === 1 ? cities[0].id : (cities.find((city) => sameId(city, -1))?.id ?? "");
+
+const reconcileEmployeeFilters = (current, bootstrap) => {
+  const availablePoints = getSelectableCafes(bootstrap.points);
+  const selectedPoints = getSelectableCafes(current.points);
+  const points = selectedPoints
+    .map((selected) => availablePoints.find((point) => sameId(point, selected)))
+    .filter(Boolean);
+  const apps = asArray(current.apps)
+    .map((selected) => {
+      if (sameId(selected, 0)) return selected;
+      return bootstrap.apps.find((app) => sameId(app, selected)) ?? null;
+    })
+    .filter(Boolean);
+
+  return {
+    ...current,
+    city: bootstrap.cities.some((city) => sameId(city, current.city))
+      ? current.city
+      : defaultCityId(bootstrap.cities),
+    points: selectedPoints.length > 0 && points.length === 0 ? availablePoints : points,
+    apps,
+  };
+};
+
 const getCityIdFromPoints = (points) => {
   const realPoints = getSelectableCafes(points).filter((point) => parseInt(point?.id) > 0);
   const cityIds = Array.from(new Set(realPoints.map((point) => point.city_id).filter(Boolean)));
@@ -998,36 +1044,22 @@ export default function EmployeesPage() {
 
     if (!res) return;
 
-    const cities = normalizeOptions(res.cities);
-    const points = normalizeOptions(res.points);
-    const formatHireableApps = (value) =>
-      normalizeOptions(value).map((app) =>
-        Number(app.id) > 0 && app.unit_name
-          ? { ...app, name: `${app.unit_name} — ${app.name}` }
-          : app,
-      );
-    const apps = normalizeOptions(res.apps);
-    const hireableApps = formatHireableApps(res.hireable_apps ?? res.apps).filter(
-      (app) => Number(app.id) > 0,
-    );
-    const nextAccess = getAccess(res);
-    const defaultCity =
-      cities.length === 1 ? cities[0].id : (cities.find((city) => sameId(city, -1))?.id ?? "");
-    const defaultPoints = getSelectableCafes(points);
+    const bootstrap = normalizeEmployeeBootstrap(res);
+    const defaultPoints = getSelectableCafes(bootstrap.points);
 
     setRefs({
-      cities,
-      points,
-      apps,
-      hireableApps,
-      cloth: normalizeOptions(res.cloth ?? res.cloth_list),
+      cities: bootstrap.cities,
+      points: bootstrap.points,
+      apps: bootstrap.apps,
+      hireableApps: bootstrap.hireableApps,
+      cloth: bootstrap.cloth,
     });
-    setAccess(nextAccess);
-    setViewerId(res.viewer?.user_id ?? null);
-    setViewerIsSuperPosition(Boolean(res.viewer?.is_super_position));
+    setAccess(bootstrap.access);
+    setViewerId(bootstrap.viewerId);
+    setViewerIsSuperPosition(bootstrap.viewerIsSuperPosition);
 
     const nextFilters = {
-      city: defaultCity,
+      city: defaultCityId(bootstrap.cities),
       points: defaultPoints,
       apps: [],
       official: officialFilters[0],
@@ -1043,6 +1075,32 @@ export default function EmployeesPage() {
     setPageTitle(title);
     document.title = title;
     await refreshEmployees(nextFilters, 0, rows);
+  };
+
+  const reloadEmployeeScope = async () => {
+    const res = await getData("get_all");
+
+    if (!res) return false;
+
+    const bootstrap = normalizeEmployeeBootstrap(res);
+    const nextFilters = reconcileEmployeeFilters(filtersRef.current, bootstrap);
+
+    setRefs({
+      cities: bootstrap.cities,
+      points: bootstrap.points,
+      apps: bootstrap.apps,
+      hireableApps: bootstrap.hireableApps,
+      cloth: bootstrap.cloth,
+    });
+    setAccess(bootstrap.access);
+    setViewerId(bootstrap.viewerId);
+    setViewerIsSuperPosition(bootstrap.viewerIsSuperPosition);
+    filtersRef.current = nextFilters;
+    setFilters(nextFilters);
+    setPage(0);
+    await refreshEmployees(nextFilters, 0, rows, sort);
+
+    return true;
   };
 
   useEffect(() => {
@@ -2182,6 +2240,7 @@ export default function EmployeesPage() {
             <EmployeeHierarchyTab
               request={getData}
               showAlert={showAlert}
+              onScopeChanged={reloadEmployeeScope}
             />
           </Grid>
         )}

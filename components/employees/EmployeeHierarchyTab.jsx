@@ -71,7 +71,7 @@ const getAppointmentPayloadItems = (items) => {
   });
 };
 
-export default function EmployeeHierarchyTab({ request, showAlert }) {
+export default function EmployeeHierarchyTab({ request, showAlert, onScopeChanged }) {
   const [units, setUnits] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [tablesReady, setTablesReady] = useState(false);
@@ -452,9 +452,10 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
         request={request}
         showAlert={showAlert}
         onClose={() => setPositionModal(null)}
-        onSaved={() => {
+        onSaved={async () => {
           setPositionModal(null);
-          loadHierarchy();
+          await loadHierarchy();
+          await onScopeChanged?.();
         }}
       />
       <EmployeeUnitModal

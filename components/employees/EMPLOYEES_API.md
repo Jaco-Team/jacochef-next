@@ -17,15 +17,15 @@ All requests use the existing `api_laravel(module, method, data)` wrapper and mu
 - `save_hierarchy`: `{ units, appointments }` → сохраняет дерево должностей и вложенность отделов
 - `get_position`: `{ position_id }` → `{ position, units, full_menu, history }`
 - `get_position_for_new` → шаблон `{ position, units, full_menu, history: [] }`
-- `save_position`: `{ position, full_menu }` → создаёт или обновляет должность
+- `save_position`: `{ position, full_menu }` → создаёт или обновляет должность; ответ
+  сохраняет `text`, `position_id` и добавляет фактически сохранённую `position`
 - `copy_position`: `{ position_id, name }`
 - `get_position_delete_info`: `{ position_id }` → `users[]`, которым назначена должность
 - `delete_position`: `{ position_id }`, только когда `users[]` пуст
 - `get_position_unit`: `{ unit_id }` → `{ unit, apps }`
 - `save_position_unit`: `{ unit: { id?, name, sort, apps[] } }`
 
-`position` использует поля `name`, `short_name`, `bonus`, `unit_id`, `is_graph`, `is_office`,
-`can_manage_all_employees`.
+`position` использует поля `name`, `short_name`, `bonus`, `unit_id`, `is_graph`, `is_office`.
 `units[]` использует `id`, `level`, `sort`, `parent_unit_id`, `parent_group_key`. Пустые
 `parent_unit_id` и `parent_group_key` означают корневой отдел. Для вложенного отдела оба поля
 обязательны и указывают на существующую группу должностей родительского отдела.
@@ -37,11 +37,12 @@ All requests use the existing `api_laravel(module, method, data)` wrapper and mu
 обратно на сервер не отправляются.
 Поле `kind` не используется и не принимается: порядок подчинённости задаёт иерархия найма.
 `is_office` — свойство должности и не зависит от списка доступных кафе.
-`can_manage_all_employees = 1` включает глобальный кадровый scope: сотрудник этой должности
-видит и может нанимать сотрудников любых должностей и кафе, а также полностью управлять
-собственной карточкой в пределах прав `edit` соответствующих вкладок. Флаг
-читается и изменяется только через модуль `employees`; старый модуль `appointment` его не
-использует.
+Право `all_users_edit` («Управление всеми сотрудниками») на уровне `access` включает
+глобальный кадровый scope: сотрудник видит и может нанимать сотрудников любых должностей и кафе,
+а также полностью управляет собственной карточкой в пределах прав `edit` вкладок. `view` и `edit`
+самого `all_users_edit` не учитываются.
+После сохранения должности frontend повторно загружает `get_all`, `get_employees` и
+иерархию, чтобы сразу применить новые `apps`, `hireable_apps` и `viewer.is_super_position`.
 `history[]` содержит журнал создания, редактирования, копирования и удаления должности в формате
 `HistoryLog`: `id`, `created_at`, `actor_name`, `event_type`, `diff_json`, `meta_json`.
 Журнал учитывает основные поля, отдел, порядок, включённые модули и внутренние права доступа.
@@ -133,10 +134,10 @@ Employee row fields are the existing fields from `site_user_manager` and `experi
 или изменить сотрудника вне кадрового scope. `get_employee`, `get_history`, создание,
 изменение работы, фото, отсутствия, медкнижка и одежда повторно проверяют scope на сервере.
 Собственную карточку можно открыть; состав полей и вкладок определяется правами просмотра.
-Без `can_manage_all_employees` вкладки «Основное», «Работа», фото и дата трудоустройства в
+Без `all_users_edit_access` вкладки «Основное», «Работа», фото и дата трудоустройства в
 собственной карточке доступны только для чтения; редактировать можно только отсутствия,
 медкнижку и одежду при наличии соответствующего права `edit`. С
-`can_manage_all_employees = 1` собственная карточка редактируется полностью в пределах прав
+`all_users_edit_access = 1` собственная карточка редактируется полностью в пределах прав
 `edit` соответствующих вкладок. При найме и переводе сервер принимает только разрешённую
 должность; новые доступы к кафе должны находиться в доступном менеджеру наборе.
 
