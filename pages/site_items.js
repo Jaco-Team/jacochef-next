@@ -51,6 +51,8 @@ import queryString from "query-string";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 
+const normalizeRecipeId = (id) => (String(id) === "0" ? "56" : id);
+
 class TableStages extends React.Component {
   render() {
     return (
@@ -423,7 +425,7 @@ class SiteItems_ extends React.Component {
         // правка от 30.09.22
         if (item["type"] == "rec") {
           items_pf_stages_1.push({
-            item_id: item["rec_id"],
+            item_id: normalizeRecipeId(item["rec_id"]),
             name: item["name"],
             count: item["count"],
             sort: item["sort"],
@@ -448,7 +450,7 @@ class SiteItems_ extends React.Component {
         // правка от 30.09.22
         if (item["type"] == "rec") {
           items_pf_stages_2.push({
-            item_id: item["rec_id"],
+            item_id: normalizeRecipeId(item["rec_id"]),
             name: item["name"],
             count: item["count"],
             sort: item["sort"],
@@ -472,7 +474,7 @@ class SiteItems_ extends React.Component {
         // правка от 30.09.22
         if (item["type"] == "rec") {
           items_pf_stages_3.push({
-            item_id: item["rec_id"],
+            item_id: normalizeRecipeId(item["rec_id"]),
             name: item["name"],
             count: item["count"],
             sort: item["sort"],
@@ -656,13 +658,13 @@ class SiteItems_ extends React.Component {
   }
 
   chooseStage(stage) {
-    let type = this.state.openMenuitem.storage_id ? "pf" : "rec";
+    const item = this.state.openMenuitem;
+    const type = item.type || (item.storage_id ? "pf" : "rec");
+    const itemId = type == "rec" ? normalizeRecipeId(item.id) : item.id;
 
     // правка от 13.11.22, убрал if this.state.openMenuitem.type == 'pf'
     //if( this.state.openMenuitem.type == 'pf' ){
     //if( type == 'pf' ){
-    let check = false;
-
     let rec =
       stage == 1
         ? this.state.pf_stage_1
@@ -674,21 +676,19 @@ class SiteItems_ extends React.Component {
 
     rec = rec ? rec : [];
     // проверка на добавленнный
-    rec.map((this_item) => {
-      if (parseInt(this.state.openMenuitem.id) == parseInt(this_item.item_id)) {
-        check = true;
-      }
-    });
+    const check = rec.some(
+      (this_item) => this_item.type == type && parseInt(itemId) == parseInt(this_item.item_id),
+    );
 
     if (!check) {
       //rec.push({item_id: this.state.openMenuitem.id, name: this.state.openMenuitem.name, count: 0, sort: 0, ei_name: this.state.openMenuitem.ei_name});
       rec.push({
-        item_id: this.state.openMenuitem.id,
-        name: this.state.openMenuitem.name,
+        item_id: itemId,
+        name: item.name,
         count: 0,
         sort: 0,
-        ei_name: this.state.openMenuitem.ei_name,
-        type: this.state.openMenuitem.type,
+        ei_name: item.ei_name,
+        type,
       });
 
       if (stage == 1) {
