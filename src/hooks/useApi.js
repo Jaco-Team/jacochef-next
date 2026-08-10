@@ -1,25 +1,25 @@
 import axios from "axios";
 import queryString from "query-string";
-import { api_laravel as api_fallback } from "../api_new";
+import { api_laravel as api_fallback, getAuthToken } from "../api_new";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/",
   timeout: 300_000, // ms
-  withCredentials: true,
-  withXSRFToken: true,
-  xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
+  withCredentials: false,
+  withXSRFToken: false,
   headers: {
     "Content-Type": "application/x-www-form-urlencoded",
   },
 });
 
-// если это включаем, начинаются Preflight запросы, пока что не надо
-// apiClient.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("token");
-//   if (token) config.headers.Authorization = `Bearer ${token}`;
-//   return config;
-// });
+apiClient.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 apiClient.interceptors.response.use(
   (response) => response.data,

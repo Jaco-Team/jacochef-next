@@ -24,7 +24,7 @@ import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import ProgressTimeline from "@/components/stat_sale/ProgressTimeline";
 import axios from "axios";
-import { credentialsConfig } from "@/src/api_new";
+import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
 
@@ -122,10 +122,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
           {
             ...credentialsConfig,
             responseType: "blob",
-            headers: {
+            headers: getAuthHeaders({
               "Content-Type": "application/json",
               Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            },
+            }),
             timeout: 30000,
           },
         );

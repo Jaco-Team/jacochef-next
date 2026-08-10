@@ -15,7 +15,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
-import { api_laravel, sanctum } from "@/src/api_new";
+import { api_laravel, createLegacyToken, storeAuthToken } from "@/src/api_new";
 
 const SmartCaptcha = dynamic(
   () => import("@yandex/smart-captcha").then((mod) => mod.SmartCaptcha),
@@ -161,11 +161,10 @@ export default function Auth() {
       login: phone,
       pwd: password,
       captcha_token: captchaToken,
-      auth_mode: "session",
+      auth_mode: "token",
     };
 
     try {
-      await sanctum();
       const res = await api_laravel("auth", "auth", data, { throwErrors: true });
       const payload = res?.data ?? res;
 
@@ -176,7 +175,9 @@ export default function Auth() {
         return;
       }
 
-      const legacyToken = payload.legacy_token || payload.token;
+      storeAuthToken(payload.token);
+
+      const legacyToken = payload.legacy_token || createLegacyToken(phone, payload.user_id);
       if (legacyToken) {
         localStorage.setItem("token", legacyToken);
         Cookies.set("token", legacyToken, {

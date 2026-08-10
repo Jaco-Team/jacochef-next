@@ -1,6 +1,6 @@
 import React from "react";
 import axios from "axios";
-import { credentialsConfig } from "@/src/api_new";
+import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -2400,7 +2400,7 @@ class CheckCheck_ extends React.Component {
     try {
       const response = await axios.post(getCheckCheckApiUrl("upload_excel"), formData, {
         ...credentialsConfig,
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: getAuthHeaders({ "Content-Type": "multipart/form-data" }),
       });
 
       const res = response.data?.data || response.data;

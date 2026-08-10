@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
-import { api_laravel, api_laravel_local, credentialsConfig } from "@/src/api_new";
+import { api_laravel, api_laravel_local, credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import dayjs from "dayjs";
@@ -872,7 +872,7 @@ function OrdersPage() {
         {
           ...credentialsConfig,
           responseType: "blob",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
         },
       );
       const blob = response.data;

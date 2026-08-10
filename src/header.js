@@ -32,7 +32,7 @@ import api from "@/src/api";
 import Cookies from "js-cookie";
 
 import { font } from "@/src/theme";
-import { api_laravel, api_laravel_local, sanctum } from "@/src/api_new";
+import { api_laravel, api_laravel_local, clearAuthToken } from "@/src/api_new";
 import { AccountCircle, Attachment, Dashboard, ExitToApp, Person } from "@mui/icons-material";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -254,13 +254,13 @@ export default function Header() {
 
   async function logOut() {
     try {
-      await sanctum();
       await api_laravel("auth", "logout", {}, { throwErrors: true });
     } catch (_) {
       // Still clear local leftovers and leave the app even if logout request fails
     }
 
     localStorage.removeItem("token");
+    clearAuthToken();
     Cookies.remove("token");
     localStorage.removeItem("auth_expires_at");
     window.location.href = "/auth";

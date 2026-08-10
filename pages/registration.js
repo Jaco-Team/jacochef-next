@@ -12,7 +12,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Link from "next/link";
 
-import { api_laravel, sanctum } from "@/src/api_new";
+import { api_laravel, createLegacyToken, storeAuthToken } from "@/src/api_new";
 
 import Cookies from "js-cookie";
 
@@ -245,8 +245,6 @@ export default function Registration() {
     setFormError("");
 
     try {
-      await sanctum();
-
       if (activeStep === 0) {
         if (!isPhoneValid) {
           setFormError("Введите корректный номер телефона");
@@ -305,7 +303,9 @@ export default function Registration() {
           applyRetryAfter(saveRes);
           setFormError(saveRes.text || "Не удалось сохранить пароль");
         } else {
-          const legacyToken = saveRes.legacy_token || saveRes.token;
+          storeAuthToken(saveRes.token);
+
+          const legacyToken = saveRes.legacy_token || createLegacyToken(phone, saveRes.user_id);
           if (legacyToken) {
             localStorage.setItem("token", legacyToken);
             Cookies.set("token", legacyToken, {
@@ -360,7 +360,6 @@ export default function Registration() {
     setFormError("");
 
     try {
-      await sanctum();
       let res = await api_laravel(
         "auth",
         "check_phone",

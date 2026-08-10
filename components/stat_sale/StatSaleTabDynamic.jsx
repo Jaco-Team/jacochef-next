@@ -9,7 +9,7 @@ import TabPanel from "@/ui/TabPanel/TabPanel";
 import DownloadButton from "@/ui/DownloadButton";
 import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import axios from "axios";
-import { credentialsConfig } from "@/src/api_new";
+import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 // ---------- Таб Динамика ----------
@@ -76,10 +76,10 @@ class StatSale_Tab_Dynamic extends React.Component {
           {
             ...credentialsConfig,
             responseType: "blob",
-            headers: {
+            headers: getAuthHeaders({
               "Content-Type": "application/json",
               Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            },
+            }),
             timeout: 30000,
           },
         );
