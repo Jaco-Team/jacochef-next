@@ -11,12 +11,15 @@ import {
 } from "@mui/material";
 
 const ALL_OPTION = { id: "__ALL__", name: "Все должности", unit_name: "Общее" };
+const DISMISSED_OPTION = { id: 0, name: "Уволенные", unit_name: "Общее" };
 
 const optionId = (option) => Number(option?.id ?? 0);
 const unitGroupKey = (option) =>
   option?.id === ALL_OPTION.id
     ? "__ALL__"
-    : `${option?.unit_id ?? "without_unit"}::${option?.unit_name || "Без отдела"}`;
+    : optionId(option) === 0
+      ? "__DISMISSED__"
+      : `${option?.unit_id ?? "without_unit"}::${option?.unit_name || "Без отдела"}`;
 
 export default function EmployeePositionFilter({ options, value, onChange, onBlur, disabled }) {
   const positions = useMemo(
@@ -162,7 +165,7 @@ export default function EmployeePositionFilter({ options, value, onChange, onBlu
     <Autocomplete
       multiple
       disableCloseOnSelect
-      options={[ALL_OPTION, ...positions]}
+      options={[ALL_OPTION, DISMISSED_OPTION, ...positions]}
       value={actualValue}
       disabled={disabled}
       onBlur={onBlur}
@@ -176,7 +179,12 @@ export default function EmployeePositionFilter({ options, value, onChange, onBlu
           return;
         }
 
-        setSelected(next.filter((option) => option.id !== ALL_OPTION.id));
+        if (optionId(details?.option) === 0) {
+          onChange?.(reason === "removeOption" ? [] : [DISMISSED_OPTION]);
+          return;
+        }
+
+        setSelected(next.filter((option) => option.id !== ALL_OPTION.id && optionId(option) !== 0));
       }}
       renderTags={renderCompactTags}
       slotProps={{
@@ -200,7 +208,7 @@ export default function EmployeePositionFilter({ options, value, onChange, onBlu
         />
       )}
       renderGroup={(params) => {
-        if (params.group === "__ALL__") {
+        if (params.group === "__ALL__" || params.group === "__DISMISSED__") {
           return (
             <li
               key={params.key}

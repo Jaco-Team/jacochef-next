@@ -241,6 +241,7 @@ const filterEmployeeHistoryByPermissions = (history, permissions) => {
   const fields = getVisibleEmployeeHistoryFields(permissions);
   const allowedKeys = new Set(fields.map(({ key }) => key));
   const activityPermissions = {
+    work: permissions.workTab,
     health_book: permissions.healthBook,
     absence: permissions.absences,
     cloth: permissions.clothing,
@@ -318,6 +319,8 @@ const normalizeEmployeeHistory = (items) => {
 };
 
 const activityEventLabels = {
+  work_update: "Изменения работы",
+  work_update_scheduled: "Изменения работы запланированы",
   health_book_update: "Медкнижка",
   cloth_issue: "Одежда выдана",
   cloth_return: "Одежда сдана",
@@ -365,6 +368,7 @@ const normalizeEmployeeActivityHistory = (items) =>
       diff,
       snapshot: parseHistoryJson(item?.after_json),
       before_snapshot: parseHistoryJson(item?.before_json),
+      meta: parseHistoryJson(item?.meta_json),
       changedFields: Object.entries(diff).map(([key, value]) => ({
         key,
         label: value?.field ?? key,
@@ -592,6 +596,30 @@ const canOpenEmployeeCard = (permissions) =>
   permissions.absences.view ||
   permissions.healthBook.view ||
   permissions.clothing.view;
+
+const getEmployeeCardPermissions = (permissions, isSelf, isSuperPosition) => {
+  if (!isSelf || isSuperPosition) return permissions;
+
+  const readOnly = (permission) => ({ ...permission, edit: false });
+  const basicTab = readOnly(permissions.basicTab);
+  const workTab = readOnly(permissions.workTab);
+
+  return {
+    ...permissions,
+    basicTab,
+    workTab,
+    officialEmployment: workTab,
+    photo: readOnly(permissions.photo),
+    fullName: readOnly(permissions.fullName),
+    phone: readOnly(permissions.phone),
+    inn: readOnly(permissions.inn),
+    birthDate: readOnly(permissions.birthDate),
+    employmentDate: readOnly(permissions.employmentDate),
+    authCode: readOnly(permissions.authCode),
+    position: workTab,
+    cafes: workTab,
+  };
+};
 
 const unwrapResponse = (res) => res?.data ?? res;
 
@@ -826,6 +854,8 @@ export default function EmployeesPage() {
     cloth: [],
   });
   const [access, setAccess] = useState(getAccess({}));
+  const [viewerId, setViewerId] = useState(null);
+  const [viewerIsSuperPosition, setViewerIsSuperPosition] = useState(false);
   const [pageTitle, setPageTitle] = useState("");
   const [filters, setFilters] = useState({
     city: "",
@@ -915,16 +945,19 @@ export default function EmployeesPage() {
     nextSort = sort,
   ) => {
     const requestPoints = getSelectableCafes(nextFilters.points);
+    const dismissedApp = asArray(nextFilters.apps).find((app) => Number(app?.id) === 0);
 
     const data = {
       city_id: getCityIdFromPoints(requestPoints),
       point_id: requestPoints,
       point_ids: requestPoints.filter((point) => parseInt(point?.id) > 0).map((point) => point.id),
-      app: null,
-      app_id: -2,
-      app_ids: asArray(nextFilters.apps)
-        .map((app) => Number(app?.id))
-        .filter((id) => id > 0),
+      app: dismissedApp ?? null,
+      app_id: dismissedApp ? 0 : -2,
+      app_ids: dismissedApp
+        ? []
+        : asArray(nextFilters.apps)
+            .map((app) => Number(app?.id))
+            .filter((id) => id > 0),
       official_status: nextFilters.official?.id ?? "all",
       health_status: nextFilters.healthBook?.id ?? "all",
       search: nextFilters.search,
@@ -990,6 +1023,8 @@ export default function EmployeesPage() {
       cloth: normalizeOptions(res.cloth ?? res.cloth_list),
     });
     setAccess(nextAccess);
+    setViewerId(res.viewer?.user_id ?? null);
+    setViewerIsSuperPosition(Boolean(res.viewer?.is_super_position));
 
     const nextFilters = {
       city: defaultCity,
@@ -1099,6 +1134,13 @@ export default function EmployeesPage() {
     });
   };
 
+  const closeEmployeeDialog = () => {
+    setEmployeeDialog(false);
+    setEmployee(null);
+    setEmployeePhotoFile(null);
+    setAbsence(emptyAbsence);
+  };
+
   const handleMutation = async (method, data, successText, afterRefreshEmployee = true) => {
     const res = await getData(method, data);
 
@@ -1170,7 +1212,7 @@ export default function EmployeesPage() {
       return;
     }
 
-    await handleMutation(
+    const ok = await handleMutation(
       "apply_work_change",
       {
         user_id: user.id,
@@ -1184,6 +1226,8 @@ export default function EmployeesPage() {
       },
       "Изменения по работе применены",
     );
+
+    if (ok) closeEmployeeDialog();
   };
 
   const saveAbsence = async () => {
@@ -2150,14 +2194,11 @@ export default function EmployeesPage() {
         activeTab={activeTab}
         refs={refs}
         permissions={permissions}
+        isSelf={sameId(employee?.user?.id, viewerId)}
+        isSuperPosition={viewerIsSuperPosition}
         absence={absence}
         clothIssue={clothIssue}
-        onClose={() => {
-          setEmployeeDialog(false);
-          setEmployee(null);
-          setEmployeePhotoFile(null);
-          setAbsence(emptyAbsence);
-        }}
+        onClose={closeEmployeeDialog}
         onTabChange={setActiveTab}
         onUserChange={updateEmployeeUser}
         onHealthChange={updateHealthItem}
@@ -2226,7 +2267,9 @@ function EmployeeDialog({
   employee,
   activeTab,
   refs,
-  permissions,
+  permissions: basePermissions,
+  isSelf,
+  isSuperPosition,
   absence,
   clothIssue,
   onClose,
@@ -2247,6 +2290,7 @@ function EmployeeDialog({
   onReturnCloth,
   onManageCloth,
 }) {
+  const permissions = getEmployeeCardPermissions(basePermissions, isSelf, isSuperPosition);
   const user = employee?.user;
   const appOptions = employee?.appointment?.length ? employee.appointment : refs.apps;
   const pointOptions = employee?.point_list?.length ? employee.point_list : refs.points;
@@ -2304,7 +2348,6 @@ function EmployeeDialog({
               sx={{ fontWeight: 900 }}
               noWrap
             >
-              {console.log(permissions)}
               {permissions.fullName.view ? joinName(user) : `Сотрудник #${user.id}`}
             </Typography>
             {permissions.workTab.view ? (
@@ -3774,7 +3817,82 @@ function AbsenceHistoryDetails({ item }) {
   );
 }
 
+function WorkHistoryDetails({ item }) {
+  const scheduled = item.event_type === "work_update_scheduled";
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={1}
+        sx={{ mb: 1.5 }}
+      >
+        <Typography sx={{ fontWeight: 900 }}>{item.event_label}</Typography>
+        {scheduled ? (
+          <Chip
+            size="small"
+            label={`Применить ${formatActivityHistoryDate(item.meta?.effective_date)}`}
+            color="warning"
+            variant="outlined"
+          />
+        ) : null}
+      </Stack>
+      <Grid
+        container
+        spacing={1.25}
+        alignItems="stretch"
+      >
+        {item.changedFields.map(({ key, label }) => {
+          const change = item.diff[key];
+
+          return (
+            <Grid
+              key={key}
+              size={{ xs: 12, sm: 6, md: 4 }}
+              sx={{ display: "flex" }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  p: 1.25,
+                  borderColor: scheduled ? "warning.light" : "success.light",
+                  bgcolor: scheduled ? "rgba(237, 108, 2, 0.06)" : "rgba(46, 125, 50, 0.06)",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", mb: 0.5, color: "text.secondary", fontWeight: 800 }}
+                >
+                  {label}
+                </Typography>
+                <Stack spacing={0.25}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "error.main", textDecoration: "line-through" }}
+                  >
+                    {change.from}
+                  </Typography>
+                  <Typography sx={{ color: "success.dark", fontWeight: 800 }}>
+                    {change.to}
+                  </Typography>
+                </Stack>
+              </Paper>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
+  );
+}
+
 function ActivityHistoryDetails({ item }) {
+  if (item.entity_type === "work") {
+    return <WorkHistoryDetails item={item} />;
+  }
+
   if (item.entity_type === "health_book") {
     return <HealthBookHistoryDetails item={item} />;
   }
@@ -3881,6 +3999,7 @@ function ActivityHistoryDetails({ item }) {
 function EmployeeHistoryRow({ item, fields }) {
   const [open, setOpen] = useState(false);
   const activityLabels = {
+    work: "Работа",
     cloth: "Одежда",
     health_book: "Медкнижка",
     absence: "Отсутствие",
