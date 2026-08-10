@@ -16,6 +16,8 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -30,6 +32,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
 import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
+import AiAnalystTab from "@/components/end_analytics/AiAnalystTab";
 import {
   DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
   END_ANALYTICS_COLUMNS,
@@ -190,6 +193,96 @@ const parseMetric = (value) => {
   }
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
+};
+
+const buildTrafficSourceMetrics = (apiData) => {
+  const totals = new Map();
+  const addSource = (name, value) => {
+    const sourceName = String(name || "not_set");
+    totals.set(sourceName, (totals.get(sourceName) || 0) + parseMetric(value));
+  };
+
+  if (apiData?.site_data && typeof apiData.site_data === "object") {
+    Object.entries(apiData.site_data).forEach(([key, item]) => {
+      if (item?.level === "src_source") {
+        addSource(item.name || key, item.cost);
+      }
+    });
+  }
+
+  if (
+    totals.size === 0 &&
+    apiData?.site_data_by_category &&
+    typeof apiData.site_data_by_category === "object"
+  ) {
+    const collectNormalizedSources = (nodes) => {
+      (Array.isArray(nodes) ? nodes : Object.values(nodes || {})).forEach((node) => {
+        if (node?.level === "normalized_source") {
+          addSource(node.name || node.value || node.normalized_source, node.cost);
+          return;
+        }
+        if (node?.children) {
+          collectNormalizedSources(node.children);
+        }
+      });
+    };
+
+    collectNormalizedSources(apiData.site_data_by_category);
+  }
+
+  return Array.from(totals, ([name, value]) => ({ name, value })).filter((item) => item.value > 0);
+};
+
+const parseMaybeJson = (value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch (_) {
+    return value;
+  }
+};
+
+const normalizeAiSiteDataSnapshot = (payload) => {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return payload;
+  }
+
+  const normalized = { ...payload };
+  [
+    "ai_analysis",
+    "site_data",
+    "site_data_by_category",
+    "daily_metrics",
+    "analytics_meta",
+    "ai_chat",
+    "data_availability",
+  ].forEach((field) => {
+    if (field in normalized) {
+      normalized[field] = parseMaybeJson(normalized[field]);
+    }
+  });
+
+  if (
+    normalized.daily_metrics &&
+    typeof normalized.daily_metrics === "object" &&
+    !Array.isArray(normalized.daily_metrics) &&
+    "items" in normalized.daily_metrics
+  ) {
+    normalized.daily_metrics = {
+      ...normalized.daily_metrics,
+      items: parseMaybeJson(normalized.daily_metrics.items),
+    };
+  }
+
+  return normalized;
 };
 
 const calculateRoi = (revenue, cost) => {
@@ -454,12 +547,22 @@ function EndPage() {
   const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
+  const [activeTab, setActiveTab] = useState(0);
+  const [aiSource, setAiSource] = useState(null);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [siteDataRequestId, setSiteDataRequestId] = useState(null);
+  const [dailyMetrics, setDailyMetrics] = useState([]);
+  const [trafficSourceMetrics, setTrafficSourceMetrics] = useState([]);
+  const [siteDataHistory, setSiteDataHistory] = useState([]);
+  const [historyChatMessages, setHistoryChatMessages] = useState(null);
+  const [aiSiteDataSnapshot, setAiSiteDataSnapshot] = useState(null);
 
   useEffect(() => {
     getData("get_all").then((data) => {
       document.title = data.module_info.name;
       setModule(data.module_info);
       setCities(data.cities);
+      setSiteDataHistory(data.site_data_history || []);
       setLastUpdate(dayjs().format("HH:mm"));
     });
   }, []);
@@ -589,10 +692,239 @@ function EndPage() {
     });
   };
 
+  const refreshSiteDataHistory = async () => {
+    const data = await getData("get_all");
+    if (data?.module_info) {
+      setSiteDataHistory(data.site_data_history || []);
+    }
+  };
+
+  const mapAiChatToMessages = (aiChat) => {
+    if (!Array.isArray(aiChat)) return [];
+
+    return aiChat.flatMap((item) => {
+      const messages = [];
+      if (item?.prompt) {
+        messages.push({ role: "user", text: item.prompt });
+      }
+      if (item?.answer) {
+        messages.push({ role: "assistant", text: item.answer });
+      }
+      return messages;
+    });
+  };
+
+  const applyAiRequest = () => {
+    setAiAnalysis(null);
+    setSiteDataRequestId(null);
+    setDailyMetrics([]);
+    setTrafficSourceMetrics([]);
+    setHistoryChatMessages(null);
+    setAiSiteDataSnapshot(null);
+
+    getData("get_site_data", {
+      ...form,
+      typeOrder: [{ id: 2, name: "Сайт" }],
+      src_source: aiSource?.name || "",
+      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+    }).then(async (data) => {
+      if (data.st) {
+        const snapshot = normalizeAiSiteDataSnapshot(data);
+        setAiAnalysis(snapshot.ai_analysis || null);
+        setSiteDataRequestId(snapshot.site_data_request_id ?? null);
+        setDailyMetrics(snapshot.daily_metrics?.items || []);
+        setTrafficSourceMetrics(buildTrafficSourceMetrics(snapshot));
+        setHistoryChatMessages(null);
+        setAiSiteDataSnapshot(snapshot);
+        setLastUpdate(dayjs().format("HH:mm"));
+        await refreshSiteDataHistory();
+      } else {
+        setAiAnalysis(null);
+        setSiteDataRequestId(null);
+        setDailyMetrics([]);
+        setTrafficSourceMetrics([]);
+        setHistoryChatMessages(null);
+        setAiSiteDataSnapshot(null);
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
+      }
+    });
+  };
+
+  const loadSiteDataHistoryItem = (item) => {
+    const requestId = item?.site_data_request_id ?? item?.id;
+    if (requestId === null || requestId === undefined) return;
+
+    getData("get_site_data_history", {
+      site_data_request_id: requestId,
+      id: requestId,
+    }).then((data) => {
+      if (data?.st === false) {
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
+        return;
+      }
+
+      const snapshot = normalizeAiSiteDataSnapshot(data);
+
+      setAiAnalysis(snapshot.ai_analysis || null);
+      setSiteDataRequestId(snapshot.site_data_request_id ?? requestId);
+      setDailyMetrics(snapshot.daily_metrics?.items || []);
+      setTrafficSourceMetrics(buildTrafficSourceMetrics(snapshot));
+      setHistoryChatMessages(mapAiChatToMessages(snapshot.ai_chat));
+      setAiSiteDataSnapshot(snapshot);
+      if (snapshot.analytics_meta) {
+        setAnalyticsMeta(snapshot.analytics_meta);
+      }
+      setLastUpdate(dayjs().format("HH:mm"));
+    });
+  };
+
+  const downloadBlobFile = (blob, fileName) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const analyzeAiReport = async () => {
+    if (!aiSiteDataSnapshot) {
+      showError("Сначала получите или откройте отчёт AI-анализа");
+      return null;
+    }
+
+    setIsLoad(true);
+    try {
+      const payload = normalizeAiSiteDataSnapshot(aiSiteDataSnapshot);
+      const result = await api_laravel("end_analytics", "ai_html_report", payload);
+
+      const data =
+        result?.html_report || result?.st !== undefined
+          ? result
+          : result?.data && typeof result.data === "object"
+            ? result.data
+            : result;
+
+      if (data?.st === false) {
+        showError(data?.text || "Не удалось сформировать HTML-отчёт");
+        return null;
+      }
+
+      const html = data?.html_report || result?.html_report || result?.data?.html_report;
+      if (!html) {
+        showError("HTML-отчёт не получен");
+        return null;
+      }
+
+      return html;
+    } catch (_) {
+      showError("Ошибка при формировании HTML-отчёта");
+      return null;
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
+  const exportAiReport = async (fileType) => {
+    if (!aiSiteDataSnapshot) {
+      showError("Сначала получите или откройте отчёт AI-анализа");
+      return;
+    }
+
+    setIsLoad(true);
+    try {
+      const payload = normalizeAiSiteDataSnapshot(aiSiteDataSnapshot);
+      const blob = await api_laravel(
+        "end_analytics",
+        "export_ai_report",
+        {
+          file_type: fileType,
+          ...payload,
+        },
+        { responseType: "blob" },
+      );
+
+      if (!(blob instanceof Blob)) {
+        showError("Не удалось получить файл экспорта");
+        return;
+      }
+
+      if (blob.type && blob.type.includes("application/json")) {
+        try {
+          const errorData = JSON.parse(await blob.text());
+          showError(errorData?.text || errorData?.message || "Ошибка экспорта");
+        } catch (_) {
+          showError("Ошибка экспорта");
+        }
+        return;
+      }
+
+      if (!blob.size) {
+        showError("Получен пустой файл");
+        return;
+      }
+
+      const dateStart =
+        aiSiteDataSnapshot?.ai_analysis?.period?.date_start ||
+        aiSiteDataSnapshot?.period?.date_start ||
+        dayjs(form.dateStart).format("YYYY-MM-DD");
+      const dateEnd =
+        aiSiteDataSnapshot?.ai_analysis?.period?.date_end ||
+        aiSiteDataSnapshot?.period?.date_end ||
+        dayjs(form.dateEnd).format("YYYY-MM-DD");
+
+      downloadBlobFile(blob, `AI_отчет_${dateStart}_${dateEnd}.${fileType}`);
+    } catch (_) {
+      showError("Ошибка экспорта отчёта");
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
+  const sendAiChat = async (prompt, analysis) => {
+    const result = await api_laravel("end_analytics", "ai_chat", {
+      prompt,
+      ai_analysis: analysis,
+      site_data_request_id: siteDataRequestId,
+    });
+
+    if (result?.data?.st !== false) {
+      const historyResult = await api_laravel("end_analytics", "get_all", {});
+      if (historyResult?.data) {
+        setSiteDataHistory(historyResult.data.site_data_history || []);
+      }
+    }
+
+    return result.data;
+  };
+
   const resetFilters = () => {
     setForm(standardForm);
     setTableData([]);
     setAnalyticsMeta(null);
+  };
+
+  const resetAiFilters = () => {
+    setForm((prev) => ({
+      ...prev,
+      cities: {},
+      dateStart: standardForm.dateStart,
+      dateEnd: standardForm.dateEnd,
+    }));
+    setAiSource(null);
+    setAiAnalysis(null);
+    setSiteDataRequestId(null);
+    setDailyMetrics([]);
+    setTrafficSourceMetrics([]);
+    setHistoryChatMessages(null);
+    setAiSiteDataSnapshot(null);
   };
 
   const refreshData = () => {
@@ -1782,7 +2114,50 @@ function EndPage() {
         </Box>
       </Grid>
 
-      {analyticsMeta && (
+      <Grid size={{ xs: 12 }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, value) => setActiveTab(value)}
+          sx={{
+            mb: 1,
+            "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
+            "& .Mui-selected": { color: PRIMARY_COLOR },
+            "& .MuiTabs-indicator": { backgroundColor: PRIMARY_COLOR },
+          }}
+        >
+          <Tab label="Сквозная аналитика" />
+          <Tab label="AI аналитик" />
+        </Tabs>
+      </Grid>
+
+      {activeTab === 1 && (
+        <Grid size={{ xs: 12 }}>
+          <AiAnalystTab
+            cities={cities}
+            form={form}
+            source={aiSource}
+            analysis={aiAnalysis}
+            dailyMetrics={dailyMetrics}
+            trafficSourceMetrics={trafficSourceMetrics}
+            siteDataRequestId={siteDataRequestId}
+            history={siteDataHistory}
+            historyChatMessages={historyChatMessages}
+            onCitiesChange={handleCitiesChange}
+            onFieldChange={setField}
+            onSourceChange={setAiSource}
+            onApply={applyAiRequest}
+            onReset={resetAiFilters}
+            onSendChat={sendAiChat}
+            onSelectHistory={loadSiteDataHistoryItem}
+            onExport={exportAiReport}
+            canExport={Boolean(aiSiteDataSnapshot)}
+            onAnalyze={analyzeAiReport}
+            canAnalyze={Boolean(aiSiteDataSnapshot)}
+          />
+        </Grid>
+      )}
+
+      {activeTab === 0 && analyticsMeta && (
         <Grid size={{ xs: 12 }}>
           <Box
             sx={{
@@ -1838,281 +2213,285 @@ function EndPage() {
         </Grid>
       )}
 
-      <Grid size={{ xs: 12 }}>
-        <StyledPaper>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <MyAutocomplite
-                label="Города"
-                data={cities}
-                multiple={false}
-                value={form.cities}
-                func={(event, data) => handleCitiesChange(data)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyDatePickerNew
-                label="Дата от"
-                customActions={true}
-                value={dayjs(form.dateStart)}
-                maxDate={dayjs(form.dateEnd) ?? dayjs()}
-                func={(e) => setField("dateStart", e)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyDatePickerNew
-                label="Дата до"
-                customActions={true}
-                value={dayjs(form.dateEnd)}
-                minDate={dayjs(form.dateStart) ?? dayjs()}
-                func={(e) => setField("dateEnd", e)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Source"
-                value={form.src_source}
-                func={({ target }) => setField("src_source", target?.value)}
-                placeholder="yandex, vk..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Medium"
-                value={form.src_medium}
-                func={({ target }) => setField("src_medium", target?.value)}
-                placeholder="cpc, organic..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Campaign"
-                value={form.src_campaign}
-                func={({ target }) => setField("src_campaign", target?.value)}
-                placeholder="brand, retarget..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Content"
-                value={form.src_content}
-                func={({ target }) => setField("src_content", target?.value)}
-                placeholder="banner_top..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Term"
-                value={form.src_term}
-                func={({ target }) => setField("src_term", target?.value)}
-                placeholder="доставка..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Заказов от"
-                value={form.orderStart}
-                func={({ target }) => setField("orderStart", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Заказов до"
-                value={form.orderEnd}
-                func={({ target }) => setField("orderEnd", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Стоимость заказа от"
-                value={form.payOrderStart}
-                func={({ target }) => setField("payOrderStart", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Стоимость заказа до"
-                value={form.payOrderEnd}
-                func={({ target }) => setField("payOrderEnd", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="ROI"
-                value={form.roi}
-                func={({ target }) => setField("roi", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyAutocomplite
-                label="Тип клиентов"
-                data={[
-                  { id: 1, name: "Все" },
-                  { id: 2, name: "Новые" },
-                  { id: 3, name: "Действующие" },
-                ]}
-                multiple={false}
-                value={form.typeClient}
-                func={(event, data) => {
-                  setField("typeClient", data);
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 1 }}
+      {activeTab === 0 && (
+        <>
+          <Grid size={{ xs: 12 }}>
+            <StyledPaper>
+              <Grid
+                container
+                spacing={3}
               >
-                Способ заказа
-              </Typography>
-              <ToggleButtonGroup
-                value={
-                  form.typeOrder.some((t) => t.id === 1)
-                    ? []
-                    : form.typeOrder
-                        .filter((t) => t.id !== 1)
-                        .map((t) => {
-                          const map = { 2: "site", 3: "cafe", 4: "kc" };
-                          return map[t.id];
-                        })
-                }
-                onChange={handleTypeOrderChange}
-                aria-label="order type"
-                sx={{ "& .MuiToggleButton-root": { border: "none" } }}
-              >
-                <StyledToggleButton value="site">Сайт</StyledToggleButton>
-                <StyledToggleButton value="cafe">Кафе</StyledToggleButton>
-                <StyledToggleButton value="kc">КЦ</StyledToggleButton>
-              </ToggleButtonGroup>
-            </Grid>
-
-            <Grid
-              size={{ xs: 12 }}
-              sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
-            >
-              <StyledButton
-                variant="outlined"
-                onClick={openCustomCostsDialog}
-              >
-                Ручные расходы
-              </StyledButton>
-              <StyledButton
-                variant="outlined"
-                onClick={resetFilters}
-                startIcon={<DeleteIcon />}
-              >
-                Сбросить
-              </StyledButton>
-              <StyledButton
-                variant="primary"
-                onClick={applyRequest}
-                startIcon={<SearchIcon />}
-              >
-                Применить
-              </StyledButton>
-            </Grid>
-          </Grid>
-        </StyledPaper>
-      </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <Paper
-          sx={{
-            width: "100%",
-            overflow: "hidden",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          }}
-        >
-          <Box sx={{ display: "flex", justifyContent: "flex-end", px: 2, py: 1.5 }}>
-            <StyledButton
-              variant="outlined"
-              startIcon={<ViewColumnIcon />}
-              onClick={() => setColumnsDialogOpen(true)}
-            >
-              Колонки
-            </StyledButton>
-          </Box>
-          <StickyTableContainer tableMinWidth={tableMinWidth}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <StyledTableCell isHeader={true}>ИСТОЧНИК ТРАФИКА</StyledTableCell>
-                  {visibleColumnDefinitions.map((column) => (
-                    <StyledTableCell
-                      key={column.key}
-                      isHeader={true}
-                      align="right"
-                      noWrap
-                    >
-                      {column.label}
-                    </StyledTableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData.map((row) => (
-                  <RenderTableRow
-                    key={row.id}
-                    row={row}
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyAutocomplite
+                    label="Города"
+                    data={cities}
+                    multiple={false}
+                    value={form.cities}
+                    func={(event, data) => handleCitiesChange(data)}
                   />
-                ))}
-                {tableData.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={visibleColumnDefinitions.length + 1}
-                      align="center"
-                      sx={{ py: 6 }}
-                    >
-                      <Typography
-                        variant="body1"
-                        color="text.secondary"
-                      >
-                        Выберите фильтры и нажмите "Применить" для отображения данных
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </StickyTableContainer>
-        </Paper>
-      </Grid>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    customActions={true}
+                    value={dayjs(form.dateStart)}
+                    maxDate={dayjs(form.dateEnd) ?? dayjs()}
+                    func={(e) => setField("dateStart", e)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    customActions={true}
+                    value={dayjs(form.dateEnd)}
+                    minDate={dayjs(form.dateStart) ?? dayjs()}
+                    func={(e) => setField("dateEnd", e)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Source"
+                    value={form.src_source}
+                    func={({ target }) => setField("src_source", target?.value)}
+                    placeholder="yandex, vk..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Medium"
+                    value={form.src_medium}
+                    func={({ target }) => setField("src_medium", target?.value)}
+                    placeholder="cpc, organic..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Campaign"
+                    value={form.src_campaign}
+                    func={({ target }) => setField("src_campaign", target?.value)}
+                    placeholder="brand, retarget..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Content"
+                    value={form.src_content}
+                    func={({ target }) => setField("src_content", target?.value)}
+                    placeholder="banner_top..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Term"
+                    value={form.src_term}
+                    func={({ target }) => setField("src_term", target?.value)}
+                    placeholder="доставка..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Заказов от"
+                    value={form.orderStart}
+                    func={({ target }) => setField("orderStart", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Заказов до"
+                    value={form.orderEnd}
+                    func={({ target }) => setField("orderEnd", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Стоимость заказа от"
+                    value={form.payOrderStart}
+                    func={({ target }) => setField("payOrderStart", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Стоимость заказа до"
+                    value={form.payOrderEnd}
+                    func={({ target }) => setField("payOrderEnd", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="ROI"
+                    value={form.roi}
+                    func={({ target }) => setField("roi", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyAutocomplite
+                    label="Тип клиентов"
+                    data={[
+                      { id: 1, name: "Все" },
+                      { id: 2, name: "Новые" },
+                      { id: 3, name: "Действующие" },
+                    ]}
+                    multiple={false}
+                    value={form.typeClient}
+                    func={(event, data) => {
+                      setField("typeClient", data);
+                    }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mb: 1 }}
+                  >
+                    Способ заказа
+                  </Typography>
+                  <ToggleButtonGroup
+                    value={
+                      form.typeOrder.some((t) => t.id === 1)
+                        ? []
+                        : form.typeOrder
+                            .filter((t) => t.id !== 1)
+                            .map((t) => {
+                              const map = { 2: "site", 3: "cafe", 4: "kc" };
+                              return map[t.id];
+                            })
+                    }
+                    onChange={handleTypeOrderChange}
+                    aria-label="order type"
+                    sx={{ "& .MuiToggleButton-root": { border: "none" } }}
+                  >
+                    <StyledToggleButton value="site">Сайт</StyledToggleButton>
+                    <StyledToggleButton value="cafe">Кафе</StyledToggleButton>
+                    <StyledToggleButton value="kc">КЦ</StyledToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
+
+                <Grid
+                  size={{ xs: 12 }}
+                  sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
+                >
+                  <StyledButton
+                    variant="outlined"
+                    onClick={openCustomCostsDialog}
+                  >
+                    Ручные расходы
+                  </StyledButton>
+                  <StyledButton
+                    variant="outlined"
+                    onClick={resetFilters}
+                    startIcon={<DeleteIcon />}
+                  >
+                    Сбросить
+                  </StyledButton>
+                  <StyledButton
+                    variant="primary"
+                    onClick={applyRequest}
+                    startIcon={<SearchIcon />}
+                  >
+                    Применить
+                  </StyledButton>
+                </Grid>
+              </Grid>
+            </StyledPaper>
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Paper
+              sx={{
+                width: "100%",
+                overflow: "hidden",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "flex-end", px: 2, py: 1.5 }}>
+                <StyledButton
+                  variant="outlined"
+                  startIcon={<ViewColumnIcon />}
+                  onClick={() => setColumnsDialogOpen(true)}
+                >
+                  Колонки
+                </StyledButton>
+              </Box>
+              <StickyTableContainer tableMinWidth={tableMinWidth}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <StyledTableCell isHeader={true}>ИСТОЧНИК ТРАФИКА</StyledTableCell>
+                      {visibleColumnDefinitions.map((column) => (
+                        <StyledTableCell
+                          key={column.key}
+                          isHeader={true}
+                          align="right"
+                          noWrap
+                        >
+                          {column.label}
+                        </StyledTableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableData.map((row) => (
+                      <RenderTableRow
+                        key={row.id}
+                        row={row}
+                      />
+                    ))}
+                    {tableData.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={visibleColumnDefinitions.length + 1}
+                          align="center"
+                          sx={{ py: 6 }}
+                        >
+                          <Typography
+                            variant="body1"
+                            color="text.secondary"
+                          >
+                            Выберите фильтры и нажмите "Применить" для отображения данных
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </StickyTableContainer>
+            </Paper>
+          </Grid>
+        </>
+      )}
     </Grid>
   );
 }
