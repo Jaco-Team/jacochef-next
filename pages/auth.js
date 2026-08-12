@@ -69,9 +69,9 @@ export default function Auth() {
 
     //let res = await api('auth', 'auth', data);
     let res = await api_laravel("auth", "auth", data);
-    res = res.data;
+    res = res?.data ?? res;
 
-    if (res.st === false) {
+    if (res?.st === false) {
       setTimeout(() => {
         setErrText(res.text);
         setOpenAlert(true);

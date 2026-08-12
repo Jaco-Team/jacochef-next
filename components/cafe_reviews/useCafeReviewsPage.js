@@ -46,12 +46,15 @@ function getInitialSection(access) {
   const { userCan } = handleUserAccess(access);
   if (userCan("view", "reviews")) return "overview";
   if (userCan("view", "incidents")) return "incidents";
+  if (userCan("view", "links")) return "links";
   return null;
 }
 
 export default function useCafeReviewsPage() {
   const api = useCafeReviewsApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
+  const showAlertRef = useRef(showAlert);
+  showAlertRef.current = showAlert;
   const listRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
   const dashboardRequestRef = useRef(0);
@@ -82,6 +85,7 @@ export default function useCafeReviewsPage() {
   const [dashboard, setDashboard] = useState(() => normalizeDashboard({}));
   const [reviews, setReviews] = useState([]);
   const [incidents, setIncidents] = useState([]);
+  const [links, setLinks] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
     per_page: DEFAULT_PAGE_SIZE,
@@ -125,7 +129,7 @@ export default function useCafeReviewsPage() {
       if (requestId !== bootstrapRequestRef.current) return null;
       const message = getErrorMessage(error, "Не удалось загрузить модуль");
       setBootstrapError(message);
-      showAlert(message);
+      showAlertRef.current(message);
       return null;
     } finally {
       if (requestId === bootstrapRequestRef.current) setBootstrapLoading(false);
@@ -161,7 +165,7 @@ export default function useCafeReviewsPage() {
         if (requestId !== dashboardRequestRef.current) return null;
         const message = getErrorMessage(error, "Не удалось загрузить обзор");
         if (!silent) setContentError(message);
-        showAlert(message);
+        showAlertRef.current(message);
         return null;
       } finally {
         if (!silent && requestId === dashboardRequestRef.current) setContentLoading(false);
@@ -206,7 +210,7 @@ export default function useCafeReviewsPage() {
         return normalized;
       } catch (error) {
         if (requestId === listRequestRef.current) {
-          showAlert(
+          showAlertRef.current(
             getErrorMessage(
               error,
               isIncidents ? "Не удалось загрузить инциденты" : "Не удалось загрузить отзывы",
@@ -229,6 +233,42 @@ export default function useCafeReviewsPage() {
     [api, canView, filters, pagination.per_page, section],
   );
 
+  const loadLinks = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!canView("links")) return null;
+      const requestId = ++listRequestRef.current;
+      if (!silent) setContentLoading(true);
+      if (!silent) setContentError("");
+
+      try {
+        const response = ensureSuccess(
+          await api.getLinks({ active: true }),
+          "Не удалось загрузить QR-ссылки",
+        );
+        if (requestId !== listRequestRef.current) return null;
+        const items = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.links)
+            ? response.links
+            : Array.isArray(response?.items)
+              ? response.items
+              : [];
+        setLinks(items);
+        return items;
+      } catch (error) {
+        if (requestId === listRequestRef.current) {
+          const message = getErrorMessage(error, "Не удалось загрузить QR-ссылки");
+          if (!silent) setContentError(message);
+          showAlertRef.current(message);
+        }
+        return null;
+      } finally {
+        if (!silent && requestId === listRequestRef.current) setContentLoading(false);
+      }
+    },
+    [api, canView],
+  );
+
   useEffect(() => {
     if (!bootstrapReady || !section) return;
     dashboardRequestRef.current += 1;
@@ -246,8 +286,10 @@ export default function useCafeReviewsPage() {
       loadList({ page: 1 });
     } else if (section === "incidents" && canView("incidents")) {
       loadList({ page: 1 });
+    } else if (section === "links" && canView("links")) {
+      loadLinks();
     }
-  }, [bootstrapReady, canView, filters, loadDashboard, loadList, section]);
+  }, [bootstrapReady, canView, filters, loadDashboard, loadLinks, loadList, section]);
 
   const loadDetail = useCallback(
     async (target, { silent = false } = {}) => {
@@ -277,7 +319,7 @@ export default function useCafeReviewsPage() {
         if (requestId === detailRequestRef.current) {
           const message = getErrorMessage(error, "Не удалось загрузить детали");
           setDetailError(message);
-          showAlert(message);
+          showAlertRef.current(message);
         }
         return null;
       } finally {
@@ -375,12 +417,12 @@ export default function useCafeReviewsPage() {
           "Не удалось обновить инцидент",
         );
         await refreshAfterMutation(payload.id);
-        showAlert(response?.text || "Инцидент обновлён", true);
+        showAlertRef.current(response?.text || "Инцидент обновлён", true);
         return true;
       } catch (error) {
         const message = getErrorMessage(error, "Не удалось обновить инцидент");
         if (isConflict(error)) await refreshAfterMutation(payload.id);
-        showAlert(message);
+        showAlertRef.current(message);
         return false;
       } finally {
         setMutationLoading(false);
@@ -404,12 +446,12 @@ export default function useCafeReviewsPage() {
           "Не удалось сохранить решение по рекомендации",
         );
         await refreshAfterMutation(id);
-        showAlert(response?.text || "Решение сохранено", true);
+        showAlertRef.current(response?.text || "Решение сохранено", true);
         return true;
       } catch (error) {
         const message = getErrorMessage(error, "Не удалось сохранить решение по рекомендации");
         if (isConflict(error)) await refreshAfterMutation(id);
-        showAlert(message);
+        showAlertRef.current(message);
         return false;
       } finally {
         setMutationLoading(false);
@@ -433,8 +475,53 @@ export default function useCafeReviewsPage() {
     if (section === "incidents" && canView("incidents")) {
       return loadList({ page: pagination.page });
     }
+    if (section === "links" && canView("links")) return loadLinks();
     return null;
-  }, [canView, loadDashboard, loadList, pagination.page, section]);
+  }, [canView, loadDashboard, loadLinks, loadList, pagination.page, section]);
+
+  const generateLink = useCallback(
+    async (payload) => {
+      if (!canEdit("links")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.generateLink(payload),
+          "Не удалось создать QR-ссылку",
+        );
+        await loadLinks();
+        showAlertRef.current(response?.text || "QR-ссылка создана", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось создать QR-ссылку"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, loadLinks],
+  );
+
+  const revokeLink = useCallback(
+    async (payload) => {
+      if (!canEdit("links")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.revokeLink(payload),
+          "Не удалось отозвать QR-ссылку",
+        );
+        await loadLinks();
+        showAlertRef.current(response?.text || "QR-ссылка отозвана", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось отозвать QR-ссылку"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, loadLinks],
+  );
 
   const retryDetail = useCallback(() => {
     if (selected) loadDetail(selected);
@@ -470,6 +557,7 @@ export default function useCafeReviewsPage() {
     filters,
     filtersOpen,
     incidents,
+    links,
     isAlert,
     loadBootstrap,
     loading: bootstrapLoading || contentLoading || mutationLoading,
@@ -479,6 +567,8 @@ export default function useCafeReviewsPage() {
     pagination,
     points,
     refresh,
+    generateLink,
+    revokeLink,
     retryDetail,
     resetFilters,
     reviews,
