@@ -273,6 +273,7 @@ function normalizeEvent(item) {
     severity: item.severity == null ? "" : String(item.severity),
     comment: String(item.comment ?? ""),
     ai_analysis_id: item.ai_analysis_id ?? null,
+    photos: asArray(item.photos).map(normalizePhoto).filter(Boolean),
   };
 }
 

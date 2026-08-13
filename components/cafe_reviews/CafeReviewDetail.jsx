@@ -71,7 +71,7 @@ function IssueList({ issues }) {
   );
 }
 
-function EventTimeline({ events, dictionaries }) {
+function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
   if (!events.length) {
     return <Typography sx={{ color: textSecondary }}>Событий пока нет</Typography>;
   }
@@ -115,6 +115,14 @@ function EventTimeline({ events, dictionaries }) {
             >
               {event.comment}
             </Typography>
+          ) : null}
+          {event.photos.length ? (
+            <CafeReviewPhotoGallery
+              photos={event.photos}
+              getPhoto={getPhoto}
+              idPrefix={`${idPrefix}-event-${event.id}`}
+              title="Вложения"
+            />
           ) : null}
         </Box>
       ))}
@@ -592,6 +600,8 @@ export default function CafeReviewDetail({
               <EventTimeline
                 events={detail.events || []}
                 dictionaries={dictionaries}
+                getPhoto={getPhoto}
+                idPrefix={idPrefix}
               />
             </Section>
           </>
