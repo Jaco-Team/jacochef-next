@@ -120,7 +120,9 @@ export function MySelect(props) {
   // force display of selected name
   const renderValue = (selected) => {
     if (props.multiple) {
-      if (!selected || selected.length === 0) return "None";
+      if (!selected || selected.length === 0) {
+        return props.displayEmptyLabel ? (props.emptyLabel ?? "None") : "None";
+      }
       return normalizedData
         .filter((item) => selected.includes(item.id))
         .map((item) => item.name)

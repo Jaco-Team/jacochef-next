@@ -37,6 +37,7 @@ export function formatDateTime(value) {
 
 export function getOptionLabel(options, value, fallback = "—") {
   if (!value) return fallback;
+  if (value === "positive") return "Решён";
   return options.find((option) => String(option.value) === String(value))?.label || String(value);
 }
 

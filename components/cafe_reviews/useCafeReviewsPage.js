@@ -80,8 +80,8 @@ export default function useCafeReviewsPage() {
     severities: [],
     issues: [],
   });
-  const [draftFilters, setDraftFilters] = useState(getDefaultFilters);
-  const [filters, setFilters] = useState(getDefaultFilters);
+  const [draftFilters, setDraftFilters] = useState(() => getDefaultFilters("reviews"));
+  const [filters, setFilters] = useState(() => getDefaultFilters("reviews"));
   const [dashboard, setDashboard] = useState(() => normalizeDashboard({}));
   const [reviews, setReviews] = useState([]);
   const [incidents, setIncidents] = useState([]);
@@ -101,11 +101,13 @@ export default function useCafeReviewsPage() {
   const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
   const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
   const canAccess = useCallback((key) => accessApi.userCan("access", key), [accessApi]);
-
-  const filteredPoints = useMemo(() => {
-    if (!draftFilters.city_id) return points;
-    return points.filter((point) => String(point.city_id) === String(draftFilters.city_id));
-  }, [draftFilters.city_id, points]);
+  const changeSection = useCallback((nextSection) => {
+    const nextFilters = getDefaultFilters(nextSection === "incidents" ? "incidents" : "reviews");
+    setDraftFilters(nextFilters);
+    setFilters(nextFilters);
+    setPagination((current) => ({ ...current, page: 1 }));
+    setSection(nextSection);
+  }, []);
 
   const loadBootstrap = useCallback(async () => {
     const requestId = ++bootstrapRequestRef.current;
@@ -122,7 +124,7 @@ export default function useCafeReviewsPage() {
       setPoints(normalized.points);
       setCities(normalized.cities);
       setDictionaries(normalized.dictionaries);
-      setSection(initialSection);
+      changeSection(initialSection);
       setBootstrapReady(true);
       return normalized;
     } catch (error) {
@@ -134,7 +136,7 @@ export default function useCafeReviewsPage() {
     } finally {
       if (requestId === bootstrapRequestRef.current) setBootstrapLoading(false);
     }
-  }, [api]);
+  }, [api, changeSection]);
 
   useEffect(() => {
     loadBootstrap();
@@ -357,21 +359,19 @@ export default function useCafeReviewsPage() {
   const applyFilters = useCallback(() => {
     setFilters({
       ...draftFilters,
-      point_id:
-        draftFilters.point_id &&
-        filteredPoints.some((point) => String(point.id) === String(draftFilters.point_id))
-          ? draftFilters.point_id
-          : "",
+      point_ids: (draftFilters.point_ids || []).filter((pointId) =>
+        points.some((point) => String(point.id) === String(pointId)),
+      ),
     });
     setFiltersOpen(false);
-  }, [draftFilters, filteredPoints]);
+  }, [draftFilters, points]);
 
   const resetFilters = useCallback(() => {
-    const defaults = getDefaultFilters();
+    const defaults = getDefaultFilters(section === "incidents" ? "incidents" : "reviews");
     setDraftFilters(defaults);
     setFilters(defaults);
     setFiltersOpen(false);
-  }, []);
+  }, [section]);
 
   const updateDraftFilter = useCallback(
     (key, value) => {
@@ -379,12 +379,27 @@ export default function useCafeReviewsPage() {
         const targetKey =
           key === "status" ? (section === "incidents" ? "incident_status" : "review_status") : key;
         const next = { ...current, [targetKey]: value };
-        if (key === "city_id") next.point_id = "";
+        if (key === "city_id") {
+          next.point_id = "";
+          next.point_ids = [];
+        }
         return next;
       });
     },
     [section],
   );
+
+  const updateSort = useCallback((sort) => {
+    setFilters((current) => {
+      const direction = current.sort === sort && current.direction === "desc" ? "asc" : "desc";
+      return { ...current, sort, direction };
+    });
+    setDraftFilters((current) => {
+      const direction = current.sort === sort && current.direction === "desc" ? "asc" : "desc";
+      return { ...current, sort, direction };
+    });
+    setPagination((current) => ({ ...current, page: 1 }));
+  }, []);
 
   const refreshAfterMutation = useCallback(
     async (incidentId) => {
@@ -408,12 +423,12 @@ export default function useCafeReviewsPage() {
   );
 
   const updateIncident = useCallback(
-    async (payload) => {
+    async (payload, attachment = null) => {
       if (!canEdit("incidents")) return false;
       setMutationLoading(true);
       try {
         const response = ensureSuccess(
-          await api.updateIncident(payload),
+          await api.updateIncident(payload, attachment),
           "Не удалось обновить инцидент",
         );
         await refreshAfterMutation(payload.id);
@@ -429,6 +444,34 @@ export default function useCafeReviewsPage() {
       }
     },
     [api, canEdit, refreshAfterMutation],
+  );
+
+  const markReviewIncident = useCallback(
+    async (reviewId) => {
+      if (!canEdit("incidents")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.markReviewIncident(reviewId),
+          "Не удалось отметить отзыв как инцидент",
+        );
+        await loadDetail({ kind: "review", id: reviewId }, { silent: true });
+        if (section === "reviews" && canView("reviews")) {
+          await Promise.all([
+            loadList({ page: pagination.page, silent: true }),
+            loadDashboard({ silent: true }),
+          ]);
+        }
+        showAlertRef.current(response?.text || "Отзыв отмечен как инцидент", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось отметить отзыв как инцидент"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, canView, loadDashboard, loadDetail, loadList, pagination.page, section],
   );
 
   const decideAi = useCallback(
@@ -553,7 +596,6 @@ export default function useCafeReviewsPage() {
     detailOpen,
     dictionaries,
     draftFilters,
-    filteredPoints,
     filters,
     filtersOpen,
     incidents,
@@ -576,9 +618,11 @@ export default function useCafeReviewsPage() {
     selected,
     setDetailOpen,
     setFiltersOpen,
-    setSection,
+    setSection: changeSection,
     updateDraftFilter,
+    updateSort,
     updateIncident,
+    markReviewIncident,
     getPhoto: api.getPhoto,
   };
 }

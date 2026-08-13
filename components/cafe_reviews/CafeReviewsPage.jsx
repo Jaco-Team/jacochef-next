@@ -39,6 +39,10 @@ export default function CafeReviewsPage() {
   }, [page.moduleInfo?.name]);
   const hasAccess = visibleSections.length > 0;
   const showFilters = page.section !== "links";
+  const singlePointTitle =
+    page.points.length === 1
+      ? `${page.moduleInfo?.name || "Отзывы кафе"} — ${page.points[0].name}`
+      : page.moduleInfo?.name || "Отзывы кафе";
 
   return (
     <Box>
@@ -62,7 +66,7 @@ export default function CafeReviewsPage() {
       >
         <Grid size={12}>
           <CafeReviewsPageHeader
-            title={page.moduleInfo?.name || "Отзывы кафе"}
+            title={singlePointTitle}
             onRefresh={page.refresh}
             refreshDisabled={!page.bootstrapReady || page.contentLoading}
           />

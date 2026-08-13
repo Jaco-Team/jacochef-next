@@ -18,9 +18,9 @@ function FilterSurface({ page, idPrefix, compact = false }) {
   return (
     <CafeReviewsFilters
       filters={page.activeDraftFilters}
-      cities={page.cities}
-      points={page.filteredPoints}
+      points={page.points}
       dictionaries={sectionDictionaries}
+      showCafeFilter={page.points.length > 1}
       onChange={page.updateDraftFilter}
       onApply={page.applyFilters}
       onReset={page.resetFilters}
@@ -52,6 +52,7 @@ function DetailContent({ page, idPrefix, showClose = false }) {
       canOpenIncident={page.canView("incidents")}
       getPhoto={page.getPhoto}
       onUpdateIncident={page.updateIncident}
+      onMarkIncident={page.markReviewIncident}
       onDecideAi={page.decideAi}
       onOpenIncident={(id) => page.openDetail("incident", id)}
       onClose={page.closeDetail}
@@ -215,6 +216,9 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
             onOpen={(id) => page.openDetail(listKind, id)}
             pagination={page.pagination}
             onPageChange={page.changePage}
+            sort={page.filters.sort}
+            direction={page.filters.direction}
+            onSort={page.updateSort}
           />
         </ContentState>
       </Grid>

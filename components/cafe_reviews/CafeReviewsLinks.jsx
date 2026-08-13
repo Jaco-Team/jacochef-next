@@ -94,7 +94,7 @@ export default function CafeReviewsLinks({
             value={zoneCode}
             func={(event) => setZoneCode(event.target.value)}
             disabled={!canEdit || loading}
-            inputProps={{ maxLength: 64, pattern: "[A-Za-z0-9_-]+" }}
+            inputProps={{ maxLength: 64, pattern: "[A-Za-z0-9_\\-]+" }}
           />
           <MyTextInput
             label="Название зоны"

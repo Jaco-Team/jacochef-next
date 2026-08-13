@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Chip,
@@ -22,6 +25,7 @@ import {
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   blockBackground,
   blockBorder,
@@ -262,6 +266,7 @@ export default function CafeReviewDetail({
   canOpenIncident,
   getPhoto,
   onUpdateIncident,
+  onMarkIncident,
   onDecideAi,
   onOpenIncident,
   onClose,
@@ -275,12 +280,14 @@ export default function CafeReviewDetail({
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [comment, setComment] = useState("");
+  const [attachment, setAttachment] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     setStatus(incident?.status || "");
     setSeverity(incident?.severity || "");
     setComment(incident?.comment || "");
+    setAttachment(null);
     setConfirmAction(null);
   }, [incident?.id, incident?.lock_version, incident?.updated_at, review?.id]);
 
@@ -366,7 +373,9 @@ export default function CafeReviewDetail({
       ? "Сохранить изменения инцидента?"
       : confirmAction?.type === "apply-ai"
         ? "Применить AI-рекомендацию?"
-        : "Отклонить AI-рекомендацию?";
+        : confirmAction?.type === "reject-ai"
+          ? "Отклонить AI-рекомендацию?"
+          : "Отметить отзыв как инцидент?";
 
   const runConfirmedAction = async () => {
     let succeeded = false;
@@ -375,13 +384,16 @@ export default function CafeReviewDetail({
         setConfirmAction(null);
         return;
       }
-      succeeded = await onUpdateIncident({
-        id: incident.id,
-        status,
-        severity,
-        comment,
-        expected_lock_version: incident.lock_version,
-      });
+      succeeded = await onUpdateIncident(
+        {
+          id: incident.id,
+          status,
+          comment,
+          expected_lock_version: incident.lock_version,
+          ...(severity ? { severity } : {}),
+        },
+        attachment,
+      );
     }
     if (confirmAction?.type === "apply-ai") {
       succeeded = await onDecideAi({
@@ -398,6 +410,9 @@ export default function CafeReviewDetail({
         decision: "rejected",
         expected_lock_version: incident.lock_version,
       });
+    }
+    if (confirmAction?.type === "mark-incident") {
+      succeeded = await onMarkIncident(review.id);
     }
     if (succeeded) setConfirmAction(null);
   };
@@ -497,6 +512,16 @@ export default function CafeReviewDetail({
           </Button>
         ) : null}
 
+        {kind === "review" && review.status === "completed" && !incident && canEdit ? (
+          <Button
+            variant="outlined"
+            onClick={() => setConfirmAction({ type: "mark-incident" })}
+            sx={{ justifySelf: "start", textTransform: "none", borderRadius: "12px" }}
+          >
+            Отметить как инцидент
+          </Button>
+        ) : null}
+
         {kind === "incident" && incident ? (
           <>
             <Divider />
@@ -513,7 +538,11 @@ export default function CafeReviewDetail({
                       id={`${idPrefix}-incident-status`}
                       value={status}
                       label="Статус"
-                      onChange={(event) => setStatus(event.target.value)}
+                      onChange={(event) => {
+                        const nextStatus = event.target.value;
+                        setStatus(nextStatus);
+                        if (nextStatus === incident.status) setAttachment(null);
+                      }}
                       sx={{ borderRadius: "12px" }}
                     >
                       {incidentStatusOptions.map((option) => (
@@ -566,6 +595,25 @@ export default function CafeReviewDetail({
                     inputProps={{ maxLength: 2000 }}
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                   />
+                  {status !== incident.status ? (
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      sx={{
+                        alignSelf: "flex-start",
+                        textTransform: "none",
+                        borderRadius: "12px",
+                      }}
+                    >
+                      {attachment ? `Фото: ${attachment.name}` : "Прикрепить фото (необязательно)"}
+                      <input
+                        hidden
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => setAttachment(event.target.files?.[0] || null)}
+                      />
+                    </Button>
+                  ) : null}
                   <Button
                     variant="contained"
                     onClick={() => setConfirmAction({ type: "save" })}
@@ -596,14 +644,34 @@ export default function CafeReviewDetail({
                 />
               </Section>
             ) : null}
-            <Section title="История событий">
-              <EventTimeline
-                events={detail.events || []}
-                dictionaries={dictionaries}
-                getPhoto={getPhoto}
-                idPrefix={idPrefix}
-              />
-            </Section>
+            <Accordion
+              disableGutters
+              elevation={0}
+              defaultExpanded={false}
+              sx={{
+                backgroundColor: "transparent",
+                "&::before": { display: "none" },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  minHeight: 40,
+                  px: 0,
+                  "& .MuiAccordionSummary-content": { my: 1 },
+                }}
+              >
+                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>История событий</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 0, pb: 0 }}>
+                <EventTimeline
+                  events={detail.events || []}
+                  dictionaries={dictionaries}
+                  getPhoto={getPhoto}
+                  idPrefix={idPrefix}
+                />
+              </AccordionDetails>
+            </Accordion>
           </>
         ) : null}
       </Box>

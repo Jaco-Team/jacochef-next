@@ -10,6 +10,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
@@ -32,8 +33,27 @@ function activateWithKeyboard(event, callback) {
   }
 }
 
-function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
+function DesktopTable({
+  kind,
+  items,
+  dictionaries,
+  selectedId,
+  onOpen,
+  showActions = false,
+  sort,
+  direction,
+  onSort,
+}) {
   const isIncident = kind === "incident";
+  const sortable = (label, key) => (
+    <TableSortLabel
+      active={sort === key}
+      direction={sort === key ? direction : "desc"}
+      onClick={() => onSort(key)}
+    >
+      {label}
+    </TableSortLabel>
+  );
 
   return (
     <TableContainer
@@ -47,14 +67,14 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
       >
         <TableHead>
           <TableRow sx={{ bgcolor: "#F7F7F7" }}>
-            <TableCell>Дата</TableCell>
+            <TableCell>{sortable("Дата", "created_at")}</TableCell>
             <TableCell>Кафе</TableCell>
-            <TableCell>Оценка</TableCell>
-            {isIncident ? <TableCell>Критичность</TableCell> : null}
-            <TableCell>Статус</TableCell>
-            <TableCell align="center">Причины</TableCell>
+            <TableCell>{sortable("Оценка", "rating")}</TableCell>
+            {isIncident ? <TableCell>{sortable("Критичность", "severity")}</TableCell> : null}
+            <TableCell>{sortable("Статус", "status")}</TableCell>
+            <TableCell align="center">{sortable("Причины", "issues_count")}</TableCell>
             <TableCell align="center">Фото</TableCell>
-            <TableCell align="right">Действие</TableCell>
+            {showActions ? <TableCell align="right">Действия</TableCell> : null}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -63,6 +83,11 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
               key={item.id}
               hover
               selected={String(selectedId) === String(item.id)}
+              tabIndex={0}
+              role="button"
+              onClick={() => onOpen(item.id)}
+              onKeyDown={(event) => activateWithKeyboard(event, () => onOpen(item.id))}
+              sx={{ cursor: "pointer" }}
             >
               <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDateTime(item.created_at)}</TableCell>
               <TableCell>
@@ -103,15 +128,20 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
                   "—"
                 )}
               </TableCell>
-              <TableCell align="right">
-                <IconButton
-                  size="small"
-                  onClick={() => onOpen(item.id)}
-                  aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
-                >
-                  <VisibilityOutlinedIcon fontSize="small" />
-                </IconButton>
-              </TableCell>
+              {showActions ? (
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpen(item.id);
+                    }}
+                    aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
+                  >
+                    <VisibilityOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              ) : null}
             </TableRow>
           ))}
         </TableBody>
@@ -216,6 +246,9 @@ export default function CafeReviewsList({
   onOpen,
   pagination,
   onPageChange,
+  sort,
+  direction,
+  onSort,
 }) {
   return (
     <Box>
@@ -227,6 +260,9 @@ export default function CafeReviewsList({
             dictionaries={dictionaries}
             selectedId={selectedId}
             onOpen={onOpen}
+            sort={sort}
+            direction={direction}
+            onSort={onSort}
           />
           <ResponsiveCards
             kind={kind}
