@@ -128,6 +128,7 @@ class ShowCook_ extends React.Component {
         <Grid
           container
           spacing={3}
+          rowSpacing={{ xs: 0, sm: 1 }}
           className="container_first_child"
         >
           <Grid
@@ -224,7 +225,14 @@ class ShowCook_ extends React.Component {
               value={this.state.activeTab}
               index={2}
               id="pf"
-              style={{ width: "auto", display: "flex", justifyContent: "center" }}
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                display: "flex",
+                justifyContent: "center",
+                overflow: "hidden",
+                boxSizing: "border-box",
+              }}
             >
               <CookPfTab pf={this.state.pf} />
             </TabPanel>
