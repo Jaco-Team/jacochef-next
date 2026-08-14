@@ -11,6 +11,7 @@ export const METHODS = {
   SAVE_SUPPLIER: "save_supplier",
   DELETE_SUPPLIER: "delete_supplier",
   REQUEST_STOCK: "request_stock",
+  GET_SUPPLIER_MATERIALS: "get_supplier_materials",
   EXPORT_EXCEL: "export_excel",
 };
 

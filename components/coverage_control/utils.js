@@ -37,8 +37,9 @@ export function matchesFilters(item, filters) {
     if (!hay.includes(search)) return false;
   }
 
-  if (filters.category_id && String(item.category_id) !== String(filters.category_id)) {
-    return false;
+  if (Array.isArray(filters.category_ids) && filters.category_ids.length) {
+    const ids = filters.category_ids.map(String).filter((id) => id !== "all");
+    if (ids.length && !ids.includes(String(item.category_id))) return false;
   }
 
   if (filters.supplier_id) {

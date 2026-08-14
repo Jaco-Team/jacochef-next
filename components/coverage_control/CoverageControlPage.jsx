@@ -28,7 +28,7 @@ import useMyAlert from "@/src/hooks/useMyAlert";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import MyAlert from "@/ui/MyAlert";
-import { MyAutocomplite, MySelect, MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import ExcelIcon from "@/ui/ExcelIcon";
 
 import {
@@ -52,10 +52,13 @@ import {
 import MaterialFormModal from "./MaterialFormModal";
 import MaterialCardModal from "./MaterialCardModal";
 import SupplierCardModal from "./SupplierCardModal";
+import RequestStockModal from "./RequestStockModal";
+
+const ALL_CATEGORIES_OPTION = { id: "all", name: "Все категории" };
 
 const defaultFilters = {
   search: "",
-  category_id: "",
+  category_ids: [ALL_CATEGORIES_OPTION.id],
   supplier_id: "",
   critical: false,
   no_supplier_stock: false,
@@ -97,6 +100,15 @@ export default function CoverageControlPage() {
     initial: null,
   });
 
+  const [requestStockModal, setRequestStockModal] = useState({
+    open: false,
+    loading: false,
+    form: null,
+    supplierName: "",
+    materials: [],
+    initialMaterialIds: [],
+  });
+
   const canAccess = useCallback(
     (key) => {
       if (!access) return false;
@@ -135,8 +147,11 @@ export default function CoverageControlPage() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
+      const categoryIds = Array.isArray(filters.category_ids)
+        ? filters.category_ids.filter((id) => String(id) !== String(ALL_CATEGORIES_OPTION.id))
+        : [];
       const filterPayload = {
-        category_id: filters.category_id || undefined,
+        category_ids: categoryIds.length ? categoryIds : undefined,
         supplier_id: filters.supplier_id || undefined,
         critical: filters.critical || undefined,
         no_supplier_stock: filters.no_supplier_stock || undefined,
@@ -371,20 +386,104 @@ export default function CoverageControlPage() {
     }
   };
 
-  const requestStock = async (form) => {
+  const closeRequestStockModal = () => {
+    setRequestStockModal({
+      open: false,
+      loading: false,
+      form: null,
+      supplierName: "",
+      materials: [],
+      initialMaterialIds: [],
+    });
+  };
+
+  const openRequestStockModal = async (form) => {
     if (!ensureAccess(canRequestStock)) return;
-    setLoading(true);
+
+    const supplierId = form?.supplier_id;
+    const supplierName =
+      suppliersDict.find((s) => String(s.id) === String(supplierId))?.name ||
+      form?.supplier_name ||
+      form?.name ||
+      "";
+
+    setRequestStockModal({
+      open: true,
+      loading: true,
+      form,
+      supplierName,
+      materials: [],
+      initialMaterialIds: form?.material_id ? [form.material_id] : [],
+    });
+
+    try {
+      const res = await callApi(METHODS.GET_SUPPLIER_MATERIALS, {
+        supplier_id: supplierId,
+        supplier_link_id: form?.id,
+      });
+      const payload = unwrapPayload(res);
+      const materials = Array.isArray(payload.materials)
+        ? payload.materials
+        : Array.isArray(payload.items)
+          ? payload.items
+          : Array.isArray(res.materials)
+            ? res.materials
+            : [];
+
+      setRequestStockModal((prev) => ({
+        ...prev,
+        loading: false,
+        materials: materials
+          .map((item) => ({
+            id: item.id ?? item.material_id,
+            name: item.name || item.material_name || "",
+          }))
+          .filter((item) => item.id != null && item.name),
+      }));
+    } catch (error) {
+      // Fallback: materials already linked to this supplier in the loaded list
+      const fallback = items
+        .filter((item) => {
+          const list = Array.isArray(item.suppliers) ? item.suppliers : [];
+          return (
+            list.some((s) => String(s?.supplier_id ?? s?.id) === String(supplierId)) ||
+            String(item.main_supplier_id) === String(supplierId)
+          );
+        })
+        .map((item) => ({ id: item.id, name: item.name || "" }))
+        .filter((item) => item.id != null && item.name);
+
+      setRequestStockModal((prev) => ({
+        ...prev,
+        loading: false,
+        materials: fallback,
+      }));
+
+      if (!fallback.length) {
+        showAlert(error?.message || "Не удалось загрузить сырьё поставщика");
+      }
+    }
+  };
+
+  const requestStock = async (materialIds) => {
+    if (!ensureAccess(canRequestStock)) return;
+    const form = requestStockModal.form;
+    if (!form?.id || !Array.isArray(materialIds) || !materialIds.length) return;
+
+    setSaving(true);
     try {
       await callApi(METHODS.REQUEST_STOCK, {
         supplier_link_id: form.id,
-        material_id: form.material_id,
         supplier_id: form.supplier_id,
+        material_ids: materialIds,
+        material_id: materialIds.length === 1 ? materialIds[0] : form.material_id,
       });
       showAlert("Запрос остатков отправлен", true);
+      closeRequestStockModal();
     } catch (error) {
       showAlert(error?.message || "Ошибка запроса остатков");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -408,6 +507,41 @@ export default function CoverageControlPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const categoryOptions = useMemo(() => [ALL_CATEGORIES_OPTION, ...categories], [categories]);
+
+  const selectedCategories = useMemo(() => {
+    const ids = Array.isArray(filters.category_ids) ? filters.category_ids.map(String) : [];
+    if (!ids.length || ids.includes(String(ALL_CATEGORIES_OPTION.id))) {
+      return [ALL_CATEGORIES_OPTION];
+    }
+    return categoryOptions.filter(
+      (category) =>
+        String(category.id) !== String(ALL_CATEGORIES_OPTION.id) &&
+        ids.includes(String(category.id)),
+    );
+  }, [categoryOptions, filters.category_ids]);
+
+  const onCategoriesChange = (event, value) => {
+    const next = Array.isArray(value) ? value : [];
+    if (!next.length) {
+      setFilter("category_ids", [ALL_CATEGORIES_OPTION.id]);
+      return;
+    }
+
+    const last = next[next.length - 1];
+    if (String(last?.id) === String(ALL_CATEGORIES_OPTION.id)) {
+      setFilter("category_ids", [ALL_CATEGORIES_OPTION.id]);
+      return;
+    }
+
+    setFilter(
+      "category_ids",
+      next
+        .filter((item) => item?.id != null && String(item.id) !== String(ALL_CATEGORIES_OPTION.id))
+        .map((item) => item.id),
+    );
   };
 
   const selectedSupplier = suppliersDict.find((s) => String(s.id) === String(filters.supplier_id));
@@ -477,11 +611,22 @@ export default function CoverageControlPage() {
         canDelete={canDelete}
         saving={saving}
         onSave={saveSupplier}
-        onRequestStock={requestStock}
+        onRequestStock={openRequestStockModal}
         onDelete={withConfirm(
           (form) => deleteSupplier(form),
           "Удалить поставщика из сырьевой позиции?",
         )}
+      />
+
+      <RequestStockModal
+        open={requestStockModal.open}
+        onClose={closeRequestStockModal}
+        onSubmit={requestStock}
+        supplierName={requestStockModal.supplierName}
+        materials={requestStockModal.materials}
+        initialMaterialIds={requestStockModal.initialMaterialIds}
+        loading={requestStockModal.loading}
+        saving={saving}
       />
 
       <Grid
@@ -517,15 +662,10 @@ export default function CoverageControlPage() {
                 </IconButton>
               </Tooltip>
             ) : null}
-            <Button
-              variant="outlined"
-              onClick={loadAll}
-            >
-              Обновить
-            </Button>
             {canEdit ? (
               <Button
                 variant="contained"
+                sx={{ textTransform: "none", height: "40px" }}
                 onClick={openCreateMaterial}
               >
                 Добавить сырьё
@@ -542,12 +682,12 @@ export default function CoverageControlPage() {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <MySelect
+          <MyAutocomplite
             label="Категория"
-            data={categories}
-            value={filters.category_id || ""}
-            is_none={true}
-            func={(e) => setFilter("category_id", e.target.value === "none" ? "" : e.target.value)}
+            data={categoryOptions}
+            value={selectedCategories}
+            multiple={true}
+            func={onCategoriesChange}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
@@ -592,6 +732,7 @@ export default function CoverageControlPage() {
             />
             <Button
               size="small"
+              variant="contained"
               onClick={loadAll}
             >
               Применить на сервере
@@ -670,6 +811,7 @@ export default function CoverageControlPage() {
                           </Typography>
                           {canEdit ? (
                             <Button
+                              size="small"
                               variant="contained"
                               onClick={openCreateMaterial}
                             >
