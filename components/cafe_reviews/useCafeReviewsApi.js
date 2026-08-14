@@ -37,14 +37,18 @@ export default function useCafeReviewsApi() {
       markReviewIncident: (id) => request("review/mark-incident", { id }),
       getIncidents: (payload) => request("incidents", payload),
       getLinks: (payload) => request("links", payload),
+      getLinkHistory: (payload) => request("link/history", payload),
+      getLinkQr: (payload) => request("link/qr", payload),
       generateLink: (payload) => request("link/generate", payload),
       revokeLink: (payload) => request("link/revoke", payload),
+      deleteLink: (payload) => request("link/delete", payload),
       getIncident: (id) => request("incident", { id }),
       updateIncident: (payload, file = null) =>
         file
           ? uploadRef.current("incident/update", file, payload)
           : request("incident/update", payload),
       decideAi: (payload) => request("incident/ai-decision", payload),
+      reanalyzeAi: (payload) => request("incident/ai-reanalyze", payload),
       getPhoto: (id) => request(`photos/${id}/view`, {}, { responseType: "blob" }),
     };
   }, []);

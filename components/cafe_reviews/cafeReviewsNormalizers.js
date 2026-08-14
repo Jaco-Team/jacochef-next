@@ -275,6 +275,7 @@ function normalizeEvent(item) {
     severity: item.severity == null ? "" : String(item.severity),
     comment: String(item.comment ?? ""),
     ai_analysis_id: item.ai_analysis_id ?? null,
+    decision: item.decision === "accepted" || item.decision === "rejected" ? item.decision : "",
     photos: asArray(item.photos).map(normalizePhoto).filter(Boolean),
   };
 }
@@ -291,14 +292,12 @@ function normalizeAiAnalysis(value) {
     recommended_actions: asArray(item.actions).map(String),
     evidence: asArray(item.evidence)
       .map((evidence) => {
-        if (typeof evidence === "string") return evidence;
-        if (!evidence || typeof evidence !== "object") return "";
-        return [
-          evidence.issue_code ? `Причина: ${evidence.issue_code}` : "",
-          evidence.photo_id ? `Фото: ${evidence.photo_id}` : "",
-        ]
-          .filter(Boolean)
-          .join(", ");
+        if (typeof evidence === "string") return { text: evidence };
+        if (!evidence || typeof evidence !== "object") return null;
+        return {
+          issue_code: evidence.issue_code ? String(evidence.issue_code) : "",
+          photo_id: evidence.photo_id ? asNumber(evidence.photo_id, 0) : null,
+        };
       })
       .filter(Boolean),
     confidence: asNumber(item.confidence, 0),

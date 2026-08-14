@@ -54,6 +54,7 @@ function DetailContent({ page, idPrefix, showClose = false }) {
       onUpdateIncident={page.updateIncident}
       onMarkIncident={page.markReviewIncident}
       onDecideAi={page.decideAi}
+      onReanalyzeAi={page.reanalyzeAi}
       onOpenIncident={(id) => page.openDetail("incident", id)}
       onClose={page.closeDetail}
       error={page.detailError}
@@ -146,8 +147,12 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
           points={page.points}
           canEdit={page.canEdit("links")}
           loading={page.contentLoading || page.mutationLoading}
+          filters={page.linkFilters}
+          onFiltersChange={page.updateLinkFilters}
           onGenerate={page.generateLink}
-          onRevoke={page.revokeLink}
+          onDelete={page.deleteLink}
+          onLoadHistory={page.loadLinkHistory}
+          onLoadQr={page.loadLinkQr}
         />
       </Grid>
     );

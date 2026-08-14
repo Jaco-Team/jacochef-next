@@ -86,6 +86,11 @@ export default function useCafeReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [links, setLinks] = useState([]);
+  const [linkFilters, setLinkFilters] = useState({
+    status: "active",
+    point_id: "",
+    zone_query: "",
+  });
   const [pagination, setPagination] = useState({
     page: 1,
     per_page: DEFAULT_PAGE_SIZE,
@@ -236,7 +241,7 @@ export default function useCafeReviewsPage() {
   );
 
   const loadLinks = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({ silent = false, filters: requestedFilters = linkFilters } = {}) => {
       if (!canView("links")) return null;
       const requestId = ++listRequestRef.current;
       if (!silent) setContentLoading(true);
@@ -244,7 +249,11 @@ export default function useCafeReviewsPage() {
 
       try {
         const response = ensureSuccess(
-          await api.getLinks({ active: true }),
+          await api.getLinks({
+            point_id: requestedFilters.point_id || undefined,
+            status: requestedFilters.status,
+            zone_query: requestedFilters.zone_query || undefined,
+          }),
           "Не удалось загрузить QR-ссылки",
         );
         if (requestId !== listRequestRef.current) return null;
@@ -266,6 +275,46 @@ export default function useCafeReviewsPage() {
         return null;
       } finally {
         if (!silent && requestId === listRequestRef.current) setContentLoading(false);
+      }
+    },
+    [api, canView, linkFilters],
+  );
+
+  const updateLinkFilters = useCallback((next) => {
+    setLinkFilters((current) => ({ ...current, ...next }));
+  }, []);
+
+  const loadLinkHistory = useCallback(
+    async (link) => {
+      if (!link?.point_id || !link?.zone_code || !canView("links")) return null;
+      try {
+        const response = ensureSuccess(
+          await api.getLinkHistory({ point_id: link.point_id, zone_code: link.zone_code }),
+          "Не удалось загрузить историю QR-зоны",
+        );
+        const items = Array.isArray(response) ? response : response?.history;
+        const normalized = Array.isArray(items) ? items : [];
+        return normalized;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось загрузить историю QR-зоны"));
+        return null;
+      }
+    },
+    [api, canView],
+  );
+
+  const loadLinkQr = useCallback(
+    async (link, variant) => {
+      if (!link?.id || !variant || !canView("links")) return null;
+      try {
+        const response = ensureSuccess(
+          await api.getLinkQr({ id: link.id, variant }),
+          "Не удалось загрузить QR-код",
+        );
+        return response?.image || null;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось загрузить QR-код"));
+        return null;
       }
     },
     [api, canView],
@@ -291,7 +340,7 @@ export default function useCafeReviewsPage() {
     } else if (section === "links" && canView("links")) {
       loadLinks();
     }
-  }, [bootstrapReady, canView, filters, loadDashboard, loadLinks, loadList, section]);
+  }, [bootstrapReady, canView, filters, linkFilters, loadDashboard, loadLinks, loadList, section]);
 
   const loadDetail = useCallback(
     async (target, { silent = false } = {}) => {
@@ -503,6 +552,28 @@ export default function useCafeReviewsPage() {
     [api, canAccess, canEdit, refreshAfterMutation],
   );
 
+  const reanalyzeAi = useCallback(
+    async ({ id, additional_context }) => {
+      if (!canEdit("incidents") || !canAccess("ai")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.reanalyzeAi({ id, additional_context }),
+          "Не удалось повторно запустить AI-анализ",
+        );
+        await refreshAfterMutation(id);
+        showAlertRef.current(response?.text || "AI-анализ обновлён", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось повторно запустить AI-анализ"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canAccess, canEdit, refreshAfterMutation],
+  );
+
   const changePage = useCallback(
     (_, nextPage) => {
       loadList({ page: nextPage });
@@ -566,6 +637,25 @@ export default function useCafeReviewsPage() {
     [api, canEdit, loadLinks],
   );
 
+  const deleteLink = useCallback(
+    async (payload) => {
+      if (!canEdit("links")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(await api.deleteLink(payload), "Не удалось удалить QR-зону");
+        await loadLinks();
+        showAlertRef.current(response?.text || "QR-зона удалена", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось удалить QR-зону"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, loadLinks],
+  );
+
   const retryDetail = useCallback(() => {
     if (selected) loadDetail(selected);
   }, [loadDetail, selected]);
@@ -590,6 +680,7 @@ export default function useCafeReviewsPage() {
     contentError,
     dashboard,
     decideAi,
+    reanalyzeAi,
     detail,
     detailError,
     detailLoading,
@@ -600,6 +691,8 @@ export default function useCafeReviewsPage() {
     filtersOpen,
     incidents,
     links,
+    linkFilters,
+    loadLinkQr,
     isAlert,
     loadBootstrap,
     loading: bootstrapLoading || contentLoading || mutationLoading,
@@ -610,6 +703,9 @@ export default function useCafeReviewsPage() {
     points,
     refresh,
     generateLink,
+    deleteLink,
+    loadLinkHistory,
+    updateLinkFilters,
     revokeLink,
     retryDetail,
     resetFilters,

@@ -2,13 +2,13 @@ import {
   Box,
   Chip,
   IconButton,
-  Pagination,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -251,7 +251,7 @@ export default function CafeReviewsList({
   onSort,
 }) {
   return (
-    <Box>
+    <Box sx={{ pb: 4 }}>
       {items.length ? (
         <>
           <DesktopTable
@@ -279,17 +279,22 @@ export default function CafeReviewsList({
             : "Нет отзывов по выбранным фильтрам"}
         </EmptyState>
       )}
-      {pagination.total_pages > 1 ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Pagination
-            page={pagination.page}
-            count={pagination.total_pages}
-            onChange={onPageChange}
-            color="primary"
-            shape="rounded"
-            aria-label="Навигация по страницам"
+      {pagination.total > 0 ? (
+        <Paper
+          variant="outlined"
+          sx={{ mt: 1.5, borderRadius: "12px", borderColor: blockBorder, overflow: "hidden" }}
+        >
+          <TablePagination
+            component="div"
+            count={pagination.total}
+            page={Math.max(0, pagination.page - 1)}
+            onPageChange={(event, page) => onPageChange(event, page + 1)}
+            rowsPerPage={pagination.per_page}
+            rowsPerPageOptions={[pagination.per_page]}
+            labelRowsPerPage="Строк на странице"
+            labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count}`}
           />
-        </Box>
+        </Paper>
       ) : null}
     </Box>
   );
