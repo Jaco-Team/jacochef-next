@@ -24,7 +24,7 @@ import {
   Typography,
 } from "@mui/material";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
-import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
@@ -140,7 +140,7 @@ export default function CafeReviewsLinks({
   filters,
   onFiltersChange,
   onGenerate,
-  onDelete,
+  onRevoke,
   onLoadHistory,
   onLoadQr,
 }) {
@@ -154,6 +154,9 @@ export default function CafeReviewsLinks({
   const [zoneModalHistory, setZoneModalHistory] = useState([]);
   const [zoneModalQrs, setZoneModalQrs] = useState({ stars: null, emoji: null });
   const [zoneModalLoading, setZoneModalLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const pointOptions = useMemo(
     () => points.map((point) => ({ id: point.id, name: point.name })),
@@ -188,6 +191,13 @@ export default function CafeReviewsLinks({
       Object.fromEntries(variants.map((variant, index) => [variant, qrImages[index] || null])),
     );
     setZoneModalLoading(false);
+  };
+
+  const loadFullHistory = async (query = historyQuery) => {
+    setHistoryLoading(true);
+    const items = await onLoadHistory(null, query);
+    setHistory(Array.isArray(items) ? items : []);
+    setHistoryLoading(false);
   };
 
   const toggleEditVariant = (variant) => {
@@ -353,17 +363,17 @@ export default function CafeReviewsLinks({
                         <EditOutlinedIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Удалить зону">
+                    <Tooltip title="Архивировать QR-ссылку">
                       <IconButton
-                        aria-label="Удалить зону"
+                        aria-label="Архивировать QR-ссылку"
                         color="error"
-                        disabled={!canEdit || loading}
+                        disabled={!canEdit || loading || link.status !== "active"}
                         onClick={withConfirm(
-                          () => onDelete({ id: link.id }),
-                          "Удалить QR-ссылки этой зоны? Событие сохранится в истории.",
+                          () => onRevoke({ id: link.id }),
+                          "Архивировать QR-ссылку? Она перестанет работать, а запись останется в истории.",
                         )}
                       >
-                        <DeleteOutlineOutlinedIcon />
+                        <ArchiveOutlinedIcon />
                       </IconButton>
                     </Tooltip>
                   </TableCell>
@@ -464,19 +474,21 @@ export default function CafeReviewsLinks({
             ) : null}
           </Box>
           <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, mt: 2 }}>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteOutlineOutlinedIcon />}
-              disabled={!canEdit || loading}
-              onClick={withConfirm(async () => {
-                const deleted = await onDelete({ id: zoneModalTarget.id });
-                if (deleted) setZoneModalTarget(null);
-              }, "Удалить QR-ссылки этой зоны? Событие сохранится в истории.")}
-              sx={actionButtonSx}
-            >
-              Удалить
-            </Button>
+            {zoneModalTarget?.status === "active" ? (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<ArchiveOutlinedIcon />}
+                disabled={!canEdit || loading}
+                onClick={withConfirm(async () => {
+                  const archived = await onRevoke({ id: zoneModalTarget.id });
+                  if (archived) setZoneModalTarget(null);
+                }, "Архивировать QR-ссылку? Она перестанет работать, а запись останется в истории.")}
+                sx={actionButtonSx}
+              >
+                Архивировать
+              </Button>
+            ) : null}
             <Button
               variant="contained"
               startIcon={<EditOutlinedIcon />}
@@ -555,6 +567,113 @@ export default function CafeReviewsLinks({
           </Accordion>
         </DialogContent>
       </MyModal>
+
+      <Accordion
+        defaultExpanded={false}
+        sx={{
+          mt: 3,
+          mb: 4,
+          border: "1px solid #E5E5E5",
+          borderRadius: "12px !important",
+          boxShadow: "none",
+          overflow: "hidden",
+          "&:before": { display: "none" },
+          "&.Mui-expanded": { margin: "24px 0 32px" },
+        }}
+        onChange={(_, expanded) => {
+          if (expanded && history.length === 0 && !historyLoading) loadFullHistory("");
+        }}
+      >
+        <AccordionSummary
+          sx={{
+            minHeight: 56,
+            bgcolor: "#FAFAFA",
+            "&.Mui-expanded": { minHeight: 56 },
+            "& .MuiAccordionSummary-content.Mui-expanded": { my: 0 },
+          }}
+          expandIcon={<ExpandMoreIcon />}
+        >
+          <Typography fontWeight={700}>Полная история QR-ссылок</Typography>
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: 2, borderTop: "1px solid #E5E5E5" }}>
+          <Grid
+            container
+            spacing={1.5}
+            sx={{ mb: 1.5 }}
+          >
+            <Grid size={{ xs: 12, md: 9 }}>
+              <MyTextInput
+                type="search"
+                label="Поиск в истории"
+                placeholder="Кафе, зона, событие, пользователь"
+                value={historyQuery}
+                func={(event) => setHistoryQuery(event.target.value)}
+                disabled={historyLoading}
+              />
+            </Grid>
+            <Grid
+              size={{ xs: 12, md: 3 }}
+              sx={{ display: "flex", alignItems: "end" }}
+            >
+              <Button
+                fullWidth
+                variant="outlined"
+                disabled={historyLoading}
+                onClick={() => loadFullHistory()}
+                sx={actionButtonSx}
+              >
+                Найти
+              </Button>
+            </Grid>
+          </Grid>
+          {historyLoading ? (
+            <Typography color="text.secondary">Загрузка истории…</Typography>
+          ) : history.length === 0 ? (
+            <Typography
+              role="status"
+              sx={{ p: 2, textAlign: "center", color: textSecondary }}
+            >
+              История пока пуста.
+            </Typography>
+          ) : (
+            <TableContainer sx={{ maxHeight: "50dvh" }}>
+              <Table
+                size="small"
+                stickyHeader
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Дата</TableCell>
+                    <TableCell>Кафе</TableCell>
+                    <TableCell>Зона</TableCell>
+                    <TableCell>Событие</TableCell>
+                    <TableCell>Ссылка</TableCell>
+                    <TableCell>Пользователь</TableCell>
+                    <TableCell>Причина</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {history.map((event) => (
+                    <TableRow key={event.id}>
+                      <TableCell>{formatDateTime(event.created_at)}</TableCell>
+                      <TableCell>{event.point_name || event.city_name || "—"}</TableCell>
+                      <TableCell>
+                        {event.zone_code || event.zone_label
+                          ? `${event.zone_code || ""}${event.zone_code && event.zone_label ? " — " : ""}${event.zone_label || ""}`
+                          : "Кафе"}
+                      </TableCell>
+                      <TableCell>{eventLabels[event.event_type] || event.event_type}</TableCell>
+                      <TableCell>{event.link_id || "—"}</TableCell>
+                      <TableCell>{event.actor_name || event.actor_id || "—"}</TableCell>
+                      <TableCell>{event.reason || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </AccordionDetails>
+      </Accordion>
 
       <MyModal
         open={Boolean(editTarget)}

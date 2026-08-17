@@ -285,18 +285,21 @@ export default function useCafeReviewsPage() {
   }, []);
 
   const loadLinkHistory = useCallback(
-    async (link) => {
-      if (!link?.point_id || !link?.zone_code || !canView("links")) return null;
+    async (link = null, query = "") => {
+      if (!canView("links")) return null;
       try {
+        const payload = { query: query || undefined };
+        if (link?.point_id) payload.point_id = link.point_id;
+        if (link?.zone_code) payload.zone_code = link.zone_code;
         const response = ensureSuccess(
-          await api.getLinkHistory({ point_id: link.point_id, zone_code: link.zone_code }),
-          "Не удалось загрузить историю QR-зоны",
+          await api.getLinkHistory(payload),
+          "Не удалось загрузить историю QR-ссылок",
         );
         const items = Array.isArray(response) ? response : response?.history;
         const normalized = Array.isArray(items) ? items : [];
         return normalized;
       } catch (error) {
-        showAlertRef.current(getErrorMessage(error, "Не удалось загрузить историю QR-зоны"));
+        showAlertRef.current(getErrorMessage(error, "Не удалось загрузить историю QR-ссылок"));
         return null;
       }
     },
@@ -637,25 +640,6 @@ export default function useCafeReviewsPage() {
     [api, canEdit, loadLinks],
   );
 
-  const deleteLink = useCallback(
-    async (payload) => {
-      if (!canEdit("links")) return false;
-      setMutationLoading(true);
-      try {
-        const response = ensureSuccess(await api.deleteLink(payload), "Не удалось удалить QR-зону");
-        await loadLinks();
-        showAlertRef.current(response?.text || "QR-зона удалена", true);
-        return true;
-      } catch (error) {
-        showAlertRef.current(getErrorMessage(error, "Не удалось удалить QR-зону"));
-        return false;
-      } finally {
-        setMutationLoading(false);
-      }
-    },
-    [api, canEdit, loadLinks],
-  );
-
   const retryDetail = useCallback(() => {
     if (selected) loadDetail(selected);
   }, [loadDetail, selected]);
@@ -703,7 +687,6 @@ export default function useCafeReviewsPage() {
     points,
     refresh,
     generateLink,
-    deleteLink,
     loadLinkHistory,
     updateLinkFilters,
     revokeLink,

@@ -150,7 +150,7 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
           filters={page.linkFilters}
           onFiltersChange={page.updateLinkFilters}
           onGenerate={page.generateLink}
-          onDelete={page.deleteLink}
+          onRevoke={page.revokeLink}
           onLoadHistory={page.loadLinkHistory}
           onLoadQr={page.loadLinkQr}
         />

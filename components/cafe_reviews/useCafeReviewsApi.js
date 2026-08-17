@@ -41,7 +41,6 @@ export default function useCafeReviewsApi() {
       getLinkQr: (payload) => request("link/qr", payload),
       generateLink: (payload) => request("link/generate", payload),
       revokeLink: (payload) => request("link/revoke", payload),
-      deleteLink: (payload) => request("link/delete", payload),
       getIncident: (id) => request("incident", { id }),
       updateIncident: (payload, file = null) =>
         file
