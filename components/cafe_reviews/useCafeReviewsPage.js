@@ -182,7 +182,7 @@ export default function useCafeReviewsPage() {
   );
 
   const loadList = useCallback(
-    async ({ page = 1, silent = false } = {}) => {
+    async ({ page = 1, perPage = pagination.per_page, silent = false } = {}) => {
       const requestSection = section;
       const isIncidents = requestSection === "incidents";
       const accessKey = isIncidents ? "incidents" : "reviews";
@@ -195,7 +195,7 @@ export default function useCafeReviewsPage() {
         const payload = {
           ...buildFilterPayload(filters, requestSection),
           page,
-          per_page: pagination.per_page || DEFAULT_PAGE_SIZE,
+          per_page: perPage || DEFAULT_PAGE_SIZE,
         };
         const response = ensureSuccess(
           isIncidents ? await api.getIncidents(payload) : await api.getReviews(payload),
@@ -584,6 +584,15 @@ export default function useCafeReviewsPage() {
     [loadList],
   );
 
+  const changePerPage = useCallback(
+    (event) => {
+      const perPage = Number(event.target.value) || DEFAULT_PAGE_SIZE;
+      setPagination((current) => ({ ...current, page: 1, per_page: perPage }));
+      loadList({ page: 1, perPage });
+    },
+    [loadList],
+  );
+
   const refresh = useCallback(() => {
     if (section === "overview" && canView("reviews")) return loadDashboard();
     if (section === "reviews" && canView("reviews")) {
@@ -657,6 +666,7 @@ export default function useCafeReviewsPage() {
     canEdit,
     canView,
     changePage,
+    changePerPage,
     cities,
     closeAlert,
     closeDetail,

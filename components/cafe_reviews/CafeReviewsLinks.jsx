@@ -298,9 +298,12 @@ export default function CafeReviewsLinks({
         <EmptyState>QR-ссылок по выбранному фильтру нет.</EmptyState>
       ) : (
         <TableContainer
-          component={Paper}
-          variant="outlined"
-          sx={{ borderRadius: "12px", maxHeight: "60dvh" }}
+          sx={{
+            maxHeight: "60dvh",
+            border: "1px solid",
+            borderColor: "#E5E5E5",
+            borderRadius: "12px",
+          }}
         >
           <Table
             size="small"

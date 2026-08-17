@@ -57,12 +57,17 @@ function DesktopTable({
 
   return (
     <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{ ...desktopOnlySx, borderRadius: "12px", borderColor: blockBorder }}
+      sx={{
+        ...desktopOnlySx,
+        maxHeight: "60dvh",
+        border: "1px solid",
+        borderColor: blockBorder,
+        borderRadius: "12px",
+      }}
     >
       <Table
         size="small"
+        stickyHeader
         aria-label={isIncident ? "Список инцидентов" : "Список отзывов"}
       >
         <TableHead>
@@ -101,7 +106,10 @@ function DesktopTable({
                 ) : null}
               </TableCell>
               <TableCell>
-                <RatingValue value={item.rating} />
+                <RatingValue
+                  value={item.rating}
+                  isIncident={isIncident || item.is_incident}
+                />
               </TableCell>
               {isIncident ? (
                 <TableCell>
@@ -187,7 +195,10 @@ function ResponsiveCards({ kind, items, dictionaries, selectedId, onOpen }) {
                 {formatDateTime(item.created_at)}
               </Typography>
             </Box>
-            <RatingValue value={item.rating} />
+            <RatingValue
+              value={item.rating}
+              isIncident={isIncident || item.is_incident}
+            />
           </Box>
           <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 1.25 }}>
             <StatusChip
@@ -246,6 +257,7 @@ export default function CafeReviewsList({
   onOpen,
   pagination,
   onPageChange,
+  onRowsPerPageChange,
   sort,
   direction,
   onSort,
@@ -280,21 +292,18 @@ export default function CafeReviewsList({
         </EmptyState>
       )}
       {pagination.total > 0 ? (
-        <Paper
-          variant="outlined"
-          sx={{ mt: 1.5, borderRadius: "12px", borderColor: blockBorder, overflow: "hidden" }}
-        >
-          <TablePagination
-            component="div"
-            count={pagination.total}
-            page={Math.max(0, pagination.page - 1)}
-            onPageChange={(event, page) => onPageChange(event, page + 1)}
-            rowsPerPage={pagination.per_page}
-            rowsPerPageOptions={[pagination.per_page]}
-            labelRowsPerPage="Строк на странице"
-            labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count}`}
-          />
-        </Paper>
+        <TablePagination
+          component="div"
+          count={pagination.total}
+          page={Math.max(0, pagination.page - 1)}
+          onPageChange={(event, page) => onPageChange(event, page + 1)}
+          onRowsPerPageChange={onRowsPerPageChange}
+          rowsPerPage={pagination.per_page}
+          rowsPerPageOptions={[20, 50, 100]}
+          labelRowsPerPage="Записей на странице:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+          sx={{ mt: 1.5 }}
+        />
       ) : null}
     </Box>
   );

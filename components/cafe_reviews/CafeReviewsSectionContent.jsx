@@ -221,6 +221,7 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
             onOpen={(id) => page.openDetail(listKind, id)}
             pagination={page.pagination}
             onPageChange={page.changePage}
+            onRowsPerPageChange={page.changePerPage}
             sort={page.filters.sort}
             direction={page.filters.direction}
             onSort={page.updateSort}
@@ -245,7 +246,7 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
             sx={{
               borderRadius: "12px",
               borderColor: blockBorder,
-              maxHeight: "calc(100vh - 110px)",
+              maxHeight: "50dvh",
               overflowY: "auto",
             }}
           >

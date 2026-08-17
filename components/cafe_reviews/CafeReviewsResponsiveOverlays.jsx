@@ -1,5 +1,8 @@
 import { Box, Dialog, DialogContent, SwipeableDrawer, Typography } from "@mui/material";
+import MyModal from "@/ui/MyModal";
 import { DetailContent, FilterSurface } from "./CafeReviewsSectionContent";
+
+const mobileDetailPresentation = "modal";
 
 function DrawerHandle() {
   return (
@@ -55,52 +58,81 @@ export default function CafeReviewsResponsiveOverlays({ page, isMobile, isTablet
         </Box>
       </SwipeableDrawer>
 
-      <SwipeableDrawer
-        anchor="bottom"
-        open={isMobile && page.detailOpen}
-        onOpen={() => page.setDetailOpen(true)}
-        onClose={page.closeDetail}
-        disableSwipeToOpen
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          role: "dialog",
-          "aria-modal": true,
-          "aria-labelledby": "cafe-reviews-mobile-detail-drawer-title",
-          sx: {
-            borderTopLeftRadius: "24px",
-            borderTopRightRadius: "24px",
-            maxHeight: "94vh",
-          },
-        }}
-      >
-        <DrawerHandle />
-        <Typography
-          id="cafe-reviews-mobile-detail-drawer-title"
-          component="h2"
-          sx={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            p: 0,
-            m: -1,
-            overflow: "hidden",
-            clip: "rect(0 0 0 0)",
-            whiteSpace: "nowrap",
-            border: 0,
+      {mobileDetailPresentation === "modal" ? (
+        <MyModal
+          open={isMobile && page.detailOpen}
+          onClose={page.closeDetail}
+          fullScreen
+          maxWidth={false}
+          scroll="paper"
+          aria-label="Детали отзыва или инцидента"
+          slotProps={{
+            paper: {
+              sx: {
+                width: "100%",
+                maxWidth: "100%",
+                "& > .MuiIconButton-root": { zIndex: 1 },
+              },
+            },
           }}
         >
-          Детали отзыва или инцидента
-        </Typography>
-        <Box sx={{ overflowY: "auto" }}>
-          {isMobile ? (
-            <DetailContent
-              page={page}
-              idPrefix="cafe-reviews-detail-mobile"
-              showClose
-            />
-          ) : null}
-        </Box>
-      </SwipeableDrawer>
+          <DialogContent sx={{ p: 0, overflowY: "auto" }}>
+            {isMobile ? (
+              <DetailContent
+                page={page}
+                idPrefix="cafe-reviews-detail-mobile"
+              />
+            ) : null}
+          </DialogContent>
+        </MyModal>
+      ) : (
+        <SwipeableDrawer
+          anchor="bottom"
+          open={isMobile && page.detailOpen}
+          onOpen={() => page.setDetailOpen(true)}
+          onClose={page.closeDetail}
+          disableSwipeToOpen
+          ModalProps={{ keepMounted: true }}
+          PaperProps={{
+            role: "dialog",
+            "aria-modal": true,
+            "aria-labelledby": "cafe-reviews-mobile-detail-drawer-title",
+            sx: {
+              borderTopLeftRadius: "24px",
+              borderTopRightRadius: "24px",
+              maxHeight: "94vh",
+            },
+          }}
+        >
+          <DrawerHandle />
+          <Typography
+            id="cafe-reviews-mobile-detail-drawer-title"
+            component="h2"
+            sx={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              p: 0,
+              m: -1,
+              overflow: "hidden",
+              clip: "rect(0 0 0 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            Детали отзыва или инцидента
+          </Typography>
+          <Box sx={{ overflowY: "auto" }}>
+            {isMobile ? (
+              <DetailContent
+                page={page}
+                idPrefix="cafe-reviews-detail-mobile"
+                showClose
+              />
+            ) : null}
+          </Box>
+        </SwipeableDrawer>
+      )}
 
       <Dialog
         open={isTablet && page.detailOpen}

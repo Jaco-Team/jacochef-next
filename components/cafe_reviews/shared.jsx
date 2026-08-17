@@ -78,7 +78,7 @@ export function StatusChip({ value, options }) {
   );
 }
 
-export function RatingValue({ value, size = "small" }) {
+export function RatingValue({ value, size = "small", isIncident = false }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
       <Rating
@@ -87,6 +87,7 @@ export function RatingValue({ value, size = "small" }) {
         size={size}
         readOnly
         aria-label={`Оценка ${Number(value) || 0} из 5`}
+        sx={isIncident ? { color: brandRed } : undefined}
       />
       <Typography
         component="span"

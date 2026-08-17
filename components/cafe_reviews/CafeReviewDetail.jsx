@@ -568,6 +568,7 @@ export default function CafeReviewDetail({
           <RatingValue
             value={review.rating}
             size="medium"
+            isIncident={kind === "incident" || review.is_incident}
           />
           <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
             <StatusChip
