@@ -1,17 +1,21 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Typography,
+  Button,
+  Collapse,
   Paper,
-  Tooltip,
-  useTheme,
-  useMediaQuery,
-  ToggleButtonGroup,
   ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { styled } from "@mui/material/styles";
 
-const TimelineContainer = styled(Box)(({ theme }) => ({
+const TimelineContainer = styled(Box)(() => ({
   position: "relative",
   width: "100%",
   boxSizing: "border-box",
@@ -30,7 +34,7 @@ const ProgressBar = styled(Box)(({ theme }) => ({
 
 const MonthMarker = styled(Box, {
   shouldForwardProp: (prop) => prop !== "position",
-})(({ theme, position }) => ({
+})(({ position }) => ({
   position: "absolute",
   top: "10px",
   left: `${position}%`,
@@ -45,6 +49,10 @@ const MonthMarker = styled(Box, {
 const MarkerCircle = styled(Box, {
   shouldForwardProp: (prop) => prop !== "isActive" && prop !== "markerColor",
 })(({ theme, isActive, markerColor }) => ({
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   width: isActive ? "24px" : "16px",
   height: isActive ? "24px" : "16px",
   borderRadius: "50%",
@@ -54,7 +62,6 @@ const MarkerCircle = styled(Box, {
   "&::after": isActive
     ? {
         content: '""',
-        position: "absolute",
         width: "8px",
         height: "8px",
         borderRadius: "50%",
@@ -63,9 +70,7 @@ const MarkerCircle = styled(Box, {
     : {},
 }));
 
-const MonthLabel = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "isActive",
-})(({ theme }) => ({
+const MonthLabel = styled(Box)(() => ({
   marginTop: "8px",
   textAlign: "center",
 }));
@@ -75,20 +80,27 @@ const CustomTooltip = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   border: `1px solid ${theme.palette.divider}`,
   boxShadow: theme.shadows[3],
-  maxWidth: "250px",
+  minWidth: "230px",
+  maxWidth: "280px",
 }));
 
-const formatNumber = (num) => {
-  return new Intl.NumberFormat("ru-RU").format(num);
+const toNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(toNumber(num));
+
 const calculateGoalPercent = (plan, fact) => {
-  const safePlan = Number(plan);
-  const safeFact = Number(fact);
-
+  const safePlan = toNumber(plan);
   if (!safePlan) return 0;
+  return ((toNumber(fact) - safePlan) / safePlan) * 100;
+};
 
-  return ((safeFact - safePlan) / safePlan) * 100;
+const calculateCompletionPercent = (plan, fact) => {
+  const safePlan = toNumber(plan);
+  if (!safePlan) return 0;
+  return (toNumber(fact) / safePlan) * 100;
 };
 
 const formatSignedPercent = (value) => {
@@ -103,7 +115,9 @@ const getGoalPercentColor = (value) => {
   return "text.primary";
 };
 
-const getShortMonthName = (monthName) => {
+const getCompletionColor = (value) => (value >= 100 ? "success.main" : "error.main");
+
+const getShortMonthName = (monthName = "") => {
   const shortNames = {
     январь: "ЯНВ",
     февраль: "ФЕВ",
@@ -118,416 +132,512 @@ const getShortMonthName = (monthName) => {
     ноябрь: "НОЯ",
     декабрь: "ДЕК",
   };
-  return shortNames[monthName.toLowerCase()] || monthName;
+  return shortNames[String(monthName).toLowerCase()] || monthName;
 };
 
-const ProgressTimeline = ({ data }) => {
+const getMonthOrder = (item) => {
+  const monthNumber = Number(item.monthNumber);
+  if (Number.isFinite(monthNumber)) return monthNumber;
+  const [, periodMonth] = String(item.periodKey ?? "").split("-");
+  return Number(periodMonth) || 0;
+};
+
+const SummaryValue = ({ label, value, color, capitalize = false }) => (
+  <Box>
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      display="block"
+    >
+      {label}
+    </Typography>
+    <Typography
+      variant="h6"
+      color={color}
+      sx={capitalize ? { textTransform: "capitalize" } : undefined}
+    >
+      {value}
+    </Typography>
+  </Box>
+);
+
+const TooltipRow = ({ label, value, color }) => (
+  <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mb: 0.5 }}>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+    >
+      {label}
+    </Typography>
+    <Typography
+      variant="body2"
+      fontWeight={600}
+      color={color}
+    >
+      {value}
+    </Typography>
+  </Box>
+);
+
+const ProgressTimeline = ({
+  data,
+  title = "Выполнение плана",
+  cumulative = false,
+  annualPlanTotal = null,
+  collapsible = true,
+  defaultExpanded = false,
+  resetKey,
+}) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [activeMonth, setActiveMonth] = useState(null);
+  const [expanded, setExpanded] = useState(collapsible ? defaultExpanded : true);
   const [summaryMode, setSummaryMode] = useState("actual");
-
-  // Фильтруем данные только за текущий год
   const currentYear = new Date().getFullYear();
-  const currentYearData = useMemo(() => {
-    return data.filter((item) => Number(item.year) === currentYear);
-  }, [data, currentYear]);
 
-  const {
-    totalPlan,
-    totalFact,
-    currentMonthIndex,
-    lastMonthData,
-    actualMonthIndex,
-    actualMonthData,
-  } = useMemo(() => {
-    const toNumber = (value) => {
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : 0;
-    };
-    const totalPlan = currentYearData.reduce((sum, item) => sum + toNumber(item.planQty), 0);
-    const totalFact = currentYearData.reduce((sum, item) => sum + toNumber(item.factQty), 0);
-    const currentMonthIndex = currentYearData.length - 1;
-    const lastMonthData = currentYearData[currentMonthIndex];
-    const detectedActualMonthIndex = [...currentYearData].reduce((lastIndex, item, index) => {
-      return toNumber(item.factQty) > 0 ? index : lastIndex;
-    }, -1);
-    const actualMonthIndex =
-      detectedActualMonthIndex >= 0 ? detectedActualMonthIndex : currentMonthIndex;
-    const actualMonthData = currentYearData[actualMonthIndex];
+  useEffect(() => {
+    if (collapsible) setExpanded(defaultExpanded);
+    setSummaryMode("actual");
+  }, [collapsible, defaultExpanded, resetKey]);
 
-    return {
-      totalPlan,
-      totalFact,
-      currentMonthIndex,
-      lastMonthData,
-      actualMonthIndex,
-      actualMonthData,
-    };
-  }, [currentYearData]);
+  const currentYearData = useMemo(
+    () =>
+      data
+        .filter((item) => Number(item.year) === currentYear)
+        .sort((a, b) => getMonthOrder(a) - getMonthOrder(b)),
+    [currentYear, data],
+  );
 
-  const summaryData =
-    summaryMode === "period"
+  const progressData = useMemo(() => {
+    if (!cumulative) return currentYearData;
+
+    let planTotal = 0;
+    let factTotal = 0;
+    return currentYearData.map((item) => {
+      planTotal += toNumber(item.planQty);
+      factTotal += toNumber(item.factQty);
+      return {
+        ...item,
+        planQty: planTotal,
+        factQty: factTotal,
+      };
+    });
+  }, [cumulative, currentYearData]);
+
+  const annualPlanAvailable =
+    annualPlanTotal !== null && annualPlanTotal !== undefined && toNumber(annualPlanTotal) > 0;
+  const totalPlan = progressData.reduce((sum, item) => sum + toNumber(item.planQty), 0);
+  const totalFact = progressData.reduce((sum, item) => sum + toNumber(item.factQty), 0);
+  const currentMonthIndex = progressData.length - 1;
+  const lastMonthData = progressData[currentMonthIndex];
+  const actualMonthIndex = cumulative
+    ? currentMonthIndex
+    : [...progressData].reduce(
+        (lastIndex, item, index) => (toNumber(item.factQty) > 0 ? index : lastIndex),
+        -1,
+      );
+  const safeActualMonthIndex = actualMonthIndex >= 0 ? actualMonthIndex : currentMonthIndex;
+  const actualMonthData = progressData[safeActualMonthIndex];
+  const cumulativePeriodLabel = `${progressData[0]?.month ?? ""} - ${lastMonthData?.month ?? ""}`;
+  const summaryData = cumulative
+    ? lastMonthData
+    : summaryMode === "period"
       ? {
-          month: `${currentYearData[0]?.month ?? ""} - ${lastMonthData?.month ?? ""}`,
+          month: cumulativePeriodLabel,
           planQty: totalPlan,
           factQty: totalFact,
         }
       : actualMonthData;
-  const summaryMonthLabel = summaryMode === "period" ? "ПЕРИОД" : "МЕСЯЦ";
-  const summaryTitle =
-    summaryMode === "period"
+  const summaryTitle = cumulative
+    ? `Выполнение плана за период (${currentYear})`
+    : summaryMode === "period"
       ? `Выполнение цели за период (${currentYear})`
       : `Выполнение цели ${summaryData?.month ?? ""} (${currentYear})`;
-  const summaryTargetLabel = summaryMode === "period" ? "периода" : (summaryData?.month ?? "");
-  const summaryProgressPercentage =
-    Number(summaryData?.planQty) > 0
-      ? (Number(summaryData?.factQty) / Number(summaryData?.planQty)) * 100
-      : 0;
+  const summaryProgressPercentage = calculateCompletionPercent(
+    summaryData?.planQty,
+    summaryData?.factQty,
+  );
   const summaryGoalPercent = calculateGoalPercent(summaryData?.planQty, summaryData?.factQty);
-  const isPlanReached = Number(summaryData?.factQty) >= Number(summaryData?.planQty);
-  const selectedMonthIndex = summaryMode === "period" ? currentMonthIndex : actualMonthIndex;
+  const annualProgressPercentage = annualPlanAvailable
+    ? calculateCompletionPercent(annualPlanTotal, summaryData?.factQty)
+    : null;
+  const isPlanReached = toNumber(summaryData?.factQty) >= toNumber(summaryData?.planQty);
+  const selectedMonthIndex = cumulative
+    ? currentMonthIndex
+    : summaryMode === "period"
+      ? currentMonthIndex
+      : safeActualMonthIndex;
 
-  // Если нет данных за текущий год, показываем сообщение
-  if (currentYearData.length === 0) {
-    return (
-      <Paper
-        elevation={0}
-        sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, width: "100%" }}
-      >
+  const renderContent = () => {
+    if (!progressData.length) {
+      return (
         <Typography
           variant="body1"
           color="text.secondary"
           align="center"
+          sx={{ py: 3 }}
         >
           Нет данных за {currentYear} год
         </Typography>
-      </Paper>
+      );
+    }
+
+    return (
+      <>
+        <Box sx={{ mb: 4 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ mb: 0 }}
+            >
+              {summaryTitle}
+            </Typography>
+            {!cumulative ? (
+              <ToggleButtonGroup
+                size="small"
+                color="primary"
+                exclusive
+                value={summaryMode}
+                onChange={(event, nextValue) => {
+                  if (nextValue) setSummaryMode(nextValue);
+                }}
+              >
+                <ToggleButton value="actual">Актуальный месяц</ToggleButton>
+                <ToggleButton value="period">Весь период</ToggleButton>
+              </ToggleButtonGroup>
+            ) : null}
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: { xs: "flex-start", sm: "center" },
+              flexDirection: { xs: "column", sm: "row" },
+              gap: { xs: 1.5, sm: 2 },
+              flexWrap: "wrap",
+              mt: 1,
+            }}
+          >
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {cumulative ? (
+                <>
+                  {summaryProgressPercentage.toFixed(1)}% плана периода ·{" "}
+                  {annualPlanAvailable
+                    ? `${annualProgressPercentage.toFixed(1)}% годового плана`
+                    : "годовой план недоступен"}
+                </>
+              ) : (
+                <>
+                  {summaryProgressPercentage.toFixed(1)}%
+                  {isPlanReached
+                    ? " · план выполнен"
+                    : ` · осталось ${(100 - summaryProgressPercentage).toFixed(2)}% до ${
+                        summaryMode === "period" ? "периода" : (summaryData?.month ?? "")
+                      }`}
+                </>
+              )}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  bgcolor: isPlanReached ? "success.main" : "error.main",
+                }}
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Факт
+              </Typography>
+              <Box sx={{ width: 12, height: 2, bgcolor: "grey.400" }} />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                План
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {summaryData ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 4,
+              bgcolor: "grey.50",
+              borderRadius: 2,
+              border: `1px solid ${theme.palette.divider}`,
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "repeat(2, minmax(0, 1fr))",
+                  sm: cumulative ? "repeat(5, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))",
+                },
+                gap: 2,
+              }}
+            >
+              <SummaryValue
+                label={cumulative ? "ПЕРИОД" : summaryMode === "period" ? "ПЕРИОД" : "МЕСЯЦ"}
+                value={cumulative ? cumulativePeriodLabel : summaryData.month}
+                capitalize
+              />
+              <SummaryValue
+                label={cumulative ? "ПЛАН ПЕРИОДА" : "ПЛАН"}
+                value={formatNumber(summaryData.planQty)}
+              />
+              <SummaryValue
+                label={cumulative ? "ФАКТ ПЕРИОДА" : "ФАКТ"}
+                value={formatNumber(summaryData.factQty)}
+                color={
+                  cumulative
+                    ? getCompletionColor(summaryProgressPercentage)
+                    : getGoalPercentColor(summaryGoalPercent)
+                }
+              />
+              <SummaryValue
+                label={cumulative ? "ВЫПОЛНЕНИЕ ПЕРИОДА" : "% К ЦЕЛИ"}
+                value={
+                  cumulative
+                    ? `${summaryProgressPercentage.toFixed(1)}%`
+                    : formatSignedPercent(summaryGoalPercent)
+                }
+                color={
+                  cumulative
+                    ? getCompletionColor(summaryProgressPercentage)
+                    : getGoalPercentColor(summaryGoalPercent)
+                }
+              />
+              {cumulative ? (
+                <SummaryValue
+                  label="ОТ ПЛАНА ГОДА"
+                  value={
+                    annualPlanAvailable
+                      ? `${annualProgressPercentage.toFixed(1)}% из ${formatNumber(annualPlanTotal)}`
+                      : "Нет данных"
+                  }
+                  color={
+                    annualPlanAvailable
+                      ? getCompletionColor(annualProgressPercentage)
+                      : "text.secondary"
+                  }
+                />
+              ) : null}
+            </Box>
+          </Paper>
+        ) : null}
+
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "100%",
+            overflowX: { xs: "hidden", sm: "visible" },
+            pb: { xs: 1, sm: 0 },
+          }}
+        >
+          <TimelineContainer sx={{ minWidth: 0 }}>
+            <ProgressBar />
+
+            {progressData.map((item, index) => {
+              const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
+              const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
+              const edgeOffset = isMobile ? 7 : 4;
+              const segmentColor =
+                itemGoalPercent > 0
+                  ? theme.palette.success.main
+                  : itemGoalPercent < 0
+                    ? theme.palette.error.main
+                    : theme.palette.grey[500];
+              const prevPosition =
+                index === 0
+                  ? 0
+                  : edgeOffset +
+                    ((index - 1) / (progressData.length - 1 || 1)) * (100 - edgeOffset * 2);
+              const currentPosition =
+                edgeOffset + (index / (progressData.length - 1 || 1)) * (100 - edgeOffset * 2);
+
+              return (
+                <Box
+                  key={`segment-${itemKey}`}
+                  sx={{
+                    position: "absolute",
+                    top: "20px",
+                    left: `${prevPosition}%`,
+                    width: `${Math.max(0, currentPosition - prevPosition)}%`,
+                    height: "4px",
+                    borderRadius: "2px",
+                    bgcolor: segmentColor,
+                    zIndex: 1,
+                  }}
+                />
+              );
+            })}
+
+            {progressData.map((item, index) => {
+              const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
+              const isActive = index === selectedMonthIndex;
+              const edgeOffset = isMobile ? 7 : 4;
+              const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
+              const itemCompletionPercent = calculateCompletionPercent(item.planQty, item.factQty);
+              const itemAnnualPercent = annualPlanAvailable
+                ? calculateCompletionPercent(annualPlanTotal, item.factQty)
+                : null;
+              const markerColor =
+                itemGoalPercent > 0
+                  ? theme.palette.success.main
+                  : itemGoalPercent < 0
+                    ? theme.palette.error.main
+                    : theme.palette.grey[500];
+              const position =
+                edgeOffset + (index / (progressData.length - 1 || 1)) * (100 - edgeOffset * 2);
+              const deviation = toNumber(item.factQty) - toNumber(item.planQty);
+
+              return (
+                <Tooltip
+                  key={itemKey}
+                  title={
+                    <CustomTooltip>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ mb: 1, textTransform: "capitalize" }}
+                      >
+                        {item.month} ({item.year})
+                      </Typography>
+                      <TooltipRow
+                        label={cumulative ? "Накопленный план" : "План"}
+                        value={formatNumber(item.planQty)}
+                      />
+                      <TooltipRow
+                        label={cumulative ? "Накопленный факт" : "Факт"}
+                        value={formatNumber(item.factQty)}
+                      />
+                      <TooltipRow
+                        label="Отклонение"
+                        value={`${deviation > 0 ? "+" : deviation < 0 ? "−" : ""}${formatNumber(
+                          Math.abs(deviation),
+                        )}`}
+                        color={deviation >= 0 ? "success.main" : "error.main"}
+                      />
+                      <TooltipRow
+                        label={cumulative ? "% плана периода" : "% к цели"}
+                        value={
+                          cumulative
+                            ? `${itemCompletionPercent.toFixed(1)}%`
+                            : formatSignedPercent(itemGoalPercent)
+                        }
+                        color={
+                          cumulative
+                            ? getCompletionColor(itemCompletionPercent)
+                            : getGoalPercentColor(itemGoalPercent)
+                        }
+                      />
+                      {cumulative ? (
+                        <TooltipRow
+                          label="% годового плана"
+                          value={
+                            annualPlanAvailable
+                              ? `${itemAnnualPercent.toFixed(1)}% из ${formatNumber(annualPlanTotal)}`
+                              : "Нет данных"
+                          }
+                          color={
+                            annualPlanAvailable
+                              ? getCompletionColor(itemAnnualPercent)
+                              : "text.secondary"
+                          }
+                        />
+                      ) : null}
+                    </CustomTooltip>
+                  }
+                  placement="top"
+                  arrow
+                >
+                  <MonthMarker position={position}>
+                    <MarkerCircle
+                      isActive={isActive}
+                      markerColor={markerColor}
+                    />
+                    <MonthLabel>
+                      <Typography
+                        variant="caption"
+                        fontWeight={isActive ? 700 : 400}
+                        sx={{ textTransform: "uppercase" }}
+                      >
+                        {getShortMonthName(item.month)}
+                      </Typography>
+                      {!isMobile ? (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                        >
+                          {formatNumber(item.planQty)}
+                        </Typography>
+                      ) : null}
+                    </MonthLabel>
+                  </MonthMarker>
+                </Tooltip>
+              );
+            })}
+          </TimelineContainer>
+        </Box>
+      </>
     );
-  }
+  };
 
   return (
     <Paper
       elevation={0}
       sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, width: "100%" }}
     >
-      <Box sx={{ mb: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ mb: 0 }}
-          >
-            {summaryTitle}
-          </Typography>
-          <ToggleButtonGroup
-            size="small"
-            color="primary"
-            exclusive
-            value={summaryMode}
-            onChange={(event, nextValue) => {
-              if (nextValue) setSummaryMode(nextValue);
-            }}
-          >
-            <ToggleButton value="actual">Актуальный месяц</ToggleButton>
-            <ToggleButton value="period">Весь период</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: { xs: "flex-start", sm: "center" },
-            flexDirection: { xs: "column", sm: "row" },
-            gap: { xs: 1.5, sm: 2 },
-            flexWrap: "wrap",
-          }}
-        >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
-            {summaryProgressPercentage.toFixed(1)}%
-            {isPlanReached
-              ? " · план выполнен"
-              : ` · осталось ${formatNumber((100 - summaryProgressPercentage).toFixed(2))}% до ${summaryTargetLabel}`}
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                bgcolor: isPlanReached ? "success.main" : "error.main",
-              }}
-            />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-            >
-              Факт
-            </Typography>
-            <Box sx={{ width: 12, height: 2, bgcolor: "grey.400" }} />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-            >
-              План
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      {summaryData && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            mb: 4,
-            bgcolor: "grey.50",
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-          }}
-        >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(2, minmax(0, 1fr))",
-                sm: "repeat(4, minmax(0, 1fr))",
-              },
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                {summaryMonthLabel}
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{ textTransform: "capitalize" }}
-              >
-                {summaryData.month}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                ПЛАН
-              </Typography>
-              <Typography variant="h6">{formatNumber(summaryData.planQty)}</Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                ФАКТ
-              </Typography>
-              <Typography
-                variant="h6"
-                color={getGoalPercentColor(summaryGoalPercent)}
-              >
-                {formatNumber(summaryData.factQty)}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                % К ЦЕЛИ
-              </Typography>
-              <Typography
-                variant="h6"
-                color={getGoalPercentColor(summaryGoalPercent)}
-              >
-                {formatSignedPercent(summaryGoalPercent)}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      )}
-
       <Box
         sx={{
-          width: "100%",
-          maxWidth: "100%",
-          overflowX: { xs: "hidden", sm: "visible" },
-          pb: { xs: 1, sm: 0 },
+          display: "flex",
+          alignItems: { xs: "flex-start", sm: "center" },
+          justifyContent: "space-between",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 1,
+          mb: expanded ? 3 : 0,
         }}
       >
-        <TimelineContainer sx={{ minWidth: 0 }}>
-          <ProgressBar />
-
-          {currentYearData.map((item, index) => {
-            const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
-            const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
-            const edgeOffset = isMobile ? 7 : 4;
-            const segmentColor =
-              itemGoalPercent > 0
-                ? theme.palette.success.main
-                : itemGoalPercent < 0
-                  ? theme.palette.error.main
-                  : theme.palette.grey[500];
-            const prevPosition =
-              index === 0
-                ? 0
-                : edgeOffset +
-                  ((index - 1) / (currentYearData.length - 1 || 1)) * (100 - edgeOffset * 2);
-            const currentPosition =
-              edgeOffset + (index / (currentYearData.length - 1 || 1)) * (100 - edgeOffset * 2);
-
-            return (
-              <Box
-                key={`segment-${itemKey}`}
-                sx={{
-                  position: "absolute",
-                  top: "20px",
-                  left: `${prevPosition}%`,
-                  width: `${Math.max(0, currentPosition - prevPosition)}%`,
-                  height: "4px",
-                  borderRadius: "2px",
-                  bgcolor: segmentColor,
-                  zIndex: 1,
-                }}
-              />
-            );
-          })}
-
-          {currentYearData.map((item, index) => {
-            const itemKey = item.periodKey ?? `${item.year ?? ""}-${item.month}-${index}`;
-            const isActive = index === selectedMonthIndex;
-            const edgeOffset = isMobile ? 7 : 4;
-            const itemGoalPercent = calculateGoalPercent(item.planQty, item.factQty);
-            const markerColor =
-              itemGoalPercent > 0
-                ? theme.palette.success.main
-                : itemGoalPercent < 0
-                  ? theme.palette.error.main
-                  : theme.palette.grey[500];
-            const position =
-              edgeOffset + (index / (currentYearData.length - 1 || 1)) * (100 - edgeOffset * 2);
-
-            return (
-              <Tooltip
-                key={itemKey}
-                title={
-                  <CustomTooltip>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ mb: 1, textTransform: "capitalize" }}
-                    >
-                      {item.month} ({item.year})
-                    </Typography>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        План
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                      >
-                        {formatNumber(item.planQty)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        Факт
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                      >
-                        {formatNumber(item.factQty)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        Отклонение
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color={item.planQty - item.factQty < 0 ? "success.main" : "error.main"}
-                      >
-                        ㅤ{item.planQty - item.factQty < 0 ? " + " : " - "}
-                        {formatNumber(Math.abs(item.planQty - item.factQty))}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        % к цели
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color={getGoalPercentColor(itemGoalPercent)}
-                      >
-                        {formatSignedPercent(itemGoalPercent)}
-                      </Typography>
-                    </Box>
-                  </CustomTooltip>
-                }
-                placement="top"
-                arrow
-              >
-                <MonthMarker position={position}>
-                  <MarkerCircle
-                    isActive={isActive}
-                    markerColor={markerColor}
-                  />
-                  <MonthLabel>
-                    <Typography
-                      variant="caption"
-                      fontWeight={isActive ? 700 : 400}
-                      sx={{ textTransform: "uppercase" }}
-                    >
-                      {getShortMonthName(item.month)}
-                    </Typography>
-                    {!isMobile ? (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        display="block"
-                      >
-                        {formatNumber(item.planQty)}
-                      </Typography>
-                    ) : null}
-                  </MonthLabel>
-                </MonthMarker>
-              </Tooltip>
-            );
-          })}
-        </TimelineContainer>
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 600, color: "#333" }}
+        >
+          {title}
+        </Typography>
+        {collapsible ? (
+          <Button
+            size="small"
+            onClick={() => setExpanded((value) => !value)}
+            endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          >
+            {expanded ? "Свернуть" : "Развернуть"}
+          </Button>
+        ) : null}
       </Box>
+      <Collapse
+        in={expanded}
+        timeout="auto"
+        unmountOnExit
+      >
+        {renderContent()}
+      </Collapse>
     </Paper>
   );
 };

@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useLayoutEffect, useMemo, useRef } from "react";
-import { Box, Typography } from "@mui/material";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Box, Button, Collapse, Typography } from "@mui/material";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const months = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
 const monthNames = [
@@ -47,8 +49,16 @@ export default function StatSaleMonthlyLineChart({
   valueSuffix = "шт",
   emptyText = "Нет данных для отображения",
   height = 560,
+  collapsible = false,
+  defaultExpanded = true,
+  resetKey,
 }) {
   const chartRef = useRef(null);
+  const [expanded, setExpanded] = useState(collapsible ? defaultExpanded : true);
+
+  useEffect(() => {
+    if (collapsible) setExpanded(defaultExpanded);
+  }, [collapsible, defaultExpanded, resetKey]);
 
   const chartSeries = useMemo(
     () =>
@@ -63,7 +73,7 @@ export default function StatSaleMonthlyLineChart({
   );
 
   useLayoutEffect(() => {
-    if (!chartRef.current || !chartSeries.length) return;
+    if (!expanded || !chartRef.current || !chartSeries.length) return;
 
     let root;
     let disposed = false;
@@ -227,6 +237,7 @@ export default function StatSaleMonthlyLineChart({
         itemSeries.strokes.template.setAll({
           strokeWidth: item.isMain ? 6 : 2.5,
           strokeOpacity: item.isMain ? 0.95 : 0.9,
+          ...(item.strokeDasharray ? { strokeDasharray: item.strokeDasharray } : {}),
         });
 
         itemSeries.bullets.push(() =>
@@ -341,44 +352,63 @@ export default function StatSaleMonthlyLineChart({
       disposed = true;
       root?.dispose();
     };
-  }, [chartSeries, valueSuffix]);
-
-  if (!chartSeries.length) {
-    return (
-      <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3, textAlign: "center" }}>
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ textAlign: "center", mb: 3 }}
-        >
-          {title}
-        </Typography>
-        <Typography color="textSecondary">{emptyText}</Typography>
-      </Box>
-    );
-  }
+  }, [chartSeries, expanded, valueSuffix]);
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
+      <Box
         sx={{
-          textAlign: "center",
-          mb: 2,
-          fontWeight: 600,
-          color: "#333",
+          display: "flex",
+          alignItems: { xs: "flex-start", sm: "center" },
+          justifyContent: "space-between",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 1,
+          mb: expanded ? 2 : 0,
         }}
       >
-        {title}
-      </Typography>
-      <Box
-        ref={chartRef}
-        sx={{
-          width: "100%",
-          height,
-        }}
-      />
+        <Typography
+          variant="h5"
+          sx={{
+            flex: 1,
+            textAlign: { xs: "left", sm: "center" },
+            fontWeight: 600,
+            color: "#333",
+          }}
+        >
+          {title}
+        </Typography>
+        {collapsible ? (
+          <Button
+            size="small"
+            onClick={() => setExpanded((value) => !value)}
+            endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          >
+            {expanded ? "Свернуть" : "Развернуть"}
+          </Button>
+        ) : null}
+      </Box>
+      <Collapse
+        in={expanded}
+        timeout="auto"
+        unmountOnExit
+      >
+        {chartSeries.length ? (
+          <Box
+            ref={chartRef}
+            sx={{
+              width: "100%",
+              height,
+            }}
+          />
+        ) : (
+          <Typography
+            color="textSecondary"
+            sx={{ py: 3, textAlign: "center" }}
+          >
+            {emptyText}
+          </Typography>
+        )}
+      </Collapse>
     </Box>
   );
 }

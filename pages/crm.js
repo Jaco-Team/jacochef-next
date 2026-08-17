@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 import useXLSExport from "@/src/hooks/useXLSXExport";
 import { LoadingProvider } from "@/components/site_clients/useClientsLoadingContext";
 import OrderDetailsModal from "@/components/shared/order/OrderDetailsModal";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, credentialsConfig } from "@/src/api_new";
 import axios from "axios";
 import queryString from "query-string";
 import useMyAlert from "@/src/hooks/useMyAlert";
@@ -130,7 +130,6 @@ export default function CrmPage() {
       method: "export_segment",
       module: "crm",
       version: 2,
-      login: localStorage.getItem("token"),
       data: JSON.stringify({ id: segment.id }),
     });
 
@@ -142,6 +141,7 @@ export default function CrmPage() {
         "https://apichef.jacochef.ru/api/crm/export_segment",
         payload,
         {
+          ...credentialsConfig,
           responseType: "blob",
           validateStatus: (status) => status < 500,
         },

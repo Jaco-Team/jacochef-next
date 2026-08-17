@@ -24,7 +24,9 @@ import { formatDateMin } from "@/src/helpers/ui/formatDate";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import ProgressTimeline from "@/components/stat_sale/ProgressTimeline";
 import axios from "axios";
+import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
+import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
 
 class StatSale_Tab_DynamicSale extends React.Component {
   constructor(props) {
@@ -42,6 +44,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
       pizzaLine: {},
       rollyLine: {},
       ordersLine: {},
+      annualPlanTotals: {
+        orders: null,
+        rolly: null,
+        pizza: null,
+      },
       data_clients_list_cafe: {},
       data_clients_list_kc: {},
       data_clients_list_site: {},
@@ -50,6 +57,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
       yearly_totals_kc: null,
       yearly_totals_site: null,
       expandedTableYears: {},
+      analyticsResetKey: 0,
       loading: false,
     };
   }
@@ -75,9 +83,26 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
   get_data_clients = async (exp = false) => {
     const { date_start, date_end, point } = this.state;
+    const selectedStart = dayjs(date_start).startOf("month");
+    const selectedEnd = dayjs(date_end).startOf("month");
+    const currentYear = new Date().getFullYear();
+    const currentYearStart = dayjs(`${currentYear}-01-01`).startOf("month");
+    const currentYearEnd = dayjs(`${currentYear}-12-01`).startOf("month");
+    const includesCurrentYear =
+      !selectedEnd.isBefore(currentYearStart, "month") &&
+      !selectedStart.isAfter(currentYearEnd, "month");
+    let requestStart = selectedStart.subtract(1, "month");
+    let requestEnd = selectedEnd;
+
+    if (includesCurrentYear) {
+      const annualPlanStart = currentYearStart.subtract(1, "month");
+      if (requestStart.isAfter(annualPlanStart, "month")) requestStart = annualPlanStart;
+      if (requestEnd.isBefore(currentYearEnd, "month")) requestEnd = currentYearEnd;
+    }
+
     const data = {
-      date_start: dayjs(date_start).subtract(1, "month").format("YYYY-MM"),
-      date_end: dayjs(date_end).format("YYYY-MM"),
+      date_start: requestStart.format("YYYY-MM"),
+      date_end: requestEnd.format("YYYY-MM"),
       points: point,
     };
 
@@ -92,15 +117,15 @@ class StatSale_Tab_DynamicSale extends React.Component {
             method: "export_data_dynamics",
             module: "orders_by_hour",
             version: 2,
-            login: localStorage.getItem("token"),
             data: this.state.res,
           },
           {
+            ...credentialsConfig,
             responseType: "blob",
-            headers: {
+            headers: getAuthHeaders({
               "Content-Type": "application/json",
               Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            },
+            }),
             timeout: 30000,
           },
         );
@@ -198,14 +223,60 @@ class StatSale_Tab_DynamicSale extends React.Component {
         if (value !== null) return value;
         return calcPercent(toNumber(current) - toNumber(previousYear), previousYear);
       };
-      const entries = Object.entries(res.res);
-      entries.map(([key, value], index) => {
-        const prevMonth = entries[index - 1]?.[1];
-        const [year] = key.split("-");
-        if (index !== 0 && prevMonth) {
+      const getPeriodIndex = (year, month) => Number(year) * 12 + Number(month) - 1;
+      const selectedStartIndex = getPeriodIndex(selectedStart.year(), selectedStart.month() + 1);
+      const selectedEndIndex = getPeriodIndex(selectedEnd.year(), selectedEnd.month() + 1);
+      const entries = Object.entries(res.res ?? {})
+        .map(([key, value]) => {
+          const [year, month] = key.split("-").map(Number);
+          return {
+            key,
+            value,
+            year,
+            month,
+            periodIndex: getPeriodIndex(year, month),
+          };
+        })
+        .filter(
+          (item) =>
+            Number.isFinite(item.year) &&
+            Number.isFinite(item.month) &&
+            item.month >= 1 &&
+            item.month <= 12,
+        )
+        .sort((a, b) => a.periodIndex - b.periodIndex);
+      const getAnnualPlanTotal = (getValue) => {
+        if (!includesCurrentYear) return null;
+
+        const monthlyPlans = new Map();
+        entries.forEach((item) => {
+          if (item.year !== currentYear) return;
+          const value = getValue(item.value);
+          if (value === null || value === undefined || value === "") return;
+          const parsed = Number(value);
+          if (Number.isFinite(parsed)) monthlyPlans.set(item.month, parsed);
+        });
+
+        if (monthlyPlans.size !== 12) return null;
+        return [...monthlyPlans.values()].reduce((sum, value) => sum + value, 0);
+      };
+      const annualPlanTotals = {
+        orders: getAnnualPlanTotal((value) => value.orders_plan ?? value.order_plan),
+        rolly: getAnnualPlanTotal((value) => value.rolly_plan),
+        pizza: getAnnualPlanTotal((value) => value.pizza_plan),
+      };
+
+      entries.forEach((entry, index) => {
+        const { key, value, year, month, periodIndex } = entry;
+        const prevMonth = entries[index - 1]?.value;
+        const isVisible = periodIndex >= selectedStartIndex && periodIndex <= selectedEndIndex;
+        if (!isVisible || !prevMonth) return;
+
+        if (index !== 0) {
           pizzaArr.push({
             periodKey: key,
-            year,
+            year: String(year),
+            monthNumber: month,
             month: value.month_name,
             planQty: value.pizza_plan,
             planLoad: getPlanLoad(value.pizza_plan_load, value.pizza_plan, pizzaCapacity),
@@ -233,10 +304,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
           });
         }
 
-        if (key !== 0 && prevMonth) {
+        if (prevMonth) {
           rollyArr.push({
             periodKey: key,
-            year,
+            year: String(year),
+            monthNumber: month,
             month: value.month_name,
             planQty: value.rolly_plan,
             planLoad: getPlanLoad(value.rolly_plan_load, value.rolly_plan, rollyCapacity),
@@ -264,10 +336,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
           });
         }
 
-        if (key !== 0 && prevMonth) {
+        if (prevMonth) {
           orderArr.push({
             periodKey: key,
-            year,
+            year: String(year),
+            monthNumber: month,
             month: value.month_name,
             planQty: value.orders_plan ?? value.order_plan,
             planLoad:
@@ -298,10 +371,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
           });
         }
 
-        if (key !== 0 && prevMonth) {
+        if (prevMonth) {
           accountArr.push({
             periodKey: key,
-            year,
+            year: String(year),
+            monthNumber: month,
             month: value.month_name,
             planQty: value.active_plan,
             planLoad: calcPercent(value.active, value.active_plan),
@@ -315,15 +389,19 @@ class StatSale_Tab_DynamicSale extends React.Component {
           });
         }
       });
-      this.setState({
+      this.setState((prevState) => ({
+        res,
         pizzaArr,
         rollyArr,
         orderArr,
         accountArr,
+        annualPlanTotals,
         pizzaLine: res.pizza_line ?? {},
         rollyLine: res.rolly_line ?? {},
         ordersLine: res.orders_line ?? {},
-      });
+        expandedTableYears: {},
+        analyticsResetKey: prevState.analyticsResetKey + 1,
+      }));
     } else {
       this.props.openAlert(res.st, res.text);
     }
@@ -392,7 +470,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
     });
   }
 
-  renderPizzaTable(pizzaArr, title, subTitle, options = {}) {
+  renderPizzaTable(pizzaArr, title, options = {}) {
     const {
       planFulfillment = false,
       tableKey = title,
@@ -664,26 +742,17 @@ class StatSale_Tab_DynamicSale extends React.Component {
             <TableHead>
               <TableRow>
                 <TableCell
-                  rowSpan={3}
+                  rowSpan={2}
                   sx={cellSx}
                 >
                   Период
                 </TableCell>
                 <TableCell
                   colSpan={planFulfillment ? 1 : 2}
-                  rowSpan={2}
                   sx={{ ...cellSx, backgroundColor: "#e8f5e9" }}
                 >
                   План
                 </TableCell>
-                <TableCell
-                  colSpan={factColumnCount}
-                  sx={{ ...cellSx, backgroundColor: "#e3f2fd" }}
-                >
-                  {subTitle}
-                </TableCell>
-              </TableRow>
-              <TableRow>
                 <TableCell
                   colSpan={factColumnCount}
                   sx={{ ...cellSx, backgroundColor: "#fff3e0" }}
@@ -692,21 +761,21 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во, шт</TableCell>
                 {!planFulfillment && (
                   <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка, %</TableCell>
                 )}
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во, шт</TableCell>
                 {showFactYoY && (
                   <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика г/г, %</TableCell>
                 )}
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м, %</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
                 <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
-                  {planFulfillment ? "п/ф, %" : "Загрузка, %"}
+                  {planFulfillment ? "План/Факт, %" : "Загрузка, %"}
                 </TableCell>
                 {hasPlanFact && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>п/ф, %</TableCell>
+                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>План/Факт, %</TableCell>
                 )}
               </TableRow>
             </TableHead>
@@ -765,7 +834,15 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
   render() {
     const { activeTab } = this.props;
-    const { data_clients_list, loading, pizzaArr, rollyArr, orderArr, accountArr } = this.state;
+    const {
+      loading,
+      pizzaArr,
+      rollyArr,
+      orderArr,
+      accountArr,
+      annualPlanTotals,
+      analyticsResetKey,
+    } = this.state;
 
     return (
       <Grid
@@ -816,7 +893,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {this.renderPizzaTable(orderArr, "Таблица с заказами", "Заказы, кол-во", {
+            {this.renderPizzaTable(orderArr, "Заказы", {
               planFulfillment: true,
             })}
             {Object.entries(this.state.ordersLine).length ? (
@@ -825,40 +902,108 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 title="Динамика заказов по годам"
                 dateStart={this.state.date_start}
                 dateEnd={this.state.date_end}
+                collapsible
+                defaultExpanded={false}
+                resetKey={analyticsResetKey}
               />
             ) : null}
-            {this.renderPizzaTable(rollyArr, "Таблица с роллами", "Ролл, шт")}
+            {orderArr.length ? (
+              <StatSalePlanFactLineChart
+                data={orderArr}
+                title="План / Факт — Заказы"
+                resetKey={analyticsResetKey}
+              />
+            ) : null}
+            {orderArr.length ? (
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+                  <ProgressTimeline
+                    data={orderArr}
+                    title="Выполнение плана по заказам"
+                    cumulative
+                    annualPlanTotal={annualPlanTotals.orders}
+                    resetKey={analyticsResetKey}
+                  />
+                </Box>
+              </Grid>
+            ) : null}
+            {this.renderPizzaTable(rollyArr, "Роллы")}
             {Object.entries(this.state.rollyLine).length ? (
               <StatSaleYearlyLineChart
                 rawData={this.state.rollyLine}
                 title="Динамика роллов по годам"
                 dateStart={this.state.date_start}
                 dateEnd={this.state.date_end}
+                collapsible
+                defaultExpanded={false}
+                resetKey={analyticsResetKey}
               />
             ) : null}
-            {this.renderPizzaTable(pizzaArr, "Таблица с пиццей", "Пицца, шт")}
+            {rollyArr.length ? (
+              <StatSalePlanFactLineChart
+                data={rollyArr}
+                title="План / Факт — Роллы"
+                resetKey={analyticsResetKey}
+              />
+            ) : null}
+            {rollyArr.length ? (
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+                  <ProgressTimeline
+                    data={rollyArr}
+                    title="Выполнение плана по роллам"
+                    cumulative
+                    annualPlanTotal={annualPlanTotals.rolly}
+                    resetKey={analyticsResetKey}
+                  />
+                </Box>
+              </Grid>
+            ) : null}
+            {this.renderPizzaTable(pizzaArr, "Пицца")}
             {Object.entries(this.state.pizzaLine).length ? (
               <StatSaleYearlyLineChart
                 rawData={this.state.pizzaLine}
                 title="Динамика пиццы по годам"
                 dateStart={this.state.date_start}
                 dateEnd={this.state.date_end}
+                collapsible
+                defaultExpanded={false}
+                resetKey={analyticsResetKey}
               />
             ) : null}
-            {this.renderPizzaTable(
-              accountArr,
-              "Таблица с аккаунтами (данные по всем кафе)",
-              "Аккаунты, кол-во",
-              {
-                planFulfillment: true,
-                showFactYoY: false,
-                preserveAccountPercentDecimals: true,
-              },
-            )}
+            {pizzaArr.length ? (
+              <StatSalePlanFactLineChart
+                data={pizzaArr}
+                title="План / Факт — Пицца"
+                resetKey={analyticsResetKey}
+              />
+            ) : null}
+            {pizzaArr.length ? (
+              <Grid size={{ xs: 12, sm: 12 }}>
+                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+                  <ProgressTimeline
+                    data={pizzaArr}
+                    title="Выполнение плана по пицце"
+                    cumulative
+                    annualPlanTotal={annualPlanTotals.pizza}
+                    resetKey={analyticsResetKey}
+                  />
+                </Box>
+              </Grid>
+            ) : null}
+            {this.renderPizzaTable(accountArr, "Аккаунты (данные по всем кафе)", {
+              planFulfillment: true,
+              showFactYoY: false,
+              preserveAccountPercentDecimals: true,
+            })}
             {accountArr.length ? (
               <Grid size={{ xs: 12, sm: 12 }}>
                 <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
-                  <ProgressTimeline data={accountArr} />
+                  <ProgressTimeline
+                    data={accountArr}
+                    title="Выполнение плана по аккаунтам"
+                    resetKey={analyticsResetKey}
+                  />
                 </Box>
               </Grid>
             ) : null}
