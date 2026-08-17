@@ -31,6 +31,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
 import AiAnalystTab from "@/components/end_analytics/AiAnalystTab";
 import {
@@ -533,6 +534,7 @@ function EndPage() {
   };
   const [isLoad, setIsLoad] = useState(false);
   const [module, setModule] = useState({});
+  const [access, setAccess] = useState(null);
   const [cities, setCities] = useState([]);
   const [form, setForm] = useState(standardForm);
   const [tableData, setTableData] = useState([]);
@@ -547,7 +549,7 @@ function EndPage() {
   const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(false);
   const [aiSource, setAiSource] = useState(null);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [siteDataRequestId, setSiteDataRequestId] = useState(null);
@@ -556,11 +558,25 @@ function EndPage() {
   const [siteDataHistory, setSiteDataHistory] = useState([]);
   const [historyChatMessages, setHistoryChatMessages] = useState(null);
   const [aiSiteDataSnapshot, setAiSiteDataSnapshot] = useState(null);
+  const accessApi = handleUserAccess(access || {});
+  const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
+  const canViewAiAnalyst = access !== null && accessApi.userCan("access", "ai_analyst");
 
   useEffect(() => {
     getData("get_all").then((data) => {
+      const nextAccess = data.access || {};
+      const nextAccessApi = handleUserAccess(nextAccess);
+
       document.title = data.module_info.name;
       setModule(data.module_info);
+      setAccess(nextAccess);
+      setActiveTab(
+        nextAccessApi.userCan("access", "analytics")
+          ? 0
+          : nextAccessApi.userCan("access", "ai_analyst")
+            ? 1
+            : false,
+      );
       setCities(data.cities);
       setSiteDataHistory(data.site_data_history || []);
       setLastUpdate(dayjs().format("HH:mm"));
@@ -2114,23 +2130,43 @@ function EndPage() {
         </Box>
       </Grid>
 
-      <Grid size={{ xs: 12 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, value) => setActiveTab(value)}
-          sx={{
-            mb: 1,
-            "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
-            "& .Mui-selected": { color: PRIMARY_COLOR },
-            "& .MuiTabs-indicator": { backgroundColor: PRIMARY_COLOR },
-          }}
-        >
-          <Tab label="Сквозная аналитика" />
-          <Tab label="AI аналитик" />
-        </Tabs>
-      </Grid>
+      {(canViewAnalytics || canViewAiAnalyst) && (
+        <Grid size={{ xs: 12 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            sx={{
+              mb: 1,
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
+              "& .Mui-selected": { color: PRIMARY_COLOR },
+              "& .MuiTabs-indicator": { backgroundColor: PRIMARY_COLOR },
+            }}
+          >
+            {canViewAnalytics && (
+              <Tab
+                value={0}
+                label="Сквозная аналитика"
+              />
+            )}
+            {canViewAiAnalyst && (
+              <Tab
+                value={1}
+                label="AI аналитик"
+              />
+            )}
+          </Tabs>
+        </Grid>
+      )}
 
-      {activeTab === 1 && (
+      {access !== null && !canViewAnalytics && !canViewAiAnalyst && (
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3 }}>
+            <Typography color="text.secondary">Нет доступа к вкладкам модуля</Typography>
+          </Paper>
+        </Grid>
+      )}
+
+      {activeTab === 1 && canViewAiAnalyst && (
         <Grid size={{ xs: 12 }}>
           <AiAnalystTab
             cities={cities}
@@ -2157,7 +2193,7 @@ function EndPage() {
         </Grid>
       )}
 
-      {activeTab === 0 && analyticsMeta && (
+      {activeTab === 0 && canViewAnalytics && analyticsMeta && (
         <Grid size={{ xs: 12 }}>
           <Box
             sx={{
@@ -2213,7 +2249,7 @@ function EndPage() {
         </Grid>
       )}
 
-      {activeTab === 0 && (
+      {activeTab === 0 && canViewAnalytics && (
         <>
           <Grid size={{ xs: 12 }}>
             <StyledPaper>
