@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -24,11 +24,12 @@ import {
   Typography,
 } from "@mui/material";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
-import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
 import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
+import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import SentimentSatisfiedAltOutlinedIcon from "@mui/icons-material/SentimentSatisfiedAltOutlined";
@@ -39,6 +40,15 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import { blockBorder, desktopOnlySx, EmptyState, formatDateTime, textSecondary } from "./shared";
 
 const actionButtonSx = { minHeight: 40, borderRadius: "8px", textTransform: "none" };
+const qrModalActionSx = {
+  ...actionButtonSx,
+  "@media (max-width: 600px)": {
+    minWidth: 40,
+    px: 1,
+    "& .qr-action-label": { display: "none" },
+    "& .MuiButton-startIcon": { m: 0 },
+  },
+};
 const linkChipSx = { minHeight: 40, fontWeight: 700 };
 
 const eventLabels = {
@@ -46,6 +56,23 @@ const eventLabels = {
   archived: "Архивирована",
   revoked: "Отозвана",
   deleted: "Удалена",
+};
+
+const revokeReasons = [
+  { id: "manual", name: "Другая причина" },
+  { id: "qr_compromised", name: "QR-код скомпрометирован" },
+  { id: "point_closed", name: "Кафе закрыто" },
+  { id: "zone_changed", name: "Зона изменена" },
+  { id: "incorrect_generation", name: "QR создан ошибочно" },
+];
+
+const reasonLabels = {
+  manual: "Другая причина",
+  qr_compromised: "QR-код скомпрометирован",
+  point_closed: "Кафе закрыто",
+  zone_changed: "Зона изменена",
+  incorrect_generation: "QR создан ошибочно",
+  replaced: "Ссылка заменена",
 };
 
 function pointName(points, link) {
@@ -130,6 +157,15 @@ function LinkChip({ link, variant, onCopy }) {
       </Tooltip>
     </Box>
   );
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function MobileLinkCard({ link, points, canEdit, loading, onOpen, onEdit, onArchive, onCopy }) {
@@ -218,9 +254,9 @@ function MobileLinkCard({ link, points, canEdit, loading, onOpen, onEdit, onArch
             <EditOutlinedIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Архивировать QR-ссылку">
+        <Tooltip title="Отозвать QR-ссылку">
           <IconButton
-            aria-label="Архивировать QR-ссылку"
+            aria-label="Отозвать QR-ссылку"
             color="error"
             disabled={!canEdit || loading || link.status !== "active"}
             onClick={(event) => {
@@ -228,7 +264,7 @@ function MobileLinkCard({ link, points, canEdit, loading, onOpen, onEdit, onArch
               onArchive(link);
             }}
           >
-            <ArchiveOutlinedIcon />
+            <BlockOutlinedIcon />
           </IconButton>
         </Tooltip>
       </Box>
@@ -261,6 +297,11 @@ export default function CafeReviewsLinks({
   const [history, setHistory] = useState([]);
   const [historyQuery, setHistoryQuery] = useState("");
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const historyRequestRef = useRef(0);
+  const [revokeTarget, setRevokeTarget] = useState(null);
+  const [revokeReason, setRevokeReason] = useState("manual");
+  const [revokeComment, setRevokeComment] = useState("");
 
   const pointOptions = useMemo(
     () => points.map((point) => ({ id: point.id, name: point.name })),
@@ -276,6 +317,27 @@ export default function CafeReviewsLinks({
   const openEdit = (link) => {
     setEditTarget(link);
     setEditVariant(link.ui_variant || "both");
+  };
+
+  const openRevokeDialog = (link) => {
+    setRevokeTarget(link);
+    setRevokeReason("manual");
+    setRevokeComment("");
+  };
+
+  const submitRevoke = () => {
+    if (!revokeTarget) return;
+
+    const comment = revokeComment.trim();
+    const reason = comment ? [revokeReason, comment].join(": ").slice(0, 255) : revokeReason;
+    const targetId = revokeTarget.id;
+    setRevokeTarget(null);
+    withConfirm(async () => {
+      const revoked = await onRevoke({ id: targetId, reason });
+      if (revoked && zoneModalTarget?.id === targetId) {
+        setZoneModalTarget(null);
+      }
+    }, "Отозвать QR-ссылку? Она перестанет работать, а причина останется в истории.")();
   };
 
   const openZoneModal = async (link) => {
@@ -298,10 +360,62 @@ export default function CafeReviewsLinks({
   };
 
   const loadFullHistory = async (query = historyQuery) => {
+    const requestId = ++historyRequestRef.current;
     setHistoryLoading(true);
     const items = await onLoadHistory(null, query);
-    setHistory(Array.isArray(items) ? items : []);
-    setHistoryLoading(false);
+    if (requestId === historyRequestRef.current) {
+      setHistory(Array.isArray(items) ? items : []);
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!historyExpanded) return undefined;
+
+    const timer = setTimeout(() => {
+      loadFullHistory(historyQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [historyExpanded, historyQuery]);
+
+  const printZoneQrs = () => {
+    if (!zoneModalTarget || (!zoneModalQrs.stars && !zoneModalQrs.emoji)) return;
+
+    const point = escapeHtml(pointName(points, zoneModalTarget));
+    const zone = escapeHtml(
+      zoneModalTarget.zone_code || zoneModalTarget.zone_label
+        ? `${zoneModalTarget.zone_code || ""}${zoneModalTarget.zone_code && zoneModalTarget.zone_label ? " — " : ""}${zoneModalTarget.zone_label || ""}`
+        : "Кафе",
+    );
+    const qrMarkup = [
+      ["stars", zoneModalQrs.stars, "Звёзды"],
+      ["emoji", zoneModalQrs.emoji, "Эмоджи"],
+    ]
+      .filter(([, image]) => image)
+      .map(
+        ([, image, label]) =>
+          `<figure><img src="${image}" alt="QR-код ${label}" /><figcaption>${label}</figcaption></figure>`,
+      )
+      .join("");
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document
+      .write(`<!doctype html><html lang="ru"><head><meta charset="utf-8" /><title>QR-коды — ${zone}</title><style>
+      @page { size: A4; margin: 16mm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: #111; font-family: Arial, sans-serif; }
+      h1 { margin: 0 0 4mm; font-size: 22pt; }
+      p { margin: 0 0 10mm; font-size: 12pt; }
+      main { display: flex; flex-wrap: wrap; gap: 12mm; align-items: flex-start; }
+      figure { width: 78mm; margin: 0; text-align: center; break-inside: avoid; }
+      img { display: block; width: 78mm; height: 78mm; }
+      figcaption { margin-top: 3mm; font-size: 13pt; font-weight: 700; }
+    </style></head><body><h1>${zone}</h1><p>${point}</p><main>${qrMarkup}</main></body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.addEventListener("load", () => printWindow.print(), { once: true });
   };
 
   const toggleEditVariant = (variant) => {
@@ -471,17 +585,17 @@ export default function CafeReviewsLinks({
                         <EditOutlinedIcon />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Архивировать QR-ссылку">
+                    <Tooltip title="Отозвать QR-ссылку">
                       <IconButton
-                        aria-label="Архивировать QR-ссылку"
+                        aria-label="Отозвать QR-ссылку"
                         color="error"
                         disabled={!canEdit || loading || link.status !== "active"}
-                        onClick={withConfirm(
-                          () => onRevoke({ id: link.id }),
-                          "Архивировать QR-ссылку? Она перестанет работать, а запись останется в истории.",
-                        )}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openRevokeDialog(link);
+                        }}
                       >
-                        <ArchiveOutlinedIcon />
+                        <BlockOutlinedIcon />
                       </IconButton>
                     </Tooltip>
                   </TableCell>
@@ -509,15 +623,63 @@ export default function CafeReviewsLinks({
               loading={loading}
               onOpen={openZoneModal}
               onEdit={openEdit}
-              onArchive={withConfirm(
-                () => onRevoke({ id: link.id }),
-                "Архивировать QR-ссылку? Она перестанет работать, а запись останется в истории.",
-              )}
+              onArchive={openRevokeDialog}
               onCopy={copy}
             />
           ))}
         </Box>
       ) : null}
+
+      <MyModal
+        open={Boolean(revokeTarget)}
+        onClose={() => setRevokeTarget(null)}
+        title="Отозвать QR-ссылку"
+        maxWidth="xs"
+      >
+        <DialogContent>
+          <Typography sx={{ mb: 1.5 }}>
+            {revokeTarget ? pointName(points, revokeTarget) : ""}
+          </Typography>
+          <MySelect
+            label="Причина"
+            data={revokeReasons}
+            value={revokeReason}
+            func={(event) => setRevokeReason(event.target.value)}
+            is_none={false}
+            disabled={loading}
+          />
+          <MyTextInput
+            label="Комментарий"
+            placeholder="Дополнительная причина (необязательно)"
+            value={revokeComment}
+            func={(event) => setRevokeComment(event.target.value)}
+            multiline
+            minRows={3}
+            maxRows={5}
+            inputProps={{ maxLength: 255 }}
+            disabled={loading}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setRevokeTarget(null)}
+            sx={actionButtonSx}
+          >
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<BlockOutlinedIcon />}
+            onClick={submitRevoke}
+            disabled={!canEdit || loading || !revokeTarget}
+            sx={actionButtonSx}
+          >
+            Отозвать
+          </Button>
+        </DialogActions>
+      </MyModal>
 
       <MyModal
         open={Boolean(zoneModalTarget)}
@@ -575,26 +737,6 @@ export default function CafeReviewsLinks({
                         alt={`QR-код ${variant === "stars" ? "звёзды" : "эмоджи"}`}
                         sx={{ display: "block", width: "100%", height: "100%" }}
                       />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          left: "50%",
-                          top: "50%",
-                          transform: "translate(-50%, -50%)",
-                          width: 42,
-                          height: 42,
-                          display: "grid",
-                          placeItems: "center",
-                          border: "3px solid #fff",
-                          borderRadius: "50%",
-                          bgcolor: "#fff",
-                          color: "#DD1A32",
-                          fontSize: 11,
-                          fontWeight: 900,
-                        }}
-                      >
-                        JACO
-                      </Box>
                     </Box>
                     <Typography sx={{ mt: 0.75, fontWeight: 700 }}>
                       {variant === "stars" ? "Звёзды" : "Эмоджи"}
@@ -609,33 +751,44 @@ export default function CafeReviewsLinks({
             ) : null}
           </Box>
           <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, mt: 2 }}>
-            {zoneModalTarget?.status === "active" ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<ArchiveOutlinedIcon />}
-                disabled={!canEdit || loading}
-                onClick={withConfirm(async () => {
-                  const archived = await onRevoke({ id: zoneModalTarget.id });
-                  if (archived) setZoneModalTarget(null);
-                }, "Архивировать QR-ссылку? Она перестанет работать, а запись останется в истории.")}
-                sx={actionButtonSx}
-              >
-                Архивировать
-              </Button>
-            ) : null}
             <Button
-              variant="contained"
+              variant="outlined"
+              color="error"
+              aria-label="Печать QR"
+              startIcon={<PrintOutlinedIcon />}
+              disabled={zoneModalLoading || (!zoneModalQrs.stars && !zoneModalQrs.emoji)}
+              onClick={printZoneQrs}
+              sx={qrModalActionSx}
+            >
+              <span className="qr-action-label">Печать</span>
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              aria-label="Изменить ссылки"
               startIcon={<EditOutlinedIcon />}
               disabled={!canEdit || loading}
               onClick={() => {
                 setZoneModalTarget(null);
                 openEdit(zoneModalTarget);
               }}
-              sx={actionButtonSx}
+              sx={qrModalActionSx}
             >
-              Изменить
+              <span className="qr-action-label">Изменить</span>
             </Button>
+            {zoneModalTarget?.status === "active" ? (
+              <Button
+                variant="contained"
+                color="error"
+                aria-label="Отозвать QR-ссылку"
+                startIcon={<BlockOutlinedIcon />}
+                disabled={!canEdit || loading}
+                onClick={() => openRevokeDialog(zoneModalTarget)}
+                sx={qrModalActionSx}
+              >
+                <span className="qr-action-label">Отозвать</span>
+              </Button>
+            ) : null}
           </Box>
           <Accordion
             defaultExpanded={false}
@@ -691,7 +844,7 @@ export default function CafeReviewsLinks({
                           <TableCell>{eventLabels[event.event_type] || event.event_type}</TableCell>
                           <TableCell>{event.ui_variant || "—"}</TableCell>
                           <TableCell>{event.actor_name || event.actor_id || "—"}</TableCell>
-                          <TableCell>{event.reason || "—"}</TableCell>
+                          <TableCell>{reasonLabels[event.reason] || event.reason || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -716,7 +869,7 @@ export default function CafeReviewsLinks({
           "&.Mui-expanded": { margin: "24px 0 32px" },
         }}
         onChange={(_, expanded) => {
-          if (expanded && history.length === 0 && !historyLoading) loadFullHistory("");
+          setHistoryExpanded(expanded);
         }}
       >
         <AccordionSummary
@@ -736,7 +889,7 @@ export default function CafeReviewsLinks({
             spacing={1.5}
             sx={{ mb: 1.5 }}
           >
-            <Grid size={{ xs: 12, md: 9 }}>
+            <Grid size={{ xs: 12 }}>
               <MyTextInput
                 type="search"
                 label="Поиск в истории"
@@ -744,21 +897,8 @@ export default function CafeReviewsLinks({
                 value={historyQuery}
                 func={(event) => setHistoryQuery(event.target.value)}
                 disabled={historyLoading}
+                sx={{ maxWidth: 300 }}
               />
-            </Grid>
-            <Grid
-              size={{ xs: 12, md: 3 }}
-              sx={{ display: "flex", alignItems: "end" }}
-            >
-              <Button
-                fullWidth
-                variant="outlined"
-                disabled={historyLoading}
-                onClick={() => loadFullHistory()}
-                sx={actionButtonSx}
-              >
-                Найти
-              </Button>
             </Grid>
           </Grid>
           {historyLoading ? (
@@ -798,9 +938,16 @@ export default function CafeReviewsLinks({
                           : "Кафе"}
                       </TableCell>
                       <TableCell>{eventLabels[event.event_type] || event.event_type}</TableCell>
-                      <TableCell>{event.link_id || "—"}</TableCell>
+                      <TableCell>
+                        <Typography
+                          component="code"
+                          sx={{ fontSize: 13, wordBreak: "break-all" }}
+                        >
+                          {event.short_code || event.token_hash || event.short_code_hash || "—"}
+                        </Typography>
+                      </TableCell>
                       <TableCell>{event.actor_name || event.actor_id || "—"}</TableCell>
-                      <TableCell>{event.reason || "—"}</TableCell>
+                      <TableCell>{reasonLabels[event.reason] || event.reason || "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
