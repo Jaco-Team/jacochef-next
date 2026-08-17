@@ -27,15 +27,14 @@ Form-поля формируются общим helper: `method`, `module=orders
 - `all_items` — позиции для фильтра отчёта;
 - `items` — дополнительный список позиций контракта.
 - `categories` — видимые категории;
-- `sources` — `0: Кафе`, `1: КЦ`, `2: Сайт`;
-- `order_types` — `1: Доставка`, `2: Самовывоз`, `3: Зал`, `4: Зал с собой`;
-- `payment_types` — `1: Нал`, `2: Безнал`.
+- `sources` — `2: Сайт`, `0: Кафе`, `1: КЦ`;
+- `order_types` — `1: Доставка`, `2: Самовывоз`, `3: Зал`, `4: Зал - с собой`;
+- `payment_types` — `2: Безнал`, `1: Нал`.
 
 Права:
 
 - `orders_extended` — доступ к модулю;
-- `export_items` — кнопка экспорта;
-- `send_feedback` — окно оценки заказа.
+- `export_items` — кнопка экспорта.
 
 FE не переименовывает поля raw access и использует существующий `handleUserAccess`.
 
@@ -47,11 +46,7 @@ FE не переименовывает поля raw access и используе
 {
   "date_start_true": "YYYY-MM-DD",
   "date_end_true": "YYYY-MM-DD",
-  "date_start_false": "YYYY-MM-DD|null",
-  "date_end_false": "YYYY-MM-DD|null",
   "is_show_claim": false,
-  "is_show_claim_last": false,
-  "is_show_marketing": false,
   "count_orders_min": 0,
   "count_orders_max": 0,
   "avg_check_min": 0,
@@ -60,7 +55,7 @@ FE не переименовывает поля raw access и используе
   "max_summ": 0,
   "promo": "",
   "no_promo": false,
-  "param": { "id": "all", "name": "Найти всех" },
+  "param": { "id": "all", "name": "Все" },
   "point": [{ "id": 1, "name": "..." }],
   "item": [{ "id": 1, "name": "..." }],
   "category_ids": [1, 2],
@@ -68,7 +63,6 @@ FE не переименовывает поля raw access и используе
   "order_type_ids": [1, 2],
   "payment_type_ids": [2],
   "with_promo": false,
-  "number": null,
   "page": 1,
   "perPage": 10,
   "sort_by": "id",
@@ -76,7 +70,7 @@ FE не переименовывает поля raw access и используе
 }
 ```
 
-`point` остаётся массивом выбранных объектов `CityCafeAutocomplete2`; при выборе города со всеми кафе FE передаёт все выбранные point objects.
+`point` заполняется через `CityCafeAutocomplete2` и содержит выбранные пользователем точки.
 
 Допустимые значения `param.id`: `all`, `new`, `current`, `lost`.
 
@@ -107,9 +101,7 @@ FE не переименовывает поля raw access и используе
 
 Ответ содержит поля заказа, позиций и ошибки заказа. Метод используется строковым modal flow.
 
-## `save_feedbacks`
-
-Метод использует request/response shape `site_clients/save_feedbacks`. Вызывать только при `send_feedback`.
+Форма сбора отзывов в модалке заказа этого модуля не используется. Модалка показывает только детали заказа.
 
 ## Семантика расширенных фильтров
 

@@ -24,7 +24,6 @@ export default function OrdersExtendedFilters({
   onSubmit,
   onKeyDown,
   onUpdateFilter,
-  onApplyPreset,
   onReset,
   onExport,
   mobile = false,
@@ -51,11 +50,23 @@ export default function OrdersExtendedFilters({
         <Grid
           container
           spacing={{ xs: 2, md: 1.5 }}
-          size={{ xs: 12, md: 9 }}
+          size={12}
         >
+          <Grid size={{ xs: 12, md: 6 }}>
+            <CityCafeAutocomplete2
+              points={points}
+              value={filters.point}
+              onChange={(value) => onUpdateFilter("point", value)}
+              label="Кафе"
+              placeholder="Выберите кафе"
+              withAll={points.length > 0}
+              withOrganizationMode={false}
+              compact
+            />
+          </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyDatePickerNew
-              label="Делал заказ от"
+              label="Дата от"
               value={filters.date_start_true}
               maxDate={filters.date_end_true ? dayjs(filters.date_end_true) : dayjs()}
               func={(value) => onUpdateFilter("date_start_true", value)}
@@ -63,7 +74,7 @@ export default function OrdersExtendedFilters({
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyDatePickerNew
-              label="Делал заказ до"
+              label="Дата до"
               value={filters.date_end_true}
               minDate={filters.date_start_true ? dayjs(filters.date_start_true) : undefined}
               maxDate={dayjs()}
@@ -71,24 +82,8 @@ export default function OrdersExtendedFilters({
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <MyDatePickerNew
-              label="Не заказывал от"
-              disabled={filters.param?.id === "new"}
-              value={filters.date_start_false}
-              func={(value) => onUpdateFilter("date_start_false", value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <MyDatePickerNew
-              label="Не заказывал до"
-              disabled={filters.param?.id === "new"}
-              value={filters.date_end_false}
-              func={(value) => onUpdateFilter("date_end_false", value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyTextInput
-              label="Количество заказов от"
+              label="Заказов за период от"
               type="number"
               min={0}
               value={filters.count_orders_min}
@@ -97,11 +92,29 @@ export default function OrdersExtendedFilters({
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyTextInput
-              label="Количество заказов до"
+              label="Заказов за период до"
               type="number"
               min={0}
               value={filters.count_orders_max}
               func={(event) => onUpdateFilter("count_orders_max", event)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <MyTextInput
+              label="Ср. чек от"
+              type="number"
+              min={0}
+              value={filters.avg_check_min}
+              func={(event) => onUpdateFilter("avg_check_min", event)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <MyTextInput
+              label="Ср. чек до"
+              type="number"
+              min={0}
+              value={filters.avg_check_max}
+              func={(event) => onUpdateFilter("avg_check_max", event)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -123,39 +136,12 @@ export default function OrdersExtendedFilters({
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <MyTextInput
-              label="Средний чек от"
-              type="number"
-              min={0}
-              value={filters.avg_check_min}
-              func={(event) => onUpdateFilter("avg_check_min", event)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <MyTextInput
-              label="Средний чек до"
-              type="number"
-              min={0}
-              value={filters.avg_check_max}
-              func={(event) => onUpdateFilter("avg_check_max", event)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyAutocomplite
-              label="Пользователи"
+              label="Клиенты"
               disableClearable
               data={PARAM_OPTIONS}
               value={filters.param}
               func={(_, value) => onUpdateFilter("param", value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <MyAutocomplite
-              label="Позиции в заказе"
-              multiple
-              data={allItems}
-              value={filters.item}
-              func={(_, value) => onUpdateFilter("item", value)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -165,6 +151,15 @@ export default function OrdersExtendedFilters({
               data={categories}
               value={filters.category_ids}
               func={(_, value) => onUpdateFilter("category_ids", value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <MyAutocomplite
+              label="Позиции в заказе"
+              multiple
+              data={allItems}
+              value={filters.item}
+              func={(_, value) => onUpdateFilter("item", value)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -194,36 +189,6 @@ export default function OrdersExtendedFilters({
               func={(_, value) => onUpdateFilter("payment_type_ids", value)}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-            <CityCafeAutocomplete2
-              points={points}
-              value={filters.point || []}
-              onChange={(value) => onUpdateFilter("point", value)}
-              label="Кафе"
-              withAll={points.length > 0}
-              withOrganizationMode={false}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <MyTextInput
-              label="Телефон"
-              type="text"
-              value={filters.number}
-              slotProps={{
-                input: {
-                  endAdornment: filters.number ? (
-                    <IconButton
-                      type="button"
-                      onClick={() => onUpdateFilter("number", { target: { value: "" } })}
-                    >
-                      <Close />
-                    </IconButton>
-                  ) : null,
-                },
-              }}
-              func={(event) => onUpdateFilter("number", event)}
-            />
-          </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyTextInput
               label="Промокод"
@@ -244,7 +209,7 @@ export default function OrdersExtendedFilters({
               func={(event) => onUpdateFilter("promo", event)}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={12}>
             <Stack
               direction="row"
               spacing={2}
@@ -258,99 +223,68 @@ export default function OrdersExtendedFilters({
                 func={(event) => onUpdateFilter("no_promo", event)}
               />
               <MyCheckBox
-                label="Заказы с промокодом"
+                label="Заказ с промокодом"
                 value={filters.with_promo}
                 func={(event) => onUpdateFilter("with_promo", event)}
+              />
+              <MyCheckBox
+                label="Была оформлена ошибка на заказ"
+                value={filters.is_show_claim}
+                func={(event) => onUpdateFilter("is_show_claim", event)}
               />
             </Stack>
           </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Stack spacing={1}>
+        <Grid size={12}>
+          <Stack
+            direction={isDesktop ? "row" : "column"}
+            justifyContent="flex-end"
+            spacing={1}
+          >
             <Button
               type="button"
-              variant="contained"
-              onClick={() => onApplyPreset("returned")}
+              size="small"
+              variant="outlined"
+              onClick={onReset}
+              disabled={loading.search || loading.bootstrap || loading.export}
+              sx={{ minHeight: 36, px: 2 }}
             >
-              Вернувшиеся
+              Сбросить
             </Button>
-            <Button
-              type="button"
-              variant="contained"
-              onClick={() => onApplyPreset("missed_90_days")}
-            >
-              Не делал заказ 90 дней
-            </Button>
-            <Button
-              type="button"
-              variant="contained"
-              onClick={() => onApplyPreset("new_week")}
-            >
-              Новые за неделю
-            </Button>
-            <MyCheckBox
-              label="Была оформлена ошибка на заказ"
-              value={filters.is_show_claim}
-              func={(event) => onUpdateFilter("is_show_claim", event)}
-            />
-            <MyCheckBox
-              label="Была оформлена ошибка на последний заказ"
-              value={filters.is_show_claim_last}
-              func={(event) => onUpdateFilter("is_show_claim_last", event)}
-            />
-            <MyCheckBox
-              label="Подписка на рекламную рассылку"
-              value={filters.is_show_marketing}
-              func={(event) => onUpdateFilter("is_show_marketing", event)}
-            />
             <Stack
-              direction={isDesktop ? "row" : "column"}
+              direction="row"
               spacing={1}
             >
               <Button
-                type="button"
-                variant="outlined"
-                onClick={onReset}
-                disabled={loading.search || loading.bootstrap || loading.export}
-                sx={{ flexGrow: 1 }}
+                type="submit"
+                size="small"
+                variant="contained"
+                disabled={loading.search || loading.bootstrap}
+                sx={{ minHeight: 36, px: 2, flexGrow: isDesktop ? 0 : 1 }}
               >
-                Сбросить
+                Применить
               </Button>
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{ flexGrow: 1 }}
-              >
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading.search || loading.bootstrap}
-                  sx={{ flexGrow: 1 }}
-                >
-                  Применить
-                </Button>
-                {canExport && rows.length > 0 ? (
-                  <Tooltip title="Скачать Excel">
-                    <span>
-                      <IconButton
-                        type="button"
-                        onClick={onExport}
-                        disabled={loading.export || loading.search}
-                        aria-label="Скачать Excel"
-                        sx={{
-                          flexShrink: 0,
-                          width: 46,
-                          height: 46,
-                          borderRadius: 1,
-                        }}
-                      >
-                        {loading.export ? <CircularProgress size={22} /> : <ExcelIcon />}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                ) : null}
-              </Stack>
+              {canExport && rows.length > 0 ? (
+                <Tooltip title="Скачать Excel">
+                  <span>
+                    <IconButton
+                      type="button"
+                      onClick={onExport}
+                      disabled={loading.export || loading.search}
+                      aria-label="Скачать Excel"
+                      sx={{
+                        flexShrink: 0,
+                        width: 36,
+                        height: 36,
+                        borderRadius: 1,
+                      }}
+                    >
+                      {loading.export ? <CircularProgress size={18} /> : <ExcelIcon />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              ) : null}
             </Stack>
           </Stack>
         </Grid>

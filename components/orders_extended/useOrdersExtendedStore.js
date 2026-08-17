@@ -5,20 +5,16 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export const PARAM_OPTIONS = [
-  { id: "all", name: "Найти всех" },
-  { id: "new", name: "Только новые" },
-  { id: "current", name: "Только текущих" },
+  { id: "all", name: "Все" },
+  { id: "new", name: "Новые" },
+  { id: "current", name: "Действующие" },
   { id: "lost", name: "Ушедшие" },
 ];
 
 export const DEFAULT_FILTERS = {
   date_start_true: null,
   date_end_true: null,
-  date_start_false: null,
-  date_end_false: null,
   is_show_claim: false,
-  is_show_claim_last: false,
-  is_show_marketing: false,
   count_orders_min: 0,
   count_orders_max: 0,
   min_summ: 0,
@@ -35,8 +31,6 @@ export const DEFAULT_FILTERS = {
   source_ids: [],
   order_type_ids: [],
   payment_type_ids: [],
-  number: "",
-  preset: "",
 };
 
 const ORDERS_EXTENDED_FILTERS_STORAGE_KEY = "orders_extended:filters";
@@ -61,13 +55,20 @@ const normalizePersistedDate = (value) => {
 };
 
 const normalizePersistedFilters = (filters = {}) => ({
-  ...cloneDefaultFilters(),
-  ...filters,
   date_start_true: normalizePersistedDate(filters.date_start_true),
   date_end_true: normalizePersistedDate(filters.date_end_true),
-  date_start_false: normalizePersistedDate(filters.date_start_false),
-  date_end_false: normalizePersistedDate(filters.date_end_false),
-  param: filters.param ?? cloneDefaultFilters().param,
+  is_show_claim: Boolean(filters.is_show_claim),
+  count_orders_min: filters.count_orders_min ?? 0,
+  count_orders_max: filters.count_orders_max ?? 0,
+  min_summ: filters.min_summ ?? 0,
+  max_summ: filters.max_summ ?? 0,
+  avg_check_min: filters.avg_check_min ?? 0,
+  avg_check_max: filters.avg_check_max ?? 0,
+  promo: filters.promo ?? "",
+  no_promo: Boolean(filters.no_promo),
+  with_promo: Boolean(filters.with_promo),
+  param:
+    PARAM_OPTIONS.find((option) => option.id === filters.param?.id) ?? cloneDefaultFilters().param,
   point: Array.isArray(filters.point) ? filters.point : [],
   item: Array.isArray(filters.item) ? filters.item : [],
   category_ids: Array.isArray(filters.category_ids) ? filters.category_ids : [],

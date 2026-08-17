@@ -88,6 +88,9 @@ export default function OrdersExtendedPage() {
     return formatted.isValid() ? formatted.format("YYYY-MM-DD") : null;
   };
 
+  const selectedIds = (values = []) =>
+    values.map((value) => (typeof value === "object" ? value?.id : value));
+
   const isValidBootstrapResponse = (response) => {
     if (response?.st === false) return false;
     if (!response || typeof response !== "object" || Array.isArray(response)) return false;
@@ -103,11 +106,7 @@ export default function OrdersExtendedPage() {
   ) => ({
     date_start_true: formatDateForApi(currentFilters.date_start_true),
     date_end_true: formatDateForApi(currentFilters.date_end_true),
-    date_start_false: formatDateForApi(currentFilters.date_start_false),
-    date_end_false: formatDateForApi(currentFilters.date_end_false),
     is_show_claim: Boolean(currentFilters.is_show_claim),
-    is_show_claim_last: Boolean(currentFilters.is_show_claim_last),
-    is_show_marketing: Boolean(currentFilters.is_show_marketing),
     count_orders_min: currentFilters.count_orders_min,
     count_orders_max: currentFilters.count_orders_max,
     min_summ: currentFilters.min_summ,
@@ -120,11 +119,10 @@ export default function OrdersExtendedPage() {
     param: currentFilters.param,
     point: currentFilters.point,
     item: currentFilters.item,
-    category_ids: currentFilters.category_ids,
-    source_ids: currentFilters.source_ids,
-    order_type_ids: currentFilters.order_type_ids,
-    payment_type_ids: currentFilters.payment_type_ids,
-    number: currentFilters.number || null,
+    category_ids: selectedIds(currentFilters.category_ids),
+    source_ids: selectedIds(currentFilters.source_ids),
+    order_type_ids: selectedIds(currentFilters.order_type_ids),
+    payment_type_ids: selectedIds(currentFilters.payment_type_ids),
     page: nextPage + 1,
     perPage: nextPerPage,
     sort_by: nextSortBy,
@@ -132,21 +130,12 @@ export default function OrdersExtendedPage() {
   });
 
   const normalizeFilterValue = (name, value) => {
-    if (name === "number") return value?.target?.value?.replace(/\D/g, "") || "";
-    if (
-      name === "is_show_claim" ||
-      name === "is_show_claim_last" ||
-      name === "is_show_marketing" ||
-      name === "no_promo" ||
-      name === "with_promo"
-    ) {
+    if (name === "is_show_claim" || name === "no_promo" || name === "with_promo") {
       return Boolean(value?.target?.checked);
     }
     if (
       name === "date_start_true" ||
       name === "date_end_true" ||
-      name === "date_start_false" ||
-      name === "date_end_false" ||
       name === "point" ||
       name === "item" ||
       name === "param" ||
@@ -177,48 +166,7 @@ export default function OrdersExtendedPage() {
       patch.no_promo = false;
     }
 
-    if (name === "param" && nextValue?.id === "new") {
-      patch.date_start_false = null;
-      patch.date_end_false = null;
-    }
-
     setFilters(patch);
-  };
-
-  const applyPreset = (presetName) => {
-    if (presetName === "returned") {
-      setFilters({
-        preset: presetName,
-        date_start_true: dayjs().subtract(91, "day"),
-        date_end_true: dayjs().subtract(1, "day"),
-        date_start_false: dayjs().subtract(6, "month"),
-        date_end_false: dayjs().subtract(92, "day"),
-        count_orders_min: 1,
-      });
-      return;
-    }
-
-    if (presetName === "missed_90_days") {
-      setFilters({
-        preset: presetName,
-        date_start_false: dayjs().subtract(91, "day"),
-        date_end_false: dayjs().subtract(1, "day"),
-        date_start_true: dayjs().subtract(6, "month"),
-        date_end_true: dayjs().subtract(92, "day"),
-        count_orders_min: 1,
-      });
-      return;
-    }
-
-    if (presetName === "new_week") {
-      setFilters({
-        preset: presetName,
-        date_start_true: dayjs().subtract(8, "day"),
-        date_end_true: dayjs().subtract(1, "day"),
-        date_start_false: null,
-        date_end_false: null,
-      });
-    }
   };
 
   const runBootstrap = async () => {
@@ -249,12 +197,6 @@ export default function OrdersExtendedPage() {
     currentFilters = filters,
     preserveRows = true,
   } = {}) => {
-    const phone = currentFilters?.number || "";
-    if (phone.length > 0 && phone.length < 4) {
-      showAlertRef.current("Минимум 4 цифры в телефоне");
-      return false;
-    }
-
     const requestId = ++reportRequestRef.current;
     const payload = buildReportPayload(
       currentFilters,
@@ -458,11 +400,7 @@ export default function OrdersExtendedPage() {
       />
       <OrdersExtendedOrderModal
         orderModal={orderModal}
-        canSendFeedback={canAccess("send_feedback")}
-        getData={(method, payload) => apiRef.current(method, payload)}
-        showAlert={showAlert}
         onClose={handleOrderModalClose}
-        onOpenOrder={runOpenOrder}
       />
       <Grid
         container
@@ -494,7 +432,6 @@ export default function OrdersExtendedPage() {
                 onSubmit={handleSearchSubmit}
                 onKeyDown={handleDesktopFormKeyDown}
                 onUpdateFilter={updateFilter}
-                onApplyPreset={applyPreset}
                 onReset={handleResetFilters}
                 onExport={runExport}
               />
@@ -523,7 +460,6 @@ export default function OrdersExtendedPage() {
                   onSubmit={handleSearchSubmit}
                   onKeyDown={handleDesktopFormKeyDown}
                   onUpdateFilter={updateFilter}
-                  onApplyPreset={applyPreset}
                   onReset={handleResetFilters}
                   onExport={runExport}
                   mobile
