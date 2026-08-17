@@ -20,6 +20,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import Masonry from "@mui/lab/Masonry";
 import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import SearchIcon from "@mui/icons-material/Search";
@@ -34,6 +35,11 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import AiDailyMetricsChart from "@/components/end_analytics/AiDailyMetricsChart";
 import AiTrafficSourcesChart from "@/components/end_analytics/AiTrafficSourcesChart";
@@ -58,6 +64,13 @@ export const AI_ANALYST_SOURCES = [
   { id: 9, name: "vk" },
   { id: 10, name: "ya" },
   { id: 11, name: "yandex" },
+];
+
+const COMPARISON_MODES = [
+  { id: "previous_period", name: "Предыдущий равный период" },
+  { id: "previous_month", name: "Те же даты прошлого месяца" },
+  { id: "previous_year", name: "Те же даты прошлого года" },
+  { id: "custom", name: "Свой период" },
 ];
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -108,14 +121,20 @@ const RATING_COLORS = {
   unknown: "#90a4ae",
 };
 
+const BASIS_LABELS = {
+  crm: "CRM",
+  crm_orders: "CRM",
+  crm_orders_to_metrika_visits: "CRM + Метрика",
+  metrika_attributed: "Атрибуция Метрики",
+  metrika_to_crm: "Метрика / CRM",
+};
+
 const METRIC_CONFIG = [
   { key: "spend", dailyKey: "spend", label: "Расходы", color: "#3975ea" },
   {
-    key: "conversions",
-    dailyKey: "conversions",
-    label: "Конверсии",
+    key: "attributed_orders",
+    label: "Атрибут. заказы",
     color: "#2eaf6d",
-    isDailyTotal: true,
   },
   { key: "cpa", dailyKey: "cpa", label: "CPA", color: "#8b5cf6" },
   { key: "ctr", dailyKey: "ctr", label: "CTR", color: "#f59e0b" },
@@ -123,14 +142,16 @@ const METRIC_CONFIG = [
 ];
 
 const SECONDARY_METRICS = [
-  ["revenue", "Выручка"],
-  ["orders", "Заказы"],
+  ["crm_revenue", "Выручка CRM"],
+  ["crm_orders", "Заказы CRM"],
+  ["attributed_revenue", "Атрибут. выручка"],
   ["visits", "Визиты"],
   ["conversion", "Конверсия"],
   ["clicks", "Клики"],
   ["leads", "Лиды"],
   ["cpl", "CPL"],
   ["roi", "ROI"],
+  ["roas", "ROAS"],
   ["cpc", "CPC"],
   ["cpm", "CPM"],
 ];
@@ -206,6 +227,248 @@ const formatPeriod = (period) => {
     "DD.MM.YYYY",
   )}`;
 };
+
+const renderInlineMarkdown = (text, keyPrefix) => {
+  const parts = String(text).split(
+    /(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\((?:https?:\/\/|mailto:)[^)\s]+\))/g,
+  );
+
+  return parts.map((part, index) => {
+    const key = `${keyPrefix}_${index}`;
+
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={key}>{part.slice(2, -2)}</strong>;
+    }
+
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <Box
+          key={key}
+          component="code"
+          sx={{ px: 0.5, py: 0.15, borderRadius: 0.75, backgroundColor: "#eef0f3" }}
+        >
+          {part.slice(1, -1)}
+        </Box>
+      );
+    }
+
+    const link = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^)\s]+)\)$/);
+    if (link) {
+      return <React.Fragment key={key}>{link[1]}</React.Fragment>;
+    }
+
+    return part;
+  });
+};
+
+const MarkdownMessage = ({ text }) => {
+  const lines = String(text || "")
+    .replaceAll("\r\n", "\n")
+    .split("\n");
+  const blocks = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    if (line.trim().startsWith("```")) {
+      const codeLines = [];
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      index += 1;
+      blocks.push(
+        <Box
+          key={`code_${index}`}
+          component="pre"
+          sx={{ m: 0, mb: 1.25, p: 1, overflowX: "auto", borderRadius: 1, bgcolor: "#eef0f3" }}
+        >
+          <Box component="code">{codeLines.join("\n")}</Box>
+        </Box>,
+      );
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) {
+      blocks.push(
+        <Typography
+          key={`heading_${index}`}
+          component="div"
+          variant={heading[1].length <= 2 ? "subtitle2" : "body2"}
+          fontWeight={700}
+          sx={{ mt: blocks.length ? 1.25 : 0, mb: 0.75 }}
+        >
+          {renderInlineMarkdown(heading[2], `heading_${index}`)}
+        </Typography>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (/^\s*\d+[.)]\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length) {
+        const item = lines[index].match(/^\s*(\d+)[.)]\s+(.+)$/);
+        if (!item) break;
+        items.push({ number: Number(item[1]), text: item[2] });
+        index += 1;
+        while (index < lines.length && !lines[index].trim()) index += 1;
+      }
+      blocks.push(
+        <Box
+          key={`ordered_${index}`}
+          component="ol"
+          sx={{ mt: 0, mb: 1.25, pl: 2.75, "& li": { mb: 0.75, pl: 0.25 } }}
+        >
+          {items.map((item, itemIndex) => (
+            <Box
+              key={`ordered_${index}_${itemIndex}`}
+              component="li"
+              value={item.number}
+            >
+              {renderInlineMarkdown(item.text, `ordered_${index}_${itemIndex}`)}
+            </Box>
+          ))}
+        </Box>,
+      );
+      continue;
+    }
+
+    if (/^\s*[-*+]\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length) {
+        const item = lines[index].match(/^\s*[-*+]\s+(.+)$/);
+        if (!item) break;
+        items.push(item[1]);
+        index += 1;
+        while (index < lines.length && !lines[index].trim()) index += 1;
+      }
+      blocks.push(
+        <Box
+          key={`unordered_${index}`}
+          component="ul"
+          sx={{ mt: 0, mb: 1.25, pl: 2.75, "& li": { mb: 0.75, pl: 0.25 } }}
+        >
+          {items.map((item, itemIndex) => (
+            <Box
+              key={`unordered_${index}_${itemIndex}`}
+              component="li"
+            >
+              {renderInlineMarkdown(item, `unordered_${index}_${itemIndex}`)}
+            </Box>
+          ))}
+        </Box>,
+      );
+      continue;
+    }
+
+    const paragraphLines = [line.trim()];
+    index += 1;
+    while (
+      index < lines.length &&
+      lines[index].trim() &&
+      !/^(#{1,6})\s+/.test(lines[index]) &&
+      !/^\s*(?:\d+[.)]|[-*+])\s+/.test(lines[index]) &&
+      !lines[index].trim().startsWith("```")
+    ) {
+      paragraphLines.push(lines[index].trim());
+      index += 1;
+    }
+    blocks.push(
+      <Typography
+        key={`paragraph_${index}`}
+        component="p"
+        variant="body2"
+        sx={{ mt: 0, mb: 1.25, lineHeight: 1.6, "&:last-child": { mb: 0 } }}
+      >
+        {renderInlineMarkdown(paragraphLines.join(" "), `paragraph_${index}`)}
+      </Typography>,
+    );
+  }
+
+  return <Box sx={{ overflowWrap: "anywhere" }}>{blocks}</Box>;
+};
+
+const MemoizedMarkdownMessage = React.memo(MarkdownMessage);
+
+const ChatComposer = React.memo(function ChatComposer({ canChat, loading, threadId, onSend }) {
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    setValue("");
+  }, [threadId]);
+
+  const submit = () => {
+    const prompt = value.trim();
+    if (!prompt || !canChat || loading) return;
+
+    setValue("");
+    onSend(prompt);
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        gap: 1,
+        alignItems: "flex-end",
+        p: 1.5,
+        flexShrink: 0,
+        backgroundColor: "white",
+      }}
+    >
+      <TextField
+        fullWidth
+        multiline
+        maxRows={4}
+        size="small"
+        placeholder={canChat ? "Спросите что-нибудь по отчёту..." : "Сначала получите отчёт"}
+        value={value}
+        disabled={!canChat || loading}
+        onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            submit();
+          }
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "10px",
+            backgroundColor: "white",
+          },
+        }}
+      />
+      <IconButton
+        color="primary"
+        onClick={submit}
+        disabled={!canChat || loading || !value.trim()}
+        sx={{
+          backgroundColor: PRIMARY_COLOR,
+          color: "white",
+          borderRadius: "10px",
+          width: 40,
+          height: 40,
+          "&:hover": { backgroundColor: "#a00028" },
+          "&.Mui-disabled": {
+            backgroundColor: "#f0f0f0",
+            color: "#bdbdbd",
+          },
+        }}
+      >
+        <SendIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+});
 
 const SectionHeader = ({ title, status, reason }) => (
   <Box sx={{ mb: 2 }}>
@@ -330,9 +593,20 @@ const MetricCard = ({ config, metric, trendValues }) => (
     <Typography
       variant="caption"
       color={metric?.status === "available" ? "success.main" : "text.secondary"}
+      sx={{ display: "block" }}
     >
       {STATUS_LABELS[metric?.status] || "Нет данных"}
+      {metric?.basis ? ` · ${BASIS_LABELS[metric.basis] || metric.basis}` : ""}
     </Typography>
+    {metric?.reason && (
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", mt: 0.25, lineHeight: 1.25 }}
+      >
+        {metric.reason}
+      </Typography>
+    )}
     <MiniSparkline
       values={trendValues}
       color={config.color}
@@ -505,12 +779,18 @@ export default function AiAnalystTab({
   siteDataRequestId,
   history = [],
   historyChatMessages = null,
+  chatThreads = [],
+  activeChatThreadId = null,
   onCitiesChange,
   onFieldChange,
   onSourceChange,
   onApply,
   onReset,
   onSendChat,
+  onSelectChatThread,
+  onCreateChatThread,
+  onUpdateChatThread,
+  onDeleteChatThread,
   onSelectHistory,
   onExport,
   canExport = false,
@@ -518,19 +798,27 @@ export default function AiAnalystTab({
   canAnalyze = false,
 }) {
   const [chatMessages, setChatMessages] = useState([]);
-  const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
   const [reportHtml, setReportHtml] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   const [analyzeLoading, setAnalyzeLoading] = useState(false);
+  const [chatMenuAnchor, setChatMenuAnchor] = useState(null);
+  const [aiGuideOpen, setAiGuideOpen] = useState(false);
+  const [renameChatOpen, setRenameChatOpen] = useState(false);
+  const [deleteChatOpen, setDeleteChatOpen] = useState(false);
+  const [chatTitle, setChatTitle] = useState("");
   const chatListRef = useRef(null);
+  const chatRequestInFlightRef = useRef(false);
+  const activeChatThread = chatThreads.find(
+    (thread) => Number(thread.id) === Number(activeChatThreadId),
+  );
 
   useEffect(() => {
     setChatMessages(Array.isArray(historyChatMessages) ? historyChatMessages : []);
-    setChatInput("");
     setChatLoading(false);
-  }, [siteDataRequestId, historyChatMessages]);
+    chatRequestInFlightRef.current = false;
+  }, [siteDataRequestId, activeChatThreadId, historyChatMessages]);
 
   useEffect(() => {
     if (chatListRef.current) {
@@ -538,32 +826,35 @@ export default function AiAnalystTab({
     }
   }, [chatMessages, chatLoading]);
 
-  const canChat = Boolean(analysis && siteDataRequestId);
+  const canChat = Boolean(analysis && siteDataRequestId && activeChatThreadId);
 
-  const handleSendChat = async () => {
-    const prompt = chatInput.trim();
-    if (!prompt || chatLoading || !canChat || !onSendChat) return;
+  const handleSendChat = async (prompt) => {
+    if (!prompt || chatRequestInFlightRef.current || !canChat || !onSendChat) return;
 
+    chatRequestInFlightRef.current = true;
     setChatMessages((prev) => [...prev, { role: "user", text: prompt }]);
-    setChatInput("");
     setChatLoading(true);
 
     try {
-      const data = await onSendChat(prompt, analysis);
+      const data = await onSendChat(prompt);
       if (data?.st === false) {
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            text: data?.text || "Не удалось получить ответ AI",
-            isError: true,
-          },
-        ]);
+        if (!data?.chat_synced) {
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              text: data?.text || "Не удалось получить ответ AI",
+              isError: true,
+            },
+          ]);
+        }
         return;
       }
 
-      const reply = data?.answer || "Пустой ответ AI";
-      setChatMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+      if (!data?.chat_synced) {
+        const reply = data?.answer || "Пустой ответ AI";
+        setChatMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+      }
     } catch (_) {
       setChatMessages((prev) => [
         ...prev,
@@ -574,15 +865,41 @@ export default function AiAnalystTab({
         },
       ]);
     } finally {
+      chatRequestInFlightRef.current = false;
       setChatLoading(false);
     }
   };
 
-  const handleChatKeyDown = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSendChat();
-    }
+  const handleCreateChat = async () => {
+    setChatMenuAnchor(null);
+    await onCreateChatThread?.();
+  };
+
+  const handleRenameChat = () => {
+    setChatMenuAnchor(null);
+    setChatTitle(activeChatThread?.title || "");
+    setRenameChatOpen(true);
+  };
+
+  const confirmRenameChat = async () => {
+    const title = chatTitle.trim();
+    if (!activeChatThreadId || !title) return;
+    await onUpdateChatThread?.(activeChatThreadId, { title });
+    setRenameChatOpen(false);
+  };
+
+  const handleTogglePin = async () => {
+    setChatMenuAnchor(null);
+    if (!activeChatThreadId) return;
+    await onUpdateChatThread?.(activeChatThreadId, {
+      is_pinned: !activeChatThread?.is_pinned,
+    });
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!activeChatThreadId) return;
+    await onDeleteChatThread?.(activeChatThreadId);
+    setDeleteChatOpen(false);
   };
 
   const handleExportClick = (fileType) => {
@@ -803,6 +1120,40 @@ export default function AiAnalystTab({
                   func={(event, data) => onSourceChange(data)}
                 />
               </Grid>
+
+              <Grid size={{ xs: 12, sm: form.comparisonMode?.id === "custom" ? 4 : 6 }}>
+                <MyAutocomplite
+                  label="Период сравнения"
+                  data={COMPARISON_MODES}
+                  multiple={false}
+                  value={form.comparisonMode}
+                  func={(event, data) => onFieldChange("comparisonMode", data)}
+                />
+              </Grid>
+
+              {form.comparisonMode?.id === "custom" && (
+                <>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyDatePickerNew
+                      label="Сравнение от"
+                      customActions={true}
+                      value={dayjs(form.comparisonDateStart)}
+                      maxDate={dayjs(form.comparisonDateEnd)}
+                      func={(e) => onFieldChange("comparisonDateStart", e)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <MyDatePickerNew
+                      label="Сравнение до"
+                      customActions={true}
+                      value={dayjs(form.comparisonDateEnd)}
+                      minDate={dayjs(form.comparisonDateStart)}
+                      maxDate={dayjs().subtract(1, "day")}
+                      func={(e) => onFieldChange("comparisonDateEnd", e)}
+                    />
+                  </Grid>
+                </>
+              )}
 
               <Grid
                 size={{ xs: 12 }}
@@ -1030,12 +1381,60 @@ export default function AiAnalystTab({
                           >
                             {formatValue(metric)}
                           </Typography>
+                          {metric?.basis && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                            >
+                              {BASIS_LABELS[metric.basis] || metric.basis}
+                            </Typography>
+                          )}
                         </Box>
                       );
                     })}
                   </Box>
                 </Paper>
               </Grid>
+
+              {analysis.data_quality && (
+                <Grid size={{ xs: 12 }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{ p: 2, borderRadius: 2, borderColor: "#e8ebf0" }}
+                  >
+                    <SectionHeader title="Качество данных" />
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      <Chip
+                        size="small"
+                        color={analysis.data_quality.attribution_available ? "success" : "warning"}
+                        label={
+                          analysis.data_quality.attribution_available
+                            ? "Атрибуция доступна"
+                            : "Атрибуция частичная"
+                        }
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`Покрытие расходов кампаниями: ${
+                          analysis.data_quality.ads_mapping?.coverage_percent ?? "—"
+                        }%`}
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`Строк с показами: ${analysis.data_quality.ctr_rows_count || 0}`}
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`UTM-строк: ${analysis.data_quality.utm_rows_count || 0}`}
+                      />
+                    </Box>
+                  </Paper>
+                </Grid>
+              )}
 
               <Grid
                 size={{ xs: 12, lg: 7 }}
@@ -1099,328 +1498,447 @@ export default function AiAnalystTab({
                 </Paper>
               </Grid>
 
-              <Grid
-                size={{ xs: 12, lg: 5 }}
-                sx={{ height: "max-content" }}
-              >
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    borderColor: "#e8ebf0",
-                    boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
-                  }}
+              <Grid size={{ xs: 12 }}>
+                <Masonry
+                  columns={{ xs: 1, lg: 2 }}
+                  spacing={2}
+                  defaultColumns={2}
+                  defaultHeight={1200}
+                  defaultSpacing={2}
                 >
-                  <SectionHeader
-                    title="Общая эффективность"
-                    status={analysis.general_effectiveness?.status}
-                  />
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                    <Box
+                  <Box>
+                    <Paper
+                      variant="outlined"
                       sx={{
-                        flexShrink: 0,
-                        width: 112,
-                        height: 112,
-                        borderRadius: "50%",
-                        background: `conic-gradient(${
-                          RATING_COLORS[analysis.general_effectiveness?.rating] ||
-                          RATING_COLORS.unknown
-                        } ${analysis.general_effectiveness?.score || 0}%, #edf0f4 0)`,
-                        display: "grid",
-                        placeItems: "center",
+                        p: 2,
+                        borderRadius: 2.5,
+                        borderColor: "#e8ebf0",
+                        boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
                       }}
                     >
-                      <Box
-                        sx={{
-                          width: 82,
-                          height: 82,
-                          borderRadius: "50%",
-                          backgroundColor: "white",
-                          display: "grid",
-                          placeItems: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="h5"
-                          fontWeight={700}
-                        >
-                          {analysis.general_effectiveness?.score ?? "—"}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="body1"
-                        fontWeight={600}
-                        sx={{ mb: 0.5 }}
-                      >
-                        Оценка периода
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        {analysis.general_effectiveness?.summary || "Общая оценка недоступна"}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Paper>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, lg: 7 }}
-                sx={{ height: "max-content" }}
-              >
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    borderColor: "#e8ebf0",
-                    boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
-                  }}
-                >
-                  <SectionHeader title="Изменения к предыдущему периоду" />
-                  {(analysis.anomalies || []).length > 0 ? (
-                    analysis.anomalies.map((anomaly, index) => (
-                      <React.Fragment key={`${anomaly.metric}_${index}`}>
-                        {index > 0 && <Divider />}
-                        <ComparisonCard anomaly={anomaly} />
-                      </React.Fragment>
-                    ))
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Значимых изменений более 15% не обнаружено
-                    </Typography>
-                  )}
-                </Paper>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, lg: 6 }}
-                sx={{ height: "max-content" }}
-              >
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    borderColor: "#e8ebf0",
-                    boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
-                  }}
-                >
-                  <SectionHeader title="Проблемы" />
-                  {(analysis.problems || []).length > 0 ? (
-                    analysis.problems.map((problem, index) => (
-                      <Box
-                        key={`${problem.type}_${problem.title}_${index}`}
-                        sx={{ display: "flex", gap: 1.25, mb: 2 }}
-                      >
-                        <WarningAmberIcon
-                          color={problem.severity === "high" ? "error" : "warning"}
-                          sx={{ mt: 0.25 }}
-                        />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                          >
-                            {problem.title}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block" }}
-                          >
-                            {problem.description}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="primary"
-                          >
-                            {problem.recommendation}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Критичных проблем не обнаружено
-                    </Typography>
-                  )}
-                </Paper>
-              </Grid>
-
-              <Grid
-                size={{ xs: 12, lg: 6 }}
-                sx={{ height: "max-content" }}
-              >
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    borderColor: "#e8ebf0",
-                    boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
-                  }}
-                >
-                  <SectionHeader title="Выводы AI" />
-                  {(analysis.insights || []).length > 0 ? (
-                    analysis.insights.map((insight, index) => (
-                      <Box
-                        key={`${insight.title}_${index}`}
-                        sx={{ display: "flex", gap: 1.25, mb: 2 }}
-                      >
-                        <AutoAwesomeIcon sx={{ mt: 0.25, color: "#8b5cf6" }} />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                          >
-                            {insight.title}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block" }}
-                          >
-                            {insight.description}
-                          </Typography>
-                          {insight.evidence && (
-                            <Typography
-                              variant="caption"
-                              color="success.main"
-                            >
-                              Основание: {insight.evidence}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Выводов пока нет
-                    </Typography>
-                  )}
-                </Paper>
-              </Grid>
-
-              {DETAIL_SECTIONS.map((section) => (
-                <Grid
-                  key={section.key}
-                  size={{ xs: 12, lg: 6 }}
-                  sx={{ height: "max-content" }}
-                >
-                  <DetailCard
-                    section={section}
-                    data={analysis[section.key]}
-                  />
-                </Grid>
-              ))}
-
-              <Grid size={{ xs: 12 }}>
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 2, borderRadius: 2, borderColor: "#e8ebf0" }}
-                >
-                  <SectionHeader title="Доступность данных" />
-                  <Grid
-                    container
-                    spacing={1.5}
-                  >
-                    {Object.entries(analysis.data_availability || {}).map(([key, item]) => (
-                      <Grid
-                        key={key}
-                        size={{ xs: 12, sm: 6 }}
-                      >
+                      <SectionHeader
+                        title="Общая эффективность"
+                        status={analysis.general_effectiveness?.status}
+                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
                         <Box
                           sx={{
-                            p: 1.5,
-                            borderRadius: 1.5,
-                            backgroundColor: "#f8f9fb",
-                            height: "100%",
+                            flexShrink: 0,
+                            width: 112,
+                            height: 112,
+                            borderRadius: "50%",
+                            background: `conic-gradient(${
+                              RATING_COLORS[analysis.general_effectiveness?.rating] ||
+                              RATING_COLORS.unknown
+                            } ${analysis.general_effectiveness?.score || 0}%, #edf0f4 0)`,
+                            display: "grid",
+                            placeItems: "center",
                           }}
                         >
                           <Box
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              gap: 1,
-                              mb: 0.5,
+                              width: 82,
+                              height: 82,
+                              borderRadius: "50%",
+                              backgroundColor: "white",
+                              display: "grid",
+                              placeItems: "center",
                             }}
                           >
                             <Typography
-                              variant="body2"
-                              fontWeight={600}
+                              variant="h5"
+                              fontWeight={700}
                             >
-                              {key.replaceAll("_", " ")}
+                              {analysis.general_effectiveness?.score ?? "—"}
                             </Typography>
-                            <Chip
-                              size="small"
-                              label={STATUS_LABELS[item.status] || item.status}
-                              color={STATUS_COLORS[item.status] || "default"}
-                              variant="outlined"
-                            />
                           </Box>
+                        </Box>
+                        <Box>
                           <Typography
-                            variant="caption"
+                            variant="body1"
+                            fontWeight={600}
+                            sx={{ mb: 0.5 }}
+                          >
+                            Оценка периода
+                          </Typography>
+                          <Typography
+                            variant="body2"
                             color="text.secondary"
                           >
-                            {item.reason}
+                            {analysis.general_effectiveness?.summary || "Общая оценка недоступна"}
                           </Typography>
                         </Box>
-                      </Grid>
+                      </Box>
+                    </Paper>
+                  </Box>
+
+                  <Box>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        borderRadius: 2.5,
+                        borderColor: "#e8ebf0",
+                        boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
+                      }}
+                    >
+                      <SectionHeader title="Изменения к предыдущему периоду" />
+                      {(analysis.anomalies || []).length > 0 ? (
+                        analysis.anomalies.map((anomaly, index) => (
+                          <React.Fragment key={`${anomaly.metric}_${index}`}>
+                            {index > 0 && <Divider />}
+                            <ComparisonCard anomaly={anomaly} />
+                          </React.Fragment>
+                        ))
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Значимых изменений более 15% не обнаружено
+                        </Typography>
+                      )}
+                    </Paper>
+                  </Box>
+
+                  <Box>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        borderRadius: 2.5,
+                        borderColor: "#e8ebf0",
+                        boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
+                      }}
+                    >
+                      <SectionHeader title="Проблемы" />
+                      {(analysis.problems || []).length > 0 ? (
+                        analysis.problems.map((problem, index) => (
+                          <Box
+                            key={`${problem.type}_${problem.title}_${index}`}
+                            sx={{ display: "flex", gap: 1.25, mb: 2 }}
+                          >
+                            <WarningAmberIcon
+                              color={problem.severity === "high" ? "error" : "warning"}
+                              sx={{ mt: 0.25 }}
+                            />
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                fontWeight={700}
+                              >
+                                {problem.title}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block" }}
+                              >
+                                {problem.description}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="primary"
+                              >
+                                {problem.recommendation}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Критичных проблем не обнаружено
+                        </Typography>
+                      )}
+                    </Paper>
+                  </Box>
+
+                  <Box>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        borderRadius: 2.5,
+                        borderColor: "#e8ebf0",
+                        boxShadow: "0 4px 16px rgba(31, 41, 55, 0.04)",
+                      }}
+                    >
+                      <SectionHeader title="Выводы AI" />
+                      {(analysis.insights || []).length > 0 ? (
+                        analysis.insights.map((insight, index) => (
+                          <Box
+                            key={`${insight.title}_${index}`}
+                            sx={{ display: "flex", gap: 1.25, mb: 2 }}
+                          >
+                            <AutoAwesomeIcon sx={{ mt: 0.25, color: "#8b5cf6" }} />
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                fontWeight={700}
+                              >
+                                {insight.title}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block" }}
+                              >
+                                {insight.description}
+                              </Typography>
+                              {insight.evidence && (
+                                <Typography
+                                  variant="caption"
+                                  color="success.main"
+                                >
+                                  Основание: {insight.evidence}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        ))
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Выводов пока нет
+                        </Typography>
+                      )}
+                    </Paper>
+                  </Box>
+
+                  {DETAIL_SECTIONS.filter((section) => analysis[section.key]).map((section) => (
+                    <Box key={section.key}>
+                      <DetailCard
+                        section={section}
+                        data={analysis[section.key]}
+                      />
+                    </Box>
+                  ))}
+                </Masonry>
+              </Grid>
+
+              <Grid
+                size={{ xs: 12 }}
+                sx={{ height: "fit-content", alignSelf: "flex-start" }}
+              >
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 2, height: "fit-content", borderRadius: 2, borderColor: "#e8ebf0" }}
+                >
+                  <SectionHeader title="Доступность данных" />
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                      gap: 1.5,
+                      alignItems: "start",
+                    }}
+                  >
+                    {Object.entries(analysis.data_availability || {}).map(([key, item]) => (
+                      <Box
+                        key={key}
+                        sx={{
+                          p: 1.5,
+                          height: "fit-content",
+                          borderRadius: 1.5,
+                          backgroundColor: "#f8f9fb",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                            gap: 1,
+                            mb: 0.5,
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                          >
+                            {key.replaceAll("_", " ")}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={STATUS_LABELS[item.status] || item.status}
+                            color={STATUS_COLORS[item.status] || "default"}
+                            variant="outlined"
+                          />
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          {item.reason}
+                        </Typography>
+                      </Box>
                     ))}
-                  </Grid>
+                  </Box>
                 </Paper>
               </Grid>
             </Grid>
           </Grid>
         )}
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid
+          size={{ xs: 12, md: 4 }}
+          sx={{
+            height: { xs: "min(72dvh, 620px)", md: "calc(100dvh - 104px)" },
+            minHeight: { xs: 420, md: 0 },
+            position: { md: "sticky" },
+            top: { md: 80 },
+            alignSelf: { md: "flex-start" },
+          }}
+        >
           <Paper
             sx={{
-              minHeight: 760,
-              maxHeight: { md: "calc(100vh - 20px)" },
+              height: "100%",
+              minHeight: 0,
               borderRadius: "8px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              p: 2,
               display: "flex",
               flexDirection: "column",
-              position: { md: "sticky" },
-              top: { md: 72 },
+              overflow: "hidden",
             }}
           >
-            <Typography
-              variant="subtitle1"
-              fontWeight={700}
-              sx={{ mb: 1.5, px: 1 }}
+            <Box
+              sx={{
+                px: 2,
+                py: 1.25,
+                minHeight: 64,
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
-              Чат с AI-аналитиком
-            </Typography>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                >
+                  Чат с AI-аналитиком
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ display: "block" }}
+                >
+                  {activeChatThread?.is_pinned ? "📌 " : ""}
+                  {activeChatThread?.title || "Выберите чат"}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                onClick={handleCreateChat}
+                aria-label="Создать чат"
+              >
+                <AddIcon fontSize="small" />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={(event) => setChatMenuAnchor(event.currentTarget)}
+                aria-label="Управление чатами"
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+              <Menu
+                anchorEl={chatMenuAnchor}
+                open={Boolean(chatMenuAnchor)}
+                onClose={() => setChatMenuAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                {chatThreads.map((thread) => (
+                  <MenuItem
+                    key={thread.id}
+                    selected={Number(thread.id) === Number(activeChatThreadId)}
+                    onClick={() => {
+                      onSelectChatThread?.(thread.id);
+                      setChatMenuAnchor(null);
+                    }}
+                  >
+                    <ListItemText
+                      primary={`${thread.is_pinned ? "📌 " : ""}${thread.title}`}
+                      secondary={`${thread.messages_count ?? thread.messages?.length ?? 0} сообщений`}
+                    />
+                  </MenuItem>
+                ))}
+                {chatThreads.length > 0 && <Divider />}
+                <MenuItem onClick={handleCreateChat}>
+                  <AddIcon
+                    fontSize="small"
+                    sx={{ mr: 1 }}
+                  />
+                  Новый чат
+                </MenuItem>
+                {activeChatThread && (
+                  <MenuItem onClick={handleTogglePin}>
+                    <PushPinIcon
+                      fontSize="small"
+                      sx={{ mr: 1 }}
+                    />
+                    {activeChatThread.is_pinned ? "Открепить" : "Закрепить"}
+                  </MenuItem>
+                )}
+                {activeChatThread && (
+                  <MenuItem onClick={handleRenameChat}>
+                    <EditIcon
+                      fontSize="small"
+                      sx={{ mr: 1 }}
+                    />
+                    Переименовать
+                  </MenuItem>
+                )}
+                {activeChatThread && chatThreads.length > 1 && (
+                  <MenuItem
+                    onClick={() => {
+                      setChatMenuAnchor(null);
+                      setDeleteChatOpen(true);
+                    }}
+                    sx={{ color: "error.main" }}
+                  >
+                    <DeleteIcon
+                      fontSize="small"
+                      sx={{ mr: 1 }}
+                    />
+                    Удалить
+                  </MenuItem>
+                )}
+                <Divider />
+                <MenuItem
+                  onClick={() => {
+                    setChatMenuAnchor(null);
+                    setAiGuideOpen(true);
+                  }}
+                >
+                  <InfoOutlinedIcon
+                    fontSize="small"
+                    sx={{ mr: 1 }}
+                  />
+                  Как работает AI-аналитик
+                </MenuItem>
+              </Menu>
+            </Box>
 
             <Box
               ref={chatListRef}
               sx={{
                 flex: 1,
-                minHeight: 280,
+                minHeight: 0,
                 overflowY: "auto",
-                borderRadius: 2,
+                overscrollBehavior: "contain",
+                scrollbarGutter: "stable",
                 backgroundColor: "#f8f9fb",
-                border: "1px solid #eef0f3",
+                borderTop: "1px solid #eef0f3",
+                borderBottom: "1px solid #eef0f3",
                 p: 1.5,
-                mb: 1.5,
               }}
             >
               {!canChat && (
@@ -1430,7 +1948,7 @@ export default function AiAnalystTab({
                   align="center"
                   sx={{ mt: 6 }}
                 >
-                  Сначала примените фильтры, чтобы отправить отчёт в чат
+                  Сначала примените фильтры и выберите чат
                 </Typography>
               )}
 
@@ -1447,7 +1965,7 @@ export default function AiAnalystTab({
 
               {chatMessages.map((message, index) => (
                 <Box
-                  key={`${message.role}_${index}`}
+                  key={message.id || `${message.role}_${index}`}
                   sx={{
                     display: "flex",
                     justifyContent: message.role === "user" ? "flex-end" : "flex-start",
@@ -1473,11 +1991,19 @@ export default function AiAnalystTab({
                           : message.isError
                             ? "1px solid #ffcdd2"
                             : "1px solid #e8ebf0",
-                      whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
                     }}
                   >
-                    <Typography variant="body2">{message.text}</Typography>
+                    {message.role === "assistant" && !message.isError ? (
+                      <MemoizedMarkdownMessage text={message.text} />
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        sx={{ whiteSpace: "pre-wrap" }}
+                      >
+                        {message.text}
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
               ))}
@@ -1508,49 +2034,434 @@ export default function AiAnalystTab({
               )}
             </Box>
 
-            <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
-              <TextField
-                fullWidth
-                multiline
-                maxRows={4}
-                size="small"
-                placeholder={
-                  canChat ? "Спросите что-нибудь по отчёту..." : "Сначала получите отчёт"
-                }
-                value={chatInput}
-                disabled={!canChat || chatLoading}
-                onChange={(event) => setChatInput(event.target.value)}
-                onKeyDown={handleChatKeyDown}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "10px",
-                    backgroundColor: "white",
-                  },
-                }}
-              />
-              <IconButton
-                color="primary"
-                onClick={handleSendChat}
-                disabled={!canChat || chatLoading || !chatInput.trim()}
-                sx={{
-                  backgroundColor: PRIMARY_COLOR,
-                  color: "white",
-                  borderRadius: "10px",
-                  width: 40,
-                  height: 40,
-                  "&:hover": { backgroundColor: "#a00028" },
-                  "&.Mui-disabled": {
-                    backgroundColor: "#f0f0f0",
-                    color: "#bdbdbd",
-                  },
-                }}
-              >
-                <SendIcon fontSize="small" />
-              </IconButton>
-            </Box>
+            <ChatComposer
+              canChat={canChat}
+              loading={chatLoading}
+              threadId={activeChatThreadId}
+              onSend={handleSendChat}
+            />
           </Paper>
         </Grid>
       </Grid>
+
+      <Dialog
+        open={aiGuideOpen}
+        onClose={() => setAiGuideOpen(false)}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            borderRadius: { xs: 0, sm: 3 },
+            m: { xs: 0, sm: 2 },
+            width: { xs: "100%", sm: "calc(100% - 32px)" },
+            height: { xs: "100dvh", sm: "auto" },
+            maxHeight: { xs: "100dvh", sm: "calc(100dvh - 32px)" },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 2,
+            pr: 1.5,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h6"
+              fontWeight={700}
+            >
+              Как работает AI-аналитик
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.5 }}
+            >
+              Памятка по данным, ограничениям и формулировке запросов
+            </Typography>
+          </Box>
+          <IconButton
+            size="small"
+            onClick={() => setAiGuideOpen(false)}
+            aria-label="Закрыть инструкцию"
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent
+          dividers
+          sx={{ p: { xs: 2, sm: 3 }, backgroundColor: "#f7f8fb" }}
+        >
+          <Paper
+            variant="outlined"
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              mb: 2.5,
+              borderRadius: 2.5,
+              borderColor: "#e3e7ed",
+              background: "linear-gradient(135deg, #fff 0%, #fff5f7 100%)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+              <AutoAwesomeIcon sx={{ color: PRIMARY_COLOR, mt: 0.25 }} />
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                >
+                  Аналитика на базе YandexGPT
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
+                  AI получает агрегированные показатели текущего отчёта и при необходимости
+                  запрашивает дополнительные данные через разрешённые серверные инструменты.
+                  Инструменты работают только на чтение.
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+
+          <Typography
+            variant="subtitle1"
+            fontWeight={700}
+            sx={{ mb: 1.5 }}
+          >
+            Как проходит запрос
+          </Typography>
+          <Grid
+            container
+            spacing={1.5}
+            alignItems="stretch"
+            sx={{ mb: 3 }}
+          >
+            {[
+              ["1", "Выберите отчёт", "Примените город, период и источник данных."],
+              ["2", "Задайте вопрос", "Укажите точные даты, показатели и желаемую детализацию."],
+              [
+                "3",
+                "Проверьте ответ",
+                "AI разделит факты, прогноз и ограничения доступных данных.",
+              ],
+            ].map(([number, title, text]) => (
+              <Grid
+                key={number}
+                size={{ xs: 12, sm: 4 }}
+                sx={{ display: "flex" }}
+              >
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    width: "100%",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 2,
+                    borderColor: "#e3e7ed",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                        color: "white",
+                        backgroundColor: PRIMARY_COLOR,
+                        fontWeight: 700,
+                        fontSize: 14,
+                      }}
+                    >
+                      {number}
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight={700}
+                    >
+                      {title}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    {text}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Grid
+            container
+            spacing={2}
+            alignItems="stretch"
+            sx={{ mb: 3 }}
+          >
+            <Grid
+              size={{ xs: 12, md: 6 }}
+              sx={{ display: "flex" }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  width: "100%",
+                  flex: 1,
+                  borderRadius: 2.5,
+                  borderColor: "#cdeedc",
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                  sx={{ mb: 1 }}
+                >
+                  Какие данные используются
+                </Typography>
+                <Box
+                  component="ul"
+                  sx={{ m: 0, pl: 2.5, color: "text.secondary" }}
+                >
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    агрегированные заказы, выручка, визиты и рекламные расходы;
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    дневная динамика и результаты сравнений периодов;
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    товары, категории, город и разрешённые UTM-метки — только когда это нужно;
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                  >
+                    краткая память диалога, последние сообщения и релевантные результаты.
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+
+            <Grid
+              size={{ xs: 12, md: 6 }}
+              sx={{ display: "flex" }}
+            >
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  width: "100%",
+                  flex: 1,
+                  borderRadius: 2.5,
+                  borderColor: "#cfe1fb",
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                  sx={{ mb: 1 }}
+                >
+                  Как защищаются данные
+                </Typography>
+                <Box
+                  component="ul"
+                  sx={{ m: 0, pl: 2.5, color: "text.secondary" }}
+                >
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    сырые заказы, ФИО клиентов, телефоны и e-mail не передаются;
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    кафе и адреса заменяются стабильными обозначениями «Кафе 1», «Кафе 2»;
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    телефоны, e-mail, токены и скрытые управляющие символы удаляются;
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                  >
+                    доступ к чату есть только у авторизованного сотрудника с нужным правом.
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          <Typography
+            variant="subtitle1"
+            fontWeight={700}
+            sx={{ mb: 1 }}
+          >
+            Как лучше формировать запрос
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 1.5 }}
+          >
+            Укажите точные даты, город, нужные показатели и формат ответа. Если нужны другие
+            периоды, попросите AI запросить их. Для большого исследования перечислите периоды и
+            отдельно обозначьте, где нужен прогноз.
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
+            {[
+              "Сравни 1–15 июля и 1–15 августа 2026 года: заказы, выручку, расходы, CPA и ROMI. Объясни ограничения.",
+              "Сравни 2022–2026 годы. За 2026 год отдельно покажи факт и прогноз до 31 декабря.",
+              "Покажи топ-10 товаров и категорий по выручке за июль и объясни изменения.",
+              "Разбери динамику по дням, найди аномалии и укажи, на каких данных основан вывод.",
+            ].map((example) => (
+              <Paper
+                key={example}
+                variant="outlined"
+                sx={{ px: 1.75, py: 1.25, borderRadius: 2, borderColor: "#e3e7ed" }}
+              >
+                <Typography variant="body2">«{example}»</Typography>
+              </Paper>
+            ))}
+          </Box>
+
+          <Paper
+            variant="outlined"
+            sx={{ p: 2.5, borderRadius: 2.5, borderColor: "#f7dfaa", backgroundColor: "#fffaf0" }}
+          >
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25 }}>
+              <WarningAmberIcon
+                color="warning"
+                sx={{ mt: 0.25, flexShrink: 0 }}
+              />
+              <Box>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                  sx={{ mb: 0.75 }}
+                >
+                  Важные ограничения
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Полные маркетинговые показатели доступны в основном с 2025 года. Показатели с
+                  разной методологией атрибуции нельзя напрямую сравнивать. Ограничения Яндекс
+                  Метрики для Тольятти сохраняются и должны быть указаны в ответе. Прогноз на
+                  незавершённый год строится как линейный run-rate без учёта сезонности и имеет
+                  низкую уверенность. Не отправляйте в чат персональные данные и секреты, даже с
+                  учётом автоматической очистки.
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 2 }}
+          >
+            Чаты принадлежат сотруднику. Название создаётся по первому запросу, его можно изменить
+            или закрепить через меню. История сообщений хранится 180 дней.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
+          <Button
+            variant="contained"
+            onClick={() => setAiGuideOpen(false)}
+          >
+            Понятно
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={renameChatOpen}
+        onClose={() => setRenameChatOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Название чата</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            label="Тема"
+            value={chatTitle}
+            onChange={(event) => setChatTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") confirmRenameChat();
+            }}
+            inputProps={{ maxLength: 160 }}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRenameChatOpen(false)}>Отмена</Button>
+          <Button
+            variant="contained"
+            onClick={confirmRenameChat}
+            disabled={!chatTitle.trim()}
+          >
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteChatOpen}
+        onClose={() => setDeleteChatOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Удалить чат?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Чат «{activeChatThread?.title}» и вся его история будут удалены.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteChatOpen(false)}>Отмена</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmDeleteChat}
+          >
+            Удалить
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={reportOpen}
