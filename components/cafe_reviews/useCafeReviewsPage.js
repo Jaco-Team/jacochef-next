@@ -73,7 +73,6 @@ export default function useCafeReviewsPage() {
   const [moduleInfo, setModuleInfo] = useState({});
   const [access, setAccess] = useState({});
   const [points, setPoints] = useState([]);
-  const [newIncidentCount, setNewIncidentCount] = useState(0);
   const [cities, setCities] = useState([]);
   const [dictionaries, setDictionaries] = useState({
     statuses: [],
@@ -105,6 +104,11 @@ export default function useCafeReviewsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
 
+  const newIncidentCount = useMemo(
+    () => incidents.filter((incident) => incident.status === "new").length,
+    [incidents],
+  );
+
   const accessApi = useMemo(() => handleUserAccess(access), [access]);
   const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
   const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
@@ -130,7 +134,6 @@ export default function useCafeReviewsPage() {
       setModuleInfo(normalized.module_info);
       setAccess(normalized.access);
       setPoints(normalized.points);
-      setNewIncidentCount(normalized.new_incidents_count);
       setCities(normalized.cities);
       setDictionaries(normalized.dictionaries);
       changeSection(initialSection);
@@ -466,7 +469,6 @@ export default function useCafeReviewsPage() {
           const normalized = normalizeBootstrap(
             ensureSuccess(response, "Не удалось обновить счётчик инцидентов"),
           );
-          setNewIncidentCount(normalized.new_incidents_count);
         }),
       );
       if (canView("incidents")) {
@@ -529,7 +531,6 @@ export default function useCafeReviewsPage() {
         const bootstrap = normalizeBootstrap(
           ensureSuccess(await api.getBootstrap(), "Не удалось обновить счётчик инцидентов"),
         );
-        setNewIncidentCount(bootstrap.new_incidents_count);
         showAlertRef.current(response?.text || "Отзыв отмечен как инцидент", true);
         return true;
       } catch (error) {
@@ -614,7 +615,6 @@ export default function useCafeReviewsPage() {
       const normalized = normalizeBootstrap(
         ensureSuccess(response, "Не удалось обновить счётчик инцидентов"),
       );
-      setNewIncidentCount(normalized.new_incidents_count);
     });
     if (section === "overview" && canView("reviews"))
       return Promise.all([loadDashboard(), refreshCount]);
