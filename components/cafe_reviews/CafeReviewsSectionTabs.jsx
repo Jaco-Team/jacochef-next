@@ -1,6 +1,6 @@
 import { Box, Paper, Tab, Tabs } from "@mui/material";
 import SmallFont from "@/ui/SmallFont";
-import { blockBorder, brandRed } from "./shared";
+import { blockBorder, brandRed, white } from "./shared";
 
 export default function CafeReviewsSectionTabs({
   value,
@@ -46,7 +46,7 @@ export default function CafeReviewsSectionTabs({
                         flexShrink: 0,
                         borderRadius: "50%",
                         backgroundColor: brandRed,
-                        color: "#fff",
+                        color: white,
                         fontSize: "0.65rem",
                         lineHeight: 1,
                         fontWeight: 800,

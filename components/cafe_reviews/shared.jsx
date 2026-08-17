@@ -3,6 +3,12 @@ import { Box, Chip, Rating, Typography } from "@mui/material";
 export const brandRed = "#DD1A32";
 export const blockBackground = "#F3F3F3";
 export const blockBorder = "#E5E5E5";
+export const white = "#FFFFFF";
+export const successGreen = "#2E7D32";
+export const successBackground = "#E8F5E9";
+export const mutedBackground = "#F6F6F6";
+export const tableHeaderBackground = "#F7F7F7";
+export const accordionHeaderBackground = "#FAFAFA";
 export const textPrimary = "#3C3B3B";
 export const textSecondary = "#5E5E5E";
 export const CAFE_REVIEWS_AUTO_REFRESH_MINUTES = 1;
@@ -51,7 +57,7 @@ export function SeverityChip({ value, options }) {
   };
   const palette = colors[value] || {
     color: textSecondary,
-    bgcolor: "#F6F6F6",
+    bgcolor: mutedBackground,
     borderColor: blockBorder,
   };
 
@@ -72,8 +78,8 @@ export function StatusChip({ value, options, highlightNew = false }) {
       size="small"
       label={getOptionLabel(options, value, "Без статуса")}
       sx={{
-        color: isNewIncident ? "#FFFFFF" : textPrimary,
-        bgcolor: isNewIncident ? brandRed : "#FFFFFF",
+        color: isNewIncident ? white : textPrimary,
+        bgcolor: isNewIncident ? brandRed : white,
         border: `1px solid ${isNewIncident ? brandRed : blockBorder}`,
         fontWeight: 700,
       }}
@@ -110,7 +116,7 @@ export function EmptyState({ children }) {
         p: 4,
         textAlign: "center",
         color: textSecondary,
-        bgcolor: "#FFFFFF",
+        bgcolor: white,
         border: `1px solid ${blockBorder}`,
         borderRadius: "12px",
       }}

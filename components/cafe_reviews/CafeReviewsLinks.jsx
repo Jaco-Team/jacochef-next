@@ -6,13 +6,11 @@ import {
   Box,
   Button,
   Checkbox,
-  Chip,
-  DialogActions,
-  DialogContent,
   FormControlLabel,
   FormGroup,
+  DialogActions,
+  DialogContent,
   Grid,
-  IconButton,
   Paper,
   Table,
   TableBody,
@@ -20,30 +18,32 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
-import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import SentimentSatisfiedAltOutlinedIcon from "@mui/icons-material/SentimentSatisfiedAltOutlined";
 import { MySelect, MyTextInput } from "@/ui/Forms";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyModal from "@/ui/MyModal";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import {
+  linkUrl,
+  LinksDesktopTable,
+  LinksMobileList,
+  pointName,
+  zoneLabel,
+} from "./CafeReviewsLinksPresentational";
+import {
+  accordionHeaderBackground,
   blockBorder,
   brandRed,
-  desktopOnlySx,
   EmptyState,
   formatDateTime,
   textSecondary,
+  white,
 } from "./shared";
 
 const actionButtonSx = { minHeight: 40, borderRadius: "8px", textTransform: "none" };
@@ -56,7 +56,6 @@ const qrModalActionSx = {
     "& .MuiButton-startIcon": { m: 0 },
   },
 };
-const linkChipSx = { minHeight: 40, fontWeight: 700 };
 
 const eventLabels = {
   created: "Создана",
@@ -82,90 +81,6 @@ const reasonLabels = {
   replaced: "Ссылка заменена",
 };
 
-function pointName(points, link) {
-  return (
-    link.point_name ||
-    points.find((point) => String(point.id) === String(link.point_id))?.name ||
-    `Кафе #${link.point_id}`
-  );
-}
-
-function linkUrl(link, variant) {
-  return link.feedback_urls_by_variant?.[variant] || "";
-}
-
-function LinkChip({ link, variant, onCopy }) {
-  const url = linkUrl(link, variant);
-  if (!url) return null;
-
-  const isStars = variant === "stars";
-  const color = isStars ? "#1976D2" : "#2E7D32";
-  return (
-    <Box
-      component="span"
-      sx={{
-        ...linkChipSx,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.5,
-      }}
-    >
-      <Box
-        component="span"
-        sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          minHeight: 40,
-          px: 0.5,
-          borderRadius: "10px",
-          bgcolor: color,
-          color: "#fff",
-        }}
-      >
-        {isStars ? (
-          <StarRoundedIcon sx={{ mx: 0.5 }} />
-        ) : (
-          <SentimentSatisfiedAltOutlinedIcon sx={{ mx: 0.5 }} />
-        )}
-        <Tooltip title="Скопировать ссылку">
-          <IconButton
-            aria-label={`Скопировать ${isStars ? "звёздную" : "эмоджи"} ссылку`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onCopy(url);
-            }}
-            sx={{ width: 40, height: 40, p: 0, color: "#fff", flexShrink: 0 }}
-          >
-            <ContentCopyOutlinedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-      <Tooltip title="Открыть в новой вкладке">
-        <IconButton
-          component="a"
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Открыть ссылку"
-          onClick={(event) => event.stopPropagation()}
-          sx={{
-            width: 40,
-            height: 40,
-            p: 0,
-            color: "#fff",
-            bgcolor: color,
-            borderRadius: "10px",
-            flexShrink: 0,
-            "&:hover": { bgcolor: color, filter: "brightness(0.9)" },
-          }}
-        >
-          <OpenInNewOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  );
-}
-
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -173,110 +88,6 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
-
-function MobileLinkCard({ link, points, canEdit, loading, onOpen, onEdit, onArchive, onCopy }) {
-  return (
-    <Paper
-      variant="outlined"
-      role="button"
-      tabIndex={0}
-      aria-label={`Открыть QR-зону ${link.zone_label || link.zone_code || "Кафе"}`}
-      onClick={() => onOpen(link)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen(link);
-        }
-      }}
-      sx={{
-        p: 1.5,
-        borderRadius: "12px",
-        borderColor: blockBorder,
-        cursor: "pointer",
-        minWidth: 0,
-        "&:focus-visible": { outline: "3px solid", outlineColor: "primary.light" },
-      }}
-    >
-      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "start" }}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 800, overflowWrap: "anywhere" }}>
-            {pointName(points, link)}
-          </Typography>
-          <Typography sx={{ color: textSecondary, fontSize: 12 }}>
-            {formatDateTime(link.created_at)}
-          </Typography>
-        </Box>
-        <Chip
-          size="small"
-          label={link.status === "active" ? "Активна" : "Отозвана"}
-          sx={{
-            flexShrink: 0,
-            fontWeight: 700,
-            color: link.status === "active" ? "#2E7D32" : textSecondary,
-            bgcolor: link.status === "active" ? "#E8F5E9" : "#F6F6F6",
-          }}
-        />
-      </Box>
-
-      <Box sx={{ mt: 1.25 }}>
-        <Chip
-          size="small"
-          label={
-            link.zone_code || link.zone_label
-              ? `${link.zone_code || ""}${link.zone_code && link.zone_label ? " — " : ""}${link.zone_label || ""}`
-              : "Кафе"
-          }
-          sx={{ fontWeight: 700, bgcolor: "#E8F5E9", color: "#2E7D32", maxWidth: "100%" }}
-        />
-      </Box>
-
-      <Box sx={{ display: "grid", gap: 0.75, mt: 1.25, minWidth: 0 }}>
-        {linkUrl(link, "stars") ? (
-          <LinkChip
-            link={link}
-            variant="stars"
-            onCopy={onCopy}
-          />
-        ) : null}
-        {linkUrl(link, "emoji") ? (
-          <LinkChip
-            link={link}
-            variant="emoji"
-            onCopy={onCopy}
-          />
-        ) : null}
-      </Box>
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5, mt: 1 }}>
-        <Tooltip title="Изменить ссылки">
-          <IconButton
-            aria-label="Изменить ссылки"
-            disabled={!canEdit || loading}
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(link);
-            }}
-          >
-            <EditOutlinedIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Отозвать QR-ссылку">
-          <IconButton
-            aria-label="Отозвать QR-ссылку"
-            color="error"
-            disabled={!canEdit || loading || link.status !== "active"}
-            onClick={(event) => {
-              event.stopPropagation();
-              onArchive(link);
-            }}
-          >
-            <BlockOutlinedIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </Paper>
-  );
 }
 
 export default function CafeReviewsLinks({
@@ -522,119 +333,29 @@ export default function CafeReviewsLinks({
       {links.length === 0 ? (
         <EmptyState>QR-ссылок по выбранному фильтру нет.</EmptyState>
       ) : (
-        <TableContainer
-          sx={{
-            ...desktopOnlySx,
-            maxHeight: "60dvh",
-            border: "1px solid",
-            borderColor: "#E5E5E5",
-            borderRadius: "12px",
-          }}
-        >
-          <Table
-            size="small"
-            stickyHeader
-          >
-            <TableHead>
-              <TableRow>
-                <TableCell>Кафе</TableCell>
-                <TableCell>Зона</TableCell>
-                <TableCell>Создана</TableCell>
-                <TableCell>Ссылки</TableCell>
-                <TableCell align="right">Действия</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {links.map((link) => (
-                <TableRow
-                  key={link.id}
-                  hover
-                  onClick={() => openZoneModal(link)}
-                  sx={{ cursor: "pointer" }}
-                >
-                  <TableCell>{pointName(points, link)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={
-                        link.zone_code || link.zone_label
-                          ? `${link.zone_code || ""}${link.zone_code && link.zone_label ? " — " : ""}${link.zone_label || ""}`
-                          : "Кафе"
-                      }
-                      sx={{ fontWeight: 700, bgcolor: "#E8F5E9", color: "#2E7D32" }}
-                    />
-                  </TableCell>
-                  <TableCell>{formatDateTime(link.created_at)}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      <LinkChip
-                        link={link}
-                        variant="stars"
-                        onCopy={copy}
-                      />
-                      <LinkChip
-                        link={link}
-                        variant="emoji"
-                        onCopy={copy}
-                      />
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Изменить ссылки">
-                      <IconButton
-                        aria-label="Изменить ссылки"
-                        disabled={!canEdit || loading}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEdit(link);
-                        }}
-                      >
-                        <EditOutlinedIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Отозвать QR-ссылку">
-                      <IconButton
-                        aria-label="Отозвать QR-ссылку"
-                        color="error"
-                        disabled={!canEdit || loading || link.status !== "active"}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openRevokeDialog(link);
-                        }}
-                      >
-                        <BlockOutlinedIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <LinksDesktopTable
+          links={links}
+          points={points}
+          canEdit={canEdit}
+          loading={loading}
+          onOpen={openZoneModal}
+          onEdit={openEdit}
+          onArchive={openRevokeDialog}
+          onCopy={copy}
+        />
       )}
 
       {links.length > 0 ? (
-        <Box
-          sx={{
-            display: "none",
-            gap: 1.25,
-            "@media (max-width: 990px)": { display: "grid" },
-          }}
-        >
-          {links.map((link) => (
-            <MobileLinkCard
-              key={link.id}
-              link={link}
-              points={points}
-              canEdit={canEdit}
-              loading={loading}
-              onOpen={openZoneModal}
-              onEdit={openEdit}
-              onArchive={openRevokeDialog}
-              onCopy={copy}
-            />
-          ))}
-        </Box>
+        <LinksMobileList
+          links={links}
+          points={points}
+          canEdit={canEdit}
+          loading={loading}
+          onOpen={openZoneModal}
+          onEdit={openEdit}
+          onArchive={openRevokeDialog}
+          onCopy={copy}
+        />
       ) : null}
 
       <MyModal
@@ -747,7 +468,7 @@ export default function CafeReviewsLinks({
                         border: 1,
                         borderColor: "divider",
                         borderRadius: 2,
-                        bgcolor: "#fff",
+                        bgcolor: white,
                       }}
                     >
                       <Box
@@ -814,7 +535,7 @@ export default function CafeReviewsLinks({
             sx={{
               mt: 3,
               mb: 0,
-              border: "1px solid #E5E5E5",
+              border: `1px solid ${blockBorder}`,
               borderRadius: "12px !important",
               boxShadow: "none",
               overflow: "hidden",
@@ -825,7 +546,7 @@ export default function CafeReviewsLinks({
             <AccordionSummary
               sx={{
                 minHeight: 56,
-                bgcolor: "#FAFAFA",
+                bgcolor: accordionHeaderBackground,
                 "&.Mui-expanded": { minHeight: 56 },
                 "& .MuiAccordionSummary-content.Mui-expanded": { my: 0 },
               }}
@@ -833,7 +554,7 @@ export default function CafeReviewsLinks({
             >
               <Typography fontWeight={700}>История изменений</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ p: 0, borderTop: "1px solid #E5E5E5" }}>
+            <AccordionDetails sx={{ p: 0, borderTop: `1px solid ${blockBorder}` }}>
               {zoneModalHistory.length === 0 ? (
                 <Typography
                   role="status"
@@ -880,7 +601,7 @@ export default function CafeReviewsLinks({
         sx={{
           mt: 3,
           mb: 4,
-          border: "1px solid #E5E5E5",
+          border: `1px solid ${blockBorder}`,
           borderRadius: "12px !important",
           boxShadow: "none",
           overflow: "hidden",
@@ -894,7 +615,7 @@ export default function CafeReviewsLinks({
         <AccordionSummary
           sx={{
             minHeight: 56,
-            bgcolor: "#FAFAFA",
+            bgcolor: accordionHeaderBackground,
             "&.Mui-expanded": { minHeight: 56 },
             "& .MuiAccordionSummary-content.Mui-expanded": { my: 0 },
           }}
@@ -902,7 +623,7 @@ export default function CafeReviewsLinks({
         >
           <Typography fontWeight={700}>Полная история QR-ссылок</Typography>
         </AccordionSummary>
-        <AccordionDetails sx={{ p: 2, borderTop: "1px solid #E5E5E5" }}>
+        <AccordionDetails sx={{ p: 2, borderTop: `1px solid ${blockBorder}` }}>
           <Grid
             container
             spacing={1.5}
@@ -951,11 +672,7 @@ export default function CafeReviewsLinks({
                     <TableRow key={event.id}>
                       <TableCell>{formatDateTime(event.created_at)}</TableCell>
                       <TableCell>{event.point_name || event.city_name || "—"}</TableCell>
-                      <TableCell>
-                        {event.zone_code || event.zone_label
-                          ? `${event.zone_code || ""}${event.zone_code && event.zone_label ? " — " : ""}${event.zone_label || ""}`
-                          : "Кафе"}
-                      </TableCell>
+                      <TableCell>{zoneLabel(event)}</TableCell>
                       <TableCell>{eventLabels[event.event_type] || event.event_type}</TableCell>
                       <TableCell>
                         <Typography

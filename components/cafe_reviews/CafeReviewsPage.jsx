@@ -47,7 +47,9 @@ export default function CafeReviewsPage() {
   return (
     <Box>
       <Backdrop
-        open={page.bootstrapLoading || page.mutationLoading}
+        open={
+          page.bootstrapLoading || page.contentLoading || page.detailLoading || page.mutationLoading
+        }
         sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
       >
         <CircularProgress color="inherit" />

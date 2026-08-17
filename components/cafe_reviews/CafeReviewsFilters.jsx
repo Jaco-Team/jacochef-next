@@ -4,23 +4,24 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import { MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import dayjs from "dayjs";
+import { blockBorder, brandRed, white } from "./shared";
 
 const fieldSx = {
   "& .MuiOutlinedInput-root, & .MuiPickersOutlinedInput-root": {
     borderRadius: "12px",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: white,
   },
   "& .MuiPickersInputBase-root": {
     minHeight: 40,
   },
   "& .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#E5E5E5",
+    borderColor: blockBorder,
   },
   "&:hover .MuiPickersOutlinedInput-notchedOutline": {
     borderColor: "#BDBDBD",
   },
   "& .MuiPickersOutlinedInput-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
-    borderColor: "#DD1A32",
+    borderColor: brandRed,
     borderWidth: 2,
   },
   "& .MuiPickersInputBase-root .MuiSvgIcon-root": {

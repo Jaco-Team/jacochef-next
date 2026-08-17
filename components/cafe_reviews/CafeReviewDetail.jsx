@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -164,6 +163,9 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
 }
 
 function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onReject, onReanalyze }) {
+  const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
+  const [additionalContext, setAdditionalContext] = useState("");
+
   if (!analysis) {
     return (
       <Alert severity="info">
@@ -177,8 +179,6 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
     rejected: "Рекомендация отклонена",
   };
   const hasDecision = Boolean(analysis.human_decision);
-  const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
-  const [additionalContext, setAdditionalContext] = useState("");
 
   const cancelReanalyze = () => {
     setAdditionalContext("");
@@ -434,18 +434,6 @@ export default function CafeReviewDetail({
     return validOptions;
   }, [dictionaries.incident_statuses, dictionaries.statuses, incident]);
 
-  if (loading) {
-    return (
-      <Box
-        role="status"
-        aria-label="Загрузка деталей"
-        sx={{ minHeight: 260, display: "grid", placeItems: "center" }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   if (error) {
     return (
       <Box
@@ -474,6 +462,8 @@ export default function CafeReviewDetail({
   }
 
   if (!detail || !review) {
+    if (loading) return null;
+
     return (
       <Box sx={{ p: 3, textAlign: "center", color: textSecondary }}>
         Выберите запись, чтобы открыть детали

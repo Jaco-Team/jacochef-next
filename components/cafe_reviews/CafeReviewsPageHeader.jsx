@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { brandRed, CAFE_REVIEWS_AUTO_REFRESH_MINUTES, textSecondary } from "./shared";
+import { brandRed, CAFE_REVIEWS_AUTO_REFRESH_MINUTES, textSecondary, white } from "./shared";
 
 export default function CafeReviewsPageHeader({
   title,
@@ -63,7 +63,7 @@ export default function CafeReviewsPageHeader({
             textTransform: "none",
             ...(autoRefreshEnabled
               ? {
-                  color: "#FFFFFF",
+                  color: white,
                   bgcolor: brandRed,
                   borderColor: brandRed,
                   "&:hover": { bgcolor: brandRed, filter: "brightness(0.9)" },

@@ -21,9 +21,11 @@ import {
   brandRed,
   desktopOnlySx,
   mobileOnlySx,
+  tableHeaderBackground,
   tabletOnlySx,
   textPrimary,
   textSecondary,
+  white,
 } from "./shared";
 
 const kpiDefinitions = [
@@ -65,7 +67,7 @@ function KpiCards({ summary }) {
               borderRadius: "12px",
               borderColor: blockBorder,
               minWidth: 0,
-              bgcolor: "#FFFFFF",
+              bgcolor: white,
             }}
           >
             <Icon
@@ -257,7 +259,7 @@ export default function CafeReviewsOverview({ dashboard }) {
               >
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#F7F7F7" }}>
+                    <TableRow sx={{ bgcolor: tableHeaderBackground }}>
                       <TableCell>Кафе</TableCell>
                       <TableCell align="right">Отзывы</TableCell>
                       <TableCell align="right">С фото</TableCell>

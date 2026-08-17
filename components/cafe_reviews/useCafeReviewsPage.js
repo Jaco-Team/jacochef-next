@@ -725,7 +725,6 @@ export default function useCafeReviewsPage() {
     loadLinkQr,
     isAlert,
     loadBootstrap,
-    loading: bootstrapLoading || contentLoading || mutationLoading,
     moduleInfo,
     newIncidentCount,
     mutationLoading,

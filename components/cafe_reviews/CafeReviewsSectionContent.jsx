@@ -1,4 +1,4 @@
-import { Box, Button, CircularProgress, Grid, Paper, Typography } from "@mui/material";
+import { Button, Grid, Paper, Typography } from "@mui/material";
 import CafeReviewsFilters from "./CafeReviewsFilters";
 import CafeReviewsLinks from "./CafeReviewsLinks";
 import CafeReviewsList from "./CafeReviewsList";
@@ -65,19 +65,7 @@ function DetailContent({ page, idPrefix, showClose = false }) {
   );
 }
 
-function ContentState({ loadingLabel, loading, error, onRetry, children }) {
-  if (loading) {
-    return (
-      <Box
-        role="status"
-        aria-label={loadingLabel}
-        sx={{ minHeight: 260, display: "grid", placeItems: "center" }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
+function ContentState({ error, onRetry, children }) {
   if (error) {
     return (
       <Paper
@@ -176,8 +164,6 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
           }}
         >
           <ContentState
-            loadingLabel="Загрузка обзора"
-            loading={page.contentLoading}
             error={page.contentError}
             onRetry={page.refresh}
           >
@@ -208,8 +194,6 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
         }}
       >
         <ContentState
-          loadingLabel="Загрузка списка"
-          loading={page.contentLoading}
           error={page.contentError}
           onRetry={page.refresh}
         >

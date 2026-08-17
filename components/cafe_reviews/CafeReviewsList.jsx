@@ -23,6 +23,7 @@ import {
   RatingValue,
   SeverityChip,
   StatusChip,
+  tableHeaderBackground,
   textSecondary,
 } from "./shared";
 
@@ -71,7 +72,7 @@ function DesktopTable({
         aria-label={isIncident ? "Список инцидентов" : "Список отзывов"}
       >
         <TableHead>
-          <TableRow sx={{ bgcolor: "#F7F7F7" }}>
+          <TableRow sx={{ bgcolor: tableHeaderBackground }}>
             <TableCell>{sortable("Дата", "created_at")}</TableCell>
             <TableCell>Кафе</TableCell>
             <TableCell>{sortable("Оценка", "rating")}</TableCell>
