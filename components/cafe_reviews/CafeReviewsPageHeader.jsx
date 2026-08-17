@@ -1,8 +1,14 @@
 import { Box, Button, Typography } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { textSecondary } from "./shared";
+import { brandRed, CAFE_REVIEWS_AUTO_REFRESH_MINUTES, textSecondary } from "./shared";
 
-export default function CafeReviewsPageHeader({ title, onRefresh, refreshDisabled }) {
+export default function CafeReviewsPageHeader({
+  title,
+  onRefresh,
+  refreshDisabled,
+  autoRefreshEnabled,
+  onToggleAutoRefresh,
+}) {
   return (
     <Box
       sx={{
@@ -32,15 +38,42 @@ export default function CafeReviewsPageHeader({ title, onRefresh, refreshDisable
           Контроль обратной связи и работа с инцидентами
         </Typography>
       </Box>
-      <Button
-        variant="outlined"
-        startIcon={<RefreshIcon />}
-        onClick={onRefresh}
-        disabled={refreshDisabled}
-        sx={{ minHeight: 40, borderRadius: "12px", textTransform: "none" }}
-      >
-        Обновить
-      </Button>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={onRefresh}
+          disabled={refreshDisabled}
+          sx={{ minHeight: 40, px: 1.5, borderRadius: "12px", textTransform: "none" }}
+        >
+          Обновить
+        </Button>
+        <Button
+          variant={autoRefreshEnabled ? "contained" : "outlined"}
+          startIcon={<RefreshIcon />}
+          onClick={onToggleAutoRefresh}
+          disabled={refreshDisabled}
+          aria-pressed={autoRefreshEnabled}
+          title={`Автообновление каждые ${CAFE_REVIEWS_AUTO_REFRESH_MINUTES} мин.`}
+          sx={{
+            minHeight: 40,
+            minWidth: 0,
+            px: 1.5,
+            borderRadius: "12px",
+            textTransform: "none",
+            ...(autoRefreshEnabled
+              ? {
+                  color: "#FFFFFF",
+                  bgcolor: brandRed,
+                  borderColor: brandRed,
+                  "&:hover": { bgcolor: brandRed, filter: "brightness(0.9)" },
+                }
+              : {}),
+          }}
+        >
+          {CAFE_REVIEWS_AUTO_REFRESH_MINUTES}'
+        </Button>
+      </Box>
     </Box>
   );
 }

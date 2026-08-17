@@ -5,6 +5,7 @@ export const blockBackground = "#F3F3F3";
 export const blockBorder = "#E5E5E5";
 export const textPrimary = "#3C3B3B";
 export const textSecondary = "#5E5E5E";
+export const CAFE_REVIEWS_AUTO_REFRESH_MINUTES = 1;
 
 export const desktopOnlySx = {
   display: "none",

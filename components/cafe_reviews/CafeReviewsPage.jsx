@@ -69,6 +69,8 @@ export default function CafeReviewsPage() {
             title={singlePointTitle}
             onRefresh={page.refresh}
             refreshDisabled={!page.bootstrapReady || page.contentLoading}
+            autoRefreshEnabled={page.autoRefreshEnabled}
+            onToggleAutoRefresh={page.toggleAutoRefresh}
           />
         </Grid>
 

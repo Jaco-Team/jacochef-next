@@ -13,6 +13,7 @@ import {
   normalizeIncident,
 } from "./cafeReviewsNormalizers";
 import useCafeReviewsApi from "./useCafeReviewsApi";
+import { CAFE_REVIEWS_AUTO_REFRESH_MINUTES } from "./shared";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -101,6 +102,7 @@ export default function useCafeReviewsPage() {
   const [detail, setDetail] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
 
   const accessApi = useMemo(() => handleUserAccess(access), [access]);
   const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
@@ -605,6 +607,14 @@ export default function useCafeReviewsPage() {
     return null;
   }, [canView, loadDashboard, loadLinks, loadList, pagination.page, section]);
 
+  useEffect(() => {
+    if (!autoRefreshEnabled || !bootstrapReady || detailOpen) return undefined;
+
+    const intervalId = window.setInterval(refresh, CAFE_REVIEWS_AUTO_REFRESH_MINUTES * 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [autoRefreshEnabled, bootstrapReady, detailOpen, refresh]);
+
   const generateLink = useCallback(
     async (payload) => {
       if (!canEdit("links")) return false;
@@ -653,8 +663,13 @@ export default function useCafeReviewsPage() {
     if (selected) loadDetail(selected);
   }, [loadDetail, selected]);
 
+  const toggleAutoRefresh = useCallback(() => {
+    setAutoRefreshEnabled((enabled) => !enabled);
+  }, []);
+
   return {
     access,
+    autoRefreshEnabled,
     activeDraftFilters,
     alertMessage,
     alertStatus,
@@ -696,6 +711,7 @@ export default function useCafeReviewsPage() {
     pagination,
     points,
     refresh,
+    toggleAutoRefresh,
     generateLink,
     loadLinkHistory,
     updateLinkFilters,

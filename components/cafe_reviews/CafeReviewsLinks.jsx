@@ -36,7 +36,7 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyModal from "@/ui/MyModal";
 import { useConfirm } from "@/src/hooks/useConfirm";
-import { EmptyState, formatDateTime, textSecondary } from "./shared";
+import { blockBorder, desktopOnlySx, EmptyState, formatDateTime, textSecondary } from "./shared";
 
 const actionButtonSx = { minHeight: 40, borderRadius: "8px", textTransform: "none" };
 const linkChipSx = { minHeight: 40, fontWeight: 700 };
@@ -129,6 +129,110 @@ function LinkChip({ link, variant, onCopy }) {
         </IconButton>
       </Tooltip>
     </Box>
+  );
+}
+
+function MobileLinkCard({ link, points, canEdit, loading, onOpen, onEdit, onArchive, onCopy }) {
+  return (
+    <Paper
+      variant="outlined"
+      role="button"
+      tabIndex={0}
+      aria-label={`Открыть QR-зону ${link.zone_label || link.zone_code || "Кафе"}`}
+      onClick={() => onOpen(link)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(link);
+        }
+      }}
+      sx={{
+        p: 1.5,
+        borderRadius: "12px",
+        borderColor: blockBorder,
+        cursor: "pointer",
+        minWidth: 0,
+        "&:focus-visible": { outline: "3px solid", outlineColor: "primary.light" },
+      }}
+    >
+      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "start" }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontWeight: 800, overflowWrap: "anywhere" }}>
+            {pointName(points, link)}
+          </Typography>
+          <Typography sx={{ color: textSecondary, fontSize: 12 }}>
+            {formatDateTime(link.created_at)}
+          </Typography>
+        </Box>
+        <Chip
+          size="small"
+          label={link.status === "active" ? "Активна" : "Отозвана"}
+          sx={{
+            flexShrink: 0,
+            fontWeight: 700,
+            color: link.status === "active" ? "#2E7D32" : textSecondary,
+            bgcolor: link.status === "active" ? "#E8F5E9" : "#F6F6F6",
+          }}
+        />
+      </Box>
+
+      <Box sx={{ mt: 1.25 }}>
+        <Chip
+          size="small"
+          label={
+            link.zone_code || link.zone_label
+              ? `${link.zone_code || ""}${link.zone_code && link.zone_label ? " — " : ""}${link.zone_label || ""}`
+              : "Кафе"
+          }
+          sx={{ fontWeight: 700, bgcolor: "#E8F5E9", color: "#2E7D32", maxWidth: "100%" }}
+        />
+      </Box>
+
+      <Box sx={{ display: "grid", gap: 0.75, mt: 1.25, minWidth: 0 }}>
+        {linkUrl(link, "stars") ? (
+          <LinkChip
+            link={link}
+            variant="stars"
+            onCopy={onCopy}
+          />
+        ) : null}
+        {linkUrl(link, "emoji") ? (
+          <LinkChip
+            link={link}
+            variant="emoji"
+            onCopy={onCopy}
+          />
+        ) : null}
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5, mt: 1 }}>
+        <Tooltip title="Изменить ссылки">
+          <IconButton
+            aria-label="Изменить ссылки"
+            disabled={!canEdit || loading}
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(link);
+            }}
+          >
+            <EditOutlinedIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Архивировать QR-ссылку">
+          <IconButton
+            aria-label="Архивировать QR-ссылку"
+            color="error"
+            disabled={!canEdit || loading || link.status !== "active"}
+            onClick={(event) => {
+              event.stopPropagation();
+              onArchive(link);
+            }}
+          >
+            <ArchiveOutlinedIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </Paper>
   );
 }
 
@@ -299,6 +403,7 @@ export default function CafeReviewsLinks({
       ) : (
         <TableContainer
           sx={{
+            ...desktopOnlySx,
             maxHeight: "60dvh",
             border: "1px solid",
             borderColor: "#E5E5E5",
@@ -386,6 +491,33 @@ export default function CafeReviewsLinks({
           </Table>
         </TableContainer>
       )}
+
+      {links.length > 0 ? (
+        <Box
+          sx={{
+            display: "none",
+            gap: 1.25,
+            "@media (max-width: 990px)": { display: "grid" },
+          }}
+        >
+          {links.map((link) => (
+            <MobileLinkCard
+              key={link.id}
+              link={link}
+              points={points}
+              canEdit={canEdit}
+              loading={loading}
+              onOpen={openZoneModal}
+              onEdit={openEdit}
+              onArchive={withConfirm(
+                () => onRevoke({ id: link.id }),
+                "Архивировать QR-ссылку? Она перестанет работать, а запись останется в истории.",
+              )}
+              onCopy={copy}
+            />
+          ))}
+        </Box>
+      ) : null}
 
       <MyModal
         open={Boolean(zoneModalTarget)}
