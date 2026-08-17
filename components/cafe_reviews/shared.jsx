@@ -64,15 +64,17 @@ export function SeverityChip({ value, options }) {
   );
 }
 
-export function StatusChip({ value, options }) {
+export function StatusChip({ value, options, highlightNew = false }) {
+  const isNewIncident = highlightNew && value === "new";
+
   return (
     <Chip
       size="small"
       label={getOptionLabel(options, value, "Без статуса")}
       sx={{
-        color: textPrimary,
-        bgcolor: "#FFFFFF",
-        border: `1px solid ${blockBorder}`,
+        color: isNewIncident ? "#FFFFFF" : textPrimary,
+        bgcolor: isNewIncident ? brandRed : "#FFFFFF",
+        border: `1px solid ${isNewIncident ? brandRed : blockBorder}`,
         fontWeight: 700,
       }}
     />

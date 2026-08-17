@@ -73,6 +73,7 @@ export default function useCafeReviewsPage() {
   const [moduleInfo, setModuleInfo] = useState({});
   const [access, setAccess] = useState({});
   const [points, setPoints] = useState([]);
+  const [newIncidentCount, setNewIncidentCount] = useState(0);
   const [cities, setCities] = useState([]);
   const [dictionaries, setDictionaries] = useState({
     statuses: [],
@@ -129,6 +130,7 @@ export default function useCafeReviewsPage() {
       setModuleInfo(normalized.module_info);
       setAccess(normalized.access);
       setPoints(normalized.points);
+      setNewIncidentCount(normalized.new_incidents_count);
       setCities(normalized.cities);
       setDictionaries(normalized.dictionaries);
       changeSection(initialSection);
@@ -459,6 +461,14 @@ export default function useCafeReviewsPage() {
     async (incidentId) => {
       const target = { kind: "incident", id: incidentId };
       const requests = [];
+      requests.push(
+        api.getBootstrap().then((response) => {
+          const normalized = normalizeBootstrap(
+            ensureSuccess(response, "Не удалось обновить счётчик инцидентов"),
+          );
+          setNewIncidentCount(normalized.new_incidents_count);
+        }),
+      );
       if (canView("incidents")) {
         requests.push(loadDetail(target, { silent: true }));
       }
@@ -473,7 +483,7 @@ export default function useCafeReviewsPage() {
       }
       await Promise.all(requests);
     },
-    [canView, loadDashboard, loadDetail, loadList, pagination.page, section],
+    [api, canView, loadDashboard, loadDetail, loadList, pagination.page, section],
   );
 
   const updateIncident = useCallback(
@@ -516,6 +526,10 @@ export default function useCafeReviewsPage() {
             loadDashboard({ silent: true }),
           ]);
         }
+        const bootstrap = normalizeBootstrap(
+          ensureSuccess(await api.getBootstrap(), "Не удалось обновить счётчик инцидентов"),
+        );
+        setNewIncidentCount(bootstrap.new_incidents_count);
         showAlertRef.current(response?.text || "Отзыв отмечен как инцидент", true);
         return true;
       } catch (error) {
@@ -596,16 +610,23 @@ export default function useCafeReviewsPage() {
   );
 
   const refresh = useCallback(() => {
-    if (section === "overview" && canView("reviews")) return loadDashboard();
+    const refreshCount = api.getBootstrap().then((response) => {
+      const normalized = normalizeBootstrap(
+        ensureSuccess(response, "Не удалось обновить счётчик инцидентов"),
+      );
+      setNewIncidentCount(normalized.new_incidents_count);
+    });
+    if (section === "overview" && canView("reviews"))
+      return Promise.all([loadDashboard(), refreshCount]);
     if (section === "reviews" && canView("reviews")) {
-      return loadList({ page: pagination.page });
+      return Promise.all([loadList({ page: pagination.page }), refreshCount]);
     }
     if (section === "incidents" && canView("incidents")) {
-      return loadList({ page: pagination.page });
+      return Promise.all([loadList({ page: pagination.page }), refreshCount]);
     }
-    if (section === "links" && canView("links")) return loadLinks();
-    return null;
-  }, [canView, loadDashboard, loadLinks, loadList, pagination.page, section]);
+    if (section === "links" && canView("links")) return Promise.all([loadLinks(), refreshCount]);
+    return refreshCount;
+  }, [api, canView, loadDashboard, loadLinks, loadList, pagination.page, section]);
 
   useEffect(() => {
     if (!autoRefreshEnabled || !bootstrapReady || detailOpen) return undefined;
@@ -706,6 +727,7 @@ export default function useCafeReviewsPage() {
     loadBootstrap,
     loading: bootstrapLoading || contentLoading || mutationLoading,
     moduleInfo,
+    newIncidentCount,
     mutationLoading,
     openDetail,
     pagination,

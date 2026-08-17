@@ -144,6 +144,7 @@ export function normalizeBootstrap(response) {
   return {
     module_info: asObject(data.module_info),
     access: asObject(data.access),
+    new_incidents_count: asNumber(data.new_incidents_count, 0),
     points: asArray(data.points).map(normalizePoint).filter(Boolean),
     cities: asArray(data.cities).map(normalizeCity).filter(Boolean),
     dictionaries: {

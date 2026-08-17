@@ -1,7 +1,13 @@
-import { Paper, Tab, Tabs } from "@mui/material";
-import { blockBorder } from "./shared";
+import { Box, Paper, Tab, Tabs } from "@mui/material";
+import SmallFont from "@/ui/SmallFont";
+import { blockBorder, brandRed } from "./shared";
 
-export default function CafeReviewsSectionTabs({ value, sections, onChange }) {
+export default function CafeReviewsSectionTabs({
+  value,
+  sections,
+  newIncidentCount = 0,
+  onChange,
+}) {
   return (
     <Paper
       variant="outlined"
@@ -25,7 +31,35 @@ export default function CafeReviewsSectionTabs({ value, sections, onChange }) {
           <Tab
             key={section.value}
             value={section.value}
-            label={section.label}
+            label={
+              section.value === "incidents" ? (
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+                  <span>{section.label}</span>
+                  {newIncidentCount > 0 ? (
+                    <SmallFont
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 18,
+                        height: 18,
+                        flexShrink: 0,
+                        borderRadius: "50%",
+                        backgroundColor: brandRed,
+                        color: "#fff",
+                        fontSize: "0.65rem",
+                        lineHeight: 1,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {newIncidentCount}
+                    </SmallFont>
+                  ) : null}
+                </Box>
+              ) : (
+                section.label
+              )
+            }
           />
         ))}
       </Tabs>

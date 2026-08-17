@@ -13,6 +13,7 @@ export default function CafeReviewsContent({ page, isDesktop, visibleSections })
         <CafeReviewsSectionTabs
           value={page.section}
           sections={visibleSections}
+          newIncidentCount={page.newIncidentCount}
           onChange={page.setSection}
         />
       </Grid>

@@ -37,7 +37,14 @@ import { MySelect, MyTextInput } from "@/ui/Forms";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import MyModal from "@/ui/MyModal";
 import { useConfirm } from "@/src/hooks/useConfirm";
-import { blockBorder, desktopOnlySx, EmptyState, formatDateTime, textSecondary } from "./shared";
+import {
+  blockBorder,
+  brandRed,
+  desktopOnlySx,
+  EmptyState,
+  formatDateTime,
+  textSecondary,
+} from "./shared";
 
 const actionButtonSx = { minHeight: 40, borderRadius: "8px", textTransform: "none" };
 const qrModalActionSx = {
@@ -640,25 +647,34 @@ export default function CafeReviewsLinks({
           <Typography sx={{ mb: 1.5 }}>
             {revokeTarget ? pointName(points, revokeTarget) : ""}
           </Typography>
-          <MySelect
-            label="Причина"
-            data={revokeReasons}
-            value={revokeReason}
-            func={(event) => setRevokeReason(event.target.value)}
-            is_none={false}
-            disabled={loading}
-          />
-          <MyTextInput
-            label="Комментарий"
-            placeholder="Дополнительная причина (необязательно)"
-            value={revokeComment}
-            func={(event) => setRevokeComment(event.target.value)}
-            multiline
-            minRows={3}
-            maxRows={5}
-            inputProps={{ maxLength: 255 }}
-            disabled={loading}
-          />
+          <Grid
+            container
+            spacing={1.5}
+          >
+            <Grid size={12}>
+              <MySelect
+                label="Причина"
+                data={revokeReasons}
+                value={revokeReason}
+                func={(event) => setRevokeReason(event.target.value)}
+                is_none={false}
+                disabled={loading}
+              />
+            </Grid>
+            <Grid size={12}>
+              <MyTextInput
+                label="Комментарий"
+                placeholder="Дополнительная причина (необязательно)"
+                value={revokeComment}
+                func={(event) => setRevokeComment(event.target.value)}
+                multiline
+                minRows={3}
+                maxRows={5}
+                inputProps={{ maxLength: 255 }}
+                disabled={loading}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           <Button
@@ -670,11 +686,14 @@ export default function CafeReviewsLinks({
           </Button>
           <Button
             variant="contained"
-            color="error"
             startIcon={<BlockOutlinedIcon />}
             onClick={submitRevoke}
             disabled={!canEdit || loading || !revokeTarget}
-            sx={actionButtonSx}
+            sx={{
+              ...actionButtonSx,
+              bgcolor: brandRed,
+              "&:hover": { bgcolor: "#B51629" },
+            }}
           >
             Отозвать
           </Button>

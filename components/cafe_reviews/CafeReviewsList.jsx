@@ -123,6 +123,7 @@ function DesktopTable({
                 <StatusChip
                   value={item.status}
                   options={dictionaries.statuses}
+                  highlightNew={isIncident}
                 />
               </TableCell>
               <TableCell align="center">{item.issues_count}</TableCell>
@@ -204,6 +205,7 @@ function ResponsiveCards({ kind, items, dictionaries, selectedId, onOpen }) {
             <StatusChip
               value={item.status}
               options={dictionaries.statuses}
+              highlightNew={isIncident}
             />
             {isIncident ? (
               <SeverityChip
