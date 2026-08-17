@@ -10,17 +10,8 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
-  Tab,
-  Tabs,
   TextField,
 } from "@mui/material";
-
-const ROLE_TABS = [
-  { key: "cook", label: "Повар", hideCatIds: [11, 4] },
-  { key: "cashier", label: "Кассир", hideCatIds: [] },
-  { key: "kitchen", label: "Кух. работник", hideCatIds: [] },
-  { key: "universal", label: "Повар универсал", hideCatIds: [] },
-];
 
 function compareByName(a, b) {
   return String(a?.name ?? "").localeCompare(String(b?.name ?? ""), "ru", {
@@ -35,32 +26,13 @@ function getItemDedupeKey(item) {
   return `name:${String(item?.name ?? "")}|${String(item?.shelf_life ?? "")}`;
 }
 
-function dedupeItems(items) {
-  const seen = new Set();
-  return items.filter((item) => {
-    const key = getItemDedupeKey(item);
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
-}
-
 export default function CookPfTab({ pf }) {
   const [search, setSearch] = useState("");
-  const [roleTab, setRoleTab] = useState(0);
 
   const filteredPf = useMemo(() => {
-    const hideCatIds = ROLE_TABS[roleTab]?.hideCatIds ?? [];
     const query = search.trim().toLowerCase();
 
-    const list = dedupeItems(pf ?? []).filter((item) => {
-      const catId = Number(item?.cat_id);
-      if (hideCatIds.includes(catId)) {
-        return false;
-      }
-
+    const list = (pf ?? []).filter((item) => {
       if (!query) {
         return true;
       }
@@ -84,7 +56,7 @@ export default function CookPfTab({ pf }) {
       }
       return compareByName(a, b);
     });
-  }, [pf, roleTab, search]);
+  }, [pf, search]);
 
   return (
     <Box
@@ -96,35 +68,6 @@ export default function CookPfTab({ pf }) {
         overflow: "hidden",
       }}
     >
-      <Paper sx={{ mb: 2, overflow: "hidden", width: "100%" }}>
-        <Tabs
-          value={roleTab}
-          onChange={(_, value) => setRoleTab(value)}
-          variant="scrollable"
-          scrollButtons={false}
-          allowScrollButtonsMobile
-          sx={{
-            minHeight: 40,
-            width: "100%",
-            "& .MuiTabs-scroller": { overflow: "auto !important" },
-            "& .MuiTab-root": {
-              minWidth: "auto",
-              minHeight: 40,
-              px: 1.5,
-              fontSize: { xs: 13, sm: 14 },
-              textTransform: "none",
-            },
-          }}
-        >
-          {ROLE_TABS.map((tab) => (
-            <Tab
-              key={tab.key}
-              label={tab.label}
-            />
-          ))}
-        </Tabs>
-      </Paper>
-
       <TextField
         size="small"
         fullWidth
