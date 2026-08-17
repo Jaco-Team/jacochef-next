@@ -3,16 +3,45 @@ import { Button, Chip, Paper, Stack, Typography } from "@mui/material";
 import { getCategoryStatusLabel } from "./closeBuyUtils";
 
 export default function CategoryCard({ category, selected, disabled, onSelect, onAction }) {
+  const actionLabel =
+    category.status === "open"
+      ? "Закрыть все"
+      : category.status === "closed"
+        ? "Открыть все"
+        : "Настроить";
+  const actionColors =
+    category.status === "closed"
+      ? { color: "#2E7D32", bgcolor: "rgba(46, 125, 50, 0.09)" }
+      : category.status === "mixed"
+        ? { color: "#8A5A00", bgcolor: "rgba(255, 152, 0, 0.12)" }
+        : { color: "#555555", bgcolor: "#F2F2F2" };
+
   return (
     <Paper
       onClick={() => onSelect?.(category.id)}
       sx={{
+        position: "relative",
+        overflow: "hidden",
         p: 2,
-        borderRadius: "18px",
-        border: selected ? "1px solid #c03" : "1px solid #E5E5E5",
+        borderRadius: "16px",
+        border: `1px solid ${selected ? "#BDBDBD" : "#E3E3E3"}`,
+        bgcolor: selected ? "#FAFAFA" : "#FFFFFF",
         cursor: "pointer",
-        transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-        boxShadow: selected ? "0 12px 28px rgba(204, 0, 51, 0.08)" : "none",
+        transition: "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+        boxShadow: selected ? "0 8px 22px rgba(0, 0, 0, 0.07)" : "none",
+        "&::before": selected
+          ? {
+              content: '""',
+              position: "absolute",
+              inset: "0 auto 0 0",
+              width: 3,
+              bgcolor: "#CC0033",
+            }
+          : undefined,
+        "&:hover": {
+          borderColor: "#C8C8C8",
+          boxShadow: "0 6px 18px rgba(0, 0, 0, 0.06)",
+        },
       }}
     >
       <Stack
@@ -22,15 +51,17 @@ export default function CategoryCard({ category, selected, disabled, onSelect, o
         spacing={2}
       >
         <Stack
-          spacing={1}
+          spacing={0.75}
           sx={{ minWidth: 0 }}
         >
-          <Typography sx={{ fontWeight: 700, color: "#2B2B2B" }}>{category.name}</Typography>
+          <Typography sx={{ fontSize: 17, fontWeight: 700, color: "#2B2B2B" }}>
+            {category.name}
+          </Typography>
           <Typography
             variant="body2"
             sx={{ color: "#6B6B6B" }}
           >
-            Открыто {category.open_count} из {category.count}
+            {category.open_count} из {category.count} товаров открыто
           </Typography>
         </Stack>
         <Chip
@@ -54,39 +85,44 @@ export default function CategoryCard({ category, selected, disabled, onSelect, o
                     ? "#ef6c00"
                     : "#616161",
             fontWeight: 600,
+            borderRadius: "9px",
           }}
         />
       </Stack>
 
       <Stack
-        spacing={1.5}
-        sx={{ mt: 2 }}
+        direction="row"
+        justifyContent="flex-end"
+        sx={{ mt: 1.5 }}
       >
         {category.count > 0 ? (
           <Button
-            variant={category.status === "open" ? "outlined" : "contained"}
+            variant="text"
+            size="small"
             disabled={disabled}
             onClick={(event) => {
               event.stopPropagation();
               onAction?.(category);
             }}
             sx={{
-              minHeight: 44,
-              borderRadius: "14px",
-              bgcolor: category.status === "open" ? undefined : "#c03",
-              borderColor: "#c03",
-              color: category.status === "open" ? "#c03" : "#fff",
+              minHeight: 34,
+              px: 1.5,
+              borderRadius: "10px",
+              color: actionColors.color,
+              bgcolor: actionColors.bgcolor,
+              fontWeight: 600,
+              textTransform: "none",
               "&:hover": {
-                borderColor: "#c03",
-                bgcolor: category.status === "open" ? "rgba(204, 0, 51, 0.04)" : "#a8002b",
+                bgcolor:
+                  category.status === "closed"
+                    ? "rgba(46, 125, 50, 0.16)"
+                    : category.status === "mixed"
+                      ? "rgba(255, 152, 0, 0.2)"
+                      : "#E8E8E8",
               },
             }}
           >
-            {category.status === "open"
-              ? "Закрыть все"
-              : category.status === "closed"
-                ? "Открыть все"
-                : "Действия с категорией"}
+            {actionLabel}
           </Button>
         ) : (
           <Typography

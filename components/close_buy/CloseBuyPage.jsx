@@ -120,7 +120,6 @@ export default function CloseBuyPage() {
     historyFilters.date_from,
     historyFilters.date_to,
     historyFilters.search,
-    historyFilters.action,
     historyFilters.author,
     historyPagination.page,
     historyPagination.per_page,

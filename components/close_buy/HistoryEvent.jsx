@@ -1,6 +1,6 @@
 import { Chip, Paper, Stack, Typography } from "@mui/material";
 
-import { getHistoryEventTitle } from "./closeBuyUtils";
+import { formatPersonName, getHistoryEventTitle } from "./closeBuyUtils";
 
 const actionLabels = {
   category_close: "Закрытие категории",
@@ -11,6 +11,14 @@ const actionLabels = {
 };
 
 export default function HistoryEvent({ event, selected, onClick }) {
+  const isOpenEvent = event.event_type === "category_open" || event.event_type === "item_open";
+  const isLegacy = event.event_type === "legacy_change";
+  const actionSx = isLegacy
+    ? { color: "#8A5A00", bgcolor: "#FFF3D6" }
+    : isOpenEvent
+      ? { color: "#287A38", bgcolor: "#E7F2E8" }
+      : { color: "#5F5F5F", bgcolor: "#EEEEEE" };
+
   return (
     <Paper
       component="button"
@@ -21,10 +29,27 @@ export default function HistoryEvent({ event, selected, onClick }) {
         p: 1.5,
         textAlign: "left",
         cursor: "pointer",
-        border: selected ? "1px solid #c03" : "1px solid #E5E5E5",
+        position: "relative",
+        overflow: "hidden",
+        border: selected ? "1px solid #BDBDBD" : "1px solid #E3E3E3",
         borderRadius: "14px",
-        bgcolor: selected ? "rgba(204, 0, 51, 0.04)" : "#fff",
-        boxShadow: "none",
+        bgcolor: selected ? "#FAFAFA" : "#FFFFFF",
+        boxShadow: selected ? "0 4px 14px rgba(0, 0, 0, 0.06)" : "none",
+        transition: "border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease",
+        "&::before": selected
+          ? {
+              content: '""',
+              position: "absolute",
+              inset: "10px auto 10px 0",
+              width: 3,
+              borderRadius: "0 3px 3px 0",
+              bgcolor: "#c03",
+            }
+          : undefined,
+        "&:hover": {
+          borderColor: "#BDBDBD",
+          bgcolor: "#FAFAFA",
+        },
       }}
     >
       <Stack spacing={0.5}>
@@ -52,10 +77,10 @@ export default function HistoryEvent({ event, selected, onClick }) {
         </Typography>
         <Typography
           variant="caption"
-          sx={{ color: "#c03" }}
+          sx={{ color: "#6B6B6B", fontWeight: 600 }}
           noWrap
         >
-          {event.user_name || "Автор не указан"} • {event.point_name || "Кафе не указано"}
+          {formatPersonName(event.user_name) || "Автор не указан"}
         </Typography>
         <Stack
           direction="row"
@@ -64,13 +89,8 @@ export default function HistoryEvent({ event, selected, onClick }) {
           <Chip
             size="small"
             label={actionLabels[event.event_type] || "Изменение"}
+            sx={{ ...actionSx, fontWeight: 700, borderRadius: "9px" }}
           />
-          {event.card_variant === "legacy" ? (
-            <Chip
-              size="small"
-              label="Legacy"
-            />
-          ) : null}
         </Stack>
       </Stack>
     </Paper>

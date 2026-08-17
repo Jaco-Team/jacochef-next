@@ -203,6 +203,32 @@ export function getHistoryEventTitle(event) {
   return `Изменено товаров: ${event.item_count}`;
 }
 
+export function formatPersonName(value) {
+  const parts = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length <= 1) return parts[0] || "";
+
+  const initials = parts
+    .slice(1, 3)
+    .map((part) => `${Array.from(part.replace(/\.+$/, ""))[0]?.toUpperCase() || ""}.`)
+    .filter((part) => part !== ".")
+    .join(" ");
+
+  return initials ? `${parts[0]} ${initials}` : parts[0];
+}
+
+export function formatHistoryDescription(event) {
+  const description = String(event?.description || "");
+  const fullName = String(event?.user_name || "").trim();
+
+  if (!description || !fullName) return description;
+
+  return description.replace(fullName, formatPersonName(fullName));
+}
+
 export function getReadableError(error, fallback = "Не удалось выполнить запрос") {
   if (typeof error === "string" && error.trim()) return error;
   if (error?.response?.data?.text) return error.response.data.text;

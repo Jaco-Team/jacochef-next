@@ -20,7 +20,6 @@ const getDefaultHistoryFilters = () => ({
   date_from: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
   date_to: dayjs().format("YYYY-MM-DD"),
   search: "",
-  action: "all",
   author: "",
 });
 
@@ -272,7 +271,6 @@ export const useCloseBuyStore = create((set, get) => ({
         date_from: historyFilters.date_from || undefined,
         date_to: historyFilters.date_to || undefined,
         search: historyFilters.search.trim() || undefined,
-        action: historyFilters.action !== "all" ? historyFilters.action : undefined,
         author: historyFilters.author.trim() || undefined,
         page: historyPagination.page,
         per_page: historyPagination.per_page,

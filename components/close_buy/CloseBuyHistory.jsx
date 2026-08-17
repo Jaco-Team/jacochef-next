@@ -1,33 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import {
+  Box,
   Button,
-  DialogContent,
   Grid,
   Paper,
   Skeleton,
   Stack,
+  SwipeableDrawer,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 
-import { MyDatePickerNew, MySelect } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import { MyAutocomplite, MyDatePickerNew, MySelect } from "@/ui/Forms";
+import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 
 import HistoryEvent from "./HistoryEvent";
 import HistoryEventDetails from "./HistoryEventDetails";
-import { groupHistoryByDate } from "./closeBuyUtils";
-
-const actionOptions = [
-  { id: "all", name: "Все действия" },
-  { id: "category_close", name: "Закрытие категории" },
-  { id: "category_open", name: "Открытие категории" },
-  { id: "item_close", name: "Закрытие товара" },
-  { id: "item_open", name: "Открытие товара" },
-  { id: "legacy_change", name: "Старые записи" },
-];
+import { formatPersonName, groupHistoryByDate } from "./closeBuyUtils";
 
 export default function CloseBuyHistory({
   points = [],
@@ -46,6 +38,9 @@ export default function CloseBuyHistory({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
   const categoryOptions = [{ id: "all", name: "Все категории" }, ...categories];
+  const selectedCategoryOption =
+    categoryOptions.find((category) => String(category.id) === String(filters.category_id)) ||
+    categoryOptions[0];
   const authorOptions = useMemo(() => {
     const authors = new Set(history.map((event) => event.user_name?.trim()).filter(Boolean));
 
@@ -55,27 +50,16 @@ export default function CloseBuyHistory({
       { id: "", name: "Все авторы" },
       ...Array.from(authors)
         .sort((first, second) => first.localeCompare(second, "ru"))
-        .map((author) => ({ id: author, name: author })),
+        .map((author) => ({ id: author, name: formatPersonName(author) })),
     ];
   }, [filters.author, history]);
   const today = dayjs();
   const dateFrom = filters.date_from ? dayjs(filters.date_from) : null;
   const dateTo = filters.date_to ? dayjs(filters.date_to) : null;
   const groupedHistory = useMemo(() => groupHistoryByDate(history), [history]);
-  const pointNames = useMemo(
-    () => new Map(points.map((point) => [String(point.id), point.name])),
-    [points],
-  );
-  const resolveEvent = (event) =>
-    event
-      ? {
-          ...event,
-          point_name: pointNames.get(String(event.point_id)) || event.point_name || "",
-        }
-      : null;
-  const selectedEvent = resolveEvent(
-    history.find((event) => event.id === selectedEventId) || history[0] || null,
-  );
+  const selectedPoint =
+    points.find((point) => String(point.id) === String(selectedPointId)) || null;
+  const selectedEvent = history.find((event) => event.id === selectedEventId) || history[0] || null;
 
   useEffect(() => {
     if (!history.some((event) => event.id === selectedEventId)) {
@@ -94,17 +78,19 @@ export default function CloseBuyHistory({
 
   return (
     <Stack spacing={3}>
-      <Grid
-        container
-        justifyContent="flex-end"
-      >
+      <Grid container>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <MySelect
-            is_none={true}
-            data={points}
-            value={selectedPointId}
-            func={onPointChange}
+          <CityCafeAutocomplete2
+            points={points}
+            value={selectedPoint ? [selectedPoint] : []}
+            onChange={(selectedPoints) => {
+              const point = selectedPoints.at(-1);
+              if (point) onPointChange?.({ target: { value: point.id } });
+            }}
             label="Кафе"
+            placeholder="Выберите кафе"
+            withOrganizationMode={false}
+            compact
           />
         </Grid>
       </Grid>
@@ -145,20 +131,13 @@ export default function CloseBuyHistory({
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <MySelect
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <MyAutocomplite
             data={categoryOptions}
-            value={filters.category_id}
-            func={(event) => onFiltersChange({ category_id: event.target.value })}
+            value={selectedCategoryOption}
+            func={(_, category) => onFiltersChange({ category_id: category.id })}
             label="Категория"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <MySelect
-            data={actionOptions}
-            value={filters.action}
-            func={(event) => onFiltersChange({ action: event.target.value })}
-            label="Действие"
+            disableClearable
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
@@ -172,130 +151,200 @@ export default function CloseBuyHistory({
         </Grid>
       </Grid>
 
-      {loading ? (
-        <Grid
-          container
-          spacing={2}
-        >
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Skeleton
-              variant="rounded"
-              height={360}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Skeleton
-              variant="rounded"
-              height={360}
-            />
-          </Grid>
-        </Grid>
-      ) : history.length ? (
-        <Grid
-          container
-          spacing={2}
-          alignItems="flex-start"
-        >
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 1.5, border: "1px solid #E5E5E5", boxShadow: "none" }}>
-              <Stack spacing={1.5}>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography sx={{ fontWeight: 700 }}>События</Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "#6B6B6B" }}
-                  >
-                    {pagination.total} событий
-                  </Typography>
-                </Stack>
-                {Object.entries(groupedHistory).map(([date, events]) => (
-                  <Stack
-                    key={date}
-                    spacing={1}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ fontWeight: 700, color: "#6B6B6B" }}
-                    >
-                      {date}
-                    </Typography>
-                    {events.map((event) => (
-                      <HistoryEvent
-                        key={event.id}
-                        event={resolveEvent(event)}
-                        selected={!isMobile && selectedEvent?.id === event.id}
-                        onClick={() => handleEventSelect(event.id)}
-                      />
-                    ))}
-                  </Stack>
-                ))}
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "#6B6B6B" }}
-                  >
-                    {pagination.page} / {pagination.last_page}
-                  </Typography>
+      <Grid
+        container
+        spacing={2}
+        alignItems="flex-start"
+      >
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Stack spacing={1.5}>
+            {loading ? (
+              <Skeleton
+                variant="rounded"
+                height={360}
+              />
+            ) : (
+              <Paper
+                sx={{
+                  p: 1.5,
+                  border: "1px solid #E3E3E3",
+                  borderRadius: "18px",
+                  bgcolor: "#F8F8F8",
+                  boxShadow: "none",
+                }}
+              >
+                <Stack spacing={1.5}>
                   <Stack
                     direction="row"
-                    spacing={0.5}
+                    justifyContent="space-between"
+                    alignItems="center"
                   >
-                    <Button
-                      size="small"
-                      disabled={pagination.page <= 1}
-                      onClick={() => onPageChange(pagination.page - 1)}
+                    <Typography sx={{ fontWeight: 700 }}>События</Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#6B6B6B" }}
                     >
-                      Назад
-                    </Button>
-                    <Button
-                      size="small"
-                      disabled={pagination.page >= pagination.last_page}
-                      onClick={() => onPageChange(pagination.page + 1)}
-                    >
-                      Далее
-                    </Button>
+                      {pagination.total} событий
+                    </Typography>
                   </Stack>
+                  {history.length ? (
+                    <>
+                      {Object.entries(groupedHistory).map(([date, events]) => (
+                        <Stack
+                          key={date}
+                          spacing={1}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{ px: 0.5, fontWeight: 700, color: "#6B6B6B" }}
+                          >
+                            {date}
+                          </Typography>
+                          {events.map((event) => (
+                            <HistoryEvent
+                              key={event.id}
+                              event={event}
+                              selected={!isMobile && selectedEvent?.id === event.id}
+                              onClick={() => handleEventSelect(event.id)}
+                            />
+                          ))}
+                        </Stack>
+                      ))}
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#6B6B6B" }}
+                        >
+                          {pagination.page} / {pagination.last_page}
+                        </Typography>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                        >
+                          <Button
+                            size="small"
+                            disabled={pagination.page <= 1}
+                            onClick={() => onPageChange(pagination.page - 1)}
+                          >
+                            Назад
+                          </Button>
+                          <Button
+                            size="small"
+                            disabled={pagination.page >= pagination.last_page}
+                            onClick={() => onPageChange(pagination.page + 1)}
+                          >
+                            Далее
+                          </Button>
+                        </Stack>
+                      </Stack>
+                    </>
+                  ) : (
+                    <Stack sx={{ px: 0.5, py: 2 }}>
+                      <Typography sx={{ fontWeight: 600 }}>История пока пуста</Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ mt: 0.5, color: "#6B6B6B" }}
+                      >
+                        Измените фильтры или выберите другое кафе.
+                      </Typography>
+                    </Stack>
+                  )}
                 </Stack>
-              </Stack>
-            </Paper>
-          </Grid>
-          {!isMobile ? (
-            <Grid size={{ xs: 12, md: 8 }}>
-              <HistoryEventDetails event={selectedEvent} />
-            </Grid>
-          ) : null}
+              </Paper>
+            )}
+          </Stack>
         </Grid>
-      ) : (
-        <Paper sx={{ p: 4, borderRadius: "20px", border: "1px dashed #DADADA" }}>
-          <Typography sx={{ fontWeight: 600 }}>История пока пуста</Typography>
-          <Typography
-            variant="body2"
-            sx={{ mt: 1, color: "#6B6B6B" }}
-          >
-            Измените фильтры или выберите другой период.
-          </Typography>
-        </Paper>
-      )}
+
+        {!isMobile ? (
+          <Grid size={{ xs: 12, md: 8 }}>
+            {loading ? (
+              <Skeleton
+                variant="rounded"
+                height={360}
+              />
+            ) : (
+              <HistoryEventDetails event={selectedEvent} />
+            )}
+          </Grid>
+        ) : null}
+      </Grid>
 
       {isMobile ? (
-        <MyModal
+        <SwipeableDrawer
+          anchor="bottom"
           open={isMobileDetailsOpen && Boolean(selectedEvent)}
           onClose={() => setIsMobileDetailsOpen(false)}
-          title="Детали события"
-          maxWidth="sm"
+          onOpen={() => {}}
+          disableSwipeToOpen
+          ModalProps={{ keepMounted: true }}
+          PaperProps={{
+            sx: {
+              height: "75dvh",
+              maxHeight: "75dvh",
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "24px 24px 0 0",
+              overflow: "hidden",
+              bgcolor: "#FFFFFF",
+            },
+          }}
+          sx={{
+            "& .MuiBackdrop-root": {
+              bgcolor: "rgba(0, 0, 0, 0.48)",
+            },
+          }}
         >
-          <DialogContent sx={{ px: 2, pb: 2 }}>
-            <HistoryEventDetails event={selectedEvent} />
-          </DialogContent>
-        </MyModal>
+          <Box
+            sx={{
+              minHeight: 0,
+              flex: "1 1 auto",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            <Box sx={{ flexShrink: 0, pt: 1.25, px: 2.5, pb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 5,
+                  mx: "auto",
+                  mb: 1.75,
+                  borderRadius: "999px",
+                  bgcolor: "#D9D9D9",
+                }}
+              />
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: "#292929" }}
+              >
+                Детали события
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                height: 0,
+                minHeight: 0,
+                flex: "1 1 0",
+                overflowY: "scroll",
+                overflowX: "hidden",
+                overscrollBehaviorY: "contain",
+                WebkitOverflowScrolling: "touch",
+                touchAction: "pan-y",
+                px: 2,
+                pb: "calc(16px + env(safe-area-inset-bottom))",
+              }}
+            >
+              <HistoryEventDetails event={selectedEvent} />
+            </Box>
+          </Box>
+        </SwipeableDrawer>
       ) : null}
     </Stack>
   );
