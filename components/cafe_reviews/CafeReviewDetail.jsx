@@ -39,6 +39,7 @@ import {
   SeverityChip,
   StatusChip,
   textSecondary,
+  ZoneChip,
 } from "./shared";
 import CafeReviewPhotoGallery from "./CafeReviewPhotoGallery";
 
@@ -578,6 +579,14 @@ export default function CafeReviewDetail({
               {review.city_name ? ` · ${review.city_name}` : ""}
             </Typography>
           </DetailRow>
+          {review.zone_code || review.zone_label ? (
+            <DetailRow label="Зона">
+              <ZoneChip
+                code={review.zone_code}
+                label={review.zone_label}
+              />
+            </DetailRow>
+          ) : null}
         </Box>
 
         <Divider />

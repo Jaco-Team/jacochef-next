@@ -134,3 +134,15 @@ export function DetailRow({ label, children }) {
     </Box>
   );
 }
+
+export function ZoneChip({ code, label }) {
+  if (!code && !label) return null;
+
+  return (
+    <Chip
+      size="small"
+      label={label || "Кафе"}
+      sx={{ fontWeight: 700, bgcolor: successBackground, color: successGreen }}
+    />
+  );
+}

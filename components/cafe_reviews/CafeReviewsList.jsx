@@ -25,6 +25,7 @@ import {
   StatusChip,
   tableHeaderBackground,
   textSecondary,
+  ZoneChip,
 } from "./shared";
 
 function activateWithKeyboard(event, callback) {
@@ -104,6 +105,14 @@ function DesktopTable({
                   <Typography sx={{ color: textSecondary, fontSize: 12 }}>
                     {item.city_name}
                   </Typography>
+                ) : null}
+                {item.zone_code || item.zone_label ? (
+                  <Box sx={{ mt: 0.5 }}>
+                    <ZoneChip
+                      code={item.zone_code}
+                      label={item.zone_label}
+                    />
+                  </Box>
                 ) : null}
               </TableCell>
               <TableCell>
@@ -207,6 +216,10 @@ function ResponsiveCards({ kind, items, dictionaries, selectedId, onOpen }) {
               value={item.status}
               options={dictionaries.statuses}
               highlightNew={isIncident}
+            />
+            <ZoneChip
+              code={item.zone_code}
+              label={item.zone_label}
             />
             {isIncident ? (
               <SeverityChip

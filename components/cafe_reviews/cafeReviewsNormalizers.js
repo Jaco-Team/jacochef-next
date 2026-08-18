@@ -167,6 +167,8 @@ export function normalizeReview(item) {
     point_name: String(item.point_name ?? ""),
     city_id: item.city_id ?? null,
     city_name: String(item.city_name ?? ""),
+    zone_code: item.zone_code == null ? "" : String(item.zone_code),
+    zone_label: item.zone_label == null ? "" : String(item.zone_label),
     rating: asNumber(item.rating, 0),
     is_incident: asBoolean(item.is_incident),
     status: String(item.status ?? ""),
@@ -189,6 +191,8 @@ export function normalizeIncident(item) {
     point_name: String(item.point_name ?? ""),
     city_id: item.city_id ?? null,
     city_name: String(item.city_name ?? ""),
+    zone_code: item.zone_code == null ? "" : String(item.zone_code),
+    zone_label: item.zone_label == null ? "" : String(item.zone_label),
     rating: asNumber(item.rating, 0),
     status: String(item.status ?? ""),
     severity: item.severity == null ? "" : String(item.severity),
@@ -329,6 +333,8 @@ export function normalizeIncidentDetail(response) {
     point_name: nestedReview.point_name ?? incident.point_name,
     city_id: nestedReview.city_id ?? incident.city_id,
     city_name: nestedReview.city_name ?? incident.city_name,
+    zone_code: nestedReview.zone_code ?? incident.zone_code,
+    zone_label: nestedReview.zone_label ?? incident.zone_label,
   };
 
   return {
@@ -362,7 +368,7 @@ export function getDefaultFilters(section = "reviews") {
     rating: "",
     review_status: [],
     incident_status: section === "incidents" ? ["new", "in_progress"] : [],
-    sort: section === "incidents" ? "severity" : "created_at",
+    sort: "created_at",
     direction: "desc",
     severity: "",
     issue: "",
