@@ -41,7 +41,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { MySelect, MyCheckBox, MyTextInput, MyDatePickerNew, MyAutocomplite } from "@/ui/Forms";
 
 import Dropzone from "dropzone";
-import { api_laravel_local, api_laravel } from "@/src/api_new";
+import { api_laravel_local, api_laravel, getAuthHeaders } from "@/src/api_new";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
@@ -63,6 +63,10 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+  /\/+$/,
+  "",
+);
 const siteItemModalAccessFields = SITE_ITEMS_MODAL_FIELD_KEYS;
 const tableSortLabelSx = {
   fontWeight: 600,
@@ -166,7 +170,7 @@ class SiteItems_Modal_Mark extends React.Component {
     parallelUploads: 10,
     acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: "https://apichef.jacochef.ru/api/site_setting/upload_banner",
+    url: `${apiBaseUrl}/site_setting/upload_banner`,
   };
 
   myDropzoneNew = null;
@@ -222,7 +226,10 @@ class SiteItems_Modal_Mark extends React.Component {
       });
 
       setTimeout(() => {
-        this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
+        this.myDropzone = new Dropzone("#for_img_edit_new", {
+          ...this.dropzoneOptions,
+          headers: getAuthHeaders(),
+        });
       }, 300);
     }
   }

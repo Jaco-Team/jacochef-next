@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBannerModalStore } from "./useBannerModalStore";
 import Dropzone from "dropzone";
 import dayjs from "dayjs";
-import { dropzoneOptions } from "./bannerUtils";
+import { getDropzoneOptions } from "./bannerUtils";
 import { useSiteSettingStore } from "@/components/site_setting/useSiteSettingStore";
 import HistoryLog from "@/ui/history/HistoryLog";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
@@ -145,9 +145,9 @@ export function BannerModal({
     if (!dropZonesReady) return;
     if (!desktopDropzoneContainerRef.current || !mobileDropzoneContainerRef.current) return;
 
-    dDropzone.current = new Dropzone(desktopDropzoneContainerRef.current, dropzoneOptions);
+    dDropzone.current = new Dropzone(desktopDropzoneContainerRef.current, getDropzoneOptions());
     setDesktopDropzone(dDropzone);
-    mDropzone.current = new Dropzone(mobileDropzoneContainerRef.current, dropzoneOptions);
+    mDropzone.current = new Dropzone(mobileDropzoneContainerRef.current, getDropzoneOptions());
     setMobileDropzone(mDropzone);
     // showAlert("Dropzones created", true);
 
