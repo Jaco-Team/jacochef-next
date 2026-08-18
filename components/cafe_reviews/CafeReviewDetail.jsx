@@ -42,6 +42,7 @@ import {
   ZoneChip,
 } from "./shared";
 import CafeReviewPhotoGallery from "./CafeReviewPhotoGallery";
+import { useConfirm } from "@/src/hooks/useConfirm";
 
 const terminalStatuses = ["resolved", "dismissed"];
 const validStatusTransitions = {
@@ -166,12 +167,32 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
 function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onReject, onReanalyze }) {
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [additionalContext, setAdditionalContext] = useState("");
+  const { withConfirm, ConfirmDialog } = useConfirm();
 
   if (!analysis) {
+    const runAnalysis = withConfirm(
+      () => onReanalyze({ incidentId: incident.id, additionalContext: "" }),
+      "Запустить AI-анализ сейчас?",
+    );
+
     return (
-      <Alert severity="info">
-        AI-анализ ещё не готов или недоступен. Решение по инциденту принимает оператор.
-      </Alert>
+      <Stack spacing={1.25}>
+        <Alert severity="info">
+          AI-анализ ещё не готов или недоступен. Решение по инциденту принимает оператор.
+        </Alert>
+        {canDecide ? (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<RefreshOutlinedIcon />}
+            onClick={runAnalysis}
+            sx={{ alignSelf: "flex-start", textTransform: "none", borderRadius: "12px" }}
+          >
+            Запустить
+          </Button>
+        ) : null}
+        <ConfirmDialog />
+      </Stack>
     );
   }
 
@@ -365,6 +386,54 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
         ) : null}
       </Stack>
     </Paper>
+  );
+}
+
+function AiAnalysisSection({ analysis, children }) {
+  const [expanded, setExpanded] = useState(!analysis?.human_decision);
+  const decision = analysis?.human_decision || null;
+
+  useEffect(() => {
+    setExpanded(!decision || decision !== "accepted");
+  }, [analysis?.id, decision]);
+
+  const status = !analysis
+    ? { label: "Не проанализирован", color: "default" }
+    : decision === "accepted"
+      ? { label: "Принято", color: "success" }
+      : decision === "rejected"
+        ? { label: "Отклонено", color: "default" }
+        : { label: "Готово к проверке", color: "warning" };
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      expanded={expanded}
+      onChange={(_, nextExpanded) => setExpanded(nextExpanded)}
+      sx={{
+        backgroundColor: "transparent",
+        "&::before": { display: "none" },
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{
+          minHeight: 40,
+          px: 0,
+          "& .MuiAccordionSummary-content": { my: 0.75, alignItems: "center", gap: 1 },
+        }}
+      >
+        <Typography sx={{ fontSize: 16, fontWeight: 800 }}>AI-анализ</Typography>
+        <Chip
+          size="small"
+          label={status.label}
+          color={status.color}
+          variant="outlined"
+        />
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 0, pt: 0.5, pb: 0 }}>{children}</AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -746,7 +815,7 @@ export default function CafeReviewDetail({
               )}
             </Section>
             {canViewAi ? (
-              <Section title="AI-анализ">
+              <AiAnalysisSection analysis={detail.ai_analysis}>
                 <AiPanel
                   analysis={detail.ai_analysis}
                   incident={incident}
@@ -758,7 +827,7 @@ export default function CafeReviewDetail({
                     onReanalyzeAi({ id: incidentId, additional_context: additionalContext })
                   }
                 />
-              </Section>
+              </AiAnalysisSection>
             ) : null}
             <Accordion
               disableGutters

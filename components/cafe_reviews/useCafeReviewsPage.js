@@ -577,8 +577,12 @@ export default function useCafeReviewsPage() {
       if (!canEdit("incidents") || !canAccess("ai")) return false;
       setMutationLoading(true);
       try {
+        const requestPayload = { id };
+        if (additional_context?.trim()) {
+          requestPayload.additional_context = additional_context.trim();
+        }
         const response = ensureSuccess(
-          await api.reanalyzeAi({ id, additional_context }),
+          await api.reanalyzeAi(requestPayload),
           "Не удалось повторно запустить AI-анализ",
         );
         await refreshAfterMutation(id);
