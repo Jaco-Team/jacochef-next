@@ -573,7 +573,7 @@ export default function useCafeReviewsPage() {
   );
 
   const reanalyzeAi = useCallback(
-    async ({ id, additional_context }) => {
+    async ({ id, additional_context, attachment = null }) => {
       if (!canEdit("incidents") || !canAccess("ai")) return false;
       setMutationLoading(true);
       try {
@@ -582,7 +582,7 @@ export default function useCafeReviewsPage() {
           requestPayload.additional_context = additional_context.trim();
         }
         const response = ensureSuccess(
-          await api.reanalyzeAi(requestPayload),
+          await api.reanalyzeAi(requestPayload, attachment),
           "Не удалось повторно запустить AI-анализ",
         );
         await refreshAfterMutation(id);

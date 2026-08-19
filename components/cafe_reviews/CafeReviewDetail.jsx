@@ -139,11 +139,20 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
             </Typography>
           ) : null}
           {event.comment ? (
-            <Typography
-              sx={{ fontSize: 14, mt: 0.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-            >
-              {event.comment}
-            </Typography>
+            <Box sx={{ mt: 0.5 }}>
+              {event.comment_type ? (
+                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                  {{
+                    operator: "Комментарий оператора",
+                    ai_recommendation: "Рекомендации AI",
+                    ai_context: "Контекст для AI",
+                  }[event.comment_type] || "Комментарий"}
+                </Typography>
+              ) : null}
+              <Typography sx={{ fontSize: 14, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                {event.comment}
+              </Typography>
+            </Box>
           ) : null}
           {event.decision ? (
             <Typography sx={{ fontSize: 14, mt: 0.25 }}>
@@ -167,6 +176,7 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
 function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onReject, onReanalyze }) {
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [additionalContext, setAdditionalContext] = useState("");
+  const [reanalyzeAttachment, setReanalyzeAttachment] = useState(null);
   const { withConfirm, ConfirmDialog } = useConfirm();
 
   if (!analysis) {
@@ -204,13 +214,20 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
 
   const cancelReanalyze = () => {
     setAdditionalContext("");
+    setReanalyzeAttachment(null);
     setReanalyzeOpen(false);
   };
 
   const submitReanalyze = async () => {
     const context = additionalContext.trim();
-    if (!context) return;
-    if (await onReanalyze({ incidentId: incident.id, additionalContext: context })) {
+    if (!context && !reanalyzeAttachment) return;
+    if (
+      await onReanalyze({
+        incidentId: incident.id,
+        additionalContext: context,
+        attachment: reanalyzeAttachment,
+      })
+    ) {
       cancelReanalyze();
     }
   };
@@ -307,7 +324,7 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
             {decisionLabels[analysis.human_decision] || analysis.human_decision}
           </Alert>
         ) : null}
-        {canDecide && !reanalyzeOpen ? (
+        {canDecide && !reanalyzeOpen && analysis.human_decision !== "accepted" ? (
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {!hasDecision ? (
               <>
@@ -364,10 +381,24 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
                 placeholder="Дополнительная информация по инциденту"
                 inputProps={{ maxLength: 2000 }}
               />
+              <Button
+                component="label"
+                variant="outlined"
+                size="small"
+                sx={{ textTransform: "none", borderRadius: "12px", alignSelf: "stretch" }}
+              >
+                {reanalyzeAttachment ? `Фото: ${reanalyzeAttachment.name}` : "Добавить фото"}
+                <input
+                  hidden
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => setReanalyzeAttachment(event.target.files?.[0] || null)}
+                />
+              </Button>
               <IconButton
                 color="success"
                 aria-label="Отправить дополнительный контекст"
-                disabled={!additionalContext.trim()}
+                disabled={!additionalContext.trim() && !reanalyzeAttachment}
                 onClick={submitReanalyze}
                 sx={{ mt: 0.25 }}
               >
@@ -823,8 +854,12 @@ export default function CafeReviewDetail({
                   canDecide={canDecideAi}
                   onApply={(analysis) => setConfirmAction({ type: "apply-ai", analysis })}
                   onReject={(analysis) => setConfirmAction({ type: "reject-ai", analysis })}
-                  onReanalyze={async ({ incidentId, additionalContext }) =>
-                    onReanalyzeAi({ id: incidentId, additional_context: additionalContext })
+                  onReanalyze={async ({ incidentId, additionalContext, attachment }) =>
+                    onReanalyzeAi({
+                      id: incidentId,
+                      additional_context: additionalContext,
+                      attachment,
+                    })
                   }
                 />
               </AiAnalysisSection>

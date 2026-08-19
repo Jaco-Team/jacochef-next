@@ -278,6 +278,7 @@ function normalizeEvent(item) {
     status_to: item.status_to == null ? "" : String(item.status_to),
     severity: item.severity == null ? "" : String(item.severity),
     comment: String(item.comment ?? ""),
+    comment_type: String(item.comment_type ?? ""),
     ai_analysis_id: item.ai_analysis_id ?? null,
     decision: item.decision === "accepted" || item.decision === "rejected" ? item.decision : "",
     photos: asArray(item.photos).map(normalizePhoto).filter(Boolean),

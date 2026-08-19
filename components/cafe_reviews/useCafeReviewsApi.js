@@ -47,7 +47,10 @@ export default function useCafeReviewsApi() {
           ? uploadRef.current("incident/update", file, payload)
           : request("incident/update", payload),
       decideAi: (payload) => request("incident/ai-decision", payload),
-      reanalyzeAi: (payload) => request("incident/ai-reanalyze", payload),
+      reanalyzeAi: (payload, file = null) =>
+        file
+          ? uploadRef.current("incident/ai-reanalyze", file, payload)
+          : request("incident/ai-reanalyze", payload),
       getPhoto: (id) => request(`photos/${id}/view`, {}, { responseType: "blob" }),
     };
   }, []);
