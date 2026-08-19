@@ -1,5 +1,32 @@
 # План модуля Cleanings
 
+## Follow-up: объединение с журналом бактерицидных ламп
+
+Chef-only task: [`TASK.md`](TASK.md).
+
+### Цель
+
+Добавить действующий `journal_of_work_of_bactericidal_lamps` внутрь `/cleanings`, сохранив
+standalone route и его текущий CRUD/export contract. Верхняя навигация и Control subtabs
+должны иметь короткие подсказки о содержимом.
+
+### Порядок действий
+
+1. Сохранить локальный `src/api_new.js` override и подтвердить API/DB target.
+2. Подключить lamp section к существующим point-based `lamps`/`lamps_active` данным.
+3. Не смешивать lamp permissions с Cleanings permissions: `export_excel` и остальные действия
+   должны проверяться исходным lamp access contract.
+4. Проверить Control actions на локальном наборе данных и отдельно зафиксировать destructive
+   smoke limits.
+
+### Проверки
+
+- local API only: `http://localhost:8000`;
+- local MariaDB only: `127.0.0.1:3307`;
+- templates/categories/control response and selected point/date filters;
+- lamp load, edit/add activity and export visibility;
+- desktop/mobile and empty/loading/error states.
+
 ## Текущее состояние
 
 `app/Chef/Cleanings` до этого плана не существовал.

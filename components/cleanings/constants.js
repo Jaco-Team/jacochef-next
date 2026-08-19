@@ -9,15 +9,51 @@ export const days = [
 ];
 
 export const cleaningSectionTabs = [
-  { value: "templates", label: "Уборки", href: "/cleanings" },
-  { value: "categories", label: "Категории", href: "/cleanings/categories" },
-  { value: "cafes", label: "Кафе", href: "/cleanings/cafes" },
-  { value: "control", label: "Контроль", href: "/cleanings/control" },
+  {
+    value: "templates",
+    label: "Уборки",
+    href: "/cleanings",
+    description: "Шаблоны уборок, расписание, роли и статус активности.",
+  },
+  {
+    value: "categories",
+    label: "Категории",
+    href: "/cleanings/categories",
+    description: "Категории и инструкции, которыми группируются уборки.",
+  },
+  {
+    value: "cafes",
+    label: "Кафе",
+    href: "/cleanings/cafes",
+    description: "Привязка уборок к точкам и дополнительное время.",
+  },
+  {
+    value: "control",
+    label: "Контроль",
+    href: "/cleanings/control",
+    description: "Проверка выполненных уборок и заготовок по точке и периоду.",
+  },
+  {
+    value: "lamps",
+    label: "Лампы",
+    href: "/cleanings/lamps",
+    description: "Журнал работы бактерицидных ламп, активации и экспорт XLS.",
+  },
 ];
 
 export const controlKindTabs = [
-  { value: "cleanings", label: "Уборки", href: "/cleanings/control/cleanings" },
-  { value: "preparations", label: "Заготовки", href: "/cleanings/control/preparations" },
+  {
+    value: "cleanings",
+    label: "Уборки",
+    href: "/cleanings/control/cleanings",
+    description: "Выполненные уборки и действия подтверждения.",
+  },
+  {
+    value: "preparations",
+    label: "Заготовки",
+    href: "/cleanings/control/preparations",
+    description: "Объемы заготовок, отходы и подтверждение заготовок.",
+  },
 ];
 
 export const defaultForm = {

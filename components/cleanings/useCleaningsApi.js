@@ -11,6 +11,12 @@ export default function useCleaningsApi() {
 
     return {
       getBootstrap: () => request("get_all"),
+      getLampsBootstrap: () => request("lamps/bootstrap"),
+      getLamps: (payload) => request("lamps", payload),
+      saveLamp: (payload) => request("lamps/save", payload),
+      saveLampActivity: (payload) => request("lamps/activity/save", payload),
+      replaceLamp: (payload) => request("lamps/replace", payload),
+      exportLamps: (payload) => request("lamps/export", payload, { responseType: "blob" }),
       getTemplates: () => request("templates"),
       getCategories: () => request("categories"),
       getCafes: (payload) => request("cafes", payload),
