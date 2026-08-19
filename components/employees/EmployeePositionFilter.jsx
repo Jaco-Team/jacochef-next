@@ -10,7 +10,7 @@ import {
   createFilterOptions,
 } from "@mui/material";
 
-const ALL_OPTION = { id: "__ALL__", name: "Все должности", unit_name: "Общее" };
+const ALL_OPTION = { id: "__ALL__", name: "Все кроме уволенных", unit_name: "Общее" };
 const DISMISSED_OPTION = { id: 0, name: "Уволенные", unit_name: "Общее" };
 
 const optionId = (option) => Number(option?.id ?? 0);
@@ -105,7 +105,7 @@ export default function EmployeePositionFilter({ options, value, onChange, onBlu
       return (
         <Chip
           size="small"
-          label="Все должности"
+          label="Все кроме уволенных"
         />
       );
     }
