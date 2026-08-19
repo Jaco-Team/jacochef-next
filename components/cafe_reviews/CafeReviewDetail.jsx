@@ -534,6 +534,9 @@ export default function CafeReviewDetail({
 
     return validOptions;
   }, [dictionaries.incident_statuses, dictionaries.statuses, incident]);
+  const incidentStatusValue = incidentStatusOptions.some((option) => option.value === status)
+    ? status
+    : incident?.status || "";
 
   if (error) {
     return (
@@ -749,7 +752,7 @@ export default function CafeReviewDetail({
                     <Select
                       labelId={`${idPrefix}-incident-status-label`}
                       id={`${idPrefix}-incident-status`}
-                      value={status}
+                      value={incidentStatusValue}
                       label="Статус"
                       onChange={(event) => {
                         const nextStatus = event.target.value;
