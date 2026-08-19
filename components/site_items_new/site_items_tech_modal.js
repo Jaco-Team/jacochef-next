@@ -27,6 +27,7 @@ import Box from "@mui/material/Box";
 import TabList from "@mui/lab/TabList";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
+import { getAuthHeaders } from "@/src/api_new";
 import {
   SITE_ITEMS_MODAL_FIELD_KEYS,
   SITE_ITEMS_MODAL_SECTIONS,
@@ -46,6 +47,10 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+  /\/+$/,
+  "",
+);
 const compositionOptionsLimit = 100;
 const filterCompositionOptions = (options, { inputValue }) => {
   const query = String(inputValue ?? "")
@@ -101,7 +106,7 @@ export class SiteItemsModalTech extends React.Component {
     parallelUploads: 10,
     acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: "https://apichef.jacochef.ru/api/site_items_new/upload_img",
+    url: `${apiBaseUrl}/site_items_new/upload_img`,
   };
 
   myDropzone = null;
@@ -779,7 +784,10 @@ export class SiteItemsModalTech extends React.Component {
     }
 
     try {
-      this.myDropzone = new Dropzone(this.dropzoneRef.current, this.dropzoneOptions);
+      this.myDropzone = new Dropzone(this.dropzoneRef.current, {
+        ...this.dropzoneOptions,
+        headers: getAuthHeaders(),
+      });
       this.dropzoneInitialized = true;
       this.setupDropzoneEvents();
     } catch (error) {

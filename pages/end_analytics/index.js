@@ -31,8 +31,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
-import AiAnalystTab from "@/components/end_analytics/AiAnalystTab";
+import AiAnalystTab, { AI_ANALYST_SOURCES } from "@/components/end_analytics/AiAnalystTab";
 import {
   DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
   END_ANALYTICS_COLUMNS,
@@ -41,6 +42,12 @@ import {
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
+const COMPARISON_MODE_NAMES = {
+  previous_period: "Предыдущий равный период",
+  previous_month: "Те же даты прошлого месяца",
+  previous_year: "Те же даты прошлого года",
+  custom: "Свой период",
+};
 
 const createEmptyCustomCostForm = () => ({
   id: null,
@@ -262,7 +269,9 @@ const normalizeAiSiteDataSnapshot = (payload) => {
     "site_data_by_category",
     "daily_metrics",
     "analytics_meta",
+    "request_payload",
     "ai_chat",
+    "ai_chat_threads",
     "data_availability",
   ].forEach((field) => {
     if (field in normalized) {
@@ -517,6 +526,9 @@ function EndPage() {
     points: [],
     dateStart: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
     dateEnd: dayjs(new Date()).format("YYYY-MM-DD"),
+    comparisonMode: { id: "previous_period", name: "Предыдущий равный период" },
+    comparisonDateStart: dayjs(new Date()).subtract(2, "day").format("YYYY-MM-DD"),
+    comparisonDateEnd: dayjs(new Date()).subtract(2, "day").format("YYYY-MM-DD"),
     cities: {},
     src_source: "",
     src_medium: "",
@@ -533,6 +545,7 @@ function EndPage() {
   };
   const [isLoad, setIsLoad] = useState(false);
   const [module, setModule] = useState({});
+  const [access, setAccess] = useState(null);
   const [cities, setCities] = useState([]);
   const [form, setForm] = useState(standardForm);
   const [tableData, setTableData] = useState([]);
@@ -547,7 +560,7 @@ function EndPage() {
   const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(false);
   const [aiSource, setAiSource] = useState(null);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [siteDataRequestId, setSiteDataRequestId] = useState(null);
@@ -555,14 +568,40 @@ function EndPage() {
   const [trafficSourceMetrics, setTrafficSourceMetrics] = useState([]);
   const [siteDataHistory, setSiteDataHistory] = useState([]);
   const [historyChatMessages, setHistoryChatMessages] = useState(null);
+  const [aiChatThreads, setAiChatThreads] = useState([]);
+  const [activeChatThreadId, setActiveChatThreadId] = useState(null);
   const [aiSiteDataSnapshot, setAiSiteDataSnapshot] = useState(null);
+  const accessApi = handleUserAccess(access || {});
+  const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
+  const canViewAiAnalyst = access !== null && accessApi.userCan("access", "ai_analyst");
 
   useEffect(() => {
     getData("get_all").then((data) => {
+      const nextAccess = data.access || {};
+      const nextAccessApi = handleUserAccess(nextAccess);
+
       document.title = data.module_info.name;
       setModule(data.module_info);
+      setAccess(nextAccess);
+      setActiveTab(
+        nextAccessApi.userCan("access", "analytics")
+          ? 0
+          : nextAccessApi.userCan("access", "ai_analyst")
+            ? 1
+            : false,
+      );
       setCities(data.cities);
       setSiteDataHistory(data.site_data_history || []);
+      const initialThreads = Array.isArray(data.ai_chat_threads) ? data.ai_chat_threads : [];
+      if (initialThreads.length) {
+        applyChatThreads(initialThreads);
+        const initialThread =
+          initialThreads.find((thread) => thread.is_pinned) || initialThreads[0] || null;
+        if (initialThread) {
+          setActiveChatThreadId(initialThread.id);
+          loadChatThreadMessages(initialThread.id);
+        }
+      }
       setLastUpdate(dayjs().format("HH:mm"));
     });
   }, []);
@@ -705,13 +744,111 @@ function EndPage() {
     return aiChat.flatMap((item) => {
       const messages = [];
       if (item?.prompt) {
-        messages.push({ role: "user", text: item.prompt });
+        messages.push({
+          id: `${item.id || "message"}-user`,
+          role: "user",
+          text: item.prompt,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
       }
       if (item?.answer) {
-        messages.push({ role: "assistant", text: item.answer });
+        messages.push({
+          id: `${item.id || "message"}-assistant`,
+          role: "assistant",
+          text: item.answer,
+          dataRefs: item.context_meta?.data_refs || [],
+          limitations: item.context_meta?.limitations || [],
+        });
+      } else if (item?.status === "error") {
+        messages.push({
+          id: `${item.id || "message"}-error`,
+          role: "assistant",
+          text: "Не удалось получить ответ AI. Предыдущая история чата сохранена.",
+          isError: true,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
       }
       return messages;
     });
+  };
+
+  const restoreChatThreads = (threads, legacyChat) => {
+    const nextThreads = Array.isArray(threads)
+      ? threads.map((thread) => ({
+          ...thread,
+          messages: Array.isArray(thread?.messages) ? thread.messages : [],
+        }))
+      : [];
+
+    if (!nextThreads.length || !Array.isArray(legacyChat)) {
+      return nextThreads;
+    }
+
+    const knownMessageIds = new Set(
+      nextThreads.flatMap((thread) => thread.messages.map((message) => Number(message?.id))),
+    );
+    const legacyMessages = legacyChat.filter(
+      (message) =>
+        message?.thread_id == null && (!message?.id || !knownMessageIds.has(Number(message.id))),
+    );
+
+    if (!legacyMessages.length) {
+      return nextThreads;
+    }
+
+    return nextThreads.map((thread, index) =>
+      index === 0 ? { ...thread, messages: [...thread.messages, ...legacyMessages] } : thread,
+    );
+  };
+
+  const applyChatThreads = (threads, preferredThreadId = null) => {
+    const nextThreads = Array.isArray(threads) ? threads : [];
+    const selected =
+      nextThreads.find((thread) => Number(thread.id) === Number(preferredThreadId)) ||
+      nextThreads.find((thread) => thread.is_pinned) ||
+      nextThreads[0] ||
+      null;
+
+    setAiChatThreads(nextThreads);
+    setActiveChatThreadId(selected?.id ?? null);
+    if (Array.isArray(selected?.messages)) {
+      setHistoryChatMessages(mapAiChatToMessages(selected.messages));
+    }
+  };
+
+  const loadChatThreadMessages = async (threadId) => {
+    if (!threadId) return [];
+    const result = await api_laravel("end_analytics", "get_ai_chat_thread_messages", {
+      thread_id: threadId,
+      page: 1,
+      per_page: 100,
+    });
+    const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+    if (data?.st === false) {
+      return [];
+    }
+    const messages = Array.isArray(data.messages) ? data.messages : data.items || [];
+    setAiChatThreads((current) =>
+      current.map((thread) =>
+        Number(thread.id) === Number(threadId) ? { ...thread, messages } : thread,
+      ),
+    );
+    setHistoryChatMessages(mapAiChatToMessages(messages));
+    return messages;
+  };
+
+  const selectChatThread = async (threadId) => {
+    const selected = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId));
+    setActiveChatThreadId(selected?.id ?? null);
+    if (!selected) {
+      setHistoryChatMessages([]);
+      return;
+    }
+    if (Array.isArray(selected.messages) && selected.messages.length > 0) {
+      setHistoryChatMessages(mapAiChatToMessages(selected.messages));
+    } else {
+      await loadChatThreadMessages(selected.id);
+    }
   };
 
   const applyAiRequest = () => {
@@ -719,11 +856,13 @@ function EndPage() {
     setSiteDataRequestId(null);
     setDailyMetrics([]);
     setTrafficSourceMetrics([]);
-    setHistoryChatMessages(null);
     setAiSiteDataSnapshot(null);
 
     getData("get_site_data", {
       ...form,
+      comparisonMode: form.comparisonMode?.id || "previous_period",
+      comparisonDateStart: dayjs(form.comparisonDateStart).format("YYYY-MM-DD"),
+      comparisonDateEnd: dayjs(form.comparisonDateEnd).format("YYYY-MM-DD"),
       typeOrder: [{ id: 2, name: "Сайт" }],
       src_source: aiSource?.name || "",
       dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
@@ -735,7 +874,9 @@ function EndPage() {
         setSiteDataRequestId(snapshot.site_data_request_id ?? null);
         setDailyMetrics(snapshot.daily_metrics?.items || []);
         setTrafficSourceMetrics(buildTrafficSourceMetrics(snapshot));
-        setHistoryChatMessages(null);
+        if (!activeChatThreadId && Array.isArray(snapshot.ai_chat_threads)) {
+          applyChatThreads(restoreChatThreads(snapshot.ai_chat_threads, snapshot.ai_chat));
+        }
         setAiSiteDataSnapshot(snapshot);
         setLastUpdate(dayjs().format("HH:mm"));
         await refreshSiteDataHistory();
@@ -744,7 +885,6 @@ function EndPage() {
         setSiteDataRequestId(null);
         setDailyMetrics([]);
         setTrafficSourceMetrics([]);
-        setHistoryChatMessages(null);
         setAiSiteDataSnapshot(null);
         setErrStatus(data.st);
         setErrText(data.text);
@@ -770,11 +910,29 @@ function EndPage() {
 
       const snapshot = normalizeAiSiteDataSnapshot(data);
 
+      if (snapshot.request_payload) {
+        const requestPayload = snapshot.request_payload;
+        const comparisonModeId = requestPayload.comparisonMode || "previous_period";
+        setForm((current) => ({
+          ...current,
+          ...requestPayload,
+          comparisonMode: {
+            id: comparisonModeId,
+            name: COMPARISON_MODE_NAMES[comparisonModeId] || COMPARISON_MODE_NAMES.previous_period,
+          },
+        }));
+        setAiSource(
+          AI_ANALYST_SOURCES.find((item) => item.name === requestPayload.src_source) || null,
+        );
+      }
+
       setAiAnalysis(snapshot.ai_analysis || null);
       setSiteDataRequestId(snapshot.site_data_request_id ?? requestId);
       setDailyMetrics(snapshot.daily_metrics?.items || []);
       setTrafficSourceMetrics(buildTrafficSourceMetrics(snapshot));
-      setHistoryChatMessages(mapAiChatToMessages(snapshot.ai_chat));
+      if (!activeChatThreadId && Array.isArray(snapshot.ai_chat_threads)) {
+        applyChatThreads(restoreChatThreads(snapshot.ai_chat_threads, snapshot.ai_chat));
+      }
       setAiSiteDataSnapshot(snapshot);
       if (snapshot.analytics_meta) {
         setAnalyticsMeta(snapshot.analytics_meta);
@@ -888,21 +1046,99 @@ function EndPage() {
     }
   };
 
-  const sendAiChat = async (prompt, analysis) => {
-    const result = await api_laravel("end_analytics", "ai_chat", {
-      prompt,
-      ai_analysis: analysis,
-      site_data_request_id: siteDataRequestId,
-    });
+  const sendAiChat = async (prompt) => {
+    const idempotencyKey =
+      typeof window !== "undefined" && window.crypto?.randomUUID
+        ? window.crypto.randomUUID().replaceAll("-", "")
+        : `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+    try {
+      const result = await api_laravel(
+        "end_analytics",
+        "ai_chat",
+        {
+          prompt,
+          site_data_request_id: siteDataRequestId,
+          thread_id: activeChatThreadId,
+          idempotency_key: idempotencyKey,
+        },
+        { throwErrors: true },
+      );
+      const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+      const chatSynced = Array.isArray(data.ai_chat_threads);
 
-    if (result?.data?.st !== false) {
-      const historyResult = await api_laravel("end_analytics", "get_all", {});
-      if (historyResult?.data) {
-        setSiteDataHistory(historyResult.data.site_data_history || []);
+      if (chatSynced) {
+        applyChatThreads(data.ai_chat_threads, data.thread_id || activeChatThreadId);
+        await loadChatThreadMessages(data.thread_id || activeChatThreadId);
       }
-    }
 
-    return result.data;
+      if (data.st !== false) {
+        const historyResult = await api_laravel("end_analytics", "get_all", {});
+        if (historyResult?.data) {
+          setSiteDataHistory(historyResult.data.site_data_history || []);
+        }
+      }
+
+      return {
+        ...data,
+        chat_synced: chatSynced,
+      };
+    } catch (error) {
+      const response = error?.response?.data;
+      const data = response?.data && typeof response.data === "object" ? response.data : response;
+      const chatSynced = Array.isArray(data?.ai_chat_threads);
+
+      if (chatSynced) {
+        applyChatThreads(data.ai_chat_threads, data.thread_id || activeChatThreadId);
+        await loadChatThreadMessages(data.thread_id || activeChatThreadId);
+      }
+
+      return {
+        st: false,
+        text: data?.text || "Ошибка при обращении к AI-чату",
+        chat_synced: chatSynced,
+      };
+    }
+  };
+
+  const createAiChatThread = async () => {
+    const result = await api_laravel("end_analytics", "create_ai_chat_thread", {
+      ...(siteDataRequestId ? { site_data_request_id: siteDataRequestId } : {}),
+    });
+    const thread = result?.data?.thread;
+    if (!thread) return null;
+
+    const nextThreads = [thread, ...aiChatThreads];
+    applyChatThreads(nextThreads, thread.id);
+    setHistoryChatMessages([]);
+    return thread;
+  };
+
+  const updateAiChatThread = async (threadId, changes) => {
+    const result = await api_laravel("end_analytics", "update_ai_chat_thread", {
+      thread_id: threadId,
+      ...changes,
+    });
+    const updated = result?.data?.thread;
+    if (!updated) return null;
+
+    const nextThreads = aiChatThreads.map((thread) =>
+      Number(thread.id) === Number(threadId)
+        ? { ...thread, ...updated, messages: thread.messages || [] }
+        : thread,
+    );
+    applyChatThreads(nextThreads, activeChatThreadId);
+    return updated;
+  };
+
+  const deleteAiChatThread = async (threadId) => {
+    const result = await api_laravel("end_analytics", "delete_ai_chat_thread", {
+      thread_id: threadId,
+    });
+    if (result?.data?.st === false) return false;
+
+    const nextThreads = aiChatThreads.filter((thread) => Number(thread.id) !== Number(threadId));
+    applyChatThreads(nextThreads);
+    return true;
   };
 
   const resetFilters = () => {
@@ -917,13 +1153,15 @@ function EndPage() {
       cities: {},
       dateStart: standardForm.dateStart,
       dateEnd: standardForm.dateEnd,
+      comparisonMode: standardForm.comparisonMode,
+      comparisonDateStart: standardForm.comparisonDateStart,
+      comparisonDateEnd: standardForm.comparisonDateEnd,
     }));
     setAiSource(null);
     setAiAnalysis(null);
     setSiteDataRequestId(null);
     setDailyMetrics([]);
     setTrafficSourceMetrics([]);
-    setHistoryChatMessages(null);
     setAiSiteDataSnapshot(null);
   };
 
@@ -2114,23 +2352,43 @@ function EndPage() {
         </Box>
       </Grid>
 
-      <Grid size={{ xs: 12 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, value) => setActiveTab(value)}
-          sx={{
-            mb: 1,
-            "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
-            "& .Mui-selected": { color: PRIMARY_COLOR },
-            "& .MuiTabs-indicator": { backgroundColor: PRIMARY_COLOR },
-          }}
-        >
-          <Tab label="Сквозная аналитика" />
-          <Tab label="AI аналитик" />
-        </Tabs>
-      </Grid>
+      {(canViewAnalytics || canViewAiAnalyst) && (
+        <Grid size={{ xs: 12 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            sx={{
+              mb: 1,
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
+              "& .Mui-selected": { color: PRIMARY_COLOR },
+              "& .MuiTabs-indicator": { backgroundColor: PRIMARY_COLOR },
+            }}
+          >
+            {canViewAnalytics && (
+              <Tab
+                value={0}
+                label="Сквозная аналитика"
+              />
+            )}
+            {canViewAiAnalyst && (
+              <Tab
+                value={1}
+                label="AI аналитик"
+              />
+            )}
+          </Tabs>
+        </Grid>
+      )}
 
-      {activeTab === 1 && (
+      {access !== null && !canViewAnalytics && !canViewAiAnalyst && (
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3 }}>
+            <Typography color="text.secondary">Нет доступа к вкладкам модуля</Typography>
+          </Paper>
+        </Grid>
+      )}
+
+      {activeTab === 1 && canViewAiAnalyst && (
         <Grid size={{ xs: 12 }}>
           <AiAnalystTab
             cities={cities}
@@ -2142,12 +2400,18 @@ function EndPage() {
             siteDataRequestId={siteDataRequestId}
             history={siteDataHistory}
             historyChatMessages={historyChatMessages}
+            chatThreads={aiChatThreads}
+            activeChatThreadId={activeChatThreadId}
             onCitiesChange={handleCitiesChange}
             onFieldChange={setField}
             onSourceChange={setAiSource}
             onApply={applyAiRequest}
             onReset={resetAiFilters}
             onSendChat={sendAiChat}
+            onSelectChatThread={selectChatThread}
+            onCreateChatThread={createAiChatThread}
+            onUpdateChatThread={updateAiChatThread}
+            onDeleteChatThread={deleteAiChatThread}
             onSelectHistory={loadSiteDataHistoryItem}
             onExport={exportAiReport}
             canExport={Boolean(aiSiteDataSnapshot)}
@@ -2157,7 +2421,7 @@ function EndPage() {
         </Grid>
       )}
 
-      {activeTab === 0 && analyticsMeta && (
+      {activeTab === 0 && canViewAnalytics && analyticsMeta && (
         <Grid size={{ xs: 12 }}>
           <Box
             sx={{
@@ -2213,7 +2477,7 @@ function EndPage() {
         </Grid>
       )}
 
-      {activeTab === 0 && (
+      {activeTab === 0 && canViewAnalytics && (
         <>
           <Grid size={{ xs: 12 }}>
             <StyledPaper>

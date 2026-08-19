@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+    - generic [ref=e4]:
+        - link [ref=e5] [cursor=pointer]:
+            - /url: https://www.bitrix24.ru
+        - generic [ref=e6]: Помогает бизнесу работать
+    - generic [ref=e16]:
+        - heading "Войти в jaco.bitrix24.ru" [level=2] [ref=e17]
+        - generic [ref=e18]:
+            - heading "E-mail или телефон" [level=4] [ref=e19]
+            - generic [ref=e20]:
+                - textbox [active] [ref=e23]:
+                    - /placeholder: name@company.ru
+                - button [ref=e24] [cursor=pointer]
+            - button "Продолжить" [ref=e26] [cursor=pointer]
+            - generic [ref=e28]:
+                - generic [ref=e29]: Войти с помощью
+                - generic [ref=e30]:
+                    - button [ref=e31] [cursor=pointer]
+                    - button [ref=e33] [cursor=pointer]
+                    - button [ref=e35] [cursor=pointer]
+                    - button [ref=e37] [cursor=pointer]
+                    - button [ref=e39] [cursor=pointer]
+    - generic [ref=e41]:
+        - generic [ref=e42]:
+            - generic [ref=e43] [cursor=pointer]: Русский
+            - link "Политика обработки персональных данных" [ref=e46] [cursor=pointer]:
+                - /url: https://www.bitrix24.ru/about/privacy.php
+        - button "Помощь" [ref=e48] [cursor=pointer]
