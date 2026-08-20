@@ -119,6 +119,7 @@ export default function CleaningsPage({
                     if (tab.value === "control") {
                       return page.canView("control_cleanings") || page.canView("control_pf");
                     }
+                    if (tab.value === "lamps") return page.canView("lamps");
                     return true;
                   })
                   .map((tab) => (
@@ -356,8 +357,8 @@ export default function CleaningsPage({
           <Grid size={12}>
             <CleaningsLampsView
               locations={page.locations}
-              canEdit={page.canEdit("cleanings")}
-              canExport={page.canAccess("export_excel") || page.canEdit("cleanings")}
+              canEdit={page.canEdit("lamps")}
+              canExport={page.canAccess("lamps_export_excel")}
               showAlert={page.showAlert}
             />
           </Grid>

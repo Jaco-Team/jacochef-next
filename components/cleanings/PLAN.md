@@ -14,8 +14,9 @@ standalone route и его текущий CRUD/export contract. Верхняя �
 
 1. Сохранить локальный `src/api_new.js` override и подтвердить API/DB target.
 2. Подключить lamp section к существующим point-based `lamps`/`lamps_active` данным.
-3. Не смешивать lamp permissions с Cleanings permissions: `export_excel` и остальные действия
-   должны проверяться исходным lamp access contract.
+3. Перенести lamp permissions в отдельную категорию Cleanings
+   `Журнал замены бактерицидных ламп`: `lamps` для раздела/CRUD и
+   `lamps_export_excel` для XLS.
 4. Проверить Control actions на локальном наборе данных и отдельно зафиксировать destructive
    smoke limits.
 
@@ -25,6 +26,7 @@ standalone route и его текущий CRUD/export contract. Верхняя �
 - local MariaDB only: `127.0.0.1:3307`;
 - templates/categories/control response and selected point/date filters;
 - lamp load, edit/add activity and export visibility;
+- lamp access visibility, CRUD and export visibility for migrated role flags;
 - desktop/mobile and empty/loading/error states.
 
 ## Текущее состояние

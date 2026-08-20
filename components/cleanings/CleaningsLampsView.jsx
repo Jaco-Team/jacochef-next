@@ -3,8 +3,8 @@ import dayjs from "dayjs";
 import {
   Box,
   Button,
-  Chip,
   Grid,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -12,18 +12,21 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
+import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import WbIncandescentOutlinedIcon from "@mui/icons-material/WbIncandescentOutlined";
 import { MyDatePickerNewViews, MySelect } from "@/ui/Forms";
 import { useConfirm } from "@/src/hooks/useConfirm";
-import Lamps_Modal_Add_Active from "@/components/journal_of_work_of_bactericidal_lamps/Lamps_Modal_Add_Active";
-import Lamps_Modal_Add from "@/components/journal_of_work_of_bactericidal_lamps/Lamps_Modal_Add";
+import { CleaningsLampActivityDialog, CleaningsLampDialog } from "./CleaningsLampDialogs";
 import useCleaningsApi from "./useCleaningsApi";
 import { getLocationName, isSameId } from "./helpers";
 
@@ -374,115 +377,173 @@ export default function CleaningsLampsView({
           <Table
             sx={{
               minWidth: 860,
+              borderCollapse: "separate",
+              borderSpacing: 0,
               "& th, & td": {
-                border: "1px solid",
+                borderRight: "1px solid",
+                borderBottom: "1px solid",
                 borderColor: "divider",
                 textAlign: "center",
                 verticalAlign: "middle",
               },
+              "& tbody tr:last-of-type td": { borderBottom: 0 },
+              "& th": { bgcolor: "action.hover" },
             }}
           >
             <TableHead>
               <TableRow>
-                <TableCell rowSpan={5}>Дата проверки</TableCell>
+                <TableCell
+                  rowSpan={2}
+                  sx={{ width: 150 }}
+                >
+                  Дата проверки
+                </TableCell>
                 {lamps.map((lamp) => (
                   <TableCell
                     key={lamp.id}
                     colSpan={3}
+                    sx={{ p: 1.25 }}
                   >
-                    Размещение: {lamp.place}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 1.5,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                        <Tooltip title="Размещение">
+                          <PlaceOutlinedIcon
+                            sx={{ color: "text.primary" }}
+                            fontSize="small"
+                          />
+                        </Tooltip>
+                        <Typography sx={{ fontWeight: 800 }}>{lamp.place || "—"}</Typography>
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                      >
+                        №{lamp.number}
+                      </Typography>
+                      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                        <Tooltip title="Модель">
+                          <WbIncandescentOutlinedIcon
+                            sx={{ color: "text.primary" }}
+                            fontSize="small"
+                          />
+                        </Tooltip>
+                        <Typography sx={{ fontWeight: 800 }}>{lamp.name || "—"}</Typography>
+                      </Box>
+                      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                        <Tooltip title="Ресурс">
+                          <TimerOutlinedIcon
+                            sx={{ color: "text.primary" }}
+                            fontSize="small"
+                          />
+                        </Tooltip>
+                        <Typography color="text.secondary">{lamp.resource || 0} ч</Typography>
+                      </Box>
+                      {canEdit ? (
+                        <Tooltip title="Редактировать лампу">
+                          <IconButton
+                            color="primary"
+                            size="small"
+                            aria-label="Редактировать лампу"
+                            onClick={() => {
+                              setLampEdit(lamp);
+                              setLampDialogOpen(true);
+                            }}
+                            sx={{
+                              ml: 2,
+                              border: 1,
+                              borderColor: "primary.main",
+                              color: "primary.main",
+                              borderRadius: 1.5,
+                            }}
+                          >
+                            <EditOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null}
+                    </Box>
                   </TableCell>
                 ))}
-                <TableCell rowSpan={5}>Подпись менеджера смены</TableCell>
-              </TableRow>
-              <TableRow>
-                {lamps.map((lamp) => (
-                  <TableCell
-                    key={lamp.id}
-                    colSpan={3}
-                    sx={{
-                      cursor: canEdit ? "pointer" : "default",
-                      color: canEdit ? "primary.main" : "inherit",
-                    }}
-                    onClick={() => canEdit && (setLampEdit(lamp), setLampDialogOpen(true))}
-                  >
-                    Модель: {lamp.name}
-                  </TableCell>
-                ))}
-              </TableRow>
-              <TableRow>
-                {lamps.map((lamp) => (
-                  <TableCell
-                    key={lamp.id}
-                    colSpan={3}
-                  >
-                    Ресурс лампы: {lamp.resource}
-                  </TableCell>
-                ))}
-              </TableRow>
-              <TableRow>
-                {lamps.map((lamp) => (
-                  <TableCell
-                    key={lamp.id}
-                    colSpan={3}
-                  >
-                    <Chip
-                      size="small"
-                      label={`Номер ${lamp.number}`}
-                    />
-                  </TableCell>
-                ))}
+                <TableCell
+                  rowSpan={2}
+                  sx={{ width: 190 }}
+                >
+                  Подпись менеджера смены
+                </TableCell>
               </TableRow>
               <TableRow>
                 {lamps.map((lamp) => (
                   <Fragment key={lamp.id}>
-                    <TableCell>Включение</TableCell>
-                    <TableCell>Выключение</TableCell>
-                    <TableCell>Время работы</TableCell>
+                    <TableCell sx={{ p: 0.75 }}>Включение</TableCell>
+                    <TableCell sx={{ p: 0.75 }}>Выключение</TableCell>
+                    <TableCell sx={{ p: 0.75 }}>Время работы</TableCell>
                   </Fragment>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {days.map((day) => (
-                <TableRow key={day.date}>
-                  <TableCell>{day.date}</TableCell>
-                  {lamps.map((lamp) => {
-                    const activity = activityCells(day, lamp.id);
-                    return (
-                      <Fragment key={lamp.id}>
-                        <TableCell
-                          sx={{
-                            cursor: activity?.id && canEdit ? "pointer" : "default",
-                            color: activity?.id && canEdit ? "primary.main" : "inherit",
-                          }}
-                          onClick={() => activity?.id && canEdit && openEditActivity(activity)}
-                        >
-                          {activity?.only_time_start || "—"}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            cursor: activity?.id && canEdit ? "pointer" : "default",
-                            color: activity?.id && canEdit ? "primary.main" : "inherit",
-                          }}
-                          onClick={() => activity?.id && canEdit && openEditActivity(activity)}
-                        >
-                          {activity?.only_time_end || "—"}
-                        </TableCell>
-                        <TableCell>{activity?.diff || "—"}</TableCell>
-                      </Fragment>
-                    );
-                  })}
-                  <TableCell>{day.manager || "—"}</TableCell>
-                </TableRow>
-              ))}
+              {days.map((day) => {
+                const rowActivities = lamps.map((lamp) => activityCells(day, lamp.id));
+                const rowActivity = rowActivities.find((activity) => activity?.id);
+                const isInteractive = Boolean(rowActivity?.id && canEdit);
+
+                return (
+                  <TableRow
+                    key={day.date}
+                    hover={isInteractive}
+                    tabIndex={isInteractive ? 0 : undefined}
+                    onClick={(event) => {
+                      if (isInteractive) {
+                        event.currentTarget.blur();
+                        openEditActivity(rowActivity);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (isInteractive && (event.key === "Enter" || event.key === " ")) {
+                        event.preventDefault();
+                        event.currentTarget.blur();
+                        openEditActivity(rowActivity);
+                      }
+                    }}
+                    sx={{
+                      cursor: isInteractive ? "pointer" : "default",
+                      "&:focus-visible": isInteractive
+                        ? { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 }
+                        : undefined,
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{day.date}</TableCell>
+                    {lamps.map((lamp, lampIndex) => {
+                      const activity = rowActivities[lampIndex];
+                      return (
+                        <Fragment key={lamp.id}>
+                          <TableCell>{activity?.only_time_start || "—"}</TableCell>
+                          <TableCell>{activity?.only_time_end || "—"}</TableCell>
+                          <TableCell>{activity?.diff || "—"}</TableCell>
+                        </Fragment>
+                      );
+                    })}
+                    <TableCell sx={{ color: day.manager ? "text.primary" : "text.disabled" }}>
+                      {day.manager || "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {canEdit ? (
                 <TableRow>
-                  <TableCell>Добавить</TableCell>
+                  <TableCell sx={{ p: 1 }}>Добавить</TableCell>
                   {lamps.map((lamp) => (
                     <TableCell
                       key={lamp.id}
                       colSpan={3}
+                      sx={{ p: 0.75 }}
                     >
                       <Button
                         size="small"
@@ -497,7 +558,7 @@ export default function CleaningsLampsView({
                 </TableRow>
               ) : null}
               <TableRow>
-                <TableCell>Отработано часов</TableCell>
+                <TableCell sx={{ p: 1, fontWeight: 800 }}>Отработано часов</TableCell>
                 {lamps.map((lamp) => (
                   <Fragment key={lamp.id}>
                     <TableCell />
@@ -512,23 +573,26 @@ export default function CleaningsLampsView({
         </TableContainer>
       </Grid>
 
-      <Lamps_Modal_Add
+      <CleaningsLampDialog
         open={lampDialogOpen}
-        add={saveLamp}
+        lamp={lampEdit}
         onClose={closeLampDialog}
+        onSave={saveLamp}
         fullScreen={isMobile}
-        lampEdit={lampEdit}
       />
-      <Lamps_Modal_Add_Active
+      <CleaningsLampActivityDialog
         open={activityDialogOpen}
-        add={saveActivity}
-        changeLamp={withConfirm(replaceLamp, "Точно заменить выбранную лампу?")}
+        activity={activityEdit}
+        mode={activityType}
+        lamp={
+          activityType === "new"
+            ? activityEdit
+            : lamps.find((item) => isSameId(item.id, activityEdit?.lamp_id))
+        }
         onClose={closeActivityDialog}
+        onSave={saveActivity}
+        onReplace={withConfirm(replaceLamp, "Точно заменить выбранную лампу?")}
         fullScreen={isMobile}
-        lampList={lamps}
-        itemEdit={activityEdit}
-        typeActive={activityType}
-        showAlert={showAlert}
       />
       <ConfirmDialog />
     </Grid>
