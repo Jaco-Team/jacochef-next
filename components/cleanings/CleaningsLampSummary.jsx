@@ -19,6 +19,13 @@ export default function CleaningsLampSummary({
   const replacementDate = lamp.removed_at
     ? dayjs(lamp.removed_at).format("DD.MM.YYYY")
     : "дата не указана";
+  const installedDate = lamp.installed_at
+    ? dayjs(lamp.installed_at).format("DD.MM.YYYY")
+    : "дата не указана";
+  const statusLabel = historical ? "Заменена: " + replacementDate : "Активная лампа";
+  const statusTooltip = historical
+    ? "Период действия: " + installedDate + " — " + replacementDate
+    : "Действует с: " + installedDate;
 
   return (
     <Box
@@ -41,11 +48,13 @@ export default function CleaningsLampSummary({
           flexWrap: { xs: "wrap", md: "nowrap" },
         }}
       >
-        <Chip
-          size="small"
-          color={historical ? "default" : "primary"}
-          label={historical ? `Заменена: ${replacementDate}` : "Текущая лампа"}
-        />
+        <Tooltip title={statusTooltip}>
+          <Chip
+            size="small"
+            color={historical ? "default" : "primary"}
+            label={statusLabel}
+          />
+        </Tooltip>
         <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
           <PlaceOutlinedIcon fontSize="small" />
           <Typography sx={{ fontWeight: 800 }}>{lamp.place || "—"}</Typography>
@@ -57,9 +66,9 @@ export default function CleaningsLampSummary({
         </Box>
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{ fontWeight: 700 }}
         >
-          ID {lamp.id}
+          ID: {lamp.id}
         </Typography>
         <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
           <TimerOutlinedIcon fontSize="small" />
