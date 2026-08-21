@@ -7,7 +7,8 @@ export default function useCleaningsApi() {
   apiRef.current = api_laravel;
 
   return useMemo(() => {
-    const request = (method, payload = {}) => apiRef.current(method, payload);
+    const request = (method, payload = {}, options = {}) =>
+      apiRef.current(method, payload, options);
 
     return {
       getBootstrap: () => request("get_all"),

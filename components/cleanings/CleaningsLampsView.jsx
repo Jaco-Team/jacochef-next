@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { Box, Button, Grid, Paper, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { MyDatePickerNewViews, MySelect } from "@/ui/Forms";
+import { Grid, Paper, Typography } from "@mui/material";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import {
   CleaningsLampActivityDialog,
@@ -13,18 +9,9 @@ import {
 } from "./CleaningsLampDialogs";
 import CleaningHistoryDialog from "./CleaningHistoryDialog";
 import CleaningsLampLifecycle, { fallbackLampGroups } from "./CleaningsLampSections";
+import CleaningsLampFilters from "./CleaningsLampFilters";
 import useCleaningsApi from "./useCleaningsApi";
 import { getLocationName, isSameId } from "./helpers";
-
-const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
-  borderRadius: "8px",
-  fontWeight: 700,
-  lineHeight: "20px",
-  whiteSpace: "nowrap",
-};
 
 function monthValue(value) {
   return dayjs(value).format("YYYY-MM");
@@ -221,84 +208,21 @@ export default function CleaningsLampsView({
       spacing={2.5}
     >
       <Grid size={12}>
-        <Paper
-          variant="outlined"
-          sx={{ borderRadius: "8px", overflow: "hidden" }}
-        >
-          <Grid
-            container
-            spacing={1.5}
-            sx={{ p: 1.5 }}
-            alignItems="center"
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-              <MyDatePickerNewViews
-                label="Дата от"
-                views={["month", "year"]}
-                value={dateFrom}
-                func={setDateFrom}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-              <MyDatePickerNewViews
-                label="Дата до"
-                views={["month", "year"]}
-                value={dateTo}
-                func={setDateTo}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <MySelect
-                label="Точка"
-                data={locationOptions}
-                value={locationId}
-                func={(event) => setLocationId(event.target.value)}
-                is_none={false}
-                disabled={locationOptions.length <= 1}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: { xs: "stretch", md: "flex-end" },
-                  gap: 1,
-                  flexWrap: "wrap",
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={loadLamps}
-                  disabled={loading}
-                  sx={actionButtonSx}
-                >
-                  Обновить
-                </Button>
-                {canEdit ? (
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setLampDialogOpen(true)}
-                    sx={actionButtonSx}
-                  >
-                    Добавить лампу
-                  </Button>
-                ) : null}
-                {canExport ? (
-                  <Button
-                    variant="outlined"
-                    startIcon={<DownloadOutlinedIcon />}
-                    onClick={download}
-                    sx={actionButtonSx}
-                  >
-                    XLS
-                  </Button>
-                ) : null}
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
+        <CleaningsLampFilters
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          locationId={locationId}
+          locationOptions={locationOptions}
+          loading={loading}
+          canEdit={canEdit}
+          canExport={canExport}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          onLocationChange={(event) => setLocationId(event.target.value)}
+          onRefresh={loadLamps}
+          onAddLamp={() => setLampDialogOpen(true)}
+          onExport={download}
+        />
       </Grid>
 
       <Grid size={12}>

@@ -1,19 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import {
-  Button,
-  DialogActions,
-  DialogContent,
-  Grid,
-  MenuItem,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Button, DialogActions, DialogContent, Grid, Typography } from "@mui/material";
 import MyModal from "@/ui/MyModal";
-import { MyDateTimePickerNew } from "@/ui/Forms";
+import { MyDateTimePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import CleaningsLampDateTimePicker from "./CleaningsLampDateTimePicker";
 
-const emptyLamp = { number: "", name: "", resource: "", place: "" };
+const emptyLamp = {
+  number: "",
+  name: "",
+  resource: "",
+  place: "",
+  serial_number: "",
+};
 const replacementReasons = [
   "Неисправна",
   "Повреждена",
@@ -21,6 +19,7 @@ const replacementReasons = [
   "Плановая замена",
   "Другая причина",
 ];
+const replacementReasonOptions = replacementReasons.map((name) => ({ id: name, name }));
 
 function dateTimeValue(value) {
   return value && dayjs(value).isValid() ? dayjs(value) : null;
@@ -43,6 +42,10 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
   const update = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }));
 
+  const canSave = [form.number, form.name, form.resource, form.place].every(
+    (value) => String(value ?? "").trim() !== "",
+  );
+
   return (
     <MyModal
       open={open}
@@ -56,40 +59,53 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
           spacing={2}
         >
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
+            <MyTextInput
+              fullWidth
+              label="Место размещения"
+              required
+              value={form.place}
+              func={update("place")}
+              disabled={Boolean(lamp?.id)}
+              helperText={lamp?.id ? "Место фиксируется для этой версии лампы" : undefined}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <MyTextInput
               fullWidth
               label="Порядковый номер"
+              required
               value={form.number}
-              onChange={update("number")}
+              func={update("number")}
               disabled={Boolean(lamp?.id)}
               helperText={lamp?.id ? "Номер меняется только при замене лампы" : undefined}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Ресурс, часов"
-              type="number"
-              value={form.resource}
-              onChange={update("resource")}
-            />
-          </Grid>
-          <Grid size={12}>
-            <TextField
+            <MyTextInput
               fullWidth
               label="Модель"
+              required
               value={form.name}
-              onChange={update("name")}
+              func={update("name")}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <MyTextInput
+              fullWidth
+              label="Ресурс, часов"
+              required
+              type="number"
+              value={form.resource}
+              func={update("resource")}
             />
           </Grid>
           <Grid size={12}>
-            <TextField
+            <MyTextInput
               fullWidth
-              label="Место размещения"
-              value={form.place}
-              onChange={update("place")}
-              disabled={Boolean(lamp?.id)}
-              helperText={lamp?.id ? "Место фиксируется для этой версии лампы" : undefined}
+              label="Производитель и серийный номер"
+              value={form.serial_number}
+              func={update("serial_number")}
+              inputProps={{ maxLength: 255 }}
             />
           </Grid>
         </Grid>
@@ -99,6 +115,7 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
         <Button
           variant="contained"
           onClick={() => onSave({ ...form, id: lamp?.id })}
+          disabled={!canSave}
         >
           СОХРАНИТЬ
         </Button>
@@ -110,17 +127,23 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
 export function CleaningsLampReplacementDialog({ open, lamp, onClose, onSave }) {
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setReason("");
     setDetails("");
+    setSerialNumber("");
   }, [open, lamp]);
 
   const submit = () => {
     const value = reason === "Другая причина" ? details.trim() : reason;
     if (!value) return;
-    onSave({ lamp_id: lamp?.id, replacement_reason: value });
+    onSave({
+      lamp_id: lamp?.id,
+      replacement_reason: value,
+      serial_number: serialNumber.trim(),
+    });
   };
 
   return (
@@ -144,35 +167,35 @@ export function CleaningsLampReplacementDialog({ open, lamp, onClose, onSave }) 
             </Typography>
           </Grid>
           <Grid size={12}>
-            <TextField
-              select
+            <MySelect
               fullWidth
-              required
               label="Причина замены"
+              data={replacementReasonOptions}
               value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            >
-              {replacementReasons.map((item) => (
-                <MenuItem
-                  key={item}
-                  value={item}
-                >
-                  {item}
-                </MenuItem>
-              ))}
-            </TextField>
+              func={(event) => setReason(event.target.value)}
+              is_none={false}
+            />
           </Grid>
           {reason === "Другая причина" ? (
             <Grid size={12}>
-              <TextField
+              <MyTextInput
                 fullWidth
                 required
                 label="Укажите причину"
                 value={details}
-                onChange={(event) => setDetails(event.target.value)}
+                func={(event) => setDetails(event.target.value)}
               />
             </Grid>
           ) : null}
+          <Grid size={12}>
+            <MyTextInput
+              fullWidth
+              label="Производитель и серийный номер"
+              value={serialNumber}
+              func={(event) => setSerialNumber(event.target.value)}
+              inputProps={{ maxLength: 255 }}
+            />
+          </Grid>
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, justifyContent: "flex-end", gap: 1 }}>
@@ -244,7 +267,7 @@ export function CleaningsLampActivityDialog({
           spacing={2}
         >
           <Grid size={12}>
-            <TextField
+            <MyTextInput
               fullWidth
               label="Лампа"
               value={lamp?.name || activity?.name || ""}
