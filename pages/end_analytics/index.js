@@ -42,12 +42,6 @@ import {
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
-const COMPARISON_MODE_NAMES = {
-  previous_period: "Предыдущий равный период",
-  previous_month: "Те же даты прошлого месяца",
-  previous_year: "Те же даты прошлого года",
-  custom: "Свой период",
-};
 
 const createEmptyCustomCostForm = () => ({
   id: null,
@@ -526,9 +520,6 @@ function EndPage() {
     points: [],
     dateStart: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
     dateEnd: dayjs(new Date()).format("YYYY-MM-DD"),
-    comparisonMode: { id: "previous_period", name: "Предыдущий равный период" },
-    comparisonDateStart: dayjs(new Date()).subtract(2, "day").format("YYYY-MM-DD"),
-    comparisonDateEnd: dayjs(new Date()).subtract(2, "day").format("YYYY-MM-DD"),
     cities: {},
     src_source: "",
     src_medium: "",
@@ -574,6 +565,7 @@ function EndPage() {
   const accessApi = handleUserAccess(access || {});
   const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
   const canViewAiAnalyst = access !== null && accessApi.userCan("access", "ai_analyst");
+  const canExportReport = access !== null && accessApi.userCan("access", "export");
 
   useEffect(() => {
     getData("get_all").then((data) => {
@@ -860,9 +852,7 @@ function EndPage() {
 
     getData("get_site_data", {
       ...form,
-      comparisonMode: form.comparisonMode?.id || "previous_period",
-      comparisonDateStart: dayjs(form.comparisonDateStart).format("YYYY-MM-DD"),
-      comparisonDateEnd: dayjs(form.comparisonDateEnd).format("YYYY-MM-DD"),
+      comparisonMode: "previous_period",
       typeOrder: [{ id: 2, name: "Сайт" }],
       src_source: aiSource?.name || "",
       dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
@@ -912,14 +902,9 @@ function EndPage() {
 
       if (snapshot.request_payload) {
         const requestPayload = snapshot.request_payload;
-        const comparisonModeId = requestPayload.comparisonMode || "previous_period";
         setForm((current) => ({
           ...current,
           ...requestPayload,
-          comparisonMode: {
-            id: comparisonModeId,
-            name: COMPARISON_MODE_NAMES[comparisonModeId] || COMPARISON_MODE_NAMES.previous_period,
-          },
         }));
         setAiSource(
           AI_ANALYST_SOURCES.find((item) => item.name === requestPayload.src_source) || null,
@@ -991,6 +976,11 @@ function EndPage() {
   };
 
   const exportAiReport = async (fileType) => {
+    if (!canExportReport) {
+      showError("Недостаточно прав для экспорта");
+      return;
+    }
+
     if (!aiSiteDataSnapshot) {
       showError("Сначала получите или откройте отчёт AI-анализа");
       return;
@@ -1153,9 +1143,6 @@ function EndPage() {
       cities: {},
       dateStart: standardForm.dateStart,
       dateEnd: standardForm.dateEnd,
-      comparisonMode: standardForm.comparisonMode,
-      comparisonDateStart: standardForm.comparisonDateStart,
-      comparisonDateEnd: standardForm.comparisonDateEnd,
     }));
     setAiSource(null);
     setAiAnalysis(null);
@@ -2414,7 +2401,8 @@ function EndPage() {
             onDeleteChatThread={deleteAiChatThread}
             onSelectHistory={loadSiteDataHistoryItem}
             onExport={exportAiReport}
-            canExport={Boolean(aiSiteDataSnapshot)}
+            canExport={canExportReport}
+            canExportData={Boolean(aiSiteDataSnapshot)}
             onAnalyze={analyzeAiReport}
             canAnalyze={Boolean(aiSiteDataSnapshot)}
           />

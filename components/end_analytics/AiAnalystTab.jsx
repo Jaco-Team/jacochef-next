@@ -21,6 +21,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Masonry from "@mui/lab/Masonry";
+import Tooltip from "@mui/material/Tooltip";
 import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import SearchIcon from "@mui/icons-material/Search";
@@ -64,13 +65,6 @@ export const AI_ANALYST_SOURCES = [
   { id: 9, name: "vk" },
   { id: 10, name: "ya" },
   { id: 11, name: "yandex" },
-];
-
-const COMPARISON_MODES = [
-  { id: "previous_period", name: "Предыдущий равный период" },
-  { id: "previous_month", name: "Те же даты прошлого месяца" },
-  { id: "previous_year", name: "Те же даты прошлого года" },
-  { id: "custom", name: "Свой период" },
 ];
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -538,81 +532,87 @@ const MiniSparkline = ({ values, color }) => {
   );
 };
 
-const MetricCard = ({ config, metric, trendValues }) => (
-  <Paper
-    sx={{
-      p: 2,
-      minWidth: 0,
-      minHeight: 164,
-      borderRadius: 3,
-      border: "1px solid #e9edf3",
-      boxShadow: "0 5px 18px rgba(31, 41, 55, 0.05)",
-      transition: "transform 160ms ease, box-shadow 160ms ease",
-      "&:hover": {
-        transform: "translateY(-2px)",
-        boxShadow: "0 10px 28px rgba(31, 41, 55, 0.09)",
-      },
-    }}
-  >
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
-      <Typography
-        variant="body2"
-        fontWeight={600}
-        color="#4b5563"
-      >
-        {config.label}
-      </Typography>
-      <Box
+function getMetricHint(metric) {
+  const statusLine = [
+    STATUS_LABELS[metric?.status] || "Нет данных",
+    metric?.basis ? BASIS_LABELS[metric.basis] || metric.basis : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return [statusLine, metric?.reason].filter(Boolean).join("\n");
+}
+
+const MetricCard = ({ config, metric, trendValues }) => {
+  const hint = getMetricHint(metric);
+
+  return (
+    <Tooltip
+      title={<Box sx={{ whiteSpace: "pre-line" }}>{hint}</Box>}
+      arrow
+    >
+      <Paper
         sx={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          backgroundColor: `${config.color}18`,
-          color: config.color,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
+          p: 2,
+          minWidth: 0,
+          minHeight: 148,
+          borderRadius: 3,
+          border: "1px solid #e9edf3",
+          boxShadow: "0 5px 18px rgba(31, 41, 55, 0.05)",
+          cursor: "help",
+          transition: "transform 160ms ease, box-shadow 160ms ease",
+          "&:hover": {
+            transform: "translateY(-2px)",
+            boxShadow: "0 10px 28px rgba(31, 41, 55, 0.09)",
+          },
         }}
       >
-        {config.label.slice(0, 1)}
-      </Box>
-    </Box>
-    <Typography
-      variant="h6"
-      fontWeight={700}
-      sx={{
-        color: metric?.status === "unavailable" ? "text.secondary" : "text.primary",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-      }}
-    >
-      {formatValue(metric)}
-    </Typography>
-    <Typography
-      variant="caption"
-      color={metric?.status === "available" ? "success.main" : "text.secondary"}
-      sx={{ display: "block" }}
-    >
-      {STATUS_LABELS[metric?.status] || "Нет данных"}
-      {metric?.basis ? ` · ${BASIS_LABELS[metric.basis] || metric.basis}` : ""}
-    </Typography>
-    {metric?.reason && (
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ display: "block", mt: 0.25, lineHeight: 1.25 }}
-      >
-        {metric.reason}
-      </Typography>
-    )}
-    <MiniSparkline
-      values={trendValues}
-      color={config.color}
-    />
-  </Paper>
-);
+        <Box
+          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.75 }}
+        >
+          <Typography
+            variant="body2"
+            fontWeight={600}
+            color="#4b5563"
+          >
+            {config.label}
+          </Typography>
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              backgroundColor: `${config.color}18`,
+              color: config.color,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+            }}
+          >
+            {config.label.slice(0, 1)}
+          </Box>
+        </Box>
+        <Typography
+          variant="h6"
+          fontWeight={700}
+          sx={{
+            color: metric?.status === "unavailable" ? "text.secondary" : "text.primary",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {formatValue(metric)}
+        </Typography>
+        <MiniSparkline
+          values={trendValues}
+          color={config.color}
+        />
+      </Paper>
+    </Tooltip>
+  );
+};
 
 const ComparisonCard = ({ anomaly }) => {
   const current = Math.abs(Number(anomaly.current_value) || 0);
@@ -769,6 +769,102 @@ const formatHistoryMoney = (value) => {
   return `${Math.round(num).toLocaleString("ru-RU")} ₽`;
 };
 
+const toNumberOrNull = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+const formatSignedInt = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  const rounded = Math.trunc(n);
+  return `${rounded > 0 ? "+" : ""}${rounded.toLocaleString("ru-RU")}`;
+};
+
+const formatSignedMoneyShort = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  const rounded = Math.round(n);
+  const abs = Math.abs(rounded).toLocaleString("ru-RU");
+  return `${rounded > 0 ? "+" : rounded < 0 ? "-" : ""}${abs} ₽`;
+};
+
+const formatPpDiff = (current, previous, digits = 2) => {
+  const c = Number(current);
+  const p = Number(previous);
+  if (!Number.isFinite(c) || !Number.isFinite(p)) return null;
+  const diff = c - p;
+  if (diff === 0) return null;
+  const sign = diff > 0 ? "+" : diff < 0 ? "−" : "";
+  return `${sign}${Math.abs(diff).toFixed(digits)} п.п.`;
+};
+
+const getHistoryDeltaSummary = (currentItem, previousItem) => {
+  if (!previousItem) return null;
+
+  const ordersNow = toNumberOrNull(currentItem?.orders);
+  const ordersPrev = toNumberOrNull(previousItem?.orders);
+  const revenueNow = toNumberOrNull(currentItem?.revenue);
+  const revenuePrev = toNumberOrNull(previousItem?.revenue);
+
+  const ctrNow = toNumberOrNull(currentItem?.ctr);
+  const ctrPrev = toNumberOrNull(previousItem?.ctr);
+  const cpaNow = toNumberOrNull(currentItem?.cpa);
+  const cpaPrev = toNumberOrNull(previousItem?.cpa);
+  const conversionNow = toNumberOrNull(currentItem?.conversion);
+  const conversionPrev = toNumberOrNull(previousItem?.conversion);
+
+  const parts = [];
+
+  if (ordersNow !== null && ordersPrev !== null) {
+    const d = ordersNow - ordersPrev;
+    if (d !== 0) parts.push(`Заказы ${formatSignedInt(d)}`);
+  }
+  if (revenueNow !== null && revenuePrev !== null) {
+    const d = revenueNow - revenuePrev;
+    if (d !== 0) parts.push(`Выручка ${formatSignedMoneyShort(d)}`);
+  }
+
+  const ctrDiff = formatPpDiff(ctrNow, ctrPrev, 2);
+  if (ctrDiff) parts.push(`CTR ${ctrDiff}`);
+
+  const cpaDiff = formatPpDiff(cpaNow, cpaPrev, 2);
+  if (cpaDiff) parts.push(`CPA ${cpaDiff}`);
+
+  const convDiff = formatPpDiff(conversionNow, conversionPrev, 2);
+  if (convDiff) parts.push(`Конверсии ${convDiff}`);
+
+  return parts.slice(0, 3).join(" · ");
+};
+
+const getThreadPreviewText = (thread) => {
+  const count = Number(thread?.messages_count ?? thread?.messages?.length ?? 0);
+  if (!thread) return `${count} сообщений`;
+
+  const direct =
+    thread.last_message_preview ||
+    thread.last_message ||
+    thread.last_text ||
+    thread.last_answer_preview ||
+    thread.last_prompt;
+  const text = typeof direct === "string" ? direct : null;
+  if (text) {
+    const trimmed = text.trim().replace(/\s+/g, " ");
+    return trimmed.length > 60 ? `${trimmed.slice(0, 60)}…` : trimmed;
+  }
+
+  if (Array.isArray(thread.messages) && thread.messages.length) {
+    const last = thread.messages[thread.messages.length - 1];
+    const lastText = last?.text;
+    if (typeof lastText === "string" && lastText.trim()) {
+      const trimmed = lastText.trim().replace(/\s+/g, " ");
+      return trimmed.length > 60 ? `${trimmed.slice(0, 60)}…` : trimmed;
+    }
+  }
+
+  return `${count} сообщений`;
+};
+
 export default function AiAnalystTab({
   cities,
   form,
@@ -794,6 +890,7 @@ export default function AiAnalystTab({
   onSelectHistory,
   onExport,
   canExport = false,
+  canExportData = false,
   onAnalyze,
   canAnalyze = false,
 }) {
@@ -903,6 +1000,7 @@ export default function AiAnalystTab({
   };
 
   const handleExportClick = (fileType) => {
+    if (!canExport) return;
     setExportMenuAnchor(null);
     onExport?.(fileType);
   };
@@ -989,9 +1087,11 @@ export default function AiAnalystTab({
                 </Typography>
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {history.map((item) => {
+                  {history.map((item, index) => {
                     const itemId = item.site_data_request_id ?? item.id;
                     const isActive = siteDataRequestId === itemId;
+                    const previousItem = history[index + 1] || null;
+                    const deltaSummary = getHistoryDeltaSummary(item, previousItem);
 
                     return (
                       <Paper
@@ -1042,13 +1142,23 @@ export default function AiAnalystTab({
                             ? ` · создан ${dayjs(item.created_at).format("DD.MM.YYYY HH:mm")}`
                             : ""}
                         </Typography>
-                        {item.ai_summary && (
+                        {deltaSummary ? (
                           <Typography
                             variant="body2"
                             sx={{ mb: 0.75 }}
+                            title={item.ai_summary || undefined}
                           >
-                            {item.ai_summary}
+                            {deltaSummary}
                           </Typography>
+                        ) : (
+                          item.ai_summary && (
+                            <Typography
+                              variant="body2"
+                              sx={{ mb: 0.75 }}
+                            >
+                              {item.ai_summary}
+                            </Typography>
+                          )
                         )}
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
                           <Typography variant="caption">
@@ -1120,40 +1230,6 @@ export default function AiAnalystTab({
                   func={(event, data) => onSourceChange(data)}
                 />
               </Grid>
-
-              <Grid size={{ xs: 12, sm: form.comparisonMode?.id === "custom" ? 4 : 6 }}>
-                <MyAutocomplite
-                  label="Период сравнения"
-                  data={COMPARISON_MODES}
-                  multiple={false}
-                  value={form.comparisonMode}
-                  func={(event, data) => onFieldChange("comparisonMode", data)}
-                />
-              </Grid>
-
-              {form.comparisonMode?.id === "custom" && (
-                <>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyDatePickerNew
-                      label="Сравнение от"
-                      customActions={true}
-                      value={dayjs(form.comparisonDateStart)}
-                      maxDate={dayjs(form.comparisonDateEnd)}
-                      func={(e) => onFieldChange("comparisonDateStart", e)}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <MyDatePickerNew
-                      label="Сравнение до"
-                      customActions={true}
-                      value={dayjs(form.comparisonDateEnd)}
-                      minDate={dayjs(form.comparisonDateStart)}
-                      maxDate={dayjs().subtract(1, "day")}
-                      func={(e) => onFieldChange("comparisonDateEnd", e)}
-                    />
-                  </Grid>
-                </>
-              )}
 
               <Grid
                 size={{ xs: 12 }}
@@ -1268,31 +1344,35 @@ export default function AiAnalystTab({
                       >
                         Анализировать
                       </StyledButton>
-                      <StyledButton
-                        variant="outlined"
-                        startIcon={<FileDownloadIcon />}
-                        endIcon={<KeyboardArrowDownIcon />}
-                        disabled={!canExport}
-                        onClick={(event) => setExportMenuAnchor(event.currentTarget)}
-                      >
-                        Экспортировать
-                      </StyledButton>
-                      <Menu
-                        anchorEl={exportMenuAnchor}
-                        open={Boolean(exportMenuAnchor)}
-                        onClose={() => setExportMenuAnchor(null)}
-                        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                        transformOrigin={{ vertical: "top", horizontal: "right" }}
-                      >
-                        {EXPORT_FORMATS.map((format) => (
-                          <MenuItem
-                            key={format.value}
-                            onClick={() => handleExportClick(format.value)}
+                      {canExport ? (
+                        <>
+                          <StyledButton
+                            variant="outlined"
+                            startIcon={<FileDownloadIcon />}
+                            endIcon={<KeyboardArrowDownIcon />}
+                            disabled={!canExportData}
+                            onClick={(event) => setExportMenuAnchor(event.currentTarget)}
                           >
-                            <ListItemText primary={format.label} />
-                          </MenuItem>
-                        ))}
-                      </Menu>
+                            Экспортировать
+                          </StyledButton>
+                          <Menu
+                            anchorEl={exportMenuAnchor}
+                            open={Boolean(exportMenuAnchor)}
+                            onClose={() => setExportMenuAnchor(null)}
+                            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                            transformOrigin={{ vertical: "top", horizontal: "right" }}
+                          >
+                            {EXPORT_FORMATS.map((format) => (
+                              <MenuItem
+                                key={format.value}
+                                onClick={() => handleExportClick(format.value)}
+                              >
+                                <ListItemText primary={format.label} />
+                              </MenuItem>
+                            ))}
+                          </Menu>
+                        </>
+                      ) : null}
                       <Chip
                         label={STATUS_LABELS[analysis.status] || analysis.status}
                         color={STATUS_COLORS[analysis.status] || "default"}
@@ -1353,44 +1433,42 @@ export default function AiAnalystTab({
                   >
                     {SECONDARY_METRICS.map(([key, label]) => {
                       const metric = analysis.metrics?.[key];
+                      const hint = getMetricHint(metric);
                       return (
-                        <Box
+                        <Tooltip
                           key={key}
-                          sx={{
-                            p: 1.5,
-                            minWidth: 0,
-                            minHeight: 78,
-                            border: "1px solid #eef0f3",
-                            borderRadius: 2,
-                            backgroundColor: "#f8f9fb",
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "center",
-                          }}
+                          title={<Box sx={{ whiteSpace: "pre-line" }}>{hint}</Box>}
+                          arrow
                         >
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              minWidth: 0,
+                              minHeight: 64,
+                              border: "1px solid #eef0f3",
+                              borderRadius: 2,
+                              backgroundColor: "#f8f9fb",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              cursor: "help",
+                            }}
                           >
-                            {label}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                            sx={{ overflowWrap: "anywhere" }}
-                          >
-                            {formatValue(metric)}
-                          </Typography>
-                          {metric?.basis && (
                             <Typography
                               variant="caption"
                               color="text.secondary"
-                              noWrap
                             >
-                              {BASIS_LABELS[metric.basis] || metric.basis}
+                              {label}
                             </Typography>
-                          )}
-                        </Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              sx={{ overflowWrap: "anywhere" }}
+                            >
+                              {formatValue(metric)}
+                            </Typography>
+                          </Box>
+                        </Tooltip>
                       );
                     })}
                   </Box>
@@ -1866,7 +1944,7 @@ export default function AiAnalystTab({
                   >
                     <ListItemText
                       primary={`${thread.is_pinned ? "📌 " : ""}${thread.title}`}
-                      secondary={`${thread.messages_count ?? thread.messages?.length ?? 0} сообщений`}
+                      secondary={getThreadPreviewText(thread)}
                     />
                   </MenuItem>
                 ))}
@@ -2102,7 +2180,7 @@ export default function AiAnalystTab({
               p: { xs: 2, sm: 2.5 },
               mb: 2.5,
               borderRadius: 2.5,
-              borderColor: "#e3e7ed",
+              borderColor: "#eadce1",
               background: "linear-gradient(135deg, #fff 0%, #fff5f7 100%)",
             }}
           >
@@ -2120,9 +2198,10 @@ export default function AiAnalystTab({
                   color="text.secondary"
                   sx={{ mt: 0.5 }}
                 >
-                  AI получает агрегированные показатели текущего отчёта и при необходимости
-                  запрашивает дополнительные данные через разрешённые серверные инструменты.
-                  Инструменты работают только на чтение.
+                  Модель видит только агрегированные показатели выбранного отчёта: город, период,
+                  источник, KPI, дневную динамику, аномалии и текстовые выводы. При необходимости
+                  сервер может дозапросить данные через инструменты только на чтение. Сырые заказы и
+                  персональные данные в модель не уходят.
                 </Typography>
               </Box>
             </Box>
@@ -2142,12 +2221,20 @@ export default function AiAnalystTab({
             sx={{ mb: 3 }}
           >
             {[
-              ["1", "Выберите отчёт", "Примените город, период и источник данных."],
-              ["2", "Задайте вопрос", "Укажите точные даты, показатели и желаемую детализацию."],
+              [
+                "1",
+                "Выберите отчёт",
+                "Укажите город, даты «от» и «до», при необходимости источник. Нажмите «Применить». Можно открыть прошлый отчёт из истории — чат и дашборд подтянутся вместе с ним.",
+              ],
+              [
+                "2",
+                "Задайте вопрос",
+                "Пишите в чат справа: какие даты сравнить, какие метрики нужны (заказы, выручка, расходы, CPA, ROMI) и в каком виде ответ — таблица, список причин или рекомендации.",
+              ],
               [
                 "3",
                 "Проверьте ответ",
-                "AI разделит факты, прогноз и ограничения доступных данных.",
+                "Факты должны опираться на цифры отчёта. Если данных нет, AI обязан это сказать. «Анализировать» собирает HTML-отчёт, «Экспортировать» — xlsx, docx или pdf.",
               ],
             ].map(([number, title, text]) => (
               <Grid
@@ -2238,27 +2325,30 @@ export default function AiAnalystTab({
                     variant="body2"
                     sx={{ mb: 0.75 }}
                   >
-                    агрегированные заказы, выручка, визиты и рекламные расходы;
+                    расходы, выручка, заказы, визиты, клики, CPA, CTR, ROMI/ROI и конверсия — если
+                    статус метрики «доступно»;
                   </Typography>
                   <Typography
                     component="li"
                     variant="body2"
                     sx={{ mb: 0.75 }}
                   >
-                    дневная динамика и результаты сравнений периодов;
+                    сравнение с предыдущим периодом той же длины и аномалии при изменении больше
+                    15%;
                   </Typography>
                   <Typography
                     component="li"
                     variant="body2"
                     sx={{ mb: 0.75 }}
                   >
-                    товары, категории, город и разрешённые UTM-метки — только когда это нужно;
+                    источники и UTM (source, medium, campaign, content, term), лучшие/худшие
+                    объявления и ключевые по UTM;
                   </Typography>
                   <Typography
                     component="li"
                     variant="body2"
                   >
-                    краткая память диалога, последние сообщения и релевантные результаты.
+                    последние сообщения чата и краткая память диалога по текущему отчёту.
                   </Typography>
                 </Box>
               </Paper>
@@ -2294,27 +2384,27 @@ export default function AiAnalystTab({
                     variant="body2"
                     sx={{ mb: 0.75 }}
                   >
-                    сырые заказы, ФИО клиентов, телефоны и e-mail не передаются;
+                    ФИО, телефоны, e-mail, адреса доставки и строки заказов в модель не передаются;
                   </Typography>
                   <Typography
                     component="li"
                     variant="body2"
                     sx={{ mb: 0.75 }}
                   >
-                    кафе и адреса заменяются стабильными обозначениями «Кафе 1», «Кафе 2»;
+                    точки заменяются стабильными ярлыками «Кафе 1», «Кафе 2» без реального адреса;
                   </Typography>
                   <Typography
                     component="li"
                     variant="body2"
                     sx={{ mb: 0.75 }}
                   >
-                    телефоны, e-mail, токены и скрытые управляющие символы удаляются;
+                    токены, пароли и скрытые управляющие символы из текста чата удаляются;
                   </Typography>
                   <Typography
                     component="li"
                     variant="body2"
                   >
-                    доступ к чату есть только у авторизованного сотрудника с нужным правом.
+                    чат видит только авторизованный сотрудник; чужие отчёты из истории недоступны.
                   </Typography>
                 </Box>
               </Paper>
@@ -2331,18 +2421,44 @@ export default function AiAnalystTab({
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ mb: 1.5 }}
+            sx={{ mb: 1 }}
           >
-            Укажите точные даты, город, нужные показатели и формат ответа. Если нужны другие
-            периоды, попросите AI запросить их. Для большого исследования перечислите периоды и
-            отдельно обозначьте, где нужен прогноз.
+            Чем конкретнее вопрос, тем точнее ответ. Укажите период, город (если он важен сверх
+            фильтра), метрики и формат. Если нужны другие даты, чем в отчёте, напишите это явно —
+            иначе AI опирается на текущий выбранный период.
           </Typography>
+          <Box
+            component="ul"
+            sx={{ m: 0, mb: 1.5, pl: 2.5, color: "text.secondary" }}
+          >
+            <Typography
+              component="li"
+              variant="body2"
+              sx={{ mb: 0.5 }}
+            >
+              Хорошо: «Сравни 1–15 июля и 1–15 августа по заказам, выручке и CPA. Если CPA нет — так
+              и напиши».
+            </Typography>
+            <Typography
+              component="li"
+              variant="body2"
+              sx={{ mb: 0.5 }}
+            >
+              Слабо: «Что у нас с рекламой?» — слишком широко, без периода и метрик.
+            </Typography>
+            <Typography
+              component="li"
+              variant="body2"
+            >
+              Для прогноза отдельно скажите «это прогноз», иначе AI должен опираться только на факт.
+            </Typography>
+          </Box>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
             {[
-              "Сравни 1–15 июля и 1–15 августа 2026 года: заказы, выручку, расходы, CPA и ROMI. Объясни ограничения.",
-              "Сравни 2022–2026 годы. За 2026 год отдельно покажи факт и прогноз до 31 декабря.",
-              "Покажи топ-10 товаров и категорий по выручке за июль и объясни изменения.",
-              "Разбери динамику по дням, найди аномалии и укажи, на каких данных основан вывод.",
+              "Сравни текущий период с предыдущим: заказы, выручку, расходы, CPA и ROMI. Если метрика недоступна — объясни почему.",
+              "Покажи топ источников по выручке и заказам. Какие UTM кампании стоит масштабировать, а какие отключить?",
+              "Найди аномалии больше 15% и свяжи их с проблемами в отчёте. Не выдумывай визиты, если их нет.",
+              "Собери рекомендации по бюджету: куда добавить расходы, а что отключить. Опирайся только на факты отчёта.",
             ].map((example) => (
               <Paper
                 key={example}
@@ -2371,17 +2487,42 @@ export default function AiAnalystTab({
                 >
                   Важные ограничения
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
+                <Box
+                  component="ul"
+                  sx={{ m: 0, pl: 2.5, color: "text.secondary" }}
                 >
-                  Полные маркетинговые показатели доступны в основном с 2025 года. Показатели с
-                  разной методологией атрибуции нельзя напрямую сравнивать. Ограничения Яндекс
-                  Метрики для Тольятти сохраняются и должны быть указаны в ответе. Прогноз на
-                  незавершённый год строится как линейный run-rate без учёта сезонности и имеет
-                  низкую уверенность. Не отправляйте в чат персональные данные и секреты, даже с
-                  учётом автоматической очистки.
-                </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    «Нет данных» и «значение 0» — разные вещи. Расход 0 ₽ означает, что цифра есть и
+                    равна нулю; CPA/ROMI при этом часто посчитать нельзя.
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    Визиты, клики, CTR, аудитория, площадки и поисковые запросы могут быть
+                    недоступны. Объявления и ключи часто берутся из UTM, а не из Директа.
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.75 }}
+                  >
+                    Полные маркетинговые ряды стабильны в основном с 2025 года. Периоды с разной
+                    атрибуцией нельзя сравнивать как одинаковые.
+                  </Typography>
+                  <Typography
+                    component="li"
+                    variant="body2"
+                  >
+                    Прогноз на незакрытый период — линейный run-rate без сезонности, уверенность
+                    низкая. Не вставляйте в чат телефоны, ФИО и доступы.
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </Paper>
@@ -2391,17 +2532,18 @@ export default function AiAnalystTab({
             color="text.secondary"
             sx={{ display: "block", mt: 2 }}
           >
-            Чаты принадлежат сотруднику. Название создаётся по первому запросу, его можно изменить
-            или закрепить через меню. История сообщений хранится 180 дней.
+            Чаты принадлежат сотруднику и привязаны к отчёту. Название создаётся по первому запросу,
+            его можно переименовать, закрепить или удалить через меню. История сообщений хранится
+            180 дней.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}>
-          <Button
-            variant="contained"
+          <StyledButton
+            variant="primary"
             onClick={() => setAiGuideOpen(false)}
           >
             Понятно
-          </Button>
+          </StyledButton>
         </DialogActions>
       </Dialog>
 
