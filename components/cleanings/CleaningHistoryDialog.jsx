@@ -1,14 +1,6 @@
-import {
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Box, CircularProgress, DialogContent, Typography } from "@mui/material";
 import HistoryLog from "@/ui/history/HistoryLog";
+import MyModal from "@/ui/MyModal";
 
 export default function CleaningHistoryDialog({
   open,
@@ -19,35 +11,16 @@ export default function CleaningHistoryDialog({
   hiddenFields = [],
 }) {
   return (
-    <Dialog
+    <MyModal
       open={open}
       onClose={onClose}
-      fullWidth
       maxWidth="md"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: "12px",
-          },
-        },
-      }}
+      title="История изменений"
     >
-      <DialogTitle
-        sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}
-      >
-        <Box>
-          <Typography sx={{ fontSize: 20, fontWeight: 800 }}>История изменений</Typography>
-          <Typography sx={{ color: "text.secondary", fontSize: 14 }}>{item?.name || ""}</Typography>
-        </Box>
-        <IconButton
-          size="small"
-          onClick={onClose}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-
       <DialogContent sx={{ pt: 0, pb: 2 }}>
+        <Typography sx={{ color: "text.secondary", fontSize: 14, mb: 2 }}>
+          {item?.name || ""}
+        </Typography>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={28} />
@@ -60,6 +33,6 @@ export default function CleaningHistoryDialog({
           />
         )}
       </DialogContent>
-    </Dialog>
+    </MyModal>
   );
 }
