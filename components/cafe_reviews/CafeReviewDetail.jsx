@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,11 +19,16 @@ import {
   Select,
   Stack,
   TextField,
+  ClickAwayListener,
+  IconButton,
   Typography,
 } from "@mui/material";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
 import {
   blockBackground,
   blockBorder,
@@ -32,8 +39,10 @@ import {
   SeverityChip,
   StatusChip,
   textSecondary,
+  ZoneChip,
 } from "./shared";
 import CafeReviewPhotoGallery from "./CafeReviewPhotoGallery";
+import { useConfirm } from "@/src/hooks/useConfirm";
 
 const terminalStatuses = ["resolved", "dismissed"];
 const validStatusTransitions = {
@@ -42,6 +51,20 @@ const validStatusTransitions = {
   resolved: ["in_progress"],
   dismissed: ["in_progress"],
 };
+
+const aiCategoryLabels = {
+  cleanliness: "Чистота и санитария",
+  supplies: "Расходные материалы",
+  equipment: "Оборудование",
+  plumbing: "Сантехника",
+  odor: "Запах",
+  service: "Сервис",
+  other: "Другое",
+};
+
+function getIssueLabel(issueCode, issues) {
+  return issues.find((issue) => issue.code === issueCode)?.name || issueCode;
+}
 
 function Section({ title, children }) {
   return (
@@ -71,7 +94,7 @@ function IssueList({ issues }) {
   );
 }
 
-function EventTimeline({ events, dictionaries }) {
+function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
   if (!events.length) {
     return <Typography sx={{ color: textSecondary }}>Событий пока нет</Typography>;
   }
@@ -96,7 +119,13 @@ function EventTimeline({ events, dictionaries }) {
             {event.actor.name ? ` · ${event.actor.name}` : ""}
           </Typography>
           <Typography sx={{ fontWeight: 700, mt: 0.25 }}>
-            {event.event_type || "Обновление"}
+            {{
+              ai_analysis_generated: "AI-анализ сформирован",
+              ai_suggestion_accepted: "AI-рекомендация принята",
+              ai_suggestion_rejected: "AI-рекомендация отклонена",
+            }[event.event_type] ||
+              event.event_type ||
+              "Обновление"}
           </Typography>
           {event.status_from || event.status_to ? (
             <Typography sx={{ fontSize: 14, mt: 0.25 }}>
@@ -110,11 +139,33 @@ function EventTimeline({ events, dictionaries }) {
             </Typography>
           ) : null}
           {event.comment ? (
-            <Typography
-              sx={{ fontSize: 14, mt: 0.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-            >
-              {event.comment}
+            <Box sx={{ mt: 0.5 }}>
+              {event.comment_type ? (
+                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                  {{
+                    operator: "Комментарий оператора",
+                    ai_recommendation: "Рекомендации AI",
+                    ai_context: "Контекст для AI",
+                  }[event.comment_type] || "Комментарий"}
+                </Typography>
+              ) : null}
+              <Typography sx={{ fontSize: 14, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                {event.comment}
+              </Typography>
+            </Box>
+          ) : null}
+          {event.decision ? (
+            <Typography sx={{ fontSize: 14, mt: 0.25 }}>
+              Решение: {event.decision === "accepted" ? "принято" : "отклонено"}
             </Typography>
+          ) : null}
+          {event.photos.length ? (
+            <CafeReviewPhotoGallery
+              photos={event.photos}
+              getPhoto={getPhoto}
+              idPrefix={`${idPrefix}-event-${event.id}`}
+              title="Вложения"
+            />
           ) : null}
         </Box>
       ))}
@@ -122,12 +173,36 @@ function EventTimeline({ events, dictionaries }) {
   );
 }
 
-function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onReject }) {
+function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onReject, onReanalyze }) {
+  const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
+  const [additionalContext, setAdditionalContext] = useState("");
+  const [reanalyzeAttachment, setReanalyzeAttachment] = useState(null);
+  const { withConfirm, ConfirmDialog } = useConfirm();
+
   if (!analysis) {
+    const runAnalysis = withConfirm(
+      () => onReanalyze({ incidentId: incident.id, additionalContext: "" }),
+      "Запустить AI-анализ сейчас?",
+    );
+
     return (
-      <Alert severity="info">
-        AI-анализ ещё не готов или недоступен. Решение по инциденту принимает оператор.
-      </Alert>
+      <Stack spacing={1.25}>
+        <Alert severity="info">
+          AI-анализ ещё не готов или недоступен. Решение по инциденту принимает оператор.
+        </Alert>
+        {canDecide ? (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<RefreshOutlinedIcon />}
+            onClick={runAnalysis}
+            sx={{ alignSelf: "flex-start", textTransform: "none", borderRadius: "12px" }}
+          >
+            Запустить
+          </Button>
+        ) : null}
+        <ConfirmDialog />
+      </Stack>
     );
   }
 
@@ -136,6 +211,26 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
     rejected: "Рекомендация отклонена",
   };
   const hasDecision = Boolean(analysis.human_decision);
+
+  const cancelReanalyze = () => {
+    setAdditionalContext("");
+    setReanalyzeAttachment(null);
+    setReanalyzeOpen(false);
+  };
+
+  const submitReanalyze = async () => {
+    const context = additionalContext.trim();
+    if (!context && !reanalyzeAttachment) return;
+    if (
+      await onReanalyze({
+        incidentId: incident.id,
+        additionalContext: context,
+        attachment: reanalyzeAttachment,
+      })
+    ) {
+      cancelReanalyze();
+    }
+  };
 
   return (
     <Paper
@@ -170,7 +265,7 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
           {analysis.suggested_category ? (
             <Chip
               size="small"
-              label={`Категория: ${analysis.suggested_category}`}
+              label={`Категория: ${aiCategoryLabels[analysis.suggested_category] || analysis.suggested_category}`}
               variant="outlined"
             />
           ) : null}
@@ -194,7 +289,17 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
               sx={{ mt: 0.5, mb: 0, pl: 2.5 }}
             >
               {analysis.evidence.map((evidence, index) => (
-                <li key={`${evidence}-${index}`}>{evidence}</li>
+                <li key={`${evidence.issue_code || evidence.photo_id || evidence.text}-${index}`}>
+                  {evidence.text ||
+                    [
+                      evidence.issue_code
+                        ? `Причина: ${getIssueLabel(evidence.issue_code, dictionaries.issues)}`
+                        : "",
+                      evidence.photo_id ? `Фото: ${evidence.photo_id}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                </li>
               ))}
             </Box>
           </DetailRow>
@@ -219,27 +324,147 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
             {decisionLabels[analysis.human_decision] || analysis.human_decision}
           </Alert>
         ) : null}
-        {canDecide && !hasDecision ? (
+        {canDecide && !reanalyzeOpen && analysis.human_decision !== "accepted" ? (
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {!hasDecision ? (
+              <>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => onApply(analysis)}
+                  disabled={!analysis.suggested_severity}
+                  sx={{ textTransform: "none", borderRadius: "12px", boxShadow: "none" }}
+                >
+                  Принять
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => onReject(analysis)}
+                  sx={{ textTransform: "none", borderRadius: "12px" }}
+                >
+                  Отклонить
+                </Button>
+              </>
+            ) : null}
             <Button
               variant="contained"
-              onClick={() => onApply(analysis)}
-              disabled={!analysis.suggested_severity}
-              sx={{ textTransform: "none", borderRadius: "12px", boxShadow: "none" }}
+              color="error"
+              aria-label="Повторить AI-анализ"
+              title="Повторить AI-анализ"
+              onClick={() => setReanalyzeOpen(true)}
+              sx={{
+                minWidth: 40,
+                width: 40,
+                height: 40,
+                p: 0,
+                borderRadius: "12px",
+                boxShadow: "none",
+              }}
             >
-              Принять
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => onReject(analysis)}
-              sx={{ textTransform: "none", borderRadius: "12px" }}
-            >
-              Отклонить
+              <RefreshOutlinedIcon />
             </Button>
           </Box>
         ) : null}
+        {canDecide && reanalyzeOpen ? (
+          <ClickAwayListener onClickAway={cancelReanalyze}>
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.75 }}>
+              <TextField
+                autoFocus
+                fullWidth
+                multiline
+                minRows={2}
+                maxRows={4}
+                size="small"
+                value={additionalContext}
+                onChange={(event) => setAdditionalContext(event.target.value)}
+                placeholder="Дополнительная информация по инциденту"
+                inputProps={{ maxLength: 2000 }}
+              />
+              <Button
+                component="label"
+                variant="outlined"
+                size="small"
+                sx={{ textTransform: "none", borderRadius: "12px", alignSelf: "stretch" }}
+              >
+                {reanalyzeAttachment ? `Фото: ${reanalyzeAttachment.name}` : "Добавить фото"}
+                <input
+                  hidden
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(event) => setReanalyzeAttachment(event.target.files?.[0] || null)}
+                />
+              </Button>
+              <IconButton
+                color="success"
+                aria-label="Отправить дополнительный контекст"
+                disabled={!additionalContext.trim() && !reanalyzeAttachment}
+                onClick={submitReanalyze}
+                sx={{ mt: 0.25 }}
+              >
+                <ArrowForwardIcon />
+              </IconButton>
+              <IconButton
+                color="error"
+                aria-label="Отменить повторный анализ"
+                onClick={cancelReanalyze}
+                sx={{ mt: 0.25 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </ClickAwayListener>
+        ) : null}
       </Stack>
     </Paper>
+  );
+}
+
+function AiAnalysisSection({ analysis, children }) {
+  const [expanded, setExpanded] = useState(!analysis?.human_decision);
+  const decision = analysis?.human_decision || null;
+
+  useEffect(() => {
+    setExpanded(!decision || decision !== "accepted");
+  }, [analysis?.id, decision]);
+
+  const status = !analysis
+    ? { label: "Не проанализирован", color: "default" }
+    : decision === "accepted"
+      ? { label: "Принято", color: "success" }
+      : decision === "rejected"
+        ? { label: "Отклонено", color: "default" }
+        : { label: "Готово к проверке", color: "warning" };
+
+  return (
+    <Accordion
+      disableGutters
+      elevation={0}
+      expanded={expanded}
+      onChange={(_, nextExpanded) => setExpanded(nextExpanded)}
+      sx={{
+        backgroundColor: "transparent",
+        "&::before": { display: "none" },
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{
+          minHeight: 40,
+          px: 0,
+          "& .MuiAccordionSummary-content": { my: 0.75, alignItems: "center", gap: 1 },
+        }}
+      >
+        <Typography sx={{ fontSize: 16, fontWeight: 800 }}>AI-анализ</Typography>
+        <Chip
+          size="small"
+          label={status.label}
+          color={status.color}
+          variant="outlined"
+        />
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: 0, pt: 0.5, pb: 0 }}>{children}</AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -254,7 +479,9 @@ export default function CafeReviewDetail({
   canOpenIncident,
   getPhoto,
   onUpdateIncident,
+  onMarkIncident,
   onDecideAi,
+  onReanalyzeAi,
   onOpenIncident,
   onClose,
   error,
@@ -267,12 +494,14 @@ export default function CafeReviewDetail({
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [comment, setComment] = useState("");
+  const [attachment, setAttachment] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     setStatus(incident?.status || "");
     setSeverity(incident?.severity || "");
     setComment(incident?.comment || "");
+    setAttachment(null);
     setConfirmAction(null);
   }, [incident?.id, incident?.lock_version, incident?.updated_at, review?.id]);
 
@@ -305,18 +534,9 @@ export default function CafeReviewDetail({
 
     return validOptions;
   }, [dictionaries.incident_statuses, dictionaries.statuses, incident]);
-
-  if (loading) {
-    return (
-      <Box
-        role="status"
-        aria-label="Загрузка деталей"
-        sx={{ minHeight: 260, display: "grid", placeItems: "center" }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const incidentStatusValue = incidentStatusOptions.some((option) => option.value === status)
+    ? status
+    : incident?.status || "";
 
   if (error) {
     return (
@@ -346,6 +566,8 @@ export default function CafeReviewDetail({
   }
 
   if (!detail || !review) {
+    if (loading) return null;
+
     return (
       <Box sx={{ p: 3, textAlign: "center", color: textSecondary }}>
         Выберите запись, чтобы открыть детали
@@ -358,7 +580,9 @@ export default function CafeReviewDetail({
       ? "Сохранить изменения инцидента?"
       : confirmAction?.type === "apply-ai"
         ? "Применить AI-рекомендацию?"
-        : "Отклонить AI-рекомендацию?";
+        : confirmAction?.type === "reject-ai"
+          ? "Отклонить AI-рекомендацию?"
+          : "Отметить отзыв как инцидент?";
 
   const runConfirmedAction = async () => {
     let succeeded = false;
@@ -367,13 +591,16 @@ export default function CafeReviewDetail({
         setConfirmAction(null);
         return;
       }
-      succeeded = await onUpdateIncident({
-        id: incident.id,
-        status,
-        severity,
-        comment,
-        expected_lock_version: incident.lock_version,
-      });
+      succeeded = await onUpdateIncident(
+        {
+          id: incident.id,
+          status,
+          comment,
+          expected_lock_version: incident.lock_version,
+          ...(severity ? { severity } : {}),
+        },
+        attachment,
+      );
     }
     if (confirmAction?.type === "apply-ai") {
       succeeded = await onDecideAi({
@@ -390,6 +617,9 @@ export default function CafeReviewDetail({
         decision: "rejected",
         expected_lock_version: incident.lock_version,
       });
+    }
+    if (confirmAction?.type === "mark-incident") {
+      succeeded = await onMarkIncident(review.id);
     }
     if (succeeded) setConfirmAction(null);
   };
@@ -432,6 +662,7 @@ export default function CafeReviewDetail({
           <RatingValue
             value={review.rating}
             size="medium"
+            isIncident={kind === "incident" || review.is_incident}
           />
           <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
             <StatusChip
@@ -451,6 +682,14 @@ export default function CafeReviewDetail({
               {review.city_name ? ` · ${review.city_name}` : ""}
             </Typography>
           </DetailRow>
+          {review.zone_code || review.zone_label ? (
+            <DetailRow label="Зона">
+              <ZoneChip
+                code={review.zone_code}
+                label={review.zone_label}
+              />
+            </DetailRow>
+          ) : null}
         </Box>
 
         <Divider />
@@ -489,6 +728,16 @@ export default function CafeReviewDetail({
           </Button>
         ) : null}
 
+        {kind === "review" && review.status === "completed" && !incident && canEdit ? (
+          <Button
+            variant="outlined"
+            onClick={() => setConfirmAction({ type: "mark-incident" })}
+            sx={{ justifySelf: "start", textTransform: "none", borderRadius: "12px" }}
+          >
+            Отметить как инцидент
+          </Button>
+        ) : null}
+
         {kind === "incident" && incident ? (
           <>
             <Divider />
@@ -503,9 +752,13 @@ export default function CafeReviewDetail({
                     <Select
                       labelId={`${idPrefix}-incident-status-label`}
                       id={`${idPrefix}-incident-status`}
-                      value={status}
+                      value={incidentStatusValue}
                       label="Статус"
-                      onChange={(event) => setStatus(event.target.value)}
+                      onChange={(event) => {
+                        const nextStatus = event.target.value;
+                        setStatus(nextStatus);
+                        if (nextStatus === incident.status) setAttachment(null);
+                      }}
                       sx={{ borderRadius: "12px" }}
                     >
                       {incidentStatusOptions.map((option) => (
@@ -558,6 +811,25 @@ export default function CafeReviewDetail({
                     inputProps={{ maxLength: 2000 }}
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                   />
+                  {status !== incident.status ? (
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      sx={{
+                        alignSelf: "flex-start",
+                        textTransform: "none",
+                        borderRadius: "12px",
+                      }}
+                    >
+                      {attachment ? `Фото: ${attachment.name}` : "Прикрепить фото (необязательно)"}
+                      <input
+                        hidden
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => setAttachment(event.target.files?.[0] || null)}
+                      />
+                    </Button>
+                  ) : null}
                   <Button
                     variant="contained"
                     onClick={() => setConfirmAction({ type: "save" })}
@@ -577,7 +849,7 @@ export default function CafeReviewDetail({
               )}
             </Section>
             {canViewAi ? (
-              <Section title="AI-анализ">
+              <AiAnalysisSection analysis={detail.ai_analysis}>
                 <AiPanel
                   analysis={detail.ai_analysis}
                   incident={incident}
@@ -585,15 +857,44 @@ export default function CafeReviewDetail({
                   canDecide={canDecideAi}
                   onApply={(analysis) => setConfirmAction({ type: "apply-ai", analysis })}
                   onReject={(analysis) => setConfirmAction({ type: "reject-ai", analysis })}
+                  onReanalyze={async ({ incidentId, additionalContext, attachment }) =>
+                    onReanalyzeAi({
+                      id: incidentId,
+                      additional_context: additionalContext,
+                      attachment,
+                    })
+                  }
                 />
-              </Section>
+              </AiAnalysisSection>
             ) : null}
-            <Section title="История событий">
-              <EventTimeline
-                events={detail.events || []}
-                dictionaries={dictionaries}
-              />
-            </Section>
+            <Accordion
+              disableGutters
+              elevation={0}
+              defaultExpanded={false}
+              sx={{
+                backgroundColor: "transparent",
+                "&::before": { display: "none" },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  minHeight: 40,
+                  px: 0,
+                  "& .MuiAccordionSummary-content": { my: 1 },
+                }}
+              >
+                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>История событий</Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 0, pb: 0 }}>
+                <EventTimeline
+                  events={detail.events || []}
+                  dictionaries={dictionaries}
+                  getPhoto={getPhoto}
+                  idPrefix={idPrefix}
+                />
+              </AccordionDetails>
+            </Accordion>
           </>
         ) : null}
       </Box>
