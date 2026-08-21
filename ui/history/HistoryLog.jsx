@@ -24,6 +24,7 @@ function HistoryLog({
   title = "История изменений",
   restoreFunc = null,
   defaultExpanded = false,
+  hiddenFields = [],
 }) {
   return (
     <>
@@ -61,7 +62,10 @@ function HistoryLog({
                       <TableCell>{dayjs(item.created_at)?.format("DD.MM.YYYY HH:mm")}</TableCell>
                       <TableCell>{item.actor_name}</TableCell>
                       <TableCell>
-                        <SmartDiff item={item} />
+                        <SmartDiff
+                          item={item}
+                          hiddenFields={hiddenFields}
+                        />
                       </TableCell>
                       {!!restoreFunc && (
                         <TableCell>
