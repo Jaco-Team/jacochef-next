@@ -16,6 +16,7 @@ export default function CleaningHistoryDialog({
   history = [],
   loading = false,
   onClose,
+  hiddenFields = [],
 }) {
   return (
     <Dialog
@@ -55,6 +56,7 @@ export default function CleaningHistoryDialog({
           <HistoryLog
             history={history}
             defaultExpanded
+            hiddenFields={hiddenFields}
           />
         )}
       </DialogContent>

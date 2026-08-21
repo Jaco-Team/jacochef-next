@@ -1,11 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { Button, DialogActions, DialogContent, Grid, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  DialogActions,
+  DialogContent,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
 import MyModal from "@/ui/MyModal";
 import { MyDateTimePickerNew } from "@/ui/Forms";
 import CleaningsLampDateTimePicker from "./CleaningsLampDateTimePicker";
 
 const emptyLamp = { number: "", name: "", resource: "", place: "" };
+const replacementReasons = [
+  "Неисправна",
+  "Повреждена",
+  "Выработан ресурс",
+  "Плановая замена",
+  "Другая причина",
+];
 
 function dateTimeValue(value) {
   return value && dayjs(value).isValid() ? dayjs(value) : null;
@@ -46,6 +61,8 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
               label="Порядковый номер"
               value={form.number}
               onChange={update("number")}
+              disabled={Boolean(lamp?.id)}
+              helperText={lamp?.id ? "Номер меняется только при замене лампы" : undefined}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -71,6 +88,8 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
               label="Место размещения"
               value={form.place}
               onChange={update("place")}
+              disabled={Boolean(lamp?.id)}
+              helperText={lamp?.id ? "Место фиксируется для этой версии лампы" : undefined}
             />
           </Grid>
         </Grid>
@@ -82,6 +101,89 @@ export function CleaningsLampDialog({ open, lamp, onClose, onSave }) {
           onClick={() => onSave({ ...form, id: lamp?.id })}
         >
           СОХРАНИТЬ
+        </Button>
+      </DialogActions>
+    </MyModal>
+  );
+}
+
+export function CleaningsLampReplacementDialog({ open, lamp, onClose, onSave }) {
+  const [reason, setReason] = useState("");
+  const [details, setDetails] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setReason("");
+    setDetails("");
+  }, [open, lamp]);
+
+  const submit = () => {
+    const value = reason === "Другая причина" ? details.trim() : reason;
+    if (!value) return;
+    onSave({ lamp_id: lamp?.id, replacement_reason: value });
+  };
+
+  return (
+    <MyModal
+      open={open}
+      onClose={onClose}
+      title="Замена лампы"
+      maxWidth="sm"
+    >
+      <DialogContent sx={{ pt: 1.5 }}>
+        <Grid
+          container
+          spacing={2}
+        >
+          <Grid size={12}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {lamp?.place || "—"} · №{lamp?.number || "—"} · {lamp?.name || "—"}
+            </Typography>
+          </Grid>
+          <Grid size={12}>
+            <TextField
+              select
+              fullWidth
+              required
+              label="Причина замены"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            >
+              {replacementReasons.map((item) => (
+                <MenuItem
+                  key={item}
+                  value={item}
+                >
+                  {item}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          {reason === "Другая причина" ? (
+            <Grid size={12}>
+              <TextField
+                fullWidth
+                required
+                label="Укажите причину"
+                value={details}
+                onChange={(event) => setDetails(event.target.value)}
+              />
+            </Grid>
+          ) : null}
+        </Grid>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2, justifyContent: "flex-end", gap: 1 }}>
+        <Button onClick={onClose}>ОТМЕНА</Button>
+        <Button
+          variant="contained"
+          color="warning"
+          onClick={submit}
+          disabled={!reason || (reason === "Другая причина" && !details.trim())}
+        >
+          ЗАМЕНИТЬ
         </Button>
       </DialogActions>
     </MyModal>

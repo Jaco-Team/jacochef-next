@@ -13,6 +13,7 @@ export default function useCleaningsApi() {
       getBootstrap: () => request("get_all"),
       getLampsBootstrap: () => request("lamps/bootstrap"),
       getLamps: (payload) => request("lamps", payload),
+      getLampHistory: (payload) => request("lamps/history", payload),
       saveLamp: (payload) => request("lamps/save", payload),
       saveLampActivity: (payload) => request("lamps/activity/save", payload),
       replaceLamp: (payload) => request("lamps/replace", payload),
