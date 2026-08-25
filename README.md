@@ -1,5 +1,10 @@
 - Next.js 16 app bootstrapped with create-next-app, so running npm run dev starts Turbopack-powered SSR/ISR pages at localhost:3000
   (README.md:1).
+
+## Docker
+
+Development и production-запуск описаны в [Docker-инструкции](docs/docker.md).
+
 - package.json declares dev, build, start, lint/format helpers, pm2 deployment flows for local/dev/prod, and a Sentry sourcemap step, so
   releases are handled via npm run deploy:\* followed by pm2 + Sentry CLI (package.json:8, package.json:16, package.json:20).
 - Dependencies span modern React 19, Next 16, MUI 7 (core/icons/lab), rich editors (TinyMCE), drag-and-drop (@dnd-kit), Zustand, and Sentry
