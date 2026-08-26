@@ -1,17 +1,8 @@
 import React from "react";
 
-import Link from "next/link";
-
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-import CloseIcon from "@mui/icons-material/Close";
 import Typography from "@mui/material/Typography";
-
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
 
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -23,11 +14,17 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import { MySelect, MyTextInput } from "@/ui/Forms";
 
-import queryString from "query-string";
 import { api_laravel, api_laravel_local } from "@/src/api_new";
 import { PromoEdit } from "@/components/site_sale_2/PromoEdit";
 import { IconButton } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import {
+  SiteSale2DeleteDialog,
+  SiteSale2Nav,
+  SiteSale2Page,
+  SiteSale2PromoTable,
+  SiteSale2SearchBar,
+} from "@/components/site_sale_2/siteSale2Ui";
 
 class SiteSale2_ extends React.Component {
   click = false;
@@ -51,6 +48,9 @@ class SiteSale2_ extends React.Component {
       promo_id: 0,
 
       findPromoList: [],
+
+      deleteDialogOpen: false,
+      deletePromoId: 0,
     };
   }
 
@@ -96,20 +96,34 @@ class SiteSale2_ extends React.Component {
     });
   }
 
-  async delPromo(promo_id) {
-    let check = confirm("Удалить промокод ?");
+  openDeleteDialog(promo_id) {
+    this.setState({
+      deleteDialogOpen: true,
+      deletePromoId: promo_id,
+    });
+  }
 
-    if (check) {
-      let data = {
-        promo_id: promo_id,
-      };
+  closeDeleteDialog() {
+    this.setState({
+      deleteDialogOpen: false,
+      deletePromoId: 0,
+    });
+  }
 
-      let res = await this.getData("remove_promo", data);
+  async confirmDeletePromo() {
+    const promo_id = this.state.deletePromoId;
 
-      setTimeout(() => {
-        this.showPromoList();
-      }, 300);
-    }
+    this.closeDeleteDialog();
+
+    let data = {
+      promo_id: promo_id,
+    };
+
+    await this.getData("remove_promo", data);
+
+    setTimeout(() => {
+      this.showPromoList();
+    }, 300);
   }
 
   editPromo(promo_id) {
@@ -143,6 +157,11 @@ class SiteSale2_ extends React.Component {
             }}
           />
         ) : null}
+        <SiteSale2DeleteDialog
+          open={this.state.deleteDialogOpen}
+          onClose={this.closeDeleteDialog.bind(this)}
+          onConfirm={this.confirmDeletePromo.bind(this)}
+        />
         <Dialog
           open={this.state.modalDialog}
           onClose={() => {
@@ -188,76 +207,14 @@ class SiteSale2_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-        <Grid
-          container
-          style={{ marginTop: "80px", paddingLeft: "24px" }}
+        <SiteSale2Page
+          title={this.state.module_name}
+          subtitle="Управление промокодами"
         >
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
+          <SiteSale2Nav />
 
-          <Grid
-            container
-            direction="row"
-            style={{ paddingTop: 20 }}
-            spacing={3}
-            sx={{
-              justifyContent: "center",
-            }}
-          >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <Link
-                href={"/site_sale_2/new"}
-                style={{ zIndex: 10 }}
-              >
-                <Button variant="contained">Новый промокод</Button>
-              </Link>
-
-              <Link
-                href={"/site_sale_2/stat"}
-                style={{ zIndex: 10, marginLeft: 20 }}
-              >
-                <Button variant="contained">Статистика</Button>
-              </Link>
-
-              <Link
-                href={"/site_sale_2/stat_list"}
-                style={{ zIndex: 10, marginLeft: 20 }}
-              >
-                <Button variant="contained">Выписанные промокоды</Button>
-              </Link>
-
-              <Link
-                href={"/site_sale_2/analitic_list"}
-                style={{ zIndex: 10, marginLeft: 20 }}
-              >
-                <Button variant="contained">Аналитика по выписанным промокодам</Button>
-              </Link>
-
-              <Link
-                href={"/site_sale_2/repeat_orders "}
-                style={{ zIndex: 10, marginLeft: 20 }}
-              >
-                <Button variant="contained">Повторные заказы с промокода</Button>
-              </Link>
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
+          <SiteSale2SearchBar onSearch={this.showPromoList.bind(this)}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <MySelect
                 data={this.state.city_list}
                 value={this.state.city_id}
@@ -268,12 +225,7 @@ class SiteSale2_ extends React.Component {
               />
             </Grid>
 
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <MyTextInput
                 value={this.state.promoName}
                 func={(event) => {
@@ -282,86 +234,13 @@ class SiteSale2_ extends React.Component {
                 label="Промокод"
               />
             </Grid>
+          </SiteSale2SearchBar>
 
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <Button
-                variant="contained"
-                onClick={this.showPromoList.bind(this)}
-              >
-                Найти
-              </Button>
-            </Grid>
-          </Grid>
-
-          <Grid
-            container
-            direction="row"
-            style={{ paddingTop: 20 }}
-            spacing={3}
-            sx={{
-              justifyContent: "center",
-            }}
-          >
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Промокод</TableCell>
-                    <TableCell>Город</TableCell>
-                    <TableCell>Было кол-во</TableCell>
-                    <TableCell>Ост. кол-во</TableCell>
-                    <TableCell>Дата окончания</TableCell>
-                    <TableCell>Описание</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.findPromoList.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>
-                        <Link
-                          href={"/site_sale_2/edit/" + item.id}
-                          style={{
-                            zIndex: 10,
-                            fontWeight: "bold",
-                            fontSize: "18px",
-                            textDecoration: "none",
-                            color: "rgba(0, 0, 0, 0.87)",
-                          }}
-                        >
-                          {item.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {parseInt(item.city_id) == 0 ? "Все города" : item.city_name}
-                      </TableCell>
-                      <TableCell>{item.def_count}</TableCell>
-                      <TableCell>{item.count}</TableCell>
-                      <TableCell>{item.date2}</TableCell>
-                      <TableCell>{item.coment}</TableCell>
-                      <TableCell>
-                        {" "}
-                        <CloseIcon
-                          style={{ cursor: "pointer" }}
-                          onClick={this.delPromo.bind(this, item.id)}
-                        />{" "}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Grid>
-          </Grid>
-        </Grid>
+          <SiteSale2PromoTable
+            rows={this.state.findPromoList}
+            onDelete={this.openDeleteDialog.bind(this)}
+          />
+        </SiteSale2Page>
       </>
     );
   }
