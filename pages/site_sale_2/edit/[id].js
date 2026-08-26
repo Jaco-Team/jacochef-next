@@ -104,7 +104,7 @@ class SiteSale2_edit_ extends React.Component {
       ],
       where_order_list: [
         { id: 1, name: "В городе" },
-        { id: 2, name: "На точке" },
+        { id: 2, name: "В кафе" },
       ],
 
       auto_text: true,

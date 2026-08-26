@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
-import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -81,17 +80,20 @@ export function SiteSale2Nav() {
       >
         Разделы
       </Typography>
-      <Stack
-        direction="row"
-        flexWrap="wrap"
-        useFlexGap
-        sx={{ gap: 1 }}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 0.75,
+        }}
       >
         {NAV_LINKS.map(({ href, label, primary }) => (
           <Link
             key={href}
             href={href}
-            style={{ textDecoration: "none" }}
+            style={{ display: "inline-flex", width: "fit-content", textDecoration: "none" }}
           >
             <Button
               variant={primary ? "contained" : "outlined"}
@@ -99,6 +101,7 @@ export function SiteSale2Nav() {
               sx={{
                 fontWeight: 600,
                 borderRadius: 1.5,
+                px: 1.5,
                 ...(!primary && {
                   borderColor: "divider",
                   color: "text.primary",
@@ -113,7 +116,7 @@ export function SiteSale2Nav() {
             </Button>
           </Link>
         ))}
-      </Stack>
+      </Box>
     </Paper>
   );
 }

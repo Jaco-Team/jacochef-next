@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import DatePicker from "react-multi-date-picker";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
+import dayjs from "dayjs";
+import { MyDatePickerNew } from "@/ui/Forms";
 
 export function formatDateName(date) {
   const d = new Date(date);
@@ -28,33 +30,70 @@ export function formatDateName(date) {
   return [day, months[parseInt(month, 10) - 1]].join(" ");
 }
 
-export class PromoExcludeDatePicker extends React.PureComponent {
-  render() {
-    const { label, value, func, disabled } = this.props;
+function normalizeDate(value) {
+  const source = value?.toDate ? value.toDate() : value;
+  const parsed = dayjs(source);
 
-    return (
-      <Box sx={{ width: "100%", position: "relative" }}>
-        {label ? (
-          <Typography
-            variant="body2"
-            sx={{ mb: 0.75, fontWeight: 600 }}
-          >
-            {label}
-          </Typography>
-        ) : null}
-        <DatePicker
-          format="YYYY-MM-DD"
-          multiple
-          sort
-          portal
-          fixMainPosition
+  return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
+}
+
+export function PromoExcludeDatePicker({ label, value = [], func, disabled }) {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const dates = value.map(normalizeDate).filter(Boolean);
+
+  const addDate = (date) => {
+    const normalizedDate = normalizeDate(date);
+
+    if (normalizedDate && !dates.includes(normalizedDate)) {
+      func([...dates, normalizedDate].sort());
+    }
+
+    setSelectedDate(null);
+  };
+
+  const removeDate = (dateToRemove) => {
+    func(dates.filter((date) => date !== dateToRemove));
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 1,
+        width: "100%",
+      }}
+    >
+      <Box sx={{ width: { xs: "100%", sm: 240 }, flexShrink: 0 }}>
+        <MyDatePickerNew
+          label={label}
+          value={selectedDate}
+          func={addDate}
           disabled={disabled}
-          containerStyle={{ width: "100%" }}
-          style={{ width: "95%" }}
-          value={value}
-          onChange={func}
+          clearable
         />
       </Box>
-    );
-  }
+
+      {dates.length ? (
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          useFlexGap
+          sx={{ gap: 1, flex: 1, minWidth: 0 }}
+        >
+          {dates.map((date) => (
+            <Chip
+              key={date}
+              label={dayjs(date).format("DD.MM.YYYY")}
+              onDelete={disabled ? undefined : () => removeDate(date)}
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: 600 }}
+            />
+          ))}
+        </Stack>
+      ) : null}
+    </Box>
+  );
 }

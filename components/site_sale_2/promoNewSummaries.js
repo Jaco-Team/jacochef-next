@@ -1,4 +1,5 @@
 import { formatDateName } from "./promoNewShared";
+import { formatPromoPhone, normalizePromoEmail } from "./promoPhone";
 
 function findName(list, id) {
   return list?.find((item) => parseInt(item.id, 10) === parseInt(id, 10))?.name || "";
@@ -114,7 +115,13 @@ export function getActionSummary(state) {
     return action;
   }
 
-  const preview = String(state.numberList).trim();
+  const deliveryAction = parseInt(state.where_promo, 10);
+  const preview =
+    deliveryAction === 4 || deliveryAction === 6
+      ? formatPromoPhone(state.numberList)
+      : deliveryAction === 3
+        ? normalizePromoEmail(state.numberList)
+        : String(state.numberList).trim();
   const short = preview.length > 28 ? `${preview.slice(0, 28)}…` : preview;
   return `${action} · ${short}`;
 }

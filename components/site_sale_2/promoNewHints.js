@@ -12,21 +12,23 @@ export const PROMO_HINTS = {
   once_number: "Каждый номер телефона может использовать промокод только один раз.",
   for_registred: "Промокод доступен только зарегистрированным клиентам с личным кабинетом.",
   for_number: "Промокод работает только с указанным номером телефона.",
-  for_number_text: "Номер в формате 8XXXXXXXXXX, без пробелов и спецсимволов.",
+  for_number_text: "Введите номер — форматирование добавится автоматически.",
   promo_action: "Что получит клиент при успешном применении промокода.",
   type_sale: "Область действия скидки: конкретные товары, категории или всё меню.",
   sale_type: "Скидка в рублях или в процентах от стоимости.",
   promo_sale: "Размер скидки в выбранных единицах измерения.",
   promo_conditions: "Что должно быть в корзине, чтобы промокод можно было применить.",
   price_start: "Минимальная сумма корзины для применения промокода.",
-  price_end: "Максимальная сумма корзины (0 — без верхнего предела, если не задано иначе на бэке).",
+  price_end: "Максимальная сумма корзины. Укажите 0, если верхнего предела нет.",
   date_promo: "Пресет срока действия или свои даты в полях ниже.",
   testDate: "Исключения: в эти даты промокод не действует, даже если попадает в общий период.",
   weekdays: "В какие дни недели промокод можно применить.",
   type_order: "Способ получения заказа: доставка, самовывоз, зал.",
-  where_order: "Ограничение по городу или конкретной точке (кафе).",
+  where_order: "Ограничение по городу или конкретному кафе.",
   where_promo: "Создать промокод, отправить на почту/SMS, выдать сертификат и т.д.",
   numberList: "Куда отправить: телефон, e-mail или список номеров через запятую.",
+  delivery_phone: "Введите номер — форматирование добавится автоматически.",
+  delivery_email: "Введите адрес электронной почты.",
   spamNameSMS: "Название SMS-рассылки в системе.",
   textSMS: "Текст SMS. Плейсхолдер --promo_name-- заменится на код промокода.",
   cert_text: "Текст описания на сертификате.",
@@ -64,23 +66,39 @@ export function HintIcon({ title }) {
 
 export function LabelWithHint({ text, hint, sx }) {
   return (
-    <Typography
-      variant="subtitle2"
-      sx={{ color: "text.secondary", display: "flex", alignItems: "center", mb: 1, ...sx }}
-    >
-      {text}
-      <HintIcon title={hint} />
-    </Typography>
+    <Box sx={{ mb: 1, ...sx }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ color: "text.primary", fontWeight: 600 }}
+      >
+        {text}
+      </Typography>
+      {hint ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 0.375, lineHeight: 1.4 }}
+        >
+          {hint}
+        </Typography>
+      ) : null}
+    </Box>
   );
 }
 
 export function FieldWithHint({ hint, children }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, width: "100%" }}>
-      <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
-      <Box sx={{ display: "flex", alignItems: "center", alignSelf: "center", flexShrink: 0 }}>
-        <HintIcon title={hint} />
-      </Box>
+    <Box sx={{ width: "100%", minWidth: 0 }}>
+      {children}
+      {hint ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 0.75, px: 0.25, lineHeight: 1.4 }}
+        >
+          {hint}
+        </Typography>
+      ) : null}
     </Box>
   );
 }

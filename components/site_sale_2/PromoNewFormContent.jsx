@@ -5,7 +5,9 @@ import {
   AccordionSummary,
   Box,
   Button,
+  Checkbox,
   Chip,
+  FormControlLabel,
   Grid,
   Paper,
   Stack,
@@ -20,26 +22,19 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableFooter from "@mui/material/TableFooter";
-import {
-  MyAutocomplite,
-  MyCheckBox,
-  MyDatePickerNew,
-  MySelect,
-  MyTextInput,
-  MyTimePicker,
-} from "@/ui/Forms";
+import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput, MyTimePicker } from "@/ui/Forms";
 import { FieldWithHint, LabelWithHint, PROMO_HINTS } from "./promoNewHints";
 import { PromoExcludeDatePicker } from "./promoNewShared";
 import {
   getActionSummary,
   getBenefitSummary,
   getConditionsSummary,
-  getExcludedDatesPreview,
   getLocationSummary,
   getScheduleSummary,
   getWeekdaysPreview,
 } from "./promoNewSummaries";
 import { PROMO_PRESETS } from "./promoNewPresets";
+import { formatPromoPhone, normalizePromoEmail, normalizePromoPhone } from "./promoPhone";
 
 const WEEKDAYS = [
   { key: "day_1", short: "Пн", full: "Понедельник" },
@@ -88,26 +83,77 @@ function SectionCard({ title, subtitle, children }) {
   );
 }
 
+function ChoiceCard({ checked, label, description, onChange, sx }) {
+  return (
+    <FormControlLabel
+      control={
+        <Checkbox
+          checked={checked}
+          onChange={onChange}
+          color="primary"
+          size="small"
+          sx={{ alignSelf: "flex-start", p: 0.5, mr: 1.25 }}
+        />
+      }
+      label={
+        <Box sx={{ py: 0.25 }}>
+          <Typography sx={{ fontWeight: 600, lineHeight: 1.35 }}>{label}</Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.5, lineHeight: 1.4 }}
+          >
+            {description}
+          </Typography>
+        </Box>
+      }
+      sx={{
+        m: 0,
+        px: 0,
+        py: 1,
+        width: "100%",
+        boxSizing: "border-box",
+        alignItems: "flex-start",
+        "& .MuiCheckbox-root.Mui-focusVisible": {
+          outline: "2px solid",
+          outlineColor: "primary.light",
+          outlineOffset: 2,
+          borderRadius: 1,
+        },
+        "& .MuiFormControlLabel-label": {
+          flex: 1,
+          minWidth: 0,
+        },
+        ...sx,
+      }}
+    />
+  );
+}
+
 function SettingsAccordion({ title, summary, children, defaultExpanded = false }) {
   return (
     <Accordion
       disableGutters
       defaultExpanded={defaultExpanded}
+      slotProps={{
+        transition: {
+          timeout: { enter: 180, exit: 140 },
+          unmountOnExit: true,
+        },
+      }}
       sx={{
         border: "1px solid",
         borderColor: "divider",
         borderRadius: "8px !important",
-        overflow: "visible",
+        overflow: "hidden",
         transition: "border-color 0.2s, box-shadow 0.2s",
         "&:before": { display: "none" },
         "&.Mui-expanded": {
           borderColor: "primary.light",
           boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
         },
-        "& .MuiCollapse-root": { overflow: "visible" },
-        "& .MuiCollapse-wrapper": { overflow: "visible" },
-        "& .MuiCollapse-wrapperInner": { overflow: "visible" },
-        "& .MuiAccordionDetails-root": { overflow: "visible" },
+        "& .MuiCollapse-root": { overflow: "hidden" },
+        "& .MuiCollapse-wrapper, & .MuiCollapse-wrapperInner": { minHeight: 0 },
       }}
     >
       <AccordionSummary
@@ -115,15 +161,18 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
         sx={{
           px: { xs: 1.5, sm: 2 },
           py: 0.5,
+          minHeight: 64,
           bgcolor: "grey.50",
           borderRadius: "8px",
           "&.Mui-expanded": {
+            minHeight: 64,
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
             borderBottom: "1px solid",
             borderColor: "divider",
           },
           "& .MuiAccordionSummary-content": { my: 1.25 },
+          "& .MuiAccordionSummary-content.Mui-expanded": { my: 1.25 },
         }}
       >
         <Box sx={{ minWidth: 0, pr: 1 }}>
@@ -144,7 +193,9 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
           </Typography>
         </Box>
       </AccordionSummary>
-      <AccordionDetails sx={{ px: { xs: 1.5, sm: 2 }, pb: 3, pt: 0 }}>{children}</AccordionDetails>
+      <AccordionDetails sx={{ px: { xs: 1.5, sm: 2 }, pb: 3, pt: { xs: 2, sm: 2.5 } }}>
+        {children}
+      </AccordionDetails>
     </Accordion>
   );
 }
@@ -184,8 +235,8 @@ function WeekdaySelector({ state, onToggleDay }) {
 function PromoPresetsBar({ activePresetId, onApplyPreset }) {
   return (
     <SectionCard
-      title="Быстрые пресеты"
-      subtitle="Заполнят типовые настройки — после применения можно изменить вручную"
+      title="Готовые сценарии"
+      subtitle="Выберите подходящий вариант — настройки можно изменить после применения"
     >
       <Stack
         direction="row"
@@ -214,7 +265,7 @@ function PromoPresetsBar({ activePresetId, onApplyPreset }) {
                   alignItems: "flex-start",
                   whiteSpace: "normal",
                   lineHeight: 1.3,
-                  px: 0.5,
+                  px: 2,
                 },
                 fontWeight: 700,
                 borderRadius: 1.5,
@@ -257,12 +308,44 @@ export default function PromoNewFormContent({
     changeDataCheck(key, { target: { checked: !state[key] } });
   };
 
+  const cafeOptions = (state.points || []).map((item) => ({
+    ...item,
+    name: item.name === "Все точки" ? "Все кафе" : item.name,
+  }));
+  const selectedCafe = cafeOptions.find((item) => String(item.id) === String(state.point)) || null;
+  const deliveryAction = parseInt(state.where_promo, 10);
+  const isPhoneDelivery = deliveryAction === 4 || deliveryAction === 6;
+  const isEmailDelivery = deliveryAction === 3;
+  const recipientValue = isPhoneDelivery
+    ? formatPromoPhone(state.numberList)
+    : isEmailDelivery
+      ? normalizePromoEmail(state.numberList)
+      : state.numberList;
+
+  const changeRecipient = (event) => {
+    const value = isPhoneDelivery
+      ? normalizePromoPhone(event.target.value)
+      : isEmailDelivery
+        ? normalizePromoEmail(event.target.value)
+        : event.target.value;
+
+    changeData("numberList", { target: { value } });
+  };
+
+  const changeDeliveryAction = (event) => {
+    if (parseInt(event.target.value, 10) !== deliveryAction && state.numberList) {
+      changeData("numberList", { target: { value: "" } });
+    }
+
+    changeData("where_promo", event);
+  };
+
   return (
     <Grid
       container
       spacing={2.5}
       sx={{
-        mt: { xs: 1, sm: 2 },
+        mt: { xs: 9, sm: 10 },
         px: { xs: 2, sm: 3 },
         pb: 4,
         width: "100%",
@@ -369,13 +452,12 @@ export default function PromoNewFormContent({
                 )}
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <FieldWithHint hint={PROMO_HINTS.generate_new}>
-                    <MyCheckBox
-                      value={state.generate_new}
-                      func={changeDataCheck.bind(null, "generate_new")}
-                      label="Сгенерировать"
-                    />
-                  </FieldWithHint>
+                  <ChoiceCard
+                    checked={state.generate_new}
+                    onChange={changeDataCheck.bind(null, "generate_new")}
+                    label="Сгенерировать промокод"
+                    description={PROMO_HINTS.generate_new}
+                  />
                 </Grid>
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -408,9 +490,15 @@ export default function PromoNewFormContent({
           title="Ограничения для клиентов"
           subtitle="Кому можно применить промокод"
         >
-          <Grid
-            container
-            spacing={1.5}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+              columnGap: 2,
+              rowGap: 0.5,
+            }}
+            role="group"
+            aria-label="Ограничения для клиентов"
           >
             {[
               {
@@ -434,32 +522,35 @@ export default function PromoNewFormContent({
                 hint: PROMO_HINTS.for_number,
               },
             ].map(({ key, label, hint }) => (
-              <Grid
-                key={key}
-                size={{ xs: 12, sm: 6 }}
-              >
-                <FieldWithHint hint={hint}>
-                  <MyCheckBox
-                    value={state[key]}
-                    func={changeDataCheck.bind(null, key)}
-                    label={label}
-                  />
-                </FieldWithHint>
-              </Grid>
-            ))}
+              <Box key={key}>
+                <ChoiceCard
+                  checked={state[key]}
+                  onChange={changeDataCheck.bind(null, key)}
+                  label={label}
+                  description={hint}
+                />
 
-            {state.for_number ? (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <FieldWithHint hint={PROMO_HINTS.for_number_text}>
-                  <MyTextInput
-                    value={state.for_number_text}
-                    func={changeData.bind(null, "for_number_text")}
-                    label="Номер телефона"
-                  />
-                </FieldWithHint>
-              </Grid>
-            ) : null}
-          </Grid>
+                {key === "for_number" && state.for_number ? (
+                  <Box sx={{ mt: 0.75, ml: 4.5, maxWidth: 420 }}>
+                    <FieldWithHint hint={PROMO_HINTS.for_number_text}>
+                      <MyTextInput
+                        value={formatPromoPhone(state.for_number_text)}
+                        func={(event) =>
+                          changeData("for_number_text", {
+                            target: { value: normalizePromoPhone(event.target.value) },
+                          })
+                        }
+                        label="Номер телефона"
+                        type="tel"
+                        placeholder="8 (___) ___-__-__"
+                        inputProps={{ inputMode: "tel", maxLength: 18 }}
+                      />
+                    </FieldWithHint>
+                  </Box>
+                ) : null}
+              </Box>
+            ))}
+          </Box>
         </SectionCard>
       </Grid>
 
@@ -490,6 +581,7 @@ export default function PromoNewFormContent({
                     value={state.promo_action}
                     func={changeData.bind(null, "promo_action")}
                     label="Промокод даёт"
+                    is_none={false}
                   />
                 </FieldWithHint>
               </Grid>
@@ -508,6 +600,7 @@ export default function PromoNewFormContent({
                       value={state.type_sale}
                       func={changeData.bind(null, "type_sale")}
                       label="Скидка"
+                      is_none={false}
                     />
                   </FieldWithHint>
                 </Grid>
@@ -554,6 +647,7 @@ export default function PromoNewFormContent({
                         value={state.promo_sale}
                         func={changeData.bind(null, "promo_sale")}
                         label="Размер скидки"
+                        is_none={false}
                       />
                     </FieldWithHint>
                   </Grid>
@@ -566,6 +660,7 @@ export default function PromoNewFormContent({
                       value={state.sale_type}
                       func={changeData.bind(null, "sale_type")}
                       label="Какая скидка"
+                      is_none={false}
                     />
                   </FieldWithHint>
                 </Grid>
@@ -733,6 +828,7 @@ export default function PromoNewFormContent({
                     value={state.promo_conditions}
                     func={changeData.bind(null, "promo_conditions")}
                     label="Условие"
+                    is_none={false}
                   />
                 </FieldWithHint>
               </Grid>
@@ -801,6 +897,7 @@ export default function PromoNewFormContent({
                     value={state.date_promo}
                     func={changeData.bind(null, "date_promo")}
                     label="Когда работает промокод"
+                    is_none={false}
                   />
                 </FieldWithHint>
               </Grid>
@@ -835,32 +932,16 @@ export default function PromoNewFormContent({
               </Grid>
 
               <Grid size={12}>
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "grey.50",
-                    overflow: "visible",
-                    position: "relative",
-                    zIndex: 1,
-                  }}
-                >
-                  <FieldWithHint hint={PROMO_HINTS.testDate}>
-                    <PromoExcludeDatePicker
-                      label="Кроме дат"
-                      value={state.testDate}
-                      func={changeDataData.bind(null, "testDate")}
-                    />
-                  </FieldWithHint>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mt: 1.5 }}
-                  >
-                    {getExcludedDatesPreview(state.testDate)}
-                  </Typography>
-                </Paper>
+                <LabelWithHint
+                  text="Исключить даты"
+                  hint={PROMO_HINTS.testDate}
+                  sx={{ mb: 1.25 }}
+                />
+                <PromoExcludeDatePicker
+                  label="Добавить дату"
+                  value={state.testDate}
+                  func={changeDataData.bind(null, "testDate")}
+                />
               </Grid>
 
               <Grid size={12}>
@@ -887,6 +968,7 @@ export default function PromoNewFormContent({
                     value={state.type_order}
                     func={changeData.bind(null, "type_order")}
                     label="Тип заказа"
+                    is_none={false}
                   />
                 </FieldWithHint>
               </Grid>
@@ -897,6 +979,7 @@ export default function PromoNewFormContent({
                     value={state.where_order}
                     func={changeData.bind(null, "where_order")}
                     label="Где работает"
+                    is_none={false}
                   />
                 </FieldWithHint>
               </Grid>
@@ -908,17 +991,23 @@ export default function PromoNewFormContent({
                     value={state.city}
                     func={changeData.bind(null, "city")}
                     label="Город"
+                    is_none={false}
                   />
                 </Grid>
               ) : null}
 
               {parseInt(state.where_order, 10) === 2 ? (
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MySelect
-                    data={state.points}
-                    value={state.point}
-                    func={changeData.bind(null, "point")}
-                    label="Точка"
+                  <MyAutocomplite
+                    data={cafeOptions}
+                    value={selectedCafe}
+                    func={(event, data) =>
+                      changeData("point", { target: { value: data?.id ?? 0 } })
+                    }
+                    label="Кафе"
+                    placeholder="Выберите кафе"
+                    multiple={false}
+                    disableClearable
                   />
                 </Grid>
               ) : null}
@@ -939,8 +1028,9 @@ export default function PromoNewFormContent({
                     <MySelect
                       data={state.where_promo_list}
                       value={state.where_promo}
-                      func={changeData.bind(null, "where_promo")}
+                      func={changeDeliveryAction}
                       label="Что сделать с промокодом"
+                      is_none={false}
                     />
                   </FieldWithHint>
                 </Grid>
@@ -965,18 +1055,40 @@ export default function PromoNewFormContent({
                   </Grid>
                 ) : (
                   <Grid size={{ xs: 12, sm: 6, md: 5 }}>
-                    <FieldWithHint hint={PROMO_HINTS.numberList}>
+                    <FieldWithHint
+                      hint={
+                        isPhoneDelivery
+                          ? PROMO_HINTS.delivery_phone
+                          : isEmailDelivery
+                            ? PROMO_HINTS.delivery_email
+                            : PROMO_HINTS.numberList
+                      }
+                    >
                       <MyTextInput
-                        value={state.numberList}
-                        func={(event) => changeData("numberList", event)}
+                        value={recipientValue}
+                        func={changeRecipient}
                         placeholder={
-                          parseInt(state.where_promo, 10) === 4
-                            ? "89999999999"
-                            : parseInt(state.where_promo, 10) === 8
+                          isPhoneDelivery
+                            ? "8 (___) ___-__-__"
+                            : deliveryAction === 8
                               ? "id юзера ВК"
                               : "example@mail.ru"
                         }
-                        label="Куда отправить"
+                        label={
+                          isPhoneDelivery
+                            ? "Номер телефона"
+                            : isEmailDelivery
+                              ? "E-mail"
+                              : "Куда отправить"
+                        }
+                        type={isPhoneDelivery ? "tel" : isEmailDelivery ? "email" : "text"}
+                        inputProps={
+                          isPhoneDelivery
+                            ? { inputMode: "tel", maxLength: 18 }
+                            : isEmailDelivery
+                              ? { inputMode: "email", autoComplete: "email" }
+                              : undefined
+                        }
                       />
                     </FieldWithHint>
                   </Grid>
@@ -1041,13 +1153,13 @@ export default function PromoNewFormContent({
       <Grid size={12}>
         <SectionCard title="Тексты для клиента">
           <Stack spacing={2}>
-            <FieldWithHint hint={PROMO_HINTS.auto_text}>
-              <MyCheckBox
-                value={state.auto_text}
-                func={changeDataCheck.bind(null, "auto_text")}
-                label="Авто-текст"
-              />
-            </FieldWithHint>
+            <ChoiceCard
+              checked={state.auto_text}
+              onChange={changeDataCheck.bind(null, "auto_text")}
+              label="Автоматически составлять тексты"
+              description={PROMO_HINTS.auto_text}
+              sx={{ maxWidth: { xs: "100%", sm: 520 } }}
+            />
 
             <FieldWithHint hint={PROMO_HINTS.promo_desc_true}>
               <MyTextInput

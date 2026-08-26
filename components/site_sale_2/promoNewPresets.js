@@ -101,62 +101,76 @@ function baseDiscountPatch(state, { percent, datePromo = 2, extra = {} } = {}) {
 
 export const PROMO_PRESETS = [
   {
+    id: "menu_20",
+    label: "Скидка 20% на меню",
+    description: "30 дней, 10:00–21:40",
+    build: (state) => baseDiscountPatch(state, { percent: 20, datePromo: 4 }),
+  },
+  {
     id: "menu_10",
-    label: "10% на меню",
+    label: "Скидка 10% на меню",
     description: "14 дней, 10:00–21:40",
     build: (state) => baseDiscountPatch(state, { percent: 10, datePromo: 2 }),
   },
   {
-    id: "new_client_15",
-    label: "Новым клиентам 15%",
-    description: "Только первый заказ",
+    id: "first_order_20",
+    label: "20% на первый заказ",
+    description: "Для новых клиентов, 30 дней",
     build: (state) =>
       baseDiscountPatch(state, {
-        percent: 15,
-        datePromo: 2,
-        extra: { for_new: true },
+        percent: 20,
+        datePromo: 4,
+        extra: { for_new: true, type_sale: 7 },
       }),
   },
   {
-    id: "min_sum_1500",
-    label: "От 1500₽ — 10%",
-    description: "Минимальная сумма корзины",
+    id: "registered_10",
+    label: "10% зарегистрированным",
+    description: "Только зарегистрированные клиенты, 30 дней",
     build: (state) =>
       baseDiscountPatch(state, {
         percent: 10,
-        datePromo: 2,
-        extra: { price_start: 1500 },
+        datePromo: 4,
+        extra: { for_registred: true, type_sale: 7 },
       }),
   },
   {
-    id: "once_number",
-    label: "1 раз на номер",
-    description: "10%, одна активация на телефон",
+    id: "gift_for_one",
+    label: "Подарок за 1 ₽",
+    description: "Выберите позицию — 1 штука за 1 ₽",
     build: (state) =>
       baseDiscountPatch(state, {
         percent: 10,
-        datePromo: 2,
-        extra: { once_number: true },
-      }),
-  },
-  {
-    id: "month_20",
-    label: "30 дней, 20%",
-    description: "Длительная акция на меню",
-    build: (state) => baseDiscountPatch(state, { percent: 20, datePromo: 4 }),
-  },
-  {
-    id: "sms_batch",
-    label: "SMS-рассылка",
-    description: "10%, автогенерация кода",
-    build: (state) =>
-      baseDiscountPatch(state, {
-        percent: 10,
-        datePromo: 2,
+        datePromo: 4,
         extra: {
-          where_promo: 5,
-          generate_new: true,
-          promo_length: 5,
+          promo_action: 2,
+          addItem: null,
+          addItemCount: 1,
+          addItemPrice: 1,
+          addItemAllPrice: 0,
+          itemsAdd: [],
+          itemsAddPrice: [],
+          priceItem: null,
+        },
+      }),
+  },
+  {
+    id: "fixed_price",
+    label: "Позиции по фиксированной цене",
+    description: "Выберите позиции и укажите цену каждой",
+    build: (state) =>
+      baseDiscountPatch(state, {
+        percent: 10,
+        datePromo: 4,
+        extra: {
+          promo_action: 3,
+          addItem: null,
+          addItemCount: 1,
+          addItemPrice: 1,
+          addItemAllPrice: 0,
+          itemsAdd: [],
+          itemsAddPrice: [],
+          priceItem: null,
         },
       }),
   },

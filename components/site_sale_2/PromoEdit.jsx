@@ -188,7 +188,7 @@ export class PromoEdit extends React.Component {
       ],
       where_order_list: [
         { id: 1, name: "В городе" },
-        { id: 2, name: "На точке" },
+        { id: 2, name: "В кафе" },
       ],
 
       auto_text: false,
@@ -1076,7 +1076,7 @@ export class PromoEdit extends React.Component {
                       data={this.state.points}
                       disabled={true}
                       value={this.state.point}
-                      label="Точка"
+                      label="Кафе"
                     />
                   </Grid>
                 )}

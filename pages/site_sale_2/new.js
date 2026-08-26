@@ -21,6 +21,11 @@ import { IconButton } from "@mui/material";
 import PromoNewFormContent from "@/components/site_sale_2/PromoNewFormContent";
 import { formatDateName } from "@/components/site_sale_2/promoNewShared";
 import { getPresetPatch } from "@/components/site_sale_2/promoNewPresets";
+import {
+  isValidPromoEmail,
+  normalizePromoEmail,
+  normalizePromoPhone,
+} from "@/components/site_sale_2/promoPhone";
 
 function formatDateDot(date) {
   var d = new Date(date),
@@ -98,7 +103,7 @@ class SiteSale2_new_ extends React.Component {
       ],
       where_order_list: [
         { id: 1, name: "В городе" },
-        { id: 2, name: "На точке" },
+        { id: 2, name: "В кафе" },
       ],
 
       promo_prizw_vk:
@@ -230,6 +235,15 @@ class SiteSale2_new_ extends React.Component {
     if (!this.click) {
       this.click = true;
 
+      const cleanPhone = normalizePromoPhone(this.state.for_number_text);
+      const deliveryAction = parseInt(this.state.where_promo, 10);
+      const cleanRecipient =
+        deliveryAction === 4 || deliveryAction === 6
+          ? normalizePromoPhone(this.state.numberList)
+          : deliveryAction === 3
+            ? normalizePromoEmail(this.state.numberList)
+            : this.state.numberList;
+
       this.setState({
         createdPromo: [],
       });
@@ -256,11 +270,35 @@ class SiteSale2_new_ extends React.Component {
         return;
       }
 
-      if (this.state.for_number === true && this.state.for_number_text.length != 11) {
+      if (this.state.for_number === true && cleanPhone.length != 11) {
         this.setState({
           openAlert: true,
           err_status: false,
-          err_text: "Номер телефона обязателен, через 8 и без спец символов",
+          err_text: "Укажите полный номер телефона",
+        });
+
+        this.click = false;
+
+        return;
+      }
+
+      if ((deliveryAction === 4 || deliveryAction === 6) && cleanRecipient.length != 11) {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: "Укажите полный номер телефона получателя",
+        });
+
+        this.click = false;
+
+        return;
+      }
+
+      if (deliveryAction === 3 && !isValidPromoEmail(cleanRecipient)) {
+        this.setState({
+          openAlert: true,
+          err_status: false,
+          err_text: "Укажите корректный адрес электронной почты",
         });
 
         this.click = false;
@@ -301,7 +339,7 @@ class SiteSale2_new_ extends React.Component {
         spamNameSMS: this.state.spamNameSMS,
         promo_vk_prize: promo_prizw_vk,
         cert_text: cert_text,
-        addr: this.state.numberList,
+        addr: cleanRecipient,
         where_promo: this.state.where_promo,
         promo_count: this.state.promo_count,
         promo_len: this.state.promo_length,
@@ -334,7 +372,7 @@ class SiteSale2_new_ extends React.Component {
         promo_type_order: this.state.type_order,
         promo_where: this.state.where_order,
 
-        numberList: this.state.numberList,
+        numberList: cleanRecipient,
 
         promo_city: this.state.city,
         promo_point: this.state.point,
@@ -355,7 +393,7 @@ class SiteSale2_new_ extends React.Component {
         for_registred: this.state.for_registred ? 1 : 0,
 
         for_number: this.state.for_number ? 1 : 0,
-        for_number_text: this.state.for_number_text,
+        for_number_text: cleanPhone,
       };
 
       let res = await this.getData("save_new_promo", data);
