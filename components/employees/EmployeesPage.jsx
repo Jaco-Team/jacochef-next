@@ -188,6 +188,34 @@ const formatDate = (value, fallback = "—") => {
   return date.isValid() ? date.format("YYYY-MM-DD") : value;
 };
 
+const getEmployeeWorkSnapshot = (user) => ({
+  app_id: String(idOf(user?.app_id) ?? ""),
+  acc_to_kas: parseInt(user?.acc_to_kas) || 0,
+  point_access_ids: asArray(user?.point_access)
+    .map((point) => parseInt(idOf(point)))
+    .filter((id) => id > 0)
+    .sort((a, b) => a - b),
+  textDel: String(user?.textDel ?? ""),
+  date_start_day: formatDate(user?.date_start_day || dayjs(), ""),
+});
+
+const hasEmployeeWorkChanges = (initialUser, currentUser) =>
+  JSON.stringify(getEmployeeWorkSnapshot(initialUser)) !==
+  JSON.stringify(getEmployeeWorkSnapshot(currentUser));
+
+const buildWorkChangePayload = (user) => ({
+  user_id: user.id,
+  app_id: idOf(user.app_id),
+  point_id: idOf(user.point_id),
+  point_access: user.point_access,
+  point_access_ids: asArray(user.point_access)
+    .map((point) => parseInt(idOf(point)))
+    .filter((id) => id > 0),
+  textDel: user.textDel ?? "",
+  date_start_day: formatDate(user.date_start_day || dayjs()),
+  user,
+});
+
 const formatDateHuman = (value, fallback = "—") => {
   if (!value) return fallback;
   const date = dayjs(value);
@@ -922,6 +950,7 @@ export default function EmployeesPage() {
   const [totalRows, setTotalRows] = useState(0);
   const [employeeDialog, setEmployeeDialog] = useState(false);
   const [employee, setEmployee] = useState(null);
+  const [initialEmployeeUser, setInitialEmployeeUser] = useState(null);
   const [employeePhotoFile, setEmployeePhotoFile] = useState(null);
   const [pageTab, setPageTab] = useState("employees");
   const [activeTab, setActiveTab] = useState("basic");
@@ -1035,7 +1064,10 @@ export default function EmployeesPage() {
       return false;
     }
 
-    setEmployee(normalizeEmployeeCard(res));
+    const nextEmployee = normalizeEmployeeCard(res);
+
+    setEmployee(nextEmployee);
+    setInitialEmployeeUser(nextEmployee.user);
     return true;
   };
 
@@ -1131,7 +1163,10 @@ export default function EmployeesPage() {
 
     if (!res || res.st === false) return;
 
-    setEmployee(normalizeEmployeeCard(res));
+    const nextEmployee = normalizeEmployeeCard(res);
+
+    setEmployee(nextEmployee);
+    setInitialEmployeeUser(nextEmployee.user);
     setEmployeeDialog(true);
   };
 
@@ -1195,6 +1230,7 @@ export default function EmployeesPage() {
   const closeEmployeeDialog = () => {
     setEmployeeDialog(false);
     setEmployee(null);
+    setInitialEmployeeUser(null);
     setEmployeePhotoFile(null);
     setAbsence(emptyAbsence);
   };
@@ -1224,18 +1260,30 @@ export default function EmployeesPage() {
       const basicUser = {
         ...employee.user,
         date_registration: formatDate(employee.user.date_registration, ""),
-        date_start_day: dayjs().format("YYYY-MM-DD"),
+        date_start_day: formatDate(employee.user.date_start_day || dayjs(), ""),
       };
+      const saveWorkTogether =
+        permissions.workTab.edit && hasEmployeeWorkChanges(initialEmployeeUser, basicUser);
+
+      if (saveWorkTogether && parseInt(idOf(basicUser.app_id)) === 0 && !basicUser.textDel) {
+        showAlert(false, "Укажите причину увольнения");
+        return;
+      }
+
       const ok = await handleMutation(
-        "save_basic",
-        {
-          user_id: employee.user.id,
-          user: basicUser,
-          employee: basicUser,
-          date_registration: basicUser.date_registration,
-          date_start_day: dayjs().format("YYYY-MM-DD"),
-        },
-        "Данные сотрудника сохранены",
+        saveWorkTogether ? "apply_work_change" : "save_basic",
+        saveWorkTogether
+          ? buildWorkChangePayload(basicUser)
+          : {
+              user_id: employee.user.id,
+              user: basicUser,
+              employee: basicUser,
+              date_registration: basicUser.date_registration,
+              date_start_day: dayjs().format("YYYY-MM-DD"),
+            },
+        saveWorkTogether
+          ? "Данные сотрудника и изменения работы сохранены"
+          : "Данные сотрудника сохранены",
       );
 
       if (!ok) return;
@@ -1272,16 +1320,7 @@ export default function EmployeesPage() {
 
     const ok = await handleMutation(
       "apply_work_change",
-      {
-        user_id: user.id,
-        app_id: idOf(user.app_id),
-        point_id: idOf(user.point_id),
-        point_access: user.point_access,
-        point_access_ids: asArray(user.point_access).map((point) => point.id),
-        textDel: user.textDel ?? "",
-        date_start_day: formatDate(user.date_start_day || dayjs()),
-        user,
-      },
+      buildWorkChangePayload(user),
       "Изменения по работе применены",
     );
 
