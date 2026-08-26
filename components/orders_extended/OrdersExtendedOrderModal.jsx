@@ -12,6 +12,7 @@ export default function OrdersExtendedOrderModal({ orderModal, onClose }) {
       open={orderModal.open}
       onClose={onClose}
       order={orderModal.order}
+      hideDeliveryDetails
     />
   );
 }

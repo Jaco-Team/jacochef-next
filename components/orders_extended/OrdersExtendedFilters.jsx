@@ -172,6 +172,13 @@ export default function OrdersExtendedFilters({
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <MyTextInput
+              label="Источник трафика"
+              value={filters.traffic_source}
+              func={(event) => onUpdateFilter("traffic_source", event)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyAutocomplite
               label="Тип заказа"
               multiple

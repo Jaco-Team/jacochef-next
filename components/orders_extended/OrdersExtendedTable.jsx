@@ -19,12 +19,10 @@ const TABLE_COLUMNS = [
   ["type_user", "Оформил"],
   ["address", "Адрес доставки"],
   ["type_order", "Тип"],
-  ["status", "Статус"],
   ["order_price", "Сумма"],
   ["avg_check", "Средний чек"],
   ["promo_name", "Промокод"],
   ["type_pay", "Оплата"],
-  ["driver", "Курьер"],
 ];
 
 export default function OrdersExtendedTable({
@@ -80,12 +78,10 @@ export default function OrdersExtendedTable({
                 <TableCell>{item.type_user}</TableCell>
                 <TableCell>{item.address}</TableCell>
                 <TableCell>{item.type_order}</TableCell>
-                <TableCell>{item.status}</TableCell>
                 <TableCell>{formatRUR(item.order_price, false)}</TableCell>
                 <TableCell>{formatRUR(item.avg_check, false)}</TableCell>
                 <TableCell>{item.promo_name}</TableCell>
                 <TableCell>{item.type_pay}</TableCell>
-                <TableCell>{item.driver}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -94,14 +90,13 @@ export default function OrdersExtendedTable({
               <TableCell>
                 <strong>Итого: {formatNumber(totals.count, 0, 0)}</strong>
               </TableCell>
-              <TableCell colSpan={5} />
+              <TableCell colSpan={4} />
               <TableCell>
                 <strong>{formatRUR(totals.order_price_sum, false)}</strong>
               </TableCell>
               <TableCell>
                 <strong>{formatRUR(totals.avg_check_avg, false)}</strong>
               </TableCell>
-              <TableCell />
               <TableCell />
               <TableCell />
             </TableRow>

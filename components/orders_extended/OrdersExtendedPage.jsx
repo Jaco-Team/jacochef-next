@@ -121,6 +121,7 @@ export default function OrdersExtendedPage() {
     item: currentFilters.item,
     category_ids: selectedIds(currentFilters.category_ids),
     source_ids: selectedIds(currentFilters.source_ids),
+    traffic_source: currentFilters.traffic_source,
     order_type_ids: selectedIds(currentFilters.order_type_ids),
     payment_type_ids: selectedIds(currentFilters.payment_type_ids),
     page: nextPage + 1,

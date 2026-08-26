@@ -29,6 +29,7 @@ export const DEFAULT_FILTERS = {
   item: [],
   category_ids: [],
   source_ids: [],
+  traffic_source: "",
   order_type_ids: [],
   payment_type_ids: [],
 };
@@ -42,6 +43,7 @@ const cloneDefaultFilters = () => ({
   item: [],
   category_ids: [],
   source_ids: [],
+  traffic_source: "",
   order_type_ids: [],
   payment_type_ids: [],
 });
@@ -73,6 +75,7 @@ const normalizePersistedFilters = (filters = {}) => ({
   item: Array.isArray(filters.item) ? filters.item : [],
   category_ids: Array.isArray(filters.category_ids) ? filters.category_ids : [],
   source_ids: Array.isArray(filters.source_ids) ? filters.source_ids : [],
+  traffic_source: filters.traffic_source ?? "",
   order_type_ids: Array.isArray(filters.order_type_ids) ? filters.order_type_ids : [],
   payment_type_ids: Array.isArray(filters.payment_type_ids) ? filters.payment_type_ids : [],
 });
