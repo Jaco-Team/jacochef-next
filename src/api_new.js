@@ -4,7 +4,7 @@ import axios from "axios";
 const PROD_API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api"
 ).replace(/\/+$/, "");
-const LOCAL_API_BASE_URL = "http://localhost:8000/api";
+const LOCAL_API_BASE_URL = "http://localhost:8080/api";
 const AUTH_TOKEN_STORAGE_KEY = "chef_auth_token";
 
 function getApiOrigin(apiBaseUrl) {

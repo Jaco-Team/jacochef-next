@@ -2,7 +2,6 @@ export const END_ANALYTICS_COLUMNS_STORAGE_KEY = "end_analytics_visible_columns"
 
 export const END_ANALYTICS_COLUMN_GROUPS = [
   { key: "main", label: "Основные показатели" },
-  { key: "attribution", label: "Атрибуция" },
   { key: "clients", label: "Клиенты и заказы" },
   { key: "additional", label: "Дополнительные показатели" },
 ];
@@ -42,48 +41,6 @@ export const END_ANALYTICS_COLUMNS = [
   },
   { key: "roi", label: "ROI (%)", settingLabel: "ROI", group: "main", width: 110 },
   {
-    key: "attributedOrders",
-    label: "АТРИБ. ЗАКАЗЫ",
-    settingLabel: "Атрибутированные заказы",
-    group: "attribution",
-    width: 155,
-  },
-  {
-    key: "attributedConversion",
-    label: "АТРИБ. КОНВЕРСИЯ (%)",
-    settingLabel: "Атрибутированная конверсия",
-    group: "attribution",
-    width: 205,
-  },
-  {
-    key: "attributedCostPerOrder",
-    label: "АТРИБ. СТОИМОСТЬ ЗАКАЗА (₽)",
-    settingLabel: "Атрибутированная стоимость заказа",
-    group: "attribution",
-    width: 250,
-  },
-  {
-    key: "attributedRevenue",
-    label: "АТРИБ. ВЫРУЧКА (₽)",
-    settingLabel: "Атрибутированная выручка",
-    group: "attribution",
-    width: 190,
-  },
-  {
-    key: "attributedAverageCheck",
-    label: "АТРИБ. СРЕДНИЙ ЧЕК (₽)",
-    settingLabel: "Атрибутированный средний чек",
-    group: "attribution",
-    width: 220,
-  },
-  {
-    key: "attributedRoi",
-    label: "АТРИБ. ROI (%)",
-    settingLabel: "Атрибутированный ROI",
-    group: "attribution",
-    width: 155,
-  },
-  {
     key: "newClients",
     label: "НОВЫЕ КЛИЕНТЫ",
     settingLabel: "Новые клиенты",
@@ -112,13 +69,6 @@ export const END_ANALYTICS_COLUMNS = [
     width: 190,
   },
   { key: "drr", label: "ДРР (%)", settingLabel: "ДРР", group: "additional", width: 110 },
-  {
-    key: "attributedDrr",
-    label: "АТРИБ. ДРР (%)",
-    settingLabel: "Атрибутированный ДРР",
-    group: "attribution",
-    width: 160,
-  },
   { key: "ltv", label: "LTV (₽)", settingLabel: "LTV", group: "additional", width: 110 },
 ];
 

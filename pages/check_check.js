@@ -65,7 +65,7 @@ import a11yProps from "@/ui/TabPanel/a11yProps";
 const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(num);
 
 const getCheckCheckApiUrl = (method) => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/";
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080/api/";
   return `${baseUrl.replace(/\/$/, "")}/check_check/${method}`;
 };
 

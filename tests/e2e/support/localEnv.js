@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const DEFAULT_FE_URL = process.env.E2E_BASE_URL || "http://localhost:3000";
-const DEFAULT_API_URL = "http://127.0.0.1:8000/api";
+const DEFAULT_API_URL = "http://127.0.0.1:8080/api";
 const DEFAULT_LOGIN = process.env.STAFF_SCHEDULE_SMOKE_LOGIN;
 const DEFAULT_USER_ID = Number(process.env.STAFF_SCHEDULE_SMOKE_USER_ID);
 

@@ -29,7 +29,7 @@ docker compose down -v
 Если Laravel запущен не на порту `8080`, измените в `.env.docker`:
 
 ```dotenv
-DOCKER_NEXT_PUBLIC_API_URL=http://localhost:8000/api
+DOCKER_NEXT_PUBLIC_API_URL=http://localhost:8080/api
 BACKEND_HTTP=http://host.docker.internal:8000
 ```
 

@@ -5,7 +5,7 @@ import queryString from "query-string";
 import { api_laravel as api_fallback, getAuthToken } from "../api_new";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/",
   timeout: 300_000, // ms
   withCredentials: false,
   withXSRFToken: false,
@@ -36,7 +36,7 @@ apiClient.interceptors.response.use(
 /**
  * NEW api_laravel wrapper (v2)
  *
- * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://localhost:8000/api
+ * to work on local add .env.development with NEXT_PUBLIC_API_URL=http://localhost:8080/api
  *
  * ⚠️ WARNING:
  * Same name as legacy src/api_new api_laravel.

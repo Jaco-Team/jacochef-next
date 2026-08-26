@@ -22,6 +22,8 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import { styled } from "@mui/material/styles";
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
@@ -42,6 +44,13 @@ import {
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
+const EMPTY_CUSTOM_COST_OPTIONS = {
+  src_source: [],
+  src_medium: [],
+  src_campaign: [],
+  src_term: [],
+  src_content: [],
+};
 
 const createEmptyCustomCostForm = () => ({
   id: null,
@@ -55,6 +64,28 @@ const createEmptyCustomCostForm = () => ({
   cost: "",
   comment: "",
 });
+
+function UtmFreeSoloAutocomplete({ label, value, options, onChange }) {
+  return (
+    <Autocomplete
+      freeSolo
+      size="small"
+      options={options || []}
+      value={value || null}
+      onChange={(_, nextValue) => onChange(nextValue || "")}
+      onInputChange={(_, nextValue, reason) => {
+        if (reason !== "reset") onChange(nextValue);
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          fullWidth
+        />
+      )}
+    />
+  );
+}
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -180,13 +211,6 @@ const ADDITIVE_METRIC_FIELDS = [
   "repeatOrders",
 ];
 const DERIVED_METRIC_FIELDS = ["conversion", "costPerOrder", "averageCheck", "roi", "drr", "ltv"];
-const ATTRIBUTED_DERIVED_METRIC_FIELDS = [
-  "attributedConversion",
-  "attributedCostPerOrder",
-  "attributedAverageCheck",
-  "attributedRoi",
-  "attributedDrr",
-];
 
 const parseMetric = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -261,6 +285,7 @@ const normalizeAiSiteDataSnapshot = (payload) => {
     "ai_analysis",
     "site_data",
     "site_data_by_category",
+    "site_totals",
     "daily_metrics",
     "analytics_meta",
     "request_payload",
@@ -308,13 +333,6 @@ const pickDerivedMetrics = (item) =>
 const pickOptionalMetrics = (item) => ({
   clicks: item.clicks ?? null,
   clicksAvailable: Boolean(item.clicksAvailable),
-  attributedOrders: item.attributedOrders ?? null,
-  attributedRevenue: item.attributedRevenue ?? null,
-  attributedAvailable: Boolean(item.attributedAvailable),
-  ...ATTRIBUTED_DERIVED_METRIC_FIELDS.reduce((acc, field) => {
-    acc[field] = item[field] ?? null;
-    return acc;
-  }, {}),
 });
 
 const applyOptionalAggregates = (item, rows) => {
@@ -325,19 +343,6 @@ const applyOptionalAggregates = (item, rows) => {
   item.clicks = item.clicksAvailable
     ? sourceRows.reduce((sum, row) => sum + parseMetric(row.clicks), 0)
     : null;
-
-  item.attributedAvailable =
-    sourceRows.length > 0 && sourceRows.every((row) => Boolean(row.attributedAvailable));
-  item.attributedOrders = item.attributedAvailable
-    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.attributedOrders), 0)
-    : null;
-  item.attributedRevenue = item.attributedAvailable
-    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.attributedRevenue), 0)
-    : null;
-
-  ATTRIBUTED_DERIVED_METRIC_FIELDS.forEach((field) => {
-    delete item[field];
-  });
 
   return item;
 };
@@ -405,44 +410,6 @@ const applyDerivedMetrics = (item) => {
 
   item.clicksAvailable = Boolean(item.clicksAvailable);
   item.clicks = item.clicksAvailable ? parseMetric(item.clicks) : null;
-  item.attributedAvailable = Boolean(item.attributedAvailable);
-
-  if (item.attributedAvailable) {
-    const attributedOrders = parseMetric(item.attributedOrders);
-    const attributedRevenue = parseMetric(item.attributedRevenue);
-
-    item.attributedOrders = attributedOrders;
-    item.attributedRevenue = attributedRevenue;
-    item.attributedConversion = hasMetricValue(item, "attributedConversion")
-      ? parseMetric(item.attributedConversion)
-      : visits > 0
-        ? (attributedOrders / visits) * 100
-        : 0;
-    item.attributedCostPerOrder = hasMetricValue(item, "attributedCostPerOrder")
-      ? parseMetric(item.attributedCostPerOrder)
-      : attributedOrders > 0
-        ? cost / attributedOrders
-        : 0;
-    item.attributedAverageCheck = hasMetricValue(item, "attributedAverageCheck")
-      ? parseMetric(item.attributedAverageCheck)
-      : attributedOrders > 0
-        ? attributedRevenue / attributedOrders
-        : 0;
-    item.attributedRoi = hasMetricValue(item, "attributedRoi")
-      ? parseMetric(item.attributedRoi)
-      : calculateRoi(attributedRevenue, cost);
-    item.attributedDrr = hasMetricValue(item, "attributedDrr")
-      ? parseMetric(item.attributedDrr)
-      : attributedRevenue > 0
-        ? (cost / attributedRevenue) * 100
-        : 0;
-  } else {
-    item.attributedOrders = null;
-    item.attributedRevenue = null;
-    ATTRIBUTED_DERIVED_METRIC_FIELDS.forEach((field) => {
-      item[field] = null;
-    });
-  }
 
   return item;
 };
@@ -462,6 +429,31 @@ const aggregateTotalRow = (item, rows) => {
   applyOptionalAggregates(item, rows);
   applyDerivedMetrics(item);
   return applyAggregatedRoi(item, rows);
+};
+
+const applyServerTotals = (item, totals) => {
+  if (!totals || typeof totals !== "object" || Array.isArray(totals)) {
+    return item;
+  }
+
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    if (hasMetricValue(totals, field)) {
+      item[field] = parseMetric(totals[field]);
+    }
+  });
+  DERIVED_METRIC_FIELDS.forEach((field) => {
+    if (hasMetricValue(totals, field)) {
+      item[field] = parseMetric(totals[field]);
+    }
+  });
+
+  item.uniqueClients = parseMetric(totals.uniqueClients);
+  item.clicksAvailable = Boolean(totals.clicksAvailable);
+  item.clicks = item.clicksAvailable ? parseMetric(totals.clicks) : null;
+  item.roiRevenue = parseMetric(item.revenue);
+  item.roiCost = parseMetric(item.cost);
+
+  return applyDerivedMetrics(item);
 };
 
 const applyTotalMetricsFromRows = (item, rows) => {
@@ -519,7 +511,7 @@ function EndPage() {
   const standardForm = {
     points: [],
     dateStart: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
-    dateEnd: dayjs(new Date()).format("YYYY-MM-DD"),
+    dateEnd: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
     cities: {},
     src_source: "",
     src_medium: "",
@@ -548,6 +540,7 @@ function EndPage() {
   const [errText, setErrText] = useState("");
   const [customCostDialogOpen, setCustomCostDialogOpen] = useState(false);
   const [customCosts, setCustomCosts] = useState([]);
+  const [customCostOptions, setCustomCostOptions] = useState(EMPTY_CUSTOM_COST_OPTIONS);
   const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
@@ -701,26 +694,30 @@ function EndPage() {
     }
   };
 
-  const applyRequest = () => {
+  const applyRequest = async () => {
+    if (isLoad) return;
+
     console.log("Фильтры:", form);
-    getData("get_data", {
-      ...form,
-      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
-      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
-    }).then((data) => {
-      if (data.st) {
+    setTableData([]);
+    setAnalyticsMeta(null);
+
+    try {
+      const data = await getData("get_data", {
+        ...form,
+        dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+        dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+      });
+      if (data?.st) {
         const formattedData = formatApiData(data);
         setTableData(formattedData);
         setAnalyticsMeta(data.analytics_meta || null);
         setLastUpdate(dayjs().format("HH:mm"));
       } else {
-        if (!data.st) {
-          setErrStatus(data.st);
-          setErrText(data.text);
-          setOpenAlert(true);
-        }
+        showError(data?.text || "Не удалось загрузить аналитику");
       }
-    });
+    } catch (_) {
+      showError("Не удалось загрузить аналитику");
+    }
   };
 
   const refreshSiteDataHistory = async () => {
@@ -1178,6 +1175,10 @@ function EndPage() {
 
     if (data?.st) {
       setCustomCosts(data.items || []);
+      setCustomCostOptions({
+        ...EMPTY_CUSTOM_COST_OPTIONS,
+        ...(data.options || {}),
+      });
     } else {
       showError(data?.text || "Не удалось загрузить ручные расходы");
     }
@@ -1649,6 +1650,7 @@ function EndPage() {
         );
 
         applyTotalMetricsFromRows(siteTotal, siteSourceRows);
+        applyServerTotals(siteTotal, apiData.site_totals);
 
         result.push(siteTotal);
       }
@@ -1689,18 +1691,21 @@ function EndPage() {
     }
 
     if (result.length > 0) {
-      return [
-        aggregateTotalRow(
-          {
-            id: `total_grand`,
-            name: "ВСЕГО",
-            isTotal: true,
-            isGrandTotal: true,
-            sourceType: "grand",
-          },
-          result,
-        ),
-      ];
+      const grandTotal = aggregateTotalRow(
+        {
+          id: `total_grand`,
+          name: "ВСЕГО",
+          isTotal: true,
+          isGrandTotal: true,
+          sourceType: "grand",
+        },
+        result,
+      );
+      if (result.length === 1 && result[0].sourceType === "site") {
+        applyServerTotals(grandTotal, apiData.site_totals);
+      }
+
+      return [grandTotal];
     }
 
     return result;
@@ -1944,27 +1949,6 @@ function EndPage() {
   const formatOptionalNumber = (value, available) =>
     available && value !== null && value !== undefined ? formatNumber(value) : "н/д";
 
-  const formatOptionalCurrency = (value, available) =>
-    available && value !== null && value !== undefined ? formatCurrency(value) : "н/д";
-
-  const formatOptionalPercent = (value, available) =>
-    available && value !== null && value !== undefined ? formatPercent(value) : "н/д";
-
-  const getAttributionModelLabel = (model) => {
-    const labels = {
-      cross_device_last_significant: "последний значимый клик, cross-device",
-      legacy: "legacy",
-    };
-
-    return labels[model] || model || "не указана";
-  };
-
-  const formatIssuePeriod = (issue) => {
-    const start = dayjs(issue.date_start).format("DD.MM.YYYY");
-    const end = dayjs(issue.date_end).format("DD.MM.YYYY");
-    return start === end ? start : `${start}–${end}`;
-  };
-
   const renderMetricValue = (key, row, isTotalRow) => {
     switch (key) {
       case "visits":
@@ -2004,16 +1988,6 @@ function EndPage() {
             {formatPercent(row.roi)}
           </Typography>
         );
-      case "attributedOrders":
-        return formatOptionalNumber(row.attributedOrders, row.attributedAvailable);
-      case "attributedConversion":
-      case "attributedRoi":
-      case "attributedDrr":
-        return formatOptionalPercent(row[key], row.attributedAvailable);
-      case "attributedCostPerOrder":
-      case "attributedRevenue":
-      case "attributedAverageCheck":
-        return formatOptionalCurrency(row[key], row.attributedAvailable);
       case "drr":
         return formatPercent(row.drr);
       default:
@@ -2168,7 +2142,9 @@ function EndPage() {
             color="text.secondary"
             sx={{ mb: 2 }}
           >
-            Расход добавляется к выбранному UTM-ключу в отчёте. Пустые UTM-поля будут сохранены как
+            Можно выбрать существующее значение из списка или ввести своё. Для поискового Яндекса
+            укажите Source: yandex и Medium: organic, остальные UTM-поля оставьте пустыми. Яндекс
+            Директ с Medium: cpc останется отдельным источником. Пустые поля сохраняются как
             not_set.
           </Typography>
 
@@ -2196,38 +2172,43 @@ function EndPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Source"
                 value={customCostForm.src_source}
-                func={({ target }) => setCustomCostField("src_source", target?.value)}
+                options={customCostOptions.src_source}
+                onChange={(value) => setCustomCostField("src_source", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Medium"
                 value={customCostForm.src_medium}
-                func={({ target }) => setCustomCostField("src_medium", target?.value)}
+                options={customCostOptions.src_medium}
+                onChange={(value) => setCustomCostField("src_medium", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Campaign"
                 value={customCostForm.src_campaign}
-                func={({ target }) => setCustomCostField("src_campaign", target?.value)}
+                options={customCostOptions.src_campaign}
+                onChange={(value) => setCustomCostField("src_campaign", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Term"
                 value={customCostForm.src_term}
-                func={({ target }) => setCustomCostField("src_term", target?.value)}
+                options={customCostOptions.src_term}
+                onChange={(value) => setCustomCostField("src_term", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
-              <MyTextInput
+              <UtmFreeSoloAutocomplete
                 label="UTM Content"
                 value={customCostForm.src_content}
-                func={({ target }) => setCustomCostField("src_content", target?.value)}
+                options={customCostOptions.src_content}
+                onChange={(value) => setCustomCostField("src_content", value)}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -2424,17 +2405,8 @@ function EndPage() {
             }}
           >
             <Typography variant="body2">
-              Модель атрибуции: {getAttributionModelLabel(analyticsMeta.attribution_model)}
-            </Typography>
-            <Typography variant="body2">
               Период данных: {analyticsMeta.effective_date_start} —{" "}
               {analyticsMeta.effective_date_end}
-            </Typography>
-            <Typography
-              variant="body2"
-              color={analyticsMeta.attributed_orders_available ? "success.main" : "warning.main"}
-            >
-              Атрибуция: {analyticsMeta.attributed_orders_available ? "доступна" : "недоступна"}
             </Typography>
             {analyticsMeta.date_was_clamped && (
               <Typography
@@ -2445,22 +2417,6 @@ function EndPage() {
                 {analyticsMeta.complete_through}
               </Typography>
             )}
-            {!analyticsMeta.attributed_orders_available &&
-              (analyticsMeta.attribution_issues || []).length > 0 && (
-                <Box sx={{ width: "100%" }}>
-                  {(analyticsMeta.attribution_issues || []).map((issue, index) => (
-                    <Typography
-                      key={`${issue.city_id}_${issue.code}_${issue.date_start}_${index}`}
-                      variant="caption"
-                      color="warning.main"
-                      sx={{ display: "block" }}
-                    >
-                      {issue.city_name || `Город ${issue.city_id}`}, {formatIssuePeriod(issue)}:{" "}
-                      {issue.message}
-                    </Typography>
-                  ))}
-                </Box>
-              )}
           </Box>
         </Grid>
       )}
@@ -2670,6 +2626,7 @@ function EndPage() {
                   <StyledButton
                     variant="primary"
                     onClick={applyRequest}
+                    disabled={isLoad}
                     startIcon={<SearchIcon />}
                   >
                     Применить
