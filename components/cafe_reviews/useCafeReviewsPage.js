@@ -13,6 +13,7 @@ import {
   normalizeIncident,
 } from "./cafeReviewsNormalizers";
 import useCafeReviewsApi from "./useCafeReviewsApi";
+import { CAFE_REVIEWS_AUTO_REFRESH_MINUTES } from "./shared";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -46,12 +47,15 @@ function getInitialSection(access) {
   const { userCan } = handleUserAccess(access);
   if (userCan("view", "reviews")) return "overview";
   if (userCan("view", "incidents")) return "incidents";
+  if (userCan("view", "links")) return "links";
   return null;
 }
 
 export default function useCafeReviewsPage() {
   const api = useCafeReviewsApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
+  const showAlertRef = useRef(showAlert);
+  showAlertRef.current = showAlert;
   const listRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
   const dashboardRequestRef = useRef(0);
@@ -77,11 +81,17 @@ export default function useCafeReviewsPage() {
     severities: [],
     issues: [],
   });
-  const [draftFilters, setDraftFilters] = useState(getDefaultFilters);
-  const [filters, setFilters] = useState(getDefaultFilters);
+  const [draftFilters, setDraftFilters] = useState(() => getDefaultFilters("reviews"));
+  const [filters, setFilters] = useState(() => getDefaultFilters("reviews"));
   const [dashboard, setDashboard] = useState(() => normalizeDashboard({}));
   const [reviews, setReviews] = useState([]);
   const [incidents, setIncidents] = useState([]);
+  const [links, setLinks] = useState([]);
+  const [linkFilters, setLinkFilters] = useState({
+    status: "active",
+    point_id: "",
+    zone_query: "",
+  });
   const [pagination, setPagination] = useState({
     page: 1,
     per_page: DEFAULT_PAGE_SIZE,
@@ -92,16 +102,24 @@ export default function useCafeReviewsPage() {
   const [detail, setDetail] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+
+  const newIncidentCount = useMemo(
+    () => incidents.filter((incident) => incident.status === "new").length,
+    [incidents],
+  );
 
   const accessApi = useMemo(() => handleUserAccess(access), [access]);
   const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
   const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
   const canAccess = useCallback((key) => accessApi.userCan("access", key), [accessApi]);
-
-  const filteredPoints = useMemo(() => {
-    if (!draftFilters.city_id) return points;
-    return points.filter((point) => String(point.city_id) === String(draftFilters.city_id));
-  }, [draftFilters.city_id, points]);
+  const changeSection = useCallback((nextSection) => {
+    const nextFilters = getDefaultFilters(nextSection === "incidents" ? "incidents" : "reviews");
+    setDraftFilters(nextFilters);
+    setFilters(nextFilters);
+    setPagination((current) => ({ ...current, page: 1 }));
+    setSection(nextSection);
+  }, []);
 
   const loadBootstrap = useCallback(async () => {
     const requestId = ++bootstrapRequestRef.current;
@@ -118,19 +136,19 @@ export default function useCafeReviewsPage() {
       setPoints(normalized.points);
       setCities(normalized.cities);
       setDictionaries(normalized.dictionaries);
-      setSection(initialSection);
+      changeSection(initialSection);
       setBootstrapReady(true);
       return normalized;
     } catch (error) {
       if (requestId !== bootstrapRequestRef.current) return null;
       const message = getErrorMessage(error, "Не удалось загрузить модуль");
       setBootstrapError(message);
-      showAlert(message);
+      showAlertRef.current(message);
       return null;
     } finally {
       if (requestId === bootstrapRequestRef.current) setBootstrapLoading(false);
     }
-  }, [api]);
+  }, [api, changeSection]);
 
   useEffect(() => {
     loadBootstrap();
@@ -161,7 +179,7 @@ export default function useCafeReviewsPage() {
         if (requestId !== dashboardRequestRef.current) return null;
         const message = getErrorMessage(error, "Не удалось загрузить обзор");
         if (!silent) setContentError(message);
-        showAlert(message);
+        showAlertRef.current(message);
         return null;
       } finally {
         if (!silent && requestId === dashboardRequestRef.current) setContentLoading(false);
@@ -171,7 +189,7 @@ export default function useCafeReviewsPage() {
   );
 
   const loadList = useCallback(
-    async ({ page = 1, silent = false } = {}) => {
+    async ({ page = 1, perPage = pagination.per_page, silent = false } = {}) => {
       const requestSection = section;
       const isIncidents = requestSection === "incidents";
       const accessKey = isIncidents ? "incidents" : "reviews";
@@ -184,7 +202,7 @@ export default function useCafeReviewsPage() {
         const payload = {
           ...buildFilterPayload(filters, requestSection),
           page,
-          per_page: pagination.per_page || DEFAULT_PAGE_SIZE,
+          per_page: perPage || DEFAULT_PAGE_SIZE,
         };
         const response = ensureSuccess(
           isIncidents ? await api.getIncidents(payload) : await api.getReviews(payload),
@@ -206,7 +224,7 @@ export default function useCafeReviewsPage() {
         return normalized;
       } catch (error) {
         if (requestId === listRequestRef.current) {
-          showAlert(
+          showAlertRef.current(
             getErrorMessage(
               error,
               isIncidents ? "Не удалось загрузить инциденты" : "Не удалось загрузить отзывы",
@@ -229,6 +247,89 @@ export default function useCafeReviewsPage() {
     [api, canView, filters, pagination.per_page, section],
   );
 
+  const loadLinks = useCallback(
+    async ({ silent = false, filters: requestedFilters = linkFilters } = {}) => {
+      if (!canView("links")) return null;
+      const requestId = ++listRequestRef.current;
+      if (!silent) setContentLoading(true);
+      if (!silent) setContentError("");
+
+      try {
+        const response = ensureSuccess(
+          await api.getLinks({
+            point_id: requestedFilters.point_id || undefined,
+            status: requestedFilters.status,
+            zone_query: requestedFilters.zone_query || undefined,
+          }),
+          "Не удалось загрузить QR-ссылки",
+        );
+        if (requestId !== listRequestRef.current) return null;
+        const items = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.links)
+            ? response.links
+            : Array.isArray(response?.items)
+              ? response.items
+              : [];
+        setLinks(items);
+        return items;
+      } catch (error) {
+        if (requestId === listRequestRef.current) {
+          const message = getErrorMessage(error, "Не удалось загрузить QR-ссылки");
+          if (!silent) setContentError(message);
+          showAlertRef.current(message);
+        }
+        return null;
+      } finally {
+        if (!silent && requestId === listRequestRef.current) setContentLoading(false);
+      }
+    },
+    [api, canView, linkFilters],
+  );
+
+  const updateLinkFilters = useCallback((next) => {
+    setLinkFilters((current) => ({ ...current, ...next }));
+  }, []);
+
+  const loadLinkHistory = useCallback(
+    async (link = null, query = "") => {
+      if (!canView("links")) return null;
+      try {
+        const payload = { query: query || undefined };
+        if (link?.point_id) payload.point_id = link.point_id;
+        if (link?.zone_code) payload.zone_code = link.zone_code;
+        const response = ensureSuccess(
+          await api.getLinkHistory(payload),
+          "Не удалось загрузить историю QR-ссылок",
+        );
+        const items = Array.isArray(response) ? response : response?.history;
+        const normalized = Array.isArray(items) ? items : [];
+        return normalized;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось загрузить историю QR-ссылок"));
+        return null;
+      }
+    },
+    [api, canView],
+  );
+
+  const loadLinkQr = useCallback(
+    async (link, variant) => {
+      if (!link?.id || !variant || !canView("links")) return null;
+      try {
+        const response = ensureSuccess(
+          await api.getLinkQr({ id: link.id, variant }),
+          "Не удалось загрузить QR-код",
+        );
+        return response?.image || null;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось загрузить QR-код"));
+        return null;
+      }
+    },
+    [api, canView],
+  );
+
   useEffect(() => {
     if (!bootstrapReady || !section) return;
     dashboardRequestRef.current += 1;
@@ -246,8 +347,10 @@ export default function useCafeReviewsPage() {
       loadList({ page: 1 });
     } else if (section === "incidents" && canView("incidents")) {
       loadList({ page: 1 });
+    } else if (section === "links" && canView("links")) {
+      loadLinks();
     }
-  }, [bootstrapReady, canView, filters, loadDashboard, loadList, section]);
+  }, [bootstrapReady, canView, filters, linkFilters, loadDashboard, loadLinks, loadList, section]);
 
   const loadDetail = useCallback(
     async (target, { silent = false } = {}) => {
@@ -277,7 +380,7 @@ export default function useCafeReviewsPage() {
         if (requestId === detailRequestRef.current) {
           const message = getErrorMessage(error, "Не удалось загрузить детали");
           setDetailError(message);
-          showAlert(message);
+          showAlertRef.current(message);
         }
         return null;
       } finally {
@@ -315,21 +418,19 @@ export default function useCafeReviewsPage() {
   const applyFilters = useCallback(() => {
     setFilters({
       ...draftFilters,
-      point_id:
-        draftFilters.point_id &&
-        filteredPoints.some((point) => String(point.id) === String(draftFilters.point_id))
-          ? draftFilters.point_id
-          : "",
+      point_ids: (draftFilters.point_ids || []).filter((pointId) =>
+        points.some((point) => String(point.id) === String(pointId)),
+      ),
     });
     setFiltersOpen(false);
-  }, [draftFilters, filteredPoints]);
+  }, [draftFilters, points]);
 
   const resetFilters = useCallback(() => {
-    const defaults = getDefaultFilters();
+    const defaults = getDefaultFilters(section === "incidents" ? "incidents" : "reviews");
     setDraftFilters(defaults);
     setFilters(defaults);
     setFiltersOpen(false);
-  }, []);
+  }, [section]);
 
   const updateDraftFilter = useCallback(
     (key, value) => {
@@ -337,17 +438,39 @@ export default function useCafeReviewsPage() {
         const targetKey =
           key === "status" ? (section === "incidents" ? "incident_status" : "review_status") : key;
         const next = { ...current, [targetKey]: value };
-        if (key === "city_id") next.point_id = "";
+        if (key === "city_id") {
+          next.point_id = "";
+          next.point_ids = [];
+        }
         return next;
       });
     },
     [section],
   );
 
+  const updateSort = useCallback((sort) => {
+    setFilters((current) => {
+      const direction = current.sort === sort && current.direction === "desc" ? "asc" : "desc";
+      return { ...current, sort, direction };
+    });
+    setDraftFilters((current) => {
+      const direction = current.sort === sort && current.direction === "desc" ? "asc" : "desc";
+      return { ...current, sort, direction };
+    });
+    setPagination((current) => ({ ...current, page: 1 }));
+  }, []);
+
   const refreshAfterMutation = useCallback(
     async (incidentId) => {
       const target = { kind: "incident", id: incidentId };
       const requests = [];
+      requests.push(
+        api.getBootstrap().then((response) => {
+          const normalized = normalizeBootstrap(
+            ensureSuccess(response, "Не удалось обновить счётчик инцидентов"),
+          );
+        }),
+      );
       if (canView("incidents")) {
         requests.push(loadDetail(target, { silent: true }));
       }
@@ -362,31 +485,62 @@ export default function useCafeReviewsPage() {
       }
       await Promise.all(requests);
     },
-    [canView, loadDashboard, loadDetail, loadList, pagination.page, section],
+    [api, canView, loadDashboard, loadDetail, loadList, pagination.page, section],
   );
 
   const updateIncident = useCallback(
-    async (payload) => {
+    async (payload, attachment = null) => {
       if (!canEdit("incidents")) return false;
       setMutationLoading(true);
       try {
         const response = ensureSuccess(
-          await api.updateIncident(payload),
+          await api.updateIncident(payload, attachment),
           "Не удалось обновить инцидент",
         );
         await refreshAfterMutation(payload.id);
-        showAlert(response?.text || "Инцидент обновлён", true);
+        showAlertRef.current(response?.text || "Инцидент обновлён", true);
         return true;
       } catch (error) {
         const message = getErrorMessage(error, "Не удалось обновить инцидент");
         if (isConflict(error)) await refreshAfterMutation(payload.id);
-        showAlert(message);
+        showAlertRef.current(message);
         return false;
       } finally {
         setMutationLoading(false);
       }
     },
     [api, canEdit, refreshAfterMutation],
+  );
+
+  const markReviewIncident = useCallback(
+    async (reviewId) => {
+      if (!canEdit("incidents")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.markReviewIncident(reviewId),
+          "Не удалось отметить отзыв как инцидент",
+        );
+        await loadDetail({ kind: "review", id: reviewId }, { silent: true });
+        if (section === "reviews" && canView("reviews")) {
+          await Promise.all([
+            loadList({ page: pagination.page, silent: true }),
+            loadDashboard({ silent: true }),
+          ]);
+        }
+        const bootstrap = normalizeBootstrap(
+          ensureSuccess(await api.getBootstrap(), "Не удалось обновить счётчик инцидентов"),
+        );
+        showAlertRef.current(response?.text || "Отзыв отмечен как инцидент", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось отметить отзыв как инцидент"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, canView, loadDashboard, loadDetail, loadList, pagination.page, section],
   );
 
   const decideAi = useCallback(
@@ -404,12 +558,38 @@ export default function useCafeReviewsPage() {
           "Не удалось сохранить решение по рекомендации",
         );
         await refreshAfterMutation(id);
-        showAlert(response?.text || "Решение сохранено", true);
+        showAlertRef.current(response?.text || "Решение сохранено", true);
         return true;
       } catch (error) {
         const message = getErrorMessage(error, "Не удалось сохранить решение по рекомендации");
         if (isConflict(error)) await refreshAfterMutation(id);
-        showAlert(message);
+        showAlertRef.current(message);
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canAccess, canEdit, refreshAfterMutation],
+  );
+
+  const reanalyzeAi = useCallback(
+    async ({ id, additional_context, attachment = null }) => {
+      if (!canEdit("incidents") || !canAccess("ai")) return false;
+      setMutationLoading(true);
+      try {
+        const requestPayload = { id };
+        if (additional_context?.trim()) {
+          requestPayload.additional_context = additional_context.trim();
+        }
+        const response = ensureSuccess(
+          await api.reanalyzeAi(requestPayload, attachment),
+          "Не удалось повторно запустить AI-анализ",
+        );
+        await refreshAfterMutation(id);
+        showAlertRef.current(response?.text || "AI-анализ обновлён", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось повторно запустить AI-анализ"));
         return false;
       } finally {
         setMutationLoading(false);
@@ -425,23 +605,96 @@ export default function useCafeReviewsPage() {
     [loadList],
   );
 
+  const changePerPage = useCallback(
+    (event) => {
+      const perPage = Number(event.target.value) || DEFAULT_PAGE_SIZE;
+      setPagination((current) => ({ ...current, page: 1, per_page: perPage }));
+      loadList({ page: 1, perPage });
+    },
+    [loadList],
+  );
+
   const refresh = useCallback(() => {
-    if (section === "overview" && canView("reviews")) return loadDashboard();
+    const refreshCount = api.getBootstrap().then((response) => {
+      const normalized = normalizeBootstrap(
+        ensureSuccess(response, "Не удалось обновить счётчик инцидентов"),
+      );
+    });
+    if (section === "overview" && canView("reviews"))
+      return Promise.all([loadDashboard(), refreshCount]);
     if (section === "reviews" && canView("reviews")) {
-      return loadList({ page: pagination.page });
+      return Promise.all([loadList({ page: pagination.page }), refreshCount]);
     }
     if (section === "incidents" && canView("incidents")) {
-      return loadList({ page: pagination.page });
+      return Promise.all([loadList({ page: pagination.page }), refreshCount]);
     }
-    return null;
-  }, [canView, loadDashboard, loadList, pagination.page, section]);
+    if (section === "links" && canView("links")) return Promise.all([loadLinks(), refreshCount]);
+    return refreshCount;
+  }, [api, canView, loadDashboard, loadLinks, loadList, pagination.page, section]);
+
+  useEffect(() => {
+    if (!autoRefreshEnabled || !bootstrapReady || detailOpen) return undefined;
+
+    const intervalId = window.setInterval(refresh, CAFE_REVIEWS_AUTO_REFRESH_MINUTES * 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [autoRefreshEnabled, bootstrapReady, detailOpen, refresh]);
+
+  const generateLink = useCallback(
+    async (payload) => {
+      if (!canEdit("links")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.generateLink(payload),
+          "Не удалось создать QR-ссылку",
+        );
+        await loadLinks();
+        showAlertRef.current(response?.text || "QR-ссылка создана", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось создать QR-ссылку"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, loadLinks],
+  );
+
+  const revokeLink = useCallback(
+    async (payload) => {
+      if (!canEdit("links")) return false;
+      setMutationLoading(true);
+      try {
+        const response = ensureSuccess(
+          await api.revokeLink(payload),
+          "Не удалось отозвать QR-ссылку",
+        );
+        await loadLinks();
+        showAlertRef.current(response?.text || "QR-ссылка отозвана", true);
+        return true;
+      } catch (error) {
+        showAlertRef.current(getErrorMessage(error, "Не удалось отозвать QR-ссылку"));
+        return false;
+      } finally {
+        setMutationLoading(false);
+      }
+    },
+    [api, canEdit, loadLinks],
+  );
 
   const retryDetail = useCallback(() => {
     if (selected) loadDetail(selected);
   }, [loadDetail, selected]);
 
+  const toggleAutoRefresh = useCallback(() => {
+    setAutoRefreshEnabled((enabled) => !enabled);
+  }, []);
+
   return {
     access,
+    autoRefreshEnabled,
     activeDraftFilters,
     alertMessage,
     alertStatus,
@@ -453,6 +706,7 @@ export default function useCafeReviewsPage() {
     canEdit,
     canView,
     changePage,
+    changePerPage,
     cities,
     closeAlert,
     closeDetail,
@@ -460,25 +714,33 @@ export default function useCafeReviewsPage() {
     contentError,
     dashboard,
     decideAi,
+    reanalyzeAi,
     detail,
     detailError,
     detailLoading,
     detailOpen,
     dictionaries,
     draftFilters,
-    filteredPoints,
     filters,
     filtersOpen,
     incidents,
+    links,
+    linkFilters,
+    loadLinkQr,
     isAlert,
     loadBootstrap,
-    loading: bootstrapLoading || contentLoading || mutationLoading,
     moduleInfo,
+    newIncidentCount,
     mutationLoading,
     openDetail,
     pagination,
     points,
     refresh,
+    toggleAutoRefresh,
+    generateLink,
+    loadLinkHistory,
+    updateLinkFilters,
+    revokeLink,
     retryDetail,
     resetFilters,
     reviews,
@@ -486,9 +748,11 @@ export default function useCafeReviewsPage() {
     selected,
     setDetailOpen,
     setFiltersOpen,
-    setSection,
+    setSection: changeSection,
     updateDraftFilter,
+    updateSort,
     updateIncident,
+    markReviewIncident,
     getPhoto: api.getPhoto,
   };
 }

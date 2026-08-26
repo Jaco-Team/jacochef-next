@@ -3,8 +3,15 @@ import { Box, Chip, Rating, Typography } from "@mui/material";
 export const brandRed = "#DD1A32";
 export const blockBackground = "#F3F3F3";
 export const blockBorder = "#E5E5E5";
+export const white = "#FFFFFF";
+export const successGreen = "#2E7D32";
+export const successBackground = "#E8F5E9";
+export const mutedBackground = "#F6F6F6";
+export const tableHeaderBackground = "#F7F7F7";
+export const accordionHeaderBackground = "#FAFAFA";
 export const textPrimary = "#3C3B3B";
 export const textSecondary = "#5E5E5E";
+export const CAFE_REVIEWS_AUTO_REFRESH_MINUTES = 1;
 
 export const desktopOnlySx = {
   display: "none",
@@ -37,6 +44,7 @@ export function formatDateTime(value) {
 
 export function getOptionLabel(options, value, fallback = "—") {
   if (!value) return fallback;
+  if (value === "positive") return "Решён";
   return options.find((option) => String(option.value) === String(value))?.label || String(value);
 }
 
@@ -49,7 +57,7 @@ export function SeverityChip({ value, options }) {
   };
   const palette = colors[value] || {
     color: textSecondary,
-    bgcolor: "#F6F6F6",
+    bgcolor: mutedBackground,
     borderColor: blockBorder,
   };
 
@@ -62,22 +70,24 @@ export function SeverityChip({ value, options }) {
   );
 }
 
-export function StatusChip({ value, options }) {
+export function StatusChip({ value, options, highlightNew = false }) {
+  const isNewIncident = highlightNew && value === "new";
+
   return (
     <Chip
       size="small"
       label={getOptionLabel(options, value, "Без статуса")}
       sx={{
-        color: textPrimary,
-        bgcolor: "#FFFFFF",
-        border: `1px solid ${blockBorder}`,
+        color: isNewIncident ? white : textPrimary,
+        bgcolor: isNewIncident ? brandRed : white,
+        border: `1px solid ${isNewIncident ? brandRed : blockBorder}`,
         fontWeight: 700,
       }}
     />
   );
 }
 
-export function RatingValue({ value, size = "small" }) {
+export function RatingValue({ value, size = "small", isIncident = false }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
       <Rating
@@ -86,6 +96,7 @@ export function RatingValue({ value, size = "small" }) {
         size={size}
         readOnly
         aria-label={`Оценка ${Number(value) || 0} из 5`}
+        sx={isIncident ? { color: brandRed } : undefined}
       />
       <Typography
         component="span"
@@ -105,7 +116,7 @@ export function EmptyState({ children }) {
         p: 4,
         textAlign: "center",
         color: textSecondary,
-        bgcolor: "#FFFFFF",
+        bgcolor: white,
         border: `1px solid ${blockBorder}`,
         borderRadius: "12px",
       }}
@@ -121,5 +132,17 @@ export function DetailRow({ label, children }) {
       <Typography sx={{ fontSize: 12, color: textSecondary, mb: 0.25 }}>{label}</Typography>
       <Box sx={{ color: textPrimary, overflowWrap: "anywhere" }}>{children || "—"}</Box>
     </Box>
+  );
+}
+
+export function ZoneChip({ code, label }) {
+  if (!code && !label) return null;
+
+  return (
+    <Chip
+      size="small"
+      label={label || "Кафе"}
+      sx={{ fontWeight: 700, bgcolor: successBackground, color: successGreen }}
+    />
   );
 }

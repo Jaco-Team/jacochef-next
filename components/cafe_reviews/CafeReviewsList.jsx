@@ -2,14 +2,15 @@ import {
   Box,
   Chip,
   IconButton,
-  Pagination,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
@@ -22,7 +23,9 @@ import {
   RatingValue,
   SeverityChip,
   StatusChip,
+  tableHeaderBackground,
   textSecondary,
+  ZoneChip,
 } from "./shared";
 
 function activateWithKeyboard(event, callback) {
@@ -32,29 +35,53 @@ function activateWithKeyboard(event, callback) {
   }
 }
 
-function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
+function DesktopTable({
+  kind,
+  items,
+  dictionaries,
+  selectedId,
+  onOpen,
+  showActions = false,
+  sort,
+  direction,
+  onSort,
+}) {
   const isIncident = kind === "incident";
+  const sortable = (label, key) => (
+    <TableSortLabel
+      active={sort === key}
+      direction={sort === key ? direction : "desc"}
+      onClick={() => onSort(key)}
+    >
+      {label}
+    </TableSortLabel>
+  );
 
   return (
     <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{ ...desktopOnlySx, borderRadius: "12px", borderColor: blockBorder }}
+      sx={{
+        ...desktopOnlySx,
+        maxHeight: "60dvh",
+        border: "1px solid",
+        borderColor: blockBorder,
+        borderRadius: "12px",
+      }}
     >
       <Table
         size="small"
+        stickyHeader
         aria-label={isIncident ? "Список инцидентов" : "Список отзывов"}
       >
         <TableHead>
-          <TableRow sx={{ bgcolor: "#F7F7F7" }}>
-            <TableCell>Дата</TableCell>
+          <TableRow sx={{ bgcolor: tableHeaderBackground }}>
+            <TableCell>{sortable("Дата", "created_at")}</TableCell>
             <TableCell>Кафе</TableCell>
-            <TableCell>Оценка</TableCell>
-            {isIncident ? <TableCell>Критичность</TableCell> : null}
-            <TableCell>Статус</TableCell>
-            <TableCell align="center">Причины</TableCell>
+            <TableCell>{sortable("Оценка", "rating")}</TableCell>
+            {isIncident ? <TableCell>{sortable("Критичность", "severity")}</TableCell> : null}
+            <TableCell>{sortable("Статус", "status")}</TableCell>
+            <TableCell align="center">{sortable("Причины", "issues_count")}</TableCell>
             <TableCell align="center">Фото</TableCell>
-            <TableCell align="right">Действие</TableCell>
+            {showActions ? <TableCell align="right">Действия</TableCell> : null}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -63,6 +90,11 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
               key={item.id}
               hover
               selected={String(selectedId) === String(item.id)}
+              tabIndex={0}
+              role="button"
+              onClick={() => onOpen(item.id)}
+              onKeyDown={(event) => activateWithKeyboard(event, () => onOpen(item.id))}
+              sx={{ cursor: "pointer" }}
             >
               <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDateTime(item.created_at)}</TableCell>
               <TableCell>
@@ -74,9 +106,20 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
                     {item.city_name}
                   </Typography>
                 ) : null}
+                {item.zone_code || item.zone_label ? (
+                  <Box sx={{ mt: 0.5 }}>
+                    <ZoneChip
+                      code={item.zone_code}
+                      label={item.zone_label}
+                    />
+                  </Box>
+                ) : null}
               </TableCell>
               <TableCell>
-                <RatingValue value={item.rating} />
+                <RatingValue
+                  value={item.rating}
+                  isIncident={isIncident || item.is_incident}
+                />
               </TableCell>
               {isIncident ? (
                 <TableCell>
@@ -90,6 +133,7 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
                 <StatusChip
                   value={item.status}
                   options={dictionaries.statuses}
+                  highlightNew={isIncident}
                 />
               </TableCell>
               <TableCell align="center">{item.issues_count}</TableCell>
@@ -103,15 +147,20 @@ function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
                   "—"
                 )}
               </TableCell>
-              <TableCell align="right">
-                <IconButton
-                  size="small"
-                  onClick={() => onOpen(item.id)}
-                  aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
-                >
-                  <VisibilityOutlinedIcon fontSize="small" />
-                </IconButton>
-              </TableCell>
+              {showActions ? (
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpen(item.id);
+                    }}
+                    aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
+                  >
+                    <VisibilityOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              ) : null}
             </TableRow>
           ))}
         </TableBody>
@@ -157,12 +206,20 @@ function ResponsiveCards({ kind, items, dictionaries, selectedId, onOpen }) {
                 {formatDateTime(item.created_at)}
               </Typography>
             </Box>
-            <RatingValue value={item.rating} />
+            <RatingValue
+              value={item.rating}
+              isIncident={isIncident || item.is_incident}
+            />
           </Box>
           <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 1.25 }}>
             <StatusChip
               value={item.status}
               options={dictionaries.statuses}
+              highlightNew={isIncident}
+            />
+            <ZoneChip
+              code={item.zone_code}
+              label={item.zone_label}
             />
             {isIncident ? (
               <SeverityChip
@@ -216,9 +273,13 @@ export default function CafeReviewsList({
   onOpen,
   pagination,
   onPageChange,
+  onRowsPerPageChange,
+  sort,
+  direction,
+  onSort,
 }) {
   return (
-    <Box>
+    <Box sx={{ pb: 4 }}>
       {items.length ? (
         <>
           <DesktopTable
@@ -227,6 +288,9 @@ export default function CafeReviewsList({
             dictionaries={dictionaries}
             selectedId={selectedId}
             onOpen={onOpen}
+            sort={sort}
+            direction={direction}
+            onSort={onSort}
           />
           <ResponsiveCards
             kind={kind}
@@ -243,17 +307,19 @@ export default function CafeReviewsList({
             : "Нет отзывов по выбранным фильтрам"}
         </EmptyState>
       )}
-      {pagination.total_pages > 1 ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Pagination
-            page={pagination.page}
-            count={pagination.total_pages}
-            onChange={onPageChange}
-            color="primary"
-            shape="rounded"
-            aria-label="Навигация по страницам"
-          />
-        </Box>
+      {pagination.total > 0 ? (
+        <TablePagination
+          component="div"
+          count={pagination.total}
+          page={Math.max(0, pagination.page - 1)}
+          onPageChange={(event, page) => onPageChange(event, page + 1)}
+          onRowsPerPageChange={onRowsPerPageChange}
+          rowsPerPage={pagination.per_page}
+          rowsPerPageOptions={[20, 50, 100]}
+          labelRowsPerPage="Записей на странице:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+          sx={{ mt: 1.5 }}
+        />
       ) : null}
     </Box>
   );
