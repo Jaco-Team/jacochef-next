@@ -869,6 +869,8 @@ export default function AiAnalystTab({
   cities,
   form,
   source,
+  models = [],
+  model = null,
   analysis,
   dailyMetrics = [],
   trafficSourceMetrics = [],
@@ -880,6 +882,7 @@ export default function AiAnalystTab({
   onCitiesChange,
   onFieldChange,
   onSourceChange,
+  onModelChange,
   onApply,
   onReset,
   onSendChat,
@@ -950,7 +953,14 @@ export default function AiAnalystTab({
 
       if (!data?.chat_synced) {
         const reply = data?.answer || "Пустой ответ AI";
-        setChatMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            text: reply,
+            aiModelName: data?.ai_model_name || null,
+          },
+        ]);
       }
     } catch (_) {
       setChatMessages((prev) => [
@@ -1231,9 +1241,25 @@ export default function AiAnalystTab({
                 />
               </Grid>
 
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <MyAutocomplite
+                  label="Модель чата"
+                  data={models}
+                  multiple={false}
+                  value={model}
+                  func={(event, data) => onModelChange(data || models[0] || null)}
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  {model?.description || "Выбранная модель применяется к новым сообщениям"}
+                </Typography>
+              </Grid>
+
               <Grid
-                size={{ xs: 12 }}
-                sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}
+                size={{ xs: 12, sm: 8 }}
+                sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1 }}
               >
                 <StyledButton
                   variant="outlined"
@@ -2073,7 +2099,18 @@ export default function AiAnalystTab({
                     }}
                   >
                     {message.role === "assistant" && !message.isError ? (
-                      <MemoizedMarkdownMessage text={message.text} />
+                      <>
+                        <MemoizedMarkdownMessage text={message.text} />
+                        {message.aiModelName ? (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", mt: 0.75 }}
+                          >
+                            {message.aiModelName}
+                          </Typography>
+                        ) : null}
+                      </>
                     ) : (
                       <Typography
                         variant="body2"
@@ -2191,7 +2228,7 @@ export default function AiAnalystTab({
                   variant="subtitle1"
                   fontWeight={700}
                 >
-                  Аналитика на базе YandexGPT
+                  Аналитика на базе моделей Yandex AI Studio
                 </Typography>
                 <Typography
                   variant="body2"

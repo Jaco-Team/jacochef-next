@@ -546,6 +546,14 @@ function EndPage() {
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
   const [activeTab, setActiveTab] = useState(false);
   const [aiSource, setAiSource] = useState(null);
+  const [aiModels, setAiModels] = useState([
+    { id: "auto", name: "Автоматически", description: "Модель выбирается сервером" },
+  ]);
+  const [aiModel, setAiModel] = useState({
+    id: "auto",
+    name: "Автоматически",
+    description: "Модель выбирается сервером",
+  });
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [siteDataRequestId, setSiteDataRequestId] = useState(null);
   const [dailyMetrics, setDailyMetrics] = useState([]);
@@ -576,6 +584,13 @@ function EndPage() {
             : false,
       );
       setCities(data.cities);
+      const availableModels = Array.isArray(data.ai_models) ? data.ai_models : [];
+      if (availableModels.length) {
+        setAiModels(availableModels);
+        setAiModel(
+          availableModels.find((item) => item.id === data.default_ai_model) || availableModels[0],
+        );
+      }
       setSiteDataHistory(data.site_data_history || []);
       const initialThreads = Array.isArray(data.ai_chat_threads) ? data.ai_chat_threads : [];
       if (initialThreads.length) {
@@ -747,6 +762,7 @@ function EndPage() {
           text: item.answer,
           dataRefs: item.context_meta?.data_refs || [],
           limitations: item.context_meta?.limitations || [],
+          aiModelName: item.context_meta?.ai_model_name || null,
         });
       } else if (item?.status === "error") {
         messages.push({
@@ -1047,6 +1063,7 @@ function EndPage() {
           site_data_request_id: siteDataRequestId,
           thread_id: activeChatThreadId,
           idempotency_key: idempotencyKey,
+          ai_model: aiModel?.id || "auto",
         },
         { throwErrors: true },
       );
@@ -2362,6 +2379,8 @@ function EndPage() {
             cities={cities}
             form={form}
             source={aiSource}
+            models={aiModels}
+            model={aiModel}
             analysis={aiAnalysis}
             dailyMetrics={dailyMetrics}
             trafficSourceMetrics={trafficSourceMetrics}
@@ -2373,6 +2392,7 @@ function EndPage() {
             onCitiesChange={handleCitiesChange}
             onFieldChange={setField}
             onSourceChange={setAiSource}
+            onModelChange={setAiModel}
             onApply={applyAiRequest}
             onReset={resetAiFilters}
             onSendChat={sendAiChat}
