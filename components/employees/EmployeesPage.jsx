@@ -57,6 +57,14 @@ dayjs.locale("ru");
 
 const MODULE = "employees";
 const DEFAULT_ROWS = 25;
+const PHOTO_CHECK_COUNTDOWN_SECONDS = 90;
+
+const formatCountdown = (seconds) => {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+
+  return `${minutes}:${String(rest).padStart(2, "0")}`;
+};
 
 const emptyEmployee = {
   id: "",
@@ -925,6 +933,7 @@ export default function EmployeesPage() {
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [isLoad, setIsLoad] = useState(false);
   const [photoChecking, setPhotoChecking] = useState(false);
+  const [photoCheckSecondsLeft, setPhotoCheckSecondsLeft] = useState(PHOTO_CHECK_COUNTDOWN_SECONDS);
   const [photoReview, setPhotoReview] = useState(null);
   const [alert, setAlert] = useState({ open: false, status: true, text: "" });
   const [refs, setRefs] = useState({
@@ -983,6 +992,24 @@ export default function EmployeesPage() {
   useEffect(() => {
     filtersRef.current = filters;
   }, [filters]);
+
+  useEffect(() => {
+    if (!photoChecking) {
+      setPhotoCheckSecondsLeft(PHOTO_CHECK_COUNTDOWN_SECONDS);
+      return undefined;
+    }
+
+    const startedAt = Date.now();
+    const updateCountdown = () => {
+      const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+      setPhotoCheckSecondsLeft(Math.max(0, PHOTO_CHECK_COUNTDOWN_SECONDS - elapsedSeconds));
+    };
+
+    updateCountdown();
+    const intervalId = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [photoChecking]);
 
   const showAlert = (status, text) => {
     setAlert({
@@ -2012,16 +2039,46 @@ export default function EmployeesPage() {
   return (
     <>
       <Backdrop
-        style={{ zIndex: 99999 }}
-        open={isLoad}
+        sx={{ zIndex: (muiTheme) => muiTheme.zIndex.modal + 2 }}
+        open={isLoad || photoChecking}
       >
-        <Stack
-          spacing={1.5}
-          alignItems="center"
-        >
+        {photoChecking ? (
+          <Paper
+            role="status"
+            aria-live="polite"
+            elevation={8}
+            sx={{ width: { xs: "calc(100% - 32px)", sm: 360 }, p: 3, borderRadius: 2.5 }}
+          >
+            <Stack
+              spacing={1.5}
+              alignItems="center"
+              textAlign="center"
+            >
+              <CircularProgress />
+              <Box>
+                <Typography sx={{ fontWeight: 900 }}>Проверяем фотографию</Typography>
+                <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: 14 }}>
+                  Локальный ИИ проверяет портрет и отсутствие документов
+                </Typography>
+              </Box>
+              <Typography
+                sx={{
+                  color: photoCheckSecondsLeft > 0 ? "text.primary" : "warning.dark",
+                  fontWeight: 800,
+                }}
+              >
+                {photoCheckSecondsLeft > 0
+                  ? `Осталось до ${formatCountdown(photoCheckSecondsLeft)}`
+                  : "Проверка занимает больше обычного. Ожидаем ответ…"}
+              </Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
+                Не закрывайте окно и не нажимайте «Сохранить» повторно
+              </Typography>
+            </Stack>
+          </Paper>
+        ) : (
           <CircularProgress color="inherit" />
-          {photoChecking ? <Typography color="inherit">Проверяем фото…</Typography> : null}
-        </Stack>
+        )}
       </Backdrop>
       <MyAlert
         isOpen={alert.open}
@@ -2379,7 +2436,7 @@ export default function EmployeesPage() {
         isSuperPosition={viewerIsSuperPosition}
         absence={absence}
         clothIssue={clothIssue}
-        onClose={closeEmployeeDialog}
+        onClose={photoChecking ? undefined : closeEmployeeDialog}
         onTabChange={setActiveTab}
         onUserChange={updateEmployeeUser}
         onHealthChange={updateHealthItem}
@@ -2396,7 +2453,7 @@ export default function EmployeesPage() {
         onIssueCloth={issueCloth}
         onReturnCloth={returnCloth}
         onManageCloth={loadClothList}
-        saving={isLoad}
+        saving={isLoad || photoChecking}
       />
 
       <CreateEmployeeDialog
@@ -2404,10 +2461,10 @@ export default function EmployeesPage() {
         fullScreen={fullScreen}
         employee={newEmployee}
         refs={refs}
-        onClose={() => setNewDialog(false)}
+        onClose={photoChecking ? undefined : () => setNewDialog(false)}
         onChange={updateNewEmployee}
         onCreate={createEmployee}
-        saving={isLoad}
+        saving={isLoad || photoChecking}
       />
 
       <ClothListDialog
@@ -2539,7 +2596,7 @@ function EmployeeDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={saving ? undefined : onClose}
       fullWidth
       maxWidth="lg"
       fullScreen={fullScreen}
@@ -2581,7 +2638,10 @@ function EmployeeDialog({
             ) : null}
           </Box>
         </Stack>
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          disabled={saving}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -3346,7 +3406,7 @@ function CreateEmployeeDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={saving ? undefined : onClose}
       fullWidth
       maxWidth="lg"
       fullScreen={fullScreen}
@@ -3359,7 +3419,10 @@ function CreateEmployeeDialog({
             Заполните карточку сотрудника до создания
           </Typography>
         </Box>
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          disabled={saving}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
