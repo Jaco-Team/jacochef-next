@@ -355,6 +355,7 @@ const activityEventLabels = {
   absence_create: "Отсутствие добавлено",
   absence_update: "Отсутствие изменено",
   absence_delete: "Отсутствие удалено",
+  photo_ai_override: "Фото сохранено после предупреждения ИИ",
 };
 
 const parseHistoryJson = (value) => {
@@ -864,6 +865,10 @@ function EmployeePhotoDropzone({ user, file, disabled, onFileChange }) {
           </Box>
         </Box>
       ) : null}
+      <Typography sx={{ color: "text.secondary", fontSize: 12.5, lineHeight: 1.45 }}>
+        Фото автоматически проверяется локальным ИИ: в кадре должен быть сотрудник, без документов и
+        персональных данных. Фото не передаётся внешним сервисам.
+      </Typography>
     </Stack>
   );
 }
@@ -919,6 +924,8 @@ export default function EmployeesPage() {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [isLoad, setIsLoad] = useState(false);
+  const [photoChecking, setPhotoChecking] = useState(false);
+  const [photoReview, setPhotoReview] = useState(null);
   const [alert, setAlert] = useState({ open: false, status: true, text: "" });
   const [refs, setRefs] = useState({
     cities: [],
@@ -1011,6 +1018,25 @@ export default function EmployeesPage() {
     } finally {
       setTimeout(() => setIsLoad(false), 300);
     }
+  };
+
+  const uploadEmployeePhoto = async (method, file, data = {}) => {
+    setPhotoChecking(true);
+    try {
+      return await uploadData(method, file, data);
+    } finally {
+      setPhotoChecking(false);
+    }
+  };
+
+  const handlePhotoCheckFailure = (res, context) => {
+    if (res?.code === "employee_photo_review_required" && res?.photo_review?.token) {
+      setPhotoReview({ ...context, ...res.photo_review });
+      return true;
+    }
+
+    showAlert(false, res?.text || "Фото отклонено");
+    return false;
   };
 
   const refreshEmployees = async (
@@ -1290,14 +1316,18 @@ export default function EmployeesPage() {
     }
 
     if (employeePhotoFile && permissions.photo.edit) {
-      const res = await uploadData("upload_photo", employeePhotoFile, {
+      const res = await uploadEmployeePhoto("upload_photo", employeePhotoFile, {
         user_id: employee.user.id,
       });
 
       if (!res) return;
 
       if (res.st === false) {
-        showAlert(false, res.text);
+        handlePhotoCheckFailure(res, {
+          mode: "edit",
+          file: employeePhotoFile,
+          userId: employee.user.id,
+        });
         return;
       }
 
@@ -1499,7 +1529,7 @@ export default function EmployeesPage() {
     setNewDialog(true);
   };
 
-  const createEmployee = async () => {
+  const createEmployee = async (photoReviewConfirmation = null) => {
     const user = { ...newEmployee };
     const photoFile = user.photo_file;
     const healthItems = asArray(user.health_items);
@@ -1520,21 +1550,68 @@ export default function EmployeesPage() {
       health_items: healthItems,
       cloth_items: clothItems,
       absences,
+      ...(photoReviewConfirmation
+        ? {
+            photo_review_token: photoReviewConfirmation.token,
+            photo_review_confirmed: true,
+          }
+        : {}),
     };
     const res = photoFile
-      ? await uploadData("create_employee", photoFile, payload)
+      ? await uploadEmployeePhoto("create_employee", photoFile, payload)
       : await getData("create_employee", payload);
 
     if (!res) return;
 
     if (res.st === false) {
-      showAlert(false, res.text);
+      handlePhotoCheckFailure(res, { mode: "create", file: photoFile });
       return;
     }
 
     showAlert(true, res.text || "Сотрудник создан");
     await refreshEmployees();
     setNewDialog(false);
+    setPhotoReview(null);
+  };
+
+  const confirmPhotoReview = async () => {
+    if (!photoReview?.token || !photoReview?.file) return;
+
+    if (photoReview.mode === "create") {
+      await createEmployee(photoReview);
+      return;
+    }
+
+    const res = await uploadEmployeePhoto("upload_photo", photoReview.file, {
+      user_id: photoReview.userId,
+      photo_review_token: photoReview.token,
+      photo_review_confirmed: true,
+    });
+    if (!res) return;
+    if (res.st === false) {
+      handlePhotoCheckFailure(res, {
+        mode: "edit",
+        file: photoReview.file,
+        userId: photoReview.userId,
+      });
+      return;
+    }
+
+    setPhotoReview(null);
+    setEmployeePhotoFile(null);
+    showAlert(true, res.text || "Фото обновлено");
+    await refreshEmployees();
+    await refreshEmployee(photoReview.userId);
+    setEmployeeDialog(false);
+  };
+
+  const chooseAnotherPhoto = () => {
+    if (photoReview?.mode === "create") {
+      setNewEmployee((prev) => ({ ...prev, photo_file: null }));
+    } else {
+      setEmployeePhotoFile(null);
+    }
+    setPhotoReview(null);
   };
 
   const handleRowsChange = (event) => {
@@ -1938,7 +2015,13 @@ export default function EmployeesPage() {
         style={{ zIndex: 99999 }}
         open={isLoad}
       >
-        <CircularProgress color="inherit" />
+        <Stack
+          spacing={1.5}
+          alignItems="center"
+        >
+          <CircularProgress color="inherit" />
+          {photoChecking ? <Typography color="inherit">Проверяем фото…</Typography> : null}
+        </Stack>
       </Backdrop>
       <MyAlert
         isOpen={alert.open}
@@ -2313,6 +2396,7 @@ export default function EmployeesPage() {
         onIssueCloth={issueCloth}
         onReturnCloth={returnCloth}
         onManageCloth={loadClothList}
+        saving={isLoad}
       />
 
       <CreateEmployeeDialog
@@ -2323,6 +2407,7 @@ export default function EmployeesPage() {
         onClose={() => setNewDialog(false)}
         onChange={updateNewEmployee}
         onCreate={createEmployee}
+        saving={isLoad}
       />
 
       <ClothListDialog
@@ -2352,6 +2437,37 @@ export default function EmployeesPage() {
             onClick={confirm?.action}
           >
             Подтвердить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(photoReview)}
+        onClose={photoChecking ? undefined : chooseAnotherPhoto}
+      >
+        <DialogTitle>Нужна проверка фотографии</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {photoReview?.reason || "ИИ не смог уверенно проверить фотографию."}
+          </Typography>
+          <Typography sx={{ mt: 1, color: "text.secondary", fontSize: 13 }}>
+            Если на фото точно нет документов и персональных данных, сохранение можно подтвердить.
+            Подтверждение будет записано в историю сотрудника.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={chooseAnotherPhoto}
+            disabled={photoChecking}
+          >
+            Выбрать другое фото
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmPhotoReview}
+            disabled={photoChecking}
+          >
+            Сохранить всё равно
           </Button>
         </DialogActions>
       </Dialog>
@@ -2387,6 +2503,7 @@ function EmployeeDialog({
   onIssueCloth,
   onReturnCloth,
   onManageCloth,
+  saving,
 }) {
   const permissions = getEmployeeCardPermissions(basePermissions, isSelf, isSuperPosition);
   const user = employee?.user;
@@ -3133,7 +3250,7 @@ function EmployeeDialog({
           <Button
             variant="contained"
             onClick={onSaveBasic}
-            disabled={!basicCanEdit && !(permissions.photo.edit && photoFile)}
+            disabled={saving || (!basicCanEdit && !(permissions.photo.edit && photoFile))}
           >
             Сохранить
           </Button>
@@ -3143,7 +3260,16 @@ function EmployeeDialog({
   );
 }
 
-function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onChange, onCreate }) {
+function CreateEmployeeDialog({
+  open,
+  fullScreen,
+  employee,
+  refs,
+  onClose,
+  onChange,
+  onCreate,
+  saving,
+}) {
   const [activeTab, setActiveTab] = useState("basic");
   const [clothDraft, setClothDraft] = useState({
     item: null,
@@ -3579,7 +3705,8 @@ function CreateEmployeeDialog({ open, fullScreen, employee, refs, onClose, onCha
         <Button onClick={onClose}>Отмена</Button>
         <Button
           variant="contained"
-          onClick={onCreate}
+          onClick={() => onCreate()}
+          disabled={saving}
         >
           Создать
         </Button>
