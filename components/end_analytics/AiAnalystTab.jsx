@@ -927,9 +927,11 @@ export default function AiAnalystTab({
   }, [chatMessages, chatLoading]);
 
   const canChat = Boolean(analysis && siteDataRequestId && activeChatThreadId);
+  const hasPendingChatMessage = chatMessages.some((message) => message?.isPending);
+  const canSendChat = canChat && !hasPendingChatMessage;
 
   const handleSendChat = async (prompt) => {
-    if (!prompt || chatRequestInFlightRef.current || !canChat || !onSendChat) return;
+    if (!prompt || chatRequestInFlightRef.current || !canSendChat || !onSendChat) return;
 
     chatRequestInFlightRef.current = true;
     setChatMessages((prev) => [...prev, { role: "user", text: prompt }]);
@@ -2098,7 +2100,12 @@ export default function AiAnalystTab({
                       wordBreak: "break-word",
                     }}
                   >
-                    {message.role === "assistant" && !message.isError ? (
+                    {message.isPending ? (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CircularProgress size={14} />
+                        <Typography variant="body2">{message.text}</Typography>
+                      </Box>
+                    ) : message.role === "assistant" && !message.isError ? (
                       <>
                         <MemoizedMarkdownMessage text={message.text} />
                         {message.aiModelName ? (
@@ -2123,7 +2130,7 @@ export default function AiAnalystTab({
                 </Box>
               ))}
 
-              {chatLoading && (
+              {chatLoading && !hasPendingChatMessage && (
                 <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1 }}>
                   <Box
                     sx={{
@@ -2151,7 +2158,7 @@ export default function AiAnalystTab({
 
             <ChatComposer
               canChat={canChat}
-              loading={chatLoading}
+              loading={chatLoading || hasPendingChatMessage}
               threadId={activeChatThreadId}
               onSend={handleSendChat}
             />

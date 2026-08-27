@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
@@ -44,6 +44,7 @@ import {
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
+const END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY = "end_analytics_active_chat_thread_id";
 const EMPTY_CUSTOM_COST_OPTIONS = {
   src_source: [],
   src_medium: [],
@@ -562,6 +563,8 @@ function EndPage() {
   const [historyChatMessages, setHistoryChatMessages] = useState(null);
   const [aiChatThreads, setAiChatThreads] = useState([]);
   const [activeChatThreadId, setActiveChatThreadId] = useState(null);
+  const activeChatThreadIdRef = useRef(null);
+  const chatPollInFlightRef = useRef(false);
   const [aiSiteDataSnapshot, setAiSiteDataSnapshot] = useState(null);
   const accessApi = handleUserAccess(access || {});
   const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
@@ -594,11 +597,12 @@ function EndPage() {
       setSiteDataHistory(data.site_data_history || []);
       const initialThreads = Array.isArray(data.ai_chat_threads) ? data.ai_chat_threads : [];
       if (initialThreads.length) {
-        applyChatThreads(initialThreads);
-        const initialThread =
-          initialThreads.find((thread) => thread.is_pinned) || initialThreads[0] || null;
+        const savedThreadId =
+          typeof window !== "undefined"
+            ? Number(window.localStorage.getItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY)) || null
+            : null;
+        const initialThread = applyChatThreads(initialThreads, savedThreadId);
         if (initialThread) {
-          setActiveChatThreadId(initialThread.id);
           loadChatThreadMessages(initialThread.id);
         }
       }
@@ -747,6 +751,11 @@ function EndPage() {
 
     return aiChat.flatMap((item) => {
       const messages = [];
+      const processingStartedAt = item?.updated_at || item?.created_at;
+      const processingTimedOut =
+        item?.status === "processing" &&
+        processingStartedAt &&
+        dayjs().diff(dayjs(processingStartedAt), "minute") >= 10;
       if (item?.prompt) {
         messages.push({
           id: `${item.id || "message"}-user`,
@@ -772,9 +781,39 @@ function EndPage() {
           isError: true,
           dataRefs: item.context_meta?.data_refs || [],
         });
+      } else if (item?.status === "processing" && !processingTimedOut) {
+        messages.push({
+          id: `${item.id || "message"}-processing`,
+          role: "assistant",
+          text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
+          isPending: true,
+          dataRefs: item.context_meta?.data_refs || [],
+          aiModelName: item.context_meta?.ai_model_name || null,
+        });
+      } else if (processingTimedOut) {
+        messages.push({
+          id: `${item.id || "message"}-error`,
+          role: "assistant",
+          text: "Запрос не завершился. Повторите его ещё раз.",
+          isError: true,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
       }
       return messages;
     });
+  };
+
+  const rememberActiveChatThread = (threadId) => {
+    const nextThreadId = threadId ? Number(threadId) : null;
+    activeChatThreadIdRef.current = nextThreadId;
+    setActiveChatThreadId(nextThreadId);
+
+    if (typeof window === "undefined") return;
+    if (nextThreadId) {
+      window.localStorage.setItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY, String(nextThreadId));
+    } else {
+      window.localStorage.removeItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY);
+    }
   };
 
   const restoreChatThreads = (threads, legacyChat) => {
@@ -815,10 +854,11 @@ function EndPage() {
       null;
 
     setAiChatThreads(nextThreads);
-    setActiveChatThreadId(selected?.id ?? null);
+    rememberActiveChatThread(selected?.id ?? null);
     if (Array.isArray(selected?.messages)) {
       setHistoryChatMessages(mapAiChatToMessages(selected.messages));
     }
+    return selected;
   };
 
   const loadChatThreadMessages = async (threadId) => {
@@ -838,13 +878,15 @@ function EndPage() {
         Number(thread.id) === Number(threadId) ? { ...thread, messages } : thread,
       ),
     );
-    setHistoryChatMessages(mapAiChatToMessages(messages));
+    if (Number(activeChatThreadIdRef.current) === Number(threadId)) {
+      setHistoryChatMessages(mapAiChatToMessages(messages));
+    }
     return messages;
   };
 
   const selectChatThread = async (threadId) => {
     const selected = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId));
-    setActiveChatThreadId(selected?.id ?? null);
+    rememberActiveChatThread(selected?.id ?? null);
     if (!selected) {
       setHistoryChatMessages([]);
       return;
@@ -855,6 +897,25 @@ function EndPage() {
       await loadChatThreadMessages(selected.id);
     }
   };
+
+  useEffect(() => {
+    const hasPendingMessage = Array.isArray(historyChatMessages)
+      ? historyChatMessages.some((message) => message?.isPending)
+      : false;
+    if (!activeChatThreadId || !hasPendingMessage) return undefined;
+
+    const timer = window.setTimeout(async () => {
+      if (chatPollInFlightRef.current) return;
+      chatPollInFlightRef.current = true;
+      try {
+        await loadChatThreadMessages(activeChatThreadId);
+      } finally {
+        chatPollInFlightRef.current = false;
+      }
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [activeChatThreadId, historyChatMessages]);
 
   const applyAiRequest = () => {
     setAiAnalysis(null);
@@ -1054,6 +1115,37 @@ function EndPage() {
       typeof window !== "undefined" && window.crypto?.randomUUID
         ? window.crypto.randomUUID().replaceAll("-", "")
         : `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+    const requestThreadId = activeChatThreadIdRef.current || activeChatThreadId;
+    const optimisticUserId = `${idempotencyKey}-user`;
+    const optimisticAssistantId = `${idempotencyKey}-processing`;
+    setHistoryChatMessages((current) => [
+      ...(Array.isArray(current) ? current : []),
+      { id: optimisticUserId, role: "user", text: prompt },
+      {
+        id: optimisticAssistantId,
+        role: "assistant",
+        text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
+        isPending: true,
+        aiModelName: aiModel?.name || null,
+      },
+    ]);
+
+    const settleOptimisticMessage = (text, options = {}) => {
+      setHistoryChatMessages((current) =>
+        (Array.isArray(current) ? current : []).map((message) =>
+          message.id === optimisticAssistantId
+            ? {
+                ...message,
+                text,
+                isPending: false,
+                isError: Boolean(options.isError),
+                aiModelName: options.aiModelName || message.aiModelName || null,
+              }
+            : message,
+        ),
+      );
+    };
+
     try {
       const result = await api_laravel(
         "end_analytics",
@@ -1061,7 +1153,7 @@ function EndPage() {
         {
           prompt,
           site_data_request_id: siteDataRequestId,
-          thread_id: activeChatThreadId,
+          thread_id: requestThreadId,
           idempotency_key: idempotencyKey,
           ai_model: aiModel?.id || "auto",
         },
@@ -1069,10 +1161,17 @@ function EndPage() {
       );
       const data = result?.data && typeof result.data === "object" ? result.data : result || {};
       const chatSynced = Array.isArray(data.ai_chat_threads);
+      const responseThreadId = data.thread_id || requestThreadId;
 
       if (chatSynced) {
-        applyChatThreads(data.ai_chat_threads, data.thread_id || activeChatThreadId);
-        await loadChatThreadMessages(data.thread_id || activeChatThreadId);
+        applyChatThreads(data.ai_chat_threads, activeChatThreadIdRef.current || responseThreadId);
+        await loadChatThreadMessages(responseThreadId);
+      } else if (data.st !== false) {
+        settleOptimisticMessage(data.answer || "Пустой ответ AI", {
+          aiModelName: data.ai_model_name,
+        });
+      } else {
+        settleOptimisticMessage(data.text || "Не удалось получить ответ AI", { isError: true });
       }
 
       if (data.st !== false) {
@@ -1084,22 +1183,29 @@ function EndPage() {
 
       return {
         ...data,
-        chat_synced: chatSynced,
+        chat_synced: true,
       };
     } catch (error) {
       const response = error?.response?.data;
       const data = response?.data && typeof response.data === "object" ? response.data : response;
       const chatSynced = Array.isArray(data?.ai_chat_threads);
+      const responseThreadId = data?.thread_id || requestThreadId;
 
       if (chatSynced) {
-        applyChatThreads(data.ai_chat_threads, data.thread_id || activeChatThreadId);
-        await loadChatThreadMessages(data.thread_id || activeChatThreadId);
+        applyChatThreads(data.ai_chat_threads, activeChatThreadIdRef.current || responseThreadId);
+        await loadChatThreadMessages(responseThreadId);
+      } else {
+        settleOptimisticMessage(data?.text || "Ошибка при обращении к AI-чату", {
+          isError: true,
+        });
       }
 
       return {
         st: false,
         text: data?.text || "Ошибка при обращении к AI-чату",
-        chat_synced: chatSynced,
+        code: data?.code || null,
+        retry_after_seconds: data?.retry_after_seconds || null,
+        chat_synced: true,
       };
     }
   };
