@@ -777,7 +777,8 @@ function EndPage() {
         messages.push({
           id: `${item.id || "message"}-error`,
           role: "assistant",
-          text: "Не удалось получить ответ AI. Предыдущая история чата сохранена.",
+          text:
+            item.error_text || "Не удалось получить ответ AI. Предыдущая история чата сохранена.",
           isError: true,
           dataRefs: item.context_meta?.data_refs || [],
         });
