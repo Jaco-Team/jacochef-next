@@ -7,7 +7,6 @@ import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import SyncAltOutlinedIcon from "@mui/icons-material/SyncAltOutlined";
 import {
   Alert,
   Box,
@@ -121,7 +120,7 @@ function formatStageRows(itemsStage) {
     return stageItems.map((item, index) => ({
       key: `${stage.key}-${item?.id ?? index}`,
       stage: stage.label,
-      entityType: item?.type === "rec" ? "Рецепт" : "Заготовка",
+      entityType: item?.type === "rec" ? "Рецепт" : "Полуфабрикат",
       name: item?.name ?? "-",
       brutto: item?.brutto ?? "-",
       netto: item?.netto ?? "-",
@@ -243,16 +242,16 @@ export default function SkladSiteItemViewDialog({
   onEdit,
   onUploadImage,
   onRestoreImage,
-  onSyncVk,
   onClose,
 }) {
   const fileInputRef = useRef(null);
   const imageUrl = resolveSiteItemImageUrl(detail?.image, detail?.img_app);
   const isVisible = detail?.is_show ?? 0;
 
-  const compositionRows = formatCompositionRows(detail?.composition_source?.pf, "Заготовка").concat(
-    formatCompositionRows(detail?.composition_source?.recipes, "Рецепт"),
-  );
+  const compositionRows = formatCompositionRows(
+    detail?.composition_source?.pf,
+    "Полуфабрикат",
+  ).concat(formatCompositionRows(detail?.composition_source?.recipes, "Рецепт"));
 
   const derivedRows = formatCompositionRows(
     detail?.composition_derived?.pf_total,
@@ -613,7 +612,7 @@ export default function SkladSiteItemViewDialog({
 
                   <SkladSectionCard
                     title="Исходный состав"
-                    subtitle="Прямые связи товара сайта с заготовками и рецептами"
+                    subtitle="Прямые связи товара сайта с полуфабрикатами и рецептами"
                   >
                     {compositionRows.length ? (
                       <TableContainer>
@@ -893,14 +892,6 @@ export default function SkladSiteItemViewDialog({
                           onClick={handlePickImage}
                         >
                           Загрузить изображение
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          startIcon={<SyncAltOutlinedIcon />}
-                          disabled={!isEditable}
-                          onClick={onSyncVk}
-                        >
-                          Синхронизировать VK
                         </Button>
                       </Stack>
                     </Stack>

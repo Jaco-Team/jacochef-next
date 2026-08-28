@@ -5,6 +5,7 @@ import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   Button,
@@ -44,8 +45,6 @@ import { PRODUCTION_ARCHIVE_MODE_OPTIONS } from "./useSkladProductionStore";
 export default function SkladProductionContent({
   activeEntityType,
   search,
-  entityFilter,
-  entityOptions,
   categoryId,
   archiveMode,
   categoryOptions,
@@ -72,12 +71,15 @@ export default function SkladProductionContent({
   canManageProduction,
   canViewHistory,
   canCreateCategory,
+  canManageCategories,
   setState,
   openCreate,
   onCreateCategory,
+  onManageCategories,
   openEdit,
   openArchiveDialog,
   openDeleteDialog,
+  openConvertDialog,
   closeModal,
   closeDeleteDialog,
   closeArchiveDialog,
@@ -94,10 +96,10 @@ export default function SkladProductionContent({
             spacing={2}
             alignItems="stretch"
           >
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <MySearchInput
                 label="Поиск"
-                placeholder="Название рецепта или заготовки"
+                placeholder="Название рецепта или полуфабриката"
                 value={search}
                 onValueChange={(nextValue) =>
                   setState({
@@ -108,22 +110,7 @@ export default function SkladProductionContent({
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
-              <MySelect
-                label="Тип"
-                data={entityOptions}
-                is_none={false}
-                value={entityFilter}
-                func={(event) =>
-                  setState({
-                    entityFilter: event.target.value,
-                    page: 0,
-                  })
-                }
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Stack
                 direction="row"
                 spacing={0.5}
@@ -135,29 +122,29 @@ export default function SkladProductionContent({
                     data={categoryOptions}
                     is_none={false}
                     value={categoryId}
-                    func={(event) =>
+                    func={(event) => {
                       setState({
                         categoryId: event.target.value,
                         page: 0,
-                      })
-                    }
+                      });
+                    }}
                   />
                 </Stack>
-                {canCreateCategory ? (
-                  <Tooltip title="Добавить категорию">
+                {canManageCategories ? (
+                  <Tooltip title="Управление категориями">
                     <IconButton
                       size="small"
-                      aria-label="Добавить категорию"
-                      onClick={onCreateCategory}
+                      aria-label="Управление категориями"
+                      onClick={onManageCategories}
                     >
-                      <AddIcon fontSize="small" />
+                      <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 ) : null}
               </Stack>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <MySelect
                 label="Показать"
                 data={PRODUCTION_ARCHIVE_MODE_OPTIONS}
@@ -192,7 +179,7 @@ export default function SkladProductionContent({
                   disabled={!canCreateProduction}
                   onClick={() => openCreate("semi_finished")}
                 >
-                  Добавить заготовку
+                  Добавить полуфабрикат
                 </Button>
               </Stack>
             </Grid>
@@ -218,15 +205,6 @@ export default function SkladProductionContent({
                     onSort={onSort}
                   >
                     Название
-                  </SkladSortableHeader>
-                  <SkladSortableHeader
-                    sortKey="entityType"
-                    sortBy={sortBy}
-                    sortDirection={sortDirection}
-                    onSort={onSort}
-                    sx={{ width: 140 }}
-                  >
-                    Тип
                   </SkladSortableHeader>
                   <SkladSortableHeader
                     sortKey="categories"
@@ -274,7 +252,9 @@ export default function SkladProductionContent({
                 {paginatedRows.map((row) => {
                   const entityType = row?.entityType || "semi_finished";
                   const canCreateOrEdit = canManageProduction;
-                  const canDelete = Boolean(row?.delete_usage?.can_delete);
+                  const canDelete =
+                    row?.delete_usage?.can_delete === true ||
+                    Number(row?.delete_usage?.can_delete) === 1;
                   const primaryStatusChip = getPrimaryStatusChip(row);
                   const secondaryStatusChips = getSecondaryStatusChips(row);
 
@@ -290,8 +270,9 @@ export default function SkladProductionContent({
                         <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
                       </TableCell>
 
-                      <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
-                      <TableCell>{formatCategories(row?.categories)}</TableCell>
+                      <TableCell>
+                        {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
+                      </TableCell>
                       <TableCell>{row?.shelf_life || "-"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
@@ -357,6 +338,31 @@ export default function SkladProductionContent({
                             </Tooltip>
                           ) : null}
 
+                          {canManageProduction ? (
+                            <Tooltip
+                              title={
+                                Number(row?.is_archived) === 1
+                                  ? "Сначала верните запись из архива"
+                                  : !canDelete
+                                    ? "Преобразование недоступно: запись уже используется"
+                                    : `Преобразовать в ${getEntitySingleLabel(
+                                        entityType === "recipe" ? "semi_finished" : "recipe",
+                                      ).toLowerCase()}`
+                              }
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Преобразовать ${getEntitySingleLabel(entityType).toLowerCase()}`}
+                                  disabled={Number(row?.is_archived) === 1 || !canDelete}
+                                  onClick={() => openConvertDialog(entityType, row)}
+                                >
+                                  <SwapHorizIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+
                           {canArchiveAction ? (
                             <Tooltip
                               title={
@@ -414,7 +420,7 @@ export default function SkladProductionContent({
 
                 {mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8}>
+                    <TableCell colSpan={7}>
                       <Typography color="text.secondary">
                         Ничего не найдено. Измените фильтры или режим показа.
                       </Typography>

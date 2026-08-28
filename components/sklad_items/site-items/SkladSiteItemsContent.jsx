@@ -90,7 +90,6 @@ export default function SkladSiteItemsContent({
   confirmDelete,
   confirmArchive,
   handleUploadImage,
-  handleSyncVk,
   handleCreateTag,
   handleRenameTag,
   submitDraft,

@@ -1170,7 +1170,7 @@ export default function SkladSiteItemEditorDialog({
                   </SkladSectionCard>
 
                   <SkladSectionCard
-                    title="Заготовки"
+                    title="Полуфабрикаты"
                     description="Состав технологической карты"
                   >
                     <TableContainer>
@@ -1323,7 +1323,7 @@ export default function SkladSiteItemEditorDialog({
                                   startIcon={<AddOutlinedIcon />}
                                   onClick={addStageRow}
                                 >
-                                  Добавить заготовку
+                                  Добавить полуфабрикат
                                 </Button>
                               </TableCell>
                             </TableRow>

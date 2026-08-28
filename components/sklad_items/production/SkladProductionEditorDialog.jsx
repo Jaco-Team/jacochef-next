@@ -10,7 +10,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
   Alert,
   Button,
-  Chip,
   DialogActions,
   DialogContent,
   Grid,
@@ -45,7 +44,6 @@ import SkladSectionCard from "../ui/SkladSectionCard";
 import {
   buildInitialDraft,
   dedupeSelectOptions,
-  formatTagNames,
   getCompositionItemId,
   getCompositionItemName,
   getCompositionLoss,
@@ -63,14 +61,6 @@ function formatMetricValue(value) {
   }
 
   return String(value);
-}
-
-function formatCalculatedAllergenNameList(items) {
-  if (!Array.isArray(items)) {
-    return [];
-  }
-
-  return items.map((item) => item?.name ?? "").filter(Boolean);
 }
 
 export default function SkladProductionEditorDialog({
@@ -161,33 +151,6 @@ export default function SkladProductionEditorDialog({
     () => normalizeSelectedOptions(form.apps, appOptions),
     [appOptions, form.apps],
   );
-  const derivedAllergenNames = useMemo(
-    () => formatTagNames(form.allergens_derived),
-    [form.allergens_derived],
-  );
-  const derivedPossibleAllergenNames = useMemo(
-    () => formatTagNames(form.allergens_possible_derived),
-    [form.allergens_possible_derived],
-  );
-  const calculatedAllergenNames = useMemo(() => {
-    const calculated = form?.calculated_allergens;
-
-    if (Array.isArray(calculated?.allergens)) {
-      return formatCalculatedAllergenNameList(calculated.allergens);
-    }
-
-    return derivedAllergenNames;
-  }, [derivedAllergenNames, form?.calculated_allergens]);
-  const calculatedPossibleAllergenNames = useMemo(() => {
-    const calculated = form?.calculated_allergens;
-
-    if (Array.isArray(calculated?.possible_allergens)) {
-      return formatCalculatedAllergenNameList(calculated.possible_allergens);
-    }
-
-    return derivedPossibleAllergenNames;
-  }, [derivedPossibleAllergenNames, form?.calculated_allergens]);
-
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -354,7 +317,6 @@ export default function SkladProductionEditorDialog({
                   <SkladSectionCard
                     icon={<InfoOutlinedIcon fontSize="small" />}
                     title="Основные"
-                    description="Ключевые поля карточки: название, срок действия, единица и расчетные значения."
                   >
                     <Grid
                       container
@@ -368,7 +330,7 @@ export default function SkladProductionEditorDialog({
                           func={(event) => updateField("name", event.target.value)}
                         />
                       </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
+                      <Grid size={12}>
                         <MyTextInput
                           label="Срок годности"
                           value={form.shelf_life}
@@ -376,7 +338,7 @@ export default function SkladProductionEditorDialog({
                           func={(event) => updateField("shelf_life", event.target.value)}
                         />
                       </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <MySelect
                           label="Единица"
                           data={unitOptions}
@@ -386,7 +348,7 @@ export default function SkladProductionEditorDialog({
                           func={(event) => updateField("ed_izmer_id", event.target.value)}
                         />
                       </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <MyDatePickerNew
                           label="Действует с"
                           value={form.date_start}
@@ -396,7 +358,7 @@ export default function SkladProductionEditorDialog({
                           }
                         />
                       </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <MyDatePickerNew
                           label="Действует по"
                           value={form.date_end}
@@ -475,37 +437,12 @@ export default function SkladProductionEditorDialog({
                           />
                         </Stack>
                       </Grid>
-                      <Grid size={12}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          useFlexGap
-                          flexWrap="wrap"
-                        >
-                          <Chip
-                            label={form.is_show ? "Активен" : "Скрыт"}
-                            size="small"
-                            color={form.is_show ? "success" : "default"}
-                          />
-                          <Chip
-                            label={form.show_in_rev ? "В ревизии" : "Без ревизии"}
-                            size="small"
-                            variant="outlined"
-                          />
-                          <Chip
-                            label={form.two_user ? "2 сотрудника" : "1 сотрудник"}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </Stack>
-                      </Grid>
                     </Grid>
                   </SkladSectionCard>
 
                   <SkladSectionCard
                     icon={<LocalShippingOutlinedIcon fontSize="small" />}
                     title="Привязки"
-                    description="Категории, аллергены, места хранения и должности."
                   >
                     <Grid
                       container
@@ -569,32 +506,6 @@ export default function SkladProductionEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Аллергены по составу
-                        </Typography>
-                        <Typography>
-                          {calculatedAllergenNames.length
-                            ? calculatedAllergenNames.join(", ")
-                            : "Нет расчетных аллергенов."}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          Возможные аллергены по составу
-                        </Typography>
-                        <Typography>
-                          {calculatedPossibleAllergenNames.length
-                            ? calculatedPossibleAllergenNames.join(", ")
-                            : "Нет расчетных возможных аллергенов."}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
                         <MyAutocomplite
                           multiple
                           label="Должности в кафе"
@@ -610,7 +521,6 @@ export default function SkladProductionEditorDialog({
                   <SkladSectionCard
                     icon={<Inventory2OutlinedIcon fontSize="small" />}
                     title={isRecipe ? "Номенклатура" : "Состав"}
-                    description={isRecipe ? "Номенклатура рецепта." : "Текстовый состав заготовки."}
                   >
                     {isRecipe ? (
                       <>
@@ -819,7 +729,6 @@ export default function SkladProductionEditorDialog({
                   <SkladSectionCard
                     icon={<HistoryOutlinedIcon fontSize="small" />}
                     title="История"
-                    description="Последние изменения текущей карточки."
                   >
                     <SkladEmbeddedHistoryTable history={form.history} />
                   </SkladSectionCard>

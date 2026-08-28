@@ -21,6 +21,10 @@ export default function useSkladApi() {
       getCategories: (sourceType) => request("categories/list", { source_type: sourceType }),
       createProductionCategory: (name) =>
         request("categories/save_new", { source_type: "semi_finished", name }),
+      updateProductionCategory: (id, name) =>
+        request("categories/save_edit", { id, source_type: "semi_finished", name }),
+      deleteProductionCategory: (id) =>
+        request("categories/delete", { id, source_type: "semi_finished" }),
       createSiteCategory: (payload) => request("site-items/categories/save_new", payload),
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
@@ -35,6 +39,7 @@ export default function useSkladApi() {
       createSemiFinished: (payload) => request("semi-finished/save_new", payload),
       updateSemiFinished: (payload) => request("semi-finished/save_edit", payload),
       saveSemiFinishedFlag: (payload) => request("semi-finished/save_flag", payload),
+      convertProductionEntity: (payload) => request("entities/convert_type", payload),
       getSiteItems: (payload = {}) => request("site-items/list", payload),
       getSiteItemBootstrap: () => request("site-items/get_all_for_new"),
       getSiteItem: (id) => request("site-items/get_one", { id }),
@@ -43,7 +48,6 @@ export default function useSkladApi() {
       saveSiteItemFlag: (payload) => request("site-items/save_flag", payload),
       createSiteItemTag: (payload) => request("site-items/tags/save_new", payload),
       updateSiteItemTag: (payload) => request("site-items/tags/save_edit", payload),
-      syncSiteItemsVk: () => request("site-items/sync_vk", {}),
       uploadSiteItemImage: (file, payload) => upload("site-items/upload_image", file, payload),
       restoreSiteItemImage: (payload) => request("site-items/restore_image", payload),
       historyList: (payload = {}) => request("history/list", payload),

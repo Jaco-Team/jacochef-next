@@ -210,7 +210,7 @@ function getProductionFieldLabels(isRecipe) {
     allergens: "Аллергены",
     allergens_possible: "Возможные аллергены",
     structure: "Состав",
-    items: isRecipe ? "Номенклатура" : "Номенклатура заготовки",
+    items: isRecipe ? "Номенклатура" : "Номенклатура полуфабриката",
     all_w_brutto: "Итого брутто",
     all_w_netto: "Итого нетто",
     all_w: "Итого выход",
@@ -343,7 +343,7 @@ const siteItemHistoryFieldLabels = {
   is_new: "Новинка",
   is_hit: "Хит",
   img_app: "Изображение",
-  stage_rows: "Заготовки и рецепты",
+  stage_rows: "Полуфабрикаты и рецепты",
   items: "Позиции",
   tags: "Теги",
 };

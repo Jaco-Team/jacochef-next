@@ -32,6 +32,7 @@ function normalizeBootstrap(response) {
   return {
     moduleName: response?.module_info?.name || "Склад",
     access: response?.access || {},
+    summary: response?.summary || {},
     units: response?.units || [],
     categories: response?.categories || [],
     allergens: response?.allergens || [],
@@ -208,6 +209,7 @@ export default function SkladPage() {
               aria-label="sklad_items tabs"
               variant="scrollable"
               scrollButtons="auto"
+              allowScrollButtonsMobile
             >
               {tabs.map((item, index) => (
                 <Tab

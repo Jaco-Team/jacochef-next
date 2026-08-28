@@ -3,11 +3,11 @@
 export const ENTITY_TYPES = ["recipe", "semi_finished"];
 
 export function getEntityLabel(entityType) {
-  return entityType === "recipe" ? "Рецепты" : "Заготовки";
+  return entityType === "recipe" ? "Рецепты" : "Полуфабрикаты";
 }
 
 export function getEntitySingleLabel(entityType) {
-  return entityType === "recipe" ? "Рецепт" : "Заготовка";
+  return entityType === "recipe" ? "Рецепт" : "Полуфабрикат";
 }
 
 export function getEntitySaveApi(api, entityType, mode) {

@@ -2,17 +2,13 @@
 
 import { create } from "zustand";
 
-export const PRODUCTION_ENTITY_OPTIONS = [
-  { id: "", name: "Все" },
-  { id: "recipe", name: "Рецепты" },
-  { id: "semi_finished", name: "Заготовки" },
-];
-
 export const PRODUCTION_ARCHIVE_MODE_OPTIONS = [
   { id: "active", name: "Активные" },
   { id: "all", name: "Все" },
   { id: "archive", name: "Архив" },
 ];
+
+export const PRODUCTION_RECIPE_CATEGORY_ID = "__recipes__";
 
 export const useSkladProductionStore = create((set) => ({
   activeEntityType: "semi_finished",
@@ -21,7 +17,6 @@ export const useSkladProductionStore = create((set) => ({
     recipe: [],
   },
   search: "",
-  entityFilter: "",
   categoryId: "",
   archiveMode: "active",
   page: 0,

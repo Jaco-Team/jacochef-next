@@ -88,7 +88,7 @@
 - `site_items_new/edit_tag` -> `sklad_items/site-items/tags/save_edit`
 - `site_items_new/saveNewTag` -> `sklad_items/site-items/tags/save_new`
 - `site_items_new/upload_img` -> `sklad_items/site-items/upload_image`
-- `site_items_new/updateVK` -> `sklad_items/site-items/sync_vk`
+- `site_items_new/updateVK` -> legacy-only `sklad_items/site-items/sync_vk`; новый UI не вызывает VK-синхронизацию
 
 Правило для новой FE по history `site_item`:
 

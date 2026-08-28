@@ -5,7 +5,9 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import {
+  Box,
   Button,
+  Chip,
   IconButton,
   Paper,
   Stack,
@@ -68,6 +70,12 @@ function buildSavePayload(draft) {
     main_count: normalizedDraft.main_count,
     con_count: normalizedDraft.con_count,
   };
+}
+
+function formatUnitAmount(value) {
+  return new Intl.NumberFormat("ru-RU", {
+    maximumFractionDigits: 3,
+  }).format(normalizeNumber(value, 0));
 }
 
 export default function useSkladUnitsController({ showAlert }) {
@@ -276,52 +284,84 @@ export default function useSkladUnitsController({ showAlert }) {
     normalizeNumber(draft?.con_count, 0) <= 0;
 
   const content = (
-    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
-      <Stack spacing={2}>
+    <Paper
+      sx={{
+        width: "100%",
+        maxWidth: 1080,
+        mx: "auto",
+        p: { xs: 1.5, sm: 2 },
+        borderRadius: 3,
+      }}
+    >
+      <Stack spacing={1.5}>
         <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
           justifyContent="space-between"
-          alignItems={{ xs: "stretch", md: "center" }}
+          alignItems={{ xs: "stretch", sm: "center" }}
         >
           <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ width: "100%" }}
+            direction="row"
+            spacing={1}
+            alignItems="center"
           >
-            <MyTextInput
-              label="Поиск"
-              value={search}
-              func={(event) => setState({ search: event.target.value })}
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700 }}
+            >
+              Единицы измерения
+            </Typography>
+            <Chip
+              label={rows.length}
+              size="small"
             />
           </Stack>
 
-          <Stack
-            direction="row"
-            spacing={1.5}
-            justifyContent={{ xs: "flex-start", md: "flex-end" }}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{ whiteSpace: "nowrap", alignSelf: { xs: "flex-start", sm: "center" } }}
+            onClick={openCreate}
+            disabled={!canCreate}
           >
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              sx={{ whiteSpace: "nowrap" }}
-              onClick={openCreate}
-              disabled={!canCreate}
-            >
-              Добавить
-            </Button>
-          </Stack>
+            Добавить единицу
+          </Button>
         </Stack>
 
-        <TableContainer>
-          <Table size="small">
+        <Box sx={{ width: "100%", maxWidth: 420 }}>
+          <MyTextInput
+            label="Поиск"
+            value={search}
+            func={(event) => setState({ search: event.target.value })}
+          />
+        </Box>
+
+        <TableContainer
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+          }}
+        >
+          <Table
+            size="small"
+            sx={{
+              "& .MuiTableCell-root": {
+                px: { xs: 1, sm: 1.5 },
+                py: 0.75,
+              },
+            }}
+          >
             <TableHead>
-              <TableRow>
-                <TableCell>Название</TableCell>
-                <TableCell align="right">Базовое количество</TableCell>
-                <TableCell align="right">Количество в связке</TableCell>
-                <TableCell>Базовая единица</TableCell>
-                <TableCell align="right">Действия</TableCell>
+              <TableRow sx={{ bgcolor: "action.hover" }}>
+                <TableCell sx={{ width: "32%", fontWeight: 700 }}>Название</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Пересчёт</TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ width: 96, fontWeight: 700 }}
+                >
+                  Действия
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -334,6 +374,15 @@ export default function useSkladUnitsController({ showAlert }) {
                   : isEditable && canDeleteAction
                     ? "Удалить"
                     : "Недостаточно прав для удаления";
+                const isBaseUnit =
+                  relationUnit &&
+                  Number(row?.id) === Number(row?.con_id) &&
+                  normalizeNumber(row?.main_count, 1) === normalizeNumber(row?.con_count, 1);
+                const conversionLabel = !relationUnit
+                  ? "Без привязки"
+                  : isBaseUnit
+                    ? "Базовая единица"
+                    : `${formatUnitAmount(row?.main_count)} ${row?.name || ""} = ${formatUnitAmount(row?.con_count)} ${relationUnit?.name || ""}`;
 
                 return (
                   <TableRow
@@ -343,9 +392,14 @@ export default function useSkladUnitsController({ showAlert }) {
                     <TableCell>
                       <Typography sx={{ fontWeight: 600 }}>{row?.name || "—"}</Typography>
                     </TableCell>
-                    <TableCell align="right">{row?.main_count ?? "—"}</TableCell>
-                    <TableCell align="right">{row?.con_count ?? "—"}</TableCell>
-                    <TableCell>{relationUnit?.name || "—"}</TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        color={isBaseUnit || !relationUnit ? "text.secondary" : "text.primary"}
+                      >
+                        {conversionLabel}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="right">
                       <Stack
                         direction="row"
@@ -355,10 +409,11 @@ export default function useSkladUnitsController({ showAlert }) {
                         <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
                           <span>
                             <IconButton
+                              size="small"
                               onClick={() => openEdit(row)}
                               disabled={!isEditable}
                             >
-                              <EditIcon />
+                              <EditIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
@@ -375,6 +430,7 @@ export default function useSkladUnitsController({ showAlert }) {
                           >
                             <span>
                               <IconButton
+                                size="small"
                                 color="error"
                                 disabled={deleteBlocked || !isEditable}
                                 onClick={withConfirm(
@@ -382,7 +438,7 @@ export default function useSkladUnitsController({ showAlert }) {
                                   `Удалить единицу "${row?.name || ""}"?`,
                                 )}
                               >
-                                <DeleteOutlineIcon />
+                                <DeleteOutlineIcon fontSize="small" />
                               </IconButton>
                             </span>
                           </Tooltip>
@@ -396,7 +452,7 @@ export default function useSkladUnitsController({ showAlert }) {
               {filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={3}
                     align="center"
                   >
                     <Typography color="text.secondary">Ничего не найдено</Typography>

@@ -11,7 +11,6 @@ import {
   InputAdornment,
   ListItemText,
   TextField,
-  Tooltip,
   createFilterOptions,
 } from "@mui/material";
 
@@ -263,43 +262,35 @@ export default function SkladCsvAutocompleteField({
 
   if (!isEditing) {
     return (
-      <Tooltip
-        title={summaryValue || ""}
-        disableFocusListener={!summaryValue}
-        disableHoverListener={!summaryValue}
-        disableTouchListener={!summaryValue}
-        placement="top-start"
-      >
-        <TextField
-          fullWidth
-          size="small"
-          label={label}
-          value={summaryValue}
-          placeholder={placeholder}
-          disabled={disabled}
-          inputProps={{
-            readOnly: true,
-            "aria-label": label,
-          }}
-          onClick={() => {
-            if (!disabled) {
-              setIsEditing(true);
-            }
-          }}
-          onFocus={() => {
-            if (!disabled) {
-              setIsEditing(true);
-            }
-          }}
-          sx={{
-            "& .MuiInputBase-input": {
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
-          }}
-        />
-      </Tooltip>
+      <TextField
+        fullWidth
+        size="small"
+        label={label}
+        value={summaryValue}
+        placeholder={placeholder}
+        disabled={disabled}
+        inputProps={{
+          readOnly: true,
+          "aria-label": label,
+        }}
+        onClick={() => {
+          if (!disabled) {
+            setIsEditing(true);
+          }
+        }}
+        onFocus={() => {
+          if (!disabled) {
+            setIsEditing(true);
+          }
+        }}
+        sx={{
+          "& .MuiInputBase-input": {
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          },
+        }}
+      />
     );
   }
 

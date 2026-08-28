@@ -6,7 +6,8 @@ import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { useSkladStore } from "../useSkladStore";
 import SkladProductionContent from "./SkladProductionContent";
-import SkladProductionCategoryDialog from "./SkladProductionCategoryDialog";
+import SkladProductionCategoryManagerDialog from "./SkladProductionCategoryManagerDialog";
+import SkladProductionConvertDialog from "./SkladProductionConvertDialog";
 import useSkladTableSort from "../table/useSkladTableSort";
 import {
   createEmptyProductionDraft,
@@ -20,7 +21,7 @@ import {
   normalizeProductionSavePayload,
   validateProductionDraft,
 } from "./production.helpers";
-import { PRODUCTION_ENTITY_OPTIONS, useSkladProductionStore } from "./useSkladProductionStore";
+import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkladProductionStore";
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
@@ -28,6 +29,7 @@ export default function useSkladProductionController({ showAlert }) {
     useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const summary = useSkladStore((state) => state.summary);
   const shellUnits = useSkladStore((state) => state.units);
   const categories = useSkladStore((state) => state.categories);
   const shellAllergens = useSkladStore((state) => state.allergens);
@@ -37,7 +39,6 @@ export default function useSkladProductionController({ showAlert }) {
   const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
   const rowsByType = useSkladProductionStore((state) => state.rowsByType);
   const search = useSkladProductionStore((state) => state.search);
-  const entityFilter = useSkladProductionStore((state) => state.entityFilter);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
   const archiveMode = useSkladProductionStore((state) => state.archiveMode);
   const page = useSkladProductionStore((state) => state.page);
@@ -48,23 +49,39 @@ export default function useSkladProductionController({ showAlert }) {
   const archiveDialog = useSkladProductionStore((state) => state.archiveDialog);
   const deleteDialog = useSkladProductionStore((state) => state.deleteDialog);
   const setState = useSkladProductionStore((state) => state.setState);
-  const [categoryDialog, setCategoryDialog] = useState({ open: false, loading: false });
+  const [categoryManagerDialog, setCategoryManagerDialog] = useState({
+    open: false,
+    loading: false,
+    categories: [],
+  });
+  const [convertDialog, setConvertDialog] = useState({
+    open: false,
+    loading: false,
+    row: null,
+    entityType: null,
+  });
 
   const categoryOptions = useMemo(() => {
     const sourceAwareCategories = (categories || []).filter(
       (item) => item?.source_type === "semi_finished" && Number(item?.is_archived) !== 1,
     );
 
-    return [{ id: "", name: "Все категории" }].concat(
-      sourceAwareCategories.map((item) => ({
+    return [
+      { id: "", name: "Все категории" },
+      ...sourceAwareCategories.map((item) => ({
         id: String(item.id),
         name: item.name,
         items_count: item?.items_count,
         recipes_count: item?.recipes_count,
         semi_finished_count: item?.semi_finished_count,
       })),
-    );
-  }, [categories]);
+      {
+        id: PRODUCTION_RECIPE_CATEGORY_ID,
+        name: "Рецепты",
+        items_count: Number(summary?.recipes_active || 0),
+      },
+    ];
+  }, [categories, summary?.recipes_active]);
 
   const filteredRows = useMemo(() => {
     return ENTITY_TYPES.flatMap((entityType) => {
@@ -74,13 +91,21 @@ export default function useSkladProductionController({ showAlert }) {
         ...row,
         entityType,
       }));
-    }).filter((row) => !entityFilter || row?.entityType === entityFilter);
-  }, [entityFilter, rowsByType]);
+    }).filter((row) => {
+      if (categoryId === PRODUCTION_RECIPE_CATEGORY_ID) {
+        return row?.entityType === "recipe";
+      }
+
+      return true;
+    });
+  }, [categoryId, rowsByType]);
 
   const productionSort = useSkladTableSort(filteredRows, {
     name: (row) => row?.name,
-    entityType: (row) => getEntitySingleLabel(row?.entityType),
-    categories: (row) => (row?.categories || []).map((item) => item?.name).join(", "),
+    categories: (row) =>
+      row?.entityType === "recipe"
+        ? "Рецепты"
+        : (row?.categories || []).map((item) => item?.name).join(", "),
     shelfLife: (row) => row?.shelf_life,
     dateStart: (row) => row?.date_start,
     dateEnd: (row) => row?.date_end,
@@ -93,16 +118,7 @@ export default function useSkladProductionController({ showAlert }) {
   }, [mergedRows, page, rowsPerPage]);
 
   const canDeleteAction = canDelete("recipe");
-
-  const openCategoryDialog = useCallback(() => {
-    if (canCreateProduction) {
-      setCategoryDialog({ open: true, loading: false });
-    }
-  }, [canCreateProduction]);
-
-  const closeCategoryDialog = useCallback(() => {
-    setCategoryDialog({ open: false, loading: false });
-  }, []);
+  const canManageCategories = canCreateProduction || canManageProduction || canDeleteAction;
 
   const refreshProductionCategories = useCallback(async () => {
     const response = await api.getCategories("semi_finished");
@@ -111,18 +127,53 @@ export default function useSkladProductionController({ showAlert }) {
       throw new Error(response?.text || "Ошибка обновления категорий");
     }
 
-    const nextCategories = Array.isArray(response?.list) ? response.list : [];
+    const nextCategories = (Array.isArray(response?.list) ? response.list : []).filter(
+      (item) => item?.source_type === "semi_finished",
+    );
     setShellState({
       categories: [
         ...(categories || []).filter((item) => item?.source_type !== "semi_finished"),
         ...nextCategories,
       ],
     });
+
+    return nextCategories;
   }, [api, categories, setShellState]);
+
+  const openCategoryManagerDialog = useCallback(async () => {
+    if (!canManageCategories) {
+      return;
+    }
+
+    setCategoryManagerDialog({ open: true, loading: true, categories: [] });
+
+    try {
+      const response = await api.getCategories("semi_finished");
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка загрузки категорий");
+      }
+
+      setCategoryManagerDialog({
+        open: true,
+        loading: false,
+        categories: (Array.isArray(response?.list) ? response.list : []).filter(
+          (item) => item?.source_type === "semi_finished",
+        ),
+      });
+    } catch (error) {
+      setCategoryManagerDialog({ open: false, loading: false, categories: [] });
+      showAlert(error?.message || "Ошибка загрузки категорий", false);
+    }
+  }, [api, canManageCategories, showAlert]);
+
+  const closeCategoryManagerDialog = useCallback(() => {
+    setCategoryManagerDialog({ open: false, loading: false, categories: [] });
+  }, []);
 
   const createCategory = useCallback(
     async (name) => {
-      setCategoryDialog({ open: true, loading: true });
+      setCategoryManagerDialog((current) => ({ ...current, loading: true }));
       setShellState({ isLoading: true });
 
       try {
@@ -132,27 +183,32 @@ export default function useSkladProductionController({ showAlert }) {
           throw new Error(response?.text || "Ошибка создания категории");
         }
 
-        await refreshProductionCategories();
-        closeCategoryDialog();
+        const nextCategories = await refreshProductionCategories();
+        setCategoryManagerDialog({ open: true, loading: false, categories: nextCategories });
         showAlert(response?.text || "Категория создана", true);
+        return true;
       } catch (error) {
-        setCategoryDialog({ open: true, loading: false });
+        setCategoryManagerDialog((current) => ({ ...current, loading: false }));
         showAlert(error?.message || "Ошибка создания категории", false);
+        return false;
       } finally {
         setShellState({ isLoading: false });
       }
     },
-    [api, closeCategoryDialog, refreshProductionCategories, setShellState, showAlert],
+    [api, refreshProductionCategories, setShellState, showAlert],
   );
 
   const loadRows = useCallback(
-    async ({ resetPage = false } = {}) => {
+    async ({ resetPage = false, categoryIdOverride } = {}) => {
       setShellState({ isLoading: true });
 
       try {
+        const selectedCategoryId =
+          categoryIdOverride === undefined ? categoryId : categoryIdOverride;
+        const isRecipeCategory = selectedCategoryId === PRODUCTION_RECIPE_CATEGORY_ID;
         const payload = {
           search: String(search || "").trim(),
-          category_id: categoryId ? Number(categoryId) : null,
+          category_id: selectedCategoryId && !isRecipeCategory ? Number(selectedCategoryId) : null,
           archive_mode: archiveMode,
         };
 
@@ -166,7 +222,7 @@ export default function useSkladProductionController({ showAlert }) {
         }
 
         if (!semiFinishedResponse?.st) {
-          throw new Error(semiFinishedResponse?.text || "Ошибка загрузки списка заготовок");
+          throw new Error(semiFinishedResponse?.text || "Ошибка загрузки списка полуфабрикатов");
         }
 
         setState({
@@ -185,6 +241,71 @@ export default function useSkladProductionController({ showAlert }) {
       }
     },
     [api, archiveMode, categoryId, search, setShellState, setState, showAlert],
+  );
+
+  const saveCategory = useCallback(
+    async (category, name) => {
+      setCategoryManagerDialog((current) => ({ ...current, loading: true }));
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.updateProductionCategory(category.id, name);
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка переименования категории");
+        }
+
+        const nextCategories = await refreshProductionCategories();
+        setCategoryManagerDialog({ open: true, loading: false, categories: nextCategories });
+        await loadRows();
+        showAlert(response?.text || "Категория переименована", true);
+        return true;
+      } catch (error) {
+        setCategoryManagerDialog((current) => ({ ...current, loading: false }));
+        showAlert(error?.message || "Ошибка переименования категории", false);
+        return false;
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, loadRows, refreshProductionCategories, setShellState, showAlert],
+  );
+
+  const deleteCategory = useCallback(
+    async (category) => {
+      setCategoryManagerDialog((current) => ({ ...current, loading: true }));
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.deleteProductionCategory(category.id);
+
+        if (!response?.st) {
+          throw new Error(getDeleteError(response));
+        }
+
+        const nextCategories = await refreshProductionCategories();
+        const shouldResetCategory = String(categoryId) === String(category.id);
+
+        if (shouldResetCategory) {
+          setState({ categoryId: "", page: 0 });
+        }
+
+        setCategoryManagerDialog({ open: true, loading: false, categories: nextCategories });
+        await loadRows({
+          resetPage: shouldResetCategory,
+          categoryIdOverride: shouldResetCategory ? "" : categoryId,
+        });
+        showAlert(response?.text || "Категория удалена", true);
+        return true;
+      } catch (error) {
+        setCategoryManagerDialog((current) => ({ ...current, loading: false }));
+        showAlert(error?.message || "Ошибка удаления категории", false);
+        return false;
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, categoryId, loadRows, refreshProductionCategories, setShellState, setState, showAlert],
   );
 
   useEffect(() => {
@@ -231,6 +352,67 @@ export default function useSkladProductionController({ showAlert }) {
       },
     });
   }, [setState]);
+
+  const closeConvertDialog = useCallback(() => {
+    setConvertDialog({ open: false, loading: false, row: null, entityType: null });
+  }, []);
+
+  const openConvertDialog = useCallback(
+    (entityType, row) => {
+      if (!canManageProduction || !row?.id || Number(row?.is_archived) === 1) {
+        return;
+      }
+
+      setConvertDialog({ open: true, loading: false, row, entityType });
+    },
+    [canManageProduction],
+  );
+
+  const confirmConvert = useCallback(async () => {
+    const row = convertDialog.row;
+    const entityType = convertDialog.entityType;
+
+    if (!canManageProduction || !row?.id || !ENTITY_TYPES.includes(entityType)) {
+      return;
+    }
+
+    const targetType = entityType === "recipe" ? "semi_finished" : "recipe";
+    setConvertDialog((current) => ({ ...current, loading: true }));
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.convertProductionEntity({
+        id: row.id,
+        from_type: entityType,
+        to_type: targetType,
+      });
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка преобразования");
+      }
+
+      closeConvertDialog();
+      showAlert(
+        `${getEntitySingleLabel(entityType)} преобразован в ${getEntitySingleLabel(targetType).toLowerCase()}`,
+        true,
+      );
+      await loadRows({ resetPage: true });
+    } catch (error) {
+      setConvertDialog((current) => ({ ...current, loading: false }));
+      showAlert(error?.message || "Ошибка преобразования", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [
+    api,
+    canManageProduction,
+    closeConvertDialog,
+    convertDialog.entityType,
+    convertDialog.row,
+    loadRows,
+    setShellState,
+    showAlert,
+  ]);
 
   const openArchiveDialog = useCallback(
     (entityType, row) => {
@@ -512,7 +694,6 @@ export default function useSkladProductionController({ showAlert }) {
   return {
     activeEntityType,
     search,
-    entityFilter,
     categoryId,
     archiveMode,
     loadRows,
@@ -521,8 +702,6 @@ export default function useSkladProductionController({ showAlert }) {
         <SkladProductionContent
           activeEntityType={activeEntityType}
           search={search}
-          entityFilter={entityFilter}
-          entityOptions={PRODUCTION_ENTITY_OPTIONS}
           categoryId={categoryId}
           archiveMode={archiveMode}
           categoryOptions={categoryOptions}
@@ -549,12 +728,15 @@ export default function useSkladProductionController({ showAlert }) {
           canManageProduction={canManageProduction}
           canViewHistory={canViewHistory}
           canCreateCategory={canCreateProduction}
-          onCreateCategory={openCategoryDialog}
+          canManageCategories={canManageCategories}
+          onCreateCategory={openCategoryManagerDialog}
+          onManageCategories={openCategoryManagerDialog}
           setState={setState}
           openCreate={openCreate}
           openEdit={openEdit}
           openArchiveDialog={openArchiveDialog}
           openDeleteDialog={openDeleteDialog}
+          openConvertDialog={openConvertDialog}
           closeModal={closeModal}
           closeDeleteDialog={closeDeleteDialog}
           closeArchiveDialog={closeArchiveDialog}
@@ -562,11 +744,25 @@ export default function useSkladProductionController({ showAlert }) {
           confirmDelete={confirmDelete}
           confirmArchive={confirmArchive}
         />
-        <SkladProductionCategoryDialog
-          open={categoryDialog.open}
-          loading={categoryDialog.loading}
-          onClose={closeCategoryDialog}
-          onSubmit={createCategory}
+        <SkladProductionCategoryManagerDialog
+          open={categoryManagerDialog.open}
+          loading={categoryManagerDialog.loading}
+          categories={categoryManagerDialog.categories}
+          canCreate={canCreateProduction}
+          canEdit={canManageProduction}
+          canDelete={canDeleteAction}
+          onClose={closeCategoryManagerDialog}
+          onCreate={createCategory}
+          onSave={saveCategory}
+          onDelete={deleteCategory}
+        />
+        <SkladProductionConvertDialog
+          open={convertDialog.open}
+          loading={convertDialog.loading}
+          row={convertDialog.row}
+          entityType={convertDialog.entityType}
+          onClose={closeConvertDialog}
+          onConfirm={confirmConvert}
         />
       </>
     ),

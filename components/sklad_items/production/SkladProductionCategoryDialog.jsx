@@ -32,7 +32,7 @@ export default function SkladProductionCategoryDialog({
     <MyModal
       open={open}
       onClose={loading ? undefined : onClose}
-      title="Новая категория рецептов и заготовок"
+      title="Новая категория рецептов и полуфабрикатов"
       maxWidth="sm"
     >
       <DialogContent>

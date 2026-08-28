@@ -10,6 +10,7 @@
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
     "build": "next build",
+    "test:e2e:sklad": "playwright test --config=playwright.sklad.config.js",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
@@ -65,6 +66,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/dropzone": "^5.7.9",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.2.18",

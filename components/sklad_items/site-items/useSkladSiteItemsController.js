@@ -614,24 +614,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [api, loadRows, modal, refreshOpenDetail, setShellState, setState, showAlert],
   );
 
-  const handleSyncVk = useCallback(async () => {
-    setShellState({ isLoading: true });
-
-    try {
-      const response = await api.syncSiteItemsVk();
-
-      if (!response?.st) {
-        throw new Error(response?.text || "Ошибка синхронизации VK");
-      }
-
-      showAlert(response?.text || "Синхронизация VK запущена", true);
-    } catch (error) {
-      showAlert(error?.message || "Ошибка синхронизации VK", false);
-    } finally {
-      setShellState({ isLoading: false });
-    }
-  }, [api, setShellState, showAlert]);
-
   const handleCreateTag = useCallback(
     async (name) => {
       const trimmedName = String(name || "").trim();
@@ -746,7 +728,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
           confirmDelete={confirmDelete}
           confirmArchive={confirmArchive}
           handleUploadImage={handleUploadImage}
-          handleSyncVk={handleSyncVk}
           handleCreateTag={handleCreateTag}
           handleRenameTag={handleRenameTag}
           submitDraft={submitDraft}

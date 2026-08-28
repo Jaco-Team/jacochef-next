@@ -1461,6 +1461,8 @@ Response:
 
 ### `POST|ANY /api/sklad_items/site-items/sync_vk`
 
+Legacy compatibility only. Новый интерфейс `sklad_items` этот endpoint не вызывает. Изображения товаров сохраняются только в Яндекс Object Storage.
+
 Rule:
 
 - sets `jaco_main_rolls.settings.type = vk_update_goods`

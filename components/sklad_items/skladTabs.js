@@ -1,7 +1,7 @@
 export const SKLAD_TAB_DEFINITIONS = [
   {
     key: "production",
-    label: "Рецепты и заготовки",
+    label: "Рецепты и полуфабрикаты",
     accessGroup: "production",
     description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
