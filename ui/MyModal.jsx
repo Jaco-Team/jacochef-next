@@ -1,5 +1,5 @@
 "use client";
-import { Dialog, DialogTitle, IconButton, useMediaQuery, useTheme } from "@mui/material";
+import { Dialog, DialogTitle, IconButton } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import useFullScreen from "@/src/hooks/useFullScreen";
 
@@ -15,10 +15,32 @@ export default function MyModal({
   maxWidth = "xl",
   scroll = "body",
   fsBp = "sm", // breakpoint for full-screen mode
+  containedDesktopScroll = false,
+  desktopMaxHeight = "80dvh",
   children,
+  slotProps,
   ...rest
 }) {
-  const fullScreen = useFullScreen();
+  const fullScreen = useFullScreen(fsBp);
+
+  const resolvedScroll = containedDesktopScroll && !fullScreen ? "paper" : scroll;
+  const mergedSlotProps = {
+    ...slotProps,
+    paper: {
+      ...(slotProps?.paper || {}),
+      sx: {
+        ...(containedDesktopScroll && !fullScreen
+          ? {
+              maxHeight: desktopMaxHeight,
+              display: "flex",
+              flexDirection: "column",
+            }
+          : {}),
+        ...(slotProps?.paper?.sx || {}),
+      },
+    },
+  };
+
   return (
     <Dialog
       open={open}
@@ -26,7 +48,8 @@ export default function MyModal({
       fullWidth={fullWidth}
       fullScreen={fullScreen}
       maxWidth={maxWidth}
-      scroll={scroll}
+      scroll={resolvedScroll}
+      slotProps={mergedSlotProps}
       {...rest}
     >
       {!!title && (
