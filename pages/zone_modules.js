@@ -27,6 +27,9 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
 
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
@@ -45,124 +48,262 @@ import { api_laravel_local, api_laravel } from "@/src/api_new";
 import dayjs from "dayjs";
 import MyAlert from "@/ui/MyAlert";
 
-class ZoneModules_Modal_History extends React.Component {
-  map_2 = null;
-  myGeoObject_2 = null;
+const historyFieldLabels = {
+  name: "Название зоны",
+  point_id: "Кафе",
+  sum_div: "Сумма для клиента",
+  sum_div_driver: "Сумма для курьера",
+  free_drive: "Бесплатная доставка",
+  is_active: "Активность",
+  zone: "Границы зоны",
+  date_start: "Дата применения",
+};
 
-  constructor(props) {
-    super(props);
+const historyEventLabels = {
+  created: "Создание",
+  copied: "Копирование",
+  updated: "Изменение",
+  archived: "Перенос в архив",
+  restored: "Восстановление",
+  scheduled_applied: "Применение по расписанию",
+};
 
-    this.state = {
-      itemView: null,
-    };
+const formatHistoryValue = (value, field, points) => {
+  if (value === null || typeof value === "undefined" || value === "") {
+    return "Нет данных";
+  }
+
+  if (field === "point_id") {
+    return points.find((point) => Number(point.id) === Number(value))?.name ?? `Кафе #${value}`;
+  }
+
+  if (field === "free_drive" || field === "is_active") {
+    return Number(value) ? "Да" : "Нет";
+  }
+
+  if (field === "sum_div" || field === "sum_div_driver") {
+    return `${Number(value).toLocaleString("ru-RU")} ₽`;
+  }
+
+  if (field === "zone") {
+    return "Границы на карте";
+  }
+
+  return String(value);
+};
+
+const historySummary = (item) => {
+  const changes = item?.changes ?? [];
+
+  if (!changes.length) {
+    return item?.history_completeness === "partial"
+      ? "Подробности сохранены частично"
+      : "Изменений полей не найдено";
+  }
+
+  return changes
+    .slice(0, 3)
+    .map((change) => historyFieldLabels[change.field] ?? change.field)
+    .join(", ");
+};
+
+class ActiveZonesMap extends React.Component {
+  map = null;
+  containerRef = React.createRef();
+  isUnmounted = false;
+
+  componentDidMount() {
+    this.initializeMap();
   }
 
   componentDidUpdate(prevProps) {
-    // console.log(this.props.itemView);
+    if (this.zonesSignature(prevProps.zones) !== this.zonesSignature(this.props.zones)) {
+      if (this.map) {
+        this.drawZones();
+      } else {
+        this.initializeMap();
+      }
+    }
+  }
 
-    if (!this.props) {
+  componentWillUnmount() {
+    this.isUnmounted = true;
+    this.map?.destroy();
+    this.map = null;
+  }
+
+  zonesSignature(zones) {
+    return zones.map((zone) => `${zone.id}:${zone.zone}`).join("|");
+  }
+
+  parseZone(zone) {
+    try {
+      return JSON.parse(zone);
+    } catch {
+      return null;
+    }
+  }
+
+  initializeMap() {
+    if (!this.containerRef.current || typeof window === "undefined" || !window.ymaps) {
       return;
     }
 
-    if (this.props.itemView !== prevProps.itemView) {
-      this.map_2 = null;
-      this.myGeoObject_2 = null;
-
-      if (this.props.zone_data) {
-        this.getZone(this.props.zone_data);
+    window.ymaps.ready(() => {
+      if (this.isUnmounted || this.map || !this.containerRef.current) {
+        return;
       }
 
-      this.setState({
-        itemView: this.props.itemView,
+      this.map = new window.ymaps.Map(
+        this.containerRef.current,
+        { center: [53.2, 50.15], zoom: 10, controls: ["zoomControl", "fullscreenControl"] },
+        { searchControlProvider: "yandex#search" },
+      );
+      this.map.behaviors.disable("scrollZoom");
+      this.drawZones();
+    });
+  }
+
+  drawZones() {
+    if (!this.map) {
+      return;
+    }
+
+    this.map.geoObjects.removeAll();
+
+    this.props.zones.forEach((zone) => {
+      const coordinates = this.parseZone(zone.zone);
+
+      if (!coordinates) {
+        return;
+      }
+
+      const polygon = new window.ymaps.Polygon(
+        [coordinates],
+        {
+          hintContent: `${zone.zone_name} · ${zone.point_name}`,
+        },
+        {
+          cursor: "pointer",
+          fillColor: "#d5003d",
+          fillOpacity: 0.24,
+          strokeColor: "#b80032",
+          strokeWidth: 3,
+        },
+      );
+
+      polygon.events.add("mouseenter", () => {
+        polygon.options.set({ fillOpacity: 0.4, strokeWidth: 5 });
       });
+      polygon.events.add("mouseleave", () => {
+        polygon.options.set({ fillOpacity: 0.24, strokeWidth: 3 });
+      });
+      polygon.events.add("click", () => this.props.onZoneClick(zone.id));
+
+      this.map.geoObjects.add(polygon);
+    });
+
+    const bounds = this.map.geoObjects.getBounds();
+
+    if (bounds) {
+      this.map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 40 });
+    }
+  }
+
+  render() {
+    return (
+      <Box
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 2,
+          overflow: "hidden",
+          bgcolor: "background.paper",
+        }}
+      >
+        <Box sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
+          <Typography fontWeight={700}>Карта активных зон</Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+          >
+            Нажмите на нужную зону, чтобы открыть её редактирование
+          </Typography>
+        </Box>
+        <Box
+          ref={this.containerRef}
+          sx={{ width: "100%", height: { xs: 360, sm: 480 }, bgcolor: "grey.100" }}
+        />
+      </Box>
+    );
+  }
+}
+
+class ZoneModules_Modal_History extends React.Component {
+  map_2 = null;
+
+  componentDidUpdate(prevProps) {
+    if (this.props.historyItem !== prevProps.historyItem) {
+      if (this.props.zone_data?.xy_point) {
+        this.getZone(this.props.zone_data);
+      }
     }
   }
 
   getZone(zone_data) {
-    if (!this.map_2) {
-      ymaps.ready(() => {
+    ymaps.ready(() => {
+      if (!this.map_2) {
         this.map_2 = new ymaps.Map(
           "map_zone",
           { center: JSON.parse(zone_data["xy_point"]), zoom: 10 },
           { searchControlProvider: "yandex#search" },
         );
+      }
 
-        this.myGeoObject_2 = new ymaps.Polygon(
-          [JSON.parse(zone_data.coordinates)],
-          { geometry: { fillRule: "nonZero" } },
-          {
-            fillOpacity: 0.4,
-            fillColor: "rgb(240, 128, 128)",
-            strokeColor: "rgb(187, 0, 37)",
-            strokeWidth: 5,
-          },
-        );
-
-        this.map_2.geoObjects.add(this.myGeoObject_2);
-
-        if (zone_data.coordinates_old && zone_data.coordinates_old !== "last") {
-          let myGeoObject_3 = new ymaps.Polygon(
-            [JSON.parse(zone_data.coordinates_old)],
-            { geometry: { fillRule: "nonZero" } },
-            {
-              fillColor: "#00FF00",
-              strokeColor: "#0000FF",
-              opacity: 0.5,
-              strokeWidth: 5,
-              strokeWidth: 5,
-            },
-          );
-
-          this.map_2.geoObjects.add(myGeoObject_3);
-        }
-      });
-    } else {
       this.map_2.geoObjects.removeAll();
 
-      this.myGeoObject_2 = new ymaps.Polygon(
-        [JSON.parse(zone_data.coordinates)],
-        { geometry: { fillRule: "nonZero" } },
-        {
-          fillOpacity: 0.4,
-          fillColor: "rgb(240, 128, 128)",
-          strokeColor: "rgb(187, 0, 37)",
-          strokeWidth: 5,
-        },
-      );
-
-      this.map_2.geoObjects.add(this.myGeoObject_2);
-
-      if (zone_data.coordinates_old && zone_data.coordinates_old !== "last") {
-        let myGeoObject_3 = new ymaps.Polygon(
+      if (zone_data.coordinates_old) {
+        const beforePolygon = new ymaps.Polygon(
           [JSON.parse(zone_data.coordinates_old)],
           { geometry: { fillRule: "nonZero" } },
           {
-            fillColor: "#00FF00",
-            strokeColor: "#0000FF",
-            opacity: 0.5,
-            strokeWidth: 5,
-            strokeWidth: 5,
+            fillOpacity: 0.2,
+            fillColor: "#1976d2",
+            strokeColor: "#1976d2",
+            strokeWidth: 4,
           },
         );
 
-        this.map_2.geoObjects.add(myGeoObject_3);
+        this.map_2.geoObjects.add(beforePolygon);
       }
-    }
+
+      if (zone_data.coordinates) {
+        const afterPolygon = new ymaps.Polygon(
+          [JSON.parse(zone_data.coordinates)],
+          { geometry: { fillRule: "nonZero" } },
+          {
+            fillOpacity: 0.3,
+            fillColor: "#d5003d",
+            strokeColor: "#d5003d",
+            strokeWidth: 4,
+          },
+        );
+
+        this.map_2.geoObjects.add(afterPolygon);
+      }
+    });
   }
 
   onClose() {
+    this.map_2?.destroy();
     this.map_2 = null;
-    this.myGeoObject_2 = null;
-
-    this.setState({
-      itemView: null,
-    });
-
     this.props.onClose();
   }
 
   render() {
-    const { open, fullScreen, date_edit, zone_data } = this.props;
+    const { fullScreen, historyItem, points, zone_data } = this.props;
+    const changes = historyItem?.changes ?? [];
+    const isIncomplete = historyItem?.history_completeness !== "complete";
 
     return (
       <Dialog
@@ -173,216 +314,108 @@ class ZoneModules_Modal_History extends React.Component {
         fullScreen={fullScreen}
       >
         <DialogTitle className="button">
-          <Typography style={{ alignSelf: "center" }}>
-            Изменения в {`зоне: ${zone_data?.name ?? ""}`} выделены цветом
-          </Typography>
+          <Box>
+            <Typography fontWeight={700}>{historyItem?.name ?? "История зоны"}</Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {historyItem?.date_time_update ?? ""} · {historyItem?.user_name ?? "Система Шеф"}
+            </Typography>
+          </Box>
           <IconButton onClick={this.onClose.bind(this)}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
         <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid
-            container
-            spacing={3}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mb: 2 }}
           >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <Typography style={{ alignSelf: "center", fontWeight: "bold" }}>
-                Дата начала изменений: {date_edit}
-              </Typography>
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyTextInput
-                label="Точка"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.point_id?.color
-                      ? this.state.itemView.point_id.key
-                      : this.state.itemView.point_id
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.point_id?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
+            <Chip
+              size="small"
+              label={historyEventLabels[historyItem?.event_type] ?? "Изменение"}
+              variant="outlined"
+            />
+            {isIncomplete ? (
+              <Chip
+                size="small"
+                label="Часть старых данных недоступна"
+                color="warning"
+                variant="outlined"
               />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
+            ) : null}
+          </Stack>
+
+          {changes.length ? (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell width="34%">Поле</TableCell>
+                  <TableCell width="33%">Было</TableCell>
+                  <TableCell width="33%">Стало</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {changes.map((change) => (
+                  <TableRow key={change.field}>
+                    <TableCell>{historyFieldLabels[change.field] ?? change.field}</TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>
+                      {formatHistoryValue(change.before, change.field, points)}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {formatHistoryValue(change.after, change.field, points)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <Typography color="text.secondary">Подробности изменения не сохранены</Typography>
+          )}
+
+          {historyItem?.history_completeness === "partial" ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1 }}
             >
-              <MyTextInput
-                label="Название зоны"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.name?.color
-                      ? this.state.itemView.name.key
-                      : this.state.itemView.name
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.name?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyTextInput
-                label="Сумма для клиента"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.sum_div?.color
-                      ? this.state.itemView.sum_div.key
-                      : this.state.itemView.sum_div
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.sum_div?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyTextInput
-                label="Сумма для курьера"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.sum_div_driver?.color
-                      ? this.state.itemView.sum_div_driver.key
-                      : this.state.itemView.sum_div_driver
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.sum_div_driver?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyTextInput
-                label="Бесплатная доставка"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.free_drive?.color
-                      ? this.state.itemView.free_drive.key
-                      : this.state.itemView.free_drive
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.free_drive?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            >
-              <MyTextInput
-                label="Активность"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.is_active?.color
-                      ? this.state.itemView.is_active.key
-                      : this.state.itemView.is_active
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.is_active?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            {zone_data?.coordinates_old === "last" ? null : (
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 12,
-                }}
-                sx={{
-                  mb: 2,
-                }}
+              Остальные значения до и после изменения: нет данных.
+            </Typography>
+          ) : null}
+
+          {zone_data?.xy_point ? (
+            <Box sx={{ mt: 3 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ mb: 1 }}
               >
-                <Typography
-                  align="center"
-                  style={{
-                    backgroundColor: "#ef5350",
-                    color: "#fff",
-                    padding: "10px 15px",
-                    fontWeight: 700,
-                  }}
-                >
-                  {zone_data?.coordinates_old
-                    ? "Красным цветом выделены границы прежней зоны, синим цветом выделены новые границы зоны"
-                    : "Изменений в границах зоны не было"}
-                </Typography>
-              </Grid>
-            )}
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
+                {zone_data.coordinates_old ? (
+                  <Chip
+                    size="small"
+                    label="Было"
+                    sx={{ color: "#1976d2", borderColor: "#1976d2" }}
+                    variant="outlined"
+                  />
+                ) : null}
+                {zone_data.coordinates ? (
+                  <Chip
+                    size="small"
+                    label="Стало"
+                    sx={{ color: "#d5003d", borderColor: "#d5003d" }}
+                    variant="outlined"
+                  />
+                ) : null}
+              </Stack>
               <div
                 id="map_zone"
                 name="map_zone"
                 style={{ width: "100%", height: 300, paddingTop: 10 }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button
@@ -431,18 +464,7 @@ class ZoneModules_Modal extends React.Component {
     }
 
     if (this.props.item !== prevProps.item) {
-      if (this.props.mark === "newZone") {
-        this.getZones(this.props.item.points[0], this.props.item.other_zone);
-      }
-
-      if (
-        this.props.mark === "editZone" ||
-        this.props.mark === "editZone_future" ||
-        this.props.mark === "copyZone"
-      ) {
-        this.getZones(this.props.item.zone, this.props.item.other_zone);
-      }
-
+      const item = JSON.parse(JSON.stringify(this.props.item));
       let zones = JSON.parse(JSON.stringify(this.props.zones));
 
       if (zones.length) {
@@ -457,8 +479,31 @@ class ZoneModules_Modal extends React.Component {
         zones = [];
       }
 
+      zones = zones.map((zone) => ({
+        ...zone,
+        is_view: Number(zone.is_active) === 1,
+      }));
+
+      const visibleZoneIds = new Set(
+        zones.filter((zone) => zone.is_view).map((zone) => Number(zone.id)),
+      );
+
+      item.other_zone = item.other_zone.filter((zone) => visibleZoneIds.has(Number(zone.id)));
+
+      if (this.props.mark === "newZone") {
+        this.getZones(item.points[0], item.other_zone);
+      }
+
+      if (
+        this.props.mark === "editZone" ||
+        this.props.mark === "editZone_future" ||
+        this.props.mark === "copyZone"
+      ) {
+        this.getZones(item.zone, item.other_zone);
+      }
+
       this.setState({
-        item: JSON.parse(JSON.stringify(this.props.item)),
+        item,
         zones,
       });
     }
@@ -1206,7 +1251,7 @@ class ZoneModules_Modal extends React.Component {
                           >
                             <MyCheckBox
                               label={item?.zone_name}
-                              value={item?.is_view ?? true}
+                              value={item?.is_view ?? Number(item?.is_active) === 1}
                               func={this.changeZonesView.bind(this, key, item.id)}
                             />
                           </ListItem>
@@ -1293,6 +1338,10 @@ class ZoneModules_ extends React.Component {
       confirmDialog: false,
 
       points: [],
+
+      zoneSortBy: null,
+      zoneSortDirection: "asc",
+      mapsReady: false,
     };
   }
 
@@ -1313,6 +1362,8 @@ class ZoneModules_ extends React.Component {
       module_name: data.module_info.name,
       zones_hist: res.all_hist,
       points: res.points,
+      zoneSortBy: null,
+      zoneSortDirection: "asc",
     });
 
     document.title = data.module_info.name;
@@ -1361,6 +1412,8 @@ class ZoneModules_ extends React.Component {
       zones_future: res.zones_future,
       zones_hist: res.all_hist,
       points: res.points,
+      zoneSortBy: null,
+      zoneSortDirection: "asc",
     });
   }
 
@@ -1593,114 +1646,37 @@ class ZoneModules_ extends React.Component {
     const points = this.state.points;
     const zones = this.state.zones;
 
-    const item = zones.find((zone) => parseInt(zone.id) === parseInt(zone_id))?.all_hist ?? [];
-    const index = item.findIndex((zone) => parseInt(zone.id) === parseInt(id));
+    const history = zones.find((zone) => Number(zone.id) === Number(zone_id))?.all_hist ?? [];
+    const itemView = history.find((item) => Number(item.id) === Number(id));
 
-    let itemView = JSON.parse(JSON.stringify(item[index]));
+    if (!itemView) {
+      return;
+    }
 
-    itemView.free_drive = parseInt(itemView.free_drive) ? "Да" : "Нет";
-    itemView.is_active = parseInt(itemView.is_active) ? "Да" : "Нет";
-
-    let itemView_old;
-
-    if (parseInt(index) !== 0) {
-      itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
-
-      itemView_old.free_drive = parseInt(itemView_old.free_drive) ? "Да" : "Нет";
-      itemView_old.is_active = parseInt(itemView_old.is_active) ? "Да" : "Нет";
-
-      for (let key in itemView) {
-        if (itemView[key] !== itemView_old[key]) {
-          if (key === "point_id") {
-            const name = points.find((item) => item.id === itemView.point_id)?.name;
-            itemView[key] = { key: name, color: "true" };
-          } else {
-            itemView[key] = { key: itemView[key], color: "true" };
-          }
-        } else {
-          if (key === "point_id") {
-            itemView.point_id = points.find((item) => item.id === itemView.point_id)?.name ?? "";
-          }
+    const zoneChange = itemView.changes?.find((change) => change.field === "zone");
+    const pointChange = itemView.changes?.find((change) => change.field === "point_id");
+    const pointId = pointChange?.after ?? itemView.point_id;
+    const zone_data = zoneChange
+      ? {
+          coordinates: zoneChange.after,
+          coordinates_old: zoneChange.before,
+          xy_point: points.find((point) => Number(point.id) === Number(pointId))?.xy_point ?? "",
         }
-      }
-    } else {
-      itemView.point_id = points.find((item) => item.id === itemView.point_id)?.name ?? "";
-    }
-
-    let date_edit;
-
-    if (itemView?.date_start?.key) {
-      date_edit = itemView?.date_start?.key;
-    } else {
-      date_edit = itemView?.date_start ?? "";
-    }
-
-    const zone_data = this.map_zone_modal_hist(itemView, itemView_old);
+      : null;
 
     this.setState({
       modalDialogView: true,
       itemView,
-      date_edit,
       zone_data,
     });
   }
 
-  map_zone_modal_hist(zone, zone_old) {
-    const points = this.state.points;
-
-    let zone_data = {};
-
-    if (zone?.name?.key) {
-      zone_data.name = zone?.name?.key;
-    } else {
-      zone_data.name = zone?.name ?? "";
-    }
-
-    if (zone?.zone?.key) {
-      zone_data.coordinates = zone?.zone?.key;
-    } else {
-      zone_data.coordinates = zone?.zone ?? "";
-    }
-
-    if (zone?.point_id?.key) {
-      zone_data.xy_point = points.find((item) => item.name === zone?.point_id?.key)?.xy_point ?? "";
-    } else {
-      zone_data.xy_point = points.find((item) => item.name === zone?.point_id)?.xy_point ?? "";
-    }
-
-    if (zone_old?.zone) {
-      if (zone_data.coordinates !== zone_old.zone) {
-        zone_data.coordinates_old = zone_old.zone;
-      } else {
-        zone_data.coordinates_old = "";
-      }
-    } else {
-      zone_data.coordinates_old = "last";
-    }
-
-    return Object.keys(zone_data).length ? zone_data : [];
-  }
-
   openHistZone(id) {
-    this.map_hist = null;
-    this.myGeoObject_hist = null;
-
-    const zones = this.state.zones;
+    const zones = [...this.state.zones];
 
     zones.forEach((zone) => {
       if (parseInt(zone.id) === parseInt(id)) {
         zone.is_open = !zone.is_open;
-
-        if (zone.is_open) {
-          zone.hist.forEach((z) => {
-            let zone_data = {
-              coordinates: z.zone,
-              xy_point: z.xy_point,
-            };
-
-            this.getZone_hist(zone_data, `map_hist_${z.date_time_update}`);
-          });
-        }
       } else {
         zone.is_open = false;
       }
@@ -1711,50 +1687,219 @@ class ZoneModules_ extends React.Component {
     });
   }
 
-  getZone_hist(zone_data, mapId) {
-    if (!this.map_hist) {
-      ymaps.ready(() => {
-        this.map_hist = new ymaps.Map(
-          mapId,
-          { center: JSON.parse(zone_data["xy_point"]), zoom: 10 },
-          { searchControlProvider: "yandex#search" },
-        );
+  handleZoneSort(field) {
+    this.setState((state) => ({
+      zoneSortBy: field,
+      zoneSortDirection:
+        state.zoneSortBy === field && state.zoneSortDirection === "asc" ? "desc" : "asc",
+    }));
+  }
 
-        this.myGeoObject_hist = new ymaps.Polygon(
-          [JSON.parse(zone_data.coordinates)],
-          { geometry: { fillRule: "nonZero" } },
-          {
-            fillOpacity: 0.4,
-            fillColor: "rgb(240, 128, 128)",
-            strokeColor: "rgb(187, 0, 37)",
-            strokeWidth: 5,
-          },
-        );
+  getActiveZones() {
+    const zones = this.state.zones.filter((zone) => Number(zone.is_active) === 1);
+    const { zoneSortBy, zoneSortDirection } = this.state;
 
-        this.map_hist.geoObjects.add(this.myGeoObject_hist);
-      });
-    } else {
-      this.map_hist.geoObjects.removeAll();
-
-      this.myGeoObject_hist = new ymaps.Polygon(
-        [JSON.parse(zone_data.coordinates)],
-        { geometry: { fillRule: "nonZero" } },
-        {
-          fillOpacity: 0.4,
-          fillColor: "rgb(240, 128, 128)",
-          strokeColor: "rgb(187, 0, 37)",
-          strokeWidth: 5,
-        },
-      );
-
-      this.map_hist.geoObjects.add(this.myGeoObject_hist);
+    if (!zoneSortBy) {
+      return zones;
     }
+
+    const numericFields = ["point_id", "sum_div", "sum_div_driver", "free_drive"];
+    const direction = zoneSortDirection === "asc" ? 1 : -1;
+
+    return zones
+      .map((zone, index) => ({ zone, index }))
+      .sort((left, right) => {
+        let result;
+
+        if (numericFields.includes(zoneSortBy)) {
+          result = Number(left.zone[zoneSortBy]) - Number(right.zone[zoneSortBy]);
+        } else {
+          result = String(left.zone[zoneSortBy] ?? "").localeCompare(
+            String(right.zone[zoneSortBy] ?? ""),
+            "ru",
+            { sensitivity: "base" },
+          );
+        }
+
+        return result === 0 ? left.index - right.index : result * direction;
+      })
+      .map(({ zone }) => zone);
+  }
+
+  renderZoneHeader(field, label, sortable, align = "left") {
+    return (
+      <TableCell align={align}>
+        {sortable ? (
+          <TableSortLabel
+            active={this.state.zoneSortBy === field}
+            direction={this.state.zoneSortBy === field ? this.state.zoneSortDirection : "asc"}
+            onClick={this.handleZoneSort.bind(this, field)}
+          >
+            {label}
+          </TableSortLabel>
+        ) : (
+          label
+        )}
+      </TableCell>
+    );
+  }
+
+  renderZonesTable(zones, title, sortable = false) {
+    return (
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell
+                colSpan={11}
+                sx={{ fontWeight: 700 }}
+              >
+                {title}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell width="4%">#</TableCell>
+              <TableCell width="4%" />
+              {this.renderZoneHeader("point_name", "Кафе", sortable)}
+              {this.renderZoneHeader("zone_name", "Зона", sortable)}
+              {this.renderZoneHeader("point_id", "Сортировка", sortable, "center")}
+              {this.renderZoneHeader("sum_div", "Сумма для клиента", sortable, "center")}
+              {this.renderZoneHeader("sum_div_driver", "Сумма для курьера", sortable, "center")}
+              {this.renderZoneHeader("free_drive", "Бесплатная доставка", sortable, "center")}
+              <TableCell align="center">Активность</TableCell>
+              <TableCell align="center">Удалить</TableCell>
+              <TableCell align="center">Копировать</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {!zones.length ? (
+              <TableRow>
+                <TableCell
+                  colSpan={11}
+                  align="center"
+                  sx={{ color: "text.secondary", py: 4 }}
+                >
+                  Зон нет
+                </TableCell>
+              </TableRow>
+            ) : (
+              zones.map((item, key) => (
+                <React.Fragment key={item.id}>
+                  <TableRow hover>
+                    <TableCell>{key + 1}</TableCell>
+                    <TableCell
+                      onClick={item.hist.length ? this.openHistZone.bind(this, item.id) : null}
+                      sx={{ cursor: item.hist.length ? "pointer" : "default" }}
+                    >
+                      {!item.hist.length ? null : (
+                        <Tooltip title="История последних изменений">
+                          <ExpandMoreIcon
+                            sx={{
+                              display: "flex",
+                              transform: item.is_open ? "rotate(180deg)" : "rotate(0deg)",
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                    <TableCell>{item.point_name}</TableCell>
+                    <TableCell
+                      onClick={this.openModal.bind(
+                        this,
+                        "editZone",
+                        "Редактирование зоны",
+                        item.id,
+                      )}
+                      sx={{ fontWeight: 700, cursor: "pointer" }}
+                    >
+                      {item.zone_name}
+                    </TableCell>
+                    <TableCell align="center">{item.point_id}</TableCell>
+                    <TableCell align="center">{item.sum_div}</TableCell>
+                    <TableCell align="center">{item.sum_div_driver}</TableCell>
+                    <TableCell align="center">
+                      {Number(item.free_drive) === 0 ? <CloseIcon /> : <CheckIcon />}
+                    </TableCell>
+                    <TableCell align="center">
+                      {Number(item.is_active) === 0 ? <CloseIcon /> : <CheckIcon />}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={this.openConfigDialog.bind(this, item.id, "zone")}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        onClick={this.openModal.bind(this, "copyZone", "Копирование зоны", item.id)}
+                      >
+                        <ContentCopyIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell
+                      sx={{ p: 0 }}
+                      colSpan={11}
+                    >
+                      <Collapse
+                        in={item.is_open}
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <Box sx={{ m: 1 }}>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>Событие</TableCell>
+                                <TableCell>Дата / время</TableCell>
+                                <TableCell>Сотрудник</TableCell>
+                                <TableCell>Изменения</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {item.hist.map((historyItem, historyIndex) => (
+                                <TableRow
+                                  hover
+                                  key={historyItem.id}
+                                  onClick={this.open_hist_zone.bind(
+                                    this,
+                                    historyItem.id,
+                                    historyItem.zone_id,
+                                  )}
+                                  sx={{ cursor: "pointer" }}
+                                >
+                                  <TableCell>{historyIndex + 1}</TableCell>
+                                  <TableCell>
+                                    {historyEventLabels[historyItem.event_type] ?? "Изменение"}
+                                  </TableCell>
+                                  <TableCell>{historyItem.date_time_update}</TableCell>
+                                  <TableCell>{historyItem.user_name ?? "Система Шеф"}</TableCell>
+                                  <TableCell>{historySummary(historyItem)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
   }
 
   render() {
     return (
       <>
-        <Script src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU" />
+        <Script
+          src="https://api-maps.yandex.ru/2.1/?apikey=665f5b53-8905-4934-9502-4a6a7b06a900&lang=ru_RU"
+          onReady={() => this.setState({ mapsReady: true })}
+        />
         <Backdrop
           style={{ zIndex: 99 }}
           open={this.state.is_load}
@@ -1811,11 +1956,11 @@ class ZoneModules_ extends React.Component {
         />
         <ZoneModules_Modal_History
           open={this.state.modalDialogView}
-          onClose={() => this.setState({ modalDialogView: false, itemView: null, date_edit: null })}
-          itemView={this.state.itemView}
+          onClose={() => this.setState({ modalDialogView: false, itemView: null, zone_data: null })}
+          historyItem={this.state.itemView}
           fullScreen={this.state.fullScreen}
-          date_edit={this.state.date_edit}
           zone_data={this.state.zone_data}
+          points={this.state.points}
         />
         <Grid
           container
@@ -1868,187 +2013,44 @@ class ZoneModules_ extends React.Component {
               xs: 12,
               sm: 12,
             }}
+            sx={{ mb: 3 }}
+          >
+            {this.state.mapsReady ? (
+              <ActiveZonesMap
+                zones={this.getActiveZones()}
+                onZoneClick={(zoneId) => this.openModal("editZone", "Редактирование зоны", zoneId)}
+              />
+            ) : (
+              <Box
+                sx={{
+                  height: { xs: 360, sm: 480 },
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                }}
+              >
+                <CircularProgress size={32} />
+              </Box>
+            )}
+          </Grid>
+
+          <Grid
+            size={{
+              xs: 12,
+              sm: 12,
+            }}
             sx={{
               mb: this.state.zones_future.length ? 2 : 10,
             }}
           >
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      colSpan={10}
-                      style={{ fontWeight: 700 }}
-                    >
-                      Текущие данные
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell style={{ width: "4%" }}>#</TableCell>
-                    <TableCell style={{ width: "4%" }}></TableCell>
-                    <TableCell style={{ width: "12%" }}>Точка</TableCell>
-                    <TableCell style={{ width: "12%" }}>Зона</TableCell>
-                    <TableCell style={{ width: "12%" }}>Сортировка</TableCell>
-                    <TableCell
-                      style={{ width: "12%" }}
-                      align="center"
-                    >
-                      Сумма для клиента
-                    </TableCell>
-                    <TableCell
-                      style={{ width: "12%" }}
-                      align="center"
-                    >
-                      Сумма для курьера
-                    </TableCell>
-                    <TableCell
-                      style={{ width: "10%" }}
-                      align="center"
-                    >
-                      Бесплатная доставка
-                    </TableCell>
-                    <TableCell
-                      style={{ width: "10%" }}
-                      align="center"
-                    >
-                      Активность
-                    </TableCell>
-                    <TableCell
-                      style={{ width: "12%" }}
-                      align="center"
-                    >
-                      Удалить
-                    </TableCell>
-                    <TableCell
-                      style={{ width: "10%" }}
-                      align="center"
-                    >
-                      Копировать
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {this.state.zones.map((item, key) => (
-                    <React.Fragment key={key}>
-                      <TableRow hover>
-                        <TableCell>{key + 1}</TableCell>
-                        <TableCell
-                          onClick={item.hist.length ? this.openHistZone.bind(this, item.id) : null}
-                          style={{ cursor: item.hist.length ? "pointer" : "unset" }}
-                        >
-                          {!item.hist.length ? null : (
-                            <Tooltip
-                              title={
-                                <Typography color="inherit">История последних изменений</Typography>
-                              }
-                            >
-                              <ExpandMoreIcon
-                                style={{
-                                  display: "flex",
-                                  transform: item.is_open ? "rotate(180deg)" : "rotate(0deg)",
-                                }}
-                              />
-                            </Tooltip>
-                          )}
-                        </TableCell>
-                        <TableCell>{item.point_name}</TableCell>
-                        <TableCell
-                          onClick={this.openModal.bind(
-                            this,
-                            "editZone",
-                            "Редактирование зоны",
-                            item.id,
-                          )}
-                          style={{ fontWeight: 700, cursor: "pointer" }}
-                        >
-                          {item.zone_name}
-                        </TableCell>
-                        <TableCell align="center">{item.point_id}</TableCell>
-                        <TableCell align="center">{item.sum_div}</TableCell>
-                        <TableCell align="center">{item.sum_div_driver}</TableCell>
-                        <TableCell align="center">
-                          {parseInt(item.free_drive) === 0 ? <CloseIcon /> : <CheckIcon />}
-                        </TableCell>
-                        <TableCell align="center">
-                          {parseInt(item.is_active) === 0 ? <CloseIcon /> : <CheckIcon />}
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton onClick={this.openConfigDialog.bind(this, item.id, "zone")}>
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            onClick={this.openModal.bind(
-                              this,
-                              "copyZone",
-                              "Копирование зоны",
-                              item.id,
-                            )}
-                          >
-                            <ContentCopyIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          style={{ padding: 0 }}
-                          colSpan={10}
-                        >
-                          <Collapse
-                            in={item.is_open}
-                            timeout="auto"
-                            unmountOnExit
-                          >
-                            <Box sx={{ margin: "8px 0" }}>
-                              <Table>
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell style={{ width: "4%" }}>#</TableCell>
-                                    <TableCell style={{ width: "4%" }}></TableCell>
-                                    <TableCell>Зона</TableCell>
-                                    <TableCell>Сумма для клиента</TableCell>
-                                    <TableCell>Сумма для курьера</TableCell>
-                                    <TableCell style={{ width: "45%" }}>Границы зоны</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {item.hist.map((it, k) => (
-                                    <TableRow key={k}>
-                                      <TableCell style={{ verticalAlign: "top" }}>
-                                        {k + 1}
-                                      </TableCell>
-                                      <TableCell style={{ verticalAlign: "top" }}></TableCell>
-                                      <TableCell style={{ verticalAlign: "top" }}>
-                                        {it.name}
-                                      </TableCell>
-                                      <TableCell style={{ verticalAlign: "top" }}>
-                                        {it.sum_div}
-                                      </TableCell>
-                                      <TableCell style={{ verticalAlign: "top" }}>
-                                        {it.sum_div_driver}
-                                      </TableCell>
-                                      <TableCell>
-                                        <div
-                                          id={`map_hist_${it.date_time_update}`}
-                                          name={`map_hist_${it.date_time_update}`}
-                                          style={{ width: "100%", height: 250 }}
-                                        />
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </Box>
-                          </Collapse>
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {this.renderZonesTable(
+              this.getActiveZones(),
+              `Активные зоны (${this.state.zones.filter((zone) => Number(zone.is_active) === 1).length})`,
+              true,
+            )}
           </Grid>
 
           {!this.state.zones_future.length ? null : (
@@ -2152,6 +2154,31 @@ class ZoneModules_ extends React.Component {
             </Grid>
           )}
 
+          {!this.state.zones.some((zone) => Number(zone.is_active) === 0) ? null : (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 12,
+              }}
+              sx={{ mb: 5 }}
+            >
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography fontWeight={700}>
+                    Архивные зоны (
+                    {this.state.zones.filter((zone) => Number(zone.is_active) === 0).length})
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0 }}>
+                  {this.renderZonesTable(
+                    this.state.zones.filter((zone) => Number(zone.is_active) === 0),
+                    "Архивные зоны",
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            </Grid>
+          )}
+
           {!this.state.zones_hist.length ? null : (
             <Grid
               size={{
@@ -2172,8 +2199,10 @@ class ZoneModules_ extends React.Component {
                       <TableRow>
                         <TableCell>#</TableCell>
                         <TableCell>Зона</TableCell>
+                        <TableCell>Событие</TableCell>
                         <TableCell>Дата / время</TableCell>
                         <TableCell>Сотрудник</TableCell>
+                        <TableCell>Изменения</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -2186,8 +2215,10 @@ class ZoneModules_ extends React.Component {
                         >
                           <TableCell>{k + 1}</TableCell>
                           <TableCell>{it.name}</TableCell>
+                          <TableCell>{historyEventLabels[it.event_type] ?? "Изменение"}</TableCell>
                           <TableCell>{it.date_time_update}</TableCell>
-                          <TableCell>{it.user_name}</TableCell>
+                          <TableCell>{it.user_name ?? "Система Шеф"}</TableCell>
+                          <TableCell>{historySummary(it)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
