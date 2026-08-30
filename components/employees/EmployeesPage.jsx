@@ -58,6 +58,14 @@ dayjs.locale("ru");
 const MODULE = "employees";
 const DEFAULT_ROWS = 25;
 const PHOTO_CHECK_COUNTDOWN_SECONDS = 90;
+const EMPLOYEE_CREATE_TIMEOUT_MS = 30_000;
+const EMPLOYEE_PHOTO_TIMEOUT_MS = 120_000;
+
+const isRequestTimeout = (error) =>
+  error?.code === "ECONNABORTED" ||
+  error?.code === "ETIMEDOUT" ||
+  error?.code === "ERR_CANCELED" ||
+  error?.name === "CanceledError";
 
 const formatCountdown = (seconds) => {
   const minutes = Math.floor(seconds / 60);
@@ -1019,38 +1027,49 @@ export default function EmployeesPage() {
     });
   };
 
-  const getData = async (method, data = {}) => {
+  const getData = async (method, data = {}, requestOptions = {}) => {
+    const { timeoutText, ...apiOptions } = requestOptions;
     setIsLoad(true);
 
     try {
-      const res = await api_laravel(MODULE, method, data);
+      const res = await api_laravel(MODULE, method, data, apiOptions);
       return unwrapResponse(res);
     } catch (e) {
-      showAlert(false, "Не удалось выполнить запрос");
+      showAlert(
+        false,
+        isRequestTimeout(e) && timeoutText ? timeoutText : "Не удалось выполнить запрос",
+      );
       return null;
     } finally {
       setTimeout(() => setIsLoad(false), 300);
     }
   };
 
-  const uploadData = async (method, file, data = {}) => {
+  const uploadData = async (method, file, data = {}, requestOptions = {}) => {
+    const { errorText, ...apiOptions } = requestOptions;
     setIsLoad(true);
 
     try {
-      const res = await api_laravel_upload(MODULE, method, file, data);
+      const res = await api_laravel_upload(MODULE, method, file, data, apiOptions);
+
+      if (!res) {
+        showAlert(false, errorText || "Не удалось загрузить файл");
+        return null;
+      }
+
       return unwrapResponse(res);
     } catch (e) {
-      showAlert(false, "Не удалось загрузить файл");
+      showAlert(false, errorText || "Не удалось загрузить файл");
       return null;
     } finally {
       setTimeout(() => setIsLoad(false), 300);
     }
   };
 
-  const uploadEmployeePhoto = async (method, file, data = {}) => {
+  const uploadEmployeePhoto = async (method, file, data = {}, requestOptions = {}) => {
     setPhotoChecking(true);
     try {
-      return await uploadData(method, file, data);
+      return await uploadData(method, file, data, requestOptions);
     } finally {
       setPhotoChecking(false);
     }
@@ -1585,8 +1604,17 @@ export default function EmployeesPage() {
         : {}),
     };
     const res = photoFile
-      ? await uploadEmployeePhoto("create_employee", photoFile, payload)
-      : await getData("create_employee", payload);
+      ? await uploadEmployeePhoto("create_employee", photoFile, payload, {
+          timeout: EMPLOYEE_PHOTO_TIMEOUT_MS,
+          errorText:
+            "Проверка фотографии не завершилась за 2 минуты. Проверьте сотрудника по телефону перед повторной отправкой.",
+        })
+      : await getData("create_employee", payload, {
+          timeout: EMPLOYEE_CREATE_TIMEOUT_MS,
+          throwErrors: true,
+          timeoutText:
+            "Сервер не ответил за 30 секунд. Проверьте сотрудника по телефону перед повторной отправкой.",
+        });
 
     if (!res) return;
 
