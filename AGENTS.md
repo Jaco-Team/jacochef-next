@@ -74,6 +74,9 @@
 - Prefer existing `design-system/shared/ui` `Jaco*` components for reusable controls, surfaces, modals, and feedback states.
 - If only a legacy `ui/My*` component exists for a needed reusable pattern, recreate it as an autonomous `Jaco*` component in `design-system/shared/ui`, align it to the current Chef design style, add or extend its Storybook story, then use the `Jaco*` component from the feature code.
 - If a reusable UI pattern is missing from Storybook, add or extend the story before spreading the pattern across modules.
+- New modules and new reusable UI within existing modules must use `design-system/shared/ui` and its `Jaco*` API; do not introduce new imports from legacy `ui/*` or `ui/My*`.
+- Legacy `ui/*` remains supported for existing code. Do not perform opportunistic/global legacy rewires or remove legacy components unless that replacement is explicitly scoped to the task.
+- A new reusable DS component is incomplete until it has a colocated Storybook story covering its normal state and relevant variants/states.
 - Before reporting a UI task done, sanity-check against sibling controls: typography, height, radius, border, spacing. See `.cursor/rules/ui-sanity-check.mdc`.
 - If the user provides a Figma URL, match Figma closely.
 - Use existing MUI patterns already present in the repo.
