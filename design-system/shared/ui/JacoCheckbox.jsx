@@ -41,12 +41,12 @@ function CheckedIcon() {
   );
 }
 
-export default function JacoCheckbox(props) {
+export default function JacoCheckbox({ sx, ...props }) {
   return (
     <MuiCheckbox
       icon={<EmptyIcon />}
       checkedIcon={<CheckedIcon />}
-      sx={{ width: 24, height: 24, p: 0 }}
+      sx={{ width: 24, height: 24, p: 0, ...sx }}
       {...props}
     />
   );

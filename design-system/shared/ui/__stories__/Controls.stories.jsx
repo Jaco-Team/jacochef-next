@@ -3,7 +3,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SaveIcon from "@mui/icons-material/Save";
-import { Box, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, FormControlLabel, Stack, Tooltip, Typography } from "@mui/material";
 
 import {
   JacoButton,
@@ -12,6 +12,7 @@ import {
   JacoFieldSwitch,
   JacoIconButton,
   JacoSegmentedTabs,
+  JacoSwitch,
 } from "@/design-system/shared/ui";
 
 const meta = {
@@ -131,7 +132,7 @@ export function ButtonStateMatrix() {
   );
 }
 
-export function Toggles() {
+export function SelectionControls() {
   const [checked, setChecked] = useState(true);
   const [boxChecked, setBoxChecked] = useState(true);
 
@@ -151,18 +152,32 @@ export function Toggles() {
           checked={false}
           disabled
         />
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{ alignItems: "center" }}
-        >
-          <JacoCheckbox
-            checked={boxChecked}
-            onChange={(event) => setBoxChecked(event.target.checked)}
-          />
-          <Typography>Выбран сотрудник</Typography>
-          <JacoCheckbox disabled />
-        </Stack>
+        <JacoSwitch
+          checked={checked}
+          onChange={(event) => setChecked(event.target.checked)}
+          slotProps={{ input: { "aria-label": "Активность" } }}
+        />
+        <JacoSwitch
+          checked={false}
+          disabled
+          slotProps={{ input: { "aria-label": "Недоступная активность" } }}
+        />
+        <FormControlLabel
+          control={
+            <JacoCheckbox
+              checked={boxChecked}
+              onChange={(event) => setBoxChecked(event.target.checked)}
+            />
+          }
+          label="Выбран сотрудник"
+          sx={{ m: 0, gap: 1 }}
+        />
+        <FormControlLabel
+          control={<JacoCheckbox disabled />}
+          label="Недоступный выбор"
+          disabled
+          sx={{ m: 0, gap: 1 }}
+        />
       </Stack>
     </StoryCanvas>
   );
