@@ -24,7 +24,9 @@ function CalcItem({ label, value }) {
     <Box>
       <Typography
         variant="caption"
-        color="text.secondary"
+        sx={{
+          color: "text.secondary",
+        }}
       >
         {label}
       </Typography>
@@ -110,7 +112,9 @@ export default function SupplierCardModal({
           <Stack spacing={2}>
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Сырьё: {formatValue(material?.name)}
               {freeNeed != null && freeNeed !== ""
@@ -207,7 +211,9 @@ export default function SupplierCardModal({
                 <Grid size={{ xs: 12, sm: 12 }}>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Дата обновления остатка: {formatValue(initial.stock_updated_at)}
                   </Typography>

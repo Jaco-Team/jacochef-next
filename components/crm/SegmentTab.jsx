@@ -194,7 +194,9 @@ const FiltersModal = ({ open, onClose, segment, filters }) => {
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      TransitionComponent={Zoom}
+      slots={{
+        transition: Zoom,
+      }}
     >
       <DialogTitle>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -214,7 +216,6 @@ const FiltersModal = ({ open, onClose, segment, filters }) => {
           {segment?.segment_name}
         </Typography>
       </DialogTitle>
-
       <DialogContent dividers>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {filters?.map((filter, idx) => (
@@ -243,7 +244,6 @@ const FiltersModal = ({ open, onClose, segment, filters }) => {
           ))}
         </Box>
       </DialogContent>
-
       <DialogActions>
         <Button
           onClick={onClose}
@@ -359,7 +359,6 @@ export const SegmentTab = ({
           </Button>
         ) : null}
       </Box>
-
       {segments.length === 0 ? (
         <Paper
           sx={{
@@ -398,11 +397,12 @@ export const SegmentTab = ({
         >
           {segments.map((segment) => (
             <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
               key={`${segment.id}-${segment.date_create}`}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4,
+              }}
             >
               <SegmentCard
                 openEdit={setEditModalOpen}
@@ -415,7 +415,6 @@ export const SegmentTab = ({
           ))}
         </Grid>
       )}
-
       <CreateSegmentModal
         open={isModalOpen}
         onClose={handleCloseModal}
@@ -425,7 +424,6 @@ export const SegmentTab = ({
         saveSegment={saveSegment}
         cities={cities}
       />
-
       <FiltersModal
         open={filtersModalOpen}
         onClose={handleCloseFiltersModal}

@@ -26,7 +26,6 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
           type="number"
         />
       </Grid>
-
       <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           value={point_info?.summ_driver ?? ""}
@@ -36,7 +35,6 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
           type="number"
         />
       </Grid>
-
       <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           value={point_info?.summ_driver_min ?? ""}
@@ -57,7 +55,9 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
       {canEdit("settings_driver") && (
         <Grid
           size={{ xs: 12, sm: 6 }}
-          display="grid"
+          sx={{
+            display: "grid",
+          }}
         >
           <Button
             onClick={saveSettings}
@@ -69,11 +69,12 @@ function CafeEditTabDrivers({ canView, canEdit, saveSettings, openHistModal }) {
           </Button>
         </Grid>
       )}
-
       {point_sett_driver_hist.length > 0 && canView("settings_driver") && (
         <Grid
           size={12}
-          mb={5}
+          sx={{
+            mb: 5,
+          }}
         >
           <HistDropDownTable
             histData={point_sett_driver_hist}

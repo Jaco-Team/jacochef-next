@@ -133,7 +133,9 @@ const InnerTabPromo = ({ getData, showAlert, canExport }) => {
       <Stack
         direction="row"
         spacing={2}
-        justifyContent={"space-between"}
+        sx={{
+          justifyContent: "space-between",
+        }}
       >
         <MyTextInput
           type="search"

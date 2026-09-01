@@ -10,6 +10,8 @@
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
     "build": "next build",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "test:e2e:sklad": "playwright test --config=playwright.sklad.config.js",
     "start": "next start",
     "lint": "next lint",
@@ -30,11 +32,11 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hello-pangea/dnd": "^18.0.1",
-    "@mui/icons-material": "^7.3.11",
-    "@mui/lab": "^7.0.1-beta.25",
-    "@mui/material": "^7.3.11",
-    "@mui/x-charts": "^9.11.1",
-    "@mui/x-date-pickers": "^8.29.2",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/lab": "^9.0.0-beta.9",
+    "@mui/material": "^9.4.0",
+    "@mui/x-charts": "^9.12.0",
+    "@mui/x-date-pickers": "^9.12.0",
     "@sentry/cli": "^3.6.2",
     "@sentry/react": "^10.70.0",
     "@tinymce/tinymce-react": "^6.3.0",
@@ -67,6 +69,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "@storybook/addon-a11y": "^10.5.10",
+    "@storybook/nextjs": "^10.5.10",
     "@types/dropzone": "^5.7.9",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.2.18",
@@ -75,6 +79,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
-    "sass": "^1.103.1"
+    "sass": "^1.103.1",
+    "storybook": "^10.5.10"
   }
 }

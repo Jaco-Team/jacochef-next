@@ -34,7 +34,9 @@ export default function CompetitorParserItemsModal({ modal, onClose }) {
           <Typography variant="h6">{modal.source?.name || "Товары"}</Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {[
               modal.source?.competitor,
@@ -48,7 +50,9 @@ export default function CompetitorParserItemsModal({ modal, onClose }) {
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Товаров: {modal.run?.item_count ?? "—"} | Ошибок: {modal.run?.error_count ?? "—"}
           </Typography>
@@ -129,7 +133,6 @@ export default function CompetitorParserItemsModal({ modal, onClose }) {
           </TableContainer>
         )}
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose}>Закрыть</Button>
       </DialogActions>

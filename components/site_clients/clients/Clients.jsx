@@ -570,11 +570,12 @@ export default function Clients({ getData, showAlert, canAccess }) {
 
         {/* ACTION */}
         <Grid
-          // sx={{ order: { sm: 2, xs: 2 } }}
-          display="flex"
-          flexDirection="row"
-          justifyContent="center"
           size={12}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+          }}
         >
           <Button
             variant="contained"
@@ -613,8 +614,10 @@ export default function Clients({ getData, showAlert, canAccess }) {
       {!users.length ? null : (
         <Grid
           container
-          justifyContent="center"
-          mt={3}
+          sx={{
+            justifyContent: "center",
+            mt: 3,
+          }}
         >
           <Grid
             size={{
@@ -682,8 +685,10 @@ export default function Clients({ getData, showAlert, canAccess }) {
       <Grid
         container
         spacing={3}
-        justifyContent="center"
-        mb={3}
+        sx={{
+          justifyContent: "center",
+          mb: 3,
+        }}
       >
         <Grid
           size={{

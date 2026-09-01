@@ -554,16 +554,13 @@ export default function CoverageControlPage() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <ConfirmDialog />
-
       <MyAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
         text={alertMessage}
       />
-
       <MaterialFormModal
         open={materialFormOpen}
         onClose={closeMaterialForm}
@@ -575,7 +572,6 @@ export default function CoverageControlPage() {
         canEdit={canEdit}
         saving={saving}
       />
-
       <MaterialCardModal
         open={materialCard.open}
         onClose={closeMaterialCard}
@@ -597,7 +593,6 @@ export default function CoverageControlPage() {
           "Удалить сырьевую позицию? Действие необратимо.",
         )}
       />
-
       <SupplierCardModal
         open={supplierCard.open}
         onClose={closeSupplierCard}
@@ -617,7 +612,6 @@ export default function CoverageControlPage() {
           "Удалить поставщика из сырьевой позиции?",
         )}
       />
-
       <RequestStockModal
         open={requestStockModal.open}
         onClose={closeRequestStockModal}
@@ -628,7 +622,6 @@ export default function CoverageControlPage() {
         loading={requestStockModal.loading}
         saving={saving}
       />
-
       <Grid
         container
         spacing={3}
@@ -638,7 +631,9 @@ export default function CoverageControlPage() {
           <h1>{moduleName}</h1>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Позиции, требующие действия, отображаются в общем списке. Расчётные поля приходят с
             сервера и не редактируются.
@@ -648,9 +643,11 @@ export default function CoverageControlPage() {
           <Stack
             direction="row"
             spacing={1}
-            justifyContent={{ xs: "flex-start", sm: "flex-end" }}
-            flexWrap="wrap"
             useFlexGap
+            sx={{
+              justifyContent: { xs: "flex-start", sm: "flex-end" },
+              flexWrap: "wrap",
+            }}
           >
             {canExport ? (
               <Tooltip title="Выгрузка в Excel">
@@ -704,8 +701,10 @@ export default function CoverageControlPage() {
           <Stack
             direction="row"
             spacing={1}
-            flexWrap="wrap"
             useFlexGap
+            sx={{
+              flexWrap: "wrap",
+            }}
           >
             {FILTER_FLAGS.map((flag) => (
               <FormControlLabel
@@ -803,8 +802,10 @@ export default function CoverageControlPage() {
                           </Typography>
                           <Typography
                             variant="body2"
-                            color="text.secondary"
                             gutterBottom
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Список загружается с сервера. Добавьте сырьевую позицию или измените
                             фильтры.

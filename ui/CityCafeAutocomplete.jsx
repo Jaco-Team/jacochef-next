@@ -110,7 +110,7 @@ export default function CityCafeAutocomplete({
           placeholder={placeholder}
         />
       )}
-      renderTags={(selected, getTagProps) => {
+      renderValue={(selected, getItemProps) => {
         const maxVisible = 2;
         const extra = selected.length - maxVisible;
         const visible = selected.slice(0, maxVisible);
@@ -118,7 +118,7 @@ export default function CityCafeAutocomplete({
           <>
             {visible.map((option, index) => (
               <Chip
-                {...getTagProps({ index })}
+                {...getItemProps({ index })}
                 key={option.id}
                 label={`${option.name} (${option.cityName})`}
               />
@@ -140,8 +140,10 @@ export default function CityCafeAutocomplete({
           <ListItemText
             primary={option.name}
             secondary={option.cityName}
-            primaryTypographyProps={{ noWrap: true }}
-            secondaryTypographyProps={{ noWrap: true }}
+            slotProps={{
+              primary: { noWrap: true },
+              secondary: { noWrap: true },
+            }}
           />
         </li>
       )}
@@ -192,10 +194,11 @@ export default function CityCafeAutocomplete({
               />
               <ListItemText
                 primary={groupParams.group}
-                primaryTypographyProps={{ fontWeight: 600 }}
+                slotProps={{
+                  primary: { fontWeight: 600 },
+                }}
               />
             </div>
-
             <ul className={autocompleteClasses.groupUl}>{groupParams.children}</ul>
           </Box>
         );

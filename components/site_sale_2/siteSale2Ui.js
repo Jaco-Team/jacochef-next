@@ -50,8 +50,10 @@ export function SiteSale2Page({ children, title, subtitle }) {
         {subtitle ? (
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mt: 0.75 }}
+            sx={{
+              color: "text.secondary",
+              mt: 0.75,
+            }}
           >
             {subtitle}
           </Typography>
@@ -75,8 +77,13 @@ export function SiteSale2Nav() {
     >
       <Typography
         variant="subtitle2"
-        color="text.secondary"
-        sx={{ mb: 1.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}
+        sx={{
+          color: "text.secondary",
+          mb: 1.5,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+        }}
       >
         Разделы
       </Typography>
@@ -151,8 +158,10 @@ export function SiteSale2Section({ title, subtitle, children, noPadding = false 
           {subtitle ? (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.25 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.25,
+              }}
             >
               {subtitle}
             </Typography>
@@ -173,7 +182,9 @@ export function SiteSale2SearchBar({ children, onSearch }) {
       <Grid
         container
         spacing={2}
-        alignItems="flex-end"
+        sx={{
+          alignItems: "flex-end",
+        }}
       >
         {children}
         <Grid size={{ xs: 12, sm: 12, md: "auto" }}>
@@ -305,14 +316,14 @@ export function SiteSale2PromoTable({ rows, onDelete }) {
                 <TableCell>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    title={item.coment}
                     sx={{
+                      color: "text.secondary",
                       maxWidth: 280,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                     }}
-                    title={item.coment}
                   >
                     {item.coment}
                   </Typography>
@@ -365,7 +376,11 @@ export function SiteSale2DeleteDialog({ open, onClose, onConfirm }) {
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <Typography color="text.secondary">
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
           Промокод будет удалён без возможности восстановления.
         </Typography>
       </DialogContent>

@@ -35,7 +35,6 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             func={(e) => changePointInfoData("k_pizza", e)}
           />
         </Grid>
-
         <Grid size={{ xs: 12, sm: 4 }}>
           <MyTextInput
             disabled={!canEdit("rate_point")}
@@ -50,7 +49,6 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             func={(e) => changePointInfoData("k_pizza_kux", e)}
           />
         </Grid>
-
         <Grid size={{ xs: 12, sm: 4 }}>
           <MyTextInput
             disabled={!canEdit("rate_point")}
@@ -65,11 +63,12 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             func={(e) => changePointInfoData("k_rolls_kux", e)}
           />
         </Grid>
-
         {canEdit("rate_point") && (
           <Grid
             size={12}
-            display="grid"
+            sx={{
+              display: "grid",
+            }}
           >
             <Button
               onClick={() => openEditModal()}
@@ -81,11 +80,12 @@ function CafeEditTabRates({ openHistModal, canView, canEdit }) {
             </Button>
           </Grid>
         )}
-
         {canEdit("rate_point") && point_rate_hist.length > 0 && (
           <Grid
             size={12}
-            mb={5}
+            sx={{
+              mb: 5,
+            }}
           >
             <HistDropDownTable
               histData={point_rate_hist}

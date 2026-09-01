@@ -685,7 +685,9 @@ export default function SkladSiteItemEditorDialog({
                             <Stack
                               direction="row"
                               spacing={0.5}
-                              alignItems="center"
+                              sx={{
+                                alignItems: "center",
+                              }}
                             >
                               <Stack sx={{ minWidth: 0, flex: 1 }}>
                                 <MySelect
@@ -812,7 +814,9 @@ export default function SkladSiteItemEditorDialog({
                       direction="row"
                       spacing={1}
                       useFlexGap
-                      flexWrap="wrap"
+                      sx={{
+                        flexWrap: "wrap",
+                      }}
                     >
                       <Chip
                         clickable
@@ -880,14 +884,20 @@ export default function SkladSiteItemEditorDialog({
                     <Grid
                       container
                       spacing={2}
-                      alignItems="center"
+                      sx={{
+                        alignItems: "center",
+                      }}
                     >
                       {storedImageUrl ? (
                         <Grid size={{ xs: 12, md: 4 }}>
                           <Typography
                             variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block", mb: 1, textAlign: "center" }}
+                            sx={{
+                              color: "text.secondary",
+                              display: "block",
+                              mb: 1,
+                              textAlign: "center",
+                            }}
                           >
                             Текущее изображение
                           </Typography>
@@ -941,9 +951,11 @@ export default function SkladSiteItemEditorDialog({
                         >
                           <Stack
                             spacing={1}
-                            justifyContent="center"
-                            alignItems="center"
-                            sx={{ minHeight: "100%" }}
+                            sx={{
+                              justifyContent: "center",
+                              alignItems: "center",
+                              minHeight: "100%",
+                            }}
                           >
                             {pendingImagePreviewUrl ? (
                               <Box
@@ -980,8 +992,10 @@ export default function SkladSiteItemEditorDialog({
                             ) : null}
                             <Typography
                               variant="body2"
-                              color="text.secondary"
                               align="center"
+                              sx={{
+                                color: "text.secondary",
+                              }}
                             >
                               {pendingImageFile
                                 ? "Новое изображение загрузится после сохранения карточки."
@@ -1116,7 +1130,9 @@ export default function SkladSiteItemEditorDialog({
                       <Grid size={{ xs: 12, md: 6 }}>
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Аллергены по составу
                         </Typography>
@@ -1129,7 +1145,9 @@ export default function SkladSiteItemEditorDialog({
                       <Grid size={{ xs: 12, md: 6 }}>
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Возможные аллергены по составу
                         </Typography>
@@ -1533,7 +1551,9 @@ export default function SkladSiteItemEditorDialog({
                         <Typography sx={{ fontWeight: 700 }}>{compositionDerivedCount}</Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Расчетные строки итогового состава
                         </Typography>
@@ -1544,7 +1564,9 @@ export default function SkladSiteItemEditorDialog({
                         <Typography sx={{ fontWeight: 700 }}>{linkedItemsCount}</Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Позиции, связанные с карточкой
                         </Typography>

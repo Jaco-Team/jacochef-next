@@ -67,7 +67,9 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
       <Grid
         container
         spacing={3}
-        maxWidth={"lg"}
+        sx={{
+          maxWidth: "lg",
+        }}
       >
         <Grid
           size={{
@@ -327,11 +329,12 @@ export default function Orders({ getOrders, openClientOrder, downLoad, canAccess
           )}
         </Grid>
       </Grid>
-
       {search_orders.length > 0 && (
         <Grid
           container
-          mt={5}
+          sx={{
+            mt: 5,
+          }}
         >
           <TableContainer
             sx={{ maxHeight: { xs: "none", sm: 570 } }}

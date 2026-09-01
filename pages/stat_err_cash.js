@@ -484,7 +484,17 @@ class StatErrCash_Modal extends React.Component {
                       : "Не указан"}
                   {parseInt(acces?.close_err_access) == 1 && (
                     <IconButton onClick={this.getStaffs}>
-                      <Tooltip title={<Typography color="inherit">Редактировать</Typography>}>
+                      <Tooltip
+                        title={
+                          <Typography
+                            sx={{
+                              color: "inherit",
+                            }}
+                          >
+                            Редактировать
+                          </Typography>
+                        }
+                      >
                         <EditIcon />
                       </Tooltip>
                     </IconButton>

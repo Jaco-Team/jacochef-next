@@ -164,16 +164,13 @@ export default function VendorDetailPage() {
       >
         <CircularProgress />
       </Backdrop>
-
       <MyAlert
         isOpen={isAlert}
         status={alertStatus}
         text={alertMessage}
         onClose={closeAlert}
       />
-
       <ConfirmDialog />
-
       <ModalAddDeclaration
         open={isDocModalOpen}
         onClose={closeDocModal}
@@ -207,7 +204,6 @@ export default function VendorDetailPage() {
           }
         }, "Сохранить изменения в email по точкам?")}
       />
-
       <Grid
         container
         className="container_first_child"
@@ -300,8 +296,10 @@ export default function VendorDetailPage() {
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={2}
-                alignItems={{ xs: "stretch", sm: "center" }}
-                justifyContent="space-between"
+                sx={{
+                  alignItems: { xs: "stretch", sm: "center" },
+                  justifyContent: "space-between",
+                }}
               >
                 <Typography
                   variant="h5"
@@ -422,7 +420,6 @@ export default function VendorDetailPage() {
           </Stack>
         </Grid>
       </Grid>
-
       <Box
         sx={{
           position: "fixed",

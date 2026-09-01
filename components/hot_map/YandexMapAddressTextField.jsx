@@ -317,30 +317,32 @@ const YandexMapAddressTextField = ({
             }
           }}
           disabled={isLoading || !mapLoaded}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                {isLoading ? (
-                  <CircularProgress size={20} />
-                ) : searchQuery ? (
-                  <IconButton
-                    size="small"
-                    onClick={handleClear}
-                    edge="end"
-                  >
-                    <ClearIcon />
-                  </IconButton>
-                ) : null}
-              </InputAdornment>
-            ),
-          }}
           variant="outlined"
           helperText="Введите полный адрес или начните вводить для получения подсказок"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  {isLoading ? (
+                    <CircularProgress size={20} />
+                  ) : searchQuery ? (
+                    <IconButton
+                      size="small"
+                      onClick={handleClear}
+                      edge="end"
+                    >
+                      <ClearIcon />
+                    </IconButton>
+                  ) : null}
+                </InputAdornment>
+              ),
+            },
+          }}
         />
 
         {/* Подсказки */}
@@ -397,7 +399,6 @@ const YandexMapAddressTextField = ({
           </Paper>
         )}
       </Box>
-
       {/* Карта */}
       <Paper
         elevation={3}

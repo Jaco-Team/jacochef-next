@@ -68,6 +68,13 @@
 
 ## UI And Design
 
+- For UI tasks, use `design-system/STORYBOOK_PROMPT.md` as the Storybook-first workflow.
+- Check existing Storybook stories before implementing a new UI pattern.
+- Use current MUI APIs for all task-affected files; when a touched file contains deprecated MUI usage, migrate that local usage as part of the same task instead of preserving old API patterns.
+- Prefer existing `design-system/shared/ui` `Jaco*` components for reusable controls, surfaces, modals, and feedback states.
+- If only a legacy `ui/My*` component exists for a needed reusable pattern, recreate it as an autonomous `Jaco*` component in `design-system/shared/ui`, align it to the current Chef design style, add or extend its Storybook story, then use the `Jaco*` component from the feature code.
+- If a reusable UI pattern is missing from Storybook, add or extend the story before spreading the pattern across modules.
+- Before reporting a UI task done, sanity-check against sibling controls: typography, height, radius, border, spacing. See `.cursor/rules/ui-sanity-check.mdc`.
 - If the user provides a Figma URL, match Figma closely.
 - Use existing MUI patterns already present in the repo.
 - Keep desktop and mobile behavior aligned when both versions exist.
@@ -92,14 +99,14 @@ Do not commit secrets, private DSNs, or deployment credentials. Review changes t
 - Do not invent validation rules or payload fields.
 - When binding forms to backend data, use only known field names and handle null/undefined safely.
 
-## MUI Grid (v7) Note
+## MUI Grid (v9) Note
 
-When using Material UI v7, the `Grid` item sizing props changed. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props. Examples:
+MUI v9 uses the modern `Grid` API. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props, and do not use `item`. Examples:
 
 - Single size: `<Grid size={12}>` (full width)
 - Responsive sizes: `<Grid size={{ xs: 12, sm: 6, md: 4 }}>`
 
-Update existing `Grid` usages when upgrading to v7 to avoid layout regressions.
+When migrating existing Grid usage, preserve container semantics and verify affected desktop/mobile layouts.
 
 MUI Grid rows stretch children to the height of the tallest sibling by default. For independent content panels, set `sx={{ height: "max-content" }}` on the `Grid` child and do not set `height: "100%"` on its nested `Paper` or `Card`. Use full height only when equal-height cards are explicitly intended.
 

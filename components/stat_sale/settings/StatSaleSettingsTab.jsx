@@ -710,7 +710,11 @@ class StatSale_Tab_Sett extends React.Component {
                                     <Tooltip
                                       key={k}
                                       title={
-                                        <Typography color="inherit">
+                                        <Typography
+                                          sx={{
+                                            color: "inherit",
+                                          }}
+                                        >
                                           Редактировать данные в столбце
                                         </Typography>
                                       }
@@ -796,7 +800,11 @@ class StatSale_Tab_Sett extends React.Component {
                                   <Tooltip
                                     key={k}
                                     title={
-                                      <Typography color="inherit">
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
                                         Редактировать данные в ячейке
                                       </Typography>
                                     }

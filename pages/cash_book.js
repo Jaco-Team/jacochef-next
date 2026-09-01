@@ -355,7 +355,17 @@ class MainTableRow extends React.Component {
                 style={{ cursor: "pointer", color: "#c03", padding: "15px 15px 15px 0px" }}
               >
                 {this.props?.label}
-                <Tooltip title={<Typography color="inherit">{this.props.tooltip}</Typography>}>
+                <Tooltip
+                  title={
+                    <Typography
+                      sx={{
+                        color: "inherit",
+                      }}
+                    >
+                      {this.props.tooltip}
+                    </Typography>
+                  }
+                >
                   <IconButton>
                     <HelpIcon color="primary" />
                   </IconButton>

@@ -277,7 +277,9 @@ export default function AiDailyMetricsChart({ items = [] }) {
       <Box sx={{ minHeight: 260, display: "grid", placeItems: "center" }}>
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           Нет данных по дням для построения графика
         </Typography>

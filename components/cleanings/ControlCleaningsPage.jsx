@@ -524,12 +524,14 @@ export function AddManualCleaningDialog({
           value={query}
           placeholder="Поиск по названию, роли или категории"
           onChange={(event) => onQueryChange(event.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
           }}
         />
 

@@ -60,14 +60,12 @@ export default function SkladUnitDialog({
       <DialogTitle sx={{ fontWeight: 700, pr: 7 }}>
         {mode === "edit" ? "Редактирование единицы" : "Новая единица"}
       </DialogTitle>
-
       <IconButton
         onClick={onClose}
         sx={{ position: "absolute", top: 12, right: 12 }}
       >
         <CloseIcon />
       </IconButton>
-
       <DialogContent sx={{ pt: 1 }}>
         <Grid
           container
@@ -119,7 +117,9 @@ export default function SkladUnitDialog({
               <Stack
                 direction="row"
                 spacing={1}
-                alignItems="center"
+                sx={{
+                  alignItems: "center",
+                }}
               >
                 <Typography sx={{ fontWeight: 600 }}>Использования</Typography>
                 <Chip
@@ -145,8 +145,10 @@ export default function SkladUnitDialog({
                       <Typography
                         key={`active-item-${item?.id ?? itemIndex}`}
                         variant="body2"
-                        color="text.secondary"
-                        sx={{ pl: 1.5 }}
+                        sx={{
+                          color: "text.secondary",
+                          pl: 1.5,
+                        }}
                       >
                         {item?.name || "Без названия"}
                       </Typography>
@@ -156,7 +158,9 @@ export default function SkladUnitDialog({
                 {!activeRelations.length ? (
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Активных использований нет.
                   </Typography>
@@ -166,13 +170,14 @@ export default function SkladUnitDialog({
           </Accordion>
         ) : null}
       </DialogContent>
-
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Stack
           direction="row"
           spacing={1.5}
-          justifyContent="flex-end"
-          sx={{ width: "100%" }}
+          sx={{
+            justifyContent: "flex-end",
+            width: "100%",
+          }}
         >
           <Button onClick={onClose}>Отмена</Button>
           <Button

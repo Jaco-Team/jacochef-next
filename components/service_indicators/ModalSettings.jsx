@@ -240,9 +240,6 @@ const ModalSettings = (props) => {
               onChange={changeItem}
               onBlur={changeItem}
               fullWidth
-              InputProps={{
-                inputProps: { min: 0, step: 1 },
-              }}
               sx={{
                 margin: 0,
                 padding: 0,
@@ -259,6 +256,11 @@ const ModalSettings = (props) => {
                   backgroundClip: "padding-box",
                 },
               }}
+              slotProps={{
+                input: {
+                  inputProps: { min: 0, step: 1 },
+                },
+              }}
             />
             <Typography>Балл</Typography>
             <TextField
@@ -269,9 +271,6 @@ const ModalSettings = (props) => {
               onBlur={changeBall}
               size="small"
               fullWidth
-              InputProps={{
-                inputProps: { min: -100, max: 100, step: 0.5 },
-              }}
               sx={{
                 margin: 0,
                 padding: 0,
@@ -285,6 +284,11 @@ const ModalSettings = (props) => {
                   fontWeight: "bold",
                   borderRadius: "8px",
                   backgroundClip: "padding-box",
+                },
+              }}
+              slotProps={{
+                input: {
+                  inputProps: { min: -100, max: 100, step: 0.5 },
                 },
               }}
             />

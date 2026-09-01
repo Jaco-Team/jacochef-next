@@ -209,7 +209,6 @@ function FormBuilderDrag({
           },
         }}
       />
-
       <Box
         sx={{
           mb: 4,
@@ -227,8 +226,10 @@ function FormBuilderDrag({
         </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ mb: 2 }}
+          sx={{
+            color: "text.secondary",
+            mb: 2,
+          }}
         >
           Можно выбрать несколько каналов. Активность формы управляется отдельно.
         </Typography>
@@ -256,7 +257,6 @@ function FormBuilderDrag({
           helperText="Чем больше число, тем выше форма при одинаковом условии"
         />
       </Box>
-
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="formElements">
           {(provided) => (
@@ -1223,11 +1223,11 @@ function FormBuilder() {
                   label="Выберите теги"
                 />
               )}
-              renderTags={(value, getTagProps) =>
+              renderValue={(value, getItemProps) =>
                 value.map((option, index) => (
                   <Chip
                     label={option}
-                    {...getTagProps({ index })}
+                    {...getItemProps({ index })}
                   />
                 ))
               }
@@ -1830,11 +1830,11 @@ function FormBuilder() {
                   label="Выберите теги"
                 />
               )}
-              renderTags={(value, getTagProps) =>
+              renderValue={(value, getItemProps) =>
                 value.map((option, index) => (
                   <Chip
                     label={option}
-                    {...getTagProps({ index })}
+                    {...getItemProps({ index })}
                   />
                 ))
               }

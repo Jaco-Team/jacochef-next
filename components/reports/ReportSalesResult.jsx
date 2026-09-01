@@ -211,7 +211,6 @@ export default function ReportSalesResult({
           <ReportSalesKpiCards totals={kpiTotals} />
         </Grid>
       ) : null}
-
       <Grid size={{ xs: 12 }}>
         <Box
           sx={{
@@ -237,7 +236,6 @@ export default function ReportSalesResult({
               onChange={(event, newValue) => setTab(newValue)}
               variant="standard"
               scrollButtons={false}
-              TabIndicatorProps={{ sx: { display: "none" } }}
               sx={{
                 minHeight: 40,
                 "& .MuiTab-root": {
@@ -254,6 +252,9 @@ export default function ReportSalesResult({
                   color: "#111827 !important",
                   backgroundColor: "#f3f4f6",
                 },
+              }}
+              slotProps={{
+                indicator: { sx: { display: "none" } },
               }}
             >
               <Tab
@@ -314,7 +315,6 @@ export default function ReportSalesResult({
           </Box>
         </Box>
       </Grid>
-
       <Grid size={{ xs: 12 }}>
         {tab === "total" ? (
           <ReportSalesTable
@@ -394,7 +394,6 @@ export default function ReportSalesResult({
           )
         ) : null}
       </Grid>
-
       <ReportSalesColumnsDialog
         open={columnsDialogOpen}
         onClose={() => setColumnsDialogOpen(false)}
@@ -402,7 +401,6 @@ export default function ReportSalesResult({
         setAllColumns={setAllColumns}
         toggleColumn={toggleColumn}
       />
-
       <ReportCostDetailModal
         open={costDetailOpen}
         onClose={closeCostDetail}

@@ -194,8 +194,10 @@ export default function SkladSiteItemsCatalog({
         <Stack
           direction={{ xs: "column", lg: "row" }}
           spacing={2}
-          alignItems={{ xs: "stretch", lg: "center" }}
-          justifyContent="space-between"
+          sx={{
+            alignItems: { xs: "stretch", lg: "center" },
+            justifyContent: "space-between",
+          }}
         >
           <Box>
             <Typography sx={{ fontSize: 20, lineHeight: "24px", fontWeight: 600 }}>
@@ -216,7 +218,6 @@ export default function SkladSiteItemsCatalog({
           </Button>
         </Stack>
       </Paper>
-
       <Box
         sx={{
           p: { xs: 1.5, lg: 2 },
@@ -233,8 +234,10 @@ export default function SkladSiteItemsCatalog({
               <Stack
                 direction={{ xs: "column", lg: "row" }}
                 spacing={1.5}
-                alignItems={{ xs: "stretch", lg: "center" }}
-                justifyContent="space-between"
+                sx={{
+                  alignItems: { xs: "stretch", lg: "center" },
+                  justifyContent: "space-between",
+                }}
               >
                 <Box>
                   <Typography sx={{ fontSize: 20, lineHeight: "24px", fontWeight: 500 }}>
@@ -252,12 +255,14 @@ export default function SkladSiteItemsCatalog({
                   value={search}
                   onChange={(event) => setState({ search: event.target.value, page: 0 })}
                   sx={{ width: { xs: "100%", lg: 320 }, backgroundColor: "#fff" }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
               </Stack>
@@ -265,8 +270,10 @@ export default function SkladSiteItemsCatalog({
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={1.5}
-                alignItems={{ xs: "stretch", md: "center" }}
-                justifyContent="space-between"
+                sx={{
+                  alignItems: { xs: "stretch", md: "center" },
+                  justifyContent: "space-between",
+                }}
               >
                 <Box
                   sx={{
@@ -331,9 +338,11 @@ export default function SkladSiteItemsCatalog({
             <Stack spacing={1.25}>
               <Stack
                 direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ px: 0.25 }}
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 0.25,
+                }}
               >
                 <Typography sx={{ color: textSecondary, fontSize: 13 }}>
                   Выберите категорию, чтобы увидеть товары
@@ -510,7 +519,9 @@ export default function SkladSiteItemsCatalog({
                                   <Stack
                                     direction="row"
                                     spacing={0.5}
-                                    justifyContent="center"
+                                    sx={{
+                                      justifyContent: "center",
+                                    }}
                                   >
                                     <Tooltip title={isEditable ? "Редактировать" : "Открыть"}>
                                       <IconButton
@@ -595,8 +606,10 @@ export default function SkladSiteItemsCatalog({
                               <Stack
                                 direction="row"
                                 useFlexGap
-                                flexWrap="wrap"
-                                gap={1}
+                                sx={{
+                                  flexWrap: "wrap",
+                                  gap: 1,
+                                }}
                               >
                                 {[
                                   ["Активность", "is_show", canEditActivity],
@@ -630,8 +643,10 @@ export default function SkladSiteItemsCatalog({
                               <Stack
                                 direction="row"
                                 useFlexGap
-                                flexWrap="wrap"
-                                gap={1}
+                                sx={{
+                                  flexWrap: "wrap",
+                                  gap: 1,
+                                }}
                               >
                                 <Button
                                   variant="outlined"

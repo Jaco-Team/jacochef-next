@@ -1781,27 +1781,29 @@ class Write_off_journal_View_Tags extends React.Component {
         maxWidth={"lg"}
         onClose={this.onClose.bind(this)}
         fullScreen={fullScreen}
-        PaperProps={{
-          sx: {
-            margin: 0,
-            position: this.state.isMobile ? "absolute" : "initial",
-            bottom: 0,
-            width: "100%",
-            borderRadius: this.state.isMobile ? "40px 40px 0 0" : "12px",
-            height: "auto",
-            maxHeight: "90vh",
-            overflow: "hidden",
-            // Добавляем трансформацию для свайпа
-            transform:
-              this.state.isMobile && this.state.swipeOffset > 0
-                ? `translateY(${this.state.swipeOffset}px)`
-                : "none",
-            transition: this.state.isSwiping ? "none" : "transform 0.3s ease-out",
-            // Добавляем тень при свайпе для лучшего визуального эффекта
-            boxShadow:
-              this.state.swipeOffset > 0
-                ? "0px -4px 20px rgba(0, 0, 0, 0.2)"
-                : "0px -4px 10px rgba(0, 0, 0, 0.1)",
+        slotProps={{
+          paper: {
+            sx: {
+              margin: 0,
+              position: this.state.isMobile ? "absolute" : "initial",
+              bottom: 0,
+              width: "100%",
+              borderRadius: this.state.isMobile ? "40px 40px 0 0" : "12px",
+              height: "auto",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              // Добавляем трансформацию для свайпа
+              transform:
+                this.state.isMobile && this.state.swipeOffset > 0
+                  ? `translateY(${this.state.swipeOffset}px)`
+                  : "none",
+              transition: this.state.isSwiping ? "none" : "transform 0.3s ease-out",
+              // Добавляем тень при свайпе для лучшего визуального эффекта
+              boxShadow:
+                this.state.swipeOffset > 0
+                  ? "0px -4px 20px rgba(0, 0, 0, 0.2)"
+                  : "0px -4px 10px rgba(0, 0, 0, 0.1)",
+            },
           },
         }}
       >
@@ -1907,7 +1909,6 @@ class Write_off_journal_View_Tags extends React.Component {
             />
           ) : null}
         </Box>
-
         <Box
           sx={{
             overflow: "auto",
@@ -2241,20 +2242,22 @@ export class Write_off_journal_View_Disabled extends React.Component {
         maxWidth={"lg"}
         onClose={this.onClose}
         fullScreen={fullScreen}
-        PaperProps={{
-          sx: {
-            margin: 0,
-            position: isMobile ? "absolute" : "initial",
-            bottom: 0,
-            width: "100%",
-            borderRadius: isMobile ? "40px 40px 0 0" : "12px",
-            height: "auto",
-            maxHeight: "90vh",
-            overflow: "hidden",
-            transform: isMobile && swipeOffset > 0 ? `translateY(${swipeOffset}px)` : "none",
-            transition: isSwiping ? "none" : "transform 0.3s ease-out",
-            boxShadow:
-              swipeOffset > 0 ? "0px -4px 20px rgba(0,0,0,0.2)" : "0px -4px 10px rgba(0,0,0,0.1)",
+        slotProps={{
+          paper: {
+            sx: {
+              margin: 0,
+              position: isMobile ? "absolute" : "initial",
+              bottom: 0,
+              width: "100%",
+              borderRadius: isMobile ? "40px 40px 0 0" : "12px",
+              height: "auto",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              transform: isMobile && swipeOffset > 0 ? `translateY(${swipeOffset}px)` : "none",
+              transition: isSwiping ? "none" : "transform 0.3s ease-out",
+              boxShadow:
+                swipeOffset > 0 ? "0px -4px 20px rgba(0,0,0,0.2)" : "0px -4px 10px rgba(0,0,0,0.1)",
+            },
           },
         }}
       >
@@ -2296,7 +2299,6 @@ export class Write_off_journal_View_Disabled extends React.Component {
             />
           </Box>
         )}
-
         <Box
           sx={{
             overflow: "auto",

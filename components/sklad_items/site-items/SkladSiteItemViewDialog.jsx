@@ -296,12 +296,20 @@ export default function SkladSiteItemViewDialog({
         {loading ? (
           <Stack
             spacing={2}
-            alignItems="center"
-            justifyContent="center"
-            sx={{ minHeight: 240 }}
+            sx={{
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 240,
+            }}
           >
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Загружаем карточку товара сайта...</Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Загружаем карточку товара сайта...
+            </Typography>
           </Stack>
         ) : (
           <TabContext value={section}>
@@ -454,7 +462,9 @@ export default function SkladSiteItemViewDialog({
                               direction="row"
                               spacing={1}
                               useFlexGap
-                              flexWrap="wrap"
+                              sx={{
+                                flexWrap: "wrap",
+                              }}
                             >
                               <Chip
                                 label={Number(isVisible) === 1 ? "Активен" : "Скрыт"}
@@ -563,7 +573,11 @@ export default function SkladSiteItemViewDialog({
                                 }}
                               />
                             ) : (
-                              <Typography color="text.secondary">
+                              <Typography
+                                sx={{
+                                  color: "text.secondary",
+                                }}
+                              >
                                 Изображение не загружено.
                               </Typography>
                             )}
@@ -666,7 +680,13 @@ export default function SkladSiteItemViewDialog({
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Typography color="text.secondary">Связи не заданы.</Typography>
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
+                        Связи не заданы.
+                      </Typography>
                     )}
                   </SkladSectionCard>
 
@@ -700,7 +720,13 @@ export default function SkladSiteItemViewDialog({
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Typography color="text.secondary">Итоговый состав не найден.</Typography>
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
+                        Итоговый состав не найден.
+                      </Typography>
                     )}
                   </SkladSectionCard>
 
@@ -736,7 +762,13 @@ export default function SkladSiteItemViewDialog({
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Typography color="text.secondary">Этапы не заданы.</Typography>
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
+                        Этапы не заданы.
+                      </Typography>
                     )}
                   </SkladSectionCard>
 
@@ -768,7 +800,13 @@ export default function SkladSiteItemViewDialog({
                         </Table>
                       </TableContainer>
                     ) : (
-                      <Typography color="text.secondary">Позиции состава не заданы.</Typography>
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
+                        Позиции состава не заданы.
+                      </Typography>
                     )}
                   </SkladSectionCard>
 
@@ -875,7 +913,13 @@ export default function SkladSiteItemViewDialog({
                           }}
                         />
                       ) : (
-                        <Typography color="text.secondary">Изображение не загружено.</Typography>
+                        <Typography
+                          sx={{
+                            color: "text.secondary",
+                          }}
+                        >
+                          Изображение не загружено.
+                        </Typography>
                       )}
                       <Grid
                         container

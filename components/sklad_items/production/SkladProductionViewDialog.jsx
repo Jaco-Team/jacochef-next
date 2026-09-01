@@ -350,7 +350,13 @@ export default function SkladProductionViewDialog({
                       ))}
                     </Stack>
                   ) : (
-                    <Typography color="text.secondary">Состав пока не заполнен.</Typography>
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      Состав пока не заполнен.
+                    </Typography>
                   )}
                 </SkladSectionCard>
               </Stack>
@@ -369,7 +375,9 @@ export default function SkladProductionViewDialog({
                     direction="row"
                     spacing={1}
                     useFlexGap
-                    flexWrap="wrap"
+                    sx={{
+                      flexWrap: "wrap",
+                    }}
                   >
                     <Chip
                       label={Number(detail?.is_show) === 1 ? "Активен" : "Скрыт"}

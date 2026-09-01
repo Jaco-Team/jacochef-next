@@ -158,8 +158,11 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
           <Grid size={12}>
             <Stack
               direction="row"
-              justifyContent="space-between"
-              sx={{ mb: 1, gap: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                mb: 1,
+                gap: 2,
+              }}
             >
               <MySelect
                 label="Кафе"
@@ -323,8 +326,10 @@ export default function ModalPrepareTransactions({ open, onClose, showAlert }) {
           <Grid size={12}>
             <Stack
               direction="row"
-              justifyContent="flex-end"
               spacing={2}
+              sx={{
+                justifyContent: "flex-end",
+              }}
             >
               <Button
                 variant="outlined"

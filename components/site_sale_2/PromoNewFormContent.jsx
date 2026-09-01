@@ -70,8 +70,10 @@ function SectionCard({ title, subtitle, children }) {
           {subtitle ? (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.5 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.5,
+              }}
             >
               {subtitle}
             </Typography>
@@ -100,8 +102,11 @@ function ChoiceCard({ checked, label, description, onChange, sx }) {
           <Typography sx={{ fontWeight: 600, lineHeight: 1.35 }}>{label}</Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mt: 0.5, lineHeight: 1.4 }}
+            sx={{
+              color: "text.secondary",
+              mt: 0.5,
+              lineHeight: 1.4,
+            }}
           >
             {description}
           </Typography>
@@ -179,8 +184,8 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
           <Typography sx={{ fontWeight: 700, fontSize: { xs: 15, sm: 16 } }}>{title}</Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
             sx={{
+              color: "text.secondary",
               mt: 0.25,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -223,8 +228,11 @@ function WeekdaySelector({ state, onToggleDay }) {
       </Box>
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ display: "block", mt: 1 }}
+        sx={{
+          color: "text.secondary",
+          display: "block",
+          mt: 1,
+        }}
       >
         {getWeekdaysPreview(state)}
       </Typography>
@@ -240,9 +248,11 @@ function PromoPresetsBar({ activePresetId, onApplyPreset }) {
     >
       <Stack
         direction="row"
-        flexWrap="wrap"
         useFlexGap
-        sx={{ gap: 1 }}
+        sx={{
+          flexWrap: "wrap",
+          gap: 1,
+        }}
       >
         {PROMO_PRESETS.map((preset) => {
           const isActive = activePresetId === preset.id;
@@ -372,23 +382,26 @@ export default function PromoNewFormContent({
           {isEdit && created ? (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1 }}
+              sx={{
+                color: "text.secondary",
+                mt: 1,
+              }}
             >
               Был создан: {created}
             </Typography>
           ) : (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.75 }}
+              sx={{
+                color: "text.secondary",
+                mt: 0.75,
+              }}
             >
               {isEdit ? "Редактирование промокода" : "Создание нового промокода"}
             </Typography>
           )}
         </Box>
       </Grid>
-
       {!isEdit && onApplyPreset ? (
         <Grid size={12}>
           <PromoPresetsBar
@@ -397,7 +410,6 @@ export default function PromoNewFormContent({
           />
         </Grid>
       ) : null}
-
       <Grid size={12}>
         <SectionCard
           title="Промокод"
@@ -484,7 +496,6 @@ export default function PromoNewFormContent({
           </Grid>
         </SectionCard>
       </Grid>
-
       <Grid size={12}>
         <SectionCard
           title="Ограничения для клиентов"
@@ -553,7 +564,6 @@ export default function PromoNewFormContent({
           </Box>
         </SectionCard>
       </Grid>
-
       <Grid size={12}>
         <Box
           sx={{
@@ -1149,7 +1159,6 @@ export default function PromoNewFormContent({
           ) : null}
         </Box>
       </Grid>
-
       <Grid size={12}>
         <SectionCard title="Тексты для клиента">
           <Stack spacing={2}>
@@ -1179,9 +1188,7 @@ export default function PromoNewFormContent({
           </Stack>
         </SectionCard>
       </Grid>
-
       {historySection ? <Grid size={12}>{historySection}</Grid> : null}
-
       <Grid size={12}>
         <Paper
           variant="outlined"

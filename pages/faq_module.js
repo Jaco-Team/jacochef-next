@@ -1192,7 +1192,17 @@ class FAQ_ extends React.Component {
                   style={{ backgroundColor: parseInt(item.status) === 2 ? "#fadadd" : "#fff" }}
                 >
                   <Typography style={{ fontWeight: "bold" }}>{item.name}</Typography>
-                  <Tooltip title={<Typography color="inherit">Редактирование раздела</Typography>}>
+                  <Tooltip
+                    title={
+                      <Typography
+                        sx={{
+                          color: "inherit",
+                        }}
+                      >
+                        Редактирование раздела
+                      </Typography>
+                    }
+                  >
                     <IconButton
                       onClick={this.openModal_edit.bind(
                         this,

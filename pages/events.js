@@ -652,7 +652,13 @@ class Events_ extends React.Component {
                               {day.event?.length > 0 && (
                                 <Tooltip
                                   title={
-                                    <Typography color="inherit">Кол-во событий дня</Typography>
+                                    <Typography
+                                      sx={{
+                                        color: "inherit",
+                                      }}
+                                    >
+                                      Кол-во событий дня
+                                    </Typography>
                                   }
                                 >
                                   <span

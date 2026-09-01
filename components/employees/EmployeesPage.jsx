@@ -1798,7 +1798,9 @@ export default function EmployeesPage() {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="baseline"
+            sx={{
+              alignItems: "baseline",
+            }}
           >
             <Box
               component="span"
@@ -1828,7 +1830,9 @@ export default function EmployeesPage() {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="baseline"
+            sx={{
+              alignItems: "baseline",
+            }}
           >
             <Box
               component="span"
@@ -1964,7 +1968,9 @@ export default function EmployeesPage() {
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      alignItems="center"
+                      sx={{
+                        alignItems: "center",
+                      }}
                     >
                       {isUnitExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
                       <Box component="span">{unit.name}</Box>
@@ -2023,7 +2029,9 @@ export default function EmployeesPage() {
                       <Stack
                         direction="row"
                         spacing={0.5}
-                        alignItems="center"
+                        sx={{
+                          alignItems: "center",
+                        }}
                       >
                         {isExpanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
                         <Box component="span">{item.name}</Box>
@@ -2092,8 +2100,10 @@ export default function EmployeesPage() {
           >
             <Stack
               spacing={1.5}
-              alignItems="center"
-              textAlign="center"
+              sx={{
+                alignItems: "center",
+                textAlign: "center",
+              }}
             >
               <CircularProgress />
               <Box>
@@ -2127,7 +2137,6 @@ export default function EmployeesPage() {
         status={alert.status}
         text={alert.text}
       />
-
       <Grid
         container
         rowSpacing={2.5}
@@ -2138,8 +2147,10 @@ export default function EmployeesPage() {
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
-            alignItems={{ xs: "stretch", sm: "center" }}
-            justifyContent="space-between"
+            sx={{
+              alignItems: { xs: "stretch", sm: "center" },
+              justifyContent: "space-between",
+            }}
           >
             {pageTitle ? (
               <Typography
@@ -2191,7 +2202,9 @@ export default function EmployeesPage() {
                 <Grid
                   container
                   spacing={1.5}
-                  alignItems="center"
+                  sx={{
+                    alignItems: "center",
+                  }}
                 >
                   <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                     <CityCafeAutocomplete2
@@ -2269,8 +2282,10 @@ export default function EmployeesPage() {
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={1}
-                      alignItems={{ xs: "stretch", sm: "center" }}
-                      justifyContent="flex-end"
+                      sx={{
+                        alignItems: { xs: "stretch", sm: "center" },
+                        justifyContent: "flex-end",
+                      }}
                     >
                       <Typography
                         sx={{
@@ -2406,7 +2421,9 @@ export default function EmployeesPage() {
                                 <Stack
                                   direction="row"
                                   spacing={1.25}
-                                  alignItems="center"
+                                  sx={{
+                                    alignItems: "center",
+                                  }}
                                 >
                                   <EmployeeAvatar employee={item} />
                                   <Box sx={{ minWidth: 0 }}>
@@ -2489,7 +2506,6 @@ export default function EmployeesPage() {
           </Grid>
         )}
       </Grid>
-
       <EmployeeDialog
         open={employeeDialog}
         fullScreen={fullScreen}
@@ -2520,7 +2536,6 @@ export default function EmployeesPage() {
         onManageCloth={loadClothList}
         saving={isLoad || photoChecking}
       />
-
       <CreateEmployeeDialog
         open={newDialog}
         fullScreen={fullScreen}
@@ -2531,7 +2546,6 @@ export default function EmployeesPage() {
         onCreate={createEmployee}
         saving={isLoad || photoChecking}
       />
-
       <ClothListDialog
         open={clothDialog}
         fullScreen={fullScreen}
@@ -2542,7 +2556,6 @@ export default function EmployeesPage() {
         onAdd={addClothItem}
         onDelete={deleteClothItem}
       />
-
       <Dialog
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
@@ -2562,7 +2575,6 @@ export default function EmployeesPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={Boolean(photoReview)}
         onClose={photoChecking ? undefined : chooseAnotherPhoto}
@@ -2671,8 +2683,10 @@ function EmployeeDialog({
         <Stack
           direction="row"
           spacing={1.5}
-          alignItems="center"
-          sx={{ minWidth: 0 }}
+          sx={{
+            alignItems: "center",
+            minWidth: 0,
+          }}
         >
           {permissions.photo.view ? (
             <EmployeeAvatar
@@ -2777,8 +2791,10 @@ function EmployeeDialog({
               <Grid
                 container
                 spacing={1.5}
-                alignItems="flex-start"
-                sx={{ alignContent: "flex-start" }}
+                sx={{
+                  alignItems: "flex-start",
+                  alignContent: "flex-start",
+                }}
               >
                 {hasPersonalView ? (
                   <Grid size={12}>
@@ -3060,7 +3076,9 @@ function EmployeeDialog({
             <Grid
               container
               spacing={2}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <Grid size={{ xs: 12, sm: 3 }}>
                 <MyAutocomplite
@@ -3149,7 +3167,9 @@ function EmployeeDialog({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      justifyContent="flex-end"
+                      sx={{
+                        justifyContent: "flex-end",
+                      }}
                     >
                       <Tooltip title="Редактировать">
                         <IconButton
@@ -3183,9 +3203,11 @@ function EmployeeDialog({
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
-            sx={{ mb: 1.5 }}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              mb: 1.5,
+            }}
           >
             <Chip
               label={`Общий статус: ${overallHealth}`}
@@ -3276,7 +3298,9 @@ function EmployeeDialog({
             <Grid
               container
               spacing={2}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <Grid size={{ xs: 12, sm: 5 }}>
                 <MyAutocomplite
@@ -3676,7 +3700,9 @@ function CreateEmployeeDialog({
           <Grid
             container
             spacing={2}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Grid size={{ xs: 12, sm: 6 }}>
               <MyAutocomplite
@@ -3743,7 +3769,9 @@ function CreateEmployeeDialog({
           <Grid
             container
             spacing={2}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Grid size={{ xs: 12, sm: 3 }}>
               <MyAutocomplite
@@ -3894,9 +3922,12 @@ function ClothListDialog({
             <Box key={item.id ?? `${item.name}-${index}`}>
               <Stack
                 direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ px: 1.5, py: 1 }}
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 1.5,
+                  py: 1,
+                }}
               >
                 <Typography>{item.name}</Typography>
                 <Tooltip title="Удалить">
@@ -3972,7 +4003,9 @@ function HealthBookHistoryDetails({ item }) {
       <Grid
         container
         spacing={1.25}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         {groups.map((group) => {
           const end = snapshot[group.endKey];
@@ -3990,10 +4023,12 @@ function HealthBookHistoryDetails({ item }) {
               >
                 <Stack
                   direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
                   spacing={1}
-                  sx={{ mb: 1.5 }}
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1.5,
+                  }}
                 >
                   <Typography sx={{ fontWeight: 900 }}>{group.name}</Typography>
                   <Chip
@@ -4062,9 +4097,11 @@ function AbsenceHistoryDetails({ item }) {
       >
         <Stack
           direction="row"
-          alignItems="center"
           spacing={1}
-          sx={{ mb: 1.5 }}
+          sx={{
+            alignItems: "center",
+            mb: 1.5,
+          }}
         >
           <Typography sx={{ fontWeight: 900 }}>{type}</Typography>
           <Chip
@@ -4177,9 +4214,11 @@ function WorkHistoryDetails({ item }) {
     <Box sx={{ p: 2 }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        alignItems={{ xs: "flex-start", sm: "center" }}
         spacing={1}
-        sx={{ mb: 1.5 }}
+        sx={{
+          alignItems: { xs: "flex-start", sm: "center" },
+          mb: 1.5,
+        }}
       >
         <Typography sx={{ fontWeight: 900 }}>{item.event_label}</Typography>
         {scheduled ? (
@@ -4194,7 +4233,9 @@ function WorkHistoryDetails({ item }) {
       <Grid
         container
         spacing={1.25}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         {item.changedFields.map(({ key, label }) => {
           const change = item.diff[key];
@@ -4302,7 +4343,9 @@ function ActivityHistoryDetails({ item }) {
       <Grid
         container
         spacing={1.25}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         {item.changedFields.map(({ key, label }) => {
           const change = item.diff[key];
@@ -4389,8 +4432,10 @@ function EmployeeHistoryRow({ item, fields }) {
           <Stack
             direction="row"
             useFlexGap
-            flexWrap="wrap"
-            gap={0.75}
+            sx={{
+              flexWrap: "wrap",
+              gap: 0.75,
+            }}
           >
             {item.event_label && !isCompactActivity ? (
               <Chip
@@ -4454,7 +4499,9 @@ function EmployeeHistoryRow({ item, fields }) {
                 <Grid
                   container
                   spacing={1.25}
-                  alignItems="stretch"
+                  sx={{
+                    alignItems: "stretch",
+                  }}
                 >
                   {fields.map(({ key, label }) => {
                     const change = item.diff[key];

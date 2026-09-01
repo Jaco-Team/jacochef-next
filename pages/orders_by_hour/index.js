@@ -100,8 +100,10 @@ const DetailModal = ({ open, onClose, data }) => {
         <Box sx={{ mb: 2 }}>
           <Typography
             variant="body2"
-            color="text.secondary"
             gutterBottom
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {data.type === "hour" ? "Почасовые данные" : "Итоговые данные"}
           </Typography>
@@ -111,7 +113,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Время:
                 </Typography>
@@ -125,7 +129,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Показатель:
                 </Typography>
@@ -139,7 +145,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Текущий период:
                 </Typography>
@@ -172,7 +180,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Прошлый период:
                 </Typography>
@@ -205,7 +215,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Изменение:
                 </Typography>
@@ -227,7 +239,9 @@ const DetailModal = ({ open, onClose, data }) => {
                 <Box sx={{ mb: 1.5 }}>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Дата:
                   </Typography>
@@ -242,7 +256,9 @@ const DetailModal = ({ open, onClose, data }) => {
                 <Box sx={{ mb: 1.5 }}>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Даты:
                   </Typography>
@@ -257,7 +273,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Показатель:
                 </Typography>
@@ -271,7 +289,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Итого за день:
                 </Typography>
@@ -285,7 +305,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Изменение:
                 </Typography>
@@ -1080,7 +1102,6 @@ function OrdersPage() {
           )}
         </Grid>
       </Grid>
-
       <Paper
         style={{
           display: tab === 0 ? "block" : "none",
@@ -1170,7 +1191,6 @@ function OrdersPage() {
           </Grid>
         </Grid>
       </Paper>
-
       <Paper
         style={{
           display: tab === 1 ? "block" : "none",
@@ -1212,9 +1232,11 @@ function OrdersPage() {
                   type="number"
                   value={setting.percent}
                   onChange={(e) => handlePercentChange(setting.id, parseInt(e.target.value) || 0)}
-                  InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
                   size="small"
                   sx={{ width: "120px", "& .MuiOutlinedInput-root": { borderRadius: 1 } }}
+                  slotProps={{
+                    input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
+                  }}
                 />
                 <Box sx={{ flex: 1 }} />
                 <IconButton

@@ -30,12 +30,10 @@ export default function ItemRow({ item, disabled, onToggle }) {
       >
         {item.name}
       </Typography>
-
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <Switch
           checked={isActive}
           disabled={disabled}
-          inputProps={{ "aria-label": `${isActive ? "Закрыть" : "Открыть"} ${item.name}` }}
           onChange={(event) => onToggle?.(event.target.checked ? 1 : 0)}
           sx={{
             width: 58,
@@ -69,6 +67,9 @@ export default function ItemRow({ item, disabled, onToggle }) {
               bgcolor: "#F1F1F1",
               opacity: 1,
             },
+          }}
+          slotProps={{
+            input: { "aria-label": `${isActive ? "Закрыть" : "Открыть"} ${item.name}` },
           }}
         />
       </Box>

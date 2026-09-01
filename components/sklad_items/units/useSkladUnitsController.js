@@ -297,13 +297,17 @@ export default function useSkladUnitsController({ showAlert }) {
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
-          justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
         >
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Typography
               variant="h6"
@@ -404,7 +408,9 @@ export default function useSkladUnitsController({ showAlert }) {
                       <Stack
                         direction="row"
                         spacing={0.5}
-                        justifyContent="flex-end"
+                        sx={{
+                          justifyContent: "flex-end",
+                        }}
                       >
                         <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
                           <span>
@@ -455,7 +461,13 @@ export default function useSkladUnitsController({ showAlert }) {
                     colSpan={3}
                     align="center"
                   >
-                    <Typography color="text.secondary">Ничего не найдено</Typography>
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      Ничего не найдено
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : null}

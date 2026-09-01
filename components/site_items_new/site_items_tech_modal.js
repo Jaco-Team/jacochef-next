@@ -3505,9 +3505,12 @@ export class SiteItemsModalTech extends React.Component {
                     ) : (
                       <Stack
                         spacing={1.5}
-                        alignItems="center"
-                        justifyContent="center"
-                        sx={{ minHeight: 240, color: textSecondary }}
+                        sx={{
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minHeight: 240,
+                          color: textSecondary,
+                        }}
                       >
                         <CircularProgress
                           size={28}
@@ -3532,7 +3535,9 @@ export class SiteItemsModalTech extends React.Component {
                         <Grid
                           container
                           spacing={2.5}
-                          alignItems="flex-start"
+                          sx={{
+                            alignItems: "flex-start",
+                          }}
                         >
                           {this.state.img_app.length > 0 ? (
                             <Grid
@@ -3586,9 +3591,9 @@ export class SiteItemsModalTech extends React.Component {
                                   </picture>
                                 ) : (
                                   <Stack
-                                    alignItems="center"
-                                    justifyContent="center"
                                     sx={{
+                                      alignItems: "center",
+                                      justifyContent: "center",
                                       width: 180,
                                       maxWidth: "100%",
                                       aspectRatio: "1 / 1",

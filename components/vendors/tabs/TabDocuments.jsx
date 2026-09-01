@@ -206,9 +206,13 @@ function DocumentsTable({
                   <Stack
                     direction="row"
                     spacing={1.25}
-                    alignItems="center"
-                    sx={fileLinkSx}
                     onClick={() => handleOpenFile(decl.url)}
+                    sx={[
+                      {
+                        alignItems: "center",
+                      },
+                      ...(Array.isArray(fileLinkSx) ? fileLinkSx : [fileLinkSx]),
+                    ]}
                   >
                     <FileTypeIcon
                       extension={getFileExtension(decl.filename || decl.url)}
@@ -247,7 +251,9 @@ function DocumentsTable({
                   <Stack
                     direction="row"
                     spacing={0.5}
-                    justifyContent="flex-end"
+                    sx={{
+                      justifyContent: "flex-end",
+                    }}
                   >
                     <Tooltip title="Скачать">
                       <span>
@@ -304,7 +310,13 @@ function DocumentsTable({
       sx={{ borderRadius: 3 }}
     >
       <CardContent>
-        <Typography color="text.secondary">Список пуст.</Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
+          Список пуст.
+        </Typography>
       </CardContent>
     </Card>
   );
@@ -395,12 +407,12 @@ export default function TabDocuments({
         onSubmit={handleSaveDeclaration}
         vendorOptions={getItemVendorOptions?.(editableDeclaration?.item_id) || []}
       />
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        // alignItems={{ xs: "stretch", sm: "center" }}
-        justifyContent="space-between"
         spacing={2}
+        sx={{
+          justifyContent: "space-between",
+        }}
       >
         <Typography
           variant="h6"
@@ -432,7 +444,6 @@ export default function TabDocuments({
           ) : null}
         </Stack>
       </Stack>
-
       {filteredVendorDeclarations.length ? (
         <Stack spacing={2}>
           <Accordion>
@@ -485,7 +496,11 @@ export default function TabDocuments({
           sx={{ borderRadius: 3 }}
         >
           <CardContent>
-            <Typography color="text.secondary">
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Декларации пока не добавлены. Загрузите файл через форму выше.
             </Typography>
           </CardContent>

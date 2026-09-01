@@ -202,10 +202,12 @@ export function SiteSettingCategory() {
         ) : null}
       </Grid>
       <Grid
-        mb={10}
         size={{
           xs: 12,
           sm: 12,
+        }}
+        sx={{
+          mb: 10,
         }}
       >
         <TableContainer>

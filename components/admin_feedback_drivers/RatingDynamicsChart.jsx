@@ -219,7 +219,13 @@ const RatingDynamicsChart = ({ data }) => {
           justifyContent: "center",
         }}
       >
-        <Typography color="text.secondary">Нет данных для отображения</Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
+          Нет данных для отображения
+        </Typography>
       </Box>
     );
   }
@@ -254,7 +260,9 @@ const RatingDynamicsChart = ({ data }) => {
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Typography
           variant="h6"
-          fontWeight="600"
+          sx={{
+            fontWeight: "600",
+          }}
         >
           Динамика оценок
         </Typography>

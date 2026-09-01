@@ -144,7 +144,6 @@ export default function CafeReviewsPage() {
         status={page.alertStatus}
         text={page.alertMessage}
       />
-
       <Grid
         container
         spacing={2.5}
@@ -471,7 +470,6 @@ export default function CafeReviewsPage() {
           </Grid>
         ) : null}
       </Grid>
-
       <SwipeableDrawer
         anchor="bottom"
         open={isMobile && page.filtersOpen}
@@ -479,14 +477,16 @@ export default function CafeReviewsPage() {
         onClose={() => page.setFiltersOpen(false)}
         disableSwipeToOpen
         ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          role: "dialog",
-          "aria-modal": true,
-          "aria-labelledby": "cafe-reviews-mobile-filters-title",
-          sx: {
-            borderTopLeftRadius: "24px",
-            borderTopRightRadius: "24px",
-            maxHeight: "92vh",
+        slotProps={{
+          paper: {
+            role: "dialog",
+            "aria-modal": true,
+            "aria-labelledby": "cafe-reviews-mobile-filters-title",
+            sx: {
+              borderTopLeftRadius: "24px",
+              borderTopRightRadius: "24px",
+              maxHeight: "92vh",
+            },
           },
         }}
       >
@@ -505,7 +505,6 @@ export default function CafeReviewsPage() {
           />
         </Box>
       </SwipeableDrawer>
-
       <SwipeableDrawer
         anchor="bottom"
         open={isMobile && page.detailOpen}
@@ -513,14 +512,16 @@ export default function CafeReviewsPage() {
         onClose={page.closeDetail}
         disableSwipeToOpen
         ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          role: "dialog",
-          "aria-modal": true,
-          "aria-labelledby": "cafe-reviews-mobile-detail-drawer-title",
-          sx: {
-            borderTopLeftRadius: "24px",
-            borderTopRightRadius: "24px",
-            maxHeight: "94vh",
+        slotProps={{
+          paper: {
+            role: "dialog",
+            "aria-modal": true,
+            "aria-labelledby": "cafe-reviews-mobile-detail-drawer-title",
+            sx: {
+              borderTopLeftRadius: "24px",
+              borderTopRightRadius: "24px",
+              maxHeight: "94vh",
+            },
           },
         }}
       >
@@ -552,7 +553,6 @@ export default function CafeReviewsPage() {
           ) : null}
         </Box>
       </SwipeableDrawer>
-
       <Dialog
         open={isTablet && page.detailOpen}
         onClose={page.closeDetail}

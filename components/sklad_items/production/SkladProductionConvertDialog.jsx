@@ -33,14 +33,15 @@ export default function SkladProductionConvertDialog({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Состав и основные настройки сохранятся. Преобразование недоступно для записи, которая
             уже используется в других данных.
           </Typography>
         </Stack>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
         <Button
           onClick={onClose}

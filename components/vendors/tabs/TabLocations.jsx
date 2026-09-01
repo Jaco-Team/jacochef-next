@@ -54,7 +54,9 @@ export default function TabLocations({ canEdit, onToggleCity }) {
                     <Typography sx={{ fontWeight: 600 }}>{city.name || "Без названия"}</Typography>
                     <Typography
                       variant="body2"
-                      color="text.secondary"
+                      sx={{
+                        color: "text.secondary",
+                      }}
                     >
                       {city.addr || "Адрес не указан"}
                     </Typography>
@@ -62,12 +64,17 @@ export default function TabLocations({ canEdit, onToggleCity }) {
                 ))}
               </Stack>
             ) : (
-              <Typography color="text.secondary">Локации не назначены.</Typography>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
+                Локации не назначены.
+              </Typography>
             )}
           </Stack>
         </CardContent>
       </Card>
-
       <Card
         variant="outlined"
         sx={{ borderRadius: 3 }}
@@ -91,13 +98,25 @@ export default function TabLocations({ canEdit, onToggleCity }) {
                   </Typography>
                   <Typography>{mail.mail || "Не указан"}</Typography>
                   {mail.comment ? (
-                    <Typography color="text.secondary">{mail.comment}</Typography>
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      {mail.comment}
+                    </Typography>
                   ) : null}
                   {index < mails.length - 1 ? <Divider sx={{ mt: 2 }} /> : null}
                 </Stack>
               ))
             ) : (
-              <Typography color="text.secondary">Email по точкам не настроены.</Typography>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
+                Email по точкам не настроены.
+              </Typography>
             )}
           </Stack>
         </CardContent>

@@ -16,8 +16,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
-import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
-import { MyTextInput } from "@/ui/Forms";
+import { JacoCityCafe, JacoTextInput } from "@/design-system/shared/ui";
 
 import CategoryCard from "./CategoryCard";
 import CloseBuyCategory from "./CloseBuyCategory";
@@ -108,7 +107,7 @@ export default function CloseBuyManagement({
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 4 }}>
-          <CityCafeAutocomplete2
+          <JacoCityCafe
             points={points}
             value={selectedPoint ? [selectedPoint] : []}
             onChange={(selectedPoints) => {
@@ -122,14 +121,14 @@ export default function CloseBuyManagement({
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <MyTextInput
+          <JacoTextInput
             fullWidth
             size="small"
             type="search"
             label="Поиск по товарам и категориям"
             value={search}
             inputProps={{ minLength: 2 }}
-            func={(event) => onSearchChange(event.target.value)}
+            onChange={(event) => onSearchChange(event.target.value)}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
@@ -144,7 +143,6 @@ export default function CloseBuyManagement({
           </Button>
         </Grid>
       </Grid>
-
       <ToggleButtonGroup
         value={statusFilter}
         exclusive
@@ -194,7 +192,6 @@ export default function CloseBuyManagement({
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
-
       {summary ? (
         <>
           {isMobile ? (
@@ -241,7 +238,6 @@ export default function CloseBuyManagement({
           )}
         </>
       ) : null}
-
       {loading ? (
         <Grid
           container
@@ -315,7 +311,6 @@ export default function CloseBuyManagement({
           </Typography>
         </Paper>
       )}
-
       {isMobile ? (
         <SwipeableDrawer
           anchor="bottom"
@@ -326,18 +321,20 @@ export default function CloseBuyManagement({
           ModalProps={{
             keepMounted: true,
           }}
-          PaperProps={{
-            sx: {
-              height: "75dvh",
-              maxHeight: "calc(100dvh - 24px)",
-              borderRadius: "24px 24px 0 0",
-              overflow: "hidden",
-              bgcolor: "#FFFFFF",
-            },
-          }}
           sx={{
             "& .MuiBackdrop-root": {
               bgcolor: "rgba(0, 0, 0, 0.48)",
+            },
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                height: "75dvh",
+                maxHeight: "calc(100dvh - 24px)",
+                borderRadius: "24px 24px 0 0",
+                overflow: "hidden",
+                bgcolor: "#FFFFFF",
+              },
             },
           }}
         >

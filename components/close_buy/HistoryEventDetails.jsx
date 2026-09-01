@@ -76,9 +76,11 @@ export default function HistoryEventDetails({ event }) {
         <Stack spacing={0.75}>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            gap={1}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 1,
+            }}
           >
             <Typography
               variant="h6"
@@ -102,8 +104,10 @@ export default function HistoryEventDetails({ event }) {
 
         <Stack
           direction="row"
-          flexWrap="wrap"
-          gap={1}
+          sx={{
+            flexWrap: "wrap",
+            gap: 1,
+          }}
         >
           <Chip
             size="small"
@@ -131,8 +135,10 @@ export default function HistoryEventDetails({ event }) {
 
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
           <Typography sx={{ fontWeight: 700 }}>
             {isLegacy ? "Детали записи" : "Фактические изменения"}
@@ -172,7 +178,9 @@ export default function HistoryEventDetails({ event }) {
                   >
                     <Stack
                       spacing={0.25}
-                      alignItems="flex-start"
+                      sx={{
+                        alignItems: "flex-start",
+                      }}
                     >
                       <Typography
                         variant="caption"
@@ -185,7 +193,9 @@ export default function HistoryEventDetails({ event }) {
                     <Typography sx={{ pb: 0.35, color: "#A0A0A0" }}>→</Typography>
                     <Stack
                       spacing={0.25}
-                      alignItems="flex-end"
+                      sx={{
+                        alignItems: "flex-end",
+                      }}
                     >
                       <Typography
                         variant="caption"

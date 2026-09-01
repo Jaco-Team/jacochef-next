@@ -572,13 +572,15 @@ function ReportDishesCostDetailModal({
       fullWidth
       maxWidth={false}
       scroll="paper"
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          fontFamily: FONT,
-          maxHeight: "90vh",
-          width: "calc(100vw - 32px)",
-          maxWidth: "1800px",
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            fontFamily: FONT,
+            maxHeight: "90vh",
+            width: "calc(100vw - 32px)",
+            maxWidth: "1800px",
+          },
         },
       }}
     >
@@ -606,9 +608,7 @@ function ReportDishesCostDetailModal({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Divider />
-
       <DialogContent sx={{ pt: 2.5, pb: 3 }}>
         {loading ? (
           <Box

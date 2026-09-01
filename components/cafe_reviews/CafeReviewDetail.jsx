@@ -555,8 +555,10 @@ export default function CafeReviewDetail({
                     }
                     minRows={3}
                     multiline
-                    inputProps={{ maxLength: 2000 }}
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
+                    slotProps={{
+                      htmlInput: { maxLength: 2000 },
+                    }}
                   />
                   <Button
                     variant="contained"
@@ -597,7 +599,6 @@ export default function CafeReviewDetail({
           </>
         ) : null}
       </Box>
-
       <Dialog
         open={Boolean(confirmAction)}
         onClose={() => setConfirmAction(null)}

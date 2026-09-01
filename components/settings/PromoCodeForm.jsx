@@ -376,8 +376,10 @@ export default function PromoCodeForm({
             size="small"
             value={formData.minOrderAmount}
             onChange={handleChange}
-            inputProps={{ min: 0 }}
             required
+            slotProps={{
+              htmlInput: { min: 0 },
+            }}
           />
         </Grid>
         <Grid
@@ -393,8 +395,10 @@ export default function PromoCodeForm({
             type="number"
             value={formData.maxOrderAmount}
             onChange={handleChange}
-            inputProps={{ min: 0 }}
             size="small"
+            slotProps={{
+              htmlInput: { min: 0 },
+            }}
           />
         </Grid>
 
@@ -412,8 +416,10 @@ export default function PromoCodeForm({
             type="number"
             value={formData.activationLimit}
             onChange={handleChange}
-            inputProps={{ min: 1 }}
             required
+            slotProps={{
+              htmlInput: { min: 1 },
+            }}
           />
         </Grid>
 
@@ -431,8 +437,10 @@ export default function PromoCodeForm({
             type="number"
             value={formData.daysBeforeIssue}
             onChange={handleChange}
-            inputProps={{ min: 0 }}
             required
+            slotProps={{
+              htmlInput: { min: 0 },
+            }}
           />
         </Grid>
 
@@ -450,8 +458,10 @@ export default function PromoCodeForm({
             type="number"
             value={formData.validityDays}
             onChange={handleChange}
-            inputProps={{ min: 1 }}
             required
+            slotProps={{
+              htmlInput: { min: 1 },
+            }}
           />
         </Grid>
 

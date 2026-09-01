@@ -501,13 +501,15 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        sx: {
-          maxHeight: "92vh",
-          height: { xs: "auto", md: "92vh" },
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
+      slotProps={{
+        paper: {
+          sx: {
+            maxHeight: "92vh",
+            height: { xs: "auto", md: "92vh" },
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          },
         },
       }}
     >
@@ -536,7 +538,6 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       {hasOrderErrorAccess ? (
         <Box
           sx={{
@@ -575,7 +576,6 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
           />
         </Box>
       ) : null}
-
       {checkedError && hasOrderErrorAccess ? (
         <Grid
           container
@@ -608,7 +608,6 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
           </Grid>
         </Grid>
       ) : null}
-
       <DialogContent
         sx={{
           flex: 1,
@@ -1239,7 +1238,6 @@ function ErrorsManagement() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <OrderDetailsDialog
         detail={selectedOrder}
         onClose={() => setSelectedOrder(null)}
@@ -1247,7 +1245,6 @@ function ErrorsManagement() {
         errCats={errCats}
         solutionsCatalog={solutions}
       />
-
       <CatsModal
         open={modalCats}
         title={modalCatsTitle}
@@ -1262,7 +1259,6 @@ function ErrorsManagement() {
         save={save}
         remove={removeErrCat}
       />
-
       <Box
         className="container_first_child"
         sx={{ pb: 3 }}
@@ -1419,8 +1415,10 @@ function ErrorsManagement() {
                       label="№ заказа"
                       value={draftFilters.orderNumber}
                       onChange={handleDraftChange("orderNumber")}
-                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
 
@@ -1431,8 +1429,10 @@ function ErrorsManagement() {
                       label="Номер телефона"
                       value={draftFilters.phone}
                       onChange={handleDraftChange("phone")}
-                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
 
@@ -1443,8 +1443,10 @@ function ErrorsManagement() {
                       label="Сумма от"
                       value={draftFilters.amountFrom}
                       onChange={handleDraftChange("amountFrom")}
-                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
 
@@ -1455,8 +1457,10 @@ function ErrorsManagement() {
                       label="Сумма до"
                       value={draftFilters.amountTo}
                       onChange={handleDraftChange("amountTo")}
-                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
                 </Grid>
@@ -1501,8 +1505,10 @@ function ErrorsManagement() {
                       label="Время оформления заказа от"
                       value={draftFilters.timeFrom}
                       onChange={handleDraftChange("timeFrom")}
-                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
 
@@ -1514,8 +1520,10 @@ function ErrorsManagement() {
                       label="Время оформления заказа до"
                       value={draftFilters.timeTo}
                       onChange={handleDraftChange("timeTo")}
-                      InputLabelProps={{ shrink: true }}
                       sx={searchFieldSx}
+                      slotProps={{
+                        inputLabel: { shrink: true },
+                      }}
                     />
                   </Grid>
                 </Grid>

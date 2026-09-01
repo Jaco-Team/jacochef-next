@@ -121,7 +121,9 @@ export default function SkladProductionCategoryManagerDialog({
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1}
-                  alignItems={{ xs: "stretch", sm: "center" }}
+                  sx={{
+                    alignItems: { xs: "stretch", sm: "center" },
+                  }}
                 >
                   <MyTextInput
                     label="Новая категория"
@@ -163,7 +165,9 @@ export default function SkladProductionCategoryManagerDialog({
                   <Stack
                     direction={{ xs: "column", sm: "row" }}
                     spacing={1.5}
-                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{
+                      alignItems: { xs: "stretch", sm: "center" },
+                    }}
                   >
                     <Stack
                       spacing={0.25}
@@ -182,11 +186,15 @@ export default function SkladProductionCategoryManagerDialog({
                           <Stack
                             direction="row"
                             spacing={1}
-                            alignItems="center"
+                            sx={{
+                              alignItems: "center",
+                            }}
                           >
                             <Typography
-                              fontWeight={600}
                               noWrap
+                              sx={{
+                                fontWeight: 600,
+                              }}
                             >
                               {category.name}
                             </Typography>
@@ -197,7 +205,9 @@ export default function SkladProductionCategoryManagerDialog({
                           </Stack>
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             {categoryUsageLabel(category)}
                           </Typography>
@@ -208,7 +218,9 @@ export default function SkladProductionCategoryManagerDialog({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      justifyContent="flex-end"
+                      sx={{
+                        justifyContent: "flex-end",
+                      }}
                     >
                       {isEditing ? (
                         <>
@@ -280,12 +292,20 @@ export default function SkladProductionCategoryManagerDialog({
             })}
 
             {!loading && !categories.length ? (
-              <Typography color="text.secondary">Категории не найдены.</Typography>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
+                Категории не найдены.
+              </Typography>
             ) : null}
 
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Удалить можно только категорию без связанных рецептов, полуфабрикатов и записей
               истории.
@@ -302,7 +322,6 @@ export default function SkladProductionCategoryManagerDialog({
           </Button>
         </DialogActions>
       </MyModal>
-
       <SkladDeleteDialog
         open={Boolean(deleteCategory)}
         loading={loading}

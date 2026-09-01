@@ -644,8 +644,10 @@ export default class ReportRevenueTable extends React.Component {
       <>
         <Grid
           container
-          justifyContent="flex-end"
-          sx={{ mb: 1 }}
+          sx={{
+            justifyContent: "flex-end",
+            mb: 1,
+          }}
         >
           <Button
             variant="outlined"
@@ -665,7 +667,6 @@ export default class ReportRevenueTable extends React.Component {
             Колонки
           </Button>
         </Grid>
-
         <div
           ref={this.topScrollRef}
           onScroll={() => this.syncHorizontalScroll("top")}
@@ -679,7 +680,6 @@ export default class ReportRevenueTable extends React.Component {
         >
           <div style={{ width: tableWidth, minWidth: "100%", height: 1 }} />
         </div>
-
         <TableContainer
           ref={this.tableScrollRef}
           onScroll={() => this.syncHorizontalScroll("table")}
@@ -1177,7 +1177,6 @@ export default class ReportRevenueTable extends React.Component {
             </TableBody>
           </Table>
         </TableContainer>
-
         <ReportRevenueColumnsDialog
           open={columnsDialogOpen}
           onClose={() => this.setState({ columnsDialogOpen: false })}

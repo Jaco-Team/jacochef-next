@@ -29,7 +29,9 @@ function SummaryItem({ label, value }) {
     <Box>
       <Typography
         variant="caption"
-        color="text.secondary"
+        sx={{
+          color: "text.secondary",
+        }}
       >
         {label}
       </Typography>
@@ -84,9 +86,11 @@ export default function MaterialCardModal({
             <Stack
               direction="row"
               spacing={1}
-              flexWrap="wrap"
               useFlexGap
-              alignItems="center"
+              sx={{
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
             >
               <Chip
                 size="small"
@@ -102,7 +106,9 @@ export default function MaterialCardModal({
               ) : null}
               <Typography
                 variant="body2"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {[
                   local.category_name,
@@ -190,11 +196,13 @@ export default function MaterialCardModal({
 
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              flexWrap="wrap"
               useFlexGap
               spacing={1}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
             >
               <Typography variant="subtitle1">Поставщики</Typography>
               {canEdit ? (

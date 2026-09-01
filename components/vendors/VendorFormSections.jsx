@@ -207,8 +207,10 @@ export function VendorPointMailsSection({
         <Stack spacing={2}>
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
             <Typography
               variant="h6"
@@ -226,7 +228,13 @@ export function VendorPointMailsSection({
           </Stack>
 
           {mails.length === 0 ? (
-            <Typography color="text.secondary">Пока нет привязанных email.</Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Пока нет привязанных email.
+            </Typography>
           ) : null}
 
           {mails.map((mail, index) => (
@@ -234,7 +242,9 @@ export function VendorPointMailsSection({
               <Grid
                 container
                 spacing={2}
-                alignItems="flex-start"
+                sx={{
+                  alignItems: "flex-start",
+                }}
               >
                 <Grid size={{ xs: 12, md: 4 }}>
                   <MyAutocomplite
@@ -305,7 +315,11 @@ export function VendorItemsSection({
             disabled={disabled}
           />
           {!allItems.length ? (
-            <Typography color="text.secondary">
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Для выбора товаров backend должен вернуть `all_items` в bootstrap vendors.
             </Typography>
           ) : null}

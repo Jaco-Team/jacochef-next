@@ -243,10 +243,12 @@ const AppointmentModal = (props) => {
 
             {fullMenuFiltered?.length > 0 && (
               <Grid
-                mb={10}
                 size={{
                   xs: 12,
                   sm: 12,
+                }}
+                sx={{
+                  mb: 10,
                 }}
               >
                 <TableContainer sx={{ maxHeight: { xs: "none", sm: 630 } }}>
@@ -304,7 +306,11 @@ const AppointmentModal = (props) => {
                                     >
                                       <Tooltip
                                         title={
-                                          <Typography color="inherit">
+                                          <Typography
+                                            sx={{
+                                              color: "inherit",
+                                            }}
+                                          >
                                             Редактировать параметры модуля
                                           </Typography>
                                         }
@@ -346,7 +352,11 @@ const AppointmentModal = (props) => {
                                     >
                                       <Tooltip
                                         title={
-                                          <Typography color="inherit">
+                                          <Typography
+                                            sx={{
+                                              color: "inherit",
+                                            }}
+                                          >
                                             Редактирование свойств модуля
                                           </Typography>
                                         }

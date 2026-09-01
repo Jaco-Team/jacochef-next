@@ -234,21 +234,17 @@ export default function CompetitorParsersPage() {
       >
         <CircularProgress />
       </Backdrop>
-
       <ConfirmDialog />
-
       <MyAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
         text={alertMessage}
       />
-
       <CompetitorParserItemsModal
         modal={itemsModal}
         onClose={closeItemsModal}
       />
-
       <Grid
         spacing={3}
         className="container_first_child"
@@ -261,16 +257,20 @@ export default function CompetitorParsersPage() {
           <Paper sx={{ p: 2.5 }}>
             <Stack
               direction={{ xs: "column", md: "row" }}
-              justifyContent="space-between"
-              alignItems={{ xs: "stretch", md: "center" }}
-              gap={2}
-              mb={2}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: { xs: "stretch", md: "center" },
+                gap: 2,
+                mb: 2,
+              }}
             >
               <Box>
                 <Typography variant="h6">Источники</Typography>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Последний статус запуска и просмотр товаров по запросу.
                 </Typography>
@@ -278,8 +278,10 @@ export default function CompetitorParsersPage() {
 
               <Stack
                 direction="row"
-                gap={1}
-                flexWrap="wrap"
+                sx={{
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
               >
                 <Button
                   variant="outlined"
@@ -383,10 +385,18 @@ export default function CompetitorParsersPage() {
                         <TableRow key={source.id}>
                           <TableCell>
                             <Stack spacing={0.5}>
-                              <Typography fontWeight={700}>{source.name}</Typography>
+                              <Typography
+                                sx={{
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {source.name}
+                              </Typography>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
+                                sx={{
+                                  color: "text.secondary",
+                                }}
                               >
                                 {source.code}
                               </Typography>
@@ -424,8 +434,10 @@ export default function CompetitorParsersPage() {
                           <TableCell>
                             <Typography
                               variant="body2"
-                              color="text.secondary"
-                              sx={{ maxWidth: 220 }}
+                              sx={{
+                                color: "text.secondary",
+                                maxWidth: 220,
+                              }}
                             >
                               {formatValue(source.notes)}
                             </Typography>
@@ -433,8 +445,10 @@ export default function CompetitorParsersPage() {
                           <TableCell align="right">
                             <Stack
                               direction={{ xs: "column", md: "row" }}
-                              justifyContent="flex-end"
-                              gap={1}
+                              sx={{
+                                justifyContent: "flex-end",
+                                gap: 1,
+                              }}
                             >
                               <Button
                                 size="small"

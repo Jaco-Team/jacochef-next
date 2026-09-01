@@ -221,8 +221,10 @@ function VendorsPage() {
                     </Typography>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ display: { xs: "block", sm: "none" } }}
+                      sx={{
+                        color: "text.secondary",
+                        display: { xs: "block", sm: "none" },
+                      }}
                     >
                       {cityText || "—"}
                     </Typography>
@@ -234,8 +236,10 @@ function VendorsPage() {
                 <TableCell align="right">
                   <Stack
                     direction="column"
-                    alignItems="flex-end"
                     spacing={0.5}
+                    sx={{
+                      alignItems: "flex-end",
+                    }}
                   >
                     <Typography variant="body2">
                       {formatPlural(itemsCount, ["продукт", "продукта", "продуктов"])}
@@ -262,9 +266,11 @@ function VendorsPage() {
                 <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                   <Stack
                     direction="row"
-                    alignItems="center"
                     spacing={0.5}
-                    sx={{ color: expiringDeclarations ? "error.main" : "text.secondary" }}
+                    sx={{
+                      alignItems: "center",
+                      color: expiringDeclarations ? "error.main" : "text.secondary",
+                    }}
                   >
                     <DescriptionOutlinedIcon sx={{ fontSize: 16 }} />
                     <Tooltip

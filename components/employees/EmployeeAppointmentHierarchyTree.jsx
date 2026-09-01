@@ -1647,23 +1647,25 @@ export default function EmployeeAppointmentHierarchyTree({
             placeholder="Найти должность или отдел"
             aria-label="Поиск по иерархии"
             sx={{ width: { xs: 170, sm: 280 } }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-              endAdornment: search ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    aria-label="Очистить поиск"
-                    onClick={() => setSearch("")}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ) : null,
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: search ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      aria-label="Очистить поиск"
+                      onClick={() => setSearch("")}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              },
             }}
           />
           {normalizedSearch ? (
@@ -1863,7 +1865,6 @@ export default function EmployeeAppointmentHierarchyTree({
           </Box>
         </Box>
       </Box>
-
       <DragOverlay>
         {activeItem ? (
           <Paper

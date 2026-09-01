@@ -129,7 +129,6 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
   return (
     <>
       <ConfirmDialog />
-
       <AdsAddConnectionModal
         api_laravel={api_laravel}
         isOpened={isAddOpen}
@@ -137,21 +136,18 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
         onSuccess={refreshAll}
         showAlert={showAlert}
       />
-
       <AdsOauthCodeModal
         open={oauthModal.open}
         connection={oauthModal.connection}
         onClose={() => setOauthModal({ open: false, connection: null })}
         onSubmit={({ code }) => exchangeCode(code)}
       />
-
       <AdsSyncModal
         open={syncModal.open}
         connection={syncModal.connection}
         onClose={closeSync}
         onSubmit={({ days }) => syncConnection(days)}
       />
-
       <Grid
         container
         spacing={1}
@@ -159,10 +155,12 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
         <Grid size={12}>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            gap={2}
-            flexWrap="wrap"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
           >
             <Box>
               <Typography variant="h6">Настройка соединений с API</Typography>
@@ -170,8 +168,10 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
 
             <Stack
               direction="row"
-              gap={1}
-              flexWrap="wrap"
+              sx={{
+                gap: 1,
+                flexWrap: "wrap",
+              }}
             >
               <Button
                 variant="outlined"
@@ -214,9 +214,11 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                     <Stack spacing={1.25}>
                       <Stack
                         direction="row"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                        gap={2}
+                        sx={{
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          gap: 2,
+                        }}
                       >
                         <Box sx={{ minWidth: 0 }}>
                           <Typography
@@ -255,8 +257,10 @@ export default function SettingsTab({ api_laravel, showAlert, canAccess }) {
                       <Stack
                         direction="row"
                         spacing={1}
-                        flexWrap="wrap"
                         useFlexGap
+                        sx={{
+                          flexWrap: "wrap",
+                        }}
                       >
                         <Button
                           size="small"
