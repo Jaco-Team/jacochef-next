@@ -26,12 +26,14 @@ import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkl
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
   const {
-    canArchive,
+    access,
+    canArchiveProduction,
     canDelete,
     canCreateProduction,
     canManageProduction,
+    canConvertProduction,
     canUseProductionPastDate,
-    canViewHistory,
+    canViewProductionHistory,
   } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
@@ -365,20 +367,20 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openConvertDialog = useCallback(
     (entityType, row) => {
-      if (!canManageProduction || !row?.id || Number(row?.is_archived) === 1) {
+      if (!canConvertProduction || !row?.id || Number(row?.is_archived) === 1) {
         return;
       }
 
       setConvertDialog({ open: true, loading: false, row, entityType });
     },
-    [canManageProduction],
+    [canConvertProduction],
   );
 
   const confirmConvert = useCallback(async () => {
     const row = convertDialog.row;
     const entityType = convertDialog.entityType;
 
-    if (!canManageProduction || !row?.id || !ENTITY_TYPES.includes(entityType)) {
+    if (!canConvertProduction || !row?.id || !ENTITY_TYPES.includes(entityType)) {
       return;
     }
 
@@ -411,7 +413,7 @@ export default function useSkladProductionController({ showAlert }) {
     }
   }, [
     api,
-    canManageProduction,
+    canConvertProduction,
     closeConvertDialog,
     convertDialog.entityType,
     convertDialog.row,
@@ -422,7 +424,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (entityType, row) => {
-      if (!row?.id || !canArchive) {
+      if (!row?.id || !canArchiveProduction) {
         return;
       }
 
@@ -436,7 +438,7 @@ export default function useSkladProductionController({ showAlert }) {
         },
       });
     },
-    [canArchive, setState],
+    [canArchiveProduction, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -567,7 +569,7 @@ export default function useSkladProductionController({ showAlert }) {
     api,
     archiveDialog?.entityType,
     archiveDialog?.row,
-    canArchive,
+    canArchiveProduction,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -746,11 +748,13 @@ export default function useSkladProductionController({ showAlert }) {
           shellAllergens={shellAllergens}
           shellStorages={shellStorages}
           shellApps={shellApps}
-          canArchiveAction={canArchive}
+          access={access}
+          canArchiveAction={canArchiveProduction}
           canDeleteAction={canDeleteAction}
           canCreateProduction={canCreateProduction}
           canManageProduction={canManageProduction}
-          canViewHistory={canViewHistory}
+          canConvertProduction={canConvertProduction}
+          canViewHistory={canViewProductionHistory}
           canCreateCategory={canCreateProduction}
           allowPastDate={canUseProductionPastDate}
           canManageCategories={canManageCategories}

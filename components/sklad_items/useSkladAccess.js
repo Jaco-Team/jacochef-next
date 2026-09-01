@@ -11,18 +11,30 @@ export default function useSkladAccess() {
     const canView = (group) => Number(access?.[`${group}_view`]) === 1 || canEdit(group);
     const canAccess = (action) => Number(access?.[action]) === 1;
 
+    const canViewProductionHistory = canView("production");
+    const canViewSiteItemsHistory = canView("site_items");
+    const canViewUnitsHistory = canView("units");
+    const canArchiveProduction = canEdit("production_activity");
+    const canArchiveSiteItems = canEdit("site_items_activity");
+
     return {
       access,
       canView,
       canEdit,
       canAccess,
       canViewUnitUsage: canView("units"),
-      canViewHistory: Number(access?.history_view) === 1,
+      canViewHistory: canViewProductionHistory || canViewSiteItemsHistory || canViewUnitsHistory,
+      canViewProductionHistory,
+      canViewSiteItemsHistory,
+      canViewUnitsHistory,
       canCreateUnit: canAccess("units_create"),
-      canArchive: canView("archive"),
+      canArchive: canArchiveProduction || canArchiveSiteItems,
+      canArchiveProduction,
+      canArchiveSiteItems,
       canCreateProduction: canAccess("production_create"),
       canUseProductionPastDate: canAccess("production_past_date"),
       canManageProduction: canEdit("production"),
+      canConvertProduction: canAccess("production_convert"),
       canManageSiteItems: canEdit("site_items"),
       canCreateSiteItem: canAccess("site_items_create"),
       canUseSiteItemPastDate: canAccess("site_items_past_date"),
@@ -41,7 +53,7 @@ export default function useSkladAccess() {
 
         return false;
       },
-      canManageArchivedEntity: canEdit("archive"),
+      canManageArchivedEntity: canArchiveProduction || canArchiveSiteItems,
     };
   }, [access]);
 }
