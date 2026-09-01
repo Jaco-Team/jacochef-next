@@ -141,7 +141,7 @@ export function getExcludedDatesPreview(testDate = []) {
 export function getWeekdaysPreview(state) {
   const labels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const keys = ["day_1", "day_2", "day_3", "day_4", "day_5", "day_6", "day_7"];
-  const active = keys.filter((key) => state[key]).map((_, index) => labels[index]);
+  const active = keys.flatMap((key, index) => (state[key] ? [labels[index]] : []));
 
   if (active.length === 7) {
     return "Каждый день";

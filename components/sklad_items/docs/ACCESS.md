@@ -13,10 +13,12 @@ Source of truth:
 - `production_edit`
 - `production_create`
 - `production_delete`
+- `production_past_date`
 - `site_items_view`
 - `site_items_edit`
 - `site_items_create`
 - `site_items_delete`
+- `site_items_past_date`
 - `units_view`
 - `units_edit`
 - `units_create`
@@ -25,17 +27,26 @@ Source of truth:
 - `archive_edit`
 - `history_view`
 
+Для вкладки «Товары сайта» дополнительно возвращаются независимые права:
+
+- таблица: `site_kc_view/edit`, `kassa_view/edit`, `sort_view/edit`;
+- основные: `name`, `date_start`, `date_end`, `short_name`, `art`, `category_id`, `stol`, `marc`, `dropzone` с суффиксами `_view/_edit`;
+- секции: `portion`, `bju`, `description`, `tags`, `activity`, `composition` с суффиксами `_view/_edit`;
+- управление справочником тегов: `change_tag_access`.
+
 ## Правила FE
 
 - Вкладка видна, если есть соответствующий `*_view` или `*_edit`.
-- `*_edit` включает весь экран/форму редактирования сущности.
+- `production_edit` и `units_edit` включают соответствующие формы целиком.
+- `site_items_edit` разрешает mutation-контур вкладки, но видимость и редактирование полей карточки определяются детальными правами.
 - `*_create` управляет созданием новой сущности.
 - `*_delete` управляет контролами удаления.
+- `production_past_date` разрешает прошлую дату «Действует с» для рецептов и полуфабрикатов.
+- `site_items_past_date` разрешает прошлую дату «Действует с» для товаров сайта.
 - `archive_edit` управляет восстановлением из архива.
 - `history_view` покрывает встроенные history-блоки и history-вкладки, где они используются в новом UI.
 - Значение access-флага трактуется как boolean: `1` разрешает действие, `0` запрещает.
-- Compact payload содержит весь фиксированный набор ключей, включая ключи со значением `0`.
-- Отдельного field-level gating в новом FE нет.
+- Payload содержит compact-права разделов и field-level права товаров сайта, включая значения `0`.
 
 ## Runtime naming boundary
 
@@ -45,12 +56,12 @@ Source of truth:
 - action DB param `production_create` дает middleware runtime `production_create_access`, а backend публикует FE-ключ `production_create`;
 - аналогично работают `site_items`, `units`, `archive` и остальные action-группы.
 
-FE использует только compact keys из этого документа и не добавляет `_access` самостоятельно.
+FE использует возвращённые backend ключи и не добавляет `_access` самостоятельно.
 
 ## Что не должен делать FE
 
-- Не использовать legacy/raw backend keys как FE-контракт.
-- Не предлагать FE старые `upd_access` aliases, field-level keys или compatibility names.
-- Не строить собственные remap-таблицы поверх этого компактного контракта.
+- Не давать доступ ко всей модалке только по `site_items_edit` при наличии детальной матрицы.
+- Не показывать VK-действия и не проверять `reload_vk_access`.
+- Не подменять отдельные права таблицы общим правом редактирования.
 
-Legacy/raw backend keys остаются только внутренним backend compatibility mapping и не должны предлагаться фронтенду как рабочий контракт.
+Названия field-level ключей сохранены совместимыми с `site_items_new`, но принадлежат runtime-контракту `sklad_items`.

@@ -1841,6 +1841,7 @@ class SiteItems_ extends React.Component {
       item_items: null,
 
       category: [],
+      categoryLegacy: [],
       stages: [],
     };
 
@@ -1948,6 +1949,7 @@ class SiteItems_ extends React.Component {
       { id: "3", name: "3 этап" },
     ];
     res.item.category_id = "";
+    res.item.category_id2 = "";
     res.item.tags_all = res?.tags_all;
 
     this.setState({
@@ -1955,6 +1957,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       stages,
@@ -2017,6 +2020,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       tags_all: res.tags_all,
@@ -2263,15 +2267,14 @@ class SiteItems_ extends React.Component {
       }
 
       if (res.cat_list) {
-        if (res.item.category_id) {
-          res.item.category_name =
-            res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))?.name ??
-            "";
-        } else {
-          res.item.category_name =
-            res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))
-              ?.name ?? "";
-        }
+        res.item.category_name2 =
+          res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))?.name ??
+          "";
+      }
+      if (res.cat_list_legacy) {
+        res.item.category_name =
+          res.cat_list_legacy.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))
+            ?.name ?? "";
       }
 
       this.setState({
@@ -2335,6 +2338,7 @@ class SiteItems_ extends React.Component {
           item={this.state.itemTech}
           method={this.state.method}
           category={this.state.category}
+          categoryLegacy={this.state.categoryLegacy}
           save={this.saveTech.bind(this)}
           getData={this.getData.bind(this)}
           update={this.update.bind(this)}

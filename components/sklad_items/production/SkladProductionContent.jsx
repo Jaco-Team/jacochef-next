@@ -71,6 +71,7 @@ export default function SkladProductionContent({
   canManageProduction,
   canViewHistory,
   canCreateCategory,
+  allowPastDate,
   canManageCategories,
   setState,
   openCreate,
@@ -468,6 +469,7 @@ export default function SkladProductionContent({
         isEditable={modal.mode === "create" ? canCreateProduction : canManageProduction}
         canViewHistory={canViewHistory}
         canCreateCategory={canCreateCategory}
+        allowPastDate={allowPastDate}
         onCreateCategory={onCreateCategory}
         onSubmit={submitDraft}
         onClose={closeModal}

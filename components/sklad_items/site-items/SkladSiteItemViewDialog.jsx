@@ -463,17 +463,41 @@ export default function SkladSiteItemViewDialog({
                               />
                               <Chip
                                 label={Number(detail?.show_site) === 1 ? "Сайт" : "Без сайта"}
-                                color={Number(detail?.show_site) === 1 ? "primary" : "default"}
+                                color={Number(detail?.show_site) === 1 ? "success" : "default"}
                                 size="small"
                               />
                               <Chip
                                 label={Number(detail?.show_program) === 1 ? "Касса" : "Без кассы"}
-                                color={Number(detail?.show_program) === 1 ? "secondary" : "default"}
+                                color={Number(detail?.show_program) === 1 ? "success" : "default"}
                                 size="small"
                               />
                               <Chip
                                 label={Number(detail?.is_new) === 1 ? "Новинка" : "Обычный"}
-                                color={Number(detail?.is_new) === 1 ? "info" : "default"}
+                                color={Number(detail?.is_new) === 1 ? "success" : "default"}
+                                size="small"
+                              />
+                              <Chip
+                                label={Number(detail?.is_hit) === 1 ? "Хит" : "Не хит"}
+                                color={Number(detail?.is_hit) === 1 ? "success" : "default"}
+                                size="small"
+                              />
+                              <Chip
+                                label={
+                                  Number(detail?.is_updated) === 1 ? "Обновлено" : "Без обновления"
+                                }
+                                color={Number(detail?.is_updated) === 1 ? "success" : "default"}
+                                size="small"
+                              />
+                              <Chip
+                                label={Number(detail?.is_spicy) === 1 ? "Острый" : "Не острый"}
+                                color={Number(detail?.is_spicy) === 1 ? "success" : "default"}
+                                size="small"
+                              />
+                              <Chip
+                                label={
+                                  Number(detail?.is_price) === 1 ? "Цена установлена" : "Без цены"
+                                }
+                                color={Number(detail?.is_price) === 1 ? "success" : "default"}
                                 size="small"
                               />
                               <Chip

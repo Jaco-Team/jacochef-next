@@ -53,6 +53,8 @@ export default function useSkladApi() {
       historyList: (payload = {}) => request("history/list", payload),
       historyGetOne: (payload = {}) => request("history/get_one", payload),
       historyCompare: (payload = {}) => request("history/compare", payload),
+      historyResolve: (payload = {}) => request("history/resolve", payload),
+      cancelScheduledHistory: (payload = {}) => request("history/schedule/cancel", payload),
       getArchiveList: (payload = {}) => request("entities/archive_list", payload),
       archiveEntity: (payload) => request("entities/archive", payload),
       deleteEntity: (payload) => request("entities/delete", payload),

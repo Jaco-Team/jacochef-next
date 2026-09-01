@@ -98,6 +98,105 @@ export function normalizeItemOptions(options) {
   return dedupeSelectOptions(list.filter((item) => item.id));
 }
 
+const russianWordEndings = [
+  "иями",
+  "ями",
+  "ами",
+  "его",
+  "ого",
+  "ему",
+  "ому",
+  "иях",
+  "ах",
+  "ях",
+  "ую",
+  "юю",
+  "ая",
+  "яя",
+  "ое",
+  "ее",
+  "ые",
+  "ие",
+  "ый",
+  "ий",
+  "ой",
+  "ам",
+  "ям",
+  "ом",
+  "ем",
+  "ов",
+  "ев",
+  "ей",
+  "ы",
+  "и",
+  "а",
+  "я",
+  "у",
+  "ю",
+  "е",
+  "о",
+];
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase("ru")
+    .replaceAll("ё", "е")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function russianWordStem(word) {
+  for (const ending of russianWordEndings) {
+    if (word.endsWith(ending) && word.length - ending.length >= 3) {
+      return word.slice(0, -ending.length);
+    }
+  }
+
+  return word;
+}
+
+function compositionMatchScore(option, query) {
+  const name = normalizeSearchText(normalizeOptionName(option));
+  if (!name || !query) return 0;
+  if (name === query) return 0;
+  if (name.startsWith(`${query} `)) return 1;
+
+  const words = name.split(" ");
+  const queryWords = query.split(" ");
+  if (queryWords.every((queryWord) => words.includes(queryWord))) return 2;
+
+  const wordStems = words.map(russianWordStem);
+  if (queryWords.every((queryWord) => wordStems.includes(russianWordStem(queryWord)))) return 3;
+  if (queryWords.every((queryWord) => words.some((word) => word.startsWith(queryWord)))) return 4;
+  if (name.includes(query)) return 5;
+  if (queryWords.every((queryWord) => words.some((word) => word.includes(queryWord)))) return 6;
+
+  return Number.POSITIVE_INFINITY;
+}
+
+export function filterProductionCompositionOptions(options, { inputValue }) {
+  const query = normalizeSearchText(inputValue);
+  if (!query) return options.slice(0, 100);
+
+  const matches = options
+    .map((option, index) => ({ option, index, score: compositionMatchScore(option, query) }))
+    .filter((match) => Number.isFinite(match.score));
+  const bestScore = Math.min(...matches.map((match) => match.score));
+  const maximumScore = bestScore <= 3 ? 3 : 6;
+
+  return matches
+    .filter((match) => match.score <= maximumScore)
+    .sort(
+      (left, right) =>
+        left.score - right.score ||
+        normalizeOptionName(left.option).localeCompare(normalizeOptionName(right.option), "ru") ||
+        left.index - right.index,
+    )
+    .slice(0, 100)
+    .map((match) => match.option);
+}
+
 export function normalizeSelectedOptions(value, options) {
   if (!Array.isArray(value)) {
     return [];

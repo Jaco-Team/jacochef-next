@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import AddIcon from "@mui/icons-material/Add";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -44,6 +45,7 @@ import SkladSectionCard from "../ui/SkladSectionCard";
 import {
   buildInitialDraft,
   dedupeSelectOptions,
+  filterProductionCompositionOptions,
   getCompositionItemId,
   getCompositionItemName,
   getCompositionLoss,
@@ -79,6 +81,7 @@ export default function SkladProductionEditorDialog({
   isEditable = false,
   canViewHistory = false,
   canCreateCategory = false,
+  allowPastDate = false,
   initialTab = "main",
   onCreateCategory,
   onSubmit,
@@ -352,6 +355,7 @@ export default function SkladProductionEditorDialog({
                         <MyDatePickerNew
                           label="Действует с"
                           value={form.date_start}
+                          minDate={allowPastDate ? undefined : dayjs().startOf("day")}
                           disabled={!isEditable}
                           func={(value) =>
                             updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
@@ -362,6 +366,9 @@ export default function SkladProductionEditorDialog({
                         <MyDatePickerNew
                           label="Действует по"
                           value={form.date_end}
+                          minDate={
+                            form.date_start ? dayjs(form.date_start) : dayjs().startOf("day")
+                          }
                           clearable
                           customActions
                           disabled={!isEditable}
@@ -569,6 +576,7 @@ export default function SkladProductionEditorDialog({
                                                 }
                                               : null)
                                           }
+                                          filterOptions={filterProductionCompositionOptions}
                                           disabled={!isEditable}
                                           func={(_, value) => updateCompositionItem(index, value)}
                                         />
@@ -691,6 +699,7 @@ export default function SkladProductionEditorDialog({
                                       }
                                       value={null}
                                       placeholder="Выберите номенклатуру"
+                                      filterOptions={filterProductionCompositionOptions}
                                       disabled={!isEditable}
                                       func={(_, value) => appendCompositionItem(value)}
                                     />

@@ -131,10 +131,12 @@ Response shape:
     "production_edit": 1,
     "production_create": 1,
     "production_delete": 1,
+    "production_past_date": 0,
     "site_items_view": 1,
     "site_items_edit": 1,
     "site_items_create": 1,
     "site_items_delete": 1,
+    "site_items_past_date": 0,
     "units_view": 1,
     "units_edit": 1,
     "units_create": 1,
@@ -1065,6 +1067,8 @@ Site item list rules:
   - `is_hit`
   - `is_new`
   - `is_price`
+  - `is_updated`
+  - `is_spicy`
   - `is_active`
   - `is_archived`
 - row does not include `delete_state` or `delete_usage`
@@ -1207,6 +1211,7 @@ Main rules:
   - `is_new`
   - `is_hit`
   - `is_updated`
+  - `is_spicy`
   - `time_stage_1`
   - `time_stage_2`
   - `time_stage_3`
@@ -1312,6 +1317,7 @@ Response:
 Write rules:
 
 - write flow lives in `SkladSiteItemWriteService`
+- implementation is owned by `sklad_items` and does not call controllers, models or helpers from `site_items_new`
 - backend uses an internal compatibility map; FE sends no legacy access keys
 - normalizes BJU and stage-time fields
 - calculates `kkal`
@@ -1331,6 +1337,7 @@ Supported flags:
 - `is_new`
 - `is_updated`
 - `is_price`
+- `is_spicy`
 - `is_mark`
 - `is_hit`
 - `is_akchis`
@@ -1579,12 +1586,16 @@ Request:
 {
   "data": {
     "entity_type": "recipe",
-    "entity_id": 10
+    "entity_id": 10,
+    "mode": "periods",
+    "all_events": false
   }
 }
 ```
 
-Returns revision list for supported entity type.
+Returns a compact period list. Full snapshots are requested only after a period is selected.
+
+Additional temporal fields are `revision_status`, `effective_date_start`, `effective_date_end`, `previous_revision_key`, `next_revision_key`, `applied_now`, `can_edit_schedule`, and `can_cancel_schedule`. Existing fields are preserved. `mode=periods` hides cancelled/superseded events; the UI's “Все записи” mode shows them and legacy rows.
 
 ### `POST|ANY /api/sklad_items/history/get_one`
 
@@ -1652,6 +1663,15 @@ History rules:
 - `history/compare` compares canonical snapshots
 - `site_item` snapshot includes composition, tags, marking, images, timing, nutrition and text fields
 - some dictionary labels may resolve from current tables when historical dictionary snapshots do not exist
+- composition rows are matched by entity type, component ID, stage and sort
+
+### `POST|ANY /api/sklad_items/history/resolve`
+
+Accepts `entity_type`, `entity_id`, and `date` (`Y-m-d`) and returns the full version effective on that date. Legacy fallback is explicitly marked in `resolution_mode` and `warning`.
+
+### `POST|ANY /api/sklad_items/history/schedule/cancel`
+
+Accepts `entity_type`, `entity_id`, and `revision_key`. Only a future `scheduled` revision can be cancelled. The regular edit permission for the entity type is required.
 
 Entity-specific history routes are compatibility aliases over the same history service:
 
@@ -1747,6 +1767,7 @@ Rules:
 ## 13. Validation Rules
 
 - `date_start` is required where applicable
+- past `date_start` requires `production_past_date` for recipes/semi-finished or `site_items_past_date` for site items; an unchanged historical value remains valid during edit
 - if `date_end` is set, it must be `>= date_start`
 - empty `date_end` or `null` means open-ended interval
 - delete is allowed only with no current or historical usage

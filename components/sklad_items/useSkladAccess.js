@@ -21,9 +21,11 @@ export default function useSkladAccess() {
       canCreateUnit: canAccess("units_create"),
       canArchive: canView("archive"),
       canCreateProduction: canAccess("production_create"),
+      canUseProductionPastDate: canAccess("production_past_date"),
       canManageProduction: canEdit("production"),
       canManageSiteItems: canEdit("site_items"),
       canCreateSiteItem: canAccess("site_items_create"),
+      canUseSiteItemPastDate: canAccess("site_items_past_date"),
       canDelete: (entityType) => {
         if (entityType === "recipe" || entityType === "semi_finished") {
           return canAccess("production_delete");

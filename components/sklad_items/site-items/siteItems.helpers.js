@@ -17,7 +17,7 @@ export function formatBju(row) {
 }
 
 export function getCategoryName(row, categories) {
-  const categoryId = row?.category_id ?? null;
+  const categoryId = row?.category_id2 ?? null;
   const directName = row?.category_name || "";
 
   if (directName) {
@@ -56,6 +56,10 @@ function dedupeChips(chips) {
 }
 
 export function getPrimaryStatusChip(row) {
+  if (Number(row?.is_scheduled) === 1 && Number(row?.is_active) !== 1) {
+    return { key: "scheduled", label: "Запланирована", color: "info" };
+  }
+
   if (Number(row?.is_archived) === 1) {
     return { key: "archived", label: "Архив", color: "default" };
   }
@@ -70,12 +74,20 @@ export function getPrimaryStatusChip(row) {
 export function getSecondaryStatusChips(row) {
   return dedupeChips(
     [
+      Number(row?.is_scheduled) === 1 && Number(row?.is_active) === 1
+        ? { key: "scheduled", label: "Есть новая версия", color: "info" }
+        : null,
       Number(row?.show_site) === 1 ? { key: "show_site", label: "Сайт", color: "primary" } : null,
       Number(row?.show_program) === 1
         ? { key: "show_program", label: "Касса", color: "secondary" }
         : null,
       Number(row?.is_hit) === 1 ? { key: "hit", label: "Хит", color: "warning" } : null,
       Number(row?.is_new) === 1 ? { key: "new", label: "Новинка", color: "info" } : null,
+      Number(row?.is_updated) === 1
+        ? { key: "updated", label: "Обновлено", color: "success" }
+        : null,
+      Number(row?.is_spicy) === 1 ? { key: "spicy", label: "Острый", color: "success" } : null,
+      Number(row?.is_price) === 1 ? { key: "price", label: "Цена", color: "success" } : null,
     ].filter(Boolean),
   );
 }
@@ -100,7 +112,7 @@ export function normalizeSiteItemDraft(response, fallbackCategories = []) {
     ...item,
     category_name:
       item?.category_name ||
-      fallbackCategories.find((category) => String(category?.id) === String(item?.category_id))
+      fallbackCategories.find((category) => String(category?.id) === String(item?.category_id2))
         ?.name ||
       "",
     tags: Array.isArray(item?.tags) ? item.tags : [],
@@ -150,9 +162,11 @@ export function normalizeSiteItemSavePayload(draft) {
 
   return {
     id: draft?.id ?? null,
+    revision_key: draft?.revision_key || null,
     name: String(draft?.name || "").trim(),
     short_name: String(draft?.short_name || "").trim(),
     category_id: draft?.category_id ? Number(draft.category_id) : null,
+    category_id2: draft?.category_id2 ? Number(draft.category_id2) : null,
     date_start: draft?.date_start ?? "",
     date_end: draft?.date_end ?? "",
     art: draft?.art ?? "",
@@ -175,11 +189,17 @@ export function normalizeSiteItemSavePayload(draft) {
       series: draft?.series ?? "",
       is_akchis: draft?.is_akchis ? 1 : 0,
     },
+    is_mark: draft?.is_mark ? Number(draft.is_mark) : 0,
+    mark_code: draft?.mark_code ?? "",
+    is_akchis: draft?.is_akchis ? 1 : 0,
     show_site: draft?.show_site ? 1 : 0,
     show_program: draft?.show_program ? 1 : 0,
     is_show: draft?.is_show ? 1 : 0,
     is_hit: draft?.is_hit ? 1 : 0,
     is_new: draft?.is_new ? 1 : 0,
+    is_updated: draft?.is_updated ? 1 : 0,
+    is_spicy: draft?.is_spicy ? 1 : 0,
+    is_price: draft?.is_price ? 1 : 0,
     time_stage_1: draft?.time_stage_1 ?? "",
     time_stage_2: draft?.time_stage_2 ?? "",
     time_stage_3: draft?.time_stage_3 ?? "",

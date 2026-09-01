@@ -25,8 +25,14 @@ import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkl
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canCreateProduction, canManageProduction, canViewHistory } =
-    useSkladAccess();
+  const {
+    canArchive,
+    canDelete,
+    canCreateProduction,
+    canManageProduction,
+    canUseProductionPastDate,
+    canViewHistory,
+  } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const summary = useSkladStore((state) => state.summary);
@@ -649,6 +655,24 @@ export default function useSkladProductionController({ showAlert }) {
         throw new Error(response?.text || "Ошибка загрузки карточки");
       }
 
+      if (Number(row?.is_scheduled) === 1 && Number(row?.is_active) !== 1) {
+        const revisionResponse = await api.historyGetOne({
+          entity_type: entityType,
+          entity_id: row.id,
+          revision_key: row.scheduled_revision_key,
+        });
+        if (!revisionResponse?.st) {
+          throw new Error(revisionResponse?.text || "Ошибка загрузки запланированной версии");
+        }
+        const revision = revisionResponse?.revision;
+        if (revision?.snapshot) {
+          return normalizeProductionDraft(
+            { ...revision.snapshot, revision_key: row.scheduled_revision_key },
+            response,
+          );
+        }
+      }
+
       return normalizeProductionDraft(response?.entity || {}, response);
     },
     [api],
@@ -728,6 +752,7 @@ export default function useSkladProductionController({ showAlert }) {
           canManageProduction={canManageProduction}
           canViewHistory={canViewHistory}
           canCreateCategory={canCreateProduction}
+          allowPastDate={canUseProductionPastDate}
           canManageCategories={canManageCategories}
           onCreateCategory={openCategoryManagerDialog}
           onManageCategories={openCategoryManagerDialog}

@@ -1,6 +1,8 @@
 "use client";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import {
   Accordion,
   AccordionDetails,
@@ -9,15 +11,27 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
+  FormControlLabel,
   Grid,
   Paper,
   Stack,
+  Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
 import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
 
-import SmartDiff from "@/ui/history/SmartDiff";
 import { resolveSiteItemImageUrl } from "../site-items/siteItemImage";
+import useSkladAccess from "../useSkladAccess";
+import useSkladApi from "../useSkladApi";
 
 function formatValue(value, fallback = "") {
   if (value === null || value === undefined || value === "") {
@@ -324,7 +338,8 @@ const siteItemHistoryFieldLabels = {
   art: "Код 1С",
   is_mark: "Маркировка",
   mark_code: "Код маркировки",
-  category_id: "Категория",
+  category_id: "Старая категория",
+  category_id2: "Новая категория",
   weight: "Вес",
   count_part: "Кусочков или размер",
   stol: "Стол",
@@ -342,6 +357,7 @@ const siteItemHistoryFieldLabels = {
   show_site: "На сайте и КЦ",
   is_new: "Новинка",
   is_hit: "Хит",
+  is_spicy: "Острый",
   img_app: "Изображение",
   stage_rows: "Полуфабрикаты и рецепты",
   items: "Позиции",
@@ -384,6 +400,8 @@ function formatSiteItemValue(field, snapshot) {
       return formatDate(snapshot?.[field]);
     case "category_id":
       return getCategoryName(snapshot);
+    case "category_id2":
+      return snapshot?.category_name2 || snapshot?.category_id2 || "";
     case "is_mark":
       return formatSiteItemMarking(snapshot?.marking?.is_mark ?? snapshot?.is_mark);
     case "mark_code":
@@ -393,6 +411,7 @@ function formatSiteItemValue(field, snapshot) {
     case "show_site":
     case "is_new":
     case "is_hit":
+    case "is_spicy":
       return formatBoolean(snapshot?.[field]);
     case "weight":
     case "count_part":
@@ -430,6 +449,7 @@ function buildSiteItemDiff(current, previous) {
     "is_mark",
     "mark_code",
     "category_id",
+    "category_id2",
     "count_part",
     "stol",
     "weight",
@@ -447,6 +467,7 @@ function buildSiteItemDiff(current, previous) {
     "show_site",
     "is_new",
     "is_hit",
+    "is_spicy",
     "img_app",
     "stage_rows",
     "items",
@@ -552,8 +573,569 @@ function renderHistorySummary(item) {
   );
 }
 
+const revisionStatusLabels = {
+  scheduled: "Запланирована",
+  active: "Действует",
+  expired: "Завершена",
+  cancelled: "Отменена",
+  superseded: "Заменена",
+  legacy: "Старая история",
+};
+
+function revisionKey(row) {
+  return String(row?.revision_key || row?.history_id || "");
+}
+
+function revisionPeriod(row) {
+  const from = formatDate(row?.effective_date_start || row?.date_start) || "—";
+  const to = formatDate(row?.effective_date_end || row?.date_end) || "без окончания";
+  return `${from} — ${to}`;
+}
+
+function revisionStatusColor(status) {
+  return {
+    active: "success",
+    scheduled: "info",
+    cancelled: "error",
+    superseded: "warning",
+    expired: "default",
+    legacy: "default",
+  }[status || "legacy"];
+}
+
+function previousEffectiveRevision(rows, selectedRow) {
+  if (!selectedRow) return null;
+
+  const explicitKey = String(selectedRow?.previous_revision_key || "");
+  if (explicitKey) {
+    const explicit = rows.find((row) => revisionKey(row) === explicitKey);
+    if (explicit) return explicit;
+  }
+
+  const selectedIndex = rows.findIndex((row) => revisionKey(row) === revisionKey(selectedRow));
+  if (selectedIndex < 0) return null;
+
+  return (
+    rows
+      .slice(selectedIndex + 1)
+      .find((row) => !["cancelled", "superseded"].includes(row?.revision_status || "legacy")) ||
+    null
+  );
+}
+
+function historyResponseRevision(response) {
+  return response?.revision || response?.data?.revision || null;
+}
+
+function assertHistoryResponse(response, fallback) {
+  if (!response?.st) {
+    throw new Error(response?.text || fallback);
+  }
+
+  return response;
+}
+
+function snapshotFieldRows(snapshot, entityType) {
+  if (!snapshot) {
+    return [];
+  }
+
+  if (entityType === "site_item") {
+    return Object.keys(siteItemHistoryFieldLabels).map((field) => ({
+      field,
+      label: siteItemHistoryFieldLabels[field],
+      value: formatSiteItemValue(field, snapshot),
+    }));
+  }
+
+  const labels = getProductionFieldLabels(entityType === "recipe");
+  return Object.keys(labels).map((field) => ({
+    field,
+    label: labels[field],
+    value: formatProductionValue(field, snapshot, entityType),
+  }));
+}
+
+function snapshotSections(entityType) {
+  if (entityType === "site_item") {
+    return [
+      {
+        title: "Основные",
+        rows: [
+          ["name", "short_name"],
+          ["date_start", "date_end"],
+          ["art", "category_id", "category_id2", "is_mark", "mark_code"],
+          ["weight", "count_part", "stol"],
+        ],
+      },
+      {
+        title: "Статусы и отображение",
+        rows: [["is_show", "show_program", "show_site", "is_new", "is_hit", "is_spicy"]],
+      },
+      {
+        title: "Пищевая ценность и этапы",
+        rows: [
+          ["protein", "fat", "carbohydrates"],
+          ["time_stage_1", "time_stage_2", "time_stage_3"],
+        ],
+      },
+      {
+        title: "Описание",
+        rows: [["tmp_desc"], ["marc_desc"], ["marc_desc_full"], ["tags"], ["img_app"]],
+      },
+    ];
+  }
+
+  return [
+    {
+      title: "Основные",
+      rows: [
+        ["name"],
+        ["shelf_life"],
+        ["ed_izmer", "date_start", "date_end"],
+        ["time_min", "time_min_dop", "all_w_brutto", "all_w_netto", "all_w"],
+        ["is_show", "show_in_rev", "two_user"],
+      ],
+    },
+    {
+      title: "Привязки",
+      rows: [["categories", "storages"], ["allergens", "allergens_possible"], ["apps"]],
+    },
+    { title: "Описание", rows: [["structure"]] },
+  ];
+}
+
+function changePresentation(status) {
+  return {
+    added: { label: "Добавлено", color: "success", borderColor: "success.main" },
+    removed: { label: "Удалено", color: "error", borderColor: "error.main" },
+    changed: { label: "Изменено", color: "warning", borderColor: "warning.main" },
+  }[status];
+}
+
+function isBooleanStatusField(field) {
+  return [
+    "is_show",
+    "show_in_rev",
+    "show_program",
+    "show_site",
+    "is_new",
+    "is_hit",
+    "is_spicy",
+  ].includes(field);
+}
+
+function SnapshotCard({ snapshot, compareSnapshot, entityType, onlyChanges }) {
+  const sourceRows = snapshotFieldRows(snapshot, entityType);
+  const compareRows = snapshotFieldRows(compareSnapshot, entityType);
+  const rows = sourceRows
+    .map((row) => {
+      const previous = compareRows.find((candidate) => candidate.label === row.label)?.value;
+      const changed = Boolean(compareSnapshot) && row.value !== previous;
+      const added = changed && !previous && Boolean(row.value);
+      const removed = changed && Boolean(previous) && !row.value;
+      const status = removed ? "removed" : added ? "added" : changed ? "changed" : "unchanged";
+
+      return { ...row, previous: previous || "", changed, added, removed, status };
+    })
+    .filter((row) => !onlyChanges || row.changed);
+
+  const byLabel = new Map(rows.map((row) => [row.label, row]));
+  const labels =
+    entityType === "site_item"
+      ? siteItemHistoryFieldLabels
+      : getProductionFieldLabels(entityType === "recipe");
+
+  return (
+    <Stack spacing={1.5}>
+      {snapshotSections(entityType).map((section) => {
+        const sectionRows = section.rows
+          .map((fields) => fields.map((field) => byLabel.get(labels[field])).filter(Boolean))
+          .filter((group) => group.length);
+
+        if (!sectionRows.length) return null;
+
+        return (
+          <Paper
+            key={section.title}
+            variant="outlined"
+            sx={{ overflow: "hidden", borderRadius: 2 }}
+          >
+            <Box
+              sx={{
+                px: { xs: 1.5, md: 2 },
+                py: 1.25,
+                bgcolor: "action.hover",
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700 }}
+              >
+                {section.title}
+              </Typography>
+            </Box>
+            <Box sx={{ px: { xs: 1.5, md: 2 } }}>
+              {sectionRows.map((group, groupIndex) => (
+                <Box
+                  key={group.map((row) => row.field).join("-")}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "minmax(0, 1fr)",
+                      sm:
+                        group.length === 1
+                          ? "minmax(0, 1fr)"
+                          : `repeat(${Math.min(group.length, 2)}, minmax(0, 1fr))`,
+                      md: `repeat(${group.length}, minmax(0, 1fr))`,
+                    },
+                    borderBottom: groupIndex < sectionRows.length - 1 ? "1px solid" : "none",
+                    borderBottomColor: "divider",
+                  }}
+                >
+                  {group.map((row, rowIndex) => {
+                    const change = changePresentation(row.status);
+                    const fullWidthRow = group.length === 1;
+
+                    return (
+                      <Box
+                        key={row.label}
+                        sx={{
+                          minHeight: fullWidthRow ? 58 : 76,
+                          display: "grid",
+                          gridTemplateColumns: fullWidthRow
+                            ? { xs: "1fr", sm: "minmax(130px, 36%) minmax(0, 1fr)" }
+                            : "minmax(0, 1fr)",
+                          gap: 0.75,
+                          alignItems: "start",
+                          boxSizing: "border-box",
+                          py: 1.25,
+                          px: 1.25,
+                          borderLeft: "3px solid",
+                          borderLeftColor: change?.borderColor || "transparent",
+                          borderRight: {
+                            xs: "none",
+                            md: rowIndex < group.length - 1 ? "1px solid" : "none",
+                          },
+                          borderRightColor: "divider",
+                          borderBottom: {
+                            xs: rowIndex < group.length - 1 ? "1px solid" : "none",
+                            md: "none",
+                          },
+                          borderBottomColor: "divider",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {row.label}
+                        </Typography>
+                        <Stack
+                          spacing={0.5}
+                          sx={{ minWidth: 0 }}
+                        >
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                            useFlexGap
+                            flexWrap="wrap"
+                          >
+                            {isBooleanStatusField(row.field) && row.value ? (
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                color={row.value === "Да" ? "success" : "default"}
+                                label={row.value}
+                                sx={{ height: 24 }}
+                              />
+                            ) : (
+                              <Typography
+                                sx={{
+                                  minWidth: 0,
+                                  whiteSpace: "pre-wrap",
+                                  overflowWrap: "break-word",
+                                  wordBreak: "normal",
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                {row.value || "—"}
+                              </Typography>
+                            )}
+                            {change ? (
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                color={change.color}
+                                label={change.label}
+                                sx={{ height: 22 }}
+                              />
+                            ) : null}
+                          </Stack>
+                          {row.changed && row.previous ? (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                textDecoration: "line-through",
+                                overflowWrap: "break-word",
+                                wordBreak: "normal",
+                                fontVariantNumeric: "tabular-nums",
+                              }}
+                            >
+                              Было: {row.previous}
+                            </Typography>
+                          ) : null}
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        );
+      })}
+    </Stack>
+  );
+}
+
+function compositionRows(snapshot, entityType) {
+  if (!snapshot) return [];
+
+  if (entityType !== "site_item") {
+    return (snapshot?.items || snapshot?.composition || []).map((item, index) => ({
+      key: `${item?.type || item?.type_rec || "item"}:${item?.item_id || 0}:${item?.stage || 0}:${item?.sort ?? index}`,
+      label: item?.name || `Компонент #${item?.item_id || 0}`,
+      value: formatProductionComposition([item]),
+    }));
+  }
+
+  const stages = normalizeSiteItemStageRows(snapshot).map((item, index) => ({
+    key: `${item?.type || "pf"}:${item?.pf_id || item?.rec_id || item?.selected_id || 0}:${item?.stage || 0}:${item?.sort ?? index}`,
+    label: item?.name || `Компонент #${item?.pf_id || item?.rec_id || item?.selected_id || 0}`,
+    value: formatSiteItemCollection([item]),
+  }));
+  const linked = (snapshot?.item_items?.this_items || []).map((item, index) => ({
+    key: `site_item:${item?.item_id || 0}:linked:${item?.sort ?? index}`,
+    label: item?.name || `Товар сайта #${item?.item_id || 0}`,
+    value: formatSiteItemCollection([item], { isFinal: true }),
+  }));
+
+  return [...stages, ...linked];
+}
+
+function CompositionChanges({ snapshot, compareSnapshot, entityType, onlyChanges }) {
+  const current = new Map(compositionRows(snapshot, entityType).map((row) => [row.key, row]));
+  const previous = new Map(
+    compositionRows(compareSnapshot, entityType).map((row) => [row.key, row]),
+  );
+  const keys = [...new Set([...current.keys(), ...previous.keys()])];
+  const rows = keys
+    .map((key) => {
+      const currentRow = current.get(key);
+      const previousRow = previous.get(key);
+      const status = !compareSnapshot
+        ? "unchanged"
+        : !previousRow
+          ? "added"
+          : !currentRow
+            ? "removed"
+            : currentRow.value !== previousRow.value
+              ? "changed"
+              : "unchanged";
+
+      return { key, currentRow, previousRow, status };
+    })
+    .filter((row) => !onlyChanges || row.status !== "unchanged");
+
+  if (!rows.length) return null;
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{ overflow: "hidden", borderRadius: 2 }}
+    >
+      <Box
+        sx={{
+          px: { xs: 1.5, md: 2 },
+          py: 1.25,
+          bgcolor: "action.hover",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 700 }}
+        >
+          Состав
+        </Typography>
+      </Box>
+      <TableContainer>
+        <Table
+          size="small"
+          sx={{ minWidth: 700 }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>Позиция</TableCell>
+              <TableCell>Значение в выбранной версии</TableCell>
+              <TableCell>Предыдущее значение</TableCell>
+              <TableCell width={120}>Изменение</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => {
+              const change = changePresentation(row.status);
+
+              return (
+                <TableRow key={row.key}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      borderLeft: "3px solid",
+                      borderLeftColor: change?.borderColor || "transparent",
+                    }}
+                  >
+                    {row.currentRow?.label || row.previousRow?.label || "Компонент"}
+                  </TableCell>
+                  <TableCell>
+                    {row.currentRow?.value ||
+                      (row.status === "removed" ? "Удалён из состава" : "—")}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      color: "text.secondary",
+                      textDecoration:
+                        row.status === "changed" || row.status === "removed"
+                          ? "line-through"
+                          : "none",
+                    }}
+                  >
+                    {row.status === "changed" || row.status === "removed"
+                      ? row.previousRow?.value || "—"
+                      : "—"}
+                  </TableCell>
+                  <TableCell>
+                    {change ? (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        color={change.color}
+                        label={change.label}
+                        sx={{ height: 22 }}
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+}
+
 export function SkladEmbeddedHistoryTable({ history, emptyText = "История пока пуста." }) {
-  const rows = getHistoryRows(history);
+  const api = useSkladApi();
+  const { canManageProduction, canManageSiteItems } = useSkladAccess();
+  const sourceRows = useMemo(() => getHistoryRows(history), [history]);
+  const [showAll, setShowAll] = useState(false);
+  const [onlyChanges, setOnlyChanges] = useState(false);
+  const [selectedKey, setSelectedKey] = useState(() => revisionKey(sourceRows[0]));
+  const [resolvedDate, setResolvedDate] = useState("");
+  const [snapshots, setSnapshots] = useState(() => ({}));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [resolutionWarning, setResolutionWarning] = useState("");
+  const [cancelledKeys, setCancelledKeys] = useState(() => new Set());
+  const entityType = history?.meta?.entity_type || sourceRows[0]?.entity_type || "";
+  const entityId = history?.meta?.entity_id || sourceRows[0]?.entity_id || null;
+  const canManageSchedule = entityType === "site_item" ? canManageSiteItems : canManageProduction;
+  const rows = useMemo(
+    () =>
+      sourceRows
+        .map((row) =>
+          cancelledKeys.has(revisionKey(row)) ? { ...row, revision_status: "cancelled" } : row,
+        )
+        .filter(
+          (row) =>
+            showAll || !["cancelled", "superseded"].includes(row?.revision_status || "legacy"),
+        ),
+    [cancelledKeys, showAll, sourceRows],
+  );
+  const selectedIndex = rows.findIndex((row) => revisionKey(row) === selectedKey);
+  const selectedRow = rows[selectedIndex] || rows[0] || null;
+  const compareRow = previousEffectiveRevision(sourceRows, selectedRow);
+  const compareKey = revisionKey(compareRow);
+
+  useEffect(() => {
+    if (!rows.some((row) => revisionKey(row) === selectedKey)) {
+      setSelectedKey(revisionKey(rows[0]));
+    }
+  }, [rows, selectedKey]);
+
+  useEffect(() => {
+    if (!compareKey) {
+      setOnlyChanges(false);
+    }
+  }, [compareKey]);
+
+  useEffect(() => {
+    let active = true;
+    const keys = [selectedKey, compareKey].filter(Boolean);
+    const missing = keys.filter((key) => snapshots[key] === undefined);
+
+    if (!entityId || !entityType || !missing.length) {
+      return undefined;
+    }
+
+    setLoading(true);
+    setError("");
+    setResolutionWarning("");
+    Promise.all(
+      missing.map(async (key) => {
+        const local = sourceRows.find((row) => revisionKey(row) === key)?.snapshot;
+        if (local) {
+          return [key, local];
+        }
+
+        const response = assertHistoryResponse(
+          await api.historyGetOne({
+            entity_type: entityType,
+            entity_id: entityId,
+            revision_key: key,
+          }),
+          "Не удалось загрузить выбранную версию.",
+        );
+        const revision = historyResponseRevision(response);
+        return [key, revision?.snapshot || null];
+      }),
+    )
+      .then((loaded) => {
+        if (active) {
+          setSnapshots((current) => ({ ...current, ...Object.fromEntries(loaded) }));
+        }
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(requestError?.message || "Не удалось загрузить выбранную версию.");
+        }
+      })
+      .finally(() => active && setLoading(false));
+
+    return () => {
+      active = false;
+    };
+  }, [api, compareKey, entityId, entityType, selectedKey, snapshots, sourceRows]);
 
   if (!rows.length) {
     return (
@@ -566,27 +1148,340 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
     );
   }
 
-  const normalized = rows.map((row, index) =>
-    buildHistoryItem(history, row, rows[index + 1] || null, index),
-  );
+  const selectedSnapshot = snapshots[revisionKey(selectedRow)] || selectedRow?.snapshot || null;
+  const compareSnapshot = snapshots[revisionKey(compareRow)] || compareRow?.snapshot || null;
+
+  const resolveOnDate = async () => {
+    if (!resolvedDate) return;
+    setLoading(true);
+    setError("");
+    try {
+      const response = assertHistoryResponse(
+        await api.historyResolve({
+          entity_type: entityType,
+          entity_id: entityId,
+          date: resolvedDate,
+        }),
+        "На выбранную дату версия не найдена.",
+      );
+      setResolutionWarning(response?.warning || response?.data?.warning || "");
+      const resolved = historyResponseRevision(response);
+      const key = revisionKey(resolved);
+      if (key) {
+        setSnapshots((current) => ({ ...current, [key]: resolved?.snapshot || null }));
+        setSelectedKey(key);
+      }
+    } catch (requestError) {
+      setError(requestError?.message || "На выбранную дату версия не найдена.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelSchedule = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      assertHistoryResponse(
+        await api.cancelScheduledHistory({
+          entity_type: entityType,
+          entity_id: entityId,
+          revision_key: revisionKey(selectedRow),
+        }),
+        "Не удалось отменить запланированную версию.",
+      );
+      setCancelledKeys((current) => new Set([...current, revisionKey(selectedRow)]));
+    } catch (requestError) {
+      setError(requestError?.message || "Не удалось отменить запланированную версию.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Stack spacing={1.25}>
-      {normalized.map((item) => (
-        <Accordion
-          key={item.id}
-          component={Paper}
-          variant="outlined"
-          disableGutters
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            {renderHistorySummary(item)}
-          </AccordionSummary>
-          <AccordionDetails>
-            <SmartDiff item={item} />
-          </AccordionDetails>
-        </Accordion>
-      ))}
+    <Stack spacing={2}>
+      {error ? <Alert severity="error">{error}</Alert> : null}
+      {resolutionWarning ? <Alert severity="warning">{resolutionWarning}</Alert> : null}
+      {selectedRow?.revision_status === "legacy" ? (
+        <Alert severity="warning">
+          Старая версия: названия справочников без собственного снимка могут быть показаны в текущем
+          состоянии.
+        </Alert>
+      ) : null}
+
+      <Paper
+        variant="outlined"
+        sx={{ overflow: "hidden" }}
+      >
+        <Stack spacing={1.5}>
+          <Box sx={{ px: 1.5, pt: 1.5 }}>
+            <Typography sx={{ fontWeight: 700 }}>Сохранения</Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              Выберите строку, чтобы открыть полное состояние карточки.
+            </Typography>
+          </Box>
+
+          <TableContainer sx={{ maxHeight: 280 }}>
+            <Table
+              stickyHeader
+              size="small"
+              aria-label="Список сохранений"
+              sx={{ minWidth: 760 }}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell>Сохранено</TableCell>
+                  <TableCell>Автор</TableCell>
+                  <TableCell>Действует с</TableCell>
+                  <TableCell>Действует по</TableCell>
+                  <TableCell>Статус</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((row) => {
+                  const key = revisionKey(row);
+                  const selected = key === revisionKey(selectedRow);
+
+                  return (
+                    <TableRow
+                      key={key}
+                      hover
+                      selected={selected}
+                      tabIndex={0}
+                      aria-selected={selected}
+                      onClick={() => setSelectedKey(key)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedKey(key);
+                        }
+                      }}
+                      sx={{ cursor: "pointer" }}
+                    >
+                      <TableCell>{formatDate(row?.changed_at, true) || "—"}</TableCell>
+                      <TableCell>{row?.changed_by || "Неизвестно"}</TableCell>
+                      <TableCell>
+                        {formatDate(row?.effective_date_start || row?.date_start) || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(row?.effective_date_end || row?.date_end) || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          color={revisionStatusColor(row?.revision_status)}
+                          label={revisionStatusLabels[row?.revision_status] || "Версия"}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Grid
+            container
+            spacing={1.5}
+            alignItems="center"
+            sx={{ px: 1.5 }}
+          >
+            <Grid size={{ xs: 12, md: 9 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="date"
+                label="Состояние на дату"
+                value={resolvedDate}
+                onChange={(event) => setResolvedDate(event.target.value)}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                disabled={!resolvedDate || loading}
+                onClick={resolveOnDate}
+              >
+                Показать
+              </Button>
+            </Grid>
+          </Grid>
+
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1}
+            alignItems={{ md: "center" }}
+            justifyContent="space-between"
+            sx={{ px: 1.5, pb: 1.5 }}
+          >
+            <Stack
+              direction="row"
+              spacing={1}
+            >
+              <Button
+                size="small"
+                startIcon={<NavigateBeforeIcon />}
+                disabled={selectedIndex >= rows.length - 1}
+                onClick={() => setSelectedKey(revisionKey(rows[selectedIndex + 1]))}
+              >
+                Предыдущий период
+              </Button>
+              <Button
+                size="small"
+                endIcon={<NavigateNextIcon />}
+                disabled={selectedIndex <= 0}
+                onClick={() => setSelectedKey(revisionKey(rows[selectedIndex - 1]))}
+              >
+                Следующий период
+              </Button>
+            </Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showAll}
+                    onChange={(event) => setShowAll(event.target.checked)}
+                  />
+                }
+                label="Показывать отменённые и заменённые"
+              />
+            </Stack>
+          </Stack>
+        </Stack>
+      </Paper>
+
+      <Paper
+        variant="outlined"
+        sx={{ p: 1.5 }}
+      >
+        <Stack spacing={1.5}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1}
+            justifyContent="space-between"
+            alignItems={{ md: "center" }}
+          >
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              flexWrap="wrap"
+              useFlexGap
+            >
+              <Chip
+                size="small"
+                color={revisionStatusColor(selectedRow?.revision_status)}
+                label={revisionStatusLabels[selectedRow?.revision_status] || "Версия"}
+              />
+              <Typography variant="body2">{revisionPeriod(selectedRow)}</Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {formatDate(selectedRow?.changed_at, true) || "—"} ·{" "}
+                {selectedRow?.changed_by || "Неизвестно"}
+              </Typography>
+            </Stack>
+            {selectedRow?.can_cancel_schedule && canManageSchedule ? (
+              <Button
+                color="error"
+                size="small"
+                disabled={loading}
+                onClick={cancelSchedule}
+              >
+                Отменить версию
+              </Button>
+            ) : null}
+          </Stack>
+
+          <Grid
+            container
+            spacing={1.5}
+            alignItems="center"
+          >
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Box
+                sx={{
+                  minHeight: 52,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: 2,
+                  bgcolor: "action.hover",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mb: 0.25 }}
+                >
+                  Сравнение
+                </Typography>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {compareRow
+                    ? `С предыдущей версией: ${revisionPeriod(compareRow)}`
+                    : "Предыдущей версии нет"}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={onlyChanges}
+                    disabled={!compareSnapshot || loading}
+                    onChange={(event) => setOnlyChanges(event.target.checked)}
+                  />
+                }
+                label="Только изменения"
+              />
+              {!compareRow ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: -0.5 }}
+                >
+                  Для первой версии изменения не рассчитываются.
+                </Typography>
+              ) : null}
+            </Grid>
+          </Grid>
+
+          {loading && !selectedSnapshot ? (
+            <Stack
+              alignItems="center"
+              sx={{ py: 4 }}
+            >
+              <CircularProgress size={28} />
+            </Stack>
+          ) : selectedSnapshot ? (
+            <>
+              <SnapshotCard
+                snapshot={selectedSnapshot}
+                compareSnapshot={compareSnapshot}
+                entityType={entityType}
+                onlyChanges={onlyChanges}
+              />
+              <CompositionChanges
+                snapshot={selectedSnapshot}
+                compareSnapshot={compareSnapshot}
+                entityType={entityType}
+                onlyChanges={onlyChanges}
+              />
+            </>
+          ) : (
+            <Alert severity="warning">Полный снимок версии недоступен.</Alert>
+          )}
+        </Stack>
+      </Paper>
     </Stack>
   );
 }
