@@ -163,12 +163,14 @@ export default function CleaningCategoriesView({
               value={categoryQuery}
               placeholder="Поиск категории"
               onChange={(event) => onCategoryQueryChange(event.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
           </Box>
@@ -211,7 +213,6 @@ export default function CleaningCategoriesView({
           </Box>
         </Paper>
       </Grid>
-
       <Grid
         size={{ xs: 12, md: 9 }}
         sx={{ display: { xs: "none", md: "block" } }}
@@ -319,7 +320,6 @@ export default function CleaningCategoriesView({
           </Box>
         </Paper>
       </Grid>
-
       <CategoryMobileEditDialog
         open={mobileEditorOpen}
         category={selectedCategory}

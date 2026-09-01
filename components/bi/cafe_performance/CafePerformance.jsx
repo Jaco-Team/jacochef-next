@@ -67,14 +67,12 @@ export default function CafePerformance() {
       >
         <CircularProgress />
       </Backdrop>
-
       <MyAlert
         isOpen={alert.isOpen}
         onClose={alert.onClose}
         status={alert.status}
         text={alert.text}
       />
-
       <EmployeeDetailsModal
         open={employeeDetails.open}
         onClose={handleCloseKitchenEmployee}
@@ -86,7 +84,6 @@ export default function CafePerformance() {
         perPage={employeeDetails.perPage}
         onPageChange={handleEmployeePageChange}
       />
-
       <SlaCategoryDetailsModal
         open={slaCategoryDetails.open}
         onClose={handleCloseSlaCategory}
@@ -100,7 +97,6 @@ export default function CafePerformance() {
         onPageChange={handleSlaCategoryPageChange}
         onOrderOpen={orderDetails.openOrder}
       />
-
       <MetricDetailsModal
         open={metricDetails.open}
         onClose={handleCloseMetricDetails}
@@ -116,13 +112,11 @@ export default function CafePerformance() {
         onOrderOpen={orderDetails.openOrder}
         paginationRowsLabel={metricDetails.paginationRowsLabel}
       />
-
       <OrderDetailsModal
         open={orderDetails.open}
         onClose={orderDetails.closeOrder}
         order={orderDetails.order}
       />
-
       <Stack
         spacing={CP_SPACE.section}
         className="container_first_child"
@@ -137,7 +131,9 @@ export default function CafePerformance() {
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Метрики эффективности кухни, выдачи, качества и лидеров сети
           </Typography>

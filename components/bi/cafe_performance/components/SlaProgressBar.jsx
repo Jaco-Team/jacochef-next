@@ -27,8 +27,10 @@ export default function SlaProgressBar({ value, label = "SLA", formatter }) {
     <Stack spacing={CP_SPACE.related}>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
       >
         <MetricLabel
           text={label}

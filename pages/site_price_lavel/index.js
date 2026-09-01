@@ -34,7 +34,7 @@ import { ExlIcon } from "@/ui/icons";
 import { MySelect, MyTextInput, MyDatePickerNew } from "@/ui/Forms";
 
 // import {api_laravel_local as api_laravel} from "@/src/api_new";
-import { api_laravel } from "@/src/api_new";
+import { api_laravel, credentialsConfig, getAuthHeaders } from "@/src/api_new";
 
 import axios from "axios";
 import dayjs from "dayjs";
@@ -108,7 +108,15 @@ class SitePriceLevel_Modal_XLS extends React.Component {
               }}
             >
               <Tooltip
-                title={<Typography color="inherit">{"Скачать шаблон таблицы в Excel"}</Typography>}
+                title={
+                  <Typography
+                    sx={{
+                      color: "inherit",
+                    }}
+                  >
+                    {"Скачать шаблон таблицы в Excel"}
+                  </Typography>
+                }
               >
                 <IconButton
                   disableRipple
@@ -806,13 +814,13 @@ class SitePriceLevel_Tab_Level extends React.Component {
     const urlApi_dev = "https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls";
 
     formData.append("file", file);
-    formData.append("login", localStorage.getItem("token"));
     formData.append("method", "import_file_xls");
     formData.append("module", "site_price_lavel");
 
     try {
       const response = await axios.post(urlApi_dev, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        ...credentialsConfig,
+        headers: getAuthHeaders({ "Content-Type": "multipart/form-data" }),
       });
 
       const res = response.data.data;
@@ -1025,13 +1033,29 @@ class SitePriceLevel_Tab_Level extends React.Component {
                               <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
                                 {parseInt(acces?.edit_level_access) ? (
                                   <Tooltip
-                                    title={<Typography color="inherit">Редактировать</Typography>}
+                                    title={
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        Редактировать
+                                      </Typography>
+                                    }
                                   >
                                     <EditIcon />
                                   </Tooltip>
                                 ) : (
                                   <Tooltip
-                                    title={<Typography color="inherit">Просмотр</Typography>}
+                                    title={
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        Просмотр
+                                      </Typography>
+                                    }
                                   >
                                     <VisibilityIcon />
                                   </Tooltip>

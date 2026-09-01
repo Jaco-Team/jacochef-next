@@ -10,6 +10,11 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import AddIcon from "@mui/icons-material/Add";
+import SyncIcon from "@mui/icons-material/Sync";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -36,19 +41,33 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { MySelect, MyCheckBox, MyTextInput, MyDatePickerNew, MyAutocomplite } from "@/ui/Forms";
 
 import Dropzone from "dropzone";
-import { api_laravel_local, api_laravel } from "@/src/api_new";
+import { api_laravel_local, api_laravel, getAuthHeaders } from "@/src/api_new";
 import dayjs from "dayjs";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
-import HistoryLog from "@/ui/history/HistoryLog";
 import { SiteItemsModalTech } from "@/components/site_items_new/site_items_tech_modal";
-import { TableSortLabel } from "@mui/material";
+import SiteItemsHistoryModal from "@/components/site_items_new/site_items_history_modal";
+import {
+  SITE_ITEMS_MODAL_FIELD_KEYS,
+  canEditAccess,
+  canViewAccess,
+  filterCatsByActivity,
+  filterCatsByName,
+  hasAccessValue,
+} from "@/components/site_items_new/site_items_access";
+import { TableSortLabel, TextField, InputAdornment } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 
 const brandRed = "#DD1A32";
 const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+  /\/+$/,
+  "",
+);
+const siteItemModalAccessFields = SITE_ITEMS_MODAL_FIELD_KEYS;
 const tableSortLabelSx = {
   fontWeight: 600,
   color: textPrimary,
@@ -82,46 +101,6 @@ function roundTo(n, digits) {
   return n;
 }
 
-const siteItemHistoryFieldLabels = {
-  name: "Наименование",
-  short_name: "Короткое название",
-  link: "Ссылка",
-  date_start: "Действует с",
-  date_end: "Действует по",
-  art: "Код 1С",
-  is_mark: "Маркировка",
-  mark_code: "Код маркировки",
-  category_id: "Категория",
-  weight: "Вес",
-  count_part: "Кусочков или размер",
-  stol: "Стол",
-  is_price: "Установить цену",
-  is_show: "Активность",
-  protein: "Белки",
-  fat: "Жиры",
-  carbohydrates: "Углеводы",
-  time_stage_1: "Время на 1 этап",
-  time_stage_2: "Время на 2 этап",
-  time_stage_3: "Время на 3 этап",
-  tmp_desc: "Состав",
-  marc_desc: "Короткое описание",
-  marc_desc_full: "Полное описание",
-  show_program: "На кассе",
-  show_site: "На сайте и КЦ",
-  is_new: "Новинка",
-  is_hit: "Хит",
-  sort: "Сортировка",
-  img_app: "Изображение",
-  all_w_brutto: "Итого брутто",
-  all_w_netto: "Итого нетто",
-  all_w: "Итого выход",
-  stage_1: "Заготовки: 1 этап",
-  stage_2: "Заготовки: 2 этап",
-  stage_3: "Заготовки: 3 этап",
-  items: "Позиции",
-  tags: "Теги",
-};
-
 function getSiteItemHistoryTimestamp(item) {
   return item?.update_item || item?.date_update || item?.date_start || "";
 }
@@ -131,251 +110,6 @@ function getSiteItemHistoryDateValue(item) {
   const parsed = timestamp ? new Date(timestamp).getTime() : 0;
 
   return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function formatSiteItemHistoryDate(value) {
-  if (!value) {
-    return "";
-  }
-
-  const parsed = dayjs(value);
-
-  return parsed.isValid() ? parsed.format("DD.MM.YYYY") : String(value);
-}
-
-function formatSiteItemHistoryBoolean(value) {
-  if (value === "" || value === null || value === undefined) {
-    return "";
-  }
-
-  return parseInt(value) ? "Да" : "Нет";
-}
-
-function formatSiteItemHistoryMarking(value) {
-  if (value === "" || value === null || value === undefined) {
-    return "";
-  }
-
-  switch (parseInt(value, 10)) {
-    case 0:
-      return "Обычный товар";
-    case 1:
-      return "Вода";
-    case 2:
-      return "Сладкий напиток";
-    default:
-      return String(value);
-  }
-}
-
-function formatSiteItemHistoryNumber(value, decimals = null) {
-  if (value === "" || value === null || value === undefined) {
-    return "";
-  }
-
-  const parsed = Number(String(value).replace(",", "."));
-
-  if (Number.isNaN(parsed)) {
-    return String(value);
-  }
-
-  if (decimals === null) {
-    return Number.isInteger(parsed) ? String(parsed) : String(parsed).replace(".", ",");
-  }
-
-  return parsed.toFixed(decimals).replace(".", ",");
-}
-
-function formatSiteItemHistoryTags(tags = []) {
-  if (!Array.isArray(tags) || !tags.length) {
-    return "";
-  }
-
-  return [...tags]
-    .sort((a, b) => parseInt(a?.id || 0) - parseInt(b?.id || 0))
-    .map((tag) => tag?.name)
-    .filter(Boolean)
-    .join(", ");
-}
-
-function formatSiteItemHistoryCollection(items = [], { isFinal = false } = {}) {
-  if (!Array.isArray(items) || !items.length) {
-    return "";
-  }
-
-  return items
-    .map((item) => {
-      const name = item?.name || item?.item_id?.name || item?.type_id?.name || "";
-      const parts = [
-        name,
-        item?.ei_name ? `ед: ${item.ei_name}` : "",
-        item?.brutto !== undefined ? `брутто: ${formatSiteItemHistoryNumber(item.brutto, 3)}` : "",
-        item?.pr_1 !== undefined ? `% ХО: ${formatSiteItemHistoryNumber(item.pr_1)}` : "",
-        item?.netto !== undefined ? `нетто: ${formatSiteItemHistoryNumber(item.netto, 3)}` : "",
-        item?.pr_2 !== undefined ? `% ГО: ${formatSiteItemHistoryNumber(item.pr_2)}` : "",
-        item?.res !== undefined ? `выход: ${formatSiteItemHistoryNumber(item.res, 3)}` : "",
-        !isFinal && item?.stage ? `этап: ${item.stage}` : "",
-        isFinal && item?.is_add !== undefined
-          ? `добавка: ${parseInt(item.is_add) ? "Да" : "Нет"}`
-          : "",
-      ].filter(Boolean);
-
-      return parts.join(", ");
-    })
-    .join(" | ");
-}
-
-function getSiteItemCategoryName(item, categories = []) {
-  const categoryId = item?.category_id ?? item?.category_id2;
-
-  if (categoryId === "" || categoryId === null || categoryId === undefined) {
-    return "";
-  }
-
-  const matchedCategory = categories.find(
-    (category) => parseInt(category?.id) === parseInt(categoryId),
-  );
-
-  return matchedCategory?.name || String(categoryId);
-}
-
-function formatSiteItemHistoryValue(field, item, categories = []) {
-  switch (field) {
-    case "date_start":
-    case "date_end":
-      return formatSiteItemHistoryDate(item?.[field]);
-    case "category_id":
-      return getSiteItemCategoryName(item, categories);
-    case "is_mark":
-      return formatSiteItemHistoryMarking(item?.is_mark);
-    case "mark_code":
-      return item?.mark_code || item?.code_mark || "";
-    case "is_price":
-    case "is_show":
-    case "show_program":
-    case "show_site":
-    case "is_new":
-    case "is_hit":
-      return formatSiteItemHistoryBoolean(item?.[field]);
-    case "weight":
-    case "count_part":
-    case "protein":
-    case "fat":
-    case "carbohydrates":
-    case "sort":
-      return formatSiteItemHistoryNumber(item?.[field]);
-    case "all_w_brutto":
-    case "all_w_netto":
-    case "all_w":
-      return formatSiteItemHistoryNumber(item?.[field], 3);
-    case "stage_1":
-    case "stage_2":
-    case "stage_3":
-      return formatSiteItemHistoryCollection(item?.[field]);
-    case "items":
-      return formatSiteItemHistoryCollection(item?.[field], { isFinal: true });
-    case "tags":
-      return formatSiteItemHistoryTags(item?.tags);
-    case "img_app":
-      return item?.img_app || "";
-    default:
-      return item?.[field] === null || item?.[field] === undefined ? "" : String(item[field]);
-  }
-}
-
-function buildSiteItemHistoryDiff(item, previousItem = null, categories = []) {
-  const diff = {};
-  const fields = [
-    "name",
-    "short_name",
-    "link",
-    "date_start",
-    "date_end",
-    "art",
-    "is_mark",
-    "mark_code",
-    "category_id",
-    "count_part",
-    "stol",
-    "weight",
-    "is_price",
-    "is_show",
-    "protein",
-    "fat",
-    "carbohydrates",
-    "time_stage_1",
-    "time_stage_2",
-    "time_stage_3",
-    "tmp_desc",
-    "marc_desc",
-    "marc_desc_full",
-    "show_program",
-    "show_site",
-    "is_new",
-    "is_hit",
-    "sort",
-    "img_app",
-    "all_w_brutto",
-    "all_w_netto",
-    "all_w",
-    "tags",
-    "stage_1",
-    "stage_2",
-    "stage_3",
-    "items",
-  ];
-
-  fields.forEach((field) => {
-    const currentValue = formatSiteItemHistoryValue(field, item, categories);
-    const previousValue = previousItem
-      ? formatSiteItemHistoryValue(field, previousItem, categories)
-      : "";
-
-    if (currentValue !== previousValue) {
-      diff[siteItemHistoryFieldLabels[field] || field] = {
-        from: previousValue,
-        to: currentValue,
-      };
-    }
-  });
-
-  if (!Object.keys(diff).length) {
-    diff["Изменения"] = {
-      from: "",
-      to: previousItem ? "Карточка обновлена" : "Карточка создана",
-    };
-  }
-
-  return diff;
-}
-
-function normalizeSiteItemHistory(hist = [], categories = []) {
-  const safeHist = Array.isArray(hist) ? hist.filter(Boolean) : [];
-  const sortedHist = [...safeHist].sort((a, b) => {
-    const dateDifference = getSiteItemHistoryDateValue(b) - getSiteItemHistoryDateValue(a);
-
-    if (dateDifference !== 0) {
-      return dateDifference;
-    }
-
-    return parseInt(b?.id || 0) - parseInt(a?.id || 0);
-  });
-
-  return sortedHist.map((item, index) => {
-    const previousItem = sortedHist[index + 1] || null;
-
-    return {
-      id: item?.id || `${item?.item_id || "site-item"}-${index}`,
-      created_at: getSiteItemHistoryTimestamp(item),
-      actor_name: item?.user || "Неизвестно",
-      event_type: previousItem ? "update" : "create",
-      diff_json: JSON.stringify(buildSiteItemHistoryDiff(item, previousItem, categories)),
-      meta_json: JSON.stringify({
-        entity_type: "site_item",
-        item_id: item?.item_id || item?.id || null,
-      }),
-    };
-  });
 }
 
 function getLatestSiteItemHistorySnapshot(hist = []) {
@@ -407,17 +141,17 @@ function OutlineActionButton({ children, onClick, sx = {} }) {
         minHeight: 40,
         px: 2,
         borderRadius: 1.5,
-        borderColor: brandRed,
-        color: brandRed,
+        borderColor: blockBorder,
+        color: textPrimary,
         backgroundColor: "#fff",
         textTransform: "none",
-        fontSize: 16,
+        fontSize: 14,
         lineHeight: "20px",
-        fontWeight: 400,
+        fontWeight: 500,
         whiteSpace: "nowrap",
         "&:hover": {
-          borderColor: brandRed,
-          backgroundColor: "#fff",
+          borderColor: "#CFCFCF",
+          backgroundColor: "#FAFAFA",
         },
         ...sx,
       }}
@@ -425,1511 +159,6 @@ function OutlineActionButton({ children, onClick, sx = {} }) {
       {children}
     </Button>
   );
-}
-
-class SiteItems_Modal_History_View_Tech extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      itemView: null,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    //console.log(this.props);
-
-    if (!this.props) {
-      return;
-    }
-
-    if (this.props !== prevProps) {
-      this.setState({
-        itemView: this.props.itemView,
-      });
-    }
-  }
-
-  onClose() {
-    this.setState({
-      itemView: null,
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-    const { open, itemName, fullScreen } = this.props;
-
-    return (
-      <Dialog
-        open={open}
-        fullWidth={true}
-        maxWidth={"lg"}
-        onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography style={{ alignSelf: "center" }}>
-            Изменения в{itemName ? `: ${itemName}` : ""}
-          </Typography>
-          <IconButton onClick={this.onClose.bind(this)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Наименование"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.name?.color
-                      ? this.state.itemView.name.key
-                      : this.state.itemView.name
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.name?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 2,
-              }}
-            >
-              <MyTextInput
-                label="Действует с"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.date_start?.color
-                      ? this.state.itemView.date_start.key
-                      : this.state.itemView.date_start
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.date_start?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 2,
-              }}
-            >
-              <MyTextInput
-                label="по"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.date_end?.color
-                      ? this.state.itemView.date_end.key
-                      : this.state.itemView.date_end
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.date_end?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Код 1С"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.art?.color
-                      ? this.state.itemView.art.key
-                      : this.state.itemView.art
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.art?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Категория"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.category_name?.color
-                      ? this.state.itemView.category_name.key
-                      : this.state.itemView.category_name
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.category_name?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 2,
-              }}
-            >
-              <MyTextInput
-                label="Кусочков или размер"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.count_part?.color
-                      ? this.state.itemView.count_part.key
-                      : this.state.itemView.count_part
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.count_part?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 2,
-              }}
-            >
-              <MyTextInput
-                label="Стол"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.stol?.color
-                      ? this.state.itemView.stol.key
-                      : this.state.itemView.stol
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.stol?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Вес"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.weight?.color
-                      ? this.state.itemView.weight.key
-                      : this.state.itemView.weight
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.weight?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Установить цену"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.is_price?.color
-                      ? this.state.itemView.is_price.key
-                      : this.state.itemView.is_price
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.is_price?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Активность"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.is_show?.color
-                      ? this.state.itemView.is_show.key
-                      : this.state.itemView.is_show
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.is_show?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
-            />
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Белки"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.protein?.color
-                      ? this.state.itemView.protein.key
-                      : this.state.itemView.protein
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.protein?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Жиры"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.fat?.color
-                      ? this.state.itemView.fat.key
-                      : this.state.itemView.fat
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.fat?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Углеводы"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.carbohydrates?.color
-                      ? this.state.itemView.carbohydrates.key
-                      : this.state.itemView.carbohydrates
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.carbohydrates?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            />
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Время на 1 этап"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.time_stage_1?.color
-                      ? this.state.itemView.time_stage_1.key
-                      : this.state.itemView.time_stage_1
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.time_stage_1?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Время на 2 этап"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.time_stage_2?.color
-                      ? this.state.itemView.time_stage_2.key
-                      : this.state.itemView.time_stage_2
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.time_stage_2?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Время на 3 этап"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.time_stage_3?.color
-                      ? this.state.itemView.time_stage_3.key
-                      : this.state.itemView.time_stage_3
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.time_stage_3?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell width="30%">Номенклатура</TableCell>
-                    <TableCell>Единица измерения</TableCell>
-                    <TableCell>Брутто</TableCell>
-                    <TableCell>% потери при ХО</TableCell>
-                    <TableCell>Нетто</TableCell>
-                    <TableCell>% потери при ГО</TableCell>
-                    <TableCell>Выход</TableCell>
-                    <TableCell>Этапы</TableCell>
-                  </TableRow>
-                  <TableRow sx={{ "& th": { fontWeight: "bold" } }}>
-                    <TableCell colSpan={8}>Заготовки</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {this.state.itemView?.stage_1.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.name?.color ? item.name.key : item.name}
-                          disabled={true}
-                          className={
-                            item.name?.color
-                              ? item.name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
-                          disabled={true}
-                          className={
-                            item.ei_name?.color
-                              ? item.ei_name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.brutto?.color ? item.brutto.key : item.brutto}
-                          disabled={true}
-                          className={
-                            item.brutto?.color
-                              ? item.brutto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
-                          disabled={true}
-                          className={
-                            item.pr_1?.color
-                              ? item.pr_1.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.netto?.color ? item.netto.key : item.netto}
-                          disabled={true}
-                          className={
-                            item.netto?.color
-                              ? item.netto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
-                          disabled={true}
-                          className={
-                            item.pr_2?.color
-                              ? item.pr_2.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.res?.color ? item.res.key : item.res}
-                          disabled={true}
-                          className={
-                            item.res?.color
-                              ? item.res.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.stage?.color ? item.stage.key : item.stage}
-                          disabled={true}
-                          className={
-                            item.stage?.color
-                              ? item.stage.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {this.state.itemView?.stage_2.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.name?.color ? item.name.key : item.name}
-                          disabled={true}
-                          className={
-                            item.name?.color
-                              ? item.name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
-                          disabled={true}
-                          className={
-                            item.ei_name?.color
-                              ? item.ei_name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.brutto?.color ? item.brutto.key : item.brutto}
-                          disabled={true}
-                          className={
-                            item.brutto?.color
-                              ? item.brutto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
-                          disabled={true}
-                          className={
-                            item.pr_1?.color
-                              ? item.pr_1.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.netto?.color ? item.netto.key : item.netto}
-                          disabled={true}
-                          className={
-                            item.netto?.color
-                              ? item.netto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
-                          disabled={true}
-                          className={
-                            item.pr_2?.color
-                              ? item.pr_2.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.res?.color ? item.res.key : item.res}
-                          disabled={true}
-                          className={
-                            item.res?.color
-                              ? item.res.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.stage?.color ? item.stage.key : item.stage}
-                          disabled={true}
-                          className={
-                            item.stage?.color
-                              ? item.stage.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {this.state.itemView?.stage_3.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.name?.color ? item.name.key : item.name}
-                          disabled={true}
-                          className={
-                            item.name?.color
-                              ? item.name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.ei_name?.color ? item.ei_name.key : item.ei_name}
-                          disabled={true}
-                          className={
-                            item.ei_name?.color
-                              ? item.ei_name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.brutto?.color ? item.brutto.key : item.brutto}
-                          disabled={true}
-                          className={
-                            item.brutto?.color
-                              ? item.brutto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
-                          disabled={true}
-                          className={
-                            item.pr_1?.color
-                              ? item.pr_1.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.netto?.color ? item.netto.key : item.netto}
-                          disabled={true}
-                          className={
-                            item.netto?.color
-                              ? item.netto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
-                          disabled={true}
-                          className={
-                            item.pr_2?.color
-                              ? item.pr_2.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.res?.color ? item.res.key : item.res}
-                          disabled={true}
-                          className={
-                            item.res?.color
-                              ? item.res.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.stage?.color ? item.stage.key : item.stage}
-                          disabled={true}
-                          className={
-                            item.stage?.color
-                              ? item.stage.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow sx={{ "& td": { fontWeight: "bold" } }}>
-                    <TableCell colSpan={8}>Позиции</TableCell>
-                  </TableRow>
-                  {this.state.itemView?.items.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell colSpan={2}>
-                        <MyTextInput
-                          value={item.name?.color ? item.name.key : item.name}
-                          disabled={true}
-                          className={
-                            item.name?.color
-                              ? item.name.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.brutto?.color ? item.brutto.key : item.brutto}
-                          disabled={true}
-                          className={
-                            item.brutto?.color
-                              ? item.brutto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_1?.color ? item.pr_1.key : item.pr_1}
-                          disabled={true}
-                          className={
-                            item.pr_1?.color
-                              ? item.pr_1.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.netto?.color ? item.netto.key : item.netto}
-                          disabled={true}
-                          className={
-                            item.netto?.color
-                              ? item.netto.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.pr_2?.color ? item.pr_2.key : item.pr_2}
-                          disabled={true}
-                          className={
-                            item.pr_2?.color
-                              ? item.pr_2.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MyTextInput
-                          value={item.res?.color ? item.res.key : item.res}
-                          disabled={true}
-                          className={
-                            item.res?.color
-                              ? item.res.color === "true"
-                                ? "disabled_input disabled_input_color"
-                                : "disabled_input disabled_input_color_delete"
-                              : "disabled_input"
-                          }
-                        />
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell colSpan={2} />
-                    <TableCell>
-                      <MyTextInput
-                        value={
-                          this.state.itemView
-                            ? this.state.itemView.all_w_brutto?.color
-                              ? this.state.itemView.all_w_brutto.key
-                              : this.state.itemView.all_w_brutto
-                            : ""
-                        }
-                        disabled={true}
-                        className={
-                          this.state.itemView
-                            ? this.state.itemView.all_w_brutto?.color
-                              ? "disabled_input disabled_input_color"
-                              : "disabled_input"
-                            : "disabled_input"
-                        }
-                      />
-                    </TableCell>
-                    <TableCell colSpan={1} />
-                    <TableCell>
-                      <MyTextInput
-                        value={
-                          this.state.itemView
-                            ? this.state.itemView.all_w_netto?.color
-                              ? this.state.itemView.all_w_netto.key
-                              : this.state.itemView.all_w_netto
-                            : ""
-                        }
-                        disabled={true}
-                        className={
-                          this.state.itemView
-                            ? this.state.itemView.all_w_netto?.color
-                              ? "disabled_input disabled_input_color"
-                              : "disabled_input"
-                            : "disabled_input"
-                        }
-                      />
-                    </TableCell>
-                    <TableCell colSpan={1} />
-                    <TableCell>
-                      <MyTextInput
-                        value={
-                          this.state.itemView
-                            ? this.state.itemView.all_w?.color
-                              ? this.state.itemView.all_w.key
-                              : this.state.itemView.all_w
-                            : ""
-                        }
-                        disabled={true}
-                        className={
-                          this.state.itemView
-                            ? this.state.itemView.all_w?.color
-                              ? "disabled_input disabled_input_color"
-                              : "disabled_input"
-                            : "disabled_input"
-                        }
-                      />
-                    </TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant="contained"
-            onClick={this.onClose.bind(this)}
-          >
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
-
-class SiteItems_Modal_History_View_Mark extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      itemView: null,
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    //console.log(this.props);
-
-    if (!this.props) {
-      return;
-    }
-
-    if (this.props !== prevProps) {
-      this.setState({
-        itemView: this.props.itemView,
-      });
-    }
-  }
-
-  onClose() {
-    this.setState({
-      itemView: null,
-    });
-
-    this.props.onClose();
-  }
-
-  render() {
-    const { open, itemName, fullScreen } = this.props;
-
-    return (
-      <Dialog
-        open={open}
-        fullWidth={true}
-        maxWidth={"lg"}
-        onClose={this.onClose.bind(this)}
-        fullScreen={fullScreen}
-      >
-        <DialogTitle className="button">
-          <Typography style={{ alignSelf: "center" }}>
-            Изменения в{itemName ? `: ${itemName}` : ""}
-          </Typography>
-          <IconButton onClick={this.onClose.bind(this)}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent style={{ paddingBottom: 10, paddingTop: 10 }}>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid
-              size={{
-                xs: 12,
-                sm: 3,
-              }}
-            >
-              <MyTextInput
-                label="Действует с"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.date_start?.color
-                      ? this.state.itemView.date_start.key
-                      : this.state.itemView.date_start
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.date_start?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Состав"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.tmp_desc?.color
-                      ? this.state.itemView.tmp_desc.key
-                      : this.state.itemView.tmp_desc
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.tmp_desc?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <MyAutocomplite
-                label="Теги"
-                multiple={true}
-                unifiedPopup
-                disabled={true}
-                data={this.state.itemView?.tags_all?.key}
-                value={this.state.itemView?.tags?.key}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.tags?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Короткое описание (в карточке)"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.marc_desc?.color
-                      ? this.state.itemView.marc_desc.key
-                      : this.state.itemView.marc_desc
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.marc_desc?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 12,
-              }}
-            >
-              <MyTextInput
-                label="Полное описание (в карточке)"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.marc_desc_full?.color
-                      ? this.state.itemView.marc_desc_full.key
-                      : this.state.itemView.marc_desc_full
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.marc_desc_full?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="На кассе"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.show_program?.color
-                      ? this.state.itemView.show_program.key
-                      : this.state.itemView.show_program
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.show_program?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Новинка"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.is_new?.color
-                      ? this.state.itemView.is_new.key
-                      : this.state.itemView.is_new
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.is_new?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Сортировка"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.sort?.color
-                      ? this.state.itemView.sort.key
-                      : this.state.itemView.sort
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.sort?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="На сайте и КЦ"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.show_site?.color
-                      ? this.state.itemView.show_site.key
-                      : this.state.itemView.show_site
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.show_site?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
-            >
-              <MyTextInput
-                label="Хит"
-                value={
-                  this.state.itemView
-                    ? this.state.itemView.is_hit?.color
-                      ? this.state.itemView.is_hit.key
-                      : this.state.itemView.is_hit
-                    : ""
-                }
-                disabled={true}
-                className={
-                  this.state.itemView
-                    ? this.state.itemView.is_hit?.color
-                      ? "disabled_input disabled_input_color"
-                      : "disabled_input"
-                    : "disabled_input"
-                }
-              />
-            </Grid>
-
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <Grid
-                container
-                spacing={3}
-              >
-                <Grid
-                  size={{
-                    xs: 12,
-                  }}
-                >
-                  <Typography
-                    style={{
-                      backgroundColor: this.state.itemView
-                        ? this.state.itemView?.img_app.length > 0
-                          ? this.state.itemView?.img_new_update?.color
-                            ? "#fadadd"
-                            : "#fff"
-                          : "#fff"
-                        : "#fff",
-                    }}
-                  >
-                    {this.state.itemView
-                      ? this.state.itemView?.img_app.length > 0
-                        ? this.state.itemView?.img_new_update?.color
-                          ? "Картинка была изменена на:"
-                          : "Картинка не была изменена"
-                        : "Картинка отсутствует"
-                      : "Картинка отсутствует"}
-                  </Typography>
-                </Grid>
-
-                {this.state.itemView ? (
-                  this.state.itemView?.img_app.length > 0 ? (
-                    <Grid
-                      size={{
-                        xs: 12,
-                        sm: 6,
-                      }}
-                    >
-                      <picture>
-                        <source
-                          srcSet={`https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_276x276.jpg 138w, 
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_292x292.jpg 146w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_366x366.jpg 183w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_466x466.jpg 233w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_585x585.jpg 292w
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_732x732.jpg 366w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_1168x1168.jpg 584w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_1420x1420.jpg 760w,
-                                  https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_2000x2000.jpg 1875w`}
-                          sizes="(max-width=1439px) 233px, (max-width=1279px) 218px, 292px"
-                        />
-                        <img
-                          style={{ maxHeight: 300 }}
-                          src={`https://storage.yandexcloud.net/site-img/${this.state.itemView.img_app}_276x276.jpg`}
-                        />
-                      </picture>
-                    </Grid>
-                  ) : null
-                ) : null}
-              </Grid>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant="contained"
-            onClick={this.onClose.bind(this)}
-          >
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
-}
-
-class SiteItems_Modal_History extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      item: [],
-    };
-  }
-
-  componentDidUpdate(prevProps) {
-    //console.log(this.props);
-
-    if (!this.props.item) {
-      return;
-    }
-
-    if (this.props.item !== prevProps.item) {
-      this.setState({
-        item: this.props.item,
-      });
-    }
-  }
-
-  onClose() {
-    setTimeout(() => {
-      this.setState({
-        item: [],
-      });
-    }, 100);
-
-    this.props.onClose();
-  }
-
-  render() {
-    const history = Array.isArray(this.state.item) ? this.state.item : [];
-
-    return (
-      <Dialog
-        open={this.props.open}
-        fullWidth={true}
-        maxWidth={"lg"}
-        onClose={this.onClose.bind(this)}
-        fullScreen={this.props.fullScreen}
-        sx={{
-          "& .MuiDialog-paper": {
-            borderRadius: { xs: 0, md: 3 },
-            overflow: "hidden",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            borderBottom: `1px solid ${blockBorder}`,
-            backgroundColor: "#fff",
-          }}
-        >
-          <Typography
-            sx={{
-              alignSelf: "center",
-              fontWeight: 700,
-              color: textPrimary,
-            }}
-          >
-            {this.props.method}
-            {this.props.itemName ? `: ${this.props.itemName}` : ""}
-          </Typography>
-          <IconButton
-            onClick={this.onClose.bind(this)}
-            sx={{ color: "#9B9B9B" }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent
-          sx={{
-            px: { xs: 1.5, md: 2.5 },
-            py: { xs: 2, md: 2.5 },
-            backgroundColor: blockBackground,
-          }}
-        >
-          <Box
-            sx={{
-              mb: 2,
-              px: { xs: 0.5, md: 0 },
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 14,
-                lineHeight: "20px",
-                color: textSecondary,
-              }}
-            >
-              История показывает только измененные поля между соседними версиями карточки.
-            </Typography>
-          </Box>
-
-          <HistoryLog
-            history={history}
-            title="Лента изменений"
-            defaultExpanded={true}
-          />
-        </DialogContent>
-
-        <DialogActions
-          sx={{
-            px: { xs: 1.5, md: 2.5 },
-            py: { xs: 1.5, md: 2 },
-            borderTop: `1px solid ${blockBorder}`,
-            backgroundColor: "#fff",
-          }}
-        >
-          <Button
-            onClick={this.onClose.bind(this)}
-            sx={{
-              minHeight: 40,
-              px: 2,
-              borderRadius: 1.5,
-              border: `1px solid ${blockBorder}`,
-              color: textPrimary,
-              backgroundColor: "#fff",
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "#fff",
-                borderColor: blockBorder,
-              },
-            }}
-          >
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  }
 }
 
 class SiteItems_Modal_Mark extends React.Component {
@@ -1941,7 +170,7 @@ class SiteItems_Modal_Mark extends React.Component {
     parallelUploads: 10,
     acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: "https://apichef.jacochef.ru/api/site_setting/upload_banner",
+    url: `${apiBaseUrl}/site_setting/upload_banner`,
   };
 
   myDropzoneNew = null;
@@ -1980,7 +209,7 @@ class SiteItems_Modal_Mark extends React.Component {
     }
 
     if (this.props.item !== prevProps.item) {
-      const tags = [{ id: -1, name: "Новый" }, ...this.props.item?.tags_all];
+      const tags = [{ id: -1, name: "Добавить новый тег" }, ...this.props.item?.tags_all];
       this.setState({
         date_start: this.props.item?.date_start ? formatDate(this.props.item.date_start) : null,
         date_end: this.props.item?.date_end ? formatDate(this.props.item.date_end) : null,
@@ -1997,7 +226,10 @@ class SiteItems_Modal_Mark extends React.Component {
       });
 
       setTimeout(() => {
-        this.myDropzone = new Dropzone("#for_img_edit_new", this.dropzoneOptions);
+        this.myDropzone = new Dropzone("#for_img_edit_new", {
+          ...this.dropzoneOptions,
+          headers: getAuthHeaders(),
+        });
       }, 300);
     }
   }
@@ -2070,7 +302,6 @@ class SiteItems_Modal_Mark extends React.Component {
 
               data.append("type", "mini");
               data.append("name", name + "site_items");
-              data.append("login", localStorage.getItem("token"));
               data.append("id", id);
             });
 
@@ -2615,32 +846,90 @@ class SiteItems_Table extends React.Component {
       sortField: "name",
       sortOrder: "asc",
       type: "",
+      expandedCategories: [],
     };
   }
 
   componentDidUpdate(prevProps) {
-    // Обновляем состояние только если изменились данные и они не равны текущим
-    if (prevProps.cats !== this.props.cats && this.props.cats) {
-      this.setState({
-        cats: this.props.cats,
-        sortField: "name",
-        sortOrder: "asc",
-      });
+    if (prevProps.cats === this.props.cats || !this.props.cats) {
+      return;
     }
+
+    const tabChanged = prevProps.listTab !== this.props.listTab;
+    const sortField = tabChanged ? "name" : this.state.sortField;
+    const sortOrder = tabChanged ? "asc" : this.state.sortOrder;
+    const nextCats = this.sortCats(this.props.cats, sortField, sortOrder);
+
+    this.setState((state) => {
+      const nextKeys = new Set(nextCats.map((cat, index) => this.getCategoryKey(cat, index)));
+
+      return {
+        cats: nextCats,
+        sortField,
+        sortOrder,
+        expandedCategories: tabChanged
+          ? []
+          : state.expandedCategories.filter((key) => nextKeys.has(key)),
+      };
+    });
   }
 
-  // Удалить shouldComponentUpdate или исправить:
   shouldComponentUpdate(nextProps, nextState) {
-    // Проверяем, изменились ли пропсы или состояние
-    if (this.props.timeUpdate !== nextProps.timeUpdate) return true;
-    if (this.state.sortField !== nextState.sortField) return true;
-    if (this.state.sortOrder !== nextState.sortOrder) return true;
-    if (JSON.stringify(this.state.cats) !== JSON.stringify(nextState.cats)) return true;
-    if (this.props.user_app !== nextProps.user_app) return true;
-    if (this.props.acces !== nextProps.acces) return true;
-
-    return false;
+    return (
+      this.props.timeUpdate !== nextProps.timeUpdate ||
+      this.props.cats !== nextProps.cats ||
+      this.props.listTab !== nextProps.listTab ||
+      this.props.user_app !== nextProps.user_app ||
+      this.props.acces !== nextProps.acces ||
+      this.state.sortField !== nextState.sortField ||
+      this.state.sortOrder !== nextState.sortOrder ||
+      this.state.cats !== nextState.cats ||
+      this.state.expandedCategories !== nextState.expandedCategories
+    );
   }
+
+  getCategoryKey = (cat, index) => String(cat?.id ?? cat?.category_id ?? index);
+
+  toggleCategory = (categoryKey) => {
+    this.setState((state) => ({
+      expandedCategories: state.expandedCategories.includes(categoryKey)
+        ? state.expandedCategories.filter((key) => key !== categoryKey)
+        : [...state.expandedCategories, categoryKey],
+    }));
+  };
+
+  toggleAllCategories = () => {
+    this.setState((state) => {
+      const allKeys = state.cats.map(this.getCategoryKey);
+      const allExpanded =
+        allKeys.length > 0 && allKeys.every((key) => state.expandedCategories.includes(key));
+
+      return {
+        expandedCategories: allExpanded ? [] : allKeys,
+      };
+    });
+  };
+
+  sortCats = (cats, field, sortOrder) =>
+    (cats || []).map((category) => ({
+      ...category,
+      items: Array.isArray(category.items)
+        ? [...category.items].sort((a, b) => {
+            const valueA = this.prepareValueForSort(
+              field === "date_update" ? a[field] || a.update_item : a[field],
+              field,
+            );
+            const valueB = this.prepareValueForSort(
+              field === "date_update" ? b[field] || b.update_item : b[field],
+              field,
+            );
+
+            if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+            if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+          })
+        : category.items,
+    }));
 
   handleSort = (field) => {
     let sortOrder = "asc";
@@ -2648,43 +937,10 @@ class SiteItems_Table extends React.Component {
       sortOrder = this.state.sortOrder === "asc" ? "desc" : "asc";
     }
 
-    const sortedData = [...this.state.cats];
-
-    sortedData.forEach((category) => {
-      if (category.items && Array.isArray(category.items)) {
-        category.items.sort((a, b) => {
-          let valueA = this.prepareValueForSort(
-            field === "date_update" ? a[field] || a.update_item : a[field],
-            field,
-          );
-          let valueB = this.prepareValueForSort(
-            field === "date_update" ? b[field] || b.update_item : b[field],
-            field,
-          );
-
-          if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
-          if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
-          return 0;
-        });
-      }
-    });
-
-    // Также сортируем категории, если нужно
-    if (field === "name") {
-      sortedData.sort((a, b) => {
-        let valueA = this.prepareValueForSort(a[field], field);
-        let valueB = this.prepareValueForSort(b[field], field);
-
-        if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
-        if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-
     this.setState({
-      cats: sortedData,
+      cats: this.sortCats(this.state.cats, field, sortOrder),
       sortField: field,
-      sortOrder: sortOrder,
+      sortOrder,
     });
   };
 
@@ -2697,6 +953,7 @@ class SiteItems_Table extends React.Component {
         return value.toString().toLowerCase();
 
       case "date_start":
+      case "date_end":
       case "date_update":
         if (typeof value === "string") {
           const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -2738,31 +995,45 @@ class SiteItems_Table extends React.Component {
     const { user_app, acces } = this.props;
     const { changeSort, saveSort, changeTableCheck, openItem, openHistoryItem } = this.props;
     const activityLabel = user_app === "technologist" ? "Активность" : "Сайт и КЦ";
+    const canOpenItem = siteItemModalAccessFields.some((field) => canViewAccess(acces, field));
+    const canEditItem = siteItemModalAccessFields.some((field) => canEditAccess(acces, field));
+    const canViewSort = user_app === "marketing" && canViewAccess(acces, "sort", true);
+    const canEditSort = user_app === "marketing" && canEditAccess(acces, "sort", true);
+    const canViewDateEnd = canViewAccess(acces, "date_end", true);
+    const categoryKeys = this.state.cats.map(this.getCategoryKey);
+    const allCategoriesExpanded =
+      categoryKeys.length > 0 &&
+      categoryKeys.every((key) => this.state.expandedCategories.includes(key));
     const mobileSortOptions = [
       {
         field: user_app === "technologist" ? "is_show" : "show_site",
         label: activityLabel,
-        visible: acces?.site_kc_edit || acces?.site_kc_view,
+        visible: canViewAccess(acces, "site_kc"),
       },
       {
         field: "show_program",
         label: "Касса",
-        visible: acces?.kassa_edit || acces?.kassa_view,
+        visible: canViewAccess(acces, "kassa"),
       },
       {
         field: "sort",
         label: "Сортировка",
-        visible: user_app === "marketing",
+        visible: canViewSort,
       },
       {
         field: "name",
         label: "Название",
-        visible: true,
+        visible: canViewAccess(acces, "name"),
       },
       {
         field: "date_start",
         label: "Действует с",
-        visible: true,
+        visible: canViewAccess(acces, "date_start"),
+      },
+      {
+        field: "date_end",
+        label: "Действует по",
+        visible: canViewDateEnd,
       },
       {
         field: "date_update",
@@ -2772,7 +1043,7 @@ class SiteItems_Table extends React.Component {
       {
         field: "art",
         label: "Код 1С",
-        visible: user_app === "technologist",
+        visible: user_app === "technologist" && canViewAccess(acces, "art"),
       },
     ].filter((option) => option.visible);
     const renderMobileSortButton = (field, label) => {
@@ -2806,7 +1077,7 @@ class SiteItems_Table extends React.Component {
         </Button>
       );
     };
-    const renderMobileStatusControl = (label, checked, onChange) => (
+    const renderMobileStatusControl = (label, checked, onChange, disabled) => (
       <Box
         key={label}
         sx={{
@@ -2835,6 +1106,7 @@ class SiteItems_Table extends React.Component {
         <Checkbox
           checked={checked}
           onChange={onChange}
+          disabled={disabled}
           size="small"
           sx={{
             p: 0.5,
@@ -2903,540 +1175,627 @@ class SiteItems_Table extends React.Component {
         }}
       >
         <Stack
-          spacing={2}
+          spacing={1.25}
           sx={{ pb: 2 }}
         >
-          {this.state.cats.map((cat, key) => (
-            <Accordion
-              key={key}
-              disableGutters
-              elevation={0}
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 0.25,
+              pb: 0.25,
+            }}
+          >
+            <Typography sx={{ color: textSecondary, fontSize: 13 }}>
+              Выберите категорию, чтобы увидеть товары
+            </Typography>
+            <Button
+              size="small"
+              startIcon={allCategoriesExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+              onClick={this.toggleAllCategories}
               sx={{
-                borderRadius: 3,
-                border: `1px solid ${blockBorder}`,
-                backgroundColor: blockBackground,
-                boxShadow: "none",
-                overflow: "hidden",
-                "&::before": {
-                  display: "none",
-                },
-                "&.Mui-expanded": {
-                  margin: 0,
-                },
+                minHeight: 32,
+                px: 1.25,
+                borderRadius: 1.5,
+                color: textSecondary,
+                textTransform: "none",
+                fontSize: 13,
+                "&:hover": { backgroundColor: "#fff" },
               }}
             >
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
+              {allCategoriesExpanded ? "Свернуть все" : "Развернуть все"}
+            </Button>
+          </Stack>
+
+          {this.state.cats.map((cat, key) => {
+            const categoryKey = this.getCategoryKey(cat, key);
+
+            return (
+              <Accordion
+                key={categoryKey}
+                expanded={this.state.expandedCategories.includes(categoryKey)}
+                onChange={() => this.toggleCategory(categoryKey)}
+                disableGutters
+                elevation={0}
                 sx={{
-                  px: { xs: 1.5, lg: 2.5 },
-                  py: 0.75,
-                  minHeight: 72,
+                  borderRadius: 2.5,
+                  border: `1px solid ${blockBorder}`,
+                  backgroundColor: "#fff",
+                  boxShadow: "none",
+                  overflow: "hidden",
+                  "&::before": {
+                    display: "none",
+                  },
                   "&.Mui-expanded": {
-                    minHeight: 72,
-                  },
-                  "& .MuiAccordionSummary-content": {
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 2,
-                    margin: "14px 0",
-                  },
-                  "& .MuiAccordionSummary-content.Mui-expanded": {
-                    margin: "14px 0",
+                    margin: 0,
+                    borderColor: "#D8D8D8",
                   },
                 }}
               >
-                <Box sx={{ minWidth: 0 }}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
+                  sx={{
+                    px: { xs: 1.5, lg: 2 },
+                    py: 0,
+                    minHeight: 56,
+                    "&.Mui-expanded": {
+                      minHeight: 56,
+                      borderBottom: `1px solid ${blockBorder}`,
+                    },
+                    "& .MuiAccordionSummary-content": {
+                      alignItems: "center",
+                      gap: 1.25,
+                      my: 1.25,
+                    },
+                    "& .MuiAccordionSummary-content.Mui-expanded": {
+                      my: 1.25,
+                    },
+                    "&:hover": {
+                      backgroundColor: "#FAFAFA",
+                    },
+                  }}
+                >
                   <Typography
                     sx={{
-                      fontSize: 18,
-                      lineHeight: "22px",
-                      fontWeight: 500,
+                      fontSize: 16,
+                      lineHeight: "20px",
+                      fontWeight: 600,
                       color: textPrimary,
                     }}
                   >
                     {cat.name}
                   </Typography>
-                  <Typography
+                  <Box
                     sx={{
-                      mt: 0.5,
-                      fontSize: 14,
-                      lineHeight: "18px",
+                      minWidth: 28,
+                      height: 24,
+                      px: 1,
+                      borderRadius: 999,
+                      backgroundColor: blockBackground,
                       color: textSecondary,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 13,
+                      lineHeight: 1,
+                      fontWeight: 600,
                     }}
                   >
-                    Товаров в категории: {cat.items?.length || 0}
-                  </Typography>
-                </Box>
-
-                <Box
+                    {cat.items?.length || 0}
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails
+                  className="accordion_details"
                   sx={{
-                    minWidth: 42,
-                    height: 42,
-                    px: 1.5,
-                    borderRadius: 999,
-                    border: `1px solid ${blockBorder}`,
-                    backgroundColor: "#fff",
-                    color: textSecondary,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 16,
-                    lineHeight: "20px",
-                    fontWeight: 500,
+                    px: 0,
+                    pt: 0,
+                    pb: { xs: 1.5, lg: 2 },
+                    backgroundColor: blockBackground,
                   }}
                 >
-                  {cat.items?.length || 0}
-                </Box>
-              </AccordionSummary>
-
-              <AccordionDetails
-                className="accordion_details"
-                sx={{
-                  px: 0,
-                  pt: 0,
-                  pb: { xs: 1.5, lg: 2 },
-                }}
-              >
-                <Box sx={{ display: { xs: "none", sm: "block" } }}>
-                  <TableContainer
-                    component={Paper}
-                    elevation={0}
-                    sx={{
-                      mx: { xs: 1, lg: 2 },
-                      borderRadius: 2.5,
-                      border: `1px solid ${blockBorder}`,
-                      boxShadow: "none",
-                      backgroundColor: "#fff",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <Table
-                      aria-label={`Категория ${cat.name}`}
+                  <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <TableContainer
+                      component={Paper}
+                      elevation={0}
                       sx={{
-                        width: "100%",
-                        tableLayout: "fixed",
-                        "& th, & td": {
-                          px: { xs: 1, lg: 1.25 },
-                          py: 1.5,
-                          fontSize: { xs: 12, lg: 14 },
-                          lineHeight: { xs: "16px", lg: "20px" },
-                          verticalAlign: "middle",
-                          whiteSpace: "normal",
-                          wordBreak: "break-word",
-                        },
-                        "& thead th": {
-                          backgroundColor: blockBackground,
-                          borderBottom: `1px solid ${blockBorder}`,
-                        },
-                        "& tbody td": {
-                          borderBottom: `1px solid ${blockBorder}`,
-                          color: textSecondary,
-                        },
-                        "& tbody tr:last-of-type td": {
-                          borderBottom: "none",
-                        },
-                        "& tbody tr": {
-                          transition: "background-color 0.15s ease",
-                        },
-                        "& tbody tr:hover": {
-                          backgroundColor: "#FAFAFA",
-                        },
-                        "& .MuiTableSortLabel-root": {
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          width: "100%",
-                          whiteSpace: "normal",
-                        },
+                        mx: { xs: 1, lg: 2 },
+                        borderRadius: 2.5,
+                        border: `1px solid ${blockBorder}`,
+                        boxShadow: "none",
+                        backgroundColor: "#fff",
+                        overflow: "hidden",
                       }}
                     >
-                      <TableHead>
-                        <TableRow sx={{ "& th": { fontWeight: "bold", color: textPrimary } }}>
-                          <TableCell sx={{ width: "3%" }}>№</TableCell>
+                      <Table
+                        aria-label={`Категория ${cat.name}`}
+                        sx={{
+                          width: "100%",
+                          tableLayout: "fixed",
+                          "& th, & td": {
+                            px: { xs: 1, lg: 1.25 },
+                            py: 1.5,
+                            fontSize: { xs: 12, lg: 14 },
+                            lineHeight: { xs: "16px", lg: "20px" },
+                            verticalAlign: "middle",
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                          },
+                          "& thead th": {
+                            backgroundColor: blockBackground,
+                            borderBottom: `1px solid ${blockBorder}`,
+                          },
+                          "& tbody td": {
+                            borderBottom: `1px solid ${blockBorder}`,
+                            color: textSecondary,
+                          },
+                          "& tbody tr:last-of-type td": {
+                            borderBottom: "none",
+                          },
+                          "& tbody tr": {
+                            transition: "background-color 0.15s ease",
+                          },
+                          "& tbody tr:hover": {
+                            backgroundColor: "#FAFAFA",
+                          },
+                          "& .MuiTableSortLabel-root": {
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            width: "100%",
+                            whiteSpace: "normal",
+                          },
+                        }}
+                      >
+                        <TableHead>
+                          <TableRow sx={{ "& th": { fontWeight: "bold", color: textPrimary } }}>
+                            <TableCell sx={{ width: "3%" }}>№</TableCell>
 
-                          {(acces?.site_kc_edit || acces?.site_kc_view) && (
-                            <TableCell sx={{ width: "8%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps(
-                                  user_app === "technologist" ? "is_show" : "show_site",
-                                )}
-                                sx={tableSortLabelSx}
-                              >
-                                {activityLabel}
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          {(acces?.kassa_edit || acces?.kassa_view) && (
-                            <TableCell sx={{ width: "8%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("show_program")}
-                                sx={tableSortLabelSx}
-                              >
-                                Касса
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          {user_app === "marketing" && (
-                            <TableCell sx={{ width: "9%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("sort")}
-                                sx={tableSortLabelSx}
-                              >
-                                Сортировка
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          <TableCell sx={{ width: user_app === "technologist" ? "18%" : "21%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("name")}
-                              sx={tableSortLabelSx}
-                            >
-                              Название
-                            </TableSortLabel>
-                          </TableCell>
-
-                          <TableCell sx={{ width: "11%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("date_start")}
-                              sx={tableSortLabelSx}
-                            >
-                              Действует с
-                            </TableSortLabel>
-                          </TableCell>
-
-                          <TableCell sx={{ width: "9%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("date_end")}
-                              sx={tableSortLabelSx}
-                            >
-                              по
-                            </TableSortLabel>
-                          </TableCell>
-
-                          <TableCell sx={{ width: "12%" }}>
-                            <TableSortLabel
-                              {...this.getSortProps("date_update")}
-                              sx={tableSortLabelSx}
-                            >
-                              Обновление
-                            </TableSortLabel>
-                          </TableCell>
-
-                          {user_app === "technologist" && (
-                            <TableCell sx={{ width: "10%" }}>
-                              <TableSortLabel
-                                {...this.getSortProps("art")}
-                                sx={tableSortLabelSx}
-                              >
-                                Код для 1С
-                              </TableSortLabel>
-                            </TableCell>
-                          )}
-
-                          <TableCell
-                            align="center"
-                            sx={{ width: "7%" }}
-                          >
-                            Редактирование
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{ width: "7%" }}
-                          >
-                            История изменений
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <TableBody>
-                        {cat.items &&
-                          cat.items.map((item, index) => (
-                            <TableRow key={item.id || index}>
-                              <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
-                                {index + 1}
+                            {canViewAccess(acces, "site_kc") && (
+                              <TableCell sx={{ width: "8%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps(
+                                    user_app === "technologist" ? "is_show" : "show_site",
+                                  )}
+                                  sx={tableSortLabelSx}
+                                >
+                                  {activityLabel}
+                                </TableSortLabel>
                               </TableCell>
+                            )}
 
-                              {(acces?.site_kc_edit || acces?.site_kc_view) && (
+                            {canViewAccess(acces, "kassa") && (
+                              <TableCell sx={{ width: "8%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("show_program")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Касса
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewSort && (
+                              <TableCell sx={{ width: "9%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("sort")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Сортировка
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewAccess(acces, "name") && (
+                              <TableCell
+                                sx={{ width: user_app === "technologist" ? "18%" : "21%" }}
+                              >
+                                <TableSortLabel
+                                  {...this.getSortProps("name")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Название
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewAccess(acces, "date_start") && (
+                              <TableCell sx={{ width: "11%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("date_start")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Действует с
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canViewDateEnd && (
+                              <TableCell sx={{ width: "9%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("date_end")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  по
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            <TableCell sx={{ width: "12%" }}>
+                              <TableSortLabel
+                                {...this.getSortProps("date_update")}
+                                sx={tableSortLabelSx}
+                              >
+                                Обновление
+                              </TableSortLabel>
+                            </TableCell>
+
+                            {user_app === "technologist" && canViewAccess(acces, "art") && (
+                              <TableCell sx={{ width: "10%" }}>
+                                <TableSortLabel
+                                  {...this.getSortProps("art")}
+                                  sx={tableSortLabelSx}
+                                >
+                                  Код для 1С
+                                </TableSortLabel>
+                              </TableCell>
+                            )}
+
+                            {canOpenItem && (
+                              <TableCell
+                                align="center"
+                                sx={{ width: "7%" }}
+                              >
+                                {canEditItem ? "Редактирование" : "Просмотр"}
+                              </TableCell>
+                            )}
+                            <TableCell
+                              align="center"
+                              sx={{ width: "7%" }}
+                            >
+                              История изменений
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                          {cat.items &&
+                            cat.items.map((item, index) => (
+                              <TableRow key={item.id || index}>
+                                <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
+                                  {index + 1}
+                                </TableCell>
+
+                                {canViewAccess(acces, "site_kc") && (
+                                  <TableCell align="center">
+                                    <MyCheckBox
+                                      label=""
+                                      value={
+                                        parseInt(
+                                          user_app === "technologist"
+                                            ? item.is_show
+                                            : item.show_site,
+                                        ) === 1
+                                      }
+                                      func={changeTableCheck.bind(
+                                        this,
+                                        key,
+                                        index,
+                                        item.id,
+                                        user_app === "technologist" ? "is_show" : "show_site",
+                                      )}
+                                      disabled={!canEditAccess(acces, "site_kc")}
+                                    />
+                                  </TableCell>
+                                )}
+
+                                {canViewAccess(acces, "kassa") && (
+                                  <TableCell align="center">
+                                    <MyCheckBox
+                                      label=""
+                                      value={parseInt(item.show_program) === 1}
+                                      func={changeTableCheck.bind(
+                                        this,
+                                        key,
+                                        index,
+                                        item.id,
+                                        "show_program",
+                                      )}
+                                      disabled={!canEditAccess(acces, "kassa")}
+                                    />
+                                  </TableCell>
+                                )}
+
+                                {canViewSort && (
+                                  <TableCell>
+                                    {canEditSort ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item.sort}
+                                        func={changeSort.bind(this, item.id)}
+                                        onBlur={saveSort.bind(this, item.id, "sort")}
+                                      />
+                                    ) : (
+                                      item.sort
+                                    )}
+                                  </TableCell>
+                                )}
+
+                                {canViewAccess(acces, "name") && (
+                                  <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
+                                    {item.name}
+                                  </TableCell>
+                                )}
+                                {canViewAccess(acces, "date_start") && (
+                                  <TableCell>{item.date_start}</TableCell>
+                                )}
+                                {canViewDateEnd && <TableCell>{item.date_end}</TableCell>}
+                                <TableCell>{item.date_update || item.update_item}</TableCell>
+
+                                {user_app === "technologist" && canViewAccess(acces, "art") && (
+                                  <TableCell>{item.art}</TableCell>
+                                )}
+
+                                {canOpenItem && (
+                                  <TableCell align="center">
+                                    <IconButton
+                                      onClick={openItem.bind(this, item.id, item.name)}
+                                      sx={{
+                                        color: textSecondary,
+                                        border: `1px solid ${blockBorder}`,
+                                        borderRadius: 1.5,
+                                        backgroundColor: "#fff",
+                                        "&:hover": {
+                                          backgroundColor: blockBackground,
+                                          color: textPrimary,
+                                        },
+                                      }}
+                                    >
+                                      <EditIcon fontSize="small" />
+                                    </IconButton>
+                                  </TableCell>
+                                )}
+
                                 <TableCell align="center">
-                                  <MyCheckBox
-                                    label=""
-                                    value={
-                                      parseInt(
-                                        user_app === "technologist" ? item.is_show : item.show_site,
-                                      ) === 1
-                                    }
-                                    func={changeTableCheck.bind(
+                                  <IconButton
+                                    onClick={openHistoryItem.bind(
+                                      this,
+                                      item.id,
+                                      "История изменений",
+                                    )}
+                                    sx={{
+                                      color: textSecondary,
+                                      border: `1px solid ${blockBorder}`,
+                                      borderRadius: 1.5,
+                                      backgroundColor: "#fff",
+                                      "&:hover": {
+                                        backgroundColor: blockBackground,
+                                        color: textPrimary,
+                                      },
+                                    }}
+                                  >
+                                    <EditNoteIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: { xs: "block", sm: "none" },
+                      mx: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: mobileSortOptions.length ? "block" : "none",
+                        px: 1.25,
+                        py: 1.25,
+                        borderRadius: 2.5,
+                        border: `1px solid ${blockBorder}`,
+                        backgroundColor: "#fff",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          mb: 1,
+                          fontSize: 12,
+                          lineHeight: "16px",
+                          fontWeight: 600,
+                          color: "#8B8B8B",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        Сортировка списка
+                      </Typography>
+                      <Stack
+                        direction="row"
+                        useFlexGap
+                        sx={{
+                          flexWrap: "wrap",
+                          gap: 0.75,
+                        }}
+                      >
+                        {mobileSortOptions.map((option) =>
+                          renderMobileSortButton(option.field, option.label),
+                        )}
+                      </Stack>
+                    </Box>
+
+                    <Stack
+                      spacing={1}
+                      sx={{ mt: 1 }}
+                    >
+                      {cat.items &&
+                        cat.items.map((item, index) => (
+                          <Box
+                            key={item.id || index}
+                            sx={{
+                              borderRadius: 2.5,
+                              border: `1px solid ${blockBorder}`,
+                              backgroundColor: "#fff",
+                              p: 1.25,
+                            }}
+                          >
+                            <Stack spacing={1.25}>
+                              <Stack
+                                direction="row"
+                                spacing={1.25}
+                                sx={{
+                                  alignItems: "flex-start",
+                                  justifyContent: "space-between",
+                                }}
+                              >
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
+                                  <Typography
+                                    sx={{
+                                      fontSize: 16,
+                                      lineHeight: "20px",
+                                      fontWeight: 700,
+                                      color: textPrimary,
+                                      wordBreak: "break-word",
+                                    }}
+                                  >
+                                    {index + 1}
+                                    {canViewAccess(acces, "name")
+                                      ? `. ${item.name || "Без названия"}`
+                                      : ""}
+                                  </Typography>
+                                  {user_app === "technologist" && canViewAccess(acces, "art") ? (
+                                    <Typography
+                                      sx={{
+                                        mt: 0.4,
+                                        fontSize: 13,
+                                        lineHeight: "16px",
+                                        color: textSecondary,
+                                      }}
+                                    >
+                                      Код 1С: {item.art || "—"}
+                                    </Typography>
+                                  ) : null}
+                                </Box>
+
+                                {canViewSort ? (
+                                  <Box sx={{ width: 88, flexShrink: 0 }}>
+                                    {canEditSort ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item.sort}
+                                        func={changeSort.bind(this, item.id)}
+                                        onBlur={saveSort.bind(this, item.id, "sort")}
+                                      />
+                                    ) : (
+                                      <Typography sx={{ color: textSecondary }}>
+                                        {item.sort ?? "—"}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                ) : null}
+                              </Stack>
+
+                              <Box
+                                sx={{
+                                  display: "grid",
+                                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                  gap: 1.25,
+                                }}
+                              >
+                                {canViewAccess(acces, "date_start") &&
+                                  renderMobileInfoItem(
+                                    "Действует с",
+                                    formatSiteItemsTableDate(item.date_start),
+                                  )}
+                                {canViewDateEnd &&
+                                  renderMobileInfoItem(
+                                    "По",
+                                    formatSiteItemsTableDate(item.date_end),
+                                  )}
+                                {renderMobileInfoItem(
+                                  "Обновление",
+                                  formatSiteItemsTableDate(
+                                    item.date_update || item.update_item,
+                                    true,
+                                  ),
+                                  true,
+                                )}
+                              </Box>
+
+                              <Stack
+                                direction="row"
+                                useFlexGap
+                                sx={{
+                                  flexWrap: "wrap",
+                                  gap: 0.75,
+                                }}
+                              >
+                                {canViewAccess(acces, "site_kc") &&
+                                  renderMobileStatusControl(
+                                    activityLabel,
+                                    parseInt(
+                                      user_app === "technologist" ? item.is_show : item.show_site,
+                                    ) === 1,
+                                    changeTableCheck.bind(
                                       this,
                                       key,
                                       index,
                                       item.id,
                                       user_app === "technologist" ? "is_show" : "show_site",
-                                    )}
-                                  />
-                                </TableCell>
-                              )}
+                                    ),
+                                    !canEditAccess(acces, "site_kc"),
+                                  )}
 
-                              {(acces?.kassa_edit || acces?.kassa_view) && (
-                                <TableCell align="center">
-                                  <MyCheckBox
-                                    label=""
-                                    value={parseInt(item.show_program) === 1}
-                                    func={changeTableCheck.bind(
+                                {canViewAccess(acces, "kassa") &&
+                                  renderMobileStatusControl(
+                                    "Касса",
+                                    parseInt(item.show_program) === 1,
+                                    changeTableCheck.bind(
                                       this,
                                       key,
                                       index,
                                       item.id,
                                       "show_program",
-                                    )}
-                                  />
-                                </TableCell>
-                              )}
+                                    ),
+                                    !canEditAccess(acces, "kassa"),
+                                  )}
+                              </Stack>
 
-                              {user_app === "marketing" && (
-                                <TableCell>
-                                  <MyTextInput
-                                    label=""
-                                    value={item.sort}
-                                    func={changeSort.bind(this, key, index)}
-                                    onBlur={saveSort.bind(this, item.id, "sort")}
-                                  />
-                                </TableCell>
-                              )}
-
-                              <TableCell sx={{ color: textPrimary, fontWeight: 500 }}>
-                                {item.name}
-                              </TableCell>
-                              <TableCell>{item.date_start}</TableCell>
-                              <TableCell>{item.date_end}</TableCell>
-                              <TableCell>{item.date_update || item.update_item}</TableCell>
-
-                              {user_app === "technologist" && <TableCell>{item.art}</TableCell>}
-
-                              <TableCell align="center">
-                                <IconButton
-                                  onClick={openItem.bind(this, item.id, item.name)}
-                                  sx={{
-                                    color: textSecondary,
-                                    border: `1px solid ${blockBorder}`,
-                                    borderRadius: 1.5,
-                                    backgroundColor: "#fff",
-                                    "&:hover": {
-                                      backgroundColor: blockBackground,
-                                      color: textPrimary,
-                                    },
-                                  }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              </TableCell>
-
-                              <TableCell align="center">
-                                <IconButton
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                              >
+                                {canOpenItem && (
+                                  <Button
+                                    variant="outlined"
+                                    startIcon={<EditIcon fontSize="small" />}
+                                    onClick={openItem.bind(this, item.id, item.name)}
+                                    sx={actionButtonSx}
+                                  >
+                                    {canEditItem ? "Изменить" : "Открыть"}
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outlined"
+                                  startIcon={<EditNoteIcon fontSize="small" />}
                                   onClick={openHistoryItem.bind(this, item.id, "История изменений")}
-                                  sx={{
-                                    color: textSecondary,
-                                    border: `1px solid ${blockBorder}`,
-                                    borderRadius: 1.5,
-                                    backgroundColor: "#fff",
-                                    "&:hover": {
-                                      backgroundColor: blockBackground,
-                                      color: textPrimary,
-                                    },
-                                  }}
+                                  sx={actionButtonSx}
                                 >
-                                  <EditNoteIcon fontSize="small" />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: { xs: "block", sm: "none" },
-                    mx: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      px: 1.25,
-                      py: 1.25,
-                      borderRadius: 2.5,
-                      border: `1px solid ${blockBorder}`,
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        mb: 1,
-                        fontSize: 12,
-                        lineHeight: "16px",
-                        fontWeight: 600,
-                        color: "#8B8B8B",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      Сортировка списка
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      flexWrap="wrap"
-                      useFlexGap
-                      gap={0.75}
-                    >
-                      {mobileSortOptions.map((option) =>
-                        renderMobileSortButton(option.field, option.label),
-                      )}
+                                  История
+                                </Button>
+                              </Stack>
+                            </Stack>
+                          </Box>
+                        ))}
                     </Stack>
                   </Box>
-
-                  <Stack
-                    spacing={1}
-                    sx={{ mt: 1 }}
-                  >
-                    {cat.items &&
-                      cat.items.map((item, index) => (
-                        <Box
-                          key={item.id || index}
-                          sx={{
-                            borderRadius: 2.5,
-                            border: `1px solid ${blockBorder}`,
-                            backgroundColor: "#fff",
-                            p: 1.25,
-                          }}
-                        >
-                          <Stack spacing={1.25}>
-                            <Stack
-                              direction="row"
-                              alignItems="flex-start"
-                              justifyContent="space-between"
-                              spacing={1.25}
-                            >
-                              <Box sx={{ minWidth: 0, flex: 1 }}>
-                                <Typography
-                                  sx={{
-                                    fontSize: 16,
-                                    lineHeight: "20px",
-                                    fontWeight: 700,
-                                    color: textPrimary,
-                                    wordBreak: "break-word",
-                                  }}
-                                >
-                                  {index + 1}. {item.name || "Без названия"}
-                                </Typography>
-                                {user_app === "technologist" ? (
-                                  <Typography
-                                    sx={{
-                                      mt: 0.4,
-                                      fontSize: 13,
-                                      lineHeight: "16px",
-                                      color: textSecondary,
-                                    }}
-                                  >
-                                    Код 1С: {item.art || "—"}
-                                  </Typography>
-                                ) : null}
-                              </Box>
-
-                              {user_app === "marketing" ? (
-                                <Box sx={{ width: 88, flexShrink: 0 }}>
-                                  <MyTextInput
-                                    label=""
-                                    value={item.sort}
-                                    func={changeSort.bind(this, key, index)}
-                                    onBlur={saveSort.bind(this, item.id, "sort")}
-                                  />
-                                </Box>
-                              ) : null}
-                            </Stack>
-
-                            <Box
-                              sx={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                                gap: 1.25,
-                              }}
-                            >
-                              {renderMobileInfoItem(
-                                "Действует с",
-                                formatSiteItemsTableDate(item.date_start),
-                              )}
-                              {renderMobileInfoItem("По", formatSiteItemsTableDate(item.date_end))}
-                              {renderMobileInfoItem(
-                                "Обновление",
-                                formatSiteItemsTableDate(
-                                  item.date_update || item.update_item,
-                                  true,
-                                ),
-                                true,
-                              )}
-                            </Box>
-
-                            <Stack
-                              direction="row"
-                              flexWrap="wrap"
-                              useFlexGap
-                              gap={0.75}
-                            >
-                              {(acces?.site_kc_edit || acces?.site_kc_view) &&
-                                renderMobileStatusControl(
-                                  activityLabel,
-                                  parseInt(
-                                    user_app === "technologist" ? item.is_show : item.show_site,
-                                  ) === 1,
-                                  changeTableCheck.bind(
-                                    this,
-                                    key,
-                                    index,
-                                    item.id,
-                                    user_app === "technologist" ? "is_show" : "show_site",
-                                  ),
-                                )}
-
-                              {(acces?.kassa_edit || acces?.kassa_view) &&
-                                renderMobileStatusControl(
-                                  "Касса",
-                                  parseInt(item.show_program) === 1,
-                                  changeTableCheck.bind(this, key, index, item.id, "show_program"),
-                                )}
-                            </Stack>
-
-                            <Stack
-                              direction="row"
-                              spacing={1}
-                            >
-                              <Button
-                                variant="outlined"
-                                startIcon={<EditIcon fontSize="small" />}
-                                onClick={openItem.bind(this, item.id, item.name)}
-                                sx={actionButtonSx}
-                              >
-                                Изменить
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                startIcon={<EditNoteIcon fontSize="small" />}
-                                onClick={openHistoryItem.bind(this, item.id, "История изменений")}
-                                sx={actionButtonSx}
-                              >
-                                История
-                              </Button>
-                            </Stack>
-                          </Stack>
-                        </Box>
-                      ))}
-                  </Stack>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
         </Stack>
       </Grid>
     );
@@ -3455,9 +1814,18 @@ class SiteItems_ extends React.Component {
       user_app: "",
 
       cats: [],
+      displayCats: [],
+      listCounts: {
+        activeCategories: 0,
+        activeItems: 0,
+        archiveCategories: 0,
+        archiveItems: 0,
+      },
       confirmDialog: false,
       timeUpdate: new Date(),
       fullScreen: false,
+      listTab: "active",
+      searchItem: "",
 
       openAlert: false,
       err_status: false,
@@ -3475,18 +1843,40 @@ class SiteItems_ extends React.Component {
       tags: [],
       modalEditTags: false,
 
-      modalDialogView_Mark: false,
-      itemView_Mark: null,
-
-      modalDialogView: false,
-      itemView: null,
       acces: {},
 
       items_stage: null,
       item_items: null,
 
       category: [],
+      categoryLegacy: [],
       stages: [],
+    };
+
+    this.changeSort = this.changeSort.bind(this);
+    this.saveSort = this.saveSort.bind(this);
+    this.changeTableCheck = this.changeTableCheck.bind(this);
+    this.openItemTech = this.openItemTech.bind(this);
+    this.openHistoryTech = this.openHistoryTech.bind(this);
+    this.openHistoryMark = this.openHistoryMark.bind(this);
+  }
+
+  buildListView(cats, listTab, searchItem) {
+    const activeCats = filterCatsByActivity(cats, false);
+    const archiveCats = filterCatsByActivity(cats, true);
+    const byActivity = listTab === "archive" ? archiveCats : activeCats;
+    const displayCats = filterCatsByName(byActivity, searchItem);
+    const countItems = (list) =>
+      (list || []).reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
+
+    return {
+      displayCats,
+      listCounts: {
+        activeCategories: activeCats.length,
+        activeItems: countItems(activeCats),
+        archiveCategories: archiveCats.length,
+        archiveItems: countItems(archiveCats),
+      },
     };
   }
 
@@ -3496,6 +1886,7 @@ class SiteItems_ extends React.Component {
     this.setState({
       module_name: data.module_info.name,
       cats: data.cats,
+      ...this.buildListView(data.cats, this.state.listTab, this.state.searchItem),
       acces: data.acces,
       user_app: data.user_app,
       timeUpdate: new Date(),
@@ -3505,19 +1896,22 @@ class SiteItems_ extends React.Component {
     document.title = data.module_info.name;
   }
 
-  getData = (method, data = {}) => {
-    this.setState({
-      is_load: true,
-    });
+  getData = (method, data = {}, options = {}) => {
+    const showLoading = options.showLoading !== false;
+    if (showLoading) {
+      this.setState({
+        is_load: true,
+      });
+    }
 
     let res = api_laravel(this.state.module, method, data)
       .then((result) => result.data)
       .finally(() => {
-        setTimeout(() => {
+        if (showLoading) {
           this.setState({
             is_load: false,
           });
-        }, 750);
+        }
       });
 
     return res;
@@ -3540,6 +1934,7 @@ class SiteItems_ extends React.Component {
 
     this.setState({
       cats: data.cats,
+      ...this.buildListView(data.cats, this.state.listTab, this.state.searchItem),
       user_app: data.user_app,
       timeUpdate: new Date(),
       tags: data.tags,
@@ -3547,6 +1942,10 @@ class SiteItems_ extends React.Component {
   }
 
   async openItemNew(method) {
+    if (!hasAccessValue(this.state.acces?.new_item_access)) {
+      return;
+    }
+
     this.handleResize();
 
     let res = await this.getData("get_all_for_new_tech");
@@ -3558,6 +1957,7 @@ class SiteItems_ extends React.Component {
       { id: "3", name: "3 этап" },
     ];
     res.item.category_id = "";
+    res.item.category_id2 = "";
     res.item.tags_all = res?.tags_all;
 
     this.setState({
@@ -3565,6 +1965,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       stages,
@@ -3572,6 +1973,10 @@ class SiteItems_ extends React.Component {
   }
 
   async openItemTech(id, method) {
+    if (!siteItemModalAccessFields.some((field) => canViewAccess(this.state.acces, field))) {
+      return;
+    }
+
     this.handleResize();
 
     const data = {
@@ -3580,74 +1985,35 @@ class SiteItems_ extends React.Component {
 
     const res = await this.getData("get_one_tech", data);
 
-    res.items_stage.stage_1.map((it) => {
-      let value;
+    const stageOptionsByKey = new Map(
+      (res.items_stage?.all || []).map((item) => [`${item.type}:${item.id}`, item]),
+    );
 
-      if (it.type === "rec") {
-        value = res.items_stage.all.find(
-          (item) => item.type === "rec" && parseInt(item.id) === parseInt(it.rec_id),
-        );
-      } else {
-        value = res.items_stage.all.find(
-          (item) => item.type === "pf" && parseInt(item.id) === parseInt(it.pf_id),
-        );
-      }
+    ["stage_1", "stage_2", "stage_3"].forEach((stage) => {
+      res.items_stage[stage] = (res.items_stage?.[stage] || []).map((item) => {
+        const itemId = item.type === "rec" ? item.rec_id : item.pf_id;
+        const value = stageOptionsByKey.get(`${item.type}:${itemId}`);
 
-      if (value) {
-        it.type_id = { id: value.id, name: value.name };
-      } else {
-        it.type_id = { id: "", name: it.name };
-      }
-    });
-
-    res.items_stage.stage_2.map((it) => {
-      let value;
-
-      if (it.type === "rec") {
-        value = res.items_stage.all.find(
-          (item) => item.type === "rec" && parseInt(item.id) === parseInt(it.rec_id),
-        );
-      } else {
-        value = res.items_stage.all.find(
-          (item) => item.type === "pf" && parseInt(item.id) === parseInt(it.pf_id),
-        );
-      }
-
-      if (value) {
-        it.type_id = { id: value.id, name: value.name };
-      } else {
-        it.type_id = { id: "", name: it.name };
-      }
-    });
-
-    res.items_stage.stage_3.map((it) => {
-      let value;
-
-      if (it.type === "rec") {
-        value = res.items_stage.all.find(
-          (item) => item.type === "rec" && parseInt(item.id) === parseInt(it.rec_id),
-        );
-      } else {
-        value = res.items_stage.all.find(
-          (item) => item.type === "pf" && parseInt(item.id) === parseInt(it.pf_id),
-        );
-      }
-
-      if (value) {
-        it.type_id = { id: value.id, name: value.name };
-      } else {
-        it.type_id = { id: "", name: it.name };
-      }
+        return {
+          ...item,
+          type_id: value ? { id: value.id, name: value.name } : { id: "", name: item.name },
+        };
+      });
     });
 
     res.items_stage.not_stage = [];
 
-    res.item_items.this_items.map((it) => {
-      const value = res.item_items.all_items.find(
-        (item) => parseInt(item.id) === parseInt(it.item_id),
-      );
-      it.item_id = { id: value.id, name: value.name };
-      return it;
+    const itemOptionsById = new Map(
+      (res.item_items?.all_items || []).map((item) => [String(item.id), item]),
+    );
+    res.item_items.this_items = (res.item_items?.this_items || []).map((item) => {
+      const currentItemId = typeof item.item_id === "object" ? item.item_id?.id : item.item_id;
+      const value = itemOptionsById.get(String(currentItemId));
+
+      return {
+        ...item,
+        item_id: value ? { id: value.id, name: value.name } : { id: "", name: item.name },
+      };
     });
 
     const stages = [
@@ -3662,6 +2028,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       tags_all: res.tags_all,
@@ -3686,6 +2053,10 @@ class SiteItems_ extends React.Component {
   }
 
   async updateVK() {
+    if (!hasAccessValue(this.state.acces?.reload_vk_access)) {
+      return;
+    }
+
     this.setState({
       confirmDialog: false,
     });
@@ -3693,40 +2064,35 @@ class SiteItems_ extends React.Component {
     await this.getData("updateVK", {});
   }
 
-  changeSort(key_cat, key_item, event) {
-    const value = event.target.value;
-    let cats = this.state.cats;
-
-    cats[key_cat]["items"][key_item]["sort"] = value;
+  updateCatItemById(id, patch) {
+    const cats = (this.state.cats || []).map((cat) => ({
+      ...cat,
+      items: (cat.items || []).map((item) =>
+        String(item?.id) === String(id) ? { ...item, ...patch } : item,
+      ),
+    }));
 
     this.setState({
       cats,
+      ...this.buildListView(cats, this.state.listTab, this.state.searchItem),
       timeUpdate: new Date(),
     });
+  }
+
+  changeSort(itemId, event) {
+    if (itemId === undefined || itemId === null) {
+      return;
+    }
+
+    this.updateCatItemById(itemId, { sort: event.target.value });
   }
 
   async saveSort(id, type, event) {
+    if (!canEditAccess(this.state.acces, "sort", true)) {
+      return;
+    }
+
     const value = event.target.value;
-
-    const data = {
-      id,
-      type,
-      value,
-    };
-
-    await this.getData("save_check", data);
-  }
-
-  async changeTableCheck(key_cat, key_item, id, type, event, val) {
-    const value = val ? 1 : 0;
-
-    let cats = this.state.cats;
-    cats[key_cat]["items"][key_item][type] = value;
-
-    this.setState({
-      cats,
-      timeUpdate: new Date(),
-    });
 
     const data = {
       id,
@@ -3736,9 +2102,41 @@ class SiteItems_ extends React.Component {
 
     const res = await this.getData("save_check", data);
 
-    // setTimeout(() => {
-    //   this.update();
-    // }, 300);
+    if (res?.st === false) {
+      await this.update();
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res?.text || "Не удалось сохранить сортировку",
+      });
+    }
+  }
+
+  async changeTableCheck(key_cat, key_item, id, type, event, val) {
+    const accessKey = type === "show_program" ? "kassa" : "site_kc";
+    if (!canEditAccess(this.state.acces, accessKey)) {
+      return;
+    }
+
+    const value = val ? 1 : 0;
+    this.updateCatItemById(id, { [type]: value });
+
+    const data = {
+      id,
+      type,
+      value,
+    };
+
+    const res = await this.getData("save_check", data);
+
+    if (res?.st === false) {
+      await this.update();
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: res?.text || "Не удалось сохранить изменение",
+      });
+    }
   }
 
   async saveTech(item_) {
@@ -3812,9 +2210,9 @@ class SiteItems_ extends React.Component {
     let res;
 
     if (method === "Новое блюдо") {
-      res = await this.getData("save_new", data);
+      res = await this.getData("save_new", data, { showLoading: false });
     } else {
-      res = await this.getData("save_edit", data);
+      res = await this.getData("save_edit", data, { showLoading: false });
     }
 
     if (res.st) {
@@ -3822,8 +2220,6 @@ class SiteItems_ extends React.Component {
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
-        modalDialogTech: false,
-        itemTech: null,
       });
 
       setTimeout(async () => {
@@ -3840,39 +2236,7 @@ class SiteItems_ extends React.Component {
   }
 
   async openHistoryMark(id, method) {
-    this.handleResize();
-
-    const data = {
-      item_id: id,
-    };
-
-    let res;
-
-    res = await this.getData("get_one_hist_mark", data);
-
-    if (res.hist.length) {
-      const latestSnapshot = getLatestSiteItemHistorySnapshot(res.hist);
-
-      this.setState({
-        modalDialogHist: true,
-        itemHist: normalizeSiteItemHistory(res.hist, this.state.category),
-        itemName: latestSnapshot?.name || "",
-        method,
-      });
-    } else {
-      const data = {
-        id,
-      };
-
-      res = await this.getData("get_one_mark", data);
-
-      this.setState({
-        modalDialogHist: true,
-        itemHist: normalizeSiteItemHistory([res.item], this.state.category),
-        itemName: res.item.name,
-        method,
-      });
-    }
+    return this.openHistoryTech(id, method);
   }
 
   async openHistoryTech(id, method, type) {
@@ -3889,7 +2253,7 @@ class SiteItems_ extends React.Component {
 
       this.setState({
         modalDialogHist: true,
-        itemHist: normalizeSiteItemHistory(res.hist, this.state.category),
+        itemHist: res.hist,
         itemName: latestSnapshot?.name || "",
         method,
       });
@@ -3898,26 +2262,32 @@ class SiteItems_ extends React.Component {
         id,
       };
 
-      const res = await this.getData("get_one_tech", data);
+      const res = await this.getData(
+        this.state.user_app === "technologist" ? "get_one_tech" : "get_one_mark",
+        data,
+      );
 
-      res.item.items = res.item_items.this_items;
-      res.item.stage_1 = res.items_stage.stage_1;
-      res.item.stage_2 = res.items_stage.stage_2;
-      res.item.stage_3 = res.items_stage.stage_3;
+      if (res.item_items && res.items_stage) {
+        res.item.items = res.item_items.this_items;
+        res.item.stage_1 = res.items_stage.stage_1;
+        res.item.stage_2 = res.items_stage.stage_2;
+        res.item.stage_3 = res.items_stage.stage_3;
+      }
 
-      if (res.item.category_id) {
-        res.item.category_name =
-          res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))?.name ??
-          "";
-      } else {
-        res.item.category_name =
+      if (res.cat_list) {
+        res.item.category_name2 =
           res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))?.name ??
           "";
+      }
+      if (res.cat_list_legacy) {
+        res.item.category_name =
+          res.cat_list_legacy.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))
+            ?.name ?? "";
       }
 
       this.setState({
         modalDialogHist: true,
-        itemHist: normalizeSiteItemHistory([res.item], res.cat_list || this.state.category),
+        itemHist: [res.item],
         itemName: res.item.name,
         method,
       });
@@ -3925,6 +2295,10 @@ class SiteItems_ extends React.Component {
   }
 
   async changeTags(chooseTag, name) {
+    if (!hasAccessValue(this.state.acces?.change_tag_access)) {
+      return;
+    }
+
     const res = await this.getData("edit_tag", { chooseTag, name });
     if (res.st) {
       this.setState({
@@ -3941,291 +2315,6 @@ class SiteItems_ extends React.Component {
         err_text: res.text,
       });
     }
-  }
-
-  openModalHistoryView_Mark(index) {
-    const item = this.state.itemHist;
-
-    let itemView = JSON.parse(JSON.stringify(item[index]));
-
-    itemView.show_program = parseInt(itemView.show_program) ? "Да" : "Нет";
-    itemView.is_new = parseInt(itemView.is_new) ? "Да" : "Нет";
-    itemView.show_site = parseInt(itemView.show_site) ? "Да" : "Нет";
-    itemView.is_hit = parseInt(itemView.is_hit) ? "Да" : "Нет";
-
-    if (parseInt(index) !== 0) {
-      let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
-
-      itemView_old.show_program = parseInt(itemView_old.show_program) ? "Да" : "Нет";
-      itemView_old.is_new = parseInt(itemView_old.is_new) ? "Да" : "Нет";
-      itemView_old.show_site = parseInt(itemView_old.show_site) ? "Да" : "Нет";
-      itemView_old.is_hit = parseInt(itemView_old.is_hit) ? "Да" : "Нет";
-
-      for (let key in itemView) {
-        if (itemView[key] !== itemView_old[key] && key !== "img_app") {
-          itemView[key] = { key: itemView[key], color: "true" };
-        }
-      }
-    }
-
-    this.setState({
-      modalDialogView_Mark: true,
-      itemView_Mark: itemView,
-    });
-  }
-
-  openModalHistoryView_Tech(index) {
-    const item = this.state.itemHist;
-
-    let itemView = JSON.parse(JSON.stringify(item[index]));
-
-    itemView.is_show = parseInt(itemView.is_show) ? "Да" : "Нет";
-    itemView.is_price = parseInt(itemView.is_price) ? "Да" : "Нет";
-
-    if (parseInt(index) !== 0) {
-      let itemView_old = JSON.parse(JSON.stringify(item[index - 1]));
-
-      itemView_old.is_show = parseInt(itemView_old.is_show) ? "Да" : "Нет";
-      itemView_old.is_price = parseInt(itemView_old.is_price) ? "Да" : "Нет";
-
-      for (let key in itemView) {
-        if (
-          itemView[key] !== itemView_old[key] &&
-          key !== "stage_1" &&
-          key !== "stage_2" &&
-          key !== "stage_3" &&
-          key !== "items"
-        ) {
-          itemView[key] = { key: itemView[key], color: "true" };
-        }
-
-        if (key === "stage_1") {
-          itemView.stage_1 = itemView.stage_1
-            .reduce((newList, it) => {
-              let item_old;
-
-              if (it.type === "rec") {
-                item_old = itemView_old.stage_1.find(
-                  (item) => item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                );
-              } else {
-                item_old = itemView_old.stage_1.find(
-                  (item) => item.type === "pf" && parseInt(item.pf_id) === parseInt(it.pf_id),
-                );
-              }
-
-              if (item_old) {
-                for (let key in it) {
-                  if (it[key] !== item_old[key]) {
-                    it[key] = { key: it[key], color: "true" };
-                  }
-                }
-              } else {
-                for (let key in it) {
-                  it[key] = { key: it[key], color: "true" };
-                }
-              }
-
-              return (newList = [...newList, ...[it]]);
-            }, [])
-            .concat(
-              itemView_old.stage_1.filter((it) => {
-                if (it.type === "rec") {
-                  let item_old = itemView_old.stage_1.find(
-                    (item) => item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                  );
-                  if (
-                    !itemView.stage_1.find(
-                      (item) =>
-                        item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                    )
-                  ) {
-                    for (let key in it) {
-                      it[key] = { key: it[key], color: "del" };
-                    }
-                    return it;
-                  }
-                } else {
-                  if (
-                    !itemView.stage_1.find(
-                      (item) => item.type === "pf" && parseInt(item.pf_id) === parseInt(it.pf_id),
-                    )
-                  ) {
-                    for (let key in it) {
-                      it[key] = { key: it[key], color: "del" };
-                    }
-                    return it;
-                  }
-                }
-              }),
-            );
-        }
-
-        if (key === "stage_2") {
-          itemView.stage_2 = itemView.stage_2
-            .reduce((newList, it) => {
-              let item_old;
-
-              if (it.type === "rec") {
-                item_old = itemView_old.stage_2.find(
-                  (item) => item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                );
-              } else {
-                item_old = itemView_old.stage_2.find(
-                  (item) => item.type === "pf" && parseInt(item.pf_id) === parseInt(it.pf_id),
-                );
-              }
-
-              if (item_old) {
-                for (let key in it) {
-                  if (it[key] !== item_old[key]) {
-                    it[key] = { key: it[key], color: "true" };
-                  }
-                }
-              } else {
-                for (let key in it) {
-                  it[key] = { key: it[key], color: "true" };
-                }
-              }
-
-              return (newList = [...newList, ...[it]]);
-            }, [])
-            .concat(
-              itemView_old.stage_2.filter((it) => {
-                if (it.type === "rec") {
-                  let item_old = itemView_old.stage_2.find(
-                    (item) => item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                  );
-                  if (
-                    !itemView.stage_2.find(
-                      (item) =>
-                        item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                    )
-                  ) {
-                    for (let key in it) {
-                      it[key] = { key: it[key], color: "del" };
-                    }
-                    return it;
-                  }
-                } else {
-                  if (
-                    !itemView.stage_2.find(
-                      (item) => item.type === "pf" && parseInt(item.pf_id) === parseInt(it.pf_id),
-                    )
-                  ) {
-                    for (let key in it) {
-                      it[key] = { key: it[key], color: "del" };
-                    }
-                    return it;
-                  }
-                }
-              }),
-            );
-        }
-
-        if (key === "stage_3") {
-          itemView.stage_3 = itemView.stage_3
-            .reduce((newList, it) => {
-              let item_old;
-
-              if (it.type === "rec") {
-                item_old = itemView_old.stage_3.find(
-                  (item) => item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                );
-              } else {
-                item_old = itemView_old.stage_3.find(
-                  (item) => item.type === "pf" && parseInt(item.pf_id) === parseInt(it.pf_id),
-                );
-              }
-
-              if (item_old) {
-                for (let key in it) {
-                  if (it[key] !== item_old[key]) {
-                    it[key] = { key: it[key], color: "true" };
-                  }
-                }
-              } else {
-                for (let key in it) {
-                  it[key] = { key: it[key], color: "true" };
-                }
-              }
-
-              return (newList = [...newList, ...[it]]);
-            }, [])
-            .concat(
-              itemView_old.stage_3.filter((it) => {
-                if (it.type === "rec") {
-                  item_old = itemView_old.stage_3.find(
-                    (item) => item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                  );
-                  if (
-                    !itemView.stage_3.find(
-                      (item) =>
-                        item.type === "rec" && parseInt(item.rec_id) === parseInt(it.rec_id),
-                    )
-                  ) {
-                    for (let key in it) {
-                      it[key] = { key: it[key], color: "del" };
-                    }
-                    return it;
-                  }
-                } else {
-                  if (
-                    !itemView.stage_3.find(
-                      (item) => item.type === "pf" && parseInt(item.pf_id) === parseInt(it.pf_id),
-                    )
-                  ) {
-                    for (let key in it) {
-                      it[key] = { key: it[key], color: "del" };
-                    }
-                    return it;
-                  }
-                }
-              }),
-            );
-        }
-
-        if (key === "items") {
-          itemView.items = itemView.items
-            .reduce((newList, it) => {
-              const item_old = itemView_old.items.find(
-                (item) => parseInt(item.item_id) === parseInt(it.item_id),
-              );
-
-              if (item_old) {
-                for (let key in it) {
-                  if (it[key] !== item_old[key]) {
-                    it[key] = { key: it[key], color: "true" };
-                  }
-                }
-              } else {
-                for (let key in it) {
-                  it[key] = { key: it[key], color: "true" };
-                }
-              }
-
-              return (newList = [...newList, ...[it]]);
-            }, [])
-            .concat(
-              itemView_old.items.filter((it) => {
-                if (
-                  !itemView.items.find((item) => parseInt(item.item_id) === parseInt(it.item_id))
-                ) {
-                  for (let key in it) {
-                    it[key] = { key: it[key], color: "del" };
-                  }
-                  return it;
-                }
-              }),
-            );
-        }
-      }
-    }
-
-    this.setState({
-      modalDialogView: true,
-      itemView,
-    });
   }
 
   render() {
@@ -4257,6 +2346,7 @@ class SiteItems_ extends React.Component {
           item={this.state.itemTech}
           method={this.state.method}
           category={this.state.category}
+          categoryLegacy={this.state.categoryLegacy}
           save={this.saveTech.bind(this)}
           getData={this.getData.bind(this)}
           update={this.update.bind(this)}
@@ -4267,13 +2357,14 @@ class SiteItems_ extends React.Component {
           items_stage={this.state.items_stage}
           stages={this.state.stages}
         />
-        <SiteItems_Modal_History
+        <SiteItemsHistoryModal
           open={this.state.modalDialogHist}
           onClose={() => this.setState({ modalDialogHist: false, itemHist: null })}
-          item={this.state.itemHist}
-          method={this.state.method}
+          snapshots={this.state.itemHist}
+          tagsAll={this.state.tags}
           fullScreen={this.state.fullScreen}
           itemName={this.state.itemName}
+          access={this.state.acces}
         />
         <Dialog
           sx={{
@@ -4312,15 +2403,16 @@ class SiteItems_ extends React.Component {
         >
           <Box
             sx={{
-              bgcolor: blockBackground,
+              bgcolor: "#fff",
+              border: { lg: `1px solid ${blockBorder}` },
               borderRadius: { xs: 0, lg: 3 },
               mx: { xs: -3, lg: 0 },
               px: { xs: 1.5, lg: 2.5 },
-              py: { xs: 2, lg: 2.5 },
-              mb: 2.5,
+              py: { xs: 2, lg: 2.25 },
+              mb: 2,
             }}
           >
-            <Stack spacing={2.5}>
+            <Stack spacing={2}>
               <Box
                 sx={{
                   display: "flex",
@@ -4330,31 +2422,32 @@ class SiteItems_ extends React.Component {
                   gap: 2,
                 }}
               >
-                <Box>
-                  <Typography
-                    component="h1"
-                    sx={{
-                      fontSize: { xs: 28, lg: 36 },
-                      lineHeight: { xs: "32px", lg: "40px" },
-                      fontWeight: 400,
-                      color: textPrimary,
-                    }}
-                  >
-                    {this.state.module_name}
-                  </Typography>
-                </Box>
+                <Typography
+                  component="h1"
+                  sx={{
+                    fontSize: { xs: 26, lg: 30 },
+                    lineHeight: { xs: "32px", lg: "36px" },
+                    fontWeight: 600,
+                    color: textPrimary,
+                  }}
+                >
+                  {this.state.module_name}
+                </Typography>
 
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1.5}
                   useFlexGap
-                  flexWrap="wrap"
-                  sx={{ width: { xs: "100%", lg: "auto" } }}
+                  sx={{
+                    flexWrap: "wrap",
+                    width: { xs: "100%", lg: "auto" },
+                  }}
                 >
-                  {this.state.acces?.reload_vk_access ? (
+                  {hasAccessValue(this.state.acces?.new_item_access) ? (
                     <Button
-                      onClick={() => this.setState({ confirmDialog: true })}
+                      onClick={this.openItemNew.bind(this, "Новое блюдо")}
                       variant="contained"
+                      startIcon={<AddIcon />}
                       sx={{
                         minHeight: 40,
                         px: 2,
@@ -4362,9 +2455,9 @@ class SiteItems_ extends React.Component {
                         backgroundColor: brandRed,
                         color: "#fff",
                         textTransform: "none",
-                        fontSize: 16,
+                        fontSize: 14,
                         lineHeight: "20px",
-                        fontWeight: 400,
+                        fontWeight: 600,
                         boxShadow: "none",
                         "&:hover": {
                           backgroundColor: brandRed,
@@ -4372,25 +2465,27 @@ class SiteItems_ extends React.Component {
                         },
                       }}
                     >
-                      Обновить товары VK
+                      Новый товар
                     </Button>
                   ) : null}
 
-                  {this.state.acces?.new_item_access ? (
-                    <OutlineActionButton
-                      onClick={this.openItemNew.bind(this, "Новое блюдо")}
-                      sx={{ width: { xs: "100%", sm: "auto" } }}
-                    >
-                      Новый товар
-                    </OutlineActionButton>
-                  ) : null}
-
-                  {this.state.acces?.change_tag_access ? (
+                  {hasAccessValue(this.state.acces?.change_tag_access) ? (
                     <OutlineActionButton
                       onClick={() => this.setState({ modalEditTags: true })}
                       sx={{ width: { xs: "100%", sm: "auto" } }}
                     >
-                      Редактировать тэги
+                      <LocalOfferOutlinedIcon sx={{ mr: 1, fontSize: 18 }} />
+                      Редактировать теги
+                    </OutlineActionButton>
+                  ) : null}
+
+                  {hasAccessValue(this.state.acces?.reload_vk_access) ? (
+                    <OutlineActionButton
+                      onClick={() => this.setState({ confirmDialog: true })}
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                    >
+                      <SyncIcon sx={{ mr: 1, fontSize: 18 }} />
+                      Обновить товары VK
                     </OutlineActionButton>
                   ) : null}
                 </Stack>
@@ -4407,56 +2502,317 @@ class SiteItems_ extends React.Component {
               py: { xs: 2, lg: 2.5 },
             }}
           >
-            <Box sx={{ mb: 2.5 }}>
-              <Typography
-                sx={{
-                  fontSize: 20,
-                  lineHeight: "24px",
-                  fontWeight: 400,
-                  color: textPrimary,
-                }}
-              >
-                Категории
-              </Typography>
-            </Box>
+            {(() => {
+              const displayCats = this.state.displayCats;
+              const counts = this.state.listCounts;
+              const isArchive = this.state.listTab === "archive";
+              const visibleItems = displayCats.reduce(
+                (sum, cat) => sum + (cat.items?.length || 0),
+                0,
+              );
+              const searchValue = this.state.searchItem || "";
 
-            {this.state.cats.length == 0 ? (
-              <Box
-                sx={{
-                  borderRadius: 2.5,
-                  border: `1px solid ${blockBorder}`,
-                  backgroundColor: "#fff",
-                  px: 2,
-                  py: 4,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 16,
-                    lineHeight: "20px",
-                    color: textSecondary,
-                  }}
-                >
-                  Категории пока не загружены.
-                </Typography>
-              </Box>
-            ) : (
-              <SiteItems_Table
-                user_app={this.state.user_app}
-                cats={this.state.cats}
-                timeUpdate={this.state.timeUpdate}
-                changeSort={this.changeSort.bind(this)}
-                saveSort={this.saveSort.bind(this)}
-                changeTableCheck={this.changeTableCheck.bind(this)}
-                acces={this.state.acces}
-                openItem={this.openItemTech.bind(this)}
-                openHistoryItem={
-                  this.state.user_app === "technologist"
-                    ? this.openHistoryTech.bind(this)
-                    : this.openHistoryMark.bind(this)
-                }
-              />
-            )}
+              return (
+                <Stack spacing={2}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: { xs: 1.5, lg: 2 },
+                      borderRadius: 2.5,
+                      border: `1px solid ${blockBorder}`,
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Stack spacing={1.75}>
+                      <Stack
+                        direction={{ xs: "column", lg: "row" }}
+                        spacing={1.5}
+                        sx={{
+                          alignItems: { xs: "stretch", lg: "center" },
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: 20,
+                              lineHeight: "24px",
+                              fontWeight: 500,
+                              color: textPrimary,
+                            }}
+                          >
+                            {isArchive ? "Архив товаров" : "Каталог товаров"}
+                          </Typography>
+                          <Typography
+                            sx={{
+                              mt: 0.5,
+                              fontSize: 14,
+                              lineHeight: "18px",
+                              color: textSecondary,
+                            }}
+                          >
+                            {this.state.cats.length === 0
+                              ? "Загрузите данные, чтобы начать работу"
+                              : isArchive
+                                ? "Позиции с выключенной активностью"
+                                : "Активные позиции, сгруппированные по категориям"}
+                          </Typography>
+                        </Box>
+
+                        <TextField
+                          size="small"
+                          placeholder="Поиск по названию"
+                          value={searchValue}
+                          onChange={(event) => {
+                            const searchItem = event.target.value;
+                            this.setState((state) => ({
+                              searchItem,
+                              ...this.buildListView(state.cats, state.listTab, searchItem),
+                            }));
+                          }}
+                          sx={{
+                            width: { xs: "100%", lg: 320 },
+                            backgroundColor: "#fff",
+                            borderRadius: 1.5,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 1.5,
+                            },
+                          }}
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
+                                </InputAdornment>
+                              ),
+                              endAdornment: searchValue ? (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    size="small"
+                                    aria-label="Очистить поиск"
+                                    onClick={() =>
+                                      this.setState((state) => ({
+                                        searchItem: "",
+                                        ...this.buildListView(state.cats, state.listTab, ""),
+                                      }))
+                                    }
+                                    edge="end"
+                                  >
+                                    <CloseIcon sx={{ fontSize: 18 }} />
+                                  </IconButton>
+                                </InputAdornment>
+                              ) : null,
+                            },
+                          }}
+                        />
+                      </Stack>
+
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={1.5}
+                        sx={{
+                          alignItems: { xs: "stretch", md: "center" },
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            p: 0.5,
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                            border: `1px solid ${blockBorder}`,
+                            width: { xs: "100%", md: "auto" },
+                          }}
+                        >
+                          {[
+                            {
+                              value: "active",
+                              label: "Активные",
+                              count: counts.activeItems,
+                            },
+                            {
+                              value: "archive",
+                              label: "Архив",
+                              count: counts.archiveItems,
+                            },
+                          ].map((tab) => {
+                            const selected = this.state.listTab === tab.value;
+
+                            return (
+                              <Button
+                                key={tab.value}
+                                onClick={() =>
+                                  this.setState((state) => ({
+                                    listTab: tab.value,
+                                    ...this.buildListView(state.cats, tab.value, state.searchItem),
+                                  }))
+                                }
+                                sx={{
+                                  flex: { xs: 1, md: "none" },
+                                  minHeight: 36,
+                                  px: 1.75,
+                                  borderRadius: 1.5,
+                                  textTransform: "none",
+                                  fontSize: 14,
+                                  fontWeight: selected ? 600 : 400,
+                                  color: selected ? "#fff" : textSecondary,
+                                  backgroundColor: selected ? brandRed : "transparent",
+                                  boxShadow: "none",
+                                  "&:hover": {
+                                    backgroundColor: selected ? brandRed : blockBackground,
+                                    boxShadow: "none",
+                                  },
+                                }}
+                              >
+                                {tab.label}
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    ml: 1,
+                                    minWidth: 22,
+                                    height: 20,
+                                    px: 0.75,
+                                    borderRadius: 999,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    backgroundColor: selected
+                                      ? "rgba(255,255,255,0.2)"
+                                      : blockBackground,
+                                    color: selected ? "#fff" : textSecondary,
+                                  }}
+                                >
+                                  {tab.count}
+                                </Box>
+                              </Button>
+                            );
+                          })}
+                        </Box>
+
+                        {this.state.cats.length > 0 ? (
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              lineHeight: "18px",
+                              color: textSecondary,
+                              textAlign: { xs: "left", md: "right" },
+                            }}
+                          >
+                            Показано {displayCats.length}{" "}
+                            {displayCats.length === 1 ? "категория" : "категорий"}
+                            {" · "}
+                            {visibleItems} {visibleItems === 1 ? "товар" : "товаров"}
+                            {searchValue.trim() ? ` по запросу «${searchValue.trim()}»` : ""}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                  {this.state.cats.length == 0 ? (
+                    <Box
+                      sx={{
+                        borderRadius: 2.5,
+                        border: `1px solid ${blockBorder}`,
+                        backgroundColor: "#fff",
+                        px: 2,
+                        py: 4,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          lineHeight: "20px",
+                          color: textSecondary,
+                        }}
+                      >
+                        Категории пока не загружены.
+                      </Typography>
+                    </Box>
+                  ) : displayCats.length === 0 ? (
+                    <Box
+                      sx={{
+                        borderRadius: 2.5,
+                        border: `1px dashed ${blockBorder}`,
+                        backgroundColor: "#fff",
+                        px: 2,
+                        py: 5,
+                        textAlign: "center",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 16,
+                          lineHeight: "22px",
+                          fontWeight: 500,
+                          color: textPrimary,
+                        }}
+                      >
+                        {isArchive
+                          ? "В архиве пока нет товаров"
+                          : searchValue.trim()
+                            ? "Ничего не найдено"
+                            : "Нет активных товаров"}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          mt: 0.75,
+                          fontSize: 14,
+                          lineHeight: "20px",
+                          color: textSecondary,
+                        }}
+                      >
+                        {searchValue.trim()
+                          ? "Попробуйте изменить запрос или сбросить поиск."
+                          : isArchive
+                            ? "Сюда попадают позиции с выключенной активностью."
+                            : "Активные позиции появятся здесь после включения активности."}
+                      </Typography>
+                      {searchValue.trim() ? (
+                        <Button
+                          onClick={() =>
+                            this.setState((state) => ({
+                              searchItem: "",
+                              ...this.buildListView(state.cats, state.listTab, ""),
+                            }))
+                          }
+                          sx={{
+                            mt: 2,
+                            minHeight: 36,
+                            px: 2,
+                            borderRadius: 1.5,
+                            border: `1px solid ${blockBorder}`,
+                            color: textPrimary,
+                            textTransform: "none",
+                          }}
+                        >
+                          Сбросить поиск
+                        </Button>
+                      ) : null}
+                    </Box>
+                  ) : (
+                    <SiteItems_Table
+                      listTab={this.state.listTab}
+                      user_app={this.state.user_app}
+                      cats={displayCats}
+                      timeUpdate={this.state.timeUpdate}
+                      changeSort={this.changeSort}
+                      saveSort={this.saveSort}
+                      changeTableCheck={this.changeTableCheck}
+                      acces={this.state.acces}
+                      openItem={this.openItemTech}
+                      openHistoryItem={
+                        this.state.user_app === "technologist"
+                          ? this.openHistoryTech
+                          : this.openHistoryMark
+                      }
+                    />
+                  )}
+                </Stack>
+              );
+            })()}
           </Box>
         </Box>
       </>

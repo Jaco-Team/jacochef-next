@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import dayjs from "dayjs";
@@ -100,8 +100,10 @@ const DetailModal = ({ open, onClose, data }) => {
         <Box sx={{ mb: 2 }}>
           <Typography
             variant="body2"
-            color="text.secondary"
             gutterBottom
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {data.type === "hour" ? "Почасовые данные" : "Итоговые данные"}
           </Typography>
@@ -111,7 +113,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Время:
                 </Typography>
@@ -125,7 +129,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Показатель:
                 </Typography>
@@ -139,7 +145,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Текущий период:
                 </Typography>
@@ -172,7 +180,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Прошлый период:
                 </Typography>
@@ -205,7 +215,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Изменение:
                 </Typography>
@@ -227,7 +239,9 @@ const DetailModal = ({ open, onClose, data }) => {
                 <Box sx={{ mb: 1.5 }}>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Дата:
                   </Typography>
@@ -242,7 +256,9 @@ const DetailModal = ({ open, onClose, data }) => {
                 <Box sx={{ mb: 1.5 }}>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Даты:
                   </Typography>
@@ -257,7 +273,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Показатель:
                 </Typography>
@@ -271,7 +289,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Итого за день:
                 </Typography>
@@ -285,7 +305,9 @@ const DetailModal = ({ open, onClose, data }) => {
               <Box sx={{ mb: 1.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   Изменение:
                 </Typography>
@@ -857,7 +879,6 @@ function OrdersPage() {
           method: "exportExcel",
           module: "orders_by_hour",
           version: 2,
-          login: localStorage.getItem("token"),
           data: {
             differences: tableData,
             date_start:
@@ -870,7 +891,11 @@ function OrdersPage() {
                 : dayjs(dateEnd).format("YYYY-MM-DD"),
           },
         }),
-        { responseType: "blob", headers: { "Content-Type": "application/json" } },
+        {
+          ...credentialsConfig,
+          responseType: "blob",
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        },
       );
       const blob = response.data;
       const urlBlob = window.URL.createObjectURL(blob);
@@ -913,7 +938,15 @@ function OrdersPage() {
     ]);
   };
 
+  const filtersAreValid =
+    point.length > 0 &&
+    dayjs(dateStart).isValid() &&
+    dayjs(dateEnd).isValid() &&
+    !dayjs(dateEnd).isBefore(dayjs(dateStart), "day");
+
   const getOrders = () => {
+    if (!filtersAreValid) return;
+
     const data = {
       start_date: dayjs(dateStart).format("YYYY-MM-DD"),
       end_date: dayjs(dateEnd).format("YYYY-MM-DD"),
@@ -1007,14 +1040,14 @@ function OrdersPage() {
                 <MyDatePickerNew
                   label="Дата от"
                   value={dateStart}
-                  func={(e) => setDateStart(formatDate(e))}
+                  func={(e) => setDateStart(e && dayjs(e).isValid() ? formatDate(e) : null)}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
                 <MyDatePickerNew
                   label="Дата до"
                   value={dateEnd}
-                  func={(e) => setDateEnd(formatDate(e))}
+                  func={(e) => setDateEnd(e && dayjs(e).isValid() ? formatDate(e) : null)}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -1046,6 +1079,7 @@ function OrdersPage() {
                   onClick={() => getOrders()}
                   variant="contained"
                   fullWidth
+                  disabled={!filtersAreValid || isLoad}
                 >
                   Обновить
                 </Button>
@@ -1068,7 +1102,6 @@ function OrdersPage() {
           )}
         </Grid>
       </Grid>
-
       <Paper
         style={{
           display: tab === 0 ? "block" : "none",
@@ -1158,7 +1191,6 @@ function OrdersPage() {
           </Grid>
         </Grid>
       </Paper>
-
       <Paper
         style={{
           display: tab === 1 ? "block" : "none",
@@ -1200,9 +1232,11 @@ function OrdersPage() {
                   type="number"
                   value={setting.percent}
                   onChange={(e) => handlePercentChange(setting.id, parseInt(e.target.value) || 0)}
-                  InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
                   size="small"
                   sx={{ width: "120px", "& .MuiOutlinedInput-root": { borderRadius: 1 } }}
+                  slotProps={{
+                    input: { endAdornment: <InputAdornment position="end">%</InputAdornment> },
+                  }}
                 />
                 <Box sx={{ flex: 1 }} />
                 <IconButton

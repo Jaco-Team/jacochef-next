@@ -1,0 +1,1785 @@
+# API
+
+Целевой runtime contract модуля `sklad_items`.
+
+Базовый prefix:
+
+- `/api/sklad_items`
+
+Общий transport:
+
+- входной payload передается через `data`
+- success: `{"st": true, ...}`
+- error: `{"st": false, "text": "..."}`
+
+Общие правила:
+
+- документ описывает только текущее live-состояние
+- legacy route names и migration notes сюда не входят
+- `get_all.access` возвращается как compact FE access contract из фиксированного набора ключей в `ACCESS.md`
+- `get_all.access` может содержать ключи со значением `0`; отсутствие permission не означает отсутствие ключа
+- field-level contract использует scoped runtime-ключи `production_<field>_view/edit` и `site_items_<field>_view/edit`
+- backend временно возвращает legacy aliases для старого редактора товаров сайта; новый production UI не должен читать unscoped `name/date_start/date_end/items`
+- недоступные для просмотра поля сохраняют ключ в payload, но получают `null` или пустую коллекцию; это же правило действует для history snapshots и compare
+- запрещённые для редактирования поля backend игнорирует даже при прямом API-запросе; при замене будущей версии база снимка определяется её `revision_key`
+- для `recipe`, `semi_finished`, `site_item` archive реализован через toggle `is_show` + history snapshot
+- для `warehouse_item`, `unit`, `category` archive не поддержан
+- `history/*` работает по canonical snapshot, а не по raw legacy row
+
+Calculated allergen inference rules:
+
+- possible markers apply only to the matching alias that follows the marker within the same local text window
+- negated phrases such as `без ...` and `не содержит ...` are excluded
+- short aliases are matched as standalone words to avoid false positives inside longer words
+- when the same allergen is found as both definite and possible, the definite result takes precedence
+
+Общий detail history contract:
+
+- в detail-эндпоинтах используется block `history`
+- для `recipe`, `semi_finished`, `site_item` это full detailed timeline:
+  - каждая row уже содержит expanded `snapshot`
+  - отдельный `history/get_one` для FE detail-screen не нужен
+- для `warehouse_item` history остается lightweight list slice
+- canonical `history/*` остается для cross-screen history tools и compare
+
+Detailed `history` shape:
+
+```json
+{
+  "rows": [
+    {
+      "entity_type": "site_item",
+      "entity_id": 1,
+      "history_id": 100,
+      "revision_key": "100",
+      "revision_label": "2026-07-24",
+      "changed_at": "2026-07-24 10:00:00",
+      "changed_by": "User Name",
+      "source": "jaco_site_rolls.items_hist_new",
+      "snapshot": {},
+      "compare_capability": {
+        "supported": true,
+        "reason": null
+      }
+    }
+  ],
+  "capabilities": {
+    "list": true,
+    "get_one": true,
+    "compare": {
+      "supported": true,
+      "reason": null
+    }
+  },
+  "meta": {
+    "entity_type": "site_item",
+    "entity_id": 1,
+    "history_meta": {}
+  }
+}
+```
+
+History rules:
+
+- `revision_key` equals stringified `history_id`
+- `changed_at` comes from historical `date_start`/legacy revision start timestamp
+- `recipe`, `semi_finished`, `site_item` rows include both list-meta and full revision `snapshot`
+- `warehouse_item` rows stay lightweight and do not include full `snapshot`
+- entity-specific rows can contain extra summary fields beyond the base meta fields above
+
+Common delete usage shape:
+
+```json
+{
+  "can_delete": false,
+  "active_relations": [
+    {
+      "source": "jaco_site_rolls.items_rec_new",
+      "count": 3
+    }
+  ],
+  "history_relations": []
+}
+```
+
+## 1. Module Open
+
+### `POST|ANY /api/sklad_items/get_all`
+
+Назначение:
+
+- открыть модуль
+- вернуть access map
+- вернуть summary/capabilities
+- вернуть shared refs для shell
+
+Request:
+
+```json
+{
+  "data": {
+    "archive_mode": "active"
+  }
+}
+```
+
+Response shape:
+
+```json
+{
+  "st": true,
+  "module_info": {},
+  "access": {
+    "production_view": 1,
+    "production_edit": 1,
+    "production_create": 1,
+    "production_delete": 1,
+    "production_past_date": 0,
+    "site_items_view": 1,
+    "site_items_edit": 1,
+    "site_items_create": 1,
+    "site_items_delete": 1,
+    "site_items_past_date": 0,
+    "units_view": 1,
+    "units_edit": 1,
+    "units_create": 1,
+    "units_delete": 0,
+    "archive_view": 1,
+    "archive_edit": 0,
+    "history_view": 1
+  },
+  "summary": {
+    "recipes_active": 0,
+    "semi_finished_active": 0,
+    "site_items_active": 0,
+    "archive_total": 0
+  },
+  "units": [],
+  "categories": [],
+  "allergens": [],
+  "storages": [],
+  "apps": [],
+  "tags": [],
+  "accounting_systems": [],
+  "sections": [],
+  "capabilities": {
+    "archive": {
+      "supported_entity_types": ["recipe", "semi_finished", "site_item"],
+      "entities": {}
+    }
+  },
+  "business_meta": {
+    "composition_chain": ["item", "semi_finished", "recipe", "site_item"],
+    "site_item_allergens_mode": "derived_from_composition",
+    "site_item_kkal_mode": "derived_from_bju"
+  }
+}
+```
+
+Примечания:
+
+- `sections` содержит только реально опубликованные разделы
+- FE должен фильтровать вкладки через compact `access`: раздел доступен, если соответствующий `*_view` или `*_edit` равен `1`
+- `production_create`, `production_delete`, `site_items_create`, `site_items_delete`, `units_create` и `units_delete` управляют action controls, а не видимостью вкладки
+- `capabilities.archive.entities` нужен для FE pre-check supported/unsupported archive actions
+
+## 2. Units
+
+### `POST|ANY /api/sklad_items/units/list`
+
+Response:
+
+```json
+{
+  "st": true,
+  "list": []
+}
+```
+
+Row fields:
+
+- `id`
+- `name`
+- `can_delete`
+- `delete_usage`
+
+`delete_usage.active_relations` shape for units:
+
+- `source`
+- `label`
+- `count`
+- `items`
+  - `id`
+  - `name`
+  - `entity_type`
+
+Notes:
+
+- `items` is returned for active unit blockers in both `units/list` and `units/get_one`
+- `items` is a compact preview, capped on backend side
+- active warehouse-item usage includes both `jaco_main_rolls.items` (managed by `sklad_items_module_new`) and `jaco_main_rolls.items_new`
+- historical warehouse-item usage includes both `jaco_main_rolls.items_hist` and `jaco_main_rolls.items_hist_new`
+- `history_relations` remains count-only
+
+### `POST|ANY /api/sklad_items/units/get_one`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 1
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "entity": {
+    "id": 1,
+    "name": ""
+  }
+}
+```
+
+### `POST|ANY /api/sklad_items/units/options`
+
+Response:
+
+```json
+{
+  "st": true,
+  "list": []
+}
+```
+
+### `POST|ANY /api/sklad_items/units/save_new`
+
+### `POST|ANY /api/sklad_items/units/save_edit`
+
+Request fields:
+
+- `name`
+- `id` for `save_edit`
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 1
+}
+```
+
+### `POST|ANY /api/sklad_items/units/delete`
+
+Success:
+
+```json
+{
+  "st": true,
+  "text": "Успешное удаление",
+  "usage": {
+    "can_delete": true,
+    "active_relations": [],
+    "history_relations": []
+  }
+}
+```
+
+Blocked:
+
+```json
+{
+  "st": false,
+  "text": "Позиция используется или использовалась ранее, удаление запрещено",
+  "usage": {
+    "can_delete": false,
+    "active_relations": [
+      {
+        "source": "recipes_new",
+        "label": "Рецепты",
+        "count": 20,
+        "items": [
+          {
+            "id": 10,
+            "name": "Соус спайси",
+            "entity_type": "recipe"
+          }
+        ]
+      }
+    ],
+    "history_relations": []
+  }
+}
+```
+
+Usage notes:
+
+- `active_relations[].items` is returned only for unit live blockers
+- it is a compact preview list for FE confirmation/warning rendering
+- `history_relations` stays count-only
+
+## 3. Categories
+
+### `POST|ANY /api/sklad_items/categories/list`
+
+Request:
+
+```json
+{
+  "data": {
+    "source_type": "warehouse_item"
+  }
+}
+```
+
+Supported `source_type`:
+
+- `warehouse_item`
+- `semi_finished`
+
+Response:
+
+```json
+{
+  "st": true,
+  "list": []
+}
+```
+
+Row fields:
+
+- `id`
+- `name`
+- `parent_id`
+- `source_type`
+- `usage_counts`
+- `can_delete`
+- `delete_usage`
+
+Category option counts:
+
+- bootstrap `categories`, production detail `categories`, and site-item `categories`/`cat_list` are backend-calculated reference lists
+- every category option includes `items_count`, counting active/current entities assigned to that category
+- production options additionally include `recipes_count` and `semi_finished_count`; `items_count` is their sum
+- site-item options additionally include `parent_id`, `parent_name`, `is_leaf`, and `source_type=site_item`; `items_count` counts active rows in `jaco_site_rolls.items_new`
+- site-item options contain leaf categories only, because only leaf categories are assignable to `items_new`
+- FE must render these values and must not recalculate them from entity lists or CSV fields
+
+### `POST|ANY /api/sklad_items/site-items/categories/list`
+
+Returns the complete site-item category tree for category administration and parent selection.
+
+The response is `{"st": true, "list": []}`. Each row contains `id`, `category_key`, `name`, `source_type=site_item`, `items_count`, `parent_id`, `parent_name`, and `is_leaf`.
+
+This endpoint includes both parent and leaf categories. `items_count` is the direct count of active site items assigned to that exact category; it does not include descendant categories. Creating a category requires `site_items_create`.
+
+### `POST|ANY /api/sklad_items/categories/get_one`
+
+Request fields:
+
+- `id`
+- `source_type`
+
+### `POST|ANY /api/sklad_items/categories/save_new`
+
+### `POST|ANY /api/sklad_items/categories/save_edit`
+
+Production-category contract:
+
+- `source_type` must be `semi_finished`
+- `name` is required
+- `parent_id` is not used; this category space is flat
+- `recipe` and `semi_finished` entities share this category space
+- the action requires `production_create`
+
+Request:
+
+```json
+{
+  "data": {
+    "source_type": "semi_finished",
+    "name": "Соусы"
+  }
+}
+```
+
+`save_edit` additionally requires `id` and `production_edit` for `semi_finished`. The existing `warehouse_item` source remains supported by this endpoint and requires `parent_id`.
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 3,
+  "item": {
+    "id": 3,
+    "category_key": "semi_finished:3",
+    "name": "Соусы",
+    "source_type": "semi_finished",
+    "parent_id": null,
+    "parent_name": null
+  }
+}
+```
+
+### `POST|ANY /api/sklad_items/site-items/categories/save_new`
+
+Creates a category in the independent site-item category tree stored in `jaco_site_rolls.category_new`.
+
+Request:
+
+```json
+{
+  "data": {
+    "name": "Поке",
+    "parent_id": 0
+  }
+}
+```
+
+Rules:
+
+- the action requires `site_items_create`
+- `name` is required and limited to 255 characters
+- `parent_id` defaults to `0` and creates a root category
+- a positive `parent_id` must reference an existing site category
+- the same name is not allowed under the same parent
+- site categories may be nested; only leaf categories are returned as selectable site-item category options
+- this endpoint does not create or modify production categories
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 23,
+  "item": {
+    "id": 23,
+    "category_key": "site_item:23",
+    "name": "Поке",
+    "source_type": "site_item",
+    "parent_id": 0,
+    "parent_name": null,
+    "sort": 14,
+    "sort_app": 14,
+    "is_show": 1,
+    "is_leaf": true,
+    "items_count": 0
+  }
+}
+```
+
+The endpoint clears Sklad reference caches after a successful insert. The response uses a source-qualified `category_key`; numeric IDs must not be shared with `semi_finished` categories.
+
+### `POST|ANY /api/sklad_items/categories/archive`
+
+Всегда unsupported.
+
+Response:
+
+```json
+{
+  "st": false,
+  "text": "",
+  "feature": "sklad.categories.archive",
+  "status": "unsupported",
+  "entity_type": "category",
+  "source_type": "semi_finished",
+  "supported": false,
+  "reason": ""
+}
+```
+
+### `POST|ANY /api/sklad_items/categories/delete`
+
+Формат success/blocked такой же, как у `units/delete`.
+
+## 4. Warehouse Items
+
+Scope:
+
+- в `sklad_items` опубликован только read/open contour
+- write/delete/archive для warehouse items в этом модуле не опубликованы
+
+### `POST|ANY /api/sklad_items/items/list`
+
+Response:
+
+```json
+{
+  "st": true,
+  "categories": [],
+  "apps": [],
+  "accounting_systems": [],
+  "list": []
+}
+```
+
+### `POST|ANY /api/sklad_items/items/get_all_for_new`
+
+Response:
+
+```json
+{
+  "st": true,
+  "item": {},
+  "categories": [],
+  "apps": [],
+  "accounting_systems": [],
+  "units": []
+}
+```
+
+### `POST|ANY /api/sklad_items/items/get_one`
+
+Response:
+
+```json
+{
+  "st": true,
+  "item": {},
+  "history": {
+    "rows": [],
+    "capabilities": {
+      "list": true,
+      "get_one": true,
+      "compare": {
+        "supported": true,
+        "reason": null
+      }
+    },
+    "meta": {
+      "entity_type": "item",
+      "entity_id": 1,
+      "history_meta": {}
+    }
+  },
+  "categories": [],
+  "apps": [],
+  "accounting_systems": [],
+  "units": []
+}
+```
+
+Warehouse item detail rules:
+
+- `item` fields:
+  - `id`
+  - `name`
+  - `name_for_vendor`
+  - `mark_name`
+  - `category_id`
+  - `ed_izmer_id`
+  - `app_id`
+  - `pq`
+  - `percent`
+  - `vend_percent`
+  - `art`
+  - `time_min`
+  - `time_min_other`
+  - `time_dop_min`
+  - `min_count`
+  - `max_count_in_m`
+  - `show_in_order`
+  - `show_in_rev`
+  - `is_show`
+  - `is_archived`
+  - `date_start`
+  - `date_end`
+  - `allergens`
+  - `allergens_possible`
+  - `accounting_systems`
+  - `storages`
+  - `can_delete`
+  - `delete_usage`
+- `history.rows` returns the recent embedded revision list for this item detail
+- warehouse item detail history is lightweight; full revision open/compare still goes through canonical history endpoints
+- `categories`, `units`, `allergens`, `accounting_systems`, `storages`, `apps` are edit references, not a second entity payload
+- `calculated_allergens` is a read-only precaution calculation from the current composition graph; it does not change manual allergen fields
+- `calculated_allergens` contains only two named lists: `allergens` and `possible_allergens`
+
+## 5. Recipes
+
+### `POST|ANY /api/sklad_items/recipes/list`
+
+Request:
+
+```json
+{
+  "data": {
+    "search": "",
+    "category_id": null,
+    "archive_mode": "active"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "list": []
+}
+```
+
+List row fields:
+
+- `id`
+- `type = recipe`
+- `name`
+- `categories`
+- `ed_izmer_id`
+- `ed_izmer_name`
+- `date_start`
+- `date_end`
+- `is_active`
+- `is_archived`
+- `show_in_rev`
+- `delete_state`
+- `delete_usage`
+
+### `POST|ANY /api/sklad_items/recipes/get_one`
+
+Response shape:
+
+```json
+{
+  "st": true,
+  "entity": {
+    "id": 1,
+    "type": "recipe",
+    "name": "",
+    "shelf_life": "",
+    "date_start": "",
+    "date_end": null,
+    "ed_izmer_id": null,
+    "unit_name": null,
+    "all_w": 0,
+    "all_w_brutto": 0,
+    "all_w_netto": 0,
+    "time_min": "",
+    "time_min_dop": "",
+    "show_in_rev": 0,
+    "two_user": 0,
+    "allergens": [],
+    "allergens_possible": [],
+    "allergens_derived": [],
+    "allergens_possible_derived": [],
+    "categories": [],
+    "structure": "",
+    "contents": "",
+    "text_contents": "",
+    "storages": [],
+    "apps": [],
+    "items": [],
+    "composition": [],
+    "is_active": 1,
+    "is_archived": 0,
+    "can_delete": false,
+    "delete_usage": {
+      "can_delete": false,
+      "active_relations": [],
+      "history_relations": []
+    }
+  },
+  "history": {
+    "rows": [],
+    "capabilities": {
+      "list": true,
+      "get_one": true,
+      "compare": {
+        "supported": true,
+        "reason": null
+      }
+    },
+    "meta": {
+      "entity_type": "recipe",
+      "entity_id": 1,
+      "history_meta": {}
+    }
+  },
+  "allergens": [],
+  "categories": [],
+  "units": [],
+  "all_storages": [],
+  "all_items_list": [],
+  "apps": [],
+  "composition": []
+}
+```
+
+Composition row fields:
+
+- `id`
+- `name`
+- `item_id` as primitive numeric id
+- `item_ref`
+- `type_rec`
+- `type`
+- `id_name`
+- `un_id`
+- `brutto`
+
+Production detail rules:
+
+- `calculated_allergens` is returned at the top level for the current recipe.
+- `calculated_allergens.allergens` and `calculated_allergens.possible_allergens` are the only returned fields and contain named `{id,name}` arrays for visual display.
+- The block is read-only and does not replace or update manual `allergens` fields.
+- PF components are traversed through current PF ingredients, manual PF declarations, and stored PF allergen links.
+- `pr_1`
+- `netto`
+- `pr_2`
+- `res`
+- `ei_name`
+- `unit_name`
+
+Recipe detail rules:
+
+- top-level response shape:
+  - `entity`
+  - `history`
+  - `allergens`
+  - `categories`
+  - `units`
+  - `all_storages`
+  - `all_items_list`
+  - `apps`
+  - `composition`
+- `entity` fields:
+  - `id`
+  - `type = recipe`
+  - `name`
+  - `shelf_life`
+  - `date_start`
+  - `date_end`
+  - `ed_izmer_id`
+  - `unit_name`
+  - `all_w`
+  - `all_w_brutto`
+  - `all_w_netto`
+  - `time_min`
+  - `time_min_dop`
+  - `show_in_rev`
+  - `two_user`
+  - `allergens`
+  - `allergens_possible`
+  - `allergens_derived`
+  - `allergens_possible_derived`
+  - `categories`
+  - `structure`
+  - `contents`
+  - `text_contents`
+  - `storages`
+  - `apps`
+  - `items`
+  - `composition`
+  - `is_active`
+  - `is_archived`
+  - `can_delete`
+  - `delete_usage`
+- `entity.items` and root `composition` publish the same composition rows
+- `history.rows` returns full detailed history rows for this recipe detail
+- every `history.rows[]` already includes expanded `snapshot`
+- `history.rows[].snapshot` for recipe includes:
+  - `unit_name`
+  - `contents`
+  - `text_contents`
+  - `composition`
+- `contents` and `text_contents` are aliases of `structure`
+- typed keys are preserved as `{id}-item`, `{id}-pf`, `{id}-rec`
+- visibility filtering matches legacy `recept_module_new_2`
+- `pf` rows are shown only for active `polufabricat_new.is_show = 1`
+- `item` rows are shown only for active `items_new.is_show = 1`
+- `rec` rows stay visible without extra `is_show` filter
+
+### `POST|ANY /api/sklad_items/recipes/save_new`
+
+### `POST|ANY /api/sklad_items/recipes/save_edit`
+
+Request fields:
+
+- `id` for `save_edit`
+- `name`
+- `shelf_life`
+- `date_start`
+- `date_end`
+- `ed_izmer_id`
+- `all_w`
+- `all_w_brutto`
+- `all_w_netto`
+- `time_min`
+- `time_min_dop`
+- `show_in_rev`
+- `two_user`
+- `allergens`
+- `allergens_possible`
+- `categories`
+- `structure`
+- `storages`
+- `apps`
+- `items`
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "history_id": 100
+}
+```
+
+Write rules:
+
+- `save_new` and `save_edit` accept canonical payload only
+- `save_edit` writes current row immediately only when `date_start <= today`
+- future-dated edit writes a new history revision without immediate current-row replacement
+
+### `POST|ANY /api/sklad_items/recipes/save_flag`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 10,
+    "type": "show_in_rev",
+    "value": 1
+  }
+}
+```
+
+Supported flags:
+
+- `show_in_rev`
+- `is_show`
+- `two_user`
+
+### `POST|ANY /api/sklad_items/recipes/archive`
+
+Thin alias over `entities/archive` with `entity_type = recipe`.
+
+### `POST|ANY /api/sklad_items/recipes/delete`
+
+Delete is blocked if recipe participates in:
+
+- `items_rec_new`
+- `items_rec_stages_new`
+- `items_rec_stages_hist_new`
+
+Success/blocked format follows the common delete contract.
+
+## 6. Semi-finished
+
+### `POST|ANY /api/sklad_items/semi-finished/list`
+
+Request shape is the same as `recipes/list`.
+
+List row fields are the same as `recipes/list`, with `type = semi_finished`.
+
+### `POST|ANY /api/sklad_items/semi-finished/get_one`
+
+Response:
+
+```json
+{
+  "st": true,
+  "entity": {
+    "id": 1,
+    "type": "semi_finished",
+    "name": "",
+    "shelf_life": "",
+    "date_start": "",
+    "date_end": null,
+    "ed_izmer_id": null,
+    "unit_name": null,
+    "all_w": 0,
+    "all_w_brutto": 0,
+    "all_w_netto": 0,
+    "time_min": "",
+    "time_min_dop": "",
+    "show_in_rev": 0,
+    "two_user": 0,
+    "allergens": [],
+    "allergens_possible": [],
+    "allergens_derived": [],
+    "allergens_possible_derived": [],
+    "categories": [],
+    "structure": "",
+    "contents": "",
+    "text_contents": "",
+    "storages": [],
+    "apps": [],
+    "items": [],
+    "composition": [],
+    "is_active": 1,
+    "is_archived": 0,
+    "can_delete": false,
+    "delete_usage": {
+      "can_delete": false,
+      "active_relations": [],
+      "history_relations": []
+    }
+  },
+  "history": {
+    "rows": [],
+    "capabilities": {
+      "list": true,
+      "get_one": true,
+      "compare": {
+        "supported": true,
+        "reason": null
+      }
+    },
+    "meta": {
+      "entity_type": "semi_finished",
+      "entity_id": 1,
+      "history_meta": {}
+    }
+  },
+  "allergens": [],
+  "categories": [],
+  "units": [],
+  "all_storages": [],
+  "all_items_list": [],
+  "apps": [],
+  "composition": [],
+  "contents": "",
+  "text_contents": ""
+}
+```
+
+Semi-finished detail rules:
+
+- top-level response shape mirrors `recipes/get_one`, plus root aliases:
+  - `contents`
+  - `text_contents`
+- `entity` fields mirror `recipe`, with:
+  - `type = semi_finished`
+- `entity.items` and root `composition` publish the same composition rows
+- `history.rows` returns full detailed history rows for this semi-finished detail
+- every `history.rows[]` already includes expanded `snapshot`
+- `history.rows[].snapshot` for semi-finished includes:
+  - `unit_name`
+  - `contents`
+  - `text_contents`
+  - `composition`
+- `contents` and `text_contents` are explicit aliases of `structure`
+- composition rows use primitive `item_id`
+- typed keys are preserved as `{id}-item`
+- only active `items_new.is_show = 1` rows are returned
+- orphaned/inactive warehouse-item links are suppressed
+- `calculated_allergens` is returned at the top level with only `allergens` and `possible_allergens` named arrays.
+- It traverses current PF ingredients and also preserves manual/stored PF allergen declarations as precaution evidence.
+- It is read-only and does not update manual allergen fields.
+
+### `POST|ANY /api/sklad_items/semi-finished/save_new`
+
+### `POST|ANY /api/sklad_items/semi-finished/save_edit`
+
+Request and response format mirror `recipes/save_*`.
+
+### `POST|ANY /api/sklad_items/semi-finished/save_flag`
+
+Supported flags:
+
+- `show_in_rev`
+- `is_show`
+- `two_user`
+
+### `POST|ANY /api/sklad_items/semi-finished/archive`
+
+Thin alias over `entities/archive` with `entity_type = semi_finished`.
+
+### `POST|ANY /api/sklad_items/semi-finished/delete`
+
+Delete is blocked if semi-finished participates in:
+
+- `items_pf_new`
+- `items_pf_stages_new`
+- `items_all_pf_new`
+- `recipe_items_new`
+- `order_post_rec`
+- related history-tail usage
+
+## 7. Convert Recipe <-> Semi-finished
+
+### `POST|ANY /api/sklad_items/entities/convert_type`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 10,
+    "from_type": "recipe",
+    "to_type": "semi_finished"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "history_id": 100
+}
+```
+
+Rules:
+
+- supported only for `recipe <-> semi_finished`
+- blocked when current usage makes conversion unsafe
+
+## 8. Site Items
+
+### `POST|ANY /api/sklad_items/site-items/list`
+
+Response:
+
+```json
+{
+  "st": true,
+  "categories": [],
+  "tags": [],
+  "list": []
+}
+```
+
+Site item list rules:
+
+- list is lightweight
+- `archive_mode` filter uses `items_new.is_show`
+- row includes backward-compatible flags:
+  - `is_show`
+  - `show_site`
+  - `show_program`
+  - `is_hit`
+  - `is_new`
+  - `is_price`
+  - `is_updated`
+  - `is_spicy`
+  - `is_active`
+  - `is_archived`
+- row does not include `delete_state` or `delete_usage`
+- nutrition can come from persisted item fields or linked child-item fallback
+- `nutrition_source = persisted|linked_items`
+- row `tags` use `tags_items`, then fallback to legacy CSV `items_new.tags`
+
+### `POST|ANY /api/sklad_items/site-items/get_all_for_new`
+
+Response shape:
+
+```json
+{
+  "st": true,
+  "item": {
+    "id": null,
+    "name": "",
+    "short_name": "",
+    "category_id": null,
+    "weight": "",
+    "protein": "",
+    "fat": "",
+    "carbohydrates": "",
+    "kkal": 0,
+    "kkal_preview": 0,
+    "date_start": "",
+    "date_end": null,
+    "is_archived": 0,
+    "tags": [],
+    "image": null,
+    "marking": {}
+  },
+  "item_items": {
+    "this_items": [],
+    "all_items": []
+  },
+  "items_stage": {
+    "stage_1": [],
+    "stage_2": [],
+    "stage_3": [],
+    "all": []
+  },
+  "composition_source": {
+    "pf": [],
+    "recipes": []
+  },
+  "composition_derived": {
+    "pf_total": []
+  },
+  "cat_list": [],
+  "tags_all": [],
+  "all_pf": [],
+  "all_rec": [],
+  "all_items": []
+}
+```
+
+### `POST|ANY /api/sklad_items/site-items/get_one`
+
+Response shape:
+
+```json
+{
+  "st": true,
+  "item": {},
+  "history": {},
+  "image_history": {},
+  "can_delete": null,
+  "delete_usage": {},
+  "pf_stage_1": [],
+  "pf_stage_2": [],
+  "pf_stage_3": [],
+  "rec_stage_1": [],
+  "rec_stage_2": [],
+  "rec_stage_3": [],
+  "item_items": {
+    "this_items": [],
+    "all_items": []
+  },
+  "items_stage": {
+    "stage_1": [],
+    "stage_2": [],
+    "stage_3": [],
+    "all": []
+  },
+  "composition_source": {
+    "pf": [],
+    "recipes": []
+  },
+  "composition_derived": {
+    "pf_total": []
+  },
+  "allergens_derived": [],
+  "possible_allergens_derived": [],
+  "cat_list": [],
+  "tags_all": [],
+  "all_pf": [],
+  "all_rec": [],
+  "all_items": []
+}
+```
+
+Main rules:
+
+- `item` fields:
+  - `id`
+  - `name`
+  - `short_name`
+  - `link`
+  - `category_id`
+  - `category_id2`
+  - `art`
+  - `nds`
+  - `time`
+  - `weight`
+  - `size_pizza`
+  - `count_part`
+  - `stol`
+  - `type`
+  - `sort`
+  - `tmp_desc`
+  - `marc_desc`
+  - `marc_desc_full`
+  - `protein`
+  - `fat`
+  - `carbohydrates`
+  - `kkal`
+  - `kkal_preview`
+  - `nutrition_source = persisted|linked_items`
+  - `all_w`
+  - `all_w_brutto`
+  - `all_w_netto`
+  - `date_start`
+  - `date_end`
+  - `is_show`
+  - `is_archived`
+  - `is_price`
+  - `show_site`
+  - `show_program`
+  - `is_new`
+  - `is_hit`
+  - `is_updated`
+  - `is_spicy`
+  - `time_stage_1`
+  - `time_stage_2`
+  - `time_stage_3`
+  - `time_stage_1_sec`
+  - `time_stage_2_sec`
+  - `time_stage_3_sec`
+  - `full_sec`
+  - `update_item`
+  - `date_update`
+  - `tags`
+  - `img_new`
+  - `img_new_update`
+  - `img_app`
+  - `is_mark`
+  - `mark_code`
+  - `series`
+  - `is_akchis`
+  - `image`
+  - `marking`
+- `history.rows` returns full detailed history rows for this site item detail
+- every `history.rows[]` already includes expanded `snapshot`
+- `history.rows[].snapshot` for site item includes:
+  - `category_name`
+  - `img_new`
+  - `img_new_update`
+  - `img_app`
+  - `tags`
+  - `image`
+  - `item_items.this_items`
+  - `items_stage.stage_1`
+  - `items_stage.stage_2`
+  - `items_stage.stage_3`
+- `image_history` is a separate lightweight timeline for image changes
+- `image_history.current.image` is the current live image state
+- `image_history.rows[]` returns changed image revisions with `before_image` and `after_image`
+- `image_history.capabilities.restore = true`
+- `composition_source.pf` = direct `site_item -> pf` links
+- `composition_source.recipes` = direct `site_item -> recipe` links
+- `composition_derived.pf_total` = aggregated derived PF composition
+- `allergens_derived` and `possible_allergens_derived` are calculated from final composition chain
+- `calculated_allergens` is returned at the top level with only `allergens` and `possible_allergens` named arrays.
+- It traverses stage PFs, stage recipes, linked site items, and the persisted PF aggregate as a compatibility fallback.
+- It is read-only and does not update persisted site-item allergen fields.
+- `marking` is part of `get_one`
+- legacy flat image fields remain:
+  - `img_new`
+  - `img_new_update`
+  - `img_app`
+- structured `image` is also returned
+- `image` shape:
+  - `paths`
+  - `asset_key`
+  - `current_fields`
+  - `variants.jpg.path`
+  - `variants.jpg.url`
+  - `variants.webp.path`
+  - `variants.webp.url`
+  - `urls.img_new`
+  - `urls.img_new_update`
+- preview delete data is returned here, not in list
+- if preview delete-check cannot be built:
+  - `can_delete = null`
+  - `delete_usage.status = unavailable`
+  - `delete_usage.is_available = false`
+- linked inactive refs already attached to the item can be included so FE does not lose persisted relations
+- `item.tags` come from `tags_items`, then fallback to legacy CSV
+- `date_end = null` means open-ended interval
+- `items_stage` and `item_items.this_items` preserve legacy row-level fields used by old `site_items_new`
+- `pf_stage_*` and `rec_stage_*` are convenience slices derived from `items_stage.stage_*`
+- `items_stage.all` / `all_pf` contain mixed stage-selection options: PF + recipe refs
+- `all_rec` contains current recipe options for root references
+- `all_items` contains current site-item options for linked items
+- `image_history.rows[]` fields:
+  - `revision_key`
+  - `history_id`
+  - `changed_at`
+  - `changed_by`
+  - `action = image_initial|image_updated`
+  - `before_image`
+  - `after_image`
+  - `can_restore`
+- `changed_at` in `image_history` is currently derived from historical `date_start`
+
+### `POST|ANY /api/sklad_items/site-items/get_marking`
+
+Returns marking/tag slice only.
+
+### `POST|ANY /api/sklad_items/site-items/save_new`
+
+### `POST|ANY /api/sklad_items/site-items/save_edit`
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "history_id": 345
+}
+```
+
+Write rules:
+
+- write flow lives in `SkladSiteItemWriteService`
+- implementation is owned by `sklad_items` and does not call controllers, models or helpers from `site_items_new`
+- backend uses an internal compatibility map; FE sends no legacy access keys
+- normalizes BJU and stage-time fields
+- calculates `kkal`
+- rebuilds source composition links
+- rebuilds derived PF links for списания
+- writes unified history snapshot
+- `save_edit` requires `data.id`
+- `kkal_preview` is derived from current `protein`, `fat`, `carbohydrates`
+
+### `POST|ANY /api/sklad_items/site-items/save_flag`
+
+Supported flags:
+
+- `is_show`
+- `show_site`
+- `show_program`
+- `is_new`
+- `is_updated`
+- `is_price`
+- `is_spicy`
+- `is_mark`
+- `is_hit`
+- `is_akchis`
+
+### `POST|ANY /api/sklad_items/site-items/archive`
+
+Thin alias over `entities/archive` with `entity_type = site_item`.
+
+### `POST|ANY /api/sklad_items/site-items/delete`
+
+Delete checks:
+
+- current links in `jaco_site_rolls`
+- historical links in `jaco_site_rolls`
+- sales usage in `jaco_rolls_*` databases where `order_items` exists
+- historical sales usage where `order_items_full_log` exists
+
+Response format follows the common delete contract.
+
+### `POST|ANY /api/sklad_items/site-items/upload_image`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 10,
+    "slot": "main"
+  },
+  "file": "(binary)"
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "item_id": 10,
+  "history_id": 348,
+  "image": {
+    "slot": "main",
+    "asset_key": "",
+    "version_key": "",
+    "history_id": 348,
+    "paths": [],
+    "variants": {},
+    "uploaded": {},
+    "alias_paths": {},
+    "immutable_paths": {}
+  }
+}
+```
+
+Image rules:
+
+- item-bound mutation only
+- accepts only `jpg/jpeg/png`
+- publishes resized assets into existing storage
+- current row keeps stable public alias naming in `img_app`
+- current row image paths point to current alias files
+- history revision stores immutable versioned image paths in `jaco_site_rolls.items_hist_new`
+- current read and history use the same structured `image` contract
+- `image.asset_key` = stable current key used by the site
+- `image.version_key` = immutable upload version key
+
+### `POST|ANY /api/sklad_items/site-items/restore_image`
+
+Request:
+
+```json
+{
+  "data": {
+    "id": 10,
+    "history_id": 348,
+    "slot": "main"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "item_id": 10,
+  "history_id": 349,
+  "restored_from_history_id": 348,
+  "image": {
+    "slot": "main",
+    "asset_key": "",
+    "version_key": "",
+    "history_id": 349,
+    "paths": [],
+    "variants": {},
+    "uploaded": {},
+    "alias_paths": {},
+    "immutable_paths": {}
+  }
+}
+```
+
+Restore rules:
+
+- restores only from this item's own `items_hist_new` row
+- source history row must contain both immutable JPG and WEBP paths
+- restore rewrites current alias files, not public naming
+- restore writes a new current history snapshot after applying the image
+
+### `POST|ANY /api/sklad_items/site-items/tags/save_new`
+
+### `POST|ANY /api/sklad_items/site-items/tags/save_edit`
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 15,
+  "tags_all": []
+}
+```
+
+### `POST|ANY /api/sklad_items/site-items/sync_vk`
+
+Legacy compatibility only. Новый интерфейс `sklad_items` этот endpoint не вызывает. Изображения товаров сохраняются только в Яндекс Object Storage.
+
+Rule:
+
+- sets `jaco_main_rolls.settings.type = vk_update_goods`
+- does not mutate `site_item` row directly
+
+## 9. Archive
+
+### `POST|ANY /api/sklad_items/entities/archive`
+
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "id": 10,
+    "value": 0
+  }
+}
+```
+
+Supported `entity_type`:
+
+- `recipe`
+- `semi_finished`
+- `site_item`
+
+Response:
+
+```json
+{
+  "st": true,
+  "text": "Успешно сохранено",
+  "id": 10,
+  "history_id": 100
+}
+```
+
+Unsupported entity types return honest error/unsupported response.
+
+### `POST|ANY /api/sklad_items/entities/archive_list`
+
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "search": ""
+  }
+}
+```
+
+Also accepted:
+
+- `entity_types: ["recipe", "semi_finished", "site_item"]`
+
+Rules:
+
+- singular `entity_type` and plural `entity_types` are both accepted
+- when omitted, backend returns all supported archived entity types
+- result is merged and sorted by `date_start` desc, then `entity_type`, then `name`
+
+## 10. Delete
+
+### `POST|ANY /api/sklad_items/entities/delete`
+
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "id": 10
+  }
+}
+```
+
+Success:
+
+```json
+{
+  "st": true,
+  "text": "Успешное удаление",
+  "usage": {
+    "can_delete": true,
+    "active_relations": [],
+    "history_relations": []
+  }
+}
+```
+
+Blocked:
+
+```json
+{
+  "st": false,
+  "text": "Позиция используется или использовалась ранее, удаление запрещено",
+  "usage": {
+    "can_delete": false,
+    "active_relations": [],
+    "history_relations": []
+  }
+}
+```
+
+## 11. History
+
+### `POST|ANY /api/sklad_items/history/list`
+
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "entity_id": 10,
+    "mode": "periods",
+    "all_events": false
+  }
+}
+```
+
+Returns a compact period list. Full snapshots are requested only after a period is selected.
+
+Additional temporal fields are `revision_status`, `effective_date_start`, `effective_date_end`, `previous_revision_key`, `next_revision_key`, `applied_now`, `can_edit_schedule`, and `can_cancel_schedule`. Existing fields are preserved. `mode=periods` hides cancelled/superseded events; the UI's “Все записи” mode shows them and legacy rows.
+
+### `POST|ANY /api/sklad_items/history/get_one`
+
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "recipe",
+    "entity_id": 10,
+    "revision_key": "100"
+  }
+}
+```
+
+Response shape:
+
+```json
+{
+  "st": true,
+  "entity_type": "recipe",
+  "entity_id": 10,
+  "revision": {
+    "entity_type": "recipe",
+    "entity_id": 10,
+    "history_id": 100,
+    "revision_key": "100",
+    "source": "",
+    "compare_capability": {
+      "supported": true,
+      "reason": null
+    },
+    "snapshot": {}
+  },
+  "capabilities": {
+    "list": true,
+    "get_one": true,
+    "compare": {
+      "supported": true,
+      "reason": null
+    }
+  },
+  "history_meta": {
+    "entity_type": "recipe",
+    "source": "",
+    "revision_key_policy": "history_id",
+    "reconstruction": {
+      "mode": "legacy_history_head_with_child_links",
+      "uses_nearest_revision_by_date_for_linked_entities": true
+    },
+    "dictionary_name_policy": {
+      "mode": "mixed",
+      "historical_where_available": true,
+      "current_dictionary_fallback_for_names": true,
+      "fallback_entities": ["unit", "tag", "category", "allergen"]
+    }
+  }
+}
+```
+
+History rules:
+
+- `history/list` returns version list
+- `history/get_one` returns canonical snapshot
+- `history/compare` compares canonical snapshots
+- `site_item` snapshot includes composition, tags, marking, images, timing, nutrition and text fields
+- some dictionary labels may resolve from current tables when historical dictionary snapshots do not exist
+- composition rows are matched by entity type, component ID, stage and sort
+
+### `POST|ANY /api/sklad_items/history/resolve`
+
+Accepts `entity_type`, `entity_id`, and `date` (`Y-m-d`) and returns the full version effective on that date. Legacy fallback is explicitly marked in `resolution_mode` and `warning`.
+
+### `POST|ANY /api/sklad_items/history/schedule/cancel`
+
+Accepts `entity_type`, `entity_id`, and `revision_key`. Only a future `scheduled` revision can be cancelled. The regular edit permission for the entity type is required.
+
+Entity-specific history routes are compatibility aliases over the same history service:
+
+- `/api/sklad_items/history/item`
+- `/api/sklad_items/history/item/get_one`
+- `/api/sklad_items/history/item/compare`
+- `/api/sklad_items/history/recipe`
+- `/api/sklad_items/history/recipe/get_one`
+- `/api/sklad_items/history/recipe/compare`
+- `/api/sklad_items/history/semi-finished`
+- `/api/sklad_items/history/semi-finished/get_one`
+- `/api/sklad_items/history/semi-finished/compare`
+- `/api/sklad_items/history/site-item`
+- `/api/sklad_items/history/site-item/get_one`
+- `/api/sklad_items/history/site-item/compare`
+
+They accept the same payload fields as the generic routes and inject the corresponding `entity_type`.
+
+### `POST|ANY /api/sklad_items/history/compare`
+
+Request:
+
+```json
+{
+  "data": {
+    "entity_type": "site_item",
+    "entity_id": 10,
+    "left_revision_key": "100",
+    "right_revision_key": "101"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "st": true,
+  "entity_type": "site_item",
+  "entity_id": 10,
+  "left_revision": {},
+  "right_revision": {},
+  "compare": {
+    "has_changes": true,
+    "changes_count": 3,
+    "changes": []
+  },
+  "capabilities": {
+    "list": true,
+    "get_one": true,
+    "compare": {
+      "supported": true,
+      "reason": null
+    }
+  },
+  "history_meta": {}
+}
+```
+
+## 12. Access Contract
+
+`get_all.access` returns the compact FE access contract. Legacy middleware keys are used only inside backend compatibility mapping.
+
+Example:
+
+```json
+{
+  "access": {
+    "production_view": 1,
+    "production_edit": 1,
+    "production_create": 1,
+    "production_delete": 1,
+    "site_items_view": 1,
+    "site_items_edit": 1,
+    "site_items_create": 1,
+    "site_items_delete": 1,
+    "units_view": 1,
+    "units_edit": 1,
+    "units_create": 1,
+    "units_delete": 0,
+    "archive_view": 1,
+    "archive_edit": 0,
+    "history_view": 1
+  }
+}
+```
+
+Rules:
+
+- FE should use the exact compact keys from `ACCESS.md`
+- backend mutation services receive an internal compatibility map built from compact permissions
+- `archive_view`, `archive_edit` и `history_view` сохранены в payload только для совместимости; UI определяет историю по view раздела, а архивирование — по edit его активности
+
+## 13. Validation Rules
+
+- `date_start` is required where applicable
+- past `date_start` requires `production_past_date` for recipes/semi-finished or `site_items_past_date` for site items; an unchanged historical value remains valid during edit
+- if `date_end` is set, it must be `>= date_start`
+- empty `date_end` or `null` means open-ended interval
+- delete is allowed only with no current or historical usage
+- archive must keep history valid
+- `kkal_preview` is calculated on backend
+- image history uses existing site-item history persistence
+
+## 14. Compatibility Policy
+
+- runtime aliases are not part of this contract
+- FE should use only canonical routes and canonical payloads from this file

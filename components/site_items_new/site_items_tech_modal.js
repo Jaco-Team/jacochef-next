@@ -20,12 +20,24 @@ import TableBody from "@mui/material/TableBody";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import Dropzone from "dropzone";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import TabList from "@mui/lab/TabList";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
+import { getAuthHeaders } from "@/src/api_new";
+import {
+  SITE_ITEMS_MODAL_FIELD_KEYS,
+  SITE_ITEMS_MODAL_SECTIONS,
+  canEditAccess,
+  canEditSection,
+  canViewAccess,
+  canViewSection,
+  hasAccessValue,
+} from "@/components/site_items_new/site_items_access";
+
 const roundTo = (value, decimals) => {
   return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
 };
@@ -35,38 +47,44 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
-const modalSections = [
-  {
-    value: "0",
-    label: "Основные",
-    description: "Наименование, категория и изображение",
-  },
-  {
-    value: "1",
-    label: "БЖУ",
-    description: "Вес, порция и пищевая ценность",
-  },
-  {
-    value: "2",
-    label: "Описание",
-    description: "Тексты для карточки и списка",
-  },
-  {
-    value: "3",
-    label: "Теги",
-    description: "Теги и промо-маркеры",
-  },
-  {
-    value: "4",
-    label: "Активность",
-    description: "Публикация и продажи",
-  },
-  {
-    value: "5",
-    label: "Состав",
-    description: "Тайминги, заготовки и позиции",
-  },
-];
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+  /\/+$/,
+  "",
+);
+const compositionOptionsLimit = 100;
+const filterCompositionOptions = (options, { inputValue }) => {
+  const query = String(inputValue ?? "")
+    .trim()
+    .toLocaleLowerCase("ru-RU");
+
+  if (!query) {
+    return options.slice(0, compositionOptionsLimit);
+  }
+
+  const filteredOptions = [];
+  for (const option of options) {
+    if (
+      String(option?.name ?? "")
+        .toLocaleLowerCase("ru-RU")
+        .includes(query)
+    ) {
+      filteredOptions.push(option);
+    }
+
+    if (filteredOptions.length === compositionOptionsLimit) {
+      break;
+    }
+  }
+
+  return filteredOptions;
+};
+const modalSections = SITE_ITEMS_MODAL_SECTIONS.map((section) => ({
+  value: section.value,
+  label: section.label,
+  description: section.description,
+  fields: section.fields,
+}));
+const modalFieldKeys = SITE_ITEMS_MODAL_FIELD_KEYS;
 const markingOptions = [
   { id: "0", name: "Обычный товар" },
   { id: "1", name: "Вода" },
@@ -88,14 +106,15 @@ export class SiteItemsModalTech extends React.Component {
     parallelUploads: 10,
     acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: "https://apichef.jacochef.ru/api/site_items_new/upload_img",
+    url: `${apiBaseUrl}/site_items_new/upload_img`,
   };
 
   myDropzone = null;
   isInit = false;
   click = false;
   dropzoneInitialized = false;
-  compositionPrefetchHandle = null;
+  imagePreviewHandle = null;
+  compositionRenderHandle = null;
 
   constructor(props) {
     super(props);
@@ -106,6 +125,7 @@ export class SiteItemsModalTech extends React.Component {
       openAlert: false,
       err_status: true,
       err_text: "",
+      isSaving: false,
     };
   }
 
@@ -118,6 +138,7 @@ export class SiteItemsModalTech extends React.Component {
       is_mark: "0",
       mark_code: "",
       category_id: null,
+      category_id2: null,
       count_part: "",
       stol: "",
       weight: "",
@@ -145,15 +166,18 @@ export class SiteItemsModalTech extends React.Component {
       is_hit: "0",
       is_new: "0",
       is_updated: "0",
+      is_spicy: "0",
       show_program: "0",
       show_site: "0",
       img_app: "",
+      imagePreviewReady: false,
       hasDropzoneFile: false,
       tags_all: [],
       tags_my: [],
       modalNewTag: false,
       tag_name_new: "",
-      compositionTabMounted: false,
+      activeCompositionAutocomplete: null,
+      compositionContentReady: false,
       err_valid: {},
     };
   }
@@ -241,45 +265,62 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   hasAccessFlag(value) {
-    return value === true || value === 1 || value === "1";
+    return hasAccessValue(value);
   }
 
   getFieldAccess(field, type = "edit") {
-    return this.hasAccessFlag(this.props.acces?.[`${field}_${type}`]);
+    if (type === "view") {
+      return canViewAccess(this.props.acces, field, false);
+    }
+
+    return canEditAccess(this.props.acces, field, false);
   }
 
   getFieldAccessOrDefault(field, type = "edit", fallback = true) {
-    const accessKey = `${field}_${type}`;
-
-    if (!(accessKey in (this.props.acces || {}))) {
-      return fallback;
+    if (type === "view") {
+      return canViewAccess(this.props.acces, field, fallback);
     }
 
-    return this.getFieldAccess(field, type);
+    return canEditAccess(this.props.acces, field, fallback);
   }
 
   getFieldVisibilityOrDefault(field, fallback = true) {
-    const editKey = `${field}_edit`;
-    const viewKey = `${field}_view`;
-    const rawAccess = this.props.acces || {};
-
-    if (!(editKey in rawAccess) && !(viewKey in rawAccess)) {
-      return fallback;
-    }
-
-    return this.hasAccessFlag(rawAccess[editKey]) || this.hasAccessFlag(rawAccess[viewKey]);
+    return canViewAccess(this.props.acces, field, fallback);
   }
 
   getNormalizedAccess() {
-    return Object.entries(this.props.acces || {}).reduce((acc, [key, value]) => {
-      acc[key] = key.endsWith("_edit") || key.endsWith("_view") ? this.hasAccessFlag(value) : value;
-      return acc;
+    const rawAccess = this.props.acces || {};
+    const acc = Object.entries(rawAccess).reduce((result, [key, value]) => {
+      result[key] =
+        key.endsWith("_edit") || key.endsWith("_view") ? this.hasAccessFlag(value) : value;
+      return result;
     }, {});
+
+    modalFieldKeys.forEach((field) => {
+      const fallback = field === "tags";
+      acc[`${field}_view`] = canViewAccess(rawAccess, field, fallback);
+      acc[`${field}_edit`] = canEditAccess(rawAccess, field, fallback);
+    });
+
+    return acc;
+  }
+
+  getVisibleSections() {
+    return modalSections.filter((section) =>
+      section.fields.some((field) => this.getFieldVisibilityOrDefault(field, field === "tags")),
+    );
   }
 
   hasAnyEditableField() {
-    return Object.entries(this.getNormalizedAccess()).some(
-      ([key, value]) => key.endsWith("_edit") && value,
+    return modalFieldKeys.some((field) =>
+      this.getFieldAccessOrDefault(field, "edit", field === "tags"),
+    );
+  }
+
+  canManageTagCatalog() {
+    return (
+      this.getFieldAccessOrDefault("tags", "edit", true) &&
+      this.hasAccessFlag(this.props.acces?.change_tag_access)
     );
   }
 
@@ -325,6 +366,20 @@ export class SiteItemsModalTech extends React.Component {
     );
 
     return Number.isNaN(parsedValue) ? 0 : parsedValue;
+  }
+
+  getCaloriesPer100g() {
+    return Math.round(
+      this.parseDecimalValue(this.state.protein) * 3.9875 +
+        this.parseDecimalValue(this.state.fat) * 8.9459 +
+        this.parseDecimalValue(this.state.carbohydrates) * 3.9945,
+    );
+  }
+
+  getCaloriesForDish() {
+    return Math.round(
+      (this.getCaloriesPer100g() * this.parseDecimalValue(this.state.weight)) / 100,
+    );
   }
 
   formatDecimalValue(value) {
@@ -496,10 +551,17 @@ export class SiteItemsModalTech extends React.Component {
       },
       {
         key: "category_id",
-        label: "Категория",
+        label: "Старая категория",
         tab: "0",
         missing:
           this.getFieldAccess("category_id") && this.isEmptySelectValue(this.state.category_id),
+      },
+      {
+        key: "category_id2",
+        label: "Новая категория",
+        tab: "0",
+        missing:
+          this.getFieldAccess("category_id") && this.isEmptySelectValue(this.state.category_id2),
       },
       {
         key: "stol",
@@ -558,12 +620,6 @@ export class SiteItemsModalTech extends React.Component {
         missing: this.getFieldAccess("marc_desc") && this.isEmptyTextValue(this.state.marc_desc),
       },
       {
-        key: "tags_my",
-        label: "Теги",
-        tab: "3",
-        missing: !Array.isArray(this.state.tags_my) || this.state.tags_my.length === 0,
-      },
-      {
         key: "time_stage_1",
         label: "Время на 1 этап MM:SS",
         tab: "5",
@@ -610,75 +666,99 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   changeTab(event, val) {
-    if (val === "5" && !this.state.compositionTabMounted) {
-      this.setState({
-        activeTab: val,
-        compositionTabMounted: true,
-      });
-      return;
-    }
-
-    this.setState({
-      activeTab: val,
-    });
-  }
-
-  ensureCompositionTabMounted(callback) {
-    if (this.state.compositionTabMounted) {
-      if (callback) {
-        callback();
-      }
-      return;
+    if (val !== "5") {
+      this.cancelCompositionRender();
     }
 
     this.setState(
       {
-        compositionTabMounted: true,
+        activeTab: val,
       },
-      callback,
+      val === "5" && !this.state.compositionContentReady
+        ? this.scheduleCompositionRender.bind(this)
+        : undefined,
     );
   }
 
-  cancelCompositionTabPrefetch() {
-    if (!this.compositionPrefetchHandle || typeof window === "undefined") {
+  cancelCompositionRender() {
+    if (!this.compositionRenderHandle || typeof window === "undefined") {
+      return;
+    }
+
+    window.clearTimeout(this.compositionRenderHandle);
+    this.compositionRenderHandle = null;
+  }
+
+  scheduleCompositionRender() {
+    if (this.state.compositionContentReady || typeof window === "undefined") {
+      return;
+    }
+
+    this.cancelCompositionRender();
+    this.compositionRenderHandle = window.setTimeout(() => {
+      this.compositionRenderHandle = null;
+      this.setState({ compositionContentReady: true });
+    }, 0);
+  }
+
+  activateCompositionAutocomplete(fieldKey) {
+    if (this.state.activeCompositionAutocomplete === fieldKey) {
+      return;
+    }
+
+    this.setState({
+      activeCompositionAutocomplete: fieldKey,
+    });
+  }
+
+  getCompositionAutocompleteOptions(fieldKey, selectedValue, options) {
+    if (this.state.activeCompositionAutocomplete === fieldKey) {
+      return options || [];
+    }
+
+    return selectedValue ? [selectedValue] : [];
+  }
+
+  cancelImagePreviewLoad() {
+    if (!this.imagePreviewHandle || typeof window === "undefined") {
       return;
     }
 
     if (
-      this.compositionPrefetchHandle.type === "idle" &&
+      this.imagePreviewHandle.type === "idle" &&
       typeof window.cancelIdleCallback === "function"
     ) {
-      window.cancelIdleCallback(this.compositionPrefetchHandle.id);
+      window.cancelIdleCallback(this.imagePreviewHandle.id);
     } else {
-      window.clearTimeout(this.compositionPrefetchHandle.id);
+      window.clearTimeout(this.imagePreviewHandle.id);
     }
 
-    this.compositionPrefetchHandle = null;
+    this.imagePreviewHandle = null;
   }
 
-  scheduleCompositionTabPrefetch() {
-    if (this.state.compositionTabMounted || typeof window === "undefined") {
+  scheduleImagePreviewLoad() {
+    if (!this.state.img_app || typeof window === "undefined") {
       return;
     }
 
-    this.cancelCompositionTabPrefetch();
+    this.cancelImagePreviewLoad();
 
-    const mountCompositionTab = () => {
-      this.compositionPrefetchHandle = null;
-      this.ensureCompositionTabMounted();
+    const showPreview = () => {
+      this.imagePreviewHandle = null;
+      this.setState({ imagePreviewReady: true });
     };
 
     if (typeof window.requestIdleCallback === "function") {
-      this.compositionPrefetchHandle = {
+      this.imagePreviewHandle = {
         type: "idle",
-        id: window.requestIdleCallback(mountCompositionTab, { timeout: 500 }),
+        id: window.requestIdleCallback(showPreview, { timeout: 300 }),
       };
       return;
     }
 
-    this.compositionPrefetchHandle = {
+    this.imagePreviewHandle = {
       type: "timeout",
-      id: window.setTimeout(mountCompositionTab, 180),
+      id: window.setTimeout(showPreview, 0),
     };
   }
 
@@ -712,7 +792,10 @@ export class SiteItemsModalTech extends React.Component {
     }
 
     try {
-      this.myDropzone = new Dropzone(this.dropzoneRef.current, this.dropzoneOptions);
+      this.myDropzone = new Dropzone(this.dropzoneRef.current, {
+        ...this.dropzoneOptions,
+        headers: getAuthHeaders(),
+      });
       this.dropzoneInitialized = true;
       this.setupDropzoneEvents();
     } catch (error) {
@@ -745,8 +828,16 @@ export class SiteItemsModalTech extends React.Component {
 
       if (!check_img) {
         setTimeout(() => {
+          this.setState({ isSaving: false });
           this.onClose(true);
         }, 1000);
+      } else {
+        this.setState({
+          isSaving: false,
+          openAlert: true,
+          err_status: false,
+          err_text: "Не удалось загрузить изображение",
+        });
       }
 
       this.isInit = false;
@@ -759,26 +850,37 @@ export class SiteItemsModalTech extends React.Component {
     }
 
     if (this.props.item !== prevProps.item) {
+      this.cancelImagePreviewLoad();
       const isNewItem = this.isNewItem();
-      const tags = this.props.item?.tags_all
-        ? [{ id: -1, name: "Новый" }, ...this.props.item.tags_all]
-        : [{ id: -1, name: "Новый" }];
+      const tags = this.props.item?.tags_all ? [...this.props.item.tags_all] : [];
+      if (this.canManageTagCatalog()) {
+        tags.unshift({ id: -1, name: "Добавить новый тег" });
+      }
       const normalizedItemsStage = this.normalizeItemsStage(this.props.items_stage);
       const normalizedItemItems = this.normalizeItemItems(this.props.item_items);
+      const visibleSections = this.getVisibleSections();
+      const selectedLegacyCategory = isNewItem
+        ? null
+        : (this.props.categoryLegacy?.find(
+            (categoryItem) => parseInt(categoryItem?.id) === parseInt(this.props.item?.category_id),
+          ) ?? null);
       const selectedCategory = isNewItem
         ? null
         : (this.props.category?.find(
-            (categoryItem) => parseInt(categoryItem?.id) === parseInt(this.props.item?.category_id),
+            (categoryItem) =>
+              parseInt(categoryItem?.id) === parseInt(this.props.item?.category_id2),
           ) ?? null);
 
       this.setState(
         {
           ...this.getDefaultFormState(),
+          activeTab: visibleSections[0]?.value || "0",
           name: isNewItem ? "" : this.props.item?.name || "",
           art: isNewItem ? "" : this.props.item?.art || "",
           is_mark: isNewItem ? "0" : String(this.props.item?.is_mark ?? 0),
           mark_code: isNewItem ? "" : this.props.item?.mark_code || "",
-          category_id: selectedCategory,
+          category_id: selectedLegacyCategory,
+          category_id2: selectedCategory,
           count_part: isNewItem
             ? ""
             : this.getEditableFieldValue(this.props.item?.count_part, true),
@@ -815,6 +917,7 @@ export class SiteItemsModalTech extends React.Component {
           marc_desc_full: isNewItem ? "" : this.props.item?.marc_desc_full || "",
           is_hit: isNewItem ? "0" : parseInt(this.props.item?.is_hit) ? 1 : 0,
           is_new: isNewItem ? "0" : parseInt(this.props.item?.is_new) ? 1 : 0,
+          is_spicy: isNewItem ? "0" : parseInt(this.props.item?.is_spicy) ? 1 : 0,
           show_program: isNewItem ? "0" : parseInt(this.props.item?.show_program) ? 1 : 0,
           show_site: isNewItem ? "0" : parseInt(this.props.item?.show_site) ? 1 : 0,
           img_app: isNewItem ? "" : this.props.item?.img_app || "",
@@ -824,7 +927,10 @@ export class SiteItemsModalTech extends React.Component {
         },
         () => {
           this.initDropzone(true);
-          this.scheduleCompositionTabPrefetch();
+          this.scheduleImagePreviewLoad();
+          if (visibleSections[0]?.value === "5") {
+            this.scheduleCompositionRender();
+          }
         },
       );
     }
@@ -866,7 +972,8 @@ export class SiteItemsModalTech extends React.Component {
 
   componentWillUnmount() {
     // Уничтожаем Dropzone при размонтировании
-    this.cancelCompositionTabPrefetch();
+    this.cancelCompositionRender();
+    this.cancelImagePreviewLoad();
     this.destroyDropzone();
   }
 
@@ -1294,7 +1401,11 @@ export class SiteItemsModalTech extends React.Component {
     this.setState(this.getWeightState(items_stage, item_items));
   }
 
-  save() {
+  async save() {
+    if (this.state.isSaving) {
+      return;
+    }
+
     const items_stage = this.state.items_stage;
     if (items_stage?.not_stage?.length) {
       this.setState({
@@ -1329,14 +1440,16 @@ export class SiteItemsModalTech extends React.Component {
       short_name: this.state.short_name,
       is_hit: this.state.is_hit,
       is_new: this.state.is_new,
+      is_spicy: this.state.is_spicy,
       show_program: this.state.show_program,
       show_site: this.state.show_site,
       img_app: this.state.img_app,
       link: this.props.item?.link,
       tags: this.state.tags_my,
       category_id: this.state.category_id?.id || "",
-      size_pizza: parseInt(this.state.category_id?.id) === 14 ? this.state.count_part : 0,
-      count_part: parseInt(this.state.category_id?.id) !== 14 ? this.state.count_part : 0,
+      category_id2: this.state.category_id2?.id || "",
+      size_pizza: parseInt(this.state.category_id2?.id) === 14 ? this.state.count_part : 0,
+      count_part: parseInt(this.state.category_id2?.id) !== 14 ? this.state.count_part : 0,
       stol: this.state.stol,
       weight: this.state.weight,
       is_price: this.state.is_price,
@@ -1365,61 +1478,53 @@ export class SiteItemsModalTech extends React.Component {
       item_items: new_obj_item_items,
     };
 
-    const resp = this.props.save(data);
-    let idGet = 0;
-    if (resp.id && resp.st) {
-      idGet = resp.id;
-    }
-    resp.then((data) => {
-      let idGet = 0;
-      if (data.id && data.st) {
-        idGet = data.id;
+    this.setState({ isSaving: true });
+
+    try {
+      const response = await this.props.save(data);
+
+      if (!response?.st) {
+        this.setState({ isSaving: false });
+        return;
       }
+
+      const idGet = response.id || 0;
       if (
         this.myDropzone &&
         this.myDropzone["files"]?.length > 0 &&
         (this.props.item?.id || idGet)
       ) {
-        if (this.myDropzone["files"].length > 0 && this.isInit === false) {
+        if (this.isInit === false) {
           this.isInit = true;
 
-          let name = this.state.name,
-            id = this.props.item?.id ? this.props.item.id : idGet;
-          this.myDropzone.on("sending", (file, xhr, data) => {
-            let file_type = file.name.split(".");
-            file_type = file_type[file_type.length - 1];
-            file_type = file_type.toLowerCase();
-
-            data.append("type", "site_items");
-            data.append("name", name + "site_items");
-            data.append("login", localStorage.getItem("token"));
-            data.append("id", id);
-          });
-
-          this.myDropzone.on("queuecomplete", (data) => {
-            var check_img = false;
-
-            this.myDropzone["files"].map((item, key) => {
-              if (item["status"] == "error") {
-                check_img = true;
-              }
-            });
-
-            if (!check_img) {
-              setTimeout(() => {
-                this.onClose(true);
-              }, 1000);
+          const name = this.state.name;
+          const id = this.props.item?.id ? this.props.item.id : idGet;
+          const historyId = response.history_id;
+          this.myDropzone.on("sending", (file, xhr, uploadData) => {
+            uploadData.append("type", "site_items");
+            uploadData.append("name", name + "site_items");
+            uploadData.append("login", localStorage.getItem("token"));
+            uploadData.append("id", id);
+            if (historyId) {
+              uploadData.append("history_id", historyId);
             }
-
-            this.isInit = false;
           });
         }
 
         this.myDropzone.processQueue();
-      } else {
-        this.onClose(true);
+        return;
       }
-    });
+
+      this.setState({ isSaving: false });
+      this.onClose(true);
+    } catch (error) {
+      this.setState({
+        isSaving: false,
+        openAlert: true,
+        err_status: false,
+        err_text: "Не удалось сохранить изменения",
+      });
+    }
   }
 
   openNewTag() {
@@ -1430,21 +1535,27 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   onClose() {
-    this.cancelCompositionTabPrefetch();
+    this.cancelCompositionRender();
+    this.cancelImagePreviewLoad();
     this.setState({
       ...this.getDefaultFormState(),
       openAlert: false,
       err_status: true,
       err_text: "",
+      isSaving: false,
     });
 
     this.props.onClose();
   }
 
   changeAutocomplite(data, event, value) {
+    if (!this.getFieldAccessOrDefault("tags", "edit", true)) {
+      return;
+    }
+
     let check = value?.find((item) => parseInt(item.id) === -1);
 
-    if (check) {
+    if (check && this.canManageTagCatalog()) {
       this.openNewTag();
       return;
     } else {
@@ -1453,6 +1564,10 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   async saveNewTag() {
+    if (!this.canManageTagCatalog()) {
+      return;
+    }
+
     let data = {
       name: this.state.tag_name_new,
     };
@@ -1461,18 +1576,45 @@ export class SiteItemsModalTech extends React.Component {
 
     if (res.st === true) {
       this.setState({
-        tags_all: res.tags_all,
+        tags_all: [{ id: -1, name: "Добавить новый тег" }, ...(res.tags_all || [])],
         modalNewTag: false,
       });
     }
   }
 
   render() {
-    const { open, method, fullScreen, category, stages } = this.props;
+    const { open, method, fullScreen, category = [], categoryLegacy = [], stages } = this.props;
     const access = this.getNormalizedAccess();
+    const visibleSections = this.getVisibleSections();
     const activeSection =
-      modalSections.find((section) => section.value === this.state.activeTab) || modalSections[0];
+      visibleSections.find((section) => section.value === this.state.activeTab) ||
+      visibleSections[0] ||
+      modalSections[0];
     const canSave = this.hasAnyEditableField();
+    const canViewTags = canViewSection(this.props.acces, "tags", true);
+    const canEditTags = canEditSection(this.props.acces, "tags", true);
+    const canViewDropzone = this.getFieldVisibilityOrDefault("dropzone", false);
+    const canViewPromoMarkers = canViewTags;
+    const canViewDescription = canViewSection(this.props.acces, "description", false);
+    const canEditDescription = canEditSection(this.props.acces, "description", false);
+    const canViewActivity = canViewSection(this.props.acces, "activity", false);
+    const canEditActivity = canEditSection(this.props.acces, "activity", false);
+    const canViewComposition = canViewSection(this.props.acces, "composition", false);
+    const canEditComposition = canEditSection(this.props.acces, "composition", false);
+    const canViewPortion =
+      this.getFieldVisibilityOrDefault("count_part", false) ||
+      this.getFieldVisibilityOrDefault("weight", false);
+    const canEditPortion =
+      this.getFieldAccessOrDefault("count_part", "edit", false) ||
+      this.getFieldAccessOrDefault("weight", "edit", false);
+    const canViewBju =
+      this.getFieldVisibilityOrDefault("protein", false) ||
+      this.getFieldVisibilityOrDefault("fat", false) ||
+      this.getFieldVisibilityOrDefault("carbohydrates", false);
+    const canEditBju =
+      this.getFieldAccessOrDefault("protein", "edit", false) ||
+      this.getFieldAccessOrDefault("fat", "edit", false) ||
+      this.getFieldAccessOrDefault("carbohydrates", "edit", false);
     const hiddenIf = (condition) => (condition ? { display: "none" } : {});
     const isChecked = (value) => parseInt(value) === 1;
     const canViewMarkingType = this.getFieldVisibilityOrDefault("marc");
@@ -1482,10 +1624,12 @@ export class SiteItemsModalTech extends React.Component {
 
     const dialogPaperSx = fullScreen
       ? {
+          position: "relative",
           borderRadius: 0,
           boxShadow: "none",
         }
       : {
+          position: "relative",
           width: "100%",
           maxWidth: {
             xs: "calc(100vw - 20px)",
@@ -1920,154 +2064,178 @@ export class SiteItemsModalTech extends React.Component {
           <TableRow sx={tableSectionRowSx}>
             <TableCell colSpan={9}>{stageLabel}</TableCell>
           </TableRow>
-          {rows.map((item, key) => (
-            <TableRow key={`${stageKey}-${key}`}>
-              <TableCell sx={{ width: "28%" }}>
-                <MyAutocomplite
-                  multiple={false}
-                  disableNoSsr
-                  unifiedPopup
-                  optionKey="un_id"
-                  getOptionKey={(option) => `${option?.un_id}`}
-                  data={this.state.items_stage?.all ?? []}
-                  value={item.type_id}
-                  func={this.changeItemData.bind(this, key, stageKey)}
-                />
-              </TableCell>
-              <TableCell sx={{ width: "7%" }}>
-                <MyTextInput
-                  value={item.ei_name}
-                  disabled={true}
-                  className="disabled_input"
-                />
-              </TableCell>
-              <TableCell sx={{ width: "9%" }}>
-                <MyTextInput
-                  value={item.brutto}
-                  isDecimalMask
-                  func={this.changeItemList.bind(this, "brutto", key, stageKey)}
-                  onBlur={this.formatDecimalListField.bind(this, "brutto", key, stageKey)}
-                />
-              </TableCell>
-              <TableCell sx={{ width: "9%" }}>
-                <MyTextInput
-                  value={item.pr_1}
-                  type={"number"}
-                  func={this.changeItemList.bind(this, "pr_1", key, stageKey)}
-                />
-              </TableCell>
-              <TableCell sx={{ width: "11%" }}>
-                <MyTextInput
-                  value={item.netto}
-                  isDecimalMask
-                  disabled={true}
-                  className="disabled_input"
-                />
-              </TableCell>
-              <TableCell sx={{ width: "11%" }}>
-                <MyTextInput
-                  value={item.pr_2}
-                  type={"number"}
-                  func={this.changeItemList.bind(this, "pr_2", key, stageKey)}
-                />
-              </TableCell>
-              <TableCell sx={{ width: "11%" }}>
-                <MyTextInput
-                  value={item.res}
-                  isDecimalMask
-                  disabled={true}
-                  className="disabled_input"
-                />
-              </TableCell>
-              <TableCell sx={{ width: "11%" }}>
-                <MySelect
-                  is_none={false}
-                  data={stages}
-                  value={item.stage}
-                  func={this.changeItemSelect.bind(this, "stage", key, stageKey, item)}
-                />
-              </TableCell>
-              <TableCell
-                align="center"
-                sx={{ width: "3%" }}
-              >
-                <IconButton
-                  onClick={this.deleteItemData.bind(this, key, stageKey)}
-                  sx={actionIconButtonSx}
+          {rows.map((item, key) => {
+            const autocompleteKey = `preparation-${stageKey}-${key}`;
+
+            return (
+              <TableRow key={`${stageKey}-${key}`}>
+                <TableCell sx={{ width: "28%" }}>
+                  <MyAutocomplite
+                    multiple={false}
+                    disableNoSsr
+                    unifiedPopup
+                    optionKey="un_id"
+                    getOptionKey={(option) => `${option?.un_id}`}
+                    data={this.getCompositionAutocompleteOptions(
+                      autocompleteKey,
+                      item.type_id,
+                      this.state.items_stage?.all,
+                    )}
+                    filterOptions={filterCompositionOptions}
+                    value={item.type_id}
+                    onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
+                    func={this.changeItemData.bind(this, key, stageKey)}
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "7%" }}>
+                  <MyTextInput
+                    value={item.ei_name}
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "9%" }}>
+                  <MyTextInput
+                    value={item.brutto}
+                    isDecimalMask
+                    func={this.changeItemList.bind(this, "brutto", key, stageKey)}
+                    onBlur={this.formatDecimalListField.bind(this, "brutto", key, stageKey)}
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "9%" }}>
+                  <MyTextInput
+                    value={item.pr_1}
+                    type={"number"}
+                    onWheel={(e) => e.target.blur()}
+                    func={this.changeItemList.bind(this, "pr_1", key, stageKey)}
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "11%" }}>
+                  <MyTextInput
+                    value={item.netto}
+                    isDecimalMask
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "11%" }}>
+                  <MyTextInput
+                    value={item.pr_2}
+                    type={"number"}
+                    onWheel={(e) => e.target.blur()}
+                    func={this.changeItemList.bind(this, "pr_2", key, stageKey)}
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "11%" }}>
+                  <MyTextInput
+                    value={item.res}
+                    isDecimalMask
+                    disabled={true}
+                    className="disabled_input"
+                  />
+                </TableCell>
+                <TableCell sx={{ width: "11%" }}>
+                  <MySelect
+                    is_none={false}
+                    data={stages}
+                    value={item.stage}
+                    func={this.changeItemSelect.bind(this, "stage", key, stageKey, item)}
+                  />
+                </TableCell>
+                <TableCell
+                  align="center"
+                  sx={{ width: "3%" }}
                 >
-                  <CloseIcon />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
+                  <IconButton
+                    onClick={this.deleteItemData.bind(this, key, stageKey)}
+                    sx={actionIconButtonSx}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </React.Fragment>
       );
     };
 
     const renderItemRows = () =>
-      (this.state.item_items?.this_items || []).map((item, key) => (
-        <TableRow key={`item-row-${key}`}>
-          <TableCell sx={{ width: "38%" }}>
-            <MyAutocomplite
-              multiple={false}
-              disableNoSsr
-              unifiedPopup
-              data={this.state.item_items?.all_items ?? []}
-              value={item.item_id}
-              func={this.changeItemData.bind(this, key, "this_items")}
-            />
-          </TableCell>
-          <TableCell sx={{ width: "13%" }}>
-            <MyTextInput
-              value={item.brutto}
-              isDecimalMask
-              func={this.changeItemList.bind(this, "brutto", key, "this_items")}
-              onBlur={this.formatDecimalListField.bind(this, "brutto", key, "this_items")}
-            />
-          </TableCell>
-          <TableCell sx={{ width: "10%" }}>
-            <MyTextInput
-              value={item.pr_1}
-              type={"number"}
-              func={this.changeItemList.bind(this, "pr_1", key, "this_items")}
-            />
-          </TableCell>
-          <TableCell sx={{ width: "13%" }}>
-            <MyTextInput
-              value={item.netto}
-              isDecimalMask
-              disabled={true}
-              className="disabled_input"
-            />
-          </TableCell>
-          <TableCell sx={{ width: "10%" }}>
-            <MyTextInput
-              value={item.pr_2}
-              type={"number"}
-              func={this.changeItemList.bind(this, "pr_2", key, "this_items")}
-            />
-          </TableCell>
-          <TableCell sx={{ width: "13%" }}>
-            <MyTextInput
-              value={item.res}
-              isDecimalMask
-              disabled={true}
-              className="disabled_input"
-            />
-          </TableCell>
-          <TableCell
-            align="center"
-            sx={{ width: "3%" }}
-          >
-            <IconButton
-              onClick={this.deleteItemData.bind(this, key, "this_items")}
-              sx={actionIconButtonSx}
+      (this.state.item_items?.this_items || []).map((item, key) => {
+        const autocompleteKey = `item-${key}`;
+
+        return (
+          <TableRow key={`item-row-${key}`}>
+            <TableCell sx={{ width: "38%" }}>
+              <MyAutocomplite
+                multiple={false}
+                disableNoSsr
+                unifiedPopup
+                data={this.getCompositionAutocompleteOptions(
+                  autocompleteKey,
+                  item.item_id,
+                  this.state.item_items?.all_items,
+                )}
+                filterOptions={filterCompositionOptions}
+                value={item.item_id}
+                onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
+                func={this.changeItemData.bind(this, key, "this_items")}
+              />
+            </TableCell>
+            <TableCell sx={{ width: "13%" }}>
+              <MyTextInput
+                value={item.brutto}
+                isDecimalMask
+                func={this.changeItemList.bind(this, "brutto", key, "this_items")}
+                onBlur={this.formatDecimalListField.bind(this, "brutto", key, "this_items")}
+              />
+            </TableCell>
+            <TableCell sx={{ width: "10%" }}>
+              <MyTextInput
+                value={item.pr_1}
+                type={"number"}
+                onWheel={(e) => e.target.blur()}
+                func={this.changeItemList.bind(this, "pr_1", key, "this_items")}
+              />
+            </TableCell>
+            <TableCell sx={{ width: "13%" }}>
+              <MyTextInput
+                value={item.netto}
+                isDecimalMask
+                disabled={true}
+                className="disabled_input"
+              />
+            </TableCell>
+            <TableCell sx={{ width: "10%" }}>
+              <MyTextInput
+                value={item.pr_2}
+                type={"number"}
+                onWheel={(e) => e.target.blur()}
+                func={this.changeItemList.bind(this, "pr_2", key, "this_items")}
+              />
+            </TableCell>
+            <TableCell sx={{ width: "13%" }}>
+              <MyTextInput
+                value={item.res}
+                isDecimalMask
+                disabled={true}
+                className="disabled_input"
+              />
+            </TableCell>
+            <TableCell
+              align="center"
+              sx={{ width: "3%" }}
             >
-              <CloseIcon />
-            </IconButton>
-          </TableCell>
-        </TableRow>
-      ));
+              <IconButton
+                onClick={this.deleteItemData.bind(this, key, "this_items")}
+                sx={actionIconButtonSx}
+              >
+                <CloseIcon />
+              </IconButton>
+            </TableCell>
+          </TableRow>
+        );
+      });
 
     return (
       <>
@@ -2209,7 +2377,11 @@ export class SiteItemsModalTech extends React.Component {
         <Dialog
           open={open}
           maxWidth={false}
-          onClose={this.onClose.bind(this)}
+          onClose={() => {
+            if (!this.state.isSaving) {
+              this.onClose();
+            }
+          }}
           fullScreen={fullScreen}
           slotProps={{
             paper: {
@@ -2222,6 +2394,21 @@ export class SiteItemsModalTech extends React.Component {
             },
           }}
         >
+          {this.state.isSaving ? (
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255,255,255,0.72)",
+              }}
+            >
+              <CircularProgress sx={{ color: brandRed }} />
+            </Box>
+          ) : null}
           <DialogTitle
             sx={{
               px: {
@@ -2232,72 +2419,161 @@ export class SiteItemsModalTech extends React.Component {
                 xs: 1.25,
                 md: 1.5,
               },
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 2,
               bgcolor: blockBackground,
               borderBottom: `1px solid ${blockBorder}`,
             }}
           >
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                sx={{
-                  color: textSecondary,
-                  fontSize: 13,
-                  lineHeight: "18px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                {activeSection.label}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.5,
-                  color: textPrimary,
-                  fontSize: {
-                    xs: 20,
-                    md: 24,
-                  },
-                  lineHeight: {
-                    xs: "26px",
-                    md: "32px",
-                  },
-                  fontWeight: 700,
-                }}
-              >
-                {method === "Новое блюдо" ? "Новая карточка блюда" : method}
-              </Typography>
-              <Typography
-                sx={{
-                  mt: 0.75,
-                  maxWidth: 720,
-                  color: textSecondary,
-                  fontSize: 14,
-                  lineHeight: "20px",
-                }}
-              >
-                {activeSection.description}
-              </Typography>
-            </Box>
-            <IconButton
-              onClick={this.onClose.bind(this)}
+            <Box
               sx={{
-                mt: {
-                  xs: -0.25,
-                  md: 0,
-                },
-                color: "#A6A6A6",
-                borderRadius: "50%",
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
-                },
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 2,
               }}
             >
-              <CloseIcon />
-            </IconButton>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    color: textSecondary,
+                    fontSize: 13,
+                    lineHeight: "18px",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {activeSection.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    color: textPrimary,
+                    fontSize: {
+                      xs: 20,
+                      md: 24,
+                    },
+                    lineHeight: {
+                      xs: "26px",
+                      md: "32px",
+                    },
+                    fontWeight: 700,
+                  }}
+                >
+                  {method === "Новое блюдо" ? "Новая карточка блюда" : method}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.75,
+                    maxWidth: 720,
+                    color: textSecondary,
+                    fontSize: 14,
+                    lineHeight: "20px",
+                  }}
+                >
+                  {activeSection.description}
+                </Typography>
+              </Box>
+              <IconButton
+                onClick={this.onClose.bind(this)}
+                sx={{
+                  mt: {
+                    xs: -0.25,
+                    md: 0,
+                  },
+                  flexShrink: 0,
+                  color: "#A6A6A6",
+                  borderRadius: "50%",
+                  "&:hover": {
+                    backgroundColor: "rgba(0, 0, 0, 0.04)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {(access?.date_start_edit ||
+              access?.date_start_view ||
+              access?.date_end_edit ||
+              access?.date_end_view) && (
+              <Box
+                sx={{
+                  mt: 1.5,
+                  p: 1.25,
+                  display: "flex",
+                  flexDirection: {
+                    xs: "column",
+                    sm: "row",
+                  },
+                  alignItems: {
+                    xs: "stretch",
+                    sm: "center",
+                  },
+                  justifyContent: "space-between",
+                  gap: 1.25,
+                  border: `1px solid ${blockBorder}`,
+                  borderRadius: 2,
+                  bgcolor: "#FFFFFF",
+                }}
+              >
+                <Box sx={{ flexShrink: 0 }}>
+                  <Typography
+                    sx={{
+                      color: textPrimary,
+                      fontSize: 13,
+                      lineHeight: "18px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Период действия
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 0.25,
+                      color: textSecondary,
+                      fontSize: 12,
+                      lineHeight: "16px",
+                    }}
+                  >
+                    Срок публикации карточки
+                  </Typography>
+                </Box>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    width: {
+                      xs: "100%",
+                      sm: "auto",
+                    },
+                  }}
+                >
+                  {(access?.date_start_edit || access?.date_start_view) && (
+                    <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
+                      <MyDatePickerNew
+                        label="С"
+                        value={this.state.date_start}
+                        disabled={!access?.date_start_edit}
+                        sx={this.getErrorFieldSx("date_start")}
+                        func={this.changeDateRange.bind(this, "date_start")}
+                        minDate={dayjs(new Date())}
+                      />
+                    </Box>
+                  )}
+                  {(access?.date_end_edit || access?.date_end_view) && (
+                    <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
+                      <MyDatePickerNew
+                        label="По"
+                        value={this.state.date_end}
+                        disabled={!access?.date_end_edit}
+                        func={this.changeDateRange.bind(this, "date_end")}
+                        clearable={true}
+                      />
+                    </Box>
+                  )}
+                </Stack>
+              </Box>
+            )}
           </DialogTitle>
           <DialogContent sx={dialogContentSx}>
             <TabContext value={this.state.activeTab}>
@@ -2332,7 +2608,7 @@ export class SiteItemsModalTech extends React.Component {
                     allowScrollButtonsMobile
                     sx={mobileTabListSx}
                   >
-                    {modalSections.map((section, index) => (
+                    {visibleSections.map((section, index) => (
                       <Tab
                         key={section.value}
                         label={section.label}
@@ -2356,7 +2632,7 @@ export class SiteItemsModalTech extends React.Component {
                       Разделы
                     </Typography>
 
-                    {modalSections.map((section) => {
+                    {visibleSections.map((section) => {
                       const active = this.state.activeTab === section.value;
 
                       return (
@@ -2408,7 +2684,7 @@ export class SiteItemsModalTech extends React.Component {
                       {renderSectionCard(
                         "Основные данные",
                         "Карточка блюда",
-                        "Заполните ключевые поля карточки: название, код, дату начала действия, категорию и параметры для зала.",
+                        "Заполните ключевые поля карточки: название, код, категорию и параметры для зала.",
                         <Grid
                           container
                           spacing={2.5}
@@ -2451,7 +2727,7 @@ export class SiteItemsModalTech extends React.Component {
                           <Grid
                             size={{
                               xs: 12,
-                              md: 4,
+                              md: 3,
                             }}
                             style={hiddenIf(!access?.art_edit && !access?.art_view)}
                           >
@@ -2469,15 +2745,18 @@ export class SiteItemsModalTech extends React.Component {
                               xs: 12,
                               md: 3,
                             }}
-                            style={hiddenIf(!access?.date_start_edit && !access?.date_start_view)}
+                            style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
-                            <MyDatePickerNew
-                              label="Действует с"
-                              value={this.state.date_start}
-                              disabled={!access?.date_start_edit}
-                              sx={this.getErrorFieldSx("date_start")}
-                              func={this.changeDateRange.bind(this, "date_start")}
-                              minDate={dayjs(new Date())}
+                            <MyAutocomplite
+                              label="Старая категория"
+                              multiple={false}
+                              unifiedPopup
+                              data={categoryLegacy}
+                              disabled={!access?.category_id_edit}
+                              value={this.state.category_id}
+                              onFocus={() => this.clearFieldError("category_id")}
+                              sx={this.getErrorFieldSx("category_id")}
+                              func={(event, value) => this.updateFieldValue("category_id", value)}
                             />
                           </Grid>
                           <Grid
@@ -2488,15 +2767,15 @@ export class SiteItemsModalTech extends React.Component {
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
                             <MyAutocomplite
-                              label="Категория"
+                              label="Новая категория"
                               multiple={false}
                               unifiedPopup
                               data={category}
                               disabled={!access?.category_id_edit}
-                              value={this.state.category_id}
-                              onFocus={() => this.clearFieldError("category_id")}
-                              sx={this.getErrorFieldSx("category_id")}
-                              func={(event, value) => this.updateFieldValue("category_id", value)}
+                              value={this.state.category_id2}
+                              onFocus={() => this.clearFieldError("category_id2")}
+                              sx={this.getErrorFieldSx("category_id2")}
+                              func={(event, value) => this.updateFieldValue("category_id2", value)}
                             />
                           </Grid>
                           <Grid
@@ -2552,7 +2831,7 @@ export class SiteItemsModalTech extends React.Component {
                           <Grid
                             size={{
                               xs: 12,
-                              md: 8,
+                              md: 6,
                             }}
                             style={hiddenIf(!this.isMarkCodeRequired() || !canViewMarkCode)}
                           >
@@ -2575,118 +2854,139 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Порция",
-                        "Размер и выход порции",
-                        "Поля используются для базовых параметров блюда и отображения в карточке.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.count_part_edit && !access?.count_part_view)}
-                          >
-                            <MyTextInput
-                              label="Кусочков или размер"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              disabled={!access?.count_part_edit}
-                              value={this.state.count_part}
-                              onFocus={() => this.clearFieldError("count_part")}
-                              sx={this.getErrorFieldSx("count_part")}
-                              func={this.changeItem.bind(this, "count_part")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.weight_edit && !access?.weight_view)}
-                          >
-                            <MyTextInput
-                              label="Вес"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.weight}
-                              disabled={!access?.weight_edit}
-                              onFocus={() => this.clearFieldError("weight")}
-                              sx={this.getErrorFieldSx("weight")}
-                              func={this.changeItem.bind(this, "weight")}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
-                      {renderSectionCard(
-                        "БЖУ",
-                        "Пищевая ценность",
-                        "Блок для показателей на 100 г или на порцию, в зависимости от принятой логики заполнения.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.protein_edit && !access?.protein_view)}
-                          >
-                            <MyTextInput
-                              label="Белки"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.protein}
-                              disabled={!access?.protein_edit}
-                              onFocus={() => this.clearFieldError("protein")}
-                              sx={this.getErrorFieldSx("protein")}
-                              func={this.changeItem.bind(this, "protein")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.fat_edit && !access?.fat_view)}
-                          >
-                            <MyTextInput
-                              label="Жиры"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.fat}
-                              disabled={!access?.fat_edit}
-                              onFocus={() => this.clearFieldError("fat")}
-                              sx={this.getErrorFieldSx("fat")}
-                              func={this.changeItem.bind(this, "fat")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(
-                              !access?.carbohydrates_edit && !access?.carbohydrates_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Углеводы"
-                              type="number"
-                              onWheel={(e) => e.target.blur()}
-                              value={this.state.carbohydrates}
-                              disabled={!access?.carbohydrates_edit}
-                              onFocus={() => this.clearFieldError("carbohydrates")}
-                              sx={this.getErrorFieldSx("carbohydrates")}
-                              func={this.changeItem.bind(this, "carbohydrates")}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewPortion
+                        ? renderSectionCard(
+                            "Порция",
+                            "Размер и выход порции",
+                            "Поля используются для базовых параметров блюда и отображения в карточке.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Кусочков или размер"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  disabled={!canEditPortion}
+                                  value={this.state.count_part}
+                                  onFocus={() => this.clearFieldError("count_part")}
+                                  sx={this.getErrorFieldSx("count_part")}
+                                  func={this.changeItem.bind(this, "count_part")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Вес"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.weight}
+                                  disabled={!canEditPortion}
+                                  onFocus={() => this.clearFieldError("weight")}
+                                  sx={this.getErrorFieldSx("weight")}
+                                  func={this.changeItem.bind(this, "weight")}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
+                      {canViewBju
+                        ? renderSectionCard(
+                            "БЖУ",
+                            "Пищевая ценность",
+                            "БЖУ указываются на 100 г. Калорийность рассчитывается автоматически для 100 г и полного веса блюда.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 4,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Белки"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.protein}
+                                  disabled={!canEditBju}
+                                  onFocus={() => this.clearFieldError("protein")}
+                                  sx={this.getErrorFieldSx("protein")}
+                                  func={this.changeItem.bind(this, "protein")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 4,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Жиры"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.fat}
+                                  disabled={!canEditBju}
+                                  onFocus={() => this.clearFieldError("fat")}
+                                  sx={this.getErrorFieldSx("fat")}
+                                  func={this.changeItem.bind(this, "fat")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 4,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Углеводы"
+                                  type="number"
+                                  onWheel={(e) => e.target.blur()}
+                                  value={this.state.carbohydrates}
+                                  disabled={!canEditBju}
+                                  onFocus={() => this.clearFieldError("carbohydrates")}
+                                  sx={this.getErrorFieldSx("carbohydrates")}
+                                  func={this.changeItem.bind(this, "carbohydrates")}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Калорийность на 100 г, ккал"
+                                  value={this.getCaloriesPer100g()}
+                                  disabled={true}
+                                />
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                <MyTextInput
+                                  label="Калорийность всего блюда, ккал"
+                                  value={this.getCaloriesForDish()}
+                                  disabled={true}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
@@ -2695,70 +2995,55 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Описание",
-                        "Тексты для карточки",
-                        "Соберите текстовую часть блюда: состав, полное описание и короткий анонс для списка.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                            style={hiddenIf(!access?.tmp_desc_edit && !access?.tmp_desc_view)}
-                          >
-                            <MyTextInput
-                              label="Состав"
-                              value={this.state.tmp_desc}
-                              disabled={!access?.tmp_desc_edit}
-                              onFocus={() => this.clearFieldError("tmp_desc")}
-                              sx={this.getErrorFieldSx("tmp_desc")}
-                              func={this.changeItem.bind(this, "tmp_desc")}
-                              multiline={true}
-                              minRows={4}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                            style={hiddenIf(
-                              !access?.marc_desc_full_edit && !access?.marc_desc_full_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Полное описание (в карточке)"
-                              value={this.state.marc_desc_full}
-                              disabled={!access?.marc_desc_full_edit}
-                              onFocus={() => this.clearFieldError("marc_desc_full")}
-                              sx={this.getErrorFieldSx("marc_desc_full")}
-                              func={this.changeItem.bind(this, "marc_desc_full")}
-                              multiline={true}
-                              minRows={4}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                            style={hiddenIf(!access?.marc_desc_edit && !access?.marc_desc_view)}
-                          >
-                            <MyTextInput
-                              label="Короткое описание (в списке)"
-                              value={this.state.marc_desc}
-                              maxLength={20}
-                              disabled={!access?.marc_desc_edit}
-                              onFocus={() => this.clearFieldError("marc_desc")}
-                              sx={this.getErrorFieldSx("marc_desc")}
-                              func={this.changeItem.bind(this, "marc_desc")}
-                              multiline={true}
-                              minRows={3}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewDescription
+                        ? renderSectionCard(
+                            "Описание",
+                            "Тексты для карточки",
+                            "Соберите текстовую часть блюда: состав, полное описание и короткий анонс для списка.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid size={{ xs: 12 }}>
+                                <MyTextInput
+                                  label="Состав"
+                                  value={this.state.tmp_desc}
+                                  disabled={!canEditDescription}
+                                  onFocus={() => this.clearFieldError("tmp_desc")}
+                                  sx={this.getErrorFieldSx("tmp_desc")}
+                                  func={this.changeItem.bind(this, "tmp_desc")}
+                                  multiline={true}
+                                  minRows={4}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12 }}>
+                                <MyTextInput
+                                  label="Полное описание (в карточке)"
+                                  value={this.state.marc_desc_full}
+                                  disabled={!canEditDescription}
+                                  onFocus={() => this.clearFieldError("marc_desc_full")}
+                                  sx={this.getErrorFieldSx("marc_desc_full")}
+                                  func={this.changeItem.bind(this, "marc_desc_full")}
+                                  multiline={true}
+                                  minRows={4}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12 }}>
+                                <MyTextInput
+                                  label="Короткое описание (в списке)"
+                                  value={this.state.marc_desc}
+                                  maxLength={20}
+                                  disabled={!canEditDescription}
+                                  onFocus={() => this.clearFieldError("marc_desc")}
+                                  sx={this.getErrorFieldSx("marc_desc")}
+                                  func={this.changeItem.bind(this, "marc_desc")}
+                                  multiline={true}
+                                  minRows={3}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
@@ -2767,84 +3052,97 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Теги",
-                        "Подборка тегов",
-                        "Теги помогают быстрее находить блюдо и формировать тематические подборки.",
-                        <Grid
-                          container
-                          spacing={2.5}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                            }}
-                          >
-                            <MyAutocomplite
-                              label="Теги"
-                              multiple={true}
-                              unifiedPopup
-                              data={this.state.tags_all}
-                              value={this.state.tags_my}
-                              onFocus={() => this.clearFieldError("tags_my")}
-                              sx={this.getErrorFieldSx("tags_my")}
-                              func={this.changeAutocomplite.bind(this, "tags_my")}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
-                      {renderSectionCard(
-                        "Промо-маркеры",
-                        "Визуальные акценты",
-                        "Настройте ярлыки, которые будут выделять блюдо на витрине и в подборках.",
-                        <Grid
-                          container
-                          spacing={2}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.is_new_edit && !access?.is_new_view)}
-                          >
-                            {renderToggleCard(
-                              "Новинка",
-                              isChecked(this.state.is_new),
-                              this.changeItemChecked.bind(this, "is_new"),
-                              !access?.is_new_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.is_updated_edit && !access?.is_updated_view)}
-                          >
-                            {renderToggleCard(
-                              "Обновлено",
-                              isChecked(this.state.is_updated),
-                              this.changeItemChecked.bind(this, "is_updated"),
-                              !access?.is_updated_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(!access?.is_hit_edit && !access?.is_hit_view)}
-                          >
-                            {renderToggleCard(
-                              "Хит",
-                              isChecked(this.state.is_hit),
-                              this.changeItemChecked.bind(this, "is_hit"),
-                              !access?.is_hit_edit,
-                            )}
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewTags
+                        ? renderSectionCard(
+                            "Теги",
+                            "Подборка тегов",
+                            "Теги помогают быстрее находить блюдо и формировать тематические подборки.",
+                            <Grid
+                              container
+                              spacing={2.5}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                }}
+                              >
+                                <MyAutocomplite
+                                  label="Теги"
+                                  multiple={true}
+                                  unifiedPopup
+                                  data={this.state.tags_all}
+                                  value={this.state.tags_my}
+                                  disabled={!canEditTags}
+                                  func={this.changeAutocomplite.bind(this, "tags_my")}
+                                />
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
+                      {canViewPromoMarkers
+                        ? renderSectionCard(
+                            "Промо-маркеры",
+                            "Визуальные акценты",
+                            "Настройте ярлыки, которые будут выделять блюдо на витрине и в подборках.",
+                            <Grid
+                              container
+                              spacing={2}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 3,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Новинка",
+                                  isChecked(this.state.is_new),
+                                  this.changeItemChecked.bind(this, "is_new"),
+                                  !canEditTags,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 3,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Обновлено",
+                                  isChecked(this.state.is_updated),
+                                  this.changeItemChecked.bind(this, "is_updated"),
+                                  !canEditTags,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 3,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Хит",
+                                  isChecked(this.state.is_hit),
+                                  this.changeItemChecked.bind(this, "is_hit"),
+                                  !canEditTags,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 3,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Острый",
+                                  isChecked(this.state.is_spicy),
+                                  this.changeItemChecked.bind(this, "is_spicy"),
+                                  !canEditTags,
+                                )}
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
@@ -2853,486 +3151,553 @@ export class SiteItemsModalTech extends React.Component {
                     sx={{ p: 0 }}
                   >
                     <Stack spacing={2.5}>
-                      {renderSectionCard(
-                        "Активность",
-                        "Публикация и продажи",
-                        "Определите, где блюдо доступно и должно ли участвовать в сценариях показа и продаж.",
-                        <Grid
-                          container
-                          spacing={2}
-                        >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.is_price_edit && !access?.is_price_view)}
-                          >
-                            {renderToggleCard(
-                              "Установить цену",
-                              isChecked(this.state.is_price),
-                              this.changeItemChecked.bind(this, "is_price"),
-                              !access?.is_price_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.is_show_edit && !access?.is_show_view)}
-                          >
-                            {renderToggleCard(
-                              "Активность",
-                              isChecked(this.state.is_show),
-                              this.changeItemChecked.bind(this, "is_show"),
-                              !access?.is_show_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(!access?.show_site_edit && !access?.show_site_view)}
-                          >
-                            {renderToggleCard(
-                              "На сайте и КЦ",
-                              isChecked(this.state.show_site),
-                              this.changeItemChecked.bind(this, "show_site"),
-                              !access?.show_site_edit,
-                            )}
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            style={hiddenIf(
-                              !access?.show_program_edit && !access?.show_program_view,
-                            )}
-                          >
-                            {renderToggleCard(
-                              "На кассе",
-                              isChecked(this.state.show_program),
-                              this.changeItemChecked.bind(this, "show_program"),
-                              !access?.show_program_edit,
-                            )}
-                          </Grid>
-                        </Grid>,
-                      )}
+                      {canViewActivity
+                        ? renderSectionCard(
+                            "Активность",
+                            "Публикация и продажи",
+                            "Определите, где блюдо доступно и должно ли участвовать в сценариях показа и продаж.",
+                            <Grid
+                              container
+                              spacing={2}
+                            >
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Установить цену",
+                                  isChecked(this.state.is_price),
+                                  this.changeItemChecked.bind(this, "is_price"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "Активность",
+                                  isChecked(this.state.is_show),
+                                  this.changeItemChecked.bind(this, "is_show"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "На сайте и КЦ",
+                                  isChecked(this.state.show_site),
+                                  this.changeItemChecked.bind(this, "show_site"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                              <Grid
+                                size={{
+                                  xs: 12,
+                                  md: 6,
+                                }}
+                              >
+                                {renderToggleCard(
+                                  "На кассе",
+                                  isChecked(this.state.show_program),
+                                  this.changeItemChecked.bind(this, "show_program"),
+                                  !canEditActivity,
+                                )}
+                              </Grid>
+                            </Grid>,
+                          )
+                        : null}
                     </Stack>
                   </TabPanel>
 
                   <TabPanel
                     value="5"
-                    keepMounted={this.state.compositionTabMounted}
                     sx={{ p: 0 }}
                   >
-                    <Stack spacing={2.5}>
+                    {this.state.compositionContentReady ? (
+                      <Stack spacing={2.5}>
+                        {canViewComposition
+                          ? renderSectionCard(
+                              "Тайминги",
+                              "Время по этапам",
+                              "Укажите продолжительность для каждого производственного этапа в формате MM:SS.",
+                              <Grid
+                                container
+                                spacing={2.5}
+                              >
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <MyTextInput
+                                    label="Время на 1 этап MM:SS"
+                                    value={this.state.time_stage_1}
+                                    disabled={!canEditComposition}
+                                    onFocus={() => this.clearFieldError("time_stage_1")}
+                                    sx={this.getErrorFieldSx("time_stage_1")}
+                                    isTimeMask={true}
+                                    placeholder="MM:SS"
+                                    func={this.changeItem.bind(this, "time_stage_1")}
+                                  />
+                                </Grid>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <MyTextInput
+                                    label="Время на 2 этап MM:SS"
+                                    value={this.state.time_stage_2}
+                                    disabled={!canEditComposition}
+                                    onFocus={() => this.clearFieldError("time_stage_2")}
+                                    sx={this.getErrorFieldSx("time_stage_2")}
+                                    isTimeMask={true}
+                                    placeholder="MM:SS"
+                                    func={this.changeItem.bind(this, "time_stage_2")}
+                                  />
+                                </Grid>
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <MyTextInput
+                                    label="Время на 3 этап MM:SS"
+                                    value={this.state.time_stage_3}
+                                    disabled={!canEditComposition}
+                                    onFocus={() => this.clearFieldError("time_stage_3")}
+                                    sx={this.getErrorFieldSx("time_stage_3")}
+                                    isTimeMask={true}
+                                    placeholder="MM:SS"
+                                    func={this.changeItem.bind(this, "time_stage_3")}
+                                  />
+                                </Grid>
+                              </Grid>,
+                            )
+                          : null}
+
+                        {canViewComposition
+                          ? renderSectionCard(
+                              "Заготовки",
+                              "Состав технологической карты",
+                              "Добавляйте заготовки, управляйте потерями и перемещайте их по этапам.",
+                              <Box sx={tableWrapperSx}>
+                                <Table sx={tableSx}>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell sx={tableHeaderCellSx}>Номенклатура</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Ед. изм.</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Этап</TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={tableHeaderCellSx}
+                                      />
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {renderPreparationRows("stage_1", "1 этап")}
+                                    {renderPreparationRows("stage_2", "2 этап")}
+                                    {renderPreparationRows("stage_3", "3 этап")}
+                                    {renderPreparationRows("not_stage", "Без этапа")}
+                                    <TableRow>
+                                      <TableCell>
+                                        <MyAutocomplite
+                                          multiple={false}
+                                          disableNoSsr
+                                          unifiedPopup
+                                          data={this.getCompositionAutocompleteOptions(
+                                            "preparation-new",
+                                            null,
+                                            this.state.items_stage?.all,
+                                          )}
+                                          filterOptions={filterCompositionOptions}
+                                          disabledItemsFocusable={true}
+                                          value={null}
+                                          optionKey="un_id"
+                                          blurOnSelect={true}
+                                          autoFocus={false}
+                                          onFocus={this.activateCompositionAutocomplete.bind(
+                                            this,
+                                            "preparation-new",
+                                          )}
+                                          func={this.chooseItem.bind(this, "stages")}
+                                        />
+                                      </TableCell>
+                                      <TableCell colSpan={8} />
+                                    </TableRow>
+                                    <TableRow sx={tableTotalRowSx}>
+                                      <TableCell colSpan={2}>
+                                        <Typography
+                                          sx={{
+                                            color: textPrimary,
+                                            fontWeight: 700,
+                                          }}
+                                        >
+                                          Итого по заготовкам
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_brutto_p}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_netto_p}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_p}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell colSpan={2} />
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                              </Box>,
+                              {},
+                              {
+                                px: {
+                                  xs: 1.25,
+                                  md: 1.5,
+                                },
+                                py: {
+                                  xs: 1.5,
+                                  md: 1.75,
+                                },
+                              },
+                            )
+                          : null}
+
+                        {canViewComposition
+                          ? renderSectionCard(
+                              "Позиции",
+                              "Финальные товары",
+                              "Управляйте позициями, которые формируют итоговый состав блюда.",
+                              <Box sx={tableWrapperSx}>
+                                <Table sx={positionTableSx}>
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell sx={tableHeaderCellSx}>Позиция</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
+                                      <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={tableHeaderCellSx}
+                                      />
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {renderItemRows()}
+                                    <TableRow>
+                                      <TableCell>
+                                        <MyAutocomplite
+                                          multiple={false}
+                                          disableNoSsr
+                                          unifiedPopup
+                                          data={this.getCompositionAutocompleteOptions(
+                                            "item-new",
+                                            null,
+                                            this.state.item_items?.all_items,
+                                          )}
+                                          filterOptions={filterCompositionOptions}
+                                          disabledItemsFocusable={true}
+                                          value={null}
+                                          blurOnSelect={true}
+                                          autoFocus={false}
+                                          onFocus={this.activateCompositionAutocomplete.bind(
+                                            this,
+                                            "item-new",
+                                          )}
+                                          func={this.chooseItem.bind(this, "items")}
+                                        />
+                                      </TableCell>
+                                      <TableCell colSpan={6} />
+                                    </TableRow>
+                                    <TableRow sx={tableTotalRowSx}>
+                                      <TableCell>
+                                        <Typography
+                                          sx={{
+                                            color: textPrimary,
+                                            fontWeight: 700,
+                                          }}
+                                        >
+                                          Итого по позициям
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_brutto}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w_netto}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                      <TableCell>
+                                        <MyTextInput
+                                          value={this.state.all_w}
+                                          isDecimalMask
+                                          disabled={true}
+                                          className="disabled_input"
+                                        />
+                                      </TableCell>
+                                      <TableCell />
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                              </Box>,
+                              {},
+                              {
+                                px: {
+                                  xs: 1.25,
+                                  md: 1.5,
+                                },
+                                py: {
+                                  xs: 1.5,
+                                  md: 1.75,
+                                },
+                              },
+                            )
+                          : null}
+                      </Stack>
+                    ) : (
+                      <Stack
+                        spacing={1.5}
+                        sx={{
+                          alignItems: "center",
+                          justifyContent: "center",
+                          minHeight: 240,
+                          color: textSecondary,
+                        }}
+                      >
+                        <CircularProgress
+                          size={28}
+                          sx={{ color: brandRed }}
+                        />
+                        <Typography>Загружаем состав…</Typography>
+                      </Stack>
+                    )}
+                  </TabPanel>
+
+                  {canViewDropzone ? (
+                    <Box
+                      sx={{
+                        display: this.state.activeTab === "0" ? "block" : "none",
+                        mt: this.state.activeTab === "0" ? 2.5 : 0,
+                      }}
+                    >
                       {renderSectionCard(
-                        "Тайминги",
-                        "Время по этапам",
-                        "Укажите продолжительность для каждого производственного этапа в формате MM:SS.",
+                        "Изображение",
+                        "Фото для карточки",
+                        "Нужен квадратный исходник 1:1, например 2000x2000. Загружаем только JPG.",
                         <Grid
                           container
                           spacing={2.5}
+                          sx={{
+                            alignItems: "flex-start",
+                          }}
                         >
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(
-                              !access?.time_stage_1_edit && !access?.time_stage_1_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Время на 1 этап MM:SS"
-                              value={this.state.time_stage_1}
-                              disabled={!access?.time_stage_1_edit}
-                              onFocus={() => this.clearFieldError("time_stage_1")}
-                              sx={this.getErrorFieldSx("time_stage_1")}
-                              isTimeMask={true}
-                              placeholder="MM:SS"
-                              func={this.changeItem.bind(this, "time_stage_1")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(
-                              !access?.time_stage_2_edit && !access?.time_stage_2_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Время на 2 этап MM:SS"
-                              value={this.state.time_stage_2}
-                              disabled={!access?.time_stage_2_edit}
-                              onFocus={() => this.clearFieldError("time_stage_2")}
-                              sx={this.getErrorFieldSx("time_stage_2")}
-                              isTimeMask={true}
-                              placeholder="MM:SS"
-                              func={this.changeItem.bind(this, "time_stage_2")}
-                            />
-                          </Grid>
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 4,
-                            }}
-                            style={hiddenIf(
-                              !access?.time_stage_3_edit && !access?.time_stage_3_view,
-                            )}
-                          >
-                            <MyTextInput
-                              label="Время на 3 этап MM:SS"
-                              value={this.state.time_stage_3}
-                              disabled={!access?.time_stage_3_edit}
-                              onFocus={() => this.clearFieldError("time_stage_3")}
-                              sx={this.getErrorFieldSx("time_stage_3")}
-                              isTimeMask={true}
-                              placeholder="MM:SS"
-                              func={this.changeItem.bind(this, "time_stage_3")}
-                            />
-                          </Grid>
-                        </Grid>,
-                      )}
-
-                      {renderSectionCard(
-                        "Заготовки",
-                        "Состав технологической карты",
-                        "Добавляйте заготовки, управляйте потерями и перемещайте их по этапам.",
-                        <Box
-                          sx={tableWrapperSx}
-                          style={hiddenIf(!access?.stage_edit && !access?.stage_view)}
-                        >
-                          <Table sx={tableSx}>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell sx={tableHeaderCellSx}>Номенклатура</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Ед. изм.</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Этап</TableCell>
-                                <TableCell
-                                  align="center"
-                                  sx={tableHeaderCellSx}
-                                />
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {renderPreparationRows("stage_1", "1 этап")}
-                              {renderPreparationRows("stage_2", "2 этап")}
-                              {renderPreparationRows("stage_3", "3 этап")}
-                              {renderPreparationRows("not_stage", "Без этапа")}
-                              <TableRow>
-                                <TableCell>
-                                  <MyAutocomplite
-                                    multiple={false}
-                                    disableNoSsr
-                                    unifiedPopup
-                                    data={this.state.items_stage?.all ?? []}
-                                    disabledItemsFocusable={true}
-                                    value={null}
-                                    optionKey="un_id"
-                                    blurOnSelect={true}
-                                    autoFocus={false}
-                                    func={this.chooseItem.bind(this, "stages")}
-                                  />
-                                </TableCell>
-                                <TableCell colSpan={8} />
-                              </TableRow>
-                              <TableRow sx={tableTotalRowSx}>
-                                <TableCell colSpan={2}>
-                                  <Typography
+                          {this.state.img_app.length > 0 ? (
+                            <Grid
+                              size={{
+                                xs: 12,
+                                md: "auto",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 180,
+                                  maxWidth: "100%",
+                                  borderRadius: 3,
+                                  overflow: "hidden",
+                                  border: `1px solid ${blockBorder}`,
+                                  backgroundColor: blockBackground,
+                                }}
+                              >
+                                {this.state.imagePreviewReady ? (
+                                  <picture>
+                                    <source
+                                      type="image/webp"
+                                      srcSet={`https://mainimg.jacofood.ru/${this.state.img_app}_366x366.webp 138w,
+                                      https://mainimg.jacofood.ru/${this.state.img_app}_466x466.webp 146w,
+                                      https://mainimg.jacofood.ru/${this.state.img_app}_585x585.webp 180w`}
+                                      sizes="180px"
+                                    />
+                                    <source
+                                      type="image/jpeg"
+                                      srcSet={`https://mainimg.jacofood.ru/${this.state.img_app}_366x366.jpg 138w,
+                                      https://mainimg.jacofood.ru/${this.state.img_app}_466x466.jpg 146w,
+                                      https://mainimg.jacofood.ru/${this.state.img_app}_585x585.jpg 180w`}
+                                      sizes="180px"
+                                    />
+                                    <img
+                                      src={`https://mainimg.jacofood.ru/${this.state.img_app}_292x292.jpg`}
+                                      alt={this.state.name || "Изображение"}
+                                      loading="lazy"
+                                      decoding="async"
+                                      fetchPriority="low"
+                                      width="180"
+                                      height="180"
+                                      style={{
+                                        width: 180,
+                                        maxWidth: "100%",
+                                        height: "auto",
+                                        display: "block",
+                                        objectFit: "cover",
+                                      }}
+                                    />
+                                  </picture>
+                                ) : (
+                                  <Stack
                                     sx={{
-                                      color: textPrimary,
-                                      fontWeight: 700,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      width: 180,
+                                      maxWidth: "100%",
+                                      aspectRatio: "1 / 1",
+                                      color: textSecondary,
                                     }}
                                   >
-                                    Итого по заготовкам
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <MyTextInput
-                                    value={this.state.all_w_brutto_p}
-                                    isDecimalMask
-                                    disabled={true}
-                                    className="disabled_input"
-                                  />
-                                </TableCell>
-                                <TableCell />
-                                <TableCell>
-                                  <MyTextInput
-                                    value={this.state.all_w_netto_p}
-                                    isDecimalMask
-                                    disabled={true}
-                                    className="disabled_input"
-                                  />
-                                </TableCell>
-                                <TableCell />
-                                <TableCell>
-                                  <MyTextInput
-                                    value={this.state.all_w_p}
-                                    isDecimalMask
-                                    disabled={true}
-                                    className="disabled_input"
-                                  />
-                                </TableCell>
-                                <TableCell colSpan={2} />
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </Box>,
-                        {},
-                        {
-                          px: {
-                            xs: 1.25,
-                            md: 1.5,
-                          },
-                          py: {
-                            xs: 1.5,
-                            md: 1.75,
-                          },
-                        },
-                      )}
-
-                      {renderSectionCard(
-                        "Позиции",
-                        "Финальные товары",
-                        "Управляйте позициями, которые формируют итоговый состав блюда.",
-                        <Box
-                          sx={tableWrapperSx}
-                          style={hiddenIf(!access?.items_edit && !access?.items_view)}
-                        >
-                          <Table sx={positionTableSx}>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell sx={tableHeaderCellSx}>Позиция</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Брутто</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>% потери при ХО</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Нетто</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>% потери при ГО</TableCell>
-                                <TableCell sx={tableHeaderCellSx}>Выход</TableCell>
-                                <TableCell
-                                  align="center"
-                                  sx={tableHeaderCellSx}
-                                />
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {renderItemRows()}
-                              <TableRow>
-                                <TableCell>
-                                  <MyAutocomplite
-                                    multiple={false}
-                                    disableNoSsr
-                                    unifiedPopup
-                                    data={this.state.item_items?.all_items ?? []}
-                                    disabledItemsFocusable={true}
-                                    value={null}
-                                    blurOnSelect={true}
-                                    autoFocus={false}
-                                    func={this.chooseItem.bind(this, "items")}
-                                  />
-                                </TableCell>
-                                <TableCell colSpan={6} />
-                              </TableRow>
-                              <TableRow sx={tableTotalRowSx}>
-                                <TableCell>
-                                  <Typography
-                                    sx={{
-                                      color: textPrimary,
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    Итого по позициям
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <MyTextInput
-                                    value={this.state.all_w_brutto}
-                                    isDecimalMask
-                                    disabled={true}
-                                    className="disabled_input"
-                                  />
-                                </TableCell>
-                                <TableCell />
-                                <TableCell>
-                                  <MyTextInput
-                                    value={this.state.all_w_netto}
-                                    isDecimalMask
-                                    disabled={true}
-                                    className="disabled_input"
-                                  />
-                                </TableCell>
-                                <TableCell />
-                                <TableCell>
-                                  <MyTextInput
-                                    value={this.state.all_w}
-                                    isDecimalMask
-                                    disabled={true}
-                                    className="disabled_input"
-                                  />
-                                </TableCell>
-                                <TableCell />
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </Box>,
-                        {},
-                        {
-                          px: {
-                            xs: 1.25,
-                            md: 1.5,
-                          },
-                          py: {
-                            xs: 1.5,
-                            md: 1.75,
-                          },
-                        },
-                      )}
-                    </Stack>
-                  </TabPanel>
-
-                  <Box
-                    sx={{
-                      display: this.state.activeTab === "0" ? "block" : "none",
-                      mt: this.state.activeTab === "0" ? 2.5 : 0,
-                    }}
-                  >
-                    {renderSectionCard(
-                      "Изображение",
-                      "Фото для карточки",
-                      "Нужен квадратный исходник 1:1, например 2000x2000. Загружаем только JPG.",
-                      <Grid
-                        container
-                        spacing={2.5}
-                        alignItems="flex-start"
-                      >
-                        {this.state.img_app.length > 0 ? (
+                                    <Typography>Загружаем изображение…</Typography>
+                                  </Stack>
+                                )}
+                              </Box>
+                            </Grid>
+                          ) : null}
                           <Grid
                             size={{
                               xs: 12,
-                              xl: 6,
+                              md: this.state.img_app.length > 0 ? 8 : 12,
                             }}
                           >
                             <Box
                               sx={{
+                                position: "relative",
                                 borderRadius: 3,
+                                border: `1px dashed ${blockBorder}`,
+                                backgroundColor: access?.dropzone_edit
+                                  ? "#FFFFFF"
+                                  : blockBackground,
                                 overflow: "hidden",
-                                border: `1px solid ${blockBorder}`,
-                                backgroundColor: blockBackground,
+                                "& .dz-message": {
+                                  display: "none",
+                                },
+                                "& .dz-preview": {
+                                  margin: 1.5,
+                                },
+                                ...(!access?.dropzone_edit
+                                  ? {
+                                      opacity: 0.75,
+                                    }
+                                  : {}),
                               }}
                             >
-                              <img
-                                src={`https://storage.yandexcloud.net/site-img/${this.state?.img_app.toLowerCase()}site_items_2000x2000.jpg`}
-                                alt="Изображение"
+                              {!this.state.hasDropzoneFile ? (
+                                <Stack
+                                  spacing={0.75}
+                                  sx={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    px: 3,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    textAlign: "center",
+                                    pointerEvents: "none",
+                                    zIndex: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: textPrimary,
+                                      fontWeight: 700,
+                                      fontSize: {
+                                        xs: 18,
+                                        md: 20,
+                                      },
+                                      lineHeight: 1.2,
+                                    }}
+                                  >
+                                    Перетащите изображение сюда
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      maxWidth: 420,
+                                      color: textSecondary,
+                                      fontSize: 15,
+                                      lineHeight: 1.45,
+                                    }}
+                                  >
+                                    Или нажмите на область загрузки, чтобы выбрать JPG или PNG с
+                                    компьютера.
+                                  </Typography>
+                                </Stack>
+                              ) : null}
+                              <div
+                                className="dropzone"
+                                id="for_img_edit_new"
+                                ref={this.dropzoneRef}
                                 style={{
                                   width: "100%",
-                                  height: "auto",
-                                  display: "block",
-                                  objectFit: "cover",
+                                  minHeight: 220,
+                                  position: "relative",
+                                  zIndex: 2,
+                                  ...(!access?.dropzone_edit
+                                    ? {
+                                        pointerEvents: "none",
+                                        cursor: "not-allowed",
+                                        filter: "grayscale(50%)",
+                                      }
+                                    : {}),
                                 }}
                               />
                             </Box>
                           </Grid>
-                        ) : null}
-                        <Grid
-                          size={{
-                            xs: 12,
-                            xl: this.state.img_app.length > 0 ? 6 : 12,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              position: "relative",
-                              borderRadius: 3,
-                              border: `1px dashed ${blockBorder}`,
-                              backgroundColor: access?.dropzone_edit ? "#FFFFFF" : blockBackground,
-                              overflow: "hidden",
-                              "& .dz-message": {
-                                display: "none",
-                              },
-                              "& .dz-preview": {
-                                margin: 1.5,
-                              },
-                              ...(!access?.dropzone_edit
-                                ? {
-                                    opacity: 0.75,
-                                  }
-                                : {}),
-                            }}
-                          >
-                            {!this.state.hasDropzoneFile ? (
-                              <Stack
-                                spacing={0.75}
-                                sx={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  px: 3,
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  textAlign: "center",
-                                  pointerEvents: "none",
-                                  zIndex: 1,
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    color: textPrimary,
-                                    fontWeight: 700,
-                                    fontSize: {
-                                      xs: 18,
-                                      md: 20,
-                                    },
-                                    lineHeight: 1.2,
-                                  }}
-                                >
-                                  Перетащите изображение сюда
-                                </Typography>
-                                <Typography
-                                  sx={{
-                                    maxWidth: 420,
-                                    color: textSecondary,
-                                    fontSize: 15,
-                                    lineHeight: 1.45,
-                                  }}
-                                >
-                                  Или нажмите на область загрузки, чтобы выбрать JPG или PNG с
-                                  компьютера.
-                                </Typography>
-                              </Stack>
-                            ) : null}
-                            <div
-                              className="dropzone"
-                              id="for_img_edit_new"
-                              ref={this.dropzoneRef}
-                              style={{
-                                width: "100%",
-                                minHeight: 220,
-                                position: "relative",
-                                zIndex: 2,
-                                ...(!access?.dropzone_edit
-                                  ? {
-                                      pointerEvents: "none",
-                                      cursor: "not-allowed",
-                                      filter: "grayscale(50%)",
-                                    }
-                                  : {}),
-                              }}
-                            />
-                          </Box>
-                        </Grid>
-                      </Grid>,
-                    )}
-                  </Box>
+                        </Grid>,
+                      )}
+                    </Box>
+                  ) : null}
                 </Box>
               </Box>
             </TabContext>
@@ -3354,6 +3719,7 @@ export class SiteItemsModalTech extends React.Component {
           >
             <Button
               onClick={this.onClose.bind(this)}
+              disabled={this.state.isSaving}
               sx={{
                 minHeight: 44,
                 px: 2,
@@ -3373,7 +3739,7 @@ export class SiteItemsModalTech extends React.Component {
             <Button
               variant="contained"
               onClick={this.save.bind(this)}
-              disabled={!canSave}
+              disabled={!canSave || this.state.isSaving}
               sx={{
                 minHeight: 44,
                 px: 2.5,

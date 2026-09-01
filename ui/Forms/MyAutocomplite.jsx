@@ -311,6 +311,7 @@ export function MyAutocomplite(props) {
         disabled={props.disabled || props.disabled === true ? true : false}
         id={props.id ?? null}
         options={props.data ?? []}
+        filterOptions={props.filterOptions}
         getOptionLabel={(option) => option?.name || ""}
         disableClearable={props.disableClearable}
         getOptionKey={resolveOptionKey}
@@ -376,14 +377,18 @@ export function MyAutocomplite(props) {
         renderOption={
           props.renderOption
             ? props.renderOption
-            : (params, option) => (
-                <li
-                  {...params}
-                  key={props.optionKey ? option[`${props.optionKey}`] : resolveOptionKey(option)}
-                >
-                  {option.name}
-                </li>
-              )
+            : (params, option) => {
+                const { key, ...optionProps } = params;
+
+                return (
+                  <li
+                    {...optionProps}
+                    key={key ?? resolveOptionKey(option)}
+                  >
+                    {option.name}
+                  </li>
+                );
+              }
         }
       />
     </Stack>

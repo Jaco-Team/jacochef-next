@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
@@ -16,6 +16,14 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import { styled } from "@mui/material/styles";
 import { api_laravel_local, api_laravel } from "@/src/api_new";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
@@ -23,10 +31,62 @@ import dayjs from "dayjs";
 import { MyAutocomplite, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
+import handleUserAccess from "@/src/helpers/access/handleUserAccess";
+import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
+import AiAnalystTab, { AI_ANALYST_SOURCES } from "@/components/end_analytics/AiAnalystTab";
+import {
+  DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
+  END_ANALYTICS_COLUMNS,
+  END_ANALYTICS_COLUMNS_STORAGE_KEY,
+} from "@/components/end_analytics/endAnalyticsColumns";
 
 const PRIMARY_COLOR = "#cc0033";
 const BACKGROUND_COLOR = "#f5f5f5";
+const END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY = "end_analytics_active_chat_thread_id";
+const EMPTY_CUSTOM_COST_OPTIONS = {
+  src_source: [],
+  src_medium: [],
+  src_campaign: [],
+  src_term: [],
+  src_content: [],
+};
+
+const createEmptyCustomCostForm = () => ({
+  id: null,
+  city_id: 0,
+  date: dayjs().format("YYYY-MM-DD"),
+  src_source: "",
+  src_medium: "",
+  src_campaign: "",
+  src_term: "",
+  src_content: "",
+  cost: "",
+  comment: "",
+});
+
+function UtmFreeSoloAutocomplete({ label, value, options, onChange }) {
+  return (
+    <Autocomplete
+      freeSolo
+      size="small"
+      options={options || []}
+      value={value || null}
+      onChange={(_, nextValue) => onChange(nextValue || "")}
+      onInputChange={(_, nextValue, reason) => {
+        if (reason !== "reset") onChange(nextValue);
+      }}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={label}
+          fullWidth
+        />
+      )}
+    />
+  );
+}
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -82,12 +142,17 @@ const StyledToggleButton = styled(ToggleButton)(({ theme, selected }) => ({
   },
 }));
 
-const StyledTableCell = styled(TableCell)(({ theme, isHeader, isTotal }) => ({
+const StyledTableCell = styled(TableCell, {
+  shouldForwardProp: (prop) => !["isHeader", "isTotal", "noWrap"].includes(prop),
+})(({ theme, isHeader, isTotal, noWrap }) => ({
   fontWeight: isHeader ? 600 : isTotal ? 700 : 400,
   backgroundColor: isHeader ? PRIMARY_COLOR : isTotal ? "#fafafa" : "transparent",
   color: isHeader ? "white" : "inherit",
   borderBottom: isTotal ? "2px solid #e0e0e0" : "1px solid #f0f0f0",
   padding: "12px 16px",
+  ...(noWrap && {
+    whiteSpace: "nowrap",
+  }),
   ...(!isHeader && {
     "&:first-of-type": {
       position: "sticky",
@@ -113,7 +178,9 @@ const StyledTableCell = styled(TableCell)(({ theme, isHeader, isTotal }) => ({
   }),
 }));
 
-const StyledTableRow = styled(TableRow)(({ theme, isTotal, isGrandTotal }) => ({
+const StyledTableRow = styled(TableRow, {
+  shouldForwardProp: (prop) => !["isTotal", "isGrandTotal"].includes(prop),
+})(({ theme, isTotal, isGrandTotal }) => ({
   backgroundColor: isGrandTotal ? "#f5f5f5" : isTotal ? "#fafafa" : "transparent",
   "&:hover": {
     backgroundColor: isTotal || isGrandTotal ? "inherit" : "#f9f9f9",
@@ -123,20 +190,329 @@ const StyledTableRow = styled(TableRow)(({ theme, isTotal, isGrandTotal }) => ({
   },
 }));
 
-const StickyTableContainer = styled(Box)(({ theme }) => ({
+const StickyTableContainer = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "tableMinWidth",
+})(({ tableMinWidth }) => ({
   position: "relative",
   overflowX: "auto",
   width: "100%",
   "& .MuiTable-root": {
-    minWidth: 1600,
+    minWidth: tableMinWidth,
   },
 }));
+
+const ADDITIVE_METRIC_FIELDS = [
+  "visits",
+  "cost",
+  "orders",
+  "revenue",
+  "newClients",
+  "existingClients",
+  "primaryOrders",
+  "repeatOrders",
+];
+const DERIVED_METRIC_FIELDS = ["conversion", "costPerOrder", "averageCheck", "roi", "drr", "ltv"];
+
+const parseMetric = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const buildTrafficSourceMetrics = (apiData) => {
+  const totals = new Map();
+  const addSource = (name, value) => {
+    const sourceName = String(name || "not_set");
+    totals.set(sourceName, (totals.get(sourceName) || 0) + parseMetric(value));
+  };
+
+  if (apiData?.site_data && typeof apiData.site_data === "object") {
+    Object.entries(apiData.site_data).forEach(([key, item]) => {
+      if (item?.level === "src_source") {
+        addSource(item.name || key, item.cost);
+      }
+    });
+  }
+
+  if (
+    totals.size === 0 &&
+    apiData?.site_data_by_category &&
+    typeof apiData.site_data_by_category === "object"
+  ) {
+    const collectNormalizedSources = (nodes) => {
+      (Array.isArray(nodes) ? nodes : Object.values(nodes || {})).forEach((node) => {
+        if (node?.level === "normalized_source") {
+          addSource(node.name || node.value || node.normalized_source, node.cost);
+          return;
+        }
+        if (node?.children) {
+          collectNormalizedSources(node.children);
+        }
+      });
+    };
+
+    collectNormalizedSources(apiData.site_data_by_category);
+  }
+
+  return Array.from(totals, ([name, value]) => ({ name, value })).filter((item) => item.value > 0);
+};
+
+const parseMaybeJson = (value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch (_) {
+    return value;
+  }
+};
+
+const normalizeAiSiteDataSnapshot = (payload) => {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return payload;
+  }
+
+  const normalized = { ...payload };
+  [
+    "ai_analysis",
+    "site_data",
+    "site_data_by_category",
+    "site_totals",
+    "daily_metrics",
+    "analytics_meta",
+    "request_payload",
+    "ai_chat",
+    "ai_chat_threads",
+    "data_availability",
+  ].forEach((field) => {
+    if (field in normalized) {
+      normalized[field] = parseMaybeJson(normalized[field]);
+    }
+  });
+
+  if (
+    normalized.daily_metrics &&
+    typeof normalized.daily_metrics === "object" &&
+    !Array.isArray(normalized.daily_metrics) &&
+    "items" in normalized.daily_metrics
+  ) {
+    normalized.daily_metrics = {
+      ...normalized.daily_metrics,
+      items: parseMaybeJson(normalized.daily_metrics.items),
+    };
+  }
+
+  return normalized;
+};
+
+const calculateRoi = (revenue, cost) => {
+  const totalRevenue = parseMetric(revenue);
+  const totalCost = parseMetric(cost);
+  return totalCost > 0 ? ((totalRevenue - totalCost) / totalCost) * 100 : 0;
+};
+
+const hasMetricValue = (item, field) =>
+  item[field] !== null && item[field] !== undefined && item[field] !== "";
+
+const pickDerivedMetrics = (item) =>
+  DERIVED_METRIC_FIELDS.reduce((acc, field) => {
+    if (hasMetricValue(item, field)) {
+      acc[field] = parseMetric(item[field]);
+    }
+    return acc;
+  }, {});
+
+const pickOptionalMetrics = (item) => ({
+  clicks: item.clicks ?? null,
+  clicksAvailable: Boolean(item.clicksAvailable),
+});
+
+const applyOptionalAggregates = (item, rows) => {
+  const sourceRows = rows || [];
+
+  item.clicksAvailable =
+    sourceRows.length > 0 && sourceRows.every((row) => Boolean(row.clicksAvailable));
+  item.clicks = item.clicksAvailable
+    ? sourceRows.reduce((sum, row) => sum + parseMetric(row.clicks), 0)
+    : null;
+
+  return item;
+};
+
+const applyAggregatedRoi = (item, rows) => {
+  let roiRevenue = 0;
+  let roiCost = 0;
+
+  (rows || []).forEach((row) => {
+    roiRevenue += parseMetric(row.revenue);
+    roiCost += parseMetric(row.cost);
+  });
+
+  item.roiRevenue = roiRevenue;
+  item.roiCost = roiCost;
+  item.roi = calculateRoi(roiRevenue, roiCost);
+
+  return item;
+};
+
+const applyDerivedMetrics = (item) => {
+  const visits = parseMetric(item.visits);
+  const cost = parseMetric(item.cost);
+  const orders = parseMetric(item.orders);
+  const revenue = parseMetric(item.revenue);
+
+  item.visits = visits;
+  item.cost = cost;
+  item.orders = orders;
+  item.revenue = revenue;
+  item.newClients = parseMetric(item.newClients);
+  item.existingClients = parseMetric(item.existingClients);
+  item.primaryOrders = parseMetric(item.primaryOrders);
+  item.repeatOrders = parseMetric(item.repeatOrders);
+
+  item.conversion = hasMetricValue(item, "conversion")
+    ? parseMetric(item.conversion)
+    : visits > 0
+      ? (orders / visits) * 100
+      : 0;
+  item.costPerOrder = hasMetricValue(item, "costPerOrder")
+    ? parseMetric(item.costPerOrder)
+    : orders > 0
+      ? cost / orders
+      : 0;
+  item.averageCheck = hasMetricValue(item, "averageCheck")
+    ? parseMetric(item.averageCheck)
+    : orders > 0
+      ? revenue / orders
+      : 0;
+  item.roi = hasMetricValue(item, "roi") ? parseMetric(item.roi) : calculateRoi(revenue, cost);
+  item.roiRevenue = cost > 0 ? revenue : 0;
+  item.roiCost = cost > 0 ? cost : 0;
+  item.drr = hasMetricValue(item, "drr")
+    ? parseMetric(item.drr)
+    : revenue > 0
+      ? (cost / revenue) * 100
+      : 0;
+  const customers = item.newClients + item.existingClients;
+  item.ltv = hasMetricValue(item, "ltv")
+    ? parseMetric(item.ltv)
+    : customers > 0
+      ? revenue / customers
+      : 0;
+
+  item.clicksAvailable = Boolean(item.clicksAvailable);
+  item.clicks = item.clicksAvailable ? parseMetric(item.clicks) : null;
+
+  return item;
+};
+
+const aggregateTotalRow = (item, rows) => {
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    item[field] = 0;
+  });
+
+  (rows || []).forEach((row) => {
+    ADDITIVE_METRIC_FIELDS.forEach((field) => {
+      item[field] += parseMetric(row[field]);
+    });
+  });
+
+  item.details = rows || [];
+  applyOptionalAggregates(item, rows);
+  applyDerivedMetrics(item);
+  return applyAggregatedRoi(item, rows);
+};
+
+const applyServerTotals = (item, totals) => {
+  if (!totals || typeof totals !== "object" || Array.isArray(totals)) {
+    return item;
+  }
+
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    if (hasMetricValue(totals, field)) {
+      item[field] = parseMetric(totals[field]);
+    }
+  });
+  DERIVED_METRIC_FIELDS.forEach((field) => {
+    if (hasMetricValue(totals, field)) {
+      item[field] = parseMetric(totals[field]);
+    }
+  });
+
+  item.uniqueClients = parseMetric(totals.uniqueClients);
+  item.clicksAvailable = Boolean(totals.clicksAvailable);
+  item.clicks = item.clicksAvailable ? parseMetric(totals.clicks) : null;
+  item.roiRevenue = parseMetric(item.revenue);
+  item.roiCost = parseMetric(item.cost);
+
+  return applyDerivedMetrics(item);
+};
+
+const applyTotalMetricsFromRows = (item, rows) => {
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    item[field] = 0;
+  });
+
+  (rows || []).forEach((row) => {
+    ADDITIVE_METRIC_FIELDS.forEach((field) => {
+      item[field] += parseMetric(row[field]);
+    });
+  });
+
+  applyOptionalAggregates(item, rows);
+  applyDerivedMetrics(item);
+  return applyAggregatedRoi(item, rows);
+};
+
+const rollupMetricsFromChildren = (item) => {
+  const childKey =
+    item.children?.length > 0 ? "children" : item.details?.length > 0 ? "details" : null;
+
+  if (childKey) {
+    item[childKey] = item[childKey].map(rollupMetricsFromChildren);
+
+    if (!item.useServerMetrics) {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        item[field] = 0;
+      });
+
+      item[childKey].forEach((child) => {
+        ADDITIVE_METRIC_FIELDS.forEach((field) => {
+          item[field] += parseMetric(child[field]);
+        });
+      });
+      applyOptionalAggregates(item, item[childKey]);
+    } else {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        item[field] = parseMetric(item[field]);
+      });
+    }
+
+    applyDerivedMetrics(item);
+    return item.useServerMetrics ? item : applyAggregatedRoi(item, item[childKey]);
+  }
+
+  ADDITIVE_METRIC_FIELDS.forEach((field) => {
+    item[field] = parseMetric(item[field]);
+  });
+
+  return applyDerivedMetrics(item);
+};
 
 function EndPage() {
   const standardForm = {
     points: [],
     dateStart: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
-    dateEnd: dayjs(new Date()).format("YYYY-MM-DD"),
+    dateEnd: dayjs(new Date()).subtract(1, "day").format("YYYY-MM-DD"),
     cities: {},
     src_source: "",
     src_medium: "",
@@ -153,23 +529,145 @@ function EndPage() {
   };
   const [isLoad, setIsLoad] = useState(false);
   const [module, setModule] = useState({});
+  const [access, setAccess] = useState(null);
   const [cities, setCities] = useState([]);
   const [form, setForm] = useState(standardForm);
   const [tableData, setTableData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [lastUpdate, setLastUpdate] = useState("");
+  const [analyticsMeta, setAnalyticsMeta] = useState(null);
   const [openAlert, setOpenAlert] = useState(false);
   const [errStatus, setErrStatus] = useState(false);
   const [errText, setErrText] = useState("");
+  const [customCostDialogOpen, setCustomCostDialogOpen] = useState(false);
+  const [customCosts, setCustomCosts] = useState([]);
+  const [customCostOptions, setCustomCostOptions] = useState(EMPTY_CUSTOM_COST_OPTIONS);
+  const [customCostForm, setCustomCostForm] = useState(createEmptyCustomCostForm);
+  const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
+  const [activeTab, setActiveTab] = useState(false);
+  const [aiSource, setAiSource] = useState(null);
+  const [aiModels, setAiModels] = useState([
+    { id: "auto", name: "Автоматически", description: "Модель выбирается сервером" },
+  ]);
+  const [aiModel, setAiModel] = useState({
+    id: "auto",
+    name: "Автоматически",
+    description: "Модель выбирается сервером",
+  });
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [siteDataRequestId, setSiteDataRequestId] = useState(null);
+  const [dailyMetrics, setDailyMetrics] = useState([]);
+  const [trafficSourceMetrics, setTrafficSourceMetrics] = useState([]);
+  const [siteDataHistory, setSiteDataHistory] = useState([]);
+  const [historyChatMessages, setHistoryChatMessages] = useState(null);
+  const [aiChatThreads, setAiChatThreads] = useState([]);
+  const [activeChatThreadId, setActiveChatThreadId] = useState(null);
+  const activeChatThreadIdRef = useRef(null);
+  const chatPollInFlightRef = useRef(false);
+  const [aiSiteDataSnapshot, setAiSiteDataSnapshot] = useState(null);
+  const accessApi = handleUserAccess(access || {});
+  const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
+  const canViewAiAnalyst = access !== null && accessApi.userCan("access", "ai_analyst");
+  const canExportReport = access !== null && accessApi.userCan("access", "export");
 
   useEffect(() => {
     getData("get_all").then((data) => {
+      const nextAccess = data.access || {};
+      const nextAccessApi = handleUserAccess(nextAccess);
+
       document.title = data.module_info.name;
       setModule(data.module_info);
+      setAccess(nextAccess);
+      setActiveTab(
+        nextAccessApi.userCan("access", "analytics")
+          ? 0
+          : nextAccessApi.userCan("access", "ai_analyst")
+            ? 1
+            : false,
+      );
       setCities(data.cities);
+      const availableModels = Array.isArray(data.ai_models) ? data.ai_models : [];
+      if (availableModels.length) {
+        setAiModels(availableModels);
+        setAiModel(
+          availableModels.find((item) => item.id === data.default_ai_model) || availableModels[0],
+        );
+      }
+      setSiteDataHistory(data.site_data_history || []);
+      const initialThreads = Array.isArray(data.ai_chat_threads) ? data.ai_chat_threads : [];
+      if (initialThreads.length) {
+        const savedThreadId =
+          typeof window !== "undefined"
+            ? Number(window.localStorage.getItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY)) || null
+            : null;
+        const initialThread = applyChatThreads(initialThreads, savedThreadId);
+        if (initialThread) {
+          loadChatThreadMessages(initialThread.id);
+        }
+      }
       setLastUpdate(dayjs().format("HH:mm"));
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const savedColumns = JSON.parse(
+        window.localStorage.getItem(END_ANALYTICS_COLUMNS_STORAGE_KEY),
+      );
+      if (savedColumns && typeof savedColumns === "object" && !Array.isArray(savedColumns)) {
+        setVisibleColumns({
+          ...DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
+          ...savedColumns,
+        });
+      }
+    } catch (_) {
+      window.localStorage.removeItem(END_ANALYTICS_COLUMNS_STORAGE_KEY);
+      setVisibleColumns(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
+    }
+  }, []);
+
+  const saveVisibleColumns = (columns) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(END_ANALYTICS_COLUMNS_STORAGE_KEY, JSON.stringify(columns));
+    }
+  };
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((current) => {
+      const next = {
+        ...current,
+        [key]: current[key] === false,
+      };
+      saveVisibleColumns(next);
+      return next;
+    });
+  };
+
+  const setAllColumns = (value) => {
+    const next = END_ANALYTICS_COLUMNS.reduce((result, column) => {
+      result[column.key] = value;
+      return result;
+    }, {});
+    saveVisibleColumns(next);
+    setVisibleColumns(next);
+  };
+
+  const resetColumns = () => {
+    const next = { ...DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS };
+    saveVisibleColumns(next);
+    setVisibleColumns(next);
+  };
+
+  const visibleColumnDefinitions = END_ANALYTICS_COLUMNS.filter(
+    (column) => visibleColumns[column.key] !== false,
+  );
+  const tableMinWidth =
+    300 + visibleColumnDefinitions.reduce((total, column) => total + (column.width || 120), 0);
 
   const getData = async (method, data = {}) => {
     setIsLoad(true);
@@ -215,41 +713,696 @@ function EndPage() {
     }
   };
 
-  const applyRequest = () => {
+  const applyRequest = async () => {
+    if (isLoad) return;
+
     console.log("Фильтры:", form);
-    getData("get_data", {
-      ...form,
-      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
-      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
-    }).then((data) => {
-      if (data.st) {
+    setTableData([]);
+    setAnalyticsMeta(null);
+
+    try {
+      const data = await getData("get_data", {
+        ...form,
+        dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+        dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+      });
+      if (data?.st) {
         const formattedData = formatApiData(data);
         setTableData(formattedData);
+        setAnalyticsMeta(data.analytics_meta || null);
         setLastUpdate(dayjs().format("HH:mm"));
       } else {
-        if (!data.st) {
-          setErrStatus(data.st);
-          setErrText(data.text);
-          setOpenAlert(true);
+        showError(data?.text || "Не удалось загрузить аналитику");
+      }
+    } catch (_) {
+      showError("Не удалось загрузить аналитику");
+    }
+  };
+
+  const refreshSiteDataHistory = async () => {
+    const data = await getData("get_all");
+    if (data?.module_info) {
+      setSiteDataHistory(data.site_data_history || []);
+    }
+  };
+
+  const mapAiChatToMessages = (aiChat) => {
+    if (!Array.isArray(aiChat)) return [];
+
+    return aiChat.flatMap((item) => {
+      const messages = [];
+      const processingStartedAt = item?.updated_at || item?.created_at;
+      const processingTimedOut =
+        item?.status === "processing" &&
+        processingStartedAt &&
+        dayjs().diff(dayjs(processingStartedAt), "minute") >= 10;
+      if (item?.prompt) {
+        messages.push({
+          id: `${item.id || "message"}-user`,
+          role: "user",
+          text: item.prompt,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
+      }
+      if (item?.answer) {
+        messages.push({
+          id: `${item.id || "message"}-assistant`,
+          role: "assistant",
+          text: item.answer,
+          dataRefs: item.context_meta?.data_refs || [],
+          limitations: item.context_meta?.limitations || [],
+          aiModelName: item.context_meta?.ai_model_name || null,
+        });
+      } else if (item?.status === "error") {
+        messages.push({
+          id: `${item.id || "message"}-error`,
+          role: "assistant",
+          text:
+            item.error_text || "Не удалось получить ответ AI. Предыдущая история чата сохранена.",
+          isError: true,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
+      } else if (item?.status === "processing" && !processingTimedOut) {
+        messages.push({
+          id: `${item.id || "message"}-processing`,
+          role: "assistant",
+          text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
+          isPending: true,
+          dataRefs: item.context_meta?.data_refs || [],
+          aiModelName: item.context_meta?.ai_model_name || null,
+        });
+      } else if (processingTimedOut) {
+        messages.push({
+          id: `${item.id || "message"}-error`,
+          role: "assistant",
+          text: "Запрос не завершился. Повторите его ещё раз.",
+          isError: true,
+          dataRefs: item.context_meta?.data_refs || [],
+        });
+      }
+      return messages;
+    });
+  };
+
+  const rememberActiveChatThread = (threadId) => {
+    const nextThreadId = threadId ? Number(threadId) : null;
+    activeChatThreadIdRef.current = nextThreadId;
+    setActiveChatThreadId(nextThreadId);
+
+    if (typeof window === "undefined") return;
+    if (nextThreadId) {
+      window.localStorage.setItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY, String(nextThreadId));
+    } else {
+      window.localStorage.removeItem(END_ANALYTICS_ACTIVE_CHAT_STORAGE_KEY);
+    }
+  };
+
+  const restoreChatThreads = (threads, legacyChat) => {
+    const nextThreads = Array.isArray(threads)
+      ? threads.map((thread) => ({
+          ...thread,
+          messages: Array.isArray(thread?.messages) ? thread.messages : [],
+        }))
+      : [];
+
+    if (!nextThreads.length || !Array.isArray(legacyChat)) {
+      return nextThreads;
+    }
+
+    const knownMessageIds = new Set(
+      nextThreads.flatMap((thread) => thread.messages.map((message) => Number(message?.id))),
+    );
+    const legacyMessages = legacyChat.filter(
+      (message) =>
+        message?.thread_id == null && (!message?.id || !knownMessageIds.has(Number(message.id))),
+    );
+
+    if (!legacyMessages.length) {
+      return nextThreads;
+    }
+
+    return nextThreads.map((thread, index) =>
+      index === 0 ? { ...thread, messages: [...thread.messages, ...legacyMessages] } : thread,
+    );
+  };
+
+  const applyChatThreads = (threads, preferredThreadId = null) => {
+    const nextThreads = Array.isArray(threads) ? threads : [];
+    const selected =
+      nextThreads.find((thread) => Number(thread.id) === Number(preferredThreadId)) ||
+      nextThreads.find((thread) => thread.is_pinned) ||
+      nextThreads[0] ||
+      null;
+
+    setAiChatThreads(nextThreads);
+    rememberActiveChatThread(selected?.id ?? null);
+    if (Array.isArray(selected?.messages)) {
+      setHistoryChatMessages(mapAiChatToMessages(selected.messages));
+    }
+    return selected;
+  };
+
+  const loadChatThreadMessages = async (threadId) => {
+    if (!threadId) return [];
+    const result = await api_laravel("end_analytics", "get_ai_chat_thread_messages", {
+      thread_id: threadId,
+      page: 1,
+      per_page: 100,
+    });
+    const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+    if (data?.st === false) {
+      return [];
+    }
+    const messages = Array.isArray(data.messages) ? data.messages : data.items || [];
+    setAiChatThreads((current) =>
+      current.map((thread) =>
+        Number(thread.id) === Number(threadId) ? { ...thread, messages } : thread,
+      ),
+    );
+    if (Number(activeChatThreadIdRef.current) === Number(threadId)) {
+      setHistoryChatMessages(mapAiChatToMessages(messages));
+    }
+    return messages;
+  };
+
+  const selectChatThread = async (threadId) => {
+    const selected = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId));
+    rememberActiveChatThread(selected?.id ?? null);
+    if (!selected) {
+      setHistoryChatMessages([]);
+      return;
+    }
+    if (Array.isArray(selected.messages) && selected.messages.length > 0) {
+      setHistoryChatMessages(mapAiChatToMessages(selected.messages));
+    } else {
+      await loadChatThreadMessages(selected.id);
+    }
+  };
+
+  useEffect(() => {
+    const hasPendingMessage = Array.isArray(historyChatMessages)
+      ? historyChatMessages.some((message) => message?.isPending)
+      : false;
+    if (!activeChatThreadId || !hasPendingMessage) return undefined;
+
+    const timer = window.setTimeout(async () => {
+      if (chatPollInFlightRef.current) return;
+      chatPollInFlightRef.current = true;
+      try {
+        await loadChatThreadMessages(activeChatThreadId);
+      } finally {
+        chatPollInFlightRef.current = false;
+      }
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [activeChatThreadId, historyChatMessages]);
+
+  const applyAiRequest = () => {
+    setAiAnalysis(null);
+    setSiteDataRequestId(null);
+    setDailyMetrics([]);
+    setTrafficSourceMetrics([]);
+    setAiSiteDataSnapshot(null);
+
+    getData("get_site_data", {
+      ...form,
+      comparisonMode: "previous_period",
+      typeOrder: [{ id: 2, name: "Сайт" }],
+      src_source: aiSource?.name || "",
+      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+    }).then(async (data) => {
+      if (data.st) {
+        const snapshot = normalizeAiSiteDataSnapshot(data);
+        setAiAnalysis(snapshot.ai_analysis || null);
+        setSiteDataRequestId(snapshot.site_data_request_id ?? null);
+        setDailyMetrics(snapshot.daily_metrics?.items || []);
+        setTrafficSourceMetrics(buildTrafficSourceMetrics(snapshot));
+        if (!activeChatThreadId && Array.isArray(snapshot.ai_chat_threads)) {
+          applyChatThreads(restoreChatThreads(snapshot.ai_chat_threads, snapshot.ai_chat));
         }
+        setAiSiteDataSnapshot(snapshot);
+        setLastUpdate(dayjs().format("HH:mm"));
+        await refreshSiteDataHistory();
+      } else {
+        setAiAnalysis(null);
+        setSiteDataRequestId(null);
+        setDailyMetrics([]);
+        setTrafficSourceMetrics([]);
+        setAiSiteDataSnapshot(null);
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
       }
     });
+  };
+
+  const loadSiteDataHistoryItem = (item) => {
+    const requestId = item?.site_data_request_id ?? item?.id;
+    if (requestId === null || requestId === undefined) return;
+
+    getData("get_site_data_history", {
+      site_data_request_id: requestId,
+      id: requestId,
+    }).then((data) => {
+      if (data?.st === false) {
+        setErrStatus(data.st);
+        setErrText(data.text);
+        setOpenAlert(true);
+        return;
+      }
+
+      const snapshot = normalizeAiSiteDataSnapshot(data);
+
+      if (snapshot.request_payload) {
+        const requestPayload = snapshot.request_payload;
+        setForm((current) => ({
+          ...current,
+          ...requestPayload,
+        }));
+        setAiSource(
+          AI_ANALYST_SOURCES.find((item) => item.name === requestPayload.src_source) || null,
+        );
+      }
+
+      setAiAnalysis(snapshot.ai_analysis || null);
+      setSiteDataRequestId(snapshot.site_data_request_id ?? requestId);
+      setDailyMetrics(snapshot.daily_metrics?.items || []);
+      setTrafficSourceMetrics(buildTrafficSourceMetrics(snapshot));
+      if (!activeChatThreadId && Array.isArray(snapshot.ai_chat_threads)) {
+        applyChatThreads(restoreChatThreads(snapshot.ai_chat_threads, snapshot.ai_chat));
+      }
+      setAiSiteDataSnapshot(snapshot);
+      if (snapshot.analytics_meta) {
+        setAnalyticsMeta(snapshot.analytics_meta);
+      }
+      setLastUpdate(dayjs().format("HH:mm"));
+    });
+  };
+
+  const downloadBlobFile = (blob, fileName) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const analyzeAiReport = async () => {
+    if (!aiSiteDataSnapshot) {
+      showError("Сначала получите или откройте отчёт AI-анализа");
+      return null;
+    }
+
+    setIsLoad(true);
+    try {
+      const payload = normalizeAiSiteDataSnapshot(aiSiteDataSnapshot);
+      const result = await api_laravel("end_analytics", "ai_html_report", payload);
+
+      const data =
+        result?.html_report || result?.st !== undefined
+          ? result
+          : result?.data && typeof result.data === "object"
+            ? result.data
+            : result;
+
+      if (data?.st === false) {
+        showError(data?.text || "Не удалось сформировать HTML-отчёт");
+        return null;
+      }
+
+      const html = data?.html_report || result?.html_report || result?.data?.html_report;
+      if (!html) {
+        showError("HTML-отчёт не получен");
+        return null;
+      }
+
+      return html;
+    } catch (_) {
+      showError("Ошибка при формировании HTML-отчёта");
+      return null;
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
+  const exportAiReport = async (fileType) => {
+    if (!canExportReport) {
+      showError("Недостаточно прав для экспорта");
+      return;
+    }
+
+    if (!aiSiteDataSnapshot) {
+      showError("Сначала получите или откройте отчёт AI-анализа");
+      return;
+    }
+
+    setIsLoad(true);
+    try {
+      const payload = normalizeAiSiteDataSnapshot(aiSiteDataSnapshot);
+      const blob = await api_laravel(
+        "end_analytics",
+        "export_ai_report",
+        {
+          file_type: fileType,
+          ...payload,
+        },
+        { responseType: "blob" },
+      );
+
+      if (!(blob instanceof Blob)) {
+        showError("Не удалось получить файл экспорта");
+        return;
+      }
+
+      if (blob.type && blob.type.includes("application/json")) {
+        try {
+          const errorData = JSON.parse(await blob.text());
+          showError(errorData?.text || errorData?.message || "Ошибка экспорта");
+        } catch (_) {
+          showError("Ошибка экспорта");
+        }
+        return;
+      }
+
+      if (!blob.size) {
+        showError("Получен пустой файл");
+        return;
+      }
+
+      const dateStart =
+        aiSiteDataSnapshot?.ai_analysis?.period?.date_start ||
+        aiSiteDataSnapshot?.period?.date_start ||
+        dayjs(form.dateStart).format("YYYY-MM-DD");
+      const dateEnd =
+        aiSiteDataSnapshot?.ai_analysis?.period?.date_end ||
+        aiSiteDataSnapshot?.period?.date_end ||
+        dayjs(form.dateEnd).format("YYYY-MM-DD");
+
+      downloadBlobFile(blob, `AI_отчет_${dateStart}_${dateEnd}.${fileType}`);
+    } catch (_) {
+      showError("Ошибка экспорта отчёта");
+    } finally {
+      setIsLoad(false);
+    }
+  };
+
+  const sendAiChat = async (prompt) => {
+    const idempotencyKey =
+      typeof window !== "undefined" && window.crypto?.randomUUID
+        ? window.crypto.randomUUID().replaceAll("-", "")
+        : `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+    const requestThreadId = activeChatThreadIdRef.current || activeChatThreadId;
+    const optimisticUserId = `${idempotencyKey}-user`;
+    const optimisticAssistantId = `${idempotencyKey}-processing`;
+    setHistoryChatMessages((current) => [
+      ...(Array.isArray(current) ? current : []),
+      { id: optimisticUserId, role: "user", text: prompt },
+      {
+        id: optimisticAssistantId,
+        role: "assistant",
+        text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
+        isPending: true,
+        aiModelName: aiModel?.name || null,
+      },
+    ]);
+
+    const settleOptimisticMessage = (text, options = {}) => {
+      setHistoryChatMessages((current) =>
+        (Array.isArray(current) ? current : []).map((message) =>
+          message.id === optimisticAssistantId
+            ? {
+                ...message,
+                text,
+                isPending: false,
+                isError: Boolean(options.isError),
+                aiModelName: options.aiModelName || message.aiModelName || null,
+              }
+            : message,
+        ),
+      );
+    };
+
+    try {
+      const result = await api_laravel(
+        "end_analytics",
+        "ai_chat",
+        {
+          prompt,
+          site_data_request_id: siteDataRequestId,
+          thread_id: requestThreadId,
+          idempotency_key: idempotencyKey,
+          ai_model: aiModel?.id || "auto",
+        },
+        { throwErrors: true },
+      );
+      const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+      const chatSynced = Array.isArray(data.ai_chat_threads);
+      const responseThreadId = data.thread_id || requestThreadId;
+
+      if (chatSynced) {
+        applyChatThreads(data.ai_chat_threads, activeChatThreadIdRef.current || responseThreadId);
+        await loadChatThreadMessages(responseThreadId);
+      } else if (data.st !== false) {
+        settleOptimisticMessage(data.answer || "Пустой ответ AI", {
+          aiModelName: data.ai_model_name,
+        });
+      } else {
+        settleOptimisticMessage(data.text || "Не удалось получить ответ AI", { isError: true });
+      }
+
+      if (data.st !== false) {
+        const historyResult = await api_laravel("end_analytics", "get_all", {});
+        if (historyResult?.data) {
+          setSiteDataHistory(historyResult.data.site_data_history || []);
+        }
+      }
+
+      return {
+        ...data,
+        chat_synced: true,
+      };
+    } catch (error) {
+      const response = error?.response?.data;
+      const data = response?.data && typeof response.data === "object" ? response.data : response;
+      const chatSynced = Array.isArray(data?.ai_chat_threads);
+      const responseThreadId = data?.thread_id || requestThreadId;
+
+      if (chatSynced) {
+        applyChatThreads(data.ai_chat_threads, activeChatThreadIdRef.current || responseThreadId);
+        await loadChatThreadMessages(responseThreadId);
+      } else {
+        settleOptimisticMessage(data?.text || "Ошибка при обращении к AI-чату", {
+          isError: true,
+        });
+      }
+
+      return {
+        st: false,
+        text: data?.text || "Ошибка при обращении к AI-чату",
+        code: data?.code || null,
+        retry_after_seconds: data?.retry_after_seconds || null,
+        chat_synced: true,
+      };
+    }
+  };
+
+  const createAiChatThread = async () => {
+    const result = await api_laravel("end_analytics", "create_ai_chat_thread", {
+      ...(siteDataRequestId ? { site_data_request_id: siteDataRequestId } : {}),
+    });
+    const thread = result?.data?.thread;
+    if (!thread) return null;
+
+    const nextThreads = [thread, ...aiChatThreads];
+    applyChatThreads(nextThreads, thread.id);
+    setHistoryChatMessages([]);
+    return thread;
+  };
+
+  const updateAiChatThread = async (threadId, changes) => {
+    const result = await api_laravel("end_analytics", "update_ai_chat_thread", {
+      thread_id: threadId,
+      ...changes,
+    });
+    const updated = result?.data?.thread;
+    if (!updated) return null;
+
+    const nextThreads = aiChatThreads.map((thread) =>
+      Number(thread.id) === Number(threadId)
+        ? { ...thread, ...updated, messages: thread.messages || [] }
+        : thread,
+    );
+    applyChatThreads(nextThreads, activeChatThreadId);
+    return updated;
+  };
+
+  const deleteAiChatThread = async (threadId) => {
+    const result = await api_laravel("end_analytics", "delete_ai_chat_thread", {
+      thread_id: threadId,
+    });
+    if (result?.data?.st === false) return false;
+
+    const nextThreads = aiChatThreads.filter((thread) => Number(thread.id) !== Number(threadId));
+    applyChatThreads(nextThreads);
+    return true;
   };
 
   const resetFilters = () => {
     setForm(standardForm);
     setTableData([]);
+    setAnalyticsMeta(null);
+  };
+
+  const resetAiFilters = () => {
+    setForm((prev) => ({
+      ...prev,
+      cities: {},
+      dateStart: standardForm.dateStart,
+      dateEnd: standardForm.dateEnd,
+    }));
+    setAiSource(null);
+    setAiAnalysis(null);
+    setSiteDataRequestId(null);
+    setDailyMetrics([]);
+    setTrafficSourceMetrics([]);
+    setAiSiteDataSnapshot(null);
   };
 
   const refreshData = () => {
     applyRequest();
   };
 
+  const showError = (text) => {
+    setErrStatus(false);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
+  const getSelectedCityId = () => {
+    const id = form.cities?.id;
+    return id === 0 || id ? Number(id) : null;
+  };
+
+  const loadCustomCosts = async (cityId = getSelectedCityId()) => {
+    if (cityId === null) return;
+
+    const data = await getData("get_custom_costs", {
+      city_id: cityId,
+      dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
+      dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
+    });
+
+    if (data?.st) {
+      setCustomCosts(data.items || []);
+      setCustomCostOptions({
+        ...EMPTY_CUSTOM_COST_OPTIONS,
+        ...(data.options || {}),
+      });
+    } else {
+      showError(data?.text || "Не удалось загрузить ручные расходы");
+    }
+  };
+
+  const openCustomCostsDialog = async () => {
+    const cityId = getSelectedCityId();
+    if (cityId === null) {
+      showError("Сначала выберите город");
+      return;
+    }
+
+    setCustomCostForm({
+      ...createEmptyCustomCostForm(),
+      city_id: cityId,
+      date: dayjs(form.dateStart).format("YYYY-MM-DD"),
+    });
+    setCustomCostDialogOpen(true);
+    await loadCustomCosts(cityId);
+  };
+
+  const setCustomCostField = (field, value) => {
+    setCustomCostForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const normalizeCustomCostField = (value) => (value === "not_set" ? "" : value || "");
+
+  const editCustomCost = (item) => {
+    setCustomCostForm({
+      id: item.id,
+      city_id: item.city_id,
+      date: item.date,
+      src_source: normalizeCustomCostField(item.src_source),
+      src_medium: normalizeCustomCostField(item.src_medium),
+      src_campaign: normalizeCustomCostField(item.src_campaign),
+      src_term: normalizeCustomCostField(item.src_term),
+      src_content: normalizeCustomCostField(item.src_content),
+      cost: item.cost,
+      comment: item.comment || "",
+    });
+  };
+
+  const saveCustomCost = async () => {
+    const cityId = getSelectedCityId();
+    if (cityId === null) {
+      showError("Сначала выберите город");
+      return;
+    }
+
+    const cost = Number(customCostForm.cost);
+    if (!Number.isFinite(cost) || cost <= 0) {
+      showError("Укажите расход больше 0");
+      return;
+    }
+
+    const data = await getData("save_custom_cost", {
+      ...customCostForm,
+      city_id: cityId,
+      date: dayjs(customCostForm.date).format("YYYY-MM-DD"),
+      cost,
+    });
+
+    if (!data?.st) {
+      showError(data?.text || "Не удалось сохранить ручной расход");
+      return;
+    }
+
+    setCustomCostForm({
+      ...createEmptyCustomCostForm(),
+      city_id: cityId,
+      date: dayjs(form.dateStart).format("YYYY-MM-DD"),
+    });
+    await loadCustomCosts(cityId);
+    if (tableData.length > 0) {
+      applyRequest();
+    }
+  };
+
+  const deleteCustomCost = async (id) => {
+    const cityId = getSelectedCityId();
+    const data = await getData("delete_custom_cost", { id });
+
+    if (!data?.st) {
+      showError(data?.text || "Не удалось удалить ручной расход");
+      return;
+    }
+
+    await loadCustomCosts(cityId);
+    if (tableData.length > 0) {
+      applyRequest();
+    }
+  };
+
   // Новая функция группировки по типам источников трафика
   const regroupByTrafficSource = (utmData) => {
     if (!utmData || typeof utmData !== "object") return [];
 
-    // Группировка источников по типам
     const trafficGroups = {
       "Поисковые системы": [
         "yandex",
@@ -272,92 +1425,173 @@ function EndPage() {
         "m.vk.ru",
         "away.vk.com",
       ],
-      Рефералы: ["promokodi.net", "jacofood.ru", "link.2gis.ru", "suggest.sso.dzen.ru"],
-      "Рекламные системы": ["direct", "vk_ads", "yandex_direct"],
-      "Прямые заходы": ["none", "(direct)"],
+      Рефералы: ["referral", "promokodi.net", "jacofood.ru", "link.2gis.ru", "suggest.sso.dzen.ru"],
+      "Рекламные системы": ["vk_ads", "yandex_direct"],
+      "Прямой трафик": ["direct", "none", "(direct)"],
       Другое: [],
     };
 
+    const adMediumPatterns = [
+      "cpc",
+      "ppc",
+      "display",
+      "epk",
+      "poisk",
+      "rsya",
+      "kampan",
+      "campaign",
+      "tovarn",
+      "context",
+      "promo",
+      "retarget",
+      "remarketing",
+    ];
+
     const result = {};
+
+    const normalizeTrafficValue = (value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase();
+    const matchesKnownValue = (value, list) => {
+      const normalized = normalizeTrafficValue(value);
+      return list.some((item) => {
+        const normalizedItem = normalizeTrafficValue(item);
+        return normalized === normalizedItem || normalized.includes(normalizedItem);
+      });
+    };
+
+    const isSearchSource = (value) => matchesKnownValue(value, trafficGroups["Поисковые системы"]);
+    const isSocialSource = (value) => matchesKnownValue(value, trafficGroups["Социальные сети"]);
+    const isReferralSource = (value) => matchesKnownValue(value, trafficGroups["Рефералы"]);
+    const isAdSource = (value) => matchesKnownValue(value, trafficGroups["Рекламные системы"]);
+    const isDirectVisitSource = (value) => matchesKnownValue(value, trafficGroups["Прямой трафик"]);
+    const isAdMedium = (value) => {
+      const normalized = normalizeTrafficValue(value);
+      return adMediumPatterns.some((pattern) => normalized.includes(pattern));
+    };
+    const looksLikeReferralDomain = (value) => {
+      const normalized = normalizeTrafficValue(value);
+      return normalized.includes(".") && !isSearchSource(normalized) && !isSocialSource(normalized);
+    };
+
+    const getGroupName = (sourceName, mediumName = "") => {
+      const medium = normalizeTrafficValue(mediumName);
+
+      if (isDirectVisitSource(sourceName)) return "Прямой трафик";
+      if (isAdSource(sourceName) || isAdMedium(medium)) return "Рекламные системы";
+      if (
+        medium === "referral" ||
+        isReferralSource(sourceName) ||
+        looksLikeReferralDomain(sourceName)
+      )
+        return "Рефералы";
+      if (medium === "social" || isSocialSource(sourceName)) return "Социальные сети";
+      if (medium === "organic") return "Поисковые системы";
+
+      return "Другое";
+    };
+
+    const getPlatformType = (sourceName, mediumName) => {
+      const source = normalizeTrafficValue(sourceName);
+      const medium = normalizeTrafficValue(mediumName);
+
+      if (isDirectVisitSource(source)) return "Прямой трафик";
+      if (medium === "organic") return "Органика";
+      if (medium === "referral" || isReferralSource(source)) return "Рефералы";
+      if (medium === "social") return "Социальные сети";
+      if (medium === "email") return "E-mail рассылки";
+      if (isAdSource(source) || isAdMedium(medium)) return "Контекстная реклама";
+      if (
+        isDirectVisitSource(source) ||
+        medium === "none" ||
+        medium === "(direct)" ||
+        medium === "(utm)"
+      )
+        return "Прямой трафик";
+
+      return mediumName || "not_set";
+    };
+
+    const addMetrics = (target, source) => {
+      ADDITIVE_METRIC_FIELDS.forEach((field) => {
+        target[field] += parseMetric(source[field]);
+      });
+    };
+
+    const ensureGroup = (groupName) => {
+      if (result[groupName]) return result[groupName];
+
+      result[groupName] = {
+        id: `group_${groupName}`,
+        name: groupName,
+        level: "src_source_group",
+        visits: 0,
+        cost: 0,
+        orders: 0,
+        revenue: 0,
+        newClients: 0,
+        existingClients: 0,
+        primaryOrders: 0,
+        repeatOrders: 0,
+        children: [],
+      };
+
+      return result[groupName];
+    };
+
+    const createDetailedSource = (sourceName, sourceData, groupName) => ({
+      id: `${sourceData.level}_${sourceName}_${groupName}`,
+      name: sourceData.name || sourceName,
+      sourceType: "site",
+      level: "src_source_detailed",
+      visits: 0,
+      cost: 0,
+      orders: 0,
+      revenue: 0,
+      newClients: 0,
+      existingClients: 0,
+      primaryOrders: 0,
+      repeatOrders: 0,
+      ...pickOptionalMetrics(sourceData),
+      useServerMetrics: true,
+      children: [],
+    });
 
     // Проходим по всем source
     for (const [sourceName, sourceData] of Object.entries(utmData)) {
       if (sourceData.level !== "src_source") continue;
 
-      // Определяем группу для source
-      let groupName = "Другое";
-      for (const [group, sources] of Object.entries(trafficGroups)) {
-        if (sources.includes(sourceName) || sources.some((s) => sourceName.includes(s))) {
-          groupName = group;
-          break;
-        }
-      }
+      const sourceNodesByGroup = {};
 
-      // Создаем группу если её нет
-      if (!result[groupName]) {
-        result[groupName] = {
-          id: `group_${groupName}`,
-          name: groupName,
-          level: "src_source_group",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          children: [],
-        };
-      }
+      const getSourceNode = (groupName) => {
+        if (sourceNodesByGroup[groupName]) return sourceNodesByGroup[groupName];
 
-      // Суммируем данные для группы
-      const group = result[groupName];
-      group.visits += sourceData.visits || 0;
-      group.cost += sourceData.cost || 0;
-      group.orders += parseInt(sourceData.orders) || 0;
-      group.revenue += sourceData.revenue || 0;
-      group.newClients += sourceData.newClients || 0;
-      group.existingClients += sourceData.existingClients || 0;
-      group.primaryOrders += parseInt(sourceData.primaryOrders) || 0;
-      group.repeatOrders += parseInt(sourceData.repeatOrders) || 0;
+        const group = ensureGroup(groupName);
+        const detailedSource = createDetailedSource(sourceName, sourceData, groupName);
 
-      // Создаем детальный источник (конкретный источник трафика)
-      const detailedSource = {
-        id: `${sourceData.level}_${sourceName}`,
-        name: sourceData.name || sourceName,
-        sourceType: "site",
-        level: "src_source_detailed",
-        visits: sourceData.visits || 0,
-        cost: sourceData.cost || 0,
-        orders: parseInt(sourceData.orders) || 0,
-        revenue: sourceData.revenue || 0,
-        newClients: sourceData.newClients || 0,
-        existingClients: sourceData.existingClients || 0,
-        primaryOrders: parseInt(sourceData.primaryOrders) || 0,
-        repeatOrders: parseInt(sourceData.repeatOrders) || 0,
-        children: [],
+        sourceNodesByGroup[groupName] = detailedSource;
+        group.children.push(detailedSource);
+
+        return detailedSource;
       };
 
       // Обрабатываем children (medium) и группируем по типу площадки
       if (sourceData.children && sourceData.children.length > 0) {
-        const platformGroups = {};
-
         sourceData.children.forEach((medium) => {
           if (medium.level === "src_medium") {
-            // Определяем тип площадки
-            let platformType = medium.name;
-            if (medium.name === "organic") platformType = "Органика";
-            else if (medium.name === "cpc") platformType = "Контекстная реклама";
-            else if (medium.name === "referral") platformType = "Рефералы";
-            else if (medium.name === "social") platformType = "Социальные сети";
-            else if (medium.name === "email") platformType = "E-mail рассылки";
-            else if (medium.name === "none" || medium.name === "(utm)")
-              platformType = "Прямые заходы";
-            else if (medium.name === "cpm") platformType = "Медийная реклама";
+            const groupName = getGroupName(sourceName, medium.name);
+            const group = ensureGroup(groupName);
+            const detailedSource = getSourceNode(groupName);
 
-            if (!platformGroups[platformType]) {
-              platformGroups[platformType] = {
+            addMetrics(group, medium);
+            addMetrics(detailedSource, medium);
+
+            const platformType = getPlatformType(sourceName, medium.name);
+            let platform = detailedSource.children.find((child) => child.name === platformType);
+
+            if (!platform) {
+              platform = {
                 id: `${sourceName}_platform_${platformType}`,
                 name: platformType,
                 originalName: medium.name,
@@ -372,18 +1606,10 @@ function EndPage() {
                 repeatOrders: 0,
                 children: [],
               };
+              detailedSource.children.push(platform);
             }
 
-            // Суммируем данные для типа площадки
-            const platform = platformGroups[platformType];
-            platform.visits += medium.visits || 0;
-            platform.cost += medium.cost || 0;
-            platform.orders += parseInt(medium.orders) || 0;
-            platform.revenue += medium.revenue || 0;
-            platform.newClients += medium.newClients || 0;
-            platform.existingClients += medium.existingClients || 0;
-            platform.primaryOrders += parseInt(medium.primaryOrders) || 0;
-            platform.repeatOrders += parseInt(medium.repeatOrders) || 0;
+            addMetrics(platform, medium);
 
             // Добавляем кампании как children к типу площадки
             if (medium.children && medium.children.length > 0) {
@@ -392,14 +1618,17 @@ function EndPage() {
                   id: `${sourceName}_${campaign.level}_${campaign.name}`,
                   name: campaign.name,
                   level: campaign.level,
-                  visits: campaign.visits || 0,
-                  cost: campaign.cost || 0,
-                  orders: parseInt(campaign.orders) || 0,
-                  revenue: campaign.revenue || 0,
-                  newClients: campaign.newClients || 0,
-                  existingClients: campaign.existingClients || 0,
-                  primaryOrders: parseInt(campaign.primaryOrders) || 0,
-                  repeatOrders: parseInt(campaign.repeatOrders) || 0,
+                  visits: parseMetric(campaign.visits),
+                  cost: parseMetric(campaign.cost),
+                  orders: parseMetric(campaign.orders),
+                  revenue: parseMetric(campaign.revenue),
+                  ...pickDerivedMetrics(campaign),
+                  ...pickOptionalMetrics(campaign),
+                  newClients: parseMetric(campaign.newClients),
+                  existingClients: parseMetric(campaign.existingClients),
+                  primaryOrders: parseMetric(campaign.primaryOrders),
+                  repeatOrders: parseMetric(campaign.repeatOrders),
+                  useServerMetrics: true,
                   children: [],
                 };
 
@@ -416,15 +1645,75 @@ function EndPage() {
             }
           }
         });
+      } else {
+        const groupName = getGroupName(sourceName);
+        const group = ensureGroup(groupName);
+        const detailedSource = getSourceNode(groupName);
 
-        detailedSource.children = Object.values(platformGroups);
+        addMetrics(group, sourceData);
+        addMetrics(detailedSource, sourceData);
+        Object.assign(
+          detailedSource,
+          pickDerivedMetrics(sourceData),
+          pickOptionalMetrics(sourceData),
+        );
       }
-
-      group.children.push(detailedSource);
     }
 
     // Преобразуем объект в массив и добавляем расчетные поля
     return calculateMetricsForGroupedData(Object.values(result));
+  };
+
+  const normalizeBackendCategoryLevel = (level) => {
+    switch (level) {
+      case "traffic_category":
+        return "src_source_group";
+      case "normalized_source":
+        return "src_source_detailed";
+      case "normalized_medium":
+        return "src_platform";
+      case "normalized_campaign":
+        return "src_campaign";
+      case "normalized_term":
+        return "src_term";
+      case "normalized_content":
+        return "src_content";
+      default:
+        return level;
+    }
+  };
+
+  const transformBackendTrafficCategoryNode = (node, parentId = "site_category", nodeIndex = 0) => {
+    const level = normalizeBackendCategoryLevel(node.level);
+    const id = `${parentId}_${nodeIndex}_${node.traffic_category || node.value || node.name}_${level}`;
+
+    return rollupMetricsFromChildren({
+      id,
+      name: node.name,
+      value: node.value,
+      sourceType: "site",
+      level,
+      visits: parseMetric(node.visits),
+      cost: parseMetric(node.cost),
+      orders: parseMetric(node.orders),
+      revenue: parseMetric(node.revenue),
+      ...pickDerivedMetrics(node),
+      ...pickOptionalMetrics(node),
+      newClients: parseMetric(node.newClients),
+      existingClients: parseMetric(node.existingClients),
+      primaryOrders: parseMetric(node.primaryOrders),
+      repeatOrders: parseMetric(node.repeatOrders),
+      traffic_category: node.traffic_category,
+      traffic_category_label: node.traffic_category_label,
+      normalized_source: node.normalized_source,
+      normalized_medium: node.normalized_medium,
+      useServerMetrics: true,
+      children: Array.isArray(node.children)
+        ? node.children.map((child, childIndex) =>
+            transformBackendTrafficCategoryNode(child, id, childIndex),
+          )
+        : [],
+    });
   };
 
   // Простая трансформация детей без перегруппировки
@@ -435,93 +1724,57 @@ function EndPage() {
       id: `${sourceName}_${child.level}_${child.name}`,
       name: child.name,
       level: child.level,
-      visits: child.visits || 0,
-      cost: child.cost || 0,
-      orders: parseInt(child.orders) || 0,
-      revenue: child.revenue || 0,
-      newClients: child.newClients || 0,
-      existingClients: child.existingClients || 0,
-      primaryOrders: parseInt(child.primaryOrders) || 0,
-      repeatOrders: parseInt(child.repeatOrders) || 0,
+      visits: parseMetric(child.visits),
+      cost: parseMetric(child.cost),
+      orders: parseMetric(child.orders),
+      revenue: parseMetric(child.revenue),
+      ...pickDerivedMetrics(child),
+      ...pickOptionalMetrics(child),
+      newClients: parseMetric(child.newClients),
+      existingClients: parseMetric(child.existingClients),
+      primaryOrders: parseMetric(child.primaryOrders),
+      repeatOrders: parseMetric(child.repeatOrders),
+      useServerMetrics: true,
       children: child.children ? transformUtmChildrenSimple(child.children, sourceName) : [],
     }));
   };
 
   // Расчет метрик для сгруппированных данных
   const calculateMetricsForGroupedData = (items) => {
-    return items.map((item) => {
-      // Расчет для текущего уровня
-      item.conversion = item.visits > 0 ? (item.orders / item.visits) * 100 : 0;
-      item.costPerOrder = item.orders > 0 ? item.cost / item.orders : 0;
-      item.averageCheck = item.orders > 0 ? item.revenue / item.orders : 0;
-      item.roi =
-        item.cost > 0
-          ? ((item.revenue - item.cost) / item.cost) * 100
-          : item.revenue > 0
-            ? Infinity
-            : 0;
-      item.drr = item.revenue > 0 ? (item.cost / item.revenue) * 100 : 0;
-      item.ltv = item.orders > 0 ? item.revenue / item.orders : 0;
-
-      // Рекурсивно для детей
-      if (item.children && item.children.length > 0) {
-        item.children = calculateMetricsForGroupedData(item.children);
-      }
-
-      return item;
-    });
+    return items.map((item) => rollupMetricsFromChildren({ ...item }));
   };
 
   const formatApiData = (apiData) => {
     const result = [];
 
-    if (apiData.site_data && typeof apiData.site_data === "object") {
-      // Используем новую функцию группировки
-      const groupedData = regroupByTrafficSource(apiData.site_data);
+    const hasCategorySiteData =
+      apiData.site_data_by_category &&
+      typeof apiData.site_data_by_category === "object" &&
+      Object.keys(apiData.site_data_by_category).length > 0;
+
+    if (hasCategorySiteData || (apiData.site_data && typeof apiData.site_data === "object")) {
+      const siteSourceRows = hasCategorySiteData
+        ? Object.values(apiData.site_data_by_category)
+        : Object.values(apiData.site_data);
+      const groupedData = hasCategorySiteData
+        ? siteSourceRows.map((item, itemIndex) =>
+            transformBackendTrafficCategoryNode(item, "site_category", itemIndex),
+          )
+        : regroupByTrafficSource(apiData.site_data);
 
       if (groupedData.length > 0) {
-        // Создаем итоговую строку для сайта
-        const siteTotal = {
-          id: `total_site`,
-          name: "ИТОГО по Сайту",
-          isTotal: true,
-          sourceType: "site",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          details: groupedData, // Детали - это сгруппированные данные
-        };
+        const siteTotal = aggregateTotalRow(
+          {
+            id: `total_site`,
+            name: "ИТОГО по Сайту",
+            isTotal: true,
+            sourceType: "site",
+          },
+          groupedData,
+        );
 
-        // Суммируем данные из groupedData
-        groupedData.forEach((group) => {
-          siteTotal.visits += group.visits || 0;
-          siteTotal.cost += group.cost || 0;
-          siteTotal.orders += group.orders || 0;
-          siteTotal.revenue += group.revenue || 0;
-          siteTotal.newClients += group.newClients || 0;
-          siteTotal.existingClients += group.existingClients || 0;
-          siteTotal.primaryOrders += group.primaryOrders || 0;
-          siteTotal.repeatOrders += group.repeatOrders || 0;
-        });
-
-        // Рассчитываем метрики для итоговой строки
-        siteTotal.conversion =
-          siteTotal.visits > 0 ? (siteTotal.orders / siteTotal.visits) * 100 : 0;
-        siteTotal.costPerOrder = siteTotal.orders > 0 ? siteTotal.cost / siteTotal.orders : 0;
-        siteTotal.averageCheck = siteTotal.orders > 0 ? siteTotal.revenue / siteTotal.orders : 0;
-        siteTotal.roi =
-          siteTotal.cost > 0
-            ? ((siteTotal.revenue - siteTotal.cost) / siteTotal.cost) * 100
-            : siteTotal.revenue > 0
-              ? Infinity
-              : 0;
-        siteTotal.drr = siteTotal.revenue > 0 ? (siteTotal.cost / siteTotal.revenue) * 100 : 0;
-        siteTotal.ltv = siteTotal.orders > 0 ? siteTotal.revenue / siteTotal.orders : 0;
+        applyTotalMetricsFromRows(siteTotal, siteSourceRows);
+        applyServerTotals(siteTotal, apiData.site_totals);
 
         result.push(siteTotal);
       }
@@ -530,139 +1783,53 @@ function EndPage() {
     if (apiData.cafe_data && Array.isArray(apiData.cafe_data)) {
       const cafeItems = apiData.cafe_data.map((item) => transformItem(item, "cafe"));
       if (cafeItems.length > 0) {
-        const cafeTotal = {
-          id: `total_cafe`,
-          name: "ИТОГО по Кафе",
-          isTotal: true,
-          sourceType: "cafe",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          details: cafeItems,
-        };
-
-        cafeItems.forEach((item) => {
-          cafeTotal.visits += item.visits || 0;
-          cafeTotal.cost += item.cost || 0;
-          cafeTotal.orders += item.orders || 0;
-          cafeTotal.revenue += item.revenue || 0;
-          cafeTotal.newClients += item.newClients || 0;
-          cafeTotal.existingClients += item.existingClients || 0;
-          cafeTotal.primaryOrders += item.primaryOrders || 0;
-          cafeTotal.repeatOrders += item.repeatOrders || 0;
-        });
-
-        cafeTotal.conversion =
-          cafeTotal.visits > 0 ? (cafeTotal.orders / cafeTotal.visits) * 100 : 0;
-        cafeTotal.costPerOrder = cafeTotal.orders > 0 ? cafeTotal.cost / cafeTotal.orders : 0;
-        cafeTotal.averageCheck = cafeTotal.orders > 0 ? cafeTotal.revenue / cafeTotal.orders : 0;
-        cafeTotal.roi =
-          cafeTotal.cost > 0
-            ? ((cafeTotal.revenue - cafeTotal.cost) / cafeTotal.cost) * 100
-            : cafeTotal.revenue > 0
-              ? Infinity
-              : 0;
-        cafeTotal.drr = cafeTotal.revenue > 0 ? (cafeTotal.cost / cafeTotal.revenue) * 100 : 0;
-        cafeTotal.ltv = cafeTotal.orders > 0 ? cafeTotal.revenue / cafeTotal.orders : 0;
-
-        result.push(cafeTotal);
+        result.push(
+          aggregateTotalRow(
+            {
+              id: `total_cafe`,
+              name: "ИТОГО по Кафе",
+              isTotal: true,
+              sourceType: "cafe",
+            },
+            cafeItems,
+          ),
+        );
       }
     }
 
     if (apiData.kc_data && Array.isArray(apiData.kc_data)) {
       const kcItems = apiData.kc_data.map((item) => transformItem(item, "kc"));
       if (kcItems.length > 0) {
-        const kcTotal = {
-          id: `total_kc`,
-          name: "ИТОГО по КЦ",
-          isTotal: true,
-          sourceType: "kc",
-          visits: 0,
-          cost: 0,
-          orders: 0,
-          revenue: 0,
-          newClients: 0,
-          existingClients: 0,
-          primaryOrders: 0,
-          repeatOrders: 0,
-          details: kcItems,
-        };
-
-        kcItems.forEach((item) => {
-          kcTotal.visits += item.visits || 0;
-          kcTotal.cost += item.cost || 0;
-          kcTotal.orders += item.orders || 0;
-          kcTotal.revenue += item.revenue || 0;
-          kcTotal.newClients += item.newClients || 0;
-          kcTotal.existingClients += item.existingClients || 0;
-          kcTotal.primaryOrders += item.primaryOrders || 0;
-          kcTotal.repeatOrders += item.repeatOrders || 0;
-        });
-
-        kcTotal.conversion = kcTotal.visits > 0 ? (kcTotal.orders / kcTotal.visits) * 100 : 0;
-        kcTotal.costPerOrder = kcTotal.orders > 0 ? kcTotal.cost / kcTotal.orders : 0;
-        kcTotal.averageCheck = kcTotal.orders > 0 ? kcTotal.revenue / kcTotal.orders : 0;
-        kcTotal.roi =
-          kcTotal.cost > 0
-            ? ((kcTotal.revenue - kcTotal.cost) / kcTotal.cost) * 100
-            : kcTotal.revenue > 0
-              ? Infinity
-              : 0;
-        kcTotal.drr = kcTotal.revenue > 0 ? (kcTotal.cost / kcTotal.revenue) * 100 : 0;
-        kcTotal.ltv = kcTotal.orders > 0 ? kcTotal.revenue / kcTotal.orders : 0;
-
-        result.push(kcTotal);
+        result.push(
+          aggregateTotalRow(
+            {
+              id: `total_kc`,
+              name: "ИТОГО по КЦ",
+              isTotal: true,
+              sourceType: "kc",
+            },
+            kcItems,
+          ),
+        );
       }
     }
 
     if (result.length > 0) {
-      const grandTotal = {
-        id: `total_grand`,
-        name: "ВСЕГО",
-        isTotal: true,
-        isGrandTotal: true,
-        sourceType: "grand",
-        visits: 0,
-        cost: 0,
-        orders: 0,
-        revenue: 0,
-        newClients: 0,
-        existingClients: 0,
-        primaryOrders: 0,
-        repeatOrders: 0,
-        details: result.slice(), // Копия всех итоговых строк
-      };
+      const grandTotal = aggregateTotalRow(
+        {
+          id: `total_grand`,
+          name: "ВСЕГО",
+          isTotal: true,
+          isGrandTotal: true,
+          sourceType: "grand",
+        },
+        result,
+      );
+      if (result.length === 1 && result[0].sourceType === "site") {
+        applyServerTotals(grandTotal, apiData.site_totals);
+      }
 
-      result.forEach((row) => {
-        grandTotal.visits += row.visits || 0;
-        grandTotal.cost += row.cost || 0;
-        grandTotal.orders += row.orders || 0;
-        grandTotal.revenue += row.revenue || 0;
-        grandTotal.newClients += row.newClients || 0;
-        grandTotal.existingClients += row.existingClients || 0;
-        grandTotal.primaryOrders += row.primaryOrders || 0;
-        grandTotal.repeatOrders += row.repeatOrders || 0;
-      });
-
-      grandTotal.conversion =
-        grandTotal.visits > 0 ? (grandTotal.orders / grandTotal.visits) * 100 : 0;
-      grandTotal.costPerOrder = grandTotal.orders > 0 ? grandTotal.cost / grandTotal.orders : 0;
-      grandTotal.averageCheck = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
-      grandTotal.roi =
-        grandTotal.cost > 0
-          ? ((grandTotal.revenue - grandTotal.cost) / grandTotal.cost) * 100
-          : grandTotal.revenue > 0
-            ? Infinity
-            : 0;
-      grandTotal.drr = grandTotal.revenue > 0 ? (grandTotal.cost / grandTotal.revenue) * 100 : 0;
-      grandTotal.ltv = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
-
-      result.unshift(grandTotal);
+      return [grandTotal];
     }
 
     return result;
@@ -705,7 +1872,8 @@ function EndPage() {
           ? Infinity
           : 0;
     total.drr = total.revenue > 0 ? (total.cost / total.revenue) * 100 : 0;
-    total.ltv = total.orders > 0 ? total.revenue / total.orders : 0;
+    const totalCustomers = total.newClients + total.existingClients;
+    total.ltv = totalCustomers > 0 ? total.revenue / totalCustomers : 0;
 
     return total;
   };
@@ -749,7 +1917,8 @@ function EndPage() {
           ? Infinity
           : 0;
     grandTotal.drr = grandTotal.revenue > 0 ? (grandTotal.cost / grandTotal.revenue) * 100 : 0;
-    grandTotal.ltv = grandTotal.orders > 0 ? grandTotal.revenue / grandTotal.orders : 0;
+    const grandTotalCustomers = grandTotal.newClients + grandTotal.existingClients;
+    grandTotal.ltv = grandTotalCustomers > 0 ? grandTotal.revenue / grandTotalCustomers : 0;
 
     return grandTotal;
   };
@@ -787,8 +1956,9 @@ function EndPage() {
             : 0;
       transformedItem.drr =
         transformedItem.revenue > 0 ? (transformedItem.cost / transformedItem.revenue) * 100 : 0;
+      const transformedItemCustomers = transformedItem.newClients + transformedItem.existingClients;
       transformedItem.ltv =
-        transformedItem.orders > 0 ? transformedItem.revenue / transformedItem.orders : 0;
+        transformedItemCustomers > 0 ? transformedItem.revenue / transformedItemCustomers : 0;
       if (value.children && Array.isArray(value.children) && value.children.length > 0) {
         transformedItem.details = transformUtmChildren(value.children, sourceType, key);
       }
@@ -829,8 +1999,10 @@ function EndPage() {
             : 0;
       transformedChild.drr =
         transformedChild.revenue > 0 ? (transformedChild.cost / transformedChild.revenue) * 100 : 0;
+      const transformedChildCustomers =
+        transformedChild.newClients + transformedChild.existingClients;
       transformedChild.ltv =
-        transformedChild.orders > 0 ? transformedChild.revenue / transformedChild.orders : 0;
+        transformedChildCustomers > 0 ? transformedChild.revenue / transformedChildCustomers : 0;
       if (child.children && Array.isArray(child.children) && child.children.length > 0) {
         transformedChild.details = transformUtmChildren(
           child.children,
@@ -844,41 +2016,25 @@ function EndPage() {
   };
 
   const transformItem = (item, sourceType) => {
-    const visits = item.visits || 0;
-    const cost = item.cost || 0;
-    const orders = parseInt(item.orders) || 0;
-    const revenue = item.revenue || 0;
-    const newClients = item.newClients || 0;
-    const existingClients = item.existingClients || 0;
-    const primaryOrders = parseInt(item.primaryOrders) || 0;
-    const repeatOrders = parseInt(item.repeatOrders) || 0;
-
-    const conversion = visits > 0 ? (orders / visits) * 100 : 0;
-    const costPerOrder = orders > 0 ? cost / orders : 0;
-    const averageCheck = orders > 0 ? revenue / orders : 0;
-    const roi = cost > 0 ? ((revenue - cost) / cost) * 100 : revenue > 0 ? Infinity : 0;
-    const drr = revenue > 0 ? (cost / revenue) * 100 : 0;
-    const ltv = orders > 0 ? revenue / orders : 0;
-
-    return {
+    return applyDerivedMetrics({
       id: `${sourceType}_${item.id}`,
-      name: item.name,
+      name: item.name || `${sourceType === "kc" ? "КЦ" : "Кафе"} #${item.id}`,
+      pointName: item.pointName,
+      city: item.city,
+      address: item.address,
+      fullAddress: item.fullAddress,
       sourceType: sourceType,
-      visits: visits,
-      cost: cost,
-      orders: orders,
-      conversion: conversion,
-      costPerOrder: costPerOrder,
-      revenue: revenue,
-      averageCheck: averageCheck,
-      roi: roi,
-      newClients: newClients,
-      existingClients: existingClients,
-      primaryOrders: primaryOrders,
-      repeatOrders: repeatOrders,
-      drr: drr,
-      ltv: ltv,
-    };
+      visits: parseMetric(item.visits),
+      cost: parseMetric(item.cost),
+      orders: parseMetric(item.orders),
+      revenue: parseMetric(item.revenue),
+      ...pickDerivedMetrics(item),
+      ...pickOptionalMetrics(item),
+      newClients: parseMetric(item.newClients),
+      existingClients: parseMetric(item.existingClients),
+      primaryOrders: parseMetric(item.primaryOrders),
+      repeatOrders: parseMetric(item.repeatOrders),
+    });
   };
 
   const toggleRow = (rowId) => {
@@ -894,27 +2050,77 @@ function EndPage() {
   };
 
   const formatNumber = (value) => {
-    if (value === Infinity) return "∞";
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toLocaleString();
+      return Math.round(value).toLocaleString("ru-RU");
     }
     return "0";
   };
 
   const formatPercent = (value) => {
-    if (value === Infinity) return "∞";
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toFixed(2) + "%";
+      return Math.round(value).toLocaleString("ru-RU");
     }
-    return "0%";
+    return "0";
   };
 
   const formatCurrency = (value) => {
-    if (value === Infinity) return "∞";
     if (typeof value === "number" && !isNaN(value)) {
-      return value.toFixed(2);
+      return Math.round(value).toLocaleString("ru-RU");
     }
     return "0";
+  };
+
+  const formatOptionalNumber = (value, available) =>
+    available && value !== null && value !== undefined ? formatNumber(value) : "н/д";
+
+  const renderMetricValue = (key, row, isTotalRow) => {
+    switch (key) {
+      case "visits":
+      case "cost":
+      case "orders":
+      case "revenue":
+      case "newClients":
+      case "existingClients":
+      case "primaryOrders":
+      case "repeatOrders":
+        return formatNumber(row[key]);
+      case "clicks":
+        return formatOptionalNumber(row.clicks, row.clicksAvailable);
+      case "conversion":
+        return (
+          <Typography
+            variant="body2"
+            color={row.conversion > 5 ? "success.main" : "inherit"}
+            sx={{
+              fontWeight: isTotalRow ? 700 : 400,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {formatPercent(row.conversion)}
+          </Typography>
+        );
+      case "costPerOrder":
+      case "averageCheck":
+      case "ltv":
+        return formatCurrency(row[key]);
+      case "roi":
+        return (
+          <Typography
+            variant="body2"
+            color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
+            sx={{
+              fontWeight: isTotalRow ? 700 : 400,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {formatPercent(row.roi)}
+          </Typography>
+        );
+      case "drr":
+        return formatPercent(row.drr);
+      default:
+        return "—";
+    }
   };
 
   const getLevelIcon = (level) => {
@@ -976,9 +2182,12 @@ function EndPage() {
               <Box>
                 <Typography
                   variant="body2"
-                  fontWeight={isTotalRow ? 700 : 500}
                   color={isGrandTotal ? PRIMARY_COLOR : "inherit"}
-                  sx={{ whiteSpace: "normal", wordBreak: "break-word" }}
+                  sx={{
+                    fontWeight: isTotalRow ? 700 : 500,
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                  }}
                 >
                   {row.level && getLevelIcon(row.level)}
                   {row.name}
@@ -989,8 +2198,10 @@ function EndPage() {
                   row.level !== "src_platform" && (
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic" }}
+                      sx={{
+                        color: "text.secondary",
+                        fontStyle: "italic",
+                      }}
                     >
                       ({row.level.replace("src_", "")})
                     </Typography>
@@ -998,118 +2209,17 @@ function EndPage() {
               </Box>
             </Box>
           </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.visits)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.cost)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.orders)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            <Typography
-              variant="body2"
-              color={row.conversion > 5 ? "success.main" : "inherit"}
-              fontWeight={isTotalRow ? 700 : 400}
+          {visibleColumnDefinitions.map((column) => (
+            <StyledTableCell
+              key={column.key}
+              isHeader={false}
+              isTotal={isTotalRow}
+              align="right"
+              noWrap
             >
-              {formatPercent(row.conversion)}
-            </Typography>
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatCurrency(row.costPerOrder)} ₽
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-            sx={{ width: "120px" }}
-          >
-            {formatNumber(row.revenue)} ₽
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatCurrency(row.averageCheck)} ₽
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            <Typography
-              variant="body2"
-              color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
-              fontWeight={isTotalRow ? 700 : 400}
-            >
-              {row.roi === Infinity ? "∞" : row.roi.toFixed(2) + "%"}
-            </Typography>
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.newClients)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.existingClients)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.primaryOrders)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatNumber(row.repeatOrders)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatPercent(row.drr)}
-          </StyledTableCell>
-          <StyledTableCell
-            isHeader={false}
-            sx={{ width: "100px" }}
-            isTotal={isTotalRow}
-            align="right"
-          >
-            {formatCurrency(row.ltv)} ₽
-          </StyledTableCell>
+              {renderMetricValue(column.key, row, isTotalRow)}
+            </StyledTableCell>
+          ))}
         </StyledTableRow>
         {hasChildren &&
           isExpanded &&
@@ -1144,13 +2254,201 @@ function EndPage() {
         status={errStatus}
         text={errText}
       />
+      <EndAnalyticsColumnsDialog
+        open={columnsDialogOpen}
+        visibleColumns={visibleColumns}
+        onClose={() => setColumnsDialogOpen(false)}
+        onToggle={toggleColumn}
+        onSetAll={setAllColumns}
+        onReset={resetColumns}
+      />
+      <Dialog
+        open={customCostDialogOpen}
+        onClose={() => setCustomCostDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Ручные расходы</DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 2,
+            }}
+          >
+            Можно выбрать существующее значение из списка или ввести своё. Для поискового Яндекса
+            укажите Source: yandex и Medium: organic, остальные UTM-поля оставьте пустыми. Яндекс
+            Директ с Medium: cpc останется отдельным источником. Пустые поля сохраняются как
+            not_set.
+          </Typography>
+
+          <Grid
+            container
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyDatePickerNew
+                label="Дата расхода"
+                customActions={true}
+                value={dayjs(customCostForm.date)}
+                minDate={dayjs(form.dateStart)}
+                maxDate={dayjs(form.dateEnd)}
+                func={(value) => setCustomCostField("date", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                type="number"
+                label="Расход"
+                value={customCostForm.cost}
+                func={({ target }) => setCustomCostField("cost", target?.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <UtmFreeSoloAutocomplete
+                label="UTM Source"
+                value={customCostForm.src_source}
+                options={customCostOptions.src_source}
+                onChange={(value) => setCustomCostField("src_source", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <UtmFreeSoloAutocomplete
+                label="UTM Medium"
+                value={customCostForm.src_medium}
+                options={customCostOptions.src_medium}
+                onChange={(value) => setCustomCostField("src_medium", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <UtmFreeSoloAutocomplete
+                label="UTM Campaign"
+                value={customCostForm.src_campaign}
+                options={customCostOptions.src_campaign}
+                onChange={(value) => setCustomCostField("src_campaign", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <UtmFreeSoloAutocomplete
+                label="UTM Term"
+                value={customCostForm.src_term}
+                options={customCostOptions.src_term}
+                onChange={(value) => setCustomCostField("src_term", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <UtmFreeSoloAutocomplete
+                label="UTM Content"
+                value={customCostForm.src_content}
+                options={customCostOptions.src_content}
+                onChange={(value) => setCustomCostField("src_content", value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <MyTextInput
+                label="Комментарий"
+                value={customCostForm.comment}
+                func={({ target }) => setCustomCostField("comment", target?.value)}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Дата</TableCell>
+                  <TableCell align="right">Расход</TableCell>
+                  <TableCell>Source</TableCell>
+                  <TableCell>Medium</TableCell>
+                  <TableCell>Campaign</TableCell>
+                  <TableCell>Term</TableCell>
+                  <TableCell>Content</TableCell>
+                  <TableCell>Комментарий</TableCell>
+                  <TableCell align="right">Действия</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {customCosts.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{dayjs(item.date).format("DD.MM.YYYY")}</TableCell>
+                    <TableCell align="right">{formatCurrency(item.cost)} ₽</TableCell>
+                    <TableCell>{item.src_source}</TableCell>
+                    <TableCell>{item.src_medium}</TableCell>
+                    <TableCell>{item.src_campaign}</TableCell>
+                    <TableCell>{item.src_term}</TableCell>
+                    <TableCell>{item.src_content}</TableCell>
+                    <TableCell>{item.comment}</TableCell>
+                    <TableCell align="right">
+                      <StyledButton
+                        variant="outlined"
+                        onClick={() => editCustomCost(item)}
+                        sx={{ mr: 1 }}
+                      >
+                        Изменить
+                      </StyledButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => deleteCustomCost(item.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {customCosts.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      Ручных расходов за выбранный период нет
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <StyledButton
+            variant="outlined"
+            onClick={() => setCustomCostDialogOpen(false)}
+          >
+            Закрыть
+          </StyledButton>
+          <StyledButton
+            variant="outlined"
+            onClick={() =>
+              setCustomCostForm({
+                ...createEmptyCustomCostForm(),
+                city_id: getSelectedCityId() ?? 0,
+                date: dayjs(form.dateStart).format("YYYY-MM-DD"),
+              })
+            }
+          >
+            Очистить
+          </StyledButton>
+          <StyledButton
+            variant="primary"
+            onClick={saveCustomCost}
+          >
+            Сохранить расход
+          </StyledButton>
+        </DialogActions>
+      </Dialog>
       <Grid size={{ xs: 12 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Box>
             <Typography
               variant="h5"
-              fontWeight={700}
               gutterBottom
+              sx={{
+                fontWeight: 700,
+              }}
             >
               {module.name || "Сквозная аналитика"}
             </Typography>
@@ -1158,341 +2456,399 @@ function EndPage() {
           <Box sx={{ display: "flex", gap: 1 }}></Box>
         </Box>
       </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <StyledPaper>
-          <Grid
-            container
-            spacing={3}
+      {(canViewAnalytics || canViewAiAnalyst) && (
+        <Grid size={{ xs: 12 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, value) => setActiveTab(value)}
+            sx={{
+              mb: 1,
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
+              "& .Mui-selected": { color: PRIMARY_COLOR },
+              "& .MuiTabs-indicator": { backgroundColor: PRIMARY_COLOR },
+            }}
           >
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <MyAutocomplite
-                label="Группы"
-                data={cities}
-                multiple={false}
-                value={form.cities}
-                func={(event, data) => handleCitiesChange(data)}
+            {canViewAnalytics && (
+              <Tab
+                value={0}
+                label="Сквозная аналитика"
               />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyDatePickerNew
-                label="Дата от"
-                customActions={true}
-                value={dayjs(form.dateStart)}
-                maxDate={dayjs(form.dateEnd) ?? dayjs()}
-                func={(e) => setField("dateStart", e)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+            )}
+            {canViewAiAnalyst && (
+              <Tab
+                value={1}
+                label="AI аналитик"
               />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyDatePickerNew
-                label="Дата до"
-                customActions={true}
-                value={dayjs(form.dateEnd)}
-                minDate={dayjs(form.dateStart) ?? dayjs()}
-                func={(e) => setField("dateEnd", e)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Source"
-                value={form.src_source}
-                func={({ target }) => setField("src_source", target?.value)}
-                placeholder="yandex, vk..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Medium"
-                value={form.src_medium}
-                func={({ target }) => setField("src_medium", target?.value)}
-                placeholder="cpc, organic..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Campaign"
-                value={form.src_campaign}
-                func={({ target }) => setField("src_campaign", target?.value)}
-                placeholder="brand, retarget..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Content"
-                value={form.src_content}
-                func={({ target }) => setField("src_content", target?.value)}
-                placeholder="banner_top..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2.66 }}>
-              <MyTextInput
-                label="UTM Term"
-                value={form.src_term}
-                func={({ target }) => setField("src_term", target?.value)}
-                placeholder="доставка..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Заказов от"
-                value={form.orderStart}
-                func={({ target }) => setField("orderStart", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Заказов до"
-                value={form.orderEnd}
-                func={({ target }) => setField("orderEnd", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Стоимость заказа от"
-                value={form.payOrderStart}
-                func={({ target }) => setField("payOrderStart", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="Стоимость заказа до"
-                value={form.payOrderEnd}
-                func={({ target }) => setField("payOrderEnd", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyTextInput
-                type="number"
-                label="ROI"
-                value={form.roi}
-                func={({ target }) => setField("roi", target?.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 2 }}>
-              <MyAutocomplite
-                label="Тип клиентов"
-                data={[
-                  { id: 1, name: "Все" },
-                  { id: 2, name: "Новые" },
-                  { id: 3, name: "Действующие" },
-                ]}
-                multiple={false}
-                value={form.typeClient}
-                func={(event, data) => {
-                  setField("typeClient", data);
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 1 }}
-              >
-                Способ заказа
-              </Typography>
-              <ToggleButtonGroup
-                value={
-                  form.typeOrder.some((t) => t.id === 1)
-                    ? []
-                    : form.typeOrder
-                        .filter((t) => t.id !== 1)
-                        .map((t) => {
-                          const map = { 2: "site", 3: "cafe", 4: "kc" };
-                          return map[t.id];
-                        })
-                }
-                onChange={handleTypeOrderChange}
-                aria-label="order type"
-                sx={{ "& .MuiToggleButton-root": { border: "none" } }}
-              >
-                <StyledToggleButton value="site">Сайт</StyledToggleButton>
-                <StyledToggleButton value="cafe">Кафе</StyledToggleButton>
-                <StyledToggleButton value="kc">КЦ</StyledToggleButton>
-              </ToggleButtonGroup>
-            </Grid>
-
-            <Grid
-              size={{ xs: 12 }}
-              sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
+            )}
+          </Tabs>
+        </Grid>
+      )}
+      {access !== null && !canViewAnalytics && !canViewAiAnalyst && (
+        <Grid size={{ xs: 12 }}>
+          <Paper sx={{ p: 3 }}>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
             >
-              <StyledButton
-                variant="outlined"
-                onClick={resetFilters}
-                startIcon={<DeleteIcon />}
+              Нет доступа к вкладкам модуля
+            </Typography>
+          </Paper>
+        </Grid>
+      )}
+      {activeTab === 1 && canViewAiAnalyst && (
+        <Grid size={{ xs: 12 }}>
+          <AiAnalystTab
+            cities={cities}
+            form={form}
+            source={aiSource}
+            models={aiModels}
+            model={aiModel}
+            analysis={aiAnalysis}
+            dailyMetrics={dailyMetrics}
+            trafficSourceMetrics={trafficSourceMetrics}
+            siteDataRequestId={siteDataRequestId}
+            history={siteDataHistory}
+            historyChatMessages={historyChatMessages}
+            chatThreads={aiChatThreads}
+            activeChatThreadId={activeChatThreadId}
+            onCitiesChange={handleCitiesChange}
+            onFieldChange={setField}
+            onSourceChange={setAiSource}
+            onModelChange={setAiModel}
+            onApply={applyAiRequest}
+            onReset={resetAiFilters}
+            onSendChat={sendAiChat}
+            onSelectChatThread={selectChatThread}
+            onCreateChatThread={createAiChatThread}
+            onUpdateChatThread={updateAiChatThread}
+            onDeleteChatThread={deleteAiChatThread}
+            onSelectHistory={loadSiteDataHistoryItem}
+            onExport={exportAiReport}
+            canExport={canExportReport}
+            canExportData={Boolean(aiSiteDataSnapshot)}
+            onAnalyze={analyzeAiReport}
+            canAnalyze={Boolean(aiSiteDataSnapshot)}
+          />
+        </Grid>
+      )}
+      {activeTab === 0 && canViewAnalytics && analyticsMeta && (
+        <Grid size={{ xs: 12 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              px: 2,
+              py: 1.5,
+              borderRadius: "8px",
+              backgroundColor: "#fafafa",
+              border: "1px solid #eeeeee",
+            }}
+          >
+            <Typography variant="body2">
+              Период данных: {analyticsMeta.effective_date_start} —{" "}
+              {analyticsMeta.effective_date_end}
+            </Typography>
+            {analyticsMeta.date_was_clamped && (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "warning.main",
+                }}
               >
-                Сбросить
-              </StyledButton>
-              <StyledButton
-                variant="primary"
-                onClick={applyRequest}
-                startIcon={<SearchIcon />}
+                Текущий или будущий день исключён; данные доступны по{" "}
+                {analyticsMeta.complete_through}
+              </Typography>
+            )}
+          </Box>
+        </Grid>
+      )}
+      {activeTab === 0 && canViewAnalytics && (
+        <>
+          <Grid size={{ xs: 12 }}>
+            <StyledPaper>
+              <Grid
+                container
+                spacing={3}
               >
-                Применить
-              </StyledButton>
-            </Grid>
-          </Grid>
-        </StyledPaper>
-      </Grid>
-
-      <Grid size={{ xs: 12 }}>
-        <Paper
-          sx={{
-            width: "100%",
-            overflow: "hidden",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          }}
-        >
-          <StickyTableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <StyledTableCell isHeader={true}>ИСТОЧНИК ТРАФИКА</StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ВИЗИТЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    РАСХОД
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    КОНВЕРСИЯ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    СТОИМОСТЬ ЗАКАЗА
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    СУММА ЗАКАЗОВ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    СРЕДНИЙ ЧЕК
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ROI
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    НОВЫЕ КЛИЕНТЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ДЕЙСТВУЮЩИЕ КЛИЕНТЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ПЕРВИЧНЫЕ ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ПОВТОРНЫЕ ЗАКАЗЫ
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    ДРР
-                  </StyledTableCell>
-                  <StyledTableCell
-                    isHeader={true}
-                    align="right"
-                  >
-                    LTV
-                  </StyledTableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData.map((row) => (
-                  <RenderTableRow
-                    key={row.id}
-                    row={row}
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <MyAutocomplite
+                    label="Города"
+                    data={cities}
+                    multiple={false}
+                    value={form.cities}
+                    func={(event, data) => handleCitiesChange(data)}
                   />
-                ))}
-                {tableData.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={15}
-                      align="center"
-                      sx={{ py: 6 }}
-                    >
-                      <Typography
-                        variant="body1"
-                        color="text.secondary"
-                      >
-                        Выберите фильтры и нажмите "Применить" для отображения данных
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </StickyTableContainer>
-        </Paper>
-      </Grid>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    customActions={true}
+                    value={dayjs(form.dateStart)}
+                    maxDate={dayjs(form.dateEnd) ?? dayjs()}
+                    func={(e) => setField("dateStart", e)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    customActions={true}
+                    value={dayjs(form.dateEnd)}
+                    minDate={dayjs(form.dateStart) ?? dayjs()}
+                    func={(e) => setField("dateEnd", e)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Source"
+                    value={form.src_source}
+                    func={({ target }) => setField("src_source", target?.value)}
+                    placeholder="yandex, vk..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Medium"
+                    value={form.src_medium}
+                    func={({ target }) => setField("src_medium", target?.value)}
+                    placeholder="cpc, organic..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Campaign"
+                    value={form.src_campaign}
+                    func={({ target }) => setField("src_campaign", target?.value)}
+                    placeholder="brand, retarget..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Content"
+                    value={form.src_content}
+                    func={({ target }) => setField("src_content", target?.value)}
+                    placeholder="banner_top..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2.66 }}>
+                  <MyTextInput
+                    label="UTM Term"
+                    value={form.src_term}
+                    func={({ target }) => setField("src_term", target?.value)}
+                    placeholder="доставка..."
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Заказов от"
+                    value={form.orderStart}
+                    func={({ target }) => setField("orderStart", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Заказов до"
+                    value={form.orderEnd}
+                    func={({ target }) => setField("orderEnd", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Стоимость заказа от"
+                    value={form.payOrderStart}
+                    func={({ target }) => setField("payOrderStart", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="Стоимость заказа до"
+                    value={form.payOrderEnd}
+                    func={({ target }) => setField("payOrderEnd", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyTextInput
+                    type="number"
+                    label="ROI"
+                    value={form.roi}
+                    func={({ target }) => setField("roi", target?.value)}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <MyAutocomplite
+                    label="Тип клиентов"
+                    data={[
+                      { id: 1, name: "Все" },
+                      { id: 2, name: "Новые" },
+                      { id: 3, name: "Действующие" },
+                    ]}
+                    multiple={false}
+                    value={form.typeClient}
+                    func={(event, data) => {
+                      setField("typeClient", data);
+                    }}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      display: "block",
+                      mb: 1,
+                    }}
+                  >
+                    Способ заказа
+                  </Typography>
+                  <ToggleButtonGroup
+                    value={
+                      form.typeOrder.some((t) => t.id === 1)
+                        ? []
+                        : form.typeOrder
+                            .filter((t) => t.id !== 1)
+                            .map((t) => {
+                              const map = { 2: "site", 3: "cafe", 4: "kc" };
+                              return map[t.id];
+                            })
+                    }
+                    onChange={handleTypeOrderChange}
+                    aria-label="order type"
+                    sx={{ "& .MuiToggleButton-root": { border: "none" } }}
+                  >
+                    <StyledToggleButton value="site">Сайт</StyledToggleButton>
+                    <StyledToggleButton value="cafe">Кафе</StyledToggleButton>
+                    <StyledToggleButton value="kc">КЦ</StyledToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
+
+                <Grid
+                  size={{ xs: 12 }}
+                  sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
+                >
+                  <StyledButton
+                    variant="outlined"
+                    onClick={openCustomCostsDialog}
+                  >
+                    Ручные расходы
+                  </StyledButton>
+                  <StyledButton
+                    variant="outlined"
+                    onClick={resetFilters}
+                    startIcon={<DeleteIcon />}
+                  >
+                    Сбросить
+                  </StyledButton>
+                  <StyledButton
+                    variant="primary"
+                    onClick={applyRequest}
+                    disabled={isLoad}
+                    startIcon={<SearchIcon />}
+                  >
+                    Применить
+                  </StyledButton>
+                </Grid>
+              </Grid>
+            </StyledPaper>
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Paper
+              sx={{
+                width: "100%",
+                overflow: "hidden",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "flex-end", px: 2, py: 1.5 }}>
+                <StyledButton
+                  variant="outlined"
+                  startIcon={<ViewColumnIcon />}
+                  onClick={() => setColumnsDialogOpen(true)}
+                >
+                  Колонки
+                </StyledButton>
+              </Box>
+              <StickyTableContainer tableMinWidth={tableMinWidth}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <StyledTableCell isHeader={true}>ИСТОЧНИК ТРАФИКА</StyledTableCell>
+                      {visibleColumnDefinitions.map((column) => (
+                        <StyledTableCell
+                          key={column.key}
+                          isHeader={true}
+                          align="right"
+                          noWrap
+                        >
+                          {column.label}
+                        </StyledTableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableData.map((row) => (
+                      <RenderTableRow
+                        key={row.id}
+                        row={row}
+                      />
+                    ))}
+                    {tableData.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={visibleColumnDefinitions.length + 1}
+                          align="center"
+                          sx={{ py: 6 }}
+                        >
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "text.secondary",
+                            }}
+                          >
+                            Выберите фильтры и нажмите "Применить" для отображения данных
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </StickyTableContainer>
+            </Paper>
+          </Grid>
+        </>
+      )}
     </Grid>
   );
 }

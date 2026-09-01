@@ -64,7 +64,7 @@ import {
   MyAutocomplite2,
   MyDatePickerNew,
 } from "@/ui/Forms";
-import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import { PickerDay } from "@mui/x-date-pickers/PickerDay";
 
 import queryString from "query-string";
 
@@ -544,6 +544,22 @@ class WorkSchedule_Table extends React.Component {
     });
   }
 
+  canEditDirBonus(item) {
+    return (
+      this.props.numberChoose == 2 &&
+      item.data.app_type == "dir" &&
+      parseInt(this.props.access["bonus_edit"]) == 1
+    );
+  }
+
+  canEditManagerBonus(item) {
+    return (
+      this.props.numberChoose == 2 &&
+      item.data.app_type == "manager" &&
+      parseInt(this.props.access["new_bonus_dop_edit"]) == 1
+    );
+  }
+
   shouldComponentUpdate(nextProps, nextState) {
     var array1 = nextProps.test;
     var array2 = this.props.test;
@@ -816,22 +832,16 @@ class WorkSchedule_Table extends React.Component {
                       display:
                         parseInt(this.props.access["bonus_view"]) == 1 ? "table-cell" : "none",
                       cursor:
-                        this.props.numberChoose == 2 &&
-                        item.data.app_type == "dir" &&
-                        parseInt(this.props.access["bonus_edit"]) == 1
+                        this.canEditDirBonus(item) || this.canEditManagerBonus(item)
                           ? "pointer"
                           : "default",
                       backgroundColor:
-                        this.props.numberChoose == 2 &&
-                        item.data.app_type == "dir" &&
-                        parseInt(this.props.access["bonus_edit"]) == 1
+                        this.canEditDirBonus(item) || this.canEditManagerBonus(item)
                           ? "#e5e5e5"
                           : "#fff",
                     }}
                     onClick={
-                      this.props.numberChoose == 2 &&
-                      parseInt(this.props.access["bonus_edit"]) == 1 &&
-                      item.data.app_type == "dir"
+                      this.canEditDirBonus(item)
                         ? this.props.openModalDirBonus.bind(
                             this,
                             item.data.id,
@@ -840,16 +850,16 @@ class WorkSchedule_Table extends React.Component {
                             this.props.numberChoose,
                             item.data,
                           )
-                        : () => {
-                            console.log(
+                        : this.canEditManagerBonus(item)
+                          ? this.props.openModalManagerBonus.bind(
+                              this,
+                              item.data.id,
+                              item.data.smena_id,
+                              item.data.app_id,
                               this.props.numberChoose,
-                              this.props.kind,
-                              item.data.app_type,
-                              this.props.numberChoose == 2 &&
-                                (this.props.kind == "dir" || this.props.kind == "mega_dir") &&
-                                item.data.app_type == "dir",
-                            );
-                          }
+                              item.data,
+                            )
+                          : () => {}
                     }
                     //onClick={ item.data.app_type == 'dir' || this.props.kind == 'dir' ? () => {} : this.props.openZPCart.bind(this, item.data.id, item.data.smena_id, item.data.app_id, this.props.numberChoose, item.data)}
                   >
@@ -2474,6 +2484,8 @@ class WorkSchedule_ extends React.Component {
 
       isModalDirBonus: false,
       dir_bonus: 0,
+      isModalManagerBonus: false,
+      manager_bonus: 0,
     };
   }
 
@@ -3118,7 +3130,7 @@ class WorkSchedule_ extends React.Component {
       }
 
       return (
-        <PickersDay
+        <PickerDay
           {...props}
           style={{ backgroundColor: backgroundColor, color: "#fff" }}
           onClick={this.chooseDay.bind(this, date)}
@@ -3127,7 +3139,7 @@ class WorkSchedule_ extends React.Component {
     }
 
     return (
-      <PickersDay
+      <PickerDay
         {...props}
         style={{ backgroundColor: "#fff", color: "rgba(0, 0, 0, 0.87)" }}
         onClick={this.chooseDay.bind(this, date)}
@@ -3867,6 +3879,55 @@ class WorkSchedule_ extends React.Component {
         isModalDirBonus: false,
         userInfo: {},
         dir_bonus: "",
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+
+      setTimeout(() => {
+        this.updateData();
+      }, 300);
+    } else {
+      this.setState({
+        operAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  }
+
+  openModalManagerBonus(user_id, smena_id, app_id, part, user) {
+    this.setState({
+      isModalManagerBonus: true,
+      manager_bonus: user?.dir_bonus ?? 0,
+      userInfo: {
+        name: user.user_name,
+        app: user.full_app_name,
+        given: user.given_cash,
+        date: this.state.mounth + (parseInt(part) == 1 ? "-01" : "-16"),
+        user_id: user_id,
+        smena_id: smena_id,
+        app_id: app_id,
+      },
+    });
+  }
+
+  async saveManagerBonus() {
+    const data = {
+      date: this.state.mounth,
+      bonus: this.state.manager_bonus,
+      user_id: this.state.userInfo.user_id,
+      app_id: this.state.userInfo.app_id,
+      smena_id: this.state.userInfo.smena_id,
+    };
+
+    const res = await this.getData("save_manager_bonus", data);
+
+    if (res.st) {
+      this.setState({
+        isModalManagerBonus: false,
+        userInfo: {},
+        manager_bonus: 0,
         operAlert: true,
         err_status: res.st,
         err_text: res.text,
@@ -5850,6 +5911,60 @@ class WorkSchedule_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
+        {/* дополнительный бонус менеджера */}
+        <Dialog
+          onClose={() => this.setState({ isModalManagerBonus: false, manager_bonus: 0 })}
+          open={this.state.isModalManagerBonus}
+        >
+          <DialogTitle className="button">
+            Дополнительный бонус менеджера {this.state?.userInfo?.name} {this.state?.userInfo?.date}
+            <IconButton
+              onClick={() => {
+                this.setState({ isModalManagerBonus: false, manager_bonus: 0 });
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <Close />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent>
+            <Grid
+              container
+              spacing={3}
+              style={{ marginTop: 10 }}
+            >
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 12,
+                }}
+              >
+                <MyTextInput
+                  label="Сумма"
+                  value={this.state.manager_bonus}
+                  func={(event) => this.setState({ manager_bonus: event.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}
+          >
+            <Button
+              style={{ backgroundColor: "green", color: "#fff" }}
+              onClick={this.saveManagerBonus.bind(this)}
+            >
+              Сохранить
+            </Button>
+            <Button
+              style={{ backgroundColor: "red", color: "#fff" }}
+              onClick={() => this.setState({ isModalManagerBonus: false, manager_bonus: 0 })}
+            >
+              Отмена
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Grid
           container
           spacing={3}
@@ -6027,6 +6142,7 @@ class WorkSchedule_ extends React.Component {
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
                     openModalDirBonus={this.openModalDirBonus.bind(this)}
+                    openModalManagerBonus={this.openModalManagerBonus.bind(this)}
                     access={this.state.access}
                   />
                 )}
@@ -6101,6 +6217,7 @@ class WorkSchedule_ extends React.Component {
                     openAddUser={() => this.setState({ mainMenuAddUsers: true })}
                     clickAppNameUser={this.clickAppNameUser.bind(this)}
                     openModalDirBonus={this.openModalDirBonus.bind(this)}
+                    openModalManagerBonus={this.openModalManagerBonus.bind(this)}
                     access={this.state.access}
                   />
                 )}

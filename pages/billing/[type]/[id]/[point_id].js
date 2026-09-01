@@ -27,6 +27,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
 
 import Dropzone from "dropzone";
@@ -214,20 +215,32 @@ const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
 const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
 // const API_URL = "http://127.0.0.1:8000/api";
 const API_URL = "https://apichef.jacochef.ru/api";
-const url_ocr = `${API_URL}/ocr/files/pipeline`;
+// const url_ocr = `${API_URL}/ocr/files/pipeline`;
+const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 
 function isImageFileName(fileName) {
   return /\.(jpe?g|png|gif|bmp|webp|heic|heif)$/i.test(String(fileName ?? ""));
 }
 
+function isOcrFileName(fileName) {
+  return /\.(jpe?g|png|pdf)$/i.test(String(fileName ?? ""));
+}
+
 function isImageDropzoneFile(file) {
   const fileName = file?.name?.toLowerCase() ?? "";
+  const fileType = file?.type?.toLowerCase() ?? "";
 
-  return file?.type?.startsWith("image/") || isImageFileName(fileName);
+  return (
+    ["image/jpeg", "image/png", "application/pdf"].includes(fileType) || isOcrFileName(fileName)
+  );
 }
 
 function getFileMimeType(fileName = "") {
   const normalized = String(fileName).toLowerCase();
+
+  if (normalized.endsWith(".pdf")) {
+    return "application/pdf";
+  }
 
   if (normalized.endsWith(".png")) {
     return "image/png";
@@ -616,27 +629,135 @@ function getResolvedVendorPackOption(vendorItem, ocrItem, selectedPackOption = n
   return findVendorPackOption(pqItems, "1") ?? (pqItems.length === 1 ? pqItems[0] : null);
 }
 
+const OCR_MATH_FLAG_FIELDS = [
+  "math_qty_price_total_wo_vat_ok",
+  "math_vat_amount_ok",
+  "math_total_with_vat_ok",
+];
+
+const OCR_REVIEW_REASON_TEXT = {
+  unmatched_product: "Товар не найден в справочнике, выбери вручную",
+  low_match_score: "Низкая уверенность сопоставления, проверь товар",
+  missing_numeric_fields: "Не хватает количества или сумм",
+  math_qty_price_total_wo_vat_ok: "не сошлась формула количество x цена = сумма без НДС",
+  math_vat_amount_ok: "не сошлась сумма НДС",
+  math_total_with_vat_ok: "не сошлась сумма с НДС",
+  lilt_numeric_weak_match: "Числа требуют проверки",
+  lilt_numeric_unconfirmed: "OCR не подтвердил числовую строку",
+};
+
+function getOcrMatchedId(ocrItem) {
+  return ocrItem?.matched_id ?? ocrItem?.matched_product?.id;
+}
+
+function hasOcrMathIssues(ocrItem) {
+  return OCR_MATH_FLAG_FIELDS.some((field) => ocrItem?.[field] === false);
+}
+
+function hasOcrRequiredNumericFields(ocrItem) {
+  return (
+    normalizeBillingText(ocrItem?.quantity).length > 0 &&
+    (normalizeBillingText(ocrItem?.total_with_vat).length > 0 ||
+      normalizeBillingText(ocrItem?.total_wo_vat).length > 0)
+  );
+}
+
+function isOcrItemReadyForAutofill(ocrItem) {
+  return (
+    Boolean(getOcrMatchedId(ocrItem)) &&
+    !hasOcrMathIssues(ocrItem) &&
+    hasOcrRequiredNumericFields(ocrItem)
+  );
+}
+
+function getOcrItemReviewMessages(ocrItem) {
+  const messages = [];
+  const reviewReasons = Array.isArray(ocrItem?.__ocr_review?.review_reasons)
+    ? ocrItem.__ocr_review.review_reasons
+    : [];
+
+  reviewReasons.forEach((reason) => {
+    if (reason === "unmatched_product" && getOcrMatchedId(ocrItem)) {
+      return;
+    }
+
+    messages.push(OCR_REVIEW_REASON_TEXT[reason] ?? reason);
+  });
+
+  if (!getOcrMatchedId(ocrItem)) {
+    messages.push(OCR_REVIEW_REASON_TEXT.unmatched_product);
+  }
+
+  if (ocrItem?.__ocr_review?.needs_review === true && !reviewReasons.length) {
+    messages.push("строка требует ручной проверки");
+  }
+
+  OCR_MATH_FLAG_FIELDS.forEach((field) => {
+    if (ocrItem?.[field] === false) {
+      messages.push(OCR_REVIEW_REASON_TEXT[field]);
+    }
+  });
+
+  if (!hasOcrRequiredNumericFields(ocrItem)) {
+    messages.push("не хватает количества или суммы");
+  }
+
+  return [...new Set(messages.filter(Boolean))];
+}
+
+function getOcrAutofillNotice(ocrItem) {
+  const reviewReasons = Array.isArray(ocrItem?.__ocr_review?.review_reasons)
+    ? ocrItem.__ocr_review.review_reasons
+    : [];
+
+  if (ocrItem?.ocr_repair) {
+    return "Числа исправлены OCR";
+  }
+
+  if (reviewReasons.includes("low_match_score")) {
+    return OCR_REVIEW_REASON_TEXT.low_match_score;
+  }
+
+  if (
+    reviewReasons.includes("lilt_numeric_weak_match") ||
+    reviewReasons.includes("lilt_numeric_unconfirmed")
+  ) {
+    return "Числа требуют проверки";
+  }
+
+  return "";
+}
+
 function getOcrResolveIssue(ocrItem, vendorItem, selectedPackOption) {
+  const issues = [];
+
   if (!vendorItem) {
-    return "OCR не смог уверенно определить товар";
+    issues.push(OCR_REVIEW_REASON_TEXT.unmatched_product);
+    return issues.join("; ");
   }
 
   if (!normalizeBillingText(ocrItem?.quantity).length) {
-    return "OCR не распознал количество товара, проверь строку вручную";
+    issues.push("OCR не распознал количество товара, проверь строку вручную");
   }
 
   const ocrPq = normalizeBillingText(ocrItem?.pq);
   const pqItems = Array.isArray(vendorItem?.pq_item) ? vendorItem.pq_item : [];
 
   if (ocrPq.length && !selectedPackOption) {
-    return `OCR распознал упаковку ${ocrPq}, но такого значения нет у товара поставщика`;
+    issues.push(`OCR распознал упаковку ${ocrPq}, но такого значения нет у товара поставщика`);
   }
 
   if (!ocrPq.length && pqItems.length > 1 && !selectedPackOption) {
-    return "OCR не распознал объем упаковки, выбери его вручную";
+    issues.push("OCR не распознал объем упаковки, выбери его вручную");
   }
 
-  return "";
+  getOcrItemReviewMessages(ocrItem).forEach((message) => {
+    if (message !== OCR_REVIEW_REASON_TEXT.unmatched_product) {
+      issues.push(message);
+    }
+  });
+
+  return [...new Set(issues.filter(Boolean))].join("; ");
 }
 
 function getOcrQuantityData(ocrItem, pqValue = "") {
@@ -683,11 +804,13 @@ function formatOcrVatRate(value) {
 
 function getParsedOcrDocuments(data) {
   const documents = Array.isArray(data?.merged?.documents) ? data.merged.documents : [];
+  const smartDocuments = Array.isArray(data?.smart?.documents) ? data.smart.documents : [];
 
   return documents
     .map((document, documentIndex) => ({
       ...document,
       documentIndex,
+      __ocr_smart_document: smartDocuments[documentIndex] ?? {},
     }))
     .filter((document) => document?.parsed);
 }
@@ -706,16 +829,23 @@ function getFirstOcrInvoice(parsedDocuments) {
 
 function getMergedOcrItems(parsedDocuments) {
   return parsedDocuments
-    .flatMap((document, documentIndex) =>
-      (Array.isArray(document?.parsed?.items) ? document.parsed.items : []).map(
+    .flatMap((document, documentIndex) => {
+      const itemsReview = Array.isArray(document?.__ocr_smart_document?.items_review)
+        ? document.__ocr_smart_document.items_review
+        : [];
+
+      return (Array.isArray(document?.parsed?.items) ? document.parsed.items : []).map(
         (item, itemIndex) => ({
           ...item,
           __ocr_document_index: documentIndex,
           __ocr_item_index: itemIndex,
           __ocr_file_name: document?.file_name ?? document?.file_names?.[0] ?? "",
+          __ocr_review: itemsReview[itemIndex] ?? {},
+          __ocr_quality: document?.__ocr_smart_document?.quality ?? {},
+          __ocr_auto_repair: document?.__ocr_smart_document?.auto_repair ?? {},
         }),
-      ),
-    )
+      );
+    })
     .sort((a, b) => {
       const lineA = Number.isFinite(Number(a?.line)) ? Number(a.line) : Number.MAX_SAFE_INTEGER;
       const lineB = Number.isFinite(Number(b?.line)) ? Number(b.line) : Number.MAX_SAFE_INTEGER;
@@ -730,6 +860,14 @@ function getMergedOcrItems(parsedDocuments) {
 
       return a.__ocr_item_index - b.__ocr_item_index;
     });
+}
+
+function getOcrAutoRepairCount(parsedDocuments) {
+  return parsedDocuments.reduce((sum, document) => {
+    const count = Number(document?.__ocr_smart_document?.auto_repair?.applied_count);
+
+    return Number.isFinite(count) ? sum + count : sum;
+  }, 0);
 }
 
 function findMatchedVendorItem(vendorItems, ocrItem) {
@@ -1490,6 +1628,11 @@ function BillItemNameContent({ item, showPriceWarnings = true, vendorId = null }
           </Link>
         </Tooltip>
       )}
+      {!item?.ocr_notice ? null : (
+        <Box sx={{ mt: 0.5, maxWidth: 340 }}>
+          <Box sx={billingPriceWarningChipSx}>{item.ocr_notice}</Box>
+        </Box>
+      )}
       {!showPriceWarnings || !item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
           <Box sx={billingPriceWarningChipSx}>Проверить ценник</Box>
@@ -1521,9 +1664,11 @@ function renderBillingVendorItemOption(optionProps, option, vendorId = null) {
       <Stack
         direction="row"
         spacing={1}
-        alignItems="center"
-        flexWrap="wrap"
         useFlexGap
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
       >
         <Box component="span">{option?.name || option?.item_name || ""}</Box>
         {option?.err_decl && resolvedVendorId ? (
@@ -2168,69 +2313,41 @@ const useStore = create((set, get) => ({
       console.log("res.items", res.items);
       console.log("bill_items", bill_items);
 
-      let check_this_bill = false;
-
-      res.billing_items.map((item) => {
-        let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
-
-        let this_bill = bill_items.find(
-          (b) =>
-            parseInt(b.item_id) === parseInt(item.item_id) &&
-            parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
-        );
-
-        if (this_bill) {
-          check_this_bill = true;
-        } else {
-          let this_bill_test = bill_items.find(
-            (b) => parseInt(b.item_id) === parseInt(item.item_id),
-          );
-
-          if (this_bill_test) {
-            check_this_bill = true;
-          }
-        }
-      });
-
       const normalizePrice = (v) => Number(parseFloat(v).toFixed(2));
 
-      const notFoundBillingItems = res.billing_items.filter(
-        (item) =>
-          !bill_items.some(
-            (bill) =>
-              Number(bill.item_id) === Number(item.item_id) &&
-              normalizePrice(bill.price_w_nds) === normalizePrice(item.price_w_nds),
-          ),
-      );
+      // Рабочая копия текущих позиций счёта. Каждую сопоставляем со строкой
+      // базового документа не более одного раза, чтобы дубли (одинаковый item_id
+      // с разными ценой/кол-вом) не схлопывались в первое совпадение.
+      const remainingBillItems = bill_items.slice();
 
-      console.log("notFoundBillingItems", notFoundBillingItems);
-
-      res.billing_items.forEach((item) => {
-        const found = bill_items.some(
-          (bill) =>
-            Number(bill.item_id) === Number(item.item_id) &&
-            normalizePrice(bill.price_w_nds) === normalizePrice(item.price_w_nds),
-        );
-
-        console.log(item, found ? "FOUND" : "NOT FOUND");
-      });
-
-      res.billing_items.map((item) => {
-        let test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
-
-        let this_bill = bill_items.find(
+      const takeBillItem = (item) => {
+        let idx = remainingBillItems.findIndex(
           (b) =>
             parseInt(b.item_id) === parseInt(item.item_id) &&
-            parseFloat(b.price_w_nds) == parseFloat(item.price_w_nds),
+            normalizePrice(b.price_w_nds) === normalizePrice(item.price_w_nds),
         );
 
-        if (!this_bill) {
-          this_bill = bill_items.find((b) => parseInt(b.item_id) === parseInt(item.item_id));
+        if (idx === -1) {
+          idx = remainingBillItems.findIndex((b) => parseInt(b.item_id) === parseInt(item.item_id));
         }
 
-        console.log("test123", check_this_bill, this_bill, item);
+        if (idx === -1) {
+          return null;
+        }
+
+        return remainingBillItems.splice(idx, 1)[0];
+      };
+
+      const check_this_bill = res.billing_items.some((item) =>
+        bill_items.some((b) => parseInt(b.item_id) === parseInt(item.item_id)),
+      );
+
+      res.billing_items.forEach((item) => {
+        const test = res.items.filter((v) => parseInt(v.id) === parseInt(item.item_id));
 
         if (check_this_bill) {
+          const this_bill = takeBillItem(item);
+
           if (this_bill) {
             get().addItem_fast(
               this_bill.count,
@@ -2250,12 +2367,12 @@ const useStore = create((set, get) => ({
               0,
               0,
               item.price_w_nds,
-              notFoundBillingItems[0].ed_izmer_name,
-              notFoundBillingItems[0].pq,
-              notFoundBillingItems[0].item_id,
+              item.ed_izmer_name,
+              item.pq,
+              item.item_id,
               test,
               1,
-              this_bill.accounting_system,
+              test[0]?.accounting_system ?? [],
             );
           }
         } else {
@@ -2269,7 +2386,7 @@ const useStore = create((set, get) => ({
             item.item_id,
             test,
             0,
-            this_bill.accounting_system,
+            test[0]?.accounting_system ?? [],
           );
         }
       });
@@ -2644,28 +2761,36 @@ const useStore = create((set, get) => ({
     const bill_items_doc = get().bill_items_doc;
 
     if (bill_items_doc.length) {
-      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
-      const item = bill_items_doc.find(
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
-
-      const nds = get().check_nds_bill(
-        Number(item.price) == 0
-          ? 0
-          : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
-
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+      if (!item) {
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      vendor_items[0].data_bill = item;
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+        const nds = get().check_nds_bill(
+          Number(item.price) == 0
+            ? 0
+            : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
+
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
+      }
     }
 
     bill_items.push(vendor_items[0]);
@@ -2743,33 +2868,39 @@ const useStore = create((set, get) => ({
     console.log("bill_items_doc", bill_items_doc, sum_w_nds);
 
     if (bill_items_doc.length) {
-      // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      // Сначала точное совпадение по товару и цене с НДС — чтобы у дублей
+      // (одинаковый item_id, разные цены) подтянулась своя строка-основание.
       let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
       if (!item) {
-        item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      // item.price_w_nds = Number(count) == 0 ? 0 : item.price_w_nds;
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        // item.price_w_nds = Number(count) == 0 ? 0 : item.price_w_nds;
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
 
-      const nds = get().check_nds_bill(
-        Number(item.price) == 0
-          ? 0
-          : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
+        const nds = get().check_nds_bill(
+          Number(item.price) == 0
+            ? 0
+            : (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
 
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
       }
-
-      vendor_items[0].data_bill = item;
     }
 
     bill_items.push(vendor_items[0]);
@@ -2962,6 +3093,48 @@ const useStore = create((set, get) => ({
 
     set({
       bill_items,
+    });
+
+    get().check_price_item_new();
+  },
+
+  copyDataBillToItem: (id, key) => {
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    bill_items = bill_items.map((item, index) => {
+      if (item.id === id && key === index && item?.data_bill) {
+        const dataBill = item.data_bill;
+        const priceItem = dataBill.price ?? "";
+        const priceWithNds = dataBill.price_w_nds ?? "";
+
+        item.pq = dataBill.pq ?? "";
+        item.count = dataBill.count ?? "";
+        item.fact_unit =
+          dataBill.fact_unit ?? getBillingFactUnitText(dataBill.count, dataBill.pq) ?? "";
+        item.price_item = priceItem;
+        item.price_w_nds = priceWithNds;
+        item.summ_nds =
+          dataBill.summ_nds ??
+          (priceItem !== "" && priceWithNds !== ""
+            ? (Number(priceWithNds) - Number(priceItem)).toFixed(2)
+            : "");
+        item.nds = dataBill.nds ?? "";
+        item.price = getBillItemUnitPrice(item);
+        item.one_price_bill = item.price;
+      }
+
+      return item;
+    });
+
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds,
     });
 
     get().check_price_item_new();
@@ -3409,17 +3582,25 @@ function FormVendorItems() {
 }
 
 function VendorItemsTableEdit({ showPriceWarnings = true }) {
-  const [bill, type, vendors, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore(
-    (state) => [
-      state.bill,
-      state.type,
-      state.vendors,
-      state.deleteItem,
-      state.changeDataTable,
-      state.handleDrag,
-      state.handleDrop,
-    ],
-  );
+  const [
+    bill,
+    type,
+    vendors,
+    deleteItem,
+    changeDataTable,
+    copyDataBillToItem,
+    handleDrag,
+    handleDrop,
+  ] = useStore((state) => [
+    state.bill,
+    state.type,
+    state.vendors,
+    state.deleteItem,
+    state.changeDataTable,
+    state.copyDataBillToItem,
+    state.handleDrag,
+    state.handleDrop,
+  ]);
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3563,7 +3744,29 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
                         />
                       </TableCell>
                     )}
-                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    {!item?.data_bill ? null : (
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <span>После</span>
+                          <Tooltip title="Скопировать без изменений">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              aria-label="Скопировать без изменений"
+                              onClick={() => copyDataBillToItem(item.id, key)}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                border: "1px solid",
+                                borderColor: "primary.main",
+                              }}
+                            >
+                              <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    )}
                     <TableCell className="ceil_white">
                       {parseInt(bill?.type) == 5 || parseInt(bill?.type) == 2 ? (
                         <MySelect
@@ -4950,8 +5153,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                 direction="row"
                 spacing={1}
                 useFlexGap
-                flexWrap="wrap"
-                sx={{ mt: 1 }}
+                sx={{
+                  flexWrap: "wrap",
+                  mt: 1,
+                }}
               >
                 <Chip
                   size="small"
@@ -5086,8 +5291,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
           direction="row"
           spacing={1}
           useFlexGap
-          flexWrap="wrap"
-          sx={{ mb: 2 }}
+          sx={{
+            flexWrap: "wrap",
+            mb: 2,
+          }}
         >
           <Chip
             size="small"
@@ -6269,7 +6476,7 @@ class Billing_Edit_ extends React.Component {
   getStoredOcrImageNames = () => {
     const { imgs_bill = [] } = this.props.store;
 
-    return imgs_bill.filter((fileName) => isImageFileName(fileName));
+    return imgs_bill.filter((fileName) => isOcrFileName(fileName));
   };
 
   getStoredOcrImageFiles = async () => {
@@ -6508,6 +6715,7 @@ class Billing_Edit_ extends React.Component {
     nextBillItems[addedIndex].nds = nds || nextBillItems[addedIndex].nds;
     nextBillItems[addedIndex].price = getBillItemUnitPrice(nextBillItems[addedIndex]);
     nextBillItems[addedIndex].one_price_bill = nextBillItems[addedIndex].price;
+    nextBillItems[addedIndex].ocr_notice = getOcrAutofillNotice(ocrItem);
 
     store.setData({
       bill_items: nextBillItems,
@@ -6558,7 +6766,7 @@ class Billing_Edit_ extends React.Component {
     let skippedItems = 0;
 
     this.state.ocrResolveItems.forEach((item) => {
-      if (!item.selectedProduct) {
+      if (!item.selectedProduct || !hasOcrRequiredNumericFields(item.ocrItem)) {
         skippedItems += 1;
         return;
       }
@@ -6575,7 +6783,7 @@ class Billing_Edit_ extends React.Component {
     this.closeOcrResolveDialog();
 
     if (!addedItems) {
-      showAlert(false, "Для OCR-строк не выбраны товар и упаковка");
+      showAlert(false, "Для OCR-строк не выбраны товар, упаковка или не хватает числовых полей");
       return;
     }
 
@@ -6598,6 +6806,7 @@ class Billing_Edit_ extends React.Component {
 
     const invoice = getFirstOcrInvoice(parsedDocuments);
     const ocrItems = getMergedOcrItems(parsedDocuments);
+    const autoRepairCount = getOcrAutoRepairCount(parsedDocuments);
     const invoiceDate = parseOcrDate(invoice?.date);
     const nextOcrState = {};
 
@@ -6623,6 +6832,7 @@ class Billing_Edit_ extends React.Component {
     }
 
     let addedItems = 0;
+    let skippedItems = 0;
     const unresolvedItems = [];
 
     ocrItems.forEach((ocrItem, index) => {
@@ -6630,17 +6840,13 @@ class Billing_Edit_ extends React.Component {
       const suggestedVendorItem =
         matchedVendorItem ?? findSuggestedVendorItem(vendorItems, ocrItem);
       const resolvedPackOption = getResolvedVendorPackOption(suggestedVendorItem, ocrItem);
-      const quantityData = getOcrQuantityData(
-        ocrItem,
-        normalizeBillingText(resolvedPackOption?.name ?? resolvedPackOption?.id),
-      );
 
-      if (
-        !matchedVendorItem ||
-        !resolvedPackOption ||
-        !normalizeBillingText(quantityData.count).length ||
-        !normalizeBillingText(quantityData.factUnit).length
-      ) {
+      if (!hasOcrRequiredNumericFields(ocrItem) || hasOcrMathIssues(ocrItem)) {
+        skippedItems += 1;
+        return;
+      }
+
+      if (!matchedVendorItem || !resolvedPackOption) {
         unresolvedItems.push({
           key: `${ocrItem?.__ocr_file_name ?? ocrItem?.line ?? index}-${ocrItem?.line ?? index}-${index}`,
           ocrItem,
@@ -6649,8 +6855,13 @@ class Billing_Edit_ extends React.Component {
         return;
       }
 
-      if (this.addOcrItemToBill(ocrItem, matchedVendorItem, resolvedPackOption)) {
+      if (
+        isOcrItemReadyForAutofill(ocrItem) &&
+        this.addOcrItemToBill(ocrItem, matchedVendorItem, resolvedPackOption)
+      ) {
         addedItems += 1;
+      } else {
+        skippedItems += 1;
       }
     });
 
@@ -6671,13 +6882,17 @@ class Billing_Edit_ extends React.Component {
 
       return {
         status: true,
-        message: `OCR обновил документ: добавлено ${addedItems} поз. Для ${unresolvedItems.length} поз. нужна ручная модерация.`,
+        message: `OCR обновил документ: добавлено ${addedItems} поз. Для ${unresolvedItems.length} поз. нужна ручная модерация.${skippedItems ? ` Пропущено ${skippedItems} поз. без чисел или с ошибкой расчета.` : ""}${
+          autoRepairCount > 0 ? ` Система исправила числовые поля: ${autoRepairCount}.` : ""
+        }`,
       };
     }
 
     return {
       status: true,
-      message: `OCR обновил документ: добавлено ${addedItems} поз.`,
+      message: `OCR обновил документ: добавлено ${addedItems} поз.${skippedItems ? ` Пропущено ${skippedItems} поз. без чисел или с ошибкой расчета.` : ""}${
+        autoRepairCount > 0 ? ` Система исправила числовые поля: ${autoRepairCount}.` : ""
+      }`,
     };
   };
 
@@ -6736,9 +6951,10 @@ class Billing_Edit_ extends React.Component {
 
       formData.append("point_id", String(point.id));
       formData.append("debug", "0");
+      formData.append("use_gpt", "0");
       formData.append("use_lock", "1");
       formData.append("upload_to_cloud", "0");
-      formData.append("overwrite_cloud", "0");
+      formData.append("overwrite_cloud", "1");
 
       const response = await fetch(url_ocr, {
         method: "POST",
@@ -7335,7 +7551,7 @@ class Billing_Edit_ extends React.Component {
     } = this.props.store;
 
     const storedOcrImagesCount = (imgs_bill ?? []).filter((fileName) =>
-      isImageFileName(fileName),
+      isOcrFileName(fileName),
     ).length;
     const canUseOcr = [2, 5].includes(parseInt(bill?.type));
     const headerMode = getBillingSectionMode(acces, "header");
@@ -7505,7 +7721,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle
             sx={{
@@ -7557,7 +7775,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7607,7 +7827,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7658,7 +7880,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7708,7 +7932,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7760,7 +7986,9 @@ class Billing_Edit_ extends React.Component {
           fullWidth
           maxWidth="xs"
           sx={{ zIndex: 2100 }}
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7805,16 +8033,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -7877,16 +8107,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -7960,22 +8192,28 @@ class Billing_Edit_ extends React.Component {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75,
+                          }}
                         >
                           Строка: {item.ocrItem?.line ?? index + 1}
                         </Typography>
                         {!normalizeBillingText(item.ocrItem?.__ocr_file_name) ? null : (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Файл: {item.ocrItem.__ocr_file_name}
                           </Typography>
                         )}
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
                           {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
@@ -7996,8 +8234,10 @@ class Billing_Edit_ extends React.Component {
                         {!item.resolveIssue ? null : (
                           <Typography
                             variant="body2"
-                            color="warning.main"
-                            sx={{ mt: 1 }}
+                            sx={{
+                              color: "warning.main",
+                              mt: 1,
+                            }}
                           >
                             {item.resolveIssue}
                           </Typography>

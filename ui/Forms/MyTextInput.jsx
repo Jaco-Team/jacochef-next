@@ -171,14 +171,16 @@ export function MyTextInput(props) {
       rows={rows}
       minRows={minRows}
       maxRows={maxRows}
-      inputProps={isTimeMask ? { maxLength: 5, ...inputProps } : inputProps}
       sx={{
         width: "100%",
         ...journalStyles,
         ...(rest.sx || {}),
       }}
       slotProps={{
-        htmlInput: isNumber ? { min, max, step, ...(inputProps || {}) } : inputProps,
+        htmlInput: {
+          ...(isTimeMask ? { maxLength: 5, ...inputProps } : inputProps),
+          ...(isNumber ? { min, max, step, ...(inputProps || {}) } : inputProps),
+        },
         input: {
           startAdornment: startAdornment || null,
           endAdornment: endAdornment || null,

@@ -108,13 +108,7 @@ const SortableItem = React.memo(
     const visibleTags = useMemo(() => (isTagsExpanded ? tags : []), [isTagsExpanded, tags]);
 
     return (
-      <Grid
-        item
-        xs={12}
-        sm={6}
-        md={6}
-        lg={4}
-        xl={3}
+      <Box
         ref={setNodeRef}
         style={style}
         {...attributes}
@@ -330,7 +324,7 @@ const SortableItem = React.memo(
             </Box>
           )}
         </Paper>
-      </Grid>
+      </Box>
     );
   },
   (prev, next) => prev.module === next.module && prev.loading === next.loading,

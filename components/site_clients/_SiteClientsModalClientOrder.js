@@ -276,9 +276,11 @@ export default class SiteClients_Modal_Client_Order extends React.Component {
 
             {!this.state.showOrder?.err_order ? null : (
               <Grid
-                mt={3}
                 size={{
                   xs: 12,
+                }}
+                sx={{
+                  mt: 3,
                 }}
               >
                 <Accordion>

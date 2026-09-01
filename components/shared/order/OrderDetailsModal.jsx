@@ -20,10 +20,11 @@ import {
 } from "@mui/material";
 import { memo } from "react";
 
-const OrderDetailsModal = ({ open, onClose, order: orderObj }) => {
+const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails = false }) => {
   if (!orderObj) return null;
 
   const { order, order_items = [], err_order = null } = orderObj;
+  const showIntercom = !hideDeliveryDetails && parseInt(order?.type_order_) === 1;
 
   return (
     <Dialog
@@ -56,18 +57,20 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj }) => {
           container
           spacing={0}
         >
-          <Grid
-            size={{
-              xs: 12,
-            }}
-          >
-            <span>
-              {order?.type_order}: {order?.type_order_addr_new}
-            </span>
-          </Grid>
+          {hideDeliveryDetails ? null : (
+            <Grid
+              size={{
+                xs: 12,
+              }}
+            >
+              <span>
+                {order?.type_order}: {order?.type_order_addr_new}
+              </span>
+            </Grid>
+          )}
 
-          {parseInt(order?.type_order_) == 1 ? (
-            parseInt(order?.fake_dom) == 0 ? (
+          {showIntercom ? (
+            parseInt(order?.fake_dom) === 0 ? (
               <Grid
                 size={{
                   xs: 12,
@@ -95,7 +98,7 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj }) => {
             </span>
           </Grid>
 
-          {order?.number?.length > 1 ? (
+          {!hideDeliveryDetails && order?.number?.length > 1 ? (
             <Grid
               size={{
                 xs: 12,
@@ -125,7 +128,7 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj }) => {
             </Grid>
           ) : null}
 
-          {parseInt(order?.is_preorder) == 1 ? null : (
+          {hideDeliveryDetails || parseInt(order?.is_preorder) == 1 ? null : (
             <Grid
               size={{
                 xs: 12,
@@ -240,9 +243,11 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj }) => {
 
           {!err_order ? null : (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>

@@ -12,14 +12,18 @@ export default function MediaDiff({ items }) {
           key={`${field}-${i}`}
           direction="row"
           spacing={2}
-          flexWrap="wrap"
-          alignItems="center"
           useFlexGap
+          sx={{
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
         >
           <Typography
             variant="body2"
-            fontWeight={600}
-            sx={{ flex: "1 0 100%" }}
+            sx={{
+              fontWeight: 600,
+              flex: "1 0 100%",
+            }}
           >
             {field} {to}
           </Typography>

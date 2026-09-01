@@ -10,7 +10,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { Close, Tune, Delete } from "@mui/icons-material";
+import { Close, Tune, Delete, Download } from "@mui/icons-material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   MyAutocomplite,
@@ -133,6 +133,8 @@ export const EditSegmentModal = ({
   handleDelete,
   updateSegment,
   segmentData,
+  canAccess,
+  onExportSegment,
 }) => {
   const [form, setForm] = useState({
     id: null,
@@ -145,6 +147,8 @@ export const EditSegmentModal = ({
     has_email: null,
     consent_email: null,
     strict_search: null,
+    promo_check: false,
+    count_pos: null,
 
     // Заказы
     orders_count_min: "",
@@ -153,6 +157,7 @@ export const EditSegmentModal = ({
     avg_check_max: "",
     total_sum_min: "",
     total_sum_max: "",
+
     last_order_date_start: null,
     last_order_date_end: null,
     first_order_date_start: null,
@@ -213,6 +218,8 @@ export const EditSegmentModal = ({
         days_from_last: segmentData.days_from_last || "",
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
+        promo_check: segmentData.promo_check || false,
+        count_pos: segmentData.count_pos || null,
         categories: parseIdsToArray(segmentData.categories, categories),
         items: parseIdsToArray(segmentData.items, items),
         promo: segmentData.promo || "",
@@ -259,6 +266,8 @@ export const EditSegmentModal = ({
       form.days_from_last ||
       form.days_from_first ||
       form.period_days ||
+      form.count_pos ||
+      form.promo_check ||
       form.categories.length ||
       form.items.length ||
       form.promo ||
@@ -356,6 +365,8 @@ export const EditSegmentModal = ({
         days_from_last: segmentData.days_from_last || "",
         days_from_first: segmentData.days_from_first || "",
         period_days: segmentData.period_days || "",
+        promo_check: segmentData.promo_check || false,
+        count_pos: segmentData.count_pos || null,
         categories: parseIdsToArray(segmentData.categories, categories),
         promo: segmentData.promo || "",
         order_types: parseIdsToArray(segmentData.order_types, orderTypes),
@@ -506,7 +517,7 @@ export const EditSegmentModal = ({
               container
               spacing={2}
             >
-              <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+              <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <MyCheckBox
                     label="Согласие на рассылки"
@@ -514,6 +525,16 @@ export const EditSegmentModal = ({
                     func={(e) => setField("consent_email", e.target.checked)}
                   />
                   <HintIcon title={SEGMENT_HINTS.consent_email} />
+                </div>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 6, md: 6 }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <MyCheckBox
+                    label="Применение промокода"
+                    value={form.promo_check}
+                    func={(e) => setField("promo_check", e.target.checked)}
+                  />
+                  <HintIcon title={SEGMENT_HINTS.promo_check} />
                 </div>
               </Grid>
             </Grid>
@@ -700,6 +721,17 @@ export const EditSegmentModal = ({
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <FieldWithHint hint={SEGMENT_HINTS.count_pos}>
+                  <MyTextInput
+                    type="number"
+                    label="Количество позиций в заказе"
+                    value={form.count_pos}
+                    func={({ target }) => setField("count_pos", target?.value)}
+                  />
+                </FieldWithHint>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <FieldWithHint hint={SEGMENT_HINTS.promo}>
                   <MyTextInput
                     type="text"
@@ -852,7 +884,23 @@ export const EditSegmentModal = ({
           </Section>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+        <DialogActions sx={{ p: 2, gap: 1, flexWrap: "wrap" }}>
+          {canAccess?.("export_segment") && segmentData?.id ? (
+            <Button
+              onClick={() => onExportSegment?.(segmentData)}
+              variant="contained"
+              startIcon={<Download />}
+              sx={{
+                mr: "auto",
+                backgroundColor: "#3cb623",
+                "&:hover": {
+                  backgroundColor: "#2f941c",
+                },
+              }}
+            >
+              Выгрузить
+            </Button>
+          ) : null}
           <Button
             onClick={handleDeleteClick}
             variant="contained"

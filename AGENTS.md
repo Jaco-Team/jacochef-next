@@ -5,18 +5,30 @@
 - Never print colored diffs, patch-tool diffs, patch contents, or code changes to chat unless the user explicitly asks to see them.
 - Save code changes directly to files and keep chat to short status updates and concise outcomes.
 
+## Mandatory Editing Execution Rule
+
+- For any non-trivial file edit, prefer delegated silent-edit workflow over direct patch-style editing in the main agent flow.
+- If a silent-editing skill or delegated worker/subagent mechanism is available, use it first for file modifications.
+- The main agent must not use `apply_patch` or other patch-style file-edit tools directly for non-trivial edits when the delegated silent-edit path is available.
+- Treat delegated silent edits as mandatory in this repository, not as a preference.
+- Main chat must never contain patch hunks, added/removed lines, before/after snippets, or file-body excerpts unless the user explicitly asks for them.
+- If a tool would expose patch contents in the main chat transcript, avoid that path when another safe file-edit path exists.
+- Treat this as a workspace-level operating rule for all future sessions in this repository, not as a one-off preference.
+
 ## Project Scope
 
 - This repository uses `Next.js` with the `pages` router, `MUI`, and local Laravel API wrappers.
 - Prefer existing project patterns over introducing new abstractions.
 - When a page already has an established visual language, preserve it instead of redesigning it.
 - Prefer focused changes inside the current module over broad refactors.
+- In Reports cost breakdowns, display product volumes with exactly three decimal places and all monetary values, including purchase prices, with exactly two.
 
 ## Workflow
 
 - Read the target page/component before editing.
 - Use `apply_patch` for manual code edits.
-- Save temporary screenshots, browser snapshots, network dumps, and other agent-generated inspection artifacts under `.codex-artifacts/`; never put them in the repo root.
+- When possible, route file edits through delegated silent-edit workflow so the main session stays diff-free.
+- In this repository, `apply_patch` in the main agent flow is reserved only for tiny emergency edits when delegated silent editing is genuinely unavailable.
 - Read the surrounding module flow before changing behavior that crosses tabs, modals, or shared hooks/stores.
 - Prefer focused changes in existing files over broad refactors.
 - Do not remove existing behavior unless explicitly requested.
@@ -28,16 +40,15 @@
 - Do not print file diffs, patch contents, plan contents, or long file summaries into chat unless explicitly requested.
 - When the user asks to write or update a file, prefer doing the work in the file and replying with a minimal status update only.
 - Keep chat responses concise by default and avoid echoing content that already exists in repository files.
+- If a delegated edit path was used, report only the outcome and any real blocker or verification result.
 
 ## Formatting And Checks
 
-- Pre-commit runs JS/JSX syntax check (`scripts/check-js-syntax.js`) before prettier.
-- After editing any `.js`, `.jsx`, `.mjs`, or `.cjs` file, run `npm run check:syntax -- <file>` on touched files before finishing.
-- Do not run full-repo `prettier`, `eslint`, or `lint` unless the user explicitly asks.
-- Assume formatting hooks are handled by husky for committed files.
+- Do not run `prettier`, `eslint`, `lint`, or similar formatting/check commands unless the user explicitly asks.
+- Assume formatting/check hooks are handled by husky or the user's normal workflow.
 - Keep code style consistent with the surrounding file.
 - Avoid adding new dependencies unless required.
-- Prefer fast, local verification such as syntax check on touched files.
+- Prefer fast, local verification such as syntax-aware review or targeted checks.
 - Do not do broad cleanup unrelated to the task.
 
 ## Output
@@ -57,6 +68,15 @@
 
 ## UI And Design
 
+- For UI tasks, use `design-system/STORYBOOK_PROMPT.md` as the Storybook-first workflow.
+- Check existing Storybook stories before implementing a new UI pattern.
+- Use current MUI APIs for all task-affected files; when a touched file contains deprecated MUI usage, migrate that local usage as part of the same task instead of preserving old API patterns.
+- Prefer existing `design-system/shared/ui` `Jaco*` components for reusable controls, surfaces, modals, and feedback states.
+- If only a legacy `ui/My*` component exists for a needed reusable pattern, recreate it as an autonomous `Jaco*` component in `design-system/shared/ui`, align it to the current Chef design style, add or extend its Storybook story, then use the `Jaco*` component from the feature code.
+- If a reusable UI pattern is missing from Storybook, add or extend the story before spreading the pattern across modules.
+- New modules and new reusable UI within existing modules must use `design-system/shared/ui` and its `Jaco*` API; do not introduce new imports from legacy `ui/*` or `ui/My*`.
+- Legacy `ui/*` remains supported for existing code. Do not perform opportunistic/global legacy rewires or remove legacy components unless that replacement is explicitly scoped to the task.
+- A new reusable DS component is incomplete until it has a colocated Storybook story covering its normal state and relevant variants/states.
 - Before reporting a UI task done, sanity-check against sibling controls: typography, height, radius, border, spacing. See `.cursor/rules/ui-sanity-check.mdc`.
 - If the user provides a Figma URL, match Figma closely.
 - Use existing MUI patterns already present in the repo.
@@ -82,14 +102,16 @@ Do not commit secrets, private DSNs, or deployment credentials. Review changes t
 - Do not invent validation rules or payload fields.
 - When binding forms to backend data, use only known field names and handle null/undefined safely.
 
-## MUI Grid (v7) Note
+## MUI Grid (v9) Note
 
-When using Material UI v7, the `Grid` item sizing props changed. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props. Examples:
+MUI v9 uses the modern `Grid` API. Use the `size` prop on `Grid` children instead of the old `xs`, `sm`, `md` props, and do not use `item`. Examples:
 
 - Single size: `<Grid size={12}>` (full width)
 - Responsive sizes: `<Grid size={{ xs: 12, sm: 6, md: 4 }}>`
 
-Update existing `Grid` usages when upgrading to v7 to avoid layout regressions.
+When migrating existing Grid usage, preserve container semantics and verify affected desktop/mobile layouts.
+
+MUI Grid rows stretch children to the height of the tallest sibling by default. For independent content panels, set `sx={{ height: "max-content" }}` on the `Grid` child and do not set `height: "100%"` on its nested `Paper` or `Card`. Use full height only when equal-height cards are explicitly intended.
 
 ## Engineering Standards
 
@@ -101,8 +123,18 @@ Always produce senior-level code: avoid inventing field names or making assumpti
 - Prefer clear, minimal, and well-tested transformations over ad-hoc, speculative code.
 - Prefer senior-level solutions: strong structure, clean abstractions, and maintainable logic without overengineering or spaghetti.
 - Keep names aligned with existing domain terminology.
-- Fast syntax checks on touched JS/JSX files are mandatory; no extra formatting.
+- Fast syntax checks, no extra formatting.
 - Do not silently change behavior outside the stated task.
 - If an assumption would materially affect behavior, stop and ask instead of guessing.
 
 Follow these rules on all PRs to keep the codebase maintainable.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

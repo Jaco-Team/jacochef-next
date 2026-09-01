@@ -5,6 +5,34 @@ import { Autocomplete, createFilterOptions, Popper, Stack, TextField } from "@mu
 
 const filter = createFilterOptions();
 
+function getAutocompleteOptionLabel(option) {
+  if (option == null) {
+    return "";
+  }
+
+  if (typeof option === "string") {
+    return option;
+  }
+
+  if (typeof option === "number" || typeof option === "boolean") {
+    return String(option);
+  }
+
+  return String(option.name ?? option.label ?? "");
+}
+
+function getAutocompleteNameOptions(data = []) {
+  return data.map((option) => getAutocompleteOptionLabel(option));
+}
+
+function getAutocompleteValue(value, multiple) {
+  if (multiple) {
+    return Array.isArray(value) ? value.map((item) => getAutocompleteOptionLabel(item)) : [];
+  }
+
+  return value == null ? "" : getAutocompleteOptionLabel(value);
+}
+
 const UnifiedAutocomplete2Popper = forwardRef(
   function UnifiedAutocomplete2Popper(popperProps, ref) {
     const {
@@ -83,8 +111,13 @@ export function MyAutocomplite2(props) {
   const unifiedAutocompleteSx = isUnifiedPopup
     ? {
         "&.Mui-expanded .MuiOutlinedInput-root": {
-          borderBottomLeftRadius: "0px",
-          borderBottomRightRadius: "0px",
+          borderBottomLeftRadius: "0px !important",
+          borderBottomRightRadius: "0px !important",
+          backgroundColor: "#FFFFFF",
+          boxShadow: "0 12px 28px rgba(15, 23, 42, 0.08)",
+        },
+        "&.Mui-expanded .MuiOutlinedInput-notchedOutline": {
+          borderBottomColor: "transparent !important",
         },
       }
     : {};
@@ -154,7 +187,7 @@ export function MyAutocomplite2(props) {
 
   const unifiedPopperSx = isUnifiedPopup
     ? {
-        marginTop: "-1px !important",
+        marginTop: "-2px !important",
         zIndex: 1400,
         [`& .MuiAutocomplete-paper`]: {
           margin: 0,
@@ -171,7 +204,7 @@ export function MyAutocomplite2(props) {
         borderTopRightRadius: 0,
         borderBottomLeftRadius: unifiedRadius,
         borderBottomRightRadius: unifiedRadius,
-        boxShadow: "0px 10px 24px rgba(0, 0, 0, 0.08)",
+        boxShadow: "0 18px 36px rgba(15, 23, 42, 0.1)",
         overflow: "hidden",
         backgroundColor: "#FFFFFF",
       }
@@ -245,8 +278,8 @@ export function MyAutocomplite2(props) {
           onBlur={props.onBlur ? props.onBlur : null}
           id={props.id ?? null}
           options={props.data ?? []}
-          getOptionLabel={(option) => option.name}
-          value={props.value}
+          getOptionLabel={getAutocompleteOptionLabel}
+          value={props.value ?? (props.multiple ? [] : null)}
           onChange={props.func}
           //filterSelectedOptions
           disabled={props.disabled && props.disabled === true ? true : false}
@@ -285,8 +318,8 @@ export function MyAutocomplite2(props) {
           //disableCloseOnSelect={true}
           onBlur={props.onBlur ? props.onBlur : null}
           id={props.id ?? null}
-          options={props.data.map((option) => option.name)}
-          value={props.value}
+          options={getAutocompleteNameOptions(props.data)}
+          value={getAutocompleteValue(props.value, props.multiple)}
           onChange={props.func}
           filterSelectedOptions
           multiple={props.multiple && props.multiple === true ? true : false}
@@ -325,12 +358,12 @@ export function MyAutocomplite2(props) {
           //disableCloseOnSelect={true}
           onBlur={props.onBlur ? props.onBlur : null}
           id={props.id ?? null}
-          options={props.data.map((option) => option.name)}
-          value={props.value}
+          options={getAutocompleteNameOptions(props.data)}
+          value={getAutocompleteValue(props.value, props.multiple)}
           onChange={props.func}
           //filterSelectedOptions
           multiple={props.multiple && props.multiple === true ? true : false}
-          isOptionEqualToValue={(option, value) => option?.id === value?.id}
+          isOptionEqualToValue={(option, value) => option === value}
           filterOptions={(options, params) => {
             const filtered = filter(options, params);
 
@@ -339,7 +372,7 @@ export function MyAutocomplite2(props) {
 
             const { inputValue } = params;
             // Suggest the creation of a new value
-            const isExisting = options.some((option) => inputValue === option.name);
+            const isExisting = options.some((option) => inputValue === option);
             /*if (inputValue !== '' && !isExisting) {
                 filtered.push(
                   inputValue
@@ -381,8 +414,8 @@ export function MyAutocomplite2(props) {
         //disableCloseOnSelect={true}
         onBlur={props.onBlur ? props.onBlur : null}
         id={props.id ?? null}
-        options={props.data.map((option) => option.name)}
-        value={props.value}
+        options={getAutocompleteNameOptions(props.data)}
+        value={getAutocompleteValue(props.value, props.multiple)}
         onChange={props.func}
         //filterSelectedOptions
         multiple={props.multiple && props.multiple === true ? true : false}
@@ -396,7 +429,7 @@ export function MyAutocomplite2(props) {
 
           const { inputValue } = params;
           // Suggest the creation of a new value
-          const isExisting = options.some((option) => inputValue === option.name);
+          const isExisting = options.some((option) => inputValue === option);
           if (inputValue !== "" && !isExisting) {
             filtered.push(inputValue);
           }

@@ -51,12 +51,24 @@ export default function ModalAddProduct({
             func={(_, value) => setSelectedCatalogItemId(value?.id || "")}
             disabled={isLoading || !itemsSelectData.length}
           />
-          {!itemsSelectData.length ? (
+          {!isLoading && !itemsSelectData.length ? (
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Нет доступных товаров для добавления.
+            </Typography>
+          ) : null}
+          {isLoading && !itemsSelectData.length ? (
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Загрузка товаров...
             </Typography>
           ) : null}
 
@@ -93,7 +105,9 @@ export default function ModalAddProduct({
                 </Button>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   {declarationFile ? declarationFile.name : "Файл не выбран (необязательно)"}
                 </Typography>

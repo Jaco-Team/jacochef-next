@@ -232,19 +232,21 @@ export default function JParamModal({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {isLoadingCategories ? (
-                                <CircularProgress
-                                  color="inherit"
-                                  size={20}
-                                />
-                              ) : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
+                        slotProps={{
+                          input: {
+                            ...params.InputProps,
+                            endAdornment: (
+                              <>
+                                {isLoadingCategories ? (
+                                  <CircularProgress
+                                    color="inherit"
+                                    size={20}
+                                  />
+                                ) : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          },
                         }}
                       />
                     )}

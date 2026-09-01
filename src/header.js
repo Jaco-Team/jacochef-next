@@ -32,7 +32,7 @@ import api from "@/src/api";
 import Cookies from "js-cookie";
 
 import { font } from "@/src/theme";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, clearAuthToken } from "@/src/api_new";
 import { AccountCircle, Attachment, Dashboard, ExitToApp, Person } from "@mui/icons-material";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -40,9 +40,16 @@ import { Button, ListItemButton, Menu, MenuItem } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import { useRouter } from "next/router";
+import {
+  getRevizionAnalysisTheme,
+  REVIZION_ANALYSIS_THEME_EVENT,
+  setRevizionAnalysisTheme,
+} from "@/src/revizionAnalysisTheme";
 
-const UserMenu = ({ my, logOut }) => {
+const UserMenu = ({ my, logOut, themeMode = null }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const router = useRouter();
   const handleMenuOpen = (event) => {
@@ -93,7 +100,7 @@ const UserMenu = ({ my, logOut }) => {
                 sx={{
                   width: { xs: 20, sm: 38 },
                   height: { xs: 20, sm: 38 },
-                  bgcolor: "primary.main",
+                  bgcolor: themeMode === "dark" ? "#616978" : "primary.main",
                   boxShadow: "none",
                 }}
               >
@@ -163,10 +170,13 @@ const UserMenu = ({ my, logOut }) => {
 };
 
 export default function Header() {
+  const router = useRouter();
   const [isOpenMenu, setIsOpenMenu] = useState(false);
   const [CatMenu, setCatMenu] = useState([]);
   const [FullMenu, setFullMenu] = useState([]);
   const [my, setMy] = useState({});
+  const [revizionAnalysisTheme, setRevizionAnalysisThemeState] = useState("dark");
+  const isRevizionAnalysisV2 = router.pathname === "/revizion/analysis-v2";
 
   function openMenu() {
     setIsOpenMenu((state) => !state);
@@ -177,35 +187,82 @@ export default function Header() {
   }
 
   async function loadMenu() {
-    const response = await api_laravel("header", "get_all");
+    try {
+      const response = await api_laravel("header", "get_all", {}, { throwErrors: true });
 
-    if (response?.data?.st === true) {
-      setCatMenu(response?.data?.left_menu);
-      setMy(response?.data?.my);
-      setFullMenu(
-        response?.data?.full_menu.filter(
-          (item, index, self) => index === self.findIndex((t) => t.name === item.name),
-        ),
-      );
+      if (response?.data?.st === true) {
+        if (response.data.legacy_token) {
+          localStorage.setItem("token", response.data.legacy_token);
+          Cookies.set("token", response.data.legacy_token, { expires: 60 });
+        }
+        setCatMenu(response?.data?.left_menu);
+        setMy(response?.data?.my);
+        setFullMenu(
+          response?.data?.full_menu.filter(
+            (item, index, self) => index === self.findIndex((t) => t.name === item.name),
+          ),
+        );
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      if (error?.response?.status === 401 || error?.response?.status === 419) {
+        return false;
+      }
+
+      // Network / temporary errors: keep the page, don't bounce to /auth
+      console.log(error);
+      return true;
     }
   }
 
   useEffect(() => {
-    if (!localStorage.getItem("token") || localStorage.getItem("token").length == 0) {
-      if (window.location.pathname == "/auth" || window.location.pathname == "/registration") {
-      } else {
-        // если не авторизованы и в каком-то модуле
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const path = window.location.pathname;
+    if (path === "/auth" || path === "/registration") {
+      return;
+    }
+
+    loadMenu().then((isAuthenticated) => {
+      if (!isAuthenticated) {
         window.location.href = "/auth";
       }
-    } else {
-      // если авторизованы
-      loadMenu();
-    }
+    });
   }, []);
 
-  function logOut() {
+  useEffect(() => {
+    if (!isRevizionAnalysisV2) return undefined;
+
+    const currentTheme = getRevizionAnalysisTheme();
+    setRevizionAnalysisThemeState(currentTheme);
+    document.documentElement.dataset.revizionAnalysisTheme = currentTheme;
+
+    const handleThemeChange = (event) => {
+      setRevizionAnalysisThemeState(event.detail === "light" ? "light" : "dark");
+    };
+    window.addEventListener(REVIZION_ANALYSIS_THEME_EVENT, handleThemeChange);
+
+    return () => {
+      window.removeEventListener(REVIZION_ANALYSIS_THEME_EVENT, handleThemeChange);
+      delete document.documentElement.dataset.revizionAnalysisTheme;
+    };
+  }, [isRevizionAnalysisV2]);
+
+  async function logOut() {
+    try {
+      await api_laravel("auth", "logout", {}, { throwErrors: true });
+    } catch (_) {
+      // Still clear local leftovers and leave the app even if logout request fails
+    }
+
     localStorage.removeItem("token");
+    clearAuthToken();
     Cookies.remove("token");
+    localStorage.removeItem("auth_expires_at");
     window.location.href = "/auth";
   }
 
@@ -224,6 +281,19 @@ export default function Header() {
       <AppBar
         position="fixed"
         className={font.variable}
+        sx={
+          isRevizionAnalysisV2
+            ? {
+                color: "#F5F4EE",
+                bgcolor: revizionAnalysisTheme === "dark" ? "rgba(30,29,27,.72)" : "#c03",
+                borderBottom: `1px solid ${
+                  revizionAnalysisTheme === "dark" ? "rgba(255,255,255,.12)" : "rgba(153,0,38,.45)"
+                }`,
+                backdropFilter: "blur(22px) saturate(180%)",
+                boxShadow: "0 6px 22px rgba(0,0,0,.16)",
+              }
+            : undefined
+        }
       >
         <Toolbar>
           <IconButton
@@ -237,19 +307,55 @@ export default function Header() {
           <Typography
             component="h1"
             variant="h6"
-            color="inherit"
             noWrap
             style={{ flexGrow: 1 }}
+            sx={{
+              color: "inherit",
+            }}
           >
-            Dashboard
+            {isRevizionAnalysisV2 ? "Анализ ревизий" : "Dashboard"}
           </Typography>
+          {isRevizionAnalysisV2 ? (
+            <IconButton
+              color="inherit"
+              aria-label={
+                revizionAnalysisTheme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"
+              }
+              title={
+                revizionAnalysisTheme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"
+              }
+              onClick={() =>
+                setRevizionAnalysisTheme(revizionAnalysisTheme === "dark" ? "light" : "dark")
+              }
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: "9px",
+                mr: 0.5,
+                color: revizionAnalysisTheme === "dark" ? "#B0ADA4" : "#fff",
+                "&:hover": {
+                  color: "#fff",
+                  bgcolor:
+                    revizionAnalysisTheme === "dark"
+                      ? "rgba(255,255,255,.12)"
+                      : "rgba(255,255,255,.14)",
+                },
+              }}
+            >
+              {revizionAnalysisTheme === "dark" ? (
+                <LightModeOutlinedIcon sx={{ fontSize: 19 }} />
+              ) : (
+                <DarkModeOutlinedIcon sx={{ fontSize: 19 }} />
+              )}
+            </IconButton>
+          ) : null}
           <UserMenu
             my={my}
             logOut={logOut}
+            themeMode={isRevizionAnalysisV2 ? revizionAnalysisTheme : null}
           />
         </Toolbar>
       </AppBar>
-
       <SwipeableDrawer
         anchor={"left"}
         open={isOpenMenu}
@@ -391,13 +497,17 @@ export default function Header() {
                 label="Поиск"
                 variant="outlined"
                 autoComplete="off"
-                inputProps={{
-                  ...params.inputProps,
-                  autoComplete: "off",
-                  autoCorrect: "off",
-                  autoCapitalize: "off",
-                  spellCheck: "false",
-                  form: "autocomplete-form",
+                slotProps={{
+                  ...params.slotProps,
+
+                  htmlInput: {
+                    ...params.slotProps.htmlInput,
+                    autoComplete: "off",
+                    autoCorrect: "off",
+                    autoCapitalize: "off",
+                    spellCheck: "false",
+                    form: "autocomplete-form",
+                  },
                 }}
               />
             )}

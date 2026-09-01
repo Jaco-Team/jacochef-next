@@ -63,12 +63,21 @@ const calculateMonthlyAverage = (groupedData, averageYears) => {
   return monthlySums.map((sum, idx) => (monthlyCounts[idx] > 0 ? sum / monthlyCounts[idx] : null));
 };
 
-export default function StatSaleYearlyLineChart({ rawData, title, dateStart, dateEnd }) {
+export default function StatSaleYearlyLineChart({
+  rawData,
+  title,
+  dateStart,
+  dateEnd,
+  collapsible = false,
+  defaultExpanded = true,
+  resetKey,
+}) {
   const groupedData = groupByYear(rawData);
   const years = Object.keys(groupedData)
     .map(Number)
     .sort((a, b) => b - a);
-  const averageValues = calculateMonthlyAverage(groupedData, getYearsFromRange(dateStart, dateEnd));
+  const averageYears = getYearsFromRange(dateStart, dateEnd);
+  const averageValues = calculateMonthlyAverage(groupedData, averageYears);
   const series = [
     ...(averageValues.some((value) => value !== null)
       ? [
@@ -83,6 +92,7 @@ export default function StatSaleYearlyLineChart({ rawData, title, dateStart, dat
     ...years.map((year, index) => ({
       name: year.toString(),
       color: yearColorPalette[index % yearColorPalette.length],
+      includedInAverage: !averageYears?.length || averageYears.includes(year),
       values: months.map((_, index) => groupedData[year]?.[index + 1] ?? null),
     })),
   ];
@@ -92,6 +102,9 @@ export default function StatSaleYearlyLineChart({ rawData, title, dateStart, dat
       title={title}
       series={series}
       valueSuffix="шт"
+      collapsible={collapsible}
+      defaultExpanded={defaultExpanded}
+      resetKey={resetKey}
     />
   );
 }

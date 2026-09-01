@@ -2,6 +2,14 @@
 
 import { Card, Stack, Typography } from "@mui/material";
 
+function formatValue(value) {
+  if (value !== null && typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return value;
+}
+
 export default function TextDiff({ items }) {
   return (
     <Stack spacing={1}>
@@ -15,9 +23,9 @@ export default function TextDiff({ items }) {
           >
             <Stack
               direction="row"
-              alignItems="baseline"
               spacing={2}
               sx={{
+                alignItems: "baseline",
                 px: 2,
                 py: 1,
                 borderBottom: 1,
@@ -26,7 +34,9 @@ export default function TextDiff({ items }) {
             >
               <Typography
                 variant="body2"
-                fontWeight={600}
+                sx={{
+                  fontWeight: 600,
+                }}
               >
                 {field}:
               </Typography>
@@ -37,12 +47,14 @@ export default function TextDiff({ items }) {
                     variant="body2"
                     sx={{ textDecoration: "line-through", color: "text.secondary" }}
                   >
-                    {from}
+                    {formatValue(from)}
                   </Typography>
 
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     →
                   </Typography>
@@ -51,9 +63,11 @@ export default function TextDiff({ items }) {
 
               <Typography
                 variant="body2"
-                fontWeight={500}
+                sx={{
+                  fontWeight: 500,
+                }}
               >
-                {to}
+                {formatValue(to)}
               </Typography>
             </Stack>
           </Card>

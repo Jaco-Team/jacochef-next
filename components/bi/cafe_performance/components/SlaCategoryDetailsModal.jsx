@@ -181,7 +181,9 @@ function CategoryDetailsTable({ rows, formatters, onOrderOpen }) {
                         </Typography>
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           план {formatters.duration(stageTargetSeconds)}
                         </Typography>
@@ -199,7 +201,9 @@ function CategoryDetailsTable({ rows, formatters, onOrderOpen }) {
                     </Typography>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
+                      sx={{
+                        color: "text.secondary",
+                      }}
                     >
                       план {formatters.duration(totalTargetSeconds)}
                     </Typography>
@@ -246,8 +250,10 @@ export default function SlaCategoryDetailsModal({
       <DialogContent>
         {loading ? (
           <Stack
-            alignItems="center"
-            justifyContent="center"
+            sx={{
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
             <CircularProgress size={28} />
           </Stack>

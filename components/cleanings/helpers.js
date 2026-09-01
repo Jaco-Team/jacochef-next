@@ -135,6 +135,12 @@ export function getControlStatusMeta(status) {
       bgcolor: "#ecfdf5",
       borderColor: "#a7f3d0",
     },
+    deleted: {
+      label: "Удалено",
+      color: "#be123c",
+      bgcolor: "#fff1f2",
+      borderColor: "#fecdd3",
+    },
   };
 
   return meta[status] || meta.active;

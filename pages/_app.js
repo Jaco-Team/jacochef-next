@@ -1,7 +1,8 @@
 import * as React from "react";
 import * as Sentry from "@sentry/react";
 import PropTypes from "prop-types";
-import { ThemeProvider, CssBaseline, StyledEngineProvider } from "@mui/material";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { StyledEngineProvider } from "@mui/material/styles";
 
 import dynamic from "next/dynamic";
 
@@ -46,6 +47,14 @@ export default function MyApp(props) {
             <meta
               name="viewport"
               content="initial-scale=1, width=device-width"
+            />
+            <meta
+              name="robots"
+              content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+            />
+            <meta
+              name="googlebot"
+              content="noindex, nofollow, noarchive, nosnippet, noimageindex"
             />
           </Head>
           {isHeader && <Header suppressHydrationWarning />}

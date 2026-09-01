@@ -3,6 +3,10 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import AddIcon from "@mui/icons-material/Add";
 
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -40,6 +44,108 @@ import MyAlert from "@/ui/MyAlert";
 import { ModalAccept } from "@/components/general/ModalAccept";
 import { TableSortLabel } from "@mui/material";
 import { ModalAdd } from "@/components/general/ModalAdd";
+import ReceptModuleCategoriesTab, {
+  getCategoryUsageCount,
+} from "@/components/recept/ReceptModuleCategoriesTab";
+
+const russianWordEndings = [
+  "иями",
+  "ями",
+  "ами",
+  "его",
+  "ого",
+  "ему",
+  "ому",
+  "иях",
+  "ах",
+  "ях",
+  "ую",
+  "юю",
+  "ая",
+  "яя",
+  "ое",
+  "ее",
+  "ые",
+  "ие",
+  "ый",
+  "ий",
+  "ой",
+  "ам",
+  "ям",
+  "ом",
+  "ем",
+  "ов",
+  "ев",
+  "ей",
+  "ы",
+  "и",
+  "а",
+  "я",
+  "у",
+  "ю",
+  "е",
+  "о",
+];
+
+function normalizeCompositionSearchText(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase("ru")
+    .replaceAll("ё", "е")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function getRussianWordStem(word) {
+  for (const ending of russianWordEndings) {
+    if (word.endsWith(ending) && word.length - ending.length >= 3) {
+      return word.slice(0, -ending.length);
+    }
+  }
+
+  return word;
+}
+
+function getCompositionMatchScore(option, query) {
+  const name = normalizeCompositionSearchText(option?.name);
+  if (!name || !query) return 0;
+  if (name === query) return 0;
+  if (name.startsWith(`${query} `)) return 1;
+
+  const words = name.split(" ");
+  const queryWords = query.split(" ");
+  if (queryWords.every((queryWord) => words.includes(queryWord))) return 2;
+
+  const wordStems = words.map(getRussianWordStem);
+  if (queryWords.every((queryWord) => wordStems.includes(getRussianWordStem(queryWord)))) return 3;
+  if (queryWords.every((queryWord) => words.some((word) => word.startsWith(queryWord)))) return 4;
+  if (name.includes(query)) return 5;
+  if (queryWords.every((queryWord) => words.some((word) => word.includes(queryWord)))) return 6;
+
+  return Number.POSITIVE_INFINITY;
+}
+
+function filterCompositionOptions(options, { inputValue }) {
+  const query = normalizeCompositionSearchText(inputValue);
+  if (!query) return options.slice(0, 100);
+
+  const matches = options
+    .map((option, index) => ({ option, index, score: getCompositionMatchScore(option, query) }))
+    .filter((match) => Number.isFinite(match.score));
+  const bestScore = Math.min(...matches.map((match) => match.score));
+  const maximumScore = bestScore <= 3 ? 3 : 6;
+
+  return matches
+    .filter((match) => match.score <= maximumScore)
+    .sort(
+      (left, right) =>
+        left.score - right.score ||
+        String(left.option?.name ?? "").localeCompare(String(right.option?.name ?? ""), "ru") ||
+        left.index - right.index,
+    )
+    .slice(0, 100)
+    .map((match) => match.option);
+}
 
 const SwapIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -173,6 +279,31 @@ class ReceptModule_Modal_History_View extends React.Component {
                 className={
                   this.state.itemView
                     ? this.state.itemView.name?.color
+                      ? "disabled_input disabled_input_color"
+                      : "disabled_input"
+                    : "disabled_input"
+                }
+              />
+            </Grid>
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyTextInput
+                label="Ед. измерения"
+                value={
+                  this.state.itemView
+                    ? this.state.itemView.ed_izmer_id?.color
+                      ? this.state.itemView.ed_izmer_id.key
+                      : this.state.itemView.ed_izmer_id
+                    : ""
+                }
+                disabled={true}
+                className={
+                  this.state.itemView
+                    ? this.state.itemView.ed_izmer_id?.color
                       ? "disabled_input disabled_input_color"
                       : "disabled_input"
                     : "disabled_input"
@@ -723,6 +854,7 @@ class ReceptModule_Modal extends React.Component {
       allergens: [],
       allergens_diff: [],
       cats: [],
+      ed_izmer_id: "",
       dop_time: "",
       two_user: "",
       modalAddCats: false,
@@ -772,17 +904,7 @@ class ReceptModule_Modal extends React.Component {
       this.setState({
         err_valid: {},
       });
-      let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-      all_w_brutto = roundTo(all_w_brutto, 3);
-
-      let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-
-      all_w_netto = roundTo(all_w_netto, 3);
-
-      let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-      all_w = roundTo(all_w, 3);
+      const { all_w_brutto, all_w_netto, all_w } = this.getWeightTotals(list);
       this.setState({
         name: this.props.rec?.name,
         shelf_life: this.props.rec?.shelf_life,
@@ -802,6 +924,7 @@ class ReceptModule_Modal extends React.Component {
         allergens: this.props.rec?.allergens,
         allergens_diff: this.props.rec?.allergens_diff,
         cats: this.props.rec?.cats,
+        ed_izmer_id: this.normalizeEdIzmerValue(this.props.rec?.ed_izmer_id),
         structure: this.props.rec?.structure,
       });
 
@@ -836,6 +959,8 @@ class ReceptModule_Modal extends React.Component {
         allergens_diff_view: this.props.acces?.allergens_diff_view,
         cats_edit: this.props.acces?.cats_edit,
         cats_view: this.props.acces?.cats_view,
+        ed_izmer_edit: this.props.acces?.ed_izmer_edit,
+        ed_izmer_view: this.props.acces?.ed_izmer_view,
       };
 
       this.setState({
@@ -894,19 +1019,7 @@ class ReceptModule_Modal extends React.Component {
 
     list.splice(key, 1);
 
-    let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-    all_w_brutto = roundTo(all_w_brutto, 3);
-
-    let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-
-    all_w_netto = roundTo(all_w_netto, 3);
-
-    let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-    all_w = roundTo(all_w, 3);
-
-    this.setState({ list, all_w_brutto, all_w_netto, all_w });
+    this.setState({ list, ...this.getWeightTotals(list) });
   }
 
   changeItemData(key, event, value) {
@@ -947,6 +1060,35 @@ class ReceptModule_Modal extends React.Component {
     });
   }
 
+  normalizeEdIzmerValue(value) {
+    const hasOption = (this.props.ed_izmer || []).some((item) => String(item.id) === String(value));
+
+    return hasOption ? value : "";
+  }
+
+  parseDecimalValue(value) {
+    const parsedValue = parseFloat(
+      String(value ?? "")
+        .replace(/\s/g, "")
+        .replace(",", "."),
+    );
+
+    return Number.isNaN(parsedValue) ? 0 : parsedValue;
+  }
+
+  getWeightTotals(list) {
+    let all_w_brutto = list.reduce((sum, item) => sum + this.parseDecimalValue(item.brutto), 0);
+    all_w_brutto = roundTo(all_w_brutto, 3);
+
+    let all_w_netto = list.reduce((sum, item) => sum + this.parseDecimalValue(item.netto), 0);
+    all_w_netto = roundTo(all_w_netto, 3);
+
+    let all_w = list.reduce((sum, item) => sum + this.parseDecimalValue(item.res), 0);
+    all_w = roundTo(all_w, 3);
+
+    return { all_w_brutto, all_w_netto, all_w };
+  }
+
   changeItemList(type, key, event) {
     let list = [...this.state.list];
 
@@ -959,53 +1101,44 @@ class ReceptModule_Modal extends React.Component {
     }
 
     if (type === "brutto") {
-      let all_w_brutto = list.reduce((sum, item) => sum + parseFloat(item.brutto), 0);
-
-      all_w_brutto = roundTo(all_w_brutto, 3);
       list[key].netto = roundTo(
-        (parseFloat(list[key].brutto) * (100 - parseFloat(list[key].pr_1))) / 100,
+        (this.parseDecimalValue(list[key].brutto) *
+          (100 - this.parseDecimalValue(list[key].pr_1))) /
+          100,
         3,
       );
 
       list[key].res = roundTo(
-        (parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100,
+        (this.parseDecimalValue(list[key].netto) * (100 - this.parseDecimalValue(list[key].pr_2))) /
+          100,
         3,
       );
-
-      this.setState({ all_w_brutto });
     }
 
     if (type === "pr_1") {
       list[key].netto = roundTo(
-        (parseFloat(list[key].brutto) * (100 - parseFloat(list[key].pr_1))) / 100,
+        (this.parseDecimalValue(list[key].brutto) *
+          (100 - this.parseDecimalValue(list[key].pr_1))) /
+          100,
         3,
       );
 
       list[key].res = roundTo(
-        (parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100,
+        (this.parseDecimalValue(list[key].netto) * (100 - this.parseDecimalValue(list[key].pr_2))) /
+          100,
         3,
       );
     }
 
     if (type === "pr_2") {
       list[key].res = roundTo(
-        (parseFloat(list[key].netto) * (100 - parseFloat(list[key].pr_2))) / 100,
+        (this.parseDecimalValue(list[key].netto) * (100 - this.parseDecimalValue(list[key].pr_2))) /
+          100,
         3,
       );
     }
 
-    if (type === "brutto" || type === "pr_1") {
-      let all_w_netto = list.reduce((sum, item) => sum + parseFloat(item.netto), 0);
-      all_w_netto = roundTo(all_w_netto, 3);
-
-      this.setState({ all_w_netto });
-    }
-
-    let all_w = list.reduce((sum, item) => sum + parseFloat(item.res), 0);
-
-    all_w = roundTo(all_w, 3);
-
-    this.setState({ list, all_w });
+    this.setState({ list, ...this.getWeightTotals(list) });
   }
 
   changeDateRange(data, event) {
@@ -1048,6 +1181,7 @@ class ReceptModule_Modal extends React.Component {
       allergens: this.state.allergens,
       allergens_diff: this.state.allergens_diff,
       cats: this.state.cats,
+      ed_izmer_id: this.normalizeEdIzmerValue(this.state.ed_izmer_id),
       all_w_brutto: this.state.all_w_brutto,
       all_w_netto: this.state.all_w_netto,
     };
@@ -1095,6 +1229,7 @@ class ReceptModule_Modal extends React.Component {
       allergens: [],
       allergens_diff: [],
       cats: [],
+      ed_izmer_id: "",
       openAlert: false,
       err_status: false,
       err_text: "",
@@ -1104,7 +1239,7 @@ class ReceptModule_Modal extends React.Component {
   }
 
   render() {
-    const { open, method, apps, storages, all_pf_list } = this.props;
+    const { open, method, apps, storages, all_pf_list, ed_izmer } = this.props;
 
     return (
       <>
@@ -1209,6 +1344,26 @@ class ReceptModule_Modal extends React.Component {
                       : {}
                   }
                   func={this.changeItem.bind(this, "name")}
+                />
+              </Grid>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 3,
+                }}
+                style={
+                  !this.state.acces?.ed_izmer_edit && !this.state.acces?.ed_izmer_view
+                    ? { display: "none" }
+                    : {}
+                }
+              >
+                <MySelect
+                  label="Ед. измерения"
+                  data={ed_izmer || []}
+                  value={this.normalizeEdIzmerValue(this.state.ed_izmer_id)}
+                  func={this.changeItem.bind(this, "ed_izmer_id")}
+                  disabled={!this.state.acces?.ed_izmer_edit}
+                  is_none={false}
                 />
               </Grid>
               <Grid
@@ -1631,6 +1786,7 @@ class ReceptModule_Modal extends React.Component {
                           <MyAutocomplite
                             multiple={false}
                             optionKey="id_name"
+                            filterOptions={filterCompositionOptions}
                             getOptionKey={(option) => `${option?.id}-${option?.name}`}
                             data={all_pf_list}
                             onFocus={() => {
@@ -1660,7 +1816,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.brutto}
-                            type={"number"}
+                            // type={"number"}
                             isDecimalMask
                             func={this.changeItemList.bind(this, "brutto", key)}
                           />
@@ -1668,7 +1824,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.pr_1}
-                            type={"number"}
+                            // type={"number"}
                             func={this.changeItemList.bind(this, "pr_1", key)}
                           />
                         </TableCell>
@@ -1683,7 +1839,7 @@ class ReceptModule_Modal extends React.Component {
                         <TableCell>
                           <MyTextInput
                             value={item.pr_2}
-                            type={"number"}
+                            // type={"number"}
                             isDecimalMask
                             func={this.changeItemList.bind(this, "pr_2", key)}
                           />
@@ -1709,6 +1865,7 @@ class ReceptModule_Modal extends React.Component {
                           multiple={false}
                           data={all_pf_list}
                           optionKey="id_name"
+                          filterOptions={filterCompositionOptions}
                           getOptionLabel={(option) => option?.name || ""}
                           disabledItemsFocusable={true}
                           value={null}
@@ -2154,6 +2311,8 @@ class ReceptModule_ extends React.Component {
 
       rec_list: [],
       pf_list: [],
+      itemSearch: "",
+      ed_izmer: [],
       allergens: [],
       cats: [],
 
@@ -2181,6 +2340,12 @@ class ReceptModule_ extends React.Component {
       itemName: "",
 
       type: "",
+
+      activeTab: "items",
+      categoryQuery: "",
+      selectedCategoryId: null,
+      categoryDraft: null,
+      deleteCategoryId: null,
     };
   }
 
@@ -2191,11 +2356,18 @@ class ReceptModule_ extends React.Component {
       module_name: data.module_info.name,
       rec_list: data.rec,
       pf_list: data.pf,
+      ed_izmer: data.ed_izmer || [],
       acces: data.acces,
       cats: data.cats,
+      selectedCategoryId: data.cats?.[0]?.id ?? null,
+      categoryDraft: data.cats?.[0] || null,
     });
 
     document.title = data.module_info.name;
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.itemSearchTimeout);
   }
 
   getData = (method, data = {}) => {
@@ -2249,6 +2421,7 @@ class ReceptModule_ extends React.Component {
           storages: res.all_storages,
           apps: res.apps,
           all_pf_list: res.all_pf_list,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
           rec: res.rec,
           cats: res.cats,
           allergens: res.allergens,
@@ -2261,6 +2434,7 @@ class ReceptModule_ extends React.Component {
           storages: res.all_storages,
           apps: res.apps,
           all_pf_list: res.all_pf_list,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
           rec_pf_list: res.pf_list,
         });
       }
@@ -2280,6 +2454,7 @@ class ReceptModule_ extends React.Component {
       if (change) {
         this.setState({
           rec: res.pf,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
         });
       } else {
         this.setState({
@@ -2289,6 +2464,7 @@ class ReceptModule_ extends React.Component {
           apps: res.apps,
           allergens: res.allergens,
           cats: res.cats,
+          ed_izmer: res.ed_izmer || this.state.ed_izmer,
           all_pf_list: res.all_items_list,
           rec_pf_list: res.items_list,
         });
@@ -2327,6 +2503,7 @@ class ReceptModule_ extends React.Component {
         storages: res.all_storages,
         apps: res.apps,
         all_pf_list: res.all_pf_list,
+        ed_izmer: res.ed_izmer || this.state.ed_izmer,
         rec: res.rec,
         rec_pf_list: res.pf_list,
         cats: res.cats,
@@ -2356,6 +2533,7 @@ class ReceptModule_ extends React.Component {
         cats: res.cats,
         allergens: res.allergens,
         all_pf_list: res.all_items_list,
+        ed_izmer: res.ed_izmer || this.state.ed_izmer,
         rec: res.pf,
         rec_pf_list: res.items_list,
         type,
@@ -2452,6 +2630,23 @@ class ReceptModule_ extends React.Component {
     }
   }
 
+  getEdIzmerName(value) {
+    const unit = (this.state.ed_izmer || []).find((item) => String(item.id) === String(value));
+
+    return unit?.name ?? value ?? "";
+  }
+
+  formatHistoryEdIzmerField(value) {
+    if (value?.color) {
+      return {
+        ...value,
+        key: this.getEdIzmerName(value.key),
+      };
+    }
+
+    return this.getEdIzmerName(value);
+  }
+
   openModalHistoryView(index) {
     const item = this.state.item;
 
@@ -2508,6 +2703,8 @@ class ReceptModule_ extends React.Component {
       }
     }
 
+    itemView.ed_izmer_id = this.formatHistoryEdIzmerField(itemView.ed_izmer_id);
+
     this.setState({
       modalDialogView: true,
       itemView,
@@ -2555,8 +2752,13 @@ class ReceptModule_ extends React.Component {
     let res = await this.getData("save_cats", { name: value });
 
     if (res.st) {
+      const nextSelected =
+        res.cats?.find((cat) => cat.name === value)?.id ?? res.cats?.[0]?.id ?? null;
+
       this.setState({
         cats: res.cats,
+        selectedCategoryId: nextSelected,
+        categoryDraft: res.cats?.find((cat) => String(cat.id) === String(nextSelected)) || null,
         openAlert: true,
         err_status: res.st,
         err_text: res.text,
@@ -2568,7 +2770,136 @@ class ReceptModule_ extends React.Component {
         err_text: res.text,
       });
     }
+
+    return res;
   }
+
+  createCategory = () => {
+    this.setState({
+      activeTab: "categories",
+      categoryDraft: { id: null, name: "" },
+      selectedCategoryId: null,
+    });
+  };
+
+  handleCategoryQueryChange = (value) => {
+    this.setState({ categoryQuery: value });
+  };
+
+  handleItemSearchChange = (event) => {
+    const itemSearch = event.target.value;
+
+    this.setState({ itemSearch });
+    clearTimeout(this.itemSearchTimeout);
+    this.itemSearchTimeout = setTimeout(() => {
+      this.update(itemSearch);
+    }, 350);
+  };
+
+  handleTabChange = (_, value) => {
+    if (value === "categories" && this.state.itemSearch.trim()) {
+      this.setState({ activeTab: value, itemSearch: "" }, () => {
+        this.update("");
+      });
+      return;
+    }
+
+    this.setState({ activeTab: value });
+  };
+
+  handleSelectCategory = (id) => {
+    const category = (this.state.cats || []).find((item) => String(item.id) === String(id)) || null;
+
+    this.setState({
+      selectedCategoryId: id,
+      categoryDraft: category,
+    });
+  };
+
+  handleDraftCategoryChange = (field, value) => {
+    this.setState((prevState) => ({
+      categoryDraft: {
+        ...(prevState.categoryDraft || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  saveCategoryFromTab = async () => {
+    const category = this.state.categoryDraft;
+
+    if (!category || !(category.name || "").trim()) {
+      return;
+    }
+
+    if (!category.id) {
+      await this.saveCats(category.name.trim());
+      return;
+    }
+
+    const res = await this.getData("save_edit_cats", {
+      id: category.id,
+      name: category.name.trim(),
+    });
+
+    if (res.st) {
+      this.setState({
+        cats: res.cats,
+        selectedCategoryId: category.id,
+        categoryDraft: (res.cats || []).find((item) => String(item.id) === String(category.id)) || {
+          ...category,
+        },
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    } else {
+      this.setState({
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  };
+
+  handleDeleteCategoryRequest = (id) => {
+    this.setState({ deleteCategoryId: id });
+  };
+
+  handleCloseDeleteCategory = () => {
+    this.setState({ deleteCategoryId: null });
+  };
+
+  confirmDeleteCategory = async () => {
+    const { deleteCategoryId } = this.state;
+
+    if (!deleteCategoryId) {
+      return;
+    }
+
+    const res = await this.getData("delete_cats", { id: deleteCategoryId });
+
+    if (res.st) {
+      const cats = res.cats || [];
+      this.setState({
+        cats,
+        deleteCategoryId: null,
+        selectedCategoryId: cats[0]?.id ?? null,
+        categoryDraft: cats[0] || null,
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+      await this.update();
+    } else {
+      this.setState({
+        deleteCategoryId: null,
+        openAlert: true,
+        err_status: res.st,
+        err_text: res.text,
+      });
+    }
+  };
 
   async saveEdit(rec) {
     const type = this.state.type;
@@ -2634,17 +2965,38 @@ class ReceptModule_ extends React.Component {
     }
   }
 
-  async update() {
-    const data = await this.getData("get_all");
+  async update(search = this.state.itemSearch) {
+    const searchText = (search || "").trim();
+    const data = await this.getData("get_all", searchText ? { search: searchText } : {});
 
     this.setState({
       rec_list: data.rec,
       pf_list: data.pf,
+      ed_izmer: data.ed_izmer || this.state.ed_izmer,
       cats: data.cats,
     });
   }
 
   render() {
+    const {
+      acces,
+      activeTab,
+      cats,
+      categoryDraft,
+      categoryQuery,
+      deleteCategoryId,
+      itemSearch,
+      pf_list,
+      rec_list,
+    } = this.state;
+    const canViewCats = acces?.cats_view || acces?.cats_edit;
+    const canEditCats = Boolean(acces?.cats_edit);
+    const deleteCategoryCandidate =
+      (cats || []).find((category) => String(category.id) === String(deleteCategoryId)) || null;
+    const deleteCategoryUsageCount = deleteCategoryCandidate
+      ? getCategoryUsageCount(deleteCategoryCandidate.id, rec_list, pf_list)
+      : 0;
+
     return (
       <>
         <Backdrop
@@ -2673,6 +3025,7 @@ class ReceptModule_ extends React.Component {
           acces={this.state.acces}
           allergens={this.state.allergens}
           cats={this.state.cats}
+          ed_izmer={this.state.ed_izmer}
           getData={this.getData.bind(this)}
           saveNew={this.saveNew.bind(this)}
           saveEdit={this.saveEdit.bind(this)}
@@ -2708,52 +3061,136 @@ class ReceptModule_ extends React.Component {
               sm: 12,
             }}
           >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
-
-          {this.state.acces?.create_rec_access || this.state.acces?.create_pol_access ? (
-            <Grid
-              size={{
-                xs: 12,
-                sm: 4,
-              }}
+            <Box
               sx={{
-                mb: 3,
+                display: "flex",
+                alignItems: { xs: "stretch", sm: "center" },
+                justifyContent: "space-between",
+                gap: 2,
+                flexWrap: "wrap",
+                mb: 2,
               }}
             >
-              <Button
-                onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
-                variant="contained"
+              <h1 style={{ margin: 0 }}>{this.state.module_name}</h1>
+              {activeTab === "categories" && canEditCats ? (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={this.createCategory}
+                >
+                  Новая категория
+                </Button>
+              ) : null}
+            </Box>
+            <Tabs
+              value={activeTab}
+              onChange={this.handleTabChange}
+              sx={{ mb: 2 }}
+            >
+              <Tab
+                value="items"
+                label="Рецепты и полуфабрикаты"
+              />
+              {this.state.acces?.cats_tab_access ? (
+                <Tab
+                  value="categories"
+                  label="Категории"
+                />
+              ) : null}
+            </Tabs>
+          </Grid>
+
+          {activeTab === "items" ? (
+            <>
+              <Grid
+                size={{
+                  xs: 12,
+                  sm: 4,
+                }}
+                sx={{
+                  mb: 3,
+                }}
               >
-                Добавить рецепт или полуфабрикат
-              </Button>
+                <MyTextInput
+                  label="Поиск"
+                  placeholder="Название рецепта или полуфабриката"
+                  value={itemSearch}
+                  func={this.handleItemSearchChange}
+                />
+              </Grid>
+              {this.state.acces?.create_rec_access || this.state.acces?.create_pol_access ? (
+                <Grid
+                  size={{
+                    xs: 12,
+                    sm: 4,
+                  }}
+                  sx={{
+                    mb: 3,
+                  }}
+                >
+                  <Button
+                    onClick={this.openItemNew.bind(this, "Новый рецепт", "rec")}
+                    variant="contained"
+                  >
+                    Добавить рецепт или полуфабрикат
+                  </Button>
+                </Grid>
+              ) : null}
+              {itemSearch.trim() && !pf_list.length && !rec_list.length ? (
+                <Grid size={12}>
+                  <Typography>Ничего не найдено</Typography>
+                </Grid>
+              ) : null}
+              <ReceptModule_Table
+                data={this.state.pf_list}
+                method="Полуфабрикаты"
+                cats={this.state.cats}
+                getData={this.getData.bind(this)}
+                openItemEdit={this.openItemEdit.bind(this)}
+                checkTable={this.checkTable.bind(this)}
+                update={this.update.bind(this)}
+                openHistoryItem={this.openHistoryItem.bind(this)}
+                type={"pf"}
+                acces={this.state.acces}
+              />
+
+              <ReceptModule_Table
+                data={this.state.rec_list}
+                method="Рецепты"
+                cats={this.state.cats}
+                update={this.update.bind(this)}
+                getData={this.getData.bind(this)}
+                openItemEdit={this.openItemEdit.bind(this)}
+                checkTable={this.checkTable.bind(this)}
+                openHistoryItem={this.openHistoryItem.bind(this)}
+                type={"rec"}
+                acces={this.state.acces}
+              />
+            </>
+          ) : null}
+
+          {activeTab === "categories" && canViewCats ? (
+            <Grid size={12}>
+              <ReceptModuleCategoriesTab
+                categories={cats.filter((i) => i.id !== -1)}
+                recList={rec_list}
+                pfList={pf_list}
+                canEdit={canEditCats}
+                categoryQuery={categoryQuery}
+                onCategoryQueryChange={this.handleCategoryQueryChange}
+                selectedCategoryId={this.state.selectedCategoryId}
+                onSelectCategory={this.handleSelectCategory}
+                draftCategory={categoryDraft}
+                onDraftCategoryChange={this.handleDraftCategoryChange}
+                onSaveCategory={this.saveCategoryFromTab}
+                onDeleteCategory={this.handleDeleteCategoryRequest}
+                deleteCategoryCandidate={deleteCategoryCandidate}
+                deleteCategoryUsageCount={deleteCategoryUsageCount}
+                onCloseDeleteCategory={this.handleCloseDeleteCategory}
+                onConfirmDeleteCategory={this.confirmDeleteCategory}
+              />
             </Grid>
           ) : null}
-          <ReceptModule_Table
-            data={this.state.pf_list}
-            method="Полуфабрикаты"
-            cats={this.state.cats}
-            getData={this.getData.bind(this)}
-            openItemEdit={this.openItemEdit.bind(this)}
-            checkTable={this.checkTable.bind(this)}
-            update={this.update.bind(this)}
-            openHistoryItem={this.openHistoryItem.bind(this)}
-            type={"pf"}
-            acces={this.state.acces}
-          />
-
-          <ReceptModule_Table
-            data={this.state.rec_list}
-            method="Рецепты"
-            cats={this.state.cats}
-            update={this.update.bind(this)}
-            getData={this.getData.bind(this)}
-            openItemEdit={this.openItemEdit.bind(this)}
-            checkTable={this.checkTable.bind(this)}
-            openHistoryItem={this.openHistoryItem.bind(this)}
-            type={"rec"}
-            acces={this.state.acces}
-          />
         </Grid>
       </>
     );

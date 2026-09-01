@@ -21,6 +21,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tab,
+  Tabs,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -69,6 +71,7 @@ class SkladModules_ extends React.Component {
       err_status: true,
       err_text: "",
       expandedItems: {},
+      activeTab: "active",
 
       mark_param: null,
       modalDialog_param: false,
@@ -298,35 +301,42 @@ class SkladModules_ extends React.Component {
       res = await this.getData("save_edit", data);
     }
 
-    if (!res.st) {
+    if (!res?.st) {
       this.setState({
         openAlert: true,
-        err_status: res.st,
-        err_text: res.text,
+        err_status: res?.st || false,
+        err_text: res?.text || "Server Error",
       });
     } else {
       setTimeout(() => {
-        this.update();
+        this.update(mark === "add" ? { activeTab: "active", expandedItems: {} } : {});
       }, 300);
     }
+
+    return res;
   }
 
-  changeSort(index, cat, id, event) {
-    const list = this.state.list;
+  changeSort(id, event) {
+    const sort = event.target.value;
 
-    if (cat === "subCat") {
-      list.forEach((item) => {
-        if (item.id === id) {
-          item.items[index].sort = event.target.value;
+    this.setState((prev) => ({
+      list: (prev.list || []).map((item) => {
+        if (String(item.id) === String(id)) {
+          return { ...item, sort };
         }
-      });
-    } else {
-      list[index].sort = event.target.value;
-    }
 
-    this.setState({
-      list,
-    });
+        if (!Array.isArray(item.items)) {
+          return item;
+        }
+
+        return {
+          ...item,
+          items: item.items.map((child) =>
+            String(child.id) === String(id) ? { ...child, sort } : child,
+          ),
+        };
+      }),
+    }));
   }
 
   async saveSort(id, event) {
@@ -350,14 +360,42 @@ class SkladModules_ extends React.Component {
     }
   }
 
-  async update() {
+  async update(nextState = {}) {
     const data = await this.getData("get_all");
 
     this.setState({
       list: data.items,
       acces: data.acces,
+      ...nextState,
     });
   }
+
+  getListForActiveTab() {
+    const isShow = this.state.activeTab === "active" ? 1 : 0;
+
+    return (this.state.list || []).reduce((items, item) => {
+      const children = Array.isArray(item.items) ? item.items : [];
+
+      if (!children.length) {
+        if (parseInt(item.is_show) === isShow) {
+          items.push(item);
+        }
+
+        return items;
+      }
+
+      const filteredChildren = children.filter((child) => parseInt(child.is_show) === isShow);
+      if (filteredChildren.length) {
+        items.push({ ...item, items: filteredChildren });
+      }
+
+      return items;
+    }, []);
+  }
+
+  handleTabChange = (_event, activeTab) => {
+    this.setState({ activeTab, expandedItems: {} });
+  };
 
   canView(key) {
     return handleUserAccess(this.state.acces)?.userCan("view", key);
@@ -372,6 +410,10 @@ class SkladModules_ extends React.Component {
   }
 
   render() {
+    const list = this.getListForActiveTab();
+    const emptyText =
+      this.state.activeTab === "active" ? "Нет активных модулей" : "Нет архивных модулей";
+
     return (
       <>
         <Backdrop
@@ -433,6 +475,23 @@ class SkladModules_ extends React.Component {
             <h1>{this.state.module_name}</h1>
           </Grid>
 
+          <Grid size={12}>
+            <Tabs
+              value={this.state.activeTab}
+              onChange={this.handleTabChange}
+              aria-label="Статус модулей"
+            >
+              <Tab
+                value="active"
+                label="Активные"
+              />
+              <Tab
+                value="archive"
+                label="Архивные"
+              />
+            </Tabs>
+          </Grid>
+
           <Grid
             size={{
               xs: 12,
@@ -477,7 +536,15 @@ class SkladModules_ extends React.Component {
                 mb: 10,
               }}
             >
-              {parseInt(this.state.acces?.view_pos_access) == 1 ? (
+              {list.length === 0 ? (
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
+                  {emptyText}
+                </Typography>
+              ) : parseInt(this.state.acces?.view_pos_access) == 1 ? (
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
@@ -495,7 +562,7 @@ class SkladModules_ extends React.Component {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {this.state.list.map((item, index) =>
+                      {list.map((item, index) =>
                         item.items?.length ? (
                           <React.Fragment key={index}>
                             <TableRow
@@ -517,7 +584,7 @@ class SkladModules_ extends React.Component {
                                 <MyTextInput
                                   label=""
                                   value={item.sort}
-                                  func={this.changeSort.bind(this, index, "cat", null)}
+                                  func={this.changeSort.bind(this, item.id)}
                                   onBlur={this.saveSort.bind(this, item.id)}
                                 />
                               </TableCell>
@@ -565,7 +632,7 @@ class SkladModules_ extends React.Component {
                                       <MyTextInput
                                         label=""
                                         value={it.sort}
-                                        func={this.changeSort.bind(this, key, "subCat", item.id)}
+                                        func={this.changeSort.bind(this, it.id)}
                                         onBlur={this.saveSort.bind(this, it.id)}
                                       />
                                     </TableCell>
@@ -658,7 +725,11 @@ class SkladModules_ extends React.Component {
                                           {this.canEdit("app_params") && (
                                             <Tooltip
                                               title={
-                                                <Typography color="inherit">
+                                                <Typography
+                                                  sx={{
+                                                    color: "inherit",
+                                                  }}
+                                                >
                                                   Редактирование параметра
                                                 </Typography>
                                               }
@@ -712,7 +783,7 @@ class SkladModules_ extends React.Component {
                                       <MyTextInput
                                         label=""
                                         value={it.sort}
-                                        func={this.changeSort.bind(this, key, "subCat", item.id)}
+                                        func={this.changeSort.bind(this, it.id)}
                                         onBlur={this.saveSort.bind(this, it.id)}
                                       />
                                     </TableCell>
@@ -815,7 +886,7 @@ class SkladModules_ extends React.Component {
                               <MyTextInput
                                 label=""
                                 value={item.sort}
-                                func={this.changeSort.bind(this, index, "cat", null)}
+                                func={this.changeSort.bind(this, item.id)}
                                 onBlur={this.saveSort.bind(this, item.id)}
                               />
                             </TableCell>
@@ -849,7 +920,7 @@ class SkladModules_ extends React.Component {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {this.state.list.map((item, index) =>
+                      {list.map((item, index) =>
                         item.items?.length ? (
                           <React.Fragment key={index}>
                             <TableRow
@@ -871,7 +942,7 @@ class SkladModules_ extends React.Component {
                                 <MyTextInput
                                   label=""
                                   value={item.sort}
-                                  func={this.changeSort.bind(this, index, "cat", null)}
+                                  func={this.changeSort.bind(this, item.id)}
                                   onBlur={this.saveSort.bind(this, item.id)}
                                 />
                               </TableCell>
@@ -902,7 +973,7 @@ class SkladModules_ extends React.Component {
                                       <MyTextInput
                                         label=""
                                         value={it.sort}
-                                        func={this.changeSort.bind(this, key, "subCat", item.id)}
+                                        func={this.changeSort.bind(this, it.id)}
                                         onBlur={this.saveSort.bind(this, it.id)}
                                       />
                                     </TableCell>
@@ -934,7 +1005,11 @@ class SkladModules_ extends React.Component {
                                       >
                                         <Tooltip
                                           title={
-                                            <Typography color="inherit">
+                                            <Typography
+                                              sx={{
+                                                color: "inherit",
+                                              }}
+                                            >
                                               Редактирование параметра
                                             </Typography>
                                           }
@@ -965,7 +1040,7 @@ class SkladModules_ extends React.Component {
                                     <MyTextInput
                                       label=""
                                       value={it.sort}
-                                      func={this.changeSort.bind(this, key, "subCat", item.id)}
+                                      func={this.changeSort.bind(this, it.id)}
                                       onBlur={this.saveSort.bind(this, it.id)}
                                     />
                                   </TableCell>
@@ -1001,7 +1076,7 @@ class SkladModules_ extends React.Component {
                               <MyTextInput
                                 label=""
                                 value={item.sort}
-                                func={this.changeSort.bind(this, index, "cat", null)}
+                                func={this.changeSort.bind(this, item.id)}
                                 onBlur={this.saveSort.bind(this, item.id)}
                               />
                             </TableCell>

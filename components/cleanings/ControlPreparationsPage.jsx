@@ -23,29 +23,35 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import dayjs from "dayjs";
 import { MyDatePickerNew, MySelect } from "@/ui/Forms";
-import {
-  formatControlTime,
-  getLocationName,
-  getLocationNameById,
-  isSameId,
-  isDateInRange,
-  tableHeaderSx,
-  tableRowSx,
-} from "./helpers";
+import { getLocationName, isSameId, isDateInRange, tableHeaderSx, tableRowSx } from "./helpers";
 
 const actionButtonSx = {
-  minHeight: 40,
-  minWidth: 112,
-  px: 2,
   borderRadius: "8px",
   fontWeight: 700,
+  minHeight: 36,
   lineHeight: "20px",
   alignItems: "center",
   justifyContent: "center",
   whiteSpace: "nowrap",
 };
+
+const dialogButtonSx = {
+  ...actionButtonSx,
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+};
+
+function formatPreparationAmount(value, unit) {
+  if (value === "" || value == null) {
+    return "—";
+  }
+
+  return unit ? `${value} ${unit}` : String(value);
+}
 
 export default function PreparationControlView({
   items,
@@ -59,6 +65,8 @@ export default function PreparationControlView({
   onEdit,
   onApprove,
   onDelete,
+  onRefresh,
+  isLoading,
   canEdit,
 }) {
   const locationOptions = locations.map((location) => ({
@@ -84,7 +92,7 @@ export default function PreparationControlView({
             sx={{
               p: 1.5,
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "260px 170px 170px" },
+              gridTemplateColumns: { xs: "1fr", md: "360px 170px 170px auto" },
               gap: 1.5,
               alignItems: "center",
             }}
@@ -109,6 +117,16 @@ export default function PreparationControlView({
               minDate={dateFrom ? dayjs(dateFrom) : null}
               func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
             />
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={onRefresh}
+              disabled={isLoading}
+              sx={{ ...actionButtonSx, justifySelf: { xs: "stretch", md: "end" } }}
+            >
+              Обновить
+            </Button>
           </Box>
         </Paper>
       </Grid>
@@ -126,12 +144,11 @@ export default function PreparationControlView({
           <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
             <Table
               size="small"
-              sx={{ minWidth: 1060 }}
+              sx={{ minWidth: 940 }}
             >
               <TableHead>
                 <TableRow sx={tableHeaderSx}>
                   <TableCell sx={{ width: "20%" }}>Позиция</TableCell>
-                  <TableCell>Кафе</TableCell>
                   <TableCell>Время</TableCell>
                   <TableCell>Заготовка</TableCell>
                   <TableCell>Отходы</TableCell>
@@ -175,13 +192,14 @@ export default function PreparationControlView({
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {getLocationNameById(item.locationId, locations)}
+                      {item.preparedAt || "—"}
                     </TableCell>
-                    <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {formatControlTime(item.preparedAt)}
+                    <TableCell sx={{ fontSize: 14 }}>
+                      {formatPreparationAmount(item.volume, item.unit)}
                     </TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>{item.volume}</TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>{item.waste}</TableCell>
+                    <TableCell sx={{ fontSize: 14 }}>
+                      {formatPreparationAmount(item.waste, item.unit)}
+                    </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                       {item.employee}
                     </TableCell>
@@ -189,7 +207,7 @@ export default function PreparationControlView({
                       {item.helper || "—"}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {formatControlTime(item.confirmedAt)}
+                      {item.confirmedAt || "—"}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", fontSize: 14 }}>
                       {item.confirmer || "—"}
@@ -203,8 +221,7 @@ export default function PreparationControlView({
                             startIcon={<CheckCircleOutlineIcon />}
                             onClick={() => onApprove(item.id)}
                             sx={{
-                              borderRadius: "8px",
-                              fontWeight: 700,
+                              ...actionButtonSx,
                               bgcolor: "#16a34a",
                               color: "#fff",
                               "&:hover": { bgcolor: "#15803d" },
@@ -220,8 +237,7 @@ export default function PreparationControlView({
                             startIcon={<DeleteOutlineIcon />}
                             onClick={() => onDelete(item.id)}
                             sx={{
-                              borderRadius: "8px",
-                              fontWeight: 700,
+                              ...actionButtonSx,
                               bgcolor: "primary.main",
                               color: "#fff",
                               "&:hover": { bgcolor: "primary.dark" },
@@ -276,10 +292,8 @@ export default function PreparationControlView({
                       {item.name}
                     </Typography>
                     <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {getLocationNameById(item.locationId, locations)}
-                    </Typography>
-                    <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                      {formatControlTime(item.preparedAt)} · {item.volume} / {item.waste}
+                      {item.preparedAt || "—"} · {formatPreparationAmount(item.volume, item.unit)} /{" "}
+                      {formatPreparationAmount(item.waste, item.unit)}
                     </Typography>
                   </Box>
                 </Box>
@@ -288,7 +302,7 @@ export default function PreparationControlView({
                     Сотрудник: {item.employee}
                   </Typography>
                   <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                    Подтвердили: {formatControlTime(item.confirmedAt)}
+                    Подтвердили: {item.confirmedAt || "—"}
                   </Typography>
                   <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
                     Подтвердивший: {item.confirmer || "—"}
@@ -313,8 +327,8 @@ export default function PreparationControlView({
                         startIcon={<CheckCircleOutlineIcon />}
                         onClick={() => onApprove(item.id)}
                         sx={{
-                          borderRadius: "8px",
-                          fontWeight: 700,
+                          ...actionButtonSx,
+                          minHeight: 44,
                           width: "100%",
                           bgcolor: "#16a34a",
                           color: "#fff",
@@ -329,8 +343,8 @@ export default function PreparationControlView({
                         startIcon={<DeleteOutlineIcon />}
                         onClick={() => onDelete(item.id)}
                         sx={{
-                          borderRadius: "8px",
-                          fontWeight: 700,
+                          ...actionButtonSx,
+                          minHeight: 44,
                           width: "100%",
                           bgcolor: "primary.main",
                           color: "#fff",
@@ -459,7 +473,7 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
           variant="contained"
           onClick={handleSave}
           sx={{
-            ...actionButtonSx,
+            ...dialogButtonSx,
             bgcolor: "#16a34a",
             color: "#fff",
             "&:hover": { bgcolor: "#15803d" },
@@ -471,7 +485,7 @@ export function PreparationEditDialog({ open, item, onClose, onSave }) {
           size="small"
           variant="outlined"
           onClick={onClose}
-          sx={actionButtonSx}
+          sx={dialogButtonSx}
         >
           Отмена
         </Button>

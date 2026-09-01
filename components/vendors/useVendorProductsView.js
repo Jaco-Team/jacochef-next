@@ -2,6 +2,18 @@
 
 import { useMemo } from "react";
 import useVendorDetailsStore from "./useVendorDetailsStore";
+import { normalizeCatalogItems } from "./vendorFormUtils";
+
+export function buildItemsSelectData(allItems, vendorItemIds) {
+  return normalizeCatalogItems(allItems)
+    .filter((item) => !vendorItemIds.has(Number(item.id)))
+    .map((item) => ({
+      id: String(item.id),
+      name: item.cat_name
+        ? `${item.name || `Товар #${item.id}`} · ${item.cat_name}`
+        : item.name || `Товар #${item.id}`,
+    }));
+}
 
 export default function useVendorProductsView() {
   const vendorItems = useVendorDetailsStore((state) => state.vendorItems || []);
@@ -18,15 +30,7 @@ export default function useVendorProductsView() {
   );
 
   const itemsSelectData = useMemo(
-    () =>
-      allItems
-        .filter((item) => !vendorItemIds.has(Number(item.id)))
-        .map((item) => ({
-          id: String(item.id),
-          name: item.cat_name
-            ? `${item.name || `Товар #${item.id}`} · ${item.cat_name}`
-            : item.name || `Товар #${item.id}`,
-        })),
+    () => buildItemsSelectData(allItems, vendorItemIds),
     [allItems, vendorItemIds],
   );
 

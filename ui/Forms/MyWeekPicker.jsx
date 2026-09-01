@@ -40,18 +40,22 @@ export default function MyWeekPicker({ value, onChange }) {
       dateAdapter={AdapterDayjs}
       adapterLocale="ru"
     >
-      <Box position="relative">
+      <Box
+        sx={{
+          position: "relative",
+        }}
+      >
         {/* real field — invisible but functional */}
         <DatePicker
           value={internalDate}
           onChange={handleSelect}
           views={["month", "day"]}
           displayWeekNumber
-          enableAccessibleFieldDOMStructure={false}
           format="DD.MM.YYYY"
           slotProps={{
             textField: {
               size: "small",
+
               sx: {
                 "& .MuiInputBase-input": {
                   opacity: 0, // <-- hide actual text
@@ -60,8 +64,11 @@ export default function MyWeekPicker({ value, onChange }) {
                   height: 40,
                 },
               },
-              inputProps: {
-                readOnly: true,
+
+              slotProps: {
+                htmlInput: {
+                  readOnly: true,
+                },
               },
             },
           }}
@@ -70,11 +77,13 @@ export default function MyWeekPicker({ value, onChange }) {
         {/* visible fake value */}
         <Box
           pointerEvents="none"
-          position="absolute"
-          left={14}
-          top={10}
-          fontSize="1rem"
-          color="text.primary"
+          sx={{
+            position: "absolute",
+            left: 14,
+            top: 10,
+            fontSize: "1rem",
+            color: "text.primary",
+          }}
         >
           {displayText}
         </Box>

@@ -45,6 +45,7 @@ export default function ModalUpdateAder({
     point_ids: [],
     name: "",
     description: "",
+    active: 0,
     order_type: 0,
     pay_type: [],
     order_types: [],
@@ -571,6 +572,20 @@ export default function ModalUpdateAder({
                   name_pack: e.target.value,
                 }))
               }
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              sm: 3,
+            }}
+          >
+            <MyCheckBox
+              label="Активность"
+              value={!!formData.active}
+              func={(_, value) => {
+                setFormData((prev) => ({ ...prev, active: +value }));
+              }}
             />
           </Grid>
         </Grid>

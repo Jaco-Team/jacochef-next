@@ -54,7 +54,9 @@ export default function AdsAddConnectionModal({
       <DialogContent>
         <Stack
           spacing={2}
-          mt={1}
+          sx={{
+            mt: 1,
+          }}
         >
           <TextField
             fullWidth

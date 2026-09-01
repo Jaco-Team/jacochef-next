@@ -151,38 +151,39 @@ export default function WriteOffReasons({ value, onChange, disabled, list }) {
             display: "none",
           },
         }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              {value ? (
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                {value ? (
+                  <IconButton
+                    size="small"
+                    onClick={() => onChange("")}
+                    sx={{
+                      color: "#A6A6A6",
+                      borderRadius: "50%",
+                      ml: 0.5,
+                      width: 24,
+                      height: 24,
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                ) : null}
                 <IconButton
+                  edge="end"
                   size="small"
-                  onClick={() => onChange("")}
-                  sx={{
-                    color: "#A6A6A6",
-                    borderRadius: "50%",
-                    ml: 0.5,
-                    width: 24,
-                    height: 24,
-                  }}
+                  onClick={() => setIsOpen(!isOpen)}
                 >
-                  <CloseIcon fontSize="small" />
+                  <KeyboardArrowDownIcon
+                    style={{ color: "#BABABA", rotate: isOpen ? "180deg" : "0deg" }}
+                  />
                 </IconButton>
-              ) : null}
-              <IconButton
-                edge="end"
-                size="small"
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                <KeyboardArrowDownIcon
-                  style={{ color: "#BABABA", rotate: isOpen ? "180deg" : "0deg" }}
-                />
-              </IconButton>
-            </InputAdornment>
-          ),
+              </InputAdornment>
+            ),
+          },
         }}
       />
-
       {isOpen && !disabled && (
         <Paper
           elevation={3}
@@ -213,10 +214,12 @@ export default function WriteOffReasons({ value, onChange, disabled, list }) {
               Теги
             </Typography>
             <Box
-              display="flex"
-              flexWrap="wrap"
-              gap={1}
-              sx={{ padding: "12px 16px" }}
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 1,
+                padding: "12px 16px",
+              }}
             >
               {uniqueTags.map((tag, index) => (
                 <Chip

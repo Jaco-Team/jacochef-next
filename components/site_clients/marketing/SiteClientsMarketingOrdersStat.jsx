@@ -157,8 +157,10 @@ function SiteClientsMarketingOrdersStat({ canExport, getData, showAlert }) {
       <Stack
         direction="row"
         spacing={2}
-        justifyContent="space-between"
-        mb={2}
+        sx={{
+          justifyContent: "space-between",
+          mb: 2,
+        }}
       >
         <Box>
           <MyTextInput
@@ -188,7 +190,6 @@ function SiteClientsMarketingOrdersStat({ canExport, getData, showAlert }) {
           </IconButton>
         )}
       </Stack>
-
       <TableContainer sx={{ maxHeight: "60dvh" }}>
         <Table stickyHeader>
           <TableHead>

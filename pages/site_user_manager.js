@@ -318,6 +318,8 @@ class SiteUserManager_ extends React.Component {
 
     // хак для автокомплита
     res.user.app_id = res.appointment.find((app) => parseInt(app.id) == parseInt(res.user.app_id));
+    res.user.point_access = (res.user.point_access || []).filter((point) => parseInt(point.id) > 0);
+    res.user.point_access_ids = res.user.point_access.map((point) => parseInt(point.id));
 
     this.setState({
       editUser: res,
@@ -339,6 +341,8 @@ class SiteUserManager_ extends React.Component {
 
     // хак для автокомплита
     res.user.app_id = null;
+    res.user.point_access = [];
+    res.user.point_access_ids = [];
 
     this.setState({
       editUser: res,
@@ -421,6 +425,36 @@ class SiteUserManager_ extends React.Component {
     });
   }
 
+  getPointOptions() {
+    return (this.state.editUser?.point_list || []).filter((point) => parseInt(point.id) > 0);
+  }
+
+  setLegacyPointFields(user, selectedPoints) {
+    const points = selectedPoints || [];
+
+    user.point_access = points;
+    user.point_access_ids = points.map((point) => parseInt(point.id));
+
+    if (points.length === 1) {
+      user.city_id = points[0].city_id;
+      user.point_id = points[0].id;
+    } else if (points.length > 1) {
+      user.city_id = -1;
+      user.point_id = -1;
+    } else {
+      user.point_id = "";
+    }
+  }
+
+  changePointAccess(event, data) {
+    let editUser = this.state.editUser;
+    this.setLegacyPointFields(editUser.user, data || []);
+
+    this.setState({
+      editUser,
+    });
+  }
+
   async openEdit(graphType) {
     if (!this.click) {
       this.click = true;
@@ -433,6 +467,7 @@ class SiteUserManager_ extends React.Component {
       const { user } = this.state.editUser;
 
       user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+      this.setLegacyPointFields(user, user.point_access || []);
 
       this.state.app_list.map((item, key) => {
         if (parseInt(user.app_id) == parseInt(item.id)) {
@@ -492,6 +527,7 @@ class SiteUserManager_ extends React.Component {
       const { user } = this.state.editUser;
 
       user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+      this.setLegacyPointFields(user, user.point_access || []);
 
       this.state.app_list.map((item, key) => {
         if (parseInt(user.app_id) == parseInt(item.id)) {
@@ -677,6 +713,7 @@ class SiteUserManager_ extends React.Component {
       // хак для нормальной работы атокомплита должность
       const { user } = this.state.editUser;
       user.app_id = this.state.chose_app !== null ? this.state.chose_app.id : 0;
+      this.setLegacyPointFields(user, user.point_access || []);
 
       this.state.app_list.map((item, key) => {
         if (parseInt(user.app_id) == parseInt(item.id)) {
@@ -1354,29 +1391,15 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4,
+                            sm: 8,
                           }}
                         >
-                          <MySelect
-                            data={this.state.editUser.cities}
-                            value={this.state.editUser.user.city_id}
-                            func={this.changeItem.bind(this, "city_id")}
-                            label="Город"
-                            is_none={false}
-                          />
-                        </Grid>
-                        <Grid
-                          size={{
-                            xs: 12,
-                            sm: 4,
-                          }}
-                        >
-                          <MySelect
-                            data={this.state.point_list_render}
-                            value={this.state.editUser.user.point_id}
-                            func={this.changeItem.bind(this, "point_id")}
-                            label="Точка"
-                            is_none={false}
+                          <MyAutocomplite
+                            data={this.getPointOptions()}
+                            value={this.state.editUser.user.point_access || []}
+                            func={this.changePointAccess.bind(this)}
+                            multiple={true}
+                            label="Доступные кафе"
                           />
                         </Grid>
                         <Grid
@@ -1778,29 +1801,15 @@ class SiteUserManager_ extends React.Component {
                         <Grid
                           size={{
                             xs: 12,
-                            sm: 4,
+                            sm: 8,
                           }}
                         >
-                          <MySelect
-                            data={this.state.editUser.cities}
-                            value={this.state.editUser.user.city_id}
-                            func={this.changeItem.bind(this, "city_id")}
-                            label="Город"
-                            is_none={false}
-                          />
-                        </Grid>
-                        <Grid
-                          size={{
-                            xs: 12,
-                            sm: 4,
-                          }}
-                        >
-                          <MySelect
-                            data={this.state.point_list_render}
-                            value={this.state.editUser.user.point_id}
-                            func={this.changeItem.bind(this, "point_id")}
-                            label="Точка"
-                            is_none={false}
+                          <MyAutocomplite
+                            data={this.getPointOptions()}
+                            value={this.state.editUser.user.point_access || []}
+                            func={this.changePointAccess.bind(this)}
+                            multiple={true}
+                            label="Доступные кафе"
                           />
                         </Grid>
                       </Grid>

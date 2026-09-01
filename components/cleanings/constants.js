@@ -35,6 +35,8 @@ export const defaultForm = {
   days: [],
   times: [],
   deleteTimes: [],
+  is_not_del: false,
+  is_need: false,
   locationIds: [],
   status: "active",
 };

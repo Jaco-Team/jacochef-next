@@ -30,6 +30,7 @@ import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
 import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import IconButton from "@mui/material/IconButton";
 
 import Dropzone from "dropzone";
@@ -97,11 +98,16 @@ const types = [
   },*/
 ];
 
+function isOcrFileName(fileName) {
+  return /\.(jpe?g|png|pdf)$/i.test(String(fileName ?? ""));
+}
+
 function isImageDropzoneFile(file) {
   const fileName = file?.name?.toLowerCase() ?? "";
+  const fileType = file?.type?.toLowerCase() ?? "";
 
   return (
-    file?.type?.startsWith("image/") || /\.(jpe?g|png|gif|bmp|webp|heic|heif)$/i.test(fileName)
+    ["image/jpeg", "image/png", "application/pdf"].includes(fileType) || isOcrFileName(fileName)
   );
 }
 
@@ -222,23 +228,131 @@ function getResolvedVendorPackOption(vendorItem, ocrItem, selectedPackOption = n
   return findVendorPackOption(pqItems, "1") ?? (pqItems.length === 1 ? pqItems[0] : null);
 }
 
+const OCR_MATH_FLAG_FIELDS = [
+  "math_qty_price_total_wo_vat_ok",
+  "math_vat_amount_ok",
+  "math_total_with_vat_ok",
+];
+
+const OCR_REVIEW_REASON_TEXT = {
+  unmatched_product: "Товар не найден в справочнике, выбери вручную",
+  low_match_score: "Низкая уверенность сопоставления, проверь товар",
+  missing_numeric_fields: "Не хватает количества или сумм",
+  math_qty_price_total_wo_vat_ok: "не сошлась формула количество x цена = сумма без НДС",
+  math_vat_amount_ok: "не сошлась сумма НДС",
+  math_total_with_vat_ok: "не сошлась сумма с НДС",
+  lilt_numeric_weak_match: "Числа требуют проверки",
+  lilt_numeric_unconfirmed: "OCR не подтвердил числовую строку",
+};
+
+function getOcrMatchedId(ocrItem) {
+  return ocrItem?.matched_id ?? ocrItem?.matched_product?.id;
+}
+
+function hasOcrMathIssues(ocrItem) {
+  return OCR_MATH_FLAG_FIELDS.some((field) => ocrItem?.[field] === false);
+}
+
+function hasOcrRequiredNumericFields(ocrItem) {
+  return (
+    normalizeOcrText(ocrItem?.quantity).length > 0 &&
+    (normalizeOcrText(ocrItem?.total_with_vat).length > 0 ||
+      normalizeOcrText(ocrItem?.total_wo_vat).length > 0)
+  );
+}
+
+function isOcrItemReadyForAutofill(ocrItem) {
+  return (
+    Boolean(getOcrMatchedId(ocrItem)) &&
+    !hasOcrMathIssues(ocrItem) &&
+    hasOcrRequiredNumericFields(ocrItem)
+  );
+}
+
+function getOcrItemReviewMessages(ocrItem) {
+  const messages = [];
+  const reviewReasons = Array.isArray(ocrItem?.__ocr_review?.review_reasons)
+    ? ocrItem.__ocr_review.review_reasons
+    : [];
+
+  reviewReasons.forEach((reason) => {
+    if (reason === "unmatched_product" && getOcrMatchedId(ocrItem)) {
+      return;
+    }
+
+    messages.push(OCR_REVIEW_REASON_TEXT[reason] ?? reason);
+  });
+
+  if (!getOcrMatchedId(ocrItem)) {
+    messages.push(OCR_REVIEW_REASON_TEXT.unmatched_product);
+  }
+
+  if (ocrItem?.__ocr_review?.needs_review === true && !reviewReasons.length) {
+    messages.push("строка требует ручной проверки");
+  }
+
+  OCR_MATH_FLAG_FIELDS.forEach((field) => {
+    if (ocrItem?.[field] === false) {
+      messages.push(OCR_REVIEW_REASON_TEXT[field]);
+    }
+  });
+
+  if (!hasOcrRequiredNumericFields(ocrItem)) {
+    messages.push("не хватает количества или суммы");
+  }
+
+  return [...new Set(messages.filter(Boolean))];
+}
+
+function getOcrAutofillNotice(ocrItem) {
+  const reviewReasons = Array.isArray(ocrItem?.__ocr_review?.review_reasons)
+    ? ocrItem.__ocr_review.review_reasons
+    : [];
+
+  if (ocrItem?.ocr_repair) {
+    return "Числа исправлены OCR";
+  }
+
+  if (reviewReasons.includes("low_match_score")) {
+    return OCR_REVIEW_REASON_TEXT.low_match_score;
+  }
+
+  if (
+    reviewReasons.includes("lilt_numeric_weak_match") ||
+    reviewReasons.includes("lilt_numeric_unconfirmed")
+  ) {
+    return "Числа требуют проверки";
+  }
+
+  return "";
+}
+
 function getOcrResolveIssue(ocrItem, vendorItem, selectedPackOption) {
+  const issues = [];
+
   if (!vendorItem) {
-    return "OCR не смог уверенно определить товар";
+    issues.push(OCR_REVIEW_REASON_TEXT.unmatched_product);
+    return issues.join("; ");
   }
 
   const ocrPq = normalizeOcrText(ocrItem?.pq);
   const pqItems = Array.isArray(vendorItem?.pq_item) ? vendorItem.pq_item : [];
 
   if (ocrPq.length && !selectedPackOption) {
-    return `OCR распознал упаковку ${ocrPq}, но такого значения нет у товара поставщика`;
+    issues.push(`OCR распознал упаковку ${ocrPq}, но такого значения нет у товара поставщика`);
   }
 
   if (!ocrPq.length && pqItems.length > 1 && !selectedPackOption) {
-    return "OCR не распознал объем упаковки, выбери его вручную";
+    issues.push("OCR не распознал объем упаковки, выбери его вручную");
   }
 
-  return "";
+  getOcrItemReviewMessages(ocrItem).forEach((message) => {
+    if (message !== OCR_REVIEW_REASON_TEXT.unmatched_product) {
+      issues.push(message);
+    }
+  });
+
+  return [...new Set(issues.filter(Boolean))].join("; ");
 }
 
 function getOcrQuantityData(ocrItem, pqValue = "") {
@@ -285,11 +399,13 @@ function formatOcrVatRate(value) {
 
 function getParsedOcrDocuments(data) {
   const documents = Array.isArray(data?.merged?.documents) ? data.merged.documents : [];
+  const smartDocuments = Array.isArray(data?.smart?.documents) ? data.smart.documents : [];
 
   return documents
     .map((document, documentIndex) => ({
       ...document,
       documentIndex,
+      __ocr_smart_document: smartDocuments[documentIndex] ?? {},
     }))
     .filter((document) => document?.parsed);
 }
@@ -308,16 +424,23 @@ function getFirstOcrInvoice(parsedDocuments) {
 
 function getMergedOcrItems(parsedDocuments) {
   return parsedDocuments
-    .flatMap((document, documentIndex) =>
-      (Array.isArray(document?.parsed?.items) ? document.parsed.items : []).map(
+    .flatMap((document, documentIndex) => {
+      const itemsReview = Array.isArray(document?.__ocr_smart_document?.items_review)
+        ? document.__ocr_smart_document.items_review
+        : [];
+
+      return (Array.isArray(document?.parsed?.items) ? document.parsed.items : []).map(
         (item, itemIndex) => ({
           ...item,
           __ocr_document_index: documentIndex,
           __ocr_item_index: itemIndex,
           __ocr_file_name: document?.file_name ?? document?.file_names?.[0] ?? "",
+          __ocr_review: itemsReview[itemIndex] ?? {},
+          __ocr_quality: document?.__ocr_smart_document?.quality ?? {},
+          __ocr_auto_repair: document?.__ocr_smart_document?.auto_repair ?? {},
         }),
-      ),
-    )
+      );
+    })
     .sort((a, b) => {
       const lineA = Number.isFinite(Number(a?.line)) ? Number(a.line) : Number.MAX_SAFE_INTEGER;
       const lineB = Number.isFinite(Number(b?.line)) ? Number(b.line) : Number.MAX_SAFE_INTEGER;
@@ -332,6 +455,14 @@ function getMergedOcrItems(parsedDocuments) {
 
       return a.__ocr_item_index - b.__ocr_item_index;
     });
+}
+
+function getOcrAutoRepairCount(parsedDocuments) {
+  return parsedDocuments.reduce((sum, document) => {
+    const count = Number(document?.__ocr_smart_document?.auto_repair?.applied_count);
+
+    return Number.isFinite(count) ? sum + count : sum;
+  }, 0);
 }
 
 function getFirstOcrSellerData(parsedDocuments) {
@@ -712,6 +843,11 @@ function BillItemNameContent({ item }) {
           </Link>
         </Tooltip>
       ) : null}
+      {!item?.ocr_notice ? null : (
+        <Box sx={{ mt: 0.5, maxWidth: 340 }}>
+          <Box sx={billingPriceWarningChipSx}>{item.ocr_notice}</Box>
+        </Box>
+      )}
       {!item?.price_check?.isError ? null : (
         <Box sx={{ mt: 0.5, maxWidth: 340 }}>
           <Box sx={billingPriceWarningChipSx}>Проверить ценник</Box>
@@ -810,7 +946,8 @@ const API_URL = "https://apichef.jacochef.ru/api";
 // const API_URL = "http://127.0.0.1:8000/api";
 const url_bill = `${API_URL}/bill-items/upload`;
 const url_bill_ex = `${API_URL}/bill-ex-items/upload`;
-const url_ocr = `${API_URL}/ocr/files/pipeline`;
+// const url_ocr = `${API_URL}/ocr/files/pipeline`;
+const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 
 function BillingUploadBackdropContent({ mainFiles = 0, facturFiles = 0 }) {
   const totalFiles = mainFiles + facturFiles;
@@ -2338,25 +2475,34 @@ const useStore = create((set, get) => ({
 
     if (bill_items_doc.length) {
       // const item = bill_items_doc.find((it) => it.item_id === vendor_items[0].id);
-      const item = bill_items_doc.find(
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
-
-      const nds = get().check_nds_bill(
-        (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
-
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+      if (!item) {
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      vendor_items[0].data_bill = item;
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+        const nds = get().check_nds_bill(
+          (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
+
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
+      }
     }
 
     bill_items.push(vendor_items[0]);
@@ -2397,7 +2543,7 @@ const useStore = create((set, get) => ({
       return;
     }
 
-    const { preserveValues = false, nds = "", summ_nds = "" } = options;
+    const { preserveValues = false, nds = "", summ_nds = "", ocr_notice = "" } = options;
 
     //const { count, fact_unit, summ, sum_w_nds, all_ed_izmer, pq, vendor_items } = get();
 
@@ -2421,6 +2567,7 @@ const useStore = create((set, get) => ({
     vendor_items[0].price_w_nds = preserveValues ? sum_w_nds : "";
     vendor_items[0].price = getBillItemUnitPrice(vendor_items[0]);
     vendor_items[0].accounting_system = accounting_system;
+    vendor_items[0].ocr_notice = ocr_notice;
 
     const bill_items_doc = get().bill_items_doc;
 
@@ -2428,27 +2575,34 @@ const useStore = create((set, get) => ({
     // console.log("stage1.7", vendor_items[0].id, sum_w_nds);
 
     if (bill_items_doc.length) {
-      const item = bill_items_doc.find(
+      const normalizeDocPrice = (v) => Number(parseFloat(v).toFixed(2));
+
+      let item = bill_items_doc.find(
         (it) =>
-          it.item_id === vendor_items[0].id && parseFloat(sum_w_nds) == parseFloat(it.price_w_nds),
+          parseInt(it.item_id) === parseInt(vendor_items[0].id) &&
+          normalizeDocPrice(sum_w_nds) === normalizeDocPrice(it.price_w_nds),
       );
 
-      // if(item){
-      item.fact_unit = getBillingFactUnitText(item.count, item.pq);
-      item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
-
-      const nds = get().check_nds_bill(
-        (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
-      );
-
-      if (nds) {
-        item.nds = nds;
-      } else {
-        item.nds = "";
+      if (!item) {
+        item = bill_items_doc.find((it) => parseInt(it.item_id) === parseInt(vendor_items[0].id));
       }
 
-      vendor_items[0].data_bill = item;
-      // }
+      if (item) {
+        item.fact_unit = getBillingFactUnitText(item.count, item.pq);
+        item.summ_nds = (Number(item.price_w_nds) - Number(item.price)).toFixed(2);
+
+        const nds = get().check_nds_bill(
+          (Number(item.price_w_nds) - Number(item.price)) / (Number(item.price) / 100),
+        );
+
+        if (nds) {
+          item.nds = nds;
+        } else {
+          item.nds = "";
+        }
+
+        vendor_items[0].data_bill = item;
+      }
     }
 
     // console.log("stage2", vendor_items[0]);
@@ -2614,6 +2768,47 @@ const useStore = create((set, get) => ({
 
     set({
       bill_items,
+    });
+
+    get().check_price_item_new();
+  },
+
+  copyDataBillToItem: (id, key) => {
+    let bill_items = JSON.parse(JSON.stringify(get().bill_items));
+
+    bill_items = bill_items.map((item, index) => {
+      if (item.id === id && key === index && item?.data_bill) {
+        const dataBill = item.data_bill;
+        const priceItem = dataBill.price ?? "";
+        const priceWithNds = dataBill.price_w_nds ?? "";
+
+        item.pq = dataBill.pq ?? "";
+        item.count = dataBill.count ?? "";
+        item.fact_unit =
+          dataBill.fact_unit ?? getBillingFactUnitText(dataBill.count, dataBill.pq) ?? "";
+        item.price_item = priceItem;
+        item.price_w_nds = priceWithNds;
+        item.summ_nds =
+          dataBill.summ_nds ??
+          (priceItem !== "" && priceWithNds !== ""
+            ? (Number(priceWithNds) - Number(priceItem)).toFixed(2)
+            : "");
+        item.nds = dataBill.nds ?? "";
+        item.price = getBillItemUnitPrice(item);
+      }
+
+      return item;
+    });
+
+    const allPrice = bill_items.reduce((all, item) => all + Number(item.price_item), 0).toFixed(2);
+    const allPrice_w_nds = bill_items
+      .reduce((all, item) => all + Number(item.price_w_nds), 0)
+      .toFixed(2);
+
+    set({
+      bill_items,
+      allPrice,
+      allPrice_w_nds,
     });
 
     get().check_price_item_new();
@@ -2809,13 +3004,16 @@ function FormVendorItems({ showHeader = true }) {
 }
 
 function VendorItemsTableEdit({ showHeader = true }) {
-  const [type, deleteItem, changeDataTable, handleDrag, handleDrop] = useStore((state) => [
-    state.type,
-    state.deleteItem,
-    state.changeDataTable,
-    state.handleDrag,
-    state.handleDrop,
-  ]);
+  const [type, deleteItem, changeDataTable, copyDataBillToItem, handleDrag, handleDrop] = useStore(
+    (state) => [
+      state.type,
+      state.deleteItem,
+      state.changeDataTable,
+      state.copyDataBillToItem,
+      state.handleDrag,
+      state.handleDrop,
+    ],
+  );
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -2947,7 +3145,29 @@ function VendorItemsTableEdit({ showHeader = true }) {
                         <BillItemNameContent item={item} />
                       </TableCell>
                     )}
-                    {!item?.data_bill ? null : <TableCell>После</TableCell>}
+                    {!item?.data_bill ? null : (
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <span>После</span>
+                          <Tooltip title="Скопировать без изменений">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              aria-label="Скопировать без изменений"
+                              onClick={() => copyDataBillToItem(item.id, key)}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                border: "1px solid",
+                                borderColor: "primary.main",
+                              }}
+                            >
+                              <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    )}
                     <TableCell className="ceil_white">
                       <MySelect
                         label=""
@@ -4951,9 +5171,10 @@ class Billing_Edit_ extends React.Component {
 
       formData.append("point_id", String(point.id));
       formData.append("debug", "0");
+      formData.append("use_gpt", "0");
       formData.append("use_lock", "1");
       formData.append("upload_to_cloud", "0");
-      formData.append("overwrite_cloud", "0");
+      formData.append("overwrite_cloud", "1");
 
       const response = await fetch(url_ocr, {
         method: "POST",
@@ -5118,6 +5339,7 @@ class Billing_Edit_ extends React.Component {
         preserveValues: true,
         nds,
         summ_nds: summNds,
+        ocr_notice: getOcrAutofillNotice(ocrItem),
       },
     );
 
@@ -5165,7 +5387,7 @@ class Billing_Edit_ extends React.Component {
     let skippedItems = 0;
 
     this.state.ocrResolveItems.forEach((item) => {
-      if (!item.selectedProduct) {
+      if (!item.selectedProduct || !hasOcrRequiredNumericFields(item.ocrItem)) {
         skippedItems += 1;
         return;
       }
@@ -5182,7 +5404,7 @@ class Billing_Edit_ extends React.Component {
     this.closeOcrResolveDialog();
 
     if (!addedItems) {
-      showAlert(false, "Для OCR-строк не выбраны товар и упаковка");
+      showAlert(false, "Для OCR-строк не выбраны товар, упаковка или не хватает числовых полей");
       return;
     }
 
@@ -5206,6 +5428,7 @@ class Billing_Edit_ extends React.Component {
     const invoice = getFirstOcrInvoice(parsedDocuments);
     const sellerData = getFirstOcrSellerData(parsedDocuments);
     const ocrItems = getMergedOcrItems(parsedDocuments);
+    const autoRepairCount = getOcrAutoRepairCount(parsedDocuments);
 
     let storeState = useStore.getState();
 
@@ -5308,6 +5531,7 @@ class Billing_Edit_ extends React.Component {
     });
 
     let addedItems = 0;
+    let skippedItems = 0;
     const unresolvedItems = [];
 
     ocrItems.forEach((ocrItem, index) => {
@@ -5315,6 +5539,11 @@ class Billing_Edit_ extends React.Component {
       const suggestedVendorItem =
         matchedVendorItem ?? findSuggestedVendorItem(vendorItems, ocrItem);
       const resolvedPackOption = getResolvedVendorPackOption(suggestedVendorItem, ocrItem);
+
+      if (!hasOcrRequiredNumericFields(ocrItem) || hasOcrMathIssues(ocrItem)) {
+        skippedItems += 1;
+        return;
+      }
 
       if (!matchedVendorItem || !resolvedPackOption) {
         console.warn("OCR item requires moderation", {
@@ -5331,8 +5560,13 @@ class Billing_Edit_ extends React.Component {
         return;
       }
 
-      if (this.addOcrItemToBill(ocrItem, matchedVendorItem, resolvedPackOption)) {
+      if (
+        isOcrItemReadyForAutofill(ocrItem) &&
+        this.addOcrItemToBill(ocrItem, matchedVendorItem, resolvedPackOption)
+      ) {
         addedItems += 1;
+      } else {
+        skippedItems += 1;
       }
     });
 
@@ -5353,13 +5587,17 @@ class Billing_Edit_ extends React.Component {
 
       return {
         status: true,
-        message: `OCR заполнил документ: добавлено ${addedItems} поз. Для ${unresolvedItems.length} поз. нужна ручная модерация.`,
+        message: `OCR заполнил документ: добавлено ${addedItems} поз. Для ${unresolvedItems.length} поз. нужна ручная модерация.${skippedItems ? ` Пропущено ${skippedItems} поз. без чисел или с ошибкой расчета.` : ""}${
+          autoRepairCount > 0 ? ` Система исправила числовые поля: ${autoRepairCount}.` : ""
+        }`,
       };
     }
 
     return {
       status: true,
-      message: `OCR заполнил документ: добавлено ${addedItems} поз.`,
+      message: `OCR заполнил документ: добавлено ${addedItems} поз.${skippedItems ? ` Пропущено ${skippedItems} поз. без чисел или с ошибкой расчета.` : ""}${
+        autoRepairCount > 0 ? ` Система исправила числовые поля: ${autoRepairCount}.` : ""
+      }`,
     };
   };
 
@@ -5671,16 +5909,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -5771,16 +6011,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -5854,22 +6096,28 @@ class Billing_Edit_ extends React.Component {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75,
+                          }}
                         >
                           Строка: {item.ocrItem?.line ?? index + 1}
                         </Typography>
                         {!normalizeOcrText(item.ocrItem?.__ocr_file_name) ? null : (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Файл: {item.ocrItem.__ocr_file_name}
                           </Typography>
                         )}
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
                           {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
@@ -5888,8 +6136,10 @@ class Billing_Edit_ extends React.Component {
                         {!item.resolveIssue ? null : (
                           <Typography
                             variant="body2"
-                            color="warning.main"
-                            sx={{ mt: 1 }}
+                            sx={{
+                              color: "warning.main",
+                              mt: 1,
+                            }}
                           >
                             {item.resolveIssue}
                           </Typography>

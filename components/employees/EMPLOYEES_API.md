@@ -1,0 +1,186 @@
+# Employees API contract
+
+Frontend module: `/employees`
+
+Laravel module: `employees`
+
+All requests use the existing `api_laravel(module, method, data)` wrapper and must return JSON. Mutation responses should return `{ "st": true, "text": "..." }` or `{ "st": false, "text": "..." }`.
+
+## Methods
+
+### Управление должностями и отделами в иерархии
+
+Методы доступны через модуль `employees` и требуют права `position_hierarchy`: просмотр для
+получения данных, редактирование для изменений.
+
+- `get_hierarchy` → `{ hierarchy: { units, appointments, tables_ready, can_edit } }`
+- `save_hierarchy`: `{ units, appointments }` → сохраняет дерево должностей и вложенность отделов
+- `get_position`: `{ position_id }` → `{ position, units, full_menu, history }`
+- `get_position_for_new` → шаблон `{ position, units, full_menu, history: [] }`
+- `save_position`: `{ position, full_menu }` → создаёт или обновляет должность; ответ
+  сохраняет `text`, `position_id` и добавляет фактически сохранённую `position`
+- `copy_position`: `{ position_id, name }`
+- `get_position_delete_info`: `{ position_id }` → `users[]`, которым назначена должность
+- `delete_position`: `{ position_id }`, только когда `users[]` пуст
+- `get_position_unit`: `{ unit_id }` → `{ unit, apps }`
+- `save_position_unit`: `{ unit: { id?, name, sort, apps[] } }`
+
+`position` использует поля `name`, `short_name`, `bonus`, `unit_id`, `is_graph`, `is_office`.
+`units[]` использует `id`, `level`, `sort`, `parent_unit_id`, `parent_group_key`. Пустые
+`parent_unit_id` и `parent_group_key` означают корневой отдел. Для вложенного отдела оба поля
+обязательны и указывают на существующую группу должностей родительского отдела.
+`appointments[]` использует `id`, `group_key`, `parent_group_key`, `group_sort`, `sort`,
+`is_office`. Отдельную должность нельзя переносить между отделами; под группу переносится
+отдел целиком.
+При сохранении `full_menu` содержит только технические поля: у модуля `modul_id`, `key_query`,
+`is_active`, у права — `id`, `is_active`, `access`, `view`, `edit`. Названия и метаданные меню
+обратно на сервер не отправляются.
+Поле `kind` не используется и не принимается: порядок подчинённости задаёт иерархия найма.
+`is_office` — свойство должности и не зависит от списка доступных кафе.
+Право `all_users_edit` («Управление всеми сотрудниками») на уровне `access` включает
+глобальный кадровый scope: сотрудник видит и может нанимать сотрудников любых должностей и кафе,
+а также полностью управляет собственной карточкой в пределах прав `edit` вкладок. `view` и `edit`
+самого `all_users_edit` не учитываются.
+После сохранения должности frontend повторно загружает `get_all`, `get_employees` и
+иерархию, чтобы сразу применить новые `apps`, `hireable_apps` и `viewer.is_super_position`.
+`history[]` содержит журнал создания, редактирования, копирования и удаления должности в формате
+`HistoryLog`: `id`, `created_at`, `actor_name`, `event_type`, `diff_json`, `meta_json`.
+Журнал учитывает основные поля, отдел, порядок, включённые модули и внутренние права доступа.
+
+### `get_all`
+
+Returns dictionaries, permissions, and optional initial stats.
+
+Expected fields:
+
+- `module_info.name`
+- `cities[]`: `{ id, name }`
+- `points[]`: `{ id, name, city_id }`
+- `apps[]`: варианты должностей для фильтра списка, ограниченные кадровым scope и дополненные
+  текущей должностью пользователя для фильтрации собственной строки.
+- `hireable_apps[]`: `{ id, name, auth_code_required, unit_id, unit_name, unit_sort, sort, is_office }`; только разрешённые должности для найма, без служебных вариантов фильтра.
+- `viewer`: `{ user_id, is_super_position }`
+- `cloth[]`: `{ id, name }`
+- `access` or `my`: `can_edit`, `can_create`, `can_manage_cloth`, `show_access`
+- optional `stat` / `experience`
+- optional `stat_of` / `employment`
+
+### `get_employees`
+
+Request:
+
+- `city_id`
+- `point_id`
+- `point_ids`
+- `app`
+- `app_id`
+- `app_ids[]`: выбранные должности; frontend группирует их по отделам, но сервер получает только ID
+- `search`
+- `page`
+- `rows`
+- `sort_by`: `fio | position | cafe | employment_date`, по умолчанию `position`
+- `sort_direction`: `asc | desc`, по умолчанию `asc`
+
+Returns:
+
+- `employees[]` or `users[]`
+- `total_rows` or `total`
+- `stat` / `experience`
+- `stat_of` / `employment`
+- `analytics` — агрегаты по полной выборке до пагинации:
+  - `headcount`, `hired_30`, `dismissed_30`
+  - `health`: `valid`, `expiring`, `blocked`
+  - `absences`: `today`, `upcoming_7`
+  - `clothing`: `missing`
+  - `cafes[]`: `name`, `headcount`, `official`, `hired_30`, `health_risk`, `health_blocked`, `absent_today`, `absence_upcoming_7`, `positions[]` с теми же полями
+  - для офиса `cafes[].units[]`: `id`, `name`, `positions[]` и те же агрегаты; отделы и должности сортируются по настройкам справочника и численности
+
+Агрегаты возвращаются только при праве `main_stats` уровня `access`. Сервер дополнительно
+ограничивает сотрудников и все агрегаты кадровым scope текущего пользователя. Для обычной
+должности это текущий пользователь и сотрудники должностей-потомков в сохранённой иерархии с
+учётом существующего доступа к кафе. Для супер-должности — все сотрудники. Собственная строка
+подчиняется тем же фильтрам, поиску, сортировке и пагинации. Параметры фильтра не могут
+расширить кадровый scope.
+Непустой `app_ids[]` имеет приоритет над одиночными `app`/`app_id`; пустой массив сохраняет
+режим по умолчанию «Все кроме уволенных».
+Фильтр «Все должности» отправляет `app: null`, `app_id: -2` и не показывает уволенных.
+Отдельный вариант «Уволенные» отправляет `app: { id: 0, name: "Уволенные" }`, `app_id: 0`
+и показывает только уволенных сотрудников; этот вариант взаимоисключающий с действующими
+должностями.
+
+Если отдел вложен под группу должностей, его корневые группы и все их потомки входят в
+кадровый scope каждой должности родительской группы. Должности внутри самой группы
+«Один уровень» не считаются подчинёнными друг другу. Сервер проверяет существование
+родительской группы и отклоняет циклы между отделами независимо от frontend.
+
+Employee row fields are the existing fields from `site_user_manager` and `experience`: `id`, `fam`, `name`, `otc`, `login`, `app_name`, `point`, `date_registration`, `exp`, `experience_total_months`, `acc_to_kas`, `status`, `type`, `img_name`, `img_update`, `photo`, `is_active`, `is_office`, `unit_name`, `unit_sort`, `app_sort`.
+
+`exp` сохраняет формат `Nг. Nм.`, но содержит суммарный активный стаж за все периоды работы без
+промежутков между увольнением и повторным приёмом. Для текущего уволенного сотрудника открытый
+период заканчивается последней валидной датой увольнения. `experience_total_months` содержит этот же стаж в полных месяцах и
+используется для статистических групп стажа.
+
+Статистические группы стажа включают уволенных сотрудников, когда они входят в текущую
+отфильтрованную выборку. Блок текущего трудоустройства (`stat_of` / `employment`) по-прежнему
+учитывает только работающих сотрудников.
+
+`is_office` относится к должности, а не к `point_id` или доступам в кафе. Значение `NULL` остаётся неклассифицированным до ручной настройки должности; доступы из `user_point_access` не изменяются.
+
+## Права
+
+Доступ к карточке задаётся на уровне вкладок через `access`: `basic_tab`, `work_tab`, `absences_tab`, `health_book_tab`, `clothing_tab`. Поля внутри вкладок не имеют отдельных прав. Отдельно остаются `add_employee`, `position_hierarchy` и `main_stats`.
+
+Права модуля и кадровый scope проверяются независимо. Право вкладки не позволяет получить
+или изменить сотрудника вне кадрового scope. `get_employee`, `get_history`, создание,
+изменение работы, фото, отсутствия, медкнижка и одежда повторно проверяют scope на сервере.
+Собственную карточку можно открыть; состав полей и вкладок определяется правами просмотра.
+Без `all_users_edit_access` вкладки «Основное», «Работа», фото и дата трудоустройства в
+собственной карточке доступны только для чтения; редактировать можно только отсутствия,
+медкнижку и одежду при наличии соответствующего права `edit`. С
+`all_users_edit_access = 1` собственная карточка редактируется полностью в пределах прав
+`edit` соответствующих вкладок. При найме и переводе сервер принимает только разрешённую
+должность; новые доступы к кафе должны находиться в доступном менеджеру наборе.
+
+Вкладка «Основное» содержит фото, ФИО, телефон, дату рождения, ИНН и код авторизации. Вкладка «Работа» содержит должность, дату трудоустройства, официальный статус, организацию, стаж и доступные кафе. При назначении должности «Уволен» сервер сбрасывает `acc_to_kas`.
+
+### `get_employee`
+
+Request:
+
+- `user_id`
+
+Returns a full employee card:
+
+- `user` — включает `exp` и `experience_total_months`, рассчитанные по тем же периодам работы, что и список
+- `appointment[]` — разрешённые варианты перевода плюс служебная должность увольнения
+- `point_list[]`
+- `health_book`
+- optional `health_items[]`
+- `cloth.active[]`
+- `cloth.non_active[]`
+- `history[]`
+- `activity_history[]`
+- `absence_history[]`
+
+`activity_history[]` дополнительно содержит изменения вкладки «Работа»:
+
+- `event_type: work_update`, `entity_type: work` — применённое изменение;
+- `event_type: work_update_scheduled`, `entity_type: work` — изменение с будущей датой;
+- `diff_json` — изменённые должность, точный список доступных кафе и официальный статус;
+- `meta_json.effective_date` — дата применения, `meta_json.scheduled` — признак отложенного изменения.
+
+### Mutations
+
+- `create_employee`: multipart when a photo is selected, otherwise JSON. Payload: `{ user, employee, health_items, cloth_items, absences }`; optional multipart `file` contains the employee photo
+- `save_basic`: `{ user_id, user, employee }`
+- `apply_work_change`: `{ user_id, app_id, point_id, point_access, point_access_ids, is_active, textDel, date_start_day, user }`
+- `save_date_registration`: `{ user_id, date_registration }`
+- `add_absence`: `{ user_id, typeVacation, type, vacationStart, vacationEnd, date_start, date_end, commentVacation, comment }`
+- `save_health_book`: `{ user_id, items, type_2_start, type_2_end, ... }`
+- `issue_cloth`: `{ user_id, cloth_id, item, date_start }`
+- `return_cloth`: `{ user_id, cloth_id, item_id, date_end }`
+- `get_cloth_list`: no required payload
+- `save_cloth_list`: `{ items }`
+- `delete_cloth_item`: `{ id, item }`
+
+After successful mutations, the frontend refreshes `get_employees` and, when a card is open, `get_employee`.

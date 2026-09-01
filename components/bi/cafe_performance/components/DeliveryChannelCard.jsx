@@ -52,9 +52,11 @@ export default function DeliveryChannelCard({
     >
       <Stack
         direction="row"
-        alignItems="center"
         spacing={CP_SPACE.compact}
-        sx={{ mb: CP_SPACE.compact }}
+        sx={{
+          alignItems: "center",
+          mb: CP_SPACE.compact,
+        }}
       >
         <Box
           sx={{
@@ -80,21 +82,24 @@ export default function DeliveryChannelCard({
           </Typography>
           <Typography
             variant="caption"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {formatPlural(count, ["заказ", "заказа", "заказов"])}
           </Typography>
         </Stack>
       </Stack>
-
       <Stack
         spacing={CP_SPACE.related}
         sx={{ mb: CP_SPACE.compact }}
       >
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
           <MetricLabel
             text="P50"
@@ -103,8 +108,10 @@ export default function DeliveryChannelCard({
           />
           <Stack
             direction="row"
-            alignItems="center"
             spacing={CP_SPACE.related}
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Typography
               variant="subtitle1"
@@ -117,8 +124,10 @@ export default function DeliveryChannelCard({
         </Stack>
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
+          sx={{
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
           <MetricLabel
             text="P90"
@@ -127,13 +136,14 @@ export default function DeliveryChannelCard({
           />
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {formatters.duration(p90)}
           </Typography>
         </Stack>
       </Stack>
-
       <Box sx={{ mt: "auto" }}>
         <SlaProgressBar
           value={sla}

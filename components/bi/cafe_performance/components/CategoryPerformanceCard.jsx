@@ -10,9 +10,11 @@ function MetricRow({ label, value, strong = false }) {
   return (
     <Stack
       direction="row"
-      alignItems="center"
-      justifyContent="space-between"
       spacing={CP_SPACE.related}
+      sx={{
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
     >
       <MetricLabel
         text={label}
@@ -74,8 +76,11 @@ export default function CategoryPerformanceCard({
       {sampleSize != null ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: compact ? CP_SPACE.related : CP_SPACE.compact }}
+          sx={{
+            color: "text.secondary",
+            display: "block",
+            mt: compact ? CP_SPACE.related : CP_SPACE.compact,
+          }}
         >
           {formatPlural(sampleSize, ["блюдо", "блюда", "блюд"])}
         </Typography>

@@ -250,25 +250,27 @@ class Billing_ extends React.Component {
 
   async componentDidMount() {
     const data = await this.getData("get_all");
+    const points = data.points ?? [];
 
     // console.log('componentDidMount data', data)
 
-    this.setState({
-      module_name: "Накладные",
-      points: data.points,
-      bill_list: bill_status,
-      billings: bill_status,
-      status: bill_status[0].id,
-      types: types,
-      acces: data.acces,
-      acces_bux_pay: parseInt(data.acces_bux_pay) == 1 ? true : false,
-    });
+    this.setState(
+      {
+        module_name: "Накладные",
+        points,
+        bill_list: bill_status,
+        billings: bill_status,
+        status: bill_status[0].id,
+        types: types,
+        acces: data.acces,
+        acces_bux_pay: parseInt(data.acces_bux_pay) == 1 ? true : false,
+      },
+      () => {
+        this.getLocalStorage(points);
+      },
+    );
 
     document.title = "Накладные";
-
-    setTimeout(() => {
-      this.getLocalStorage();
-    }, 300);
   }
 
   getData_old = (method, data = {}) => {
@@ -408,7 +410,15 @@ class Billing_ extends React.Component {
     localStorage.setItem("main_page_bill", JSON.stringify(data));
   }
 
-  async getLocalStorage() {
+  getAvailablePointSelection(point, points = this.state.points) {
+    const selectedPoints = Array.isArray(point) ? point : [];
+    const availablePoints = Array.isArray(points) ? points : [];
+    const selectedIds = new Set(selectedPoints.map((item) => parseInt(item?.id)));
+
+    return availablePoints.filter((item) => selectedIds.has(parseInt(item?.id)));
+  }
+
+  async getLocalStorage(points = this.state.points) {
     const res = JSON.parse(localStorage.getItem("main_page_bill"));
 
     if (res) {
@@ -416,15 +426,21 @@ class Billing_ extends React.Component {
 
       const date_start = dateStart ? dayjs(dateStart) : null;
       const date_end = dateEnd ? dayjs(dateEnd) : null;
+      const availablePoint = this.getAvailablePointSelection(point, points);
 
-      this.setState({
-        date_start,
-        date_end,
-        status,
-        type,
-        point,
-        number,
-      });
+      this.setState(
+        {
+          date_start,
+          date_end,
+          status,
+          type,
+          point: availablePoint,
+          number,
+        },
+        () => {
+          this.setLocalStorage();
+        },
+      );
 
       if (type && type.length) {
         const data = {
@@ -893,11 +909,13 @@ class Billing_ extends React.Component {
           onClose={() => {
             this.setState({ modelCheckPay: false });
           }}
-          PaperProps={{
-            sx: {
-              width: "100%",
-              maxWidth: 520,
-              borderRadius: "16px",
+          slotProps={{
+            paper: {
+              sx: {
+                width: "100%",
+                maxWidth: 520,
+                borderRadius: "16px",
+              },
             },
           }}
         >
@@ -965,8 +983,10 @@ class Billing_ extends React.Component {
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              justifyContent={{ xs: "stretch", md: "flex-end" }}
-              sx={{ width: { xs: "100%", md: "auto" } }}
+              sx={{
+                justifyContent: { xs: "stretch", md: "flex-end" },
+                width: { xs: "100%", md: "auto" },
+              }}
             >
               <Button
                 component={Link}
@@ -1042,7 +1062,9 @@ class Billing_ extends React.Component {
               <Grid
                 container
                 spacing={2}
-                alignItems="flex-end"
+                sx={{
+                  alignItems: "flex-end",
+                }}
               >
                 <Grid
                   size={{
@@ -1207,9 +1229,11 @@ class Billing_ extends React.Component {
                     <Stack
                       direction={{ xs: "column", md: "row" }}
                       spacing={1}
-                      alignItems={{ xs: "flex-start", md: "center" }}
-                      justifyContent="space-between"
-                      sx={{ mb: 0.5 }}
+                      sx={{
+                        alignItems: { xs: "flex-start", md: "center" },
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
                     >
                       <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#1f2937" }}>
                         Короткая сводка
@@ -1260,8 +1284,10 @@ class Billing_ extends React.Component {
                             <Stack
                               direction="row"
                               spacing={1}
-                              alignItems="center"
-                              sx={{ minWidth: 0 }}
+                              sx={{
+                                alignItems: "center",
+                                minWidth: 0,
+                              }}
                             >
                               <Box
                                 sx={{
@@ -1341,8 +1367,10 @@ class Billing_ extends React.Component {
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   spacing={1.25}
-                  alignItems={{ xs: "flex-start", md: "center" }}
-                  justifyContent="space-between"
+                  sx={{
+                    alignItems: { xs: "flex-start", md: "center" },
+                    justifyContent: "space-between",
+                  }}
                 >
                   <Box>
                     <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#1f2937" }}>
@@ -1353,8 +1381,10 @@ class Billing_ extends React.Component {
                   <Stack
                     direction="row"
                     spacing={1}
-                    flexWrap="wrap"
                     useFlexGap
+                    sx={{
+                      flexWrap: "wrap",
+                    }}
                   >
                     <Box sx={headerMetricSx}>
                       Всего: {new Intl.NumberFormat("ru-RU").format(this.state.bills.length)}
@@ -1441,7 +1471,9 @@ class Billing_ extends React.Component {
                             <Stack
                               direction="row"
                               spacing={1}
-                              alignItems="center"
+                              sx={{
+                                alignItems: "center",
+                              }}
                             >
                               <Tooltip title={getBillingStatusName(item.status)}>
                                 <Box

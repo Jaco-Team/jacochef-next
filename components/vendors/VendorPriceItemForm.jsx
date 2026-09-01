@@ -8,6 +8,7 @@ export default function VendorPriceItemForm({
   canEdit,
   cityLabel,
   hideTitle = false,
+  hideActions = false,
   draft,
   onCancel,
   onSave,
@@ -36,11 +37,12 @@ export default function VendorPriceItemForm({
           Редактирование цены {cityLabel ? ` · ${cityLabel}` : ""}
         </Typography>
       )}
-
       <Grid
         container
         spacing={2}
-        alignItems="flex-end"
+        sx={{
+          alignItems: "flex-end",
+        }}
       >
         <Grid size={{ xs: 12, md: 4 }}>
           <MyTextInput
@@ -64,7 +66,9 @@ export default function VendorPriceItemForm({
           <Stack spacing={0.5}>
             <Typography
               variant="caption"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Цена за 1 ед.
             </Typography>
@@ -72,17 +76,20 @@ export default function VendorPriceItemForm({
           </Stack>
         </Grid>
       </Grid>
-
-      {canEdit ? (
+      {canEdit && !hideActions ? (
         <Stack
-          direction="row"
+          direction={{ xs: "column-reverse", sm: "row" }}
           spacing={1}
-          justifyContent="flex-end"
-          sx={{ mt: 2 }}
+          sx={{
+            justifyContent: "flex-end",
+            mt: 2,
+          }}
         >
           <Button
             onClick={onCancel}
             disabled={isLoading}
+            fullWidth
+            sx={{ width: { sm: "auto" } }}
           >
             Отмена
           </Button>
@@ -90,6 +97,8 @@ export default function VendorPriceItemForm({
             variant="contained"
             onClick={onSave}
             disabled={isLoading}
+            fullWidth
+            sx={{ width: { sm: "auto" } }}
           >
             Сохранить
           </Button>

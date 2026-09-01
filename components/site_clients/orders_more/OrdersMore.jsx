@@ -25,8 +25,17 @@ import { Close } from "@mui/icons-material";
 
 const LS_KEY_OM = "site_clients_orders_more";
 
-export default function OrdersMore({ getData, showAlert, canAccess }) {
-  const { points, all_items, keepParams } = useSiteClientsStore();
+export default function OrdersMore({
+  getData,
+  showAlert,
+  canAccess,
+  moduleData,
+  keepParams: keepParamsProp,
+}) {
+  const store = useSiteClientsStore();
+  const points = moduleData?.points ?? store.points;
+  const all_items = moduleData?.all_items ?? store.all_items;
+  const keepParams = keepParamsProp ?? store.keepParams;
   // const { access, update } = useSiteClientsStore();
 
   const [orders, setOrders] = useState([]);
@@ -541,12 +550,13 @@ export default function OrdersMore({ getData, showAlert, canAccess }) {
           </Grid>
         </Grid>
       </Grid>
-
       {!orders.length ? null : (
         <>
           <Grid
             container
-            justifyContent="center"
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{

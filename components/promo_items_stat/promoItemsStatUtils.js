@@ -18,6 +18,7 @@ export function getDefaultPromoItemsStatState() {
     stats: [],
     promoTable: [],
     promoTableTotals: {},
+    promoTableGroups: [],
     promoTablePagination: {
       page: 0,
       perpage: 50,
@@ -35,6 +36,9 @@ export function getDefaultPromoItemsStatState() {
     selectedClientSources: [],
     activationsRange: { min: null, max: null },
     activationsFilter: { from: null, to: null },
+    orderSumAfterDiscountFilter: { from: null, to: null },
+    promoItemDetails: {},
+    promoItemDetailsLoading: {},
   };
 }
 
@@ -105,6 +109,36 @@ export function buildPromoItemsStatPayload(filters, options = {}) {
     payload.activations = {
       ...(payload.activations || {}),
       to: activationToValue,
+    };
+  }
+
+  const orderSumFrom = filters.orderSumAfterDiscountFilter?.from;
+  const orderSumTo = filters.orderSumAfterDiscountFilter?.to;
+
+  const orderSumFromValue = Number(orderSumFrom);
+  const orderSumToValue = Number(orderSumTo);
+
+  if (
+    orderSumFrom !== undefined &&
+    orderSumFrom !== null &&
+    orderSumFrom !== "" &&
+    Number.isFinite(orderSumFromValue)
+  ) {
+    payload.sum_after_discount = {
+      ...(payload.sum_after_discount || {}),
+      from: orderSumFromValue,
+    };
+  }
+
+  if (
+    orderSumTo !== undefined &&
+    orderSumTo !== null &&
+    orderSumTo !== "" &&
+    Number.isFinite(orderSumToValue)
+  ) {
+    payload.sum_after_discount = {
+      ...(payload.sum_after_discount || {}),
+      to: orderSumToValue,
     };
   }
 

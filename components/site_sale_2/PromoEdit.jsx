@@ -188,7 +188,7 @@ export class PromoEdit extends React.Component {
       ],
       where_order_list: [
         { id: 1, name: "В городе" },
-        { id: 2, name: "На точке" },
+        { id: 2, name: "В кафе" },
       ],
 
       auto_text: false,
@@ -508,9 +508,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="start"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "start",
+                }}
               >
                 <Grid
                   size={{
@@ -524,9 +526,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="start"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "start",
+                }}
               >
                 <Grid
                   size={{
@@ -567,9 +571,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="column"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("for_new")}
@@ -651,9 +657,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("promo_action")}
@@ -675,9 +683,11 @@ export class PromoEdit extends React.Component {
                 <Grid
                   container
                   direction="row"
-                  justifyContent="center"
                   style={{ paddingTop: 20 }}
                   spacing={3}
+                  sx={{
+                    justifyContent: "center",
+                  }}
                 >
                   <Grid
                     className={this.diffUndo("type_sale")}
@@ -780,9 +790,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("promo_conditions")}
@@ -855,9 +867,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("date_promo")}
@@ -878,9 +892,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("date_start")}
@@ -941,9 +957,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("testDate")}
@@ -964,9 +982,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ marginTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <MyCheckBox
                   value={this.state.day_1}
@@ -1016,9 +1036,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("type_order")}
@@ -1076,7 +1098,7 @@ export class PromoEdit extends React.Component {
                       data={this.state.points}
                       disabled={true}
                       value={this.state.point}
-                      label="Точка"
+                      label="Кафе"
                     />
                   </Grid>
                 )}
@@ -1087,9 +1109,11 @@ export class PromoEdit extends React.Component {
               <Grid
                 container
                 direction="row"
-                justifyContent="center"
                 style={{ paddingTop: 20 }}
                 spacing={3}
+                sx={{
+                  justifyContent: "center",
+                }}
               >
                 <Grid
                   className={this.diffUndo("auto_text")}

@@ -111,8 +111,7 @@ class Appointment_ extends React.Component {
     try {
       const response = await api_laravel(this.state.module, method, data);
       if (!response) throw new Error("Server error");
-      const res = response?.data;
-      return res;
+      return response;
     } catch (e) {
       this.setState({
         openAlert: true,
@@ -178,7 +177,7 @@ class Appointment_ extends React.Component {
       this.setState({
         openAlert: true,
         err_status: res?.st,
-        err_text: res.text || "Ошибка сервера",
+        err_text: res?.text || "Ошибка сервера",
       });
       return;
     }

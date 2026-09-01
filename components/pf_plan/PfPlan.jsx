@@ -311,14 +311,17 @@ export default function PfPlan() {
                             <ShowChart fontSize="inherit" />
                           </IconButton>
                         </TableCell>
-
                         {weekDays.map((date) => {
                           const fv = f.daily[date] ?? 0;
                           const av = a?.daily?.[date];
 
                           return (
                             <TableCell key={date}>
-                              <Stack alignItems={"center"}>
+                              <Stack
+                                sx={{
+                                  alignItems: "center",
+                                }}
+                              >
                                 <span style={{ fontWeight: 500 }}>{formatNumber(fv, 0, 2)}</span>
                                 {av !== undefined && (
                                   <span style={{ color: "#8a8a8a", marginLeft: 4 }}>
@@ -329,7 +332,6 @@ export default function PfPlan() {
                             </TableCell>
                           );
                         })}
-
                         <TableCell>
                           {formatNumber(f.weekly_total, 0, 2)}
                           {a?.weekly_total !== undefined && (
