@@ -141,24 +141,21 @@ export function normalizeSiteItemSavePayload(draft) {
     (Array.isArray(rows) ? rows : [])
       .filter((item) => String(item?.type ?? "") === type)
       .map((item) => ({
-        ...(type === "pf"
-          ? {
-              pf_id: item?.pf_id
-                ? Number(item.pf_id)
+        [type === "pf" ? "pf_id" : type === "rec" ? "rec_id" : "warehouse_item_id"]:
+          type === "pf" && item?.pf_id
+            ? Number(item.pf_id)
+            : type === "rec" && item?.rec_id
+              ? Number(item.rec_id)
+              : type === "item" && item?.warehouse_item_id
+                ? Number(item.warehouse_item_id)
                 : Number(String(item?.selected_id || "").split("-")[0] || 0),
-            }
-          : {
-              rec_id: item?.rec_id
-                ? Number(item.rec_id)
-                : Number(String(item?.selected_id || "").split("-")[0] || 0),
-            }),
         brutto: item?.brutto ?? "",
         pr_1: item?.pr_1 ?? "",
         netto: item?.netto ?? "",
         pr_2: item?.pr_2 ?? "",
         res: item?.res ?? "",
       }))
-      .filter((item) => Number(item?.pf_id ?? item?.rec_id ?? 0) > 0);
+      .filter((item) => Number(item?.pf_id ?? item?.rec_id ?? item?.warehouse_item_id ?? 0) > 0);
 
   return {
     id: draft?.id ?? null,
@@ -209,6 +206,9 @@ export function normalizeSiteItemSavePayload(draft) {
     rec_stage_1: toStagePayload(stageRows?.stage_1, "rec"),
     rec_stage_2: toStagePayload(stageRows?.stage_2, "rec"),
     rec_stage_3: toStagePayload(stageRows?.stage_3, "rec"),
+    item_stage_1: toStagePayload(stageRows?.stage_1, "item"),
+    item_stage_2: toStagePayload(stageRows?.stage_2, "item"),
+    item_stage_3: toStagePayload(stageRows?.stage_3, "item"),
     composition_source:
       draft?.composition_source || createEmptySiteItemRelations().composition_source,
     composition_derived:

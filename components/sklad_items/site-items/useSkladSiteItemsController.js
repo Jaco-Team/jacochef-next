@@ -30,7 +30,12 @@ function prepareLegacyDetail(response, fallbackCategories = [], fallbackTags = [
   );
   const normalizeStageRows = (rows = []) =>
     rows.map((item) => {
-      const itemId = item?.type === "rec" ? item?.rec_id : item?.pf_id;
+      const itemId =
+        item?.type === "rec"
+          ? item?.rec_id
+          : item?.type === "item"
+            ? item?.warehouse_item_id
+            : item?.pf_id;
       const option = stageOptions.get(`${item?.type}:${itemId}`);
 
       return {
@@ -84,7 +89,7 @@ function legacySavePayload(draft) {
       .filter((row) => row?.type === type)
       .map((row) => ({
         ...row,
-        [type === "pf" ? "pf_id" : "rec_id"]:
+        [type === "pf" ? "pf_id" : type === "rec" ? "rec_id" : "warehouse_item_id"]:
           typeof row?.type_id === "object" ? Number(row.type_id?.id) : Number(row?.type_id),
       }));
 
@@ -103,6 +108,9 @@ function legacySavePayload(draft) {
     rec_stage_1: stageRows("stage_1", "rec"),
     rec_stage_2: stageRows("stage_2", "rec"),
     rec_stage_3: stageRows("stage_3", "rec"),
+    item_stage_1: stageRows("stage_1", "item"),
+    item_stage_2: stageRows("stage_2", "item"),
+    item_stage_3: stageRows("stage_3", "item"),
   };
 }
 
