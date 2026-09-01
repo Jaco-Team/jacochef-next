@@ -4,26 +4,47 @@ const { FULL_ACCESS, installSkladMock } = require("./support/skladMock");
 const SITE_ITEM_MODAL_ACCESS = {
   ...FULL_ACCESS,
   date_start_edit: 0,
+  site_items_date_start_edit: 0,
   date_end_view: 0,
   date_end_edit: 0,
+  site_items_date_end_view: 0,
+  site_items_date_end_edit: 0,
   short_name_view: 0,
   short_name_edit: 0,
+  site_items_short_name_view: 0,
+  site_items_short_name_edit: 0,
   art_view: 0,
   art_edit: 0,
+  site_items_art_view: 0,
+  site_items_art_edit: 0,
   category_id_view: 0,
   category_id_edit: 0,
+  site_items_category_id_view: 0,
+  site_items_category_id_edit: 0,
   stol_view: 0,
   stol_edit: 0,
+  site_items_stol_view: 0,
+  site_items_stol_edit: 0,
   marc_view: 0,
   marc_edit: 0,
+  site_items_marc_view: 0,
+  site_items_marc_edit: 0,
   portion_view: 0,
   portion_edit: 0,
+  site_items_portion_view: 0,
+  site_items_portion_edit: 0,
   bju_view: 0,
   bju_edit: 0,
+  site_items_bju_view: 0,
+  site_items_bju_edit: 0,
   description_view: 0,
   description_edit: 0,
+  site_items_description_view: 0,
+  site_items_description_edit: 0,
   composition_view: 0,
   composition_edit: 0,
+  site_items_composition_view: 0,
+  site_items_composition_edit: 0,
 };
 
 const SITE_ITEM_READ_ONLY_ACCESS = {
@@ -40,7 +61,7 @@ test("полный доступ: все разделы открываются, V
   await page.goto("/sklad_items");
   await expect(page.getByRole("heading", { name: "Склад" })).toBeVisible();
 
-  const tabs = ["Рецепты и полуфабрикаты", "Товары сайта", "Единицы измерения", "Архив"];
+  const tabs = ["Рецепты и полуфабрикаты", "Товары сайта", "Единицы измерения"];
   for (const [index, tab] of tabs.entries()) {
     await expect(page.getByRole("tab", { name: tab })).toBeVisible();
     await page.getByRole("tab", { name: tab }).click();
@@ -56,6 +77,8 @@ test("полный доступ: все разделы открываются, V
       fullPage: true,
     });
   }
+
+  await expect(page.getByRole("tab", { name: "Архив" })).toHaveCount(0);
 
   await expect(page.getByText("Синхронизировать VK")).toHaveCount(0);
   expect(state.requests.some((request) => request.method.includes("sync_vk"))).toBeFalsy();
@@ -159,8 +182,15 @@ test("товары сайта: фильтр, создание и редакти�
   await page.getByRole("button", { name: "Новый товар", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Новый товар сайта" })).toBeVisible();
   await page.getByRole("textbox", { name: "Наименование" }).fill("E2E_SKLAD_Новый товар сайта");
+  const siteStartsAt = page.getByRole("group", { name: "С" });
+  await siteStartsAt.getByRole("spinbutton", { name: "Year" }).fill("2026");
+  await siteStartsAt.getByRole("spinbutton", { name: "Month" }).fill("09");
+  await siteStartsAt.getByRole("spinbutton", { name: "Day" }).fill("01");
+  await page.getByRole("combobox", { name: "Старая категория" }).click();
+  await page.getByRole("option", { name: "E2E_SKLAD_Старая категория" }).click();
+  await page.getByRole("combobox", { name: "Новая категория" }).click();
+  await page.getByRole("option", { name: "E2E_SKLAD_Салаты и закуски" }).click();
   await page.getByRole("button", { name: "Создать товар" }).click();
-  await page.getByRole("button", { name: "Развернуть все" }).click();
   await expect(
     page.locator('[data-testid="site-item-300"]:visible').getByText(/E2E_SKLAD_Новый товар сайта/),
   ).toBeVisible();
@@ -172,7 +202,7 @@ test("товары сайта: фильтр, создание и редакти�
   await expect(
     page.getByRole("heading", { name: /Редактирование: E2E_SKLAD_Новый товар сайта/ }),
   ).toBeVisible();
-  await page.locator("button:visible", { hasText: "Теги" }).click();
+  await page.locator("button:visible", { hasText: "Теги" }).last().click();
   for (const label of ["Хит", "Обновлено", "Острый"]) {
     const flag = page.getByRole("checkbox", { name: new RegExp(label) });
     await flag.click();
@@ -199,6 +229,33 @@ test("товары сайта: фильтр, создание и редакти�
     is_spicy: 1,
     is_price: 1,
   });
+});
+
+test("товары сайта: редактор тегов переименовывает тег с отдельным правом", async ({ page }) => {
+  const state = await installSkladMock(page, { access: SITE_ITEM_MODAL_ACCESS });
+  await page.goto("/sklad_items");
+  await page.getByRole("tab", { name: "Товары сайта" }).click();
+
+  await page.getByRole("button", { name: "Редактировать теги" }).click();
+  const dialog = page.getByRole("dialog", { name: "Редактирование тегов" });
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole("combobox", { name: "Тег" }).click();
+  await page.getByRole("option", { name: "E2E_SKLAD_Тег", exact: true }).click();
+  await dialog.getByRole("textbox", { name: "Новое название" }).fill("E2E_SKLAD_Новый тег");
+  await dialog.getByRole("button", { name: "Сохранить" }).click();
+
+  await expect
+    .poll(() =>
+      state.requests.some(
+        (request) =>
+          request.method === "site-items/tags/save_edit" &&
+          request.data?.tag_id === 20 &&
+          request.data?.name === "E2E_SKLAD_Новый тег",
+      ),
+    )
+    .toBeTruthy();
+  await expect(dialog).toHaveCount(0);
 });
 
 test("товары сайта: изображение показывается локально и загружается только после сохранения", async ({
@@ -392,6 +449,50 @@ test("матрица прав: редактор без create/delete может 
   const row = page.getByRole("row", { name: /Грамм/ });
   await expect(row.locator("button").first()).toBeEnabled();
   await expect(row.locator("button")).toHaveCount(1);
+});
+
+test("матрица прав: архивирование наследует редактирование активности", async ({ page }) => {
+  await installSkladMock(page, {
+    access: {
+      production_view: 1,
+      production_edit: 1,
+      production_name_view: 1,
+      production_name_edit: 1,
+      production_date_start_view: 1,
+      production_date_start_edit: 0,
+      production_activity_view: 1,
+      production_activity_edit: 0,
+    },
+  });
+
+  await page.goto("/sklad_items");
+  const row = page.getByRole("row", { name: /E2E_SKLAD_Очень длинное название рецепта/ });
+  await expect(row.getByRole("button", { name: "Архивировать" })).toHaveCount(0);
+  await row.getByRole("button", { name: "Редактировать" }).click();
+
+  await expect(page.getByRole("textbox", { name: "Название" })).toBeEnabled();
+  await expect(
+    page.getByRole("group", { name: "Действует с" }).locator("input").first(),
+  ).toBeDisabled();
+});
+
+test("матрица прав: создание товара показывает обязательные поля без прав на остальные", async ({
+  page,
+}) => {
+  await installSkladMock(page, {
+    access: { site_items_view: 1, site_items_create: 1 },
+  });
+
+  await page.goto("/sklad_items");
+  await page.getByRole("tab", { name: "Товары сайта" }).click();
+  await page.getByRole("button", { name: "Новый товар", exact: true }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("textbox", { name: "Наименование" })).toBeEnabled();
+  await expect(dialog.getByRole("group", { name: "С" })).toBeVisible();
+  await expect(dialog.getByRole("combobox", { name: "Старая категория" })).toBeVisible();
+  await expect(dialog.getByRole("combobox", { name: "Новая категория" })).toBeVisible();
+  await expect(dialog.getByText("БЖУ", { exact: true })).toHaveCount(0);
 });
 
 test("единицы измерения: создание, редактирование и безопасное удаление", async ({ page }) => {

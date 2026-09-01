@@ -4,11 +4,13 @@ const FULL_ACCESS = {
   production_create: 1,
   production_delete: 1,
   production_past_date: 1,
+  production_convert: 1,
   site_items_view: 1,
   site_items_edit: 1,
   site_items_create: 1,
   site_items_delete: 1,
   site_items_past_date: 1,
+  site_items_sync_vk: 1,
   kassa_view: 1,
   kassa_edit: 1,
   site_kc_view: 1,
@@ -53,6 +55,55 @@ const FULL_ACCESS = {
   archive_view: 1,
   archive_edit: 1,
   history_view: 1,
+  ...Object.fromEntries(
+    [
+      "name",
+      "shelf_life",
+      "unit",
+      "activity",
+      "two_user",
+      "show_in_rev",
+      "date_start",
+      "date_end",
+      "time",
+      "dop_time",
+      "apps",
+      "storages",
+      "items",
+      "allergens",
+      "allergens_diff",
+      "structure",
+      "categories",
+    ].flatMap((field) => [
+      [`production_${field}_view`, 1],
+      [`production_${field}_edit`, 1],
+    ]),
+  ),
+  ...Object.fromEntries(
+    [
+      "kassa",
+      "site_kc",
+      "sort",
+      "name",
+      "date_start",
+      "date_end",
+      "short_name",
+      "art",
+      "category_id",
+      "stol",
+      "marc",
+      "dropzone",
+      "portion",
+      "bju",
+      "description",
+      "tags",
+      "activity",
+      "composition",
+    ].flatMap((field) => [
+      [`site_items_${field}_view`, 1],
+      [`site_items_${field}_edit`, 1],
+    ]),
+  ),
 };
 
 function unit(id, name, overrides = {}) {
@@ -564,6 +615,14 @@ async function installSkladMock(page, options = {}) {
         };
       }
       return respond({ st: true, text: "Успешно сохранено", id: data.id });
+    }
+
+    if (method === "site-items/tags/save_edit") {
+      return respond({
+        st: true,
+        text: "Тег обновлен",
+        tags_all: [{ id: Number(data.tag_id), name: data.name }],
+      });
     }
 
     if (method === "entities/archive") {

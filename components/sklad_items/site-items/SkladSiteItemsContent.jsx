@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
+
 import { Stack, useMediaQuery, useTheme } from "@mui/material";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemsHistoryDialog from "./SkladSiteItemsHistoryDialog";
 import SkladSiteItemsCatalog from "./SkladSiteItemsCatalog";
 import { SkladSiteItemsLegacyEditorDialog } from "./SkladSiteItemsLegacyEditorDialog";
+import SkladSiteItemsTagsDialog from "./SkladSiteItemsTagsDialog";
 
 export default function SkladSiteItemsContent({
   search,
@@ -21,6 +24,7 @@ export default function SkladSiteItemsContent({
   archiveDialog,
   isEditable,
   canCreate,
+  canManageTags,
   canArchiveAction,
   canDeleteAction,
   canEditActivity,
@@ -50,6 +54,7 @@ export default function SkladSiteItemsContent({
 }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
   const showHistory = modal.open && modal.section === "history";
   const legacyItem = detail?.item ? { ...detail.item, tags_all: detail?.tags_all || tags } : null;
 
@@ -75,6 +80,7 @@ export default function SkladSiteItemsContent({
         categories={categories}
         isEditable={isEditable}
         canCreate={canCreate}
+        canManageTags={canManageTags}
         canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
         canEditActivity={canEditActivity}
@@ -83,14 +89,24 @@ export default function SkladSiteItemsContent({
         canViewHistory={canViewHistory}
         setState={setState}
         openCreate={openCreate}
+        openTagsEditor={() => setTagsDialogOpen(true)}
         openEdit={openEdit}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}
         onSaveQuickField={onSaveQuickField}
       />
 
+      <SkladSiteItemsTagsDialog
+        open={tagsDialogOpen}
+        tags={tags}
+        onClose={() => setTagsDialogOpen(false)}
+        onSubmit={handleRenameTag}
+        showAlert={showAlert}
+      />
+
       <SkladSiteItemsLegacyEditorDialog
         open={modal.open && !showHistory && !modal.loading && Boolean(legacyItem)}
+        mode={modal.mode}
         method={
           modal.mode === "create"
             ? "Новое блюдо"

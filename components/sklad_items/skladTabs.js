@@ -17,12 +17,6 @@ export const SKLAD_TAB_DEFINITIONS = [
     accessGroup: "units",
     description: "Справочник единиц измерения и их базовые CRUD-операции.",
   },
-  {
-    key: "archive",
-    label: "Архив",
-    accessGroup: "archive",
-    description: "Archive contour для поддерживаемых entity types.",
-  },
 ];
 
 export function getVisibleSkladTabs({ access = {} } = {}) {

@@ -270,14 +270,17 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
   }
 
   getFieldAccess(field, type = "edit") {
-    if (type === "view") {
-      return canViewAccess(this.props.acces, field, false);
-    }
-
-    return canEditAccess(this.props.acces, field, false);
+    return this.getFieldAccessOrDefault(field, type, false);
   }
 
   getFieldAccessOrDefault(field, type = "edit", fallback = false) {
+    if (
+      this.props.mode === "create" &&
+      ["name", "date_start", "date_end", "category_id"].includes(field)
+    ) {
+      return true;
+    }
+
     if (type === "view") {
       return canViewAccess(this.props.acces, field, fallback);
     }
@@ -286,7 +289,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
   }
 
   getFieldVisibilityOrDefault(field, fallback = false) {
-    return canViewAccess(this.props.acces, field, fallback);
+    return this.getFieldAccessOrDefault(field, "view", fallback);
   }
 
   getNormalizedAccess() {
@@ -301,6 +304,13 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
       acc[`${field}_view`] = canViewAccess(rawAccess, field, false);
       acc[`${field}_edit`] = canEditAccess(rawAccess, field, false);
     });
+
+    if (this.props.mode === "create") {
+      ["name", "date_start", "date_end", "category_id"].forEach((field) => {
+        acc[`${field}_view`] = true;
+        acc[`${field}_edit`] = true;
+      });
+    }
 
     return acc;
   }

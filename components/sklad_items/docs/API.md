@@ -18,7 +18,10 @@
 - legacy route names и migration notes сюда не входят
 - `get_all.access` возвращается как compact FE access contract из фиксированного набора ключей в `ACCESS.md`
 - `get_all.access` может содержать ключи со значением `0`; отсутствие permission не означает отсутствие ключа
-- middleware/runtime suffixes (`_view`, `_edit`, `_access`) и legacy field-level keys не являются FE contract
+- field-level contract использует scoped runtime-ключи `production_<field>_view/edit` и `site_items_<field>_view/edit`
+- backend временно возвращает legacy aliases для старого редактора товаров сайта; новый production UI не должен читать unscoped `name/date_start/date_end/items`
+- недоступные для просмотра поля сохраняют ключ в payload, но получают `null` или пустую коллекцию; это же правило действует для history snapshots и compare
+- запрещённые для редактирования поля backend игнорирует даже при прямом API-запросе; при замене будущей версии база снимка определяется её `revision_key`
 - для `recipe`, `semi_finished`, `site_item` archive реализован через toggle `is_show` + history snapshot
 - для `warehouse_item`, `unit`, `category` archive не поддержан
 - `history/*` работает по canonical snapshot, а не по raw legacy row
@@ -1763,6 +1766,7 @@ Rules:
 
 - FE should use the exact compact keys from `ACCESS.md`
 - backend mutation services receive an internal compatibility map built from compact permissions
+- `archive_view`, `archive_edit` и `history_view` сохранены в payload только для совместимости; UI определяет историю по view раздела, а архивирование — по edit его активности
 
 ## 13. Validation Rules
 

@@ -7,6 +7,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import {
@@ -89,6 +90,7 @@ export default function SkladSiteItemsCatalog({
   categories,
   isEditable,
   canCreate,
+  canManageTags,
   canDeleteAction,
   canEditActivity,
   canEditCash,
@@ -96,6 +98,7 @@ export default function SkladSiteItemsCatalog({
   canViewHistory,
   setState,
   openCreate,
+  openTagsEditor,
   openEdit,
   openDeleteDialog,
   onSaveQuickField,
@@ -207,15 +210,31 @@ export default function SkladSiteItemsCatalog({
               Каталог, сгруппированный по категориям
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            disabled={!canCreate}
-            onClick={openCreate}
-            sx={{ alignSelf: { xs: "stretch", lg: "center" }, whiteSpace: "nowrap" }}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
           >
-            Новый товар
-          </Button>
+            {canCreate ? (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openCreate}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Новый товар
+              </Button>
+            ) : null}
+            {canManageTags ? (
+              <Button
+                variant="outlined"
+                startIcon={<LocalOfferOutlinedIcon />}
+                onClick={openTagsEditor}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Редактировать теги
+              </Button>
+            ) : null}
+          </Stack>
         </Stack>
       </Paper>
       <Box

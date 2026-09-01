@@ -26,7 +26,6 @@ import SkladProductionTab from "./production/SkladProductionTab";
 import SkladSiteItemsTab from "./site-items/SkladSiteItemsTab";
 import { getVisibleSkladTabs } from "./skladTabs";
 import { useSkladStore } from "./useSkladStore";
-import SkladArchiveTab from "./archive/SkladArchiveTab";
 
 function normalizeBootstrap(response) {
   return {
@@ -133,15 +132,6 @@ export default function SkladPage() {
     if (item.key === "site-items") {
       return (
         <SkladSiteItemsTab
-          showAlert={showAlert}
-          refreshToken={refreshToken}
-        />
-      );
-    }
-
-    if (item.key === "archive") {
-      return (
-        <SkladArchiveTab
           showAlert={showAlert}
           refreshToken={refreshToken}
         />

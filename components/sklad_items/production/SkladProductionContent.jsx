@@ -65,10 +65,12 @@ export default function SkladProductionContent({
   shellAllergens,
   shellStorages,
   shellApps,
+  access,
   canArchiveAction,
   canDeleteAction,
   canCreateProduction,
   canManageProduction,
+  canConvertProduction,
   canViewHistory,
   canCreateCategory,
   allowPastDate,
@@ -346,7 +348,7 @@ export default function SkladProductionContent({
                             </Tooltip>
                           ) : null}
 
-                          {canManageProduction ? (
+                          {canConvertProduction ? (
                             <Tooltip
                               title={
                                 Number(row?.is_archived) === 1
@@ -476,6 +478,7 @@ export default function SkladProductionContent({
         storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
         apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
         allItemsList={detail?.all_items_list || draft?.all_items_list || []}
+        access={access}
         isEditable={modal.mode === "create" ? canCreateProduction : canManageProduction}
         canViewHistory={canViewHistory}
         canCreateCategory={canCreateCategory}

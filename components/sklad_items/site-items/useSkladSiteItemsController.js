@@ -110,12 +110,12 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
   const {
     access,
-    canArchive,
+    canArchiveSiteItems,
     canDelete,
     canCreateSiteItem,
     canManageSiteItems,
     canUseSiteItemPastDate,
-    canViewHistory,
+    canViewSiteItemsHistory,
   } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
@@ -150,6 +150,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const canEditCash =
     hasAccessValue(access?.kassa_edit) || canEditAccess(access, "show_program", false);
   const canEditSort = canEditAccess(access, "sort", false);
+  const canManageTags =
+    hasAccessValue(access?.change_tag_access) && canEditAccess(access, "tags", false);
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
@@ -349,7 +351,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (row) => {
-      if (!row?.id || !canArchive) {
+      if (!row?.id || !canArchiveSiteItems) {
         return;
       }
 
@@ -361,7 +363,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         },
       });
     },
-    [canArchive, setState],
+    [canArchiveSiteItems, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -480,7 +482,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   }, [
     api,
     archiveDialog?.row,
-    canArchive,
+    canArchiveSiteItems,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -824,6 +826,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
       const nextTags = response?.tags_all || [];
       setState({ tags: nextTags });
+      await loadRows();
 
       return {
         tags: nextTags,
@@ -834,7 +837,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         text: response?.text || "Тег создан",
       };
     },
-    [api, setState],
+    [api, loadRows, setState],
   );
 
   const handleRenameTag = useCallback(
@@ -861,13 +864,14 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
       const nextTags = response?.tags_all || [];
       setState({ tags: nextTags });
+      await loadRows();
 
       return {
         tags: nextTags,
         text: response?.text || "Тег обновлен",
       };
     },
-    [api, setState],
+    [api, loadRows, setState],
   );
 
   return {
@@ -902,12 +906,13 @@ export default function useSkladSiteItemsController({ showAlert }) {
           archiveDialog={archiveDialog}
           isEditable={isEditable}
           canCreate={canCreate}
-          canArchiveAction={canArchive}
+          canManageTags={canManageTags}
+          canArchiveAction={canArchiveSiteItems}
           canDeleteAction={canDeleteAction}
           canEditActivity={canEditActivity}
           canEditCash={canEditCash}
           canEditSort={canEditSort}
-          canViewHistory={canViewHistory}
+          canViewHistory={canViewSiteItemsHistory}
           canCreateCategory={canCreate}
           allowPastDate={canUseSiteItemPastDate}
           showAlert={showAlert}
