@@ -565,11 +565,38 @@ async function installSkladMock(page, options = {}) {
 
     if (method === "site-items/get_one") {
       const item = state.siteItems.find((row) => Number(row.id) === Number(data.id)) || {};
+      const warehouseOptions = [
+        { id: 1, un_id: "1-item", type: "item", name: "Рис вареный П/Ф", ei_name: "кг." },
+        {
+          id: 2,
+          un_id: "2-item",
+          type: "item",
+          name: "Сахар пакетированный (5гр) П/Ф",
+          ei_name: "шт.",
+        },
+        {
+          id: 3,
+          un_id: "3-item",
+          type: "item",
+          name: "Крышка прозрачная для салатника",
+          ei_name: "шт.",
+        },
+        { id: 4, un_id: "4-item", type: "item", name: "Салатник 750 мл", ei_name: "шт." },
+        {
+          id: 5,
+          un_id: "5-item",
+          type: "item",
+          name: "Стикер для салатника",
+          ei_name: "шт.",
+        },
+      ];
       return respond({
         st: true,
         item,
         cat_list: [{ id: 30, name: "E2E_SKLAD_Салаты и закуски" }],
         cat_list_legacy: [{ id: 7, name: "E2E_SKLAD_Старая категория" }],
+        items_stage: { stage_1: [], stage_2: [], stage_3: [], all: warehouseOptions },
+        item_items: { this_items: [], all_items: [] },
         composition_source: { item_items: [], items_stage: [] },
         composition_derived: { item_items: [], items_stage: [] },
         history: {

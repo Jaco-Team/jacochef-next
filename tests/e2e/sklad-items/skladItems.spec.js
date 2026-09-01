@@ -231,6 +231,37 @@ test("товары сайта: фильтр, создание и редакти�
   });
 });
 
+test("товары сайта: поиск в составе исключает постороннюю номенклатуру", async ({ page }) => {
+  await installSkladMock(page, { access: FULL_ACCESS });
+  await page.goto("/sklad_items");
+  await page.getByRole("tab", { name: "Товары сайта" }).click();
+  await page.getByRole("button", { name: /E2E_SKLAD_Салаты и закуски/ }).click();
+  await page
+    .locator('[data-testid="site-item-21"]:visible')
+    .getByRole("button", { name: "Редактировать" })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .locator('[role="tab"]:visible, button:visible')
+    .filter({ hasText: /^Состав/ })
+    .last()
+    .click();
+
+  const preparationSearch = page.getByRole("combobox").first();
+  await preparationSearch.fill("салатник");
+  await expect(
+    page.getByRole("option", { name: "Крышка прозрачная для салатника", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("option", { name: "Салатник 750 мл", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("option", { name: "Стикер для салатника", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("option", { name: "Рис вареный П/Ф", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("option", { name: "Сахар пакетированный (5гр) П/Ф", exact: true }),
+  ).toHaveCount(0);
+});
+
 test("товары сайта: редактор тегов переименовывает тег с отдельным правом", async ({ page }) => {
   const state = await installSkladMock(page, { access: SITE_ITEM_MODAL_ACCESS });
   await page.goto("/sklad_items");
