@@ -8,6 +8,7 @@ import {
   JacoCityCafe,
   JacoDatePicker,
   JacoSelect,
+  JacoSwitch,
   JacoTextInput,
   JacoTimePicker,
 } from "@/design-system/shared/ui";
@@ -127,6 +128,25 @@ export function FormStates() {
         label="С поиском"
         placeholder="Введите кафе"
         options={cafes}
+      />
+    </StorySurface>
+  );
+}
+
+export function Switches() {
+  const [checked, setChecked] = useState(true);
+
+  return (
+    <StorySurface>
+      <JacoSwitch
+        checked={checked}
+        onChange={(event) => setChecked(event.target.checked)}
+        slotProps={{ input: { "aria-label": "Активность" } }}
+      />
+      <JacoSwitch
+        checked={false}
+        disabled
+        slotProps={{ input: { "aria-label": "Недоступная активность" } }}
       />
     </StorySurface>
   );

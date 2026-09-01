@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import SaveIcon from "@mui/icons-material/Save";
 import { Box, Stack, Tooltip, Typography } from "@mui/material";
 
@@ -53,7 +54,13 @@ export function Buttons() {
       >
         <JacoButton startIcon={<SaveIcon />}>Сохранить</JacoButton>
         <JacoButton tone="secondary">Отмена</JacoButton>
-        <JacoButton tone="outlinePrimary">Обновить</JacoButton>
+        <JacoButton
+          tone="outlinePrimary"
+          compact
+          startIcon={<RefreshIcon />}
+        >
+          Обновить
+        </JacoButton>
         <JacoButton
           tone="danger"
           startIcon={<DeleteOutlinedIcon />}
@@ -175,6 +182,14 @@ export function Tabs() {
           value={segmented}
           onChange={(_event, value) => setSegmented(value)}
           items={tabItems}
+        />
+        <JacoSegmentedTabs
+          value={segmented}
+          onChange={(_event, value) => setSegmented(value)}
+          items={tabItems}
+          size="compact"
+          variant="standard"
+          sx={{ width: "fit-content" }}
         />
         <JacoCompactTabs
           value={compact}

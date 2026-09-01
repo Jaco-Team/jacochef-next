@@ -14,8 +14,6 @@ import {
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
-import { uiColors, uiRadii, uiShadows, uiTypography } from "../tokens";
-
 // TODO: для того, чтобы это привести в порядок, Helper->getMyPointsList должен возвращать
 // атомарные данные cityId и cityName, но придется весь фронт обойти и автокомплиты привести
 // поэтому пока так
@@ -379,26 +377,15 @@ export default function JacoCityCafe({
           {...params}
           label={label}
           placeholder={placeholder}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              minHeight: compact ? 40 : 44,
-              borderRadius: uiRadii.lg,
-              bgcolor: uiColors.surface,
-              "& fieldset": { borderColor: uiColors.border },
-              "&:hover fieldset": { borderColor: uiColors.border },
-              "&.Mui-focused fieldset": { borderColor: uiColors.primary, borderWidth: 1 },
-            },
-            "& .MuiInputBase-input": {
-              ...uiTypography.body,
-              fontSize: compact ? 14 : undefined,
-            },
-            "& .MuiInputLabel-root": {
-              ...uiTypography.label,
-              color: uiColors.textMuted,
-              fontSize: compact ? 13 : undefined,
-              "&.Mui-focused": { color: uiColors.primary },
-            },
-          }}
+          sx={
+            compact
+              ? {
+                  "& .MuiInputBase-root": { minHeight: 40 },
+                  "& .MuiInputBase-input": { fontSize: 14 },
+                  "& .MuiInputLabel-root": { fontSize: 13 },
+                }
+              : undefined
+          }
         />
       )}
       limitTags={compact ? 1 : 2}
@@ -550,9 +537,6 @@ export default function JacoCityCafe({
             [`& .${autocompleteClasses.option}`]: { py: compact ? 0.25 : 0, px: 1 },
             [`& .${autocompleteClasses.groupLabel}`]: { py: compact ? 0.5 : 1, px: 0 },
             [`& .${autocompleteClasses.listbox}`]: { maxHeight: compact ? 280 : 420 },
-            border: `1px solid ${uiColors.border}`,
-            borderRadius: uiRadii.lg,
-            boxShadow: uiShadows.popover,
             position: "relative",
           },
           elevation: 3,

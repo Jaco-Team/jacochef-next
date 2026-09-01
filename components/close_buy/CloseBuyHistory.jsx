@@ -15,7 +15,6 @@ import {
 
 import {
   JacoAutocomplete,
-  JacoCityCafe,
   JacoDatePicker,
   JacoSelect,
   JacoTextInput,
@@ -61,8 +60,6 @@ export default function CloseBuyHistory({
   const dateFrom = filters.date_from ? dayjs(filters.date_from) : null;
   const dateTo = filters.date_to ? dayjs(filters.date_to) : null;
   const groupedHistory = useMemo(() => groupHistoryByDate(history), [history]);
-  const selectedPoint =
-    points.find((point) => String(point.id) === String(selectedPointId)) || null;
   const selectedEvent = history.find((event) => event.id === selectedEventId) || history[0] || null;
 
   useEffect(() => {
@@ -84,17 +81,12 @@ export default function CloseBuyHistory({
     <Stack spacing={3}>
       <Grid container>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <JacoCityCafe
-            points={points}
-            value={selectedPoint ? [selectedPoint] : []}
-            onChange={(selectedPoints) => {
-              const point = selectedPoints.at(-1);
-              if (point) onPointChange?.({ target: { value: point.id } });
-            }}
+          <JacoSelect
+            options={points}
+            value={selectedPointId}
+            onChange={onPointChange}
             label="Кафе"
-            placeholder="Выберите кафе"
-            withOrganizationMode={false}
-            compact
+            allowNone={false}
           />
         </Grid>
       </Grid>

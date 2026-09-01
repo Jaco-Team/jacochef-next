@@ -419,10 +419,8 @@ export default function CityCafeAutocomplete2({
                 !isAll && (
                   <Typography
                     noWrap
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: compact ? 12 : undefined,
-                    }}
+                    color="text.secondary"
+                    sx={{ fontSize: compact ? 12 : undefined }}
                   >
                     {option.cityName}
                   </Typography>
@@ -514,16 +512,15 @@ export default function CityCafeAutocomplete2({
               <ListItemText
                 primary={
                   <Typography
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: compact ? 14 : undefined,
-                    }}
+                    fontWeight={600}
+                    sx={{ fontSize: compact ? 14 : undefined }}
                   >
                     {entityName}
                   </Typography>
                 }
               />
             </div>
+
             <ul className={autocompleteClasses.groupUl}>{groupParams.children}</ul>
           </Box>
         );
