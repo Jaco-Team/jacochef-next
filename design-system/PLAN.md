@@ -278,4 +278,6 @@
 - [x] Закрыть build-blocking MUI v9 icon aliases (`*Outline` -> актуальные `*Outlined`) во всем runtime-коде и повторно проверить production compilation.
 - [x] Уплотнить desktop-таблицу Staff Schedule: salary columns 68px, selection/action columns 44px; первая половина месяца с 12 salary columns занимает 1854px и помещается в стандартный desktop container.
 - [x] Восстановить наследование `full_month` для доступа к day card согласно существующему unit-контракту.
+- [x] Убрать лишнюю работу floating table head Staff Schedule: geometry и horizontal scroll sync coalesced через `requestAnimationFrame`, AppBar height обновляется только при resize.
+- [x] Исправить assignment в day card: `new_app` и связанные legacy-поля читаются из `h_info.user` с сохранением top-level compatibility; добавить unit regression.
 - [ ] Снять парные full-page desktop/mobile baseline screenshots Staff Schedule до и после миграции в авторизованной browser session. Текущая Chrome DevTools session не наследует пользовательскую авторизацию, поэтому screenshot-run отложен без подмены credentials.

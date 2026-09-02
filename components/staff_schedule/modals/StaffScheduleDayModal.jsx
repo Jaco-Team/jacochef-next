@@ -728,19 +728,21 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                 onHistoryOpen={() => setIsHistoryOpen(true)}
               />
 
-              <StaffScheduleMobileSelectField
-                options={appOptions}
-                value={draft.newApp}
-                onChange={(event) =>
-                  setDraft((prev) => ({
-                    ...prev,
-                    newApp: event.target.value,
-                  }))
-                }
-                label="Кем работает"
-                pickerTitle="Кем работает"
-                disabled={!canEditAssignment}
-              />
+              {appOptions.length ? (
+                <StaffScheduleMobileSelectField
+                  options={appOptions}
+                  value={draft.newApp}
+                  onChange={(event) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      newApp: event.target.value,
+                    }))
+                  }
+                  label="Кем работает"
+                  pickerTitle="Кем работает"
+                  disabled={!canEditAssignment}
+                />
+              ) : null}
 
               {mentorOptions.length ? (
                 <StaffScheduleMobileSelectField

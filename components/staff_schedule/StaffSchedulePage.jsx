@@ -98,6 +98,7 @@ export default function StaffSchedulePage() {
             colorMode={page.colorMode}
             onColorModeChange={page.handleColorModeChange}
             selectedPart={page.selectedPart}
+            isGraphLoading={page.isBootstrapping || page.isGraphLoading}
             onOpenSummaryAction={page.handleOpenSummaryAction}
             onRemoveTeamBonusFromUser={page.handleRemoveTeamBonusFromUser}
             isMobile={isMobile}

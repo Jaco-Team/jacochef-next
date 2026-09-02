@@ -516,9 +516,8 @@ function ShiftHeaderRow({
       >
         <Stack
           direction="row"
-          alignItems="center"
           spacing={1}
-          sx={{ minWidth: 0 }}
+          sx={{ alignItems: "center", minWidth: 0 }}
         >
           <Box
             component="span"
@@ -725,6 +724,7 @@ export default function StaffScheduleTableSection({
   colorMode,
   onColorModeChange,
   isMobile = false,
+  isGraphLoading = false,
 }) {
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
   const [stickyHeader, setStickyHeader] = useState({
@@ -738,6 +738,10 @@ export default function StaffScheduleTableSection({
   const tableContainerRef = useRef(null);
   const stickyHeaderContainerRef = useRef(null);
   const isSyncingScrollRef = useRef(false);
+  const stickyTopRef = useRef(0);
+  const stickyHeaderSyncRafRef = useRef(null);
+  const scrollSyncRafRef = useRef(null);
+  const pendingScrollSyncRef = useRef(null);
   const days = toArray(period?.meta?.days);
   const visibleRows = toArray(rows);
   const { canView, canEdit, canShowFooterStats, canOpenMonthCard, canOpenDayCard, canManageSmena } =
@@ -808,6 +812,40 @@ export default function StaffScheduleTableSection({
     });
   }, []);
 
+  const scheduleScrollPosition = useCallback(
+    (source, target) => {
+      if (!source || !target || target.scrollLeft === source.scrollLeft) {
+        return;
+      }
+
+      pendingScrollSyncRef.current = { source, target };
+
+      if (scrollSyncRafRef.current) {
+        return;
+      }
+
+      scrollSyncRafRef.current = requestAnimationFrame(() => {
+        scrollSyncRafRef.current = null;
+        const pending = pendingScrollSyncRef.current;
+        pendingScrollSyncRef.current = null;
+
+        if (pending) {
+          syncScrollPosition(pending.source, pending.target);
+        }
+      });
+    },
+    [syncScrollPosition],
+  );
+
+  const refreshStickyTop = useCallback(() => {
+    const appToolbar = document.querySelector(".MuiAppBar-root .MuiToolbar-root");
+    const appBar = document.querySelector(".MuiAppBar-root");
+
+    stickyTopRef.current = Math.round(
+      appToolbar?.getBoundingClientRect().height || appBar?.getBoundingClientRect().height || 0,
+    );
+  }, []);
+
   const syncStickyHeaderPosition = useCallback(() => {
     const currentTable = tableRef.current;
     const currentHead = tableHeadRef.current;
@@ -817,11 +855,7 @@ export default function StaffScheduleTableSection({
       return;
     }
 
-    const appToolbar = document.querySelector(".MuiAppBar-root .MuiToolbar-root");
-    const appBar = document.querySelector(".MuiAppBar-root");
-    const stickyTop = Math.round(
-      appToolbar?.getBoundingClientRect().height || appBar?.getBoundingClientRect().height || 0,
-    );
+    const stickyTop = stickyTopRef.current;
     const tableRect = currentTable.getBoundingClientRect();
     const headRect = currentHead.getBoundingClientRect();
     const containerRect = currentContainer.getBoundingClientRect();
@@ -844,15 +878,31 @@ export default function StaffScheduleTableSection({
     });
 
     if (stickyHeaderContainerRef.current) {
-      syncScrollPosition(currentContainer, stickyHeaderContainerRef.current);
+      scheduleScrollPosition(currentContainer, stickyHeaderContainerRef.current);
     }
-  }, [syncScrollPosition]);
+  }, [scheduleScrollPosition]);
+
+  const scheduleStickyHeaderPosition = useCallback(() => {
+    if (stickyHeaderSyncRafRef.current) {
+      return;
+    }
+
+    stickyHeaderSyncRafRef.current = requestAnimationFrame(() => {
+      stickyHeaderSyncRafRef.current = null;
+      syncStickyHeaderPosition();
+    });
+  }, [syncStickyHeaderPosition]);
 
   useEffect(() => {
-    syncStickyHeaderPosition();
+    refreshStickyTop();
+    scheduleStickyHeaderPosition();
 
     const handleWindowChange = () => {
-      syncStickyHeaderPosition();
+      scheduleStickyHeaderPosition();
+    };
+    const handleResize = () => {
+      refreshStickyTop();
+      scheduleStickyHeaderPosition();
     };
     const handleTableScroll = () => {
       if (isSyncingScrollRef.current) {
@@ -860,7 +910,7 @@ export default function StaffScheduleTableSection({
       }
 
       if (stickyHeaderContainerRef.current && tableContainerRef.current) {
-        syncScrollPosition(tableContainerRef.current, stickyHeaderContainerRef.current);
+        scheduleScrollPosition(tableContainerRef.current, stickyHeaderContainerRef.current);
       }
     };
     const handleStickyHeaderScroll = () => {
@@ -869,14 +919,14 @@ export default function StaffScheduleTableSection({
       }
 
       if (stickyHeaderContainerRef.current && tableContainerRef.current) {
-        syncScrollPosition(stickyHeaderContainerRef.current, tableContainerRef.current);
+        scheduleScrollPosition(stickyHeaderContainerRef.current, tableContainerRef.current);
       }
     };
     const currentContainer = tableContainerRef.current;
     const currentStickyHeaderContainer = stickyHeaderContainerRef.current;
 
     window.addEventListener("scroll", handleWindowChange, { passive: true });
-    window.addEventListener("resize", handleWindowChange);
+    window.addEventListener("resize", handleResize);
     currentContainer?.addEventListener("scroll", handleTableScroll, { passive: true });
     currentStickyHeaderContainer?.addEventListener("scroll", handleStickyHeaderScroll, {
       passive: true,
@@ -884,20 +934,20 @@ export default function StaffScheduleTableSection({
 
     return () => {
       window.removeEventListener("scroll", handleWindowChange);
-      window.removeEventListener("resize", handleWindowChange);
+      window.removeEventListener("resize", handleResize);
       currentContainer?.removeEventListener("scroll", handleTableScroll);
       currentStickyHeaderContainer?.removeEventListener("scroll", handleStickyHeaderScroll);
     };
-  }, [stickyHeader.visible, syncScrollPosition, syncStickyHeaderPosition]);
+  }, [
+    refreshStickyTop,
+    scheduleScrollPosition,
+    scheduleStickyHeaderPosition,
+    stickyHeader.visible,
+  ]);
 
   useEffect(() => {
-    const rafId = requestAnimationFrame(() => {
-      syncStickyHeaderPosition();
-    });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
+    refreshStickyTop();
+    scheduleStickyHeaderPosition();
   }, [
     collapsedShiftIds,
     days.length,
@@ -906,10 +956,24 @@ export default function StaffScheduleTableSection({
     rows,
     showFastActions,
     summaryColumns,
-    syncStickyHeaderPosition,
+    refreshStickyTop,
+    scheduleStickyHeaderPosition,
   ]);
 
-  if (!days.length && !visibleRows.length) {
+  useEffect(
+    () => () => {
+      if (stickyHeaderSyncRafRef.current) {
+        cancelAnimationFrame(stickyHeaderSyncRafRef.current);
+      }
+
+      if (scrollSyncRafRef.current) {
+        cancelAnimationFrame(scrollSyncRafRef.current);
+      }
+    },
+    [],
+  );
+
+  if (!isGraphLoading && !days.length && !visibleRows.length) {
     return (
       <Box
         sx={{
@@ -977,10 +1041,13 @@ export default function StaffScheduleTableSection({
     >
       <Stack
         direction={{ xs: "column", md: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", md: "flex-start" }}
         spacing={2}
-        sx={{ p: 2, pb: 1.5 }}
+        sx={{
+          justifyContent: "space-between",
+          alignItems: { xs: "stretch", md: "flex-start" },
+          p: 2,
+          pb: 1.5,
+        }}
       >
         <Stack spacing={0.5}>
           <Typography sx={{ fontSize: 14, fontWeight: 500, textTransform: "uppercase" }}>
@@ -994,8 +1061,10 @@ export default function StaffScheduleTableSection({
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={1}
-          alignItems={{ xs: "stretch", md: "center" }}
-          sx={{ width: { xs: "100%", md: "auto" } }}
+          sx={{
+            alignItems: { xs: "stretch", md: "center" },
+            width: { xs: "100%", md: "auto" },
+          }}
         >
           {canCreateSmena ? (
             <Box sx={{ minWidth: toolbarControlMinWidth }}>
@@ -1213,14 +1282,13 @@ export default function StaffScheduleTableSection({
                 >
                   <Stack
                     direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
                     spacing={1}
+                    sx={{ alignItems: "center", justifyContent: "space-between" }}
                   >
                     <Stack
                       direction="row"
-                      alignItems="center"
                       spacing={0.75}
+                      sx={{ alignItems: "center" }}
                     >
                       <SummarySectionIcon sx={{ fontSize: 16 }} />
                       <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
-import { computePremiumSheet, toArray } from "./staffScheduleHelpers";
-import { STAFF_SCHEDULE_HOUR_PRESETS, getHourPresetByType } from "./staffScheduleHourPresets";
+import { computePremiumSheet, toArray } from "./staffScheduleHelpers.js";
+import { STAFF_SCHEDULE_HOUR_PRESETS, getHourPresetByType } from "./staffScheduleHourPresets.js";
 import {
   buildMonthSavePayload,
   canEditDayHealth,

@@ -1,5 +1,6 @@
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { useId } from "react";
 
 import { uiColors, uiRadii, uiShadows, uiStateColors, uiTypography } from "../tokens";
 
@@ -28,8 +29,14 @@ export default function JacoSelect({
   menuSx,
   customRI,
   unifiedPopup,
+  id: providedId,
+  inputProps: providedInputProps,
   ...props
 }) {
+  const generatedId = useId().replace(/:/g, "");
+  const selectId = providedId || `jaco-select-${generatedId}`;
+  const nativeInputId = `${selectId}-input`;
+  const labelId = label ? `${selectId}-label` : undefined;
   const normalizedOptions = normalizeOptions(options ?? data);
   const withNone = (allowNone ?? is_none) !== false;
   const items = withNone ? [{ id: "none", name: "None" }, ...normalizedOptions] : normalizedOptions;
@@ -64,9 +71,19 @@ export default function JacoSelect({
       disabled={disabled}
       sx={sx}
     >
-      {label ? <InputLabel>{label}</InputLabel> : null}
+      {label ? (
+        <InputLabel
+          id={labelId}
+          htmlFor={nativeInputId}
+        >
+          {label}
+        </InputLabel>
+      ) : null}
       <Select
         {...props}
+        id={selectId}
+        labelId={labelId}
+        inputProps={{ ...providedInputProps, id: nativeInputId }}
         multiple={multiple}
         value={normalizedValue}
         label={label}
