@@ -36,19 +36,19 @@ const colorLegendItems = [
   },
   {
     label: "Рабочий день 10:00 - 22:00",
-    description: "Основная полная смена из backend day.info.color.",
+    description: "Полная рабочая смена.",
     color: monthFullPreset.color,
     textColor: monthFullPreset.textColor,
   },
   {
     label: "Рабочий день 10:00 - 16:00",
-    description: "Первая половина смены из backend day.info.color.",
+    description: "Первая половина рабочей смены.",
     color: monthFirstHalfPreset.color,
     textColor: monthFirstHalfPreset.textColor,
   },
   {
     label: "Рабочий день 16:00 - 22:00",
-    description: "Вторая половина смены или желтая пользовательская отметка.",
+    description: "Вторая половина рабочей смены.",
     color: monthSecondHalfPreset.color,
     textColor: monthSecondHalfPreset.textColor,
   },
@@ -75,24 +75,6 @@ const colorLegendItems = [
     description: "Пользовательская backend-отметка my_color_day: black.",
     color: "#000000",
     textColor: "#FFFFFF",
-  },
-  {
-    label: "Календарь 10:00 - 22:00",
-    description: "Тот же пресет полной смены в модале заполнения часов.",
-    color: monthFullPreset.color,
-    textColor: monthFullPreset.textColor,
-  },
-  {
-    label: "Календарь 10:00 - 16:00",
-    description: "Тот же пресет первой половины дня в модале заполнения часов.",
-    color: monthFirstHalfPreset.color,
-    textColor: monthFirstHalfPreset.textColor,
-  },
-  {
-    label: "Календарь 16:00 - 22:00",
-    description: "Тот же пресет второй половины дня в модале заполнения часов.",
-    color: monthSecondHalfPreset.color,
-    textColor: monthSecondHalfPreset.textColor,
   },
   {
     label: "Выходной/праздник",

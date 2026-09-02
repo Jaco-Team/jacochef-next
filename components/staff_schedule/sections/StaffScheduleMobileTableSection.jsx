@@ -318,7 +318,13 @@ function MobileShiftCard({
           size="small"
           onClick={() => onToggle(group.shiftId)}
           aria-label={collapsed ? "Развернуть смену" : "Свернуть смену"}
-          sx={{ borderRadius: "8px", backgroundColor: "#FFFFFF" }}
+          sx={{
+            width: 32,
+            height: 32,
+            border: "none",
+            borderRadius: "8px",
+            backgroundColor: "#FFFFFF",
+          }}
         >
           {collapsed ? <KeyboardArrowRightRoundedIcon /> : <KeyboardArrowDownRoundedIcon />}
         </IconButton>

@@ -1,4 +1,7 @@
-import { TextField } from "@mui/material";
+import { NoSsr, TextField } from "@mui/material";
+import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
 import { uiColors, uiRadii, uiStateColors, uiTypography } from "../tokens";
@@ -13,6 +16,11 @@ function normalizeTimeValue(value) {
   return digits;
 }
 
+function toPickerValue(value) {
+  const parsed = dayjs(`2026-01-01T${normalizeTimeValue(value) || "00:00"}`);
+  return parsed.isValid() ? parsed : null;
+}
+
 export default function JacoTimePicker({
   value,
   onChange,
@@ -21,6 +29,9 @@ export default function JacoTimePicker({
   sx,
   inputProps,
   slotProps,
+  picker = false,
+  pickerFormat = "HH:mm",
+  ampm = false,
   ...props
 }) {
   const controlledChange = onChange ?? func;
@@ -45,6 +56,47 @@ export default function JacoTimePicker({
     }
     onBlur?.(event);
   };
+
+  if (picker) {
+    return (
+      <NoSsr>
+        <LocalizationProvider
+          dateAdapter={AdapterDayjs}
+          adapterLocale="ru"
+        >
+          <TimePicker
+            {...props}
+            ampm={ampm}
+            format={pickerFormat}
+            value={toPickerValue(value)}
+            onChange={(nextValue) =>
+              controlledChange?.(nextValue?.isValid?.() ? nextValue.format("HH:mm") : "")
+            }
+            slotProps={{
+              ...slotProps,
+              textField: {
+                fullWidth: true,
+                size: "small",
+                ...slotProps?.textField,
+                sx: {
+                  "& .MuiOutlinedInput-root, & .MuiPickersOutlinedInput-root": {
+                    minHeight: 44,
+                    borderRadius: uiRadii.lg,
+                    backgroundColor: props.disabled
+                      ? uiStateColors.disabledSurface
+                      : uiColors.surface,
+                  },
+                  "& .MuiInputBase-input": uiTypography.body,
+                  ...sx,
+                  ...slotProps?.textField?.sx,
+                },
+              },
+            }}
+          />
+        </LocalizationProvider>
+      </NoSsr>
+    );
+  }
 
   return (
     <TextField

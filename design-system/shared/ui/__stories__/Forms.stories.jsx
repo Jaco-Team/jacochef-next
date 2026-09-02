@@ -132,6 +132,27 @@ export function FormStates() {
   );
 }
 
+export function PopupTimePicker() {
+  const [time, setTime] = useState("09:00");
+
+  return (
+    <StorySurface>
+      <JacoTimePicker
+        picker
+        label="Время начала работы"
+        value={time}
+        onChange={setTime}
+      />
+      <JacoTimePicker
+        picker
+        label="Недоступное время"
+        value="18:00"
+        disabled
+      />
+    </StorySurface>
+  );
+}
+
 export function CityCafeSelection() {
   const [selectedCafes, setSelectedCafes] = useState([cafes[0]]);
 

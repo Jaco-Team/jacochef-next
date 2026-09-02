@@ -3,14 +3,11 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { Box, Grid, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
-import "dayjs/locale/ru";
 import {
   JacoAlert,
   JacoButton,
   JacoMonthGridCalendar,
+  JacoTimePicker,
   useJacoConfirm,
 } from "@/design-system/shared/ui";
 import { toNumber } from "../staffScheduleHelpers";
@@ -29,8 +26,6 @@ import {
 } from "../staffScheduleModalViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
-
-dayjs.locale("ru");
 
 const CUSTOM_HOUR_COLORS = ["#D92D5F", "#4CC5EA", "#FFB800"];
 
@@ -238,9 +233,8 @@ function HourSlotCard({ slot, selected, onClick, onRemove = null, maxWidth = "no
   return (
     <Stack
       direction="row"
-      alignItems="center"
       spacing={1}
-      sx={{ width: "fit-content", maxWidth }}
+      sx={{ width: "fit-content", maxWidth, alignItems: "center" }}
     >
       <Box
         onClick={onClick}
@@ -294,33 +288,16 @@ function HourSlotCard({ slot, selected, onClick, onRemove = null, maxWidth = "no
   );
 }
 
-function timeToPickerValue(value) {
-  const parsed = dayjs(`2026-01-01T${value || "00:00"}`);
-  return parsed.isValid() ? parsed : null;
-}
-
 function TimePickerField({ label, value, onChange }) {
   return (
-    <TimePicker
-      ampm={false}
+    <JacoTimePicker
+      picker
       label={label}
-      value={timeToPickerValue(value)}
-      onChange={(nextValue) => {
-        if (nextValue?.isValid?.()) {
-          onChange(nextValue.format("HH:mm"));
-        }
-      }}
-      slotProps={{
-        textField: {
-          fullWidth: true,
-          size: "small",
-          sx: {
-            "& .MuiOutlinedInput-root": {
-              minHeight: 44,
-              borderRadius: "12px",
-              backgroundColor: "#FFFFFF",
-            },
-          },
+      value={value}
+      onChange={onChange}
+      sx={{
+        "& .MuiOutlinedInput-root, & .MuiPickersOutlinedInput-root": {
+          borderRadius: "12px",
         },
       }}
     />
@@ -342,9 +319,8 @@ function CustomTimeDialog({ open, value, onChange, onClose, onSubmit }) {
       actions={
         <Stack
           direction="row"
-          justifyContent="flex-end"
           spacing={1.25}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", justifyContent: "flex-end" }}
         >
           <JacoButton
             compact
@@ -367,110 +343,105 @@ function CustomTimeDialog({ open, value, onChange, onClose, onSubmit }) {
         </Stack>
       }
     >
-      <LocalizationProvider
-        dateAdapter={AdapterDayjs}
-        adapterLocale="ru"
-      >
-        <Stack spacing={2}>
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: "12px",
-              border: "1px solid #ECECEC",
-              backgroundColor: "#FFFFFF",
-            }}
+      <Stack spacing={2}>
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: "12px",
+            border: "1px solid #ECECEC",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери цвет</Typography>
+          <Stack
+            direction="row"
+            spacing={0}
+            sx={{ borderRadius: "8px", overflow: "hidden" }}
           >
-            <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери цвет</Typography>
-            <Stack
-              direction="row"
-              spacing={0}
-              sx={{ borderRadius: "8px", overflow: "hidden" }}
-            >
-              {CUSTOM_HOUR_COLORS.map((color) => {
-                const selected = value.color === color;
+            {CUSTOM_HOUR_COLORS.map((color) => {
+              const selected = value.color === color;
 
-                return (
-                  <Box
-                    key={color}
-                    onClick={() => onChange((prev) => ({ ...prev, color }))}
-                    sx={{
-                      flex: 1,
-                      minHeight: 32,
-                      border: selected ? "2px solid #EE2737" : "2px solid transparent",
-                      backgroundColor: color,
-                      cursor: "pointer",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                );
-              })}
-            </Stack>
-          </Box>
+              return (
+                <Box
+                  key={color}
+                  onClick={() => onChange((prev) => ({ ...prev, color }))}
+                  sx={{
+                    flex: 1,
+                    minHeight: 32,
+                    border: selected ? "2px solid #EE2737" : "2px solid transparent",
+                    backgroundColor: color,
+                    cursor: "pointer",
+                    boxSizing: "border-box",
+                  }}
+                />
+              );
+            })}
+          </Stack>
+        </Box>
 
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: "12px",
-              border: "1px solid #ECECEC",
-              backgroundColor: "#FFFFFF",
-            }}
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: "12px",
+            border: "1px solid #ECECEC",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери время</Typography>
+          <Grid
+            container
+            spacing={1.25}
           >
-            <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>Выбери время</Typography>
-            <Grid
-              container
-              spacing={1.25}
-            >
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TimePickerField
-                  label="c"
-                  value={value.time_start}
-                  onChange={(nextValue) =>
-                    onChange((prev) => ({
-                      ...prev,
-                      time_start: nextValue,
-                    }))
-                  }
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TimePickerField
-                  label="до"
-                  value={value.time_end}
-                  onChange={(nextValue) =>
-                    onChange((prev) => ({
-                      ...prev,
-                      time_end: nextValue,
-                    }))
-                  }
-                />
-              </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TimePickerField
+                label="c"
+                value={value.time_start}
+                onChange={(nextValue) =>
+                  onChange((prev) => ({
+                    ...prev,
+                    time_start: nextValue,
+                  }))
+                }
+              />
             </Grid>
-          </Box>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TimePickerField
+                label="до"
+                value={value.time_end}
+                onChange={(nextValue) =>
+                  onChange((prev) => ({
+                    ...prev,
+                    time_end: nextValue,
+                  }))
+                }
+              />
+            </Grid>
+          </Grid>
+        </Box>
 
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: "12px",
-              border: "1px solid #ECECEC",
-              backgroundColor: "#FFFFFF",
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: "12px",
+            border: "1px solid #ECECEC",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>
+            Новый временной промежуток
+          </Typography>
+          <HourSlotCard
+            slot={{
+              type: 3,
+              time_start: value.time_start,
+              time_end: value.time_end,
+              color: value.color,
             }}
-          >
-            <Typography sx={{ mb: 1, fontSize: 16, color: "#666666" }}>
-              Новый временной промежуток
-            </Typography>
-            <HourSlotCard
-              slot={{
-                type: 3,
-                time_start: value.time_start,
-                time_end: value.time_end,
-                color: value.color,
-              }}
-              selected
-              onClick={() => {}}
-            />
-          </Box>
-        </Stack>
-      </LocalizationProvider>
+            selected
+            onClick={() => {}}
+          />
+        </Box>
+      </Stack>
     </StaffScheduleResponsiveModal>
   );
 }
@@ -513,9 +484,8 @@ function AssignmentDialog({
       actions={
         <Stack
           direction="row"
-          justifyContent="flex-end"
           spacing={1.25}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", justifyContent: "flex-end" }}
         >
           <JacoButton
             compact
@@ -1005,7 +975,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
 
               <Stack
                 direction="row"
-                justifyContent="flex-end"
+                sx={{ justifyContent: "flex-end" }}
               >
                 <JacoButton
                   tone="primary"

@@ -14,11 +14,17 @@ import {
   Paper,
   Popper,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { AddTimeIcon, HistoryFileIcon } from "@/design-system/shared/icons";
-import { JacoAlert, JacoButton, JacoIconButton, useJacoConfirm } from "@/design-system/shared/ui";
+import {
+  JacoAlert,
+  JacoButton,
+  JacoIconButton,
+  JacoTextInput,
+  JacoTimePicker,
+  useJacoConfirm,
+} from "@/design-system/shared/ui";
 import { formatHourRangeLabel } from "../staffScheduleHourPresets";
 import { buildDaySavePayload } from "../staffScheduleModalCore.mjs";
 import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
@@ -54,9 +60,8 @@ function DayPersonHeader({ data, onHistoryOpen }) {
     >
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="flex-start"
         spacing={2}
+        sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
       >
         <Box sx={{ minWidth: 0, pt: 0.125 }}>
           <Typography
@@ -98,9 +103,8 @@ function DayPersonHeader({ data, onHistoryOpen }) {
 
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="flex-start"
         spacing={2}
+        sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
       >
         <Stack
           spacing={0.5}
@@ -183,62 +187,76 @@ function TemperatureField({ value, onChange, disabled = false }) {
 
   return (
     <>
-      <TextField
+      <Box
         ref={anchorRef}
-        fullWidth
-        size="small"
-        label="Температура"
-        value={value ?? ""}
-        placeholder="Введите данные или выберите из списка"
-        onChange={handleInputChange}
-        onFocus={() => {
-          if (!disabled) {
-            setOpen(true);
-          }
-        }}
-        disabled={disabled}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            minHeight: 44,
-            borderRadius: open ? "18px 18px 0 0" : "18px",
-            border: "1px solid #E5E5E5",
-            backgroundColor: "#FFFFFF",
-            "& .MuiOutlinedInput-notchedOutline": { display: "none" },
-          },
-          "& .MuiInputBase-input": {
-            fontSize: 16,
-            color: "#666666",
-          },
-          "& .MuiInputLabel-root": {
-            color: "#A6A6A6",
-            backgroundColor: "#FFFFFF",
-            px: 1,
-          },
-        }}
-        slotProps={{
-          input: {
+        sx={{ width: "100%" }}
+      >
+        <JacoTextInput
+          fullWidth
+          size="small"
+          label="Температура"
+          value={value ?? ""}
+          placeholder="Введите данные или выберите из списка"
+          onChange={handleInputChange}
+          onFocus={() => {
+            if (!disabled) {
+              setOpen(true);
+            }
+          }}
+          disabled={disabled}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              minHeight: 44,
+              borderRadius: open ? "18px 18px 0 0" : "18px",
+              border: "1px solid #E5E5E5",
+              backgroundColor: "#FFFFFF",
+              "& .MuiOutlinedInput-notchedOutline": { display: "none" },
+            },
+            "& .MuiInputBase-input": {
+              fontSize: 16,
+              color: "#666666",
+            },
+            "& .MuiInputLabel-root": {
+              color: "#A6A6A6",
+              backgroundColor: "#FFFFFF",
+              px: 1,
+            },
+          }}
+          inputAdornment={{
             endAdornment: value ? (
               <IconButton
-                size="small"
+                aria-label="Очистить температуру"
                 onClick={() => onChange("")}
                 disabled={disabled}
-                sx={{ color: "#BABABA" }}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#BABABA",
+                }}
               >
                 <CloseIcon />
               </IconButton>
             ) : (
               <IconButton
-                size="small"
+                aria-label="Открыть список температур"
                 onClick={() => setOpen((prev) => !prev)}
                 disabled={disabled}
-                sx={{ color: "#A6A6A6" }}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: "none",
+                  backgroundColor: "transparent",
+                  color: "#A6A6A6",
+                }}
               >
                 <KeyboardArrowDownRoundedIcon />
               </IconButton>
             ),
-          },
-        }}
-      />
+          }}
+        />
+      </Box>
       <Popper
         open={open && !disabled}
         anchorEl={anchorRef.current}
@@ -307,8 +325,7 @@ function TimeRow({ item, onRemove }) {
       <Stack
         direction="row"
         spacing={1}
-        alignItems="center"
-        sx={{ minWidth: 0 }}
+        sx={{ minWidth: 0, alignItems: "center" }}
       >
         <ScheduleIcon sx={{ fontSize: 20, color: "#A6A6A6" }} />
         <Typography sx={{ fontSize: 16, color: "#666666", lineHeight: 1.25 }}>
@@ -371,11 +388,14 @@ function HistoryDialog({ open, history, onClose }) {
             >
               <Stack
                 direction="row"
-                alignItems="center"
-                justifyContent="space-between"
                 spacing={1}
                 onClick={() => setExpandedId(expanded ? "" : historyItem.id)}
-                sx={{ minHeight: 40, cursor: "pointer" }}
+                sx={{
+                  minHeight: 40,
+                  cursor: "pointer",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
               >
                 <Typography
                   sx={{ fontSize: 16, color: "#666666", fontWeight: expanded ? 700 : 400 }}
@@ -427,9 +447,8 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
       actions={
         <Stack
           direction="row"
-          justifyContent="flex-end"
           spacing={1.5}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", justifyContent: "flex-end" }}
         >
           <JacoButton
             compact
@@ -464,17 +483,12 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
       }
     >
       <Stack spacing={2.5}>
-        <TextField
-          fullWidth
-          size="small"
+        <JacoTimePicker
           label="Время начала работы"
           type="time"
           value={start}
           onChange={onChangeStart}
-          slotProps={{
-            inputLabel: { shrink: true },
-            input: { step: 600 },
-          }}
+          inputProps={{ step: 600 }}
           sx={{
             "& .MuiOutlinedInput-root": {
               minHeight: 44,
@@ -492,17 +506,12 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
             },
           }}
         />
-        <TextField
-          fullWidth
-          size="small"
+        <JacoTimePicker
           label="Время окончания работы"
           type="time"
           value={end}
           onChange={onChangeEnd}
-          slotProps={{
-            inputLabel: { shrink: true },
-            input: { step: 600 },
-          }}
+          inputProps={{ step: 600 }}
           sx={{
             "& .MuiOutlinedInput-root": {
               minHeight: 44,
@@ -675,9 +684,8 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
     modal.loading || !modal.data ? null : (
       <Stack
         direction="row"
-        justifyContent="flex-end"
         spacing={1.5}
-        sx={{ width: "100%" }}
+        sx={{ width: "100%", justifyContent: "flex-end" }}
       >
         <JacoButton
           compact

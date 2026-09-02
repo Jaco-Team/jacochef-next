@@ -357,7 +357,14 @@ function ScheduleRow({
             <IconButton
               size="small"
               onClick={() => onOpenFastActions(data)}
-              sx={{ width: 32, height: 32, color: "#666666" }}
+              aria-label="Быстрые действия"
+              sx={{
+                width: 32,
+                height: 32,
+                border: "none",
+                backgroundColor: "transparent",
+                color: "#666666",
+              }}
             >
               <SwapHorizRoundedIcon fontSize="small" />
             </IconButton>
@@ -580,7 +587,13 @@ function ShiftHeaderRow({
           size="small"
           onClick={handleToggle}
           aria-label={collapsed ? "Развернуть смену" : "Свернуть смену"}
-          sx={{ borderRadius: "8px", backgroundColor: "#FFFFFF" }}
+          sx={{
+            width: 32,
+            height: 32,
+            border: "none",
+            borderRadius: "8px",
+            backgroundColor: "#FFFFFF",
+          }}
         >
           {collapsed ? <KeyboardArrowRightRoundedIcon /> : <KeyboardArrowDownRoundedIcon />}
         </IconButton>
