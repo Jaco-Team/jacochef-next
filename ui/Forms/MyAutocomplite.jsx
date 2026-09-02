@@ -316,6 +316,7 @@ export function MyAutocomplite(props) {
         disableClearable={props.disableClearable}
         getOptionKey={resolveOptionKey}
         value={props.value ?? (props.multiple ? [] : null)}
+        inputValue={props.inputValue}
         onChange={props.func}
         onInputChange={props.onInputChange}
         onFocus={props.onFocus}

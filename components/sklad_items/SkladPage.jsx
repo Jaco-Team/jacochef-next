@@ -23,6 +23,7 @@ import a11yProps from "@/ui/TabPanel/a11yProps";
 import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
 import SkladProductionTab from "./production/SkladProductionTab";
+import SkladWarehouseItemsTab from "./warehouse-items/SkladWarehouseItemsTab";
 import SkladSiteItemsTab from "./site-items/SkladSiteItemsTab";
 import { getVisibleSkladTabs } from "./skladTabs";
 import { useSkladStore } from "./useSkladStore";
@@ -132,6 +133,15 @@ export default function SkladPage() {
     if (item.key === "site-items") {
       return (
         <SkladSiteItemsTab
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+        />
+      );
+    }
+
+    if (item.key === "warehouse-items") {
+      return (
+        <SkladWarehouseItemsTab
           showAlert={showAlert}
           refreshToken={refreshToken}
         />

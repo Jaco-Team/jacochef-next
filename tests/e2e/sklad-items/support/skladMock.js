@@ -5,6 +5,11 @@ const FULL_ACCESS = {
   production_delete: 1,
   production_past_date: 1,
   production_convert: 1,
+  warehouse_items_view: 1,
+  warehouse_items_edit: 1,
+  warehouse_items_create: 1,
+  warehouse_items_delete: 1,
+  warehouse_items_past_date: 1,
   site_items_view: 1,
   site_items_edit: 1,
   site_items_create: 1,
@@ -55,6 +60,37 @@ const FULL_ACCESS = {
   archive_view: 1,
   archive_edit: 1,
   history_view: 1,
+  ...Object.fromEntries(
+    [
+      "name",
+      "name_for_vendor",
+      "mark_name",
+      "categories",
+      "unit",
+      "date_start",
+      "date_end",
+      "art",
+      "pq",
+      "percent",
+      "vend_percent",
+      "min_count",
+      "max_count_in_m",
+      "composition",
+      "time",
+      "properties",
+      "activity",
+      "order",
+      "revision",
+      "allergens",
+      "allergens_possible",
+      "storages",
+      "apps",
+      "accounting_systems",
+    ].flatMap((field) => [
+      [`warehouse_items_${field}_view`, 1],
+      [`warehouse_items_${field}_edit`, 1],
+    ]),
+  ),
   ...Object.fromEntries(
     [
       "name",
@@ -131,6 +167,14 @@ function bootstrap(access) {
     units: [unit(1, "Грамм")],
     categories: [
       { id: 10, name: "E2E_SKLAD_Категория производства", source_type: "semi_finished" },
+      {
+        id: 41,
+        name: "E2E_SKLAD_Упаковка",
+        parent_id: 40,
+        parent_name: "E2E_SKLAD_Хозтовары",
+        category_key: "warehouse_item:41",
+        source_type: "warehouse_item",
+      },
     ],
     allergens: [],
     storages: [],
@@ -158,6 +202,25 @@ async function installSkladMock(page, options = {}) {
     nextUnitId: 100,
     nextProductionId: 200,
     nextSiteItemId: 300,
+    nextWarehouseItemId: 400,
+    warehouseItems: [
+      {
+        id: 51,
+        name: "E2E_SKLAD_Коробка для пиццы",
+        category_id: 41,
+        category_name: "E2E_SKLAD_Упаковка",
+        ed_izmer_id: 1,
+        ed_izmer_name: "Грамм",
+        is_show: 1,
+        is_active: 1,
+        show_in_order: 1,
+        show_in_rev: 0,
+        effective_date_start: "2026-08-01",
+        effective_date_end: "",
+        revision_status: "active",
+        delete_state: "allowed",
+      },
+    ],
     recipes: [
       {
         id: 11,
@@ -526,6 +589,67 @@ async function installSkladMock(page, options = {}) {
       return respond({ st: true, text: "Успешно сохранено", id: data.id });
     }
 
+    if (method === "items/list") {
+      const search = String(data.search || "")
+        .trim()
+        .toLocaleLowerCase("ru");
+      return respond({
+        st: true,
+        list: state.warehouseItems.filter(
+          (row) => !search || row.name.toLocaleLowerCase("ru").includes(search),
+        ),
+      });
+    }
+
+    if (method === "items/get_all_for_new" || method === "items/get_one") {
+      const item =
+        method === "items/get_one"
+          ? state.warehouseItems.find((row) => Number(row.id) === Number(data.id)) || {}
+          : { date_start: "2026-09-01", date_end: "", is_show: 1 };
+      return respond({
+        st: true,
+        item,
+        categories: bootstrap(state.access).categories,
+        units: state.units,
+        allergens: [],
+        storages: [],
+        apps: [],
+        accounting_systems: [],
+        history: {
+          rows: [],
+          capabilities: {},
+          meta: { entity_type: "item", entity_id: item.id || null },
+        },
+      });
+    }
+
+    if (method === "items/save_new") {
+      const created = {
+        ...data,
+        id: state.nextWarehouseItemId++,
+        category_name: "E2E_SKLAD_Упаковка",
+        ed_izmer_name: "Грамм",
+        is_active: Number(data.is_show || 0),
+        revision_status: "active",
+        delete_state: "allowed",
+      };
+      state.warehouseItems.push(created);
+      return respond({ st: true, text: "Успешно сохранено", id: created.id });
+    }
+
+    if (method === "items/save_edit") {
+      const index = state.warehouseItems.findIndex((row) => Number(row.id) === Number(data.id));
+      if (index >= 0) state.warehouseItems[index] = { ...state.warehouseItems[index], ...data };
+      return respond({ st: true, text: "Успешно сохранено", id: data.id });
+    }
+
+    if (method === "items/delete") {
+      state.warehouseItems = state.warehouseItems.filter(
+        (row) => Number(row.id) !== Number(data.id),
+      );
+      return respond({ st: true, text: "Успешно удалено" });
+    }
+
     if (method === "site-items/list") {
       const search = String(data.search || "")
         .trim()
@@ -566,6 +690,13 @@ async function installSkladMock(page, options = {}) {
     if (method === "site-items/get_one") {
       const item = state.siteItems.find((row) => Number(row.id) === Number(data.id)) || {};
       const warehouseOptions = [
+        ...Array.from({ length: 120 }, (_, index) => ({
+          id: 1000 + index,
+          un_id: `${1000 + index}-item`,
+          type: "item",
+          name: `Служебная позиция ${String(index + 1).padStart(3, "0")}`,
+          ei_name: "шт.",
+        })),
         { id: 1, un_id: "1-item", type: "item", name: "Рис вареный П/Ф", ei_name: "кг." },
         {
           id: 2,
@@ -587,6 +718,20 @@ async function installSkladMock(page, options = {}) {
           un_id: "5-item",
           type: "item",
           name: "Стикер для салатника",
+          ei_name: "шт.",
+        },
+        {
+          id: 6,
+          un_id: "6-item",
+          type: "item",
+          name: "Коробка для пиццы 35 см",
+          ei_name: "шт.",
+        },
+        {
+          id: 7,
+          un_id: "7-item",
+          type: "item",
+          name: "Пакет для пиццы",
           ei_name: "шт.",
         },
       ];

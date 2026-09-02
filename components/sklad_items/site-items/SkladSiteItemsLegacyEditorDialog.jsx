@@ -710,31 +710,42 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
     }, 0);
   }
 
-  activateCompositionAutocomplete(fieldKey) {
+  activateCompositionAutocomplete(fieldKey, event) {
     if (this.state.activeCompositionAutocomplete === fieldKey) {
       return;
     }
+
+    const inputValue = String(event?.target?.value ?? "");
 
     this.setState((prevState) => ({
       activeCompositionAutocomplete: fieldKey,
       compositionSearchByField: {
         ...prevState.compositionSearchByField,
-        [fieldKey]: "",
+        [fieldKey]: inputValue,
       },
     }));
   }
 
   changeCompositionSearch(fieldKey, event, inputValue, reason) {
-    if (reason !== "input" && reason !== "clear") {
+    if (reason !== "input" && reason !== "clear" && reason !== "reset") {
       return;
     }
 
     this.setState((prevState) => ({
+      ...(reason === "reset" ? {} : { activeCompositionAutocomplete: fieldKey }),
       compositionSearchByField: {
         ...prevState.compositionSearchByField,
-        [fieldKey]: inputValue,
+        [fieldKey]: String(inputValue ?? ""),
       },
     }));
+  }
+
+  getCompositionAutocompleteInputValue(fieldKey, selectedValue) {
+    if (Object.prototype.hasOwnProperty.call(this.state.compositionSearchByField, fieldKey)) {
+      return this.state.compositionSearchByField[fieldKey];
+    }
+
+    return String(selectedValue?.name ?? "");
   }
 
   getCompositionAutocompleteOptions(fieldKey, selectedValue, options) {
@@ -2086,6 +2097,10 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                       this.state.items_stage?.all,
                     )}
                     filterOptions={filterCompositionOptions}
+                    inputValue={this.getCompositionAutocompleteInputValue(
+                      autocompleteKey,
+                      item.type_id,
+                    )}
                     onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                     value={item.type_id}
                     onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
@@ -2182,6 +2197,10 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   this.state.item_items?.all_items,
                 )}
                 filterOptions={filterCompositionOptions}
+                inputValue={this.getCompositionAutocompleteInputValue(
+                  autocompleteKey,
+                  item.item_id,
+                )}
                 onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                 value={item.item_id}
                 onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
@@ -3341,6 +3360,10 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                             this.state.items_stage?.all,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          inputValue={this.getCompositionAutocompleteInputValue(
+                                            "preparation-new",
+                                            null,
+                                          )}
                                           onInputChange={this.changeCompositionSearch.bind(
                                             this,
                                             "preparation-new",
@@ -3450,6 +3473,10 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                             this.state.item_items?.all_items,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          inputValue={this.getCompositionAutocompleteInputValue(
+                                            "item-new",
+                                            null,
+                                          )}
                                           onInputChange={this.changeCompositionSearch.bind(
                                             this,
                                             "item-new",

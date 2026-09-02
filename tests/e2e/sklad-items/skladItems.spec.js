@@ -61,7 +61,7 @@ test("полный доступ: все разделы открываются, V
   await page.goto("/sklad_items");
   await expect(page.getByRole("heading", { name: "Склад" })).toBeVisible();
 
-  const tabs = ["Рецепты и полуфабрикаты", "Товары сайта", "Единицы измерения"];
+  const tabs = ["Рецепты и полуфабрикаты", "Товары склада", "Товары сайта", "Единицы измерения"];
   for (const [index, tab] of tabs.entries()) {
     await expect(page.getByRole("tab", { name: tab })).toBeVisible();
     await page.getByRole("tab", { name: tab }).click();
@@ -84,6 +84,50 @@ test("полный доступ: все разделы открываются, V
   expect(state.requests.some((request) => request.method.includes("sync_vk"))).toBeFalsy();
 
   await page.screenshot({ path: testInfo.outputPath("sklad-full-access.png"), fullPage: true });
+});
+
+test("товары склада: вкладка, фильтр и независимый редактор", async ({ page }) => {
+  const state = await installSkladMock(page, { access: FULL_ACCESS });
+  await page.goto("/sklad_items");
+  await page.getByRole("tab", { name: "Товары склада" }).click();
+
+  await expect(page.getByText("E2E_SKLAD_Коробка для пиццы")).toBeVisible();
+  await page.waitForTimeout(750);
+  expect(state.requests.filter((request) => request.method === "items/list")).toHaveLength(1);
+  const warehouseSearch = page.getByRole("textbox", { name: "Поиск", exact: true });
+  expect((await warehouseSearch.boundingBox())?.height || 0).toBeLessThanOrEqual(44);
+  await warehouseSearch.fill("не существует");
+  await expect(page.getByText("E2E_SKLAD_Коробка для пиццы")).toHaveCount(0);
+  await warehouseSearch.fill("");
+
+  await page.getByRole("button", { name: "Добавить товар" }).click();
+  const dialog = page.getByRole("dialog", { name: "Новый товар склада" });
+  await expect(dialog.getByRole("heading", { name: "Новый товар склада" })).toBeVisible();
+  expect((await dialog.getByLabel("Наименование").boundingBox())?.height || 0).toBeLessThanOrEqual(
+    44,
+  );
+  const startsAt = dialog.getByRole("group", { name: "Действует с" });
+  await expect(startsAt.getByRole("spinbutton", { name: "Year" })).toHaveAttribute(
+    "aria-valuetext",
+    "Empty",
+  );
+  await expect(dialog.getByLabel("Время", { exact: true })).toHaveValue("");
+  await expect(dialog.getByLabel("Доп. время", { exact: true })).toHaveValue("");
+  await expect(dialog.getByLabel("Другое время", { exact: true })).toHaveValue("");
+  await dialog.getByLabel("Наименование").fill("E2E_SKLAD_Новый товар склада");
+  await dialog.getByRole("combobox", { name: "Категория" }).click();
+  await page.getByRole("option", { name: /E2E_SKLAD_Упаковка/ }).click();
+  await dialog.getByRole("combobox", { name: "Единица" }).click();
+  await page.getByRole("option", { name: "Грамм" }).click();
+  await startsAt.getByRole("spinbutton", { name: "Year" }).fill("2026");
+  await startsAt.getByRole("spinbutton", { name: "Month" }).fill("09");
+  await startsAt.getByRole("spinbutton", { name: "Day" }).fill("01");
+  await dialog.getByLabel("Количество в упаковке").fill("100abc#50");
+  await expect(dialog.getByLabel("Количество в упаковке")).toHaveValue("100#50");
+  await dialog.getByLabel("Время", { exact: true }).fill("000000000");
+  await expect(dialog.getByLabel("Время", { exact: true })).toHaveValue("00:00");
+  await dialog.getByRole("button", { name: "Сохранить изменения" }).click();
+  await expect(page.getByText("E2E_SKLAD_Новый товар склада")).toBeVisible();
 });
 
 test("производство: фильтр, сортировка, создание и редактирование рецепта", async ({ page }) => {
@@ -248,18 +292,19 @@ test("товары сайта: поиск в составе исключает �
     .click();
 
   const preparationSearch = page.getByRole("combobox").first();
-  await preparationSearch.fill("салатник");
+  await preparationSearch.fill("пиццы");
   await expect(
-    page.getByRole("option", { name: "Крышка прозрачная для салатника", exact: true }),
+    page.getByRole("option", { name: "Коробка для пиццы 35 см", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("option", { name: "Салатник 750 мл", exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("option", { name: "Стикер для салатника", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("option", { name: "Пакет для пиццы", exact: true })).toBeVisible();
   await expect(page.getByRole("option", { name: "Рис вареный П/Ф", exact: true })).toHaveCount(0);
   await expect(
     page.getByRole("option", { name: "Сахар пакетированный (5гр) П/Ф", exact: true }),
   ).toHaveCount(0);
+  await expect(page.getByRole("option", { name: "Служебная позиция 001" })).toHaveCount(0);
+
+  await page.getByRole("option", { name: "Коробка для пиццы 35 см", exact: true }).click();
+  await expect(preparationSearch).toHaveValue("Коробка для пиццы 35 см");
 });
 
 test("товары сайта: редактор тегов переименовывает тег с отдельным правом", async ({ page }) => {
