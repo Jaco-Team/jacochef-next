@@ -1,4 +1,4 @@
-import { V2ResponsiveModalShell } from "@/ui/v2";
+import { JacoResponsiveModalShell } from "@/design-system/shared/ui";
 import { buildStaffScheduleModalProps } from "./staffScheduleModalPresets";
 
 export default function StaffScheduleResponsiveModal({
@@ -20,7 +20,7 @@ export default function StaffScheduleResponsiveModal({
   });
 
   return (
-    <V2ResponsiveModalShell
+    <JacoResponsiveModalShell
       desktopBreakpoint="md"
       titleSx={modalProps.titleSx}
       titleContainerSx={modalProps.titleContainerSx}

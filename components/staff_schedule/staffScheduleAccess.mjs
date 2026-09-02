@@ -64,10 +64,8 @@ export function createStaffSchedulePolicy(access = {}) {
       canView("over_40_min") ||
       canView("sums_all");
   const canOpenMonthCard = canAccess("full_month");
-  const canOpenDayCard = canEdit("day_edit") || canAccess("full_day") || canOpenMonthCard;
-  const canExportWorkSchedule = hasAccessRule(access, "export_excel")
-    ? canAccess("export_excel")
-    : true;
+  const canOpenDayCard = canEdit("day_edit") || canAccess("full_day") || canAccess("full_month");
+  const canExportWorkSchedule = canAccess("export_excel");
 
   return {
     ...accessCheck,

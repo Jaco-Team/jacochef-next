@@ -1,7 +1,13 @@
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import { Stack } from "@mui/material";
 import StaffScheduleColorLegendModal from "./StaffScheduleColorLegendModal";
-import { V2Button, V2FieldSwitch, V2IconButton, V2Surface, v2Colors } from "@/ui/v2";
+import {
+  JacoButton,
+  JacoFieldSwitch,
+  JacoIconButton,
+  JacoSurface,
+  uiColors,
+} from "@/design-system/shared/ui";
 import { CONTROL_RADIUS } from "../staffScheduleConstants";
 import { useState } from "react";
 
@@ -22,12 +28,12 @@ export default function StaffScheduleMobileScheduleControls({
         sx={{ pb: 1.5 }}
       >
         {canCreateSmena ? (
-          <V2Button
+          <JacoButton
             tone="secondary"
             onClick={onOpenCreateSmena}
             sx={{
               borderRadius: "18px",
-              color: v2Colors.textMuted,
+              color: uiColors.textMuted,
               "&.MuiButton-root": {
                 fontSize: 16,
                 lineHeight: 1.25,
@@ -36,21 +42,21 @@ export default function StaffScheduleMobileScheduleControls({
             }}
           >
             Новая смена
-          </V2Button>
+          </JacoButton>
         ) : null}
 
-        <V2FieldSwitch
+        <JacoFieldSwitch
           label="Календарь"
           checked={!isCalendarHidden}
           onChange={onCalendarVisibilityChange}
         />
 
-        <V2FieldSwitch
+        <JacoFieldSwitch
           label="Цветовые обозначения"
           checked={useColors}
           onChange={onColorModeChange}
           action={
-            <V2IconButton
+            <JacoIconButton
               aria-label="Показать цветовые обозначения"
               onClick={() => setIsColorLegendOpen(true)}
               sx={{
@@ -64,7 +70,7 @@ export default function StaffScheduleMobileScheduleControls({
               }}
             >
               <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
-            </V2IconButton>
+            </JacoIconButton>
           }
         />
       </Stack>

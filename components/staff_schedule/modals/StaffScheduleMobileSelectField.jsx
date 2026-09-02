@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import { Box, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { V2SelectableList, V2SelectableListItem, V2Select } from "@/ui/v2";
+import { JacoSelectableList, JacoSelectableListItem, JacoSelect } from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
@@ -40,7 +40,7 @@ export default function StaffScheduleMobileSelectField({
 
   if (!isMobile) {
     return (
-      <V2Select
+      <JacoSelect
         options={options}
         value={value}
         onChange={onChange}
@@ -119,14 +119,14 @@ export default function StaffScheduleMobileSelectField({
         contentSx={{ px: 0, pt: 1.5, pb: 0 }}
         mobileContentSx={{ px: 0, pt: 1.5, pb: 0 }}
       >
-        <V2SelectableList
+        <JacoSelectableList
           sx={{ borderLeft: "none", borderRight: "none", borderBottom: "none", borderRadius: 0 }}
         >
           {resolvedOptions.map((item) => {
             const isSelected = item.id === normalizedValue;
 
             return (
-              <V2SelectableListItem
+              <JacoSelectableListItem
                 key={item.id}
                 selected={isSelected}
                 onClick={() => handleSelect(item.id)}
@@ -151,10 +151,10 @@ export default function StaffScheduleMobileSelectField({
                   <Typography sx={staffScheduleModalTypography.fieldValue}>{item.name}</Typography>
                   {isSelected ? <CheckRoundedIcon sx={{ color: "#EE2737" }} /> : null}
                 </Stack>
-              </V2SelectableListItem>
+              </JacoSelectableListItem>
             );
           })}
-        </V2SelectableList>
+        </JacoSelectableList>
       </StaffScheduleResponsiveModal>
     </>
   );

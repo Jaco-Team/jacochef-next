@@ -32,7 +32,7 @@ import IconButton from "@mui/material/IconButton";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 
 import Chip from "@mui/material/Chip";
 import Box from "@mui/material/Box";

@@ -11,16 +11,16 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { V2Surface } from "@/ui/v2";
+import { JacoSurface } from "@/design-system/shared/ui";
 
 function ErrorTableCard({ title, children }) {
   return (
-    <V2Surface sx={{ borderRadius: "12px", overflow: "hidden" }}>
+    <JacoSurface sx={{ borderRadius: "12px", overflow: "hidden" }}>
       <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid #ECECEC" }}>
         <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#3C3B3B" }}>{title}</Typography>
       </Box>
       <TableContainer>{children}</TableContainer>
-    </V2Surface>
+    </JacoSurface>
   );
 }
 

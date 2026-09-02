@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Box, Grid } from "@mui/material";
-import { V2Alert, V2Button, V2DatePicker } from "@/ui/v2";
+import { JacoAlert, JacoButton, JacoDatePicker } from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 const EXPORT_TITLES = {
@@ -34,32 +34,32 @@ export default function StaffScheduleExportDialog({
             pb: { xs: 0, sm: 0.5 },
           }}
         >
-          <V2Button
+          <JacoButton
             compact
             tone="success"
             onClick={onDownload}
             sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             Скачать
-          </V2Button>
-          <V2Button
+          </JacoButton>
+          <JacoButton
             compact
             tone="secondary"
             onClick={onClose}
             sx={{ minWidth: 112, borderRadius: "8px" }}
           >
             Отмена
-          </V2Button>
+          </JacoButton>
         </Box>
       }
     >
       {dialog?.error ? (
-        <V2Alert
+        <JacoAlert
           severity="error"
           sx={{ mb: 2 }}
         >
           {dialog.error}
-        </V2Alert>
+        </JacoAlert>
       ) : null}
 
       <Grid
@@ -68,7 +68,7 @@ export default function StaffScheduleExportDialog({
         sx={{ pt: 0.5 }}
       >
         <Grid size={{ xs: 12, sm: 6 }}>
-          <V2DatePicker
+          <JacoDatePicker
             label="Дата от"
             value={dialog?.dateStart ? dayjs(dialog.dateStart) : null}
             minDate={dayjs("2023-05-01")}
@@ -77,7 +77,7 @@ export default function StaffScheduleExportDialog({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <V2DatePicker
+          <JacoDatePicker
             label="Дата до"
             value={dialog?.dateEnd ? dayjs(dialog.dateEnd) : null}
             minDate={dialog?.dateStart ? dayjs(dialog.dateStart) : dayjs("2023-05-01")}

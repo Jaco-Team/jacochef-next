@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useConfirm } from "@/ui/v2";
+import { useJacoConfirm } from "@/design-system/shared/ui";
 import useStaffScheduleApi from "./useStaffScheduleApi";
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
 import {
@@ -28,7 +28,7 @@ import { buildCamErrorModalData, buildOrderErrorModalData } from "./staffSchedul
 
 export default function useStaffSchedulePage() {
   const api = useStaffScheduleApi();
-  const { confirm, ConfirmDialog } = useConfirm();
+  const { confirm, ConfirmDialog } = useJacoConfirm();
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isGraphLoading, setIsGraphLoading] = useState(false);

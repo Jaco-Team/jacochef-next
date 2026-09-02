@@ -271,3 +271,11 @@
 - [x] Проверить Figma MCP путь на Ubuntu/Snap: текущий `figma-linux` не дает Desktop MCP, рабочий путь - remote Figma MCP и маленькие node-level reads.
 - [x] Применить Figma-derived visual normalization к DS tokens и базовым `Jaco*` primitives.
 - [x] Добавить opt-in visual coverage для `staff_schedule` как первый per-module screenshot pattern.
+- [x] Смержить Storybook/MUI v9 foundation в `feat/staff_schedule-41639` с сохранением актуального Staff Schedule поведения.
+- [x] Перевести все Staff Schedule imports с `ui/v2` на `design-system/shared/ui`, `design-system/shared/icons` и DS tokens.
+- [x] Удалить неиспользуемый `ui/v2`: после module migration внешних импортов не осталось.
+- [x] Повторно прогнать официальные MUI Material/X codemods после синхронизации с main: обработаны `staff_schedule`, дизайн-система и все найденные прямые кандидаты; legacy wrapper interfaces сохранены, а их внутренняя реализация использует актуальные `slotProps`/`renderValue` API.
+- [x] Закрыть build-blocking MUI v9 icon aliases (`*Outline` -> актуальные `*Outlined`) во всем runtime-коде и повторно проверить production compilation.
+- [x] Уплотнить desktop-таблицу Staff Schedule: salary columns 68px, selection/action columns 44px; первая половина месяца с 12 salary columns занимает 1854px и помещается в стандартный desktop container.
+- [x] Восстановить наследование `full_month` для доступа к day card согласно существующему unit-контракту.
+- [ ] Снять парные full-page desktop/mobile baseline screenshots Staff Schedule до и после миграции в авторизованной browser session. Текущая Chrome DevTools session не наследует пользовательскую авторизацию, поэтому screenshot-run отложен без подмены credentials.

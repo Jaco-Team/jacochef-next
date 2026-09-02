@@ -131,7 +131,6 @@ export default function StaffScheduleAccessTester({ page }) {
       >
         {open ? <Close /> : <Edit />}
       </IconButton>
-
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -265,12 +264,14 @@ export default function StaffScheduleAccessTester({ page }) {
                               <TextField
                                 type="number"
                                 value={access[accessKey]}
-                                inputProps={{ min: 0, max: 1 }}
                                 helperText={isMissing ? "нет ключа" : " "}
                                 onChange={(event) =>
                                   setAccessValue(rule.key, action, event.target.value)
                                 }
                                 sx={{ width: 86 }}
+                                slotProps={{
+                                  htmlInput: { min: 0, max: 1 },
+                                }}
                               />
                             </TableCell>
                           );

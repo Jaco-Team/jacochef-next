@@ -1,5 +1,5 @@
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Button } from "@/ui/v2";
+import { JacoButton } from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "../modals/StaffScheduleResponsiveModal";
 import { getHourPresetByType } from "../staffScheduleHourPresets";
 
@@ -118,12 +118,12 @@ export default function StaffScheduleColorLegendModal({ open, onClose }) {
       maxWidth="sm"
       actions={
         <Box sx={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
-          <V2Button
+          <JacoButton
             compact
             onClick={onClose}
           >
             Понятно
-          </V2Button>
+          </JacoButton>
         </Box>
       }
     >

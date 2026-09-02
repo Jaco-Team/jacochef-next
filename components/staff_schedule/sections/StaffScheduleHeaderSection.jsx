@@ -4,7 +4,12 @@ import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Grid from "@mui/material/Grid";
 import { Box } from "@mui/material";
-import { V2Button, V2IconButton, V2SegmentedTabs, V2Select } from "@/ui/v2";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoSegmentedTabs,
+  JacoSelect,
+} from "@/design-system/shared/ui";
 
 const secondaryActionButtonSx = {
   minHeight: 44,
@@ -32,31 +37,31 @@ function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
         flexWrap: "nowrap",
       }}
     >
-      <V2Button
+      <JacoButton
         startIcon={<RefreshIcon />}
         onClick={page.handleReload}
         disabled={page.isGraphLoading}
         sx={{ minWidth: 126, fontWeight: 500 }}
       >
         Обновить
-      </V2Button>
+      </JacoButton>
 
       {canExportWorkSchedule ? (
         <>
-          <V2IconButton
+          <JacoIconButton
             onClick={() => page.handleOpenExportDialog("ws")}
             aria-label="Распечатать график работ"
             sx={softActionSx}
           >
             <PrintOutlinedIcon fontSize="small" />
-          </V2IconButton>
-          <V2IconButton
+          </JacoIconButton>
+          <JacoIconButton
             onClick={() => page.handleOpenExportDialog("ws")}
             aria-label="Скачать график работ"
             sx={softActionSx}
           >
             <FileDownloadOutlinedIcon fontSize="small" />
-          </V2IconButton>
+          </JacoIconButton>
         </>
       ) : null}
     </Box>
@@ -71,7 +76,7 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
     >
       {canExportHealthJournal ? (
         <Grid size={{ xs: 12, sm: 6 }}>
-          <V2Button
+          <JacoButton
             fullWidth
             tone="secondary"
             onClick={() => page.handleOpenExportDialog("hj")}
@@ -79,12 +84,12 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
             sx={secondaryActionButtonSx}
           >
             Журнал здоровья
-          </V2Button>
+          </JacoButton>
         </Grid>
       ) : null}
 
       <Grid size={canExportHealthJournal ? { xs: 12, sm: 6 } : 12}>
-        <V2Button
+        <JacoButton
           fullWidth
           startIcon={<RefreshIcon />}
           onClick={page.handleReload}
@@ -92,7 +97,7 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
           sx={{ minHeight: 44, fontWeight: 500 }}
         >
           Обновить
-        </V2Button>
+        </JacoButton>
       </Grid>
     </Grid>
   );
@@ -122,7 +127,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         sx={{ mb: 1.5 }}
       >
         <Grid size={{ xs: 12, md: 4 }}>
-          <V2Select
+          <JacoSelect
             allowNone={false}
             options={page.points}
             value={page.pointId}
@@ -132,7 +137,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <V2Select
+          <JacoSelect
             allowNone={false}
             options={page.months}
             value={page.monthId}
@@ -157,7 +162,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         </Grid>
       </Grid>
 
-      <V2SegmentedTabs
+      <JacoSegmentedTabs
         value={page.selectedPart}
         onChange={(_, nextValue) => page.setSelectedPart(nextValue)}
         items={page.view.periodTabs.map((tab, index) => ({
@@ -178,7 +183,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         spacing={1.25}
       >
         <Grid size={{ xs: 12, md: canExportHealthJournal ? 8 : 12 }}>
-          <V2Select
+          <JacoSelect
             allowNone={false}
             options={page.view.shiftOptions}
             value={page.selectedShiftId}
@@ -189,7 +194,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
 
         {!isMobile && canExportHealthJournal ? (
           <Grid size={{ xs: 12, md: 4 }}>
-            <V2Button
+            <JacoButton
               fullWidth
               tone="secondary"
               onClick={() => page.handleOpenExportDialog("hj")}
@@ -197,7 +202,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
               sx={secondaryActionButtonSx}
             >
               Журнал здоровья
-            </V2Button>
+            </JacoButton>
           </Grid>
         ) : null}
       </Grid>

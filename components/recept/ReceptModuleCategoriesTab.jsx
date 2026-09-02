@@ -14,7 +14,7 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 
 const actionButtonSx = {

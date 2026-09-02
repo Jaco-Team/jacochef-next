@@ -14,9 +14,9 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import SmallFont from "@/ui/SmallFont";
-import { SummarySectionIcon } from "@/ui/icons";
-import { V2Button, V2Checkbox, V2Surface, v2TableColors } from "@/ui/v2";
+import { SmallFont } from "@/design-system/shared/ui";
+import { SummarySectionIcon } from "@/design-system/shared/icons";
+import { JacoButton, JacoCheckbox, JacoSurface, uiTableColors } from "@/design-system/shared/ui";
 import { CONTROL_RADIUS, DAY_COLUMN_WIDTH } from "../staffScheduleConstants";
 import { getRowBaseColor, getSummaryCellValue, toArray } from "../staffScheduleHelpers";
 
@@ -44,7 +44,7 @@ const mobileActionCellSx = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  border: `1px solid ${v2TableColors.bulkActionBorder}`,
+  border: `1px solid ${uiTableColors.bulkActionBorder}`,
   borderRadius: "8px",
 };
 
@@ -105,11 +105,11 @@ function MobileScheduleRow({
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
   const rowSurfaceColor = isSelected
-    ? v2TableColors.rowSelected
+    ? uiTableColors.rowSelected
     : row?.color
-      ? v2TableColors.rowMuted
+      ? uiTableColors.rowMuted
       : "#ffffff";
-  const employeeCellColor = isSelected ? v2TableColors.rowSelected : baseColors.backgroundColor;
+  const employeeCellColor = isSelected ? uiTableColors.rowSelected : baseColors.backgroundColor;
   const employeeMetaColor =
     baseColors.color === "#ffffff" ? "rgba(255, 255, 255, 0.82)" : "#666666";
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
@@ -135,7 +135,7 @@ function MobileScheduleRow({
             justifyContent: "center",
           }}
         >
-          <V2Checkbox
+          <JacoCheckbox
             checked={isSelected}
             onChange={() => onToggleRowSelection(rowId)}
             disabled={!rowId || String(data?.smena_id ?? "") === "-1"}
@@ -220,7 +220,7 @@ function MobileScheduleRow({
             fontSize: 11,
             backgroundColor:
               column.key === "test_all_price" && column.accessKey === "premia"
-                ? v2Colors.primary
+                ? uiColors.primary
                 : rowSurfaceColor,
             color:
               column.key === "test_all_price" && column.accessKey === "premia"
@@ -281,7 +281,7 @@ function MobileShiftCard({
           gap: 1,
           px: 1,
           py: 0.75,
-          backgroundColor: v2TableColors.shiftHeader,
+          backgroundColor: uiTableColors.shiftHeader,
           borderBottom: collapsed ? "none" : "1px solid #ECECEC",
         }}
       >
@@ -363,8 +363,8 @@ function MobileShiftCard({
                         cursor: showFastActions && hasBulkSelection ? "pointer" : "default",
                         backgroundColor:
                           showFastActions && hasBulkSelection
-                            ? v2TableColors.bulkActionActive
-                            : v2TableColors.bulkActionInactive,
+                            ? uiTableColors.bulkActionActive
+                            : uiTableColors.bulkActionInactive,
                         opacity: showFastActions ? 1 : 0.4,
                       }}
                     >
@@ -399,7 +399,7 @@ function MobileShiftCard({
                           minWidth: DAY_COLUMN_WIDTH,
                           backgroundColor:
                             day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                              ? v2TableColors.weekend
+                              ? uiTableColors.weekend
                               : "#FFFFFF",
                           color: "#666666",
                           py: 0.7,
@@ -554,7 +554,7 @@ function MobileSummaryCard({
           gap: 1,
           px: 1,
           py: 0.9,
-          backgroundColor: v2TableColors.sectionHeader,
+          backgroundColor: uiTableColors.sectionHeader,
           color: "#FFFFFF",
         }}
       >
@@ -593,7 +593,7 @@ function MobileSummaryCard({
                     py: 0.7,
                     backgroundColor:
                       item?.day === "Пт" || item?.day === "Сб" || item?.day === "Вс"
-                        ? v2TableColors.weekend
+                        ? uiTableColors.weekend
                         : "#FFFFFF",
                     color: "#666666",
                   }}
@@ -731,7 +731,7 @@ function MobileSelectionBar({ selectedCount, onClearSelection, onOpenBulkFastAct
         {`Выбрано: ${selectedCount}`}
       </Typography>
 
-      <V2Button
+      <JacoButton
         tone="secondary"
         onClick={onClearSelection}
         sx={{
@@ -751,9 +751,9 @@ function MobileSelectionBar({ selectedCount, onClearSelection, onOpenBulkFastAct
         }}
       >
         Снять
-      </V2Button>
+      </JacoButton>
 
-      <V2Button
+      <JacoButton
         onClick={onOpenBulkFastActions}
         startIcon={<SwapHorizRoundedIcon sx={{ fontSize: 18 }} />}
         sx={{
@@ -766,7 +766,7 @@ function MobileSelectionBar({ selectedCount, onClearSelection, onOpenBulkFastAct
         }}
       >
         Редактирование
-      </V2Button>
+      </JacoButton>
     </Box>
   );
 }
@@ -813,7 +813,7 @@ export default function StaffScheduleMobileTableSection({
 
   return (
     <>
-      <V2Surface
+      <JacoSurface
         sx={{
           borderRadius: CONTROL_RADIUS,
           overflow: "hidden",
@@ -878,7 +878,7 @@ export default function StaffScheduleMobileTableSection({
             ) : null}
           </Stack>
         </Stack>
-      </V2Surface>
+      </JacoSurface>
 
       {showFastActions ? (
         <MobileSelectionBar

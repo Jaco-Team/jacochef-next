@@ -17,8 +17,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { AddTimeIcon, HistoryFileIcon } from "@/ui/icons";
-import { V2Alert, V2Button, V2IconButton, useConfirm } from "@/ui/v2";
+import { AddTimeIcon, HistoryFileIcon } from "@/design-system/shared/icons";
+import { JacoAlert, JacoButton, JacoIconButton, useJacoConfirm } from "@/design-system/shared/ui";
 import { formatHourRangeLabel } from "../staffScheduleHourPresets";
 import { buildDaySavePayload } from "../staffScheduleModalCore.mjs";
 import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
@@ -116,7 +116,7 @@ function DayPersonHeader({ data, onHistoryOpen }) {
             Бонус: {data?.bonusValue || 0}
           </Typography>
         </Stack>
-        <V2Button
+        <JacoButton
           compact
           tone="secondary"
           startIcon={<HistoryFileIcon sx={{ fontSize: "16px !important" }} />}
@@ -141,7 +141,7 @@ function DayPersonHeader({ data, onHistoryOpen }) {
           }}
         >
           История
-        </V2Button>
+        </JacoButton>
       </Stack>
     </Stack>
   );
@@ -215,26 +215,28 @@ function TemperatureField({ value, onChange, disabled = false }) {
             px: 1,
           },
         }}
-        InputProps={{
-          endAdornment: value ? (
-            <IconButton
-              size="small"
-              onClick={() => onChange("")}
-              disabled={disabled}
-              sx={{ color: "#BABABA" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          ) : (
-            <IconButton
-              size="small"
-              onClick={() => setOpen((prev) => !prev)}
-              disabled={disabled}
-              sx={{ color: "#A6A6A6" }}
-            >
-              <KeyboardArrowDownRoundedIcon />
-            </IconButton>
-          ),
+        slotProps={{
+          input: {
+            endAdornment: value ? (
+              <IconButton
+                size="small"
+                onClick={() => onChange("")}
+                disabled={disabled}
+                sx={{ color: "#BABABA" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            ) : (
+              <IconButton
+                size="small"
+                onClick={() => setOpen((prev) => !prev)}
+                disabled={disabled}
+                sx={{ color: "#A6A6A6" }}
+              >
+                <KeyboardArrowDownRoundedIcon />
+              </IconButton>
+            ),
+          },
         }}
       />
       <Popper
@@ -313,7 +315,7 @@ function TimeRow({ item, onRemove }) {
           {formatHourRangeLabel(item.time_start, item.time_end)}
         </Typography>
       </Stack>
-      <V2IconButton
+      <JacoIconButton
         aria-label="Удалить время"
         onClick={onRemove}
         disabled={!onRemove}
@@ -331,7 +333,7 @@ function TimeRow({ item, onRemove }) {
         }}
       >
         <CloseIcon />
-      </V2IconButton>
+      </JacoIconButton>
     </Box>
   );
 }
@@ -429,7 +431,7 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
           spacing={1.5}
           sx={{ width: "100%" }}
         >
-          <V2Button
+          <JacoButton
             compact
             tone="secondary"
             onClick={onClose}
@@ -442,8 +444,8 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
             }}
           >
             Отменить
-          </V2Button>
-          <V2Button
+          </JacoButton>
+          <JacoButton
             compact
             tone="primary"
             onClick={onSubmit}
@@ -457,7 +459,7 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
             }}
           >
             Добавить
-          </V2Button>
+          </JacoButton>
         </Stack>
       }
     >
@@ -531,7 +533,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const [newTimeStart, setNewTimeStart] = useState("");
   const [newTimeEnd, setNewTimeEnd] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const { confirm, withConfirm, ConfirmDialog } = useConfirm();
+  const { confirm, withConfirm, ConfirmDialog } = useJacoConfirm();
 
   useEffect(() => {
     if (!modal.open) {
@@ -677,7 +679,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         spacing={1.5}
         sx={{ width: "100%" }}
       >
-        <V2Button
+        <JacoButton
           compact
           tone="secondary"
           onClick={handleRequestClose}
@@ -690,8 +692,8 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
           }}
         >
           Отменить
-        </V2Button>
-        <V2Button
+        </JacoButton>
+        <JacoButton
           compact
           tone="primary"
           onClick={handleSave}
@@ -699,7 +701,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
           sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
         >
           Сохранить
-        </V2Button>
+        </JacoButton>
       </Stack>
     );
 
@@ -716,8 +718,8 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         paperSx={{ maxWidth: 800 }}
       >
         <Stack spacing={2.5}>
-          {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
-          {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
+          {modal.error ? <JacoAlert severity="error">{modal.error}</JacoAlert> : null}
+          {saveError ? <JacoAlert severity="error">{saveError}</JacoAlert> : null}
 
           {hasData ? (
             <>
@@ -811,7 +813,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                     </Stack>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <V2Button
+                    <JacoButton
                       fullWidth
                       tone="secondary"
                       startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
@@ -829,7 +831,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       }}
                     >
                       Добавить время
-                    </V2Button>
+                    </JacoButton>
                   </Grid>
                 </Grid>
               </Stack>

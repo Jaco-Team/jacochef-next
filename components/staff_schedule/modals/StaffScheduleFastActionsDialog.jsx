@@ -3,7 +3,12 @@ import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRound
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { Box, Stack, Typography } from "@mui/material";
-import { V2Alert, V2Button, V2SegmentedTabs, useConfirm } from "@/ui/v2";
+import {
+  JacoAlert,
+  JacoButton,
+  JacoSegmentedTabs,
+  useJacoConfirm,
+} from "@/design-system/shared/ui";
 import { createStaffScheduleAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -51,7 +56,7 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
         </Typography>
       </Box>
       {onAction ? (
-        <V2Button
+        <JacoButton
           compact
           tone="secondary"
           size="small"
@@ -71,7 +76,7 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
           }}
         >
           {actionLabel}
-        </V2Button>
+        </JacoButton>
       ) : null}
     </Box>
   );
@@ -155,7 +160,7 @@ function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDo
       spacing={1.5}
       sx={{ pt: 2 }}
     >
-      <V2Button
+      <JacoButton
         compact
         tone="secondary"
         onClick={onCancel}
@@ -168,8 +173,8 @@ function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDo
         }}
       >
         {cancelLabel}
-      </V2Button>
-      <V2Button
+      </JacoButton>
+      <JacoButton
         compact
         onClick={onDone}
         disabled={doneDisabled}
@@ -186,7 +191,7 @@ function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDo
         }}
       >
         {doneLabel}
-      </V2Button>
+      </JacoButton>
     </Stack>
   );
 }
@@ -207,7 +212,7 @@ function SubScreenPanel({ title, onBack, children, actions }) {
           spacing={1.5}
           alignItems="center"
         >
-          <V2Button
+          <JacoButton
             aria-label="Назад"
             tone="secondary"
             onClick={onBack}
@@ -224,7 +229,7 @@ function SubScreenPanel({ title, onBack, children, actions }) {
             }}
           >
             <ArrowBackIosNewRoundedIcon />
-          </V2Button>
+          </JacoButton>
           <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#666666" }}>{title}</Typography>
         </Stack>
         {children}
@@ -236,7 +241,7 @@ function SubScreenPanel({ title, onBack, children, actions }) {
 
 function EditStepSegmentedTabs({ sx, tabSx, ...props }) {
   return (
-    <V2SegmentedTabs
+    <JacoSegmentedTabs
       sx={{
         backgroundColor: "#E5E5E5",
         borderRadius: "12px",
@@ -376,7 +381,7 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingPointCity, setPendingPointCity] = useState("");
   const [isBulkUsersOpen, setIsBulkUsersOpen] = useState(false);
   const [pendingUsers, setPendingUsers] = useState([]);
-  const { confirm, ConfirmDialog } = useConfirm();
+  const { confirm, ConfirmDialog } = useJacoConfirm();
 
   useEffect(() => {
     if (!state?.open) {
@@ -524,12 +529,12 @@ export default function StaffScheduleFastActionsDialog({
         </Typography>
 
         {saveError ? (
-          <V2Alert
+          <JacoAlert
             severity="error"
             sx={{ mb: 1.5 }}
           >
             {saveError}
-          </V2Alert>
+          </JacoAlert>
         ) : null}
 
         {canMonth || canWeek ? (

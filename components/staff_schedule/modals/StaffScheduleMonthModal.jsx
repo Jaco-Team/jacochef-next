@@ -7,7 +7,12 @@ import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-import { V2Alert, V2Button, V2MonthGridCalendar, useConfirm } from "@/ui/v2";
+import {
+  JacoAlert,
+  JacoButton,
+  JacoMonthGridCalendar,
+  useJacoConfirm,
+} from "@/design-system/shared/ui";
 import { toNumber } from "../staffScheduleHelpers";
 import {
   buildHourSlotId,
@@ -341,15 +346,15 @@ function CustomTimeDialog({ open, value, onChange, onClose, onSubmit }) {
           spacing={1.25}
           sx={{ width: "100%" }}
         >
-          <V2Button
+          <JacoButton
             compact
             tone="secondary"
             onClick={onClose}
             sx={{ minHeight: 44, minWidth: 96 }}
           >
             Сброс
-          </V2Button>
-          <V2Button
+          </JacoButton>
+          <JacoButton
             compact
             tone="primary"
             onClick={onSubmit}
@@ -358,7 +363,7 @@ function CustomTimeDialog({ open, value, onChange, onClose, onSubmit }) {
             sx={{ minHeight: 44, minWidth: 132 }}
           >
             Добавить
-          </V2Button>
+          </JacoButton>
         </Stack>
       }
     >
@@ -512,22 +517,22 @@ function AssignmentDialog({
           spacing={1.25}
           sx={{ width: "100%" }}
         >
-          <V2Button
+          <JacoButton
             compact
             tone="secondary"
             onClick={onClose}
             sx={{ minHeight: 44, minWidth: 106 }}
           >
             Отменить
-          </V2Button>
-          <V2Button
+          </JacoButton>
+          <JacoButton
             compact
             tone="primary"
             onClick={onSave}
             sx={{ minHeight: 44, minWidth: 114 }}
           >
             Сохранить
-          </V2Button>
+          </JacoButton>
         </Stack>
       }
     >
@@ -572,7 +577,7 @@ function AssignmentDialog({
                     maxWidth={slot.isCustom ? customChipMaxWidth : "none"}
                   />
                 ))}
-                <V2Button
+                <JacoButton
                   tone="secondary"
                   startIcon={
                     addButtonCollapsed ? undefined : <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -636,7 +641,7 @@ function AssignmentDialog({
                   >
                     + Часы
                   </Box>
-                </V2Button>
+                </JacoButton>
               </Box>
             </Stack>
           </Box>
@@ -646,7 +651,7 @@ function AssignmentDialog({
               spacing={0}
               sx={{ minWidth: 0, alignItems: "center" }}
             >
-              <V2MonthGridCalendar
+              <JacoMonthGridCalendar
                 monthId={monthValue}
                 title="Часы в календаре"
                 previousDisabled
@@ -699,7 +704,7 @@ function AssignmentDialog({
 export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { withConfirm, ConfirmDialog } = useConfirm();
+  const { withConfirm, ConfirmDialog } = useJacoConfirm();
   const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
@@ -931,8 +936,8 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
         contentSx={{ px: 2.5, pt: 3, pb: 2 }}
       >
         <Stack spacing={2.25}>
-          {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
-          {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
+          {modal.error ? <JacoAlert severity="error">{modal.error}</JacoAlert> : null}
+          {saveError ? <JacoAlert severity="error">{saveError}</JacoAlert> : null}
 
           {!modal.loading && modal.data ? (
             <>
@@ -1002,7 +1007,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                 direction="row"
                 justifyContent="flex-end"
               >
-                <V2Button
+                <JacoButton
                   tone="primary"
                   startIcon={<CheckRoundedIcon sx={{ fontSize: 18 }} />}
                   onClick={openAssignmentDialog}
@@ -1016,7 +1021,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave }) {
                   }}
                 >
                   Заполнить часы
-                </V2Button>
+                </JacoButton>
               </Stack>
             </>
           ) : null}

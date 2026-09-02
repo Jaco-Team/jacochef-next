@@ -19,16 +19,18 @@ export default function MyDrawer({
       onOpen={() => {}}
       disableDiscovery
       disableSwipeToOpen
-      PaperProps={{
-        sx: {
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          maxHeight: "88vh",
-          overflow: "hidden",
-          ...paperSx,
+      {...rest}
+      slotProps={{
+        paper: {
+          sx: {
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            maxHeight: "88vh",
+            overflow: "hidden",
+            ...paperSx,
+          },
         },
       }}
-      {...rest}
     >
       <Box
         sx={{

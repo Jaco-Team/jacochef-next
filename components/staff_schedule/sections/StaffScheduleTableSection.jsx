@@ -16,17 +16,17 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import SmallFont from "@/ui/SmallFont";
-import { SummarySectionIcon } from "@/ui/icons";
+import { SmallFont } from "@/design-system/shared/ui";
+import { SummarySectionIcon } from "@/design-system/shared/icons";
 import {
-  V2Button,
-  V2Checkbox,
-  V2FieldSwitch,
-  V2IconButton,
-  V2Surface,
-  v2Colors,
-  v2TableColors,
-} from "@/ui/v2";
+  JacoButton,
+  JacoCheckbox,
+  JacoFieldSwitch,
+  JacoIconButton,
+  JacoSurface,
+  uiColors,
+  uiTableColors,
+} from "@/design-system/shared/ui";
 import StaffScheduleColorLegendModal from "./StaffScheduleColorLegendModal";
 import {
   ACTION_COLUMN_WIDTH,
@@ -107,15 +107,15 @@ function ScheduleTableHeaderRow({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: `1px solid ${v2TableColors.bulkActionBorder}`,
+              border: `1px solid ${uiTableColors.bulkActionBorder}`,
               borderRadius: "4px",
               cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
               pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
               opacity: hasBulkSelection && showFastActions ? 1 : 0.3,
               backgroundColor:
                 hasBulkSelection && showFastActions
-                  ? v2TableColors.bulkActionActive
-                  : v2TableColors.bulkActionInactive,
+                  ? uiTableColors.bulkActionActive
+                  : uiTableColors.bulkActionInactive,
             }}
           >
             <SwapHorizRoundedIcon
@@ -170,7 +170,7 @@ function ScheduleTableHeaderRow({
                 minWidth: DAY_COLUMN_WIDTH,
                 backgroundColor:
                   day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                    ? v2TableColors.weekend
+                    ? uiTableColors.weekend
                     : "#ffffff",
                 fontWeight: 500,
                 color: "#666666",
@@ -270,14 +270,14 @@ function ScheduleRow({
     : { backgroundColor: "#ffffff", color: "#000000" };
   const isFullRowHighlighted = isSelected || hoverMode === "row";
   const rowSurfaceColor = isFullRowHighlighted
-    ? v2TableColors.rowSelected
+    ? uiTableColors.rowSelected
     : row?.color
-      ? v2TableColors.rowMuted
-      : v2Colors.surface;
+      ? uiTableColors.rowMuted
+      : uiColors.surface;
   const employeeCellColor = isFullRowHighlighted
-    ? v2TableColors.rowSelected
+    ? uiTableColors.rowSelected
     : hoverMode === "name"
-      ? v2TableColors.nameHover
+      ? uiTableColors.nameHover
       : baseColors.backgroundColor;
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
   const canUseFastActions =
@@ -297,7 +297,7 @@ function ScheduleRow({
         onMouseLeave={() => setHoverMode(null)}
       >
         <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <V2Checkbox
+          <JacoCheckbox
             checked={isSelected}
             onChange={() => onToggleRowSelection(rowId)}
             disabled={!rowId || String(data?.smena_id ?? "") === "-1"}
@@ -459,16 +459,16 @@ function ScheduleRow({
                 px: 0.75,
                 cursor: isClickable ? "pointer" : "default",
                 backgroundColor: isPremiumColumn
-                  ? v2Colors.primary
+                  ? uiColors.primary
                   : isFullRowHighlighted || !canEditDirBonus
                     ? rowSurfaceColor
-                    : v2TableColors.rowHover,
+                    : uiTableColors.rowHover,
                 color: isPremiumColumn ? "#FFFFFF" : undefined,
                 fontWeight: isPremiumColumn ? 700 : undefined,
                 "&:hover": isClickable
                   ? {
                       backgroundColor: isPremiumColumn
-                        ? v2Colors.primaryHover
+                        ? uiColors.primaryHover
                         : isFullRowHighlighted
                           ? rowSurfaceColor
                           : canEditDirBonus
@@ -499,7 +499,7 @@ function ShiftHeaderRow({
   canEditSmena,
 }) {
   const handleToggle = () => onToggle(shiftId);
-  const headerBg = v2TableColors.shiftHeader;
+  const headerBg = uiTableColors.shiftHeader;
 
   return (
     <TableRow>
@@ -968,7 +968,7 @@ export default function StaffScheduleTableSection({
   }
 
   return (
-    <V2Surface
+    <JacoSurface
       sx={{
         borderRadius: CONTROL_RADIUS,
         overflow: "hidden",
@@ -999,13 +999,13 @@ export default function StaffScheduleTableSection({
         >
           {canCreateSmena ? (
             <Box sx={{ minWidth: toolbarControlMinWidth }}>
-              <V2Button
+              <JacoButton
                 fullWidth
                 tone="secondary"
                 onClick={onOpenCreateSmena}
                 sx={{
                   borderRadius: "18px",
-                  color: v2Colors.textMuted,
+                  color: uiColors.textMuted,
                   "&.MuiButton-root": {
                     fontSize: 16,
                     lineHeight: 1.25,
@@ -1014,12 +1014,12 @@ export default function StaffScheduleTableSection({
                 }}
               >
                 Новая смена
-              </V2Button>
+              </JacoButton>
             </Box>
           ) : null}
 
           <Box sx={{ minWidth: toolbarControlMinWidth }}>
-            <V2FieldSwitch
+            <JacoFieldSwitch
               label="Календарь"
               checked={!isCalendarHidden}
               onChange={onCalendarVisibilityChange}
@@ -1027,12 +1027,12 @@ export default function StaffScheduleTableSection({
           </Box>
 
           <Box sx={{ minWidth: toolbarControlMinWidth }}>
-            <V2FieldSwitch
+            <JacoFieldSwitch
               label="Цветовые обозначения"
               checked={useColors}
               onChange={onColorModeChange}
               action={
-                <V2IconButton
+                <JacoIconButton
                   aria-label="Показать цветовые обозначения"
                   onClick={() => setIsColorLegendOpen(true)}
                   sx={{
@@ -1046,7 +1046,7 @@ export default function StaffScheduleTableSection({
                   }}
                 >
                   <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
-                </V2IconButton>
+                </JacoIconButton>
               }
             />
           </Box>
@@ -1203,7 +1203,7 @@ export default function StaffScheduleTableSection({
                 <TableCell
                   colSpan={colSpan}
                   sx={{
-                    backgroundColor: v2TableColors.sectionHeader,
+                    backgroundColor: uiTableColors.sectionHeader,
                     height: 60,
                     py: 0.75,
                     px: 1.5,
@@ -1230,7 +1230,7 @@ export default function StaffScheduleTableSection({
 
                     {/*
                     {canOpenDirectorLevel ? (
-                      <V2Button
+                      <JacoButton
                         compact
                         tone="secondary"
                         onClick={() => onOpenSummaryAction?.(null, "dir_lv")}
@@ -1251,7 +1251,7 @@ export default function StaffScheduleTableSection({
                         }}
                       >
                         {`Уровень директора: ${directorLevel ?? 0}`}
-                      </V2Button>
+                      </JacoButton>
                     ) : null}
                     */}
                   </Stack>
@@ -1339,6 +1339,6 @@ export default function StaffScheduleTableSection({
         open={isColorLegendOpen}
         onClose={() => setIsColorLegendOpen(false)}
       />
-    </V2Surface>
+    </JacoSurface>
   );
 }

@@ -1,5 +1,5 @@
 import { Box, Grid, useMediaQuery, useTheme } from "@mui/material";
-import { V2Alert, V2BackdropLoader } from "@/ui/v2";
+import { JacoAlert, JacoBackdropLoader } from "@/design-system/shared/ui";
 import StaffScheduleDayModal from "./modals/StaffScheduleDayModal";
 import StaffScheduleExportDialog from "./modals/StaffScheduleExportDialog";
 import StaffScheduleFastActionsDialog from "./modals/StaffScheduleFastActionsDialog";
@@ -25,7 +25,7 @@ export default function StaffSchedulePage() {
       className="v2-module"
       sx={{ pb: PAGE_BOTTOM_PADDING, fontSize: 14 }}
     >
-      <V2BackdropLoader open={page.isLoading} />
+      <JacoBackdropLoader open={page.isLoading} />
 
       <Grid
         container
@@ -48,7 +48,7 @@ export default function StaffSchedulePage() {
 
         {page.error ? (
           <Grid size={12}>
-            <V2Alert severity="error">{page.error}</V2Alert>
+            <JacoAlert severity="error">{page.error}</JacoAlert>
           </Grid>
         ) : null}
 

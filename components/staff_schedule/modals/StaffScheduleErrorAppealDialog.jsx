@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Grid, Link, Stack, Typography } from "@mui/material";
-import { V2Alert, V2Button, V2TextInput } from "@/ui/v2";
+import { JacoAlert, JacoButton, JacoTextInput } from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
@@ -33,33 +33,33 @@ export default function StaffScheduleErrorAppealDialog({ modal, onClose, onSubmi
       actions={
         canSubmit || modal?.loading ? (
           <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-            <V2Button
+            <JacoButton
               compact
               tone="secondary"
               onClick={onClose}
               sx={{ minWidth: 112 }}
             >
               Отмена
-            </V2Button>
-            <V2Button
+            </JacoButton>
+            <JacoButton
               compact
               onClick={() => onSubmit?.({ type: data?.type, appealText })}
               disabled={!canSubmit}
               sx={{ minWidth: 128 }}
             >
               Обжаловать
-            </V2Button>
+            </JacoButton>
           </Box>
         ) : null
       }
     >
       {modal?.error ? (
-        <V2Alert
+        <JacoAlert
           severity="error"
           sx={{ mb: 2 }}
         >
           {modal.error}
-        </V2Alert>
+        </JacoAlert>
       ) : null}
 
       {data ? (
@@ -134,7 +134,7 @@ export default function StaffScheduleErrorAppealDialog({ modal, onClose, onSubmi
 
           {data?.canEdit ? (
             <Grid size={{ xs: 12, sm: 6 }}>
-              <V2TextInput
+              <JacoTextInput
                 label="Причина обжалования"
                 multiline
                 maxRows={5}

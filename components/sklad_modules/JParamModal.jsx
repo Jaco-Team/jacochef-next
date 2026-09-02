@@ -234,7 +234,7 @@ export default function JParamModal({
                         {...params}
                         slotProps={{
                           input: {
-                            ...params.InputProps,
+                            ...params.slotProps?.input,
                             endAdornment: (
                               <>
                                 {isLoadingCategories ? (
@@ -243,7 +243,7 @@ export default function JParamModal({
                                     size={20}
                                   />
                                 ) : null}
-                                {params.InputProps.endAdornment}
+                                {params.slotProps?.input?.endAdornment}
                               </>
                             ),
                           },

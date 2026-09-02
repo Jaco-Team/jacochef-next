@@ -49,8 +49,8 @@ import MyAlert from "@/ui/MyAlert";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import {
   InfoOutlined,
-  ChatBubbleOutline,
-  StarOutline,
+  ChatBubbleOutlined,
+  StarOutlined,
   ThumbDownOutlined,
   ThumbUpOutlined,
 } from "@mui/icons-material";
@@ -1676,7 +1676,7 @@ function FeedbackPage() {
                         >
                           Всего отзывов
                         </Typography>
-                        <ChatBubbleOutline sx={{ color: "text.secondary", fontSize: 20 }} />
+                        <ChatBubbleOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
 
                       <Typography
@@ -1736,7 +1736,7 @@ function FeedbackPage() {
                         >
                           Средняя оценка
                         </Typography>
-                        <StarOutline sx={{ color: "text.secondary", fontSize: 20 }} />
+                        <StarOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
 
                       <Typography

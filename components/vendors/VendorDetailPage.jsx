@@ -24,7 +24,7 @@ import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import SummarizeOutlinedIcon from "@mui/icons-material/SummarizeOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import { useConfirm } from "@/src/hooks/useConfirm";
 import MyAlert from "@/ui/MyAlert";
 import TabPanel from "@/ui/TabPanel/TabPanel";

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Divider, Stack, Typography } from "@mui/material";
 import {
-  V2Alert,
-  V2Button,
-  V2SelectableList,
-  V2SelectableListItem,
-  V2TextInput,
-  useConfirm,
-} from "@/ui/v2";
+  JacoAlert,
+  JacoButton,
+  JacoSelectableList,
+  JacoSelectableListItem,
+  JacoTextInput,
+  useJacoConfirm,
+} from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 
 function buildDraft(data) {
@@ -28,7 +28,7 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
   const [draft, setDraft] = useState(() => buildDraft(modal.data));
   const initialDraftRef = useRef(buildDraft(modal.data));
   const [saveError, setSaveError] = useState("");
-  const { confirm, ConfirmDialog } = useConfirm();
+  const { confirm, ConfirmDialog } = useJacoConfirm();
 
   useEffect(() => {
     if (!modal.open) {
@@ -104,20 +104,20 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
         spacing={1.5}
         sx={{ width: "100%", pt: 1 }}
       >
-        <V2Button
+        <JacoButton
           compact
           tone="success"
           onClick={handleSave}
         >
           Сохранить
-        </V2Button>
-        <V2Button
+        </JacoButton>
+        <JacoButton
           compact
           tone="danger"
           onClick={handleRequestClose}
         >
           Отмена
-        </V2Button>
+        </JacoButton>
       </Stack>
     );
 
@@ -131,12 +131,12 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
         actions={actions}
       >
         <Stack spacing={2}>
-          {modal.error ? <V2Alert severity="error">{modal.error}</V2Alert> : null}
-          {saveError ? <V2Alert severity="error">{saveError}</V2Alert> : null}
+          {modal.error ? <JacoAlert severity="error">{modal.error}</JacoAlert> : null}
+          {saveError ? <JacoAlert severity="error">{saveError}</JacoAlert> : null}
 
           {!modal.loading && modal.data ? (
             <>
-              <V2TextInput
+              <JacoTextInput
                 label="Название смены"
                 value={draft.name}
                 onChange={(event) =>
@@ -147,9 +147,9 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
                 }
               />
 
-              <V2SelectableList>
+              <JacoSelectableList>
                 {draft.users.map((item) => (
-                  <V2SelectableListItem
+                  <JacoSelectableListItem
                     key={item.id}
                     label={item.name || "Без имени"}
                     selected={item.is_my === 1}
@@ -159,7 +159,7 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
                 {modal.mode === "edit" && onRequestDelete ? (
                   <>
                     <Divider />
-                    <V2SelectableListItem
+                    <JacoSelectableListItem
                       label="Удалить смену"
                       destructive
                       selected
@@ -167,7 +167,7 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
                     />
                   </>
                 ) : null}
-              </V2SelectableList>
+              </JacoSelectableList>
             </>
           ) : null}
         </Stack>
