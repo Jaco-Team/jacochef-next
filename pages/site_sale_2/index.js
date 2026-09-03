@@ -51,6 +51,8 @@ class SiteSale2_ extends React.Component {
 
       deleteDialogOpen: false,
       deletePromoId: 0,
+
+      acces: {},
     };
   }
 
@@ -60,6 +62,7 @@ class SiteSale2_ extends React.Component {
     this.setState({
       module_name: data.module_info.name,
       city_list: data.all_city_list,
+      acces: data.acces || {},
     });
 
     document.title = data.module_info.name;
@@ -211,7 +214,7 @@ class SiteSale2_ extends React.Component {
           title={this.state.module_name}
           subtitle="Управление промокодами"
         >
-          <SiteSale2Nav />
+          <SiteSale2Nav acces={this.state.acces} />
 
           <SiteSale2SearchBar onSearch={this.showPromoList.bind(this)}>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>

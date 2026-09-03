@@ -25,6 +25,11 @@ const NAV_LINKS = [
   { href: "/site_sale_2/stat_list", label: "Выписанные промокоды" },
   { href: "/site_sale_2/analitic_list", label: "Аналитика по выписанным промокодам" },
   { href: "/site_sale_2/repeat_orders", label: "Повторные заказы с промокода" },
+  {
+    href: "/site_sale_2/employee_promos",
+    label: "Промокоды для сотрудников",
+    accessKey: "employee_promos_access",
+  },
 ];
 
 export function SiteSale2Page({ children, title, subtitle }) {
@@ -62,7 +67,15 @@ export function SiteSale2Page({ children, title, subtitle }) {
   );
 }
 
-export function SiteSale2Nav() {
+export function SiteSale2Nav({ acces = {} }) {
+  const links = NAV_LINKS.filter(({ accessKey }) => {
+    if (!accessKey) {
+      return true;
+    }
+
+    return parseInt(acces?.[accessKey], 10) === 1;
+  });
+
   return (
     <Paper
       variant="outlined"
@@ -89,7 +102,7 @@ export function SiteSale2Nav() {
           gap: 0.75,
         }}
       >
-        {NAV_LINKS.map(({ href, label, primary }) => (
+        {links.map(({ href, label, primary }) => (
           <Link
             key={href}
             href={href}
