@@ -13,29 +13,48 @@ Source of truth:
 - `production_edit`
 - `production_create`
 - `production_delete`
+- `production_past_date`
+- `production_convert`
 - `site_items_view`
 - `site_items_edit`
 - `site_items_create`
 - `site_items_delete`
+- `site_items_past_date`
+- `site_items_sync_vk`
 - `units_view`
 - `units_edit`
 - `units_create`
 - `units_delete`
-- `archive_view`
-- `archive_edit`
-- `history_view`
+- `archive_view` — compatibility, вычисляется backend из прав разделов
+- `archive_edit` — compatibility, вычисляется backend из прав разделов
+- `history_view` — compatibility, вычисляется backend из прав разделов
+
+Для рецептов и полуфабрикатов каждое поле использует `production_<field>_view/edit`: `name`, `shelf_life`, `unit`, `date_start`, `date_end`, `time`, `dop_time`, `items`, `allergens`, `allergens_diff`, `structure`, `categories`, `storages`, `apps`, `show_in_rev`, `two_user`, `activity`.
+
+Для вкладки «Товары сайта» дополнительно возвращаются независимые scoped-права:
+
+- таблица: `site_items_site_kc_view/edit`, `site_items_kassa_view/edit`, `site_items_sort_view/edit`;
+- основные: `site_items_name`, `site_items_date_start`, `site_items_date_end`, `site_items_short_name`, `site_items_art`, `site_items_category_id`, `site_items_stol`, `site_items_marc`, `site_items_dropzone` с суффиксами `_view/_edit`;
+- секции: `site_items_portion`, `site_items_bju`, `site_items_description`, `site_items_tags`, `site_items_activity`, `site_items_composition` с суффиксами `_view/_edit`;
+- управление справочником тегов: `change_tag_access`.
+
+Backend пока также возвращает старые unscoped aliases для совместимости legacy-компонентов. Новый код производства должен использовать только `production_*`; одинаковые unscoped `name`, `date_start`, `date_end`, `items` относятся к compatibility-слою товаров сайта.
 
 ## Правила FE
 
 - Вкладка видна, если есть соответствующий `*_view` или `*_edit`.
-- `*_edit` включает весь экран/форму редактирования сущности.
+- `production_edit` разрешает mutation endpoint, но каждое поле формы проверяется по `production_<field>_edit`.
+- `units_edit` включает форму единицы целиком.
+- `site_items_edit` разрешает mutation-контур вкладки, но видимость и редактирование полей карточки определяются детальными правами.
 - `*_create` управляет созданием новой сущности.
 - `*_delete` управляет контролами удаления.
-- `archive_edit` управляет восстановлением из архива.
-- `history_view` покрывает встроенные history-блоки и history-вкладки, где они используются в новом UI.
+- `production_past_date` разрешает прошлую дату «Действует с» для рецептов и полуфабрикатов.
+- `site_items_past_date` разрешает прошлую дату «Действует с» для товаров сайта.
+- Архивирование и восстановление доступны по праву редактирования активности конкретного раздела: `production_activity_edit` либо `site_items_activity_edit`.
+- История доступна по view-права конкретного раздела: `production_view`, `site_items_view` либо `units_view`.
+- Отдельных групп прав «Архив» и «История» в `sklad_items` нет.
 - Значение access-флага трактуется как boolean: `1` разрешает действие, `0` запрещает.
-- Compact payload содержит весь фиксированный набор ключей, включая ключи со значением `0`.
-- Отдельного field-level gating в новом FE нет.
+- Payload содержит compact-права разделов и field-level права товаров сайта, включая значения `0`.
 
 ## Runtime naming boundary
 
@@ -45,12 +64,12 @@ Source of truth:
 - action DB param `production_create` дает middleware runtime `production_create_access`, а backend публикует FE-ключ `production_create`;
 - аналогично работают `site_items`, `units`, `archive` и остальные action-группы.
 
-FE использует только compact keys из этого документа и не добавляет `_access` самостоятельно.
+FE использует возвращённые backend ключи и не добавляет `_access` самостоятельно.
 
 ## Что не должен делать FE
 
-- Не использовать legacy/raw backend keys как FE-контракт.
-- Не предлагать FE старые `upd_access` aliases, field-level keys или compatibility names.
-- Не строить собственные remap-таблицы поверх этого компактного контракта.
+- Не давать доступ ко всей модалке только по `site_items_edit` при наличии детальной матрицы.
+- Не показывать VK-действия и не проверять `reload_vk_access`.
+- Не подменять отдельные права таблицы общим правом редактирования.
 
-Legacy/raw backend keys остаются только внутренним backend compatibility mapping и не должны предлагаться фронтенду как рабочий контракт.
+Названия field-level ключей сохранены совместимыми с `site_items_new`, но принадлежат runtime-контракту `sklad_items`.

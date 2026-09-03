@@ -17,7 +17,7 @@ export function formatBju(row) {
 }
 
 export function getCategoryName(row, categories) {
-  const categoryId = row?.category_id ?? null;
+  const categoryId = row?.category_id2 ?? null;
   const directName = row?.category_name || "";
 
   if (directName) {
@@ -56,6 +56,10 @@ function dedupeChips(chips) {
 }
 
 export function getPrimaryStatusChip(row) {
+  if (Number(row?.is_scheduled) === 1 && Number(row?.is_active) !== 1) {
+    return { key: "scheduled", label: "Запланирована", color: "info" };
+  }
+
   if (Number(row?.is_archived) === 1) {
     return { key: "archived", label: "Архив", color: "default" };
   }
@@ -70,12 +74,20 @@ export function getPrimaryStatusChip(row) {
 export function getSecondaryStatusChips(row) {
   return dedupeChips(
     [
+      Number(row?.is_scheduled) === 1 && Number(row?.is_active) === 1
+        ? { key: "scheduled", label: "Есть новая версия", color: "info" }
+        : null,
       Number(row?.show_site) === 1 ? { key: "show_site", label: "Сайт", color: "primary" } : null,
       Number(row?.show_program) === 1
         ? { key: "show_program", label: "Касса", color: "secondary" }
         : null,
       Number(row?.is_hit) === 1 ? { key: "hit", label: "Хит", color: "warning" } : null,
       Number(row?.is_new) === 1 ? { key: "new", label: "Новинка", color: "info" } : null,
+      Number(row?.is_updated) === 1
+        ? { key: "updated", label: "Обновлено", color: "success" }
+        : null,
+      Number(row?.is_spicy) === 1 ? { key: "spicy", label: "Острый", color: "success" } : null,
+      Number(row?.is_price) === 1 ? { key: "price", label: "Цена", color: "success" } : null,
     ].filter(Boolean),
   );
 }
@@ -100,7 +112,7 @@ export function normalizeSiteItemDraft(response, fallbackCategories = []) {
     ...item,
     category_name:
       item?.category_name ||
-      fallbackCategories.find((category) => String(category?.id) === String(item?.category_id))
+      fallbackCategories.find((category) => String(category?.id) === String(item?.category_id2))
         ?.name ||
       "",
     tags: Array.isArray(item?.tags) ? item.tags : [],
@@ -129,30 +141,29 @@ export function normalizeSiteItemSavePayload(draft) {
     (Array.isArray(rows) ? rows : [])
       .filter((item) => String(item?.type ?? "") === type)
       .map((item) => ({
-        ...(type === "pf"
-          ? {
-              pf_id: item?.pf_id
-                ? Number(item.pf_id)
+        [type === "pf" ? "pf_id" : type === "rec" ? "rec_id" : "warehouse_item_id"]:
+          type === "pf" && item?.pf_id
+            ? Number(item.pf_id)
+            : type === "rec" && item?.rec_id
+              ? Number(item.rec_id)
+              : type === "item" && item?.warehouse_item_id
+                ? Number(item.warehouse_item_id)
                 : Number(String(item?.selected_id || "").split("-")[0] || 0),
-            }
-          : {
-              rec_id: item?.rec_id
-                ? Number(item.rec_id)
-                : Number(String(item?.selected_id || "").split("-")[0] || 0),
-            }),
         brutto: item?.brutto ?? "",
         pr_1: item?.pr_1 ?? "",
         netto: item?.netto ?? "",
         pr_2: item?.pr_2 ?? "",
         res: item?.res ?? "",
       }))
-      .filter((item) => Number(item?.pf_id ?? item?.rec_id ?? 0) > 0);
+      .filter((item) => Number(item?.pf_id ?? item?.rec_id ?? item?.warehouse_item_id ?? 0) > 0);
 
   return {
     id: draft?.id ?? null,
+    revision_key: draft?.revision_key || null,
     name: String(draft?.name || "").trim(),
     short_name: String(draft?.short_name || "").trim(),
     category_id: draft?.category_id ? Number(draft.category_id) : null,
+    category_id2: draft?.category_id2 ? Number(draft.category_id2) : null,
     date_start: draft?.date_start ?? "",
     date_end: draft?.date_end ?? "",
     art: draft?.art ?? "",
@@ -175,11 +186,17 @@ export function normalizeSiteItemSavePayload(draft) {
       series: draft?.series ?? "",
       is_akchis: draft?.is_akchis ? 1 : 0,
     },
+    is_mark: draft?.is_mark ? Number(draft.is_mark) : 0,
+    mark_code: draft?.mark_code ?? "",
+    is_akchis: draft?.is_akchis ? 1 : 0,
     show_site: draft?.show_site ? 1 : 0,
     show_program: draft?.show_program ? 1 : 0,
     is_show: draft?.is_show ? 1 : 0,
     is_hit: draft?.is_hit ? 1 : 0,
     is_new: draft?.is_new ? 1 : 0,
+    is_updated: draft?.is_updated ? 1 : 0,
+    is_spicy: draft?.is_spicy ? 1 : 0,
+    is_price: draft?.is_price ? 1 : 0,
     time_stage_1: draft?.time_stage_1 ?? "",
     time_stage_2: draft?.time_stage_2 ?? "",
     time_stage_3: draft?.time_stage_3 ?? "",
@@ -189,6 +206,9 @@ export function normalizeSiteItemSavePayload(draft) {
     rec_stage_1: toStagePayload(stageRows?.stage_1, "rec"),
     rec_stage_2: toStagePayload(stageRows?.stage_2, "rec"),
     rec_stage_3: toStagePayload(stageRows?.stage_3, "rec"),
+    item_stage_1: toStagePayload(stageRows?.stage_1, "item"),
+    item_stage_2: toStagePayload(stageRows?.stage_2, "item"),
+    item_stage_3: toStagePayload(stageRows?.stage_3, "item"),
     composition_source:
       draft?.composition_source || createEmptySiteItemRelations().composition_source,
     composition_derived:

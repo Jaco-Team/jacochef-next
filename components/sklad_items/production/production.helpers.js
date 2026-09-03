@@ -75,6 +75,10 @@ export function formatCategories(categories) {
 }
 
 export function getPrimaryStatusChip(row) {
+  if (Number(row?.is_scheduled) === 1 && Number(row?.is_active) !== 1) {
+    return { key: "scheduled", label: "Запланирована", color: "info" };
+  }
+
   if (Number(row?.is_archived) === 1) {
     return { key: "archived", label: "Архив", color: "default" };
   }
@@ -88,6 +92,9 @@ export function getPrimaryStatusChip(row) {
 
 export function getSecondaryStatusChips(row) {
   return [
+    Number(row?.is_scheduled) === 1 && Number(row?.is_active) === 1
+      ? { key: "scheduled", label: "Есть новая версия", color: "info" }
+      : null,
     Number(row?.show_in_rev) === 1
       ? { key: "show_in_rev", label: "В ревизии", color: "primary" }
       : null,
@@ -287,6 +294,10 @@ export function normalizeProductionSavePayload(draft) {
 
   if (draft?.id !== null && draft?.id !== undefined && draft?.id !== "") {
     payload.id = draft.id;
+  }
+
+  if (draft?.revision_key) {
+    payload.revision_key = draft.revision_key;
   }
 
   return payload;

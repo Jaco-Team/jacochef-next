@@ -25,8 +25,16 @@ import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkl
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canCreateProduction, canManageProduction, canViewHistory } =
-    useSkladAccess();
+  const {
+    access,
+    canArchiveProduction,
+    canDelete,
+    canCreateProduction,
+    canManageProduction,
+    canConvertProduction,
+    canUseProductionPastDate,
+    canViewProductionHistory,
+  } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
   const summary = useSkladStore((state) => state.summary);
@@ -121,24 +129,17 @@ export default function useSkladProductionController({ showAlert }) {
   const canManageCategories = canCreateProduction || canManageProduction || canDeleteAction;
 
   const refreshProductionCategories = useCallback(async () => {
-    const response = await api.getCategories("semi_finished");
+    const response = await api.getCategories();
 
     if (!response?.st) {
       throw new Error(response?.text || "Ошибка обновления категорий");
     }
 
-    const nextCategories = (Array.isArray(response?.list) ? response.list : []).filter(
-      (item) => item?.source_type === "semi_finished",
-    );
-    setShellState({
-      categories: [
-        ...(categories || []).filter((item) => item?.source_type !== "semi_finished"),
-        ...nextCategories,
-      ],
-    });
+    const nextCategories = Array.isArray(response?.list) ? response.list : [];
+    setShellState({ categories: nextCategories });
 
     return nextCategories;
-  }, [api, categories, setShellState]);
+  }, [api, setShellState]);
 
   const openCategoryManagerDialog = useCallback(async () => {
     if (!canManageCategories) {
@@ -148,7 +149,7 @@ export default function useSkladProductionController({ showAlert }) {
     setCategoryManagerDialog({ open: true, loading: true, categories: [] });
 
     try {
-      const response = await api.getCategories("semi_finished");
+      const response = await api.getCategories();
 
       if (!response?.st) {
         throw new Error(response?.text || "Ошибка загрузки категорий");
@@ -157,9 +158,7 @@ export default function useSkladProductionController({ showAlert }) {
       setCategoryManagerDialog({
         open: true,
         loading: false,
-        categories: (Array.isArray(response?.list) ? response.list : []).filter(
-          (item) => item?.source_type === "semi_finished",
-        ),
+        categories: Array.isArray(response?.list) ? response.list : [],
       });
     } catch (error) {
       setCategoryManagerDialog({ open: false, loading: false, categories: [] });
@@ -172,12 +171,16 @@ export default function useSkladProductionController({ showAlert }) {
   }, []);
 
   const createCategory = useCallback(
-    async (name) => {
+    async (name, sourceType = "semi_finished", parentId = 0) => {
       setCategoryManagerDialog((current) => ({ ...current, loading: true }));
       setShellState({ isLoading: true });
 
       try {
-        const response = await api.createProductionCategory(name);
+        const response = await api.createCategory({
+          name,
+          source_type: sourceType,
+          parent_id: parentId,
+        });
 
         if (!response?.st) {
           throw new Error(response?.text || "Ошибка создания категории");
@@ -249,7 +252,12 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const response = await api.updateProductionCategory(category.id, name);
+        const response = await api.updateCategory({
+          id: category.id,
+          name,
+          source_type: category.source_type,
+          parent_id: category.parent_id || 0,
+        });
 
         if (!response?.st) {
           throw new Error(response?.text || "Ошибка переименования категории");
@@ -277,7 +285,10 @@ export default function useSkladProductionController({ showAlert }) {
       setShellState({ isLoading: true });
 
       try {
-        const response = await api.deleteProductionCategory(category.id);
+        const response = await api.deleteCategory({
+          id: category.id,
+          source_type: category.source_type,
+        });
 
         if (!response?.st) {
           throw new Error(getDeleteError(response));
@@ -359,20 +370,20 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openConvertDialog = useCallback(
     (entityType, row) => {
-      if (!canManageProduction || !row?.id || Number(row?.is_archived) === 1) {
+      if (!canConvertProduction || !row?.id || Number(row?.is_archived) === 1) {
         return;
       }
 
       setConvertDialog({ open: true, loading: false, row, entityType });
     },
-    [canManageProduction],
+    [canConvertProduction],
   );
 
   const confirmConvert = useCallback(async () => {
     const row = convertDialog.row;
     const entityType = convertDialog.entityType;
 
-    if (!canManageProduction || !row?.id || !ENTITY_TYPES.includes(entityType)) {
+    if (!canConvertProduction || !row?.id || !ENTITY_TYPES.includes(entityType)) {
       return;
     }
 
@@ -405,7 +416,7 @@ export default function useSkladProductionController({ showAlert }) {
     }
   }, [
     api,
-    canManageProduction,
+    canConvertProduction,
     closeConvertDialog,
     convertDialog.entityType,
     convertDialog.row,
@@ -416,7 +427,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (entityType, row) => {
-      if (!row?.id || !canArchive) {
+      if (!row?.id || !canArchiveProduction) {
         return;
       }
 
@@ -430,7 +441,7 @@ export default function useSkladProductionController({ showAlert }) {
         },
       });
     },
-    [canArchive, setState],
+    [canArchiveProduction, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -561,7 +572,7 @@ export default function useSkladProductionController({ showAlert }) {
     api,
     archiveDialog?.entityType,
     archiveDialog?.row,
-    canArchive,
+    canArchiveProduction,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -649,6 +660,24 @@ export default function useSkladProductionController({ showAlert }) {
         throw new Error(response?.text || "Ошибка загрузки карточки");
       }
 
+      if (Number(row?.is_scheduled) === 1 && Number(row?.is_active) !== 1) {
+        const revisionResponse = await api.historyGetOne({
+          entity_type: entityType,
+          entity_id: row.id,
+          revision_key: row.scheduled_revision_key,
+        });
+        if (!revisionResponse?.st) {
+          throw new Error(revisionResponse?.text || "Ошибка загрузки запланированной версии");
+        }
+        const revision = revisionResponse?.revision;
+        if (revision?.snapshot) {
+          return normalizeProductionDraft(
+            { ...revision.snapshot, revision_key: row.scheduled_revision_key },
+            response,
+          );
+        }
+      }
+
       return normalizeProductionDraft(response?.entity || {}, response);
     },
     [api],
@@ -722,12 +751,15 @@ export default function useSkladProductionController({ showAlert }) {
           shellAllergens={shellAllergens}
           shellStorages={shellStorages}
           shellApps={shellApps}
-          canArchiveAction={canArchive}
+          access={access}
+          canArchiveAction={canArchiveProduction}
           canDeleteAction={canDeleteAction}
           canCreateProduction={canCreateProduction}
           canManageProduction={canManageProduction}
-          canViewHistory={canViewHistory}
+          canConvertProduction={canConvertProduction}
+          canViewHistory={canViewProductionHistory}
           canCreateCategory={canCreateProduction}
+          allowPastDate={canUseProductionPastDate}
           canManageCategories={canManageCategories}
           onCreateCategory={openCategoryManagerDialog}
           onManageCategories={openCategoryManagerDialog}
@@ -751,6 +783,7 @@ export default function useSkladProductionController({ showAlert }) {
           canCreate={canCreateProduction}
           canEdit={canManageProduction}
           canDelete={canDeleteAction}
+          access={access}
           onClose={closeCategoryManagerDialog}
           onCreate={createCategory}
           onSave={saveCategory}

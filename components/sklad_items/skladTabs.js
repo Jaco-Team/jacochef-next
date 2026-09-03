@@ -6,6 +6,12 @@ export const SKLAD_TAB_DEFINITIONS = [
     description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
   {
+    key: "warehouse-items",
+    label: "Товары склада",
+    accessGroup: "warehouse_items",
+    description: "Справочник товаров склада с периодами действия и полной историей.",
+  },
+  {
     key: "site-items",
     label: "Товары сайта",
     accessGroup: "site_items",
@@ -16,12 +22,6 @@ export const SKLAD_TAB_DEFINITIONS = [
     label: "Единицы измерения",
     accessGroup: "units",
     description: "Справочник единиц измерения и их базовые CRUD-операции.",
-  },
-  {
-    key: "archive",
-    label: "Архив",
-    accessGroup: "archive",
-    description: "Archive contour для поддерживаемых entity types.",
   },
 ];
 

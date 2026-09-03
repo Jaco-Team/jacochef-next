@@ -146,9 +146,11 @@ export function buildInitialDraft(draft) {
 
   return {
     id: draft?.id ?? null,
+    revision_key: draft?.revision_key ?? null,
     name: draft?.name ?? "",
     short_name: draft?.short_name ?? "",
     category_id: draft?.category_id ? String(draft.category_id) : "",
+    category_id2: draft?.category_id2 ? String(draft.category_id2) : "",
     date_start: draft?.date_start ?? "",
     date_end: draft?.date_end ?? "",
     art: draft?.art ?? "",
@@ -174,6 +176,9 @@ export function buildInitialDraft(draft) {
     is_show: Number(draft?.is_show ?? 0) === 1,
     is_hit: Number(draft?.is_hit ?? 0) === 1,
     is_new: Number(draft?.is_new ?? 0) === 1,
+    is_updated: Number(draft?.is_updated ?? 0) === 1,
+    is_spicy: Number(draft?.is_spicy ?? 0) === 1,
+    is_price: Number(draft?.is_price ?? 0) === 1,
     time_stage_1: draft?.time_stage_1 ?? "",
     time_stage_2: draft?.time_stage_2 ?? "",
     time_stage_3: draft?.time_stage_3 ?? "",

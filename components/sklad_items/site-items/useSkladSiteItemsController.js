@@ -16,11 +16,115 @@ import {
 } from "./siteItems.helpers";
 import { dedupeSelectOptions } from "./siteItemEditor.helpers";
 import { useSkladSiteItemsStore } from "./useSkladSiteItemsStore";
+import {
+  SITE_ITEMS_MODAL_FIELD_KEYS,
+  canEditAccess,
+  canViewAccess,
+  hasAccessValue,
+} from "./skladSiteItemsAccess";
+
+function prepareLegacyDetail(response, fallbackCategories = [], fallbackTags = []) {
+  const itemsStage = response?.items_stage || { stage_1: [], stage_2: [], stage_3: [], all: [] };
+  const stageOptions = new Map(
+    (itemsStage?.all || []).map((item) => [`${item?.type}:${item?.id}`, item]),
+  );
+  const normalizeStageRows = (rows = []) =>
+    rows.map((item) => {
+      const itemId =
+        item?.type === "rec"
+          ? item?.rec_id
+          : item?.type === "item"
+            ? item?.warehouse_item_id
+            : item?.pf_id;
+      const option = stageOptions.get(`${item?.type}:${itemId}`);
+
+      return {
+        ...item,
+        type_id: option
+          ? { id: option.id, name: option.name }
+          : { id: itemId || "", name: item?.name || "" },
+      };
+    });
+  const itemItems = response?.item_items || { this_items: [], all_items: [] };
+  const itemOptions = new Map((itemItems?.all_items || []).map((item) => [String(item?.id), item]));
+
+  return {
+    ...response,
+    item: {
+      ...(response?.item || {}),
+      tags_all: response?.tags_all || fallbackTags,
+    },
+    cat_list: response?.cat_list || fallbackCategories,
+    tags_all: response?.tags_all || fallbackTags,
+    items_stage: {
+      ...itemsStage,
+      stage_1: normalizeStageRows(itemsStage?.stage_1),
+      stage_2: normalizeStageRows(itemsStage?.stage_2),
+      stage_3: normalizeStageRows(itemsStage?.stage_3),
+      not_stage: [],
+    },
+    item_items: {
+      ...itemItems,
+      this_items: (itemItems?.this_items || []).map((item) => {
+        const itemId = typeof item?.item_id === "object" ? item.item_id?.id : item?.item_id;
+        const option = itemOptions.get(String(itemId));
+
+        return {
+          ...item,
+          item_id: option
+            ? { id: option.id, name: option.name }
+            : { id: itemId || "", name: item?.name || "" },
+        };
+      }),
+    },
+  };
+}
+
+function legacySavePayload(draft) {
+  const item = JSON.parse(JSON.stringify(draft || {}));
+  const itemItems = item?.item_items || { this_items: [] };
+  const itemsStage = item?.items_stage || { stage_1: [], stage_2: [], stage_3: [] };
+  const stageRows = (stage, type) =>
+    (itemsStage?.[stage] || [])
+      .filter((row) => row?.type === type)
+      .map((row) => ({
+        ...row,
+        [type === "pf" ? "pf_id" : type === "rec" ? "rec_id" : "warehouse_item_id"]:
+          typeof row?.type_id === "object" ? Number(row.type_id?.id) : Number(row?.type_id),
+      }));
+
+  return {
+    ...item,
+    item_items: {
+      ...itemItems,
+      this_items: (itemItems?.this_items || []).map((row) => ({
+        ...row,
+        item_id: typeof row?.item_id === "object" ? Number(row.item_id?.id) : Number(row?.item_id),
+      })),
+    },
+    pf_stage_1: stageRows("stage_1", "pf"),
+    pf_stage_2: stageRows("stage_2", "pf"),
+    pf_stage_3: stageRows("stage_3", "pf"),
+    rec_stage_1: stageRows("stage_1", "rec"),
+    rec_stage_2: stageRows("stage_2", "rec"),
+    rec_stage_3: stageRows("stage_3", "rec"),
+    item_stage_1: stageRows("stage_1", "item"),
+    item_stage_2: stageRows("stage_2", "item"),
+    item_stage_3: stageRows("stage_3", "item"),
+  };
+}
 
 export default function useSkladSiteItemsController({ showAlert }) {
   const api = useSkladApi();
-  const { canArchive, canDelete, canCreateSiteItem, canManageSiteItems, canViewHistory } =
-    useSkladAccess();
+  const {
+    access,
+    canArchiveSiteItems,
+    canDelete,
+    canCreateSiteItem,
+    canManageSiteItems,
+    canUseSiteItemPastDate,
+    canViewSiteItemsHistory,
+  } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
 
@@ -41,9 +145,21 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const setState = useSkladSiteItemsStore((state) => state.setState);
   const [categoryDialog, setCategoryDialog] = useState({ open: false, loading: false });
 
-  const isEditable = canManageSiteItems;
+  const canViewSiteItemForm = SITE_ITEMS_MODAL_FIELD_KEYS.some((field) =>
+    canViewAccess(access, field, false),
+  );
+  const canEditSiteItemForm = SITE_ITEMS_MODAL_FIELD_KEYS.some((field) =>
+    canEditAccess(access, field, false),
+  );
+  const isEditable = canEditSiteItemForm || canManageSiteItems;
   const canCreate = canCreateSiteItem;
   const canDeleteAction = canDelete("site_item");
+  const canEditActivity = canEditAccess(access, "is_show", false);
+  const canEditCash =
+    hasAccessValue(access?.kassa_edit) || canEditAccess(access, "show_program", false);
+  const canEditSort = canEditAccess(access, "sort", false);
+  const canManageTags =
+    hasAccessValue(access?.change_tag_access) && canEditAccess(access, "tags", false);
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
@@ -52,9 +168,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       try {
         const response = await api.getSiteItems({
           search: String(search || "").trim(),
-          category_id: categoryId ? Number(categoryId) : null,
-          tag_id: tagId ? Number(tagId) : null,
-          archive_mode: archiveMode,
+          archive_mode: "all",
         });
 
         if (!response?.st) {
@@ -73,7 +187,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, archiveMode, categoryId, search, setShellState, setState, showAlert, tagId],
+    [api, search, setShellState, setState, showAlert],
   );
 
   const categoryOptions = useMemo(
@@ -146,7 +260,15 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [tags],
   );
 
-  const siteItemSort = useSkladTableSort(rows, {
+  const visibleRows = useMemo(
+    () =>
+      rows.filter((row) =>
+        archiveMode === "archive" ? Number(row?.is_archived) === 1 : Number(row?.is_archived) !== 1,
+      ),
+    [archiveMode, rows],
+  );
+
+  const siteItemSort = useSkladTableSort(visibleRows, {
     name: (row) => row?.name,
     category: (row) => row?.category_name,
     kkal: (row) => row?.kkal_preview ?? row?.kkal,
@@ -154,18 +276,53 @@ export default function useSkladSiteItemsController({ showAlert }) {
     dateEnd: (row) => row?.date_end,
   });
 
-  const paginatedRows = useMemo(() => {
-    const start = page * rowsPerPage;
-    return siteItemSort.sortedRows.slice(start, start + rowsPerPage);
-  }, [page, rowsPerPage, siteItemSort.sortedRows]);
+  const paginatedRows = siteItemSort.sortedRows;
 
   useEffect(() => {
-    const maxPage = rows.length ? Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1) : 0;
+    const maxPage = visibleRows.length
+      ? Math.max(0, Math.ceil(visibleRows.length / rowsPerPage) - 1)
+      : 0;
 
     if (page > maxPage) {
       setState({ page: maxPage });
     }
-  }, [page, rows.length, rowsPerPage, setState]);
+  }, [page, rowsPerPage, setState, visibleRows.length]);
+
+  const saveQuickField = useCallback(
+    async (row, type, value) => {
+      const permission = {
+        is_show: canEditAccess(access, "is_show", false),
+        show_program:
+          hasAccessValue(access?.kassa_edit) || canEditAccess(access, "show_program", false),
+        sort: canEditAccess(access, "sort", false),
+      }[type];
+
+      if (!row?.id || !permission) {
+        return;
+      }
+
+      setShellState({ isLoading: true });
+
+      try {
+        const response = await api.saveSiteItemFlag({
+          id: Number(row.id),
+          type,
+          value,
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка сохранения");
+        }
+
+        await loadRows();
+      } catch (error) {
+        showAlert(error?.message || "Ошибка сохранения", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [access, api, loadRows, setShellState, showAlert],
+  );
 
   const closeModal = useCallback(() => {
     setState({
@@ -202,7 +359,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const openArchiveDialog = useCallback(
     (row) => {
-      if (!row?.id || !canArchive) {
+      if (!row?.id || !canArchiveSiteItems) {
         return;
       }
 
@@ -214,7 +371,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         },
       });
     },
-    [canArchive, setState],
+    [canArchiveSiteItems, setState],
   );
 
   const openDeleteDialog = useCallback(
@@ -333,7 +490,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   }, [
     api,
     archiveDialog?.row,
-    canArchive,
+    canArchiveSiteItems,
     closeArchiveDialog,
     loadRows,
     setShellState,
@@ -362,6 +519,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         }
 
         const normalizedDraft = normalizeSiteItemDraft(response, response?.cat_list || categories);
+        const legacyDetail = prepareLegacyDetail(response, categories, tags);
 
         setState({
           categories: response?.cat_list || categories,
@@ -372,7 +530,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             loading: false,
             section: "main",
           },
-          detail: normalizedDraft,
+          detail: legacyDetail,
           draft: normalizedDraft,
         });
       })
@@ -394,24 +552,15 @@ export default function useSkladSiteItemsController({ showAlert }) {
       });
   }, [api, categories, setShellState, setState, showAlert, tags]);
 
-  const submitDraft = useCallback(
-    async (nextDraft) => {
-      const validationError = validateSiteItemDraft(nextDraft);
-
-      if (validationError) {
-        showAlert(validationError, false);
-        return;
-      }
-
+  const persistSiteItem = useCallback(
+    async (payload, pendingImageFile = null) => {
       const saveItem = modal.mode === "create" ? api.createSiteItem : api.updateSiteItem;
-      const payload = normalizeSiteItemSavePayload(nextDraft);
 
       setState({
         modal: {
           ...modal,
           loading: true,
         },
-        draft: nextDraft,
       });
       setShellState({ isLoading: true });
 
@@ -422,18 +571,47 @@ export default function useSkladSiteItemsController({ showAlert }) {
           throw new Error(response?.text || "Ошибка сохранения");
         }
 
-        showAlert(response?.text || "Успешно сохранено", true);
+        if (pendingImageFile) {
+          const itemId = Number(response?.item_id || response?.id || payload?.id || 0);
+
+          if (!itemId) {
+            throw new Error("Карточка сохранена, но не удалось определить товар для изображения");
+          }
+
+          const imageResponse = await api.uploadSiteItemImage(pendingImageFile, {
+            id: itemId,
+            slot: "main",
+            revision_key:
+              response?.revision_status === "scheduled"
+                ? response?.revision_key || response?.history_id
+                : undefined,
+          });
+
+          if (!imageResponse?.st) {
+            throw new Error(
+              imageResponse?.text || "Карточка сохранена, но изображение загрузить не удалось",
+            );
+          }
+        }
+
+        showAlert(
+          pendingImageFile
+            ? "Карточка и изображение сохранены"
+            : response?.text || "Успешно сохранено",
+          true,
+        );
         closeModal();
         await loadRows();
+        return response;
       } catch (error) {
         setState({
           modal: {
             ...modal,
             loading: false,
           },
-          draft: nextDraft,
         });
         showAlert(error?.message || "Ошибка сохранения", false);
+        return { st: false, text: error?.message || "Ошибка сохранения" };
       } finally {
         setShellState({ isLoading: false });
       }
@@ -441,9 +619,29 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [api, closeModal, loadRows, modal, setShellState, setState, showAlert],
   );
 
+  const submitDraft = useCallback(
+    async (nextDraft, pendingImageFile = null) => {
+      const validationError = validateSiteItemDraft(nextDraft);
+
+      if (validationError) {
+        showAlert(validationError, false);
+        return { st: false, text: validationError };
+      }
+
+      return persistSiteItem(normalizeSiteItemSavePayload(nextDraft), pendingImageFile);
+    },
+    [persistSiteItem, showAlert],
+  );
+
+  const submitLegacyDraft = useCallback(
+    async (nextDraft, pendingImageFile = null) =>
+      persistSiteItem(legacySavePayload(nextDraft), pendingImageFile),
+    [persistSiteItem],
+  );
+
   const openEdit = useCallback(
     async (row, section = "main") => {
-      if (!row?.id) {
+      if (!row?.id || (section !== "history" && !canViewSiteItemForm && !isEditable)) {
         return;
       }
 
@@ -466,7 +664,31 @@ export default function useSkladSiteItemsController({ showAlert }) {
           throw new Error(response?.text || "Ошибка загрузки товара");
         }
 
-        const normalizedDraft = normalizeSiteItemDraft(response, categories);
+        let normalizedDraft = normalizeSiteItemDraft(response, categories);
+        let legacyDetail = prepareLegacyDetail(response, categories, tags);
+        if (Number(row?.is_scheduled) === 1 && Number(row?.is_active) !== 1) {
+          const revisionResponse = await api.historyGetOne({
+            entity_type: "site_item",
+            entity_id: row.id,
+            revision_key: row.scheduled_revision_key,
+          });
+          if (!revisionResponse?.st) {
+            throw new Error(revisionResponse?.text || "Ошибка загрузки запланированной версии");
+          }
+          const snapshot = revisionResponse?.revision?.snapshot;
+          if (snapshot) {
+            const scheduledResponse = {
+              ...response,
+              item: { ...snapshot, revision_key: row.scheduled_revision_key },
+              item_items: snapshot.item_items,
+              items_stage: snapshot.items_stage,
+              composition_source: snapshot.composition_source,
+              composition_derived: snapshot.composition_derived,
+            };
+            normalizedDraft = normalizeSiteItemDraft(scheduledResponse, categories);
+            legacyDetail = prepareLegacyDetail(scheduledResponse, categories, tags);
+          }
+        }
 
         setState({
           modal: {
@@ -475,7 +697,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
             loading: false,
             section,
           },
-          detail: normalizedDraft,
+          detail: legacyDetail,
           draft: normalizedDraft,
         });
       } catch (error) {
@@ -494,11 +716,11 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, categories, setShellState, setState, showAlert],
+    [api, canViewSiteItemForm, categories, isEditable, setShellState, setState, showAlert, tags],
   );
 
   const refreshOpenDetail = useCallback(
-    async (id, section = "main") => {
+    async (id, section = "main", revisionKey = null) => {
       if (!id) {
         return;
       }
@@ -509,7 +731,31 @@ export default function useSkladSiteItemsController({ showAlert }) {
         throw new Error(response?.text || "Ошибка загрузки товара");
       }
 
-      const normalizedDraft = normalizeSiteItemDraft(response, categories);
+      let normalizedDraft = normalizeSiteItemDraft(response, categories);
+      if (revisionKey) {
+        const revisionResponse = await api.historyGetOne({
+          entity_type: "site_item",
+          entity_id: id,
+          revision_key: revisionKey,
+        });
+        if (!revisionResponse?.st) {
+          throw new Error(revisionResponse?.text || "Ошибка загрузки запланированной версии");
+        }
+        const snapshot = revisionResponse?.revision?.snapshot;
+        if (snapshot) {
+          normalizedDraft = normalizeSiteItemDraft(
+            {
+              ...response,
+              item: { ...snapshot, revision_key: revisionKey },
+              item_items: snapshot.item_items,
+              items_stage: snapshot.items_stage,
+              composition_source: snapshot.composition_source,
+              composition_derived: snapshot.composition_derived,
+            },
+            categories,
+          );
+        }
+      }
 
       setState({
         modal: {
@@ -518,55 +764,11 @@ export default function useSkladSiteItemsController({ showAlert }) {
           loading: false,
           section,
         },
-        detail: normalizedDraft,
+        detail: prepareLegacyDetail(response, categories, tags),
         draft: normalizedDraft,
       });
     },
-    [api, categories, setState],
-  );
-
-  const handleUploadImage = useCallback(
-    async (row, file, section = "main") => {
-      if (!row?.id || !file) {
-        return;
-      }
-
-      setState({
-        modal: {
-          ...modal,
-          loading: true,
-          section,
-        },
-      });
-      setShellState({ isLoading: true });
-
-      try {
-        const response = await api.uploadSiteItemImage(file, {
-          id: row.id,
-          slot: "main",
-        });
-
-        if (!response?.st) {
-          throw new Error(response?.text || "Ошибка загрузки изображения");
-        }
-
-        await refreshOpenDetail(row.id, section);
-        showAlert(response?.text || "Изображение загружено", true);
-        await loadRows();
-      } catch (error) {
-        setState({
-          modal: {
-            ...modal,
-            loading: false,
-            section,
-          },
-        });
-        showAlert(error?.message || "Ошибка загрузки изображения", false);
-      } finally {
-        setShellState({ isLoading: false });
-      }
-    },
-    [api, loadRows, modal, refreshOpenDetail, setShellState, setState, showAlert],
+    [api, categories, setState, tags],
   );
 
   const handleRestoreImage = useCallback(
@@ -632,6 +834,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
       const nextTags = response?.tags_all || [];
       setState({ tags: nextTags });
+      await loadRows();
 
       return {
         tags: nextTags,
@@ -642,7 +845,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         text: response?.text || "Тег создан",
       };
     },
-    [api, setState],
+    [api, loadRows, setState],
   );
 
   const handleRenameTag = useCallback(
@@ -669,13 +872,14 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
       const nextTags = response?.tags_all || [];
       setState({ tags: nextTags });
+      await loadRows();
 
       return {
         tags: nextTags,
         text: response?.text || "Тег обновлен",
       };
     },
-    [api, setState],
+    [api, loadRows, setState],
   );
 
   return {
@@ -703,19 +907,26 @@ export default function useSkladSiteItemsController({ showAlert }) {
           modal={modal}
           detail={detail}
           draft={draft}
+          access={access}
           categories={categories}
           tags={tags}
           deleteDialog={deleteDialog}
           archiveDialog={archiveDialog}
           isEditable={isEditable}
           canCreate={canCreate}
-          canArchiveAction={canArchive}
+          canManageTags={canManageTags}
+          canArchiveAction={canArchiveSiteItems}
           canDeleteAction={canDeleteAction}
-          canViewHistory={canViewHistory}
+          canEditActivity={canEditActivity}
+          canEditCash={canEditCash}
+          canEditSort={canEditSort}
+          canViewHistory={canViewSiteItemsHistory}
           canCreateCategory={canCreate}
+          allowPastDate={canUseSiteItemPastDate}
           showAlert={showAlert}
           setState={setState}
           loadRows={loadRows}
+          onSaveQuickField={saveQuickField}
           openCreate={openCreate}
           onCreateCategory={openCategoryDialog}
           openEdit={openEdit}
@@ -727,10 +938,10 @@ export default function useSkladSiteItemsController({ showAlert }) {
           closeArchiveDialog={closeArchiveDialog}
           confirmDelete={confirmDelete}
           confirmArchive={confirmArchive}
-          handleUploadImage={handleUploadImage}
           handleCreateTag={handleCreateTag}
           handleRenameTag={handleRenameTag}
           submitDraft={submitDraft}
+          submitLegacyDraft={submitLegacyDraft}
         />
         <SkladSiteCategoryDialog
           open={categoryDialog.open}

@@ -1841,6 +1841,7 @@ class SiteItems_ extends React.Component {
       item_items: null,
 
       category: [],
+      categoryLegacy: [],
       stages: [],
     };
 
@@ -1948,6 +1949,7 @@ class SiteItems_ extends React.Component {
       { id: "3", name: "3 этап" },
     ];
     res.item.category_id = "";
+    res.item.category_id2 = "";
     res.item.tags_all = res?.tags_all;
 
     this.setState({
@@ -1955,6 +1957,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       stages,
@@ -1980,7 +1983,12 @@ class SiteItems_ extends React.Component {
 
     ["stage_1", "stage_2", "stage_3"].forEach((stage) => {
       res.items_stage[stage] = (res.items_stage?.[stage] || []).map((item) => {
-        const itemId = item.type === "rec" ? item.rec_id : item.pf_id;
+        const itemId =
+          item.type === "rec"
+            ? item.rec_id
+            : item.type === "item"
+              ? item.warehouse_item_id
+              : item.pf_id;
         const value = stageOptionsByKey.get(`${item.type}:${itemId}`);
 
         return {
@@ -2017,6 +2025,7 @@ class SiteItems_ extends React.Component {
       modalDialogTech: true,
       method,
       category: res.cat_list,
+      categoryLegacy: res.cat_list_legacy || [],
       items_stage: res.items_stage,
       item_items: res.item_items,
       tags_all: res.tags_all,
@@ -2185,6 +2194,30 @@ class SiteItems_ extends React.Component {
       return newIt;
     }, []);
 
+    const item_stage_1 = item.items_stage.stage_1.reduce((newIt, it) => {
+      if (it.type === "item") {
+        it.warehouse_item_id = it.type_id.id;
+        newIt.push(it);
+      }
+      return newIt;
+    }, []);
+
+    const item_stage_2 = item.items_stage.stage_2.reduce((newIt, it) => {
+      if (it.type === "item") {
+        it.warehouse_item_id = it.type_id.id;
+        newIt.push(it);
+      }
+      return newIt;
+    }, []);
+
+    const item_stage_3 = item.items_stage.stage_3.reduce((newIt, it) => {
+      if (it.type === "item") {
+        it.warehouse_item_id = it.type_id.id;
+        newIt.push(it);
+      }
+      return newIt;
+    }, []);
+
     const data = {
       ...item,
       pf_stage_1,
@@ -2193,6 +2226,9 @@ class SiteItems_ extends React.Component {
       rec_stage_1,
       rec_stage_2,
       rec_stage_3,
+      item_stage_1,
+      item_stage_2,
+      item_stage_3,
     };
 
     let res;
@@ -2263,15 +2299,14 @@ class SiteItems_ extends React.Component {
       }
 
       if (res.cat_list) {
-        if (res.item.category_id) {
-          res.item.category_name =
-            res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))?.name ??
-            "";
-        } else {
-          res.item.category_name =
-            res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))
-              ?.name ?? "";
-        }
+        res.item.category_name2 =
+          res.cat_list.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id2))?.name ??
+          "";
+      }
+      if (res.cat_list_legacy) {
+        res.item.category_name =
+          res.cat_list_legacy.find((cat) => parseInt(cat.id) === parseInt(res.item.category_id))
+            ?.name ?? "";
       }
 
       this.setState({
@@ -2335,6 +2370,7 @@ class SiteItems_ extends React.Component {
           item={this.state.itemTech}
           method={this.state.method}
           category={this.state.category}
+          categoryLegacy={this.state.categoryLegacy}
           save={this.saveTech.bind(this)}
           getData={this.getData.bind(this)}
           update={this.update.bind(this)}

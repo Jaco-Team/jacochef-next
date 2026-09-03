@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import AddIcon from "@mui/icons-material/Add";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -44,6 +45,7 @@ import SkladSectionCard from "../ui/SkladSectionCard";
 import {
   buildInitialDraft,
   dedupeSelectOptions,
+  filterProductionCompositionOptions,
   getCompositionItemId,
   getCompositionItemName,
   getCompositionLoss,
@@ -76,9 +78,11 @@ export default function SkladProductionEditorDialog({
   storages = [],
   apps = [],
   allItemsList = [],
+  access = {},
   isEditable = false,
   canViewHistory = false,
   canCreateCategory = false,
+  allowPastDate = false,
   initialTab = "main",
   onCreateCategory,
   onSubmit,
@@ -88,6 +92,12 @@ export default function SkladProductionEditorDialog({
   const [form, setForm] = useState(() => buildInitialDraft(draft));
 
   const isRecipe = entityType === "recipe";
+  const createRequiredFields = ["name", "shelf_life", "unit", "date_start", "date_end"];
+  const canEditField = (field) =>
+    isEditable &&
+    (Number(access?.[`production_${field}_edit`]) === 1 ||
+      (mode === "create" && createRequiredFields.includes(field)));
+  const canEditItems = canEditField("items");
 
   useEffect(() => {
     if (!open) {
@@ -326,7 +336,7 @@ export default function SkladProductionEditorDialog({
                         <MyTextInput
                           label="Название"
                           value={form.name}
-                          disabled={!isEditable}
+                          disabled={!canEditField("name")}
                           func={(event) => updateField("name", event.target.value)}
                         />
                       </Grid>
@@ -334,7 +344,7 @@ export default function SkladProductionEditorDialog({
                         <MyTextInput
                           label="Срок годности"
                           value={form.shelf_life}
-                          disabled={!isEditable}
+                          disabled={!canEditField("shelf_life")}
                           func={(event) => updateField("shelf_life", event.target.value)}
                         />
                       </Grid>
@@ -344,7 +354,7 @@ export default function SkladProductionEditorDialog({
                           data={unitOptions}
                           is_none={false}
                           value={safeUnitValue}
-                          disabled={!isEditable}
+                          disabled={!canEditField("unit")}
                           func={(event) => updateField("ed_izmer_id", event.target.value)}
                         />
                       </Grid>
@@ -352,7 +362,8 @@ export default function SkladProductionEditorDialog({
                         <MyDatePickerNew
                           label="Действует с"
                           value={form.date_start}
-                          disabled={!isEditable}
+                          minDate={allowPastDate ? undefined : dayjs().startOf("day")}
+                          disabled={!canEditField("date_start")}
                           func={(value) =>
                             updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
                           }
@@ -362,9 +373,12 @@ export default function SkladProductionEditorDialog({
                         <MyDatePickerNew
                           label="Действует по"
                           value={form.date_end}
+                          minDate={
+                            form.date_start ? dayjs(form.date_start) : dayjs().startOf("day")
+                          }
                           clearable
                           customActions
-                          disabled={!isEditable}
+                          disabled={!canEditField("date_end")}
                           func={(value) =>
                             updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
                           }
@@ -374,7 +388,7 @@ export default function SkladProductionEditorDialog({
                         <MyTimeInput
                           label="Время приготовления"
                           value={form.time_min}
-                          disabled={!isEditable}
+                          disabled={!canEditField("time")}
                           func={(event) => updateField("time_min", event.target.value)}
                         />
                       </Grid>
@@ -382,7 +396,7 @@ export default function SkladProductionEditorDialog({
                         <MyTimeInput
                           label="Доп. время"
                           value={form.time_min_dop}
-                          disabled={!isEditable}
+                          disabled={!canEditField("dop_time")}
                           func={(event) => updateField("time_min_dop", event.target.value)}
                         />
                       </Grid>
@@ -390,7 +404,7 @@ export default function SkladProductionEditorDialog({
                         <MyTextInput
                           label="Выход"
                           value={form.all_w}
-                          disabled={!isEditable}
+                          disabled={!canEditItems}
                           func={(event) => updateField("all_w", event.target.value)}
                         />
                       </Grid>
@@ -398,7 +412,7 @@ export default function SkladProductionEditorDialog({
                         <MyTextInput
                           label="Брутто"
                           value={form.all_w_brutto}
-                          disabled={!isEditable}
+                          disabled={!canEditItems}
                           func={(event) => updateField("all_w_brutto", event.target.value)}
                         />
                       </Grid>
@@ -406,7 +420,7 @@ export default function SkladProductionEditorDialog({
                         <MyTextInput
                           label="Нетто"
                           value={form.all_w_netto}
-                          disabled={!isEditable}
+                          disabled={!canEditItems}
                           func={(event) => updateField("all_w_netto", event.target.value)}
                         />
                       </Grid>
@@ -420,19 +434,19 @@ export default function SkladProductionEditorDialog({
                           <MyCheckBox
                             label="Активность"
                             value={form.is_show}
-                            disabled={!isEditable}
+                            disabled={!canEditField("activity")}
                             func={(event) => updateField("is_show", event.target.checked)}
                           />
                           <MyCheckBox
                             label="Показывать в ревизии"
                             value={form.show_in_rev}
-                            disabled={!isEditable}
+                            disabled={!canEditField("show_in_rev")}
                             func={(event) => updateField("show_in_rev", event.target.checked)}
                           />
                           <MyCheckBox
                             label="Требуется 2 сотрудника"
                             value={form.two_user}
-                            disabled={!isEditable}
+                            disabled={!canEditField("two_user")}
                             func={(event) => updateField("two_user", event.target.checked)}
                           />
                         </Stack>
@@ -460,11 +474,11 @@ export default function SkladProductionEditorDialog({
                               label="Категории"
                               data={categoryOptions}
                               value={selectedCategories}
-                              disabled={!isEditable}
+                              disabled={!canEditField("categories")}
                               func={(_, value) => updateRelationField("categories", value)}
                             />
                           </Stack>
-                          {canCreateCategory && isEditable ? (
+                          {canCreateCategory && canEditField("categories") ? (
                             <IconButton
                               size="small"
                               aria-label="Добавить категорию"
@@ -481,7 +495,7 @@ export default function SkladProductionEditorDialog({
                           label="Аллергены"
                           data={allergenOptions}
                           value={selectedAllergens}
-                          disabled={!isEditable}
+                          disabled={!canEditField("allergens")}
                           func={(_, value) => updateRelationField("allergens", value)}
                         />
                       </Grid>
@@ -491,7 +505,7 @@ export default function SkladProductionEditorDialog({
                           label="Места хранения"
                           data={storageOptions}
                           value={selectedStorages}
-                          disabled={!isEditable}
+                          disabled={!canEditField("storages")}
                           func={(_, value) => updateRelationField("storages", value)}
                         />
                       </Grid>
@@ -501,7 +515,7 @@ export default function SkladProductionEditorDialog({
                           label="Возможные аллергены"
                           data={allergenOptions}
                           value={selectedPossibleAllergens}
-                          disabled={!isEditable}
+                          disabled={!canEditField("allergens_diff")}
                           func={(_, value) => updateRelationField("allergens_possible", value)}
                         />
                       </Grid>
@@ -511,7 +525,7 @@ export default function SkladProductionEditorDialog({
                           label="Должности в кафе"
                           data={appOptions}
                           value={selectedApps}
-                          disabled={!isEditable}
+                          disabled={!canEditField("apps")}
                           func={(_, value) => updateRelationField("apps", value)}
                         />
                       </Grid>
@@ -536,14 +550,14 @@ export default function SkladProductionEditorDialog({
                                   <TableCell align="right">Нетто</TableCell>
                                   <TableCell align="right">% потери при ГО</TableCell>
                                   <TableCell align="right">Выход</TableCell>
-                                  {isEditable ? <TableCell align="right" /> : null}
+                                  {canEditItems ? <TableCell align="right" /> : null}
                                 </TableRow>
                               </TableHead>
                               <TableBody>
                                 {form.items.map((item, index) => (
                                   <TableRow key={getCompositionRowKey(item, index)}>
                                     <TableCell sx={{ minWidth: 260 }}>
-                                      {isEditable ? (
+                                      {canEditItems ? (
                                         <MyAutocomplite
                                           multiple={false}
                                           data={itemOptions}
@@ -569,7 +583,8 @@ export default function SkladProductionEditorDialog({
                                                 }
                                               : null)
                                           }
-                                          disabled={!isEditable}
+                                          filterOptions={filterProductionCompositionOptions}
+                                          disabled={!canEditItems}
                                           func={(_, value) => updateCompositionItem(index, value)}
                                         />
                                       ) : (
@@ -578,11 +593,11 @@ export default function SkladProductionEditorDialog({
                                     </TableCell>
                                     <TableCell>{getCompositionUnitName(item)}</TableCell>
                                     <TableCell align="right">
-                                      {isEditable ? (
+                                      {canEditItems ? (
                                         <MyTextInput
                                           label=""
                                           value={item?.brutto ?? ""}
-                                          disabled={!isEditable}
+                                          disabled={!canEditItems}
                                           func={(event) =>
                                             updateCompositionRow(
                                               index,
@@ -596,11 +611,11 @@ export default function SkladProductionEditorDialog({
                                       )}
                                     </TableCell>
                                     <TableCell align="right">
-                                      {isEditable ? (
+                                      {canEditItems ? (
                                         <MyTextInput
                                           label=""
                                           value={getCompositionLoss(item)}
-                                          disabled={!isEditable}
+                                          disabled={!canEditItems}
                                           func={(event) =>
                                             updateCompositionRow(index, "pr_1", event.target.value)
                                           }
@@ -610,11 +625,11 @@ export default function SkladProductionEditorDialog({
                                       )}
                                     </TableCell>
                                     <TableCell align="right">
-                                      {isEditable ? (
+                                      {canEditItems ? (
                                         <MyTextInput
                                           label=""
                                           value={item?.netto ?? ""}
-                                          disabled={!isEditable}
+                                          disabled={!canEditItems}
                                           func={(event) =>
                                             updateCompositionRow(index, "netto", event.target.value)
                                           }
@@ -624,11 +639,11 @@ export default function SkladProductionEditorDialog({
                                       )}
                                     </TableCell>
                                     <TableCell align="right">
-                                      {isEditable ? (
+                                      {canEditItems ? (
                                         <MyTextInput
                                           label=""
                                           value={item?.pr_2 ?? ""}
-                                          disabled={!isEditable}
+                                          disabled={!canEditItems}
                                           func={(event) =>
                                             updateCompositionRow(index, "pr_2", event.target.value)
                                           }
@@ -638,11 +653,11 @@ export default function SkladProductionEditorDialog({
                                       )}
                                     </TableCell>
                                     <TableCell align="right">
-                                      {isEditable ? (
+                                      {canEditItems ? (
                                         <MyTextInput
                                           label=""
                                           value={getCompositionOutput(item)}
-                                          disabled={!isEditable}
+                                          disabled={!canEditItems}
                                           func={(event) =>
                                             updateCompositionRow(index, "res", event.target.value)
                                           }
@@ -651,7 +666,7 @@ export default function SkladProductionEditorDialog({
                                         formatMetricValue(getCompositionOutput(item))
                                       )}
                                     </TableCell>
-                                    {isEditable ? (
+                                    {canEditItems ? (
                                       <TableCell align="right">
                                         <IconButton
                                           color="error"
@@ -667,7 +682,7 @@ export default function SkladProductionEditorDialog({
                             </Table>
                           </TableContainer>
                         ) : null}
-                        {isEditable ? (
+                        {canEditItems ? (
                           <TableContainer sx={{ mt: form.items.length ? 1.5 : 0 }}>
                             <Table size="small">
                               <TableBody>
@@ -691,7 +706,8 @@ export default function SkladProductionEditorDialog({
                                       }
                                       value={null}
                                       placeholder="Выберите номенклатуру"
-                                      disabled={!isEditable}
+                                      filterOptions={filterProductionCompositionOptions}
+                                      disabled={!canEditItems}
                                       func={(_, value) => appendCompositionItem(value)}
                                     />
                                   </TableCell>
@@ -712,7 +728,7 @@ export default function SkladProductionEditorDialog({
                       <SkladCsvAutocompleteField
                         label="Состав"
                         value={form.structure}
-                        disabled={!isEditable}
+                        disabled={!canEditField("structure")}
                         onChange={(nextValue) => updateField("structure", nextValue)}
                         placeholder="Введите состав через запятую"
                       />

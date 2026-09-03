@@ -36,13 +36,14 @@ import {
   canViewAccess,
   canViewSection,
   hasAccessValue,
-} from "@/components/site_items_new/site_items_access";
+} from "./skladSiteItemsAccess";
 
 const roundTo = (value, decimals) => {
   return Number(Math.round(value + "e" + decimals) + "e-" + decimals);
 };
 
 const brandRed = "#DD1A32";
+const activeGreen = "#46B653";
 const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
@@ -97,7 +98,7 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
-export class SiteItemsModalTech extends React.Component {
+export class SkladSiteItemsLegacyEditorDialog extends React.Component {
   dropzoneOptions = {
     autoProcessQueue: false,
     autoQueue: true,
@@ -106,7 +107,7 @@ export class SiteItemsModalTech extends React.Component {
     parallelUploads: 10,
     acceptedFiles: "image/jpeg,image/png",
     addRemoveLinks: true,
-    url: `${apiBaseUrl}/site_items_new/upload_img`,
+    url: `${apiBaseUrl}/sklad_items/site-items/upload_image`,
   };
 
   myDropzone = null;
@@ -270,14 +271,17 @@ export class SiteItemsModalTech extends React.Component {
   }
 
   getFieldAccess(field, type = "edit") {
-    if (type === "view") {
-      return canViewAccess(this.props.acces, field, false);
-    }
-
-    return canEditAccess(this.props.acces, field, false);
+    return this.getFieldAccessOrDefault(field, type, false);
   }
 
-  getFieldAccessOrDefault(field, type = "edit", fallback = true) {
+  getFieldAccessOrDefault(field, type = "edit", fallback = false) {
+    if (
+      this.props.mode === "create" &&
+      ["name", "date_start", "date_end", "category_id"].includes(field)
+    ) {
+      return true;
+    }
+
     if (type === "view") {
       return canViewAccess(this.props.acces, field, fallback);
     }
@@ -285,8 +289,8 @@ export class SiteItemsModalTech extends React.Component {
     return canEditAccess(this.props.acces, field, fallback);
   }
 
-  getFieldVisibilityOrDefault(field, fallback = true) {
-    return canViewAccess(this.props.acces, field, fallback);
+  getFieldVisibilityOrDefault(field, fallback = false) {
+    return this.getFieldAccessOrDefault(field, "view", fallback);
   }
 
   getNormalizedAccess() {
@@ -298,29 +302,33 @@ export class SiteItemsModalTech extends React.Component {
     }, {});
 
     modalFieldKeys.forEach((field) => {
-      const fallback = field === "tags";
-      acc[`${field}_view`] = canViewAccess(rawAccess, field, fallback);
-      acc[`${field}_edit`] = canEditAccess(rawAccess, field, fallback);
+      acc[`${field}_view`] = canViewAccess(rawAccess, field, false);
+      acc[`${field}_edit`] = canEditAccess(rawAccess, field, false);
     });
+
+    if (this.props.mode === "create") {
+      ["name", "date_start", "date_end", "category_id"].forEach((field) => {
+        acc[`${field}_view`] = true;
+        acc[`${field}_edit`] = true;
+      });
+    }
 
     return acc;
   }
 
   getVisibleSections() {
     return modalSections.filter((section) =>
-      section.fields.some((field) => this.getFieldVisibilityOrDefault(field, field === "tags")),
+      section.fields.some((field) => this.getFieldVisibilityOrDefault(field, false)),
     );
   }
 
   hasAnyEditableField() {
-    return modalFieldKeys.some((field) =>
-      this.getFieldAccessOrDefault(field, "edit", field === "tags"),
-    );
+    return modalFieldKeys.some((field) => this.getFieldAccessOrDefault(field, "edit", false));
   }
 
   canManageTagCatalog() {
     return (
-      this.getFieldAccessOrDefault("tags", "edit", true) &&
+      this.getFieldAccessOrDefault("tags", "edit", false) &&
       this.hasAccessFlag(this.props.acces?.change_tag_access)
     );
   }
@@ -702,31 +710,42 @@ export class SiteItemsModalTech extends React.Component {
     }, 0);
   }
 
-  activateCompositionAutocomplete(fieldKey) {
+  activateCompositionAutocomplete(fieldKey, event) {
     if (this.state.activeCompositionAutocomplete === fieldKey) {
       return;
     }
+
+    const inputValue = String(event?.target?.value ?? "");
 
     this.setState((prevState) => ({
       activeCompositionAutocomplete: fieldKey,
       compositionSearchByField: {
         ...prevState.compositionSearchByField,
-        [fieldKey]: "",
+        [fieldKey]: inputValue,
       },
     }));
   }
 
   changeCompositionSearch(fieldKey, event, inputValue, reason) {
-    if (reason !== "input" && reason !== "clear") {
+    if (reason !== "input" && reason !== "clear" && reason !== "reset") {
       return;
     }
 
     this.setState((prevState) => ({
+      ...(reason === "reset" ? {} : { activeCompositionAutocomplete: fieldKey }),
       compositionSearchByField: {
         ...prevState.compositionSearchByField,
-        [fieldKey]: inputValue,
+        [fieldKey]: String(inputValue ?? ""),
       },
     }));
+  }
+
+  getCompositionAutocompleteInputValue(fieldKey, selectedValue) {
+    if (Object.prototype.hasOwnProperty.call(this.state.compositionSearchByField, fieldKey)) {
+      return this.state.compositionSearchByField[fieldKey];
+    }
+
+    return String(selectedValue?.name ?? "");
   }
 
   getCompositionAutocompleteOptions(fieldKey, selectedValue, options) {
@@ -825,7 +844,9 @@ export class SiteItemsModalTech extends React.Component {
 
   setupDropzoneEvents() {
     if (!this.myDropzone) return;
-    this.myDropzone.on("addedfile", () => {
+    this.myDropzone.on("addedfile", (file) => {
+      const previousFiles = (this.myDropzone?.files || []).filter((item) => item !== file);
+      previousFiles.forEach((item) => this.myDropzone.removeFile(item));
       this.setState({
         hasDropzoneFile: true,
       });
@@ -1501,37 +1522,11 @@ export class SiteItemsModalTech extends React.Component {
     this.setState({ isSaving: true });
 
     try {
-      const response = await this.props.save(data);
+      const pendingImageFile = this.myDropzone?.files?.[0] || null;
+      const response = await this.props.save(data, pendingImageFile);
 
       if (!response?.st) {
         this.setState({ isSaving: false });
-        return;
-      }
-
-      const idGet = response.id || 0;
-      if (
-        this.myDropzone &&
-        this.myDropzone["files"]?.length > 0 &&
-        (this.props.item?.id || idGet)
-      ) {
-        if (this.isInit === false) {
-          this.isInit = true;
-
-          const name = this.state.name;
-          const id = this.props.item?.id ? this.props.item.id : idGet;
-          const historyId = response.history_id;
-          this.myDropzone.on("sending", (file, xhr, uploadData) => {
-            uploadData.append("type", "site_items");
-            uploadData.append("name", name + "site_items");
-            uploadData.append("login", localStorage.getItem("token"));
-            uploadData.append("id", id);
-            if (historyId) {
-              uploadData.append("history_id", historyId);
-            }
-          });
-        }
-
-        this.myDropzone.processQueue();
         return;
       }
 
@@ -1611,8 +1606,8 @@ export class SiteItemsModalTech extends React.Component {
       visibleSections[0] ||
       modalSections[0];
     const canSave = this.hasAnyEditableField();
-    const canViewTags = canViewSection(this.props.acces, "tags", true);
-    const canEditTags = canEditSection(this.props.acces, "tags", true);
+    const canViewTags = canViewSection(this.props.acces, "tags", false);
+    const canEditTags = canEditSection(this.props.acces, "tags", false);
     const canViewDropzone = this.getFieldVisibilityOrDefault("dropzone", false);
     const canViewPromoMarkers = canViewTags;
     const canViewDescription = canViewSection(this.props.acces, "description", false);
@@ -1974,9 +1969,9 @@ export class SiteItemsModalTech extends React.Component {
         <Paper
           sx={{
             borderRadius: 2.5,
-            border: `1px solid ${value ? brandRed : blockBorder}`,
+            border: `1px solid ${value ? activeGreen : blockBorder}`,
             boxShadow: "none",
-            backgroundColor: value ? "#FFF7F8" : "#FFFFFF",
+            backgroundColor: value ? "#F2FAF3" : "#FFFFFF",
             minHeight: 92,
             p: 1.75,
             display: "flex",
@@ -2019,7 +2014,7 @@ export class SiteItemsModalTech extends React.Component {
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: "50%",
-                backgroundColor: value ? "rgba(221, 26, 50, 0.08)" : blockBackground,
+                backgroundColor: value ? "rgba(70, 182, 83, 0.12)" : blockBackground,
                 transition: "background-color 0.2s ease",
               }}
             >
@@ -2036,7 +2031,7 @@ export class SiteItemsModalTech extends React.Component {
                     backgroundColor: "transparent",
                   },
                   "&.Mui-checked": {
-                    color: brandRed,
+                    color: activeGreen,
                   },
                 }}
               />
@@ -2102,6 +2097,10 @@ export class SiteItemsModalTech extends React.Component {
                       this.state.items_stage?.all,
                     )}
                     filterOptions={filterCompositionOptions}
+                    inputValue={this.getCompositionAutocompleteInputValue(
+                      autocompleteKey,
+                      item.type_id,
+                    )}
                     onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                     value={item.type_id}
                     onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
@@ -2198,6 +2197,10 @@ export class SiteItemsModalTech extends React.Component {
                   this.state.item_items?.all_items,
                 )}
                 filterOptions={filterCompositionOptions}
+                inputValue={this.getCompositionAutocompleteInputValue(
+                  autocompleteKey,
+                  item.item_id,
+                )}
                 onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                 value={item.item_id}
                 onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
@@ -2481,7 +2484,7 @@ export class SiteItemsModalTech extends React.Component {
                     fontWeight: 700,
                   }}
                 >
-                  {method === "Новое блюдо" ? "Новая карточка блюда" : method}
+                  {method === "Новое блюдо" ? "Новый товар сайта" : method}
                 </Typography>
                 <Typography
                   sx={{
@@ -2578,7 +2581,7 @@ export class SiteItemsModalTech extends React.Component {
                         disabled={!access?.date_start_edit}
                         sx={this.getErrorFieldSx("date_start")}
                         func={this.changeDateRange.bind(this, "date_start")}
-                        minDate={dayjs(new Date())}
+                        minDate={this.props.allowPastDate ? undefined : dayjs(new Date())}
                       />
                     </Box>
                   )}
@@ -2589,6 +2592,13 @@ export class SiteItemsModalTech extends React.Component {
                         value={this.state.date_end}
                         disabled={!access?.date_end_edit}
                         func={this.changeDateRange.bind(this, "date_end")}
+                        minDate={
+                          this.state.date_start
+                            ? dayjs(this.state.date_start)
+                            : this.props.allowPastDate
+                              ? undefined
+                              : dayjs(new Date())
+                        }
                         clearable={true}
                       />
                     </Box>
@@ -3350,6 +3360,10 @@ export class SiteItemsModalTech extends React.Component {
                                             this.state.items_stage?.all,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          inputValue={this.getCompositionAutocompleteInputValue(
+                                            "preparation-new",
+                                            null,
+                                          )}
                                           onInputChange={this.changeCompositionSearch.bind(
                                             this,
                                             "preparation-new",
@@ -3459,6 +3473,10 @@ export class SiteItemsModalTech extends React.Component {
                                             this.state.item_items?.all_items,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          inputValue={this.getCompositionAutocompleteInputValue(
+                                            "item-new",
+                                            null,
+                                          )}
                                           onInputChange={this.changeCompositionSearch.bind(
                                             this,
                                             "item-new",
@@ -3782,7 +3800,7 @@ export class SiteItemsModalTech extends React.Component {
                 },
               }}
             >
-              {method === "Новое блюдо" ? "Создать блюдо" : "Сохранить изменения"}
+              {method === "Новое блюдо" ? "Создать товар" : "Сохранить изменения"}
             </Button>
           </DialogActions>
         </Dialog>

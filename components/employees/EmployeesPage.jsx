@@ -498,6 +498,19 @@ const normalizeEmployeeRow = (item) => {
   };
 };
 
+const getEmployeePositionGroupKey = (employee) => {
+  const appId = employee?.app_id;
+
+  if (appId !== null && appId !== undefined && appId !== "") {
+    return `id:${appId}`;
+  }
+
+  return `name:${String(employee?.app_name ?? "").trim()}`;
+};
+
+const getEmployeePositionGroupName = (employee) =>
+  String(employee?.app_name ?? "").trim() || "Без должности";
+
 const normalizeEmployeeCard = (data) => {
   const source = data?.employee ?? data?.user ?? data ?? {};
   const user = {
@@ -2354,62 +2367,86 @@ export default function EmployeesPage() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {visibleEmployees.map((item) => {
+                      {visibleEmployees.map((item, index) => {
                         const health = getHealthStatusMeta(item);
+                        const showPositionDivider =
+                          index === 0 ||
+                          getEmployeePositionGroupKey(visibleEmployees[index - 1]) !==
+                            getEmployeePositionGroupKey(item);
 
                         return (
-                          <TableRow
-                            key={item.id}
-                            hover={canOpenEmployeeCard(permissions)}
-                            onClick={() => openEmployee(item.id)}
-                            sx={{
-                              cursor: canOpenEmployeeCard(permissions) ? "pointer" : "default",
-                            }}
-                          >
-                            <TableCell>
-                              <Stack
-                                direction="row"
-                                spacing={1.25}
-                                alignItems="center"
-                              >
-                                <EmployeeAvatar employee={item} />
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Typography
-                                    sx={{ fontWeight: 800, maxWidth: 240 }}
-                                    noWrap
-                                  >
-                                    {item.displayName}
+                          <React.Fragment key={item.id}>
+                            {showPositionDivider ? (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={8}
+                                  sx={{
+                                    px: 2,
+                                    py: 0.75,
+                                    bgcolor: "grey.200",
+                                    borderTop: "1px solid",
+                                    borderBottom: "1px solid",
+                                    borderColor: "divider",
+                                  }}
+                                >
+                                  <Typography sx={{ fontSize: 13, fontWeight: 900 }}>
+                                    {getEmployeePositionGroupName(item)}
                                   </Typography>
-                                  {String(item.is_active) === "0" ? (
-                                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                                      уволен
+                                </TableCell>
+                              </TableRow>
+                            ) : null}
+                            <TableRow
+                              hover={canOpenEmployeeCard(permissions)}
+                              onClick={() => openEmployee(item.id)}
+                              sx={{
+                                cursor: canOpenEmployeeCard(permissions) ? "pointer" : "default",
+                              }}
+                            >
+                              <TableCell>
+                                <Stack
+                                  direction="row"
+                                  spacing={1.25}
+                                  alignItems="center"
+                                >
+                                  <EmployeeAvatar employee={item} />
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography
+                                      sx={{ fontWeight: 800, maxWidth: 240 }}
+                                      noWrap
+                                    >
+                                      {item.displayName}
                                     </Typography>
-                                  ) : null}
-                                </Box>
-                              </Stack>
-                            </TableCell>
-                            <TableCell>{item.phone || "—"}</TableCell>
-                            <TableCell>{item.app_name || "—"}</TableCell>
-                            <TableCell>{item.point || "—"}</TableCell>
-                            <TableCell>{formatDate(item.date_registration)}</TableCell>
-                            <TableCell>{item.exp || "—"}</TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                size="small"
-                                label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
-                                color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
-                                sx={{ fontWeight: 800 }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                size="small"
-                                label={health.label}
-                                color={health.color}
-                                sx={{ fontWeight: 800 }}
-                              />
-                            </TableCell>
-                          </TableRow>
+                                    {String(item.is_active) === "0" ? (
+                                      <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                                        уволен
+                                      </Typography>
+                                    ) : null}
+                                  </Box>
+                                </Stack>
+                              </TableCell>
+                              <TableCell>{item.phone || "—"}</TableCell>
+                              <TableCell>{item.app_name || "—"}</TableCell>
+                              <TableCell>{item.point || "—"}</TableCell>
+                              <TableCell>{formatDate(item.date_registration)}</TableCell>
+                              <TableCell>{item.exp || "—"}</TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  size="small"
+                                  label={parseInt(item.acc_to_kas) === 1 ? "Да" : "Нет"}
+                                  color={parseInt(item.acc_to_kas) === 1 ? "success" : "error"}
+                                  sx={{ fontWeight: 800 }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  size="small"
+                                  label={health.label}
+                                  color={health.color}
+                                  sx={{ fontWeight: 800 }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          </React.Fragment>
                         );
                       })}
                       {!visibleEmployees.length ? (

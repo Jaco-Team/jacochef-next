@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dayjs from "dayjs";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
@@ -8,8 +9,6 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   Box,
   Button,
@@ -84,16 +83,14 @@ export default function SkladSiteItemEditorDialog({
   categories = [],
   tags = [],
   isEditable = false,
-  canArchiveAction = false,
   canViewHistory = false,
   canCreateCategory = false,
-  onUploadImage,
+  allowPastDate = false,
   onRestoreImage,
   initialTab = "main",
   onSubmit,
   onCreateTag,
   onRenameTag,
-  onArchive,
   onCreateCategory,
   showAlert,
   onClose,
@@ -110,8 +107,18 @@ export default function SkladSiteItemEditorDialog({
   });
   const fileInputRef = useRef(null);
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const pendingImagePreviewRef = useRef("");
+  const [pendingImageFile, setPendingImageFile] = useState(null);
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = useState("");
 
   useEffect(() => {
+    if (pendingImagePreviewRef.current) {
+      URL.revokeObjectURL(pendingImagePreviewRef.current);
+      pendingImagePreviewRef.current = "";
+    }
+    setPendingImageFile(null);
+    setPendingImagePreviewUrl("");
+
     if (!open) {
       return;
     }
@@ -128,6 +135,15 @@ export default function SkladSiteItemEditorDialog({
     });
     setImagePreviewOpen(false);
   }, [canViewHistory, draft, initialTab, open]);
+
+  useEffect(
+    () => () => {
+      if (pendingImagePreviewRef.current) {
+        URL.revokeObjectURL(pendingImagePreviewRef.current);
+      }
+    },
+    [],
+  );
 
   const categoryOptions = useMemo(() => {
     const options = [{ id: "", name: "Выберите категорию" }].concat(
@@ -167,12 +183,12 @@ export default function SkladSiteItemEditorDialog({
   const calculatedPossibleAllergenNames = useMemo(() => {
     return formatCalculatedAllergenNameList(form?.calculated_allergens?.possible_allergens);
   }, [form?.calculated_allergens]);
-  const imageUrl = useMemo(
+  const storedImageUrl = useMemo(
     () =>
       resolveSiteItemImageUrl(form?.image, draft?.img_app || form?.image?.current_fields?.img_app),
     [draft?.img_app, form?.image],
   );
-  const imagePreviewUrl = useMemo(
+  const storedImagePreviewUrl = useMemo(
     () =>
       resolveSiteItemImagePreviewUrl(
         form?.image,
@@ -222,8 +238,8 @@ export default function SkladSiteItemEditorDialog({
     );
   };
 
-  const submitImageFile = async (file) => {
-    if (!file || !draft?.id || !onUploadImage) {
+  const selectImageFile = (file) => {
+    if (!file) {
       return;
     }
 
@@ -232,21 +248,29 @@ export default function SkladSiteItemEditorDialog({
       return;
     }
 
-    await onUploadImage(file);
+    const nextPreviewUrl = URL.createObjectURL(file);
+
+    if (pendingImagePreviewRef.current) {
+      URL.revokeObjectURL(pendingImagePreviewRef.current);
+    }
+
+    pendingImagePreviewRef.current = nextPreviewUrl;
+    setPendingImageFile(file);
+    setPendingImagePreviewUrl(nextPreviewUrl);
   };
 
-  const handleImageInputChange = async (event) => {
+  const handleImageInputChange = (event) => {
     const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    await submitImageFile(file);
+    selectImageFile(file);
     event.target.value = "";
   };
 
-  const handleImageDrop = async (event) => {
+  const handleImageDrop = (event) => {
     event.preventDefault();
 
     if (!isEditable) {
@@ -259,7 +283,7 @@ export default function SkladSiteItemEditorDialog({
       return;
     }
 
-    await submitImageFile(file);
+    selectImageFile(file);
   };
 
   const stagePreparationOptions = useMemo(() => {
@@ -688,6 +712,7 @@ export default function SkladSiteItemEditorDialog({
                             <MyDatePickerNew
                               label="Действует с"
                               value={form.date_start}
+                              minDate={allowPastDate ? undefined : dayjs().startOf("day")}
                               disabled={!isEditable}
                               func={(value) =>
                                 updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
@@ -698,6 +723,9 @@ export default function SkladSiteItemEditorDialog({
                             <MyDatePickerNew
                               label="Действует по"
                               value={form.date_end}
+                              minDate={
+                                form.date_start ? dayjs(form.date_start) : dayjs().startOf("day")
+                              }
                               disabled={!isEditable}
                               func={(value) =>
                                 updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
@@ -778,7 +806,7 @@ export default function SkladSiteItemEditorDialog({
 
                   <SkladSectionCard
                     title="Активность"
-                    description="Публикация, продажа, промо и архив"
+                    description="Публикация, продажа и промо"
                   >
                     <Stack
                       direction="row"
@@ -796,44 +824,51 @@ export default function SkladSiteItemEditorDialog({
                       <Chip
                         clickable
                         disabled={!isEditable}
-                        color={form.show_site ? "primary" : "default"}
+                        color={form.show_site ? "success" : "default"}
                         label={form.show_site ? "Показывать на сайте" : "Скрыт на сайте"}
                         onClick={() => updateField("show_site", !form.show_site)}
                       />
                       <Chip
                         clickable
                         disabled={!isEditable}
-                        color={form.show_program ? "secondary" : "default"}
+                        color={form.show_program ? "success" : "default"}
                         label={form.show_program ? "Показывать на кассе" : "Скрыт на кассе"}
                         onClick={() => updateField("show_program", !form.show_program)}
                       />
                       <Chip
                         clickable
                         disabled={!isEditable}
-                        color={form.is_hit ? "warning" : "default"}
+                        color={form.is_hit ? "success" : "default"}
                         label={form.is_hit ? "Хит" : "Не хит"}
                         onClick={() => updateField("is_hit", !form.is_hit)}
                       />
                       <Chip
                         clickable
                         disabled={!isEditable}
-                        color={form.is_new ? "info" : "default"}
+                        color={form.is_new ? "success" : "default"}
                         label={form.is_new ? "Новинка" : "Обычный"}
                         onClick={() => updateField("is_new", !form.is_new)}
                       />
                       <Chip
                         clickable
-                        disabled={!isEditable || !canArchiveAction || !form.id || !onArchive}
-                        color={Number(form.is_archived) === 1 ? "default" : "warning"}
-                        icon={
-                          Number(form.is_archived) === 1 ? (
-                            <UnarchiveOutlinedIcon />
-                          ) : (
-                            <ArchiveOutlinedIcon />
-                          )
-                        }
-                        label={Number(form.is_archived) === 1 ? "В архиве" : "В архив"}
-                        onClick={() => onArchive(form)}
+                        disabled={!isEditable}
+                        color={form.is_updated ? "success" : "default"}
+                        label={form.is_updated ? "Обновлено" : "Без обновления"}
+                        onClick={() => updateField("is_updated", !form.is_updated)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_spicy ? "success" : "default"}
+                        label={form.is_spicy ? "Острый" : "Не острый"}
+                        onClick={() => updateField("is_spicy", !form.is_spicy)}
+                      />
+                      <Chip
+                        clickable
+                        disabled={!isEditable}
+                        color={form.is_price ? "success" : "default"}
+                        label={form.is_price ? "Цена установлена" : "Без цены"}
+                        onClick={() => updateField("is_price", !form.is_price)}
                       />
                     </Stack>
                   </SkladSectionCard>
@@ -847,8 +882,15 @@ export default function SkladSiteItemEditorDialog({
                       spacing={2}
                       alignItems="center"
                     >
-                      {imageUrl ? (
+                      {storedImageUrl ? (
                         <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", mb: 1, textAlign: "center" }}
+                          >
+                            Текущее изображение
+                          </Typography>
                           <Box
                             role="button"
                             tabIndex={0}
@@ -863,7 +905,7 @@ export default function SkladSiteItemEditorDialog({
                           >
                             <Box
                               component="img"
-                              src={imageUrl}
+                              src={storedImageUrl}
                               alt={form.name || "Изображение товара"}
                               sx={{
                                 width: "100%",
@@ -876,7 +918,7 @@ export default function SkladSiteItemEditorDialog({
                         </Grid>
                       ) : null}
 
-                      <Grid size={{ xs: 12, md: imageUrl ? 8 : 12 }}>
+                      <Grid size={{ xs: 12, md: storedImageUrl ? 8 : 12 }}>
                         <Box
                           role="button"
                           tabIndex={isEditable ? 0 : -1}
@@ -894,24 +936,56 @@ export default function SkladSiteItemEditorDialog({
                             borderRadius: 1,
                             minHeight: 180,
                             px: 3,
-                            py: 4,
+                            py: pendingImageFile ? 2 : 4,
                           }}
                         >
                           <Stack
-                            spacing={0.75}
+                            spacing={1}
                             justifyContent="center"
                             alignItems="center"
                             sx={{ minHeight: "100%" }}
                           >
-                            <CloudUploadOutlinedIcon color={isEditable ? "action" : "disabled"} />
+                            {pendingImagePreviewUrl ? (
+                              <Box
+                                component="img"
+                                src={pendingImagePreviewUrl}
+                                alt={`Выбранное изображение: ${form.name || pendingImageFile?.name || "товар"}`}
+                                sx={{
+                                  width: "100%",
+                                  maxWidth: 220,
+                                  aspectRatio: "1 / 1",
+                                  objectFit: "contain",
+                                  display: "block",
+                                  borderRadius: 1,
+                                  bgcolor: "background.paper",
+                                }}
+                              />
+                            ) : (
+                              <CloudUploadOutlinedIcon color={isEditable ? "action" : "disabled"} />
+                            )}
                             <Typography sx={{ fontWeight: 700 }}>
-                              {imageUrl ? "Заменить изображение" : "Загрузить изображение"}
+                              {pendingImageFile
+                                ? "Выбрать другое изображение"
+                                : storedImageUrl
+                                  ? "Заменить изображение"
+                                  : "Загрузить изображение"}
                             </Typography>
+                            {pendingImageFile ? (
+                              <Chip
+                                size="small"
+                                color="info"
+                                variant="outlined"
+                                label={pendingImageFile.name}
+                              />
+                            ) : null}
                             <Typography
                               variant="body2"
                               color="text.secondary"
+                              align="center"
                             >
-                              Перетащите файл сюда или нажмите, чтобы выбрать.
+                              {pendingImageFile
+                                ? "Новое изображение загрузится после сохранения карточки."
+                                : "Перетащите файл сюда или нажмите, чтобы выбрать."}
                             </Typography>
                           </Stack>
                         </Box>
@@ -1515,7 +1589,7 @@ export default function SkladSiteItemEditorDialog({
           <Button
             variant="contained"
             disabled={!isEditable || loading}
-            onClick={() => onSubmit?.(form)}
+            onClick={() => onSubmit?.(form, pendingImageFile)}
           >
             {loading ? "Сохраняем..." : mode === "create" ? "Создать товар" : "Сохранить изменения"}
           </Button>
@@ -1528,10 +1602,10 @@ export default function SkladSiteItemEditorDialog({
         title={form.name || "Изображение"}
       >
         <DialogContent dividers>
-          {imageUrl ? (
+          {storedImageUrl ? (
             <Box
               component="img"
-              src={imagePreviewUrl || imageUrl}
+              src={storedImagePreviewUrl || storedImageUrl}
               alt={form.name || "Изображение товара"}
               sx={{
                 width: "100%",
