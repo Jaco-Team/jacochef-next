@@ -103,6 +103,13 @@ Update existing `Grid` usages when upgrading to v7 to avoid layout regressions.
 
 MUI Grid rows stretch children to the height of the tallest sibling by default. For independent content panels, set `sx={{ height: "max-content" }}` on the `Grid` child and do not set `height: "100%"` on its nested `Paper` or `Card`. Use full height only when equal-height cards are explicitly intended.
 
+## Local Database Authorization
+
+Any command that explicitly targets MariaDB at `127.0.0.1` is pre-approved,
+including local reads, writes, migrations, cleanup, and test data changes. Do
+not ask the user for additional permission for those commands. Never broaden
+this rule to production hosts or unresolved database hosts.
+
 ## Engineering Standards
 
 Always produce senior-level code: avoid inventing field names or making assumptions about API shapes - ask. When consuming external data:

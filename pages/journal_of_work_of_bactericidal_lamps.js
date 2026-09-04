@@ -1,7 +1,12 @@
 import React, { Fragment } from "react";
 
+import AddIcon from "@mui/icons-material/Add";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -28,7 +33,17 @@ import Lamps_Modal_Add_Active from "@/components/journal_of_work_of_bactericidal
 import Lamps_Modal_Add from "@/components/journal_of_work_of_bactericidal_lamps/Lamps_Modal_Add";
 import { Paper } from "@mui/material";
 
-class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
+const actionButtonSx = {
+  borderRadius: "8px",
+  fontWeight: 700,
+  minHeight: 36,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+};
+
+export class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
   constructor(props) {
     super(props);
 
@@ -325,97 +340,92 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           spacing={3}
           className="container_first_child"
         >
-          <Grid
-            size={{
-              xs: 12,
-              sm: 12,
-            }}
-          >
-            <h1>{this.state.module_name}</h1>
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MyDatePickerNewViews
-              label="Дата от"
-              views={["month", "year"]}
-              value={this.state.date_start}
-              func={this.changeDateRange.bind(this, "date_start")}
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MyDatePickerNewViews
-              label="Дата до"
-              views={["month", "year"]}
-              value={this.state.date_end}
-              func={this.changeDateRange.bind(this, "date_end")}
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <MySelect
-              id="select_point"
-              is_none={false}
-              data={this.state.points}
-              value={this.state.point}
-              func={this.changePoint.bind(this)}
-              label="Точка"
-            />
-          </Grid>
-
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={this.getLamps.bind(this)}
-            >
-              Обновить данные
-            </Button>
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 6,
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={this.openModalAddLamp.bind(this)}
-            >
-              Добавить лампу
-            </Button>
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            {this.canAccess("export_excel") && (
-              <Button
-                variant="contained"
-                onClick={this.download.bind(this)}
+          {!this.props.embedded ? (
+            <Grid size={12}>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{ fontWeight: 700, fontSize: { xs: 28, md: 32 } }}
               >
-                Скачать файл XLS
-              </Button>
-            )}
+                {this.state.module_name}
+              </Typography>
+            </Grid>
+          ) : null}
+
+          <Grid size={12}>
+            <Paper
+              variant="outlined"
+              sx={{ borderRadius: "8px", overflow: "hidden" }}
+            >
+              <Box
+                sx={{
+                  p: 1.5,
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "220px 220px 300px auto" },
+                  gap: 1.5,
+                  alignItems: "center",
+                }}
+              >
+                <MyDatePickerNewViews
+                  label="Дата от"
+                  views={["month", "year"]}
+                  value={this.state.date_start}
+                  func={this.changeDateRange.bind(this, "date_start")}
+                />
+                <MyDatePickerNewViews
+                  label="Дата до"
+                  views={["month", "year"]}
+                  value={this.state.date_end}
+                  func={this.changeDateRange.bind(this, "date_end")}
+                />
+                <MySelect
+                  id="select_point"
+                  is_none={false}
+                  data={this.state.points}
+                  value={this.state.point}
+                  func={this.changePoint.bind(this)}
+                  label="Точка"
+                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    justifyContent: { xs: "stretch", md: "flex-end" },
+                    flexDirection: { xs: "column", sm: "row" },
+                  }}
+                >
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={this.getLamps.bind(this)}
+                    sx={actionButtonSx}
+                  >
+                    Обновить
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={this.openModalAddLamp.bind(this)}
+                    sx={actionButtonSx}
+                  >
+                    Добавить лампу
+                  </Button>
+                  {this.canAccess("export_excel") ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<DownloadOutlinedIcon />}
+                      onClick={this.download.bind(this)}
+                      sx={actionButtonSx}
+                    >
+                      XLS
+                    </Button>
+                  ) : null}
+                </Box>
+              </Box>
+            </Paper>
           </Grid>
 
           <Grid
@@ -430,10 +440,16 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           >
             <TableContainer
               component={Paper}
-              sx={{ borderRadius: 2 }}
+              variant="outlined"
+              sx={{
+                borderRadius: { xs: 0, md: "12px" },
+                overflowX: "auto",
+                border: { xs: 0, md: "1px solid #e0e0e0" },
+              }}
             >
               <Table
                 sx={{
+                  minWidth: 840,
                   borderCollapse: "collapse", // classic grid
                   "& th, & td": {
                     border: "1px solid #e5e5e5",
