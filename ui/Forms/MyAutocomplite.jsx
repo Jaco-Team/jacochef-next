@@ -272,6 +272,7 @@ export function MyAutocomplite(props) {
       },
     },
     listbox: {
+      ...(props.ListboxProps || {}),
       ...props.slotProps?.listbox,
       sx: {
         ...(unifiedListboxSx || {}),
@@ -316,13 +317,14 @@ export function MyAutocomplite(props) {
         disableClearable={props.disableClearable}
         getOptionKey={resolveOptionKey}
         value={props.value ?? (props.multiple ? [] : null)}
+        inputValue={props.inputValue}
         onChange={props.func}
+        onInputChange={props.onInputChange}
         onFocus={props.onFocus}
         autoFocus={props.autoFocus}
         disabledItemsFocusable={props.disabledItemsFocusable}
         //disableAutoFocus={props.disableAutoFocus}
         blurOnSelect={props.blurOnSelect}
-        ListboxProps={props.ListboxProps || undefined}
         onBlur={props.onBlur || undefined}
         disablePortal={props.disablePortal ?? false}
         filterSelectedOptions={props.filterSelectedOptions ?? true}
@@ -337,11 +339,11 @@ export function MyAutocomplite(props) {
           props.isOptionEqualToValue ||
           ((option, value) => parseInt(option?.id) === parseInt(value?.id))
         }
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
+        renderValue={(value, getItemProps) =>
+          (Array.isArray(value) ? value : []).map((option, index) => (
             <Chip
               {...(() => {
-                const { key, ...tagProps } = getTagProps({ index });
+                const { key, ...tagProps } = getItemProps({ index });
                 return tagProps;
               })()}
               key={`${resolveOptionKey(option)}-${index}`}

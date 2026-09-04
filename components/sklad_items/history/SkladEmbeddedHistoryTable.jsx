@@ -232,6 +232,41 @@ function getProductionFieldLabels(isRecipe) {
   };
 }
 
+const warehouseItemHistoryFieldLabels = {
+  name: "Наименование",
+  name_for_vendor: "Для поставщика",
+  mark_name: "Маркетинговое название",
+  category_id: "Категория",
+  ed_izmer_id: "Единица измерения",
+  date_start: "Действует с",
+  date_end: "Действует по",
+  art: "Код 1С",
+  pq: "Количество в упаковке",
+  percent: "% заявки",
+  vend_percent: "% повышения цены",
+  min_count: "Минимальный остаток",
+  max_count_in_m: "Максимальный вес",
+  time_min: "Время приготовления",
+  time_dop_min: "Доп. время",
+  time_min_other: "Другое время",
+  is_show: "Активность",
+  show_in_order: "Заявка",
+  show_in_rev: "Ревизия",
+  storages: "Места хранения",
+  allergens: "Аллергены",
+  allergens_possible: "Возможные аллергены",
+  accounting_systems: "Системы учёта",
+};
+
+function formatWarehouseItemValue(field, snapshot) {
+  if (["date_start", "date_end"].includes(field)) return formatDate(snapshot?.[field]);
+  if (["is_show", "show_in_order", "show_in_rev"].includes(field))
+    return formatBoolean(snapshot?.[field]);
+  if (["storages", "allergens", "allergens_possible", "accounting_systems"].includes(field))
+    return formatNameList(snapshot?.[field]);
+  return formatValue(snapshot?.[field]);
+}
+
 function formatProductionValue(field, snapshot, entityType) {
   const isRecipe = entityType === "recipe";
 
@@ -657,6 +692,14 @@ function snapshotFieldRows(snapshot, entityType) {
     }));
   }
 
+  if (entityType === "item") {
+    return Object.keys(warehouseItemHistoryFieldLabels).map((field) => ({
+      field,
+      label: warehouseItemHistoryFieldLabels[field],
+      value: formatWarehouseItemValue(field, snapshot),
+    }));
+  }
+
   const labels = getProductionFieldLabels(entityType === "recipe");
   return Object.keys(labels).map((field) => ({
     field,
@@ -691,6 +734,40 @@ function snapshotSections(entityType) {
       {
         title: "Описание",
         rows: [["tmp_desc"], ["marc_desc"], ["marc_desc_full"], ["tags"], ["img_app"]],
+      },
+    ];
+  }
+
+  if (entityType === "item") {
+    return [
+      {
+        title: "Основные",
+        rows: [
+          ["name"],
+          ["name_for_vendor", "mark_name"],
+          ["category_id", "ed_izmer_id", "date_start", "date_end"],
+        ],
+      },
+      {
+        title: "Закупка и остатки",
+        rows: [
+          ["art", "pq", "percent", "vend_percent"],
+          ["min_count", "max_count_in_m"],
+        ],
+      },
+      {
+        title: "Приготовление и активность",
+        rows: [
+          ["time_min", "time_dop_min", "time_min_other"],
+          ["is_show", "show_in_order", "show_in_rev"],
+        ],
+      },
+      {
+        title: "Привязки",
+        rows: [
+          ["storages", "accounting_systems"],
+          ["allergens", "allergens_possible"],
+        ],
       },
     ];
   }
@@ -753,7 +830,9 @@ function SnapshotCard({ snapshot, compareSnapshot, entityType, onlyChanges }) {
   const labels =
     entityType === "site_item"
       ? siteItemHistoryFieldLabels
-      : getProductionFieldLabels(entityType === "recipe");
+      : entityType === "item"
+        ? warehouseItemHistoryFieldLabels
+        : getProductionFieldLabels(entityType === "recipe");
 
   return (
     <Stack spacing={1.5}>
@@ -1059,7 +1138,7 @@ function CompositionChanges({ snapshot, compareSnapshot, entityType, onlyChanges
 
 export function SkladEmbeddedHistoryTable({ history, emptyText = "История пока пуста." }) {
   const api = useSkladApi();
-  const { canManageProduction, canManageSiteItems } = useSkladAccess();
+  const { canManageProduction, canManageSiteItems, canManageWarehouseItems } = useSkladAccess();
   const sourceRows = useMemo(() => getHistoryRows(history), [history]);
   const [showAll, setShowAll] = useState(false);
   const [onlyChanges, setOnlyChanges] = useState(false);
@@ -1072,7 +1151,12 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
   const [cancelledKeys, setCancelledKeys] = useState(() => new Set());
   const entityType = history?.meta?.entity_type || sourceRows[0]?.entity_type || "";
   const entityId = history?.meta?.entity_id || sourceRows[0]?.entity_id || null;
-  const canManageSchedule = entityType === "site_item" ? canManageSiteItems : canManageProduction;
+  const canManageSchedule =
+    entityType === "site_item"
+      ? canManageSiteItems
+      : entityType === "item"
+        ? canManageWarehouseItems
+        : canManageProduction;
   const rows = useMemo(
     () =>
       sourceRows

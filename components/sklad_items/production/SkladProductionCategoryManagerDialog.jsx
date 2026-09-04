@@ -12,8 +12,12 @@ import {
   DialogActions,
   DialogContent,
   IconButton,
+  MenuItem,
   Paper,
   Stack,
+  Tab,
+  Tabs,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -23,6 +27,13 @@ import MyModal from "@/ui/MyModal";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 
 function categoryUsageLabel(category) {
+  if (category?.source_type === "warehouse_item") {
+    if (category?.is_group) {
+      return `Группа складских категорий · Подкатегорий: ${Number(category?.delete_usage?.active?.find?.((entry) => entry?.source === "items_cat.parent_id")?.count) || 0}`;
+    }
+
+    return `${category?.parent_name || "Некорректная legacy-группа"} · Товары: ${Number(category?.warehouse_items_count) || 0}`;
+  }
   const recipes = Number(category?.recipes_count) || 0;
   const semiFinished = Number(category?.semi_finished_count) || 0;
 
@@ -44,11 +55,14 @@ export default function SkladProductionCategoryManagerDialog({
   onCreate,
   onSave,
   onDelete,
+  access = {},
 }) {
   const [editingId, setEditingId] = useState(null);
   const [name, setName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [deleteCategory, setDeleteCategory] = useState(null);
+  const [sourceType, setSourceType] = useState("semi_finished");
+  const [parentId, setParentId] = useState("");
 
   useEffect(() => {
     if (!open) {
@@ -56,6 +70,8 @@ export default function SkladProductionCategoryManagerDialog({
       setName("");
       setNewCategoryName("");
       setDeleteCategory(null);
+      setSourceType("semi_finished");
+      setParentId("");
     }
   }, [open]);
 
@@ -97,23 +113,57 @@ export default function SkladProductionCategoryManagerDialog({
       return;
     }
 
-    const created = await onCreate(normalizedName);
+    const created = await onCreate(normalizedName, sourceType, Number(parentId || 0));
     if (created !== false) {
       setNewCategoryName("");
     }
   };
+
+  const visibleCategories = categories.filter((category) => category?.source_type === sourceType);
+  const warehouseParents = Array.from(
+    new Map(
+      categories
+        .filter((category) => category?.source_type === "warehouse_item" && category?.is_group)
+        .map((category) => [Number(category.id), category.name]),
+    ),
+  );
+  const canCreateSource =
+    sourceType === "warehouse_item" ? Number(access?.warehouse_items_create) === 1 : canCreate;
+  const canEditCategory = (category) =>
+    category?.source_type === "warehouse_item"
+      ? !category?.is_group && Number(access?.warehouse_items_categories_edit) === 1
+      : canEdit;
+  const canDeleteCategory = (category) =>
+    category?.source_type === "warehouse_item"
+      ? Number(access?.warehouse_items_delete) === 1
+      : canDelete;
 
   return (
     <>
       <MyModal
         open={open}
         onClose={loading ? undefined : onClose}
-        title="Категории рецептов и полуфабрикатов"
+        title="Категории"
         maxWidth="md"
       >
         <DialogContent>
           <Stack spacing={1.25}>
-            {canCreate ? (
+            <Tabs
+              value={sourceType}
+              onChange={(_, value) => setSourceType(value)}
+              variant="scrollable"
+              scrollButtons="auto"
+            >
+              <Tab
+                value="semi_finished"
+                label="Рецепты и полуфабрикаты"
+              />
+              <Tab
+                value="warehouse_item"
+                label="Товары склада"
+              />
+            </Tabs>
+            {canCreateSource ? (
               <Paper
                 variant="outlined"
                 sx={{ p: 1.5, borderRadius: 2 }}
@@ -137,11 +187,35 @@ export default function SkladProductionCategoryManagerDialog({
                       }
                     }}
                   />
+                  {sourceType === "warehouse_item" ? (
+                    <TextField
+                      select
+                      size="small"
+                      label="Группа"
+                      value={parentId}
+                      onChange={(event) => setParentId(event.target.value)}
+                      sx={{ minWidth: 220 }}
+                    >
+                      {warehouseParents.map(([id, label]) => (
+                        <MenuItem
+                          key={id}
+                          value={id}
+                        >
+                          {label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  ) : null}
                   <Button
+                    size="small"
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={create}
-                    disabled={loading || !newCategoryName.trim()}
+                    disabled={
+                      loading ||
+                      !newCategoryName.trim() ||
+                      (sourceType === "warehouse_item" && !parentId)
+                    }
                     sx={{ flexShrink: 0 }}
                   >
                     Добавить
@@ -150,7 +224,7 @@ export default function SkladProductionCategoryManagerDialog({
               </Paper>
             ) : null}
 
-            {categories.map((category) => {
+            {visibleCategories.map((category) => {
               const isEditing = editingId === category.id;
               const isEmpty = category?.delete_state === "allowed";
               const count =
@@ -210,6 +284,8 @@ export default function SkladProductionCategoryManagerDialog({
                             }}
                           >
                             {categoryUsageLabel(category)}
+                            {category?.is_group ? " · Группа" : ""}
+                            {category?.is_legacy_invalid ? " · Некорректный legacy-родитель" : ""}
                           </Typography>
                         </>
                       )}
@@ -250,7 +326,7 @@ export default function SkladProductionCategoryManagerDialog({
                         </>
                       ) : (
                         <>
-                          {canEdit ? (
+                          {canEditCategory(category) ? (
                             <Tooltip title="Переименовать">
                               <span>
                                 <IconButton
@@ -263,7 +339,7 @@ export default function SkladProductionCategoryManagerDialog({
                               </span>
                             </Tooltip>
                           ) : null}
-                          {canDelete ? (
+                          {canDeleteCategory(category) ? (
                             <Tooltip
                               title={
                                 isEmpty
@@ -291,7 +367,7 @@ export default function SkladProductionCategoryManagerDialog({
               );
             })}
 
-            {!loading && !categories.length ? (
+            {!loading && !visibleCategories.length ? (
               <Typography
                 sx={{
                   color: "text.secondary",

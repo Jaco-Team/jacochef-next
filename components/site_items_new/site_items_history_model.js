@@ -296,7 +296,11 @@ function getCollectionRowKey(row, isFinal) {
   }
 
   const entityId =
-    row?.type === "rec" ? (row?.rec_id ?? row?.type_id?.id) : (row?.pf_id ?? row?.type_id?.id);
+    row?.type === "rec"
+      ? (row?.rec_id ?? row?.type_id?.id)
+      : row?.type === "item"
+        ? (row?.warehouse_item_id ?? row?.type_id?.id)
+        : (row?.pf_id ?? row?.type_id?.id);
 
   return `${row?.type || "pf"}:${entityId ?? row?.id ?? row?.name ?? ""}`;
 }

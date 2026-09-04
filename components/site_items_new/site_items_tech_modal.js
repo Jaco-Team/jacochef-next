@@ -177,6 +177,7 @@ export class SiteItemsModalTech extends React.Component {
       modalNewTag: false,
       tag_name_new: "",
       activeCompositionAutocomplete: null,
+      compositionSearchByField: {},
       compositionContentReady: false,
       err_valid: {},
     };
@@ -706,14 +707,33 @@ export class SiteItemsModalTech extends React.Component {
       return;
     }
 
-    this.setState({
+    this.setState((prevState) => ({
       activeCompositionAutocomplete: fieldKey,
-    });
+      compositionSearchByField: {
+        ...prevState.compositionSearchByField,
+        [fieldKey]: "",
+      },
+    }));
+  }
+
+  changeCompositionSearch(fieldKey, event, inputValue, reason) {
+    if (reason !== "input" && reason !== "clear") {
+      return;
+    }
+
+    this.setState((prevState) => ({
+      compositionSearchByField: {
+        ...prevState.compositionSearchByField,
+        [fieldKey]: inputValue,
+      },
+    }));
   }
 
   getCompositionAutocompleteOptions(fieldKey, selectedValue, options) {
     if (this.state.activeCompositionAutocomplete === fieldKey) {
-      return options || [];
+      return filterCompositionOptions(options || [], {
+        inputValue: this.state.compositionSearchByField?.[fieldKey] || "",
+      });
     }
 
     return selectedValue ? [selectedValue] : [];
@@ -2082,6 +2102,7 @@ export class SiteItemsModalTech extends React.Component {
                       this.state.items_stage?.all,
                     )}
                     filterOptions={filterCompositionOptions}
+                    onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                     value={item.type_id}
                     onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
                     func={this.changeItemData.bind(this, key, stageKey)}
@@ -2177,6 +2198,7 @@ export class SiteItemsModalTech extends React.Component {
                   this.state.item_items?.all_items,
                 )}
                 filterOptions={filterCompositionOptions}
+                onInputChange={this.changeCompositionSearch.bind(this, autocompleteKey)}
                 value={item.item_id}
                 onFocus={this.activateCompositionAutocomplete.bind(this, autocompleteKey)}
                 func={this.changeItemData.bind(this, key, "this_items")}
@@ -3328,6 +3350,10 @@ export class SiteItemsModalTech extends React.Component {
                                             this.state.items_stage?.all,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          onInputChange={this.changeCompositionSearch.bind(
+                                            this,
+                                            "preparation-new",
+                                          )}
                                           disabledItemsFocusable={true}
                                           value={null}
                                           optionKey="un_id"
@@ -3433,6 +3459,10 @@ export class SiteItemsModalTech extends React.Component {
                                             this.state.item_items?.all_items,
                                           )}
                                           filterOptions={filterCompositionOptions}
+                                          onInputChange={this.changeCompositionSearch.bind(
+                                            this,
+                                            "item-new",
+                                          )}
                                           disabledItemsFocusable={true}
                                           value={null}
                                           blurOnSelect={true}

@@ -14,6 +14,7 @@ export default function useSkladAccess() {
     const canViewProductionHistory = canView("production");
     const canViewSiteItemsHistory = canView("site_items");
     const canViewUnitsHistory = canView("units");
+    const canViewWarehouseItemsHistory = canView("warehouse_items");
     const canArchiveProduction = canEdit("production_activity");
     const canArchiveSiteItems = canEdit("site_items_activity");
 
@@ -23,7 +24,15 @@ export default function useSkladAccess() {
       canEdit,
       canAccess,
       canViewUnitUsage: canView("units"),
-      canViewHistory: canViewProductionHistory || canViewSiteItemsHistory || canViewUnitsHistory,
+      canViewHistory:
+        canViewProductionHistory ||
+        canViewSiteItemsHistory ||
+        canViewWarehouseItemsHistory ||
+        canViewUnitsHistory,
+      canViewWarehouseItemsHistory,
+      canManageWarehouseItems: canEdit("warehouse_items"),
+      canCreateWarehouseItem: canAccess("warehouse_items_create"),
+      canUseWarehouseItemPastDate: canAccess("warehouse_items_past_date"),
       canViewProductionHistory,
       canViewSiteItemsHistory,
       canViewUnitsHistory,
@@ -49,6 +58,10 @@ export default function useSkladAccess() {
 
         if (entityType === "unit") {
           return canAccess("units_delete");
+        }
+
+        if (entityType === "item") {
+          return canAccess("warehouse_items_delete");
         }
 
         return false;

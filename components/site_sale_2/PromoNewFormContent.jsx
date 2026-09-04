@@ -22,6 +22,7 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableFooter from "@mui/material/TableFooter";
+import dayjs from "dayjs";
 import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput, MyTimePicker } from "@/ui/Forms";
 import { FieldWithHint, LabelWithHint, PROMO_HINTS } from "./promoNewHints";
 import { PromoExcludeDatePicker } from "./promoNewShared";
@@ -313,7 +314,12 @@ export default function PromoNewFormContent({
   historySection = null,
   onApplyPreset = null,
   activePresetId = "",
+  mode = "promo",
+  embedded = false,
+  saveLabel = "Сохранить",
+  subtitleText = null,
 }) {
+  const isEmployeeConfig = mode === "employee_config";
   const toggleDay = (key) => {
     changeDataCheck(key, { target: { checked: !state[key] } });
   };
@@ -355,54 +361,61 @@ export default function PromoNewFormContent({
       container
       spacing={2.5}
       sx={{
-        mt: { xs: 9, sm: 10 },
-        px: { xs: 2, sm: 3 },
-        pb: 4,
+        mt: embedded ? 0 : { xs: 9, sm: 10 },
+        px: embedded ? 0 : { xs: 2, sm: 3 },
+        pb: embedded ? 2 : 4,
         width: "100%",
-        maxWidth: 1400,
+        maxWidth: embedded ? "100%" : 1400,
         mx: "auto",
       }}
     >
-      <Grid size={12}>
-        <Box
-          sx={{
-            pb: 1,
-            borderBottom: "2px solid",
-            borderColor: "primary.main",
-            mb: 0.5,
-          }}
-        >
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ fontWeight: 700, fontSize: { xs: 24, sm: 32 } }}
+      {!embedded ? (
+        <Grid size={12}>
+          <Box
+            sx={{
+              pb: 1,
+              borderBottom: "2px solid",
+              borderColor: "primary.main",
+              mb: 0.5,
+            }}
           >
-            {moduleName}
-          </Typography>
-          {isEdit && created ? (
             <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                mt: 1,
-              }}
+              component="h1"
+              variant="h4"
+              sx={{ fontWeight: 700, fontSize: { xs: 24, sm: 32 } }}
             >
-              Был создан: {created}
+              {moduleName}
             </Typography>
-          ) : (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                mt: 0.75,
-              }}
-            >
-              {isEdit ? "Редактирование промокода" : "Создание нового промокода"}
-            </Typography>
-          )}
-        </Box>
-      </Grid>
-      {!isEdit && onApplyPreset ? (
+            {isEdit && created ? (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  mt: 1,
+                }}
+              >
+                Был создан: {created}
+              </Typography>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  mt: 0.75,
+                }}
+              >
+                {subtitleText ||
+                  (isEmployeeConfig
+                    ? "Настройки конфига промокода для сотрудников"
+                    : isEdit
+                      ? "Редактирование промокода"
+                      : "Создание нового промокода")}
+              </Typography>
+            )}
+          </Box>
+        </Grid>
+      ) : null}
+      {!isEdit && !isEmployeeConfig && onApplyPreset ? (
         <Grid size={12}>
           <PromoPresetsBar
             activePresetId={activePresetId}
@@ -412,14 +425,51 @@ export default function PromoNewFormContent({
       ) : null}
       <Grid size={12}>
         <SectionCard
-          title="Промокод"
-          subtitle={isEdit ? "Код и лимиты активаций" : "Название, генерация и лимиты"}
+          title={isEmployeeConfig ? "Конфиг" : "Промокод"}
+          subtitle={
+            isEmployeeConfig
+              ? "Дата вступления изменений и лимит активаций"
+              : isEdit
+                ? "Код и лимиты активаций"
+                : "Название, генерация и лимиты"
+          }
         >
           <Grid
             container
             spacing={2}
           >
-            {isEdit ? (
+            {isEmployeeConfig ? (
+              <>
+                <Grid size={12}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
+                    Сегодняшняя дата применит изменения сразу. Будущая дата запланирует одну
+                    отложенную версию.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <MyDatePickerNew
+                    label="Дата вступления изменений"
+                    value={state.effective_date}
+                    func={changeDateRange.bind(null, "effective_date")}
+                    minDate={dayjs().startOf("day")}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <FieldWithHint hint={PROMO_HINTS.count_action}>
+                    <MyTextInput
+                      value={state.count_action}
+                      func={changeData.bind(null, "count_action")}
+                      label="Количество активаций"
+                    />
+                  </FieldWithHint>
+                </Grid>
+              </>
+            ) : isEdit ? (
               <>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <Typography
@@ -465,7 +515,7 @@ export default function PromoNewFormContent({
 
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <ChoiceCard
-                    checked={state.generate_new}
+                    checked={!!state.generate_new}
                     onChange={changeDataCheck.bind(null, "generate_new")}
                     label="Сгенерировать промокод"
                     description={PROMO_HINTS.generate_new}
@@ -496,74 +546,76 @@ export default function PromoNewFormContent({
           </Grid>
         </SectionCard>
       </Grid>
-      <Grid size={12}>
-        <SectionCard
-          title="Ограничения для клиентов"
-          subtitle="Кому можно применить промокод"
-        >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
-              columnGap: 2,
-              rowGap: 0.5,
-            }}
-            role="group"
-            aria-label="Ограничения для клиентов"
+      {!isEmployeeConfig ? (
+        <Grid size={12}>
+          <SectionCard
+            title="Ограничения для клиентов"
+            subtitle="Кому можно применить промокод"
           >
-            {[
-              {
-                key: "for_new",
-                label: "Для новых клиентов (на первый заказ)",
-                hint: PROMO_HINTS.for_new,
-              },
-              {
-                key: "once_number",
-                label: "1 раз на номер телефона",
-                hint: PROMO_HINTS.once_number,
-              },
-              {
-                key: "for_registred",
-                label: "Только для зарегистрированных клиентов",
-                hint: PROMO_HINTS.for_registred,
-              },
-              {
-                key: "for_number",
-                label: "Привязан к номеру телефона",
-                hint: PROMO_HINTS.for_number,
-              },
-            ].map(({ key, label, hint }) => (
-              <Box key={key}>
-                <ChoiceCard
-                  checked={state[key]}
-                  onChange={changeDataCheck.bind(null, key)}
-                  label={label}
-                  description={hint}
-                />
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                columnGap: 2,
+                rowGap: 0.5,
+              }}
+              role="group"
+              aria-label="Ограничения для клиентов"
+            >
+              {[
+                {
+                  key: "for_new",
+                  label: "Для новых клиентов (на первый заказ)",
+                  hint: PROMO_HINTS.for_new,
+                },
+                {
+                  key: "once_number",
+                  label: "1 раз на номер телефона",
+                  hint: PROMO_HINTS.once_number,
+                },
+                {
+                  key: "for_registred",
+                  label: "Только для зарегистрированных клиентов",
+                  hint: PROMO_HINTS.for_registred,
+                },
+                {
+                  key: "for_number",
+                  label: "Привязан к номеру телефона",
+                  hint: PROMO_HINTS.for_number,
+                },
+              ].map(({ key, label, hint }) => (
+                <Box key={key}>
+                  <ChoiceCard
+                    checked={state[key]}
+                    onChange={changeDataCheck.bind(null, key)}
+                    label={label}
+                    description={hint}
+                  />
 
-                {key === "for_number" && state.for_number ? (
-                  <Box sx={{ mt: 0.75, ml: 4.5, maxWidth: 420 }}>
-                    <FieldWithHint hint={PROMO_HINTS.for_number_text}>
-                      <MyTextInput
-                        value={formatPromoPhone(state.for_number_text)}
-                        func={(event) =>
-                          changeData("for_number_text", {
-                            target: { value: normalizePromoPhone(event.target.value) },
-                          })
-                        }
-                        label="Номер телефона"
-                        type="tel"
-                        placeholder="8 (___) ___-__-__"
-                        inputProps={{ inputMode: "tel", maxLength: 18 }}
-                      />
-                    </FieldWithHint>
-                  </Box>
-                ) : null}
-              </Box>
-            ))}
-          </Box>
-        </SectionCard>
-      </Grid>
+                  {key === "for_number" && state.for_number ? (
+                    <Box sx={{ mt: 0.75, ml: 4.5, maxWidth: 420 }}>
+                      <FieldWithHint hint={PROMO_HINTS.for_number_text}>
+                        <MyTextInput
+                          value={formatPromoPhone(state.for_number_text)}
+                          func={(event) =>
+                            changeData("for_number_text", {
+                              target: { value: normalizePromoPhone(event.target.value) },
+                            })
+                          }
+                          label="Номер телефона"
+                          type="tel"
+                          placeholder="8 (___) ___-__-__"
+                          inputProps={{ inputMode: "tel", maxLength: 18 }}
+                        />
+                      </FieldWithHint>
+                    </Box>
+                  ) : null}
+                </Box>
+              ))}
+            </Box>
+          </SectionCard>
+        </Grid>
+      ) : null}
       <Grid size={12}>
         <Box
           sx={{
@@ -892,76 +944,113 @@ export default function PromoNewFormContent({
             </Grid>
           </SettingsAccordion>
 
-          <SettingsAccordion
-            title="Срок и расписание"
-            summary={getScheduleSummary(state)}
-          >
-            <Grid
-              container
-              spacing={2}
+          {isEmployeeConfig ? (
+            <SettingsAccordion
+              title="Время работы"
+              summary={`${state.time_start || "—"} — ${state.time_end || "—"}`}
             >
-              <Grid size={12}>
-                <FieldWithHint hint={PROMO_HINTS.date_promo}>
-                  <MySelect
-                    data={state.date_promo_list}
-                    value={state.date_promo}
-                    func={changeData.bind(null, "date_promo")}
-                    label="Когда работает промокод"
-                    is_none={false}
+              <Grid
+                container
+                spacing={2}
+              >
+                <Grid size={12}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
+                    Интервал действует каждый день; без ограничений по датам и дням недели.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <MyTimePicker
+                    label="Время от"
+                    value={state.time_start}
+                    func={changeData.bind(null, "time_start")}
                   />
-                </FieldWithHint>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <MyTimePicker
+                    label="Время до"
+                    value={state.time_end}
+                    func={changeData.bind(null, "time_end")}
+                  />
+                </Grid>
               </Grid>
+            </SettingsAccordion>
+          ) : (
+            <SettingsAccordion
+              title="Срок и расписание"
+              summary={getScheduleSummary(state)}
+            >
+              <Grid
+                container
+                spacing={2}
+              >
+                <Grid size={12}>
+                  <FieldWithHint hint={PROMO_HINTS.date_promo}>
+                    <MySelect
+                      data={state.date_promo_list}
+                      value={state.date_promo}
+                      func={changeData.bind(null, "date_promo")}
+                      label="Когда работает промокод"
+                      is_none={false}
+                    />
+                  </FieldWithHint>
+                </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <MyDatePickerNew
-                  label="Дата от"
-                  value={state.date_start}
-                  func={changeDateRange.bind(null, "date_start")}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <MyDatePickerNew
-                  label="Дата до"
-                  value={state.date_end}
-                  func={changeDateRange.bind(null, "date_end")}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <MyTimePicker
-                  label="Время от"
-                  value={state.time_start}
-                  func={changeData.bind(null, "time_start")}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <MyTimePicker
-                  label="Время до"
-                  value={state.time_end}
-                  func={changeData.bind(null, "time_end")}
-                />
-              </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <MyDatePickerNew
+                    label="Дата от"
+                    value={state.date_start}
+                    func={changeDateRange.bind(null, "date_start")}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <MyDatePickerNew
+                    label="Дата до"
+                    value={state.date_end}
+                    func={changeDateRange.bind(null, "date_end")}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <MyTimePicker
+                    label="Время от"
+                    value={state.time_start}
+                    func={changeData.bind(null, "time_start")}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <MyTimePicker
+                    label="Время до"
+                    value={state.time_end}
+                    func={changeData.bind(null, "time_end")}
+                  />
+                </Grid>
 
-              <Grid size={12}>
-                <LabelWithHint
-                  text="Исключить даты"
-                  hint={PROMO_HINTS.testDate}
-                  sx={{ mb: 1.25 }}
-                />
-                <PromoExcludeDatePicker
-                  label="Добавить дату"
-                  value={state.testDate}
-                  func={changeDataData.bind(null, "testDate")}
-                />
-              </Grid>
+                <Grid size={12}>
+                  <LabelWithHint
+                    text="Исключить даты"
+                    hint={PROMO_HINTS.testDate}
+                    sx={{ mb: 1.25 }}
+                  />
+                  <PromoExcludeDatePicker
+                    label="Добавить дату"
+                    value={state.testDate}
+                    func={changeDataData.bind(null, "testDate")}
+                  />
+                </Grid>
 
-              <Grid size={12}>
-                <WeekdaySelector
-                  state={state}
-                  onToggleDay={toggleDay}
-                />
+                <Grid size={12}>
+                  <WeekdaySelector
+                    state={state}
+                    onToggleDay={toggleDay}
+                  />
+                </Grid>
               </Grid>
-            </Grid>
-          </SettingsAccordion>
+            </SettingsAccordion>
+          )}
 
           <SettingsAccordion
             title="География и тип заказа"
@@ -1024,7 +1113,7 @@ export default function PromoNewFormContent({
             </Grid>
           </SettingsAccordion>
 
-          {!isEdit ? (
+          {!isEdit && !isEmployeeConfig ? (
             <SettingsAccordion
               title="Действие после создания"
               summary={getActionSummary(state)}
@@ -1209,7 +1298,7 @@ export default function PromoNewFormContent({
             onClick={onSave}
             sx={{ width: { xs: "100%", sm: "auto" }, minWidth: 180, fontWeight: 700 }}
           >
-            Сохранить
+            {saveLabel}
           </Button>
         </Paper>
       </Grid>
