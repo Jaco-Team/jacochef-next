@@ -265,7 +265,9 @@ function ClientHistory({ getData, showAlert, canAccess }) {
       <Grid
         container
         spacing={2}
-        maxWidth={"lg"}
+        sx={{
+          maxWidth: "lg",
+        }}
       >
         <Grid
           size={{

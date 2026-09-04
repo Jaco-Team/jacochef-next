@@ -146,8 +146,10 @@ const SummaryValue = ({ label, value, color, capitalize = false }) => (
   <Box>
     <Typography
       variant="caption"
-      color="text.secondary"
-      display="block"
+      sx={{
+        color: "text.secondary",
+        display: "block",
+      }}
     >
       {label}
     </Typography>
@@ -165,14 +167,18 @@ const TooltipRow = ({ label, value, color }) => (
   <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mb: 0.5 }}>
     <Typography
       variant="body2"
-      color="text.secondary"
+      sx={{
+        color: "text.secondary",
+      }}
     >
       {label}
     </Typography>
     <Typography
       variant="body2"
-      fontWeight={600}
       color={color}
+      sx={{
+        fontWeight: 600,
+      }}
     >
       {value}
     </Typography>
@@ -272,11 +278,13 @@ const ProgressTimeline = ({
       return (
         <Typography
           variant="body1"
-          color="text.secondary"
           align="center"
-          sx={{ py: 3 }}
+          sx={{
+            color: "text.secondary",
+            py: 3,
+          }}
         >
-          Нет данных за {currentYear} год
+          Нет данных за {currentYear}год
         </Typography>
       );
     }
@@ -326,7 +334,9 @@ const ProgressTimeline = ({
           >
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {cumulative ? (
                 <>
@@ -357,21 +367,24 @@ const ProgressTimeline = ({
               />
               <Typography
                 variant="caption"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 Факт
               </Typography>
               <Box sx={{ width: 12, height: 2, bgcolor: "grey.400" }} />
               <Typography
                 variant="caption"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 План
               </Typography>
             </Box>
           </Box>
         </Box>
-
         {summaryData ? (
           <Paper
             elevation={0}
@@ -442,7 +455,6 @@ const ProgressTimeline = ({
             </Box>
           </Paper>
         ) : null}
-
         <Box
           sx={{
             width: "100%",
@@ -575,16 +587,20 @@ const ProgressTimeline = ({
                     <MonthLabel>
                       <Typography
                         variant="caption"
-                        fontWeight={isActive ? 700 : 400}
-                        sx={{ textTransform: "uppercase" }}
+                        sx={{
+                          fontWeight: isActive ? 700 : 400,
+                          textTransform: "uppercase",
+                        }}
                       >
                         {getShortMonthName(item.month)}
                       </Typography>
                       {!isMobile ? (
                         <Typography
                           variant="caption"
-                          color="text.secondary"
-                          display="block"
+                          sx={{
+                            color: "text.secondary",
+                            display: "block",
+                          }}
                         >
                           {formatNumber(item.planQty)}
                         </Typography>

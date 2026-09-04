@@ -302,7 +302,6 @@ export function MySelect(props) {
       style={style}
     >
       {label && <InputLabel id={labelId}>{label}</InputLabel>}
-
       {isMobile ? (
         // ===== Мобилка: нативный select — стабильно стреляет onChange =====
         <NativeSelect

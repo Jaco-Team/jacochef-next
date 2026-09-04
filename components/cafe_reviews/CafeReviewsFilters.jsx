@@ -198,10 +198,12 @@ export default function CafeReviewsFilters({
         size="small"
         value={filters.search}
         onChange={(event) => onChange("search", event.target.value)}
-        inputProps={{ "aria-label": "Поиск по отзывам и инцидентам" }}
         sx={{
           ...fieldSx,
           gridColumn: compact ? "auto" : "span 2",
+        }}
+        slotProps={{
+          htmlInput: { "aria-label": "Поиск по отзывам и инцидентам" },
         }}
       />
       <Box

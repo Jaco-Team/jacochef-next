@@ -30,8 +30,10 @@ export default function StatTableAccordeon(props) {
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
-          flexGrow={1}
+          sx={{
+            alignItems: "center",
+            flexGrow: 1,
+          }}
         >
           <Typography sx={{ fontWeight: "bold" }}>{title}</Typography>
           {!!canExport && !!excel_link && (

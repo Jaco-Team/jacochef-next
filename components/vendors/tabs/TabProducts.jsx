@@ -332,16 +332,13 @@ export default function TabProducts({
       >
         <CircularProgress />
       </Backdrop>
-
       <ConfirmDialog />
-
       <MyAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
         text={alertMessage}
       />
-
       <VendorPriceEditDialog
         open={Boolean(editingItemId)}
         onClose={handleCloseEditModal}
@@ -353,7 +350,6 @@ export default function TabProducts({
         onSave={handleSaveEdit}
         onDraftChange={handleDraftChange}
       />
-
       <Dialog
         open={isCityModalOpen}
         onClose={handleCloseCityModal}
@@ -390,7 +386,6 @@ export default function TabProducts({
           </Button>
         </DialogActions>
       </Dialog>
-
       <DeclarationEditDialog
         open={Boolean(editableDeclaration)}
         declaration={editableDeclaration}
@@ -400,15 +395,16 @@ export default function TabProducts({
         onSubmit={handleSaveDeclaration}
         vendorOptions={getItemVendorOptions?.(editableDeclaration?.item_id) || []}
       />
-
       <Card variant="outlined">
         <CardContent>
           <Stack spacing={3}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              alignItems={{ xs: "stretch", sm: "center" }}
-              justifyContent="space-between"
               spacing={2}
+              sx={{
+                alignItems: { xs: "stretch", sm: "center" },
+                justifyContent: "space-between",
+              }}
             >
               <Typography
                 variant="h6"
@@ -528,8 +524,8 @@ export default function TabProducts({
                                 {item.name_for_vendor ? (
                                   <Typography
                                     variant="body2"
-                                    color="text.secondary"
                                     sx={{
+                                      color: "text.secondary",
                                       display: "-webkit-box",
                                       WebkitLineClamp: 1,
                                       WebkitBoxOrient: "vertical",
@@ -555,7 +551,9 @@ export default function TabProducts({
                               ) : (
                                 <Typography
                                   variant="body2"
-                                  color="text.secondary"
+                                  sx={{
+                                    color: "text.secondary",
+                                  }}
                                 >
                                   Не указана
                                 </Typography>
@@ -568,8 +566,10 @@ export default function TabProducts({
                               <Stack
                                 direction="row"
                                 spacing={0.5}
-                                alignItems="center"
-                                justifyContent="center"
+                                sx={{
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
                               >
                                 <Typography sx={{ fontWeight: 600 }}>
                                   {declarations.length}
@@ -620,7 +620,9 @@ export default function TabProducts({
                             <TableCell sx={priceCellSx}>
                               <Typography
                                 variant="body2"
-                                color="text.secondary"
+                                sx={{
+                                  color: "text.secondary",
+                                }}
                               >
                                 {formatUnitPriceLabel(item)}
                               </Typography>
@@ -633,7 +635,9 @@ export default function TabProducts({
                                 <Stack
                                   direction="row"
                                   spacing={0.5}
-                                  justifyContent="flex-end"
+                                  sx={{
+                                    justifyContent: "flex-end",
+                                  }}
                                 >
                                   {canUpload ? (
                                     <Tooltip title="Добавить декларацию">
@@ -758,15 +762,15 @@ export default function TabProducts({
                                                   <Stack
                                                     direction="row"
                                                     spacing={1.25}
-                                                    alignItems="center"
+                                                    onClick={(event) =>
+                                                      handleOpenDeclaration(event, decl.url)
+                                                    }
                                                     sx={{
+                                                      alignItems: "center",
                                                       cursor: decl.url ? "pointer" : "default",
                                                       width: "fit-content",
                                                       maxWidth: "100%",
                                                     }}
-                                                    onClick={(event) =>
-                                                      handleOpenDeclaration(event, decl.url)
-                                                    }
                                                   >
                                                     <FileTypeIcon
                                                       extension={getFileExtension(
@@ -843,7 +847,9 @@ export default function TabProducts({
                                   ) : (
                                     <Typography
                                       variant="body2"
-                                      color="text.secondary"
+                                      sx={{
+                                        color: "text.secondary",
+                                      }}
                                     >
                                       Для этого товара пока нет деклараций.
                                     </Typography>
@@ -859,7 +865,11 @@ export default function TabProducts({
                 </Table>
               </TableContainer>
             ) : (
-              <Typography color="text.secondary">
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 {vendorItemIds.size
                   ? "По текущим фильтрам товары не найдены."
                   : "У поставщика пока нет привязанных товаров."}
@@ -868,7 +878,6 @@ export default function TabProducts({
           </Stack>
         </CardContent>
       </Card>
-
       <ModalAddProduct
         open={isAddProductModalOpen}
         onClose={handleCloseAddModal}

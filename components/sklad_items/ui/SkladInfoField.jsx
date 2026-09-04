@@ -7,7 +7,9 @@ export default function SkladInfoField({ label, value }) {
     <Stack spacing={0.5}>
       <Typography
         variant="caption"
-        color="text.secondary"
+        sx={{
+          color: "text.secondary",
+        }}
       >
         {label}
       </Typography>

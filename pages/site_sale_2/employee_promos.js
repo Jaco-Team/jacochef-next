@@ -255,8 +255,10 @@ class SiteSale2EmployeePromos_ extends React.Component {
                 <>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
+                    sx={{
+                      color: "text.secondary",
+                      mb: 2,
+                    }}
                   >
                     {editingScheduled
                       ? "Редактируется запланированная версия конфига."

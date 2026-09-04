@@ -221,8 +221,11 @@ export default function OrdersExtendedFilters({
               direction="row"
               spacing={2}
               useFlexGap
-              flexWrap="wrap"
-              sx={{ minHeight: "100%", alignItems: "center" }}
+              sx={{
+                flexWrap: "wrap",
+                minHeight: "100%",
+                alignItems: "center",
+              }}
             >
               <MyCheckBox
                 label="Заказ без промокода"
@@ -246,8 +249,10 @@ export default function OrdersExtendedFilters({
         <Grid size={12}>
           <Stack
             direction={isDesktop ? "row" : "column"}
-            justifyContent="flex-end"
             spacing={1}
+            sx={{
+              justifyContent: "flex-end",
+            }}
           >
             <Button
               type="button"

@@ -1670,7 +1670,9 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Всего отзывов
                         </Typography>
@@ -1679,8 +1681,10 @@ function FeedbackPage() {
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.countAll}
                       </Typography>
@@ -1726,7 +1730,9 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Средняя оценка
                         </Typography>
@@ -1735,8 +1741,10 @@ function FeedbackPage() {
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.mediumRating}
                       </Typography>
@@ -1782,7 +1790,9 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Доля негатива
                         </Typography>
@@ -1791,8 +1801,10 @@ function FeedbackPage() {
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.negativeRating}%
                       </Typography>
@@ -1838,7 +1850,9 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Доля позитива
                         </Typography>
@@ -1847,8 +1861,10 @@ function FeedbackPage() {
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.positiveRating}%
                       </Typography>

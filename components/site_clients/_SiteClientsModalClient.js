@@ -340,10 +340,12 @@ export default class SiteClients_Modal_Client extends React.Component {
                 <Paper style={{ padding: 24 }}>
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Имя: &nbsp;</Typography>
@@ -352,10 +354,12 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Телефон: &nbsp;</Typography>
@@ -364,11 +368,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   {parseInt(acces?.edit_mail_access) ? (
                     <Grid
-                      mb={3}
                       className="mail_box"
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mb: 3,
                       }}
                     >
                       <Typography style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -384,10 +390,12 @@ export default class SiteClients_Modal_Client extends React.Component {
                   ) : (
                     <Grid
                       style={{ display: "flex" }}
-                      mb={3}
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mb: 3,
                       }}
                     >
                       <Typography style={{ fontWeight: "bold" }}>Эл почта: &nbsp;</Typography>
@@ -397,10 +405,12 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Регистрация: &nbsp;</Typography>
@@ -409,11 +419,13 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   {parseInt(acces?.edit_bir_access) ? (
                     <Grid
-                      mb={3}
                       className="select_box"
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mb: 3,
                       }}
                     >
                       <Typography style={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
@@ -441,10 +453,12 @@ export default class SiteClients_Modal_Client extends React.Component {
                   ) : (
                     <Grid
                       style={{ display: "flex" }}
-                      mb={3}
                       size={{
                         xs: 12,
                         sm: 12,
+                      }}
+                      sx={{
+                        mb: 3,
                       }}
                     >
                       <Typography style={{ fontWeight: "bold" }}>Дата рождения: &nbsp;</Typography>
@@ -454,10 +468,12 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Заказов: &nbsp;</Typography>
@@ -468,10 +484,12 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Доставок: &nbsp;</Typography>
@@ -482,10 +500,12 @@ export default class SiteClients_Modal_Client extends React.Component {
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
                       sm: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold" }}>Самовывозов: &nbsp;</Typography>

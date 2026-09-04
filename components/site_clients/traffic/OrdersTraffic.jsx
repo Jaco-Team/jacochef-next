@@ -26,7 +26,9 @@ export default function OrdersTraffic({ getData }) {
       <Grid
         container
         spacing={3}
-        maxWidth="lg"
+        sx={{
+          maxWidth: "lg",
+        }}
       >
         <Grid
           size={{
@@ -95,11 +97,13 @@ export default function OrdersTraffic({ getData }) {
         {/* Визиты статистика */}
         {traffic_stats?.length > 0 && (
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <Typography variant="h4">Визиты все</Typography>
@@ -111,11 +115,13 @@ export default function OrdersTraffic({ getData }) {
         {/* Визиты по источнику */}
         {traffic_sources?.length > 0 && (
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <Typography variant="h4">Источники трафика</Typography>
@@ -127,11 +133,13 @@ export default function OrdersTraffic({ getData }) {
         {/* Заказы по источнику */}
         {orders_by_source?.length > 0 && (
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <Typography variant="h4">Источники заказов</Typography>
@@ -143,11 +151,13 @@ export default function OrdersTraffic({ getData }) {
         {/* Заказы по utm */}
         {orders_by_utm?.length > 0 && (
           <Grid
-            mt={3}
-            mb={5}
             size={{
               xs: 12,
               sm: 6,
+            }}
+            sx={{
+              mt: 3,
+              mb: 5,
             }}
           >
             <Typography variant="h4">Заказы по UTM</Typography>

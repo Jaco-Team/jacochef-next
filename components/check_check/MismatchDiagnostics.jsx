@@ -99,13 +99,11 @@ export default function MismatchDiagnostics({
           </Typography>
         </Stack>
       </Paper>
-
       {!canResolve && (
         <Alert severity="info">
           Диагностика доступна для просмотра. Для применения решения требуется отдельное право.
         </Alert>
       )}
-
       <Box>
         <Typography
           variant="subtitle1"
@@ -114,7 +112,13 @@ export default function MismatchDiagnostics({
           Чеки ОФД
         </Typography>
         {receipts.length === 0 ? (
-          <Typography color="text.secondary">Подходящие чеки ОФД не найдены</Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            Подходящие чеки ОФД не найдены
+          </Typography>
         ) : (
           <TableContainer component={Paper}>
             <Table size="small">
@@ -164,7 +168,6 @@ export default function MismatchDiagnostics({
           </TableContainer>
         )}
       </Box>
-
       <Box>
         <Typography
           variant="subtitle1"
@@ -173,7 +176,13 @@ export default function MismatchDiagnostics({
           Заказы системы
         </Typography>
         {orders.length === 0 ? (
-          <Typography color="text.secondary">Подходящие заказы не найдены</Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            Подходящие заказы не найдены
+          </Typography>
         ) : (
           <TableContainer component={Paper}>
             <Table size="small">
@@ -213,7 +222,9 @@ export default function MismatchDiagnostics({
                       {order.ofd_smena && (
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           ОФД: {order.ofd_smena}
                         </Typography>
@@ -233,8 +244,10 @@ export default function MismatchDiagnostics({
                       {order.match_reason && (
                         <Typography
                           variant="caption"
-                          color="text.secondary"
-                          sx={{ display: "block" }}
+                          sx={{
+                            color: "text.secondary",
+                            display: "block",
+                          }}
                         >
                           {order.match_reason}
                         </Typography>
@@ -248,7 +261,6 @@ export default function MismatchDiagnostics({
           </TableContainer>
         )}
       </Box>
-
       <Box>
         <Typography
           variant="subtitle1"
@@ -280,7 +292,9 @@ export default function MismatchDiagnostics({
                       {action.description && (
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           {action.description}
                         </Typography>
@@ -309,7 +323,6 @@ export default function MismatchDiagnostics({
           </Stack>
         )}
       </Box>
-
       <HistoryLog
         history={history}
         title="История разбора"

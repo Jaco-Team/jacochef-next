@@ -269,12 +269,14 @@ export default function SkladItemsCategoriesTab({
                 value={categoryQuery}
                 placeholder="Поиск категории"
                 onChange={(event) => onCategoryQueryChange(event.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
             </Box>
@@ -413,7 +415,6 @@ export default function SkladItemsCategoriesTab({
           ) : null}
         </Grid>
       </Grid>
-
       <SkladCategoryMobileDialog
         open={mobileEditorOpen}
         category={selectedCategory}
@@ -430,7 +431,6 @@ export default function SkladItemsCategoriesTab({
           }
         }}
       />
-
       <Dialog
         open={Boolean(deleteCategoryCandidate)}
         onClose={onCloseDeleteCategory}

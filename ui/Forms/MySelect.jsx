@@ -458,17 +458,22 @@ export function MySelect(props) {
               {...params}
               label={props.label}
               placeholder={props.placeholder}
-              InputLabelProps={{
-                ...(params.InputLabelProps || {}),
-                ...(props.InputLabelProps || {}),
-              }}
               sx={{
                 ...(unifiedTextFieldSx || {}),
                 ...(props.sx || {}),
               }}
-              inputProps={{
-                ...params.inputProps,
-                readOnly: true,
+              slotProps={{
+                ...params.slotProps,
+
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  readOnly: true,
+                },
+
+                inputLabel: {
+                  ...(params.slotProps.inputLabel || {}),
+                  ...(props.InputLabelProps || {}),
+                },
               }}
             />
           )}

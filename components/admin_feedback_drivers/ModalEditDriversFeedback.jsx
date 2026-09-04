@@ -43,7 +43,9 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             >
               <Box
                 component="span"
-                fontWeight="bold"
+                sx={{
+                  fontWeight: "bold",
+                }}
               >
                 Кто создал:
               </Box>{" "}
@@ -56,7 +58,9 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
               >
                 <Box
                   component="span"
-                  fontWeight="bold"
+                  sx={{
+                    fontWeight: "bold",
+                  }}
                 >
                   Кто закрыл:
                 </Box>{" "}
@@ -69,7 +73,9 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             >
               <Box
                 component="span"
-                fontWeight="bold"
+                sx={{
+                  fontWeight: "bold",
+                }}
               >
                 Тип обращения:
               </Box>{" "}
@@ -81,7 +87,9 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             >
               <Box
                 component="span"
-                fontWeight="bold"
+                sx={{
+                  fontWeight: "bold",
+                }}
               >
                 Статус:
               </Box>{" "}
@@ -93,7 +101,9 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             >
               <Box
                 component="span"
-                fontWeight="bold"
+                sx={{
+                  fontWeight: "bold",
+                }}
               >
                 Заголовок:
               </Box>{" "}
@@ -105,7 +115,9 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             >
               <Box
                 component="span"
-                fontWeight="bold"
+                sx={{
+                  fontWeight: "bold",
+                }}
               >
                 Описание:
               </Box>{" "}
@@ -122,10 +134,7 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
               </div>
             </Grid>
           ) : null}
-          <Grid
-            item
-            xs={4}
-          >
+          <Grid size={4}>
             <MyAutocomplite
               data={types}
               disabled={item.status_id === 3 || item.status_id === 4}
@@ -137,10 +146,7 @@ export const ModalEditDriversFeedback = ({ open, onClose, save, item }) => {
             />
           </Grid>
 
-          <Grid
-            item
-            xs={12}
-          >
+          <Grid size={12}>
             <TextField
               fullWidth
               label="Комментарий"

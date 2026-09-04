@@ -388,12 +388,14 @@ function ModuleAccessCard({
                         onUpdateFeature(featureIndex, field.key, nextValue),
                       );
                     }}
-                    inputProps={{
-                      "aria-label": `${nextAction} ${field.label} для всех параметров раздела ${groupLabel}`,
-                    }}
                     sx={{
                       p: 0.5,
                       "&.Mui-checked, &.MuiCheckbox-indeterminate": { color: "#d50032" },
+                    }}
+                    slotProps={{
+                      input: {
+                        "aria-label": `${nextAction} ${field.label} для всех параметров раздела ${groupLabel}`,
+                      },
                     }}
                   />
                 </span>
@@ -1018,14 +1020,16 @@ export default function EmployeePositionModal({
         fullWidth
         maxWidth="lg"
         fullScreen={fullScreen}
-        PaperProps={{
-          sx: {
-            display: "flex",
-            flexDirection: "column",
-            height: fullScreen ? "100%" : { xs: "calc(100dvh - 16px)", md: "min(90vh, 860px)" },
-            maxHeight: "none",
-            overflow: "hidden",
-            borderRadius: fullScreen ? 0 : 3,
+        slotProps={{
+          paper: {
+            sx: {
+              display: "flex",
+              flexDirection: "column",
+              height: fullScreen ? "100%" : { xs: "calc(100dvh - 16px)", md: "min(90vh, 860px)" },
+              maxHeight: "none",
+              overflow: "hidden",
+              borderRadius: fullScreen ? 0 : 3,
+            },
           },
         }}
       >
@@ -1391,25 +1395,6 @@ export default function EmployeePositionModal({
                               setSearch(event.target.value);
                               setExpandedKeys(new Set());
                             }}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <SearchIcon fontSize="small" />
-                                </InputAdornment>
-                              ),
-                              endAdornment: search ? (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    aria-label="Очистить поиск"
-                                    edge="end"
-                                    size="small"
-                                    onClick={() => setSearch("")}
-                                  >
-                                    <CloseIcon fontSize="small" />
-                                  </IconButton>
-                                </InputAdornment>
-                              ) : null,
-                            }}
                             sx={{
                               "& .MuiOutlinedInput-root": {
                                 borderRadius: 2,
@@ -1417,6 +1402,27 @@ export default function EmployeePositionModal({
                                 "& fieldset": { borderColor: "#e2e8f0" },
                                 "&:hover fieldset": { borderColor: "#cbd5e1" },
                                 "&.Mui-focused fieldset": { borderColor: "#d50032" },
+                              },
+                            }}
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <SearchIcon fontSize="small" />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: search ? (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      aria-label="Очистить поиск"
+                                      edge="end"
+                                      size="small"
+                                      onClick={() => setSearch("")}
+                                    >
+                                      <CloseIcon fontSize="small" />
+                                    </IconButton>
+                                  </InputAdornment>
+                                ) : null,
                               },
                             }}
                           />
@@ -1567,7 +1573,6 @@ export default function EmployeePositionModal({
           ) : null}
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={historyDialog}
         onClose={() => setHistoryDialog(false)}
@@ -1611,7 +1616,6 @@ export default function EmployeePositionModal({
           <Button onClick={() => setHistoryDialog(false)}>Закрыть</Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={closeDialog}
         onClose={() => setCloseDialog(false)}
@@ -1636,7 +1640,6 @@ export default function EmployeePositionModal({
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={copyDialog}
         onClose={() => setCopyDialog(false)}
@@ -1663,7 +1666,6 @@ export default function EmployeePositionModal({
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={deleteDialog}
         onClose={() => setDeleteDialog(false)}

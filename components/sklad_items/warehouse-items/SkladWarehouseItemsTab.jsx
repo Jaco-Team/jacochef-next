@@ -244,7 +244,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
               <Stack
                 direction="row"
                 spacing={0.5}
-                alignItems="center"
+                sx={{
+                  alignItems: "center",
+                }}
               >
                 <TextField
                   size="small"
@@ -348,7 +350,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                     <TableCell align="right">
                       <Stack
                         direction="row"
-                        justifyContent="flex-end"
+                        sx={{
+                          justifyContent: "flex-end",
+                        }}
                       >
                         <Tooltip title="Редактировать">
                           <span>
@@ -389,9 +393,11 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   <TableRow>
                     <TableCell colSpan={9}>
                       <Typography
-                        color="text.secondary"
                         align="center"
-                        sx={{ py: 4 }}
+                        sx={{
+                          color: "text.secondary",
+                          py: 4,
+                        }}
                       >
                         Товары не найдены
                       </Typography>
@@ -416,7 +422,6 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
           />
         </Stack>
       </Paper>
-
       <SkladWarehouseItemEditorDialog
         open={editor.open}
         loading={editor.loading}

@@ -2091,8 +2091,10 @@ function EndPage() {
           <Typography
             variant="body2"
             color={row.conversion > 5 ? "success.main" : "inherit"}
-            fontWeight={isTotalRow ? 700 : 400}
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{
+              fontWeight: isTotalRow ? 700 : 400,
+              whiteSpace: "nowrap",
+            }}
           >
             {formatPercent(row.conversion)}
           </Typography>
@@ -2106,8 +2108,10 @@ function EndPage() {
           <Typography
             variant="body2"
             color={row.roi > 100 ? "success.main" : row.roi < 0 ? "error.main" : "inherit"}
-            fontWeight={isTotalRow ? 700 : 400}
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{
+              fontWeight: isTotalRow ? 700 : 400,
+              whiteSpace: "nowrap",
+            }}
           >
             {formatPercent(row.roi)}
           </Typography>
@@ -2178,9 +2182,12 @@ function EndPage() {
               <Box>
                 <Typography
                   variant="body2"
-                  fontWeight={isTotalRow ? 700 : 500}
                   color={isGrandTotal ? PRIMARY_COLOR : "inherit"}
-                  sx={{ whiteSpace: "normal", wordBreak: "break-word" }}
+                  sx={{
+                    fontWeight: isTotalRow ? 700 : 500,
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                  }}
                 >
                   {row.level && getLevelIcon(row.level)}
                   {row.name}
@@ -2191,8 +2198,10 @@ function EndPage() {
                   row.level !== "src_platform" && (
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ fontStyle: "italic" }}
+                      sx={{
+                        color: "text.secondary",
+                        fontStyle: "italic",
+                      }}
                     >
                       ({row.level.replace("src_", "")})
                     </Typography>
@@ -2263,8 +2272,10 @@ function EndPage() {
         <DialogContent>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mb: 2 }}
+            sx={{
+              color: "text.secondary",
+              mb: 2,
+            }}
           >
             Можно выбрать существующее значение из списка или ввести своё. Для поискового Яндекса
             укажите Source: yandex и Medium: organic, остальные UTM-поля оставьте пустыми. Яндекс
@@ -2434,8 +2445,10 @@ function EndPage() {
           <Box>
             <Typography
               variant="h5"
-              fontWeight={700}
               gutterBottom
+              sx={{
+                fontWeight: 700,
+              }}
             >
               {module.name || "Сквозная аналитика"}
             </Typography>
@@ -2443,7 +2456,6 @@ function EndPage() {
           <Box sx={{ display: "flex", gap: 1 }}></Box>
         </Box>
       </Grid>
-
       {(canViewAnalytics || canViewAiAnalyst) && (
         <Grid size={{ xs: 12 }}>
           <Tabs
@@ -2471,15 +2483,19 @@ function EndPage() {
           </Tabs>
         </Grid>
       )}
-
       {access !== null && !canViewAnalytics && !canViewAiAnalyst && (
         <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3 }}>
-            <Typography color="text.secondary">Нет доступа к вкладкам модуля</Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Нет доступа к вкладкам модуля
+            </Typography>
           </Paper>
         </Grid>
       )}
-
       {activeTab === 1 && canViewAiAnalyst && (
         <Grid size={{ xs: 12 }}>
           <AiAnalystTab
@@ -2516,7 +2532,6 @@ function EndPage() {
           />
         </Grid>
       )}
-
       {activeTab === 0 && canViewAnalytics && analyticsMeta && (
         <Grid size={{ xs: 12 }}>
           <Box
@@ -2538,7 +2553,9 @@ function EndPage() {
             {analyticsMeta.date_was_clamped && (
               <Typography
                 variant="body2"
-                color="warning.main"
+                sx={{
+                  color: "warning.main",
+                }}
               >
                 Текущий или будущий день исключён; данные доступны по{" "}
                 {analyticsMeta.complete_through}
@@ -2547,7 +2564,6 @@ function EndPage() {
           </Box>
         </Grid>
       )}
-
       {activeTab === 0 && canViewAnalytics && (
         <>
           <Grid size={{ xs: 12 }}>
@@ -2707,8 +2723,11 @@ function EndPage() {
                 <Grid size={{ xs: 12 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mb: 1 }}
+                    sx={{
+                      color: "text.secondary",
+                      display: "block",
+                      mb: 1,
+                    }}
                   >
                     Способ заказа
                   </Typography>
@@ -2814,7 +2833,9 @@ function EndPage() {
                         >
                           <Typography
                             variant="body1"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Выберите фильтры и нажмите "Применить" для отображения данных
                           </Typography>

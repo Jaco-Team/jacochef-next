@@ -184,8 +184,10 @@ export default function TabSettings({ showAlert }) {
       >
         <Typography
           variant="h6"
-          fontWeight={600}
-          sx={{ mb: 2 }}
+          sx={{
+            fontWeight: 600,
+            mb: 2,
+          }}
         >
           Загрузка справочника статей
         </Typography>
@@ -193,7 +195,9 @@ export default function TabSettings({ showAlert }) {
         <Grid
           container
           spacing={2}
-          alignItems="center"
+          sx={{
+            alignItems: "center",
+          }}
         >
           <Grid size={{ xs: 12, sm: "auto" }}>
             <Button
@@ -224,7 +228,6 @@ export default function TabSettings({ showAlert }) {
           </Grid>
         </Grid>
       </Paper>
-
       <Paper
         variant="outlined"
         sx={{ p: 2 }}
@@ -232,13 +235,17 @@ export default function TabSettings({ showAlert }) {
         <Stack
           direction="row"
           spacing={2}
-          justifyContent={"space-between"}
-          sx={{ pb: 2 }}
+          sx={{
+            justifyContent: "space-between",
+            pb: 2,
+          }}
         >
           <Typography
             variant="h6"
-            fontWeight={600}
-            sx={{ mb: 2 }}
+            sx={{
+              fontWeight: 600,
+              mb: 2,
+            }}
           >
             Справочник статей ДДС
           </Typography>

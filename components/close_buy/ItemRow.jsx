@@ -1,4 +1,6 @@
-import { Box, Paper, Switch, Typography } from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
+
+import { JacoSwitch } from "@/design-system/shared/ui";
 
 export default function ItemRow({ item, disabled, onToggle }) {
   const isActive = item.is_active === 1;
@@ -30,45 +32,13 @@ export default function ItemRow({ item, disabled, onToggle }) {
       >
         {item.name}
       </Typography>
-
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Switch
+        <JacoSwitch
           checked={isActive}
           disabled={disabled}
-          inputProps={{ "aria-label": `${isActive ? "Закрыть" : "Открыть"} ${item.name}` }}
           onChange={(event) => onToggle?.(event.target.checked ? 1 : 0)}
-          sx={{
-            width: 58,
-            height: 34,
-            p: 0,
-            "& .MuiSwitch-switchBase": {
-              p: "3px",
-              color: "#FFFFFF",
-              "&.Mui-checked": {
-                transform: "translateX(24px)",
-                color: "#FFFFFF",
-                "& + .MuiSwitch-track": {
-                  bgcolor: "#CC0033",
-                  borderColor: "#CC0033",
-                  opacity: 1,
-                },
-              },
-              "&.Mui-disabled": {
-                color: "#FFFFFF",
-                "& + .MuiSwitch-track": { opacity: 0.55 },
-              },
-            },
-            "& .MuiSwitch-thumb": {
-              width: 28,
-              height: 28,
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.18)",
-            },
-            "& .MuiSwitch-track": {
-              border: "1px solid #D9D9D9",
-              borderRadius: "17px",
-              bgcolor: "#F1F1F1",
-              opacity: 1,
-            },
+          slotProps={{
+            input: { "aria-label": `${isActive ? "Закрыть" : "Открыть"} ${item.name}` },
           }}
         />
       </Box>

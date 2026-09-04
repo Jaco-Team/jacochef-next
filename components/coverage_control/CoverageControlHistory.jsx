@@ -150,8 +150,12 @@ function HistoryItem({ item, index }) {
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
-          sx={{ width: "100%", minWidth: 0, pr: 1 }}
+          sx={{
+            alignItems: "center",
+            width: "100%",
+            minWidth: 0,
+            pr: 1,
+          }}
         >
           <Chip
             size="small"
@@ -161,8 +165,10 @@ function HistoryItem({ item, index }) {
           />
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ whiteSpace: "nowrap" }}
+            sx={{
+              color: "text.secondary",
+              whiteSpace: "nowrap",
+            }}
           >
             {date}
           </Typography>
@@ -174,10 +180,13 @@ function HistoryItem({ item, index }) {
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
             noWrap
             title={buildSummary(changes)}
-            sx={{ flex: 1, minWidth: 0 }}
+            sx={{
+              color: "text.secondary",
+              flex: 1,
+              minWidth: 0,
+            }}
           >
             {buildSummary(changes)}
           </Typography>
@@ -210,7 +219,9 @@ function HistoryItem({ item, index }) {
         ) : (
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Подробности изменения не переданы сервером
           </Typography>
@@ -218,8 +229,10 @@ function HistoryItem({ item, index }) {
         {item.comment ? (
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mt: 1 }}
+            sx={{
+              color: "text.secondary",
+              mt: 1,
+            }}
           >
             Комментарий: {item.comment}
           </Typography>
@@ -239,7 +252,9 @@ export default function CoverageControlHistory({ history = [] }) {
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
+          sx={{
+            alignItems: "center",
+          }}
         >
           <Typography>История изменений</Typography>
           <Chip
@@ -251,7 +266,13 @@ export default function CoverageControlHistory({ history = [] }) {
       </AccordionSummary>
       <AccordionDetails>
         {!history.length ? (
-          <Typography color="text.secondary">Изменений пока нет</Typography>
+          <Typography
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            Изменений пока нет
+          </Typography>
         ) : (
           <Stack spacing={1}>
             {history.map((item, index) => (

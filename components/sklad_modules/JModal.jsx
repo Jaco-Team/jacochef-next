@@ -34,10 +34,12 @@ const ModalNewTagNav = ({ open, onClose, save }) => {
       </DialogTitle>
       <DialogContent>
         <Grid
-          mt={2}
           size={{
             xs: 12,
             sm: 12,
+          }}
+          sx={{
+            mt: 2,
           }}
         >
           <MyTextInput
@@ -80,10 +82,12 @@ const ModalNewTagCont = ({ open, onClose, save }) => {
       </DialogTitle>
       <DialogContent>
         <Grid
-          mt={2}
           size={{
             xs: 12,
             sm: 12,
+          }}
+          sx={{
+            mt: 2,
           }}
         >
           <MyTextInput

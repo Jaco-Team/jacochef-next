@@ -210,12 +210,14 @@ export default function ReceptModuleCategoriesTab({
                 value={categoryQuery}
                 placeholder="Поиск категории"
                 onChange={(event) => onCategoryQueryChange(event.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
             </Box>
@@ -334,7 +336,6 @@ export default function ReceptModuleCategoriesTab({
           ) : null}
         </Grid>
       </Grid>
-
       <ReceptCategoryMobileDialog
         open={mobileEditorOpen}
         category={selectedCategory}
@@ -349,7 +350,6 @@ export default function ReceptModuleCategoriesTab({
           }
         }}
       />
-
       <Dialog
         open={Boolean(deleteCategoryCandidate)}
         onClose={onCloseDeleteCategory}

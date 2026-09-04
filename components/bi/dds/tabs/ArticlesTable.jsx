@@ -249,8 +249,11 @@ export default function ArticlesTable() {
 
       <Grid
         container
-        justifyContent="flex-end"
-        sx={{ mt: 2, pr: 4 }}
+        sx={{
+          justifyContent: "flex-end",
+          mt: 2,
+          pr: 4,
+        }}
       >
         <Typography
           variant="subtitle1"

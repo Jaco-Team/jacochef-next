@@ -114,7 +114,9 @@ export default function Client({ getData, showAlert, canAccess }) {
       <Grid
         container
         spacing={3}
-        maxWidth="lg"
+        sx={{
+          maxWidth: "lg",
+        }}
       >
         <Grid
           size={{
@@ -169,7 +171,6 @@ export default function Client({ getData, showAlert, canAccess }) {
           )}
         </Grid>
       </Grid>
-
       {clients.length > 0 && (
         <TableContainer
           sx={{ maxHeight: { xs: "none", sm: 570 }, mt: 3 }}

@@ -201,10 +201,10 @@ function PositionSelect({ positions, value, onChange, disabled }) {
           </Box>
         );
       }}
-      renderTags={(selected, getTagProps) =>
+      renderValue={(selected, getItemProps) =>
         selected.map((option, index) => (
           <Chip
-            {...getTagProps({ index })}
+            {...getItemProps({ index })}
             key={option.id}
             size="small"
             label={

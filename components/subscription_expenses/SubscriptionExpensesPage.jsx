@@ -208,14 +208,18 @@ function MetricCard({ title, value, hint, color = "text.primary", icon }) {
       <CardContent>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
           spacing={2}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
         >
           <Box>
             <Typography
-              color="text.secondary"
               variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {title}
             </Typography>
@@ -227,8 +231,10 @@ function MetricCard({ title, value, hint, color = "text.primary", icon }) {
             </Typography>
             {hint ? (
               <Typography
-                color="text.secondary"
                 variant="caption"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {hint}
               </Typography>
@@ -259,7 +265,9 @@ function AnalyticsAmount({ rub, currencyAmounts = [], color = "text.primary" }) 
   return (
     <Stack
       spacing={0.25}
-      alignItems="flex-end"
+      sx={{
+        alignItems: "flex-end",
+      }}
     >
       <Typography
         component="span"
@@ -273,8 +281,10 @@ function AnalyticsAmount({ rub, currencyAmounts = [], color = "text.primary" }) 
           <Typography
             component="span"
             variant="caption"
-            color="text.secondary"
             key={item.currency}
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {money(item.amount, item.currency)}
           </Typography>
@@ -283,7 +293,9 @@ function AnalyticsAmount({ rub, currencyAmounts = [], color = "text.primary" }) 
         <Typography
           component="span"
           variant="caption"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           —
         </Typography>
@@ -722,7 +734,6 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
           });
         }}
       />
-
       {form.operation_type === "payment" ? (
         <>
           <MySelect
@@ -827,7 +838,6 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
           </Grid>
         </>
       ) : null}
-
       {form.operation_type === "purchase" ? (
         <>
           <MyTextInput
@@ -887,7 +897,6 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
           />
         </>
       ) : null}
-
       {isExpense && !isPersonalExpense ? (
         <>
           {availableBudgets.length ? (
@@ -904,7 +913,9 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
               />
               <Typography
                 variant="caption"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 Автоматически выбирается последнее поступление на дату операции. При необходимости
                 можно указать более ранний бюджет.
@@ -917,7 +928,6 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
           )}
         </>
       ) : null}
-
       {form.operation_type === "exchange" ? (
         <>
           <MySelect
@@ -959,7 +969,6 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
           />
         </>
       ) : null}
-
       {form.operation_type === "funding" ? (
         <>
           <MySelect
@@ -994,7 +1003,6 @@ function OperationDialog({ open, value, wallets, subscriptions, budgets, onClose
           ) : null}
         </>
       ) : null}
-
       <MyTextInput
         label="Комментарий"
         multiline
@@ -1148,13 +1156,14 @@ export default function SubscriptionExpensesPage() {
         status={alert.status}
         text={alert.text}
       />
-
       <Grid size={12}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "stretch", sm: "center" }}
           spacing={2}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
         >
           <Box>
             <Typography
@@ -1164,7 +1173,11 @@ export default function SubscriptionExpensesPage() {
             >
               Расходы на сервисы
             </Typography>
-            <Typography color="text.secondary">
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Подписки, валютные остатки и бюджет за выбранный период
             </Typography>
           </Box>
@@ -1196,7 +1209,6 @@ export default function SubscriptionExpensesPage() {
           </Stack>
         </Stack>
       </Grid>
-
       <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
         <MetricCard
           title="Доступно на начало"
@@ -1244,7 +1256,6 @@ export default function SubscriptionExpensesPage() {
           icon={<AccountBalanceWalletRoundedIcon />}
         />
       </Grid>
-
       {dashboard.budget_tracking_start && dateFrom < dashboard.budget_tracking_start ? (
         <Grid size={12}>
           <Alert severity="info">
@@ -1253,7 +1264,6 @@ export default function SubscriptionExpensesPage() {
           </Alert>
         </Grid>
       ) : null}
-
       {dashboard.missing_rate_count > 0 ? (
         <Grid size={12}>
           <Alert severity="warning">
@@ -1262,7 +1272,6 @@ export default function SubscriptionExpensesPage() {
           </Alert>
         </Grid>
       ) : null}
-
       {(data.data_quality?.negative_wallets || []).map((wallet) => (
         <Grid
           size={12}
@@ -1275,7 +1284,6 @@ export default function SubscriptionExpensesPage() {
           </Alert>
         </Grid>
       ))}
-
       {(data.data_quality?.duplicate_payment_groups || []).length ? (
         <Grid size={12}>
           <Alert severity="info">
@@ -1290,7 +1298,6 @@ export default function SubscriptionExpensesPage() {
           </Alert>
         </Grid>
       ) : null}
-
       <Grid size={12}>
         <Paper variant="outlined">
           <Tabs
@@ -1308,7 +1315,6 @@ export default function SubscriptionExpensesPage() {
           </Tabs>
         </Paper>
       </Grid>
-
       {tab === 0 ? (
         <>
           <Grid size={{ xs: 12, lg: 7 }}>
@@ -1318,16 +1324,20 @@ export default function SubscriptionExpensesPage() {
             >
               <Stack
                 direction={{ xs: "column", md: "row" }}
-                justifyContent="space-between"
-                alignItems={{ xs: "stretch", md: "center" }}
                 spacing={2}
-                mb={2}
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: { xs: "stretch", md: "center" },
+                  mb: 2,
+                }}
               >
                 <Box>
                   <Typography variant="h6">Движение бюджета</Typography>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Остаток переносится между периодами автоматически
                   </Typography>
@@ -1364,11 +1374,17 @@ export default function SubscriptionExpensesPage() {
                 <Grid size={{ xs: 6, sm: 4, md: 2.4 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     На начало
                   </Typography>
-                  <Typography fontWeight={700}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                    }}
+                  >
                     {money(
                       Number(dashboard.carryover_rub || 0) +
                         Number(dashboard.tracking_opening_rub || 0),
@@ -1378,42 +1394,68 @@ export default function SubscriptionExpensesPage() {
                 <Grid size={{ xs: 6, sm: 4, md: 2.4 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Получено
                   </Typography>
-                  <Typography fontWeight={700}>{money(dashboard.base_budget_rub || 0)}</Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                    }}
+                  >
+                    {money(dashboard.base_budget_rub || 0)}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6, sm: 4, md: 2.4 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Корректировки
                   </Typography>
-                  <Typography fontWeight={700}>{money(dashboard.adjustments_rub || 0)}</Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                    }}
+                  >
+                    {money(dashboard.adjustments_rub || 0)}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6, sm: 4, md: 2.4 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     Потрачено
                   </Typography>
-                  <Typography fontWeight={700}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                    }}
+                  >
                     {money(dashboard.budget_actual_rub || 0)}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6, sm: 4, md: 2.4 }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     На конец
                   </Typography>
                   <Typography
-                    fontWeight={700}
                     color={difference < 0 ? "error.main" : "success.main"}
+                    sx={{
+                      fontWeight: 700,
+                    }}
                   >
                     {money(difference)}
                   </Typography>
@@ -1424,7 +1466,9 @@ export default function SubscriptionExpensesPage() {
               (data.adjustments || []).length ? (
                 <Stack
                   spacing={1}
-                  mt={2}
+                  sx={{
+                    mt: 2,
+                  }}
                 >
                   <Divider />
                   {(data.budget_options || [])
@@ -1433,8 +1477,10 @@ export default function SubscriptionExpensesPage() {
                       <Stack
                         key={`budget-${item.id}`}
                         direction="row"
-                        justifyContent="space-between"
                         spacing={2}
+                        sx={{
+                          justifyContent: "space-between",
+                        }}
                       >
                         <Box>
                           <Typography variant="body2">
@@ -1443,15 +1489,19 @@ export default function SubscriptionExpensesPage() {
                           {item.comment ? (
                             <Typography
                               variant="caption"
-                              color="text.secondary"
+                              sx={{
+                                color: "text.secondary",
+                              }}
                             >
                               {item.comment}
                             </Typography>
                           ) : null}
                           <Typography
                             variant="caption"
-                            color="text.secondary"
-                            display="block"
+                            sx={{
+                              color: "text.secondary",
+                              display: "block",
+                            }}
                           >
                             Потрачено: {money(item.spent_rub)} · Осталось:{" "}
                             <Box
@@ -1468,12 +1518,16 @@ export default function SubscriptionExpensesPage() {
                         </Box>
                         <Stack
                           direction="row"
-                          alignItems="center"
                           spacing={0.5}
+                          sx={{
+                            alignItems: "center",
+                          }}
                         >
                           <Typography
                             variant="body2"
-                            fontWeight={700}
+                            sx={{
+                              fontWeight: 700,
+                            }}
                           >
                             {money(item.base_amount_rub)}
                           </Typography>
@@ -1503,20 +1557,26 @@ export default function SubscriptionExpensesPage() {
                     <Stack
                       key={`adjustment-${item.id}`}
                       direction="row"
-                      justifyContent="space-between"
                       spacing={2}
+                      sx={{
+                        justifyContent: "space-between",
+                      }}
                     >
                       <Typography variant="body2">
                         {dateLabel(item.adjustment_date)} · {item.comment}
                       </Typography>
                       <Stack
                         direction="row"
-                        alignItems="center"
                         spacing={0.5}
+                        sx={{
+                          alignItems: "center",
+                        }}
                       >
                         <Typography
                           variant="body2"
-                          fontWeight={700}
+                          sx={{
+                            fontWeight: 700,
+                          }}
                         >
                           {money(item.amount_rub)}
                         </Typography>
@@ -1539,9 +1599,11 @@ export default function SubscriptionExpensesPage() {
                 </Stack>
               ) : (
                 <Typography
-                  color="text.secondary"
                   variant="body2"
-                  mt={2}
+                  sx={{
+                    color: "text.secondary",
+                    mt: 2,
+                  }}
                 >
                   В выбранном периоде поступлений и корректировок нет
                 </Typography>
@@ -1555,7 +1617,9 @@ export default function SubscriptionExpensesPage() {
             >
               <Typography
                 variant="h6"
-                mb={2}
+                sx={{
+                  mb: 2,
+                }}
               >
                 Ближайшие платежи
               </Typography>
@@ -1564,13 +1628,23 @@ export default function SubscriptionExpensesPage() {
                   <Stack
                     key={`${item.id}-${item.next_payment_date}`}
                     direction="row"
-                    justifyContent="space-between"
+                    sx={{
+                      justifyContent: "space-between",
+                    }}
                   >
                     <Box>
-                      <Typography fontWeight={600}>{item.name}</Typography>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.name}
+                      </Typography>
                       <Typography
                         variant="caption"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         {dateLabel(item.next_payment_date)}
                       </Typography>
@@ -1579,7 +1653,13 @@ export default function SubscriptionExpensesPage() {
                   </Stack>
                 ))}
                 {!data.upcoming?.length ? (
-                  <Typography color="text.secondary">В ближайшие 45 дней платежей нет</Typography>
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
+                    В ближайшие 45 дней платежей нет
+                  </Typography>
                 ) : null}
               </Stack>
             </Paper>
@@ -1591,7 +1671,9 @@ export default function SubscriptionExpensesPage() {
             >
               <Typography
                 variant="h6"
-                mb={2}
+                sx={{
+                  mb: 2,
+                }}
               >
                 Остатки по счетам на {dateLabel(dateTo)}
               </Typography>
@@ -1608,9 +1690,17 @@ export default function SubscriptionExpensesPage() {
                       <CardContent>
                         <Stack
                           direction="row"
-                          justifyContent="space-between"
+                          sx={{
+                            justifyContent: "space-between",
+                          }}
                         >
-                          <Typography fontWeight={700}>{wallet.name}</Typography>
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                            }}
+                          >
+                            {wallet.name}
+                          </Typography>
                           <Chip
                             size="small"
                             label={wallet.currency}
@@ -1618,13 +1708,17 @@ export default function SubscriptionExpensesPage() {
                         </Stack>
                         <Typography
                           variant="h6"
-                          mt={1}
+                          sx={{
+                            mt: 1,
+                          }}
                         >
                           {money(wallet.balance, wallet.currency)}
                         </Typography>
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           В рублях: {money(wallet.value_rub)}
                         </Typography>
@@ -1634,7 +1728,13 @@ export default function SubscriptionExpensesPage() {
                 ))}
                 {!data.wallets?.length ? (
                   <Grid size={12}>
-                    <Typography color="text.secondary">Добавьте первый счёт</Typography>
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      Добавьте первый счёт
+                    </Typography>
                   </Grid>
                 ) : null}
               </Grid>
@@ -1642,15 +1742,16 @@ export default function SubscriptionExpensesPage() {
           </Grid>
         </>
       ) : null}
-
       {tab === 1 ? (
         <Grid size={12}>
           <Paper variant="outlined">
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ p: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                p: 2,
+              }}
             >
               <Typography variant="h6">Подписки</Typography>
               <Button
@@ -1734,15 +1835,16 @@ export default function SubscriptionExpensesPage() {
           </Paper>
         </Grid>
       ) : null}
-
       {tab === 2 ? (
         <Grid size={12}>
           <Paper variant="outlined">
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ p: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                p: 2,
+              }}
             >
               <Typography variant="h6">Счета и кошельки</Typography>
               <Button
@@ -1809,16 +1911,17 @@ export default function SubscriptionExpensesPage() {
           </Paper>
         </Grid>
       ) : null}
-
       {tab === 3 ? (
         <Grid size={12}>
           <Paper variant="outlined">
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              justifyContent="space-between"
-              alignItems={{ xs: "stretch", sm: "center" }}
               spacing={2}
-              sx={{ p: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: { xs: "stretch", sm: "center" },
+                p: 2,
+              }}
             >
               <Typography variant="h6">Журнал операций</Typography>
               <Stack
@@ -1895,7 +1998,9 @@ export default function SubscriptionExpensesPage() {
                               </Typography>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
+                                sx={{
+                                  color: "text.secondary",
+                                }}
                               >
                                 {money(item.budget_amount_rub)}
                               </Typography>
@@ -1955,7 +2060,6 @@ export default function SubscriptionExpensesPage() {
           </Paper>
         </Grid>
       ) : null}
-
       {tab === 4 || isReport ? (
         <Grid size={12}>
           <Paper
@@ -1963,14 +2067,24 @@ export default function SubscriptionExpensesPage() {
             sx={{ p: isReport ? 3 : 0 }}
           >
             {isReport ? (
-              <Box mb={3}>
+              <Box
+                sx={{
+                  mb: 3,
+                }}
+              >
                 <Typography
                   variant="h5"
-                  fontWeight={700}
+                  sx={{
+                    fontWeight: 700,
+                  }}
                 >
                   Отчёт по расходам за {dateLabel(dateFrom)} — {dateLabel(dateTo)}
                 </Typography>
-                <Typography color="text.secondary">
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Доступно с поступлениями: {money(dashboard.effective_budget_rub)} · Корпоративный
                   факт: {money(dashboard.budget_actual_rub)} ·{" "}
                   {overspend > 0
@@ -1981,9 +2095,11 @@ export default function SubscriptionExpensesPage() {
             ) : (
               <Stack
                 direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ p: 2 }}
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  p: 2,
+                }}
               >
                 <Typography variant="h6">План и факт по подпискам и покупкам</Typography>
                 {dashboard.structural_deficit_rub > 0 ? (
@@ -2116,7 +2232,9 @@ export default function SubscriptionExpensesPage() {
                                                 </Typography>
                                                 <Typography
                                                   variant="caption"
-                                                  color="text.secondary"
+                                                  sx={{
+                                                    color: "text.secondary",
+                                                  }}
                                                 >
                                                   {money(payment.budget_amount_rub)}
                                                 </Typography>
@@ -2162,7 +2280,11 @@ export default function SubscriptionExpensesPage() {
               </Table>
             </TableContainer>
             {isReport ? (
-              <Box mt={3}>
+              <Box
+                sx={{
+                  mt: 3,
+                }}
+              >
                 <Divider sx={{ mb: 2 }} />
                 <Typography
                   variant="subtitle2"
@@ -2173,8 +2295,10 @@ export default function SubscriptionExpensesPage() {
                 <Stack
                   direction="row"
                   spacing={1}
-                  flexWrap="wrap"
                   useFlexGap
+                  sx={{
+                    flexWrap: "wrap",
+                  }}
                 >
                   {(data.wallets || []).map((item) => (
                     <Chip
@@ -2189,7 +2313,6 @@ export default function SubscriptionExpensesPage() {
           </Paper>
         </Grid>
       ) : null}
-
       <SubscriptionDialog
         open={subscriptionDialog.open}
         value={subscriptionDialog.value}

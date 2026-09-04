@@ -44,8 +44,10 @@ function VersionBody({ entry, previous, catalogs }) {
     return (
       <Box>
         <Typography
-          color="text.secondary"
-          sx={{ mb: summary.length ? 1 : 0 }}
+          sx={{
+            color: "text.secondary",
+            mb: summary.length ? 1 : 0,
+          }}
         >
           Первая зафиксированная версия
         </Typography>
@@ -65,7 +67,15 @@ function VersionBody({ entry, previous, catalogs }) {
   const diffs = getConfigHistoryFieldDiffs(entry, previous, catalogs);
 
   if (!diffs.length) {
-    return <Typography color="text.secondary">Нет отличий от предыдущей версии</Typography>;
+    return (
+      <Typography
+        sx={{
+          color: "text.secondary",
+        }}
+      >
+        Нет отличий от предыдущей версии
+      </Typography>
+    );
   }
 
   return (
@@ -90,7 +100,9 @@ function VersionBody({ entry, previous, catalogs }) {
           <TruncatedValue value={diff.from} />
           <Typography
             component="span"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             →
           </Typography>
@@ -148,7 +160,13 @@ export function EmployeePromoConfigHistoryPanel({
         </AccordionSummary>
         <AccordionDetails sx={{ p: 1.5 }}>
           {list.length === 0 ? (
-            <Typography color="text.secondary">Пока нет истории изменений</Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Пока нет истории изменений
+            </Typography>
           ) : (
             list.map((entry, index) => {
               const previous = list[index + 1] || null;

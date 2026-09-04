@@ -269,10 +269,6 @@ export default function SkladCsvAutocompleteField({
         value={summaryValue}
         placeholder={placeholder}
         disabled={disabled}
-        inputProps={{
-          readOnly: true,
-          "aria-label": label,
-        }}
         onClick={() => {
           if (!disabled) {
             setIsEditing(true);
@@ -288,6 +284,12 @@ export default function SkladCsvAutocompleteField({
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
+          },
+        }}
+        slotProps={{
+          htmlInput: {
+            readOnly: true,
+            "aria-label": label,
           },
         }}
       />
@@ -378,8 +380,10 @@ export default function SkladCsvAutocompleteField({
               placeholder={selectedValues.length ? "Фильтр или новое значение" : placeholder}
               inputRef={inputRef}
               slotProps={{
+                ...params.slotProps,
+
                 input: {
-                  ...params.InputProps,
+                  ...params.slotProps.input,
                   endAdornment: (
                     <>
                       {canAddInput ? (
@@ -395,7 +399,7 @@ export default function SkladCsvAutocompleteField({
                           </IconButton>
                         </InputAdornment>
                       ) : null}
-                      {params.InputProps.endAdornment}
+                      {params.slotProps.input.endAdornment}
                     </>
                   ),
                 },

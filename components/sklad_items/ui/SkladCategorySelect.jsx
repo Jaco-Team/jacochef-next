@@ -23,9 +23,12 @@ export default function SkladCategorySelect(props) {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ width: "100%", minWidth: 0 }}
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+              minWidth: 0,
+            }}
           >
             <Typography
               variant="inherit"
@@ -39,7 +42,6 @@ export default function SkladCategorySelect(props) {
             >
               {item?.name}
             </Typography>
-
             {count != null ? (
               <Chip
                 label={count}

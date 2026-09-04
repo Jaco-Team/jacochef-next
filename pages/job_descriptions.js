@@ -1054,21 +1054,22 @@ class JobDescriptions_ extends React.Component {
         onOpen={() => {}}
         disableSwipeToOpen
         ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          sx: {
-            borderTopLeftRadius: 25,
-            borderTopRightRadius: 25,
-            overflow: "hidden",
-            backgroundColor: blockBackground,
-            boxShadow: "none",
-            minHeight: "82vh",
-            maxHeight: "92vh",
-          },
-        }}
         slotProps={{
           backdrop: {
             sx: {
               backgroundColor: "rgba(0,0,0,0.3)",
+            },
+          },
+
+          paper: {
+            sx: {
+              borderTopLeftRadius: 25,
+              borderTopRightRadius: 25,
+              overflow: "hidden",
+              backgroundColor: blockBackground,
+              boxShadow: "none",
+              minHeight: "82vh",
+              maxHeight: "92vh",
             },
           },
         }}
@@ -1136,7 +1137,6 @@ class JobDescriptions_ extends React.Component {
             </IconButton>
           </Box>
         </Box>
-
         <Box
           sx={{
             bgcolor: blockBackground,
@@ -1316,7 +1316,6 @@ class JobDescriptions_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         {parseInt(this.state.access?.edit_description_access) == 0 ? null : this.state.isMobile ? (
           this.renderInstructionMobileSheet("edit")
         ) : (
@@ -1396,7 +1395,6 @@ class JobDescriptions_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {!this.state.itemsNew ? null : this.state.isMobile ? (
           this.renderInstructionMobileSheet("new")
         ) : (
@@ -1476,7 +1474,6 @@ class JobDescriptions_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         {this.state.isMobile ? (
           this.renderNewsMobileSheet()
         ) : (
@@ -1567,7 +1564,6 @@ class JobDescriptions_ extends React.Component {
             </DialogActions>
           </Dialog>
         )}
-
         <Dialog
           open={this.state.modalDialogDeleteInstruction}
           maxWidth={false}
@@ -1697,7 +1693,6 @@ class JobDescriptions_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Dialog
           open={this.state.modalDialogDeleteNews}
           maxWidth={false}
@@ -1827,7 +1822,6 @@ class JobDescriptions_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <Box
           className="container_first_child"
           sx={{
@@ -1911,9 +1905,11 @@ class JobDescriptions_ extends React.Component {
               >
                 <Stack
                   direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ mb: { xs: 2.5, lg: 2 } }}
+                  sx={{
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: { xs: 2.5, lg: 2 },
+                  }}
                 >
                   <Typography
                     sx={{

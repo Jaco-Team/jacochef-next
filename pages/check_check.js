@@ -1757,7 +1757,6 @@ class CheckCheck_Accordion extends React.Component {
             </TabPanel>
           </AccordionDetails>
         </Accordion>
-
         {/* Модалка по ошибкам (расхождение сумм ОФД и ШЕФ) */}
         <Dialog
           open={mismatchOpen}
@@ -1831,7 +1830,6 @@ class CheckCheck_Accordion extends React.Component {
                       Показатель: <b>{c.label}</b>
                     </Typography>
                   )}
-
                   <Box sx={{ mb: 2 }}>
                     <Typography>
                       ОФД: <b>{formatNumber ? formatNumber(nOfd) : nOfd} ₽</b>
@@ -1843,7 +1841,6 @@ class CheckCheck_Accordion extends React.Component {
                       Разница: <b>{formatNumber ? formatNumber(diff) : diff} ₽</b>
                     </Typography>
                   </Box>
-
                   {(c.scope === "kassa_day" || c.scope === "smena") && (
                     <MismatchDiagnostics
                       diagnostics={mismatchDiagnostics}
@@ -1856,13 +1853,15 @@ class CheckCheck_Accordion extends React.Component {
                       formatNumber={formatNumber}
                     />
                   )}
-
                   {c.scope !== "kassa_day" && c.scope !== "smena" && (
-                    <Typography color="text.secondary">
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
                       Подробный разбор доступен в красной строке конкретной кассы за день или смены.
                     </Typography>
                   )}
-
                   {c.scope === "day" && dayCommentRows.length > 0 && (
                     <TableContainer component={Paper}>
                       <Table size="small">
@@ -1892,7 +1891,6 @@ class CheckCheck_Accordion extends React.Component {
                       </Table>
                     </TableContainer>
                   )}
-
                   {(c.scope === "kassa_day" || c.scope === "smena") && (
                     <Box sx={{ mt: 2 }}>
                       <MyTextInput
@@ -1940,7 +1938,6 @@ class CheckCheck_Accordion extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         {/* Подтверждение выбранного решения */}
         <Dialog
           open={resolutionConfirmOpen}
@@ -2608,7 +2605,6 @@ class CheckCheck_ extends React.Component {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
-
         <Dialog
           sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 600 } }}
           maxWidth="md"
@@ -2724,14 +2720,12 @@ class CheckCheck_ extends React.Component {
             </Button>
           </DialogActions>
         </Dialog>
-
         <MyAlert
           isOpen={open_alert}
           onClose={() => this.setState({ open_alert: false })}
           status={err_status}
           text={err_text}
         />
-
         <CheckCheck_Modal
           open={modalOrder}
           onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
@@ -2740,7 +2734,6 @@ class CheckCheck_ extends React.Component {
           order={order}
           saveOrder={this.saveOrder}
         />
-
         <Grid
           container
           spacing={3}
@@ -2926,7 +2919,9 @@ class CheckCheck_ extends React.Component {
                 {excelFileName && (
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     {excelFileName}
                   </Typography>

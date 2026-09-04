@@ -5909,16 +5909,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -6009,16 +6011,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -6092,22 +6096,28 @@ class Billing_Edit_ extends React.Component {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75,
+                          }}
                         >
                           Строка: {item.ocrItem?.line ?? index + 1}
                         </Typography>
                         {!normalizeOcrText(item.ocrItem?.__ocr_file_name) ? null : (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Файл: {item.ocrItem.__ocr_file_name}
                           </Typography>
                         )}
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
                           {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
@@ -6126,8 +6136,10 @@ class Billing_Edit_ extends React.Component {
                         {!item.resolveIssue ? null : (
                           <Typography
                             variant="body2"
-                            color="warning.main"
-                            sx={{ mt: 1 }}
+                            sx={{
+                              color: "warning.main",
+                              mt: 1,
+                            }}
                           >
                             {item.resolveIssue}
                           </Typography>

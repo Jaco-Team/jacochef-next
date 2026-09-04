@@ -179,7 +179,9 @@ export default function SkladWarehouseItemEditorDialog({
       fullScreen={fullScreen}
       fullWidth
       maxWidth="xl"
-      PaperProps={{ sx: { borderRadius: fullScreen ? 0 : 3, minHeight: { md: "76dvh" } } }}
+      slotProps={{
+        paper: { sx: { borderRadius: fullScreen ? 0 : 3, minHeight: { md: "76dvh" } } },
+      }}
     >
       <DialogTitle>
         {detail?.item?.id ? `Редактирование: ${detail.item.name}` : "Новый товар склада"}

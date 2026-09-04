@@ -138,7 +138,6 @@ export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }
           <EmptyState />
         )}
       </Stack>
-
       <SectionCard
         title="Лига кафе"
         subtitle="Рейтинг по эффективности"
@@ -247,7 +246,9 @@ export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }
                       <Stack
                         direction="row"
                         spacing={1}
-                        alignItems="center"
+                        sx={{
+                          alignItems: "center",
+                        }}
                       >
                         <Typography
                           variant="subtitle2"
@@ -263,9 +264,11 @@ export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }
                         {!item.is_valid_for_rating ? (
                           <Stack
                             direction="row"
-                            alignItems="center"
                             spacing={CP_SPACE.micro}
-                            sx={{ color: "warning.dark" }}
+                            sx={{
+                              alignItems: "center",
+                              color: "warning.dark",
+                            }}
                           >
                             <WarningAmberRoundedIcon sx={{ fontSize: 14 }} />
                             <Typography
@@ -297,7 +300,9 @@ export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }
                     <TableCell align="right">
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         {formatters.duration(item.p90)}
                       </Typography>
@@ -311,7 +316,9 @@ export default function LeadersTab({ data, formatters, filters, onEmployeeOpen }
                     <TableCell align="right">
                       <Typography
                         variant="body2"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         {formatters.integer(item.sample_size)}
                       </Typography>

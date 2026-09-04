@@ -75,15 +75,16 @@ export default function CookPfTab({ pf }) {
         placeholder="Поиск"
         onChange={(event) => setSearch(event.target.value)}
         sx={{ mb: 2, maxWidth: "100%" }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" />
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          },
         }}
       />
-
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <List disablePadding>
           {filteredPf.map((item, index) => (
@@ -102,15 +103,19 @@ export default function CookPfTab({ pf }) {
                 <ListItemText
                   primary={item.name}
                   sx={{ flex: "1 1 40%", minWidth: 0, m: 0 }}
-                  primaryTypographyProps={{
-                    sx: { wordBreak: "break-word", fontSize: { xs: 13, sm: 14 } },
+                  slotProps={{
+                    primary: {
+                      sx: { wordBreak: "break-word", fontSize: { xs: 13, sm: 14 } },
+                    },
                   }}
                 />
                 <ListItemText
                   primary={item.shelf_life}
                   sx={{ flex: "1 1 60%", minWidth: 0, m: 0 }}
-                  primaryTypographyProps={{
-                    sx: { wordBreak: "break-word", fontSize: { xs: 13, sm: 14 } },
+                  slotProps={{
+                    primary: {
+                      sx: { wordBreak: "break-word", fontSize: { xs: 13, sm: 14 } },
+                    },
                   }}
                 />
               </ListItemButton>

@@ -48,7 +48,10 @@ export default function DateWithEditableTimePicker(props) {
         slotProps={{
           textField: {
             size: "small",
-            inputProps: { readOnly: true },
+
+            slotProps: {
+              htmlInput: { readOnly: true },
+            },
           },
         }}
         {...rest}

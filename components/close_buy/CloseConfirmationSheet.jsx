@@ -74,8 +74,10 @@ export default function CloseConfirmationSheet({ open, category, pending, onClos
       ModalProps={{
         sx: { zIndex: (theme) => theme.zIndex.modal + 2 },
       }}
-      PaperProps={{
-        sx: { width: "100%", maxWidth: "100vw", boxSizing: "border-box" },
+      slotProps={{
+        paper: {
+          sx: { width: "100%", maxWidth: "100vw", boxSizing: "border-box" },
+        },
       }}
     >
       <Box sx={{ p: 3, width: "100%", boxSizing: "border-box" }}>

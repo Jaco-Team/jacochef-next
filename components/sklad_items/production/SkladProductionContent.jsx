@@ -97,7 +97,9 @@ export default function SkladProductionContent({
           <Grid
             container
             spacing={2}
-            alignItems="stretch"
+            sx={{
+              alignItems: "stretch",
+            }}
           >
             <Grid size={{ xs: 12, md: 4 }}>
               <MySearchInput
@@ -117,7 +119,9 @@ export default function SkladProductionContent({
               <Stack
                 direction="row"
                 spacing={0.5}
-                alignItems="center"
+                sx={{
+                  alignItems: "center",
+                }}
               >
                 <Stack sx={{ minWidth: 0, flex: 1 }}>
                   <SkladCategorySelect
@@ -166,7 +170,9 @@ export default function SkladProductionContent({
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={1.5}
-                justifyContent="flex-start"
+                sx={{
+                  justifyContent: "flex-start",
+                }}
               >
                 <Button
                   variant="contained"
@@ -272,21 +278,21 @@ export default function SkladProductionContent({
                       >
                         <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
                       </TableCell>
-
                       <TableCell>
                         {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
                       </TableCell>
                       <TableCell>{row?.shelf_life || "-"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
-
                       <TableCell>
                         <Stack
                           direction="row"
                           spacing={0.75}
                           useFlexGap
-                          flexWrap="wrap"
-                          alignItems="center"
+                          sx={{
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
                         >
                           <Chip
                             key={primaryStatusChip.key}
@@ -306,12 +312,13 @@ export default function SkladProductionContent({
                           ))}
                         </Stack>
                       </TableCell>
-
                       <TableCell align="right">
                         <Stack
                           direction="row"
                           spacing={1}
-                          justifyContent="flex-end"
+                          sx={{
+                            justifyContent: "flex-end",
+                          }}
                         >
                           <Tooltip
                             title={canCreateOrEdit ? "Открыть редактор" : "Открыть карточку"}
@@ -424,7 +431,11 @@ export default function SkladProductionContent({
                 {mergedRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7}>
-                      <Typography color="text.secondary">
+                      <Typography
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
                         Ничего не найдено. Измените фильтры или режим показа.
                       </Typography>
                     </TableCell>
@@ -451,7 +462,6 @@ export default function SkladProductionContent({
           />
         </Stack>
       </Paper>
-
       <SkladProductionEditorDialog
         open={modal.open}
         loading={modal.loading}

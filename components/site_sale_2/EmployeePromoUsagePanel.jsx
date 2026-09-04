@@ -37,8 +37,12 @@ function StatCard({ label, value, hint }) {
     >
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}
+        sx={{
+          color: "text.secondary",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: 0.4,
+        }}
       >
         {label}
       </Typography>
@@ -48,8 +52,11 @@ function StatCard({ label, value, hint }) {
       {hint ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ mt: 0.5, display: "block" }}
+          sx={{
+            color: "text.secondary",
+            mt: 0.5,
+            display: "block",
+          }}
         >
           {hint}
         </Typography>
@@ -101,7 +108,6 @@ export function EmployeePromoUsagePanel({ history = [], cities = [], points = []
       <Typography sx={{ fontWeight: 700, mb: 1.5, fontSize: { xs: 16, sm: 18 } }}>
         Использование
       </Typography>
-
       <Box
         sx={{
           display: "flex",
@@ -132,7 +138,6 @@ export function EmployeePromoUsagePanel({ history = [], cities = [], points = []
           hint={stats.promos ? `Промокодов: ${stats.promos}` : undefined}
         />
       </Box>
-
       <Accordion
         expanded={historyOpen}
         onChange={(event, isExpanded) => setHistoryOpen(isExpanded)}
@@ -159,7 +164,13 @@ export function EmployeePromoUsagePanel({ history = [], cities = [], points = []
         <AccordionDetails sx={{ p: 0 }}>
           {list.length === 0 ? (
             <Box sx={{ p: 2 }}>
-              <Typography color="text.secondary">По этому конфигу пока нет выдач</Typography>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
+                По этому конфигу пока нет выдач
+              </Typography>
             </Box>
           ) : (
             <TableContainer sx={{ maxHeight: 360 }}>

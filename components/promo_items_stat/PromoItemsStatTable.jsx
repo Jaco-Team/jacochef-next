@@ -490,7 +490,13 @@ export default function PromoItemsStatTable({ type = "promo", onRefresh, onLoadP
                   </TableContainer>
                 ) : (
                   <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
-                    <Typography color="text.secondary">Нет проданных позиций</Typography>
+                    <Typography
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      Нет проданных позиций
+                    </Typography>
                   </Box>
                 )}
               </Box>
