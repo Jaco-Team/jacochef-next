@@ -138,7 +138,7 @@ export function EmployeePromoConfigHistoryPanel({
             },
           }}
         >
-          <Typography sx={{ fontWeight: 700 }}>История изменений конфига</Typography>
+          <Typography sx={{ fontWeight: 700 }}>История изменений шаблона</Typography>
           <Chip
             size="small"
             label={`Версий: ${list.length}`}

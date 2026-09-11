@@ -11,6 +11,7 @@ import {
   Grid,
   Paper,
   Stack,
+  Switch,
   TextareaAutosize,
   Typography,
 } from "@mui/material";
@@ -131,7 +132,46 @@ function ChoiceCard({ checked, label, description, onChange, sx }) {
   );
 }
 
-function SettingsAccordion({ title, summary, children, defaultExpanded = false }) {
+function SettingSwitch({ checked, label, description, onChange, sx }) {
+  return (
+    <FormControlLabel
+      control={
+        <Switch
+          checked={checked}
+          onChange={onChange}
+          color="primary"
+          slotProps={{ input: { "aria-label": label } }}
+        />
+      }
+      label={
+        <Box>
+          <Typography sx={{ fontWeight: 600, lineHeight: 1.35 }}>{label}</Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.25, lineHeight: 1.4 }}
+          >
+            {description}
+          </Typography>
+        </Box>
+      }
+      sx={{
+        m: 0,
+        width: "100%",
+        alignItems: "flex-start",
+        gap: 1,
+        "& .MuiSwitch-root": { mt: -0.5, ml: -0.75 },
+        "& .MuiFormControlLabel-label": { flex: 1, minWidth: 0 },
+        ...sx,
+      }}
+    />
+  );
+}
+
+function SettingsAccordion({ id, title, summary, children, defaultExpanded = false }) {
+  const summaryId = id ? `${id}-header` : undefined;
+  const detailsId = id ? `${id}-content` : undefined;
+
   return (
     <Accordion
       disableGutters
@@ -158,6 +198,8 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
       }}
     >
       <AccordionSummary
+        id={summaryId}
+        aria-controls={detailsId}
         expandIcon={<ExpandMoreIcon />}
         sx={{
           px: { xs: 1.5, sm: 2 },
@@ -194,7 +236,11 @@ function SettingsAccordion({ title, summary, children, defaultExpanded = false }
           </Typography>
         </Box>
       </AccordionSummary>
-      <AccordionDetails sx={{ px: { xs: 1.5, sm: 2 }, pb: 3, pt: { xs: 2, sm: 2.5 } }}>
+      <AccordionDetails
+        id={detailsId}
+        aria-labelledby={summaryId}
+        sx={{ px: { xs: 1.5, sm: 2 }, pb: 3, pt: { xs: 2, sm: 2.5 } }}
+      >
         {children}
       </AccordionDetails>
     </Accordion>
@@ -284,6 +330,45 @@ function PromoPresetsBar({ activePresetId, onApplyPreset }) {
       </Stack>
     </SectionCard>
   );
+}
+
+function hasEmployeeAmountLimit(value) {
+  const raw = value == null ? "" : String(value).trim();
+
+  return raw !== "" && Number(raw) !== 0;
+}
+
+function getEmployeeConditionsSummary(state) {
+  const hasFrom = hasEmployeeAmountLimit(state.price_start);
+  const hasTo = hasEmployeeAmountLimit(state.price_end);
+
+  if (!hasFrom && !hasTo) {
+    return "Без ограничений";
+  }
+
+  if (hasFrom && hasTo) {
+    return `От ${state.price_start} до ${state.price_end} ₽`;
+  }
+
+  return hasFrom ? `От ${state.price_start} ₽` : `До ${state.price_end} ₽`;
+}
+
+function getEmployeeLocationSummary(state) {
+  const orderType = (state.type_order_list || []).find(
+    (item) => parseInt(item.id, 10) === parseInt(state.type_order, 10),
+  )?.name;
+  const city = (state.cities || []).find(
+    (item) => parseInt(item.id, 10) === parseInt(state.city, 10),
+  )?.name;
+
+  return `${orderType || "Тип заказа не выбран"} · ${city || "Вся сеть"}`;
+}
+
+function getEmployeeRestrictionsSummary(state) {
+  const time = `${state.time_start || "—"}–${state.time_end || "—"}`;
+  const phoneBinding = state.for_number ? "Привязан к телефону" : "Без привязки к телефону";
+
+  return `${getEmployeeLocationSummary(state)} · ${time} · ${getEmployeeConditionsSummary(state)} · ${phoneBinding}`;
 }
 
 export default function PromoNewFormContent({
@@ -392,7 +477,7 @@ export default function PromoNewFormContent({
               >
                 {subtitleText ||
                   (isEmployeeConfig
-                    ? "Настройки конфига промокода для сотрудников"
+                    ? "Настройки шаблона промокода для сотрудников"
                     : isEdit
                       ? "Редактирование промокода"
                       : "Создание нового промокода")}
@@ -413,10 +498,10 @@ export default function PromoNewFormContent({
 
       <Grid size={12}>
         <SectionCard
-          title={isEmployeeConfig ? "Конфиг" : "Промокод"}
+          title={isEmployeeConfig ? "Основные настройки шаблона" : "Промокод"}
           subtitle={
             isEmployeeConfig
-              ? "Дата вступления изменений и лимит активаций"
+              ? "Дата применения и лимит активаций создаваемых промокодов"
               : isEdit
                 ? "Код и лимиты активаций"
                 : "Название, генерация и лимиты"
@@ -437,7 +522,7 @@ export default function PromoNewFormContent({
                     отложенную версию.
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <MyDatePickerNew
                     label="Дата вступления изменений"
                     value={state.effective_date}
@@ -445,7 +530,7 @@ export default function PromoNewFormContent({
                     minDate={dayjs().startOf("day")}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FieldWithHint hint={PROMO_HINTS.count_action}>
                     <MyTextInput
                       value={state.count_action}
@@ -453,6 +538,14 @@ export default function PromoNewFormContent({
                       label="Количество активаций"
                     />
                   </FieldWithHint>
+                </Grid>
+                <Grid size={12}>
+                  <SettingSwitch
+                    checked={!!state.is_active}
+                    onChange={changeDataCheck.bind(null, "is_active")}
+                    label="Шаблон активен"
+                    description="Неактивный шаблон хранится и остаётся доступен для редактирования, но промокоды по нему автоматически не выдаются."
+                  />
                 </Grid>
               </>
             ) : isEdit ? (
@@ -614,8 +707,10 @@ export default function PromoNewFormContent({
           }}
         >
           <SettingsAccordion
+            id={isEmployeeConfig ? "employee-promo-benefit" : undefined}
             title="Что даёт промокод"
             summary={getBenefitSummary(state)}
+            defaultExpanded={isEmployeeConfig}
           >
             <Grid
               container
@@ -863,88 +958,54 @@ export default function PromoNewFormContent({
             ) : null}
           </SettingsAccordion>
 
-          <SettingsAccordion
-            title="Условия применения"
-            summary={getConditionsSummary(state)}
-          >
-            <Grid
-              container
-              spacing={2}
-            >
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <FieldWithHint hint={PROMO_HINTS.promo_conditions}>
-                  <MySelect
-                    data={state.promo_conditions_list}
-                    value={state.promo_conditions}
-                    func={changeData.bind(null, "promo_conditions")}
-                    label="Условие"
-                    is_none={false}
-                  />
-                </FieldWithHint>
-              </Grid>
-
-              {parseInt(state.promo_conditions, 10) === 1 ? (
-                <Grid size={12}>
-                  <MyAutocomplite
-                    data={state.items}
-                    value={state.conditionItems}
-                    func={(event, data) => changeDataData("conditionItems", data)}
-                    multiple
-                    label="Товары"
-                  />
-                </Grid>
-              ) : null}
-
-              {parseInt(state.promo_conditions, 10) === 3 ? (
-                <Grid size={12}>
-                  <MyAutocomplite
-                    data={state.cats}
-                    value={state.conditionCat}
-                    func={(event, data) => changeDataData("conditionCat", data)}
-                    multiple
-                    label="Категории"
-                  />
-                </Grid>
-              ) : null}
-
-              {parseInt(state.promo_conditions, 10) === 2 ? (
-                <>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <FieldWithHint hint={PROMO_HINTS.price_start}>
-                      <MyTextInput
-                        value={state.price_start}
-                        func={changeData.bind(null, "price_start")}
-                        label="Сумма от"
-                      />
-                    </FieldWithHint>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <FieldWithHint hint={PROMO_HINTS.price_end}>
-                      <MyTextInput
-                        value={state.price_end}
-                        func={changeData.bind(null, "price_end")}
-                        label="Сумма до"
-                      />
-                    </FieldWithHint>
-                  </Grid>
-                </>
-              ) : null}
-            </Grid>
-          </SettingsAccordion>
-
           {isEmployeeConfig ? (
             <SettingsAccordion
-              title="Время работы"
-              summary={`${state.time_start || "—"} — ${state.time_end || "—"}`}
+              id="employee-promo-restrictions"
+              title="Ограничения применения"
+              summary={getEmployeeRestrictionsSummary(state)}
             >
               <Grid
                 container
                 spacing={2}
               >
                 <Grid size={12}>
+                  <Typography sx={{ fontWeight: 700 }}>Сумма заказа</Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
+                    sx={{ mt: 0.25 }}
+                  >
+                    Укажите границы суммы заказа. 0 или пусто — без ограничений.
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <FieldWithHint hint={PROMO_HINTS.price_start}>
+                    <MyTextInput
+                      value={state.price_start}
+                      func={changeData.bind(null, "price_start")}
+                      label="Сумма от, ₽"
+                    />
+                  </FieldWithHint>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <FieldWithHint hint={PROMO_HINTS.price_end}>
+                    <MyTextInput
+                      value={state.price_end}
+                      func={changeData.bind(null, "price_end")}
+                      label="Сумма до, ₽"
+                    />
+                  </FieldWithHint>
+                </Grid>
+
+                <Grid
+                  size={12}
+                  sx={{ pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}
+                >
+                  <Typography sx={{ fontWeight: 700 }}>Время действия</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.25 }}
                   >
                     Интервал действует каждый день; без ограничений по датам и дням недели.
                   </Typography>
@@ -963,141 +1024,298 @@ export default function PromoNewFormContent({
                     func={changeData.bind(null, "time_end")}
                   />
                 </Grid>
-              </Grid>
-            </SettingsAccordion>
-          ) : (
-            <SettingsAccordion
-              title="Срок и расписание"
-              summary={getScheduleSummary(state)}
-            >
-              <Grid
-                container
-                spacing={2}
-              >
-                <Grid size={12}>
-                  <FieldWithHint hint={PROMO_HINTS.date_promo}>
+
+                <Grid
+                  size={12}
+                  sx={{ pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}
+                >
+                  <Typography sx={{ fontWeight: 700 }}>География и тип заказа</Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <FieldWithHint hint={PROMO_HINTS.type_order}>
                     <MySelect
-                      data={state.date_promo_list}
-                      value={state.date_promo}
-                      func={changeData.bind(null, "date_promo")}
-                      label="Когда работает промокод"
+                      data={state.type_order_list}
+                      value={state.type_order}
+                      func={changeData.bind(null, "type_order")}
+                      label="Тип заказа"
                       is_none={false}
                     />
                   </FieldWithHint>
                 </Grid>
-
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MyDatePickerNew
-                    label="Дата от"
-                    value={state.date_start}
-                    func={changeDateRange.bind(null, "date_start")}
-                  />
+                <Grid
+                  size={12}
+                  sx={{ pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}
+                >
+                  <Typography sx={{ fontWeight: 700 }}>Привязка к сотруднику</Typography>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MyDatePickerNew
-                    label="Дата до"
-                    value={state.date_end}
-                    func={changeDateRange.bind(null, "date_end")}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MyTimePicker
-                    label="Время от"
-                    value={state.time_start}
-                    func={changeData.bind(null, "time_start")}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MyTimePicker
-                    label="Время до"
-                    value={state.time_end}
-                    func={changeData.bind(null, "time_end")}
-                  />
-                </Grid>
-
-                <Grid size={12}>
-                  <LabelWithHint
-                    text="Исключить даты"
-                    hint={PROMO_HINTS.testDate}
-                    sx={{ mb: 1.25 }}
-                  />
-                  <PromoExcludeDatePicker
-                    label="Добавить дату"
-                    value={state.testDate}
-                    func={changeDataData.bind(null, "testDate")}
-                  />
-                </Grid>
-
-                <Grid size={12}>
-                  <WeekdaySelector
-                    state={state}
-                    onToggleDay={toggleDay}
+                <Grid size={{ xs: 12, md: 8 }}>
+                  <SettingSwitch
+                    checked={!!state.for_number}
+                    onChange={changeDataCheck.bind(null, "for_number")}
+                    label="Привязан к номеру телефона"
+                    description="При создании персональный промокод ограничивается номером телефона сотрудника."
                   />
                 </Grid>
               </Grid>
             </SettingsAccordion>
+          ) : (
+            <>
+              <SettingsAccordion
+                title="Условия применения"
+                summary={
+                  isEmployeeConfig
+                    ? getEmployeeConditionsSummary(state)
+                    : getConditionsSummary(state)
+                }
+              >
+                <Grid
+                  container
+                  spacing={2}
+                >
+                  {isEmployeeConfig ? (
+                    <Grid size={12}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        Укажите границы суммы заказа. 0 или пусто — без ограничений.
+                      </Typography>
+                    </Grid>
+                  ) : (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <FieldWithHint hint={PROMO_HINTS.promo_conditions}>
+                        <MySelect
+                          data={state.promo_conditions_list}
+                          value={state.promo_conditions}
+                          func={changeData.bind(null, "promo_conditions")}
+                          label="Условие"
+                          is_none={false}
+                        />
+                      </FieldWithHint>
+                    </Grid>
+                  )}
+
+                  {!isEmployeeConfig && parseInt(state.promo_conditions, 10) === 1 ? (
+                    <Grid size={12}>
+                      <MyAutocomplite
+                        data={state.items}
+                        value={state.conditionItems}
+                        func={(event, data) => changeDataData("conditionItems", data)}
+                        multiple
+                        label="Товары"
+                      />
+                    </Grid>
+                  ) : null}
+
+                  {!isEmployeeConfig && parseInt(state.promo_conditions, 10) === 3 ? (
+                    <Grid size={12}>
+                      <MyAutocomplite
+                        data={state.cats}
+                        value={state.conditionCat}
+                        func={(event, data) => changeDataData("conditionCat", data)}
+                        multiple
+                        label="Категории"
+                      />
+                    </Grid>
+                  ) : null}
+
+                  {isEmployeeConfig || parseInt(state.promo_conditions, 10) === 2 ? (
+                    <>
+                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <FieldWithHint hint={PROMO_HINTS.price_start}>
+                          <MyTextInput
+                            value={state.price_start}
+                            func={changeData.bind(null, "price_start")}
+                            label={isEmployeeConfig ? "Сумма от, ₽" : "Сумма от"}
+                          />
+                        </FieldWithHint>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <FieldWithHint hint={PROMO_HINTS.price_end}>
+                          <MyTextInput
+                            value={state.price_end}
+                            func={changeData.bind(null, "price_end")}
+                            label={isEmployeeConfig ? "Сумма до, ₽" : "Сумма до"}
+                          />
+                        </FieldWithHint>
+                      </Grid>
+                    </>
+                  ) : null}
+                </Grid>
+              </SettingsAccordion>
+
+              {isEmployeeConfig ? (
+                <SettingsAccordion
+                  title="Время работы"
+                  summary={`${state.time_start || "—"} — ${state.time_end || "—"}`}
+                >
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+                    <Grid size={12}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        Интервал действует каждый день; без ограничений по датам и дням недели.
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                      <MyTimePicker
+                        label="Время от"
+                        value={state.time_start}
+                        func={changeData.bind(null, "time_start")}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                      <MyTimePicker
+                        label="Время до"
+                        value={state.time_end}
+                        func={changeData.bind(null, "time_end")}
+                      />
+                    </Grid>
+                  </Grid>
+                </SettingsAccordion>
+              ) : (
+                <SettingsAccordion
+                  title="Срок и расписание"
+                  summary={getScheduleSummary(state)}
+                >
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+                    <Grid size={12}>
+                      <FieldWithHint hint={PROMO_HINTS.date_promo}>
+                        <MySelect
+                          data={state.date_promo_list}
+                          value={state.date_promo}
+                          func={changeData.bind(null, "date_promo")}
+                          label="Когда работает промокод"
+                          is_none={false}
+                        />
+                      </FieldWithHint>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                      <MyDatePickerNew
+                        label="Дата от"
+                        value={state.date_start}
+                        func={changeDateRange.bind(null, "date_start")}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                      <MyDatePickerNew
+                        label="Дата до"
+                        value={state.date_end}
+                        func={changeDateRange.bind(null, "date_end")}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                      <MyTimePicker
+                        label="Время от"
+                        value={state.time_start}
+                        func={changeData.bind(null, "time_start")}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                      <MyTimePicker
+                        label="Время до"
+                        value={state.time_end}
+                        func={changeData.bind(null, "time_end")}
+                      />
+                    </Grid>
+
+                    <Grid size={12}>
+                      <LabelWithHint
+                        text="Исключить даты"
+                        hint={PROMO_HINTS.testDate}
+                        sx={{ mb: 1.25 }}
+                      />
+                      <PromoExcludeDatePicker
+                        label="Добавить дату"
+                        value={state.testDate}
+                        func={changeDataData.bind(null, "testDate")}
+                      />
+                    </Grid>
+
+                    <Grid size={12}>
+                      <WeekdaySelector
+                        state={state}
+                        onToggleDay={toggleDay}
+                      />
+                    </Grid>
+                  </Grid>
+                </SettingsAccordion>
+              )}
+
+              <SettingsAccordion
+                title="География и тип заказа"
+                summary={
+                  isEmployeeConfig ? getEmployeeLocationSummary(state) : getLocationSummary(state)
+                }
+              >
+                <Grid
+                  container
+                  spacing={2}
+                >
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <FieldWithHint hint={PROMO_HINTS.type_order}>
+                      <MySelect
+                        data={state.type_order_list}
+                        value={state.type_order}
+                        func={changeData.bind(null, "type_order")}
+                        label="Тип заказа"
+                        is_none={false}
+                      />
+                    </FieldWithHint>
+                  </Grid>
+                  {!isEmployeeConfig ? (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <FieldWithHint hint={PROMO_HINTS.where_order}>
+                        <MySelect
+                          data={state.where_order_list}
+                          value={state.where_order}
+                          func={changeData.bind(null, "where_order")}
+                          label="Где работает"
+                          is_none={false}
+                        />
+                      </FieldWithHint>
+                    </Grid>
+                  ) : null}
+
+                  {isEmployeeConfig || parseInt(state.where_order, 10) === 1 ? (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <MySelect
+                        data={state.cities}
+                        value={state.city}
+                        func={changeData.bind(null, "city")}
+                        label={isEmployeeConfig ? "Город или вся сеть" : "Город"}
+                        is_none={false}
+                      />
+                    </Grid>
+                  ) : null}
+
+                  {!isEmployeeConfig && parseInt(state.where_order, 10) === 2 ? (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                      <MyAutocomplite
+                        data={cafeOptions}
+                        value={selectedCafe}
+                        func={(event, data) =>
+                          changeData("point", { target: { value: data?.id ?? 0 } })
+                        }
+                        label="Кафе"
+                        placeholder="Выберите кафе"
+                        multiple={false}
+                        disableClearable
+                      />
+                    </Grid>
+                  ) : null}
+                </Grid>
+              </SettingsAccordion>
+            </>
           )}
-
-          <SettingsAccordion
-            title="География и тип заказа"
-            summary={getLocationSummary(state)}
-          >
-            <Grid
-              container
-              spacing={2}
-            >
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <FieldWithHint hint={PROMO_HINTS.type_order}>
-                  <MySelect
-                    data={state.type_order_list}
-                    value={state.type_order}
-                    func={changeData.bind(null, "type_order")}
-                    label="Тип заказа"
-                    is_none={false}
-                  />
-                </FieldWithHint>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <FieldWithHint hint={PROMO_HINTS.where_order}>
-                  <MySelect
-                    data={state.where_order_list}
-                    value={state.where_order}
-                    func={changeData.bind(null, "where_order")}
-                    label="Где работает"
-                    is_none={false}
-                  />
-                </FieldWithHint>
-              </Grid>
-
-              {parseInt(state.where_order, 10) === 1 ? (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MySelect
-                    data={state.cities}
-                    value={state.city}
-                    func={changeData.bind(null, "city")}
-                    label="Город"
-                    is_none={false}
-                  />
-                </Grid>
-              ) : null}
-
-              {parseInt(state.where_order, 10) === 2 ? (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MyAutocomplite
-                    data={cafeOptions}
-                    value={selectedCafe}
-                    func={(event, data) =>
-                      changeData("point", { target: { value: data?.id ?? 0 } })
-                    }
-                    label="Кафе"
-                    placeholder="Выберите кафе"
-                    multiple={false}
-                    disableClearable
-                  />
-                </Grid>
-              ) : null}
-            </Grid>
-          </SettingsAccordion>
 
           {!isEdit && !isEmployeeConfig ? (
             <SettingsAccordion
@@ -1236,33 +1454,73 @@ export default function PromoNewFormContent({
       </Grid>
 
       <Grid size={12}>
-        <SectionCard title="Тексты для клиента">
-          <Stack spacing={2}>
-            <ChoiceCard
-              checked={state.auto_text}
-              onChange={changeDataCheck.bind(null, "auto_text")}
-              label="Автоматически составлять тексты"
-              description={PROMO_HINTS.auto_text}
-              sx={{ maxWidth: { xs: "100%", sm: 520 } }}
-            />
-
-            <FieldWithHint hint={PROMO_HINTS.promo_desc_true}>
-              <MyTextInput
-                value={state.promo_desc_true}
-                func={changeData.bind(null, "promo_desc_true")}
-                label="Описание после активации (Промокод даёт: )"
+        {isEmployeeConfig ? (
+          <SettingsAccordion
+            id="employee-promo-texts"
+            title="Тексты для клиента"
+            summary={state.auto_text ? "Автоматическое формирование" : "Ручное редактирование"}
+          >
+            <Stack spacing={2}>
+              <SettingSwitch
+                checked={!!state.auto_text}
+                onChange={changeDataCheck.bind(null, "auto_text")}
+                label="Автоматически составлять тексты"
+                description={PROMO_HINTS.auto_text}
+                sx={{ maxWidth: { xs: "100%", sm: 620 } }}
               />
-            </FieldWithHint>
 
-            <FieldWithHint hint={PROMO_HINTS.promo_desc_false}>
-              <MyTextInput
-                value={state.promo_desc_false}
-                func={changeData.bind(null, "promo_desc_false")}
-                label="Условие, когда промокод нельзя применить"
+              <FieldWithHint hint={PROMO_HINTS.promo_desc_true}>
+                <MyTextInput
+                  value={state.promo_desc_true}
+                  func={changeData.bind(null, "promo_desc_true")}
+                  label="Описание после активации (Промокод даёт: )"
+                  multiline
+                  minRows={2}
+                  disabled={!!state.auto_text}
+                />
+              </FieldWithHint>
+
+              <FieldWithHint hint={PROMO_HINTS.promo_desc_false}>
+                <MyTextInput
+                  value={state.promo_desc_false}
+                  func={changeData.bind(null, "promo_desc_false")}
+                  label="Условие, когда промокод нельзя применить"
+                  multiline
+                  minRows={2}
+                  disabled={!!state.auto_text}
+                />
+              </FieldWithHint>
+            </Stack>
+          </SettingsAccordion>
+        ) : (
+          <SectionCard title="Тексты для клиента">
+            <Stack spacing={2}>
+              <ChoiceCard
+                checked={state.auto_text}
+                onChange={changeDataCheck.bind(null, "auto_text")}
+                label="Автоматически составлять тексты"
+                description={PROMO_HINTS.auto_text}
+                sx={{ maxWidth: { xs: "100%", sm: 520 } }}
               />
-            </FieldWithHint>
-          </Stack>
-        </SectionCard>
+
+              <FieldWithHint hint={PROMO_HINTS.promo_desc_true}>
+                <MyTextInput
+                  value={state.promo_desc_true}
+                  func={changeData.bind(null, "promo_desc_true")}
+                  label="Описание после активации (Промокод даёт: )"
+                />
+              </FieldWithHint>
+
+              <FieldWithHint hint={PROMO_HINTS.promo_desc_false}>
+                <MyTextInput
+                  value={state.promo_desc_false}
+                  func={changeData.bind(null, "promo_desc_false")}
+                  label="Условие, когда промокод нельзя применить"
+                />
+              </FieldWithHint>
+            </Stack>
+          </SectionCard>
+        )}
       </Grid>
 
       {historySection ? <Grid size={12}>{historySection}</Grid> : null}

@@ -37,6 +37,18 @@ function idsToCatalogItems(ids, catalog) {
     .filter(Boolean);
 }
 
+function normalizeBooleanFlag(value, fallback = true) {
+  if (value == null) {
+    return fallback;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  return parseInt(value, 10) === 1;
+}
+
 export function getEmptyEmployeePromoForm() {
   return {
     effective_date: formatDate(Date.now()),
@@ -52,6 +64,8 @@ export function getEmptyEmployeePromoForm() {
     where_order: 1,
     city: 0,
     point: 0,
+    is_active: true,
+    for_number: true,
     auto_text: true,
     promo_desc_true: "",
     promo_desc_false: "",
@@ -107,14 +121,16 @@ export function hydrateEmployeePromoConfig(config, catalogs = {}) {
     type_sale: config.promo_type_sale ?? 3,
     promo_sale,
     sale_type: config.promo_type ?? 2,
-    promo_conditions: config.promo_conditions ?? 2,
+    promo_conditions: 2,
     price_start: config.promo_summ ?? 0,
     price_end: config.promo_summ_to ?? 0,
     type_order: config.promo_type_order ?? 1,
-    where_order: config.promo_where ?? 1,
+    where_order: 1,
     city: config.promo_city ?? 0,
-    point: config.promo_point ?? 0,
-    auto_text: false,
+    point: 0,
+    is_active: normalizeBooleanFlag(config.is_active),
+    for_number: config.for_number == null ? true : Boolean(parseInt(config.for_number, 10)),
+    auto_text: true,
     promo_desc_true: config.about_promo_text || "",
     promo_desc_false: config.condition_promo_text || "",
     time_start: config.time_start || "10:00",
@@ -124,8 +140,16 @@ export function hydrateEmployeePromoConfig(config, catalogs = {}) {
     addItemAllPrice,
     saleItem: idsToCatalogItems(config.promo_items, items),
     saleCat: idsToCatalogItems(config.promo_cat, cats),
-    conditionItems: idsToCatalogItems(config.promo_conditions_items, items),
+    conditionItems: [],
   };
+}
+
+function normalizeOptionalAmount(value) {
+  if (value == null || (typeof value === "string" && value.trim() === "")) {
+    return 0;
+  }
+
+  return value;
 }
 
 export function buildEmployeePromoConfigPayload(state) {
@@ -140,7 +164,6 @@ export function buildEmployeePromoConfigPayload(state) {
     count_promo = parseInt(state.promo_sale, 10);
   }
 
-  const conditionItems = (state.conditionItems || []).map((item) => item.id);
   const promo_items = (state.saleItem || []).map((item) => item.id);
   const promo_cat = (state.saleCat || []).map((item) => item.id);
 
@@ -151,13 +174,15 @@ export function buildEmployeePromoConfigPayload(state) {
     promo_type_sale: state.type_sale,
     count_promo,
     promo_type: state.sale_type,
-    promo_conditions: state.promo_conditions,
-    promo_summ: state.price_start,
-    promo_summ_to: state.price_end,
+    promo_conditions: 2,
+    promo_summ: normalizeOptionalAmount(state.price_start),
+    promo_summ_to: normalizeOptionalAmount(state.price_end),
     promo_type_order: state.type_order,
-    promo_where: state.where_order,
+    promo_where: 1,
     promo_city: state.city,
-    promo_point: state.point,
+    promo_point: 0,
+    is_active: !!state.is_active,
+    for_number: !!state.for_number,
     about_promo_text: state.promo_desc_true,
     condition_promo_text: state.promo_desc_false,
     time_start: state.time_start,
@@ -166,6 +191,6 @@ export function buildEmployeePromoConfigPayload(state) {
     promo_cat: JSON.stringify(promo_cat),
     promo_items_add: JSON.stringify(state.itemsAdd || []),
     promo_items_sale: JSON.stringify(state.itemsAddPrice || []),
-    promo_conditions_items: JSON.stringify(conditionItems),
+    promo_conditions_items: "[]",
   };
 }

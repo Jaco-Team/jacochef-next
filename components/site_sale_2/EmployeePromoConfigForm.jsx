@@ -33,6 +33,14 @@ const STATIC_LISTS = {
   ],
 };
 
+function getEmployeeCities(cities) {
+  const list = Array.isArray(cities) ? cities : [];
+  const networkOption = list.find((item) => parseInt(item.id, 10) === 0);
+  const cityOptions = list.filter((item) => parseInt(item.id, 10) !== 0);
+
+  return [{ ...(networkOption || {}), id: 0, name: "Вся сеть" }, ...cityOptions];
+}
+
 export class EmployeePromoConfigForm extends React.Component {
   click = false;
 
@@ -50,7 +58,7 @@ export class EmployeePromoConfigForm extends React.Component {
       items: catalogs.items || [],
       cats: catalogs.cats || [],
       points: catalogs.points || [],
-      cities: catalogs.cities || [],
+      cities: getEmployeeCities(catalogs.cities),
     };
   }
 
@@ -293,10 +301,18 @@ export class EmployeePromoConfigForm extends React.Component {
 
     const timeStart = this.state.time_start || "10:00";
     const timeEnd = this.state.time_end || "21:30";
+    const phoneText = this.state.for_number
+      ? ". Промокод привязан к номеру телефона сотрудника"
+      : "";
 
     this.setState({
       promo_desc_false:
-        "Промокод действует для сотрудников с " + timeStart + " до " + timeEnd + dop_text,
+        "Промокод действует для сотрудников с " +
+        timeStart +
+        " до " +
+        timeEnd +
+        dop_text +
+        phoneText,
     });
   }
 
@@ -437,7 +453,7 @@ export class EmployeePromoConfigForm extends React.Component {
     return (
       <PromoNewFormContent
         state={this.state}
-        moduleName="Конфиг промокода"
+        moduleName="Шаблон промокода"
         changeData={this.changeData.bind(this)}
         changeDataCheck={this.changeDataCheck.bind(this)}
         changeDataData={this.changeDataData.bind(this)}

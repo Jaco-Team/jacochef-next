@@ -1,5 +1,6 @@
 const COMPARE_FIELDS = [
   "effective_date",
+  "is_active",
   "promo_in_count",
   "promo_action",
   "promo_type_sale",
@@ -12,6 +13,7 @@ const COMPARE_FIELDS = [
   "promo_where",
   "promo_city",
   "promo_point",
+  "for_number",
   "about_promo_text",
   "condition_promo_text",
   "time_start",
@@ -33,6 +35,7 @@ const JSON_FIELDS = new Set([
 
 const FIELD_LABELS = {
   effective_date: "Дата вступления",
+  is_active: "Шаблон активен",
   promo_in_count: "Кол-во активаций",
   promo_action: "Что даёт",
   promo_type_sale: "Тип скидки/выгоды",
@@ -45,6 +48,7 @@ const FIELD_LABELS = {
   promo_where: "Где",
   promo_city: "Город",
   promo_point: "Точка",
+  for_number: "Привязан к номеру телефона",
   about_promo_text: "Текст выгоды",
   condition_promo_text: "Текст условий",
   time_start: "Время от",
@@ -224,6 +228,10 @@ function formatTimeValue(value) {
   return String(value);
 }
 
+function isActiveFlag(value) {
+  return value == null || value === true || parseInt(value, 10) === 1;
+}
+
 function getItemDisplayName(entry) {
   if (entry == null) {
     return "";
@@ -302,6 +310,10 @@ function formatFieldDisplay(key, value, catalogs = {}) {
         return "—";
       }
       return findCatalogName(catalogs.points, value);
+    case "is_active":
+      return isActiveFlag(value) ? "Да" : "Нет";
+    case "for_number":
+      return parseInt(value, 10) === 1 ? "Да" : "Нет";
     case "time_start":
     case "time_end":
       return formatTimeValue(value);
@@ -326,6 +338,10 @@ function compareValue(key, value) {
 
   if (key === "time_start" || key === "time_end") {
     return formatTimeValue(value);
+  }
+
+  if (key === "is_active") {
+    return isActiveFlag(value) ? "1" : "0";
   }
 
   if (value == null) {
@@ -372,6 +388,10 @@ export function getConfigHistoryFirstVersionSummary(entry, catalogs = {}) {
 
   return [
     {
+      label: FIELD_LABELS.is_active,
+      value: formatFieldDisplay("is_active", entry.is_active, catalogs),
+    },
+    {
       label: FIELD_LABELS.promo_action,
       value: formatFieldDisplay("promo_action", entry.promo_action, catalogs),
     },
@@ -386,6 +406,10 @@ export function getConfigHistoryFirstVersionSummary(entry, catalogs = {}) {
     {
       label: FIELD_LABELS.promo_city,
       value: formatFieldDisplay("promo_city", entry.promo_city, catalogs),
+    },
+    {
+      label: FIELD_LABELS.for_number,
+      value: formatFieldDisplay("for_number", entry.for_number, catalogs),
     },
     {
       label: FIELD_LABELS.promo_point,
