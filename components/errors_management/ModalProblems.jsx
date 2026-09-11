@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   Card,
+  CardContent,
   CardMedia,
   Dialog,
   DialogActions,
@@ -14,6 +15,8 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  MenuItem,
+  TextField,
   Typography,
 } from "@mui/material";
 import { AddPhotoAlternate, CloudUpload, Delete } from "@mui/icons-material";
@@ -22,7 +25,7 @@ import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 function parseCsvIds(value) {
   if (!value) return [];
   if (Array.isArray(value)) {
-    return value.map((item) => Number(item)).filter((id) => Number.isFinite(id) && id > 0);
+    return value.map(Number).filter((id) => Number.isFinite(id) && id > 0);
   }
 
   return String(value)
@@ -49,9 +52,7 @@ function buildCategoryOptions(errCats = []) {
   const byId = new Map();
   errCats.forEach((cat) => {
     const id = Number(cat?.id);
-    if (Number.isFinite(id)) {
-      byId.set(id, cat);
-    }
+    if (Number.isFinite(id)) byId.set(id, cat);
   });
 
   const activeCats = errCats.filter((cat) => Number(cat?.is_active) === 1);
@@ -60,430 +61,255 @@ function buildCategoryOptions(errCats = []) {
   activeCats.forEach((cat) => {
     const parentId = Number(cat?.parent_id);
     if (!Number.isFinite(parentId)) return;
-
-    if (!activeChildrenByParent.has(parentId)) {
-      activeChildrenByParent.set(parentId, []);
-    }
+    if (!activeChildrenByParent.has(parentId)) activeChildrenByParent.set(parentId, []);
     activeChildrenByParent.get(parentId).push(cat);
   });
 
-  const selectableCats = activeCats.filter((cat) => {
-    const id = Number(cat?.id);
-    if (!Number.isFinite(id)) return false;
-    return (activeChildrenByParent.get(id) || []).length === 0;
-  });
+  return activeCats
+    .filter((cat) => !(activeChildrenByParent.get(Number(cat?.id)) || []).length)
+    .map((cat) => {
+      const pathNodes = [];
+      let current = cat;
+      const visited = new Set();
 
-  const buildPath = (cat) => {
-    const path = [];
-    let current = cat;
-    const visited = new Set();
+      while (current) {
+        const currentId = Number(current?.id);
+        if (!Number.isFinite(currentId) || visited.has(currentId)) break;
+        visited.add(currentId);
+        pathNodes.unshift({ id: currentId, name: current?.name || String(currentId) });
 
-    while (current) {
-      const currentId = Number(current?.id);
-      if (!Number.isFinite(currentId) || visited.has(currentId)) break;
-      visited.add(currentId);
-      path.unshift(current?.name || String(currentId));
+        const parentId = Number(current?.parent_id);
+        if (!Number.isFinite(parentId) || parentId <= 0) break;
+        current = byId.get(parentId);
+      }
 
-      const parentId = Number(current?.parent_id);
-      if (!Number.isFinite(parentId)) break;
-      current = byId.get(parentId);
-    }
+      const pathIds = pathNodes.map((node) => node.id);
+      const pathNames = pathNodes.map((node) => node.name);
+      const siteCats = [
+        ...new Set(pathNodes.flatMap((node) => parseCsvIds(byId.get(node.id)?.site_cats))),
+      ];
 
-    return path;
-  };
-
-  return selectableCats.map((cat) => {
-    const id = Number(cat.id);
-    const pathNodes = [];
-    let current = cat;
-    const visited = new Set();
-
-    while (current) {
-      const currentId = Number(current?.id);
-      if (!Number.isFinite(currentId) || visited.has(currentId)) break;
-      visited.add(currentId);
-      pathNodes.unshift({
-        id: currentId,
-        name: current?.name || String(currentId),
-      });
-
-      const parentId = Number(current?.parent_id);
-      if (!Number.isFinite(parentId)) break;
-      current = byId.get(parentId);
-    }
-
-    const pathIds = pathNodes.map((node) => node.id);
-    const pathNames = pathNodes.map((node) => node.name);
-
-    return {
-      id,
-      name: pathNames.join(" / "),
-      shortName: cat?.name || String(id),
-      pathIds,
-      pathNames,
-      needImg: Number(cat?.need_img) === 1,
-      siteCats: parseCsvIds(cat?.site_cats),
-      stage1: parseCsvIds(cat?.stage_1),
-      stage2: parseCsvIds(cat?.stage_2),
-      stage3: parseCsvIds(cat?.stage_3),
-      solutionIds: parseCsvIds(cat?.solutions),
-    };
-  });
+      return {
+        id: Number(cat.id),
+        name: pathNames.join(" / "),
+        shortName: cat?.name || String(cat.id),
+        pathIds,
+        pathNames,
+        needImg: Number(cat?.need_img) === 1,
+        siteCats,
+        stage1: parseCsvIds(cat?.stage_1),
+        stage2: parseCsvIds(cat?.stage_2),
+        stage3: parseCsvIds(cat?.stage_3),
+        solutionIds: parseCsvIds(cat?.solutions),
+      };
+    });
 }
 
-function extractPositionCategoryIds(positions = []) {
-  const ids = positions
-    .map((position) => Number(position?.category_id ?? position?.cat_id))
-    .filter((id) => Number.isFinite(id) && id > 0);
-
-  return [...new Set(ids)];
+function getPositionKey(position, index = 0) {
+  return String(position?.position_key || position?.id || `position-${index}`);
 }
 
-function categoryMatchesPositionIds(categoryOption, positionCategoryIds) {
-  if (!categoryOption) return false;
-  if (!Array.isArray(positionCategoryIds) || !positionCategoryIds.length) return true;
-  if (!Array.isArray(categoryOption.siteCats) || !categoryOption.siteCats.length) return true;
+function getPositionCategoryIds(position) {
+  const categoryId = Number(position?.category_id ?? position?.cat_id);
+  return Number.isFinite(categoryId) && categoryId > 0 ? [categoryId] : [];
+}
 
+function categoryMatchesPosition(categoryOption, position) {
+  const positionCategoryIds = getPositionCategoryIds(position);
+  if (!positionCategoryIds.length) return true;
+  if (!categoryOption?.siteCats?.length) return true;
   return positionCategoryIds.every((id) => categoryOption.siteCats.includes(id));
 }
 
-function areNumberArraysEqual(a = [], b = []) {
-  if (a === b) return true;
-  if (!Array.isArray(a) || !Array.isArray(b)) return false;
-  if (a.length !== b.length) return false;
+function filteredCategoriesForPosition(categoryOptions, position) {
+  return categoryOptions.filter((category) => categoryMatchesPosition(category, position));
+}
 
-  for (let index = 0; index < a.length; index += 1) {
-    if (Number(a[index]) !== Number(b[index])) {
-      return false;
-    }
+function automaticRootPath(categoryOptions, position) {
+  const positionCategoryIds = getPositionCategoryIds(position);
+  if (positionCategoryIds.length !== 1) return [];
+
+  const categoryId = positionCategoryIds[0];
+  const roots = new Set(
+    categoryOptions
+      .filter((category) => category.siteCats.includes(categoryId))
+      .map((category) => Number(category.pathIds?.[0]))
+      .filter(Number.isFinite),
+  );
+
+  return roots.size === 1 ? [Array.from(roots)[0]] : [];
+}
+
+function findSelectedCategory(categoryOptions, selectedPathIds) {
+  if (!selectedPathIds?.length) return null;
+
+  return (
+    categoryOptions.find(
+      (category) =>
+        category.pathIds.length === selectedPathIds.length &&
+        selectedPathIds.every(
+          (selectedId, index) => Number(category.pathIds[index]) === Number(selectedId),
+        ),
+    ) || null
+  );
+}
+
+function cascadeOptions(categoryOptions, selectedPathIds) {
+  const maxDepth = categoryOptions.reduce(
+    (depth, category) => Math.max(depth, category.pathIds.length),
+    0,
+  );
+  const levels = [];
+
+  for (let levelIndex = 0; levelIndex < maxDepth; levelIndex += 1) {
+    if (levelIndex > 0 && !selectedPathIds[levelIndex - 1]) break;
+
+    const options = new Map();
+    categoryOptions.forEach((category) => {
+      const matchesPrefix = selectedPathIds
+        .slice(0, levelIndex)
+        .every((id, index) => Number(category.pathIds[index]) === Number(id));
+      const optionId = Number(category.pathIds[levelIndex]);
+      if (!matchesPrefix || !Number.isFinite(optionId)) return;
+      if (!options.has(optionId)) {
+        options.set(optionId, {
+          id: optionId,
+          name: category.pathNames[levelIndex] || String(optionId),
+        });
+      }
+    });
+
+    const values = Array.from(options.values()).sort((a, b) =>
+      String(a.name).localeCompare(String(b.name), "ru"),
+    );
+    if (!values.length) break;
+    levels.push(values);
+    if (!selectedPathIds[levelIndex]) break;
   }
 
-  return true;
+  return levels;
 }
 
-function getCascadeLevelLabel(levelIndex, visibleLevelsCount) {
-  if (visibleLevelsCount <= 1) return "Тип ошибки";
+function cascadeLevelLabel(levelIndex, categoryOptions, selectedPathIds) {
   if (levelIndex === 0) return "Раздел ошибки";
-  if (levelIndex === visibleLevelsCount - 1) return "Тип ошибки";
-  return "Подраздел ошибки";
+
+  const hasDeeperLevel = categoryOptions.some(
+    (category) =>
+      category.pathIds.length > levelIndex + 1 &&
+      selectedPathIds
+        .slice(0, levelIndex)
+        .every((id, index) => Number(category.pathIds[index]) === Number(id)),
+  );
+
+  return hasDeeperLevel ? "Подраздел ошибки" : "Тип ошибки";
 }
 
-export const ModalProblems = ({
-  open,
-  onClose,
-  save,
-  positions,
-  problem_arr = [],
-  current_name,
-  title = "Проблема с позициями",
-  errCats = [],
-  solutionCatalog = [],
-}) => {
-  const [comment, setComment] = useState("");
-  const [selectedPathIds, setSelectedPathIds] = useState([]);
-  const [selectedSolution, setSelectedSolution] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [validationError, setValidationError] = useState("");
-
-  const normalizedSolutions = useMemo(() => normalizeSolutions(solutionCatalog), [solutionCatalog]);
-  const categoryOptions = useMemo(() => buildCategoryOptions(errCats), [errCats]);
-  const positionCategoryIds = useMemo(() => extractPositionCategoryIds(positions), [positions]);
-  const filteredCategoryOptions = useMemo(
-    () =>
-      categoryOptions.filter((categoryOption) =>
-        categoryMatchesPositionIds(categoryOption, positionCategoryIds),
-      ),
-    [categoryOptions, positionCategoryIds],
+function isIngredientQuality(category) {
+  return Boolean(
+    category?.pathNames?.some((name) =>
+      String(name).toLocaleLowerCase("ru").includes("качество ингредиентов"),
+    ),
   );
+}
 
-  const cascadeLevelOptions = useMemo(() => {
-    const maxDepth = filteredCategoryOptions.reduce(
-      (acc, item) => Math.max(acc, item.pathIds?.length || 0),
-      0,
-    );
-    const levels = [];
-
-    for (let levelIndex = 0; levelIndex < maxDepth; levelIndex += 1) {
-      if (levelIndex > 0 && !selectedPathIds[levelIndex - 1]) {
-        levels.push([]);
-        continue;
-      }
-
-      const optionsById = new Map();
-
-      filteredCategoryOptions.forEach((leafCategory) => {
-        const pathIds = Array.isArray(leafCategory.pathIds) ? leafCategory.pathIds : [];
-        const pathNames = Array.isArray(leafCategory.pathNames) ? leafCategory.pathNames : [];
-
-        if (!pathIds[levelIndex]) return;
-
-        let matchesPrefix = true;
-        for (let prefixIndex = 0; prefixIndex < levelIndex; prefixIndex += 1) {
-          if (Number(pathIds[prefixIndex]) !== Number(selectedPathIds[prefixIndex])) {
-            matchesPrefix = false;
-            break;
-          }
-        }
-
-        if (!matchesPrefix) return;
-
-        const optionId = Number(pathIds[levelIndex]);
-        if (!Number.isFinite(optionId)) return;
-
-        if (!optionsById.has(optionId)) {
-          optionsById.set(optionId, {
-            id: optionId,
-            name: pathNames[levelIndex] || String(optionId),
-          });
-        }
-      });
-
-      const options = Array.from(optionsById.values()).sort((a, b) =>
-        String(a.name).localeCompare(String(b.name), "ru"),
-      );
-      levels.push(options);
-    }
-
-    return levels;
-  }, [filteredCategoryOptions, selectedPathIds]);
-
-  const visibleLevelIndexes = useMemo(() => {
-    const indexes = [];
-
-    for (let levelIndex = 0; levelIndex < cascadeLevelOptions.length; levelIndex += 1) {
-      const options = cascadeLevelOptions[levelIndex] || [];
-      if (!options.length) break;
-
-      indexes.push(levelIndex);
-      if (!selectedPathIds[levelIndex]) break;
-    }
-
-    return indexes;
-  }, [cascadeLevelOptions, selectedPathIds]);
-
-  const selectedValueByLevel = useMemo(
-    () =>
-      cascadeLevelOptions.map((levelOptions, levelIndex) => {
-        const selectedId = Number(selectedPathIds[levelIndex]);
-        if (!Number.isFinite(selectedId)) return null;
-        return levelOptions.find((option) => Number(option.id) === selectedId) || null;
-      }),
-    [cascadeLevelOptions, selectedPathIds],
+function buildInitialDraft(position, index, categoryOptions, problemArr, normalizedSolutions) {
+  const key = getPositionKey(position, index);
+  const stored = problemArr.find(
+    (problem) =>
+      getPositionKey(problem) === key ||
+      (!problem?.position_key && Number(problem?.id) === Number(position?.id)),
   );
+  const filteredCategories = filteredCategoriesForPosition(categoryOptions, position);
+  const storedCategory = filteredCategories.find(
+    (category) => Number(category.id) === Number(stored?.problem_cat_id),
+  );
+  const storedSolution = normalizedSolutions.find(
+    (solution) => Number(solution.id) === Number(stored?.problem_solution?.id),
+  );
+  const ingredients = Array.isArray(position?.ingredients) ? position.ingredients : [];
+  const storedIngredient = ingredients.find(
+    (ingredient) => Number(ingredient.id) === Number(stored?.problem_ingredient?.id),
+  );
+  const maxCount = Math.max(1, Number(position?.total_count) || 1);
 
-  const selectedCategory = useMemo(() => {
-    if (!selectedPathIds.length) return null;
+  return {
+    selectedPathIds: storedCategory?.pathIds || automaticRootPath(categoryOptions, position),
+    selectedSolution: storedSolution || null,
+    selectedIngredient: storedIngredient || null,
+    comment: stored?.problem_comment || "",
+    selectedImage: stored?.selectedImage || null,
+    previewUrl: stored?.previewUrl || "",
+    errorCount: Math.min(maxCount, Math.max(1, Number(stored?.error_count) || 1)),
+  };
+}
 
-    return (
-      filteredCategoryOptions.find((leafCategory) => {
-        if (!Array.isArray(leafCategory.pathIds)) return false;
-        if (leafCategory.pathIds.length !== selectedPathIds.length) return false;
-
-        return selectedPathIds.every(
-          (selectedPathId, pathIndex) =>
-            Number(leafCategory.pathIds[pathIndex]) === Number(selectedPathId),
-        );
-      }) || null
-    );
-  }, [filteredCategoryOptions, selectedPathIds]);
-
+function PositionProblemCard({
+  position,
+  draft,
+  updateDraft,
+  categoryOptions,
+  normalizedSolutions,
+  validationError,
+}) {
+  const filteredCategories = useMemo(
+    () => filteredCategoriesForPosition(categoryOptions, position),
+    [categoryOptions, position],
+  );
+  const levels = useMemo(
+    () => cascadeOptions(filteredCategories, draft.selectedPathIds),
+    [filteredCategories, draft.selectedPathIds],
+  );
+  const selectedCategory = useMemo(
+    () => findSelectedCategory(filteredCategories, draft.selectedPathIds),
+    [filteredCategories, draft.selectedPathIds],
+  );
   const availableSolutions = useMemo(() => {
-    if (!selectedCategory) return [];
-    if (!selectedCategory.solutionIds.length) return [];
-
+    if (!selectedCategory?.solutionIds?.length) return [];
     return normalizedSolutions.filter((solution) =>
       selectedCategory.solutionIds.includes(Number(solution.id)),
     );
   }, [normalizedSolutions, selectedCategory]);
+  const ingredients = Array.isArray(position?.ingredients) ? position.ingredients : [];
+  const ingredientRequired = isIngredientQuality(selectedCategory);
+  const maxCount = Math.max(1, Number(position?.total_count) || 1);
 
-  const isImageRequired = Boolean(selectedCategory?.needImg);
+  const handleLevelChange = (levelIndex) => (_, option) => {
+    const nextPath = draft.selectedPathIds.slice(0, levelIndex);
+    if (option?.id) nextPath[levelIndex] = Number(option.id);
+    updateDraft({
+      selectedPathIds: nextPath,
+      selectedSolution: null,
+      selectedIngredient: null,
+    });
+  };
 
   const handleImageUpload = (event) => {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
-
-    setSelectedImage(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setValidationError("");
-  };
-
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setPreviewUrl("");
-    setValidationError("");
-  };
-
-  useEffect(() => {
-    if (!selectedPathIds.length) return;
-
-    setSelectedPathIds((prev) => {
-      if (!prev.length) return prev;
-
-      const next = [...prev];
-      for (let levelIndex = 0; levelIndex < next.length; levelIndex += 1) {
-        const levelOptions = cascadeLevelOptions[levelIndex] || [];
-        const exists = levelOptions.some(
-          (option) => Number(option.id) === Number(next[levelIndex]),
-        );
-
-        if (!exists) {
-          const cropped = next.slice(0, levelIndex);
-          return areNumberArraysEqual(prev, cropped) ? prev : cropped;
-        }
-      }
-
-      const cropped = next.slice(0, cascadeLevelOptions.length);
-      return areNumberArraysEqual(prev, cropped) ? prev : cropped;
-    });
-  }, [cascadeLevelOptions, selectedPathIds]);
-
-  useEffect(() => {
-    const positionIds = new Set(positions.map((position) => Number(position?.id)).filter(Boolean));
-    const matchingItem = problem_arr.find(
-      (item) =>
-        positionIds.has(Number(item?.id)) &&
-        (Number(item?.id) === Number(current_name) || item?.id === ""),
-    );
-
-    if (!matchingItem) {
-      setSelectedPathIds([]);
-      setSelectedSolution(null);
-      setComment("");
-      setPreviewUrl("");
-      setSelectedImage(null);
-      setValidationError("");
-      return;
-    }
-
-    const storedCategoryId = Number(matchingItem?.problem_cat_id);
-    const fromId = Number.isFinite(storedCategoryId)
-      ? categoryOptions.find((option) => option.id === storedCategoryId)
-      : null;
-    const fromName = !fromId
-      ? categoryOptions.find((option) => option.shortName === matchingItem?.problem_name)
-      : null;
-    const nextCategory = fromId || fromName || null;
-    const validCategory =
-      nextCategory && categoryMatchesPositionIds(nextCategory, positionCategoryIds)
-        ? nextCategory
-        : null;
-
-    const storedSolutionId = Number(matchingItem?.problem_solution?.id);
-    const nextSolution = Number.isFinite(storedSolutionId)
-      ? normalizedSolutions.find((solution) => Number(solution.id) === storedSolutionId) || null
-      : null;
-
-    setSelectedPathIds(validCategory?.pathIds || []);
-    setSelectedSolution(nextSolution);
-    setComment(matchingItem?.problem_comment || "");
-    setPreviewUrl(matchingItem?.previewUrl || "");
-    setSelectedImage(null);
-    setValidationError("");
-  }, [
-    problem_arr,
-    positions,
-    current_name,
-    categoryOptions,
-    normalizedSolutions,
-    positionCategoryIds,
-  ]);
-
-  useEffect(() => {
-    if (!selectedCategory) return;
-
-    const isStillValid = categoryMatchesPositionIds(selectedCategory, positionCategoryIds);
-    if (isStillValid) return;
-
-    setSelectedPathIds([]);
-    setSelectedSolution(null);
-  }, [selectedCategory, positionCategoryIds]);
-
-  useEffect(() => {
-    if (!selectedSolution) return;
-
-    const exists = availableSolutions.some(
-      (solution) => Number(solution?.id) === Number(selectedSolution?.id),
-    );
-    if (!exists) {
-      setSelectedSolution(null);
-    }
-  }, [availableSolutions, selectedSolution]);
-
-  const handleLevelChange = (levelIndex) => (_, option) => {
-    setValidationError("");
-    setSelectedPathIds((prev) => {
-      const basePath = prev.slice(0, levelIndex);
-      if (option?.id) {
-        basePath[levelIndex] = Number(option.id);
-      }
-      return basePath;
-    });
-    setSelectedSolution(null);
-  };
-
-  const handleSave = () => {
-    if (!selectedCategory) {
-      setValidationError("Выберите тип ошибки.");
-      return;
-    }
-
-    if (availableSolutions.length && !selectedSolution) {
-      setValidationError("Выберите вариант решения.");
-      return;
-    }
-
-    if (isImageRequired && !previewUrl && !selectedImage) {
-      setValidationError("Для выбранной ошибки необходимо приложить фото.");
-      return;
-    }
-
-    if (!categoryMatchesPositionIds(selectedCategory, positionCategoryIds)) {
-      setValidationError("Тип ошибки не подходит для выбранных позиций.");
-      return;
-    }
-
-    setValidationError("");
-
-    save({
-      problem_cat_id: selectedCategory.id,
-      problem_name: selectedCategory.shortName,
-      problem_path: selectedCategory.name,
-      problem_comment: comment,
-      problem_solution: selectedSolution,
-      previewUrl,
-      selectedImage,
-      need_img: selectedCategory.needImg ? 1 : 0,
-      site_cats: selectedCategory.siteCats,
-      stage_1: selectedCategory.stage1,
-      stage_2: selectedCategory.stage2,
-      stage_3: selectedCategory.stage3,
-      selected_position_category_ids: positionCategoryIds,
-    });
-
-    setSelectedPathIds([]);
-    setSelectedSolution(null);
-    setComment("");
-    setPreviewUrl("");
-    setSelectedImage(null);
+    updateDraft({ selectedImage: file, previewUrl: URL.createObjectURL(file) });
   };
 
   return (
-    <Dialog
-      sx={{ "& .MuiDialog-paper": { width: "80%", maxHeight: 620 } }}
-      maxWidth="sm"
-      open={open}
-      onClose={onClose}
+    <Card
+      variant="outlined"
+      sx={{ borderRadius: 2 }}
     >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ fontWeight: "bold" }}>
-        <Box sx={{ mb: 2 }}>
-          <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Выбранные позиции:</Typography>
-          <ul style={{ margin: 0, paddingLeft: 22 }}>
-            {positions.map((item, index) => (
-              <li key={`${item.id || item.name}-${index}`}>{item.name}</li>
-            ))}
-          </ul>
+      <CardContent>
+        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2, mb: 2 }}>
+          <Box>
+            <Typography sx={{ fontWeight: 700 }}>{position?.name || "Позиция"}</Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {position?.type === "extra"
+                ? "Дополнение"
+                : position?.type === "delivery"
+                  ? "Доставка"
+                  : "Блюдо"}
+            </Typography>
+          </Box>
+          <Typography sx={{ whiteSpace: "nowrap", fontWeight: 600 }}>× {maxCount}</Typography>
         </Box>
 
         {validationError ? (
@@ -494,13 +320,12 @@ export const ModalProblems = ({
             {validationError}
           </Alert>
         ) : null}
-
-        {!filteredCategoryOptions.length && positionCategoryIds.length ? (
+        {!filteredCategories.length ? (
           <Alert
             severity="info"
             sx={{ mb: 1.5 }}
           >
-            Для выбранных позиций не найдено подходящих типов ошибок.
+            Для позиции не найдено подходящих типов ошибок.
           </Alert>
         ) : null}
 
@@ -508,115 +333,150 @@ export const ModalProblems = ({
           container
           spacing={1.25}
         >
-          {visibleLevelIndexes.map((levelIndex) => (
-            <Grid
-              key={levelIndex}
-              size={12}
-            >
-              <MyAutocomplite
-                value={selectedValueByLevel[levelIndex]}
-                data={cascadeLevelOptions[levelIndex]}
-                label={getCascadeLevelLabel(levelIndex, visibleLevelIndexes.length)}
-                func={handleLevelChange(levelIndex)}
-                multiple={false}
-                disabled={!cascadeLevelOptions[levelIndex]?.length}
-              />
+          {levels.map((levelOptions, levelIndex) => {
+            const value =
+              levelOptions.find(
+                (option) => Number(option.id) === Number(draft.selectedPathIds[levelIndex]),
+              ) || null;
+
+            return (
+              <Grid
+                key={levelIndex}
+                size={12}
+              >
+                <MyAutocomplite
+                  value={value}
+                  data={levelOptions}
+                  label={cascadeLevelLabel(levelIndex, filteredCategories, draft.selectedPathIds)}
+                  func={handleLevelChange(levelIndex)}
+                  multiple={false}
+                />
+              </Grid>
+            );
+          })}
+
+          {maxCount > 1 ? (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Количество с ошибкой"
+                value={draft.errorCount}
+                onChange={(event) => updateDraft({ errorCount: Number(event.target.value) })}
+              >
+                {Array.from({ length: maxCount }, (_, index) => index + 1).map((count) => (
+                  <MenuItem
+                    key={count}
+                    value={count}
+                  >
+                    {count}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
-          ))}
-        </Grid>
+          ) : null}
 
-        <Grid sx={{ mt: 1.25 }}>
-          <MyAutocomplite
-            value={selectedSolution}
-            data={availableSolutions}
-            label="Решение ошибки"
-            func={(_, data) => {
-              setSelectedSolution(data || null);
-              setValidationError("");
-            }}
-            multiple={false}
-            disabled={!selectedCategory || !availableSolutions.length}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: maxCount > 1 ? 6 : 12 }}>
+            <MyAutocomplite
+              value={draft.selectedSolution}
+              data={availableSolutions}
+              label="Решение ошибки"
+              func={(_, value) => updateDraft({ selectedSolution: value || null })}
+              multiple={false}
+              disabled={!selectedCategory || !availableSolutions.length}
+            />
+          </Grid>
 
-        {selectedCategory ? (
-          <>
-            <Grid sx={{ mt: 1.25 }}>
+          {ingredientRequired ? (
+            <Grid size={12}>
+              {ingredients.length ? (
+                <MyAutocomplite
+                  value={draft.selectedIngredient}
+                  data={ingredients}
+                  label="Продукт из состава"
+                  func={(_, value) => updateDraft({ selectedIngredient: value || null })}
+                  multiple={false}
+                />
+              ) : (
+                <Alert severity="info">
+                  {position?.ingredients_warning ||
+                    "Для позиции не найден состав из закупаемых продуктов."}
+                </Alert>
+              )}
+            </Grid>
+          ) : null}
+
+          {selectedCategory ? (
+            <Grid size={12}>
               <MyTextInput
-                value={comment}
-                multiline={true}
-                rows={4}
-                func={(event) => setComment(event.target.value)}
+                value={draft.comment}
+                multiline
+                rows={3}
+                func={(event) => updateDraft({ comment: event.target.value })}
                 label="Комментарий"
               />
             </Grid>
+          ) : null}
+        </Grid>
 
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center", p: 2 }}
-            >
-              {isImageRequired ? (
+        {selectedCategory ? (
+          <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", gap: 1.5, alignItems: "center" }}>
+            {draft.previewUrl ? (
+              <Box sx={{ position: "relative" }}>
+                <Card sx={{ width: 150 }}>
+                  <CardMedia
+                    component="img"
+                    image={draft.previewUrl}
+                    alt="Фото ошибки"
+                    sx={{ height: 100, objectFit: "cover" }}
+                  />
+                </Card>
+                <IconButton
+                  size="small"
+                  onClick={() => updateDraft({ selectedImage: null, previewUrl: "" })}
+                  sx={{ position: "absolute", top: 4, right: 4, bgcolor: "white" }}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Box>
+            ) : (
+              <Avatar
+                component="label"
+                variant="rounded"
+                sx={{
+                  width: 100,
+                  height: 100,
+                  bgcolor: "grey.100",
+                  border: "2px dashed",
+                  borderColor: selectedCategory.needImg ? "error.main" : "grey.300",
+                }}
+              >
+                <AddPhotoAlternate sx={{ color: "grey.400" }} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleImageUpload}
+                />
+              </Avatar>
+            )}
+            <Box>
+              {selectedCategory.needImg ? (
                 <Typography
                   variant="body2"
                   color="error"
-                  sx={{ alignSelf: "flex-start" }}
+                  sx={{ mb: 0.75 }}
                 >
-                  Для этой ошибки фото обязательно
+                  Фото обязательно
                 </Typography>
               ) : null}
-
-              {previewUrl ? (
-                <Box sx={{ position: "relative" }}>
-                  <Card sx={{ maxWidth: 400 }}>
-                    <CardMedia
-                      component="img"
-                      image={previewUrl}
-                      alt="Preview"
-                      sx={{ height: 140, objectFit: "cover" }}
-                    />
-                  </Card>
-                  <IconButton
-                    onClick={handleRemoveImage}
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      backgroundColor: "white",
-                      border: "1px solid #DD1A32",
-                      "&:hover": { backgroundColor: "grey.100" },
-                    }}
-                  >
-                    <Delete />
-                  </IconButton>
-                </Box>
-              ) : (
-                <Avatar
-                  component="label"
-                  sx={{
-                    width: 200,
-                    height: 200,
-                    bgcolor: "grey.100",
-                    border: "2px dashed",
-                    borderColor: isImageRequired ? "#DD1A32" : "grey.300",
-                  }}
-                  variant="rounded"
-                >
-                  <AddPhotoAlternate sx={{ fontSize: 48, color: "grey.400" }} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={handleImageUpload}
-                  />
-                </Avatar>
-              )}
-
               <Button
-                variant="contained"
+                variant="outlined"
                 component="label"
                 startIcon={<CloudUpload />}
-                size="large"
               >
-                Выбрать картинку
+                Выбрать фото
                 <input
                   type="file"
                   accept="image/*"
@@ -625,17 +485,157 @@ export const ModalProblems = ({
                 />
               </Button>
             </Box>
-          </>
+          </Box>
         ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+export const ModalProblems = ({
+  open,
+  onClose,
+  save,
+  positions = [],
+  problem_arr = [],
+  title = "Проблемы с позициями",
+  errCats = [],
+  solutionCatalog = [],
+}) => {
+  const categoryOptions = useMemo(() => buildCategoryOptions(errCats), [errCats]);
+  const normalizedSolutions = useMemo(() => normalizeSolutions(solutionCatalog), [solutionCatalog]);
+  const [drafts, setDrafts] = useState({});
+  const [validationErrors, setValidationErrors] = useState({});
+
+  useEffect(() => {
+    if (!open) return;
+
+    const nextDrafts = {};
+    positions.forEach((position, index) => {
+      nextDrafts[getPositionKey(position, index)] = buildInitialDraft(
+        position,
+        index,
+        categoryOptions,
+        problem_arr,
+        normalizedSolutions,
+      );
+    });
+    setDrafts(nextDrafts);
+    setValidationErrors({});
+  }, [open, positions, problem_arr, categoryOptions, normalizedSolutions]);
+
+  const updateDraft = (key, patch) => {
+    setDrafts((previous) => ({
+      ...previous,
+      [key]: { ...previous[key], ...patch },
+    }));
+    setValidationErrors((previous) => ({ ...previous, [key]: "" }));
+  };
+
+  const handleSave = () => {
+    const errors = {};
+    const assignments = [];
+
+    positions.forEach((position, index) => {
+      const key = getPositionKey(position, index);
+      const draft = drafts[key];
+      const filteredCategories = filteredCategoriesForPosition(categoryOptions, position);
+      const selectedCategory = findSelectedCategory(
+        filteredCategories,
+        draft?.selectedPathIds || [],
+      );
+      const availableSolutions = selectedCategory?.solutionIds?.length
+        ? normalizedSolutions.filter((solution) =>
+            selectedCategory.solutionIds.includes(Number(solution.id)),
+          )
+        : [];
+
+      if (!selectedCategory) {
+        errors[key] = "Выберите тип ошибки.";
+        return;
+      }
+      if (availableSolutions.length && !draft?.selectedSolution) {
+        errors[key] = "Выберите вариант решения.";
+        return;
+      }
+      if (selectedCategory.needImg && !draft?.previewUrl && !draft?.selectedImage) {
+        errors[key] = "Для выбранной ошибки необходимо приложить фото.";
+        return;
+      }
+      if (isIngredientQuality(selectedCategory) && !draft?.selectedIngredient) {
+        errors[key] = "Выберите продукт из состава блюда.";
+        return;
+      }
+
+      assignments.push({
+        ...position,
+        position_key: key,
+        problem_cat_id: selectedCategory.id,
+        problem_name: selectedCategory.shortName,
+        problem_path: selectedCategory.name,
+        problem_comment: draft?.comment || "",
+        problem_solution: draft?.selectedSolution || null,
+        problem_ingredient: draft?.selectedIngredient || null,
+        error_count: Number(draft?.errorCount) || 1,
+        previewUrl: draft?.previewUrl || "",
+        selectedImage: draft?.selectedImage || null,
+        need_img: selectedCategory.needImg ? 1 : 0,
+        site_cats: selectedCategory.siteCats,
+        stage_1: selectedCategory.stage1,
+        stage_2: selectedCategory.stage2,
+        stage_3: selectedCategory.stage3,
+      });
+    });
+
+    if (Object.keys(errors).length) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    save(assignments);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{ sx: { maxHeight: "90vh", display: "flex", flexDirection: "column" } }}
+    >
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent
+        dividers
+        sx={{ overflowY: "auto" }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {positions.map((position, index) => {
+            const key = getPositionKey(position, index);
+            const draft = drafts[key];
+            if (!draft) return null;
+
+            return (
+              <PositionProblemCard
+                key={key}
+                position={position}
+                draft={draft}
+                updateDraft={(patch) => updateDraft(key, patch)}
+                categoryOptions={categoryOptions}
+                normalizedSolutions={normalizedSolutions}
+                validationError={validationErrors[key]}
+              />
+            );
+          })}
+        </Box>
       </DialogContent>
       <DialogActions>
+        <Button onClick={onClose}>Отмена</Button>
         <Button
-          autoFocus
-          onClick={onClose}
+          onClick={handleSave}
+          variant="contained"
         >
-          Отмена
+          Применить
         </Button>
-        <Button onClick={handleSave}>Сохранить</Button>
       </DialogActions>
     </Dialog>
   );

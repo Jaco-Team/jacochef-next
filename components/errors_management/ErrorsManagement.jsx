@@ -334,6 +334,10 @@ function hasAccessValue(flag) {
   return flag === "1" || flag === 1 || flag === true;
 }
 
+function getErrorPositionKey(position, index = 0) {
+  return String(position?.position_key || position?.id || `position-${index}`);
+}
+
 const IOSSwitch = styled(Switch)(() => ({
   width: 42,
   height: 26,
@@ -379,11 +383,40 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
   const orderItemsFor = Array.isArray(detail?.order_items_for)
     ? detail.order_items_for
     : orderItems;
+  const errorPositions = useMemo(() => {
+    if (Array.isArray(detail?.error_positions)) {
+      return detail.error_positions;
+    }
+
+    const fallbackPositions = orderItemsFor.map((item, index) => ({
+      ...item,
+      position_key: `log:${item?.id || index}`,
+      type: "dish",
+      total_count: Number(item?.count) || 1,
+      log_ids: item?.id ? [Number(item.id)] : [],
+      row_ids: [],
+      ingredients: [],
+    }));
+    const delivery = orderItems.find((item) => Number(item?.item_id) === -1);
+
+    if (delivery) {
+      fallbackPositions.push({
+        ...delivery,
+        position_key: "delivery",
+        type: "delivery",
+        total_count: 1,
+        log_ids: [],
+        row_ids: [],
+        ingredients: [],
+      });
+    }
+
+    return fallbackPositions;
+  }, [detail?.error_positions, orderItems, orderItemsFor]);
   const [checkedError, setCheckedError] = useState(false);
   const [checkedDiffOrder, setCheckedDiffOrder] = useState(false);
   const [orderDiff, setOrderDiff] = useState("");
   const [checkedKey, setCheckedKey] = useState({});
-  const [currentName, setCurrentName] = useState("");
   const [problemArr, setProblemArr] = useState([]);
   const [positions, setPositions] = useState([]);
   const [isProblemsOpen, setIsProblemsOpen] = useState(false);
@@ -410,7 +443,6 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
     setCheckedDiffOrder(false);
     setOrderDiff("");
     setCheckedKey({});
-    setCurrentName("");
     setProblemArr([]);
     setPositions([]);
     setIsProblemsOpen(false);
@@ -432,11 +464,12 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
     setCheckedDiffOrder(false);
     setOrderDiff("");
     setCheckedKey({});
-    setCurrentName("");
   };
 
   const openProblems = useCallback(() => {
-    const nextPositions = orderItemsFor.filter((item, index) => checkedKey[index]);
+    const nextPositions = errorPositions.filter(
+      (item, index) => checkedKey[getErrorPositionKey(item, index)],
+    );
 
     if (!nextPositions.length) {
       return;
@@ -444,52 +477,35 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
 
     setPositions(nextPositions);
     setIsProblemsOpen(true);
-  }, [checkedKey, orderItemsFor]);
+  }, [checkedKey, errorPositions]);
 
-  const saveProblems = useCallback(
-    (problemData) => {
-      setProblemArr((prev) => {
-        const next = [...prev];
+  const saveProblems = useCallback((problemData) => {
+    const assignments = Array.isArray(problemData) ? problemData : [];
 
-        positions.forEach((pos) => {
-          const existingIndex = next.findIndex((item) => item.id === pos.id);
-          const mergedFields = {
-            problem_cat_id: problemData?.problem_cat_id ?? null,
-            problem_path: problemData?.problem_path || "",
-            problem_name: problemData?.problem_name || problemData?.value || "",
-            problem_comment: problemData?.problem_comment ?? problemData?.comment ?? "",
-            problem_solution: problemData?.problem_solution ?? problemData?.solution ?? null,
-            previewUrl: problemData?.previewUrl || "",
-            need_img: problemData?.need_img ?? 0,
-            site_cats: problemData?.site_cats || [],
-            stage_1: problemData?.stage_1 || [],
-            stage_2: problemData?.stage_2 || [],
-            stage_3: problemData?.stage_3 || [],
+    setProblemArr((prev) => {
+      const next = [...prev];
+
+      assignments.forEach((assignment) => {
+        const assignmentKey = getErrorPositionKey(assignment);
+        const existingIndex = next.findIndex((item) => getErrorPositionKey(item) === assignmentKey);
+
+        if (existingIndex !== -1) {
+          next[existingIndex] = {
+            ...next[existingIndex],
+            ...assignment,
           };
-
-          if (existingIndex !== -1) {
-            next[existingIndex] = {
-              ...next[existingIndex],
-              ...mergedFields,
-            };
-          } else {
-            next.push({
-              ...pos,
-              ...mergedFields,
-            });
-          }
-        });
-
-        return next;
+        } else {
+          next.push(assignment);
+        }
       });
 
-      setIsProblemsOpen(false);
-      setCheckedKey({});
-      setCurrentName("");
-      setPositions([]);
-    },
-    [positions],
-  );
+      return next;
+    });
+
+    setIsProblemsOpen(false);
+    setCheckedKey({});
+    setPositions([]);
+  }, []);
 
   if (!order) {
     return null;
@@ -504,7 +520,7 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
       PaperProps={{
         sx: {
           maxHeight: "92vh",
-          height: { xs: "auto", md: "92vh" },
+          height: "92vh",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
@@ -613,19 +629,19 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
         sx={{
           flex: 1,
           minHeight: 0,
-          overflow: "hidden",
+          overflowY: "auto",
         }}
       >
         <Grid
           container
           spacing={3}
-          sx={{ height: "100%", minHeight: 0 }}
+          sx={{ minHeight: 0 }}
         >
           <Grid
             size={{ xs: 12, md: 5 }}
             sx={{
               minHeight: 0,
-              overflowY: { xs: "visible", md: "auto" },
+              overflowY: "visible",
               pr: { md: 0.5 },
             }}
           >
@@ -749,7 +765,6 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
             errCats={errCats}
             solutionCatalog={solutionsCatalog}
             open={isProblemsOpen}
-            current_name={currentName}
             onClose={() => setIsProblemsOpen(false)}
             title={`Проблема с ${selectedProblemsCount || positions.length} позициями`}
             save={saveProblems}
@@ -785,9 +800,8 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
 
             <Box
               sx={{
-                flex: 1,
                 minHeight: 0,
-                overflowY: "auto",
+                overflowY: "visible",
                 pr: 0.5,
               }}
             >
@@ -843,8 +857,11 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
                   }}
                 >
                   <TableBody>
-                    {orderItemsFor.map((item, index) => {
-                      const problem = problemArr.find((it) => it?.id === item.id);
+                    {errorPositions.map((item, index) => {
+                      const positionKey = getErrorPositionKey(item, index);
+                      const problem = problemArr.find(
+                        (it) => getErrorPositionKey(it) === positionKey,
+                      );
 
                       return (
                         <TableRow
@@ -867,8 +884,7 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
                               return;
                             }
 
-                            setCheckedKey({ [index]: true });
-                            setCurrentName(item.id);
+                            setCheckedKey({ [positionKey]: true });
                             setPositions([item]);
                             setIsProblemsOpen(true);
                           }}
@@ -877,11 +893,11 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                               <span>
                                 <MyCheckBox
-                                  value={checkedKey[index] === true}
+                                  value={checkedKey[positionKey] === true}
                                   func={(event) =>
                                     setCheckedKey((prev) => ({
                                       ...prev,
-                                      [index]: event.target.checked,
+                                      [positionKey]: event.target.checked,
                                     }))
                                   }
                                 />
@@ -894,6 +910,12 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
                                 }}
                               >
                                 <Typography>{item?.name}</Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Количество: {Number(item?.total_count) || 1}
+                                </Typography>
                                 {problem?.problem_name ? (
                                   <Box
                                     component="span"
@@ -910,13 +932,16 @@ function OrderDetailsDialog({ detail, onClose, access, errCats, solutionsCatalog
                                     }}
                                   >
                                     {problem.problem_name}
+                                    {Number(problem?.error_count) > 1
+                                      ? ` × ${problem.error_count}`
+                                      : ""}
                                   </Box>
                                 ) : null}
                               </Box>
                             </Box>
                           </TableCell>
                           <TableCell sx={{ borderRadius: "0 10px 10px 0" }}>
-                            {item?.price} р.
+                            {item?.total_price ?? item?.price} р.
                           </TableCell>
                         </TableRow>
                       );
