@@ -7,7 +7,11 @@ import { Button, CircularProgress, Grid, IconButton, Paper, Stack, Tooltip } fro
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import ExcelIcon from "@/ui/ExcelIcon";
 import { MyAutocomplite, MyCheckBox, MyDatePickerNew, MyTextInput } from "@/ui/Forms";
-import { PARAM_OPTIONS } from "./useOrdersExtendedStore";
+import {
+  DELIVERY_STATUS_OPTIONS,
+  ERROR_STATUS_OPTIONS,
+  PARAM_OPTIONS,
+} from "./useOrdersExtendedStore";
 
 export default function OrdersExtendedFilters({
   filters,
@@ -137,11 +141,29 @@ export default function OrdersExtendedFilters({
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <MyAutocomplite
-              label="Клиенты"
+              label="Тип клиента"
               disableClearable
               data={PARAM_OPTIONS}
               value={filters.param}
               func={(_, value) => onUpdateFilter("param", value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <MyAutocomplite
+              label="Ошибка в заказе"
+              disableClearable
+              data={ERROR_STATUS_OPTIONS}
+              value={filters.error_status}
+              func={(_, value) => onUpdateFilter("error_status", value)}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <MyAutocomplite
+              label="Срок доставки"
+              disableClearable
+              data={DELIVERY_STATUS_OPTIONS}
+              value={filters.delivery_status}
+              func={(_, value) => onUpdateFilter("delivery_status", value)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -233,11 +255,6 @@ export default function OrdersExtendedFilters({
                 label="Заказ с промокодом"
                 value={filters.with_promo}
                 func={(event) => onUpdateFilter("with_promo", event)}
-              />
-              <MyCheckBox
-                label="Была оформлена ошибка на заказ"
-                value={filters.is_show_claim}
-                func={(event) => onUpdateFilter("is_show_claim", event)}
               />
             </Stack>
           </Grid>

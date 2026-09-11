@@ -106,7 +106,8 @@ export default function OrdersExtendedPage() {
   ) => ({
     date_start_true: formatDateForApi(currentFilters.date_start_true),
     date_end_true: formatDateForApi(currentFilters.date_end_true),
-    is_show_claim: Boolean(currentFilters.is_show_claim),
+    error_status: currentFilters.error_status?.id ?? "all",
+    delivery_status: currentFilters.delivery_status?.id ?? "all",
     count_orders_min: currentFilters.count_orders_min,
     count_orders_max: currentFilters.count_orders_max,
     min_summ: currentFilters.min_summ,
@@ -131,7 +132,7 @@ export default function OrdersExtendedPage() {
   });
 
   const normalizeFilterValue = (name, value) => {
-    if (name === "is_show_claim" || name === "no_promo" || name === "with_promo") {
+    if (name === "no_promo" || name === "with_promo") {
       return Boolean(value?.target?.checked);
     }
     if (
@@ -140,6 +141,8 @@ export default function OrdersExtendedPage() {
       name === "point" ||
       name === "item" ||
       name === "param" ||
+      name === "error_status" ||
+      name === "delivery_status" ||
       name === "category_ids" ||
       name === "source_ids" ||
       name === "order_type_ids" ||

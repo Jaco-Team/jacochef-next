@@ -46,7 +46,8 @@ FE не переименовывает поля raw access и используе
 {
   "date_start_true": "YYYY-MM-DD",
   "date_end_true": "YYYY-MM-DD",
-  "is_show_claim": false,
+  "error_status": "all",
+  "delivery_status": "all",
   "count_orders_min": 0,
   "count_orders_max": 0,
   "avg_check_min": 0,
@@ -83,7 +84,10 @@ FE не переименовывает поля raw access и используе
   - `order_price_sum` — sum of `order_price`;
   - `avg_check_avg` — arithmetic average of `avg_check`;
 - `url` — URL export-файла либо пустая строка.
-- New row fields: `avg_check` and `promo_name`.
+- Row fields additionally include `avg_check`, `promo_name`, `client_status`, `has_error`, and `delivery_status`.
+- `client_status`: `new`, `current`, or `null` when the client cannot be determined.
+- `has_error`: boolean based on exact `point_id + order_id` matching.
+- `delivery_status`: `on_time`, `late`, or `null` for non-delivery/undetermined SLA.
 
 Ошибка: `st=false`, `text` содержит причину (`Выберите даты`, `Выберите точку`, `Не найдено заказов`).
 
@@ -106,12 +110,15 @@ FE не переименовывает поля raw access и используе
 ## Семантика расширенных фильтров
 
 - `avg_check_min/max`: `SUM(site_orders_new.summ) / COUNT(*)` по номеру клиента, выбранным точкам и периоду `date_start_true..date_end_true`; `0` и `null` отключают соответствующую границу.
+- `error_status`: `with_error` выбирает заказы с ошибкой, совпавшей по `point_id + order_id`; `without_error` — без такой ошибки; `all` отключает фильтр. Если новое поле отсутствует, прежний `is_show_claim=true` трактуется как `with_error`.
+- `delivery_status`: `on_time` выбирает доставки с `type_all_overtime IN (1,2)`, `late` — доставки с `type_all_overtime=3`; `all` отключает фильтр. Другие типы заказов и неопределённый срок не входят в выбранные статусы.
 - `category_ids` и `item`: внутри каждого списка совпадает любое значение; если заданы оба списка, одна позиция заказа должна соответствовать и категории, и item.
 - `source_ids`: точные `site_orders_new.is_client` IDs `0/1/2`.
 - `order_type_ids`: точные `orders.type_order` IDs `1..4`.
 - `payment_type_ids`: `1` — `orders.type_pay=1` (`Нал`), `2` — `orders.type_pay!=1` (`Безнал`).
-- Sorting is server-side before pagination. Allowed `sort_by`: `id`, `source`, `type_user`, `address`, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`; `sort_dir`: `asc` or `desc`.
+- Sorting is server-side before pagination. Allowed `sort_by`: `id`, `source`, `type_user`, `client_status`, `address`, `type_order`, `status`, `has_error`, `delivery_status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`; `sort_dir`: `asc` or `desc`.
 - `promo`: точное имя промокода; `no_promo`: `promo_id=0`; `with_promo`: `promo_id>0`. Включённые фильтры объединяются через `AND`; `no_promo` с `promo`/`with_promo` не даёт строк.
 - `param.id=lost`: предыдущий qualifying order в 90 дней до периода, qualifying order в выбранном периоде и отсутствие qualifying delivery/self-pickup order в 90 дней после периода. Qualifying order: `type_order IN (1,2)`, `client_id != 0`.
+- Заказы без определяемого клиента не входят в `param.id=new/current`, получают `client_status=null`, а недоступный средний чек возвращается как `null`.
 
 DOCX table fields: `source`, `type_user`, address, `type_order`, `status`, `order_price`, `avg_check`, `promo_name`, `type_pay`, `driver`. Fields excluded by the DOCX remain in JSON for compatibility.
