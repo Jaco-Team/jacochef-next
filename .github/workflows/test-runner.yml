@@ -43,25 +43,3 @@ jobs:
             ghcr.io/jaco-team/jacochef-next:main
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
-
-      - name: Configure deployment SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.ANSIBLE_SSH_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.ANSIBLE_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
-      - name: Deploy immutable frontend release through Ansible
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ANSIBLE_HOST: ${{ secrets.ANSIBLE_HOST }}
-          ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}
-        run: |
-          printf '%s\n' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key \
-            -o BatchMode=yes -o IdentitiesOnly=yes \
-            "$ANSIBLE_USER@$ANSIBLE_HOST" \
-            "/opt/jaco/ansible/bin/deploy-jacochef-component jacosoft $GITHUB_SHA $GITHUB_ACTOR"
