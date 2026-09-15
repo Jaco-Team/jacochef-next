@@ -3,6 +3,7 @@ import axios from "axios";
 import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 
 import Grid from "@mui/material/Grid";
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
@@ -37,6 +38,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import Chip from "@mui/material/Chip";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
+import TextField from "@mui/material/TextField";
 
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -59,10 +61,293 @@ import MyAlert from "@/ui/MyAlert";
 import { Close } from "@mui/icons-material";
 import ExcelCompareSummary from "@/components/check_check/ExcelCompareSummary";
 import MismatchDiagnostics from "@/components/check_check/MismatchDiagnostics";
+import BatchExcelCheck from "@/components/check_check/BatchExcelCheck";
+import OnlineCheckAudit from "@/components/check_check/OnlineCheckAudit";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 
 const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(num);
+
+const receiptAmount = (row, field, cashField, bankField) => {
+  if (row?.[field] != null) return Number(row[field]) || 0;
+  return (Number(row?.[cashField]) || 0) + (Number(row?.[bankField]) || 0);
+};
+
+const candidateStatus = (order) => {
+  if (!order) return "—";
+  if (order.status_text) {
+    return `${order.status_text}${order.status_order == null ? "" : ` (${order.status_order})`}`;
+  }
+  return order.status_order ?? "—";
+};
+
+const CompletenessSummary = ({ summary, rowsCount }) => {
+  if (!summary) return null;
+
+  const rowsTotal = Number(summary.rows_total) || 0;
+  const rowsComplete = Number(summary.rows_complete) || 0;
+  const rowsIncomplete = Number(summary.rows_incomplete ?? rowsCount) || 0;
+  const percent = Number(
+    summary.completeness_percent ?? (rowsTotal > 0 ? (rowsComplete / rowsTotal) * 100 : 100),
+  );
+
+  if (rowsIncomplete === 0 && rowsCount === 0) {
+    return (
+      <Alert severity="success">
+        {formatNumber(percent)}% — проблем не найдено. Заполнено {formatNumber(rowsComplete)} из{" "}
+        {formatNumber(rowsTotal)} чеков.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+      <Chip
+        label={`Заполненность: ${formatNumber(percent)}%`}
+        color="primary"
+        size="small"
+      />
+      <Chip
+        label={`Заполнено: ${formatNumber(rowsComplete)} / ${formatNumber(rowsTotal)}`}
+        size="small"
+      />
+      <Chip
+        label={`Проблемы: ${formatNumber(rowsIncomplete)}`}
+        color="error"
+        size="small"
+      />
+      <Chip
+        label={`Нет связи с заказом: ${formatNumber(summary.missing_order_count ?? 0)}`}
+        size="small"
+      />
+      <Chip
+        label={`Нет рабочей суммы: ${formatNumber(summary.missing_amount_count ?? 0)}`}
+        size="small"
+      />
+      <Chip
+        label={`Исходная сумма сохранена: ${formatNumber(summary.recoverable_amount_count ?? 0)} / ${formatNumber(summary.recoverable_amount_total ?? 0)} ₽`}
+        color="warning"
+        size="small"
+      />
+      <Chip
+        label={`Вероятных заказов: ${formatNumber(summary.unique_candidate_count ?? 0)}`}
+        size="small"
+      />
+      <Chip
+        label={`Вероятных лишних чеков: ${formatNumber(summary.duplicate_candidate_count ?? 0)}`}
+        color={Number(summary.duplicate_candidate_count) > 0 ? "error" : "default"}
+        size="small"
+      />
+    </Box>
+  );
+};
+
+const CompletenessRow = ({ row, index, onFind }) => {
+  const receiptId = row.receipt_id ?? row.id ?? "—";
+  const storedAmount = receiptAmount(row, "stored_amount", "sum_cash", "sum_bank");
+  const sourceAmount = receiptAmount(row, "source_amount", "sum_cash_", "sum_bank_");
+  const issues = Array.isArray(row.completeness_issues) ? row.completeness_issues : [];
+  const likelyOrder = row.likely_order;
+  const linkedOrder = row.linked_order;
+  const duplicateCandidate = row.duplicate_receipt_candidate;
+  const candidateOrders = Array.isArray(row.candidate_orders)
+    ? row.candidate_orders.slice(0, 3)
+    : [];
+  const candidateCount = Number(row.candidate_count ?? candidateOrders.length) || 0;
+  const candidateDescriptions = candidateOrders.map(
+    (order) =>
+      `№${order.order_id} — ${candidateStatus(order)}, ${order.date_time || "время не указано"}`,
+  );
+  const hasCandidateAnalysis =
+    row.linked_order !== undefined ||
+    row.likely_order !== undefined ||
+    row.duplicate_receipt_candidate !== undefined ||
+    row.candidate_count !== undefined ||
+    candidateOrders.length > 0;
+  const operation =
+    row.operation_text ||
+    row.transaction_type ||
+    (Number(row.type_check) === 2 ? "Возврат" : "Приход");
+  const payment = row.payment_type_text || "Не определён";
+  const receiptDetails = [
+    row.fd ? `ФД ${row.fd}` : null,
+    row.fpd ? `ФПД ${row.fpd}` : null,
+    row.number_check ? `Чек №${row.number_check}` : null,
+  ].filter(Boolean);
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{ p: { xs: 1.25, sm: 1.5 }, mb: 1.5 }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+        <Typography sx={{ fontWeight: 600 }}>
+          {index + 1}. ID чека ОФД: {receiptId}
+        </Typography>
+        <Tooltip
+          title="Найти заказ"
+          arrow
+        >
+          <IconButton
+            size="small"
+            aria-label="Найти заказ"
+            onClick={() => onFind(row.summ_check, row.date, row)}
+          >
+            <ReceiptLongIcon sx={{ color: "#c03" }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+        <Chip
+          label={operation}
+          size="small"
+          variant="outlined"
+        />
+        <Chip
+          label={payment}
+          size="small"
+          variant="outlined"
+        />
+        <Chip
+          label={`Касса ${row.kassa ?? "—"}`}
+          size="small"
+          variant="outlined"
+        />
+        <Chip
+          label={`Смена ${row.smena ?? "—"}`}
+          size="small"
+          variant="outlined"
+        />
+        {receiptDetails.map((detail) => (
+          <Chip
+            key={detail}
+            label={detail}
+            size="small"
+            variant="outlined"
+          />
+        ))}
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" },
+          gap: 1,
+          mt: 1.25,
+        }}
+      >
+        <Typography variant="body2">
+          Дата/время: {row.date || "—"} {row.time || ""}
+        </Typography>
+        <Typography variant="body2">Рабочая сумма: {formatNumber(storedAmount)} ₽</Typography>
+        <Typography variant="body2">Исходная сумма: {formatNumber(sourceAmount)} ₽</Typography>
+      </Box>
+
+      {issues.length > 0 && (
+        <Box sx={{ mt: 1.25 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+            {issues.map((issue) => (
+              <Chip
+                key={issue.code || issue.label}
+                label={issue.label || issue.code}
+                color="error"
+                size="small"
+              />
+            ))}
+          </Box>
+          {issues.map((issue) => (
+            <Typography
+              key={`${issue.code || issue.label}-detail`}
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.5 }}
+            >
+              {issue.detail || issue.label}
+            </Typography>
+          ))}
+        </Box>
+      )}
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+          gap: 1.5,
+          mt: 1.25,
+        }}
+      >
+        <Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+          >
+            Диагноз
+          </Typography>
+          <Typography variant="body2">
+            {row.diagnosis || "Данные чека заполнены не полностью."}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+          >
+            Рекомендация
+          </Typography>
+          <Typography variant="body2">
+            {row.recommendation || "Найдите и проверьте заказ вручную."}
+          </Typography>
+        </Box>
+      </Box>
+
+      {hasCandidateAnalysis && (
+        <Box sx={{ mt: 1.25 }}>
+          {linkedOrder ? (
+            <Alert severity="info">
+              Связанный заказ №{linkedOrder.order_id}: {candidateStatus(linkedOrder)},{" "}
+              {linkedOrder.date_time || "дата не указана"}.
+            </Alert>
+          ) : duplicateCandidate ? (
+            <Alert
+              severity="error"
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => onFind(row.summ_check, row.date, row)}
+                >
+                  Проверить
+                </Button>
+              }
+            >
+              Вероятный лишний чек: заказ №{duplicateCandidate.order_id} уже связан с чеком ОФД ID{" "}
+              {duplicateCandidate.matching_linked_receipt?.receipt_id || "—"}, чек №
+              {duplicateCandidate.matching_linked_receipt?.number_check || "—"}. Обычная привязка
+              заблокирована; доступно ручное решение «Исправить лишний чек».
+            </Alert>
+          ) : likelyOrder ? (
+            <Alert severity="warning">
+              Вероятный заказ №{likelyOrder.order_id}: {candidateStatus(likelyOrder)}, разница
+              времени {formatNumber(likelyOrder.time_difference_minutes ?? 0)} мин. Кандидат не
+              применён автоматически.
+            </Alert>
+          ) : candidateCount > 0 ? (
+            <Alert severity="warning">
+              Найдено кандидатов: {formatNumber(candidateCount)}.
+              {candidateDescriptions.length > 0 && ` ${candidateDescriptions.join("; ")}.`}{" "}
+              Однозначный кандидат не выбран и не применён автоматически.
+            </Alert>
+          ) : (
+            <Alert severity="warning">
+              Кандидаты заказов не найдены. Связь автоматически не изменялась.
+            </Alert>
+          )}
+        </Box>
+      )}
+    </Paper>
+  );
+};
 
 const getCheckCheckApiUrl = (method) => {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8080/api/";
@@ -2011,9 +2296,12 @@ class CheckCheck_Modal extends React.Component {
 
     this.state = {
       orders: [],
-      order_id: "",
-      type_pay: "",
+      selectedOrder: null,
+      manualOrderId: "",
+      manualSearchError: "",
       confirmDialog: false,
+      duplicateConfirmDialog: false,
+      duplicateSubmitting: false,
     };
   }
 
@@ -2031,43 +2319,103 @@ class CheckCheck_Modal extends React.Component {
     }
   }
 
-  openConfirm = (order_id, type_pay) => {
+  openConfirm = (order) => {
+    if (order?.can_link !== true) return;
+
     this.setState({
       confirmDialog: true,
-      order_id,
-      type_pay,
+      selectedOrder: order,
     });
   };
 
-  save = () => {
-    this.setState({
-      confirmDialog: false,
-    });
+  save = async () => {
+    const { selectedOrder } = this.state;
+    if (!selectedOrder?.can_link) return;
 
-    this.props.saveOrder(
-      this.props.order?.id,
-      this.state.order_id,
-      this.state.type_pay,
-      this.props.order?.summ_check,
+    const saved = await this.props.saveOrder(
+      this.props.searchMeta?.receipt?.receipt_id ??
+        this.props.order?.receipt_id ??
+        this.props.order?.id,
+      selectedOrder,
     );
 
-    this.onClose();
+    if (saved) this.onClose();
+  };
+
+  searchManualOrder = () => {
+    const orderId = Number(this.state.manualOrderId);
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      this.setState({ manualSearchError: "Укажите корректный ID заказа" });
+      return;
+    }
+
+    this.setState({ manualSearchError: "" });
+    this.props.searchOrder(orderId);
+  };
+
+  resolveDuplicate = async () => {
+    const {
+      duplicate_receipt_candidate: candidate,
+      receipt,
+      recommended_action: action,
+    } = this.props.searchMeta || {};
+    const receiptId =
+      action?.receipt_id ??
+      receipt?.receipt_id ??
+      this.props.order?.receipt_id ??
+      this.props.order?.id;
+    const orderId = action?.order_id ?? candidate?.order_id;
+    if (
+      action?.action !== "duplicate_receipt_correction" ||
+      !orderId ||
+      !receiptId ||
+      this.state.duplicateSubmitting
+    )
+      return;
+
+    this.setState({ duplicateSubmitting: true });
+    try {
+      const resolved = await this.props.resolveDuplicate(receiptId, orderId);
+      if (resolved) this.setState({ duplicateConfirmDialog: false });
+    } finally {
+      this.setState({ duplicateSubmitting: false });
+    }
   };
 
   onClose = () => {
     this.setState({
       orders: [],
       confirmDialog: false,
-      order_id: "",
-      type_pay: "",
+      duplicateConfirmDialog: false,
+      duplicateSubmitting: false,
+      selectedOrder: null,
+      manualOrderId: "",
+      manualSearchError: "",
     });
 
     this.props.onClose();
   };
 
   render() {
-    const { orders, confirmDialog } = this.state;
-    const { order, open, fullScreen } = this.props;
+    const {
+      orders,
+      selectedOrder,
+      manualOrderId,
+      manualSearchError,
+      confirmDialog,
+      duplicateConfirmDialog,
+      duplicateSubmitting,
+    } = this.state;
+    const { order, open, fullScreen, searchMeta, canResolve } = this.props;
+    const receipt = searchMeta?.receipt || {
+      receipt_id: order?.receipt_id ?? order?.id,
+      date_time: [order?.date, order?.time].filter(Boolean).join(" "),
+      amount: order?.summ_check,
+      payment_type_text: order?.payment_type_text,
+    };
+    const duplicateCandidate = searchMeta?.duplicate_receipt_candidate;
+    const duplicateAction = searchMeta?.recommended_action;
+    const matchingReceipt = duplicateCandidate?.matching_linked_receipt;
 
     return (
       <>
@@ -2078,11 +2426,11 @@ class CheckCheck_Modal extends React.Component {
           onClose={() => this.setState({ confirmDialog: false })}
         >
           <DialogTitle sx={{ fontWeight: "bold" }}>Подтвердите действие</DialogTitle>
-          <DialogContent
-            align="center"
-            sx={{ fontWeight: "bold" }}
-          >
-            Сохранить данные выбранного заказа ?
+          <DialogContent dividers>
+            <Typography>
+              Привязать чек ОФД ID {receipt?.receipt_id || "—"} к заказу №
+              {selectedOrder?.order_id ?? selectedOrder?.id ?? "—"}?
+            </Typography>
           </DialogContent>
           <DialogActions>
             <Button
@@ -2097,10 +2445,54 @@ class CheckCheck_Modal extends React.Component {
               color="success"
               onClick={this.save}
             >
-              Сохранить
+              Привязать
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Dialog
+          open={duplicateConfirmDialog}
+          onClose={() => {
+            if (!duplicateSubmitting) this.setState({ duplicateConfirmDialog: false });
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Исправить лишний чек?</DialogTitle>
+          <DialogContent dividers>
+            <Typography sx={{ mb: 1 }}>
+              Заказ №{duplicateCandidate?.order_id || "—"}; лишний чек ОФД ID{" "}
+              {receipt?.receipt_id || "—"}.
+            </Typography>
+            <Typography sx={{ mb: 1 }}>
+              Уже связанный чек: ID {matchingReceipt?.receipt_id || "—"}, чек №
+              {matchingReceipt?.number_check || "—"},{" "}
+              {matchingReceipt?.date_time || "дата не указана"}.
+            </Typography>
+            <Typography sx={{ mb: 2 }}>Сумма: {formatNumber(receipt?.amount ?? 0)} ₽.</Typography>
+            <Alert severity="warning">
+              Лишний чек будет связан с заказом, исходная сумма будет перенесена в рабочее поле и
+              будет создан чек коррекции возврата. Заказ не будет удалён.
+            </Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              disabled={duplicateSubmitting}
+              onClick={() => this.setState({ duplicateConfirmDialog: false })}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              disabled={duplicateSubmitting}
+              onClick={this.resolveDuplicate}
+            >
+              {duplicateSubmitting ? "Исправление…" : "Исправить лишний чек"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <Dialog
           open={open}
           onClose={this.onClose}
@@ -2120,82 +2512,201 @@ class CheckCheck_Modal extends React.Component {
           </DialogTitle>
 
           <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
-            <Grid
-              size={{
-                xs: 12,
-                sm: 6,
-              }}
+            <Paper
+              variant="outlined"
+              sx={{ p: 1.5, mb: 2 }}
+            >
+              <Typography sx={{ fontWeight: 600 }}>
+                Чек ОФД ID {receipt?.receipt_id || "—"}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {receipt?.date_time || "Дата не указана"} · {formatNumber(receipt?.amount ?? 0)} ₽ ·{" "}
+                {receipt?.payment_type_text || "Тип оплаты не определён"}
+              </Typography>
+            </Paper>
+
+            {duplicateCandidate && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                action={
+                  Number(canResolve) === 1 &&
+                  duplicateAction?.action === "duplicate_receipt_correction" ? (
+                    <Button
+                      color="inherit"
+                      size="small"
+                      onClick={() => this.setState({ duplicateConfirmDialog: true })}
+                    >
+                      Исправить лишний чек
+                    </Button>
+                  ) : null
+                }
+              >
+                Заказ №{duplicateCandidate.order_id} уже связан с чеком ОФД ID{" "}
+                {matchingReceipt?.receipt_id || "—"} на ту же сумму. Обычная привязка заблокирована.
+              </Alert>
+            )}
+
+            <Box
               sx={{
                 display: "flex",
-                flexDirection: "column",
-                marginBottom: 2,
+                alignItems: { xs: "stretch", sm: "flex-start" },
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 1,
+                mb: 2,
               }}
             >
-              <Grid
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
+              <TextField
+                size="small"
+                type="number"
+                label="ID заказа"
+                value={manualOrderId}
+                error={Boolean(manualSearchError)}
+                helperText={manualSearchError}
+                onChange={(event) =>
+                  this.setState({ manualOrderId: event.target.value, manualSearchError: "" })
+                }
+              />
+              <Button
+                variant="outlined"
+                onClick={this.searchManualOrder}
               >
-                <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
-                  Дата/Время заказа:
-                </Typography>
-                <Typography sx={{ whiteSpace: "nowrap" }}>
-                  {order?.date} {order?.time}
-                </Typography>
-              </Grid>
+                Найти по ID
+              </Button>
+            </Box>
 
-              <Grid
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                }}
-              >
-                <Typography sx={{ fontWeight: "bold", whiteSpace: "nowrap", marginRight: 2 }}>
-                  Сумма заказа:
-                </Typography>
-                <Typography sx={{ whiteSpace: "nowrap" }}>
-                  {formatNumber(order?.summ_check ?? 0)} ₽
-                </Typography>
-              </Grid>
-            </Grid>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+              Кандидаты: {formatNumber(searchMeta?.candidate_count ?? orders.length)}
+            </Typography>
 
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell colSpan={6}>Список заказов</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>#</TableCell>
-                    <TableCell>Номер заказа</TableCell>
-                    <TableCell>Тип заказа</TableCell>
-                    <TableCell>Дата/Время заказа</TableCell>
-                    <TableCell>Сумма заказа</TableCell>
-                    <TableCell>Выбрать</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {orders.map((item, key) => (
-                    <TableRow key={key}>
-                      <TableCell>{key + 1}</TableCell>
-                      <TableCell>{item.id}</TableCell>
-                      <TableCell>{item.order_type}</TableCell>
-                      <TableCell>{item.date}</TableCell>
-                      <TableCell>{formatNumber(item.summ_check ?? 0)} ₽</TableCell>
-                      <TableCell>
-                        <IconButton
-                          title={"Сохранить"}
-                          onClick={() => this.openConfirm(item.id, item.type_pay)}
+            {orders.length === 0 ? (
+              <Alert severity="info">Подходящие заказы не найдены.</Alert>
+            ) : (
+              orders.map((item, index) => {
+                const orderId = item.order_id ?? item.id;
+                const linkedReceipts = Array.isArray(item.linked_receipts)
+                  ? item.linked_receipts
+                  : [];
+                return (
+                  <Paper
+                    key={orderId ?? index}
+                    variant="outlined"
+                    sx={{ p: 1.5, mb: 1.5 }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 1,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 600 }}>Заказ №{orderId || "—"}</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>
+                        {formatNumber(item.amount ?? item.summ_check ?? 0)} ₽
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.5 }}
+                    >
+                      {item.order_type || "Тип заказа не указан"} ·{" "}
+                      {item.date_time || item.date || "Дата не указана"}
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                      <Chip
+                        label={`Статус: ${candidateStatus(item)}`}
+                        size="small"
+                        variant="outlined"
+                      />
+                      <Chip
+                        label={item.payment_type_text || "Тип оплаты не указан"}
+                        size="small"
+                        variant="outlined"
+                      />
+                      {item.time_difference_minutes != null && (
+                        <Chip
+                          label={`Разница: ${formatNumber(item.time_difference_minutes)} мин`}
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                      {item.payment_matches === false && (
+                        <Chip
+                          label="Оплата не совпадает"
+                          size="small"
+                          color="warning"
+                        />
+                      )}
+                      {item.duplicate_receipt_match && (
+                        <Chip
+                          label="Вероятный лишний чек"
+                          size="small"
+                          color="error"
+                        />
+                      )}
+                      {Number(item.is_delete) === 1 && (
+                        <Chip
+                          label="Заказ удалён"
+                          size="small"
+                          color="error"
+                        />
+                      )}
+                    </Box>
+
+                    {linkedReceipts.length > 0 && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
                         >
-                          <ArchiveIcon sx={{ color: "#c03" }} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                          Уже связанные чеки
+                        </Typography>
+                        {linkedReceipts.map((linkedReceipt) => (
+                          <Typography
+                            key={linkedReceipt.receipt_id}
+                            variant="body2"
+                          >
+                            ID {linkedReceipt.receipt_id}, чек №{linkedReceipt.number_check || "—"},{" "}
+                            {linkedReceipt.date_time || "дата не указана"},{" "}
+                            {formatNumber(
+                              linkedReceipt.stored_amount || linkedReceipt.source_amount || 0,
+                            )}{" "}
+                            ₽
+                          </Typography>
+                        ))}
+                      </Box>
+                    )}
+
+                    {item.blocked_reason && (
+                      <Alert
+                        severity="warning"
+                        sx={{ mt: 1 }}
+                      >
+                        {item.blocked_reason}
+                      </Alert>
+                    )}
+
+                    {item.can_link === true && Number(canResolve) === 1 && (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        sx={{ mt: 1 }}
+                        startIcon={<ArchiveIcon />}
+                        onClick={() => this.openConfirm(item)}
+                      >
+                        Привязать заказ
+                      </Button>
+                    )}
+                  </Paper>
+                );
+              })
+            )}
           </DialogContent>
 
           <DialogActions>
@@ -2235,6 +2746,7 @@ class CheckCheck_ extends React.Component {
       err_text: "",
 
       complete_data: [],
+      complete_data_summary: null,
       summ_ofd: null,
       summ_chef: null,
 
@@ -2242,6 +2754,7 @@ class CheckCheck_ extends React.Component {
       modalOrder: false,
       fullScreen: false,
       orders: [],
+      orderSearchMeta: null,
 
       isAccordionOpen: false,
       confirmDialog: false,
@@ -2252,6 +2765,7 @@ class CheckCheck_ extends React.Component {
       need_upload: false,
       excelCompare: null,
       excelFileName: "",
+      onlineAudit: null,
     };
   }
 
@@ -2299,7 +2813,15 @@ class CheckCheck_ extends React.Component {
   };
 
   changeDateRange = (field, newDate) => {
-    this.setState({ [field]: newDate, needsRefresh: true, excelCompare: null, excelFileName: "" });
+    this.setState({
+      [field]: newDate,
+      needsRefresh: true,
+      excelCompare: null,
+      excelFileName: "",
+      onlineAudit: null,
+      complete_data: [],
+      complete_data_summary: null,
+    });
   };
 
   changeSort = (type, event) => {
@@ -2308,6 +2830,9 @@ class CheckCheck_ extends React.Component {
       needsRefresh: true,
       excelCompare: null,
       excelFileName: "",
+      onlineAudit: null,
+      complete_data: [],
+      complete_data_summary: null,
     });
   };
 
@@ -2317,6 +2842,9 @@ class CheckCheck_ extends React.Component {
       needsRefresh: true,
       excelCompare: null,
       excelFileName: "",
+      onlineAudit: null,
+      complete_data: [],
+      complete_data_summary: null,
     });
   };
 
@@ -2360,7 +2888,8 @@ class CheckCheck_ extends React.Component {
       this.openAlert(false, res.text);
     } else {
       this.setState({
-        complete_data: res.complete_data,
+        complete_data: res.complete_data ?? [],
+        complete_data_summary: res.complete_data_summary ?? null,
         summ_ofd: res.summ_ofd,
         summ_chef: res.summ_chef,
         unfisc_online_orders: res.unfisc_online_orders,
@@ -2370,6 +2899,36 @@ class CheckCheck_ extends React.Component {
         excelFileName: "",
       });
     }
+  };
+
+  auditOnline = async () => {
+    const { date_start, date_end, point_id, points, acces } = this.state;
+
+    if (!date_start || !date_end || !point_id) {
+      this.openAlert(false, "Укажите период и кафе");
+      return;
+    }
+
+    const point = points.find((it) => Number(it.id) === Number(point_id));
+    if (!point) {
+      this.openAlert(false, "Не найдено выбранное кафе");
+      return;
+    }
+
+    const res = await this.getData("audit_online", {
+      date_start: dayjs(date_start).format("YYYY-MM-DD"),
+      date_end: dayjs(date_end).format("YYYY-MM-DD"),
+      point,
+      auto_repair: Number(acces?.resolve_access) === 1,
+    });
+
+    if (!res.st) {
+      this.setState({ onlineAudit: null });
+      this.openAlert(false, res.text);
+      return;
+    }
+
+    this.setState({ onlineAudit: res.online_audit });
   };
 
   uploadExcel = async (event) => {
@@ -2437,28 +2996,65 @@ class CheckCheck_ extends React.Component {
       summ,
       point,
       date,
+      receipt_id: order?.receipt_id ?? order?.id,
     };
 
     const res = await this.getData("find_order", data);
+    if (!res.st) {
+      this.openAlert(false, res.text || "Не удалось найти подходящие заказы");
+      return;
+    }
 
     this.setState({
       modalOrder: true,
-      orders: res.orders,
+      orders: Array.isArray(res.orders) ? res.orders : [],
+      orderSearchMeta: res,
       order,
     });
   };
 
-  saveOrder = async (id, order_id, type_pay, summ) => {
+  searchOrderById = async (orderId) => {
+    const { point_id, points, order, orderSearchMeta } = this.state;
+    const point = points.find((it) => parseInt(it.id) === parseInt(point_id));
+    const receiptId = orderSearchMeta?.receipt?.receipt_id ?? order?.receipt_id ?? order?.id;
+    if (!point || !receiptId || !orderId) {
+      this.openAlert(false, "Не хватает данных для поиска заказа");
+      return;
+    }
+
+    const res = await this.getData("find_order", {
+      point,
+      receipt_id: receiptId,
+      order_id: orderId,
+    });
+    if (!res.st) {
+      this.openAlert(false, res.text || "Не удалось найти заказ");
+      return;
+    }
+
+    this.setState({
+      orders: Array.isArray(res.orders) ? res.orders : [],
+      orderSearchMeta: res,
+    });
+  };
+
+  saveOrder = async (receiptId, candidate) => {
+    if (candidate?.can_link !== true) {
+      this.openAlert(
+        false,
+        candidate?.blocked_reason || "Обычная привязка этого заказа недоступна",
+      );
+      return false;
+    }
+
     const { point_id, points } = this.state;
     const point = points.find((it) => parseInt(it.id) === parseInt(point_id));
-    const type = parseInt(type_pay) === 1 ? "sum_cash" : "sum_bank";
+    const orderId = candidate.order_id ?? candidate.id;
 
     const data = {
-      id,
-      order_id,
+      id: receiptId,
+      order_id: orderId,
       point,
-      type,
-      summ,
     };
 
     const res = await this.getData("save_order", data);
@@ -2470,6 +3066,35 @@ class CheckCheck_ extends React.Component {
         this.getOrders();
       }, 500);
     }
+
+    return Boolean(res.st);
+  };
+
+  resolveDuplicateReceipt = async (receiptId, orderId) => {
+    const { point_id, points } = this.state;
+    const point = points.find((it) => parseInt(it.id) === parseInt(point_id));
+    if (!point || !receiptId || !orderId) {
+      this.openAlert(false, "Не хватает данных для исправления лишнего чека");
+      return false;
+    }
+
+    const res = await this.getData("resolve_duplicate_receipt", {
+      point,
+      receipt_id: receiptId,
+      order_id: orderId,
+    });
+    this.openAlert(res.st, res.text);
+
+    if (!res.st) return false;
+
+    this.setState({
+      modalOrder: false,
+      orders: [],
+      order: null,
+      orderSearchMeta: null,
+    });
+    await this.getOrders();
+    return true;
   };
 
   openAlert = (status, text) => {
@@ -2572,6 +3197,7 @@ class CheckCheck_ extends React.Component {
       modalOrder,
       fullScreen,
       orders,
+      orderSearchMeta,
       module_name,
       date_start,
       date_end,
@@ -2580,6 +3206,7 @@ class CheckCheck_ extends React.Component {
       point_id,
       kassa,
       complete_data,
+      complete_data_summary,
       order,
       summ_ofd,
       summ_chef,
@@ -2590,6 +3217,7 @@ class CheckCheck_ extends React.Component {
       need_upload,
       excelCompare,
       excelFileName,
+      onlineAudit,
     } = this.state;
 
     const canAct = summ_ofd != null && summ_chef != null && !needsRefresh;
@@ -2599,6 +3227,12 @@ class CheckCheck_ extends React.Component {
       : "Все равно выгрузить данные в 1С (возможны дубли!)";
 
     const point = points.find((p) => Number(p.id) === Number(point_id));
+    const completenessRows = Array.isArray(complete_data) ? complete_data : [];
+    const completenessVisibleRows = completenessRows.slice(0, 100);
+    const completenessProblems =
+      Number(complete_data_summary?.rows_incomplete ?? completenessRows.length) || 0;
+    const hasCompletenessData =
+      complete_data_summary?.rows_total != null || completenessRows.length > 0;
 
     return (
       <>
@@ -2734,11 +3368,17 @@ class CheckCheck_ extends React.Component {
 
         <CheckCheck_Modal
           open={modalOrder}
-          onClose={() => this.setState({ modalOrder: false, orders: [], order: null })}
+          onClose={() =>
+            this.setState({ modalOrder: false, orders: [], order: null, orderSearchMeta: null })
+          }
           fullScreen={fullScreen}
           orders={orders}
           order={order}
+          searchMeta={orderSearchMeta}
+          canResolve={acces?.resolve_access}
+          searchOrder={this.searchOrderById}
           saveOrder={this.saveOrder}
+          resolveDuplicate={this.resolveDuplicateReceipt}
         />
 
         <Grid
@@ -2776,6 +3416,19 @@ class CheckCheck_ extends React.Component {
             />
           </Grid>
 
+          {Number(acces?.check_access) === 1 && (
+            <Grid size={12}>
+              <BatchExcelCheck
+                dateStart={date_start}
+                dateEnd={date_end}
+                points={points}
+                access={acces}
+                onLoading={(value) => this.setState({ is_load: value })}
+                onAlert={(status, text) => this.openAlert(status, text)}
+              />
+            </Grid>
+          )}
+
           <Grid
             size={{
               xs: 12,
@@ -2805,6 +3458,17 @@ class CheckCheck_ extends React.Component {
               func={(event, value) => this.changeKass("kassa", event, value)}
             />
           </Grid>
+
+          {Number(acces?.check_access) === 1 && (
+            <Grid size={12}>
+              <OnlineCheckAudit
+                result={onlineAudit}
+                onRun={this.auditOnline}
+                disabled={!date_start || !date_end || !point_id}
+                canRepair={Number(acces?.resolve_access) === 1}
+              />
+            </Grid>
+          )}
 
           <Grid
             size={{
@@ -2944,7 +3608,7 @@ class CheckCheck_ extends React.Component {
             </Grid>
           )}
 
-          {complete_data?.length > 0 && Number(acces?.check_access) === 1 && (
+          {hasCompletenessData && Number(acces?.check_access) === 1 && (
             <Grid
               size={12}
               sx={{
@@ -2953,17 +3617,16 @@ class CheckCheck_ extends React.Component {
             >
               <Accordion
                 style={{ width: "100%" }}
-                expanded={complete_data.length > 100 ? false : this.state.isAccordionOpen}
-                onChange={complete_data.length > 100 ? undefined : this.handleAccordionChange}
-                disabled={complete_data.length > 100}
+                expanded={this.state.isAccordionOpen}
+                onChange={this.handleAccordionChange}
               >
-                <AccordionSummary
-                  expandIcon={complete_data.length > 100 ? null : <ExpandMoreIcon />}
-                >
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 1,
                       width: "100%",
                     }}
                   >
@@ -2975,58 +3638,45 @@ class CheckCheck_ extends React.Component {
                     >
                       Проверка на заполненность данных
                     </Typography>
-                    <Tooltip
-                      title="Количество заказов"
-                      arrow
-                    >
+                    {complete_data_summary && (
                       <Chip
-                        label={complete_data.length}
-                        color="primary"
+                        label={`${formatNumber(complete_data_summary.completeness_percent ?? 100)}%`}
+                        color={completenessProblems === 0 ? "success" : "warning"}
                         size="small"
-                        sx={{ ml: 1 }}
                       />
-                    </Tooltip>
+                    )}
+                    <Chip
+                      label={`Проблемы: ${formatNumber(completenessProblems)}`}
+                      color={completenessProblems === 0 ? "success" : "error"}
+                      size="small"
+                      variant="outlined"
+                    />
                   </Box>
                 </AccordionSummary>
-                {complete_data.length <= 100 && (
-                  <AccordionDetails>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>#</TableCell>
-                          <TableCell>Номер заказа</TableCell>
-                          <TableCell>Номер кассы</TableCell>
-                          <TableCell>Сумма заказа</TableCell>
-                          <TableCell>Дата / время</TableCell>
-                          <TableCell>Найти заказ</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {complete_data.map((it, k) => (
-                          <TableRow
-                            hover
-                            key={k}
-                          >
-                            <TableCell>{k + 1}</TableCell>
-                            <TableCell>{it.id}</TableCell>
-                            <TableCell>{it.kassa}</TableCell>
-                            <TableCell>{formatNumber(it.summ_check ?? 0)} ₽</TableCell>
-                            <TableCell>
-                              {it.date} {it.time}
-                            </TableCell>
-                            <TableCell>
-                              <IconButton
-                                onClick={() => this.openModal(it.summ_check, it.date, it)}
-                              >
-                                <ReceiptLongIcon sx={{ color: "#c03" }} />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </AccordionDetails>
-                )}
+                <AccordionDetails>
+                  <CompletenessSummary
+                    summary={complete_data_summary}
+                    rowsCount={completenessRows.length}
+                  />
+                  {completenessRows.length > completenessVisibleRows.length && (
+                    <Alert
+                      severity="info"
+                      sx={{ mb: 2 }}
+                    >
+                      Показаны первые {formatNumber(completenessVisibleRows.length)} из{" "}
+                      {formatNumber(completenessRows.length)} проблемных чеков. Список ограничен для
+                      удобства просмотра.
+                    </Alert>
+                  )}
+                  {completenessVisibleRows.map((it, index) => (
+                    <CompletenessRow
+                      key={it.receipt_id ?? it.id ?? index}
+                      row={it}
+                      index={index}
+                      onFind={this.openModal}
+                    />
+                  ))}
+                </AccordionDetails>
               </Accordion>
             </Grid>
           )}
