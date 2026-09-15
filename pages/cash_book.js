@@ -74,7 +74,6 @@ const fizCashRows = [
     column: "plus",
     tooltip: text.virycka_fiz,
     isDelete: false,
-    forceShow: true,
   },
   {
     type: "cash_from_bank",
@@ -129,7 +128,6 @@ const driverCashRows = [
     column: "plus",
     tooltip: text.virycka_driver,
     isDelete: false,
-    forceShow: true,
   },
   {
     type: "payroll_from_fiz",
@@ -178,7 +176,6 @@ const driverCashRows = [
     column: "minus",
     tooltip: text.zp_driver,
     isDelete: false,
-    forceShow: true,
   },
   {
     type: "cafe_salary",
@@ -549,10 +546,6 @@ class MainTable extends React.Component {
       return false;
     }
 
-    if (row.forceShow) {
-      return true;
-    }
-
     return this.getCashValue(`${row.type}_is_edit`) !== false;
   }
 
@@ -561,7 +554,7 @@ class MainTable extends React.Component {
       return false;
     }
 
-    const isEdit = row.forceShow ? "show" : this.getCashValue(`${row.type}_is_edit`);
+    const isEdit = this.getCashValue(`${row.type}_is_edit`);
     const plusKey =
       row.plusKey || (row.column === "plus" || row.column === "both" ? row.type : null);
     const minusKey =
@@ -637,11 +630,9 @@ class MainTable extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody>
-            <TableRow>
-              <TableCell>
-                {this.getCashValue("ostatok_nachalo_dnya_is_edit") === false ? (
-                  <Typography component="span">Остаток на начало дня</Typography>
-                ) : (
+            {this.getCashValue("ostatok_nachalo_dnya_is_edit") !== false ? (
+              <TableRow>
+                <TableCell>
                   <Typography
                     component="span"
                     onClick={this.props.addData.bind(
@@ -655,44 +646,48 @@ class MainTable extends React.Component {
                   >
                     Остаток на начало дня
                   </Typography>
-                )}
-              </TableCell>
-              <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
-                {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.getCashValue("ostatok_nachalo_dnya") || 0,
-                )}
-              </TableCell>
-              <TableCell
-                style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}
-              ></TableCell>
-            </TableRow>
+                </TableCell>
+                <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
+                  {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
+                    this.getCashValue("ostatok_nachalo_dnya") || 0,
+                  )}
+                </TableCell>
+                <TableCell
+                  style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}
+                ></TableCell>
+              </TableRow>
+            ) : null}
 
             {this.renderRows()}
 
-            <TableRow>
-              <TableCell>Итого</TableCell>
-              <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
-                {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.getCashValue("itog_plus") || 0,
-                )}
-              </TableCell>
-              <TableCell style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}>
-                {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.getCashValue("itog_minus") || 0,
-                )}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>Остаток на конец дня</TableCell>
-              <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
-                {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
-                  this.getCashValue("ostatok_konec_dnya") || 0,
-                )}
-              </TableCell>
-              <TableCell
-                style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}
-              ></TableCell>
-            </TableRow>
+            {this.getCashValue("itog_is_edit") !== false ? (
+              <TableRow>
+                <TableCell>Итого</TableCell>
+                <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
+                  {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
+                    this.getCashValue("itog_plus") || 0,
+                  )}
+                </TableCell>
+                <TableCell style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}>
+                  {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
+                    this.getCashValue("itog_minus") || 0,
+                  )}
+                </TableCell>
+              </TableRow>
+            ) : null}
+            {this.getCashValue("ostatok_konec_dnya_is_edit") !== false ? (
+              <TableRow>
+                <TableCell>Остаток на конец дня</TableCell>
+                <TableCell style={{ backgroundColor: "rgba(3, 192, 60, 0.8)", color: "#fff" }}>
+                  {new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2 }).format(
+                    this.getCashValue("ostatok_konec_dnya") || 0,
+                  )}
+                </TableCell>
+                <TableCell
+                  style={{ backgroundColor: "rgba(255, 3, 62, 1)", color: "#fff" }}
+                ></TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>
