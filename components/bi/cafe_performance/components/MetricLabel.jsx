@@ -38,9 +38,11 @@ export default function MetricLabel({
   return (
     <Stack
       direction="row"
-      alignItems="center"
       spacing={CP_SPACE.micro}
-      sx={{ minWidth: 0 }}
+      sx={{
+        alignItems: "center",
+        minWidth: 0,
+      }}
     >
       <Typography
         variant={variant}

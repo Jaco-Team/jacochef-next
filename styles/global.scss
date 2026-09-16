@@ -13,6 +13,17 @@ label {
   font-size: 1rem !important;
 }
 
+.v2-module {
+  p,
+  span,
+  b,
+  th,
+  td,
+  label {
+    font-size: inherit !important;
+  }
+}
+
 .medium-table {
   p,
   span,

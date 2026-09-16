@@ -28,21 +28,21 @@ export default function SkladDeleteDialog({
       maxWidth="sm"
     >
       <DialogTitle sx={{ fontWeight: 700 }}>{title}</DialogTitle>
-
       <DialogContent>
         <Stack spacing={1.5}>
           {description ? <Typography>{description}</Typography> : null}
           {warning ? (
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {warning}
             </Typography>
           ) : null}
         </Stack>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
         <Button
           onClick={onClose}

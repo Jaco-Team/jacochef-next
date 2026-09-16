@@ -21,9 +21,11 @@ function FieldCard({ title, rows }) {
         <Stack spacing={2}>
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
             spacing={2}
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
             <Typography
               variant="h6"
@@ -39,7 +41,9 @@ function FieldCard({ title, rows }) {
             >
               <Typography
                 variant="body2"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {row.label}
               </Typography>
@@ -74,7 +78,9 @@ function SettingValueRow({ checked, label }) {
     <Stack spacing={0.5}>
       <Typography
         variant="body2"
-        color="text.secondary"
+        sx={{
+          color: "text.secondary",
+        }}
       >
         {label}
       </Typography>

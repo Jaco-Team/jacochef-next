@@ -594,8 +594,10 @@ export default function SiteClients() {
       <Grid
         container
         spacing={0}
-        mb={1}
         className="container_first_child"
+        sx={{
+          mb: 1,
+        }}
       >
         <Grid
           size={12}

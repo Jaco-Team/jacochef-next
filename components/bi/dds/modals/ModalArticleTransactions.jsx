@@ -85,13 +85,21 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
       >
         <Paper variant="outlined">
           <Box
-            p={2}
-            display="flex"
-            flexDirection="column"
-            gap={2}
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
           >
             <Box>
-              <Typography fontWeight={500}>Назначить статью:</Typography>
+              <Typography
+                sx={{
+                  fontWeight: 500,
+                }}
+              >
+                Назначить статью:
+              </Typography>
               <MyAutocomplite
                 data={articles}
                 value={selectedArticle}
@@ -100,7 +108,13 @@ export default function ModalArticleTransactions({ onClose, showAlert }) {
               />
             </Box>
 
-            <Typography fontWeight={500}>Для транзакций:</Typography>
+            <Typography
+              sx={{
+                fontWeight: 500,
+              }}
+            >
+              Для транзакций:
+            </Typography>
             <TableContainer
               component={Paper}
               variant="outlined"

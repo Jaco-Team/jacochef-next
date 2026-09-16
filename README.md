@@ -7,7 +7,7 @@ Development и production-запуск описаны в [Docker-инструк�
 
 - package.json declares dev, build, start, lint/format helpers, pm2 deployment flows for local/dev/prod, and a Sentry sourcemap step, so
   releases are handled via npm run deploy:\* followed by pm2 + Sentry CLI (package.json:8, package.json:16, package.json:20).
-- Dependencies span modern React 19, Next 16, MUI 7 (core/icons/lab), rich editors (TinyMCE), drag-and-drop (@dnd-kit), Zustand, and Sentry
+- Dependencies span modern React 19, Next 16, MUI 9 (core/icons/lab), rich editors (TinyMCE), drag-and-drop (@dnd-kit), Zustand, and Sentry
   tooling, reflecting an internal operations dashboard with charts, scheduling, and forms (package.json:31, package.json:35, package.json:48,
   package.json:51, package.json:62).
 - \_app.js boots Sentry, wraps every page in the shared MUI theme, conditionally hides the dynamically loaded header for auth routes, and
@@ -20,6 +20,13 @@ Development и production-запуск описаны в [Docker-инструк�
   useful for the many internal AJAX-heavy routes that follow (pages/index.js:1-34).
 
 ---
+
+## Дизайн-система и Storybook
+
+- Корневая папка `design-system/` хранит план внедрения, Storybook-first промпт и stories для единых Chef UI-паттернов.
+- Папка `.storybook/` является частью исходников проекта и должна индексироваться git: в ней лежит конфигурация Storybook, preview-провайдеры MUI/локализации и mock для `next/font/google`.
+- Для UI-задач сначала сверяйся со Storybook и `design-system/STORYBOOK_PROMPT.md`; Figma остается внешним эталоном дизайна, а Storybook - внутренним контрактом реализации.
+- Локальный запуск: `npm run storybook`. Статическая проверка: `npm run build-storybook`.
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 

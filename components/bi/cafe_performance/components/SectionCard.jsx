@@ -28,9 +28,11 @@ export default function SectionCard({ title, subtitle, action, children }) {
         {hasHeader ? (
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
             spacing={CP_SPACE.component}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+            }}
           >
             <Stack spacing={CP_SPACE.micro}>
               {title ? (
@@ -44,7 +46,9 @@ export default function SectionCard({ title, subtitle, action, children }) {
               {subtitle ? (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   {subtitle}
                 </Typography>

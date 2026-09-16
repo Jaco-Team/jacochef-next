@@ -250,13 +250,17 @@ const ReviewsTable = ({ reviews }) => {
                           </Typography>
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             ID заказа: {review.order_id}
                           </Typography>
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Дата: {review.date_time_create}
                           </Typography>

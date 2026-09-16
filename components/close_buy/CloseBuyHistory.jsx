@@ -8,14 +8,17 @@ import {
   Skeleton,
   Stack,
   SwipeableDrawer,
-  TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 
-import { MyAutocomplite, MyDatePickerNew, MySelect } from "@/ui/Forms";
-import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
+import {
+  JacoAutocomplete,
+  JacoDatePicker,
+  JacoSelect,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 
 import HistoryEvent from "./HistoryEvent";
 import HistoryEventDetails from "./HistoryEventDetails";
@@ -57,8 +60,6 @@ export default function CloseBuyHistory({
   const dateFrom = filters.date_from ? dayjs(filters.date_from) : null;
   const dateTo = filters.date_to ? dayjs(filters.date_to) : null;
   const groupedHistory = useMemo(() => groupHistoryByDate(history), [history]);
-  const selectedPoint =
-    points.find((point) => String(point.id) === String(selectedPointId)) || null;
   const selectedEvent = history.find((event) => event.id === selectedEventId) || history[0] || null;
 
   useEffect(() => {
@@ -80,28 +81,22 @@ export default function CloseBuyHistory({
     <Stack spacing={3}>
       <Grid container>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <CityCafeAutocomplete2
-            points={points}
-            value={selectedPoint ? [selectedPoint] : []}
-            onChange={(selectedPoints) => {
-              const point = selectedPoints.at(-1);
-              if (point) onPointChange?.({ target: { value: point.id } });
-            }}
+          <JacoSelect
+            options={points}
+            value={selectedPointId}
+            onChange={onPointChange}
             label="Кафе"
-            placeholder="Выберите кафе"
-            withOrganizationMode={false}
-            compact
+            allowNone={false}
           />
         </Grid>
       </Grid>
-
       <Grid
         container
         spacing={2}
         alignItems="center"
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <TextField
+          <JacoTextInput
             fullWidth
             size="small"
             type="search"
@@ -111,46 +106,45 @@ export default function CloseBuyHistory({
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <MyDatePickerNew
+          <JacoDatePicker
             label="Дата от"
             value={filters.date_from}
             maxDate={dateTo || today}
-            func={(value) =>
+            onChange={(value) =>
               onFiltersChange({ date_from: value ? value.format("YYYY-MM-DD") : null })
             }
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <MyDatePickerNew
+          <JacoDatePicker
             label="Дата до"
             value={filters.date_to}
             minDate={dateFrom || undefined}
             maxDate={today}
-            func={(value) =>
+            onChange={(value) =>
               onFiltersChange({ date_to: value ? value.format("YYYY-MM-DD") : null })
             }
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <MyAutocomplite
-            data={categoryOptions}
+          <JacoAutocomplete
+            options={categoryOptions}
             value={selectedCategoryOption}
-            func={(_, category) => onFiltersChange({ category_id: category.id })}
+            onChange={(_, category) => onFiltersChange({ category_id: category?.id ?? "all" })}
             label="Категория"
             disableClearable
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <MySelect
-            is_none={false}
-            data={authorOptions}
+          <JacoSelect
+            allowNone={false}
+            options={authorOptions}
             value={filters.author}
-            func={(event) => onFiltersChange({ author: event.target.value })}
+            onChange={(event) => onFiltersChange({ author: event.target.value })}
             label="Автор"
           />
         </Grid>
       </Grid>
-
       <Grid
         container
         spacing={2}
@@ -272,7 +266,6 @@ export default function CloseBuyHistory({
           </Grid>
         ) : null}
       </Grid>
-
       {isMobile ? (
         <SwipeableDrawer
           anchor="bottom"
@@ -281,21 +274,23 @@ export default function CloseBuyHistory({
           onOpen={() => {}}
           disableSwipeToOpen
           ModalProps={{ keepMounted: true }}
-          PaperProps={{
-            sx: {
-              height: "75dvh",
-              maxHeight: "75dvh",
-              minHeight: 0,
-              display: "flex",
-              flexDirection: "column",
-              borderRadius: "24px 24px 0 0",
-              overflow: "hidden",
-              bgcolor: "#FFFFFF",
-            },
-          }}
           sx={{
             "& .MuiBackdrop-root": {
               bgcolor: "rgba(0, 0, 0, 0.48)",
+            },
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                height: "75dvh",
+                maxHeight: "75dvh",
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+                borderRadius: "24px 24px 0 0",
+                overflow: "hidden",
+                bgcolor: "#FFFFFF",
+              },
             },
           }}
         >

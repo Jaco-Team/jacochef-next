@@ -93,14 +93,12 @@ export default function AdsPage() {
       >
         <CircularProgress />
       </Backdrop>
-
       <MyAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
         text={alertMessage}
       />
-
       <Grid
         spacing={3}
         className="container_first_child"
@@ -114,7 +112,9 @@ export default function AdsPage() {
 
         <Grid
           size={12}
-          mt={2}
+          sx={{
+            mt: 2,
+          }}
         >
           <Paper>
             <Tabs

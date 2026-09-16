@@ -89,10 +89,14 @@ export function MyDatePickerNew(props) {
               fullWidth: true,
               required: !!props.required,
               size: "small",
-              InputLabelProps: props.InputLabelProps || undefined,
+
               sx: {
                 ...(props.customRI ? customStylesRenderInput[props.customRI] : {}),
                 ...(props.sx || {}),
+              },
+
+              slotProps: {
+                inputLabel: props.InputLabelProps || undefined,
               },
             },
 

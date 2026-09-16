@@ -108,7 +108,15 @@ class SitePriceLevel_Modal_XLS extends React.Component {
               }}
             >
               <Tooltip
-                title={<Typography color="inherit">{"Скачать шаблон таблицы в Excel"}</Typography>}
+                title={
+                  <Typography
+                    sx={{
+                      color: "inherit",
+                    }}
+                  >
+                    {"Скачать шаблон таблицы в Excel"}
+                  </Typography>
+                }
               >
                 <IconButton
                   disableRipple
@@ -1025,13 +1033,29 @@ class SitePriceLevel_Tab_Level extends React.Component {
                               <IconButton /*onClick={() => this.getOneLevel(level.id)}*/>
                                 {parseInt(acces?.edit_level_access) ? (
                                   <Tooltip
-                                    title={<Typography color="inherit">Редактировать</Typography>}
+                                    title={
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        Редактировать
+                                      </Typography>
+                                    }
                                   >
                                     <EditIcon />
                                   </Tooltip>
                                 ) : (
                                   <Tooltip
-                                    title={<Typography color="inherit">Просмотр</Typography>}
+                                    title={
+                                      <Typography
+                                        sx={{
+                                          color: "inherit",
+                                        }}
+                                      >
+                                        Просмотр
+                                      </Typography>
+                                    }
                                   >
                                     <VisibilityIcon />
                                   </Tooltip>

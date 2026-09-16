@@ -148,8 +148,10 @@ export default function EmployeeHierarchyList({
               <Stack
                 direction="row"
                 spacing={1}
-                alignItems="flex-start"
-                justifyContent="space-between"
+                sx={{
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                }}
               >
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography sx={{ fontWeight: 800 }}>{row.name}</Typography>

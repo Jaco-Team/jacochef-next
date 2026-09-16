@@ -84,10 +84,11 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
           </Button>
         </Grid>
       )}
-
       <Grid
         size={12}
-        mb={5}
+        sx={{
+          mb: 5,
+        }}
       >
         <TableContainer>
           <Table>
@@ -235,11 +236,12 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
           </Table>
         </TableContainer>
       </Grid>
-
       {kkt_info_none_active.length > 0 && (
         <Grid
           size={12}
-          mb={kkt_info_hist.length ? 0 : 5}
+          sx={{
+            mb: kkt_info_hist.length ? 0 : 5,
+          }}
         >
           <Accordion style={{ width: "100%" }}>
             <AccordionSummary expandIcon={<ExpandMore />}>
@@ -278,11 +280,12 @@ function CafeEditTabKKT({ canAccess, canView, canEdit, openHistModal }) {
           </Accordion>
         </Grid>
       )}
-
       {kkt_info_hist.length > 0 && canView("edit_kkt") && (
         <Grid
           size={12}
-          mb={5}
+          sx={{
+            mb: 5,
+          }}
         >
           <Accordion style={{ width: "100%" }}>
             <AccordionSummary expandIcon={<ExpandMore />}>

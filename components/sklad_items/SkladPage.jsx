@@ -159,14 +159,12 @@ export default function SkladPage() {
       >
         <CircularProgress />
       </Backdrop>
-
       <MyAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
         text={alertMessage}
       />
-
       <Grid
         container
         spacing={3}
@@ -176,7 +174,9 @@ export default function SkladPage() {
           <Grid
             container
             spacing={2}
-            alignItems={{ xs: "flex-start", md: "center" }}
+            sx={{
+              alignItems: { xs: "flex-start", md: "center" },
+            }}
           >
             <Grid size={{ xs: 12, md: "grow" }}>
               <Box>
@@ -187,7 +187,9 @@ export default function SkladPage() {
             <Grid size={{ xs: 12, md: "auto" }}>
               <Stack
                 direction="row"
-                justifyContent={{ xs: "flex-start", md: "flex-end" }}
+                sx={{
+                  justifyContent: { xs: "flex-start", md: "flex-end" },
+                }}
               >
                 <Button
                   variant="contained"
@@ -241,7 +243,11 @@ export default function SkladPage() {
               ) : (
                 <Paper sx={{ p: 3, borderRadius: 3 }}>
                   <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
-                  <Typography color="text.secondary">
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     Проверь права доступа в `sklad_items/get_all`.
                   </Typography>
                 </Paper>

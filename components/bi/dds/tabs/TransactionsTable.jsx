@@ -24,7 +24,7 @@ import {
   Category,
   Clear,
   Delete,
-  DeleteOutline,
+  DeleteOutlined,
   EditOutlined,
   FilterAlt,
 } from "@mui/icons-material";
@@ -245,7 +245,7 @@ export default function TransactionsTable({ showAlert }) {
             variant="text"
             size="small"
             disabled={!selected?.length}
-            startIcon={<DeleteOutline />}
+            startIcon={<DeleteOutlined />}
             onClick={withConfirm(() => {
               setState({
                 selectedTx: transactions?.filter((r) => selected?.includes(r.id)),

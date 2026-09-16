@@ -301,14 +301,15 @@ export default function useSkladArchiveController({ showAlert }) {
             func={(event) => setEntityType(event.target.value)}
           />
         </Paper>
-
         <Paper sx={{ p: 2, borderRadius: 3 }}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
-            sx={{ mb: 2 }}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              mb: 2,
+            }}
           >
             <Typography sx={{ fontWeight: 700 }}>Архив: {getEntityLabel(entityType)}</Typography>
 
@@ -355,7 +356,9 @@ export default function useSkladArchiveController({ showAlert }) {
                         <Stack
                           direction="row"
                           spacing={1}
-                          justifyContent="flex-end"
+                          sx={{
+                            justifyContent: "flex-end",
+                          }}
                         >
                           <Button
                             size="small"
@@ -386,8 +389,10 @@ export default function useSkladArchiveController({ showAlert }) {
                     >
                       <Typography
                         variant="body2"
-                        color="text.secondary"
                         align="center"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         Архивных записей по выбранному типу сейчас нет.
                       </Typography>

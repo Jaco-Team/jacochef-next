@@ -3,16 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,yml,yaml,css,scss,html,mjs,cjs}": "prettier --write"
+    "*.{js,jsx,mjs,cjs}": [
+      "node scripts/check-js-syntax.js --",
+      "prettier --write"
+    ],
+    "*.{ts,tsx,json,md,yml,yaml,css,scss,html}": "prettier --write"
   },
   "scripts": {
     "postinstall": "node scripts/copy-tinymce.js",
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
+    "test": "node scripts/test.js",
     "build": "next build",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "test:e2e:sklad": "playwright test --config=playwright.sklad.config.js",
     "start": "next start",
     "lint": "next lint",
+    "check:syntax": "node scripts/check-js-syntax.js",
     "format": "prettier --write .",
     "prepare": "husky",
     "deploy:local": "next build && pm2 startOrRestart ecosystem.config.js --env local",
@@ -30,11 +38,11 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hello-pangea/dnd": "^18.0.1",
-    "@mui/icons-material": "^7.3.11",
-    "@mui/lab": "^7.0.1-beta.25",
-    "@mui/material": "^7.3.11",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/lab": "^9.0.0-beta.9",
+    "@mui/material": "^9.4.0",
     "@mui/x-charts": "^9.13.0",
-    "@mui/x-date-pickers": "^8.29.3",
+    "@mui/x-date-pickers": "^9.12.0",
     "@sentry/cli": "^3.7.0",
     "@sentry/react": "^10.74.0",
     "@tinymce/tinymce-react": "^6.3.0",
@@ -67,6 +75,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@storybook/addon-a11y": "^10.5.10",
+    "@storybook/nextjs": "^10.5.10",
     "@types/dropzone": "^5.7.9",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.3.0",
@@ -75,6 +85,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
     "prettier": "^3.9.7",
-    "sass": "^1.104.1"
+    "sass": "^1.104.1",
+    "storybook": "^10.5.10"
   }
 }

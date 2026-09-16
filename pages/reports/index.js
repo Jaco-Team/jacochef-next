@@ -423,7 +423,9 @@ function FeedbackPage() {
               <Grid
                 container
                 spacing={2}
-                alignItems="flex-end"
+                sx={{
+                  alignItems: "flex-end",
+                }}
               >
                 <Grid size={{ xs: 12, sm: 4, md: 3 }}>
                   <CityCafeAutocomplete2
@@ -506,7 +508,9 @@ function FeedbackPage() {
               <Grid
                 container
                 spacing={2}
-                alignItems="flex-end"
+                sx={{
+                  alignItems: "flex-end",
+                }}
               >
                 <Grid size={{ xs: 12, sm: 4, md: 3 }}>
                   <CityCafeAutocomplete2

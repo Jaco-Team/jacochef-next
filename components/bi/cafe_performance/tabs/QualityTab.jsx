@@ -190,9 +190,11 @@ function QualitySummaryCard({ label, value, caption, tone = "default", icon, del
     >
       <Stack
         direction="row"
-        alignItems="flex-start"
-        justifyContent="space-between"
         spacing={1}
+        sx={{
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+        }}
       >
         <MetricLabel
           text={label}
@@ -219,12 +221,13 @@ function QualitySummaryCard({ label, value, caption, tone = "default", icon, del
           </Box>
         ) : null}
       </Stack>
-
       <Stack
         direction="row"
-        alignItems="center"
         spacing={0.75}
-        flexWrap="wrap"
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
       >
         <Typography
           variant="h5"
@@ -239,12 +242,13 @@ function QualitySummaryCard({ label, value, caption, tone = "default", icon, del
         </Typography>
         <DeltaPill delta={delta} />
       </Stack>
-
       {caption ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ mt: "auto" }}
+          sx={{
+            color: "text.secondary",
+            mt: "auto",
+          }}
         >
           {caption}
         </Typography>
@@ -430,11 +434,12 @@ export default function QualityTab({ data, formatters }) {
         title="Качество и проблемы"
         subtitle="Статистика ошибок и жалоб, а также аномалий в длительности этапов"
       />
-
       <Grid
         container
         spacing={2}
-        alignItems="stretch"
+        sx={{
+          alignItems: "stretch",
+        }}
       >
         <Grid
           size={{ xs: 12, md: 4 }}
@@ -489,7 +494,6 @@ export default function QualityTab({ data, formatters }) {
           />
         </Grid>
       </Grid>
-
       <Grid
         container
         spacing={3}
@@ -509,7 +513,6 @@ export default function QualityTab({ data, formatters }) {
           </SectionCard>
         </Grid>
       </Grid>
-
       <SectionCard
         title="Аномалии длительности этапов по категориям"
         action={stageSwitch}
@@ -566,7 +569,9 @@ export default function QualityTab({ data, formatters }) {
                         />
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           {formatters.integer(item.long_count)} из {formatters.integer(item.count)}
                         </Typography>

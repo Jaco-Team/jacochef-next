@@ -192,7 +192,6 @@ const CustomPaper = React.memo(
             </ButtonGroup>
           </Box>
         )}
-
         <Box
           sx={{
             px: 2,
@@ -265,7 +264,6 @@ const CustomPaper = React.memo(
             </span>
           </Box>
         </Box>
-
         <Box sx={{ px: 2 }}>
           <TextField
             fullWidth
@@ -276,24 +274,25 @@ const CustomPaper = React.memo(
             onChange={(e) => setSearchQuery(e.target.value)}
             onMouseDown={handleSearchMouseDown}
             onClick={handleSearchClick}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment
-                  position="end"
-                  onMouseDown={handleSearchMouseDown}
-                >
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 1,
               },
             }}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment
+                    position="end"
+                    onMouseDown={handleSearchMouseDown}
+                  >
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
         </Box>
-
         {children}
       </Paper>
     );
@@ -590,7 +589,7 @@ export default function CityCafeAutocompleteNew({
               setOpen(true);
             }
           }}
-          renderTags={(value, getTagProps) => {
+          renderValue={(value, getItemProps) => {
             const count = value.length;
 
             // Если нет выбранных — ничего не рендерим
@@ -600,7 +599,7 @@ export default function CityCafeAutocompleteNew({
               <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                   {value.map((option, index) => {
-                    const { key, ...tagProps } = getTagProps({ index });
+                    const { key, ...tagProps } = getItemProps({ index });
                     return (
                       <Chip
                         key={key}
@@ -662,15 +661,6 @@ export default function CityCafeAutocompleteNew({
                     setOpen(true);
                   }
                 }}
-                InputProps={{
-                  ...InputProps,
-                  className: hasTags
-                    ? InputProps.className
-                        ?.replace(/\s?MuiAutocomplete-input\s?/g, " ")
-                        .replace(/\s?MuiAutocomplete-inputFocused\s?/g, " ")
-                        .trim()
-                    : InputProps.className,
-                }}
                 sx={{
                   "& .MuiInputBase-root": {
                     minHeight: hasTags ? "auto" : undefined,
@@ -680,6 +670,17 @@ export default function CityCafeAutocompleteNew({
                   "& .MuiInputBase-input": {
                     paddingTop: hasTags ? "2px" : undefined,
                     paddingBottom: hasTags ? "2px" : undefined,
+                  },
+                }}
+                slotProps={{
+                  input: {
+                    ...InputProps,
+                    className: hasTags
+                      ? InputProps.className
+                          ?.replace(/\s?MuiAutocomplete-input\s?/g, " ")
+                          .replace(/\s?MuiAutocomplete-inputFocused\s?/g, " ")
+                          .trim()
+                      : InputProps.className,
                   },
                 }}
               />
@@ -812,7 +813,11 @@ export default function CityCafeAutocompleteNew({
                   />
                   <ListItemText
                     primary={
-                      <Typography fontWeight={600}>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                        }}
+                      >
                         {entityName}{" "}
                         <span className="group-items-label">
                           Выбрано{" "}
@@ -829,7 +834,6 @@ export default function CityCafeAutocompleteNew({
                     }
                   />
                 </div>
-
                 <ul className={autocompleteClasses.groupUl}>{groupParams.children}</ul>
               </Box>
             );

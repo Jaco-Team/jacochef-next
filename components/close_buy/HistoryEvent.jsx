@@ -55,8 +55,10 @@ export default function HistoryEvent({ event, selected, onClick }) {
       <Stack spacing={0.5}>
         <Stack
           direction="row"
-          justifyContent="space-between"
           spacing={1}
+          sx={{
+            justifyContent: "space-between",
+          }}
         >
           <Typography sx={{ fontWeight: 700, color: "#2B2B2B" }}>
             {getHistoryEventTitle(event)}

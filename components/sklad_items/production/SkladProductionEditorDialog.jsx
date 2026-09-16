@@ -429,7 +429,9 @@ export default function SkladProductionEditorDialog({
                           direction="row"
                           spacing={1}
                           useFlexGap
-                          flexWrap="wrap"
+                          sx={{
+                            flexWrap: "wrap",
+                          }}
                         >
                           <MyCheckBox
                             label="Активность"
@@ -466,7 +468,9 @@ export default function SkladProductionEditorDialog({
                         <Stack
                           direction="row"
                           spacing={0.5}
-                          alignItems="center"
+                          sx={{
+                            alignItems: "center",
+                          }}
                         >
                           <Stack sx={{ minWidth: 0, flex: 1 }}>
                             <MyAutocomplite
@@ -754,7 +758,6 @@ export default function SkladProductionEditorDialog({
           )}
         </Stack>
       </DialogContent>
-
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose}>Закрыть</Button>
         <Button

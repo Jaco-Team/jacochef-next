@@ -83,13 +83,15 @@ export default class ErrCatsTable extends Component {
               >
                 <Typography
                   variant="body1"
-                  fontWeight={level < 2 ? 600 : 400}
                   sx={{
+                    fontWeight: level < 2 ? 600 : 400,
                     cursor: "pointer",
                     flex: 1,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    ml: hasChildren ? 0 : 2, // Отступ если нет детей
+
+                    // Отступ если нет детей
+                    ml: hasChildren ? 0 : 2,
                   }}
                 >
                   {node.name}
@@ -182,8 +184,8 @@ export default class ErrCatsTable extends Component {
             >
               <Typography
                 variant="body1"
-                fontWeight={level < 2 ? 600 : 400}
                 sx={{
+                  fontWeight: level < 2 ? 600 : 400,
                   cursor: "default",
                   flex: 1,
                   overflow: "hidden",

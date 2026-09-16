@@ -64,7 +64,7 @@ import {
   MyAutocomplite2,
   MyDatePickerNew,
 } from "@/ui/Forms";
-import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+import { PickerDay } from "@mui/x-date-pickers/PickerDay";
 
 import queryString from "query-string";
 
@@ -3130,7 +3130,7 @@ class WorkSchedule_ extends React.Component {
       }
 
       return (
-        <PickersDay
+        <PickerDay
           {...props}
           style={{ backgroundColor: backgroundColor, color: "#fff" }}
           onClick={this.chooseDay.bind(this, date)}
@@ -3139,7 +3139,7 @@ class WorkSchedule_ extends React.Component {
     }
 
     return (
-      <PickersDay
+      <PickerDay
         {...props}
         style={{ backgroundColor: "#fff", color: "rgba(0, 0, 0, 0.87)" }}
         onClick={this.chooseDay.bind(this, date)}

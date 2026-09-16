@@ -307,9 +307,11 @@ export default function Header() {
           <Typography
             component="h1"
             variant="h6"
-            color="inherit"
             noWrap
             style={{ flexGrow: 1 }}
+            sx={{
+              color: "inherit",
+            }}
           >
             {isRevizionAnalysisV2 ? "Анализ ревизий" : "Dashboard"}
           </Typography>
@@ -354,7 +356,6 @@ export default function Header() {
           />
         </Toolbar>
       </AppBar>
-
       <SwipeableDrawer
         anchor={"left"}
         open={isOpenMenu}
@@ -496,13 +497,17 @@ export default function Header() {
                 label="Поиск"
                 variant="outlined"
                 autoComplete="off"
-                inputProps={{
-                  ...params.inputProps,
-                  autoComplete: "off",
-                  autoCorrect: "off",
-                  autoCapitalize: "off",
-                  spellCheck: "false",
-                  form: "autocomplete-form",
+                slotProps={{
+                  ...params.slotProps,
+
+                  htmlInput: {
+                    ...params.slotProps.htmlInput,
+                    autoComplete: "off",
+                    autoCorrect: "off",
+                    autoCapitalize: "off",
+                    spellCheck: "false",
+                    form: "autocomplete-form",
+                  },
                 }}
               />
             )}

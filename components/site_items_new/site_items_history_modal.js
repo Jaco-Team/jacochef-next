@@ -222,7 +222,9 @@ function CompositionTable({ title, rows, status, isFinal = false }) {
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
+          sx={{
+            alignItems: "center",
+          }}
         >
           <Typography sx={{ fontWeight: 700 }}>{title}</Typography>
           {status === "removed" ? (
@@ -523,7 +525,6 @@ export default function SiteItemsHistoryModal({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent
         sx={{
           px: { xs: 1.25, md: 2.5 },
@@ -555,8 +556,10 @@ export default function SiteItemsHistoryModal({
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   spacing={1.5}
-                  alignItems={{ xs: "stretch", md: "center" }}
-                  justifyContent="space-between"
+                  sx={{
+                    alignItems: { xs: "stretch", md: "center" },
+                    justifyContent: "space-between",
+                  }}
                 >
                   <Box>
                     <Typography sx={{ color: textPrimary, fontSize: 18, fontWeight: 700 }}>
@@ -657,7 +660,9 @@ export default function SiteItemsHistoryModal({
                                 direction="row"
                                 spacing={0.75}
                                 useFlexGap
-                                flexWrap="wrap"
+                                sx={{
+                                  flexWrap: "wrap",
+                                }}
                               >
                                 {version.changedSections.map((section) => (
                                   <Chip
@@ -698,8 +703,10 @@ export default function SiteItemsHistoryModal({
                   direction={{ xs: "column", md: "row" }}
                   spacing={1}
                   useFlexGap
-                  flexWrap="wrap"
-                  alignItems={{ xs: "flex-start", md: "center" }}
+                  sx={{
+                    flexWrap: "wrap",
+                    alignItems: { xs: "flex-start", md: "center" },
+                  }}
                 >
                   <Typography sx={{ color: textSecondary, fontSize: 14 }}>
                     Состояние на {formatHistoryTimestamp(comparison.current.history_timestamp)}
@@ -857,7 +864,6 @@ export default function SiteItemsHistoryModal({
           </Stack>
         )}
       </DialogContent>
-
       <DialogActions
         sx={{
           px: { xs: 1.5, md: 2.5 },

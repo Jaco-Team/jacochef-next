@@ -211,7 +211,6 @@ const ColorPickerWithPalette = ({ color, onChange, showGradientPalette = false, 
         }}
         onClick={handleOpen}
       />
-
       <Popover
         open={open}
         anchorEl={anchorEl}
@@ -224,12 +223,14 @@ const ColorPickerWithPalette = ({ color, onChange, showGradientPalette = false, 
           vertical: "top",
           horizontal: "left",
         }}
-        PaperProps={{
-          sx: {
-            p: 2,
-            maxWidth: "500px",
-            maxHeight: "500px",
-            overflow: "auto",
+        slotProps={{
+          paper: {
+            sx: {
+              p: 2,
+              maxWidth: "500px",
+              maxHeight: "500px",
+              overflow: "auto",
+            },
           },
         }}
       >
@@ -239,22 +240,24 @@ const ColorPickerWithPalette = ({ color, onChange, showGradientPalette = false, 
             label="Пользовательский цвет"
             value={customColor}
             onChange={handleCustomColorChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      backgroundColor: customColor,
-                      border: "1px solid #d1d5db",
-                      borderRadius: 0.5,
-                    }}
-                  />
-                </InputAdornment>
-              ),
-            }}
             sx={{ width: "100%", mb: 2 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        backgroundColor: customColor,
+                        border: "1px solid #d1d5db",
+                        borderRadius: 0.5,
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
 
           <input
@@ -311,10 +314,7 @@ const ColorPickerWithPalette = ({ color, onChange, showGradientPalette = false, 
               spacing={0.5}
             >
               {colors.map((colorItem) => (
-                <Grid
-                  item
-                  key={colorItem}
-                >
+                <Grid key={colorItem}>
                   <Tooltip
                     title={colorItem}
                     arrow

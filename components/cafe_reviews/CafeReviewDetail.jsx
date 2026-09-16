@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   blockBackground,
@@ -555,8 +555,10 @@ export default function CafeReviewDetail({
                     }
                     minRows={3}
                     multiline
-                    inputProps={{ maxLength: 2000 }}
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
+                    slotProps={{
+                      htmlInput: { maxLength: 2000 },
+                    }}
                   />
                   <Button
                     variant="contained"
@@ -597,7 +599,6 @@ export default function CafeReviewDetail({
           </>
         ) : null}
       </Box>
-
       <Dialog
         open={Boolean(confirmAction)}
         onClose={() => setConfirmAction(null)}

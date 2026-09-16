@@ -31,16 +31,21 @@ export default function PageFilters({ filters, periodPresets, points, onFilterCh
       <Stack
         direction={{ xs: "column", lg: "row" }}
         spacing={CP_SPACE.group}
-        alignItems={{ xs: "stretch", lg: "center" }}
-        justifyContent="space-between"
+        sx={{
+          alignItems: { xs: "stretch", lg: "center" },
+          justifyContent: "space-between",
+        }}
       >
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={CP_SPACE.component}
-          alignItems={{ xs: "stretch", sm: "center" }}
-          flexWrap="wrap"
           useFlexGap
-          sx={{ flex: 1, minWidth: 0 }}
+          sx={{
+            alignItems: { xs: "stretch", sm: "center" },
+            flexWrap: "wrap",
+            flex: 1,
+            minWidth: 0,
+          }}
         >
           <Box sx={{ minWidth: { xs: "100%", sm: 260 }, flex: { sm: 1 }, maxWidth: { sm: 420 } }}>
             <MyAutocomplite
@@ -56,10 +61,12 @@ export default function PageFilters({ filters, periodPresets, points, onFilterCh
 
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            alignItems={{ xs: "stretch", sm: "center" }}
             spacing={CP_SPACE.component}
-            flexWrap="wrap"
             useFlexGap
+            sx={{
+              alignItems: { xs: "stretch", sm: "center" },
+              flexWrap: "wrap",
+            }}
           >
             <ToggleButtonGroup
               exclusive

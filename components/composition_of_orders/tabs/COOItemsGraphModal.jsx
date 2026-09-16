@@ -249,13 +249,15 @@ export default function COOItemsGraphModal({
           <Close />
         </IconButton>
       </DialogTitle>
-
       <DialogContent>
         <Grid
           container
           spacing={2}
-          alignItems="center"
-          sx={{ mb: 2, py: 1 }}
+          sx={{
+            alignItems: "center",
+            mb: 2,
+            py: 1,
+          }}
         >
           <Grid size={{ xs: 12, sm: 6 }}>
             <ToggleButtonGroup

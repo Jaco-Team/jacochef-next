@@ -74,13 +74,16 @@ export function PromoExcludeDatePicker({ label, value = [], func, disabled }) {
           clearable
         />
       </Box>
-
       {dates.length ? (
         <Stack
           direction="row"
-          flexWrap="wrap"
           useFlexGap
-          sx={{ gap: 1, flex: 1, minWidth: 0 }}
+          sx={{
+            flexWrap: "wrap",
+            gap: 1,
+            flex: 1,
+            minWidth: 0,
+          }}
         >
           {dates.map((date) => (
             <Chip

@@ -32,12 +32,14 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
           backgroundColor: "transparent !important",
         },
       }}
-      PaperProps={{
-        sx: {
-          borderRadius: "12px",
-          maxHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "12px",
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          },
         },
       }}
     >
@@ -60,7 +62,6 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       {/* Контент */}
       <DialogContent
         dividers
@@ -100,9 +101,8 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
         >
           {postData.reach.map((item, index) => (
             <Grid
-              item
-              xs={6}
               key={index}
+              size={6}
             >
               <Box
                 sx={{
@@ -150,9 +150,8 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
         >
           {postData.actions.map((item, index) => (
             <Grid
-              item
-              xs={4}
               key={index}
+              size={4}
             >
               <Box
                 sx={{
@@ -192,7 +191,6 @@ export const ModalPost = ({ open, onClose, postData, openGraph, refreshPost }) =
           Обновлено: {postData.updated}
         </Typography>
       </DialogContent>
-
       {/* Кнопки действий */}
       <DialogActions sx={{ p: 2, justifyContent: "space-between", gap: 1 }}>
         <Button

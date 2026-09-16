@@ -15,7 +15,6 @@ export default function TextFilter({ value, onChange }) {
         {/* <FilterList fontSize="small" /> */}
         <FilterAlt fontSize="small" />
       </IconButton>
-
       <Popover
         open={!!anchor}
         anchorEl={anchor}
@@ -28,19 +27,21 @@ export default function TextFilter({ value, onChange }) {
           placeholder="includes…"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          InputProps={{
-            endAdornment: value && (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => onChange("")}
-                >
-                  <Clear fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
           sx={{ m: 0, width: 200 }}
+          slotProps={{
+            input: {
+              endAdornment: value && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => onChange("")}
+                  >
+                    <Clear fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
         />
       </Popover>
     </>

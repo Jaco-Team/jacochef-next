@@ -241,7 +241,7 @@ const AppointmentModal = (props) => {
               />
             </Grid>
 
-            {fullMenuFiltered?.length > 0 && (
+            {full_menu?.length > 0 && (
               <Grid
                 mb={10}
                 size={{
@@ -269,10 +269,146 @@ const AppointmentModal = (props) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {fullMenuFiltered.map((item) =>
-                        item.chaild?.length > 0 ? (
-                          <Fragment key={item.__mainIndex}>
-                            <TableRow sx={{ "& th": { border: "none" } }}>
+                      {fullMenuFiltered?.length > 0 ? (
+                        fullMenuFiltered.map((item) =>
+                          item.chaild?.length > 0 ? (
+                            <Fragment key={item.__mainIndex}>
+                              <TableRow sx={{ "& th": { border: "none" } }}>
+                                <TableCell>{item.__mainIndex + 1}</TableCell>
+                                <TableCell
+                                  colSpan={3}
+                                  sx={{ fontWeight: "bold" }}
+                                >
+                                  {item?.parent?.name}
+                                </TableCell>
+                              </TableRow>
+                              {item.chaild.map((it) =>
+                                it.features.length ? (
+                                  <Fragment key={`${item.__mainIndex}-${it.__childIndex}`}>
+                                    <TableRow hover>
+                                      <TableCell></TableCell>
+                                      <TableCell
+                                        sx={{
+                                          paddingLeft: { xs: 2, sm: 5 },
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <li>{it.name}</li>
+                                      </TableCell>
+                                      <TableCell
+                                        sx={{ cursor: "pointer" }}
+                                        onClick={() =>
+                                          openParams(
+                                            `Редактирование параметров модуля: ${it.name}`,
+                                            item.__mainIndex,
+                                            it.__childIndex,
+                                            "one",
+                                          )
+                                        }
+                                      >
+                                        <Tooltip
+                                          title={
+                                            <Typography color="inherit">
+                                              Редактировать параметры модуля
+                                            </Typography>
+                                          }
+                                        >
+                                          <EditIcon />
+                                        </Tooltip>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Checkbox
+                                          edge="end"
+                                          onChange={(e) =>
+                                            changeActiveModule(item.__mainIndex, it.__childIndex, e)
+                                          }
+                                          disabled={!canEdit("module_active")}
+                                          checked={!!+it.is_active}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  </Fragment>
+                                ) : it?.features_cat?.length ? (
+                                  <Fragment key={it.__childIndex}>
+                                    <TableRow hover>
+                                      <TableCell></TableCell>
+                                      <TableCell
+                                        sx={{
+                                          paddingLeft: { xs: 2, sm: 5 },
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <li>{it.name}</li>
+                                      </TableCell>
+                                      <TableCell
+                                        sx={{ cursor: "pointer" }}
+                                        onClick={() =>
+                                          openParams(
+                                            `Редактирование параметров модуля: ${it.name}`,
+                                            item.__mainIndex,
+                                            it.__childIndex,
+                                            "two",
+                                          )
+                                        }
+                                      >
+                                        <Tooltip
+                                          title={
+                                            <Typography color="inherit">
+                                              Редактирование свойств модуля
+                                            </Typography>
+                                          }
+                                        >
+                                          <EditIcon />
+                                        </Tooltip>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Checkbox
+                                          edge="end"
+                                          onChange={(e) =>
+                                            changeActiveModule(item.__mainIndex, it.__childIndex, e)
+                                          }
+                                          disabled={!canEdit("module_active")}
+                                          checked={!!+it.is_active}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  </Fragment>
+                                ) : (
+                                  <TableRow
+                                    hover
+                                    key={it.__childIndex}
+                                  >
+                                    <TableCell></TableCell>
+                                    <TableCell
+                                      sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: "center" }}
+                                    >
+                                      <li>{it.name}</li>
+                                    </TableCell>
+                                    <TableCell></TableCell>
+                                    <TableCell>
+                                      <Checkbox
+                                        edge="end"
+                                        onChange={(e) =>
+                                          changeActiveModule(item.__mainIndex, it.__childIndex, e)
+                                        }
+                                        checked={!!+it.is_active}
+                                        disabled={
+                                          !canEdit("module_active") ||
+                                          it.key_query === "home" ||
+                                          it.key_query === "lk"
+                                        }
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                ),
+                              )}
+                            </Fragment>
+                          ) : (
+                            <TableRow
+                              hover
+                              key={item.__mainIndex}
+                              sx={{ "& th": { border: "none" } }}
+                            >
                               <TableCell>{item.__mainIndex + 1}</TableCell>
                               <TableCell
                                 colSpan={3}
@@ -281,136 +417,14 @@ const AppointmentModal = (props) => {
                                 {item?.parent?.name}
                               </TableCell>
                             </TableRow>
-                            {item.chaild.map((it) =>
-                              it.features.length ? (
-                                <Fragment key={`${item.__mainIndex}-${it.__childIndex}`}>
-                                  <TableRow hover>
-                                    <TableCell></TableCell>
-                                    <TableCell
-                                      sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: "center" }}
-                                    >
-                                      <li>{it.name}</li>
-                                    </TableCell>
-                                    <TableCell
-                                      sx={{ cursor: "pointer" }}
-                                      onClick={() =>
-                                        openParams(
-                                          `Редактирование параметров модуля: ${it.name}`,
-                                          item.__mainIndex,
-                                          it.__childIndex,
-                                          "one",
-                                        )
-                                      }
-                                    >
-                                      <Tooltip
-                                        title={
-                                          <Typography color="inherit">
-                                            Редактировать параметры модуля
-                                          </Typography>
-                                        }
-                                      >
-                                        <EditIcon />
-                                      </Tooltip>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Checkbox
-                                        edge="end"
-                                        onChange={(e) =>
-                                          changeActiveModule(item.__mainIndex, it.__childIndex, e)
-                                        }
-                                        disabled={!canEdit("module_active")}
-                                        checked={!!+it.is_active}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                </Fragment>
-                              ) : it?.features_cat?.length ? (
-                                <Fragment key={it.__childIndex}>
-                                  <TableRow hover>
-                                    <TableCell></TableCell>
-                                    <TableCell
-                                      sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: "center" }}
-                                    >
-                                      <li>{it.name}</li>
-                                    </TableCell>
-                                    <TableCell
-                                      sx={{ cursor: "pointer" }}
-                                      onClick={() =>
-                                        openParams(
-                                          `Редактирование параметров модуля: ${it.name}`,
-                                          item.__mainIndex,
-                                          it.__childIndex,
-                                          "two",
-                                        )
-                                      }
-                                    >
-                                      <Tooltip
-                                        title={
-                                          <Typography color="inherit">
-                                            Редактирование свойств модуля
-                                          </Typography>
-                                        }
-                                      >
-                                        <EditIcon />
-                                      </Tooltip>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Checkbox
-                                        edge="end"
-                                        onChange={(e) =>
-                                          changeActiveModule(item.__mainIndex, it.__childIndex, e)
-                                        }
-                                        disabled={!canEdit("module_active")}
-                                        checked={!!+it.is_active}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                </Fragment>
-                              ) : (
-                                <TableRow
-                                  hover
-                                  key={it.__childIndex}
-                                >
-                                  <TableCell></TableCell>
-                                  <TableCell
-                                    sx={{ paddingLeft: { xs: 2, sm: 5 }, alignItems: "center" }}
-                                  >
-                                    <li>{it.name}</li>
-                                  </TableCell>
-                                  <TableCell></TableCell>
-                                  <TableCell>
-                                    <Checkbox
-                                      edge="end"
-                                      onChange={(e) =>
-                                        changeActiveModule(item.__mainIndex, it.__childIndex, e)
-                                      }
-                                      checked={!!+it.is_active}
-                                      disabled={
-                                        !canEdit("module_active") ||
-                                        it.key_query === "home" ||
-                                        it.key_query === "lk"
-                                      }
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                              ),
-                            )}
-                          </Fragment>
-                        ) : (
-                          <TableRow
-                            hover
-                            key={item.__mainIndex}
-                            sx={{ "& th": { border: "none" } }}
-                          >
-                            <TableCell>{item.__mainIndex + 1}</TableCell>
-                            <TableCell
-                              colSpan={3}
-                              sx={{ fontWeight: "bold" }}
-                            >
-                              {item?.parent?.name}
-                            </TableCell>
-                          </TableRow>
-                        ),
+                          ),
+                        )
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4}>
+                            <Typography color="text.secondary">Модули не найдены</Typography>
+                          </TableCell>
+                        </TableRow>
                       )}
                     </TableBody>
                   </Table>

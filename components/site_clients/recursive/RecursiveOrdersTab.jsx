@@ -160,7 +160,9 @@ const RecursiveOrdersTab = ({ getData, showAlert, canAccess }) => {
       <Grid
         container
         spacing={3}
-        maxWidth="lg"
+        sx={{
+          maxWidth: "lg",
+        }}
       >
         <Grid
           size={{
@@ -282,7 +284,6 @@ const RecursiveOrdersTab = ({ getData, showAlert, canAccess }) => {
           )}
         </Grid>
       </Grid>
-
       <Grid
         container
         spacing={3}

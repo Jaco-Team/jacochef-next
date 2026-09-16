@@ -52,7 +52,9 @@ function MetricLegendSection({ title, items }) {
               key={item}
               direction="row"
               spacing={CP_SPACE.related}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <Box
                 sx={{
@@ -65,7 +67,9 @@ function MetricLegendSection({ title, items }) {
               />
               <Typography
                 variant="body2"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {item}
               </Typography>
@@ -96,8 +100,10 @@ function MetricLegendContent({ metric }) {
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={CP_SPACE.component}
-                justifyContent="space-between"
-                alignItems={{ xs: "flex-start", sm: "flex-start" }}
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: { xs: "flex-start", sm: "flex-start" },
+                }}
               >
                 <Stack spacing={CP_SPACE.related}>
                   <Typography
@@ -125,7 +131,9 @@ function MetricLegendContent({ metric }) {
                     <Stack spacing={CP_SPACE.related}>
                       <Typography
                         variant="caption"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         Ключевые значения
                       </Typography>
@@ -133,13 +141,17 @@ function MetricLegendContent({ metric }) {
                         <Stack
                           key={item.label}
                           direction="row"
-                          alignItems="center"
-                          justifyContent="space-between"
                           spacing={CP_SPACE.related}
+                          sx={{
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
                         >
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             {item.label}
                           </Typography>
@@ -156,7 +168,9 @@ function MetricLegendContent({ metric }) {
                     <Stack spacing={CP_SPACE.micro}>
                       <Typography
                         variant="caption"
-                        color="text.secondary"
+                        sx={{
+                          color: "text.secondary",
+                        }}
                       >
                         Текущее значение
                       </Typography>
@@ -169,7 +183,9 @@ function MetricLegendContent({ metric }) {
                       {metric.caption ? (
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           {metric.caption}
                         </Typography>
@@ -182,7 +198,9 @@ function MetricLegendContent({ metric }) {
               {metric.summaryNote ? (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   {metric.summaryNote}
                 </Typography>
@@ -191,7 +209,9 @@ function MetricLegendContent({ metric }) {
               {metric.comparisonSource ? (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
+                  sx={{
+                    color: "text.secondary",
+                  }}
                 >
                   {metric.comparisonSource}
                 </Typography>

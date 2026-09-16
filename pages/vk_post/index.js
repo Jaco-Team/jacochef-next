@@ -287,14 +287,12 @@ function FeedbackPage() {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
       <VKAuthDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         onSave={handleSaveToken}
         authUrl={authUrl}
       />
-
       {/* Модальные окна */}
       {openRight && (
         <ModalPost
@@ -319,7 +317,6 @@ function FeedbackPage() {
         status={errStatus}
         text={errText}
       />
-
       {/* Заголовок и управление */}
       <Grid size={{ xs: 12, sm: 5 }}>
         <h1>{module.name}</h1>
@@ -382,7 +379,6 @@ function FeedbackPage() {
           </Button>
         </div>
       </Grid>
-
       {/* Таблица с постами */}
       <Grid size={{ xs: 12, sm: 12 }}>
         <div
@@ -606,8 +602,8 @@ function FeedbackPage() {
           <Grid
             container
             spacing={2}
-            alignItems="center"
             sx={{
+              alignItems: "center",
               mb: 2,
               p: 2,
               border: "1px solid #e5e5e5",
@@ -616,22 +612,26 @@ function FeedbackPage() {
             }}
           >
             <Grid
-              item
-              xs={12}
-              sm={6}
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
             >
               <Typography
                 variant="body2"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {getRangeText()}
               </Typography>
             </Grid>
             <Grid
-              item
-              xs={12}
-              sm={6}
               sx={{ display: "flex", justifyContent: "flex-end" }}
+              size={{
+                xs: 12,
+                sm: 6,
+              }}
             >
               <Pagination
                 count={pagination.totalPages}
@@ -643,10 +643,6 @@ function FeedbackPage() {
                 showLastButton
                 renderItem={(item) => (
                   <PaginationItem
-                    components={{
-                      previous: KeyboardArrowDownIcon,
-                      next: KeyboardArrowDownIcon,
-                    }}
                     {...item}
                     sx={{
                       "&.Mui-selected": {
@@ -654,6 +650,10 @@ function FeedbackPage() {
                         color: "white",
                         "&:hover": { backgroundColor: "#155db5" },
                       },
+                    }}
+                    slots={{
+                      previous: KeyboardArrowDownIcon,
+                      next: KeyboardArrowDownIcon,
                     }}
                   />
                 )}

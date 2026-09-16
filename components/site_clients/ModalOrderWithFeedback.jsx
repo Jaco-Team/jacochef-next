@@ -328,13 +328,17 @@ const ModalOrderWithFeedback = ({
     return (
       <Stack
         spacing={1.25}
-        alignItems="center"
+        sx={{
+          alignItems: "center",
+        }}
       >
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
-          justifyContent="center"
+          sx={{
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           {ratingElement ? (
             <Tooltip
@@ -373,7 +377,6 @@ const ModalOrderWithFeedback = ({
             </Tooltip>
           ) : null}
         </Stack>
-
         {commentValue && !isEditing ? (
           <Typography
             variant="body2"
@@ -382,7 +385,6 @@ const ModalOrderWithFeedback = ({
             {commentValue}
           </Typography>
         ) : null}
-
         {isEditing ? (
           <Box
             onBlur={(event) => {
@@ -402,7 +404,6 @@ const ModalOrderWithFeedback = ({
             />
           </Box>
         ) : null}
-
         {extraElements.map((element) => (
           <div key={element.id}>{renderElement(element, key, item)}</div>
         ))}
@@ -433,7 +434,9 @@ const ModalOrderWithFeedback = ({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {formatOrderDateTime(order?.time_order)}
           </Typography>
@@ -813,9 +816,11 @@ const ModalOrderWithFeedback = ({
           {hasFeedbackForm ? (
             <Stack
               direction="row"
-              justifyContent="center"
               spacing={1.5}
-              sx={{ mt: 2 }}
+              sx={{
+                justifyContent: "center",
+                mt: 2,
+              }}
             >
               <Button
                 variant="contained"
@@ -836,9 +841,11 @@ const ModalOrderWithFeedback = ({
 
           {!err_order ? null : (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>

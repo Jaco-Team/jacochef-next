@@ -8,12 +8,16 @@
 
 # testing
 /coverage
-/playwright-report
 /test-results
+/playwright-report
+/blob-report
 
 # next.js
 /.next/
 /out/
+
+# storybook build output
+/storybook-static/
 
 # production
 /build
@@ -29,7 +33,6 @@ yarn-error.log*
 
 # local env files
 .env*.local
-.env.docker
 
 # vercel
 .vercel
@@ -48,6 +51,11 @@ next-env.d.ts
 
 # AI
 .codex
-./.codex
-.env
-.playwright*
+.codex/
+.codex-artifacts/
+tmp-staff-*
+*.network-request
+*.network-response
+.playwright-mcp/
+.cursor
+.cursor*

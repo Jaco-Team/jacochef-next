@@ -243,9 +243,11 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
 
           {!err_order ? null : (
             <Grid
-              mt={3}
               size={{
                 xs: 12,
+              }}
+              sx={{
+                mt: 3,
               }}
             >
               <Accordion>

@@ -550,12 +550,13 @@ export default function OrdersMore({
           </Grid>
         </Grid>
       </Grid>
-
       {!orders.length ? null : (
         <>
           <Grid
             container
-            justifyContent="center"
+            sx={{
+              justifyContent: "center",
+            }}
           >
             <Grid
               size={{

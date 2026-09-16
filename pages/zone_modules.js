@@ -222,10 +222,18 @@ class ActiveZonesMap extends React.Component {
         }}
       >
         <Box sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
-          <Typography fontWeight={700}>Карта активных зон</Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+            }}
+          >
+            Карта активных зон
+          </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             Нажмите на нужную зону, чтобы открыть её редактирование
           </Typography>
@@ -315,10 +323,18 @@ class ZoneModules_Modal_History extends React.Component {
       >
         <DialogTitle className="button">
           <Box>
-            <Typography fontWeight={700}>{historyItem?.name ?? "История зоны"}</Typography>
+            <Typography
+              sx={{
+                fontWeight: 700,
+              }}
+            >
+              {historyItem?.name ?? "История зоны"}
+            </Typography>
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {historyItem?.date_time_update ?? ""} · {historyItem?.user_name ?? "Система Шеф"}
             </Typography>
@@ -372,14 +388,22 @@ class ZoneModules_Modal_History extends React.Component {
               </TableBody>
             </Table>
           ) : (
-            <Typography color="text.secondary">Подробности изменения не сохранены</Typography>
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              Подробности изменения не сохранены
+            </Typography>
           )}
 
           {historyItem?.history_completeness === "partial" ? (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1 }}
+              sx={{
+                color: "text.secondary",
+                mt: 1,
+              }}
             >
               Остальные значения до и после изменения: нет данных.
             </Typography>
@@ -2164,7 +2188,11 @@ class ZoneModules_ extends React.Component {
             >
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography fontWeight={700}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                    }}
+                  >
                     Архивные зоны (
                     {this.state.zones.filter((zone) => Number(zone.is_active) === 0).length})
                   </Typography>

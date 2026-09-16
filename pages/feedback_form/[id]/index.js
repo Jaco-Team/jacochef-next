@@ -49,8 +49,8 @@ import MyAlert from "@/ui/MyAlert";
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
 import {
   InfoOutlined,
-  ChatBubbleOutline,
-  StarOutline,
+  ChatBubbleOutlined,
+  StarOutlined,
   ThumbDownOutlined,
   ThumbUpOutlined,
 } from "@mui/icons-material";
@@ -1670,17 +1670,21 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Всего отзывов
                         </Typography>
-                        <ChatBubbleOutline sx={{ color: "text.secondary", fontSize: 20 }} />
+                        <ChatBubbleOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.countAll}
                       </Typography>
@@ -1726,17 +1730,21 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Средняя оценка
                         </Typography>
-                        <StarOutline sx={{ color: "text.secondary", fontSize: 20 }} />
+                        <StarOutlined sx={{ color: "text.secondary", fontSize: 20 }} />
                       </Box>
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.mediumRating}
                       </Typography>
@@ -1782,7 +1790,9 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Доля негатива
                         </Typography>
@@ -1791,8 +1801,10 @@ function FeedbackPage() {
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.negativeRating}%
                       </Typography>
@@ -1838,7 +1850,9 @@ function FeedbackPage() {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Доля позитива
                         </Typography>
@@ -1847,8 +1861,10 @@ function FeedbackPage() {
 
                       <Typography
                         variant="h4"
-                        fontWeight="bold"
                         gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
                       >
                         {dataEva?.positiveRating}%
                       </Typography>

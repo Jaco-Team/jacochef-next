@@ -108,9 +108,11 @@ export function CategoryModal() {
           <Grid size={12}>
             <Grid
               container
-              mb={1}
-              alignItems="center"
-              justifyContent="space-between"
+              sx={{
+                mb: 1,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
             >
               <Typography variant="subtitle1">Товары категории</Typography>
               {canEditCategoryItems ? (

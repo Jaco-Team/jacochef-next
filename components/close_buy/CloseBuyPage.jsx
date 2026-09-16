@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 
 import { Backdrop, Box, CircularProgress, Container, Tab, Tabs, Typography } from "@mui/material";
 
+import { JacoAlert } from "@/design-system/shared/ui";
 import useMyAlert from "@/src/hooks/useMyAlert";
-import MyAlert from "@/ui/MyAlert";
 
 import CategoryActionsSheet from "./CategoryActionsSheet";
 import CloseBuyHistory from "./CloseBuyHistory";
@@ -200,7 +200,7 @@ export default function CloseBuyPage() {
         <CircularProgress />
       </Backdrop>
 
-      <MyAlert
+      <JacoAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}

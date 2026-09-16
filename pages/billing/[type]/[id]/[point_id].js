@@ -1664,9 +1664,11 @@ function renderBillingVendorItemOption(optionProps, option, vendorId = null) {
       <Stack
         direction="row"
         spacing={1}
-        alignItems="center"
-        flexWrap="wrap"
         useFlexGap
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
       >
         <Box component="span">{option?.name || option?.item_name || ""}</Box>
         {option?.err_decl && resolvedVendorId ? (
@@ -5151,8 +5153,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
                 direction="row"
                 spacing={1}
                 useFlexGap
-                flexWrap="wrap"
-                sx={{ mt: 1 }}
+                sx={{
+                  flexWrap: "wrap",
+                  mt: 1,
+                }}
               >
                 <Chip
                   size="small"
@@ -5287,8 +5291,10 @@ function Billing_Accordion_item({ bill_list, bill, index, bill_type }) {
           direction="row"
           spacing={1}
           useFlexGap
-          flexWrap="wrap"
-          sx={{ mb: 2 }}
+          sx={{
+            flexWrap: "wrap",
+            mb: 2,
+          }}
         >
           <Chip
             size="small"
@@ -7715,7 +7721,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle
             sx={{
@@ -7767,7 +7775,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7817,7 +7827,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7868,7 +7880,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7918,7 +7932,9 @@ class Billing_Edit_ extends React.Component {
           }}
           fullWidth
           maxWidth="sm"
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -7970,7 +7986,9 @@ class Billing_Edit_ extends React.Component {
           fullWidth
           maxWidth="xs"
           sx={{ zIndex: 2100 }}
-          PaperProps={{ sx: billingConfirmDialogPaperSx }}
+          slotProps={{
+            paper: { sx: billingConfirmDialogPaperSx },
+          }}
         >
           <DialogTitle sx={{ px: { xs: 2.5, md: 4 }, pt: { xs: 2.5, md: 3.5 }, pb: 0 }}>
             <Typography sx={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: "#111827" }}>
@@ -8015,16 +8033,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -8087,16 +8107,18 @@ class Billing_Edit_ extends React.Component {
           fullWidth={true}
           maxWidth={fullScreen ? false : "lg"}
           scroll="paper"
-          PaperProps={{
-            sx: {
-              ...billingConfirmDialogPaperSx,
-              ...(fullScreen
-                ? {
-                    borderRadius: 0,
-                    minHeight: "100dvh",
-                    maxHeight: "100dvh",
-                  }
-                : {}),
+          slotProps={{
+            paper: {
+              sx: {
+                ...billingConfirmDialogPaperSx,
+                ...(fullScreen
+                  ? {
+                      borderRadius: 0,
+                      minHeight: "100dvh",
+                      maxHeight: "100dvh",
+                    }
+                  : {}),
+              },
             },
           }}
         >
@@ -8170,22 +8192,28 @@ class Billing_Edit_ extends React.Component {
                         </Typography>
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ mt: 0.75 }}
+                          sx={{
+                            color: "text.secondary",
+                            mt: 0.75,
+                          }}
                         >
                           Строка: {item.ocrItem?.line ?? index + 1}
                         </Typography>
                         {!normalizeBillingText(item.ocrItem?.__ocr_file_name) ? null : (
                           <Typography
                             variant="body2"
-                            color="text.secondary"
+                            sx={{
+                              color: "text.secondary",
+                            }}
                           >
                             Файл: {item.ocrItem.__ocr_file_name}
                           </Typography>
                         )}
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           OCR: {formatBillingQuantity(item.ocrItem?.quantity)}
                           {formatBillingQuantity(item.ocrItem?.quantity) === "—" ? "" : " упак."}
@@ -8206,8 +8234,10 @@ class Billing_Edit_ extends React.Component {
                         {!item.resolveIssue ? null : (
                           <Typography
                             variant="body2"
-                            color="warning.main"
-                            sx={{ mt: 1 }}
+                            sx={{
+                              color: "warning.main",
+                              mt: 1,
+                            }}
                           >
                             {item.resolveIssue}
                           </Typography>

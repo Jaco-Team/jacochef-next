@@ -854,14 +854,12 @@ export default function CafeEdit() {
           <Button onClick={confirmTabChange}>Перейти</Button>
         </DialogActions>
       </Dialog>
-
       <MyAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
         text={alertMessage}
       />
-
       <CafeEdit_Modal_Kkt_Info
         type={type_modal}
         open={modalDialog_kkt}
@@ -873,14 +871,12 @@ export default function CafeEdit() {
         acces={acces}
         canEdit={(key) => canEdit(key)}
       />
-
       <CafeEdit_Modal_Kkt_Info_Add
         open={modalDialog_kkt_add}
         onClose={() => setModalsStateKey("modalDialog_kkt_add", false)}
         fullScreen={fullScreen}
         addFN={add_new_fn}
       />
-
       <CafeEdit_Modal_Close_Cafe
         open={modalDialog_close}
         onClose={close_modal_cafe}
@@ -888,14 +884,12 @@ export default function CafeEdit() {
         fullScreen={fullScreen}
         stop_cafe={stop_cafe}
       />
-
       <CafeEdit_Modal_New
         open={modalDialog}
         onClose={() => setModalsState({ modalDialog: false, mark: "" })}
         save={save_new_point}
         fullScreen={fullScreen}
       />
-
       <CafeEdit_Modal_Zone
         open={modalDialog_zone}
         onClose={() => setModalsState({ modalDialog_zone: false, one_zone: null })}
@@ -903,14 +897,12 @@ export default function CafeEdit() {
         save={save_active_zone}
         fullScreen={fullScreen}
       />
-
       <CafeEdit_Modal_Edit
         open={modalDialog_edit}
         onClose={() => setModalsState({ modalDialog_edit: false })}
         save={save_edit_point}
         fullScreen={fullScreen}
       />
-
       <CafeEdit_Modal_History
         open={modalDialogView}
         onClose={() =>
@@ -926,12 +918,13 @@ export default function CafeEdit() {
         type_modal={type_modal}
         date_edit={date_edit}
       />
-
       <Grid
         container
         spacing={3}
-        mb={3}
         className="container_first_child"
+        sx={{
+          mb: 3,
+        }}
       >
         <Grid size={12}>
           <h1>{module_name}</h1>
@@ -1056,7 +1049,9 @@ export default function CafeEdit() {
             >
               <Grid
                 size={12}
-                mb={3}
+                sx={{
+                  mb: 3,
+                }}
               >
                 <CafeEdit_ZonesMap
                   zones={zone}
@@ -1069,7 +1064,9 @@ export default function CafeEdit() {
               {point_zone_hist.length > 0 && (
                 <Grid
                   size={12}
-                  mb={5}
+                  sx={{
+                    mb: 5,
+                  }}
                 >
                   <HistDropDownTable
                     histData={point_zone_hist}

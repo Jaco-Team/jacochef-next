@@ -32,7 +32,6 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
           func={(e) => changePointInfoData("dir_price", e)}
         />
       </Grid>
-
       <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           label="Бонус от уровня директору"
@@ -41,7 +40,6 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
           func={(e) => changePointInfoData("price_per_lv", e)}
         />
       </Grid>
-
       <Grid size={{ xs: 12, sm: 4 }}>
         <MyTextInput
           label="Часовая ставка курьера"
@@ -53,7 +51,9 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
       {canEdit("pay_point") && (
         <Grid
           size={12}
-          display="grid"
+          sx={{
+            display: "grid",
+          }}
         >
           <Button
             onClick={() => openEditPoint()}
@@ -68,7 +68,9 @@ function CafeEditTabPay({ canView, canEdit, openHistModal }) {
       {point_pay_hist.length > 0 && (
         <Grid
           size={12}
-          mb={5}
+          sx={{
+            mb: 5,
+          }}
         >
           <HistDropDownTable
             histData={point_pay_hist}

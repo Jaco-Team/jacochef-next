@@ -385,8 +385,10 @@ const StatSale_Tab_Sett_Dynamics = ({
                               onKeyPress={(e) => {
                                 if (e.key === "Enter") setEditingValue(null);
                               }}
-                              InputProps={{ inputProps: { min: 0, step: 1000 } }}
                               sx={{ width: "100px" }}
+                              slotProps={{
+                                input: { inputProps: { min: 0, step: 1000 } },
+                              }}
                             />
                           ) : (
                             <Typography
@@ -428,7 +430,7 @@ const StatSale_Tab_Sett_Dynamics = ({
               spacing={2}
               sx={{ mt: 2, justifyContent: "flex-end" }}
             >
-              <Grid item>
+              <Grid>
                 <Button
                   variant="outlined"
                   onClick={handleCancel}
@@ -436,7 +438,7 @@ const StatSale_Tab_Sett_Dynamics = ({
                   Отменить все
                 </Button>
               </Grid>
-              <Grid item>
+              <Grid>
                 <Button
                   variant="contained"
                   color="primary"
@@ -766,8 +768,10 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                               onKeyPress={(e) => {
                                 if (e.key === "Enter") setEditingValue(null);
                               }}
-                              InputProps={{ inputProps: { min: 0, step: 1000 } }}
                               sx={{ width: "100px" }}
+                              slotProps={{
+                                input: { inputProps: { min: 0, step: 1000 } },
+                              }}
                             />
                           ) : (
                             <Typography
@@ -809,7 +813,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
               spacing={2}
               sx={{ mt: 2, justifyContent: "flex-end" }}
             >
-              <Grid item>
+              <Grid>
                 <Button
                   variant="outlined"
                   onClick={handleCancel}
@@ -817,7 +821,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                   Отменить все
                 </Button>
               </Grid>
-              <Grid item>
+              <Grid>
                 <Button
                   variant="contained"
                   color="primary"

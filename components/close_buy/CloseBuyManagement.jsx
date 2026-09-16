@@ -8,16 +8,18 @@ import {
   Stack,
   SwipeableDrawer,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
-import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
-import { MyTextInput } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoSegmentedTabs,
+  JacoSelect,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 
 import CategoryCard from "./CategoryCard";
 import CloseBuyCategory from "./CloseBuyCategory";
@@ -27,24 +29,39 @@ function SummaryCard({ label, value }) {
   return (
     <Paper
       variant="outlined"
-      sx={{ px: 2, py: 1.5, borderRadius: "14px", borderColor: "#E3E3E3" }}
+      sx={{
+        height: 50,
+        px: 2,
+        borderRadius: "14px",
+        borderColor: "#E3E3E3",
+        display: "flex",
+        alignItems: "center",
+      }}
     >
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        spacing={2}
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
       >
-        <Typography
-          variant="body2"
-          sx={{ color: "#6B6B6B", fontWeight: 500 }}
-        >
+        <Typography sx={{ fontSize: 16, lineHeight: "20px", color: "#6B6B6B", fontWeight: 500 }}>
           {label}
         </Typography>
-        <Typography sx={{ fontSize: 22, lineHeight: 1, fontWeight: 700, color: "#2B2B2B" }}>
+        <Typography
+          sx={{
+            fontSize: 16,
+            lineHeight: "20px",
+            fontWeight: 700,
+            color: "#2B2B2B",
+            flexShrink: 0,
+          }}
+        >
           {value}
         </Typography>
-      </Stack>
+      </Box>
     </Paper>
   );
 }
@@ -75,8 +92,6 @@ export default function CloseBuyManagement({
   const [mobileCategoryId, setMobileCategoryId] = useState(null);
   const [mobileCategorySearch, setMobileCategorySearch] = useState("");
   const mobileCategory = categories.find((category) => category.id === mobileCategoryId) || null;
-  const selectedPoint =
-    points.find((point) => String(point.id) === String(selectedPointId)) || null;
   const mobileCategoryItems = mobileCategory
     ? filterCategoryItems(mobileCategory.items, mobileCategorySearch)
     : [];
@@ -108,93 +123,55 @@ export default function CloseBuyManagement({
         spacing={2}
       >
         <Grid size={{ xs: 12, md: 4 }}>
-          <CityCafeAutocomplete2
-            points={points}
-            value={selectedPoint ? [selectedPoint] : []}
-            onChange={(selectedPoints) => {
-              const point = selectedPoints.at(-1);
-              if (point) onPointChange?.({ target: { value: point.id } });
-            }}
+          <JacoSelect
+            options={points}
+            value={selectedPointId}
+            onChange={onPointChange}
             label="Кафе"
-            placeholder="Выберите кафе"
-            withOrganizationMode={false}
-            compact
+            allowNone={false}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 5 }}>
-          <MyTextInput
+          <JacoTextInput
             fullWidth
             size="small"
             type="search"
-            label="Поиск по товарам и категориям"
+            placeholder="Поиск по товарам и категориям"
             value={search}
             inputProps={{ minLength: 2 }}
-            func={(event) => onSearchChange(event.target.value)}
+            onChange={(event) => onSearchChange(event.target.value)}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
-          <Button
+          <JacoButton
             fullWidth
-            variant="outlined"
+            compact
+            tone="outlinePrimary"
             startIcon={<RefreshIcon />}
             onClick={onRetry}
-            sx={{ minHeight: 40, borderColor: "#c03", color: "#c03" }}
           >
             Обновить
-          </Button>
+          </JacoButton>
         </Grid>
       </Grid>
-
-      <ToggleButtonGroup
+      <JacoSegmentedTabs
+        items={CLOSE_BUY_STATUS_FILTERS.map((option) => ({
+          id: option.value,
+          value: option.value,
+          label: option.label,
+        }))}
         value={statusFilter}
-        exclusive
         onChange={(_, nextStatus) => {
           if (nextStatus) onStatusFilterChange(nextStatus);
         }}
         aria-label="Фильтр категорий по статусу"
-        size="small"
+        size="compact"
+        variant="standard"
         sx={{
           width: "fit-content",
           maxWidth: "100%",
-          p: 0.5,
-          gap: 0.5,
-          flexWrap: "wrap",
-          borderRadius: "14px",
-          bgcolor: "#F2F2F2",
-          "& .MuiToggleButtonGroup-grouped": {
-            m: 0,
-            border: "0 !important",
-            borderRadius: "10px !important",
-          },
         }}
-      >
-        {CLOSE_BUY_STATUS_FILTERS.map((option) => (
-          <ToggleButton
-            key={option.value}
-            value={option.value}
-            aria-label={option.label}
-            sx={{
-              px: 2,
-              py: 0.75,
-              color: "#666666",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                bgcolor: "rgba(255, 255, 255, 0.65)",
-              },
-              "&.Mui-selected": {
-                color: "#2B2B2B",
-                bgcolor: "#FFFFFF",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-                "&:hover": { bgcolor: "#FFFFFF" },
-              },
-            }}
-          >
-            {option.label}
-          </ToggleButton>
-        ))}
-      </ToggleButtonGroup>
-
+      />
       {summary ? (
         <>
           {isMobile ? (
@@ -241,7 +218,6 @@ export default function CloseBuyManagement({
           )}
         </>
       ) : null}
-
       {loading ? (
         <Grid
           container
@@ -315,7 +291,6 @@ export default function CloseBuyManagement({
           </Typography>
         </Paper>
       )}
-
       {isMobile ? (
         <SwipeableDrawer
           anchor="bottom"
@@ -326,18 +301,20 @@ export default function CloseBuyManagement({
           ModalProps={{
             keepMounted: true,
           }}
-          PaperProps={{
-            sx: {
-              height: "75dvh",
-              maxHeight: "calc(100dvh - 24px)",
-              borderRadius: "24px 24px 0 0",
-              overflow: "hidden",
-              bgcolor: "#FFFFFF",
-            },
-          }}
           sx={{
             "& .MuiBackdrop-root": {
               bgcolor: "rgba(0, 0, 0, 0.48)",
+            },
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                height: "75dvh",
+                maxHeight: "calc(100dvh - 24px)",
+                borderRadius: "24px 24px 0 0",
+                overflow: "hidden",
+                bgcolor: "#FFFFFF",
+              },
             },
           }}
         >

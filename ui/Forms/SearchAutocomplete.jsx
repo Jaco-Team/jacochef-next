@@ -439,13 +439,6 @@ export const SearchAutocomplete = ({
           </Box>
         );
       }}
-      ListboxProps={{
-        sx: {
-          maxHeight: "700px",
-          overflowY: "scroll",
-          scrollbarWidth: "none",
-        },
-      }}
       slotProps={{
         paper: {
           sx: {
@@ -456,6 +449,7 @@ export const SearchAutocomplete = ({
             marginTop: "4px",
           },
         },
+
         popupIndicator: {
           sx: {
             color: "#A6A6A6",
@@ -465,6 +459,7 @@ export const SearchAutocomplete = ({
             },
           },
         },
+
         clearIndicator: {
           sx: {
             color: "#A6A6A6",
@@ -472,6 +467,14 @@ export const SearchAutocomplete = ({
               backgroundColor: "transparent",
               color: "#3C3B3B",
             },
+          },
+        },
+
+        listbox: {
+          sx: {
+            maxHeight: "700px",
+            overflowY: "scroll",
+            scrollbarWidth: "none",
           },
         },
       }}
@@ -483,28 +486,6 @@ export const SearchAutocomplete = ({
           label="Поиск"
           variant="outlined"
           autoComplete="off"
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {favoritesLoading ? (
-                  <CircularProgress
-                    color="inherit"
-                    size={20}
-                  />
-                ) : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-          inputProps={{
-            ...params.inputProps,
-            autoComplete: "off",
-            autoCorrect: "off",
-            autoCapitalize: "off",
-            spellCheck: "false",
-            form: "autocomplete-form",
-          }}
           sx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: "12px",
@@ -548,6 +529,33 @@ export const SearchAutocomplete = ({
             },
             "& .MuiOutlinedInput-notchedOutline": {
               display: "none",
+            },
+          }}
+          slotProps={{
+            ...params.slotProps,
+
+            input: {
+              ...params.slotProps.input,
+              endAdornment: (
+                <>
+                  {favoritesLoading ? (
+                    <CircularProgress
+                      color="inherit"
+                      size={20}
+                    />
+                  ) : null}
+                  {params.slotProps.input.endAdornment}
+                </>
+              ),
+            },
+
+            htmlInput: {
+              ...params.slotProps.htmlInput,
+              autoComplete: "off",
+              autoCorrect: "off",
+              autoCapitalize: "off",
+              spellCheck: "false",
+              form: "autocomplete-form",
             },
           }}
         />

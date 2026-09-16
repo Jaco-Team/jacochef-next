@@ -40,7 +40,6 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             func={(e) => changeItemChecked("priority_pizza", e)}
           />
         </Grid>
-
         <Grid size={12}>
           <MyCheckBox
             label="Если заказ приготовить зарнее - он выйдет в приоритете на сборку, кроме предов (напитки, допы и закуски не учитываются)"
@@ -49,7 +48,6 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             func={(e) => changeItemChecked("priority_order", e)}
           />
         </Grid>
-
         <Grid size={12}>
           <MyCheckBox
             label="Пицца у повара будет отображаться, если более 50% роллов в заказе начнут готовить"
@@ -58,7 +56,6 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             func={(e) => changeItemChecked("rolls_pizza_dif", e)}
           />
         </Grid>
-
         <Grid size={12}>
           <MyCheckBox
             label="Общий стол"
@@ -67,7 +64,6 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             func={(e) => changeItemChecked("cook_common_stol", e)}
           />
         </Grid>
-
         <Grid size={12}>
           {canEdit("settings_point") ? (
             <Button
@@ -86,7 +82,6 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             </Typography>
           )}
         </Grid>
-
         <Grid size={{ xs: 12, sm: 4 }}>
           <MyAutocomplite
             label="Управляющий"
@@ -97,7 +92,6 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             func={(_, val) => changePointInfoData("manager_id", val)}
           />
         </Grid>
-
         <Grid size={{ xs: 12, sm: 4 }}>
           <MyTextInput
             label="Количество столов сборки"
@@ -110,7 +104,9 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
         {canEdit("settings_point") && (
           <Grid
             size={12}
-            display="grid"
+            sx={{
+              display: "grid",
+            }}
           >
             <Button
               onClick={async () => await saveSettings()}
@@ -122,11 +118,12 @@ function CafeEditTabSettings({ saveSettings, canView, canEdit, openHistModal }) 
             </Button>
           </Grid>
         )}
-
         {canView("settings_point") && point_sett_hist.length > 0 && (
           <Grid
             size={12}
-            mb={5}
+            sx={{
+              mb: 5,
+            }}
           >
             <HistDropDownTable
               histData={point_sett_hist}

@@ -135,8 +135,10 @@ export default function ModalEditTransaction({ onClose, showAlert }) {
 
         <Box>
           <Typography
-            fontWeight={600}
-            sx={{ mb: 1 }}
+            sx={{
+              fontWeight: 600,
+              mb: 1,
+            }}
           >
             Детали транзакции
           </Typography>

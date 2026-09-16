@@ -161,8 +161,10 @@ export default function AiTrafficSourcesChart({ items = [] }) {
       <Box sx={{ minHeight: 260, display: "grid", placeItems: "center" }}>
         <Typography
           variant="body2"
-          color="text.secondary"
           align="center"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           Нет расходов по источникам для построения графика
         </Typography>

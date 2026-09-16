@@ -500,9 +500,11 @@ export default function SkladSiteItemsHistoryDialog({
       >
         <Stack
           direction="row"
-          alignItems="flex-start"
-          justifyContent="space-between"
           spacing={2}
+          sx={{
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
         >
           <Box>
             <Typography
@@ -530,7 +532,6 @@ export default function SkladSiteItemsHistoryDialog({
           </IconButton>
         </Stack>
       </DialogTitle>
-
       <DialogContent sx={{ p: { xs: 1.25, md: 2.5 }, bgcolor: "#FAFAFA" }}>
         {!sourceRows.length ? (
           <Alert severity="info">История изменений отсутствует.</Alert>
@@ -544,9 +545,13 @@ export default function SkladSiteItemsHistoryDialog({
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={1.5}
-                alignItems={{ xs: "stretch", md: "center" }}
-                justifyContent="space-between"
-                sx={{ px: 2, py: 1.5, borderBottom: `1px solid ${borderColor}` }}
+                sx={{
+                  alignItems: { xs: "stretch", md: "center" },
+                  justifyContent: "space-between",
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: `1px solid ${borderColor}`,
+                }}
               >
                 <Box>
                   <Typography sx={{ fontSize: 17, fontWeight: 700 }}>Сохранения</Typography>
@@ -630,9 +635,12 @@ export default function SkladSiteItemsHistoryDialog({
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={1.25}
-                alignItems={{ xs: "stretch", md: "center" }}
-                justifyContent="space-between"
-                sx={{ p: 1.5, borderTop: `1px solid ${borderColor}` }}
+                sx={{
+                  alignItems: { xs: "stretch", md: "center" },
+                  justifyContent: "space-between",
+                  p: 1.5,
+                  borderTop: `1px solid ${borderColor}`,
+                }}
               >
                 <Stack
                   direction="row"
@@ -663,7 +671,9 @@ export default function SkladSiteItemsHistoryDialog({
                     label="Состояние на дату"
                     value={resolveDate}
                     onChange={(event) => setResolveDate(event.target.value)}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{
+                      inputLabel: { shrink: true },
+                    }}
                   />
                   <Button
                     variant="outlined"
@@ -679,14 +689,18 @@ export default function SkladSiteItemsHistoryDialog({
             <Stack
               direction={{ xs: "column", md: "row" }}
               spacing={1}
-              alignItems={{ xs: "stretch", md: "center" }}
-              justifyContent="space-between"
+              sx={{
+                alignItems: { xs: "stretch", md: "center" },
+                justifyContent: "space-between",
+              }}
             >
               <Stack
                 direction="row"
                 spacing={0.75}
                 useFlexGap
-                flexWrap="wrap"
+                sx={{
+                  flexWrap: "wrap",
+                }}
               >
                 <Chip
                   size="small"
@@ -800,8 +814,10 @@ export default function SkladSiteItemsHistoryDialog({
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {loading && !comparison.current ? (
                   <Stack
-                    alignItems="center"
-                    sx={{ py: 8 }}
+                    sx={{
+                      alignItems: "center",
+                      py: 8,
+                    }}
                   >
                     <CircularProgress />
                   </Stack>
@@ -844,7 +860,6 @@ export default function SkladSiteItemsHistoryDialog({
           </Stack>
         )}
       </DialogContent>
-
       <DialogActions sx={{ px: 2.5, py: 1.5, borderTop: `1px solid ${borderColor}` }}>
         <Button onClick={onClose}>Закрыть</Button>
       </DialogActions>

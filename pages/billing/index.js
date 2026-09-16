@@ -909,11 +909,13 @@ class Billing_ extends React.Component {
           onClose={() => {
             this.setState({ modelCheckPay: false });
           }}
-          PaperProps={{
-            sx: {
-              width: "100%",
-              maxWidth: 520,
-              borderRadius: "16px",
+          slotProps={{
+            paper: {
+              sx: {
+                width: "100%",
+                maxWidth: 520,
+                borderRadius: "16px",
+              },
             },
           }}
         >
@@ -981,8 +983,10 @@ class Billing_ extends React.Component {
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={1}
-              justifyContent={{ xs: "stretch", md: "flex-end" }}
-              sx={{ width: { xs: "100%", md: "auto" } }}
+              sx={{
+                justifyContent: { xs: "stretch", md: "flex-end" },
+                width: { xs: "100%", md: "auto" },
+              }}
             >
               <Button
                 component={Link}
@@ -1058,7 +1062,9 @@ class Billing_ extends React.Component {
               <Grid
                 container
                 spacing={2}
-                alignItems="flex-end"
+                sx={{
+                  alignItems: "flex-end",
+                }}
               >
                 <Grid
                   size={{
@@ -1223,9 +1229,11 @@ class Billing_ extends React.Component {
                     <Stack
                       direction={{ xs: "column", md: "row" }}
                       spacing={1}
-                      alignItems={{ xs: "flex-start", md: "center" }}
-                      justifyContent="space-between"
-                      sx={{ mb: 0.5 }}
+                      sx={{
+                        alignItems: { xs: "flex-start", md: "center" },
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
                     >
                       <Typography sx={{ fontSize: 16, fontWeight: 700, color: "#1f2937" }}>
                         Короткая сводка
@@ -1276,8 +1284,10 @@ class Billing_ extends React.Component {
                             <Stack
                               direction="row"
                               spacing={1}
-                              alignItems="center"
-                              sx={{ minWidth: 0 }}
+                              sx={{
+                                alignItems: "center",
+                                minWidth: 0,
+                              }}
                             >
                               <Box
                                 sx={{
@@ -1357,8 +1367,10 @@ class Billing_ extends React.Component {
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   spacing={1.25}
-                  alignItems={{ xs: "flex-start", md: "center" }}
-                  justifyContent="space-between"
+                  sx={{
+                    alignItems: { xs: "flex-start", md: "center" },
+                    justifyContent: "space-between",
+                  }}
                 >
                   <Box>
                     <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#1f2937" }}>
@@ -1369,8 +1381,10 @@ class Billing_ extends React.Component {
                   <Stack
                     direction="row"
                     spacing={1}
-                    flexWrap="wrap"
                     useFlexGap
+                    sx={{
+                      flexWrap: "wrap",
+                    }}
                   >
                     <Box sx={headerMetricSx}>
                       Всего: {new Intl.NumberFormat("ru-RU").format(this.state.bills.length)}
@@ -1457,7 +1471,9 @@ class Billing_ extends React.Component {
                             <Stack
                               direction="row"
                               spacing={1}
-                              alignItems="center"
+                              sx={{
+                                alignItems: "center",
+                              }}
                             >
                               <Tooltip title={getBillingStatusName(item.status)}>
                                 <Box

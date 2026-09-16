@@ -249,10 +249,12 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
               <Grid size={{ xs: 12, md: 4 }}>
                 <Stack
                   direction="row"
-                  justifyContent={{ xs: "flex-start", md: "flex-end" }}
-                  alignItems="center"
                   spacing={1}
-                  sx={{ height: "100%" }}
+                  sx={{
+                    justifyContent: { xs: "flex-start", md: "flex-end" },
+                    alignItems: "center",
+                    height: "100%",
+                  }}
                 >
                   <Button
                     variant="contained"
@@ -352,8 +354,10 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                           <TableCell>
                             <Stack
                               direction="row"
-                              alignItems="center"
                               spacing={1}
+                              sx={{
+                                alignItems: "center",
+                              }}
                             >
                               <Tooltip title={c.status}>
                                 <Box
@@ -373,7 +377,13 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                                   <StatusIcon sx={{ fontSize: 14 }} />
                                 </Box>
                               </Tooltip>
-                              <Typography fontWeight={600}>{c.name}</Typography>
+                              <Typography
+                                sx={{
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {c.name}
+                              </Typography>
                               <Tooltip title={<Typography>Показать графики</Typography>}>
                                 <QueryStats
                                   sx={{
@@ -394,7 +404,6 @@ export default function YandexDirectTab({ api_laravel, showAlert }) {
                               {c.connection_title} • {c.external_account_id}
                             </SmallText>
                           </TableCell>
-
                           <TableCell align="right">{formatNumber(c.impressions, 0)}</TableCell>
                           <TableCell align="right">{formatNumber(c.clicks, 0)}</TableCell>
                           <TableCell align="right">{formatNumber(ctr, 2)}%</TableCell>

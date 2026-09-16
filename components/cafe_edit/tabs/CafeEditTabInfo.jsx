@@ -155,7 +155,6 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
           </Grid>
         </>
       )}
-
       {canView("active_point") && (
         <Grid size={12}>
           <MyCheckBox
@@ -166,7 +165,6 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
           />
         </Grid>
       )}
-
       {canView("telephone_point") && (
         <>
           <Grid size={{ xs: 12, sm: 4 }}>
@@ -197,11 +195,12 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
           </Grid>
         </>
       )}
-
       {canEditAny && (
         <Grid
           size={12}
-          display="grid"
+          sx={{
+            display: "grid",
+          }}
         >
           <Button
             onClick={async () => await saveData()}
@@ -213,11 +212,12 @@ function CafeEditTabInfo({ saveData, openHistModal, canView, canEdit }) {
           </Button>
         </Grid>
       )}
-
       {point_info_hist?.length > 0 && (
         <Grid
           size={12}
-          mb={5}
+          sx={{
+            mb: 5,
+          }}
         >
           <HistDropDownTable
             histData={point_info_hist}

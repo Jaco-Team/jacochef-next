@@ -186,7 +186,7 @@ export default function EmployeePositionFilter({ options, value, onChange, onBlu
 
         setSelected(next.filter((option) => option.id !== ALL_OPTION.id && optionId(option) !== 0));
       }}
-      renderTags={renderCompactTags}
+      renderValue={renderCompactTags}
       slotProps={{
         listbox: {
           sx: {
@@ -260,8 +260,10 @@ export default function EmployeePositionFilter({ options, value, onChange, onBlu
               <ListItemText
                 primary={unit?.name || "Без отдела"}
                 secondary={`${selectedCount} из ${unitPositions.length}`}
-                primaryTypographyProps={{ fontSize: 14, fontWeight: 800 }}
-                secondaryTypographyProps={{ fontSize: 11 }}
+                slotProps={{
+                  primary: { fontSize: 14, fontWeight: 800 },
+                  secondary: { fontSize: 11 },
+                }}
               />
             </Box>
             <Box

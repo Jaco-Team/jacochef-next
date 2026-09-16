@@ -1,0 +1,31 @@
+---
+description: Mandatory JS/JSX syntax verification before finishing edits
+globs: "**/*.{js,jsx,mjs,cjs}"
+alwaysApply: true
+---
+
+# JS/JSX Syntax Verification
+
+Syntax errors must never be left in edited files.
+
+## Required Before Finishing
+
+After editing any `.js`, `.jsx`, `.mjs`, or `.cjs` file:
+
+1. Run syntax check on touched files:
+   - `npm run check:syntax -- path/to/file.jsx`
+   - or `node scripts/check-js-syntax.js path/to/file.jsx`
+2. If the check fails, fix the syntax before replying done.
+3. Re-read the edited function/component after multi-hunk patches, especially when changing `return (` blocks.
+
+## Common Failure Patterns
+
+- `return (` placed before `const` / hook declarations inside a component.
+- JSX siblings outside a single parent without a fragment.
+- Broken `sx={{ ... }}` objects with props after the closing `}}`.
+- Table rows split across invalid JSX structure (`</TableRow>` before sibling cells).
+
+## Do Not Skip
+
+- Do not assume prettier, husky, or the dev server will catch parse errors before the user sees them.
+- Do not mark a JS/JSX task complete without a passing syntax check on edited files.

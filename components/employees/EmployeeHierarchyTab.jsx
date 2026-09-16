@@ -240,27 +240,23 @@ export default function EmployeeHierarchyTab({ request, showAlert, onScopeChange
           </Stack>
         </Stack>
       </Paper>
-
       {!tablesReady ? (
         <Alert severity="warning">
           Структура таблиц иерархии ещё не обновлена. До выполнения SQL редактор работает только как
           просмотр.
         </Alert>
       ) : null}
-
       {tablesReady && !officeFlagReady ? (
         <Alert severity="warning">
           Для настройки офисных должностей выполните миграцию `add_is_office_to_appointment_table`.
         </Alert>
       ) : null}
-
       {tablesReady && !canEdit ? (
         <Alert severity="info">
           Иерархия доступна только для просмотра. Для изменения требуется право редактирования
           иерархии должностей.
         </Alert>
       ) : null}
-
       {viewMode === "tree" ? (
         <Alert severity="info">
           Перетащите должность в существующий блок, чтобы поставить её на один уровень, либо в
@@ -269,7 +265,6 @@ export default function EmployeeHierarchyTab({ request, showAlert, onScopeChange
           навигации включите режим руки; масштаб также меняется через Ctrl/⌘ + колесо.
         </Alert>
       ) : null}
-
       <Paper
         variant="outlined"
         sx={{ p: 2 }}
@@ -324,24 +319,26 @@ export default function EmployeeHierarchyTab({ request, showAlert, onScopeChange
                 onChange={(event) => setListSearch(event.target.value)}
                 placeholder="Поиск по должности или отделу…"
                 sx={{ minWidth: { md: 320 }, flex: 1 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: listSearch ? (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        edge="end"
-                        aria-label="Очистить поиск"
-                        onClick={() => setListSearch("")}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : null,
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: listSearch ? (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          edge="end"
+                          aria-label="Очистить поиск"
+                          onClick={() => setListSearch("")}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : null,
+                  },
                 }}
               />
             ) : (
@@ -428,7 +425,6 @@ export default function EmployeeHierarchyTab({ request, showAlert, onScopeChange
           />
         )}
       </Paper>
-
       <Snackbar
         open={undoNoticeOpen}
         autoHideDuration={5000}
@@ -444,7 +440,6 @@ export default function EmployeeHierarchyTab({ request, showAlert, onScopeChange
           </Button>
         }
       />
-
       <EmployeePositionModal
         open={Boolean(positionModal)}
         positionId={positionModal?.positionId}

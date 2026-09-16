@@ -41,7 +41,9 @@ export default function CategoryPerformanceRow({ item, formatters, onClick }) {
           </Typography>
           <Typography
             variant="caption"
-            color="text.secondary"
+            sx={{
+              color: "text.secondary",
+            }}
           >
             {formatPlural(item.sample_size, ["блюдо", "блюда", "блюд"])}
           </Typography>
@@ -49,14 +51,18 @@ export default function CategoryPerformanceRow({ item, formatters, onClick }) {
 
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           P50 {formatters.duration(item.p50)}
         </Typography>
 
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           P90 {formatters.duration(item.p90)}
         </Typography>
@@ -70,7 +76,9 @@ export default function CategoryPerformanceRow({ item, formatters, onClick }) {
 
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           {formatPlural(item.sample_size, ["блюдо", "блюда", "блюд"])}
         </Typography>

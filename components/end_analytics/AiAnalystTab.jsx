@@ -2165,19 +2165,20 @@ export default function AiAnalystTab({
           </Paper>
         </Grid>
       </Grid>
-
       <Dialog
         open={aiGuideOpen}
         onClose={() => setAiGuideOpen(false)}
         fullWidth
         maxWidth="md"
-        PaperProps={{
-          sx: {
-            borderRadius: { xs: 0, sm: 3 },
-            m: { xs: 0, sm: 2 },
-            width: { xs: "100%", sm: "calc(100% - 32px)" },
-            height: { xs: "100dvh", sm: "auto" },
-            maxHeight: { xs: "100dvh", sm: "calc(100dvh - 32px)" },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: { xs: 0, sm: 3 },
+              m: { xs: 0, sm: 2 },
+              width: { xs: "100%", sm: "calc(100% - 32px)" },
+              height: { xs: "100dvh", sm: "auto" },
+              maxHeight: { xs: "100dvh", sm: "calc(100dvh - 32px)" },
+            },
           },
         }}
       >
@@ -2590,7 +2591,6 @@ export default function AiAnalystTab({
           </StyledButton>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={renameChatOpen}
         onClose={() => setRenameChatOpen(false)}
@@ -2609,8 +2609,10 @@ export default function AiAnalystTab({
             onKeyDown={(event) => {
               if (event.key === "Enter") confirmRenameChat();
             }}
-            inputProps={{ maxLength: 160 }}
             sx={{ mt: 1 }}
+            slotProps={{
+              htmlInput: { maxLength: 160 },
+            }}
           />
         </DialogContent>
         <DialogActions>
@@ -2624,7 +2626,6 @@ export default function AiAnalystTab({
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={deleteChatOpen}
         onClose={() => setDeleteChatOpen(false)}
@@ -2648,16 +2649,17 @@ export default function AiAnalystTab({
           </Button>
         </DialogActions>
       </Dialog>
-
       <Dialog
         open={reportOpen}
         onClose={closeReportModal}
         maxWidth="lg"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            minHeight: { xs: "70vh", md: "80vh" },
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              minHeight: { xs: "70vh", md: "80vh" },
+            },
           },
         }}
       >

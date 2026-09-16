@@ -16,7 +16,13 @@ export default function EmptyState({ text = "Нет данных для отоб
         px: 2,
       }}
     >
-      <Typography color="text.secondary">{text}</Typography>
+      <Typography
+        sx={{
+          color: "text.secondary",
+        }}
+      >
+        {text}
+      </Typography>
     </Box>
   );
 }

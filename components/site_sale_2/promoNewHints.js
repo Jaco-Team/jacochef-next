@@ -76,8 +76,12 @@ export function LabelWithHint({ text, hint, sx }) {
       {hint ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 0.375, lineHeight: 1.4 }}
+          sx={{
+            color: "text.secondary",
+            display: "block",
+            mt: 0.375,
+            lineHeight: 1.4,
+          }}
         >
           {hint}
         </Typography>
@@ -93,8 +97,13 @@ export function FieldWithHint({ hint, children }) {
       {hint ? (
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 0.75, px: 0.25, lineHeight: 1.4 }}
+          sx={{
+            color: "text.secondary",
+            display: "block",
+            mt: 0.75,
+            px: 0.25,
+            lineHeight: 1.4,
+          }}
         >
           {hint}
         </Typography>

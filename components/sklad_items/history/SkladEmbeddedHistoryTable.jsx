@@ -567,8 +567,11 @@ function renderHistorySummary(item) {
     <Grid
       container
       spacing={1}
-      alignItems="center"
-      sx={{ width: "100%", pr: 1 }}
+      sx={{
+        alignItems: "center",
+        width: "100%",
+        pr: 1,
+      }}
     >
       <Grid size={{ xs: 12, md: 3 }}>
         <Typography sx={{ fontWeight: 700 }}>{summary.name || "Без названия"}</Typography>
@@ -576,7 +579,9 @@ function renderHistorySummary(item) {
       <Grid size={{ xs: 6, md: 2 }}>
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           {summary.date_start || "—"}
         </Typography>
@@ -584,7 +589,9 @@ function renderHistorySummary(item) {
       <Grid size={{ xs: 6, md: 2 }}>
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           {summary.date_end || "—"}
         </Typography>
@@ -599,7 +606,9 @@ function renderHistorySummary(item) {
       <Grid size={{ xs: 6, md: 2.5 }}>
         <Typography
           variant="body2"
-          color="text.secondary"
+          sx={{
+            color: "text.secondary",
+          }}
         >
           {summary.changed_by || "Неизвестно"}
         </Typography>
@@ -908,8 +917,10 @@ function SnapshotCard({ snapshot, compareSnapshot, entityType, onlyChanges }) {
                       >
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ fontWeight: 600 }}
+                          sx={{
+                            color: "text.secondary",
+                            fontWeight: 600,
+                          }}
                         >
                           {row.label}
                         </Typography>
@@ -920,9 +931,11 @@ function SnapshotCard({ snapshot, compareSnapshot, entityType, onlyChanges }) {
                           <Stack
                             direction="row"
                             spacing={1}
-                            alignItems="center"
                             useFlexGap
-                            flexWrap="wrap"
+                            sx={{
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
                           >
                             {isBooleanStatusField(row.field) && row.value ? (
                               <Chip
@@ -958,8 +971,8 @@ function SnapshotCard({ snapshot, compareSnapshot, entityType, onlyChanges }) {
                           {row.changed && row.previous ? (
                             <Typography
                               variant="caption"
-                              color="text.secondary"
                               sx={{
+                                color: "text.secondary",
                                 textDecoration: "line-through",
                                 overflowWrap: "break-word",
                                 wordBreak: "normal",
@@ -1292,7 +1305,6 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
           состоянии.
         </Alert>
       ) : null}
-
       <Paper
         variant="outlined"
         sx={{ overflow: "hidden" }}
@@ -1302,7 +1314,9 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
             <Typography sx={{ fontWeight: 700 }}>Сохранения</Typography>
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               Выберите строку, чтобы открыть полное состояние карточки.
             </Typography>
@@ -1370,8 +1384,10 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
           <Grid
             container
             spacing={1.5}
-            alignItems="center"
-            sx={{ px: 1.5 }}
+            sx={{
+              alignItems: "center",
+              px: 1.5,
+            }}
           >
             <Grid size={{ xs: 12, md: 9 }}>
               <TextField
@@ -1381,7 +1397,9 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
                 label="Состояние на дату"
                 value={resolvedDate}
                 onChange={(event) => setResolvedDate(event.target.value)}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{
+                  inputLabel: { shrink: true },
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
@@ -1399,9 +1417,12 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={1}
-            alignItems={{ md: "center" }}
-            justifyContent="space-between"
-            sx={{ px: 1.5, pb: 1.5 }}
+            sx={{
+              alignItems: { md: "center" },
+              justifyContent: "space-between",
+              px: 1.5,
+              pb: 1.5,
+            }}
           >
             <Stack
               direction="row"
@@ -1427,7 +1448,9 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
             <Stack
               direction="row"
               spacing={1}
-              alignItems="center"
+              sx={{
+                alignItems: "center",
+              }}
             >
               <FormControlLabel
                 control={
@@ -1442,7 +1465,6 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
           </Stack>
         </Stack>
       </Paper>
-
       <Paper
         variant="outlined"
         sx={{ p: 1.5 }}
@@ -1451,15 +1473,19 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={1}
-            justifyContent="space-between"
-            alignItems={{ md: "center" }}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: { md: "center" },
+            }}
           >
             <Stack
               direction="row"
               spacing={1}
-              alignItems="center"
-              flexWrap="wrap"
               useFlexGap
+              sx={{
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
             >
               <Chip
                 size="small"
@@ -1469,7 +1495,9 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
               <Typography variant="body2">{revisionPeriod(selectedRow)}</Typography>
               <Typography
                 variant="body2"
-                color="text.secondary"
+                sx={{
+                  color: "text.secondary",
+                }}
               >
                 {formatDate(selectedRow?.changed_at, true) || "—"} ·{" "}
                 {selectedRow?.changed_by || "Неизвестно"}
@@ -1490,7 +1518,9 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
           <Grid
             container
             spacing={1.5}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             <Grid size={{ xs: 12, md: 8 }}>
               <Box
@@ -1504,8 +1534,11 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
               >
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mb: 0.25 }}
+                  sx={{
+                    color: "text.secondary",
+                    display: "block",
+                    mb: 0.25,
+                  }}
                 >
                   Сравнение
                 </Typography>
@@ -1530,8 +1563,11 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
               {!compareRow ? (
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mt: -0.5 }}
+                  sx={{
+                    color: "text.secondary",
+                    display: "block",
+                    mt: -0.5,
+                  }}
                 >
                   Для первой версии изменения не рассчитываются.
                 </Typography>
@@ -1541,8 +1577,10 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
 
           {loading && !selectedSnapshot ? (
             <Stack
-              alignItems="center"
-              sx={{ py: 4 }}
+              sx={{
+                alignItems: "center",
+                py: 4,
+              }}
             >
               <CircularProgress size={28} />
             </Stack>
@@ -1607,8 +1645,11 @@ export function SkladEmbeddedImageHistoryTable({
               <Grid
                 container
                 spacing={1}
-                alignItems="center"
-                sx={{ width: "100%", pr: 1 }}
+                sx={{
+                  alignItems: "center",
+                  width: "100%",
+                  pr: 1,
+                }}
               >
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Typography sx={{ fontWeight: 700 }}>Изменение изображения</Typography>
@@ -1623,7 +1664,9 @@ export function SkladEmbeddedImageHistoryTable({
                 <Grid size={{ xs: 6, md: 4 }}>
                   <Typography
                     variant="body2"
-                    color="text.secondary"
+                    sx={{
+                      color: "text.secondary",
+                    }}
                   >
                     {formatValue(row?.changed_by, "Неизвестно")}
                   </Typography>
@@ -1661,7 +1704,9 @@ export function SkladEmbeddedImageHistoryTable({
                       ) : (
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Изображение отсутствовало.
                         </Typography>
@@ -1693,7 +1738,9 @@ export function SkladEmbeddedImageHistoryTable({
                       ) : (
                         <Typography
                           variant="body2"
-                          color="text.secondary"
+                          sx={{
+                            color: "text.secondary",
+                          }}
                         >
                           Изображение отсутствует.
                         </Typography>
@@ -1705,7 +1752,9 @@ export function SkladEmbeddedImageHistoryTable({
                 {row?.can_restore ? (
                   <Stack
                     direction="row"
-                    justifyContent="flex-end"
+                    sx={{
+                      justifyContent: "flex-end",
+                    }}
                   >
                     <Button
                       size="small"

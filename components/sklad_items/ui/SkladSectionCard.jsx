@@ -12,7 +12,9 @@ export default function SkladSectionCard({ icon = null, title, description, subt
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
+            sx={{
+              alignItems: "center",
+            }}
           >
             {icon}
             <Box>
@@ -25,8 +27,10 @@ export default function SkladSectionCard({ icon = null, title, description, subt
               {text ? (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.25 }}
+                  sx={{
+                    color: "text.secondary",
+                    mt: 0.25,
+                  }}
                 >
                   {text}
                 </Typography>
@@ -44,8 +48,10 @@ export default function SkladSectionCard({ icon = null, title, description, subt
             {text ? (
               <Typography
                 variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.25 }}
+                sx={{
+                  color: "text.secondary",
+                  mt: 0.25,
+                }}
               >
                 {text}
               </Typography>

@@ -43,9 +43,9 @@ function DeltaChip({ delta }) {
   return (
     <Stack
       direction="row"
-      alignItems="center"
       spacing={CP_SPACE.micro}
       sx={{
+        alignItems: "center",
         backgroundColor: tone.bg,
         color: tone.fg,
         borderRadius: 999,
@@ -88,10 +88,12 @@ export default function KpiCard({
     <Stack sx={{ p: compact ? CP_SPACE.compact : CP_PADDING.card, height: "100%" }}>
       <Stack
         direction="row"
-        alignItems="flex-start"
-        justifyContent="space-between"
         spacing={CP_SPACE.related}
-        sx={{ mb: compact ? CP_SPACE.micro : CP_SPACE.related }}
+        sx={{
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          mb: compact ? CP_SPACE.micro : CP_SPACE.related,
+        }}
       >
         <MetricLabel
           text={label}
@@ -120,9 +122,11 @@ export default function KpiCard({
 
       <Stack
         direction="row"
-        alignItems="center"
         spacing={CP_SPACE.related}
-        flexWrap="wrap"
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
       >
         <Typography
           variant={compact ? "h5" : "h4"}
@@ -137,9 +141,9 @@ export default function KpiCard({
       {caption ? (
         <Typography
           variant="caption"
-          color="text.secondary"
           className="cp-kpi-caption"
           sx={{
+            color: "text.secondary",
             mt: compact ? CP_SPACE.related : "auto",
             pt: compact ? CP_SPACE.micro : CP_SPACE.related,
           }}

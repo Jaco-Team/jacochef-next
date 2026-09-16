@@ -104,11 +104,6 @@ function TestAccess({ access, setAccess }) {
                           <TextField
                             value={value}
                             type="number"
-                            inputProps={{
-                              min: 0,
-                              max: 1,
-                              autoComplete: "off",
-                            }}
                             onChange={(e) =>
                               setLocalAccess({ ...localAccess, [key]: +e.target.value })
                             }
@@ -116,6 +111,13 @@ function TestAccess({ access, setAccess }) {
                               "& .MuiInputBase-input": {
                                 padding: "6px 10px", // custom padding
                                 fontSize: "14px", // custom font size
+                              },
+                            }}
+                            slotProps={{
+                              htmlInput: {
+                                min: 0,
+                                max: 1,
+                                autoComplete: "off",
                               },
                             }}
                           />

@@ -36,7 +36,9 @@ export default function AdsOauthCodeModal({ open, connection, onClose, onSubmit 
       <DialogContent>
         <Stack
           spacing={2}
-          mt={1}
+          sx={{
+            mt: 1,
+          }}
         >
           <Typography
             variant="body2"

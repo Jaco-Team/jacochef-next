@@ -46,9 +46,11 @@ export default function CategoryCard({ category, selected, disabled, onSelect, o
     >
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="flex-start"
         spacing={2}
+        sx={{
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
       >
         <Stack
           spacing={0.75}
@@ -89,11 +91,12 @@ export default function CategoryCard({ category, selected, disabled, onSelect, o
           }}
         />
       </Stack>
-
       <Stack
         direction="row"
-        justifyContent="flex-end"
-        sx={{ mt: 1.5 }}
+        sx={{
+          justifyContent: "flex-end",
+          mt: 1.5,
+        }}
       >
         {category.count > 0 ? (
           <Button

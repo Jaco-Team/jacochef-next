@@ -8,9 +8,11 @@ function HeadingTitle({ title, tooltipText }) {
   const content = (
     <Stack
       direction="row"
-      alignItems="center"
       spacing={CP_SPACE.micro}
-      sx={{ width: "fit-content" }}
+      sx={{
+        alignItems: "center",
+        width: "fit-content",
+      }}
     >
       <Typography
         variant="h6"
@@ -84,14 +86,18 @@ export default function SectionHeading({
   return (
     <Stack
       direction={{ xs: "column", sm: "row" }}
-      alignItems={{ xs: "flex-start", sm: "center" }}
-      justifyContent="space-between"
       spacing={CP_SPACE.group}
+      sx={{
+        alignItems: { xs: "flex-start", sm: "center" },
+        justifyContent: "space-between",
+      }}
     >
       <Stack
         direction="row"
-        alignItems="center"
         spacing={CP_SPACE.component}
+        sx={{
+          alignItems: "center",
+        }}
       >
         {icon ? (
           <Box
@@ -118,7 +124,9 @@ export default function SectionHeading({
           {subtitle ? (
             <Typography
               variant="body2"
-              color="text.secondary"
+              sx={{
+                color: "text.secondary",
+              }}
             >
               {subtitle}
             </Typography>

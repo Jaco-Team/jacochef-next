@@ -164,7 +164,9 @@ function HierarchyNode({
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
+          sx={{
+            alignItems: "center",
+          }}
         >
           <Tooltip title={disabled ? "Редактирование недоступно" : "Перетащить"}>
             <span>
@@ -235,8 +237,10 @@ function HierarchyLevel({
       <Stack
         direction="row"
         spacing={0.5}
-        alignItems="center"
-        justifyContent="center"
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
         <Chip
           size="small"
@@ -249,7 +253,6 @@ function HierarchyLevel({
           {level === 0 ? "Высший" : "Равные права"}
         </Typography>
       </Stack>
-
       <Box sx={{ position: "relative", height: 32 }}>
         <Box
           sx={{
@@ -320,7 +323,6 @@ function HierarchyLevel({
           />
         ) : null}
       </Box>
-
       {items.length ? (
         <Stack
           direction="row"
@@ -360,7 +362,6 @@ function HierarchyLevel({
           Перетащите карточку сюда
         </Paper>
       )}
-
       {hasNextLevel ? (
         <Box sx={{ position: "relative", height: 40 }}>
           {items.map((item, index) => {
@@ -880,8 +881,10 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
-          alignItems={{ xs: "stretch", md: "center" }}
-          justifyContent="space-between"
+          sx={{
+            alignItems: { xs: "stretch", md: "center" },
+            justifyContent: "space-between",
+          }}
         >
           <Box>
             <Typography sx={{ fontSize: 18, fontWeight: 900 }}>Иерархия найма</Typography>
@@ -913,31 +916,29 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
           </Stack>
         </Stack>
       </Paper>
-
       {!tablesReady ? (
         <Alert severity="warning">
           Структура таблиц иерархии ещё не обновлена. До выполнения SQL редактор работает только как
           просмотр.
         </Alert>
       ) : null}
-
       {tablesReady && !canEdit ? (
         <Alert severity="info">
           Иерархия доступна только для просмотра. Для изменения требуется право редактировать
           должности.
         </Alert>
       ) : null}
-
       <Alert severity="info">
         Перетащите должность в существующий блок, чтобы дать ей равные права. Перетащите её в
         область «Новая дочерняя ветка» под руководителем, чтобы создать отдельную ветку подчинения.
         Для навигации включите режим руки; масштаб также меняется через Ctrl/⌘ + колесо.
       </Alert>
-
       <Grid
         container
         spacing={2}
-        alignItems="flex-start"
+        sx={{
+          alignItems: "flex-start",
+        }}
       >
         <Grid size={{ xs: 12, lg: 5 }}>
           <Paper
@@ -947,8 +948,10 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
             <Stack
               direction="row"
               spacing={1}
-              alignItems="center"
-              sx={{ mb: 1.5 }}
+              sx={{
+                alignItems: "center",
+                mb: 1.5,
+              }}
             >
               <BusinessOutlinedIcon color="primary" />
               <Box sx={{ flex: 1 }}>
@@ -981,14 +984,18 @@ export default function EmployeeHierarchyTab({ request, showAlert }) {
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={1.5}
-              alignItems={{ xs: "stretch", sm: "center" }}
-              sx={{ mb: 1.5 }}
+              sx={{
+                alignItems: { xs: "stretch", sm: "center" },
+                mb: 1.5,
+              }}
             >
               <Stack
                 direction="row"
                 spacing={1}
-                alignItems="center"
-                sx={{ flex: 1 }}
+                sx={{
+                  alignItems: "center",
+                  flex: 1,
+                }}
               >
                 <AccountTreeOutlinedIcon color="primary" />
                 <Box>

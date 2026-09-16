@@ -58,9 +58,12 @@ export default function BestEmployeeCard({
       />
       <Stack
         direction="row"
-        alignItems="center"
         spacing={CP_SPACE.related}
-        sx={{ position: "relative", mb: CP_SPACE.related }}
+        sx={{
+          alignItems: "center",
+          position: "relative",
+          mb: CP_SPACE.related,
+        }}
       >
         <Box
           sx={{
@@ -79,8 +82,10 @@ export default function BestEmployeeCard({
         </Box>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ fontWeight: 500 }}
+          sx={{
+            color: "text.secondary",
+            fontWeight: 500,
+          }}
         >
           {label || decor.label}
         </Typography>
@@ -96,8 +101,11 @@ export default function BestEmployeeCard({
       {description ? (
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ mt: CP_SPACE.micro, position: "relative" }}
+          sx={{
+            color: "text.secondary",
+            mt: CP_SPACE.micro,
+            position: "relative",
+          }}
         >
           {description}
         </Typography>
@@ -106,8 +114,12 @@ export default function BestEmployeeCard({
       {caption ? (
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ mt: "auto", pt: CP_SPACE.related, position: "relative" }}
+          sx={{
+            color: "text.secondary",
+            mt: "auto",
+            pt: CP_SPACE.related,
+            position: "relative",
+          }}
         >
           {caption}
         </Typography>

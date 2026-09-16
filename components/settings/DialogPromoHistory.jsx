@@ -201,8 +201,10 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
                 disabled
                 size="small"
                 value={formData.minOrderAmount}
-                inputProps={{ min: 0 }}
                 required
+                slotProps={{
+                  htmlInput: { min: 0 },
+                }}
               />
             </Grid>
             <Grid
@@ -218,8 +220,10 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
                 type="number"
                 disabled
                 value={formData.maxOrderAmount}
-                inputProps={{ min: 0 }}
                 size="small"
+                slotProps={{
+                  htmlInput: { min: 0 },
+                }}
               />
             </Grid>
 
@@ -237,8 +241,10 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
                 name="activationLimit"
                 type="number"
                 value={formData.activationLimit}
-                inputProps={{ min: 1 }}
                 required
+                slotProps={{
+                  htmlInput: { min: 1 },
+                }}
               />
             </Grid>
 
@@ -256,8 +262,10 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
                 disabled
                 type="number"
                 value={formData.daysBeforeIssue}
-                inputProps={{ min: 0 }}
                 required
+                slotProps={{
+                  htmlInput: { min: 0 },
+                }}
               />
             </Grid>
 
@@ -275,8 +283,10 @@ const DialogPromoHistory = ({ open, onClose, story }) => {
                 type="number"
                 disabled
                 value={formData.validityDays}
-                inputProps={{ min: 1 }}
                 required
+                slotProps={{
+                  htmlInput: { min: 1 },
+                }}
               />
             </Grid>
 

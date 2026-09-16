@@ -230,11 +230,15 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
           <Grid
             container
             spacing={0}
-            mb={1}
+            sx={{
+              mb: 1,
+            }}
           >
             <Grid
-              mb={2}
               size={12}
+              sx={{
+                mb: 2,
+              }}
             >
               Информация о клиенте с номером телефона
               {!!clientLogin && `: ${clientLogin}`}
@@ -292,8 +296,10 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                 <Paper style={{ padding: 24 }}>
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={12}
+                    sx={{
+                      mb: 3,
+                    }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>Имя:</Typography>
                     <Typography>{clientInfo?.name || "Не указано"}</Typography>
@@ -301,9 +307,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -315,10 +323,12 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                   </Grid>
 
                   <Grid
-                    mb={3}
                     className="mail_box"
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography
@@ -331,9 +341,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -348,9 +360,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -364,10 +378,12 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                   </Grid>
 
                   <Grid
-                    mb={3}
                     className="select_box"
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography
@@ -383,9 +399,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -398,9 +416,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -414,9 +434,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -430,9 +452,11 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
 
                   <Grid
                     style={{ display: "flex" }}
-                    mb={3}
                     size={{
                       xs: 12,
+                    }}
+                    sx={{
+                      mb: 3,
                     }}
                   >
                     <Typography style={{ fontWeight: "bold", paddingRight: 10 }}>
@@ -675,8 +699,10 @@ function HistoryClientModal({ canAccess, showAlert, openOrder, open, onClose }) 
                   </TableContainer>
                   <Stack
                     direction={"row"}
-                    justifyContent={"flex-end"}
-                    sx={{ mt: 1 }}
+                    sx={{
+                      justifyContent: "flex-end",
+                      mt: 1,
+                    }}
                   >
                     Всего:{" "}
                     {formatPlural(sortedFilteredOrders.length, ["заказ", "заказа", "заказов"])} на
