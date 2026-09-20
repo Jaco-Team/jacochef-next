@@ -20,7 +20,7 @@ export default function JacoSegmentedTabs({
       sx={{
         minHeight: isCompact ? 46 : 58,
         p: isCompact ? 0.5 : `${uiControl.segmentPadding}px`,
-        borderRadius: isCompact ? "14px" : uiRadii.md,
+        borderRadius: uiRadii.md,
         backgroundColor: uiColors.surfaceMuted,
         "& .MuiTabs-indicator": {
           display: "none",
@@ -29,7 +29,7 @@ export default function JacoSegmentedTabs({
           minHeight: isCompact ? 36 : 40,
           px: isCompact ? 2 : undefined,
           textTransform: "none",
-          borderRadius: isCompact ? "10px" : uiRadii.sm,
+          borderRadius: uiRadii.sm,
           color: uiColors.text,
           fontSize: isCompact ? uiTypography.label.fontSize : uiTypography.bodyLarge.fontSize,
           lineHeight: isCompact ? uiTypography.label.lineHeight : uiTypography.bodyLarge.lineHeight,

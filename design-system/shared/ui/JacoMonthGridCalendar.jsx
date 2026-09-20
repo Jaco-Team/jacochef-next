@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import { Box, Typography } from "@mui/material";
+import { uiRadii } from "../tokens";
 
 dayjs.locale("ru");
 
@@ -49,7 +50,7 @@ export default function JacoMonthGridCalendar({
         width: panelWidth,
         minWidth: 0,
         boxSizing: "border-box",
-        borderRadius: "12px",
+        borderRadius: uiRadii.lg,
         backgroundColor: "#F3F3F3",
         overflow: "hidden",
         p: `${padding}px`,
@@ -84,7 +85,7 @@ export default function JacoMonthGridCalendar({
             height: 44,
             px: 1.5,
             border: "1px solid #E5E5E5",
-            borderRadius: "8px",
+            borderRadius: uiRadii.md,
             backgroundColor: "#FFFFFF",
             display: "flex",
             alignItems: "center",
@@ -118,7 +119,7 @@ export default function JacoMonthGridCalendar({
                 height: navButtonSize,
                 p: 0,
                 border: "1px solid #E5E5E5",
-                borderRadius: "8px",
+                borderRadius: uiRadii.md,
                 backgroundColor: "#FFFFFF",
                 color: "#A6A6A6",
                 fontSize: 30,
@@ -172,7 +173,7 @@ export default function JacoMonthGridCalendar({
                 width: size,
                 height: size,
                 p: 0,
-                borderRadius: "999px",
+                borderRadius: uiRadii.full,
                 border: isEmpty ? "1px solid transparent" : meta.border || "1px solid transparent",
                 backgroundColor: isEmpty ? "transparent" : meta.backgroundColor || "#FFFFFF",
                 color: isEmpty ? "transparent" : meta.color || (isWeekend ? "#A6A6A6" : "#666666"),

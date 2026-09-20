@@ -15,7 +15,7 @@ import { JacoSurface } from "@/design-system/shared/ui";
 
 function ErrorTableCard({ title, children }) {
   return (
-    <JacoSurface sx={{ borderRadius: "12px", overflow: "hidden" }}>
+    <JacoSurface sx={{ overflow: "hidden" }}>
       <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid #ECECEC" }}>
         <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#3C3B3B" }}>{title}</Typography>
       </Box>

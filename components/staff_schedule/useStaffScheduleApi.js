@@ -56,6 +56,7 @@ export default function useStaffScheduleApi() {
       saveUserPriceH: (payload) => request("save_userPriceH", payload),
       saveDirLv: (payload) => request("save_dir_lv", payload),
       saveDopBonus: (payload) => request("save_dop_bonus", payload),
+      saveDopBonusUser: (payload) => request("save_dop_bonus_user", payload),
       deleteDopBonusUser: (payload) => request("del_dop_bonus_user", payload),
       saveUserGivePrice: (payload) => request("save_user_give_price", payload),
       saveUserGiveCartPrice: (payload) => request("save_user_give_cart_price", payload),

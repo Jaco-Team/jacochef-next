@@ -39,6 +39,8 @@ export default function useStaffSchedulePage() {
   const [months, setMonths] = useState([]);
   const [pointId, setPointId] = useState("");
   const [monthId, setMonthId] = useState("");
+  const [draftPointId, setDraftPointId] = useState("");
+  const [draftMonthId, setDraftMonthId] = useState("");
   const [access, setAccess] = useState({});
   const [devRoleKind, setDevRoleKind] = useState("");
   const [graph, setGraph] = useState({
@@ -126,9 +128,9 @@ export default function useStaffSchedulePage() {
   }, []);
 
   const loadGraph = useCallback(
-    async (nextPointId, nextMonthId) => {
+    async (nextPointId, nextMonthId, { selectCurrentPeriod = false } = {}) => {
       if (!nextPointId || !nextMonthId) {
-        return;
+        return false;
       }
 
       setIsGraphLoading(true);
@@ -146,9 +148,13 @@ export default function useStaffSchedulePage() {
 
         setGraph(buildGraphState(response));
         setAccess((prev) => pickAccessMap(response) ?? prev);
-        setSelectedPart(Math.max(Number(response?.part || 1) - 1, 0));
+        if (selectCurrentPeriod) {
+          setSelectedPart(Math.max(Number(response?.part || 1) - 1, 0));
+        }
+        return true;
       } catch (requestError) {
         setError(requestError?.message || "Не удалось загрузить график");
+        return false;
       } finally {
         setIsGraphLoading(false);
       }
@@ -184,10 +190,12 @@ export default function useStaffSchedulePage() {
         setMonths(nextMonths);
         setPointId(nextPointId);
         setMonthId(nextMonthId);
+        setDraftPointId(nextPointId);
+        setDraftMonthId(nextMonthId);
         setAccess(pickAccessMap(response) ?? {});
 
         if (nextPointId && nextMonthId) {
-          await loadGraph(nextPointId, nextMonthId);
+          await loadGraph(nextPointId, nextMonthId, { selectCurrentPeriod: true });
         }
       } catch (requestError) {
         if (isMounted) {
@@ -217,16 +225,22 @@ export default function useStaffSchedulePage() {
         moduleName,
         access,
         graph,
+        monthId,
         selectedPart,
         selectedShiftId,
         collapsedShiftIds,
       }),
-    [access, collapsedShiftIds, graph, moduleName, selectedPart, selectedShiftId],
+    [access, collapsedShiftIds, graph, moduleName, monthId, selectedPart, selectedShiftId],
   );
-  const periodBonusState = useMemo(
-    () => view.activePeriod?.meta?.bonus_other ?? 0,
-    [view.activePeriod],
-  );
+  const periodBonusState = useMemo(() => {
+    const explicitStatus = Number(view.activePeriod?.meta?.bonus_other_status ?? 0);
+
+    if (explicitStatus === 1 || explicitStatus === 2) {
+      return explicitStatus;
+    }
+
+    return Number(view.activePeriod?.meta?.bonus_other) === 1 ? 1 : 0;
+  }, [view.activePeriod]);
   const effectiveGraphKind = devRoleKind || graph.kind;
 
   useEffect(() => {
@@ -235,23 +249,22 @@ export default function useStaffSchedulePage() {
     setSelectedRowIds([]);
   }, [selectedPart, pointId, monthId]);
 
-  const handlePointChange = useCallback(
-    async (event) => {
-      const nextPointId = event.target.value;
-      setPointId(nextPointId);
-      await loadGraph(nextPointId, monthId);
-    },
-    [loadGraph, monthId],
-  );
+  const handlePointChange = useCallback((event) => {
+    setDraftPointId(event.target.value);
+  }, []);
 
-  const handleMonthChange = useCallback(
-    async (event) => {
-      const nextMonthId = event.target.value;
-      setMonthId(nextMonthId);
-      await loadGraph(pointId, nextMonthId);
-    },
-    [loadGraph, pointId],
-  );
+  const handleMonthChange = useCallback((event) => {
+    setDraftMonthId(event.target.value);
+  }, []);
+
+  const handleApplyFilters = useCallback(async () => {
+    const didLoad = await loadGraph(draftPointId, draftMonthId);
+
+    if (didLoad) {
+      setPointId(draftPointId);
+      setMonthId(draftMonthId);
+    }
+  }, [draftMonthId, draftPointId, loadGraph]);
 
   const handleReload = useCallback(async () => {
     await loadGraph(pointId, monthId);
@@ -834,12 +847,23 @@ export default function useStaffSchedulePage() {
     [api, handleCloseSummaryAction, handleReload, runMutation],
   );
 
-  const handleRemoveTeamBonusFromUser = useCallback(
+  const handleChangeTeamBonusForUser = useCallback(
     async (row) => {
+      const isGranted = Number(row?.dop_bonus ?? 0) > 0;
+      const nextType = isGranted ? 2 : 1;
+      const actionLabel = isGranted ? "Лишить" : "Выдать";
+      const employeeName = row?.user_name;
       const accepted = await confirm({
-        title: "Предупреждение",
-        message: `Лишить командного бонуса ${row?.user_name || "сотрудника"}?`,
-        confirmLabel: "Лишить",
+        title: isGranted ? "Предупреждение" : "Подтверждение",
+        tone: isGranted ? "danger" : "success",
+        confirmTone: isGranted ? "danger" : "success",
+        cancelLabel: "Отмена",
+        message: isGranted
+          ? `Лишить командного бонуса ${employeeName || "этого сотрудника"}?`
+          : employeeName
+            ? `Выдать командный бонус сотруднику ${employeeName}?`
+            : "Выдать командный бонус этому сотруднику?",
+        confirmLabel: actionLabel,
       });
 
       if (!accepted) {
@@ -848,13 +872,14 @@ export default function useStaffSchedulePage() {
 
       try {
         await runMutation(async () => {
-          const response = await api.deleteDopBonusUser({
+          const response = await api.saveDopBonusUser({
             point_id: pointId,
             user_id: row?.id,
             smena_id: row?.smena_id,
             app_id: row?.app_id,
             part: selectedPart,
             data: monthId,
+            type: nextType,
           });
 
           if (response?.st === false) {
@@ -987,6 +1012,8 @@ export default function useStaffSchedulePage() {
     months,
     pointId,
     monthId,
+    draftPointId,
+    draftMonthId,
     access,
     devRoleKind,
     selectedPart,
@@ -1006,7 +1033,7 @@ export default function useStaffSchedulePage() {
     graphKind: graph.kind,
     effectiveGraphKind,
     directorLevel: graph.add_lv,
-    periodBonusState: view.activePeriod?.meta?.bonus_other ?? 0,
+    periodBonusState,
     exportDialog: exportActions.dialog,
     canExportWorkSchedule: exportActions.canExportWorkSchedule,
     canExportHealthJournal: exportActions.canExportHealthJournal,
@@ -1016,6 +1043,7 @@ export default function useStaffSchedulePage() {
     setSelectedPart,
     handlePointChange,
     handleMonthChange,
+    handleApplyFilters,
     handleReload,
     handleShiftChange,
     handleCalendarVisibilityChange,
@@ -1041,7 +1069,7 @@ export default function useStaffSchedulePage() {
     handleOpenCamError,
     handleCloseErrorAppeal,
     handleSaveErrorAppeal,
-    handleRemoveTeamBonusFromUser,
+    handleChangeTeamBonusForUser,
     handleOpenFastActions: fastActions.open,
     handleCloseFastActions: fastActions.close,
     handleOpenBulkFastActions: fastActions.openBulk,

@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  SwipeableDrawer,
   Typography,
   useMediaQuery,
   useTheme,
@@ -80,8 +81,8 @@ export default function JacoModal({
         slotProps={{
           paper: {
             sx: {
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
+              borderTopLeftRadius: uiRadii.sheet,
+              borderTopRightRadius: uiRadii.sheet,
               maxHeight: "88vh",
               overflow: "hidden",
               outline: "none",
@@ -151,7 +152,7 @@ export default function JacoModal({
       slotProps={{
         paper: {
           sx: {
-            borderRadius: uiRadii.md,
+            borderRadius: uiRadii.lg,
             maxHeight: "calc(100% - 48px)",
             outline: "none",
             ...paperSx,

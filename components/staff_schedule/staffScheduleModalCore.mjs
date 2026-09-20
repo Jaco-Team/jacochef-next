@@ -67,6 +67,86 @@ export function canEditMonthByRole({ roleKind, monthId }) {
   return isMegaOnlyRole(roleKind) || !isPastMonth(monthId);
 }
 
+function timeToMinutes(value) {
+  const match = String(value ?? "").match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+export function getTimeRangeValidationError(range = {}) {
+  const start = timeToMinutes(range?.time_start);
+  const end = timeToMinutes(range?.time_end);
+
+  if (start === null || end === null) {
+    return "Укажите корректное время начала и окончания.";
+  }
+
+  if (end <= start) {
+    return "Время окончания должно быть позже начала. Переход через полночь недоступен.";
+  }
+
+  return "";
+}
+
+export function findInvalidTimeRangeIds(hours = []) {
+  const invalidIds = new Set();
+
+  toArray(hours).forEach((range, index) => {
+    if (getTimeRangeValidationError(range)) {
+      invalidIds.add(range?.id ?? `hour-${index}`);
+    }
+  });
+
+  return invalidIds;
+}
+
+export function timeRangesOverlap(first = {}, second = {}) {
+  if (getTimeRangeValidationError(first) || getTimeRangeValidationError(second)) {
+    return false;
+  }
+
+  const firstStart = timeToMinutes(first?.time_start);
+  const firstEnd = timeToMinutes(first?.time_end);
+  const secondStart = timeToMinutes(second?.time_start);
+  const secondEnd = timeToMinutes(second?.time_end);
+
+  if (firstStart === null || firstEnd === null || secondStart === null || secondEnd === null) {
+    return false;
+  }
+
+  return Math.max(firstStart, secondStart) < Math.min(firstEnd, secondEnd);
+}
+
+export function findOverlappingTimeRangeIds(hours = []) {
+  const ranges = toArray(hours);
+  const overlappingIds = new Set();
+
+  ranges.forEach((range, rangeIndex) => {
+    ranges.slice(rangeIndex + 1).forEach((otherRange, offset) => {
+      if (!timeRangesOverlap(range, otherRange)) {
+        return;
+      }
+
+      const otherIndex = rangeIndex + offset + 1;
+      overlappingIds.add(range?.id ?? `hour-${rangeIndex}`);
+      overlappingIds.add(otherRange?.id ?? `hour-${otherIndex}`);
+    });
+  });
+
+  return overlappingIds;
+}
+
 function normalizeNullableValue(value) {
   return value && value !== "none" ? value : "";
 }

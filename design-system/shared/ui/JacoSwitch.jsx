@@ -1,6 +1,6 @@
 import { Switch } from "@mui/material";
 
-import { uiColors } from "../tokens";
+import { uiColors, uiRadii } from "../tokens";
 
 export default function JacoSwitch({ sx, ...props }) {
   return (
@@ -35,7 +35,7 @@ export default function JacoSwitch({ sx, ...props }) {
         "& .MuiSwitch-track": {
           boxSizing: "border-box",
           border: "1px solid #D9D9D9",
-          borderRadius: "17px",
+          borderRadius: uiRadii.full,
           bgcolor: "#F1F1F1",
           opacity: 1,
         },

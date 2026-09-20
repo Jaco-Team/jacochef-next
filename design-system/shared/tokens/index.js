@@ -46,8 +46,9 @@ export const uiRadii = {
   xs: "4px",
   sm: "8px",
   md: "12px",
-  lg: "12px",
+  lg: "16px",
   sheet: "24px",
+  full: "999px",
 };
 
 export const uiSpacing = {

@@ -72,7 +72,9 @@ export default function JacoAutocomplete({
     ? {
         "& .MuiOutlinedInput-root": {
           minHeight: 44,
-          borderRadius: uiRadii.lg,
+          alignItems: "center",
+          py: "0 !important",
+          borderRadius: uiRadii.md,
           backgroundColor: disabled ? uiStateColors.disabledSurface : uiColors.surface,
           color: uiColors.text,
           "& fieldset": {
@@ -86,12 +88,20 @@ export default function JacoAutocomplete({
             borderWidth: 1,
           },
         },
-        "& .MuiInputBase-input": {
+        "& .MuiAutocomplete-inputRoot .MuiAutocomplete-input": {
           ...uiTypography.body,
+          boxSizing: "border-box",
+          height: 20,
+          py: "0 !important",
+          alignSelf: "center",
         },
         "& .MuiInputLabel-root": {
           ...uiTypography.label,
           color: uiColors.textMuted,
+          transform: "translate(16px, 13px) scale(1)",
+          "&.MuiInputLabel-shrink": {
+            transform: "translate(16px, -9px) scale(0.75)",
+          },
           "&.Mui-focused": {
             color: uiColors.primary,
           },
@@ -138,7 +148,7 @@ export default function JacoAutocomplete({
           ...slotProps?.paper,
           sx: {
             border: `1px solid ${uiColors.border}`,
-            borderRadius: uiRadii.lg,
+            borderRadius: uiRadii.md,
             boxShadow: uiShadows.popover,
             overflow: "hidden",
             ...slotProps?.paper?.sx,

@@ -3,6 +3,7 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
 import {
   Box,
@@ -24,7 +25,9 @@ import {
   JacoFieldSwitch,
   JacoIconButton,
   JacoSurface,
+  JacoTextInput,
   uiColors,
+  uiRadii,
   uiTableColors,
 } from "@/design-system/shared/ui";
 import StaffScheduleColorLegendModal from "./StaffScheduleColorLegendModal";
@@ -45,6 +48,7 @@ import {
   toArray,
 } from "../staffScheduleHelpers";
 import StaffScheduleMobileTableSection from "./StaffScheduleMobileTableSection";
+import { getHolidayStripeSx } from "../staffSchedulePatterns";
 
 const stickyBaseSx = {
   position: "sticky",
@@ -59,6 +63,74 @@ const stickyBoundarySx = {
   boxShadow:
     "inset -1px 0 0 #E2E8F0, inset 0 -1px 0 #ECECEC, 10px 0 14px -14px rgba(15, 23, 42, 0.45)",
 };
+const SALARY_HEADER_FONT_SIZE = "0.75rem";
+const SALARY_HEADER_LINE_HEIGHT = 1.2;
+
+function normalizeEmployeeSearch(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase("ru-RU")
+    .replace(/ё/g, "е")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function filterScheduleRowsByEmployee(rows, searchValue) {
+  const normalizedSearch = normalizeEmployeeSearch(searchValue);
+
+  if (!normalizedSearch) {
+    return rows;
+  }
+
+  const result = [];
+  let currentHeader = null;
+  let isCurrentHeaderIncluded = false;
+
+  rows.forEach((row) => {
+    if (row?.row === "header") {
+      currentHeader = row;
+      isCurrentHeaderIncluded = false;
+      return;
+    }
+
+    const employeeName = normalizeEmployeeSearch(
+      row?.data?.user_name || row?.data?.fio || row?.data?.name,
+    );
+
+    if (!employeeName.includes(normalizedSearch)) {
+      return;
+    }
+
+    if (currentHeader && !isCurrentHeaderIncluded) {
+      result.push(currentHeader);
+      isCurrentHeaderIncluded = true;
+    }
+
+    result.push(row);
+  });
+
+  return result;
+}
+
+function EmployeeSearchField({ value, onChange }) {
+  return (
+    <Box
+      data-employee-search-field
+      sx={{ width: { xs: "100%", md: 360 }, pt: { xs: 1, md: 1.5 } }}
+    >
+      <JacoTextInput
+        type="search"
+        label="Поиск по ФИО"
+        placeholder="Введите имя сотрудника"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        inputAdornment={{
+          startAdornment: <SearchRoundedIcon sx={{ fontSize: 20, color: uiColors.textMuted }} />,
+        }}
+        inputProps={{ "aria-label": "Поиск по ФИО" }}
+      />
+    </Box>
+  );
+}
 
 const stickyCellSx = (width, left, zIndex, backgroundColor = "#ffffff") => ({
   ...stickyBaseSx,
@@ -189,13 +261,14 @@ function ScheduleTableHeaderRow({
       {summaryColumns.map((column) => (
         <TableCell
           key={`head-bottom-${column.key}`}
+          data-salary-header-cell
           align="center"
           sx={{
             ...tableCellDividerSx,
             minWidth: SUMMARY_COLUMN_WIDTH,
-            fontWeight: 700,
-            fontSize: 10.5,
-            lineHeight: 1.15,
+            fontWeight: 600,
+            fontSize: SALARY_HEADER_FONT_SIZE,
+            lineHeight: SALARY_HEADER_LINE_HEIGHT,
             whiteSpace: "normal",
             wordBreak: "break-word",
             overflowWrap: "anywhere",
@@ -207,10 +280,12 @@ function ScheduleTableHeaderRow({
           <SmallFont
             style={{
               display: "block",
-              fontSize: "10.5px",
-              lineHeight: "1.15",
+              fontSize: SALARY_HEADER_FONT_SIZE,
+              lineHeight: String(SALARY_HEADER_LINE_HEIGHT),
+              fontWeight: 600,
               textAlign: "center",
             }}
+            title={column.label}
           >
             {column.label}
           </SmallFont>
@@ -250,11 +325,12 @@ function ScheduleRow({
   onOpenMonth,
   onOpenFastActions,
   onOpenSummaryAction,
-  onRemoveTeamBonusFromUser,
+  onChangeTeamBonusForUser,
   canOpenMonth,
   canOpenDayEdit,
   canEdit,
   selectedPart,
+  periodBonusState,
   showFastActions,
   isCalendarHidden,
   useColors,
@@ -395,9 +471,9 @@ function ScheduleRow({
                   py: 0.5,
                   fontSize: 11,
                   fontWeight: 500,
-                  background: isHoliday
-                    ? `repeating-linear-gradient(-45deg, ${baseBackground}, ${baseBackground} 8px, rgba(255, 0, 0, 0.3) 8px, rgba(255, 0, 0, 0.3) 12px)`
-                    : baseBackground,
+                  ...(isHoliday
+                    ? getHolidayStripeSx(baseBackground, index, DAY_COLUMN_WIDTH)
+                    : { backgroundColor: baseBackground }),
                   color: textColor,
                   cursor: canOpenDay ? "pointer" : "default",
                   transition: "filter 0.15s ease",
@@ -432,6 +508,7 @@ function ScheduleRow({
           const canEditDopBonus =
             column.key === "dop_bonus" &&
             canEdit("com_bonus") &&
+            [1, 2].includes(Number(periodBonusState)) &&
             Number(data?.check_period) === 1 &&
             String(data?.smena_id ?? "") !== "-1";
           const isPremiumColumn = column.key === "test_all_price" && column.accessKey === "premia";
@@ -445,7 +522,7 @@ function ScheduleRow({
 
           const handleClick = () => {
             if (canEditDopBonus) {
-              onRemoveTeamBonusFromUser?.(data);
+              onChangeTeamBonusForUser?.(data);
               return;
             }
 
@@ -722,7 +799,7 @@ export default function StaffScheduleTableSection({
   onOpenMonth,
   onOpenFastActions,
   onOpenSummaryAction,
-  onRemoveTeamBonusFromUser,
+  onChangeTeamBonusForUser,
   onOpenBulkFastActions,
   onOpenSelectedFastActions,
   onOpenCreateSmena,
@@ -740,6 +817,7 @@ export default function StaffScheduleTableSection({
   isGraphLoading = false,
 }) {
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState("");
   const [stickyHeader, setStickyHeader] = useState({
     visible: false,
     left: 0,
@@ -756,7 +834,15 @@ export default function StaffScheduleTableSection({
   const scrollSyncRafRef = useRef(null);
   const pendingScrollSyncRef = useRef(null);
   const days = toArray(period?.meta?.days);
-  const visibleRows = toArray(rows);
+  const allRows = toArray(rows);
+  const normalizedEmployeeSearch = normalizeEmployeeSearch(employeeSearch);
+  const visibleRows = useMemo(
+    () => filterScheduleRowsByEmployee(allRows, normalizedEmployeeSearch),
+    [allRows, normalizedEmployeeSearch],
+  );
+  const filteredShiftCount = normalizedEmployeeSearch
+    ? visibleRows.filter((row) => row?.row === "header").length
+    : shownShiftCount;
   const { canView, canEdit, canShowFooterStats, canOpenMonthCard, canOpenDayCard, canManageSmena } =
     useMemo(() => createStaffSchedulePolicy(access), [access]);
   const renderedDayCount = isCalendarHidden ? 0 : days.length;
@@ -986,12 +1072,12 @@ export default function StaffScheduleTableSection({
     [],
   );
 
-  if (!isGraphLoading && !days.length && !visibleRows.length) {
+  if (!isGraphLoading && !days.length && !allRows.length) {
     return (
       <Box
         sx={{
           border: "1px solid #E5E5E5",
-          borderRadius: CONTROL_RADIUS,
+          borderRadius: uiRadii.lg,
           p: 4,
           textAlign: "center",
           color: "text.secondary",
@@ -1004,312 +1090,337 @@ export default function StaffScheduleTableSection({
 
   if (isMobile) {
     return (
-      <StaffScheduleMobileTableSection
-        shownShiftCount={shownShiftCount}
-        rows={visibleRows}
-        days={days}
-        collapsedShiftIds={collapsedShiftIds}
-        onToggleShiftCollapse={onToggleShiftCollapse}
-        canEditSmena={canEditSmena}
-        onOpenEditSmena={onOpenEditSmena}
-        isCalendarHidden={isCalendarHidden}
-        showFastActions={showFastActions}
-        hasBulkSelection={hasBulkSelection}
-        onOpenBulkFastActions={onOpenBulkFastActions}
-        onOpenSelectedFastActions={onOpenSelectedFastActions}
-        useColors={useColors}
-        selectedRowIds={selectedRowIds}
-        onToggleRowSelection={onToggleRowSelection}
-        onClearRowSelection={onClearRowSelection}
-        onOpenMonth={onOpenMonth}
-        onOpenDay={onOpenDay}
-        canOpenMonth={canOpenMonth}
-        canOpenDayEdit={canOpenDayEdit}
-        hasSummaryRows={hasSummaryRows}
-        onOpenSummaryAction={onOpenSummaryAction}
-        summaryColumns={summaryColumns}
-        summaryTotals={summaryTotals}
-        totalsSummaryKeyMap={totalsSummaryKeyMap}
-        periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
-        canEditTeamBonus={canEditTeamBonus}
-        periodBonusState={periodBonusState}
-        canShowPeriodSum={canShowPeriodSum}
-        bonusDayValues={bonusDayValues}
-        canShowTotals={canShowTotals}
-        canShowRolls={canShowRolls}
-        canShowPizza={canShowPizza}
-        canShowSlowOrders={canShowSlowOrders}
-        slowOrderValues={slowOrderValues}
-      />
+      <Stack spacing={1.5}>
+        <EmployeeSearchField
+          value={employeeSearch}
+          onChange={setEmployeeSearch}
+        />
+        <StaffScheduleMobileTableSection
+          shownShiftCount={filteredShiftCount}
+          rows={visibleRows}
+          days={days}
+          collapsedShiftIds={collapsedShiftIds}
+          onToggleShiftCollapse={onToggleShiftCollapse}
+          canEditSmena={canEditSmena}
+          onOpenEditSmena={onOpenEditSmena}
+          isCalendarHidden={isCalendarHidden}
+          showFastActions={showFastActions}
+          hasBulkSelection={hasBulkSelection}
+          onOpenBulkFastActions={onOpenBulkFastActions}
+          onOpenSelectedFastActions={onOpenSelectedFastActions}
+          useColors={useColors}
+          selectedRowIds={selectedRowIds}
+          onToggleRowSelection={onToggleRowSelection}
+          onClearRowSelection={onClearRowSelection}
+          onOpenMonth={onOpenMonth}
+          onOpenDay={onOpenDay}
+          canOpenMonth={canOpenMonth}
+          canOpenDayEdit={canOpenDayEdit}
+          hasSummaryRows={hasSummaryRows}
+          onOpenSummaryAction={onOpenSummaryAction}
+          summaryColumns={summaryColumns}
+          summaryTotals={summaryTotals}
+          totalsSummaryKeyMap={totalsSummaryKeyMap}
+          periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
+          canEditTeamBonus={canEditTeamBonus}
+          onChangeTeamBonusForUser={onChangeTeamBonusForUser}
+          periodBonusState={periodBonusState}
+          canShowPeriodSum={canShowPeriodSum}
+          bonusDayValues={bonusDayValues}
+          canShowTotals={canShowTotals}
+          canShowRolls={canShowRolls}
+          canShowPizza={canShowPizza}
+          canShowSlowOrders={canShowSlowOrders}
+          slowOrderValues={slowOrderValues}
+          isEmployeeSearchActive={Boolean(normalizedEmployeeSearch)}
+        />
+      </Stack>
     );
   }
 
   return (
-    <JacoSurface
-      sx={{
-        borderRadius: CONTROL_RADIUS,
-        overflow: "hidden",
-        border: "none",
-      }}
-    >
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={2}
+    <Stack spacing={1.5}>
+      <EmployeeSearchField
+        value={employeeSearch}
+        onChange={setEmployeeSearch}
+      />
+      <JacoSurface
         sx={{
-          justifyContent: "space-between",
-          alignItems: { xs: "stretch", md: "flex-start" },
-          p: 2,
-          pb: 1.5,
+          borderRadius: uiRadii.lg,
+          overflow: "hidden",
+          border: "none",
         }}
       >
-        <Stack spacing={0.5}>
-          <Typography sx={{ fontSize: 14, fontWeight: 500, textTransform: "uppercase" }}>
-            График смен
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: "#666666" }}>
-            Показано • {shownShiftCount} смен
-          </Typography>
-        </Stack>
-
         <Stack
           direction={{ xs: "column", md: "row" }}
-          spacing={1}
+          spacing={2}
           sx={{
-            alignItems: { xs: "stretch", md: "center" },
-            width: { xs: "100%", md: "auto" },
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", md: "flex-start" },
+            p: 2,
+            pb: 1.5,
           }}
         >
-          {canCreateSmena ? (
-            <Box sx={{ minWidth: toolbarControlMinWidth }}>
-              <JacoButton
-                fullWidth
-                tone="secondary"
-                onClick={onOpenCreateSmena}
-                sx={{
-                  borderRadius: "18px",
-                  color: uiColors.textMuted,
-                  "&.MuiButton-root": {
-                    fontSize: 16,
-                    lineHeight: 1.25,
-                    fontWeight: 500,
-                  },
-                }}
-              >
-                Новая смена
-              </JacoButton>
-            </Box>
-          ) : null}
+          <Stack spacing={0.5}>
+            <Typography sx={{ fontSize: 14, fontWeight: 500, textTransform: "uppercase" }}>
+              График смен
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: "#666666" }}>
+              Показано • {filteredShiftCount} смен
+            </Typography>
+          </Stack>
 
-          <Box sx={{ minWidth: toolbarControlMinWidth }}>
-            <JacoFieldSwitch
-              label="Календарь"
-              checked={!isCalendarHidden}
-              onChange={onCalendarVisibilityChange}
-            />
-          </Box>
-
-          <Box sx={{ minWidth: toolbarControlMinWidth }}>
-            <JacoFieldSwitch
-              label="Цветовые обозначения"
-              checked={useColors}
-              onChange={onColorModeChange}
-              action={
-                <JacoIconButton
-                  aria-label="Показать цветовые обозначения"
-                  onClick={() => setIsColorLegendOpen(true)}
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: "50%",
-                    border: "none",
-                    backgroundColor: "transparent",
-                    color: "#666666",
-                    "&:hover": { backgroundColor: "#F2F2F2" },
-                  }}
-                >
-                  <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
-                </JacoIconButton>
-              }
-            />
-          </Box>
-        </Stack>
-      </Stack>
-
-      {stickyHeader.visible ? (
-        <Box
-          sx={{
-            position: "fixed",
-            left: stickyHeader.left,
-            top: stickyHeader.top,
-            width: stickyHeader.width,
-            zIndex: 1200,
-            boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
-            borderTop: "1px solid #ECECEC",
-            borderBottom: "1px solid #ECECEC",
-            backgroundColor: "#FFFFFF",
-          }}
-        >
-          <TableContainer
-            ref={stickyHeaderContainerRef}
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1}
             sx={{
-              overflowX: "auto",
-              overflowY: "hidden",
-              scrollbarWidth: "none",
-              "&::-webkit-scrollbar": {
-                display: "none",
-              },
+              alignItems: { xs: "stretch", md: "center" },
+              width: { xs: "100%", md: "auto" },
             }}
           >
-            <Table
-              size="small"
+            {canCreateSmena ? (
+              <Box sx={{ minWidth: toolbarControlMinWidth }}>
+                <JacoButton
+                  fullWidth
+                  tone="secondary"
+                  onClick={onOpenCreateSmena}
+                  sx={{
+                    borderRadius: uiRadii.md,
+                    color: uiColors.textMuted,
+                    "&.MuiButton-root": {
+                      fontSize: 16,
+                      lineHeight: 1.25,
+                      fontWeight: 500,
+                    },
+                  }}
+                >
+                  Новая смена
+                </JacoButton>
+              </Box>
+            ) : null}
+
+            <Box sx={{ minWidth: toolbarControlMinWidth }}>
+              <JacoFieldSwitch
+                label="Календарь"
+                checked={!isCalendarHidden}
+                onChange={onCalendarVisibilityChange}
+              />
+            </Box>
+
+            <Box sx={{ minWidth: toolbarControlMinWidth }}>
+              <JacoFieldSwitch
+                label="Цветовые обозначения"
+                checked={useColors}
+                onChange={onColorModeChange}
+                labelAction={
+                  <JacoIconButton
+                    aria-label="Показать цветовые обозначения"
+                    onClick={() => setIsColorLegendOpen(true)}
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: uiRadii.full,
+                      border: "none",
+                      backgroundColor: "transparent",
+                      color: "#666666",
+                      "&:hover": { backgroundColor: "#F2F2F2" },
+                    }}
+                  >
+                    <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+                  </JacoIconButton>
+                }
+              />
+            </Box>
+          </Stack>
+        </Stack>
+
+        {stickyHeader.visible ? (
+          <Box
+            sx={{
+              position: "fixed",
+              left: stickyHeader.left,
+              top: stickyHeader.top,
+              width: stickyHeader.width,
+              zIndex: 1200,
+              boxShadow: "0 6px 18px rgba(15, 23, 42, 0.12)",
+              borderTop: "1px solid #ECECEC",
+              borderBottom: "1px solid #ECECEC",
+              backgroundColor: "#FFFFFF",
+            }}
+          >
+            <TableContainer
+              ref={stickyHeaderContainerRef}
               sx={{
-                width: tableWidth,
-                minWidth: tableWidth,
-                tableLayout: "fixed",
-                borderCollapse: "separate",
-                borderSpacing: 0,
-                "& .MuiTableCell-root": {
-                  borderColor: "#EDEDED",
+                overflowX: "auto",
+                overflowY: "hidden",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": {
+                  display: "none",
                 },
               }}
             >
-              <ScheduleTableColGroup
-                dayCount={renderedDayCount}
-                summaryColumnCount={summaryColumns.length}
-                showFastActions={showFastActions}
-              />
-              <TableHead>
-                <ScheduleTableHeaderRow
-                  days={days}
-                  summaryColumns={summaryColumns}
-                  hasBulkSelection={hasBulkSelection}
+              <Table
+                size="small"
+                sx={{
+                  width: tableWidth,
+                  minWidth: tableWidth,
+                  tableLayout: "fixed",
+                  borderCollapse: "separate",
+                  borderSpacing: 0,
+                  "& .MuiTableCell-root": {
+                    borderColor: "#EDEDED",
+                  },
+                }}
+              >
+                <ScheduleTableColGroup
+                  dayCount={renderedDayCount}
+                  summaryColumnCount={summaryColumns.length}
                   showFastActions={showFastActions}
-                  isCalendarHidden={isCalendarHidden}
-                  positionHeaderLeft={positionHeaderLeft}
-                  onOpenBulkFastActions={onOpenBulkFastActions}
-                  stickyZIndex={8}
                 />
-              </TableHead>
-            </Table>
-          </TableContainer>
-        </Box>
-      ) : null}
+                <TableHead>
+                  <ScheduleTableHeaderRow
+                    days={days}
+                    summaryColumns={summaryColumns}
+                    hasBulkSelection={hasBulkSelection}
+                    showFastActions={showFastActions}
+                    isCalendarHidden={isCalendarHidden}
+                    positionHeaderLeft={positionHeaderLeft}
+                    onOpenBulkFastActions={onOpenBulkFastActions}
+                    stickyZIndex={8}
+                  />
+                </TableHead>
+              </Table>
+            </TableContainer>
+          </Box>
+        ) : null}
 
-      <TableContainer
-        ref={tableContainerRef}
-        sx={{
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-          border: "1px solid #ECECEC",
-          borderRadius: CONTROL_RADIUS,
-        }}
-      >
-        <Table
-          ref={tableRef}
-          size="small"
+        <TableContainer
+          ref={tableContainerRef}
           sx={{
-            width: tableWidth,
-            minWidth: tableWidth,
-            tableLayout: "fixed",
-            borderCollapse: "separate",
-            borderSpacing: 0,
-            "& .MuiTableCell-root": {
-              borderColor: "#EDEDED",
-            },
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            border: "1px solid #ECECEC",
+            borderRadius: CONTROL_RADIUS,
           }}
         >
-          <ScheduleTableColGroup
-            dayCount={renderedDayCount}
-            summaryColumnCount={summaryColumns.length}
-            showFastActions={showFastActions}
-          />
-          <TableHead ref={tableHeadRef}>
-            <ScheduleTableHeaderRow
-              days={days}
-              summaryColumns={summaryColumns}
-              hasBulkSelection={hasBulkSelection}
+          <Table
+            ref={tableRef}
+            size="small"
+            sx={{
+              width: tableWidth,
+              minWidth: tableWidth,
+              tableLayout: "fixed",
+              borderCollapse: "separate",
+              borderSpacing: 0,
+              "& .MuiTableCell-root": {
+                borderColor: "#EDEDED",
+              },
+            }}
+          >
+            <ScheduleTableColGroup
+              dayCount={renderedDayCount}
+              summaryColumnCount={summaryColumns.length}
               showFastActions={showFastActions}
-              isCalendarHidden={isCalendarHidden}
-              positionHeaderLeft={positionHeaderLeft}
-              onOpenBulkFastActions={onOpenBulkFastActions}
             />
-          </TableHead>
+            <TableHead ref={tableHeadRef}>
+              <ScheduleTableHeaderRow
+                days={days}
+                summaryColumns={summaryColumns}
+                hasBulkSelection={hasBulkSelection}
+                showFastActions={showFastActions}
+                isCalendarHidden={isCalendarHidden}
+                positionHeaderLeft={positionHeaderLeft}
+                onOpenBulkFastActions={onOpenBulkFastActions}
+              />
+            </TableHead>
 
-          <TableBody>
-            {visibleRows.map((row, index) => {
-              if (row?.row === "header") {
-                const shiftId = row?.__shiftId || `shift-${index}`;
+            <TableBody>
+              {normalizedEmployeeSearch && !visibleRows.length ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={colSpan}
+                    sx={{ py: 3, textAlign: "center", color: uiColors.textMuted }}
+                  >
+                    Сотрудники не найдены
+                  </TableCell>
+                </TableRow>
+              ) : null}
+
+              {visibleRows.map((row, index) => {
+                if (row?.row === "header") {
+                  const shiftId = row?.__shiftId || `shift-${index}`;
+
+                  return (
+                    <Fragment key={`shift-${index}`}>
+                      <ShiftHeaderRow
+                        shiftId={shiftId}
+                        smenaId={row?.__smenaId || row?.smena_id}
+                        label={row?.data}
+                        stickyColumnCount={stickyColumnCount}
+                        middleColSpan={shiftHeaderMiddleColSpan}
+                        collapsed={collapsedShiftIds.includes(shiftId)}
+                        onToggle={onToggleShiftCollapse}
+                        onEdit={onOpenEditSmena}
+                        canEditSmena={canEditSmena}
+                      />
+                    </Fragment>
+                  );
+                }
 
                 return (
-                  <Fragment key={`shift-${index}`}>
-                    <ShiftHeaderRow
-                      shiftId={shiftId}
-                      smenaId={row?.__smenaId || row?.smena_id}
-                      label={row?.data}
-                      stickyColumnCount={stickyColumnCount}
-                      middleColSpan={shiftHeaderMiddleColSpan}
-                      collapsed={collapsedShiftIds.includes(shiftId)}
-                      onToggle={onToggleShiftCollapse}
-                      onEdit={onOpenEditSmena}
-                      canEditSmena={canEditSmena}
-                    />
-                  </Fragment>
+                  <ScheduleRow
+                    key={`row-${row?.data?.id || row?.data?.smena_id || row?.data?.user_name || "x"}-${index}`}
+                    row={row}
+                    summaryColumns={summaryColumns}
+                    onOpenDay={onOpenDay}
+                    onOpenMonth={onOpenMonth}
+                    onOpenFastActions={onOpenFastActions}
+                    onOpenSummaryAction={onOpenSummaryAction}
+                    onChangeTeamBonusForUser={onChangeTeamBonusForUser}
+                    canOpenMonth={canOpenMonth}
+                    canOpenDayEdit={canOpenDayEdit}
+                    canEdit={canEdit}
+                    selectedPart={selectedPart}
+                    periodBonusState={periodBonusState}
+                    showFastActions={showFastActions}
+                    isCalendarHidden={isCalendarHidden}
+                    useColors={useColors}
+                    selectedRowIds={selectedRowIds}
+                    onToggleRowSelection={onToggleRowSelection}
+                  />
                 );
-              }
+              })}
 
-              return (
-                <ScheduleRow
-                  key={`row-${row?.data?.id || row?.data?.smena_id || row?.data?.user_name || "x"}-${index}`}
-                  row={row}
-                  summaryColumns={summaryColumns}
-                  onOpenDay={onOpenDay}
-                  onOpenMonth={onOpenMonth}
-                  onOpenFastActions={onOpenFastActions}
-                  onOpenSummaryAction={onOpenSummaryAction}
-                  onRemoveTeamBonusFromUser={onRemoveTeamBonusFromUser}
-                  canOpenMonth={canOpenMonth}
-                  canOpenDayEdit={canOpenDayEdit}
-                  canEdit={canEdit}
-                  selectedPart={selectedPart}
-                  showFastActions={showFastActions}
-                  isCalendarHidden={isCalendarHidden}
-                  useColors={useColors}
-                  selectedRowIds={selectedRowIds}
-                  onToggleRowSelection={onToggleRowSelection}
-                />
-              );
-            })}
-
-            {hasSummaryRows ? (
-              <TableRow>
-                <TableCell
-                  colSpan={colSpan}
-                  sx={{
-                    backgroundColor: uiTableColors.sectionHeader,
-                    height: 60,
-                    py: 0.75,
-                    px: 1.5,
-                    borderTop: "1px solid #EDEDED",
-                    color: "#FFFFFF",
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ alignItems: "center", justifyContent: "space-between" }}
+              {hasSummaryRows ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={colSpan}
+                    sx={{
+                      backgroundColor: uiTableColors.shiftHeader,
+                      height: 44,
+                      py: 0.75,
+                      px: 1,
+                      borderTop: "1px solid #EDEDED",
+                      color: "#4B5563",
+                    }}
                   >
                     <Stack
                       direction="row"
-                      spacing={0.75}
-                      sx={{ alignItems: "center" }}
+                      spacing={1}
+                      sx={{ alignItems: "center", justifyContent: "space-between" }}
                     >
-                      <SummarySectionIcon sx={{ fontSize: 16 }} />
-                      <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>
-                        Сводные данные
-                      </Typography>
-                    </Stack>
+                      <Stack
+                        direction="row"
+                        spacing={0.75}
+                        sx={{ alignItems: "center" }}
+                      >
+                        <SummarySectionIcon sx={{ fontSize: 20, color: "#3C3B3B" }} />
+                        <Typography sx={{ fontSize: 15, fontWeight: 500, lineHeight: 1.2 }}>
+                          Сводные данные
+                        </Typography>
+                      </Stack>
 
-                    {/*
+                      {/*
                     {canOpenDirectorLevel ? (
                       <JacoButton
                         compact
@@ -1319,7 +1430,7 @@ export default function StaffScheduleTableSection({
                           minHeight: 32,
                           px: 1.5,
                           border: "none",
-                          borderRadius: "10px",
+                          borderRadius: uiRadii.sm,
                           backgroundColor: "#FFFFFF",
                           color: "#666666",
                           fontSize: 14,
@@ -1335,91 +1446,92 @@ export default function StaffScheduleTableSection({
                       </JacoButton>
                     ) : null}
                     */}
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ) : null}
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ) : null}
 
-            {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length) ? (
-              <SummaryMetricRow
-                label="Сумма за период"
-                values={!isCalendarHidden ? bonusDayValues : []}
-                summaryColumns={summaryColumns}
-                stickyColumnCount={stickyColumnCount}
-                labelWidth={summaryLabelWidth}
-                compactValues
-                fillColor="#9BDD7C"
-                textColor="#5E5E5E"
-                getValue={(item) => item?.res ?? ""}
-                getSummaryValue={(column) => {
-                  if (column.key === "dop_bonus" && canEditTeamBonus) {
-                    if (!periodBonusState) {
-                      return "+ / -";
+              {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length) ? (
+                <SummaryMetricRow
+                  label="Сумма за период"
+                  values={!isCalendarHidden ? bonusDayValues : []}
+                  summaryColumns={summaryColumns}
+                  stickyColumnCount={stickyColumnCount}
+                  labelWidth={summaryLabelWidth}
+                  compactValues
+                  fillColor="#9BDD7C"
+                  textColor="#5E5E5E"
+                  getValue={(item) => item?.res ?? ""}
+                  getSummaryValue={(column) => {
+                    if (column.key === "dop_bonus" && canEditTeamBonus) {
+                      if (!periodBonusState) {
+                        return "+ / -";
+                      }
+
+                      return Number(periodBonusState) === 1 ? "+" : "−";
                     }
 
-                    return Number(periodBonusState) === 1 ? "+" : "−";
-                  }
+                    const summaryKey = totalsSummaryKeyMap[column.key];
+                    if (summaryKey) {
+                      return summaryTotals?.[summaryKey] ?? "";
+                    }
 
-                  const summaryKey = totalsSummaryKeyMap[column.key];
-                  if (summaryKey) {
-                    return summaryTotals?.[summaryKey] ?? "";
-                  }
-
-                  const periodBonusKey = periodBonusSummaryKeyMap[column.key];
-                  return periodBonusKey ? (summaryTotals?.[periodBonusKey] ?? "") : "";
-                }}
-                onSummaryCellClick={
-                  canEditTeamBonus
-                    ? (column) => {
-                        if (column.key === "dop_bonus") {
-                          onOpenSummaryAction?.(null, "dop_bonus_toggle");
+                    const periodBonusKey = periodBonusSummaryKeyMap[column.key];
+                    return periodBonusKey ? (summaryTotals?.[periodBonusKey] ?? "") : "";
+                  }}
+                  onSummaryCellClick={
+                    canEditTeamBonus
+                      ? (column) => {
+                          if (column.key === "dop_bonus") {
+                            onOpenSummaryAction?.(null, "dop_bonus_toggle");
+                          }
                         }
-                      }
-                    : undefined
-                }
-              />
-            ) : null}
+                      : undefined
+                  }
+                />
+              ) : null}
 
-            {!isCalendarHidden && canShowRolls ? (
-              <SummaryMetricRow
-                label="Роллы"
-                values={bonusDayValues}
-                summaryColumns={summaryColumns}
-                stickyColumnCount={stickyColumnCount}
-                labelWidth={summaryLabelWidth}
-                getValue={(item) => item?.count_rolls ?? ""}
-              />
-            ) : null}
+              {!isCalendarHidden && canShowRolls ? (
+                <SummaryMetricRow
+                  label="Роллы"
+                  values={bonusDayValues}
+                  summaryColumns={summaryColumns}
+                  stickyColumnCount={stickyColumnCount}
+                  labelWidth={summaryLabelWidth}
+                  getValue={(item) => item?.count_rolls ?? ""}
+                />
+              ) : null}
 
-            {!isCalendarHidden && canShowPizza ? (
-              <SummaryMetricRow
-                label="Пицца"
-                values={bonusDayValues}
-                summaryColumns={summaryColumns}
-                stickyColumnCount={stickyColumnCount}
-                labelWidth={summaryLabelWidth}
-                getValue={(item) => item?.count_pizza ?? ""}
-              />
-            ) : null}
+              {!isCalendarHidden && canShowPizza ? (
+                <SummaryMetricRow
+                  label="Пицца"
+                  values={bonusDayValues}
+                  summaryColumns={summaryColumns}
+                  stickyColumnCount={stickyColumnCount}
+                  labelWidth={summaryLabelWidth}
+                  getValue={(item) => item?.count_pizza ?? ""}
+                />
+              ) : null}
 
-            {!isCalendarHidden && canShowSlowOrders ? (
-              <SummaryMetricRow
-                label="Заказы готовились более 40 минут"
-                values={slowOrderValues}
-                summaryColumns={summaryColumns}
-                stickyColumnCount={stickyColumnCount}
-                labelWidth={summaryLabelWidth}
-                getValue={(item) => item?.count_false ?? ""}
-              />
-            ) : null}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              {!isCalendarHidden && canShowSlowOrders ? (
+                <SummaryMetricRow
+                  label="Заказы готовились более 40 минут"
+                  values={slowOrderValues}
+                  summaryColumns={summaryColumns}
+                  stickyColumnCount={stickyColumnCount}
+                  labelWidth={summaryLabelWidth}
+                  getValue={(item) => item?.count_false ?? ""}
+                />
+              ) : null}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      <StaffScheduleColorLegendModal
-        open={isColorLegendOpen}
-        onClose={() => setIsColorLegendOpen(false)}
-      />
-    </JacoSurface>
+        <StaffScheduleColorLegendModal
+          open={isColorLegendOpen}
+          onClose={() => setIsColorLegendOpen(false)}
+        />
+      </JacoSurface>
+    </Stack>
   );
 }

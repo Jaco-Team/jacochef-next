@@ -27,7 +27,12 @@ function formatDateLabel(value) {
 }
 
 function formatHistoryDateLabel(value) {
-  return value || "—";
+  if (!value) {
+    return "—";
+  }
+
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format("DD.MM.YYYY HH:mm:ss") : value;
 }
 
 export const MONTH_TYPE_PRESETS = STAFF_SCHEDULE_HOUR_PRESETS.map((item) => ({
@@ -96,9 +101,13 @@ export function buildDayModalViewModel(response, context = {}) {
     })),
     history: toArray(info?.hist).map((item, index) => ({
       id: `${item?.date || "date"}-${item?.user_name || index}`,
+      createdAt: formatHistoryDateLabel(item?.date),
+      actorName: item?.user_name || "—",
       title: [formatHistoryDateLabel(item?.date), item?.user_name].filter(Boolean).join(" - "),
       items: toArray(item?.items).map((historyItem, historyIndex) => ({
         id: `${historyItem?.time_start || "start"}-${historyItem?.time_end || "end"}-${historyIndex}`,
+        timeStart: historyItem?.time_start ?? "",
+        timeEnd: historyItem?.time_end ?? "",
         label: [historyItem?.time_start, historyItem?.time_end].filter(Boolean).join(" - ") || "—",
         appName: historyItem?.app_name ?? "",
       })),

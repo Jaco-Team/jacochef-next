@@ -20,7 +20,7 @@ When adding or changing buttons, toggles, fields, or toolbar items on a page tha
 
 Controls in the table toolbar row must match:
 
-- Shell: 44px min-height, 18px radius, `#E5E5E5` border, white background, 240px min-width on desktop
+- Shell: 44px min-height, 12px radius, `#E5E5E5` border, white background, 240px min-width on desktop
 - Label: 14px, weight 500, `#666666`, line-height 1.25
 - Layout: same outlined field shell as `Календарь` / `Цветовые обозначения`
 

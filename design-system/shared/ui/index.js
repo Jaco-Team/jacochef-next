@@ -7,6 +7,7 @@ export { useJacoConfirm } from "./JacoConfirm";
 export { default as JacoFieldSwitch } from "./JacoFieldSwitch";
 export { default as JacoIconButton } from "./JacoIconButton";
 export { default as JacoModal } from "./JacoModal";
+export { default as JacoPeriodSwitch } from "./JacoPeriodSwitch";
 export { default as JacoResponsiveModalShell } from "./JacoResponsiveModalShell";
 export { default as JacoSelectableList } from "./JacoSelectableList";
 export { default as JacoSelectableListItem } from "./JacoSelectableListItem";
@@ -22,6 +23,7 @@ export { default as JacoMonthGridCalendar } from "./JacoMonthGridCalendar";
 export { default as JacoSelect } from "./JacoSelect";
 export { default as JacoTextInput } from "./JacoTextInput";
 export { default as JacoTimePicker } from "./JacoTimePicker";
+export { default as JacoTimeRangePicker } from "./JacoTimeRangePicker";
 export {
   uiColors,
   uiControl,

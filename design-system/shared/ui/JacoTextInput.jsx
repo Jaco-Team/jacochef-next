@@ -101,7 +101,7 @@ export default function JacoTextInput({
         "& .MuiOutlinedInput-root": {
           minHeight: 44,
           alignItems: "center",
-          borderRadius: customRI === "journal" ? uiRadii.md : uiRadii.lg,
+          borderRadius: uiRadii.md,
           backgroundColor: props.disabled ? uiStateColors.disabledSurface : uiColors.surface,
           color: uiColors.text,
           "& fieldset": {

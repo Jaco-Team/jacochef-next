@@ -1,10 +1,55 @@
 import { NoSsr, TextField } from "@mui/material";
 import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { ruRU } from "@mui/x-date-pickers/locales";
+import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
 import dayjs from "dayjs";
+import "dayjs/locale/ru";
 import { useEffect, useState } from "react";
 
-import { uiColors, uiRadii, uiStateColors, uiTypography } from "../tokens";
+import { uiColors, uiRadii, uiShadows, uiStateColors, uiTypography } from "../tokens";
+
+dayjs.locale("ru");
+
+const ruLocaleText = {
+  ...ruRU.components.MuiLocalizationProvider.defaultProps.localeText,
+  cancelButtonLabel: "Отмена",
+  okButtonLabel: "Выбрать",
+  timePickerToolbarTitle: "Выберите время",
+};
+
+const timePickerPaperSx = {
+  border: `1px solid ${uiColors.border}`,
+  borderRadius: uiRadii.lg,
+  boxShadow: uiShadows.overlay,
+  overflow: "hidden",
+  "& .MuiPickersLayout-root": {
+    color: uiColors.textStrong,
+    backgroundColor: uiColors.surface,
+  },
+  "& .MuiClock-pin, & .MuiClockPointer-root": {
+    backgroundColor: uiColors.primary,
+  },
+  "& .MuiClockPointer-thumb": {
+    borderColor: uiColors.primary,
+  },
+  "& .MuiClockNumber-root.Mui-selected": {
+    color: "#FFFFFF",
+    backgroundColor: uiColors.primary,
+  },
+  "& .MuiPickersActionBar-root": {
+    gap: 1,
+    px: 2,
+    pb: 2,
+  },
+  "& .MuiPickersActionBar-root .MuiButton-root": {
+    minHeight: 40,
+    px: 2,
+    borderRadius: uiRadii.md,
+    textTransform: "none",
+    fontWeight: 500,
+  },
+};
 
 function normalizeTimeValue(value) {
   const digits = String(value ?? "")
@@ -17,7 +62,13 @@ function normalizeTimeValue(value) {
 }
 
 function toPickerValue(value) {
-  const parsed = dayjs(`2026-01-01T${normalizeTimeValue(value) || "00:00"}`);
+  const normalizedValue = normalizeTimeValue(value);
+
+  if (!/^\d{2}:\d{2}$/.test(normalizedValue)) {
+    return null;
+  }
+
+  const parsed = dayjs(`2026-01-01T${normalizedValue}`);
   return parsed.isValid() ? parsed : null;
 }
 
@@ -32,6 +83,11 @@ export default function JacoTimePicker({
   picker = false,
   pickerFormat = "HH:mm",
   ampm = false,
+  minutesStep = 10,
+  timeSteps,
+  viewRenderers,
+  views,
+  closeOnSelect = false,
   ...props
 }) {
   const controlledChange = onChange ?? func;
@@ -63,11 +119,22 @@ export default function JacoTimePicker({
         <LocalizationProvider
           dateAdapter={AdapterDayjs}
           adapterLocale="ru"
+          localeText={ruLocaleText}
         >
           <TimePicker
             {...props}
             ampm={ampm}
             format={pickerFormat}
+            views={views ?? ["hours", "minutes"]}
+            minutesStep={minutesStep}
+            timeSteps={timeSteps ?? { minutes: minutesStep }}
+            viewRenderers={
+              viewRenderers ?? {
+                hours: renderTimeViewClock,
+                minutes: renderTimeViewClock,
+              }
+            }
+            closeOnSelect={closeOnSelect}
             value={toPickerValue(value)}
             onChange={(nextValue) =>
               controlledChange?.(nextValue?.isValid?.() ? nextValue.format("HH:mm") : "")
@@ -81,7 +148,7 @@ export default function JacoTimePicker({
                 sx: {
                   "& .MuiOutlinedInput-root, & .MuiPickersOutlinedInput-root": {
                     minHeight: 44,
-                    borderRadius: uiRadii.lg,
+                    borderRadius: uiRadii.md,
                     backgroundColor: props.disabled
                       ? uiStateColors.disabledSurface
                       : uiColors.surface,
@@ -89,6 +156,24 @@ export default function JacoTimePicker({
                   "& .MuiInputBase-input": uiTypography.body,
                   ...sx,
                   ...slotProps?.textField?.sx,
+                },
+              },
+              actionBar: {
+                actions: ["cancel", "accept"],
+                ...slotProps?.actionBar,
+              },
+              desktopPaper: {
+                ...slotProps?.desktopPaper,
+                sx: {
+                  ...timePickerPaperSx,
+                  ...slotProps?.desktopPaper?.sx,
+                },
+              },
+              mobilePaper: {
+                ...slotProps?.mobilePaper,
+                sx: {
+                  ...timePickerPaperSx,
+                  ...slotProps?.mobilePaper?.sx,
                 },
               },
             }}
@@ -111,7 +196,7 @@ export default function JacoTimePicker({
       sx={{
         "& .MuiOutlinedInput-root": {
           minHeight: 44,
-          borderRadius: uiRadii.lg,
+          borderRadius: uiRadii.md,
           backgroundColor: props.disabled ? uiStateColors.disabledSurface : uiColors.surface,
           color: uiColors.text,
           "& fieldset": {

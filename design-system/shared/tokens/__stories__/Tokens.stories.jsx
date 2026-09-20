@@ -25,6 +25,15 @@ const meta = {
 
 export default meta;
 
+const radiusUsage = {
+  xs: "Маленькие индикаторы и чекбоксы",
+  sm: "Вложенные активные плашки и пункты меню",
+  md: "Контролы высотой 44–48 px: поля, селекты и кнопки",
+  lg: "Карточки, панели и диалоги",
+  sheet: "Мобильные bottom sheets",
+  full: "Круги, switch-треки и pill-элементы",
+};
+
 function Section({ title, children }) {
   return (
     <Box
@@ -145,7 +154,10 @@ export function TypographyAndSpacing() {
       <Section title="Typography">
         <Stack spacing={2}>
           {Object.entries(uiTypography).map(([name, value]) => (
-            <Box key={name}>
+            <Box
+              key={name}
+              sx={{ width: 190 }}
+            >
               <Typography sx={value}>{name}: Быстрые действия смены</Typography>
               <Typography sx={{ mt: 0.5, fontSize: 12, color: "text.secondary" }}>
                 {JSON.stringify(value)}
@@ -208,7 +220,12 @@ export function ShapeDensityAndElevation() {
                   bgcolor: "background.paper",
                 }}
               />
-              <Typography sx={{ mt: 1, fontSize: 13 }}>{name + ": " + value}</Typography>
+              <Typography sx={{ mt: 1, fontSize: 13, fontWeight: 700 }}>
+                {name + ": " + value}
+              </Typography>
+              <Typography sx={{ mt: 0.5, fontSize: 12, color: "text.secondary" }}>
+                {radiusUsage[name]}
+              </Typography>
             </Box>
           ))}
         </Stack>

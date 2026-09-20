@@ -6,7 +6,7 @@ export default function JacoSurface({ sx, ...props }) {
     <Paper
       variant="outlined"
       sx={{
-        borderRadius: uiRadii.md,
+        borderRadius: uiRadii.lg,
         borderColor: uiColors.border,
         boxShadow: "none",
         ...sx,

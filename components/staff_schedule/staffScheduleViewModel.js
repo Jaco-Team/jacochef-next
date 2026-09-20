@@ -1,5 +1,8 @@
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
 import { buildShiftGroups, getVisibleSummaryColumns, toArray } from "./staffScheduleHelpers";
+import { buildPeriodRangeLabels } from "./staffSchedulePeriodRange.mjs";
+
+export { buildPeriodRangeLabels } from "./staffSchedulePeriodRange.mjs";
 
 export function hasBootstrapPayload(response) {
   return Boolean(response?.module_info || response?.point_list || response?.months);
@@ -42,11 +45,13 @@ export function buildGraphState(response) {
   };
 }
 
-export function buildPeriodTabs(graph) {
+export function buildPeriodTabs(graph, monthId) {
+  const [firstHalfLabel, secondHalfLabel] = buildPeriodRangeLabels(monthId);
+
   return [
     {
       id: "part-1",
-      label: "с 1 по 15 число",
+      label: firstHalfLabel,
       rows: graph.oneRows,
       meta: graph.oneMeta,
       showZp: graph.show_zp_one,
@@ -54,7 +59,7 @@ export function buildPeriodTabs(graph) {
     },
     {
       id: "part-2",
-      label: "с 16 по конец месяца",
+      label: secondHalfLabel,
       rows: graph.twoRows,
       meta: graph.twoMeta,
       showZp: graph.show_zp_two,
@@ -98,11 +103,12 @@ export function buildPageViewModel({
   moduleName,
   access,
   graph,
+  monthId,
   selectedPart,
   selectedShiftId = "all",
   collapsedShiftIds = [],
 }) {
-  const periodTabs = buildPeriodTabs(graph);
+  const periodTabs = buildPeriodTabs(graph, monthId);
   const activePeriod = periodTabs[selectedPart] ?? periodTabs[0];
   const visibleRows = buildVisibleRows(
     activePeriod?.rows ?? [],

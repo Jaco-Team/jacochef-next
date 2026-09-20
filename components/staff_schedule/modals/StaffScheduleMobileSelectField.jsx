@@ -2,7 +2,12 @@ import { useMemo, useState } from "react";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import { Box, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { JacoSelectableList, JacoSelectableListItem, JacoSelect } from "@/design-system/shared/ui";
+import {
+  JacoSelectableList,
+  JacoSelectableListItem,
+  JacoSelect,
+  uiRadii,
+} from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
@@ -80,7 +85,7 @@ export default function StaffScheduleMobileSelectField({
         sx={{
           minHeight: 44,
           border: "1px solid #E5E5E5",
-          borderRadius: "18px",
+          borderRadius: uiRadii.md,
           px: 2,
           py: 1,
           backgroundColor: disabled ? "#F5F5F5" : "#FFFFFF",
@@ -102,7 +107,7 @@ export default function StaffScheduleMobileSelectField({
                 wordBreak: "break-word",
               }}
             >
-              {selectedOption?.name || "None"}
+              {selectedOption?.name || (allowNone === false ? "" : "None")}
             </Typography>
           </Box>
           <KeyboardArrowDownRoundedIcon

@@ -25,7 +25,10 @@ export default function StaffSchedulePage() {
       className="v2-module"
       sx={{ pb: PAGE_BOTTOM_PADDING, fontSize: 14 }}
     >
-      <JacoBackdropLoader open={page.isLoading} />
+      <JacoBackdropLoader
+        open={page.isLoading}
+        sx={{ "& .MuiCircularProgress-root": { color: "#FFFFFF" } }}
+      />
 
       <Grid
         container
@@ -69,7 +72,7 @@ export default function StaffSchedulePage() {
       <Grid
         container
         spacing={2.5}
-        sx={{ pt: 1 }}
+        sx={{ pt: 1, px: { xs: 0.5, md: 3 } }}
       >
         <Grid size={12}>
           <StaffScheduleTableSection
@@ -100,7 +103,7 @@ export default function StaffSchedulePage() {
             selectedPart={page.selectedPart}
             isGraphLoading={page.isBootstrapping || page.isGraphLoading}
             onOpenSummaryAction={page.handleOpenSummaryAction}
-            onRemoveTeamBonusFromUser={page.handleRemoveTeamBonusFromUser}
+            onChangeTeamBonusForUser={page.handleChangeTeamBonusForUser}
             isMobile={isMobile}
           />
         </Grid>

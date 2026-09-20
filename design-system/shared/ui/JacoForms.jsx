@@ -5,3 +5,4 @@ export { default as JacoDatePickerGraph } from "./JacoDatePickerGraph";
 export { default as JacoSelect } from "./JacoSelect";
 export { default as JacoTextInput } from "./JacoTextInput";
 export { default as JacoTimePicker } from "./JacoTimePicker";
+export { default as JacoTimeRangePicker } from "./JacoTimeRangePicker";

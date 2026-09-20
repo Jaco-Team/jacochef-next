@@ -2,13 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import { Box, Stack, Typography } from "@mui/material";
-import {
-  JacoAlert,
-  JacoButton,
-  JacoSegmentedTabs,
-  useJacoConfirm,
-} from "@/design-system/shared/ui";
+import { Box, IconButton, Stack, Typography } from "@mui/material";
+import { JacoAlert, JacoButton, JacoPeriodSwitch, useJacoConfirm } from "@/design-system/shared/ui";
 import { createStaffScheduleAccess } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -82,25 +77,97 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
   );
 }
 
-function PersonHeader({ context }) {
+const RUSSIAN_MONTHS = [
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь",
+];
+
+function formatMonthLabel(value) {
+  const match = /^(\d{4})-(\d{2})$/.exec(String(value || ""));
+
+  if (!match) {
+    return value || "—";
+  }
+
+  const monthIndex = Number(match[2]) - 1;
+
+  if (monthIndex < 0 || monthIndex >= RUSSIAN_MONTHS.length) {
+    return value;
+  }
+
+  return `${RUSSIAN_MONTHS[monthIndex]} ${match[1]}`;
+}
+
+function FastActionsModalTitle({ context, onBack }) {
   return (
-    <Box sx={{ pb: 2.25, borderBottom: "1px solid #E5E5E5" }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        spacing={2}
+    <Box
+      component="span"
+      data-testid="fast-actions-title"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: { xs: 1, md: 1.5 },
+        minWidth: 0,
+        width: "100%",
+      }}
+    >
+      {onBack ? (
+        <IconButton
+          aria-label="Назад"
+          data-testid="fast-actions-back"
+          onClick={onBack}
+          sx={{
+            width: 36,
+            height: 36,
+            flexShrink: 0,
+            borderRadius: "10px",
+            color: "#A6A6A6",
+          }}
+        >
+          <ArrowBackIosNewRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      ) : null}
+      <Box
+        component="span"
+        sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}
       >
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={staffScheduleModalTypography.personName}>
-            {context.userName || "—"}
-          </Typography>
-          <Typography sx={staffScheduleModalTypography.personMeta}>
-            {context.roleName || "—"}
-          </Typography>
-        </Box>
-        <Typography sx={staffScheduleModalTypography.periodValue}>{context.periodLabel}</Typography>
-      </Stack>
+        <Typography
+          component="span"
+          noWrap
+          sx={staffScheduleModalTypography.personName}
+        >
+          {context.userName || "—"}
+        </Typography>
+        <Typography
+          component="span"
+          noWrap
+          sx={{ ...staffScheduleModalTypography.personMeta, fontSize: 14 }}
+        >
+          {context.roleName || "—"}
+        </Typography>
+      </Box>
+      <Typography
+        component="span"
+        noWrap
+        sx={{
+          ...staffScheduleModalTypography.periodValue,
+          ml: "auto",
+          flexShrink: 0,
+          fontSize: { xs: 13, md: staffScheduleModalTypography.periodValue.fontSize },
+        }}
+      >
+        {formatMonthLabel(context.periodLabel)}
+      </Typography>
     </Box>
   );
 }
@@ -155,10 +222,11 @@ function getBulkScheduleDraftValue(draft, scheduleScope, pendingScheduleType) {
 function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDone, doneDisabled }) {
   return (
     <Stack
+      data-testid="fast-actions-buttons"
       direction="row"
-      justifyContent="flex-end"
+      justifyContent="space-between"
       spacing={1.5}
-      sx={{ pt: 2 }}
+      sx={{ width: "100%", justifyContent: "space-between !important" }}
     >
       <JacoButton
         compact
@@ -196,67 +264,19 @@ function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDo
   );
 }
 
-function SubScreenPanel({ title, onBack, children, actions }) {
+function SubScreenPanel({ title, children }) {
   return (
     <Box
+      data-testid="fast-actions-panel"
       sx={{
-        backgroundColor: "#F2F2F2",
-        borderRadius: "12px",
-        p: 2,
-        minHeight: 288,
+        backgroundColor: "#FFFFFF",
       }}
     >
       <Stack spacing={2}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          alignItems="center"
-        >
-          <JacoButton
-            aria-label="Назад"
-            tone="secondary"
-            onClick={onBack}
-            sx={{
-              minWidth: 52,
-              width: 52,
-              height: 52,
-              p: 0,
-              border: "none",
-              borderRadius: "12px",
-              color: "#A6A6A6",
-              backgroundColor: "#FFFFFF",
-              "&:hover": { backgroundColor: "#FFFFFF" },
-            }}
-          >
-            <ArrowBackIosNewRoundedIcon />
-          </JacoButton>
-          <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#666666" }}>{title}</Typography>
-        </Stack>
+        <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#666666" }}>{title}</Typography>
         {children}
-        {actions}
       </Stack>
     </Box>
-  );
-}
-
-function EditStepSegmentedTabs({ sx, tabSx, ...props }) {
-  return (
-    <JacoSegmentedTabs
-      sx={{
-        backgroundColor: "#E5E5E5",
-        borderRadius: "12px",
-        minHeight: 52,
-        ...sx,
-      }}
-      tabSx={{
-        minHeight: 44,
-        borderRadius: "8px",
-        fontSize: 18,
-        fontWeight: 500,
-        ...tabSx,
-      }}
-      {...props}
-    />
   );
 }
 
@@ -511,19 +531,17 @@ export default function StaffScheduleFastActionsDialog({
     onClose?.();
   };
 
-  let modalTitle = "Редактирование";
+  let modalTitle = "";
   let content = null;
   let actions = null;
 
   if (isBulk && screen === "schedule") {
-    modalTitle = monthId ? `Смена часов ${monthId}` : "Смена часов";
+    modalTitle = monthId ? `Смена часов ${formatMonthLabel(monthId)}` : "Смена часов";
   }
 
   if (screen === "hub") {
     content = (
       <Stack spacing={3.25}>
-        <PersonHeader context={context} />
-
         <Typography sx={{ ...staffScheduleModalTypography.sectionHeading, mb: -1 }}>
           Что изменить?
         </Typography>
@@ -563,15 +581,16 @@ export default function StaffScheduleFastActionsDialog({
             onAction={onOpenPoint}
           />
         ) : null}
-
-        <InlineActions
-          cancelLabel="Отменить"
-          onCancel={handleRequestClose}
-          doneLabel="Сохранить изменения"
-          onDone={onSaveChanges}
-          doneDisabled={!hasChanges}
-        />
       </Stack>
+    );
+    actions = (
+      <InlineActions
+        cancelLabel="Отменить"
+        onCancel={handleRequestClose}
+        doneLabel="Сохранить изменения"
+        onDone={onSaveChanges}
+        doneDisabled={!hasChanges}
+      />
     );
   }
 
@@ -597,7 +616,7 @@ export default function StaffScheduleFastActionsDialog({
               Смена часов
             </Typography>
             {canMonth && canWeek ? (
-              <EditStepSegmentedTabs
+              <JacoPeriodSwitch
                 value={scheduleScope}
                 onChange={(_, value) => {
                   setScheduleScope(value);
@@ -637,27 +656,11 @@ export default function StaffScheduleFastActionsDialog({
       );
     } else {
       content = (
-        <Stack spacing={2}>
-          <PersonHeader context={context} />
-          <SubScreenPanel
-            title="СМЕНА ЧАСОВ"
-            onBack={onBackToHub}
-            actions={
-              <InlineActions
-                onCancel={onBackToHub}
-                doneLabel="Готово"
-                doneDisabled={scheduleDoneDisabled}
-                onDone={() =>
-                  onApplyScheduleDraft({
-                    scheduleScope,
-                    scheduleType: Number(pendingScheduleType),
-                  })
-                }
-              />
-            }
-          >
+        <Stack>
+          <SubScreenPanel title="СМЕНА ЧАСОВ">
             {canMonth && canWeek ? (
-              <EditStepSegmentedTabs
+              <JacoPeriodSwitch
+                data-testid="fast-actions-scope-tabs"
                 value={scheduleScope}
                 onChange={(_, value) => {
                   setScheduleScope(value);
@@ -672,8 +675,8 @@ export default function StaffScheduleFastActionsDialog({
               />
             ) : null}
 
-            <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
-              <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1 }}>
+            <Box>
+              <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 2 }}>
                 Выбери часовой график
               </Typography>
               <StaffScheduleMobileSelectField
@@ -688,26 +691,27 @@ export default function StaffScheduleFastActionsDialog({
           </SubScreenPanel>
         </Stack>
       );
+      actions = (
+        <InlineActions
+          onCancel={onBackToHub}
+          doneLabel="Готово"
+          doneDisabled={scheduleDoneDisabled}
+          onDone={() =>
+            onApplyScheduleDraft({
+              scheduleScope,
+              scheduleType: Number(pendingScheduleType),
+            })
+          }
+        />
+      );
     }
   }
 
   if (screen === "shift") {
     content = (
-      <Stack spacing={2}>
-        <PersonHeader context={context} />
-        <SubScreenPanel
-          title="ИЗМЕНЕНИЕ СМЕНЫ"
-          onBack={onBackToHub}
-          actions={
-            <InlineActions
-              onCancel={onBackToHub}
-              doneLabel="Готово"
-              doneDisabled={shiftDoneDisabled}
-              onDone={() => onApplyShiftDraft(pendingSmenaId)}
-            />
-          }
-        >
-          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+      <Stack>
+        <SubScreenPanel title="ИЗМЕНЕНИЕ СМЕНЫ">
+          <Box>
             <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1 }}>
               Выбери смену
             </Typography>
@@ -727,43 +731,37 @@ export default function StaffScheduleFastActionsDialog({
         </SubScreenPanel>
       </Stack>
     );
+    actions = (
+      <InlineActions
+        onCancel={onBackToHub}
+        doneLabel="Готово"
+        doneDisabled={shiftDoneDisabled}
+        onDone={() => onApplyShiftDraft(pendingSmenaId)}
+      />
+    );
   }
 
   if (screen === "point") {
     content = (
-      <Stack spacing={2}>
-        <PersonHeader context={context} />
-        <SubScreenPanel
-          title="ИЗМЕНЕНИЕ КАФЕ"
-          onBack={onBackToHub}
-          actions={
-            <InlineActions
-              onCancel={onBackToHub}
-              doneLabel="Готово"
-              doneDisabled={pointDoneDisabled}
-              onDone={() => {
-                const selected = pointOptions.find(
-                  (item) => String(item.id) === String(pendingPointId),
-                );
-                onApplyPointDraft(selected || null);
-              }}
-            />
-          }
-        >
-          <EditStepSegmentedTabs
+      <Stack>
+        <SubScreenPanel title="ИЗМЕНЕНИЕ КАФЕ">
+          <JacoPeriodSwitch
             value={pendingPointCity}
             onChange={(_, value) => {
               const nextCity = String(value);
+
+              if (nextCity === pendingPointCity) {
+                return;
+              }
 
               setPendingPointCity(nextCity);
               setPendingPointId("");
             }}
             items={cityOptions}
-            tabSx={{
-              fontSize: 16,
-            }}
+            sx={{ borderRadius: "10px", minHeight: 40 }}
+            tabSx={{ minHeight: 32, borderRadius: "8px", fontSize: 16 }}
           />
-          <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 2 }}>
+          <Box>
             <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1.25 }}>
               Выбери кафе
             </Typography>
@@ -783,6 +781,17 @@ export default function StaffScheduleFastActionsDialog({
         </SubScreenPanel>
       </Stack>
     );
+    actions = (
+      <InlineActions
+        onCancel={onBackToHub}
+        doneLabel="Готово"
+        doneDisabled={pointDoneDisabled}
+        onDone={() => {
+          const selected = pointOptions.find((item) => String(item.id) === String(pendingPointId));
+          onApplyPointDraft(selected || null);
+        }}
+      />
+    );
   }
 
   return (
@@ -790,9 +799,20 @@ export default function StaffScheduleFastActionsDialog({
       <StaffScheduleResponsiveModal
         open={Boolean(state?.open)}
         onClose={handleRequestClose}
-        title={modalTitle}
+        title={
+          isBulk ? (
+            modalTitle
+          ) : (
+            <FastActionsModalTitle
+              context={context}
+              onBack={screen === "hub" ? null : onBackToHub}
+            />
+          )
+        }
         maxWidth="md"
         actions={actions}
+        titleSx={isBulk ? undefined : { width: "100%" }}
+        titleContainerSx={isBulk ? undefined : { height: "auto", minHeight: 68, py: 1.25 }}
         contentSx={{
           "&&": {
             px: 2.5,

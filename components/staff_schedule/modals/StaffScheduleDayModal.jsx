@@ -1,34 +1,41 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseIcon from "@mui/icons-material/Close";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import {
   Box,
-  ClickAwayListener,
   Grid,
-  IconButton,
-  MenuItem,
-  MenuList,
-  Paper,
-  Popper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
+import dayjs from "dayjs";
 import { AddTimeIcon, HistoryFileIcon } from "@/design-system/shared/icons";
 import {
   JacoAlert,
+  JacoAutocomplete,
   JacoButton,
   JacoIconButton,
-  JacoTextInput,
-  JacoTimePicker,
+  JacoTimeRangePicker,
+  uiColors,
+  uiRadii,
   useJacoConfirm,
 } from "@/design-system/shared/ui";
 import { formatHourRangeLabel } from "../staffScheduleHourPresets";
-import { buildDaySavePayload } from "../staffScheduleModalCore.mjs";
+import {
+  buildDaySavePayload,
+  findInvalidTimeRangeIds,
+  findOverlappingTimeRangeIds,
+  getTimeRangeValidationError,
+  timeRangesOverlap,
+} from "../staffScheduleModalCore.mjs";
 import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
 const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
 
@@ -49,58 +56,62 @@ function buildDraft(data) {
   };
 }
 
-function DayPersonHeader({ data, onHistoryOpen }) {
+function DayModalTitle({ data }) {
+  return (
+    <Box
+      component="span"
+      data-testid="employee-day-title"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: { xs: 1, md: 1.5 },
+        minWidth: 0,
+        width: "100%",
+      }}
+    >
+      <Box
+        component="span"
+        sx={{ display: "flex", flex: 1, flexDirection: "column", minWidth: 0 }}
+      >
+        <Typography
+          component="span"
+          noWrap
+          sx={staffScheduleModalTypography.personName}
+        >
+          {data?.personName || data?.title || "—"}
+        </Typography>
+        <Typography
+          component="span"
+          noWrap
+          sx={{ ...staffScheduleModalTypography.personMeta, fontSize: 14 }}
+        >
+          {data?.positionName || data?.subtitle || "—"}
+        </Typography>
+      </Box>
+      <Typography
+        component="span"
+        noWrap
+        sx={{
+          ...staffScheduleModalTypography.periodValue,
+          ml: "auto",
+          flexShrink: 0,
+          fontSize: { xs: 13, md: staffScheduleModalTypography.periodValue.fontSize },
+        }}
+      >
+        {data?.dateLabel || "—"}
+      </Typography>
+    </Box>
+  );
+}
+
+function DayPersonSummary({ data, onHistoryOpen }) {
   return (
     <Stack
-      spacing={2}
       sx={{
         pb: 2.5,
         borderBottom: "1px solid #E5E5E5",
       }}
     >
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
-      >
-        <Box sx={{ minWidth: 0, pt: 0.125 }}>
-          <Typography
-            sx={{
-              fontSize: "18px !important",
-              lineHeight: 1.2,
-              fontWeight: 700,
-              color: "#666666",
-            }}
-          >
-            {data?.personName || data?.title || "—"}
-          </Typography>
-          <Typography
-            sx={{
-              mt: 0.125,
-              fontSize: "17px !important",
-              lineHeight: 1.2,
-              fontWeight: 400,
-              color: "#666666",
-            }}
-          >
-            {data?.positionName || data?.subtitle || "—"}
-          </Typography>
-        </Box>
-        <Typography
-          sx={{
-            pt: 0.125,
-            flexShrink: 0,
-            fontSize: "18px !important",
-            lineHeight: 1.2,
-            fontWeight: 700,
-            color: "#666666",
-            textAlign: "right",
-          }}
-        >
-          {data?.dateLabel || "—"}
-        </Typography>
-      </Stack>
-
       <Stack
         direction="row"
         spacing={2}
@@ -167,159 +178,28 @@ function SectionTitle({ children }) {
   );
 }
 
-function TemperatureField({ value, onChange, disabled = false }) {
-  const anchorRef = useRef(null);
-  const [open, setOpen] = useState(false);
-
-  const setTemperature = (nextValue) => {
-    onChange(nextValue);
-    setOpen(false);
-  };
-
-  const handleInputChange = (event) => {
-    const nextValue = event.target.value
-      .replace(/\./g, ",")
-      .replace(/[^\d,]/g, "")
-      .replace(/(,.*),/g, "$1")
-      .slice(0, 4);
-    onChange(nextValue);
-  };
-
-  return (
-    <>
-      <Box
-        ref={anchorRef}
-        sx={{ width: "100%" }}
-      >
-        <JacoTextInput
-          fullWidth
-          size="small"
-          label="Температура"
-          value={value ?? ""}
-          placeholder="Введите данные или выберите из списка"
-          onChange={handleInputChange}
-          onFocus={() => {
-            if (!disabled) {
-              setOpen(true);
-            }
-          }}
-          disabled={disabled}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              minHeight: 44,
-              borderRadius: open ? "18px 18px 0 0" : "18px",
-              border: "1px solid #E5E5E5",
-              backgroundColor: "#FFFFFF",
-              "& .MuiOutlinedInput-notchedOutline": { display: "none" },
-            },
-            "& .MuiInputBase-input": {
-              fontSize: 16,
-              color: "#666666",
-            },
-            "& .MuiInputLabel-root": {
-              color: "#A6A6A6",
-              backgroundColor: "#FFFFFF",
-              px: 1,
-            },
-          }}
-          inputAdornment={{
-            endAdornment: value ? (
-              <IconButton
-                aria-label="Очистить температуру"
-                onClick={() => onChange("")}
-                disabled={disabled}
-                sx={{
-                  width: 32,
-                  height: 32,
-                  border: "none",
-                  backgroundColor: "transparent",
-                  color: "#BABABA",
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            ) : (
-              <IconButton
-                aria-label="Открыть список температур"
-                onClick={() => setOpen((prev) => !prev)}
-                disabled={disabled}
-                sx={{
-                  width: 32,
-                  height: 32,
-                  border: "none",
-                  backgroundColor: "transparent",
-                  color: "#A6A6A6",
-                }}
-              >
-                <KeyboardArrowDownRoundedIcon />
-              </IconButton>
-            ),
-          }}
-        />
-      </Box>
-      <Popper
-        open={open && !disabled}
-        anchorEl={anchorRef.current}
-        placement="bottom-start"
-        sx={{ zIndex: 1500, width: anchorRef.current?.offsetWidth }}
-      >
-        <ClickAwayListener onClickAway={() => setOpen(false)}>
-          <Paper
-            sx={{
-              border: "1px solid #E5E5E5",
-              borderTop: "none",
-              borderRadius: "0 0 12px 12px",
-              boxShadow: "0 10px 24px rgba(0, 0, 0, 0.18)",
-              overflow: "hidden",
-            }}
-          >
-            <MenuList sx={{ p: 1 }}>
-              <MenuItem
-                onClick={() => setTemperature("")}
-                sx={{ minHeight: 44 }}
-              >
-                None
-              </MenuItem>
-              {TEMPERATURE_SUGGESTIONS.map((item) => {
-                const selected = String(value) === item;
-                return (
-                  <MenuItem
-                    key={item}
-                    selected={selected}
-                    onClick={() => setTemperature(item)}
-                    sx={{
-                      minHeight: 44,
-                      borderTop: "1px solid #E5E5E5",
-                      borderRadius: selected ? "6px" : 0,
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    {item}
-                    {selected ? <CheckRoundedIcon sx={{ color: "#EE2737" }} /> : null}
-                  </MenuItem>
-                );
-              })}
-            </MenuList>
-          </Paper>
-        </ClickAwayListener>
-      </Popper>
-    </>
-  );
+function normalizeTemperatureValue(value) {
+  return String(value ?? "")
+    .replace(/\./g, ",")
+    .replace(/[^\d,]/g, "")
+    .replace(/(,.*),/g, "$1")
+    .slice(0, 4);
 }
 
-function TimeRow({ item, onRemove }) {
+function TimeRow({ item, onRemove, hasConflict = false }) {
   return (
     <Box
+      aria-invalid={hasConflict || undefined}
       sx={{
         minHeight: 44,
-        border: "1px solid #E5E5E5",
+        border: `1px solid ${hasConflict ? uiColors.warning : "#E5E5E5"}`,
         borderRadius: "12px",
         px: 1.5,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         gap: 1,
+        backgroundColor: hasConflict ? uiColors.warningSoft : "transparent",
       }}
     >
       <Stack
@@ -356,93 +236,177 @@ function TimeRow({ item, onRemove }) {
 }
 
 function HistoryDialog({ open, history, onClose }) {
-  const [expandedId, setExpandedId] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setExpandedId("");
-    }
-  }, [open]);
-
   return (
     <StaffScheduleResponsiveModal
       open={open}
       onClose={onClose}
       title="История редактирования"
-      maxWidth="sm"
-      paperSx={{ maxWidth: 600 }}
-      contentSx={{ px: 2.5, pt: 2.5, minHeight: 292 }}
+      maxWidth="md"
+      paperSx={{ maxWidth: 760 }}
+      contentSx={{ px: { xs: 1.5, sm: 2.5 }, pt: 2.5, pb: 2.5, minHeight: 292 }}
     >
-      <Stack spacing={1.5}>
-        {history.map((historyItem) => {
-          const expanded = expandedId === historyItem.id;
-          return (
-            <Box
-              key={historyItem.id}
-              sx={{
-                border: "1px solid #E5E5E5",
-                borderRadius: "12px",
-                px: 1.5,
-                py: 1,
-              }}
-            >
-              <Stack
-                direction="row"
-                spacing={1}
-                onClick={() => setExpandedId(expanded ? "" : historyItem.id)}
-                sx={{
-                  minHeight: 40,
-                  cursor: "pointer",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography
-                  sx={{ fontSize: 16, color: "#666666", fontWeight: expanded ? 700 : 400 }}
-                >
-                  {historyItem.title}
-                </Typography>
-                <ExpandMoreIcon
-                  sx={{
-                    color: "#A6A6A6",
-                    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-                  }}
-                />
-              </Stack>
-              {expanded ? (
-                <Stack
-                  spacing={0.5}
-                  sx={{ pb: 0.25 }}
-                >
-                  {historyItem.items.map((item) => (
-                    <Typography
-                      key={item.id}
-                      sx={{ fontSize: 14, color: "#666666" }}
+      {history.length ? (
+        <TableContainer
+          data-testid="staff-schedule-history-table"
+          sx={{
+            maxHeight: 420,
+            border: `1px solid ${uiColors.border}`,
+            borderRadius: uiRadii.md,
+          }}
+        >
+          <Table
+            stickyHeader
+            size="small"
+            aria-label="История редактирования сотрудника"
+            sx={{ tableLayout: "fixed", minWidth: { xs: 0, sm: 620 } }}
+          >
+            <TableHead>
+              <TableRow>
+                {[
+                  ["Дата изменения", "24%"],
+                  ["Автор", "24%"],
+                  ["Рабочее время", "26%"],
+                  ["Должность", "26%"],
+                ].map(([label, width]) => (
+                  <TableCell
+                    key={label}
+                    sx={{
+                      width,
+                      px: { xs: 1, sm: 1.5 },
+                      py: 1.25,
+                      backgroundColor: uiColors.surfaceMuted,
+                      color: uiColors.textStrong,
+                      fontSize: { xs: 12, sm: 14 },
+                      lineHeight: 1.2,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {history.flatMap((historyItem) => {
+                const items = historyItem.items?.length
+                  ? historyItem.items
+                  : [{ id: `${historyItem.id}-empty`, label: "—", appName: "—" }];
+
+                return items.map((item, itemIndex) => (
+                  <TableRow
+                    key={`${historyItem.id}-${item.id}`}
+                    sx={{
+                      verticalAlign: "top",
+                      "&:last-child td": { borderBottom: 0 },
+                    }}
+                  >
+                    {itemIndex === 0 ? (
+                      <TableCell
+                        rowSpan={items.length}
+                        sx={{
+                          px: { xs: 1, sm: 1.5 },
+                          py: 1.5,
+                          color: uiColors.text,
+                          fontSize: { xs: 12, sm: 14 },
+                          lineHeight: 1.35,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {historyItem.createdAt || historyItem.title?.split(" - ")[0] || "—"}
+                      </TableCell>
+                    ) : null}
+                    {itemIndex === 0 ? (
+                      <TableCell
+                        rowSpan={items.length}
+                        sx={{
+                          px: { xs: 1, sm: 1.5 },
+                          py: 1.5,
+                          color: uiColors.text,
+                          fontSize: { xs: 12, sm: 14 },
+                          lineHeight: 1.35,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {historyItem.actorName || "—"}
+                      </TableCell>
+                    ) : null}
+                    <TableCell
+                      sx={{
+                        px: { xs: 1, sm: 1.5 },
+                        py: 1.5,
+                        color: uiColors.text,
+                        fontSize: { xs: 12, sm: 14 },
+                        lineHeight: 1.35,
+                        overflowWrap: "anywhere",
+                      }}
                     >
-                      {[item.label, item.appName].filter(Boolean).join(" - ")}
-                    </Typography>
-                  ))}
-                </Stack>
-              ) : null}
-            </Box>
-          );
-        })}
-      </Stack>
+                      {item.label || "—"}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        px: { xs: 1, sm: 1.5 },
+                        py: 1.5,
+                        color: uiColors.text,
+                        fontSize: { xs: 12, sm: 14 },
+                        lineHeight: 1.35,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {item.appName || "—"}
+                    </TableCell>
+                  </TableRow>
+                ));
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Typography sx={{ color: uiColors.textMuted, fontSize: 14 }}>
+          История изменений пока пуста
+        </Typography>
+      )}
     </StaffScheduleResponsiveModal>
   );
 }
 
-function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, onSubmit }) {
-  const canSubmit = Boolean(start && end);
+function AddTimeDialog({
+  open,
+  start,
+  end,
+  existingHours,
+  onChangeStart,
+  onChangeEnd,
+  onClose,
+  onSubmit,
+}) {
+  const validationError = useMemo(
+    () => (start && end ? getTimeRangeValidationError({ time_start: start, time_end: end }) : ""),
+    [end, start],
+  );
+  const conflictingHour = useMemo(
+    () =>
+      validationError
+        ? null
+        : existingHours.find((item) =>
+            timeRangesOverlap(item, { time_start: start, time_end: end }),
+          ),
+    [end, existingHours, start, validationError],
+  );
+  const minEndTime = useMemo(() => {
+    const parsedStart = dayjs(`2026-01-01T${start}`);
+    return parsedStart.isValid() ? parsedStart.add(1, "minute") : undefined;
+  }, [start]);
+  const maxEndTime = useMemo(() => dayjs("2026-01-01T23:59"), []);
+  const canSubmit = Boolean(start && end && !validationError && !conflictingHour);
 
   return (
     <StaffScheduleResponsiveModal
       open={open}
       onClose={onClose}
-      title="Добавление нового времени"
+      title="Добавление рабочего времени"
       maxWidth="sm"
       paperSx={{ maxWidth: 600 }}
-      contentSx={{ px: 2.5, pt: 2.5, pb: 2.5, minHeight: 232 }}
+      contentSx={{ px: 2.5, pt: 2.5, pb: 1.5 }}
       actionsSx={{ px: 2.5, pt: 0, pb: 2.5, borderTop: "none" }}
       actions={
         <Stack
@@ -457,7 +421,7 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
             sx={{
               minWidth: 108,
               minHeight: 44,
-              borderRadius: "12px",
+              borderRadius: uiRadii.md,
               fontSize: 16,
               fontWeight: 500,
             }}
@@ -473,7 +437,7 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
             sx={{
               minWidth: 130,
               minHeight: 44,
-              borderRadius: "12px",
+              borderRadius: uiRadii.md,
               fontSize: 16,
             }}
           >
@@ -482,53 +446,23 @@ function AddTimeDialog({ open, start, end, onChangeStart, onChangeEnd, onClose, 
         </Stack>
       }
     >
-      <Stack spacing={2.5}>
-        <JacoTimePicker
-          label="Время начала работы"
-          type="time"
-          value={start}
-          onChange={onChangeStart}
-          inputProps={{ step: 600 }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              minHeight: 44,
-              borderRadius: "16px",
-              backgroundColor: "#FFFFFF",
-            },
-            "& .MuiInputBase-input": {
-              fontSize: "16px !important",
-              color: "#666666",
-            },
-            "& .MuiInputLabel-root": {
-              color: "#A6A6A6",
-              backgroundColor: "#FFFFFF",
-              px: 0.75,
-            },
-          }}
+      <Stack spacing={1.5}>
+        <JacoTimeRangePicker
+          startValue={start}
+          endValue={end}
+          onStartChange={onChangeStart}
+          onEndChange={onChangeEnd}
+          showDuration={!validationError}
+          endPickerProps={{ minTime: minEndTime, maxTime: maxEndTime }}
         />
-        <JacoTimePicker
-          label="Время окончания работы"
-          type="time"
-          value={end}
-          onChange={onChangeEnd}
-          inputProps={{ step: 600 }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              minHeight: 44,
-              borderRadius: "16px",
-              backgroundColor: "#FFFFFF",
-            },
-            "& .MuiInputBase-input": {
-              fontSize: "16px !important",
-              color: "#666666",
-            },
-            "& .MuiInputLabel-root": {
-              color: "#A6A6A6",
-              backgroundColor: "#FFFFFF",
-              px: 0.75,
-            },
-          }}
-        />
+        {validationError ? <JacoAlert severity="warning">{validationError}</JacoAlert> : null}
+        {!validationError && conflictingHour ? (
+          <JacoAlert severity="warning">
+            Интервал {formatHourRangeLabel(start, end)} пересекается с уже добавленным временем{" "}
+            {formatHourRangeLabel(conflictingHour.time_start, conflictingHour.time_end)}. Измените
+            время или удалите существующий интервал.
+          </JacoAlert>
+        ) : null}
       </Stack>
     </StaffScheduleResponsiveModal>
   );
@@ -572,8 +506,15 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const canEditAssignment = Boolean(modal.data?.canEditAssignment);
   const canEditHealth = Boolean(modal.data?.canEditHealth);
   const canSave = canEditHours || canEditAssignment || canEditHealth;
+  const invalidHourIds = useMemo(() => findInvalidTimeRangeIds(draft.hours), [draft.hours]);
+  const overlappingHourIds = useMemo(() => findOverlappingTimeRangeIds(draft.hours), [draft.hours]);
+  const hasInvalidHours = invalidHourIds.size > 0;
+  const hasHourConflicts = overlappingHourIds.size > 0;
+  const hasHourErrors = hasInvalidHours || hasHourConflicts;
+  const hasBlockingHourErrors = canEditHours && hasHourErrors;
 
   const removeHour = (index) => {
+    setSaveError("");
     setDraft((prev) => ({
       ...prev,
       hours: prev.hours.filter((_, itemIndex) => itemIndex !== index),
@@ -612,10 +553,19 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   };
 
   const addHour = () => {
-    if (!newTimeStart || !newTimeEnd) {
+    const validationError = getTimeRangeValidationError({
+      time_start: newTimeStart,
+      time_end: newTimeEnd,
+    });
+    const hasConflict = draft.hours.some((item) =>
+      timeRangesOverlap(item, { time_start: newTimeStart, time_end: newTimeEnd }),
+    );
+
+    if (!newTimeStart || !newTimeEnd || validationError || hasConflict) {
       return;
     }
 
+    setSaveError("");
     setDraft((prev) => ({
       ...prev,
       hours: [
@@ -633,6 +583,18 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
   const handleSave = async () => {
     if (!onSave || !modal.request) {
+      return;
+    }
+
+    if (canEditHours && hasInvalidHours) {
+      setSaveError("Время окончания должно быть позже начала. Переход через полночь недоступен.");
+      return;
+    }
+
+    if (canEditHours && hasHourConflicts) {
+      setSaveError(
+        "Рабочие интервалы пересекаются. Удалите или измените один из них перед сохранением.",
+      );
       return;
     }
 
@@ -705,7 +667,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
           compact
           tone="primary"
           onClick={handleSave}
-          disabled={!canSave}
+          disabled={!canSave || hasBlockingHourErrors}
           sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
         >
           Сохранить
@@ -718,10 +680,12 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       <StaffScheduleResponsiveModal
         open={modal.open}
         onClose={handleRequestClose}
-        title="Сведения о сотруднике"
+        title={<DayModalTitle data={modal.data} />}
         maxWidth="md"
         actions={actions}
-        contentSx={{ px: 2.5, pt: 5, pb: 1.5 }}
+        titleSx={{ width: "100%" }}
+        titleContainerSx={{ height: "auto", minHeight: 68, py: 1.25 }}
+        contentSx={{ px: 2.5, pt: 3.25, pb: 1.5 }}
         actionsSx={{ px: 2.5, pt: 1, pb: 3 }}
         paperSx={{ maxWidth: 800 }}
       >
@@ -731,7 +695,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
           {hasData ? (
             <>
-              <DayPersonHeader
+              <DayPersonSummary
                 data={modal.data}
                 onHistoryOpen={() => setIsHistoryOpen(true)}
               />
@@ -748,6 +712,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   }
                   label="Кем работает"
                   pickerTitle="Кем работает"
+                  allowNone={false}
                   disabled={!canEditAssignment}
                 />
               ) : null}
@@ -775,14 +740,28 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   spacing={1.25}
                 >
                   <Grid size={{ xs: 12, sm: 6 }}>
-                    <TemperatureField
+                    <JacoAutocomplete
+                      freeSolo
+                      forcePopupIcon
+                      clearOnBlur={false}
+                      selectOnFocus
+                      options={TEMPERATURE_SUGGESTIONS}
                       value={draft.userTemp}
-                      onChange={(nextValue) =>
+                      inputValue={draft.userTemp ?? ""}
+                      onChange={(_event, nextValue) =>
                         setDraft((prev) => ({
                           ...prev,
-                          userTemp: nextValue,
+                          userTemp: normalizeTemperatureValue(nextValue),
                         }))
                       }
+                      onInputChange={(_event, nextValue) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          userTemp: normalizeTemperatureValue(nextValue),
+                        }))
+                      }
+                      label="Температура"
+                      placeholder="Введите или выберите"
                       disabled={!canEditHealth}
                     />
                   </Grid>
@@ -807,6 +786,18 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
               <Stack spacing={1}>
                 <SectionTitle>Время работы</SectionTitle>
+                {canEditHours && hasInvalidHours ? (
+                  <JacoAlert severity="warning">
+                    Время окончания должно быть позже начала. Смена не может переходить через
+                    полночь. Удалите некорректный интервал.
+                  </JacoAlert>
+                ) : null}
+                {canEditHours && hasHourConflicts ? (
+                  <JacoAlert severity="warning">
+                    Рабочие интервалы пересекаются. Удалите или измените один из них — система не
+                    будет автоматически выбирать, какой интервал сохранить.
+                  </JacoAlert>
+                ) : null}
                 <Grid
                   container
                   spacing={1.25}
@@ -817,6 +808,9 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                         <TimeRow
                           key={item.id}
                           item={item}
+                          hasConflict={
+                            invalidHourIds.has(item.id) || overlappingHourIds.has(item.id)
+                          }
                           onRemove={canEditHours ? requestRemoveHour(item, index) : undefined}
                         />
                       ))}
@@ -859,8 +853,9 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         open={isAddTimeOpen}
         start={newTimeStart}
         end={newTimeEnd}
-        onChangeStart={(event) => setNewTimeStart(event.target.value)}
-        onChangeEnd={(event) => setNewTimeEnd(event.target.value)}
+        existingHours={draft.hours}
+        onChangeStart={setNewTimeStart}
+        onChangeEnd={setNewTimeEnd}
         onClose={closeAddTimeDialog}
         onSubmit={addHour}
       />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import SaveIcon from "@mui/icons-material/Save";
 import { Box, FormControlLabel, Stack, Tooltip, Typography } from "@mui/material";
@@ -146,6 +147,14 @@ export function SelectionControls() {
           label="Показывать только активных"
           checked={checked}
           onChange={(event) => setChecked(event.target.checked)}
+          labelAction={
+            <JacoIconButton
+              aria-label="Подробнее о фильтре"
+              sx={{ width: 24, height: 24, border: "none" }}
+            >
+              <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+            </JacoIconButton>
+          }
         />
         <JacoFieldSwitch
           label="Недоступное состояние"

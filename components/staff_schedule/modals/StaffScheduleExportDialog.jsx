@@ -30,7 +30,6 @@ export default function StaffScheduleExportDialog({
             justifyContent: "space-between",
             gap: 1,
             width: "100%",
-            px: { xs: 0, sm: 1 },
             pb: { xs: 0, sm: 0.5 },
           }}
         >
@@ -70,6 +69,7 @@ export default function StaffScheduleExportDialog({
         <Grid size={{ xs: 12, sm: 6 }}>
           <JacoDatePicker
             label="Дата от"
+            format="DD.MM.YYYY"
             value={dialog?.dateStart ? dayjs(dialog.dateStart) : null}
             minDate={dayjs("2023-05-01")}
             maxDate={dialog?.dateEnd ? dayjs(dialog.dateEnd) : null}
@@ -79,6 +79,7 @@ export default function StaffScheduleExportDialog({
         <Grid size={{ xs: 12, sm: 6 }}>
           <JacoDatePicker
             label="Дата до"
+            format="DD.MM.YYYY"
             value={dialog?.dateEnd ? dayjs(dialog.dateEnd) : null}
             minDate={dialog?.dateStart ? dayjs(dialog.dateStart) : dayjs("2023-05-01")}
             onChange={(value) => onDateEndChange(value ? value.format("YYYY-MM-DD") : "")}

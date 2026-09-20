@@ -7,6 +7,7 @@ import {
   JacoIconButton,
   JacoSurface,
   uiColors,
+  uiRadii,
 } from "@/design-system/shared/ui";
 import { CONTROL_RADIUS } from "../staffScheduleConstants";
 import { useState } from "react";
@@ -32,7 +33,7 @@ export default function StaffScheduleMobileScheduleControls({
             tone="secondary"
             onClick={onOpenCreateSmena}
             sx={{
-              borderRadius: "18px",
+              borderRadius: uiRadii.md,
               color: uiColors.textMuted,
               "&.MuiButton-root": {
                 fontSize: 16,
@@ -55,14 +56,14 @@ export default function StaffScheduleMobileScheduleControls({
           label="Цветовые обозначения"
           checked={useColors}
           onChange={onColorModeChange}
-          action={
+          labelAction={
             <JacoIconButton
               aria-label="Показать цветовые обозначения"
               onClick={() => setIsColorLegendOpen(true)}
               sx={{
                 width: 24,
                 height: 24,
-                borderRadius: "50%",
+                borderRadius: uiRadii.full,
                 border: "none",
                 backgroundColor: "transparent",
                 color: "#666666",

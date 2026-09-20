@@ -17,6 +17,7 @@
     "build": "next build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:e2e:design-system": "playwright test --config=playwright.design-system.config.js",
     "test:e2e:sklad": "playwright test --config=playwright.sklad.config.js",
     "start": "next start",
     "lint": "next lint",

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
+import { uiColors, uiRadii } from "../tokens";
 import JacoButton from "./JacoButton";
 import JacoModal from "./JacoModal";
 
@@ -8,6 +9,8 @@ const DEFAULT_OPTIONS = {
   message: "Подтвердите действие",
   cancelLabel: "Нет",
   confirmLabel: "ОК",
+  tone: "danger",
+  confirmTone: "secondary",
 };
 
 export function useJacoConfirm() {
@@ -72,12 +75,12 @@ export function useJacoConfirm() {
         maxWidth="xs"
         titleContainerSx={{
           py: 1.25,
-          backgroundColor: "#FF3333",
+          backgroundColor: state.tone === "success" ? uiColors.successHover : "#FF3333",
           borderBottom: "none",
         }}
         titleSx={{ color: "#FFFFFF", fontWeight: 700, fontSize: 16 }}
         closeButtonSx={{ color: "#FFFFFF" }}
-        paperSx={{ borderRadius: "12px" }}
+        paperSx={{ borderRadius: uiRadii.lg }}
         contentSx={{ py: 3 }}
         actionsSx={{ justifyContent: "center", pt: 0, pb: 3, borderTop: "none" }}
         actions={
@@ -85,24 +88,31 @@ export function useJacoConfirm() {
             <JacoButton
               tone="secondary"
               compact
+              autoFocus={state.confirmTone === "danger"}
               onClick={handleCancel}
-              sx={{ minWidth: 86, borderRadius: "10px", fontWeight: 500, fontSize: 16 }}
+              sx={{ flex: "1 1 0", maxWidth: 160, minWidth: 0, fontWeight: 500, fontSize: 16 }}
             >
               {state.cancelLabel}
             </JacoButton>
             <JacoButton
               compact
+              autoFocus={state.confirmTone !== "danger"}
               onClick={handleConfirm}
-              tone="secondary"
+              tone={state.confirmTone}
               sx={{
-                minWidth: 122,
-                borderRadius: "10px",
-                border: "none",
-                backgroundColor: "#E5E5E5",
-                color: "#666666",
+                flex: "1 1 0",
+                maxWidth: 160,
+                minWidth: 0,
                 fontWeight: 500,
                 fontSize: 16,
-                "&:hover": { backgroundColor: "#DCDCDC" },
+                ...(state.confirmTone === "secondary"
+                  ? {
+                      border: "none",
+                      backgroundColor: "#E5E5E5",
+                      color: "#666666",
+                      "&:hover": { backgroundColor: "#DCDCDC" },
+                    }
+                  : {}),
               }}
             >
               {state.confirmLabel}

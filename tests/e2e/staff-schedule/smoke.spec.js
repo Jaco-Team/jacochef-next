@@ -60,7 +60,7 @@ test.describe("staff_schedule local smoke", () => {
     expect(altMonthGraph?.st).not.toBe(false);
   });
 
-  test("page loads and reload button triggers local get_graph", async ({ page }) => {
+  test("filters apply only after the reload button is pressed", async ({ page }) => {
     const localApiHosts = [];
     page.on("request", (request) => {
       if (request.url().includes("/staff_schedule/")) {
@@ -70,8 +70,25 @@ test.describe("staff_schedule local smoke", () => {
 
     const schedulePage = new StaffSchedulePage(page, env);
     await schedulePage.bootstrapSession();
+    const initialGraphResponse = page.waitForResponse((response) =>
+      response.url().includes("/staff_schedule/get_graph"),
+    );
     await schedulePage.goto();
+    await initialGraphResponse;
     await schedulePage.expectLoaded();
+
+    const monthLabel = alternateMonth?.name || alternateMonth?.id;
+    const unexpectedGraphRequest = page
+      .waitForRequest((request) => request.url().includes("/staff_schedule/get_graph"), {
+        timeout: 750,
+      })
+      .then(() => true)
+      .catch(() => false);
+
+    await page.getByLabel("Месяц").click();
+    await page.getByRole("option", { name: monthLabel, exact: true }).click();
+
+    expect(await unexpectedGraphRequest).toBe(false);
     await schedulePage.reloadAndWaitForGraph();
 
     expect(

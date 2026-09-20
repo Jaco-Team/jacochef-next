@@ -10,6 +10,7 @@ import {
   JacoSelect,
   JacoTextInput,
   JacoTimePicker,
+  JacoTimeRangePicker,
 } from "@/design-system/shared/ui";
 
 const meta = {
@@ -132,6 +133,84 @@ export function FormStates() {
   );
 }
 
+export function FreeSoloSuggestions() {
+  const [temperature, setTemperature] = useState("");
+
+  return (
+    <StorySurface>
+      <JacoAutocomplete
+        freeSolo
+        forcePopupIcon
+        clearOnBlur={false}
+        options={["36,0", "36,6", "37,0"]}
+        value={temperature}
+        inputValue={temperature}
+        onChange={(_event, value) => setTemperature(value ?? "")}
+        onInputChange={(_event, value) => setTemperature(value)}
+        label="Температура"
+        placeholder="Введите или выберите"
+      />
+    </StorySurface>
+  );
+}
+
+export function UnifiedSelectPopup() {
+  const [month, setMonth] = useState("2026-09");
+
+  return (
+    <StorySurface>
+      <JacoSelect
+        label="Месяц"
+        value={month}
+        onChange={(event) => setMonth(event.target.value)}
+        options={[
+          { id: "2026-08", name: "Август 2026" },
+          { id: "2026-09", name: "Сентябрь 2026" },
+          { id: "2026-10", name: "Октябрь 2026" },
+        ]}
+        allowNone={false}
+        defaultOpen
+      />
+    </StorySurface>
+  );
+}
+
+export function EmptySelectPlaceholder() {
+  const [hours, setHours] = useState("");
+
+  return (
+    <StorySurface>
+      <JacoSelect
+        label="Часы"
+        value={hours}
+        onChange={(event) => setHours(event.target.value)}
+        options={[
+          { id: "1", name: "10:00 - 22:00" },
+          { id: "2", name: "10:00 - 16:00" },
+        ]}
+        allowNone={false}
+      />
+    </StorySurface>
+  );
+}
+
+export function UnifiedDatePickerPopup() {
+  const [date, setDate] = useState(dayjs("2026-09-16"));
+
+  return (
+    <StorySurface>
+      <JacoDatePicker
+        label="Дата"
+        format="DD.MM.YYYY"
+        value={date}
+        onChange={setDate}
+        open
+        onClose={() => {}}
+      />
+    </StorySurface>
+  );
+}
+
 export function PopupTimePicker() {
   const [time, setTime] = useState("09:00");
 
@@ -148,6 +227,23 @@ export function PopupTimePicker() {
         label="Недоступное время"
         value="18:00"
         disabled
+      />
+    </StorySurface>
+  );
+}
+
+export function WorkTimeRange() {
+  const [start, setStart] = useState("10:00");
+  const [end, setEnd] = useState("22:00");
+
+  return (
+    <StorySurface>
+      <Typography sx={{ fontWeight: 700 }}>Рабочее время сотрудника</Typography>
+      <JacoTimeRangePicker
+        startValue={start}
+        endValue={end}
+        onStartChange={setStart}
+        onEndChange={setEnd}
       />
     </StorySurface>
   );

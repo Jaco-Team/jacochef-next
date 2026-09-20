@@ -7,7 +7,7 @@ import { Box } from "@mui/material";
 import {
   JacoButton,
   JacoIconButton,
-  JacoSegmentedTabs,
+  JacoPeriodSwitch,
   JacoSelect,
 } from "@/design-system/shared/ui";
 
@@ -27,6 +27,8 @@ const secondaryActionButtonSx = {
   },
 };
 
+const shiftSelectWidth = { xs: "100%", md: 240 };
+
 function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
   return (
     <Box
@@ -39,8 +41,8 @@ function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
     >
       <JacoButton
         startIcon={<RefreshIcon />}
-        onClick={page.handleReload}
-        disabled={page.isGraphLoading}
+        onClick={page.handleApplyFilters}
+        disabled={page.isGraphLoading || !page.draftPointId || !page.draftMonthId}
         sx={{ minWidth: 126, fontWeight: 500 }}
       >
         Обновить
@@ -92,8 +94,8 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
         <JacoButton
           fullWidth
           startIcon={<RefreshIcon />}
-          onClick={page.handleReload}
-          disabled={page.isGraphLoading}
+          onClick={page.handleApplyFilters}
+          disabled={page.isGraphLoading || !page.draftPointId || !page.draftMonthId}
           sx={{ minHeight: 44, fontWeight: 500 }}
         >
           Обновить
@@ -130,7 +132,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
           <JacoSelect
             allowNone={false}
             options={page.points}
-            value={page.pointId}
+            value={page.draftPointId}
             onChange={page.handlePointChange}
             label="Кафе"
           />
@@ -140,7 +142,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
           <JacoSelect
             allowNone={false}
             options={page.months}
-            value={page.monthId}
+            value={page.draftMonthId}
             onChange={page.handleMonthChange}
             label="Месяц"
           />
@@ -162,7 +164,7 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         </Grid>
       </Grid>
 
-      <JacoSegmentedTabs
+      <JacoPeriodSwitch
         value={page.selectedPart}
         onChange={(_, nextValue) => page.setSelectedPart(nextValue)}
         items={page.view.periodTabs.map((tab, index) => ({
@@ -170,12 +172,12 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
           value: index,
           label: tab.label,
         }))}
-        sx={{ mb: 1.5, borderRadius: "10px", minHeight: 40 }}
         tabSx={{
-          minHeight: 32,
-          fontSize: 16,
-          borderRadius: "8px",
+          px: { xs: 0.5, sm: 1.5 },
+          fontSize: { xs: 16, sm: 20 },
+          whiteSpace: "nowrap",
         }}
+        sx={{ mb: 1.5 }}
       />
 
       <Grid
@@ -183,13 +185,15 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         spacing={1.25}
       >
         <Grid size={{ xs: 12, md: canExportHealthJournal ? 8 : 12 }}>
-          <JacoSelect
-            allowNone={false}
-            options={page.view.shiftOptions}
-            value={page.selectedShiftId}
-            onChange={page.handleShiftChange}
-            label="Смена"
-          />
+          <Box sx={{ width: shiftSelectWidth }}>
+            <JacoSelect
+              allowNone={false}
+              options={page.view.shiftOptions}
+              value={page.selectedShiftId}
+              onChange={page.handleShiftChange}
+              label="Смена"
+            />
+          </Box>
         </Grid>
 
         {!isMobile && canExportHealthJournal ? (

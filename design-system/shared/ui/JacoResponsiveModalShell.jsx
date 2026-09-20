@@ -17,7 +17,7 @@ import { uiColors, uiRadii } from "../tokens";
 const mobileHandleSx = {
   width: 34,
   height: 4,
-  borderRadius: 999,
+  borderRadius: uiRadii.full,
   backgroundColor: "#CFCFCF",
 };
 
@@ -152,8 +152,8 @@ export default function JacoResponsiveModalShell({
         slotProps={{
           paper: {
             sx: {
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: uiRadii.sheet,
+              borderTopRightRadius: uiRadii.sheet,
               maxHeight: "92vh",
               overflow: "hidden",
               backgroundColor: "#FFFFFF",
@@ -229,7 +229,7 @@ export default function JacoResponsiveModalShell({
       slotProps={{
         paper: {
           sx: {
-            borderRadius: uiRadii.md,
+            borderRadius: uiRadii.lg,
             maxHeight: "calc(100% - 48px)",
             outline: "none",
             ...paperSx,

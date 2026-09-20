@@ -1,3 +1,4 @@
+import { useCallback, useRef, useState } from "react";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
@@ -16,16 +17,65 @@ import {
 } from "@mui/material";
 import { SmallFont } from "@/design-system/shared/ui";
 import { SummarySectionIcon } from "@/design-system/shared/icons";
-import { JacoButton, JacoCheckbox, JacoSurface, uiTableColors } from "@/design-system/shared/ui";
+import {
+  JacoButton,
+  JacoCheckbox,
+  JacoSurface,
+  uiColors,
+  uiTableColors,
+} from "@/design-system/shared/ui";
 import { CONTROL_RADIUS, DAY_COLUMN_WIDTH } from "../staffScheduleConstants";
 import { getRowBaseColor, getSummaryCellValue, toArray } from "../staffScheduleHelpers";
+import { getHolidayStripeSx } from "../staffSchedulePatterns";
 
 const MOBILE_SELECTION_COLUMN_WIDTH = 34;
 const MOBILE_EMPLOYEE_COLUMN_WIDTH = 150;
-const MOBILE_SUMMARY_LABEL_WIDTH = 140;
+const MOBILE_SUMMARY_LABEL_WIDTH = MOBILE_SELECTION_COLUMN_WIDTH + MOBILE_EMPLOYEE_COLUMN_WIDTH;
 const MOBILE_SUMMARY_COLUMN_WIDTH = 76;
 const MOBILE_CARD_BORDER = "1px solid #ECECEC";
 const MOBILE_CARD_RADIUS = "14px";
+const MOBILE_MIN_FONT_SIZE = 13;
+const MOBILE_WEEKDAY_LABELS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+
+const getMobileFixedColumnSx = (width) => ({
+  width,
+  minWidth: width,
+  maxWidth: width,
+  boxSizing: "border-box",
+});
+
+const getMobileStickyColumnSx = (left, zIndex, withEdgeShadow = false) => ({
+  position: "sticky",
+  left,
+  zIndex,
+  backgroundClip: "padding-box",
+  ...(withEdgeShadow
+    ? {
+        boxShadow:
+          "inset -1px 0 0 #ECECEC, inset 0 -1px 0 #ECECEC, 8px 0 12px -12px rgba(15, 23, 42, 0.45)",
+      }
+    : {}),
+});
+
+function getMobileDayHeader(item) {
+  const rawDate = String(item?.date ?? "");
+  const isoDateParts = rawDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+
+  if (!isoDateParts) {
+    return {
+      day: item?.day ?? "",
+      date: rawDate,
+    };
+  }
+
+  const [, year, month, day] = isoDateParts;
+  const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+
+  return {
+    day: item?.day || MOBILE_WEEKDAY_LABELS[parsedDate.getUTCDay()],
+    date: day.padStart(2, "0"),
+  };
+}
 
 const mobileCellDividerSx = {
   boxShadow: "inset -1px 0 0 #ECECEC, inset 0 -1px 0 #ECECEC",
@@ -49,12 +99,12 @@ const mobileActionCellSx = {
 };
 
 const mobileDayHeaderTextSx = {
-  fontSize: 11,
-  lineHeight: 1,
+  fontSize: MOBILE_MIN_FONT_SIZE,
+  lineHeight: 1.1,
 };
 
 const mobileDayHeaderDateSx = {
-  fontSize: 12,
+  fontSize: MOBILE_MIN_FONT_SIZE,
   lineHeight: 1.1,
 };
 
@@ -97,8 +147,13 @@ function MobileScheduleRow({
   onOpenDay,
   canOpenMonth,
   canOpenDayEdit,
+  canEditTeamBonus,
+  onChangeTeamBonusForUser,
+  periodBonusState,
+  hideSelectionColumn,
 }) {
   const data = row?.data ?? {};
+  const selectionColumnWidth = hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH;
   const rowId = data?.id ? String(data.id) : "";
   const isSelected = selectedRowIds.includes(rowId);
   const baseColors = useColors
@@ -119,12 +174,14 @@ function MobileScheduleRow({
       <TableCell
         sx={{
           ...mobileCellDividerSx,
-          width: MOBILE_SELECTION_COLUMN_WIDTH,
-          minWidth: MOBILE_SELECTION_COLUMN_WIDTH,
-          maxWidth: MOBILE_SELECTION_COLUMN_WIDTH,
+          ...getMobileFixedColumnSx(selectionColumnWidth),
           p: 0,
           backgroundColor: rowSurfaceColor,
           verticalAlign: "middle",
+          overflow: "hidden",
+          opacity: hideSelectionColumn ? 0 : 1,
+          transition:
+            "width 180ms ease, min-width 180ms ease, max-width 180ms ease, opacity 120ms ease",
         }}
       >
         <Box
@@ -146,7 +203,8 @@ function MobileScheduleRow({
       <TableCell
         sx={{
           ...mobileCellDividerSx,
-          minWidth: MOBILE_EMPLOYEE_COLUMN_WIDTH,
+          ...getMobileFixedColumnSx(MOBILE_EMPLOYEE_COLUMN_WIDTH),
+          ...getMobileStickyColumnSx(0, 3, true),
           px: 1,
           py: 1,
           backgroundColor: employeeCellColor,
@@ -162,7 +220,12 @@ function MobileScheduleRow({
           {data?.user_name || "Без имени"}
         </Typography>
         <Typography
-          sx={{ mt: 0.25, fontSize: 12, lineHeight: 1.2, color: employeeMetaColor }}
+          sx={{
+            mt: 0.25,
+            fontSize: MOBILE_MIN_FONT_SIZE,
+            lineHeight: 1.2,
+            color: employeeMetaColor,
+          }}
           noWrap
         >
           {data?.app_name || "—"}
@@ -187,15 +250,14 @@ function MobileScheduleRow({
                 align="center"
                 sx={{
                   ...mobileCellDividerSx,
-                  width: DAY_COLUMN_WIDTH,
-                  minWidth: DAY_COLUMN_WIDTH,
+                  ...getMobileFixedColumnSx(DAY_COLUMN_WIDTH),
                   px: 0.25,
                   py: 0.75,
-                  fontSize: 12,
+                  fontSize: MOBILE_MIN_FONT_SIZE,
                   fontWeight: 500,
-                  background: isHoliday
-                    ? `repeating-linear-gradient(-45deg, ${baseBackground}, ${baseBackground} 8px, rgba(255, 0, 0, 0.3) 8px, rgba(255, 0, 0, 0.3) 12px)`
-                    : baseBackground,
+                  ...(isHoliday
+                    ? getHolidayStripeSx(baseBackground, index, DAY_COLUMN_WIDTH)
+                    : { backgroundColor: baseBackground }),
                   color: textColor,
                   cursor: canOpenDay ? "pointer" : "default",
                 }}
@@ -207,41 +269,46 @@ function MobileScheduleRow({
           })
         : null}
 
-      {summaryColumns.map((column) => (
-        <TableCell
-          key={`${data?.id || data?.user_name}-${column.key}`}
-          align="center"
-          sx={{
-            ...mobileCellDividerSx,
-            width: MOBILE_SUMMARY_COLUMN_WIDTH,
-            minWidth: MOBILE_SUMMARY_COLUMN_WIDTH,
-            px: 0.5,
-            py: 0.75,
-            fontSize: 11,
-            backgroundColor:
-              column.key === "test_all_price" && column.accessKey === "premia"
-                ? uiColors.primary
-                : rowSurfaceColor,
-            color:
-              column.key === "test_all_price" && column.accessKey === "premia"
-                ? "#FFFFFF"
-                : "#5E5E5E",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <SmallFont
-            style={{
-              display: "block",
-              fontSize: "10px",
-              lineHeight: "1.1",
-              fontWeight:
-                column.key === "test_all_price" && column.accessKey === "premia" ? 700 : undefined,
+      {summaryColumns.map((column) => {
+        const canEditDopBonus =
+          column.key === "dop_bonus" &&
+          canEditTeamBonus &&
+          [1, 2].includes(Number(periodBonusState)) &&
+          Number(data?.check_period) === 1 &&
+          String(data?.smena_id ?? "") !== "-1";
+        const isPremiumColumn = column.key === "test_all_price" && column.accessKey === "premia";
+
+        return (
+          <TableCell
+            key={`${data?.id || data?.user_name}-${column.key}`}
+            align="center"
+            onClick={canEditDopBonus ? () => onChangeTeamBonusForUser?.(data) : undefined}
+            sx={{
+              ...mobileCellDividerSx,
+              ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
+              px: 0.5,
+              py: 0.75,
+              fontSize: MOBILE_MIN_FONT_SIZE,
+              backgroundColor: isPremiumColumn ? uiColors.primary : rowSurfaceColor,
+              color: isPremiumColumn ? "#FFFFFF" : "#5E5E5E",
+              whiteSpace: "nowrap",
+              cursor: canEditDopBonus ? "pointer" : "default",
+              "&:hover": canEditDopBonus ? { backgroundColor: uiTableColors.rowHover } : undefined,
             }}
           >
-            {getSummaryCellValue(column, data)}
-          </SmallFont>
-        </TableCell>
-      ))}
+            <SmallFont
+              style={{
+                display: "block",
+                fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                lineHeight: "1.1",
+                fontWeight: isPremiumColumn ? 700 : undefined,
+              }}
+            >
+              {getSummaryCellValue(column, data)}
+            </SmallFont>
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 }
@@ -264,10 +331,17 @@ function MobileShiftCard({
   onOpenDay,
   canOpenMonth,
   canOpenDayEdit,
+  canEditTeamBonus,
+  onChangeTeamBonusForUser,
+  periodBonusState,
   summaryColumns,
+  registerScrollContainer,
+  onSynchronizedScroll,
+  hideSelectionColumn,
 }) {
+  const selectionColumnWidth = hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH;
   const tableMinWidth =
-    MOBILE_SELECTION_COLUMN_WIDTH +
+    selectionColumnWidth +
     MOBILE_EMPLOYEE_COLUMN_WIDTH +
     (isCalendarHidden ? 0 : days.length * DAY_COLUMN_WIDTH) +
     summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
@@ -332,6 +406,9 @@ function MobileShiftCard({
 
       {!collapsed ? (
         <TableContainer
+          ref={registerScrollContainer}
+          data-mobile-synced-scroll
+          onScroll={onSynchronizedScroll}
           sx={{
             overflowX: "auto",
             WebkitOverflowScrolling: "touch",
@@ -340,7 +417,10 @@ function MobileShiftCard({
           <Table
             size="small"
             sx={{
+              width: tableMinWidth,
               minWidth: tableMinWidth,
+              transition: "width 180ms ease, min-width 180ms ease",
+              tableLayout: "fixed",
               borderCollapse: "separate",
               borderSpacing: 0,
               "& .MuiTableCell-root": {
@@ -351,12 +431,16 @@ function MobileShiftCard({
             <TableHead>
               <TableRow>
                 <TableCell
+                  data-mobile-selection-column
                   sx={{
                     ...mobileCellDividerSx,
-                    width: MOBILE_SELECTION_COLUMN_WIDTH,
-                    minWidth: MOBILE_SELECTION_COLUMN_WIDTH,
+                    ...getMobileFixedColumnSx(selectionColumnWidth),
                     p: 0,
                     backgroundColor: "#FFFFFF",
+                    overflow: "hidden",
+                    opacity: hideSelectionColumn ? 0 : 1,
+                    transition:
+                      "width 180ms ease, min-width 180ms ease, max-width 180ms ease, opacity 120ms ease",
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
@@ -384,9 +468,12 @@ function MobileShiftCard({
                   </Box>
                 </TableCell>
                 <TableCell
+                  data-mobile-employee-column
                   sx={{
                     ...mobileCellDividerSx,
-                    minWidth: MOBILE_EMPLOYEE_COLUMN_WIDTH,
+                    ...getMobileFixedColumnSx(MOBILE_EMPLOYEE_COLUMN_WIDTH),
+                    ...getMobileStickyColumnSx(0, 5, true),
+                    backgroundColor: "#FFFFFF",
                     py: 0.7,
                     px: 1,
                     fontWeight: 500,
@@ -395,29 +482,31 @@ function MobileShiftCard({
                   Сотрудник
                 </TableCell>
                 {!isCalendarHidden
-                  ? days.map((day, index) => (
-                      <TableCell
-                        key={`${group.shiftId}-${day?.date || index}`}
-                        align="center"
-                        sx={{
-                          ...mobileCellDividerSx,
-                          width: DAY_COLUMN_WIDTH,
-                          minWidth: DAY_COLUMN_WIDTH,
-                          backgroundColor:
-                            day?.day === "Пт" || day?.day === "Сб" || day?.day === "Вс"
-                              ? uiTableColors.weekend
-                              : "#FFFFFF",
-                          color: "#666666",
-                          py: 0.7,
-                          px: 0.25,
-                        }}
-                      >
-                        <Stack spacing={0.25}>
-                          <Typography sx={mobileDayHeaderTextSx}>{day?.day ?? ""}</Typography>
-                          <Typography sx={mobileDayHeaderDateSx}>{day?.date ?? ""}</Typography>
-                        </Stack>
-                      </TableCell>
-                    ))
+                  ? days.map((day, index) => {
+                      const dayHeader = getMobileDayHeader(day);
+                      const isWeekend = ["Пт", "Сб", "Вс"].includes(dayHeader.day);
+
+                      return (
+                        <TableCell
+                          key={`${group.shiftId}-${day?.date || index}`}
+                          data-mobile-day-column
+                          align="center"
+                          sx={{
+                            ...mobileCellDividerSx,
+                            ...getMobileFixedColumnSx(DAY_COLUMN_WIDTH),
+                            backgroundColor: isWeekend ? uiTableColors.weekend : "#FFFFFF",
+                            color: "#666666",
+                            py: 0.7,
+                            px: 0.25,
+                          }}
+                        >
+                          <Stack spacing={0.25}>
+                            <Typography sx={mobileDayHeaderTextSx}>{dayHeader.day}</Typography>
+                            <Typography sx={mobileDayHeaderDateSx}>{dayHeader.date}</Typography>
+                          </Stack>
+                        </TableCell>
+                      );
+                    })
                   : null}
                 {summaryColumns.map((column) => (
                   <TableCell
@@ -425,14 +514,19 @@ function MobileShiftCard({
                     align="center"
                     sx={{
                       ...mobileCellDividerSx,
-                      width: MOBILE_SUMMARY_COLUMN_WIDTH,
-                      minWidth: MOBILE_SUMMARY_COLUMN_WIDTH,
+                      ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
                       py: 0.7,
                       px: 0.5,
                       textAlign: "center",
                     }}
                   >
-                    <SmallFont style={{ display: "block", fontSize: "10px", lineHeight: "1.1" }}>
+                    <SmallFont
+                      style={{
+                        display: "block",
+                        fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                        lineHeight: "1.15",
+                      }}
+                    >
                       {column.label}
                     </SmallFont>
                   </TableCell>
@@ -454,6 +548,10 @@ function MobileShiftCard({
                   onOpenDay={onOpenDay}
                   canOpenMonth={canOpenMonth}
                   canOpenDayEdit={canOpenDayEdit}
+                  canEditTeamBonus={canEditTeamBonus}
+                  onChangeTeamBonusForUser={onChangeTeamBonusForUser}
+                  periodBonusState={periodBonusState}
+                  hideSelectionColumn={hideSelectionColumn}
                 />
               ))}
             </TableBody>
@@ -480,6 +578,8 @@ function MobileSummaryCard({
   canShowPizza,
   canShowSlowOrders,
   slowOrderValues,
+  registerScrollContainer,
+  onSynchronizedScroll,
 }) {
   const dayCount = isCalendarHidden ? 0 : bonusDayValues.length;
   const labelColumnWidth = `${MOBILE_SUMMARY_LABEL_WIDTH}px`;
@@ -501,6 +601,7 @@ function MobileSummaryCard({
       sx={{
         display: "grid",
         gridTemplateColumns: cellTemplate,
+        width: gridWidth,
         minWidth: gridWidth,
         backgroundColor: options.fillColor || "#FFFFFF",
       }}
@@ -519,7 +620,7 @@ function MobileSummaryCard({
                 justifyContent: "center",
                 px: 0.25,
                 py: 1,
-                fontSize: options.compactValues ? 13.2 : 12,
+                fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
                 color: options.textColor || "#5E5E5E",
                 whiteSpace: options.compactValues ? "nowrap" : "normal",
               }}
@@ -539,7 +640,7 @@ function MobileSummaryCard({
             justifyContent: "center",
             px: 0.5,
             py: 1,
-            fontSize: options.compactValues ? 13.2 : 12,
+            fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
             color: options.textColor || "#5E5E5E",
             cursor: onSummaryCellClick ? "pointer" : "default",
           }}
@@ -559,9 +660,12 @@ function MobileSummaryCard({
           justifyContent: "space-between",
           gap: 1,
           px: 1,
-          py: 0.9,
-          backgroundColor: uiTableColors.sectionHeader,
-          color: "#FFFFFF",
+          py: 0.75,
+          minHeight: 44,
+          boxSizing: "border-box",
+          backgroundColor: uiTableColors.shiftHeader,
+          color: "#4B5563",
+          borderBottom: "1px solid #ECECEC",
         }}
       >
         <Stack
@@ -569,15 +673,20 @@ function MobileSummaryCard({
           alignItems="center"
           spacing={0.75}
         >
-          <SummarySectionIcon sx={{ fontSize: 16 }} />
+          <SummarySectionIcon sx={{ fontSize: 20, color: "#3C3B3B" }} />
           <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>
             Сводные данные
           </Typography>
         </Stack>
       </Box>
 
-      <Box sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        <Box sx={{ minWidth: gridWidth }}>
+      <Box
+        ref={registerScrollContainer}
+        data-mobile-synced-scroll
+        onScroll={onSynchronizedScroll}
+        sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}
+      >
+        <Box sx={{ width: gridWidth, minWidth: gridWidth }}>
           {!isCalendarHidden ? (
             <Box
               sx={{
@@ -586,30 +695,38 @@ function MobileSummaryCard({
                 backgroundColor: "#FFFFFF",
               }}
             >
-              <Box sx={{ ...mobileCellDividerSx, px: 1, py: 0.7, fontWeight: 500 }}>Показатель</Box>
-              {bonusDayValues.map((item, index) => (
-                <Box
-                  key={`summary-day-${item?.date || index}`}
-                  sx={{
-                    ...mobileCellDividerSx,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    px: 0.25,
-                    py: 0.7,
-                    backgroundColor:
-                      item?.day === "Пт" || item?.day === "Сб" || item?.day === "Вс"
-                        ? uiTableColors.weekend
-                        : "#FFFFFF",
-                    color: "#666666",
-                  }}
-                >
-                  <Stack spacing={0.25}>
-                    <Typography sx={mobileDayHeaderTextSx}>{item?.day ?? ""}</Typography>
-                    <Typography sx={mobileDayHeaderDateSx}>{item?.date ?? ""}</Typography>
-                  </Stack>
-                </Box>
-              ))}
+              <Box
+                data-mobile-summary-label-column
+                sx={{ ...mobileCellDividerSx, px: 1, py: 0.7, fontWeight: 500 }}
+              >
+                Показатель
+              </Box>
+              {bonusDayValues.map((item, index) => {
+                const dayHeader = getMobileDayHeader(item);
+                const isWeekend = ["Пт", "Сб", "Вс"].includes(dayHeader.day);
+
+                return (
+                  <Box
+                    key={`summary-day-${item?.date || index}`}
+                    data-mobile-day-column
+                    sx={{
+                      ...mobileCellDividerSx,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      px: 0.25,
+                      py: 0.7,
+                      backgroundColor: isWeekend ? uiTableColors.weekend : "#FFFFFF",
+                      color: "#666666",
+                    }}
+                  >
+                    <Stack spacing={0.25}>
+                      <Typography sx={mobileDayHeaderTextSx}>{dayHeader.day}</Typography>
+                      <Typography sx={mobileDayHeaderDateSx}>{dayHeader.date}</Typography>
+                    </Stack>
+                  </Box>
+                );
+              })}
               {summaryColumns.map((column) => (
                 <Box
                   key={`summary-column-${column.key}`}
@@ -623,7 +740,13 @@ function MobileSummaryCard({
                     textAlign: "center",
                   }}
                 >
-                  <SmallFont style={{ display: "block", fontSize: "10.5px", lineHeight: "1.15" }}>
+                  <SmallFont
+                    style={{
+                      display: "block",
+                      fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                      lineHeight: "1.15",
+                    }}
+                  >
                     {column.label}
                   </SmallFont>
                 </Box>
@@ -805,6 +928,7 @@ export default function StaffScheduleMobileTableSection({
   totalsSummaryKeyMap,
   periodBonusSummaryKeyMap,
   canEditTeamBonus,
+  onChangeTeamBonusForUser,
   periodBonusState,
   canShowPeriodSum,
   bonusDayValues,
@@ -813,78 +937,115 @@ export default function StaffScheduleMobileTableSection({
   canShowPizza,
   canShowSlowOrders,
   slowOrderValues,
+  isEmployeeSearchActive = false,
 }) {
   const mobileShiftGroups = buildMobileShiftGroups(rows);
   const selectedCount = selectedRowIds.length;
+  const scrollRootRef = useRef(null);
+  const sharedScrollLeftRef = useRef(0);
+  const [isHorizontallyScrolled, setIsHorizontallyScrolled] = useState(false);
+  const registerScrollContainer = useCallback((node) => {
+    if (node) {
+      node.scrollLeft = sharedScrollLeftRef.current;
+    }
+  }, []);
+  const handleSynchronizedScroll = useCallback((event) => {
+    const source = event.currentTarget;
+    const nextScrollLeft = source.scrollLeft;
+
+    sharedScrollLeftRef.current = nextScrollLeft;
+    setIsHorizontallyScrolled(nextScrollLeft > 1);
+    scrollRootRef.current?.querySelectorAll("[data-mobile-synced-scroll]").forEach((container) => {
+      if (container !== source && Math.abs(container.scrollLeft - nextScrollLeft) > 0.5) {
+        container.scrollLeft = nextScrollLeft;
+      }
+    });
+  }, []);
 
   return (
     <>
-      <JacoSurface
-        sx={{
-          borderRadius: CONTROL_RADIUS,
-          overflow: "hidden",
-        }}
-      >
-        <Stack
-          spacing={1.5}
-          sx={{ p: 1.5 }}
+      <Box ref={scrollRootRef}>
+        <JacoSurface
+          sx={{
+            borderRadius: CONTROL_RADIUS,
+            overflow: "hidden",
+          }}
         >
-          <Stack spacing={0.25}>
-            <Typography sx={{ fontSize: 13, fontWeight: 500, textTransform: "uppercase" }}>
-              График смен
-            </Typography>
-            <Typography sx={{ fontSize: 13, color: "#666666" }}>
-              Показано • {shownShiftCount} смен
-            </Typography>
-          </Stack>
+          <Stack
+            spacing={1.5}
+            sx={{ p: 1.5 }}
+          >
+            <Stack spacing={0.25}>
+              <Typography sx={{ fontSize: 13, fontWeight: 500, textTransform: "uppercase" }}>
+                График смен
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: "#666666" }}>
+                Показано • {shownShiftCount} смен
+              </Typography>
+            </Stack>
 
-          <Stack spacing={1.25}>
-            {mobileShiftGroups.map((group) => (
-              <MobileShiftCard
-                key={group.key}
-                group={group}
-                days={days}
-                collapsed={collapsedShiftIds.includes(group.shiftId)}
-                onToggle={onToggleShiftCollapse}
-                canEditSmena={canEditSmena}
-                onOpenEditSmena={onOpenEditSmena}
-                isCalendarHidden={isCalendarHidden}
-                showFastActions={showFastActions}
-                hasBulkSelection={hasBulkSelection}
-                onOpenBulkFastActions={onOpenBulkFastActions}
-                useColors={useColors}
-                selectedRowIds={selectedRowIds}
-                onToggleRowSelection={onToggleRowSelection}
-                onOpenMonth={onOpenMonth}
-                onOpenDay={onOpenDay}
-                canOpenMonth={canOpenMonth}
-                canOpenDayEdit={canOpenDayEdit}
-                summaryColumns={summaryColumns}
-              />
-            ))}
+            <Stack spacing={1.25}>
+              {isEmployeeSearchActive && !mobileShiftGroups.length ? (
+                <Box sx={{ py: 2, textAlign: "center", color: uiColors.textMuted, fontSize: 13 }}>
+                  Сотрудники не найдены
+                </Box>
+              ) : null}
 
-            {hasSummaryRows ? (
-              <MobileSummaryCard
-                onOpenSummaryAction={onOpenSummaryAction}
-                summaryColumns={summaryColumns}
-                summaryTotals={summaryTotals}
-                totalsSummaryKeyMap={totalsSummaryKeyMap}
-                periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
-                canEditTeamBonus={canEditTeamBonus}
-                periodBonusState={periodBonusState}
-                canShowPeriodSum={canShowPeriodSum}
-                bonusDayValues={bonusDayValues}
-                isCalendarHidden={isCalendarHidden}
-                canShowTotals={canShowTotals}
-                canShowRolls={canShowRolls}
-                canShowPizza={canShowPizza}
-                canShowSlowOrders={canShowSlowOrders}
-                slowOrderValues={slowOrderValues}
-              />
-            ) : null}
+              {mobileShiftGroups.map((group) => (
+                <MobileShiftCard
+                  key={group.key}
+                  group={group}
+                  days={days}
+                  collapsed={collapsedShiftIds.includes(group.shiftId)}
+                  onToggle={onToggleShiftCollapse}
+                  canEditSmena={canEditSmena}
+                  onOpenEditSmena={onOpenEditSmena}
+                  isCalendarHidden={isCalendarHidden}
+                  showFastActions={showFastActions}
+                  hasBulkSelection={hasBulkSelection}
+                  onOpenBulkFastActions={onOpenBulkFastActions}
+                  useColors={useColors}
+                  selectedRowIds={selectedRowIds}
+                  onToggleRowSelection={onToggleRowSelection}
+                  onOpenMonth={onOpenMonth}
+                  onOpenDay={onOpenDay}
+                  canOpenMonth={canOpenMonth}
+                  canOpenDayEdit={canOpenDayEdit}
+                  canEditTeamBonus={canEditTeamBonus}
+                  onChangeTeamBonusForUser={onChangeTeamBonusForUser}
+                  periodBonusState={periodBonusState}
+                  summaryColumns={summaryColumns}
+                  registerScrollContainer={registerScrollContainer}
+                  onSynchronizedScroll={handleSynchronizedScroll}
+                  hideSelectionColumn={isHorizontallyScrolled}
+                />
+              ))}
+
+              {hasSummaryRows ? (
+                <MobileSummaryCard
+                  onOpenSummaryAction={onOpenSummaryAction}
+                  summaryColumns={summaryColumns}
+                  summaryTotals={summaryTotals}
+                  totalsSummaryKeyMap={totalsSummaryKeyMap}
+                  periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
+                  canEditTeamBonus={canEditTeamBonus}
+                  periodBonusState={periodBonusState}
+                  canShowPeriodSum={canShowPeriodSum}
+                  bonusDayValues={bonusDayValues}
+                  isCalendarHidden={isCalendarHidden}
+                  canShowTotals={canShowTotals}
+                  canShowRolls={canShowRolls}
+                  canShowPizza={canShowPizza}
+                  canShowSlowOrders={canShowSlowOrders}
+                  slowOrderValues={slowOrderValues}
+                  registerScrollContainer={registerScrollContainer}
+                  onSynchronizedScroll={handleSynchronizedScroll}
+                />
+              ) : null}
+            </Stack>
           </Stack>
-        </Stack>
-      </JacoSurface>
+        </JacoSurface>
+      </Box>
 
       {showFastActions ? (
         <MobileSelectionBar

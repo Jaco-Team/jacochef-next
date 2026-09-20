@@ -110,14 +110,17 @@ export default function StaffScheduleColorLegendModal({ open, onClose }) {
       }
     >
       <Stack spacing={1.25}>
-        {colorLegendItems.map((item) => (
+        {colorLegendItems.map((item, index) => (
           <Stack
             key={item.label}
             direction="row"
             spacing={1.5}
-            alignItems="flex-start"
+            alignItems="center"
+            data-testid={`color-legend-item-${index}`}
+            sx={{ alignItems: "center !important" }}
           >
             <Box
+              data-testid={`color-legend-swatch-${index}`}
               sx={{
                 width: 42,
                 height: 28,
