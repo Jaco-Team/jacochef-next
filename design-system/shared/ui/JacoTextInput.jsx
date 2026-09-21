@@ -123,6 +123,10 @@ export default function JacoTextInput({
         "& .MuiInputLabel-root": {
           ...uiTypography.label,
           color: uiColors.textMuted,
+          transform: "translate(16px, 13px) scale(1)",
+          "&.MuiInputLabel-shrink": {
+            transform: "translate(16px, -9px) scale(0.75)",
+          },
           "&.Mui-focused": {
             color: uiColors.primary,
           },

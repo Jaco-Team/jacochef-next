@@ -1,5 +1,16 @@
 # Sklad Implementation Plan
 
+## Текущая карточка: `feat/sklad_items-43371`
+
+Цель текущей итерации — обновить только оболочку уже работающего `sklad_items`, без смены API-контрактов и без изменения диалогов товаров сайта.
+
+1. Сверить shell с существующими Storybook-примитивами и применить `JacoBackdropLoader`, `JacoAlert`, `JacoButton`, `JacoSurface`, `JacoCompactTabs`; сохранить текущие tab/data flows и современный MUI `Grid`.
+2. Сверить видимость разделов и действий с compact access-контрактом из `ACCESS.md`: отсутствие ключа запрещает действие, edit включает view. Не добавлять permissive FE fallback.
+3. Сохранить `site-items` editor/view/history dialogs полностью без визуальных и поведенческих изменений.
+4. Выполнить только узкую статическую/синтаксическую проверку затронутого shell и access-gate. Исторический phased plan ниже сохраняется как архив решений, а API-источником истины остаётся `API.md` (его FE/BE копии синхронны).
+
+---
+
 Статус: детальный phased plan для нового модуля `sklad_items`.
 
 Pinned execution rule:
@@ -31,7 +42,7 @@ Pinned execution rule:
 - не зависит runtime-архитектурно от старых module classes
 - позволяет переводить FE по section-ам, а не big-bang миграцией
 - не требует включать текущий экран `sklad_items_module_new` в этот FE merge на текущем этапе
-- не строит отдельный `Warehouse items` tab/screen в текущей итерации
+- включает отдельный `Warehouse items` tab в уже реализованный scope
 - использует tabbed UI shell по современному project pattern
 - переиспользует project form controls и modal patterns без копирования legacy page architecture
 
@@ -63,7 +74,7 @@ FE strategy after current backend update:
 - новый модуль строим как единый page shell с tabs
 - каждый tab соответствует legacy business area, а не backend table
 - shared/global fields и dictionaries живут в module-level adapters and scoped lib
-- MUI v7 используем как базовый UI-kit
+- MUI v9 используем как базовый UI-kit
 - existing shared form controls reused as-is; если нужна адаптация, она делается только внутри `components/sklad_items`
 - legacy modules используются только как analytical reference for flows and field meaning
 - new FE runtime integration binds only to canonical `/api/sklad_items/*`, never directly to legacy module APIs

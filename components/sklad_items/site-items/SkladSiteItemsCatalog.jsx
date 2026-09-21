@@ -15,11 +15,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Button,
-  Checkbox,
-  IconButton,
   InputAdornment,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -28,11 +24,18 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+
+import {
+  JacoButton,
+  JacoCheckbox,
+  JacoIconButton,
+  JacoSurface,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 
 import { formatDateRU } from "../formatDateRangeRU";
 
@@ -190,8 +193,7 @@ export default function SkladSiteItemsCatalog({
 
   return (
     <Stack spacing={2}>
-      <Paper
-        elevation={0}
+      <JacoSurface
         sx={{ p: { xs: 1.5, lg: 2 }, borderRadius: 2.5, border: `1px solid ${blockBorder}` }}
       >
         <Stack
@@ -215,28 +217,27 @@ export default function SkladSiteItemsCatalog({
             spacing={1}
           >
             {canCreate ? (
-              <Button
-                variant="contained"
+              <JacoButton
                 startIcon={<AddIcon />}
                 onClick={openCreate}
                 sx={{ whiteSpace: "nowrap" }}
               >
                 Новый товар
-              </Button>
+              </JacoButton>
             ) : null}
             {canManageTags ? (
-              <Button
-                variant="outlined"
+              <JacoButton
+                tone="secondary"
                 startIcon={<LocalOfferOutlinedIcon />}
                 onClick={openTagsEditor}
                 sx={{ whiteSpace: "nowrap" }}
               >
                 Редактировать теги
-              </Button>
+              </JacoButton>
             ) : null}
           </Stack>
         </Stack>
-      </Paper>
+      </JacoSurface>
       <Box
         sx={{
           p: { xs: 1.5, lg: 2 },
@@ -245,8 +246,7 @@ export default function SkladSiteItemsCatalog({
         }}
       >
         <Stack spacing={2}>
-          <Paper
-            elevation={0}
+          <JacoSurface
             sx={{ p: { xs: 1.5, lg: 2 }, borderRadius: 2.5, border: `1px solid ${blockBorder}` }}
           >
             <Stack spacing={1.75}>
@@ -268,8 +268,7 @@ export default function SkladSiteItemsCatalog({
                       : "Активные позиции, сгруппированные по категориям"}
                   </Typography>
                 </Box>
-                <TextField
-                  size="small"
+                <JacoTextInput
                   placeholder="Поиск по названию"
                   value={search}
                   onChange={(event) => setState({ search: event.target.value, page: 0 })}
@@ -309,7 +308,7 @@ export default function SkladSiteItemsCatalog({
                   ].map((tab) => {
                     const selected = archiveMode === tab.value;
                     return (
-                      <Button
+                      <JacoButton
                         key={tab.value}
                         onClick={() => setState({ archiveMode: tab.value, page: 0 })}
                         sx={{
@@ -342,7 +341,7 @@ export default function SkladSiteItemsCatalog({
                         >
                           {tab.count}
                         </Box>
-                      </Button>
+                      </JacoButton>
                     );
                   })}
                 </Box>
@@ -351,7 +350,7 @@ export default function SkladSiteItemsCatalog({
                 </Typography>
               </Stack>
             </Stack>
-          </Paper>
+          </JacoSurface>
 
           {groupedRows.length ? (
             <Stack spacing={1.25}>
@@ -366,14 +365,15 @@ export default function SkladSiteItemsCatalog({
                 <Typography sx={{ color: textSecondary, fontSize: 13 }}>
                   Выберите категорию, чтобы увидеть товары
                 </Typography>
-                <Button
-                  size="small"
+                <JacoButton
+                  compact
+                  tone="secondary"
                   startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
                   onClick={toggleAll}
                   sx={{ color: textSecondary, textTransform: "none" }}
                 >
                   {allExpanded ? "Свернуть все" : "Развернуть все"}
-                </Button>
+                </JacoButton>
               </Stack>
 
               {groupedRows.map((category) => {
@@ -427,8 +427,7 @@ export default function SkladSiteItemsCatalog({
                       sx={{ px: 0, pt: 0, pb: 2, backgroundColor: blockBackground }}
                     >
                       <TableContainer
-                        component={Paper}
-                        elevation={0}
+                        component={JacoSurface}
                         sx={{
                           display: { xs: "none", md: "block" },
                           mx: 2,
@@ -485,24 +484,21 @@ export default function SkladSiteItemsCatalog({
                               >
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell align="center">
-                                  <Checkbox
-                                    size="small"
+                                  <JacoCheckbox
                                     checked={Number(row?.is_show) === 1}
                                     disabled={!canEditActivity}
                                     onChange={quickCheck(row, "is_show")}
                                   />
                                 </TableCell>
                                 <TableCell align="center">
-                                  <Checkbox
-                                    size="small"
+                                  <JacoCheckbox
                                     checked={Number(row?.show_program) === 1}
                                     disabled={!canEditCash}
                                     onChange={quickCheck(row, "show_program")}
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <TextField
-                                    size="small"
+                                  <JacoTextInput
                                     type="number"
                                     value={sortDrafts[row.id] ?? row?.sort ?? 0}
                                     disabled={!canEditSort}
@@ -543,37 +539,34 @@ export default function SkladSiteItemsCatalog({
                                     }}
                                   >
                                     <Tooltip title={isEditable ? "Редактировать" : "Открыть"}>
-                                      <IconButton
-                                        size="small"
+                                      <JacoIconButton
                                         aria-label="Редактировать"
                                         onClick={() => openEdit(row, "main")}
                                       >
                                         <EditIcon fontSize="small" />
-                                      </IconButton>
+                                      </JacoIconButton>
                                     </Tooltip>
                                     {canViewHistory ? (
                                       <Tooltip title="История изменений">
-                                        <IconButton
-                                          size="small"
+                                        <JacoIconButton
                                           aria-label="История"
                                           onClick={() => openEdit(row, "history")}
                                         >
                                           <EditNoteIcon fontSize="small" />
-                                        </IconButton>
+                                        </JacoIconButton>
                                       </Tooltip>
                                     ) : null}
                                     {canDeleteAction ? (
                                       <Tooltip title="Удалить">
                                         <span>
-                                          <IconButton
-                                            size="small"
-                                            color="error"
+                                          <JacoIconButton
+                                            sx={{ color: "error.main" }}
                                             aria-label="Удалить"
                                             disabled={row?.can_delete === false}
                                             onClick={() => openDeleteDialog(row)}
                                           >
                                             <DeleteOutlineIcon fontSize="small" />
-                                          </IconButton>
+                                          </JacoIconButton>
                                         </span>
                                       </Tooltip>
                                     ) : null}
@@ -590,7 +583,7 @@ export default function SkladSiteItemsCatalog({
                         sx={{ display: { xs: "flex", md: "none" }, mx: 1 }}
                       >
                         {category.items.map((row, index) => (
-                          <Paper
+                          <JacoSurface
                             key={row.id}
                             data-testid={`site-item-${row.id}`}
                             elevation={0}
@@ -650,8 +643,7 @@ export default function SkladSiteItemsCatalog({
                                     <Typography sx={{ fontSize: 13, color: textSecondary }}>
                                       {label}
                                     </Typography>
-                                    <Checkbox
-                                      size="small"
+                                    <JacoCheckbox
                                       checked={Number(row?.[field]) === 1}
                                       disabled={!canEditField}
                                       onChange={quickCheck(row, field)}
@@ -667,28 +659,28 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1,
                                 }}
                               >
-                                <Button
-                                  variant="outlined"
+                                <JacoButton
+                                  tone="secondary"
                                   startIcon={<EditIcon />}
                                   aria-label="Редактировать"
                                   onClick={() => openEdit(row, "main")}
                                   sx={{ flex: 1 }}
                                 >
                                   {isEditable ? "Изменить" : "Открыть"}
-                                </Button>
+                                </JacoButton>
                                 {canViewHistory ? (
-                                  <Button
-                                    variant="outlined"
+                                  <JacoButton
+                                    tone="secondary"
                                     startIcon={<EditNoteIcon />}
                                     onClick={() => openEdit(row, "history")}
                                     sx={{ flex: 1 }}
                                   >
                                     История
-                                  </Button>
+                                  </JacoButton>
                                 ) : null}
                               </Stack>
                             </Stack>
-                          </Paper>
+                          </JacoSurface>
                         ))}
                       </Stack>
                     </AccordionDetails>
@@ -697,15 +689,12 @@ export default function SkladSiteItemsCatalog({
               })}
             </Stack>
           ) : (
-            <Paper
-              elevation={0}
-              sx={{ p: 5, textAlign: "center", borderRadius: 2.5 }}
-            >
+            <JacoSurface sx={{ p: 5, textAlign: "center", borderRadius: 2.5 }}>
               <Typography sx={{ fontSize: 16, fontWeight: 500 }}>Ничего не найдено</Typography>
               <Typography sx={{ mt: 0.75, color: textSecondary }}>
                 Измените строку поиска или переключите режим списка.
               </Typography>
-            </Paper>
+            </JacoSurface>
           )}
         </Stack>
       </Box>
