@@ -8,6 +8,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import SyncIcon from "@mui/icons-material/Sync";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import {
@@ -93,6 +94,7 @@ export default function SkladSiteItemsCatalog({
   categories,
   isEditable,
   canCreate,
+  canSyncSiteItemsVk,
   canManageTags,
   canDeleteAction,
   canEditActivity,
@@ -101,6 +103,7 @@ export default function SkladSiteItemsCatalog({
   canViewHistory,
   setState,
   openCreate,
+  onSyncSiteItemsVk,
   openTagsEditor,
   openEdit,
   openDeleteDialog,
@@ -233,6 +236,16 @@ export default function SkladSiteItemsCatalog({
                 sx={{ whiteSpace: "nowrap" }}
               >
                 Редактировать теги
+              </JacoButton>
+            ) : null}
+            {canSyncSiteItemsVk ? (
+              <JacoButton
+                tone="secondary"
+                startIcon={<SyncIcon />}
+                onClick={onSyncSiteItemsVk}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Обновить товары VK
               </JacoButton>
             ) : null}
           </Stack>
