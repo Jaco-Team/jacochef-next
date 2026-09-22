@@ -27,6 +27,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SaveIcon from "@mui/icons-material/Save";
 import SearchIcon from "@mui/icons-material/Search";
 import UndoIcon from "@mui/icons-material/Undo";
+import { JacoButton } from "@/design-system/shared/ui";
 import EmployeeAppointmentHierarchyTree from "./EmployeeAppointmentHierarchyTree";
 import EmployeeHierarchyList from "./EmployeeHierarchyList";
 import EmployeePositionModal from "./EmployeePositionModal";
@@ -194,49 +195,56 @@ export default function EmployeeHierarchyTab({ request, showAlert, onScopeChange
             spacing={1}
             useFlexGap
             flexWrap="wrap"
+            alignItems="center"
+            justifyContent={{ xs: "center", md: "flex-end" }}
           >
-            <Button
-              variant="outlined"
+            <JacoButton
+              tone="secondary"
+              compact
               startIcon={<RestartAltIcon />}
               disabled={!dirty}
               onClick={loadHierarchy}
             >
               Сбросить
-            </Button>
-            <Button
-              variant="outlined"
+            </JacoButton>
+            <JacoButton
+              tone="secondary"
+              compact
               startIcon={<UndoIcon />}
               disabled={!undoStack.length}
               onClick={undoHierarchyChange}
             >
               Отменить
-            </Button>
+            </JacoButton>
             {canEdit ? (
-              <Button
-                variant="outlined"
+              <JacoButton
+                tone="outlinePrimary"
+                compact
                 startIcon={<AddIcon />}
                 onClick={() => setUnitModal({ unitId: null })}
               >
                 Отдел
-              </Button>
+              </JacoButton>
             ) : null}
             {canEdit ? (
-              <Button
-                variant="contained"
+              <JacoButton
+                tone="primary"
+                compact
                 startIcon={<AddIcon />}
                 onClick={() => setPositionModal({ positionId: null })}
               >
                 Должность
-              </Button>
+              </JacoButton>
             ) : null}
-            <Button
-              variant="contained"
+            <JacoButton
+              tone="primary"
+              compact
               startIcon={<SaveIcon />}
               disabled={!tablesReady || !canEdit || !dirty}
               onClick={saveHierarchy}
             >
               Сохранить
-            </Button>
+            </JacoButton>
           </Stack>
         </Stack>
       </Paper>
