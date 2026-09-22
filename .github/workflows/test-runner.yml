@@ -38,6 +38,9 @@ jobs:
             NEXT_PUBLIC_API_URL=https://apichef2.jacochef.ru/api/
             NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=${{ vars.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
             MUI_STYLE_ENGINE=sc
+            BUILD_SHA=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/jaco-team/jacochef-next:${{ github.sha }}
             ghcr.io/jaco-team/jacochef-next:main
