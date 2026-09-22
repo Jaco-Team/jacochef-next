@@ -51,7 +51,7 @@ docker compose --env-file .env.production -f compose.prod.yaml ps
 Минимальный production env:
 
 ```dotenv
-NEXT_PUBLIC_API_URL=https://apichef.jacochef.ru/api
+NEXT_PUBLIC_API_URL=https://apichef2.jacochef.ru/api
 NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=
 MUI_STYLE_ENGINE=sc
 BACKEND_HTTP=http://host.docker.internal:8080
