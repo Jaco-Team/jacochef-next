@@ -23,11 +23,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   Typography,
 } from "@mui/material";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import {
@@ -288,7 +288,8 @@ export default function SkladProductionEditorDialog({
             </Alert>
           ) : (
             <TabContext value={activeTab}>
-              <TabList
+              <Tabs
+                value={activeTab}
                 onChange={(_, nextValue) => setActiveTab(nextValue)}
                 variant="scrollable"
                 allowScrollButtonsMobile
@@ -317,7 +318,7 @@ export default function SkladProductionEditorDialog({
                     label="История"
                   />
                 ) : null}
-              </TabList>
+              </Tabs>
 
               <TabPanel
                 value="main"

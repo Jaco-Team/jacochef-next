@@ -10,8 +10,8 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
-import TabList from "@mui/lab/TabList";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabContext from "@mui/lab/TabContext";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -371,7 +371,8 @@ class ReceptModule_Modal_Edit extends React.Component {
             >
               <TabContext value={this.state.ItemTab}>
                 <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                  <TabList
+                  <Tabs
+                    value={this.state.ItemTab}
                     onChange={this.changeTab.bind(this)}
                     variant="fullWidth"
                   >
@@ -390,7 +391,7 @@ class ReceptModule_Modal_Edit extends React.Component {
                       label="Добавить"
                       value="-1"
                     />
-                  </TabList>
+                  </Tabs>
                 </Box>
 
                 <Grid

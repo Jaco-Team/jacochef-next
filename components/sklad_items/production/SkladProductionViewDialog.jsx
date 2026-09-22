@@ -16,11 +16,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   Typography,
 } from "@mui/material";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import MyModal from "@/ui/MyModal";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
@@ -115,7 +115,8 @@ export default function SkladProductionViewDialog({
           </Alert>
         ) : (
           <TabContext value={tab}>
-            <TabList
+            <Tabs
+              value={tab}
               onChange={(_, nextValue) => onTabChange?.(nextValue)}
               variant="scrollable"
               allowScrollButtonsMobile
@@ -139,7 +140,7 @@ export default function SkladProductionViewDialog({
                   label={item.label}
                 />
               ))}
-            </TabList>
+            </Tabs>
 
             <TabPanel
               value="main"

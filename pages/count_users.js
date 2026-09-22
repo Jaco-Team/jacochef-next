@@ -7,8 +7,8 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import Accordion from "@mui/material/Accordion";
@@ -1158,7 +1158,8 @@ class CountUsers_ extends React.Component {
             >
               <TabContext value={this.state.ItemTab}>
                 <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                  <TabList
+                  <Tabs
+                    value={this.state.ItemTab}
                     onChange={this.changeTab.bind(this)}
                     variant="scrollable"
                     scrollButtons
@@ -1192,7 +1193,7 @@ class CountUsers_ extends React.Component {
                       label="Воскресенье"
                       value="7"
                     />
-                  </TabList>
+                  </Tabs>
                 </Box>
                 <CountUsers_TablePanel
                   value={this.state.ItemTab}
