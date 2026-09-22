@@ -5268,8 +5268,15 @@ class Billing_Edit_ extends React.Component {
 
         dropzone.off?.("queuecomplete", handleQueueComplete);
 
+        const failedFiles = dropzone.files.filter((file) => file?.status === "error");
+        const ambiguousFiles = failedFiles.filter(
+          (file) => file?.xhr && Number(file.xhr.status) === 0,
+        );
+
         resolve({
-          hasErrors: dropzone.files.some((file) => file?.status === "error"),
+          hasErrors: failedFiles.length > 0,
+          hasAmbiguousErrors: ambiguousFiles.length > 0,
+          hasDefinitiveErrors: failedFiles.length > ambiguousFiles.length,
           filesCount: pendingFiles.length,
         });
       };
@@ -5280,6 +5287,37 @@ class Billing_Edit_ extends React.Component {
 
       dropzone.on("queuecomplete", handleQueueComplete);
     });
+  };
+
+  verifyUploadedImages = async ({ billId, pointId, billType, mainFiles, facturFiles }) => {
+    const method = billType === "bill_ex" ? "get_one_bill_ex" : "get_one";
+    const retryDelays = [0, 500, 1500];
+
+    for (const delay of retryDelays) {
+      if (delay > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, delay));
+      }
+
+      try {
+        const response = await this.getData(method, {
+          id: billId,
+          point_id: pointId,
+          type: billType,
+        });
+        const savedMainFiles = Array.isArray(response?.bill_imgs) ? response.bill_imgs.length : 0;
+        const savedFacturFiles = Array.isArray(response?.factur_imgs)
+          ? response.factur_imgs.length
+          : 0;
+
+        if (savedMainFiles >= mainFiles && savedFacturFiles >= facturFiles) {
+          return true;
+        }
+      } catch (error) {
+        console.warn("Unable to verify billing images after an ambiguous upload result", error);
+      }
+    }
+
+    return false;
   };
 
   getOcrResolveState = (ocrItem, selectedProduct = null, selectedPackOption = null) => {
@@ -5774,8 +5812,12 @@ class Billing_Edit_ extends React.Component {
         const facturUploadFiles =
           parseInt(type) == 2 && DropzoneDop ? this.getPendingDropzoneFiles(DropzoneDop) : [];
         const uploadTargets = [
-          mainUploadFiles.length ? { dropzone: this.myDropzone } : null,
-          facturUploadFiles.length ? { dropzone: DropzoneDop } : null,
+          mainUploadFiles.length
+            ? { dropzone: this.myDropzone, target: "main", filesCount: mainUploadFiles.length }
+            : null,
+          facturUploadFiles.length
+            ? { dropzone: DropzoneDop, target: "factur", filesCount: facturUploadFiles.length }
+            : null,
         ].filter(Boolean);
 
         is_return = false;
@@ -5788,9 +5830,11 @@ class Billing_Edit_ extends React.Component {
           },
         });
 
-        const uploadPromises = uploadTargets.map(({ dropzone }) =>
-          this.waitForDropzoneQueue(dropzone),
-        );
+        const uploadPromises = uploadTargets.map(async ({ dropzone, target, filesCount }) => ({
+          ...(await this.waitForDropzoneQueue(dropzone)),
+          target,
+          filesCount,
+        }));
 
         this.myDropzone.processQueue();
 
@@ -5799,7 +5843,23 @@ class Billing_Edit_ extends React.Component {
         }
 
         const uploadResults = await Promise.all(uploadPromises);
-        const hasUploadErrors = uploadResults.some((item) => item.hasErrors);
+        const hasDefinitiveUploadErrors = uploadResults.some((item) => item.hasDefinitiveErrors);
+        const hasAmbiguousUploadErrors = uploadResults.some((item) => item.hasAmbiguousErrors);
+        let ambiguousUploadsVerified = false;
+
+        if (hasAmbiguousUploadErrors && !hasDefinitiveUploadErrors) {
+          ambiguousUploadsVerified = await this.verifyUploadedImages({
+            billId: res.bill_id,
+            pointId: point?.id,
+            billType: type_bill,
+            mainFiles: uploadResults
+              .filter((item) => item.target === "main")
+              .reduce((total, item) => total + item.filesCount, 0),
+            facturFiles: uploadResults
+              .filter((item) => item.target === "factur")
+              .reduce((total, item) => total + item.filesCount, 0),
+          });
+        }
 
         this.finishSaveAction({
           isUploadProcessing: false,
@@ -5809,7 +5869,7 @@ class Billing_Edit_ extends React.Component {
           },
         });
 
-        if (hasUploadErrors) {
+        if (hasDefinitiveUploadErrors || (hasAmbiguousUploadErrors && !ambiguousUploadsVerified)) {
           showAlert(false, "Документ сохранен, но часть изображений не загрузилась");
           return;
         }
