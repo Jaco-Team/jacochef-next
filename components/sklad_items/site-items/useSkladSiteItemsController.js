@@ -164,7 +164,16 @@ export default function useSkladSiteItemsController({ showAlert }) {
         throw new Error(response?.text || "Не удалось запустить обновление товаров VK");
       }
 
-      showAlert("Обновление товаров VK запущено", true);
+      if (!response?.queued) {
+        throw new Error("Не удалось поставить обновление товаров VK в очередь");
+      }
+
+      showAlert(
+        response?.already_queued
+          ? "Обновление товаров VK уже ожидает обработки"
+          : "Обновление товаров VK поставлено в очередь",
+        true,
+      );
     } catch (error) {
       showAlert(error?.message || "Не удалось запустить обновление товаров VK", false);
     } finally {

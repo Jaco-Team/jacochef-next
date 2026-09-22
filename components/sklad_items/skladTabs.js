@@ -6,7 +6,8 @@ export const SKLAD_TAB_DEFINITIONS = [
     description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
   // Suspended by task-chat clarification: `sklad_items_module_new` remains a
-  // standalone module and is not part of the current consolidation.
+  // standalone module and is not part of the current consolidation. Its
+  // warehouse flags and permissions are effective in `sklad_items_module_new`.
   // {
   //   key: "warehouse-items",
   //   label: "Товары склада",

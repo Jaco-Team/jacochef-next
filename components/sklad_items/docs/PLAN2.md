@@ -6,7 +6,7 @@ This plan records the VK parity work and the other confirmed gaps found while co
 
 ## 1. VK tooling in the new module
 
-Status: completed for the new FE integration; positive click coverage awaits a local appointment with the canonical permission enabled.
+Status: completed. VK remains an external-worker trigger: the unified API and UI report queue acceptance, never a fabricated completed-sync state.
 
 - [done] expose the canonical `site-items/sync_vk` request from the new `useSkladApi` boundary;
 - [done] expose `site_items_sync_vk` through the new access adapter;
@@ -14,17 +14,19 @@ Status: completed for the new FE integration; positive click coverage awaits a l
 - [done] confirm the action before sending the trigger;
 - [done] show loading, success, and failure states without calling legacy pages/controllers;
 - [done] verify the request uses the canonical endpoint and the backend permission check;
-- [done] run focused syntax checks and Chrome smoke coverage; the current local appointment correctly hides the action because `site_items_sync_vk=0`, so a positive click/request still needs access-sync data.
+- [done] run focused syntax checks and Chrome smoke coverage, including the permitted positive trigger path.
 
 ## 2. Confirmed follow-up parity gaps
 
 Status: suspended in this module. The warehouse implementation remains intact but its top-level tab declaration is commented out: the task chat clarifies that `sklad_items_module_new` remains a separate module and is not part of this consolidation.
 
+The warehouse flags and their permissions remain effective in `sklad_items_module_new`; do not migrate their behavior into the consolidated shell while this suspension stands.
+
 - [deferred] restore warehouse-editor controls for `w_pf`, `w_trash`, `w_item`, and `two_user`; do this in `sklad_items_module_new`, not this consolidated shell;
 - [deferred] restore warehouse-editor controls for `honest_sign` and `mercury`; do this in `sklad_items_module_new`, not this consolidated shell;
 - [deferred] reconcile warehouse-editor permission groups; retain this work in `sklad_items_module_new`;
-- [ ] resolve the contradictory VK statements in the historical PLAN documents after the new action is live;
-- [ ] decide and document whether VK triggering should remain a manual flag or gain result/status feedback from the external integration;
+- [done] resolve the VK wording in the current module plan: this action enqueues external work and does not report worker completion;
+- [done] document queue acknowledgement (`queued` / `already_queued`) instead of claiming completed VK synchronization;
 - [ ] review documented historical-dictionary fallback behavior for history and compare screens.
 
 ## 3. Retained but intentionally unexposed: cross-entity archive
