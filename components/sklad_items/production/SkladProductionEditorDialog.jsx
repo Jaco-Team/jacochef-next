@@ -44,6 +44,7 @@ import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable"
 import SkladSectionCard from "../ui/SkladSectionCard";
 import {
   buildInitialDraft,
+  calculateProductionTotals,
   dedupeSelectOptions,
   filterProductionCompositionOptions,
   getCompositionItemId,
@@ -55,6 +56,7 @@ import {
   normalizeItemOptions,
   normalizeOptions,
   normalizeSelectedOptions,
+  recalculateProductionRow,
 } from "./productionEditor.helpers";
 
 function formatMetricValue(value) {
@@ -173,10 +175,12 @@ export default function SkladProductionEditorDialog({
     setForm((prev) => ({
       ...prev,
       items: (Array.isArray(prev?.items) ? prev.items : []).map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [key]: value } : item,
+        itemIndex === index ? recalculateProductionRow({ ...item, [key]: value }, key) : item,
       ),
     }));
   };
+
+  const productionTotals = useMemo(() => calculateProductionTotals(form.items), [form.items]);
 
   const updateCompositionItem = (index, option) => {
     setForm((prev) => ({
@@ -402,26 +406,23 @@ export default function SkladProductionEditorDialog({
                       </Grid>
                       <Grid size={{ xs: 12, md: 2 }}>
                         <MyTextInput
-                          label="Выход"
-                          value={form.all_w}
-                          disabled={!canEditItems}
-                          func={(event) => updateField("all_w", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 2 }}>
-                        <MyTextInput
                           label="Брутто"
-                          value={form.all_w_brutto}
-                          disabled={!canEditItems}
-                          func={(event) => updateField("all_w_brutto", event.target.value)}
+                          value={productionTotals.all_w_brutto}
+                          disabled
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 2 }}>
                         <MyTextInput
                           label="Нетто"
-                          value={form.all_w_netto}
-                          disabled={!canEditItems}
-                          func={(event) => updateField("all_w_netto", event.target.value)}
+                          value={productionTotals.all_w_netto}
+                          disabled
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 2 }}>
+                        <MyTextInput
+                          label="Выход"
+                          value={productionTotals.all_w}
+                          disabled
                         />
                       </Grid>
                       <Grid size={12}>
@@ -540,203 +541,194 @@ export default function SkladProductionEditorDialog({
                     icon={<Inventory2OutlinedIcon fontSize="small" />}
                     title={isRecipe ? "Номенклатура" : "Состав"}
                   >
-                    {isRecipe ? (
-                      <>
-                        {form.items.length ? (
-                          <TableContainer>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>Номенклатура</TableCell>
-                                  <TableCell>Единица измерения</TableCell>
-                                  <TableCell align="right">Брутто</TableCell>
-                                  <TableCell align="right">% потери при ХО</TableCell>
-                                  <TableCell align="right">Нетто</TableCell>
-                                  <TableCell align="right">% потери при ГО</TableCell>
-                                  <TableCell align="right">Выход</TableCell>
-                                  {canEditItems ? <TableCell align="right" /> : null}
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {form.items.map((item, index) => (
-                                  <TableRow key={getCompositionRowKey(item, index)}>
-                                    <TableCell sx={{ minWidth: 260 }}>
-                                      {canEditItems ? (
-                                        <MyAutocomplite
-                                          multiple={false}
-                                          data={itemOptions}
-                                          optionKey="id"
-                                          getOptionKey={(option) => option?.id || ""}
-                                          getOptionLabel={(option) => option?.name || ""}
-                                          isOptionEqualToValue={(option, value) =>
-                                            String(option?.id || "") === String(value?.id || "")
-                                          }
-                                          value={
-                                            itemOptions.find(
-                                              (option) =>
-                                                String(option?.id || "") ===
-                                                String(getCompositionItemId(item)),
-                                            ) ||
-                                            (getCompositionItemId(item)
-                                              ? {
-                                                  id: getCompositionItemId(item),
-                                                  name: getCompositionItemName(item),
-                                                  source_id: item?.item_id || "",
-                                                  type_rec: item?.type_rec || "item",
-                                                  ei_name: getCompositionUnitName(item),
-                                                }
-                                              : null)
-                                          }
-                                          filterOptions={filterProductionCompositionOptions}
-                                          disabled={!canEditItems}
-                                          func={(_, value) => updateCompositionItem(index, value)}
-                                        />
-                                      ) : (
-                                        getCompositionItemName(item)
-                                      )}
-                                    </TableCell>
-                                    <TableCell>{getCompositionUnitName(item)}</TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={item?.brutto ?? ""}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(
-                                              index,
-                                              "brutto",
-                                              event.target.value,
-                                            )
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(item?.brutto)
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={getCompositionLoss(item)}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "pr_1", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(getCompositionLoss(item))
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={item?.netto ?? ""}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "netto", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(item?.netto)
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={item?.pr_2 ?? ""}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "pr_2", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(item?.pr_2)
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={getCompositionOutput(item)}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "res", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(getCompositionOutput(item))
-                                      )}
-                                    </TableCell>
-                                    {canEditItems ? (
-                                      <TableCell align="right">
-                                        <IconButton
-                                          color="error"
-                                          onClick={() => removeCompositionRow(index)}
-                                        >
-                                          <CloseIcon />
-                                        </IconButton>
-                                      </TableCell>
-                                    ) : null}
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        ) : null}
-                        {canEditItems ? (
-                          <TableContainer sx={{ mt: form.items.length ? 1.5 : 0 }}>
-                            <Table size="small">
-                              <TableBody>
-                                <TableRow>
+                    <>
+                      {!isRecipe ? (
+                        <Stack sx={{ mb: 1.5 }}>
+                          <SkladCsvAutocompleteField
+                            label="Состав"
+                            value={form.structure}
+                            disabled={!canEditField("structure")}
+                            onChange={(nextValue) => updateField("structure", nextValue)}
+                            placeholder="Введите состав через запятую"
+                          />
+                        </Stack>
+                      ) : null}
+                      {form.items.length ? (
+                        <TableContainer>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Номенклатура</TableCell>
+                                <TableCell>Единица измерения</TableCell>
+                                <TableCell align="right">Брутто</TableCell>
+                                <TableCell align="right">% потери при ХО</TableCell>
+                                <TableCell align="right">Нетто</TableCell>
+                                <TableCell align="right">% потери при ГО</TableCell>
+                                <TableCell align="right">Выход</TableCell>
+                                {canEditItems ? <TableCell align="right" /> : null}
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {form.items.map((item, index) => (
+                                <TableRow key={getCompositionRowKey(item, index)}>
                                   <TableCell sx={{ minWidth: 260 }}>
-                                    <MyAutocomplite
-                                      multiple={false}
-                                      data={itemOptions.filter(
-                                        (option) =>
-                                          !form.items.some(
-                                            (item) =>
-                                              String(item?.item_option_key || "") ===
-                                              String(option?.id || ""),
-                                          ),
-                                      )}
-                                      optionKey="id"
-                                      getOptionKey={(option) => option?.id || ""}
-                                      getOptionLabel={(option) => option?.name || ""}
-                                      isOptionEqualToValue={(option, value) =>
-                                        String(option?.id || "") === String(value?.id || "")
-                                      }
-                                      value={null}
-                                      placeholder="Выберите номенклатуру"
-                                      filterOptions={filterProductionCompositionOptions}
-                                      disabled={!canEditItems}
-                                      func={(_, value) => appendCompositionItem(value)}
-                                    />
+                                    {canEditItems ? (
+                                      <MyAutocomplite
+                                        multiple={false}
+                                        data={itemOptions}
+                                        optionKey="id"
+                                        getOptionKey={(option) => option?.id || ""}
+                                        getOptionLabel={(option) => option?.name || ""}
+                                        isOptionEqualToValue={(option, value) =>
+                                          String(option?.id || "") === String(value?.id || "")
+                                        }
+                                        value={
+                                          itemOptions.find(
+                                            (option) =>
+                                              String(option?.id || "") ===
+                                              String(getCompositionItemId(item)),
+                                          ) ||
+                                          (getCompositionItemId(item)
+                                            ? {
+                                                id: getCompositionItemId(item),
+                                                name: getCompositionItemName(item),
+                                                source_id: item?.item_id || "",
+                                                type_rec: item?.type_rec || "item",
+                                                ei_name: getCompositionUnitName(item),
+                                              }
+                                            : null)
+                                        }
+                                        filterOptions={filterProductionCompositionOptions}
+                                        disabled={!canEditItems}
+                                        func={(_, value) => updateCompositionItem(index, value)}
+                                      />
+                                    ) : (
+                                      getCompositionItemName(item)
+                                    )}
                                   </TableCell>
-                                  <TableCell>-</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell />
+                                  <TableCell>{getCompositionUnitName(item)}</TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item?.brutto ?? ""}
+                                        disabled={!canEditItems}
+                                        func={(event) =>
+                                          updateCompositionRow(index, "brutto", event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      formatMetricValue(item?.brutto)
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={getCompositionLoss(item)}
+                                        disabled={!canEditItems}
+                                        func={(event) =>
+                                          updateCompositionRow(index, "pr_1", event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      formatMetricValue(getCompositionLoss(item))
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item?.netto ?? ""}
+                                        disabled
+                                      />
+                                    ) : (
+                                      formatMetricValue(item?.netto)
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={item?.pr_2 ?? ""}
+                                        disabled={!canEditItems}
+                                        func={(event) =>
+                                          updateCompositionRow(index, "pr_2", event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      formatMetricValue(item?.pr_2)
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <MyTextInput
+                                        label=""
+                                        value={getCompositionOutput(item)}
+                                        disabled
+                                      />
+                                    ) : (
+                                      formatMetricValue(getCompositionOutput(item))
+                                    )}
+                                  </TableCell>
+                                  {canEditItems ? (
+                                    <TableCell align="right">
+                                      <IconButton
+                                        color="error"
+                                        onClick={() => removeCompositionRow(index)}
+                                      >
+                                        <CloseIcon />
+                                      </IconButton>
+                                    </TableCell>
+                                  ) : null}
                                 </TableRow>
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        ) : null}
-                      </>
-                    ) : (
-                      <SkladCsvAutocompleteField
-                        label="Состав"
-                        value={form.structure}
-                        disabled={!canEditField("structure")}
-                        onChange={(nextValue) => updateField("structure", nextValue)}
-                        placeholder="Введите состав через запятую"
-                      />
-                    )}
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      ) : null}
+                      {canEditItems ? (
+                        <TableContainer sx={{ mt: form.items.length ? 1.5 : 0 }}>
+                          <Table size="small">
+                            <TableBody>
+                              <TableRow>
+                                <TableCell sx={{ minWidth: 260 }}>
+                                  <MyAutocomplite
+                                    multiple={false}
+                                    data={itemOptions.filter(
+                                      (option) =>
+                                        !form.items.some(
+                                          (item) =>
+                                            String(item?.item_option_key || "") ===
+                                            String(option?.id || ""),
+                                        ),
+                                    )}
+                                    optionKey="id"
+                                    getOptionKey={(option) => option?.id || ""}
+                                    getOptionLabel={(option) => option?.name || ""}
+                                    isOptionEqualToValue={(option, value) =>
+                                      String(option?.id || "") === String(value?.id || "")
+                                    }
+                                    value={null}
+                                    placeholder="Выберите номенклатуру"
+                                    filterOptions={filterProductionCompositionOptions}
+                                    disabled={!canEditItems}
+                                    func={(_, value) => appendCompositionItem(value)}
+                                  />
+                                </TableCell>
+                                <TableCell>-</TableCell>
+                                <TableCell align="right">0</TableCell>
+                                <TableCell align="right">0</TableCell>
+                                <TableCell align="right">0</TableCell>
+                                <TableCell align="right">0</TableCell>
+                                <TableCell align="right">0</TableCell>
+                                <TableCell />
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      ) : null}
+                    </>
                   </SkladSectionCard>
                 </Stack>
               </TabPanel>

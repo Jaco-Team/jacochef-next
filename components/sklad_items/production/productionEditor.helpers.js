@@ -16,6 +16,9 @@ export function dedupeSelectOptions(options) {
 }
 
 export function buildInitialDraft(draft) {
+  const items = Array.isArray(draft?.items) ? draft.items : [];
+  const totals = calculateProductionTotals(items);
+
   return {
     id: draft?.id ?? null,
     name: draft?.name ?? "",
@@ -23,9 +26,9 @@ export function buildInitialDraft(draft) {
     date_start: draft?.date_start ?? "",
     date_end: draft?.date_end ?? "",
     ed_izmer_id: draft?.ed_izmer_id ? String(draft.ed_izmer_id) : "",
-    all_w: draft?.all_w ?? "",
-    all_w_brutto: draft?.all_w_brutto ?? "",
-    all_w_netto: draft?.all_w_netto ?? "",
+    all_w: totals.all_w,
+    all_w_brutto: totals.all_w_brutto,
+    all_w_netto: totals.all_w_netto,
     time_min: draft?.time_min ?? "",
     time_min_dop: draft?.time_min_dop ?? "",
     structure: draft?.structure ?? "",
@@ -42,7 +45,7 @@ export function buildInitialDraft(draft) {
     calculated_allergens: draft?.calculated_allergens ?? null,
     storages: Array.isArray(draft?.storages) ? draft.storages : [],
     apps: Array.isArray(draft?.apps) ? draft.apps : [],
-    items: Array.isArray(draft?.items) ? draft.items : [],
+    items,
     history: draft?.history ?? { rows: [], capabilities: {}, meta: {} },
   };
 }
@@ -282,9 +285,58 @@ function pickFirstDefined(...values) {
 }
 
 export function getCompositionLoss(item) {
-  return pickFirstDefined(item?.loss, item?.waste, item?.proc_loss, item?.loss_percent);
+  return pickFirstDefined(item?.pr_1, item?.loss, item?.waste, item?.proc_loss, item?.loss_percent);
 }
 
 export function getCompositionOutput(item) {
   return pickFirstDefined(item?.res, item?.output, item?.all_w, item?.weight_out);
+}
+
+function parseProductionDecimal(value) {
+  const parsed = Number.parseFloat(
+    String(value ?? "")
+      .replace(/\s/g, "")
+      .replace(",", "."),
+  );
+
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function roundProductionDecimal(value) {
+  return Math.round((value + Number.EPSILON) * 1000) / 1000;
+}
+
+export function recalculateProductionRow(item, changedField) {
+  const next = { ...item };
+  const gross = parseProductionDecimal(next.brutto);
+  const primaryLoss = parseProductionDecimal(getCompositionLoss(next));
+  const thermalLoss = parseProductionDecimal(next.pr_2);
+
+  if (changedField === "brutto" || changedField === "pr_1") {
+    next.netto = roundProductionDecimal((gross * (100 - primaryLoss)) / 100);
+  }
+
+  if (changedField === "brutto" || changedField === "pr_1" || changedField === "pr_2") {
+    next.res = roundProductionDecimal(
+      (parseProductionDecimal(next.netto) * (100 - thermalLoss)) / 100,
+    );
+  }
+
+  return next;
+}
+
+export function calculateProductionTotals(items) {
+  const list = Array.isArray(items) ? items : [];
+
+  return {
+    all_w_brutto: roundProductionDecimal(
+      list.reduce((total, item) => total + parseProductionDecimal(item?.brutto), 0),
+    ),
+    all_w_netto: roundProductionDecimal(
+      list.reduce((total, item) => total + parseProductionDecimal(item?.netto), 0),
+    ),
+    all_w: roundProductionDecimal(
+      list.reduce((total, item) => total + parseProductionDecimal(getCompositionOutput(item)), 0),
+    ),
+  };
 }
