@@ -24,6 +24,7 @@ import {
 
 import {
   JacoButton,
+  JacoCheckbox,
   JacoIconButton,
   JacoSearchField,
   JacoSelect,
@@ -77,6 +78,7 @@ export default function SkladProductionContent({
   canConvertProduction,
   canViewHistory,
   canCreateCategory,
+  canEditRevision,
   allowPastDate,
   canManageCategories,
   setState,
@@ -87,6 +89,7 @@ export default function SkladProductionContent({
   openArchiveDialog,
   openDeleteDialog,
   openConvertDialog,
+  onToggleRevision,
   closeModal,
   closeDeleteDialog,
   closeArchiveDialog,
@@ -208,6 +211,7 @@ export default function SkladProductionContent({
             >
               <TableHead>
                 <TableRow>
+                  <TableCell sx={{ width: 116 }}>Тип</TableCell>
                   <SkladSortableHeader
                     sortKey="name"
                     sortBy={sortBy}
@@ -248,6 +252,7 @@ export default function SkladProductionContent({
                   >
                     Действует до
                   </SkladSortableHeader>
+                  <TableCell sx={{ minWidth: 116 }}>Обновление</TableCell>
                   <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
                   <TableCell
                     align="right"
@@ -273,6 +278,7 @@ export default function SkladProductionContent({
                       key={getRowKey(entityType, row)}
                       hover
                     >
+                      <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
                       <TableCell
                         onClick={() => openEdit(entityType, row, "main")}
                         sx={{ cursor: "pointer" }}
@@ -285,6 +291,7 @@ export default function SkladProductionContent({
                       <TableCell>{row?.shelf_life || "-"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
+                      <TableCell>{formatDateRU(row?.date_update) || "—"}</TableCell>
                       <TableCell>
                         <Stack
                           direction="row"
@@ -311,6 +318,18 @@ export default function SkladProductionContent({
                               variant="outlined"
                             />
                           ))}
+                          {canEditRevision ? (
+                            <Tooltip title="Показывать в ревизии">
+                              <span>
+                                <JacoCheckbox
+                                  checked={Number(row?.show_in_rev) === 1}
+                                  onChange={(event) =>
+                                    onToggleRevision(entityType, row, event.target.checked)
+                                  }
+                                />
+                              </span>
+                            </Tooltip>
+                          ) : null}
                         </Stack>
                       </TableCell>
                       <TableCell align="right">
@@ -423,7 +442,7 @@ export default function SkladProductionContent({
 
                 {mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={9}>
                       <Typography
                         sx={{
                           color: "text.secondary",

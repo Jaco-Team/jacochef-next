@@ -128,7 +128,7 @@ No business-rule loss was confirmed for units. The wording/order of fields diffe
 - [done] Render the full component matrix for both recipes and semi-finished products whenever composition exists or is being created.
 - [done] Allow input only for item, gross, `pr_1`, and `pr_2`; display net/output and all totals as disabled derived values.
 - [done] Remove direct editing of top-level gross/net/output; render an explicit aggregate summary from component rows.
-- [ ] In read mode, show both loss stages and derived values rather than one ambiguous loss value.
+- [done] In read mode, show both loss stages and derived values rather than one ambiguous loss value.
 - [ ] Keep text `structure` as supplementary PF metadata only, subject to the Phase 1 decision.
 
 ### Phase 3 — make the backend authoritative
@@ -140,9 +140,9 @@ No business-rule loss was confirmed for units. The wording/order of fields diffe
 
 ### Phase 4 — list and access closure
 
-- [ ] Add an explicit recipe/PF type marker to the merged list, or restore distinct visual sections; retain category filtering.
-- [ ] Decide whether last-update date must remain in the list and, if yes, expose it from the canonical projection.
-- [ ] Either restore the field-specific revision quick-toggle or explicitly test and document the editor-only workflow for a `production_show_in_rev_edit` role.
+- [done] Add an explicit recipe/PF type marker to the merged list while retaining category filtering.
+- [done] Restore the legacy update-date projection in the canonical list.
+- [done] Restore the field-specific revision quick-toggle through the existing canonical flag endpoint and existing `production_show_in_rev_edit` permission.
 - [ ] Re-run the access matrix for view-only, field-edit-only, full-edit, history-only and delete/convert roles.
 
 ### Phase 5 — local E2E and data reconciliation
