@@ -652,7 +652,7 @@ export default function Index() {
               variant="h6"
               sx={{ mb: 3 }}
             >
-              Избранное2
+              Избранное5
             </Typography>
             <Box sx={{ textAlign: "center", py: 8, color: "#999" }}>Загрузка...</Box>
           </Box>
@@ -666,7 +666,7 @@ export default function Index() {
               padding: "16px",
             }}
           >
-            <h3 style={{ color: "#3C3B3B", fontWeight: "400" }}>Обновления</h3>
+            <h3 style={{ color: "#3C3B3B", fontWeight: "400" }}>Обновления!</h3>
           </div>
         </Grid>
       </Grid>
@@ -995,7 +995,7 @@ export default function Index() {
                 gap: 1,
               }}
             >
-              Избранное
+              Избранное3
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
