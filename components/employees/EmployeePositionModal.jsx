@@ -304,23 +304,32 @@ function ModuleAccessCard({
       <Grid
         container
         key={`${feature.id}-${featureIndex}`}
-        alignItems="center"
         sx={{
           minHeight: 44,
+          alignItems: "center",
           borderTop: 1,
           borderColor: "divider",
           transition: "background-color 120ms ease",
           "&:hover": { bgcolor: "#f8fafc" },
         }}
       >
-        <Grid size={6}>
+        <Grid
+          size={6}
+          sx={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}
+        >
           <Typography sx={{ px: 1.5, fontSize: 14, fontWeight: 500 }}>{feature.name}</Typography>
         </Grid>
         {PERMISSION_FIELDS.map((field) => (
           <Grid
             key={field.key}
             size={2}
-            sx={{ textAlign: "center" }}
+            sx={{
+              alignSelf: "stretch",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+            }}
           >
             <PermissionCell
               allowed={Number(feature[`allow_${field.key}`]) === 1}
@@ -338,10 +347,18 @@ function ModuleAccessCard({
   const renderPermissionHeader = (items, groupLabel = "параметров") => (
     <Grid
       container
-      alignItems="center"
-      sx={{ minHeight: 52, borderTop: 1, borderColor: "divider", bgcolor: "#f8fafc" }}
+      sx={{
+        minHeight: 54,
+        alignItems: "center",
+        borderTop: 1,
+        borderColor: "divider",
+        bgcolor: "#f8fafc",
+      }}
     >
-      <Grid size={6}>
+      <Grid
+        size={6}
+        sx={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}
+      >
         <Typography sx={{ px: 1.5, color: "text.secondary", fontSize: 12, fontWeight: 700 }}>
           Параметр
         </Typography>
@@ -360,50 +377,60 @@ function ModuleAccessCard({
           <Grid
             key={field.key}
             size={2}
-            sx={{ textAlign: "center" }}
+            sx={{ alignSelf: "stretch", textAlign: "center" }}
           >
             <Stack
-              direction="row"
-              spacing={0.15}
-              alignItems="center"
-              justifyContent="center"
+              spacing={0}
+              sx={{ height: "100%", py: 0.5, alignItems: "center", justifyContent: "center" }}
             >
-              <Typography
-                sx={{ color: "text.secondary", fontSize: 11, fontWeight: 700, letterSpacing: 0.2 }}
+              <Stack
+                direction="row"
+                spacing={0.25}
+                sx={{ alignItems: "center", justifyContent: "center" }}
               >
-                {field.shortLabel}
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 0.2,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {field.shortLabel}
+                </Typography>
+                <Tooltip
+                  title={`${nextAction} «${field.label}» для всех доступных параметров раздела «${groupLabel}»`}
+                >
+                  <span>
+                    <Checkbox
+                      size="small"
+                      checked={allEnabled}
+                      indeterminate={enabledCount > 0 && !allEnabled}
+                      disabled={!canEdit || applicable.length === 0}
+                      onChange={() => {
+                        const nextValue = !allEnabled;
+                        applicable.forEach(({ featureIndex }) =>
+                          onUpdateFeature(featureIndex, field.key, nextValue),
+                        );
+                      }}
+                      sx={{
+                        p: 0.25,
+                        "&.Mui-checked, &.MuiCheckbox-indeterminate": { color: "#d50032" },
+                      }}
+                      slotProps={{
+                        input: {
+                          "aria-label": `${nextAction} ${field.label} для всех параметров раздела ${groupLabel}`,
+                        },
+                      }}
+                    />
+                  </span>
+                </Tooltip>
+              </Stack>
+              <Typography sx={{ color: "text.disabled", fontSize: 10, lineHeight: 1.2 }}>
+                {enabledCount}/{applicable.length}
               </Typography>
-              <Tooltip
-                title={`${nextAction} «${field.label}» для всех доступных параметров раздела «${groupLabel}»`}
-              >
-                <span>
-                  <Checkbox
-                    size="small"
-                    checked={allEnabled}
-                    indeterminate={enabledCount > 0 && !allEnabled}
-                    disabled={!canEdit || applicable.length === 0}
-                    onChange={() => {
-                      const nextValue = !allEnabled;
-                      applicable.forEach(({ featureIndex }) =>
-                        onUpdateFeature(featureIndex, field.key, nextValue),
-                      );
-                    }}
-                    sx={{
-                      p: 0.5,
-                      "&.Mui-checked, &.MuiCheckbox-indeterminate": { color: "#d50032" },
-                    }}
-                    slotProps={{
-                      input: {
-                        "aria-label": `${nextAction} ${field.label} для всех параметров раздела ${groupLabel}`,
-                      },
-                    }}
-                  />
-                </span>
-              </Tooltip>
             </Stack>
-            <Typography sx={{ mt: -0.5, color: "text.disabled", fontSize: 10, lineHeight: 1 }}>
-              {enabledCount}/{applicable.length}
-            </Typography>
           </Grid>
         );
       })}
@@ -414,6 +441,7 @@ function ModuleAccessCard({
     <Paper
       variant="outlined"
       sx={{
+        boxSizing: "border-box",
         borderRadius: 2.5,
         overflow: "hidden",
         borderColor: expanded ? "rgba(213, 0, 50, 0.2)" : "#e2e8f0",
@@ -422,15 +450,13 @@ function ModuleAccessCard({
     >
       <Stack
         direction="row"
-        alignItems="center"
         spacing={1}
-        sx={{ px: { xs: 1, sm: 1.5 }, py: 1.25, minHeight: 56 }}
+        sx={{ px: { xs: 1, sm: 1.5 }, py: 0.75, minHeight: 48, alignItems: "center" }}
       >
         <Stack
           direction="row"
-          alignItems="center"
           spacing={1}
-          sx={{ flex: 1, minWidth: 0 }}
+          sx={{ flex: 1, minWidth: 0, alignItems: "center" }}
         >
           <Switch
             checked={enabled}
@@ -501,7 +527,7 @@ function ModuleAccessCard({
         <Typography
           sx={{
             px: { xs: 1, sm: 1.5 },
-            pb: expanded ? 2 : 1,
+            pb: expanded ? 1 : 0.75,
             pl: { xs: 7, sm: 8 },
             color: "text.secondary",
             fontSize: 11,
@@ -517,7 +543,7 @@ function ModuleAccessCard({
           unmountOnExit
         >
           <Divider />
-          <Box sx={{ px: { xs: 1, sm: 1.5 }, py: 1.25 }}>
+          <Box sx={{ px: { xs: 0.75, sm: 1 }, py: 0.75 }}>
             {featureGroups.map((group) => {
               if (!hasCategories) {
                 return (
@@ -555,7 +581,7 @@ function ModuleAccessCard({
                     heading: { component: "h4" },
                   }}
                   sx={{
-                    mt: 1,
+                    mt: 0.75,
                     border: "1px solid",
                     borderColor: "#e2e8f0",
                     borderRadius: "8px!important",
@@ -573,25 +599,28 @@ function ModuleAccessCard({
                     expandIcon={<ExpandMoreIcon />}
                     sx={{
                       px: 1.5,
-                      minHeight: 64,
+                      minHeight: 52,
                       transition: "background-color 120ms ease",
                       "&:hover": { bgcolor: "#f8fafc" },
                       "&.Mui-expanded": {
-                        minHeight: 64,
+                        minHeight: 52,
                         bgcolor: "#fff",
                         borderBottom: "1px solid",
                         borderColor: "divider",
                       },
-                      "& .MuiAccordionSummary-content": { my: 1 },
-                      "& .MuiAccordionSummary-content.Mui-expanded": { my: 1 },
+                      "& .MuiAccordionSummary-content": { my: 0.75 },
+                      "& .MuiAccordionSummary-content.Mui-expanded": { my: 0.75 },
                     }}
                   >
                     <Stack
                       direction="row"
                       spacing={1.5}
-                      alignItems="center"
-                      justifyContent="space-between"
-                      sx={{ width: "100%", pr: 1 }}
+                      sx={{
+                        width: "100%",
+                        pr: 1,
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
                     >
                       <Box sx={{ minWidth: 0 }}>
                         <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
@@ -661,13 +690,18 @@ export default function EmployeePositionModal({
   const positionDraftRef = useRef(null);
   const searchRef = useRef(null);
   const contentScrollRef = useRef(null);
+  const permissionsScrollRef = useRef(null);
   const accessToolbarRef = useRef(null);
   const modulesAnchorRef = useRef(null);
   const skipSectionScrollResetRef = useRef(true);
   const fullScreen = useFullScreen();
 
   const scrollToModuleList = () => {
-    const container = contentScrollRef.current;
+    const permissionsContainer = permissionsScrollRef.current;
+    const container =
+      permissionsContainer?.scrollHeight > permissionsContainer?.clientHeight
+        ? permissionsContainer
+        : contentScrollRef.current;
     const toolbar = accessToolbarRef.current;
     const anchor = modulesAnchorRef.current;
 
@@ -1046,8 +1080,7 @@ export default function EmployeePositionModal({
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            sx={{ minWidth: 0 }}
+            sx={{ minWidth: 0, alignItems: "center" }}
           >
             <Box sx={{ minWidth: 0 }}>
               <Typography
@@ -1070,8 +1103,7 @@ export default function EmployeePositionModal({
           <Stack
             direction="row"
             spacing={0.5}
-            alignItems="center"
-            sx={{ flexShrink: 0 }}
+            sx={{ flexShrink: 0, alignItems: "center" }}
           >
             {position?.id ? (
               <>
@@ -1110,21 +1142,19 @@ export default function EmployeePositionModal({
             p: 0,
             flex: "1 1 auto",
             minHeight: 0,
-            overflowY: "auto",
+            display: { md: "flex" },
+            flexDirection: { md: "column" },
+            overflowY: { xs: "auto", md: "hidden" },
           }}
         >
           {!position ? (
-            <Stack
-              alignItems="center"
-              justifyContent="center"
-              sx={{ minHeight: 240 }}
-            >
+            <Stack sx={{ minHeight: 240, alignItems: "center", justifyContent: "center" }}>
               <CircularProgress />
             </Stack>
           ) : (
             <>
               <Box
-                sx={{ px: 3, py: 2, backgroundColor: "#fff" }}
+                sx={{ px: 3, py: 2, backgroundColor: "#fff", flexShrink: 0 }}
                 style={{ borderBottom: "1px solid #f1f5f9" }}
               >
                 <Grid
@@ -1179,12 +1209,18 @@ export default function EmployeePositionModal({
                     <Stack
                       direction="row"
                       spacing={2}
-                      sx={{ minHeight: 40, alignItems: "center", flexWrap: "wrap" }}
+                      sx={{
+                        minHeight: 40,
+                        width: "100%",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexWrap: "wrap",
+                      }}
                     >
                       <Stack
                         direction="row"
                         spacing={0.25}
-                        alignItems="center"
+                        sx={{ alignItems: "center" }}
                       >
                         <Checkbox
                           size="small"
@@ -1200,7 +1236,7 @@ export default function EmployeePositionModal({
                       <Stack
                         direction="row"
                         spacing={0.25}
-                        alignItems="center"
+                        sx={{ alignItems: "center" }}
                       >
                         <Checkbox
                           size="small"
@@ -1220,23 +1256,26 @@ export default function EmployeePositionModal({
 
               <Box
                 sx={{
-                  minHeight: { xs: "auto", md: "calc(100vh - 280px)" },
+                  flex: { md: "1 1 auto" },
+                  minHeight: 0,
+                  overflow: { xs: "visible", md: "hidden" },
                   backgroundColor: "#f8fafc80",
                 }}
               >
-                <Grid container>
+                <Grid
+                  container
+                  sx={{ height: { md: "100%" }, minHeight: 0 }}
+                >
                   <Grid
                     size={{ xs: 12, md: 3 }}
                     sx={{
                       borderRight: { md: "1px solid #f1f5f9" },
                       borderBottom: { xs: 1, md: 0 },
                       borderColor: "#f1f5f9",
-                      position: { md: "sticky" },
-                      top: { md: 13 },
-                      alignSelf: { md: "flex-start" },
-                      maxHeight: { md: "calc(100vh - 220px)" },
+                      minHeight: 0,
+                      height: { md: "100%" },
                       overflowX: { xs: "auto", md: "hidden" },
-                      overflowY: { md: "auto" },
+                      overflowY: { xs: "hidden", md: "auto" },
                       backgroundColor: "#f8fafc80",
                     }}
                   >
@@ -1274,7 +1313,7 @@ export default function EmployeePositionModal({
                       >
                         <Box sx={{ flex: 1 }}>
                           <Typography sx={{ fontSize: 14, fontWeight: 500, color: "inherit" }}>
-                            Все разделы 11
+                            Все разделы {sections.length}
                           </Typography>
                         </Box>
                         <Chip
@@ -1340,8 +1379,14 @@ export default function EmployeePositionModal({
                   </Grid>
 
                   <Grid
+                    ref={permissionsScrollRef}
                     size={{ xs: 12, md: 9 }}
-                    sx={{ backgroundColor: "#fff" }}
+                    sx={{
+                      minHeight: 0,
+                      height: { md: "100%" },
+                      overflowY: { xs: "visible", md: "auto" },
+                      backgroundColor: "#fff",
+                    }}
                   >
                     <Box
                       ref={accessToolbarRef}
@@ -1356,16 +1401,26 @@ export default function EmployeePositionModal({
                     >
                       <Stack
                         direction={{ xs: "column", sm: "row" }}
-                        alignItems={{ xs: "flex-start", sm: "center" }}
-                        justifyContent="space-between"
                         spacing={1}
-                        sx={{ px: 2, py: 1.5 }}
+                        sx={{
+                          px: 2,
+                          py: 1.5,
+                          alignItems: { xs: "flex-start", sm: "center" },
+                          justifyContent: "space-between",
+                        }}
                       >
                         <Stack
                           direction="row"
                           spacing={1}
-                          alignItems="center"
-                          sx={{ flexWrap: "wrap", gap: 1 }}
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            width: { xs: "100%", sm: "auto" },
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexWrap: "wrap",
+                            gap: 1,
+                          }}
                         >
                           {FILTERS.map((item) => (
                             <Chip
@@ -1380,11 +1435,18 @@ export default function EmployeePositionModal({
                                 color: filter === item.id ? "#fff" : "#64748b",
                                 borderRadius: "999px",
                                 fontWeight: 400,
+                                "&.Mui-disabled": {
+                                  opacity: 1,
+                                  backgroundColor: filter === item.id ? "#d50032" : "#f1f5f9",
+                                  color: filter === item.id ? "#fff" : "#64748b",
+                                },
                               }}
                             />
                           ))}
                         </Stack>
-                        <Box sx={{ width: { xs: "100%", sm: 250 } }}>
+                        <Box
+                          sx={{ width: { xs: "100%", sm: 250 }, ml: { sm: "auto" }, flexShrink: 0 }}
+                        >
                           <TextField
                             inputRef={searchRef}
                             size="small"
@@ -1448,10 +1510,12 @@ export default function EmployeePositionModal({
                             <Box key={`group-${group.sectionKey}`}>
                               <Stack
                                 direction="row"
-                                alignItems="center"
-                                justifyContent="space-between"
                                 spacing={1}
-                                sx={{ mb: 0.75 }}
+                                sx={{
+                                  mb: 0.75,
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                }}
                               >
                                 <Typography
                                   sx={{ color: "text.secondary", fontSize: 12, fontWeight: 600 }}
