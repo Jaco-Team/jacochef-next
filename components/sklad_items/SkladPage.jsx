@@ -11,6 +11,8 @@ import {
   JacoButton,
   JacoCompactTabs,
   JacoSurface,
+  uiColors,
+  uiShadows,
 } from "@/design-system/shared/ui";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 
@@ -192,7 +194,15 @@ export default function SkladPage() {
         </Grid>
 
         <Grid size={12}>
-          <JacoSurface sx={{ p: 0, overflow: "hidden", border: "none" }}>
+          <JacoSurface
+            sx={{
+              p: 0,
+              overflow: "hidden",
+              backgroundColor: uiColors.surface,
+              borderColor: uiColors.border,
+              boxShadow: uiShadows.surface,
+            }}
+          >
             <JacoCompactTabs
               value={tabs.length ? tab : 0}
               onChange={(_, value) => setState({ tab: value })}
@@ -205,11 +215,7 @@ export default function SkladPage() {
               variant="scrollable"
               scrollButtons={false}
               allowScrollButtonsMobile
-              sx={{
-                "& .MuiTab-root:first-of-type": {
-                  pl: 0,
-                },
-              }}
+              tabSx={{ textTransform: "uppercase" }}
             />
           </JacoSurface>
         </Grid>

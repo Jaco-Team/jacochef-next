@@ -27,13 +27,28 @@ Status: recorded for a later implementation pass
 - [ ] decide and document whether VK triggering should remain a manual flag or gain result/status feedback from the external integration;
 - [ ] review documented historical-dictionary fallback behavior for history and compare screens.
 
-## 3. Constraints
+## 3. Retained but intentionally unexposed: cross-entity archive
+
+Status: retained in code for reference; do not add it to the top-level tab set without a separately accepted audit/search requirement.
+
+`archive/SkladArchiveTab` and its controller currently remain in the module, but are deliberately absent from `SKLAD_TAB_DEFINITIONS`.
+
+Reasons:
+
+- archive semantics are not uniform: recipes, semi-finished products and site items can be archived through their activity state; warehouse items, units and categories do not support archive persistence;
+- rows would mix incompatible fields, detail dialogs, restore flows and field-level access rules;
+- entity-local archive/status filters preserve the user's current context and give the correct action contract;
+- detailed history is already available from the relevant entity dialogs, where revision data can be rendered safely.
+
+Reconsider a global view only if a confirmed business workflow needs cross-entity audit/search. Such a screen must require an entity-type selection first and define a common minimal row contract, filtering, permissions and restore behavior before it is exposed.
+
+## 4. Constraints
 
 - new FE code must use `useSkladApi`, `useSkladAccess`, and design-system primitives;
 - no calls to legacy controllers, legacy page methods, or legacy route wrappers;
 - site-item editor modal remains the existing compatibility-preserving modal;
 - completed items remain in this file and are marked `done`; no plan item is deleted.
 
-## 4. Completion log
+## 5. Completion log
 
 - [done] plan created before implementation.
