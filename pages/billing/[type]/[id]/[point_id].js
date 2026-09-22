@@ -211,10 +211,10 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-const url_bill = "https://apichef.jacochef.ru/api/bill-items/upload";
-const url_bill_ex = "https://apichef.jacochef.ru/api/bill-ex-items/upload";
+const url_bill = "https://apichef2.jacochef.ru/api/bill-items/upload";
+const url_bill_ex = "https://apichef2.jacochef.ru/api/bill-ex-items/upload";
 // const API_URL = "http://127.0.0.1:8000/api";
-const API_URL = "https://apichef.jacochef.ru/api";
+const API_URL = "https://apichef2.jacochef.ru/api";
 // const url_ocr = `${API_URL}/ocr/files/pipeline`;
 const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 

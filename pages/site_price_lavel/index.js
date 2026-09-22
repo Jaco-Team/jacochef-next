@@ -811,7 +811,7 @@ class SitePriceLevel_Tab_Level extends React.Component {
     let formData = new FormData();
 
     //const urlApi_dev = 'http://127.0.0.1:8000/api/site_price_lavel/import_file_xls';
-    const urlApi_dev = "https://apichef.jacochef.ru/api/site_price_lavel/import_file_xls";
+    const urlApi_dev = "https://apichef2.jacochef.ru/api/site_price_lavel/import_file_xls";
 
     formData.append("file", file);
     formData.append("method", "import_file_xls");

@@ -48,7 +48,7 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
   /\/+$/,
   "",
 );

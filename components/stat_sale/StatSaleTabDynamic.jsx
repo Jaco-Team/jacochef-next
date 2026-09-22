@@ -66,7 +66,7 @@ class StatSale_Tab_Dynamic extends React.Component {
         this.setState({ is_load: true });
 
         const response = await axios.post(
-          "https://apichef.jacochef.ru/api/stat_sale/export_data_dynamics",
+          "https://apichef2.jacochef.ru/api/stat_sale/export_data_dynamics",
           {
             method: "export_data_dynamics",
             module: "orders_by_hour",
