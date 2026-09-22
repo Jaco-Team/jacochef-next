@@ -652,7 +652,7 @@ export default function Index() {
               variant="h6"
               sx={{ mb: 3 }}
             >
-              Избранное
+              Избранное2
             </Typography>
             <Box sx={{ textAlign: "center", py: 8, color: "#999" }}>Загрузка...</Box>
           </Box>
