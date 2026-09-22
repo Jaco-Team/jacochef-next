@@ -18,11 +18,11 @@ Status: completed for the new FE integration; positive click coverage awaits a l
 
 ## 2. Confirmed follow-up parity gaps
 
-Status: recorded for a later implementation pass
+Status: suspended in this module. The warehouse implementation remains intact but its top-level tab declaration is commented out: the task chat clarifies that `sklad_items_module_new` remains a separate module and is not part of this consolidation.
 
-- [ ] restore warehouse-editor controls for `w_pf`, `w_trash`, `w_item`, and `two_user`;
-- [ ] restore warehouse-editor controls for `honest_sign` and `mercury`;
-- [ ] reconcile warehouse permission groups between legacy source appointments, target sync, backend access output, and FE visibility;
+- [deferred] restore warehouse-editor controls for `w_pf`, `w_trash`, `w_item`, and `two_user`; do this in `sklad_items_module_new`, not this consolidated shell;
+- [deferred] restore warehouse-editor controls for `honest_sign` and `mercury`; do this in `sklad_items_module_new`, not this consolidated shell;
+- [deferred] reconcile warehouse-editor permission groups; retain this work in `sklad_items_module_new`;
 - [ ] resolve the contradictory VK statements in the historical PLAN documents after the new action is live;
 - [ ] decide and document whether VK triggering should remain a manual flag or gain result/status feedback from the external integration;
 - [ ] review documented historical-dictionary fallback behavior for history and compare screens.
@@ -46,6 +46,7 @@ Reconsider a global view only if a confirmed business workflow needs cross-entit
 
 - new FE code must use `useSkladApi`, `useSkladAccess`, and design-system primitives;
 - no calls to legacy controllers, legacy page methods, or legacy route wrappers;
+- `sklad_items_module_new` is a standalone module for now: keep its implementation intact, but leave the "Товары склада" tab declaration commented out in the consolidated `sklad_items` shell until that decision changes;
 - site-item editor modal remains the existing compatibility-preserving modal;
 - completed items remain in this file and are marked `done`; no plan item is deleted.
 

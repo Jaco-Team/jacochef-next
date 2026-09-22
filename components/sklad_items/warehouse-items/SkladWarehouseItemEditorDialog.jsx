@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 
 import { MyAutocomplite, MyDatePickerNew, MyTimeInput } from "@/ui/Forms";
+import { JacoFieldSwitch } from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
 
@@ -66,6 +67,12 @@ function normalize(item = {}) {
       allergens_possible: [],
       storages: [],
       accounting_systems: [],
+      w_pf: 0,
+      w_trash: 0,
+      w_item: 0,
+      two_user: 0,
+      honest_sign: 0,
+      mercury: 0,
     };
   }
 
@@ -293,6 +300,37 @@ export default function SkladWarehouseItemEditorDialog({
               </Grid>
             </SkladSectionCard>
 
+            {canView("properties") ? (
+              <SkladSectionCard
+                title="Вес и сотрудники"
+                description="Параметры производственного учёта"
+              >
+                <Grid
+                  container
+                  spacing={1.5}
+                >
+                  {[
+                    ["w_pf", "Вес заготовки"],
+                    ["w_trash", "Вес отхода"],
+                    ["w_item", "Вес товара"],
+                    ["two_user", "Два сотрудника"],
+                  ].map(([key, label]) => (
+                    <Grid
+                      key={key}
+                      size={{ xs: 12, md: 3 }}
+                    >
+                      <JacoFieldSwitch
+                        label={label}
+                        checked={Boolean(Number(draft?.[key]))}
+                        onChange={(event) => set(key, event.target.checked ? 1 : 0)}
+                        disabled={!canEdit("properties")}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </SkladSectionCard>
+            ) : null}
+
             <SkladSectionCard
               title="Закупка и остатки"
               description="Упаковка, заявка и параметры поставки"
@@ -446,6 +484,27 @@ export default function SkladWarehouseItemEditorDialog({
                       onChange={(value) => set("accounting_systems", value)}
                       disabled={!canEdit("accounting_systems")}
                     />
+                  </Grid>
+                ) : null}
+                {canView("accounting_systems") ? (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                    >
+                      <JacoFieldSwitch
+                        label="Честный ЗНАК"
+                        checked={Boolean(Number(draft?.honest_sign))}
+                        onChange={(event) => set("honest_sign", event.target.checked ? 1 : 0)}
+                        disabled={!canEdit("accounting_systems")}
+                      />
+                      <JacoFieldSwitch
+                        label="Меркурий"
+                        checked={Boolean(Number(draft?.mercury))}
+                        onChange={(event) => set("mercury", event.target.checked ? 1 : 0)}
+                        disabled={!canEdit("accounting_systems")}
+                      />
+                    </Stack>
                   </Grid>
                 ) : null}
                 {canView("apps") ? (
