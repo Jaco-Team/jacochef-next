@@ -20,6 +20,8 @@ import Select from "@mui/material/Select";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import CityCafeAutocomplete2 from "@/ui/CityCafeAutocomplete2";
+import { JacoSegmentedTabs } from "@/design-system/shared/ui";
+import { SALES_SOURCE_TABS } from "@/components/stat_sale/statSaleDynamicSaleUtils";
 
 function ArrowForwardIcon() {
   return null;
@@ -457,6 +459,7 @@ const StatSale_Tab_Sett_Dynamics = ({
 
 const StatSale_Tab_Sett_Dynamics_Pay = ({
   dynamics,
+  dynamicsBySource,
   saveDynamics,
   openAlert,
   points,
@@ -468,6 +471,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
 
   // Новые стейты для навигации
   const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
+  const [currentSource, setCurrentSource] = React.useState("total");
 
   const months = [
     "Январь",
@@ -491,19 +495,30 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
     { value: "active", label: "Активные аккаунты (план)" },
     { value: "register", label: "Аккаунты (план)" },
   ];
+  const sourceTypes = types.filter((type) => ["rolly", "pizza", "order"].includes(type.value));
+  const visibleTypes = currentSource === "total" ? types : sourceTypes;
 
   // Получаем доступные годы из данных
   const availableYears = React.useMemo(() => {
-    const years = Object.keys(dynamics || {})
+    const sourceDynamics = currentSource === "total" ? dynamics : dynamicsBySource;
+    const years = Object.keys(sourceDynamics || {})
       .map(Number)
+      .filter((year) =>
+        currentSource === "total"
+          ? Boolean(dynamics?.[year])
+          : Boolean(dynamicsBySource?.[year]?.[currentSource]),
+      )
       .sort((a, b) => a - b);
     return years;
-  }, [dynamics]);
+  }, [currentSource, dynamics, dynamicsBySource]);
 
   // Парсим вложенную структуру в плоский массив для таблицы
   const flatDynamics = React.useMemo(() => {
     const result = [];
-    const yearData = dynamics?.[currentYear];
+    const yearData =
+      currentSource === "total"
+        ? dynamics?.[currentYear]
+        : dynamicsBySource?.[currentYear]?.[currentSource];
 
     if (!yearData) {
       return result;
@@ -514,7 +529,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
 
       Object.entries(typesData).forEach(([type, value]) => {
         result.push({
-          id: `${currentYear}_${month}_${type}`,
+          id: `${currentYear}_${currentSource}_${month}_${type}`,
           type,
           month: month,
           value: value || 0,
@@ -524,7 +539,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
     });
 
     return result;
-  }, [dynamics, currentYear]);
+  }, [currentSource, currentYear, dynamics, dynamicsBySource]);
 
   const groupedData = React.useMemo(() => {
     const grouped = {};
@@ -559,6 +574,12 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
       setEditData({});
       setEditingValue(null);
     }
+  };
+
+  const handleSourceChange = (source) => {
+    setCurrentSource(source);
+    setEditData({});
+    setEditingValue(null);
   };
 
   const handleEdit = (type, month, currentValue, id) => {
@@ -625,6 +646,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                 month: monthNum,
                 value: newValue,
                 year: currentYear,
+                source: currentSource,
               });
             }
           }
@@ -662,6 +684,14 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
     getDataSetOne(filterType);
   }, [filterType]);
 
+  React.useEffect(() => {
+    if (availableYears.length && !availableYears.includes(currentYear)) {
+      setCurrentYear(availableYears[availableYears.length - 1]);
+      setEditData({});
+      setEditingValue(null);
+    }
+  }, [availableYears, currentYear]);
+
   return (
     <Grid
       container
@@ -675,6 +705,17 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
             spacing={2}
             sx={{ mb: 2, alignItems: "center" }}
           >
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ width: { xs: "100%", sm: 520 }, maxWidth: "100%" }}>
+                <JacoSegmentedTabs
+                  value={currentSource}
+                  onChange={(_event, source) => handleSourceChange(source)}
+                  items={SALES_SOURCE_TABS}
+                  size="compact"
+                  aria-label="Источник планов продаж"
+                />
+              </Box>
+            </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <IconButton
@@ -732,7 +773,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {types.map((type) => (
+                {visibleTypes.map((type) => (
                   <TableRow key={type.value}>
                     <TableCell sx={{ fontWeight: "bold" }}>{type.label}</TableCell>
                     {months.map((month, monthIndex) => {
@@ -749,13 +790,15 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                       const hasChanges =
                         editData[type.value]?.[monthNum] !== undefined &&
                         editData[type.value][monthNum] !== originalValue;
+                      const isEditable =
+                        currentSource !== "total" || ["active", "register"].includes(type.value);
 
                       return (
                         <TableCell
                           key={monthIndex}
                           align="right"
                         >
-                          {isEditing ? (
+                          {isEditable && isEditing ? (
                             <TextField
                               type="number"
                               size="small"
@@ -765,7 +808,7 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                               }
                               autoFocus
                               onBlur={() => setEditingValue(null)}
-                              onKeyPress={(e) => {
+                              onKeyDown={(e) => {
                                 if (e.key === "Enter") setEditingValue(null);
                               }}
                               sx={{ width: "100px" }}
@@ -777,21 +820,28 @@ const StatSale_Tab_Sett_Dynamics_Pay = ({
                             <Typography
                               variant="body2"
                               sx={{
-                                cursor: "pointer",
+                                cursor: isEditable ? "pointer" : "default",
                                 color: hasChanges ? "#1976d2" : "inherit",
                                 fontWeight: hasChanges ? "bold" : "normal",
-                                "&:hover": {
-                                  color: "#1976d2",
-                                  textDecoration: "underline",
-                                },
+                                ...(isEditable
+                                  ? {
+                                      "&:hover": {
+                                        color: "#1976d2",
+                                        textDecoration: "underline",
+                                      },
+                                    }
+                                  : { color: "text.secondary" }),
                               }}
-                              onClick={() =>
-                                handleEdit(
-                                  type.value,
-                                  monthNum,
-                                  currentValue,
-                                  groupedData[type.value]?.[monthNum]?.id,
-                                )
+                              onClick={
+                                isEditable
+                                  ? () =>
+                                      handleEdit(
+                                        type.value,
+                                        monthNum,
+                                        currentValue,
+                                        groupedData[type.value]?.[monthNum]?.id,
+                                      )
+                                  : undefined
                               }
                             >
                               {currentValue.toLocaleString()}

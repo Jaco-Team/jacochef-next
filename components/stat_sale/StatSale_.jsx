@@ -41,6 +41,7 @@ class StatSale_ extends React.Component {
       activeTab: 0,
       data_sett_limit_dynamic: [],
       data_sett_limit_dynamic_pay: [],
+      data_sett_limit_dynamic_pay_by_source: {},
 
       data_sett_rate: [],
       data_sett_points: [],
@@ -145,6 +146,7 @@ class StatSale_ extends React.Component {
       data_sett_rate_clients: res.data_sett_rate_clients,
       data_sett_limit_dynamic: res.data_sett_limit_dynamic,
       data_sett_limit_dynamic_pay: res.data_sett_limit_dynamic_pay,
+      data_sett_limit_dynamic_pay_by_source: res.data_sett_limit_dynamic_pay_by_source ?? {},
     });
   };
 
@@ -154,6 +156,7 @@ class StatSale_ extends React.Component {
     this.setState({
       data_sett_limit_dynamic: res.data_sett_limit_dynamic,
       data_sett_limit_dynamic_pay: res.data_sett_limit_dynamic_pay,
+      data_sett_limit_dynamic_pay_by_source: res.data_sett_limit_dynamic_pay_by_source ?? {},
     });
   };
 
@@ -490,6 +493,7 @@ class StatSale_ extends React.Component {
               rows={this.state.data_sett_rate}
               dynamics={this.state.data_sett_limit_dynamic}
               dynamics_pay={this.state.data_sett_limit_dynamic_pay}
+              dynamics_pay_by_source={this.state.data_sett_limit_dynamic_pay_by_source}
               rows_clietns={this.state.data_sett_rate_clients}
               getDataSet={this.getDataSet}
               pointsCurrent={this.state.points}

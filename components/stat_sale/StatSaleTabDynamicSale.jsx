@@ -14,7 +14,6 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import { Chip } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 
@@ -27,6 +26,14 @@ import axios from "axios";
 import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
+import { JacoSegmentedTabs } from "@/design-system/shared/ui";
+import {
+  buildDynamicSaleView,
+  indexRowsByPeriod,
+  SALES_SOURCE_KEYS,
+  SALES_SOURCE_LABELS,
+  SALES_SOURCE_TABS,
+} from "@/components/stat_sale/statSaleDynamicSaleUtils";
 
 class StatSale_Tab_DynamicSale extends React.Component {
   constructor(props) {
@@ -57,6 +64,19 @@ class StatSale_Tab_DynamicSale extends React.Component {
       yearly_totals_kc: null,
       yearly_totals_site: null,
       expandedTableYears: {},
+      expandedTableMonths: {},
+      sourceRows: {
+        cafe: { orders: [], rolly: [], pizza: [] },
+        kc: { orders: [], rolly: [], pizza: [] },
+        site: { orders: [], rolly: [], pizza: [] },
+      },
+      annualPlanTotalsBySource: {},
+      linesBySource: {},
+      analyticsSources: {
+        orders: "total",
+        rolly: "total",
+        pizza: "total",
+      },
       analyticsResetKey: 0,
       loading: false,
     };
@@ -195,211 +215,57 @@ class StatSale_Tab_DynamicSale extends React.Component {
     this.setState({ loading: false });
 
     if (res.st) {
-      const pizzaArr = [];
-      const rollyArr = [];
-      const orderArr = [];
-      const accountArr = [];
-      const pizzaCapacity = 24000;
-      const rollyCapacity = 200000;
-      const toNumber = (value) => {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : 0;
-      };
-      const calcPercent = (numerator, denominator) => {
-        const safeDenominator = toNumber(denominator);
-        if (!safeDenominator) return 0;
-        return (toNumber(numerator) / safeDenominator) * 100;
-      };
-      const getPlanLoad = (value, plan, capacity) => {
-        if (value !== null && value !== undefined) return toNumber(value);
-        return calcPercent(plan, capacity);
-      };
-      const getFirstDefinedPercent = (...values) => {
-        const value = values.find((item) => item !== null && item !== undefined);
-        return value !== undefined ? toNumber(value) : null;
-      };
-      const getFactYoYPercent = (current, previousYear, backendValue) => {
-        const value = getFirstDefinedPercent(backendValue);
-        if (value !== null) return value;
-        return calcPercent(toNumber(current) - toNumber(previousYear), previousYear);
-      };
-      const getPeriodIndex = (year, month) => Number(year) * 12 + Number(month) - 1;
-      const selectedStartIndex = getPeriodIndex(selectedStart.year(), selectedStart.month() + 1);
-      const selectedEndIndex = getPeriodIndex(selectedEnd.year(), selectedEnd.month() + 1);
-      const entries = Object.entries(res.res ?? {})
-        .map(([key, value]) => {
-          const [year, month] = key.split("-").map(Number);
-          return {
-            key,
-            value,
-            year,
-            month,
-            periodIndex: getPeriodIndex(year, month),
-          };
-        })
-        .filter(
-          (item) =>
-            Number.isFinite(item.year) &&
-            Number.isFinite(item.month) &&
-            item.month >= 1 &&
-            item.month <= 12,
-        )
-        .sort((a, b) => a.periodIndex - b.periodIndex);
-      const getAnnualPlanTotal = (getValue) => {
-        if (!includesCurrentYear) return null;
-
-        const monthlyPlans = new Map();
-        entries.forEach((item) => {
-          if (item.year !== currentYear) return;
-          const value = getValue(item.value);
-          if (value === null || value === undefined || value === "") return;
-          const parsed = Number(value);
-          if (Number.isFinite(parsed)) monthlyPlans.set(item.month, parsed);
+      const selectedStartIndex = selectedStart.year() * 12 + selectedStart.month();
+      const selectedEndIndex = selectedEnd.year() * 12 + selectedEnd.month();
+      const buildView = (monthMap) =>
+        buildDynamicSaleView({
+          monthMap,
+          selectedStartIndex,
+          selectedEndIndex,
+          currentYear,
+          includesCurrentYear,
         });
+      const totalView = buildView(res.res);
+      const sourceViews = SALES_SOURCE_KEYS.reduce((views, source) => {
+        views[source] = buildView(res.res_by_source?.[source]);
+        return views;
+      }, {});
+      const sourceRows = SALES_SOURCE_KEYS.reduce((rows, source) => {
+        rows[source] = {
+          orders: sourceViews[source].orders,
+          rolly: sourceViews[source].rolly,
+          pizza: sourceViews[source].pizza,
+        };
+        return rows;
+      }, {});
+      const annualPlanTotalsBySource = SALES_SOURCE_KEYS.reduce(
+        (totals, source) => ({
+          ...totals,
+          [source]: sourceViews[source].annualPlanTotals,
+        }),
+        { total: totalView.annualPlanTotals },
+      );
 
-        if (monthlyPlans.size !== 12) return null;
-        return [...monthlyPlans.values()].reduce((sum, value) => sum + value, 0);
-      };
-      const annualPlanTotals = {
-        orders: getAnnualPlanTotal((value) => value.orders_plan ?? value.order_plan),
-        rolly: getAnnualPlanTotal((value) => value.rolly_plan),
-        pizza: getAnnualPlanTotal((value) => value.pizza_plan),
-      };
-
-      entries.forEach((entry, index) => {
-        const { key, value, year, month, periodIndex } = entry;
-        const prevMonth = entries[index - 1]?.value;
-        const isVisible = periodIndex >= selectedStartIndex && periodIndex <= selectedEndIndex;
-        if (!isVisible || !prevMonth) return;
-
-        if (index !== 0) {
-          pizzaArr.push({
-            periodKey: key,
-            year: String(year),
-            monthNumber: month,
-            month: value.month_name,
-            planQty: value.pizza_plan,
-            planLoad: getPlanLoad(value.pizza_plan_load, value.pizza_plan, pizzaCapacity),
-            factQty: value.pizza,
-            planFact:
-              getFirstDefinedPercent(value.pizza_plan_fact) ??
-              calcPercent(value.pizza, value.pizza_plan),
-            factYoYPct: getFactYoYPercent(
-              value.pizza,
-              value.pizza_fact_prev_year,
-              value.pizza_fact_yoy,
-            ),
-            factYoYQty:
-              value.pizza_fact_yoy_delta !== null && value.pizza_fact_yoy_delta !== undefined
-                ? toNumber(value.pizza_fact_yoy_delta)
-                : toNumber(value.pizza) - toNumber(value.pizza_fact_prev_year),
-            factDynPct: calcPercent(
-              toNumber(value.pizza) - toNumber(prevMonth.pizza),
-              prevMonth.pizza,
-            ),
-            factDynQty: toNumber(value.pizza) - toNumber(prevMonth.pizza),
-            factLoad:
-              getFirstDefinedPercent(value.pizza_fact_load) ??
-              calcPercent(value.pizza, pizzaCapacity),
-          });
-        }
-
-        if (prevMonth) {
-          rollyArr.push({
-            periodKey: key,
-            year: String(year),
-            monthNumber: month,
-            month: value.month_name,
-            planQty: value.rolly_plan,
-            planLoad: getPlanLoad(value.rolly_plan_load, value.rolly_plan, rollyCapacity),
-            factQty: value.rolly,
-            planFact:
-              getFirstDefinedPercent(value.rolly_plan_fact) ??
-              calcPercent(value.rolly, value.rolly_plan),
-            factYoYPct: getFactYoYPercent(
-              value.rolly,
-              value.rolly_fact_prev_year,
-              value.rolly_fact_yoy,
-            ),
-            factYoYQty:
-              value.rolly_fact_yoy_delta !== null && value.rolly_fact_yoy_delta !== undefined
-                ? toNumber(value.rolly_fact_yoy_delta)
-                : toNumber(value.rolly) - toNumber(value.rolly_fact_prev_year),
-            factDynPct: calcPercent(
-              toNumber(value.rolly) - toNumber(prevMonth?.rolly),
-              prevMonth?.rolly,
-            ),
-            factDynQty: toNumber(value.rolly) - toNumber(prevMonth?.rolly),
-            factLoad:
-              getFirstDefinedPercent(value.rolly_fact_load) ??
-              calcPercent(value.rolly, rollyCapacity),
-          });
-        }
-
-        if (prevMonth) {
-          orderArr.push({
-            periodKey: key,
-            year: String(year),
-            monthNumber: month,
-            month: value.month_name,
-            planQty: value.orders_plan ?? value.order_plan,
-            planLoad:
-              getFirstDefinedPercent(
-                value.orders_plan_fact,
-                value.order_plan_fact,
-                value.orders_fact_plan,
-                value.order_fact_plan,
-              ) ?? calcPercent(value.orders, value.orders_plan ?? value.order_plan),
-            factQty: value.orders,
-            factYoYPct: getFactYoYPercent(
-              value.orders,
-              value.orders_fact_prev_year ?? value.order_fact_prev_year,
-              value.orders_fact_yoy ?? value.order_fact_yoy,
-            ),
-            factYoYQty:
-              value.orders_fact_yoy_delta !== null && value.orders_fact_yoy_delta !== undefined
-                ? toNumber(value.orders_fact_yoy_delta)
-                : toNumber(value.order_fact_yoy_delta) ||
-                  toNumber(value.orders) -
-                    toNumber(value.orders_fact_prev_year ?? value.order_fact_prev_year),
-            factDynPct: calcPercent(
-              toNumber(value.orders) - toNumber(prevMonth?.orders),
-              prevMonth?.orders,
-            ),
-            factDynQty: toNumber(value.orders) - toNumber(prevMonth?.orders),
-            factLoad: calcPercent(value.orders, prevMonth.orders),
-          });
-        }
-
-        if (prevMonth) {
-          accountArr.push({
-            periodKey: key,
-            year: String(year),
-            monthNumber: month,
-            month: value.month_name,
-            planQty: value.active_plan,
-            planLoad: calcPercent(value.active, value.active_plan),
-            factQty: value.active,
-            factDynPct: calcPercent(
-              toNumber(value.active) - toNumber(prevMonth?.active),
-              prevMonth?.active,
-            ),
-            factDynQty: toNumber(value.active) - toNumber(prevMonth?.active),
-            factLoad: calcPercent(value.active, prevMonth.active),
-          });
-        }
-      });
       this.setState((prevState) => ({
         res,
-        pizzaArr,
-        rollyArr,
-        orderArr,
-        accountArr,
-        annualPlanTotals,
+        pizzaArr: totalView.pizza,
+        rollyArr: totalView.rolly,
+        orderArr: totalView.orders,
+        accountArr: totalView.accounts,
+        annualPlanTotals: totalView.annualPlanTotals,
+        sourceRows,
+        annualPlanTotalsBySource,
         pizzaLine: res.pizza_line ?? {},
         rollyLine: res.rolly_line ?? {},
         ordersLine: res.orders_line ?? {},
+        linesBySource: res.lines_by_source ?? {},
+        analyticsSources: {
+          orders: "total",
+          rolly: "total",
+          pizza: "total",
+        },
         expandedTableYears: {},
+        expandedTableMonths: {},
         analyticsResetKey: prevState.analyticsResetKey + 1,
       }));
     } else {
@@ -470,12 +336,36 @@ class StatSale_Tab_DynamicSale extends React.Component {
     });
   }
 
+  isMonthExpanded(tableKey, periodKey) {
+    return Boolean(this.state.expandedTableMonths?.[`${tableKey}:${periodKey}`]);
+  }
+
+  toggleMonth(tableKey, periodKey) {
+    const key = `${tableKey}:${periodKey}`;
+    this.setState((prevState) => ({
+      expandedTableMonths: {
+        ...prevState.expandedTableMonths,
+        [key]: !prevState.expandedTableMonths?.[key],
+      },
+    }));
+  }
+
+  changeAnalyticsSource(metric, source) {
+    this.setState((prevState) => ({
+      analyticsSources: {
+        ...prevState.analyticsSources,
+        [metric]: source,
+      },
+    }));
+  }
+
   renderPizzaTable(pizzaArr, title, options = {}) {
     const {
       planFulfillment = false,
       tableKey = title,
       showFactYoY = true,
       preserveAccountPercentDecimals = false,
+      sourceRows = null,
     } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(String(value ?? "").replace(",", "."));
@@ -497,32 +387,29 @@ class StatSale_Tab_DynamicSale extends React.Component {
         ? String(Number(numericValue.toFixed(2)))
         : String(Math.round(numericValue));
     };
-    const renderPercentChip = (value, variant = "filled") => (
-      <Chip
-        label={formatPercent(value)}
-        size="small"
-        variant={variant}
-        sx={
-          variant === "outlined"
-            ? {
-                borderColor: "#1976d2",
-                color: "#1976d2",
-                fontWeight: "500",
-                fontSize: "0.75rem",
-              }
-            : {
-                backgroundColor: getSafeNumber(value) >= 0 ? "#4caf50" : "#f44336",
-                color: "white",
-                fontWeight: "bold",
-                fontSize: "0.75rem",
-                minWidth: "70px",
-                "& .MuiChip-label": {
-                  padding: "4px 8px",
-                },
-              }
-        }
-      />
+    const renderColoredValue = (value, { threshold = 0, formatter = formatPercent } = {}) => (
+      <Typography
+        component="span"
+        sx={{
+          color:
+            threshold === 0 && getSafeNumber(value) === 0
+              ? "text.secondary"
+              : getSafeNumber(value) >= threshold
+                ? "success.main"
+                : "error.main",
+          fontWeight: 700,
+          fontSize: "0.85rem",
+        }}
+      >
+        {formatter(value)}
+      </Typography>
     );
+    const sourceRowsByPeriod = sourceRows
+      ? SALES_SOURCE_KEYS.reduce((result, source) => {
+          result[source] = indexRowsByPeriod(sourceRows[source] ?? []);
+          return result;
+        }, {})
+      : null;
 
     const cellSx = {
       border: "1px solid #e0e0e0",
@@ -543,175 +430,156 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
     if (!pizzaArr.length) return null;
 
-    const renderDataRow = (row, index) => (
-      <TableRow
-        key={row.periodKey ?? `${row.month}-${index}`}
-        sx={{
-          "&:hover": {
-            backgroundColor: "#f5f5f5",
-            "& .MuiTableCell-root": {
+    const renderDataRow = (row, index, rowOptions = {}) => {
+      const { source = null, expanded = false } = rowOptions;
+      const isSourceRow = Boolean(source);
+      const canExpand = !isSourceRow && Boolean(sourceRowsByPeriod);
+      const rowBackground = isSourceRow ? "#f7f9fc" : index % 2 === 0 ? "#fafafa" : "white";
+
+      return (
+        <TableRow
+          key={`${row.periodKey ?? `${row.month}-${index}`}-${source ?? "total"}`}
+          sx={{
+            "&:hover": {
               backgroundColor: "#f5f5f5",
-            },
-          },
-        }}
-      >
-        <TableCell
-          component="th"
-          scope="row"
-          sx={{
-            ...bodyCellSx,
-            fontWeight: "bold",
-            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-          }}
-        >
-          {row.month}
-        </TableCell>
-        <TableCell
-          sx={{
-            ...bodyCellSx,
-            fontWeight: "500",
-            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-          }}
-        >
-          {formatQuantity(row.planQty)}
-        </TableCell>
-        {!planFulfillment && (
-          <TableCell
-            sx={{
-              ...bodyCellSx,
-              backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-            }}
-          >
-            {formatPercent(row.planLoad)}
-          </TableCell>
-        )}
-        <TableCell
-          sx={{
-            ...bodyCellSx,
-            fontWeight: "500",
-            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-          }}
-        >
-          {formatQuantity(row.factQty)}
-        </TableCell>
-        {showFactYoY && (
-          <TableCell
-            sx={{
-              ...bodyCellSx,
-              backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-            }}
-          >
-            {renderPercentChip(row.factYoYPct)}
-          </TableCell>
-        )}
-        <TableCell
-          sx={{
-            ...bodyCellSx,
-            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-          }}
-        >
-          <Chip
-            label={formatPercent(row.factDynPct)}
-            size="small"
-            sx={{
-              backgroundColor: getSafeNumber(row.factDynPct) >= 0 ? "#4caf50" : "#f44336",
-              color: "white",
-              fontWeight: "bold",
-              fontSize: "0.75rem",
-              minWidth: "70px",
-              "& .MuiChip-label": {
-                padding: "4px 8px",
+              "& .MuiTableCell-root": {
+                backgroundColor: "#f5f5f5",
               },
-            }}
-          />
-        </TableCell>
-        <TableCell
-          sx={{
-            ...bodyCellSx,
-            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+            },
           }}
         >
-          <Box
+          <TableCell
+            component="th"
+            scope="row"
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 0.5,
+              ...bodyCellSx,
+              fontWeight: "bold",
+              backgroundColor: rowBackground,
+              color: isSourceRow ? "primary.main" : "text.primary",
+              textAlign: "left",
+              pl: isSourceRow ? 6 : canExpand ? 0.5 : 2,
             }}
           >
-            <span
-              style={{
-                color: getSafeNumber(row.factDynQty) >= 0 ? "#4caf50" : "#f44336",
-                fontWeight: "bold",
-                fontSize: "0.85rem",
+            {isSourceRow ? (
+              SALES_SOURCE_LABELS[source]
+            ) : (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {canExpand ? (
+                  <IconButton
+                    size="small"
+                    onClick={() => this.toggleMonth(tableKey, row.periodKey)}
+                    aria-label={`${expanded ? "Свернуть" : "Развернуть"} источники за ${row.month}`}
+                    aria-expanded={expanded}
+                  >
+                    {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+                  </IconButton>
+                ) : null}
+                <Typography
+                  component="span"
+                  sx={{ fontWeight: 700, fontSize: "inherit" }}
+                >
+                  {row.month}
+                </Typography>
+                {canExpand ? (
+                  <Typography
+                    component="span"
+                    sx={{ color: "text.secondary", fontWeight: 600, fontSize: "0.75rem" }}
+                  >
+                    Тотал
+                  </Typography>
+                ) : null}
+              </Box>
+            )}
+          </TableCell>
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              fontWeight: "500",
+              backgroundColor: rowBackground,
+            }}
+          >
+            {formatQuantity(row.planQty)}
+          </TableCell>
+          {!planFulfillment && (
+            <TableCell
+              sx={{
+                ...bodyCellSx,
+                backgroundColor: rowBackground,
               }}
             >
-              {getSafeNumber(row.factDynQty) > 0 ? "+" : ""}
-              {formatQuantity(row.factDynQty)}
-            </span>
-            {getSafeNumber(row.factDynQty) !== 0 && (
-              <span style={{ fontSize: "0.7rem" }}>
-                {getSafeNumber(row.factDynQty) > 0 ? "▲" : "▼"}
-              </span>
-            )}
-          </Box>
-        </TableCell>
-        <TableCell
-          sx={{
-            ...bodyCellSx,
-            backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
-          }}
-        >
-          <Chip
-            label={formatPercent(planFulfillment ? row.planLoad : row.factLoad)}
-            size="small"
-            variant={planFulfillment ? "filled" : "outlined"}
-            sx={
-              planFulfillment
-                ? {
-                    backgroundColor: getSafeNumber(row.planLoad) >= 100 ? "#4caf50" : "#f44336",
-                    color: "white",
-                    fontWeight: "bold",
-                    fontSize: "0.75rem",
-                    minWidth: "70px",
-                    "& .MuiChip-label": {
-                      padding: "4px 8px",
-                    },
-                  }
-                : {
-                    borderColor: "#1976d2",
-                    color: "#1976d2",
-                    fontWeight: "500",
-                    fontSize: "0.75rem",
-                  }
-            }
-          />
-        </TableCell>
-        {hasPlanFact && (
+              <Typography
+                component="span"
+                sx={{ color: "primary.main", fontWeight: 700, fontSize: "0.85rem" }}
+              >
+                {formatPercent(row.planLoad)}
+              </Typography>
+            </TableCell>
+          )}
           <TableCell
             sx={{
               ...bodyCellSx,
-              backgroundColor: index % 2 === 0 ? "#fafafa" : "white",
+              fontWeight: "500",
+              backgroundColor: rowBackground,
             }}
           >
-            <Chip
-              label={formatPercent(row.planFact)}
-              size="small"
-              sx={{
-                backgroundColor: getSafeNumber(row.planFact) >= 100 ? "#4caf50" : "#f44336",
-                color: "white",
-                fontWeight: "bold",
-                fontSize: "0.75rem",
-                minWidth: "70px",
-                "& .MuiChip-label": {
-                  padding: "4px 8px",
-                },
-              }}
-            />
+            {formatQuantity(row.factQty)}
           </TableCell>
-        )}
-      </TableRow>
-    );
+          {showFactYoY && (
+            <TableCell
+              sx={{
+                ...bodyCellSx,
+                backgroundColor: rowBackground,
+              }}
+            >
+              {renderColoredValue(row.factYoYPct)}
+            </TableCell>
+          )}
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              backgroundColor: rowBackground,
+            }}
+          >
+            {renderColoredValue(row.factDynPct)}
+          </TableCell>
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              backgroundColor: rowBackground,
+            }}
+          >
+            {renderColoredValue(row.factDynQty, { formatter: formatQuantity })}
+          </TableCell>
+          <TableCell
+            sx={{
+              ...bodyCellSx,
+              backgroundColor: rowBackground,
+            }}
+          >
+            {planFulfillment ? (
+              renderColoredValue(row.planLoad, { threshold: 100 })
+            ) : (
+              <Typography
+                component="span"
+                sx={{ color: "primary.main", fontWeight: 700, fontSize: "0.85rem" }}
+              >
+                {formatPercent(row.factLoad)}
+              </Typography>
+            )}
+          </TableCell>
+          {hasPlanFact && (
+            <TableCell
+              sx={{
+                ...bodyCellSx,
+                backgroundColor: rowBackground,
+              }}
+            >
+              {renderColoredValue(row.planFact, { threshold: 100 })}
+            </TableCell>
+          )}
+        </TableRow>
+      );
+    };
 
     return (
       <Grid
@@ -804,13 +672,19 @@ class StatSale_Tab_DynamicSale extends React.Component {
                         }}
                       >
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <IconButton
-                            size="small"
-                            disabled={yearGroups.length === 1}
-                            sx={{ p: 0.25 }}
-                          >
-                            {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
-                          </IconButton>
+                          {yearGroups.length > 1 ? (
+                            <IconButton
+                              size="small"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                this.toggleYear(tableKey, group.year, yearGroups);
+                              }}
+                              aria-label={`${expanded ? "Свернуть" : "Развернуть"} ${group.year} год`}
+                              aria-expanded={expanded}
+                            >
+                              {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
+                            </IconButton>
+                          ) : null}
                           <Typography sx={{ fontWeight: 700 }}>{group.year} год</Typography>
                           <Typography
                             variant="caption"
@@ -821,7 +695,25 @@ class StatSale_Tab_DynamicSale extends React.Component {
                         </Box>
                       </TableCell>
                     </TableRow>
-                    {expanded ? group.items.map((row, index) => renderDataRow(row, index)) : null}
+                    {expanded
+                      ? group.items.map((row, index) => {
+                          const monthExpanded = this.isMonthExpanded(tableKey, row.periodKey);
+
+                          return (
+                            <React.Fragment key={`${tableKey}-${row.periodKey}`}>
+                              {renderDataRow(row, index, { expanded: monthExpanded })}
+                              {monthExpanded && sourceRowsByPeriod
+                                ? SALES_SOURCE_KEYS.map((source) => {
+                                    const sourceRow = sourceRowsByPeriod[source]?.[row.periodKey];
+                                    return sourceRow
+                                      ? renderDataRow(sourceRow, index, { source })
+                                      : null;
+                                  })
+                                : null}
+                            </React.Fragment>
+                          );
+                        })
+                      : null}
                   </React.Fragment>
                 );
               })}
@@ -832,17 +724,89 @@ class StatSale_Tab_DynamicSale extends React.Component {
     );
   }
 
+  renderSalesMetric({
+    metric,
+    title,
+    totalRows,
+    totalLine,
+    yearlyTitle,
+    planFactTitle,
+    progressTitle,
+    tableOptions = {},
+  }) {
+    const { analyticsResetKey, analyticsSources, annualPlanTotalsBySource, linesBySource } =
+      this.state;
+    const selectedSource = analyticsSources[metric] ?? "total";
+    const selectedRows =
+      selectedSource === "total"
+        ? totalRows
+        : (this.state.sourceRows?.[selectedSource]?.[metric] ?? []);
+    const selectedLine =
+      selectedSource === "total" ? totalLine : (linesBySource?.[selectedSource]?.[metric] ?? {});
+    const annualPlanTotal = annualPlanTotalsBySource?.[selectedSource]?.[metric] ?? null;
+    const tableSourceRows = SALES_SOURCE_KEYS.reduce((result, source) => {
+      result[source] = this.state.sourceRows?.[source]?.[metric] ?? [];
+      return result;
+    }, {});
+
+    return (
+      <>
+        {this.renderPizzaTable(totalRows, title, {
+          ...tableOptions,
+          tableKey: metric,
+          sourceRows: tableSourceRows,
+        })}
+        {totalRows.length ? (
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ width: { xs: "100%", sm: 520 }, maxWidth: "100%", mx: "auto" }}>
+              <JacoSegmentedTabs
+                value={selectedSource}
+                onChange={(_event, source) => this.changeAnalyticsSource(metric, source)}
+                items={SALES_SOURCE_TABS}
+                size="compact"
+                aria-label={`Источник: ${title.toLowerCase()}`}
+              />
+            </Box>
+          </Grid>
+        ) : null}
+        {Object.keys(selectedLine).length ? (
+          <StatSaleYearlyLineChart
+            rawData={selectedLine}
+            title={yearlyTitle}
+            dateStart={this.state.date_start}
+            dateEnd={this.state.date_end}
+            collapsible
+            defaultExpanded={false}
+            resetKey={analyticsResetKey}
+          />
+        ) : null}
+        {selectedRows.length ? (
+          <StatSalePlanFactLineChart
+            data={selectedRows}
+            title={planFactTitle}
+            resetKey={analyticsResetKey}
+          />
+        ) : null}
+        {selectedRows.length ? (
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+              <ProgressTimeline
+                data={selectedRows}
+                title={progressTitle}
+                cumulative
+                annualPlanTotal={annualPlanTotal}
+                resetKey={analyticsResetKey}
+              />
+            </Box>
+          </Grid>
+        ) : null}
+      </>
+    );
+  }
+
   render() {
     const { activeTab } = this.props;
-    const {
-      loading,
-      pizzaArr,
-      rollyArr,
-      orderArr,
-      accountArr,
-      annualPlanTotals,
-      analyticsResetKey,
-    } = this.state;
+    const { loading, pizzaArr, rollyArr, orderArr, accountArr } = this.state;
 
     return (
       <Grid
@@ -893,104 +857,34 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {this.renderPizzaTable(orderArr, "Заказы", {
-              planFulfillment: true,
+            {this.renderSalesMetric({
+              metric: "orders",
+              title: "Заказы",
+              totalRows: orderArr,
+              totalLine: this.state.ordersLine,
+              yearlyTitle: "Динамика заказов по годам",
+              planFactTitle: "План / Факт — Заказы",
+              progressTitle: "Выполнение плана по заказам",
+              tableOptions: { planFulfillment: true },
             })}
-            {Object.entries(this.state.ordersLine).length ? (
-              <StatSaleYearlyLineChart
-                rawData={this.state.ordersLine}
-                title="Динамика заказов по годам"
-                dateStart={this.state.date_start}
-                dateEnd={this.state.date_end}
-                collapsible
-                defaultExpanded={false}
-                resetKey={analyticsResetKey}
-              />
-            ) : null}
-            {orderArr.length ? (
-              <StatSalePlanFactLineChart
-                data={orderArr}
-                title="План / Факт — Заказы"
-                resetKey={analyticsResetKey}
-              />
-            ) : null}
-            {orderArr.length ? (
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
-                  <ProgressTimeline
-                    data={orderArr}
-                    title="Выполнение плана по заказам"
-                    cumulative
-                    annualPlanTotal={annualPlanTotals.orders}
-                    resetKey={analyticsResetKey}
-                  />
-                </Box>
-              </Grid>
-            ) : null}
-            {this.renderPizzaTable(rollyArr, "Роллы")}
-            {Object.entries(this.state.rollyLine).length ? (
-              <StatSaleYearlyLineChart
-                rawData={this.state.rollyLine}
-                title="Динамика роллов по годам"
-                dateStart={this.state.date_start}
-                dateEnd={this.state.date_end}
-                collapsible
-                defaultExpanded={false}
-                resetKey={analyticsResetKey}
-              />
-            ) : null}
-            {rollyArr.length ? (
-              <StatSalePlanFactLineChart
-                data={rollyArr}
-                title="План / Факт — Роллы"
-                resetKey={analyticsResetKey}
-              />
-            ) : null}
-            {rollyArr.length ? (
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
-                  <ProgressTimeline
-                    data={rollyArr}
-                    title="Выполнение плана по роллам"
-                    cumulative
-                    annualPlanTotal={annualPlanTotals.rolly}
-                    resetKey={analyticsResetKey}
-                  />
-                </Box>
-              </Grid>
-            ) : null}
-            {this.renderPizzaTable(pizzaArr, "Пицца")}
-            {Object.entries(this.state.pizzaLine).length ? (
-              <StatSaleYearlyLineChart
-                rawData={this.state.pizzaLine}
-                title="Динамика пиццы по годам"
-                dateStart={this.state.date_start}
-                dateEnd={this.state.date_end}
-                collapsible
-                defaultExpanded={false}
-                resetKey={analyticsResetKey}
-              />
-            ) : null}
-            {pizzaArr.length ? (
-              <StatSalePlanFactLineChart
-                data={pizzaArr}
-                title="План / Факт — Пицца"
-                resetKey={analyticsResetKey}
-              />
-            ) : null}
-            {pizzaArr.length ? (
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
-                  <ProgressTimeline
-                    data={pizzaArr}
-                    title="Выполнение плана по пицце"
-                    cumulative
-                    annualPlanTotal={annualPlanTotals.pizza}
-                    resetKey={analyticsResetKey}
-                  />
-                </Box>
-              </Grid>
-            ) : null}
+            {this.renderSalesMetric({
+              metric: "rolly",
+              title: "Роллы",
+              totalRows: rollyArr,
+              totalLine: this.state.rollyLine,
+              yearlyTitle: "Динамика роллов по годам",
+              planFactTitle: "План / Факт — Роллы",
+              progressTitle: "Выполнение плана по роллам",
+            })}
+            {this.renderSalesMetric({
+              metric: "pizza",
+              title: "Пицца",
+              totalRows: pizzaArr,
+              totalLine: this.state.pizzaLine,
+              yearlyTitle: "Динамика пиццы по годам",
+              planFactTitle: "План / Факт — Пицца",
+              progressTitle: "Выполнение плана по пицце",
+            })}
             {this.renderPizzaTable(accountArr, "Аккаунты (данные по всем кафе)", {
               planFulfillment: true,
               showFactYoY: false,
@@ -1002,7 +896,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
                   <ProgressTimeline
                     data={accountArr}
                     title="Выполнение плана по аккаунтам"
-                    resetKey={analyticsResetKey}
+                    resetKey={this.state.analyticsResetKey}
                   />
                 </Box>
               </Grid>

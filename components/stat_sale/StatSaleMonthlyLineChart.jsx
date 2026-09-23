@@ -26,6 +26,48 @@ const formatValue = (value) =>
     .toFixed(0)
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
+const getNiceStep = (roughStep) => {
+  if (!Number.isFinite(roughStep) || roughStep <= 0) return 1;
+
+  const exponent = Math.floor(Math.log10(roughStep));
+  const fraction = roughStep / 10 ** exponent;
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+
+  return niceFraction * 10 ** exponent;
+};
+
+const calculateYAxisBounds = (seriesItems) => {
+  const values = seriesItems
+    .flatMap((item) => item.values ?? [])
+    .filter((value) => value !== null && value !== undefined && value !== "")
+    .map(Number)
+    .filter(Number.isFinite);
+  const nonZeroValues = values.filter((value) => value !== 0);
+
+  if (!nonZeroValues.length) {
+    return { min: 0, max: 1 };
+  }
+
+  const minValue = Math.min(...nonZeroValues);
+  const maxValue = Math.max(...nonZeroValues);
+  const span = maxValue - minValue || Math.abs(maxValue) || 1;
+  const padding = span * 0.1;
+  const hasZero = values.some((value) => value === 0);
+  const rawMin = hasZero && minValue >= 0 ? 0 : minValue - padding;
+  const rawMax = maxValue + padding;
+  const step = getNiceStep((rawMax - rawMin) / 5);
+  const min =
+    minValue >= 0
+      ? Math.max(0, Math.floor(rawMin / step) * step)
+      : Math.floor(rawMin / step) * step;
+  const max = Math.ceil(rawMax / step) * step;
+
+  return {
+    min,
+    max: max > min ? max : min + step,
+  };
+};
+
 const buildSharedTooltip = ({ month, seriesItems, valueSuffix }) => {
   const rows = seriesItems
     .map((item) => ({
@@ -157,8 +199,7 @@ export default function StatSaleMonthlyLineChart({
 
       const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
-          min: 0,
-          extraMax: 0.08,
+          strictMinMax: true,
           renderer: yRenderer,
           numberFormat: "#,###",
         }),
@@ -253,7 +294,7 @@ export default function StatSaleMonthlyLineChart({
 
         itemSeries.data.setAll(buildSeriesData(item, chartSeries));
         itemSeries.appear(500);
-        createdSeries.push({ item, series: itemSeries });
+        createdSeries.push({ item, series: itemSeries, values: item.values });
         return itemSeries;
       };
 
@@ -299,6 +340,7 @@ export default function StatSaleMonthlyLineChart({
           ...mainEntry.item,
           values: averageValues,
         };
+        mainEntry.values = averageValues;
         const tooltipSeriesItems = [
           ...(isEntryVisible(mainEntry) ? [averageItem] : []),
           ...visibleYearEntries.map((entry) => entry.item),
@@ -309,11 +351,29 @@ export default function StatSaleMonthlyLineChart({
           entry.series.data.setAll(buildSeriesData(entry.item, tooltipSeriesItems));
         });
       };
+      const updateYAxisBounds = () => {
+        const visibleSeries = createdSeries
+          .filter(isEntryVisible)
+          .map((entry) => ({ values: entry.values }));
+        const bounds = calculateYAxisBounds(visibleSeries);
+
+        yAxis.setAll({
+          min: bounds.min,
+          max: bounds.max,
+          strictMinMax: true,
+        });
+      };
       createdSeries.forEach((entry) => {
         entry.series.on("visible", () => {
-          root.events.once("frameended", updateAverageSeries);
+          root.events.once("frameended", () => {
+            updateAverageSeries();
+            updateYAxisBounds();
+          });
         });
       });
+
+      updateAverageSeries();
+      updateYAxisBounds();
 
       cursor.set("snapToSeries", chart.series.values);
 

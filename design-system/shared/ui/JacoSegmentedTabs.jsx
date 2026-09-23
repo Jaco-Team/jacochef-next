@@ -27,7 +27,8 @@ export default function JacoSegmentedTabs({
         },
         "& .MuiTab-root": {
           minHeight: isCompact ? 36 : 40,
-          px: isCompact ? 2 : undefined,
+          minWidth: 0,
+          px: isCompact ? { xs: 1, sm: 2 } : undefined,
           textTransform: "none",
           borderRadius: uiRadii.sm,
           color: uiColors.text,

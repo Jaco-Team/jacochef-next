@@ -35,6 +35,13 @@ const tabItems = [
   { id: "period", label: "На 2 недели" },
 ];
 
+const sourceTabItems = [
+  { id: "total", label: "Тотал" },
+  { id: "site", label: "Сайт" },
+  { id: "cafe", label: "Кафе" },
+  { id: "kc", label: "КЦ" },
+];
+
 function StoryCanvas({ children }) {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default", p: { xs: 2, md: 4 } }}>
@@ -194,6 +201,7 @@ export function SelectionControls() {
 
 export function Tabs() {
   const [segmented, setSegmented] = useState("month");
+  const [source, setSource] = useState("total");
   const [compact, setCompact] = useState("main");
 
   return (
@@ -214,6 +222,13 @@ export function Tabs() {
           size="compact"
           variant="standard"
           sx={{ width: "fit-content" }}
+        />
+        <JacoSegmentedTabs
+          value={source}
+          onChange={(_event, value) => setSource(value)}
+          items={sourceTabItems}
+          size="compact"
+          aria-label="Источник продаж"
         />
         <JacoCompactTabs
           value={compact}

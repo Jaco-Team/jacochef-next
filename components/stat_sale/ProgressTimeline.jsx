@@ -619,7 +619,14 @@ const ProgressTimeline = ({
   return (
     <Paper
       elevation={0}
-      sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, width: "100%" }}
+      sx={{
+        p: { xs: 2, sm: 3 },
+        borderRadius: 2,
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
+      }}
     >
       <Box
         sx={{
