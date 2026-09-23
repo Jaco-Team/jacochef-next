@@ -15,6 +15,7 @@ export { default as JacoSelectableListItem } from "./JacoSelectableListItem";
 export { default as JacoSegmentedTabs } from "./JacoSegmentedTabs";
 export { default as JacoSurface } from "./JacoSurface";
 export { default as JacoSwitch } from "./JacoSwitch";
+export { default as JacoTabPanel } from "./JacoTabPanel";
 export { default as SmallFont } from "./SmallFont";
 export { default as JacoAutocomplete } from "./JacoAutocomplete";
 export { default as JacoCityCafe } from "./JacoCityCafe";

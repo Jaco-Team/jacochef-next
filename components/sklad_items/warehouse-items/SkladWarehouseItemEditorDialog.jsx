@@ -22,8 +22,12 @@ import {
   useTheme,
 } from "@mui/material";
 
-import { MyAutocomplite, MyDatePickerNew, MyTimeInput } from "@/ui/Forms";
-import { JacoFieldSwitch } from "@/design-system/shared/ui";
+import {
+  JacoAutocomplete,
+  JacoDatePicker,
+  JacoFieldSwitch,
+  JacoTimePicker,
+} from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
 
@@ -226,7 +230,7 @@ export default function SkladWarehouseItemEditorDialog({
                 </Grid>
                 {canView("categories") ? (
                   <Grid size={{ xs: 12, md: 4 }}>
-                    <MyAutocomplite
+                    <JacoAutocomplete
                       label="Категория"
                       data={categoryOptions}
                       multiple={false}
@@ -247,7 +251,7 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
                 {canView("unit") ? (
                   <Grid size={{ xs: 12, md: 2 }}>
-                    <MyAutocomplite
+                    <JacoAutocomplete
                       label="Единица"
                       data={detail?.units || []}
                       multiple={false}
@@ -268,7 +272,7 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
                 {canView("date_start") ? (
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <MyDatePickerNew
+                    <JacoDatePicker
                       required
                       label="Действует с"
                       value={draft?.date_start || ""}
@@ -280,7 +284,7 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
                 {canView("date_end") ? (
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <MyDatePickerNew
+                    <JacoDatePicker
                       label="Действует по"
                       value={draft?.date_end || ""}
                       minDate={
@@ -373,7 +377,7 @@ export default function SkladWarehouseItemEditorDialog({
                 <Grid size={{ xs: 12, md: 4 }}>{field("composition", "pf_id", "Состав")}</Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   {canView("time") ? (
-                    <MyTimeInput
+                    <JacoTimePicker
                       label="Время"
                       value={draft?.time_min || ""}
                       disabled={!canEdit("time")}
@@ -383,7 +387,7 @@ export default function SkladWarehouseItemEditorDialog({
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   {canView("time") ? (
-                    <MyTimeInput
+                    <JacoTimePicker
                       label="Доп. время"
                       value={draft?.time_dop_min || ""}
                       disabled={!canEdit("time")}
@@ -393,7 +397,7 @@ export default function SkladWarehouseItemEditorDialog({
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   {canView("time") ? (
-                    <MyTimeInput
+                    <JacoTimePicker
                       label="Другое время"
                       value={draft?.time_min_other || ""}
                       disabled={!canEdit("time")}

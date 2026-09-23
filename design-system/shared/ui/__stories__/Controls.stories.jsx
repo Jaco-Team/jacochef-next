@@ -15,6 +15,7 @@ import {
   JacoIconButton,
   JacoSegmentedTabs,
   JacoSwitch,
+  JacoTabPanel,
 } from "@/design-system/shared/ui";
 
 const meta = {
@@ -234,6 +235,12 @@ export function Tabs() {
             { id: "settings", label: "Настройки" },
           ]}
         />
+        <JacoTabPanel
+          value={compact}
+          index="main"
+        >
+          Основная вкладка
+        </JacoTabPanel>
       </Stack>
     </StoryCanvas>
   );

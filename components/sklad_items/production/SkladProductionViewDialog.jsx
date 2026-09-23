@@ -22,7 +22,7 @@ import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
-import MyModal from "@/ui/MyModal";
+import { JacoModal } from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import { formatDateRangeRU } from "../formatDateRangeRU";
 import SkladInfoField from "../ui/SkladInfoField";
@@ -77,7 +77,8 @@ export default function SkladProductionViewDialog({
   const items = Array.isArray(detail?.items) ? detail.items : [];
 
   return (
-    <MyModal
+    <JacoModal
+      contentWrapper={false}
       open={open}
       onClose={onClose}
       maxWidth="lg"
@@ -407,6 +408,6 @@ export default function SkladProductionViewDialog({
           </TabContext>
         )}
       </DialogContent>
-    </MyModal>
+    </JacoModal>
   );
 }

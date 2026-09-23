@@ -11,10 +11,10 @@ import {
   JacoButton,
   JacoCompactTabs,
   JacoSurface,
+  JacoTabPanel,
   uiColors,
   uiShadows,
 } from "@/design-system/shared/ui";
-import TabPanel from "@/ui/TabPanel/TabPanel";
 
 import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
@@ -228,13 +228,13 @@ export default function SkladPage() {
             <Grid size={12}>
               {tabs.length ? (
                 tabs.map((item, index) => (
-                  <TabPanel
+                  <JacoTabPanel
                     key={item.key}
                     value={tab}
                     index={index}
                   >
                     {renderTabContent(item)}
-                  </TabPanel>
+                  </JacoTabPanel>
                 ))
               ) : (
                 <Box sx={{ p: 3 }}>

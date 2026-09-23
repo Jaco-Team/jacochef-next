@@ -22,8 +22,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MyTextInput } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import { JacoModal, JacoTextInput } from "@/design-system/shared/ui";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 
 function categoryUsageLabel(category) {
@@ -140,7 +139,8 @@ export default function SkladProductionCategoryManagerDialog({
 
   return (
     <>
-      <MyModal
+      <JacoModal
+        contentWrapper={false}
         open={open}
         onClose={loading ? undefined : onClose}
         title="Категории"
@@ -170,7 +170,7 @@ export default function SkladProductionCategoryManagerDialog({
                   spacing={1}
                   sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                 >
-                  <MyTextInput
+                  <JacoTextInput
                     label="Новая категория"
                     value={newCategoryName}
                     disabled={loading}
@@ -241,7 +241,7 @@ export default function SkladProductionCategoryManagerDialog({
                       sx={{ minWidth: 0, flex: 1 }}
                     >
                       {isEditing ? (
-                        <MyTextInput
+                        <JacoTextInput
                           label="Название категории"
                           value={name}
                           disabled={loading}
@@ -374,7 +374,7 @@ export default function SkladProductionCategoryManagerDialog({
             Закрыть
           </Button>
         </DialogActions>
-      </MyModal>
+      </JacoModal>
 
       <SkladDeleteDialog
         open={Boolean(deleteCategory)}
