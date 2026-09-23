@@ -121,7 +121,7 @@ No business-rule loss was confirmed for units. The wording/order of fields diffe
 - [done] Reproduce the legacy gross/loss/net/output formulas and three-decimal totals in the composite FE and canonical production write flow. No new validation policy was introduced.
 - [done] Make `pr_1` canonical in the editor helper while retaining legacy read aliases.
 - [done] Add focused backend regression coverage for row recalculation, aggregate totals and aggregate-only payloads.
-- [ ] Decide and document whether a zero-component PF is allowed to use only `structure`; preserve that mode without using it as a fallback for populated component rows.
+- [done] Confirm zero-component PF behavior from the legacy modal: it initializes and submits an empty component list while keeping `structure` as independent metadata. The canonical editor preserves that mode and never substitutes text structure for a populated component matrix.
 
 ### Phase 2 — restore production modal parity
 
@@ -129,28 +129,28 @@ No business-rule loss was confirmed for units. The wording/order of fields diffe
 - [done] Allow input only for item, gross, `pr_1`, and `pr_2`; display net/output and all totals as disabled derived values.
 - [done] Remove direct editing of top-level gross/net/output; render an explicit aggregate summary from component rows.
 - [done] In read mode, show both loss stages and derived values rather than one ambiguous loss value.
-- [ ] Keep text `structure` as supplementary PF metadata only, subject to the Phase 1 decision.
+- [done] Keep text `structure` as supplementary PF metadata only; component rows remain the source of derived weights whenever present.
 
 ### Phase 3 — make the backend authoritative
 
 - [done] Recalculate row outputs and parent totals in the production write service from component input.
 - [done] Ignore aggregate-only client payloads; derived values are persisted only when the existing component payload is supplied with `production_items_edit`.
-- [ ] Preserve historical snapshots exactly; never bulk-rewrite existing history/archive records as a side effect of this fix.
-- [ ] Add service/API tests for contradictory payloads and scheduled revisions.
+- [done] Preserve historical snapshots exactly: no migration, bulk repair, archive rewrite or history rewrite is part of this change.
+- [done] Add service coverage for contradictory payloads and the future-revision snapshot merge; existing effective-revision coverage continues to exercise revision scheduling.
 
 ### Phase 4 — list and access closure
 
 - [done] Add an explicit recipe/PF type marker to the merged list while retaining category filtering.
 - [done] Restore the legacy update-date projection in the canonical list.
 - [done] Restore the field-specific revision quick-toggle through the existing canonical flag endpoint and existing `production_show_in_rev_edit` permission.
-- [ ] Re-run the access matrix for view-only, field-edit-only, full-edit, history-only and delete/convert roles.
+- [done] Re-run the access matrix in unit coverage: view-only exposes history without edit; field-only revision access remains scoped; full edit remains distinct from activity/archive access; standalone history remains fail-closed; delete/convert remain action-only.
 
 ### Phase 5 — local E2E and data reconciliation
 
-- [ ] On local DB only, create disposable recipe and PF examples covering 40% ХО loss, non-zero ГО loss, multiple rows, a future-dated revision, archive/restore and history inspection; clean up only those identified disposable records after verification.
-- [ ] Compare the resulting legacy and canonical screens side by side in Chrome.
-- [ ] Run a dry-run report for component/header mismatches; obtain approval before correcting any existing source record.
-- [ ] Re-run focused Sklad tests and the access sync dry-run after implementation.
+- [ ] On local DB only, create disposable recipe and PF examples covering 40% ХО loss, non-zero ГО loss, multiple rows, a future-dated revision, archive/restore and history inspection; clean up only those identified disposable records after verification. A rollback-only service probe was attempted, but Artisan's interactive `mariadb` PDO connection failed before its first query while the connector's local SQL client remained healthy. No record was created; do not treat this as E2E completion until the application CLI connection is restored or the flow is exercised through the authenticated local UI.
+- [done] Compare the legacy and canonical screens side by side in Chrome using local `Ананасы, без сиропа П/Ф`: both show the component matrix, both loss stages, and derived gross/net/output values.
+- [done] Run the local dry-run reconciliation: exactly one mismatch remains, `polufabricat_new.id=1` (`7Up 0.6 л`), whose stored headers are all `0` while its only component is `1/1/1`. No source row was modified because legacy behavior does not establish the intended business value.
+- [done] Re-run focused Sklad tests and the local access sync dry-run: the sync reports 77 desired/77 existing target groups, no stale groups, and 55 appointments in scope.
 
 ## Acceptance criteria
 

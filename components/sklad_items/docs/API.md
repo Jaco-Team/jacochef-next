@@ -1471,12 +1471,13 @@ Response:
 
 ### `POST|ANY /api/sklad_items/site-items/sync_vk`
 
-Legacy compatibility only. Новый интерфейс `sklad_items` этот endpoint не вызывает. Изображения товаров сохраняются только в Яндекс Object Storage.
+Новый интерфейс `sklad_items` вызывает этот endpoint только через подтверждённое action-право `site_items_sync_vk`. Изображения товаров сохраняются только в Яндекс Object Storage.
 
 Rule:
 
 - sets `jaco_main_rolls.settings.type = vk_update_goods`
 - does not mutate `site_item` row directly
+- returns `queued=true`; `already_queued=true` means the external worker flag was already set, not that VK processing has completed
 
 ## 9. Archive
 

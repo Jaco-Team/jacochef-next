@@ -27,7 +27,17 @@ The warehouse flags and their permissions remain effective in `sklad_items_modul
 - [deferred] reconcile warehouse-editor permission groups; retain this work in `sklad_items_module_new`;
 - [done] resolve the VK wording in the current module plan: this action enqueues external work and does not report worker completion;
 - [done] document queue acknowledgement (`queued` / `already_queued`) instead of claiming completed VK synchronization;
-- [ ] review documented historical-dictionary fallback behavior for history and compare screens.
+- [done] review historical-dictionary fallback behavior: legacy history also resolves units, tags and category labels from current dictionaries when no historical dictionary snapshot exists; the canonical fallback preserves that limitation and documents it instead of fabricating past names.
+
+## 2.1. Audit: legacy-to-composite closure
+
+Status: completed on local runtime.
+
+- [done] rechecked `recept_module_new_2`, `site_items_new` and `ed_izmer` against composite routes, editor flows, archive/delete/history actions and field-level access;
+- [done] confirmed `sklad_items_module_new` stays standalone; its tab remains commented out and its warehouse flags/permissions stay effective there;
+- [done] ran `sklad:sync-access --dry-run`: 77 desired target groups, 77 existing target groups, no stale groups, pruning disabled;
+- [done] ran focused Sklad backend coverage: 86 tests, 282 assertions;
+- [done] reconciled FE API, migration map, access handoff, README and test report with the live VK queue action and hidden cross-entity archive decision.
 
 ## 3. Retained but intentionally unexposed: cross-entity archive
 
@@ -55,3 +65,15 @@ Reconsider a global view only if a confirmed business workflow needs cross-entit
 ## 5. Completion log
 
 - [done] plan created before implementation.
+
+## 6. Design-system control migration
+
+Status: in progress. Preserve the existing API payloads, field-level access and modal flows; this is a control-layer replacement, not a business-flow redesign.
+
+- [in progress] establish DS control parity and stories for any missing reusable behavior before feature rewiring;
+- [in progress] replace controls in the simple production/unit dialogs: buttons, text inputs, selects and dialog shell/actions;
+- [todo] migrate the production editor and view dialogs, including date, duration, checkbox, relation-autocomplete and inner tabs;
+- [todo] migrate the active site-item compatibility modal without changing its data contract, sections, staged composition behavior or permissions;
+- [todo] migrate history, category/tag and archive dialog controls, then the retained warehouse editor code;
+- [todo] replace remaining direct legacy `ui/*` imports in `components/sklad_items` and record any deliberately retained non-control compatibility boundary;
+- [todo] add/extend DS stories for each new primitive and verify desktop UI parity in local Chrome.

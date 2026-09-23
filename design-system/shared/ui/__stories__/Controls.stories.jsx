@@ -9,6 +9,7 @@ import { Box, FormControlLabel, Stack, Tooltip, Typography } from "@mui/material
 import {
   JacoButton,
   JacoCheckbox,
+  JacoCheckboxField,
   JacoCompactTabs,
   JacoFieldSwitch,
   JacoIconButton,
@@ -186,6 +187,15 @@ export function SelectionControls() {
           label="Недоступный выбор"
           disabled
           sx={{ m: 0, gap: 1 }}
+        />
+        <JacoCheckboxField
+          checked={boxChecked}
+          onChange={(event) => setBoxChecked(event.target.checked)}
+          label="Показывать в ревизии"
+        />
+        <JacoCheckboxField
+          label="Недоступный выбор"
+          disabled
         />
       </Stack>
     </StoryCanvas>

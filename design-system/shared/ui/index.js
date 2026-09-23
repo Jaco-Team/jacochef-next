@@ -2,6 +2,7 @@ export { default as JacoAlert } from "./JacoAlert";
 export { default as JacoBackdropLoader } from "./JacoBackdropLoader";
 export { default as JacoButton } from "./JacoButton";
 export { default as JacoCheckbox } from "./JacoCheckbox";
+export { default as JacoCheckboxField } from "./JacoCheckboxField";
 export { default as JacoCompactTabs } from "./JacoCompactTabs";
 export { useJacoConfirm } from "./JacoConfirm";
 export { default as JacoFieldSwitch } from "./JacoFieldSwitch";
