@@ -343,7 +343,7 @@ export function MyAutocomplite(props) {
         renderValue={
           props.multiple
             ? (value, getItemProps) =>
-                value.map((option, index) => (
+                (Array.isArray(value) ? value : []).map((option, index) => (
                   <Chip
                     {...(() => {
                       const { key, ...tagProps } = getItemProps({ index });

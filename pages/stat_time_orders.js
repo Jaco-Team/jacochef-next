@@ -12,8 +12,8 @@ import TableRow from "@mui/material/TableRow";
 
 import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import Backdrop from "@mui/material/Backdrop";
@@ -444,7 +444,8 @@ class StatTimeOrders_ extends React.Component {
           >
             <TabContext value={this.state.ItemTab}>
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <TabList
+                <Tabs
+                  value={this.state.ItemTab}
                   onChange={this.changeTab.bind(this)}
                   variant="scrollable"
                   allowScrollButtonsMobile
@@ -474,7 +475,7 @@ class StatTimeOrders_ extends React.Component {
                     label="Заготовки"
                     value="5"
                   />
-                </TabList>
+                </Tabs>
               </Box>
 
               <StatTimeOrders_Table

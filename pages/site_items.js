@@ -21,8 +21,8 @@ import MenuItem from "@mui/material/MenuItem";
 
 import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import Dialog from "@mui/material/Dialog";
@@ -1772,7 +1772,8 @@ class SiteItems_ extends React.Component {
                 >
                   <TabContext value={this.state.ItemTab1}>
                     <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                      <TabList
+                      <Tabs
+                        value={this.state.ItemTab1}
                         onChange={this.changeTab1.bind(this)}
                         variant="fullWidth"
                       >
@@ -1791,7 +1792,7 @@ class SiteItems_ extends React.Component {
                           label="Добавить"
                           value="-1"
                         />
-                      </TabList>
+                      </Tabs>
                     </Box>
                   </TabContext>
 
@@ -1806,7 +1807,8 @@ class SiteItems_ extends React.Component {
                     >
                       <TabContext value={this.state.ItemTab}>
                         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                          <TabList
+                          <Tabs
+                            value={this.state.ItemTab}
                             onChange={this.changeTab.bind(this)}
                             variant="fullWidth"
                           >
@@ -1822,7 +1824,7 @@ class SiteItems_ extends React.Component {
                               label="Позиции"
                               value="4"
                             />
-                          </TabList>
+                          </Tabs>
                         </Box>
                         <TabPanel value="1">
                           <Grid
@@ -2726,7 +2728,8 @@ class SiteItems_ extends React.Component {
                     >
                       <TabContext value={this.state.ItemTab}>
                         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                          <TabList
+                          <Tabs
+                            value={this.state.ItemTab}
                             onChange={this.changeTab.bind(this)}
                             variant="fullWidth"
                           >
@@ -2743,7 +2746,7 @@ class SiteItems_ extends React.Component {
                               label="Позиции"
                               value="4"
                             />
-                          </TabList>
+                          </Tabs>
                         </Box>
                         <TabPanel value="1">
                           <Grid

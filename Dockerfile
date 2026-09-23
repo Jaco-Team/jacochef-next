@@ -32,9 +32,12 @@ RUN node scripts/copy-tinymce.js \
     && npm run build
 
 FROM base AS production
+ARG BUILD_SHA=development
 ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
-    PORT=3000
+    PORT=3000 \
+    APP_BUILD_SHA=${BUILD_SHA}
+LABEL org.opencontainers.image.revision=${BUILD_SHA}
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/node_modules/next/node_modules/@swc/helpers ./node_modules/next/node_modules/@swc/helpers
 COPY --from=build --chown=node:node /app/.next/static ./.next/static

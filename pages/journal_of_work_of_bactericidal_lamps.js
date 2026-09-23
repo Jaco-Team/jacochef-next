@@ -167,19 +167,23 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
   async addActive(data) {
     data.point_id = this.state.point;
 
-    const res = await this.getData("add_lamp_active", data);
+    try {
+      const res = await this.getData("add_lamp_active", data);
 
-    if (!res?.st) {
-      return this.showAlert(res.text);
+      if (!res?.st) {
+        return this.showAlert(res?.text || "Не удалось сохранить активацию");
+      }
+      this.showAlert("Успешно сохранено!", true);
+      this.setState({
+        modalAddActiveLamp: false,
+      });
+
+      setTimeout(() => {
+        this.getLamps();
+      }, 500);
+    } catch {
+      return this.showAlert("Не удалось сохранить активацию");
     }
-    this.showAlert("Успешно сохранено!", true);
-    this.setState({
-      modalAddActiveLamp: false,
-    });
-
-    setTimeout(() => {
-      this.getLamps();
-    }, 500);
   }
 
   openModalAddLamp() {
@@ -319,6 +323,7 @@ class Journal_of_work_of_bactericidal_lamps_ extends React.Component {
           itemEdit={this.state.itemEdit}
           changeLamp={this.changeLamp.bind(this)}
           typeActive={this.state.typeActive}
+          showAlert={this.showAlert.bind(this)}
         />
         <Grid
           container

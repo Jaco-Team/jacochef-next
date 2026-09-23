@@ -23,8 +23,8 @@ import TableContainer from "@mui/material/TableContainer";
 
 import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import Backdrop from "@mui/material/Backdrop";
@@ -416,7 +416,8 @@ class Experience_Modal_User extends React.Component {
           <DialogContent style={{ paddingTop: 10, paddingBottom: 10 }}>
             <TabContext value={this.state.ItemTab}>
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <TabList
+                <Tabs
+                  value={this.state.ItemTab}
                   onChange={this.changeTab.bind(this)}
                   variant="fullWidth"
                 >
@@ -436,7 +437,7 @@ class Experience_Modal_User extends React.Component {
                       value="3"
                     />
                   ) : null}
-                </TabList>
+                </Tabs>
               </Box>
 
               {/* Информация */}

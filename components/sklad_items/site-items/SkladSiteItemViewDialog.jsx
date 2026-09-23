@@ -23,11 +23,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   Typography,
 } from "@mui/material";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 import { JacoModal } from "@/design-system/shared/ui";
 import {
@@ -315,7 +315,8 @@ export default function SkladSiteItemViewDialog({
         ) : (
           <TabContext value={section}>
             <Stack spacing={2.5}>
-              <TabList
+              <Tabs
+                value={section}
                 onChange={(_, nextValue) => onSectionChange?.(nextValue)}
                 variant="scrollable"
                 allowScrollButtonsMobile
@@ -339,7 +340,7 @@ export default function SkladSiteItemViewDialog({
                     value={item.value}
                   />
                 ))}
-              </TabList>
+              </Tabs>
 
               <TabPanel
                 value="tech"

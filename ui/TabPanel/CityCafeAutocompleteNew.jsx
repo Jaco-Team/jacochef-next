@@ -647,13 +647,13 @@ export default function CityCafeAutocompleteNew({
           autoFocus={autoFocus}
           filterOptions={(options) => options}
           renderInput={(params) => {
-            const { InputProps, ...otherParams } = params;
-
             const hasTags = actualValue.length > 0;
+            const inputSlotProps = params.slotProps?.input ?? {};
+            const inputClassName = inputSlotProps.className;
 
             return (
               <TextField
-                {...otherParams}
+                {...params}
                 label={label}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -673,14 +673,15 @@ export default function CityCafeAutocompleteNew({
                   },
                 }}
                 slotProps={{
+                  ...params.slotProps,
                   input: {
-                    ...InputProps,
+                    ...inputSlotProps,
                     className: hasTags
-                      ? InputProps.className
+                      ? inputClassName
                           ?.replace(/\s?MuiAutocomplete-input\s?/g, " ")
                           .replace(/\s?MuiAutocomplete-inputFocused\s?/g, " ")
                           .trim()
-                      : InputProps.className,
+                      : inputClassName,
                   },
                 }}
               />

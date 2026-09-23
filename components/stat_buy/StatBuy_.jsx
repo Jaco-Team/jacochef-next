@@ -2,11 +2,11 @@
 
 import React from "react";
 
-import { Grid, Button, TableCell, Box, Tab, Backdrop, CircularProgress } from "@mui/material";
+import { Grid, Button, TableCell, Box, Tab, Tabs, Backdrop, CircularProgress } from "@mui/material";
 
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 
-import { TabContext, TabList } from "@mui/lab";
+import { TabContext } from "@mui/lab";
 import Stat_buy_Table_ from "./StatBuyTable_";
 
 import dayjs from "dayjs";
@@ -313,7 +313,8 @@ export default class Stat_buy_ extends React.Component {
         >
           <TabContext value={this.state.ItemTab}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <TabList
+              <Tabs
+                value={this.state.ItemTab}
                 onChange={this.changeTab.bind(this)}
                 variant="fullWidth"
               >
@@ -329,7 +330,7 @@ export default class Stat_buy_ extends React.Component {
                   label="Средняя цена"
                   value="3"
                 />
-              </TabList>
+              </Tabs>
             </Box>
 
             <Stat_buy_Table_

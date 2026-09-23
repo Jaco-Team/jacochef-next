@@ -28,8 +28,8 @@ import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dropzone from "dropzone";
 import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import Box from "@mui/material/Box";
-import TabList from "@mui/lab/TabList";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
 import { getAuthHeaders } from "@/src/api_new";
@@ -53,7 +53,7 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
-const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef.jacochef.ru/api").replace(
+const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
   /\/+$/,
   "",
 );
@@ -2636,7 +2636,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                     },
                   }}
                 >
-                  <TabList
+                  <Tabs
+                    value={this.state.activeTab}
                     onChange={this.changeTab.bind(this)}
                     variant="scrollable"
                     scrollButtons="auto"
@@ -2651,7 +2652,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                         {...a11yProps(index)}
                       />
                     ))}
-                  </TabList>
+                  </Tabs>
                 </Box>
 
                 <Paper sx={desktopNavPaperSx}>
