@@ -2087,7 +2087,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 <TableCell sx={{ width: "28%" }}>
                   <MyAutocomplite
                     multiple={false}
-                    disableNoSsr
                     unifiedPopup
                     optionKey="un_id"
                     getOptionKey={(option) => `${option?.un_id}`}
@@ -2189,7 +2188,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             <TableCell sx={{ width: "38%" }}>
               <MyAutocomplite
                 multiple={false}
-                disableNoSsr
                 unifiedPopup
                 data={this.getCompositionAutocompleteOptions(
                   autocompleteKey,
@@ -3352,7 +3350,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       <TableCell>
                                         <MyAutocomplite
                                           multiple={false}
-                                          disableNoSsr
                                           unifiedPopup
                                           data={this.getCompositionAutocompleteOptions(
                                             "preparation-new",
@@ -3465,7 +3462,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       <TableCell>
                                         <MyAutocomplite
                                           multiple={false}
-                                          disableNoSsr
                                           unifiedPopup
                                           data={this.getCompositionAutocompleteOptions(
                                             "item-new",

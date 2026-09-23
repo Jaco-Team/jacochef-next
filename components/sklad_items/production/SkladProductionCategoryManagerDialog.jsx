@@ -158,10 +158,7 @@ export default function SkladProductionCategoryManagerDialog({
                 value="semi_finished"
                 label="Рецепты и полуфабрикаты"
               />
-              <Tab
-                value="warehouse_item"
-                label="Товары склада"
-              />
+              {/* Suspended warehouse-item category scope; keep its logic/access wiring for later reactivation. */}
             </Tabs>
             {canCreateSource ? (
               <Paper
@@ -171,7 +168,7 @@ export default function SkladProductionCategoryManagerDialog({
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1}
-                  alignItems={{ xs: "stretch", sm: "center" }}
+                  sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                 >
                   <MyTextInput
                     label="Новая категория"
@@ -237,7 +234,7 @@ export default function SkladProductionCategoryManagerDialog({
                   <Stack
                     direction={{ xs: "column", sm: "row" }}
                     spacing={1.5}
-                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                   >
                     <Stack
                       spacing={0.25}
@@ -256,7 +253,7 @@ export default function SkladProductionCategoryManagerDialog({
                           <Stack
                             direction="row"
                             spacing={1}
-                            alignItems="center"
+                            sx={{ alignItems: "center" }}
                           >
                             <Typography
                               fontWeight={600}
@@ -284,7 +281,7 @@ export default function SkladProductionCategoryManagerDialog({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      justifyContent="flex-end"
+                      sx={{ justifyContent: "flex-end" }}
                     >
                       {isEditing ? (
                         <>
