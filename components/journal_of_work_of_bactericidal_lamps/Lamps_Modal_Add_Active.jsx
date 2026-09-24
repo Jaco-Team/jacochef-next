@@ -74,11 +74,6 @@ export default function Lamps_Modal_Add_Active({
       return;
     }
 
-    if (diff > 5 * 60) {
-      showAlert("Разница во времени не должна превышать 5 часов!");
-      return;
-    }
-
     add({
       id: state.active_id,
       lamp_id: state.lamp_id,
