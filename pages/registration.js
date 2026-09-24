@@ -24,8 +24,6 @@ const SmartCaptcha = dynamic(
 );
 
 const SMARTCAPTCHA_CLIENT_KEY = process.env.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY || "";
-const CAPTCHA_BYPASS_UNTIL = Date.parse("2026-09-28T09:00:56Z");
-const isCaptchaBypassActive = () => Date.now() < CAPTCHA_BYPASS_UNTIL;
 
 const AUTH_RED = "#a30021";
 const AUTH_TEXT = "#1a1a1a";
@@ -154,20 +152,6 @@ export default function Registration() {
   const [resendAfter, setResendAfter] = useState(0);
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
-  const [captchaBypassActive, setCaptchaBypassActive] = useState(false);
-
-  useEffect(() => {
-    const updateCaptchaBypass = () => setCaptchaBypassActive(isCaptchaBypassActive());
-    updateCaptchaBypass();
-
-    const remainingMs = CAPTCHA_BYPASS_UNTIL - Date.now();
-    if (remainingMs <= 0) {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(updateCaptchaBypass, remainingMs);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (retryAfter <= 0) {
@@ -272,8 +256,7 @@ export default function Registration() {
           return;
         }
 
-        const bypassCaptcha = isCaptchaBypassActive();
-        if (!bypassCaptcha && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken)) {
+        if (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken) {
           setFormError(
             SMARTCAPTCHA_CLIENT_KEY
               ? "Пожалуйста, подтвердите, что вы не робот"
@@ -285,7 +268,7 @@ export default function Registration() {
         let res = await api_laravel(
           "auth",
           "check_phone",
-          bypassCaptcha ? { login: phone } : { login: phone, captcha_token: captchaToken },
+          { login: phone, captcha_token: captchaToken },
           { throwErrors: true },
         );
         res = res?.data ?? res;
@@ -364,8 +347,7 @@ export default function Registration() {
       return;
     }
 
-    const bypassCaptcha = isCaptchaBypassActive();
-    if (!bypassCaptcha && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken)) {
+    if (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken) {
       setFormError(
         SMARTCAPTCHA_CLIENT_KEY
           ? "Пожалуйста, подтвердите, что вы не робот"
@@ -381,7 +363,7 @@ export default function Registration() {
       let res = await api_laravel(
         "auth",
         "check_phone",
-        bypassCaptcha ? { login: phone } : { login: phone, captcha_token: captchaToken },
+        { login: phone, captcha_token: captchaToken },
         { throwErrors: true },
       );
       res = res?.data ?? res;
@@ -430,11 +412,7 @@ export default function Registration() {
     }
 
     if (activeStep === 0) {
-      return (
-        !isPhoneValid ||
-        !isPasswordValid ||
-        (!captchaBypassActive && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken))
-      );
+      return !isPhoneValid || !isPasswordValid || !SMARTCAPTCHA_CLIENT_KEY || !captchaToken;
     }
 
     if (activeStep === 1) {
@@ -660,7 +638,7 @@ export default function Registration() {
                   </Box>
                 </Box>
 
-                {!captchaBypassActive && SMARTCAPTCHA_CLIENT_KEY ? (
+                {SMARTCAPTCHA_CLIENT_KEY ? (
                   <Box sx={{ mb: 2 }}>
                     <SmartCaptcha
                       key={captchaResetKey}
@@ -689,7 +667,7 @@ export default function Registration() {
                   }}
                 />
 
-                {resendAfter <= 0 && !captchaBypassActive && SMARTCAPTCHA_CLIENT_KEY ? (
+                {resendAfter <= 0 && SMARTCAPTCHA_CLIENT_KEY ? (
                   <Box sx={{ mt: 1.5, mb: 1 }}>
                     <SmartCaptcha
                       key={captchaResetKey}
@@ -706,11 +684,7 @@ export default function Registration() {
                   fullWidth
                   variant="text"
                   onClick={resendCode}
-                  disabled={
-                    isLoad ||
-                    resendAfter > 0 ||
-                    (!captchaBypassActive && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken))
-                  }
+                  disabled={isLoad || resendAfter > 0 || !SMARTCAPTCHA_CLIENT_KEY || !captchaToken}
                   sx={{ mb: 2, textTransform: "none", color: AUTH_RED }}
                 >
                   {resendAfter > 0
