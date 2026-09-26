@@ -99,17 +99,18 @@
 - `Единицы`
 - `Рецепты и заготовки`
 - `Товары сайта`
-- `Архив`
 
 Скрытые / переходные части:
 
 - категории остаются в backend/read contour и shared bootstrap references, но отдельного top-level CRUD tab нет
 - item history живет внутри modal-а сущности, а не в отдельном workspace
+- cross-entity archive implementation сохранён для reference, но не опубликован: archive/restore contracts и права различаются по сущностям
 
 Важное ограничение:
 
 - tab-а отдельного CRUD для warehouse items сейчас нет
 - `Item` используется только как upstream source/reference inside editors and history
+- warehouse flags и их права остаются effective в самостоятельном `sklad_items_module_new`
 
 UI pattern for tabs:
 

@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, DialogActions, DialogContent, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
-import { MyTextInput } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import { JacoButton, JacoModal, JacoTextInput } from "@/design-system/shared/ui";
 
 export default function SkladProductionCategoryDialog({
   open,
@@ -29,41 +28,40 @@ export default function SkladProductionCategoryDialog({
   };
 
   return (
-    <MyModal
+    <JacoModal
       open={open}
       onClose={loading ? undefined : onClose}
       title="Новая категория рецептов и полуфабрикатов"
       maxWidth="sm"
-    >
-      <DialogContent>
-        <MyTextInput
-          label="Название"
-          value={name}
-          disabled={loading}
-          func={(event) => setName(event.target.value)}
-          autoFocus
-        />
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
+      actions={
         <Stack
           direction="row"
           spacing={1.5}
         >
-          <Button
+          <JacoButton
+            tone="secondary"
             onClick={onClose}
             disabled={loading}
           >
             Отмена
-          </Button>
-          <Button
-            variant="contained"
+          </JacoButton>
+          <JacoButton
             onClick={submit}
-            disabled={loading || !name.trim()}
+            loading={loading}
+            disabled={!name.trim()}
           >
             Создать
-          </Button>
+          </JacoButton>
         </Stack>
-      </DialogActions>
-    </MyModal>
+      }
+    >
+      <JacoTextInput
+        label="Название"
+        value={name}
+        disabled={loading}
+        onChange={(event) => setName(event.target.value)}
+        autoFocus
+      />
+    </JacoModal>
   );
 }

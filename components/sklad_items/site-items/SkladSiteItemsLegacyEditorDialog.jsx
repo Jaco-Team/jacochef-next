@@ -1,7 +1,13 @@
 import React from "react";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import dayjs from "dayjs";
-import MyAlert from "@/ui/MyAlert";
+import {
+  JacoAlert,
+  JacoAutocomplete,
+  JacoDatePicker,
+  JacoSelect,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
@@ -11,7 +17,6 @@ import DialogContent from "@mui/material/DialogContent";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
@@ -2085,9 +2090,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             return (
               <TableRow key={`${stageKey}-${key}`}>
                 <TableCell sx={{ width: "28%" }}>
-                  <MyAutocomplite
+                  <JacoAutocomplete
                     multiple={false}
-                    disableNoSsr
                     unifiedPopup
                     optionKey="un_id"
                     getOptionKey={(option) => `${option?.un_id}`}
@@ -2108,14 +2112,14 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   />
                 </TableCell>
                 <TableCell sx={{ width: "7%" }}>
-                  <MyTextInput
+                  <JacoTextInput
                     value={item.ei_name}
                     disabled={true}
                     className="disabled_input"
                   />
                 </TableCell>
                 <TableCell sx={{ width: "9%" }}>
-                  <MyTextInput
+                  <JacoTextInput
                     value={item.brutto}
                     isDecimalMask
                     func={this.changeItemList.bind(this, "brutto", key, stageKey)}
@@ -2123,7 +2127,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   />
                 </TableCell>
                 <TableCell sx={{ width: "9%" }}>
-                  <MyTextInput
+                  <JacoTextInput
                     value={item.pr_1}
                     type={"number"}
                     onWheel={(e) => e.target.blur()}
@@ -2131,7 +2135,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   />
                 </TableCell>
                 <TableCell sx={{ width: "11%" }}>
-                  <MyTextInput
+                  <JacoTextInput
                     value={item.netto}
                     isDecimalMask
                     disabled={true}
@@ -2139,7 +2143,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   />
                 </TableCell>
                 <TableCell sx={{ width: "11%" }}>
-                  <MyTextInput
+                  <JacoTextInput
                     value={item.pr_2}
                     type={"number"}
                     onWheel={(e) => e.target.blur()}
@@ -2147,7 +2151,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   />
                 </TableCell>
                 <TableCell sx={{ width: "11%" }}>
-                  <MyTextInput
+                  <JacoTextInput
                     value={item.res}
                     isDecimalMask
                     disabled={true}
@@ -2155,7 +2159,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   />
                 </TableCell>
                 <TableCell sx={{ width: "11%" }}>
-                  <MySelect
+                  <JacoSelect
                     is_none={false}
                     data={stages}
                     value={item.stage}
@@ -2187,9 +2191,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
         return (
           <TableRow key={`item-row-${key}`}>
             <TableCell sx={{ width: "38%" }}>
-              <MyAutocomplite
+              <JacoAutocomplete
                 multiple={false}
-                disableNoSsr
                 unifiedPopup
                 data={this.getCompositionAutocompleteOptions(
                   autocompleteKey,
@@ -2208,7 +2211,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               />
             </TableCell>
             <TableCell sx={{ width: "13%" }}>
-              <MyTextInput
+              <JacoTextInput
                 value={item.brutto}
                 isDecimalMask
                 func={this.changeItemList.bind(this, "brutto", key, "this_items")}
@@ -2216,7 +2219,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               />
             </TableCell>
             <TableCell sx={{ width: "10%" }}>
-              <MyTextInput
+              <JacoTextInput
                 value={item.pr_1}
                 type={"number"}
                 onWheel={(e) => e.target.blur()}
@@ -2224,7 +2227,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               />
             </TableCell>
             <TableCell sx={{ width: "13%" }}>
-              <MyTextInput
+              <JacoTextInput
                 value={item.netto}
                 isDecimalMask
                 disabled={true}
@@ -2232,7 +2235,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               />
             </TableCell>
             <TableCell sx={{ width: "10%" }}>
-              <MyTextInput
+              <JacoTextInput
                 value={item.pr_2}
                 type={"number"}
                 onWheel={(e) => e.target.blur()}
@@ -2240,7 +2243,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               />
             </TableCell>
             <TableCell sx={{ width: "13%" }}>
-              <MyTextInput
+              <JacoTextInput
                 value={item.res}
                 isDecimalMask
                 disabled={true}
@@ -2264,7 +2267,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
 
     return (
       <>
-        <MyAlert
+        <JacoAlert
           isOpen={this.state.openAlert}
           onClose={() => this.setState({ openAlert: false })}
           status={this.state.err_status}
@@ -2343,7 +2346,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   }}
                   style={{ paddingTop: 20 }}
                 >
-                  <MyTextInput
+                  <JacoTextInput
                     label="Название тега"
                     value={this.state.tag_name_new}
                     func={this.changeItem.bind(this, "tag_name_new")}
@@ -2575,7 +2578,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 >
                   {(access?.date_start_edit || access?.date_start_view) && (
                     <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
-                      <MyDatePickerNew
+                      <JacoDatePicker
                         label="С"
                         value={this.state.date_start}
                         disabled={!access?.date_start_edit}
@@ -2587,7 +2590,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   )}
                   {(access?.date_end_edit || access?.date_end_view) && (
                     <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
-                      <MyDatePickerNew
+                      <JacoDatePicker
                         label="По"
                         value={this.state.date_end}
                         disabled={!access?.date_end_edit}
@@ -2729,7 +2732,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.name_edit && !access?.name_view)}
                           >
-                            <MyTextInput
+                            <JacoTextInput
                               label="Наименование"
                               disabled={!access?.name_edit}
                               value={this.state.name}
@@ -2745,7 +2748,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.short_name_edit && !access?.short_name_view)}
                           >
-                            <MyTextInput
+                            <JacoTextInput
                               label="Короткое название (20 символов)"
                               value={this.state.short_name}
                               inputProps={{ maxLength: 20 }}
@@ -2764,7 +2767,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.art_edit && !access?.art_view)}
                           >
-                            <MyTextInput
+                            <JacoTextInput
                               label="Код 1С"
                               value={this.state.art}
                               disabled={!access?.art_edit}
@@ -2780,7 +2783,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
-                            <MyAutocomplite
+                            <JacoAutocomplete
                               label="Старая категория"
                               multiple={false}
                               unifiedPopup
@@ -2799,7 +2802,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
-                            <MyAutocomplite
+                            <JacoAutocomplete
                               label="Новая категория"
                               multiple={false}
                               unifiedPopup
@@ -2818,7 +2821,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.stol_edit && !access?.stol_view)}
                           >
-                            <MyTextInput
+                            <JacoTextInput
                               label="Стол"
                               type="number"
                               onWheel={(e) => e.target.blur()}
@@ -2836,7 +2839,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!canViewMarkingType)}
                           >
-                            <MyAutocomplite
+                            <JacoAutocomplete
                               label="Маркировка"
                               data={markingOptions}
                               multiple={false}
@@ -2868,7 +2871,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!this.isMarkCodeRequired() || !canViewMarkCode)}
                           >
-                            <MyTextInput
+                            <JacoTextInput
                               label="Код маркировки"
                               value={this.state.mark_code}
                               disabled={!canEditMarkCode}
@@ -2902,7 +2905,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 6,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Кусочков или размер"
                                   type="number"
                                   onWheel={(e) => e.target.blur()}
@@ -2919,7 +2922,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 6,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Вес"
                                   type="number"
                                   onWheel={(e) => e.target.blur()}
@@ -2948,7 +2951,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 4,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Белки"
                                   type="number"
                                   onWheel={(e) => e.target.blur()}
@@ -2965,7 +2968,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 4,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Жиры"
                                   type="number"
                                   onWheel={(e) => e.target.blur()}
@@ -2982,7 +2985,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 4,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Углеводы"
                                   type="number"
                                   onWheel={(e) => e.target.blur()}
@@ -2999,7 +3002,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 6,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Калорийность на 100 г, ккал"
                                   value={this.getCaloriesPer100g()}
                                   disabled={true}
@@ -3011,7 +3014,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   md: 6,
                                 }}
                               >
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Калорийность всего блюда, ккал"
                                   value={this.getCaloriesForDish()}
                                   disabled={true}
@@ -3038,7 +3041,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               spacing={2.5}
                             >
                               <Grid size={{ xs: 12 }}>
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Состав"
                                   value={this.state.tmp_desc}
                                   disabled={!canEditDescription}
@@ -3050,7 +3053,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                 />
                               </Grid>
                               <Grid size={{ xs: 12 }}>
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Полное описание (в карточке)"
                                   value={this.state.marc_desc_full}
                                   disabled={!canEditDescription}
@@ -3062,7 +3065,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                 />
                               </Grid>
                               <Grid size={{ xs: 12 }}>
-                                <MyTextInput
+                                <JacoTextInput
                                   label="Короткое описание (в списке)"
                                   value={this.state.marc_desc}
                                   maxLength={20}
@@ -3099,7 +3102,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   xs: 12,
                                 }}
                               >
-                                <MyAutocomplite
+                                <JacoAutocomplete
                                   label="Теги"
                                   multiple={true}
                                   unifiedPopup
@@ -3272,7 +3275,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     md: 4,
                                   }}
                                 >
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label="Время на 1 этап MM:SS"
                                     value={this.state.time_stage_1}
                                     disabled={!canEditComposition}
@@ -3289,7 +3292,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     md: 4,
                                   }}
                                 >
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label="Время на 2 этап MM:SS"
                                     value={this.state.time_stage_2}
                                     disabled={!canEditComposition}
@@ -3306,7 +3309,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     md: 4,
                                   }}
                                 >
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label="Время на 3 этап MM:SS"
                                     value={this.state.time_stage_3}
                                     disabled={!canEditComposition}
@@ -3351,9 +3354,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     {renderPreparationRows("not_stage", "Без этапа")}
                                     <TableRow>
                                       <TableCell>
-                                        <MyAutocomplite
+                                        <JacoAutocomplete
                                           multiple={false}
-                                          disableNoSsr
                                           unifiedPopup
                                           data={this.getCompositionAutocompleteOptions(
                                             "preparation-new",
@@ -3395,7 +3397,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                         </Typography>
                                       </TableCell>
                                       <TableCell>
-                                        <MyTextInput
+                                        <JacoTextInput
                                           value={this.state.all_w_brutto_p}
                                           isDecimalMask
                                           disabled={true}
@@ -3404,7 +3406,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       </TableCell>
                                       <TableCell />
                                       <TableCell>
-                                        <MyTextInput
+                                        <JacoTextInput
                                           value={this.state.all_w_netto_p}
                                           isDecimalMask
                                           disabled={true}
@@ -3413,7 +3415,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       </TableCell>
                                       <TableCell />
                                       <TableCell>
-                                        <MyTextInput
+                                        <JacoTextInput
                                           value={this.state.all_w_p}
                                           isDecimalMask
                                           disabled={true}
@@ -3464,9 +3466,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     {renderItemRows()}
                                     <TableRow>
                                       <TableCell>
-                                        <MyAutocomplite
+                                        <JacoAutocomplete
                                           multiple={false}
-                                          disableNoSsr
                                           unifiedPopup
                                           data={this.getCompositionAutocompleteOptions(
                                             "item-new",
@@ -3507,7 +3508,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                         </Typography>
                                       </TableCell>
                                       <TableCell>
-                                        <MyTextInput
+                                        <JacoTextInput
                                           value={this.state.all_w_brutto}
                                           isDecimalMask
                                           disabled={true}
@@ -3516,7 +3517,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       </TableCell>
                                       <TableCell />
                                       <TableCell>
-                                        <MyTextInput
+                                        <JacoTextInput
                                           value={this.state.all_w_netto}
                                           isDecimalMask
                                           disabled={true}
@@ -3525,7 +3526,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       </TableCell>
                                       <TableCell />
                                       <TableCell>
-                                        <MyTextInput
+                                        <JacoTextInput
                                           value={this.state.all_w}
                                           isDecimalMask
                                           disabled={true}

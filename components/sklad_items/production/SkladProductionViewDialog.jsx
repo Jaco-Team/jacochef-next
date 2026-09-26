@@ -22,11 +22,12 @@ import {
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
-import MyModal from "@/ui/MyModal";
+import { JacoModal } from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import { formatDateRangeRU } from "../formatDateRangeRU";
 import SkladInfoField from "../ui/SkladInfoField";
 import SkladSectionCard from "../ui/SkladSectionCard";
+import { getCompositionLoss, getCompositionOutput } from "./productionEditor.helpers";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -50,24 +51,6 @@ function formatMetricValue(value) {
   }
 
   return String(value);
-}
-
-function pickFirstDefined(...values) {
-  for (const value of values) {
-    if (value !== null && value !== undefined && value !== "") {
-      return value;
-    }
-  }
-
-  return null;
-}
-
-function getCompositionLoss(item) {
-  return pickFirstDefined(item?.loss, item?.waste, item?.proc_loss, item?.loss_percent);
-}
-
-function getCompositionOutput(item) {
-  return pickFirstDefined(item?.res, item?.output, item?.all_w, item?.weight_out);
 }
 
 const TABS = [
@@ -94,7 +77,8 @@ export default function SkladProductionViewDialog({
   const items = Array.isArray(detail?.items) ? detail.items : [];
 
   return (
-    <MyModal
+    <JacoModal
+      contentWrapper={false}
       open={open}
       onClose={onClose}
       maxWidth="lg"
@@ -199,12 +183,6 @@ export default function SkladProductionViewDialog({
                     </Grid>
                     <Grid size={{ xs: 12, md: 2 }}>
                       <SkladInfoField
-                        label="Выход"
-                        value={formatMetricValue(detail?.all_w)}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 2 }}>
-                      <SkladInfoField
                         label="Брутто"
                         value={formatMetricValue(detail?.all_w_brutto)}
                       />
@@ -213,6 +191,12 @@ export default function SkladProductionViewDialog({
                       <SkladInfoField
                         label="Нетто"
                         value={formatMetricValue(detail?.all_w_netto)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 2 }}>
+                      <SkladInfoField
+                        label="Выход"
+                        value={formatMetricValue(detail?.all_w)}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
@@ -330,7 +314,7 @@ export default function SkladProductionViewDialog({
                             </Grid>
                             <Grid size={{ xs: 6, md: 1.5 }}>
                               <SkladInfoField
-                                label="Потери"
+                                label="% потери при ХО"
                                 value={formatValue(getCompositionLoss(item))}
                               />
                             </Grid>
@@ -338,6 +322,12 @@ export default function SkladProductionViewDialog({
                               <SkladInfoField
                                 label="Нетто"
                                 value={formatValue(item?.netto)}
+                              />
+                            </Grid>
+                            <Grid size={{ xs: 6, md: 1.5 }}>
+                              <SkladInfoField
+                                label="% потери при ГО"
+                                value={formatValue(item?.pr_2)}
                               />
                             </Grid>
                             <Grid size={{ xs: 6, md: 1.5 }}>
@@ -419,6 +409,6 @@ export default function SkladProductionViewDialog({
           </TabContext>
         )}
       </DialogContent>
-    </MyModal>
+    </JacoModal>
   );
 }

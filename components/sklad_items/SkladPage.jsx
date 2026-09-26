@@ -2,23 +2,19 @@
 
 import { useEffect, useMemo } from "react";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import {
-  Backdrop,
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  Paper,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-} from "@mui/material";
+import { Box, Grid, Stack, Typography } from "@mui/material";
 
 import useMyAlert from "@/src/hooks/useMyAlert";
-import MyAlert from "@/ui/MyAlert";
-import TabPanel from "@/ui/TabPanel/TabPanel";
-import a11yProps from "@/ui/TabPanel/a11yProps";
+import {
+  JacoAlert,
+  JacoBackdropLoader,
+  JacoButton,
+  JacoCompactTabs,
+  JacoSurface,
+  JacoTabPanel,
+  uiColors,
+  uiShadows,
+} from "@/design-system/shared/ui";
 
 import useSkladApi from "./useSkladApi";
 import SkladUnitsTab from "./units/SkladUnitsTab";
@@ -153,13 +149,8 @@ export default function SkladPage() {
 
   return (
     <>
-      <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
-        open={isLoading}
-      >
-        <CircularProgress />
-      </Backdrop>
-      <MyAlert
+      <JacoBackdropLoader open={isLoading} />
+      <JacoAlert
         isOpen={isAlert}
         onClose={closeAlert}
         status={alertStatus}
@@ -191,37 +182,42 @@ export default function SkladPage() {
                   justifyContent: { xs: "flex-start", md: "flex-end" },
                 }}
               >
-                <Button
-                  variant="contained"
+                <JacoButton
                   startIcon={<RefreshIcon />}
                   onClick={() => requestRefresh()}
                 >
                   Обновить
-                </Button>
+                </JacoButton>
               </Stack>
             </Grid>
           </Grid>
         </Grid>
 
         <Grid size={12}>
-          <Paper sx={{ borderRadius: 3, overflow: "hidden" }}>
-            <Tabs
+          <JacoSurface
+            sx={{
+              p: 0,
+              overflow: "hidden",
+              backgroundColor: uiColors.surface,
+              borderColor: uiColors.border,
+              boxShadow: uiShadows.surface,
+            }}
+          >
+            <JacoCompactTabs
               value={tabs.length ? tab : 0}
               onChange={(_, value) => setState({ tab: value })}
+              items={tabs.map((item, index) => ({
+                id: item.key,
+                value: index,
+                label: item.label,
+              }))}
               aria-label="sklad_items tabs"
               variant="scrollable"
-              scrollButtons="auto"
+              scrollButtons={false}
               allowScrollButtonsMobile
-            >
-              {tabs.map((item, index) => (
-                <Tab
-                  key={item.key}
-                  label={item.label}
-                  {...a11yProps(index)}
-                />
-              ))}
-            </Tabs>
-          </Paper>
+              tabSx={{ textTransform: "uppercase" }}
+            />
+          </JacoSurface>
         </Grid>
 
         <Grid size={12}>
@@ -232,16 +228,16 @@ export default function SkladPage() {
             <Grid size={12}>
               {tabs.length ? (
                 tabs.map((item, index) => (
-                  <TabPanel
+                  <JacoTabPanel
                     key={item.key}
                     value={tab}
                     index={index}
                   >
                     {renderTabContent(item)}
-                  </TabPanel>
+                  </JacoTabPanel>
                 ))
               ) : (
-                <Paper sx={{ p: 3, borderRadius: 3 }}>
+                <Box sx={{ p: 3 }}>
                   <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
                   <Typography
                     sx={{
@@ -250,7 +246,7 @@ export default function SkladPage() {
                   >
                     Проверь права доступа в `sklad_items/get_all`.
                   </Typography>
-                </Paper>
+                </Box>
               )}
             </Grid>
           </Grid>

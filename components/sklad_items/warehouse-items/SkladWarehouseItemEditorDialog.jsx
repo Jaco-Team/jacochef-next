@@ -22,7 +22,12 @@ import {
   useTheme,
 } from "@mui/material";
 
-import { MyAutocomplite, MyDatePickerNew, MyTimeInput } from "@/ui/Forms";
+import {
+  JacoAutocomplete,
+  JacoDatePicker,
+  JacoFieldSwitch,
+  JacoTimePicker,
+} from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
 
@@ -66,6 +71,12 @@ function normalize(item = {}) {
       allergens_possible: [],
       storages: [],
       accounting_systems: [],
+      w_pf: 0,
+      w_trash: 0,
+      w_item: 0,
+      two_user: 0,
+      honest_sign: 0,
+      mercury: 0,
     };
   }
 
@@ -219,7 +230,7 @@ export default function SkladWarehouseItemEditorDialog({
                 </Grid>
                 {canView("categories") ? (
                   <Grid size={{ xs: 12, md: 4 }}>
-                    <MyAutocomplite
+                    <JacoAutocomplete
                       label="Категория"
                       data={categoryOptions}
                       multiple={false}
@@ -240,7 +251,7 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
                 {canView("unit") ? (
                   <Grid size={{ xs: 12, md: 2 }}>
-                    <MyAutocomplite
+                    <JacoAutocomplete
                       label="Единица"
                       data={detail?.units || []}
                       multiple={false}
@@ -261,7 +272,7 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
                 {canView("date_start") ? (
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <MyDatePickerNew
+                    <JacoDatePicker
                       required
                       label="Действует с"
                       value={draft?.date_start || ""}
@@ -273,7 +284,7 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
                 {canView("date_end") ? (
                   <Grid size={{ xs: 12, md: 3 }}>
-                    <MyDatePickerNew
+                    <JacoDatePicker
                       label="Действует по"
                       value={draft?.date_end || ""}
                       minDate={
@@ -292,6 +303,37 @@ export default function SkladWarehouseItemEditorDialog({
                 ) : null}
               </Grid>
             </SkladSectionCard>
+
+            {canView("properties") ? (
+              <SkladSectionCard
+                title="Вес и сотрудники"
+                description="Параметры производственного учёта"
+              >
+                <Grid
+                  container
+                  spacing={1.5}
+                >
+                  {[
+                    ["w_pf", "Вес заготовки"],
+                    ["w_trash", "Вес отхода"],
+                    ["w_item", "Вес товара"],
+                    ["two_user", "Два сотрудника"],
+                  ].map(([key, label]) => (
+                    <Grid
+                      key={key}
+                      size={{ xs: 12, md: 3 }}
+                    >
+                      <JacoFieldSwitch
+                        label={label}
+                        checked={Boolean(Number(draft?.[key]))}
+                        onChange={(event) => set(key, event.target.checked ? 1 : 0)}
+                        disabled={!canEdit("properties")}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </SkladSectionCard>
+            ) : null}
 
             <SkladSectionCard
               title="Закупка и остатки"
@@ -335,7 +377,7 @@ export default function SkladWarehouseItemEditorDialog({
                 <Grid size={{ xs: 12, md: 4 }}>{field("composition", "pf_id", "Состав")}</Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   {canView("time") ? (
-                    <MyTimeInput
+                    <JacoTimePicker
                       label="Время"
                       value={draft?.time_min || ""}
                       disabled={!canEdit("time")}
@@ -345,7 +387,7 @@ export default function SkladWarehouseItemEditorDialog({
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   {canView("time") ? (
-                    <MyTimeInput
+                    <JacoTimePicker
                       label="Доп. время"
                       value={draft?.time_dop_min || ""}
                       disabled={!canEdit("time")}
@@ -355,7 +397,7 @@ export default function SkladWarehouseItemEditorDialog({
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   {canView("time") ? (
-                    <MyTimeInput
+                    <JacoTimePicker
                       label="Другое время"
                       value={draft?.time_min_other || ""}
                       disabled={!canEdit("time")}
@@ -446,6 +488,27 @@ export default function SkladWarehouseItemEditorDialog({
                       onChange={(value) => set("accounting_systems", value)}
                       disabled={!canEdit("accounting_systems")}
                     />
+                  </Grid>
+                ) : null}
+                {canView("accounting_systems") ? (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                    >
+                      <JacoFieldSwitch
+                        label="Честный ЗНАК"
+                        checked={Boolean(Number(draft?.honest_sign))}
+                        onChange={(event) => set("honest_sign", event.target.checked ? 1 : 0)}
+                        disabled={!canEdit("accounting_systems")}
+                      />
+                      <JacoFieldSwitch
+                        label="Меркурий"
+                        checked={Boolean(Number(draft?.mercury))}
+                        onChange={(event) => set("mercury", event.target.checked ? 1 : 0)}
+                        disabled={!canEdit("accounting_systems")}
+                      />
+                    </Stack>
                   </Grid>
                 ) : null}
                 {canView("apps") ? (

@@ -1,5 +1,7 @@
 "use client";
 
+import { calculateProductionTotals } from "./productionEditor.helpers";
+
 export const ENTITY_TYPES = ["recipe", "semi_finished"];
 
 export function getEntityLabel(entityType) {
@@ -261,15 +263,25 @@ export function normalizeProductionDraft(entity, response = {}) {
 }
 
 export function normalizeProductionSavePayload(draft) {
+  const items = normalizeCompositionItems(draft?.items).map((item) => ({
+    item_id: item?.item_id ? Number(item.item_id) : null,
+    type_rec: item?.type_rec ?? "item",
+    brutto: item?.brutto ?? "",
+    pr_1: item?.pr_1 ?? item?.loss ?? item?.waste ?? item?.proc_loss ?? item?.loss_percent ?? "",
+    netto: item?.netto ?? "",
+    pr_2: item?.pr_2 ?? "",
+    res: item?.res ?? item?.output ?? item?.all_w ?? item?.weight_out ?? "",
+  }));
+  const totals = calculateProductionTotals(items);
   const payload = {
     name: String(draft?.name || "").trim(),
     shelf_life: draft?.shelf_life ?? "",
     date_start: draft?.date_start ?? "",
     date_end: draft?.date_end ?? "",
     ed_izmer_id: draft?.ed_izmer_id ? Number(draft.ed_izmer_id) : null,
-    all_w: draft?.all_w ?? "",
-    all_w_brutto: draft?.all_w_brutto ?? "",
-    all_w_netto: draft?.all_w_netto ?? "",
+    all_w: totals.all_w,
+    all_w_brutto: totals.all_w_brutto,
+    all_w_netto: totals.all_w_netto,
     time_min: draft?.time_min ?? "",
     time_min_dop: draft?.time_min_dop ?? "",
     structure: draft?.structure ?? "",
@@ -281,15 +293,7 @@ export function normalizeProductionSavePayload(draft) {
     categories: normalizeRelationIds(draft?.categories),
     storages: normalizeRelationIds(draft?.storages),
     apps: normalizeRelationIds(draft?.apps),
-    items: normalizeCompositionItems(draft?.items).map((item) => ({
-      item_id: item?.item_id ? Number(item.item_id) : null,
-      type_rec: item?.type_rec ?? "item",
-      brutto: item?.brutto ?? "",
-      pr_1: item?.pr_1 ?? item?.loss ?? item?.waste ?? item?.proc_loss ?? item?.loss_percent ?? "",
-      netto: item?.netto ?? "",
-      pr_2: item?.pr_2 ?? "",
-      res: item?.res ?? item?.output ?? item?.all_w ?? item?.weight_out ?? "",
-    })),
+    items,
   };
 
   if (draft?.id !== null && draft?.id !== undefined && draft?.id !== "") {

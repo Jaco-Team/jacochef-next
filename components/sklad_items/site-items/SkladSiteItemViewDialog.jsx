@@ -29,7 +29,7 @@ import {
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
-import MyModal from "@/ui/MyModal";
+import { JacoModal } from "@/design-system/shared/ui";
 import {
   SkladEmbeddedHistoryTable,
   SkladEmbeddedImageHistoryTable,
@@ -278,7 +278,8 @@ export default function SkladSiteItemViewDialog({
   };
 
   return (
-    <MyModal
+    <JacoModal
+      contentWrapper={false}
       open={open}
       onClose={onClose}
       maxWidth="lg"
@@ -985,6 +986,6 @@ export default function SkladSiteItemViewDialog({
           </TabContext>
         )}
       </DialogContent>
-    </MyModal>
+    </JacoModal>
   );
 }

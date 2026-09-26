@@ -59,6 +59,7 @@ export default function useSkladApi() {
       saveSiteItemFlag: (payload) => request("site-items/save_flag", payload),
       createSiteItemTag: (payload) => request("site-items/tags/save_new", payload),
       updateSiteItemTag: (payload) => request("site-items/tags/save_edit", payload),
+      syncSiteItemsVk: () => request("site-items/sync_vk"),
       uploadSiteItemImage: (file, payload) => upload("site-items/upload_image", file, payload),
       restoreSiteItemImage: (payload) => request("site-items/restore_image", payload),
       historyList: (payload = {}) => request("history/list", payload),

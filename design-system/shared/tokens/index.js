@@ -96,6 +96,7 @@ export const uiTypography = {
 
 export const uiShadows = {
   none: "none",
+  surface: "0px 2px 8px rgba(0, 0, 0, 0.08)",
   popover: "0px 10px 24px rgba(0, 0, 0, 0.08)",
   overlay: "0px 18px 44px rgba(17, 24, 39, 0.14)",
 };

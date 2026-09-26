@@ -22,8 +22,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MyTextInput } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import { JacoModal, JacoTextInput } from "@/design-system/shared/ui";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 
 function categoryUsageLabel(category) {
@@ -140,7 +139,8 @@ export default function SkladProductionCategoryManagerDialog({
 
   return (
     <>
-      <MyModal
+      <JacoModal
+        contentWrapper={false}
         open={open}
         onClose={loading ? undefined : onClose}
         title="Категории"
@@ -158,10 +158,7 @@ export default function SkladProductionCategoryManagerDialog({
                 value="semi_finished"
                 label="Рецепты и полуфабрикаты"
               />
-              <Tab
-                value="warehouse_item"
-                label="Товары склада"
-              />
+              {/* Suspended warehouse-item category scope; keep its logic/access wiring for later reactivation. */}
             </Tabs>
             {canCreateSource ? (
               <Paper
@@ -171,9 +168,9 @@ export default function SkladProductionCategoryManagerDialog({
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1}
-                  alignItems={{ xs: "stretch", sm: "center" }}
+                  sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                 >
-                  <MyTextInput
+                  <JacoTextInput
                     label="Новая категория"
                     value={newCategoryName}
                     disabled={loading}
@@ -237,14 +234,14 @@ export default function SkladProductionCategoryManagerDialog({
                   <Stack
                     direction={{ xs: "column", sm: "row" }}
                     spacing={1.5}
-                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                   >
                     <Stack
                       spacing={0.25}
                       sx={{ minWidth: 0, flex: 1 }}
                     >
                       {isEditing ? (
-                        <MyTextInput
+                        <JacoTextInput
                           label="Название категории"
                           value={name}
                           disabled={loading}
@@ -256,7 +253,7 @@ export default function SkladProductionCategoryManagerDialog({
                           <Stack
                             direction="row"
                             spacing={1}
-                            alignItems="center"
+                            sx={{ alignItems: "center" }}
                           >
                             <Typography
                               fontWeight={600}
@@ -284,7 +281,7 @@ export default function SkladProductionCategoryManagerDialog({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      justifyContent="flex-end"
+                      sx={{ justifyContent: "flex-end" }}
                     >
                       {isEditing ? (
                         <>
@@ -377,7 +374,7 @@ export default function SkladProductionCategoryManagerDialog({
             Закрыть
           </Button>
         </DialogActions>
-      </MyModal>
+      </JacoModal>
 
       <SkladDeleteDialog
         open={Boolean(deleteCategory)}

@@ -7,12 +7,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
-  Button,
   Chip,
   Grid,
-  IconButton,
-  MenuItem,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -21,10 +17,17 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoSelect,
+  JacoSurface,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import { formatDateRU } from "../formatDateRangeRU";
@@ -72,6 +75,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
     access,
     canCreateWarehouseItem,
     canManageWarehouseItems,
+    canViewWarehouseItemsHistory,
     canUseWarehouseItemPastDate,
     canDelete,
   } = useSkladAccess();
@@ -225,16 +229,14 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
 
   return (
     <>
-      <Paper sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 3 }}>
+      <JacoSurface sx={{ p: { xs: 1.5, md: 2 } }}>
         <Stack spacing={2}>
           <Grid
             container
             spacing={1.5}
           >
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                size="small"
-                fullWidth
+              <JacoTextInput
                 label="Поиск"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -246,63 +248,46 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                 spacing={0.5}
                 alignItems="center"
               >
-                <TextField
-                  size="small"
-                  select
-                  fullWidth
+                <JacoSelect
                   label="Категория"
                   value={categoryKey}
                   onChange={(event) => setCategoryKey(event.target.value)}
-                >
-                  <MenuItem value="">Все категории</MenuItem>
-                  {warehouseCategories.map((row) => (
-                    <MenuItem
-                      key={row.category_key || row.id}
-                      value={row.category_key || `warehouse_item:${row.id}`}
-                    >
-                      {row.parent_name ? `${row.parent_name} / ${row.name}` : row.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  allowNone={false}
+                  options={[
+                    { id: "", name: "Все категории" },
+                    ...warehouseCategories.map((row) => ({
+                      id: row.category_key || `warehouse_item:${row.id}`,
+                      name: row.parent_name ? `${row.parent_name} / ${row.name}` : row.name,
+                    })),
+                  ]}
+                />
                 <Tooltip title="Управление категориями">
-                  <IconButton onClick={openCategoryManager}>
+                  <JacoIconButton onClick={openCategoryManager}>
                     <SettingsOutlinedIcon />
-                  </IconButton>
+                  </JacoIconButton>
                 </Tooltip>
               </Stack>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                size="small"
-                select
-                fullWidth
+              <JacoSelect
                 label="Показать"
                 value={stateFilter}
                 onChange={(event) => {
                   setStateFilter(event.target.value);
                   setPage(0);
                 }}
-              >
-                {STATE_OPTIONS.map(([value, label]) => (
-                  <MenuItem
-                    key={value}
-                    value={value}
-                  >
-                    {label}
-                  </MenuItem>
-                ))}
-              </TextField>
+                allowNone={false}
+                options={STATE_OPTIONS.map(([id, name]) => ({ id, name }))}
+              />
             </Grid>
             <Grid size={12}>
-              <Button
-                size="small"
-                variant="contained"
+              <JacoButton
                 startIcon={<AddIcon />}
                 disabled={!canCreateWarehouseItem}
                 onClick={() => openEditor()}
               >
                 Добавить товар
-              </Button>
+              </JacoButton>
             </Grid>
           </Grid>
 
@@ -352,33 +337,30 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                       >
                         <Tooltip title="Редактировать">
                           <span>
-                            <IconButton
-                              size="small"
+                            <JacoIconButton
                               disabled={!canManageWarehouseItems}
                               onClick={() => openEditor(row)}
                             >
                               <EditIcon fontSize="small" />
-                            </IconButton>
+                            </JacoIconButton>
                           </span>
                         </Tooltip>
-                        <Tooltip title="История">
-                          <IconButton
-                            size="small"
-                            onClick={() => openEditor(row, true)}
-                          >
-                            <HistoryOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        {canViewWarehouseItemsHistory ? (
+                          <Tooltip title="История">
+                            <JacoIconButton onClick={() => openEditor(row, true)}>
+                              <HistoryOutlinedIcon fontSize="small" />
+                            </JacoIconButton>
+                          </Tooltip>
+                        ) : null}
                         <Tooltip title="Удалить">
                           <span>
-                            <IconButton
-                              size="small"
-                              color="error"
+                            <JacoIconButton
+                              sx={{ color: "error.main" }}
                               disabled={!canDelete("item") || row?.delete_state === "blocked"}
                               onClick={() => setRemove({ open: true, row, loading: false })}
                             >
                               <DeleteOutlineIcon fontSize="small" />
-                            </IconButton>
+                            </JacoIconButton>
                           </span>
                         </Tooltip>
                       </Stack>
@@ -415,7 +397,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
             labelRowsPerPage="Строк на странице:"
           />
         </Stack>
-      </Paper>
+      </JacoSurface>
 
       <SkladWarehouseItemEditorDialog
         open={editor.open}
