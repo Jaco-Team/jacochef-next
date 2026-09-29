@@ -138,3 +138,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Architecture Before Implementation
+
+For multi-step business modules, establish and document the full solution before editing implementation code: current business process, task-derived target process, backend contract, data ownership, legacy compatibility, authorization, responsive UI flows, and test strategy. Reuse existing project and design-system patterns. Do not deliver isolated visual or local-state patches before the durable backend contract and acceptance flow are defined. Keep task UI aligned with the documented business process and update the contract/plan when implementation facts change.
