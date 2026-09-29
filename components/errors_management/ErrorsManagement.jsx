@@ -258,7 +258,6 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
       setLoading(false);
     }
   };
-
   return (
     <Drawer
       anchor="right"
@@ -402,9 +401,11 @@ function ErrorsManagement() {
   const [points, setPoints] = useState([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [orders, setOrders] = useState([]);
+  const [complaints, setComplaints] = useState([]);
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState("journal");
   const [statistics, setStatistics] = useState(null);
+  const [ready, setReady] = useState(false);
 
   const request = useCallback(
     async (method, data = {}) => api_laravel(moduleName, method, data),
@@ -432,7 +433,27 @@ function ErrorsManagement() {
     },
     [request],
   );
+  const loadComplaints = useCallback(
+    async (nextFilters) => {
+      const response = await request("v2/journal", {
+        page: 1,
+        per_page: 50,
+        filters: {
+          city_id: nextFilters.cityId || null,
+          point_id: nextFilters.pointId || null,
+          order_id: nextFilters.orderNumber || null,
+          date_from: nextFilters.dateFrom || null,
+          date_to: nextFilters.dateTo || null,
+        },
+      });
+      const payload = response?.data ?? response;
+      setComplaints(Array.isArray(payload?.items) ? payload.items : []);
+    },
+    [request],
+  );
+
   const bootstrap = useCallback(async () => {
+    setReady(false);
     setLoading(true);
     setMessage("");
     try {
@@ -447,13 +468,13 @@ function ErrorsManagement() {
       setCities(nextCities);
       setPoints(nextPoints);
       setFilters(nextFilters);
-      await loadOrders(nextFilters);
+      setReady(true);
     } catch {
       setMessage("Не удалось загрузить модуль.");
     } finally {
       setLoading(false);
     }
-  }, [loadOrders, request]);
+  }, [loadComplaints, loadOrders, request]);
   useEffect(() => {
     setMounted(true);
     bootstrap();
@@ -462,7 +483,15 @@ function ErrorsManagement() {
     document.title = title;
   }, [title]);
   useEffect(() => {
-    if (tab !== "statistics") return;
+    if (!ready || tab !== "journal") return;
+    loadComplaints(filters);
+  }, [filters, loadComplaints, ready, tab]);
+  useEffect(() => {
+    if (!ready || tab !== "registration") return;
+    loadOrders(filters);
+  }, [filters, loadOrders, ready, tab]);
+  useEffect(() => {
+    if (!ready || tab !== "statistics") return;
     request("v2/statistics", {
       filters: {
         city_id: filters.cityId || null,
@@ -471,7 +500,7 @@ function ErrorsManagement() {
         date_to: filters.dateTo || null,
       },
     }).then((response) => setStatistics(response?.data ?? response ?? null));
-  }, [filters.cityId, filters.dateFrom, filters.dateTo, filters.pointId, request, tab]);
+  }, [filters.cityId, filters.dateFrom, filters.dateTo, filters.pointId, ready, request, tab]);
   const cafes = useMemo(
     () => points.filter((item) => !filters.cityId || item.city_id === filters.cityId),
     [filters.cityId, points],
@@ -486,13 +515,15 @@ function ErrorsManagement() {
     setLoading(true);
     setMessage("");
     try {
-      await loadOrders(filters);
+      if (tab === "journal") await loadComplaints(filters);
+      else await loadOrders(filters);
     } catch {
       setMessage("Не удалось загрузить журнал.");
     } finally {
       setLoading(false);
     }
   };
+  const rows = tab === "journal" ? complaints : orders;
 
   return (
     <Box
@@ -631,7 +662,7 @@ function ErrorsManagement() {
             </Box>
             {mobile ? (
               <Stack spacing={1.5}>
-                {orders.map((row, index) => (
+                {rows.map((row, index) => (
                   <Paper
                     key={`${orderId(row)}-${index}`}
                     variant="outlined"
@@ -645,7 +676,7 @@ function ErrorsManagement() {
                         <Typography fontWeight={700}>Заказ №{orderId(row)}</Typography>
                         <Chip
                           size="small"
-                          label={row.status || "—"}
+                          label={row.status_label || row.status || "—"}
                         />
                       </Stack>
                       <Typography color="text.secondary">Кафе: {row.point_id || "—"}</Typography>
@@ -655,12 +686,21 @@ function ErrorsManagement() {
                         sx={{ justifyContent: "space-between" }}
                       >
                         <Typography>{row.order_price || "—"} ₽</Typography>
-                        <Button
-                          size="small"
-                          onClick={() => setSelected(row)}
-                        >
-                          {tab === "registration" ? "Зарегистрировать" : "Открыть"}
-                        </Button>
+                        {tab === "registration" ? (
+                          <Button
+                            size="small"
+                            onClick={() => setSelected(row)}
+                          >
+                            Зарегистрировать
+                          </Button>
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            {row.created_at || "—"}
+                          </Typography>
+                        )}
                       </Stack>
                     </Stack>
                   </Paper>
@@ -677,41 +717,49 @@ function ErrorsManagement() {
                       <TableRow>
                         <TableCell>Заказ</TableCell>
                         <TableCell>Кафе</TableCell>
-                        <TableCell>Клиент</TableCell>
-                        <TableCell>Адрес</TableCell>
+                        <TableCell>{tab === "journal" ? "Автор" : "Клиент"}</TableCell>
+                        <TableCell>{tab === "journal" ? "Дата регистрации" : "Адрес"}</TableCell>
                         <TableCell>Статус</TableCell>
                         <TableCell>Сумма</TableCell>
                         <TableCell />
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {orders.map((row, index) => (
+                      {rows.map((row, index) => (
                         <TableRow
                           hover
                           key={`${orderId(row)}-${index}`}
                         >
                           <TableCell>№{orderId(row)}</TableCell>
-                          <TableCell>{row.point_id || "—"}</TableCell>
-                          <TableCell>{row.number || "—"}</TableCell>
+                          <TableCell>{row.cafe_name || row.point_id || "—"}</TableCell>
                           <TableCell>
-                            {row.type_order_ === 1
-                              ? `${row.street || ""} ${row.home || ""}`
-                              : row.type_order_addr_new || "—"}
+                            {tab === "journal" ? row.created_by_name || "—" : row.number || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {tab === "journal"
+                              ? row.created_at || "—"
+                              : row.type_order_ === 1
+                                ? `${row.street || ""} ${row.home || ""}`
+                                : row.type_order_addr_new || "—"}
                           </TableCell>
                           <TableCell>
                             <Chip
                               size="small"
-                              label={row.status || "—"}
+                              label={row.status_label || row.status || "—"}
                             />
                           </TableCell>
                           <TableCell>{row.order_price || "—"} ₽</TableCell>
                           <TableCell align="right">
-                            <Button
-                              size="small"
-                              onClick={() => setSelected(row)}
-                            >
-                              {tab === "registration" ? "Зарегистрировать" : "Открыть"}
-                            </Button>
+                            {tab === "registration" ? (
+                              <Button
+                                size="small"
+                                onClick={() => setSelected(row)}
+                              >
+                                Зарегистрировать
+                              </Button>
+                            ) : (
+                              "—"
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
