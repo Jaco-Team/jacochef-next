@@ -145,4 +145,4 @@ For multi-step business modules, establish and document the full solution before
 
 ## Commit messages
 
-Use the repository history style: a capitalized imperative sentence without Conventional Commit prefixes or scopes. Check recent commits before creating or rewriting a commit.
+Use `feat:`, `fix:`, `refactor:`, or `docs:` followed by a brief lowercase recap. Check recent commits before creating or rewriting a commit.
