@@ -52,13 +52,11 @@ const filterSx = { p: { xs: 2, md: 2.5 }, ...surfaceSx };
 const titleSx = { fontSize: { xs: 26, md: 32 }, fontWeight: 700, lineHeight: 1.2 };
 
 function selectOptions(items = []) {
-  return items
-    .filter(Boolean)
-    .map((item) => ({
-      id: String(item.id),
-      name: item.name || item.addr || String(item.id),
-      city_id: String(item.city_id ?? ""),
-    }));
+  return items.filter(Boolean).map((item) => ({
+    id: String(item.id),
+    name: item.name || item.addr || String(item.id),
+    city_id: String(item.city_id ?? ""),
+  }));
 }
 
 function orderId(row) {
@@ -406,6 +404,7 @@ function ErrorsManagement() {
   const [orders, setOrders] = useState([]);
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState("journal");
+  const [statistics, setStatistics] = useState(null);
 
   const request = useCallback(
     async (method, data = {}) => api_laravel(moduleName, method, data),
@@ -462,6 +461,17 @@ function ErrorsManagement() {
   useEffect(() => {
     document.title = title;
   }, [title]);
+  useEffect(() => {
+    if (tab !== "statistics") return;
+    request("v2/statistics", {
+      filters: {
+        city_id: filters.cityId || null,
+        point_id: filters.pointId || null,
+        date_from: filters.dateFrom || null,
+        date_to: filters.dateTo || null,
+      },
+    }).then((response) => setStatistics(response?.data ?? response ?? null));
+  }, [filters.cityId, filters.dateFrom, filters.dateTo, filters.pointId, request, tab]);
   const cafes = useMemo(
     () => points.filter((item) => !filters.cityId || item.city_id === filters.cityId),
     [filters.cityId, points],
@@ -712,14 +722,103 @@ function ErrorsManagement() {
             )}
           </>
         ) : (
-          <Paper
-            variant="outlined"
-            sx={{ p: { xs: 2, md: 3 }, ...surfaceSx }}
-          >
-            <Typography fontWeight={700}>
-              Статистика будет доступна после подключения серверной агрегации.
-            </Typography>
-          </Paper>
+          <Stack spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 2.5, ...surfaceSx }}
+                >
+                  <Typography color="text.secondary">Всего жалоб</Typography>
+                  <Typography
+                    variant="h4"
+                    fontWeight={700}
+                  >
+                    {statistics?.total ?? "—"}
+                  </Typography>
+                </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 2.5, ...surfaceSx }}
+                >
+                  <Typography color="text.secondary">Доля решённых</Typography>
+                  <Typography
+                    variant="h4"
+                    fontWeight={700}
+                  >
+                    {statistics ? `${statistics.resolution_rate}%` : "—"}
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+            <Paper
+              variant="outlined"
+              sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
+            >
+              <Typography
+                fontWeight={700}
+                mb={1.5}
+              >
+                По источнику
+              </Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Источник</TableCell>
+                    <TableCell align="right">Жалобы</TableCell>
+                    <TableCell align="right">Решено</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(statistics?.by_source || []).map((row) => (
+                    <TableRow key={row.source}>
+                      <TableCell>{row.source === "cafe" ? "Кафе" : "Контакт-центр"}</TableCell>
+                      <TableCell align="right">{row.total}</TableCell>
+                      <TableCell align="right">{row.resolved}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+            <Paper
+              variant="outlined"
+              sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
+            >
+              <Typography
+                fontWeight={700}
+                mb={1.5}
+              >
+                Категории и ошибки
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Категория</TableCell>
+                      <TableCell>Тип ошибки</TableCell>
+                      <TableCell>Ошибка</TableCell>
+                      <TableCell align="right">Количество</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(statistics?.by_error || []).map((row, index) => (
+                      <TableRow key={`${row.error_name}-${index}`}>
+                        <TableCell>{row.category_name}</TableCell>
+                        <TableCell>{row.error_type_name || "—"}</TableCell>
+                        <TableCell>{row.error_name}</TableCell>
+                        <TableCell align="right">{row.total}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Stack>
         )}
       </Stack>
       <RegistrationDrawer
