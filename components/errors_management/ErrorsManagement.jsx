@@ -6,7 +6,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
-  Backdrop,
   Box,
   Button,
   Chip,
@@ -31,6 +30,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
 import { api_laravel } from "@/src/api_new";
 import {
+  JacoBackdropLoader,
   JacoButton,
   JacoSegmentedTabs,
   JacoDatePicker,
@@ -645,6 +645,7 @@ function ErrorsManagement() {
   const [complaints, setComplaints] = useState([]);
   const [selected, setSelected] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [tableOrderIdSearch, setTableOrderIdSearch] = useState("");
   const [tab, setTab] = useState("journal");
   const [statistics, setStatistics] = useState(null);
   const [statisticsDraft, setStatisticsDraft] = useState(DEFAULT_FILTERS);
@@ -657,43 +658,53 @@ function ErrorsManagement() {
   );
   const loadOrders = useCallback(
     async (nextFilters) => {
-      const orderNumber = nextFilters.orderNumber.trim();
-      const response = await request("get_orders", {
-        city_id: nextFilters.cityId || "",
-        point_id: nextFilters.pointId || 0,
-        type_order: 0,
-        order_id: orderNumber,
-        number_order: orderNumber,
-        sum_from: "",
-        sum_to: "",
-        date_from: orderNumber ? "" : nextFilters.dateFrom || "",
-        date_to: orderNumber ? "" : nextFilters.dateTo || "",
-        phone: "",
-        number: "",
-        time_from: "",
-        time_to: "",
-      });
-      const payload = response?.data ?? response;
-      setOrders(Array.isArray(payload?.orders) ? payload.orders : []);
+      setLoading(true);
+      try {
+        const orderNumber = nextFilters.orderNumber.trim();
+        const response = await request("get_orders", {
+          city_id: nextFilters.cityId || "",
+          point_id: nextFilters.pointId || 0,
+          type_order: 0,
+          order_id: orderNumber,
+          number_order: orderNumber,
+          sum_from: "",
+          sum_to: "",
+          date_from: orderNumber ? "" : nextFilters.dateFrom || "",
+          date_to: orderNumber ? "" : nextFilters.dateTo || "",
+          phone: "",
+          number: "",
+          time_from: "",
+          time_to: "",
+        });
+        const payload = response?.data ?? response;
+        setOrders(Array.isArray(payload?.orders) ? payload.orders : []);
+      } finally {
+        setLoading(false);
+      }
     },
     [request],
   );
   const loadComplaints = useCallback(
     async (nextFilters) => {
-      const orderNumber = nextFilters.orderNumber.trim();
-      const response = await request("v2/journal", {
-        page: 1,
-        per_page: 50,
-        filters: {
-          city_id: nextFilters.cityId || null,
-          point_id: nextFilters.pointId || null,
-          order_id: orderNumber || null,
-          date_from: orderNumber ? null : nextFilters.dateFrom || null,
-          date_to: orderNumber ? null : nextFilters.dateTo || null,
-        },
-      });
-      const payload = response?.data ?? response;
-      setComplaints(Array.isArray(payload?.items) ? payload.items : []);
+      setLoading(true);
+      try {
+        const orderNumber = nextFilters.orderNumber.trim();
+        const response = await request("v2/journal", {
+          page: 1,
+          per_page: 50,
+          filters: {
+            city_id: nextFilters.cityId || null,
+            point_id: nextFilters.pointId || null,
+            order_id: orderNumber || null,
+            date_from: orderNumber ? null : nextFilters.dateFrom || null,
+            date_to: orderNumber ? null : nextFilters.dateTo || null,
+          },
+        });
+        const payload = response?.data ?? response;
+        setComplaints(Array.isArray(payload?.items) ? payload.items : []);
+      } finally {
+        setLoading(false);
+      }
     },
     [request],
   );
@@ -739,26 +750,24 @@ function ErrorsManagement() {
     if (!ready || tab !== "registration") return;
     loadOrders(appliedFilters).catch(() => setMessage("Не удалось загрузить заказы."));
   }, [appliedFilters, loadOrders, ready, tab]);
-  useEffect(() => {
-    if (!ready || tab === "statistics") return undefined;
-    const timer = window.setTimeout(() => {
-      setAppliedFilters((previous) => ({ ...previous, orderNumber: filters.orderNumber }));
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [filters.orderNumber, ready, tab]);
   const loadStatistics = useCallback(
     async (nextFilters) => {
-      const response = await request("v2/statistics", {
-        filters: {
-          city_id: nextFilters.cityId || null,
-          point_id: nextFilters.pointId || null,
-          date_from: nextFilters.dateFrom || null,
-          date_to: nextFilters.dateTo || null,
-          source: nextFilters.source || null,
-          employee_id: nextFilters.employeeId || null,
-        },
-      });
-      setStatistics(response?.data ?? response ?? null);
+      setLoading(true);
+      try {
+        const response = await request("v2/statistics", {
+          filters: {
+            city_id: nextFilters.cityId || null,
+            point_id: nextFilters.pointId || null,
+            date_from: nextFilters.dateFrom || null,
+            date_to: nextFilters.dateTo || null,
+            source: nextFilters.source || null,
+            employee_id: nextFilters.employeeId || null,
+          },
+        });
+        setStatistics(response?.data ?? response ?? null);
+      } finally {
+        setLoading(false);
+      }
     },
     [request],
   );
@@ -785,6 +794,11 @@ function ErrorsManagement() {
     setAppliedFilters(filters);
   };
   const rows = tab === "journal" ? complaints : orders;
+  const visibleRows = useMemo(() => {
+    const query = tableOrderIdSearch.trim();
+    if (!query) return rows;
+    return rows.filter((row) => String(orderId(row)).includes(query));
+  }, [rows, tableOrderIdSearch]);
   const statisticsCafes = useMemo(
     () =>
       points.filter((item) => !statisticsDraft.cityId || item.city_id === statisticsDraft.cityId),
@@ -807,12 +821,10 @@ function ErrorsManagement() {
       className="container_first_child"
       sx={rootSx}
     >
-      <Backdrop
+      <JacoBackdropLoader
         open={loading}
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
+        sx={{ "& .MuiCircularProgress-root": { color: "#FFFFFF" } }}
+      />
       <Stack spacing={2.5}>
         <Typography
           component="h1"
@@ -847,7 +859,7 @@ function ErrorsManagement() {
                 spacing={1.5}
                 sx={{ alignItems: "center" }}
               >
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <JacoSelect
                     label="Город"
                     options={cities}
@@ -857,7 +869,7 @@ function ErrorsManagement() {
                     onChange={(event) => update("cityId", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <JacoSelect
                     label="Кафе"
                     options={cafes}
@@ -867,46 +879,69 @@ function ErrorsManagement() {
                     onChange={(event) => update("pointId", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <JacoDatePicker
                     label="Дата от"
                     value={filters.dateFrom}
                     onChange={(value) => update("dateFrom", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <JacoDatePicker
                     label="Дата до"
                     value={filters.dateTo}
                     onChange={(value) => update("dateTo", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <JacoSearch
-                    label="Номер заказа"
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <JacoTextInput
+                    placeholder="Номер заказа"
+                    inputProps={{ "aria-label": "Номер заказа" }}
                     value={filters.orderNumber}
-                    onValueChange={(value) => update("orderNumber", value)}
-                    debounceMs={350}
+                    onChange={(event) => update("orderNumber", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12 }}>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 2 }}
+                  sx={{ display: "flex", alignItems: "flex-end" }}
+                >
                   <JacoButton
                     type="submit"
-                    fullWidth={mobile}
+                    fullWidth
+                    sx={{ minHeight: 44 }}
                   >
                     Применить
                   </JacoButton>
                 </Grid>
               </Grid>
             </JacoSurface>
-            {rows.length === 0 ? (
-              <EmptyResults
-                mode={tab}
-                onAction={() => setTab("registration")}
+            <Box sx={{ width: { xs: "100%", sm: 360 } }}>
+              <JacoSearch
+                label="Поиск в таблице по ID заказа"
+                value={tableOrderIdSearch}
+                onValueChange={setTableOrderIdSearch}
+                debounceMs={350}
               />
+            </Box>
+            {visibleRows.length === 0 ? (
+              tableOrderIdSearch ? (
+                <JacoSurface
+                  variant="outlined"
+                  sx={{ p: { xs: 3, md: 4 }, textAlign: "center", ...surfaceSx }}
+                >
+                  <Typography color="text.secondary">
+                    По указанному ID заказа ничего не найдено.
+                  </Typography>
+                </JacoSurface>
+              ) : (
+                <EmptyResults
+                  mode={tab}
+                  onAction={() => setTab("registration")}
+                />
+              )
             ) : mobile ? (
               <Stack spacing={1.5}>
-                {rows.map((row, index) => (
+                {visibleRows.map((row, index) => (
                   <JacoSurface
                     key={`${orderId(row)}-${index}`}
                     variant="outlined"
@@ -969,7 +1004,7 @@ function ErrorsManagement() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {rows.map((row, index) => (
+                      {visibleRows.map((row, index) => (
                         <TableRow
                           hover
                           key={`${orderId(row)}-${index}`}
