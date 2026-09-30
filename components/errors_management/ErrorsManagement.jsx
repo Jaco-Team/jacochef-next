@@ -29,15 +29,15 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import { api_laravel } from "@/src/api_new";
 import {
   JacoButton,
-  JacoCompactTabs,
+  JacoSegmentedTabs,
   JacoDatePicker,
   JacoSelect,
   JacoSurface,
   JacoTextInput,
+  JacoResponsiveModalShell,
 } from "@/design-system/shared/ui";
 import JacoSearch from "@/ui/JacoSearch";
 import dayjs from "dayjs";
@@ -47,7 +47,7 @@ const DEFAULT_FILTERS = {
   cityId: "",
   pointId: "",
   orderNumber: "",
-  dateFrom: dayjs().format("YYYY-MM-DD"),
+  dateFrom: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
   dateTo: dayjs().format("YYYY-MM-DD"),
 };
 const rootSx = { pb: 3 };
@@ -88,6 +88,7 @@ function selectOptions(items = []) {
   return items.filter(Boolean).map((item) => ({
     id: String(item.id),
     name: item.name || item.addr || String(item.id),
+    addr: item.addr || item.name || "",
     city_id: String(item.city_id ?? ""),
   }));
 }
@@ -344,7 +345,7 @@ function ErrorEditor({ value, positions, catalog, solutions, stages, onChange, o
   );
 }
 
-function RegistrationDrawer({ selected, onClose, request, onSaved }) {
+function RegistrationDrawer({ selected, onClose, request, onSaved, cities, points }) {
   const [context, setContext] = useState(null);
   const [errors, setErrors] = useState([]);
   const [comment, setComment] = useState("");
@@ -391,63 +392,64 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
       setLoading(false);
     }
   };
+  const cafeContext = useMemo(() => {
+    const point = points.find((item) => String(item.id) === String(context?.order?.point_id));
+    const city = cities.find((item) => String(item.id) === String(context?.order?.city_id));
+    return (
+      [city?.name, point?.addr || point?.name].filter(Boolean).join(" · ") || "Кафе не определено"
+    );
+  }, [cities, context?.order?.city_id, context?.order?.point_id, points]);
+
+  const actions =
+    context && !loading ? (
+      <JacoButton
+        fullWidth
+        disabled={!errors.length}
+        onClick={save}
+      >
+        Зарегистрировать жалобу
+      </JacoButton>
+    ) : null;
+
   return (
-    <Drawer
-      anchor="right"
+    <JacoResponsiveModalShell
       open={Boolean(selected)}
       onClose={onClose}
-      PaperProps={{ sx: { width: { xs: "100%", sm: 640 }, p: { xs: 2, md: 3 } } }}
+      title="Регистрация жалобы"
+      maxWidth="md"
+      actions={actions}
+      mobilePaperSx={{ height: "100vh", maxHeight: "100vh", borderRadius: 0 }}
+      mobileContentSx={{ px: 2, py: 2.5 }}
+      mobileActionsSx={{ px: 2, pt: 1.5, pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
     >
-      <Stack
-        spacing={2.5}
-        sx={{ height: "100%" }}
-      >
-        <Stack
-          direction="row"
-          gap={2}
-          sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
-        >
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight={700}
-            >
-              Регистрация жалобы
-            </Typography>
-            <Typography color="text.secondary">Заказ №{orderId(selected)}</Typography>
-          </Box>
-          <Button
-            color="inherit"
-            onClick={onClose}
-            startIcon={<CloseIcon />}
-          >
-            Закрыть
-          </Button>
-        </Stack>
+      <Stack spacing={2.5}>
         {message ? <Alert severity="error">{message}</Alert> : null}
         {loading ? (
-          <Box sx={{ display: "grid", placeItems: "center", py: 6 }}>
+          <Box sx={{ display: "grid", placeItems: "center", minHeight: 240 }}>
             <CircularProgress />
           </Box>
         ) : context ? (
           <>
-            <Box>
+            <JacoSurface sx={{ p: 2 }}>
               <Typography
                 variant="subtitle2"
                 color="text.secondary"
               >
-                Кафе
+                Заказ №{orderId(selected)}
               </Typography>
-              <Typography>{context.order?.point_id}</Typography>
-            </Box>
-            <Divider />
-            <Stack spacing={1}>
+              <Typography
+                fontWeight={700}
+                mt={0.5}
+              >
+                Кафе: {cafeContext}
+              </Typography>
+            </JacoSurface>
+            <Stack spacing={1.25}>
               <Typography fontWeight={700}>Позиции заказа</Typography>
               {context.positions?.map((position) => (
                 <JacoSurface
                   key={position.position_key}
-                  variant="outlined"
-                  sx={{ p: 1.5, ...surfaceSx }}
+                  sx={{ p: 1.5 }}
                 >
                   <Stack
                     direction="row"
@@ -455,7 +457,7 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
                     sx={{ alignItems: "center", justifyContent: "space-between" }}
                   >
                     <Box>
-                      <Typography>{position.name}</Typography>
+                      <Typography fontWeight={600}>{position.name}</Typography>
                       <Typography
                         variant="body2"
                         color="text.secondary"
@@ -463,24 +465,25 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
                         {position.total_count} шт.
                       </Typography>
                     </Box>
-                    <Button
-                      size="small"
+                    <JacoButton
+                      compact
+                      tone="outlinePrimary"
                       startIcon={<AddIcon />}
                       onClick={() => addError(position)}
                     >
                       Ошибка
-                    </Button>
+                    </JacoButton>
                   </Stack>
                 </JacoSurface>
               ))}
             </Stack>
-            <Button
-              variant="outlined"
+            <JacoButton
+              tone="outlinePrimary"
               startIcon={<AddIcon />}
               onClick={addOrderError}
             >
               Добавить ошибку заказа
-            </Button>
+            </JacoButton>
             <Stack spacing={1.5}>
               {errors.map((error, index) => (
                 <ErrorEditor
@@ -489,7 +492,7 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
                   positions={context.positions || []}
                   catalog={context.catalog || []}
                   solutions={context.solutions || []}
-                  stages={context.stages || {}}
+                  stages={context.stages || []}
                   onChange={(next) =>
                     setErrors((previous) =>
                       previous.map((item, itemIndex) => (itemIndex === index ? next : item)),
@@ -509,19 +512,12 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
               value={comment}
               onChange={(event) => setComment(event.target.value)}
             />
-            <JacoButton
-              disabled={!errors.length}
-              onClick={save}
-            >
-              Зарегистрировать жалобу
-            </JacoButton>
           </>
         ) : null}
       </Stack>
-    </Drawer>
+    </JacoResponsiveModalShell>
   );
 }
-
 function ComplaintDrawer({ complaint, onClose, request }) {
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState("");
@@ -644,6 +640,7 @@ function ErrorsManagement() {
   const [cities, setCities] = useState([]);
   const [points, setPoints] = useState([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [orders, setOrders] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -660,16 +657,17 @@ function ErrorsManagement() {
   );
   const loadOrders = useCallback(
     async (nextFilters) => {
+      const orderNumber = nextFilters.orderNumber.trim();
       const response = await request("get_orders", {
         city_id: nextFilters.cityId || "",
         point_id: nextFilters.pointId || 0,
         type_order: 0,
-        order_id: nextFilters.orderNumber || "",
-        number_order: nextFilters.orderNumber || "",
+        order_id: orderNumber,
+        number_order: orderNumber,
         sum_from: "",
         sum_to: "",
-        date_from: nextFilters.dateFrom || "",
-        date_to: nextFilters.dateTo || "",
+        date_from: orderNumber ? "" : nextFilters.dateFrom || "",
+        date_to: orderNumber ? "" : nextFilters.dateTo || "",
         phone: "",
         number: "",
         time_from: "",
@@ -682,15 +680,16 @@ function ErrorsManagement() {
   );
   const loadComplaints = useCallback(
     async (nextFilters) => {
+      const orderNumber = nextFilters.orderNumber.trim();
       const response = await request("v2/journal", {
         page: 1,
         per_page: 50,
         filters: {
           city_id: nextFilters.cityId || null,
           point_id: nextFilters.pointId || null,
-          order_id: nextFilters.orderNumber || null,
-          date_from: nextFilters.dateFrom || null,
-          date_to: nextFilters.dateTo || null,
+          order_id: orderNumber || null,
+          date_from: orderNumber ? null : nextFilters.dateFrom || null,
+          date_to: orderNumber ? null : nextFilters.dateTo || null,
         },
       });
       const payload = response?.data ?? response;
@@ -715,6 +714,7 @@ function ErrorsManagement() {
       setCities(nextCities);
       setPoints(nextPoints);
       setFilters(nextFilters);
+      setAppliedFilters(nextFilters);
       setStatisticsDraft(nextFilters);
       setStatisticsApplied(nextFilters);
       setReady(true);
@@ -733,12 +733,19 @@ function ErrorsManagement() {
   }, [title]);
   useEffect(() => {
     if (!ready || tab !== "journal") return;
-    loadComplaints(filters);
-  }, [filters, loadComplaints, ready, tab]);
+    loadComplaints(appliedFilters).catch(() => setMessage("Не удалось загрузить журнал."));
+  }, [appliedFilters, loadComplaints, ready, tab]);
   useEffect(() => {
     if (!ready || tab !== "registration") return;
-    loadOrders(filters);
-  }, [filters, loadOrders, ready, tab]);
+    loadOrders(appliedFilters).catch(() => setMessage("Не удалось загрузить заказы."));
+  }, [appliedFilters, loadOrders, ready, tab]);
+  useEffect(() => {
+    if (!ready || tab === "statistics") return undefined;
+    const timer = window.setTimeout(() => {
+      setAppliedFilters((previous) => ({ ...previous, orderNumber: filters.orderNumber }));
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [filters.orderNumber, ready, tab]);
   const loadStatistics = useCallback(
     async (nextFilters) => {
       const response = await request("v2/statistics", {
@@ -763,23 +770,19 @@ function ErrorsManagement() {
     () => points.filter((item) => !filters.cityId || item.city_id === filters.cityId),
     [filters.cityId, points],
   );
-  const update = (field, value) =>
-    setFilters((previous) => ({
-      ...previous,
+  const update = (field, value) => {
+    const next = {
       [field]: value,
       ...(field === "cityId" ? { pointId: "" } : {}),
-    }));
-  const apply = async () => {
-    setLoading(true);
-    setMessage("");
-    try {
-      if (tab === "journal") await loadComplaints(filters);
-      else await loadOrders(filters);
-    } catch {
-      setMessage("Не удалось загрузить журнал.");
-    } finally {
-      setLoading(false);
+    };
+    setFilters((previous) => ({ ...previous, ...next }));
+    if (["cityId", "pointId", "dateFrom", "dateTo"].includes(field)) {
+      setStatisticsDraft((previous) => ({ ...previous, ...next }));
     }
+  };
+  const apply = () => {
+    setMessage("");
+    setAppliedFilters(filters);
   };
   const rows = tab === "journal" ? complaints : orders;
   const statisticsCafes = useMemo(
@@ -787,26 +790,17 @@ function ErrorsManagement() {
       points.filter((item) => !statisticsDraft.cityId || item.city_id === statisticsDraft.cityId),
     [points, statisticsDraft.cityId],
   );
-  const updateStatistics = (field, value) =>
-    setStatisticsDraft((previous) => ({
-      ...previous,
+  const updateStatistics = (field, value) => {
+    const next = {
       [field]: value,
       ...(field === "cityId" ? { pointId: "" } : {}),
-    }));
-  const applyStatistics = () => setStatisticsApplied(statisticsDraft);
-  const refreshActiveView = async () => {
-    setLoading(true);
-    setMessage("");
-    try {
-      if (tab === "statistics") await loadStatistics(statisticsApplied);
-      else if (tab === "journal") await loadComplaints(filters);
-      else await loadOrders(filters);
-    } catch {
-      setMessage("Не удалось обновить данные.");
-    } finally {
-      setLoading(false);
+    };
+    setStatisticsDraft((previous) => ({ ...previous, ...next }));
+    if (["cityId", "pointId", "dateFrom", "dateTo"].includes(field)) {
+      setFilters((previous) => ({ ...previous, ...next }));
     }
   };
+  const applyStatistics = () => setStatisticsApplied(statisticsDraft);
 
   return (
     <Box
@@ -820,43 +814,24 @@ function ErrorsManagement() {
         <CircularProgress color="inherit" />
       </Backdrop>
       <Stack spacing={2.5}>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            justifyContent: "space-between",
-            alignItems: { xs: "flex-start", sm: "center" },
-            gap: 1.5,
-          }}
+        <Typography
+          component="h1"
+          sx={titleSx}
         >
-          <Typography
-            component="h1"
-            sx={titleSx}
-          >
-            {title}
-          </Typography>
-          <JacoButton
-            fullWidth={mobile}
-            startIcon={<RefreshIcon />}
-            onClick={refreshActiveView}
-            loading={loading}
-            sx={{ minWidth: { sm: 126 }, minHeight: 44, fontWeight: 500 }}
-          >
-            Обновить
-          </JacoButton>
-        </Box>
+          {title}
+        </Typography>
         {message ? <Alert severity="error">{message}</Alert> : null}
-        <JacoSurface sx={{ p: 0.5 }}>
-          <JacoCompactTabs
-            value={tab}
-            onChange={(_, value) => setTab(value)}
-            items={[
-              { value: "journal", label: "Журнал" },
-              { value: "registration", label: "Регистрация" },
-              { value: "statistics", label: "Статистика" },
-            ]}
-          />
-        </JacoSurface>
+        <JacoSegmentedTabs
+          size="compact"
+          sx={{ minHeight: 42 }}
+          value={tab}
+          onChange={(_, value) => setTab(value)}
+          items={[
+            { id: "journal", label: "Журнал" },
+            { id: "registration", label: "Регистрация" },
+            { id: "statistics", label: "Статистика" },
+          ]}
+        />
         {tab !== "statistics" ? (
           <>
             <JacoSurface
@@ -906,31 +881,24 @@ function ErrorsManagement() {
                     onChange={(value) => update("dateTo", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <JacoSearch
+                    label="Номер заказа"
+                    value={filters.orderNumber}
+                    onValueChange={(value) => update("orderNumber", value)}
+                    debounceMs={350}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <JacoButton
+                    type="submit"
+                    fullWidth={mobile}
+                  >
+                    Применить
+                  </JacoButton>
+                </Grid>
               </Grid>
             </JacoSurface>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                justifyContent: "space-between",
-                gap: 1.5,
-              }}
-            >
-              <Box sx={{ width: { xs: "100%", sm: 320 } }}>
-                <JacoSearch
-                  label="Поиск по номеру заказа"
-                  value={filters.orderNumber}
-                  onValueChange={(value) => update("orderNumber", value)}
-                  minLength={1}
-                />
-              </Box>
-              <JacoButton
-                onClick={apply}
-                sx={{ width: { xs: "100%", sm: "auto" } }}
-              >
-                Найти
-              </JacoButton>
-            </Box>
             {rows.length === 0 ? (
               <EmptyResults
                 mode={tab}
@@ -1133,7 +1101,12 @@ function ErrorsManagement() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <JacoButton type="submit">Применить фильтры</JacoButton>
+                  <JacoButton
+                    type="submit"
+                    fullWidth={mobile}
+                  >
+                    Применить
+                  </JacoButton>
                 </Grid>
               </Grid>
             </JacoSurface>
@@ -1296,6 +1269,8 @@ function ErrorsManagement() {
         onClose={() => setSelected(null)}
         request={request}
         onSaved={apply}
+        cities={cities}
+        points={points}
       />
     </Box>
   );
