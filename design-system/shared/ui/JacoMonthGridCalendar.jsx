@@ -1,7 +1,9 @@
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import { Box, Typography } from "@mui/material";
-import { uiRadii } from "../tokens";
+import { uiRadii, uiTableColors } from "../tokens";
 
 dayjs.locale("ru");
 
@@ -32,7 +34,16 @@ export default function JacoMonthGridCalendar({
   onDayClick,
   title = "",
   size = CELL_SIZE,
+  dayHeight = size,
   gap = GRID_GAP,
+  renderDayContent,
+  weekdayLabels = WEEK_DAYS,
+  highlightWeekendHeaders = false,
+  onPreviousMonth,
+  onNextMonth,
+  previousDisabled = false,
+  nextDisabled = false,
+  showMonthChevron = true,
   containerSx,
   padding = 20,
   controlsGap = 12,
@@ -104,31 +115,46 @@ export default function JacoMonthGridCalendar({
           >
             {monthStart.format("MMMM YYYY")}
           </Typography>
-          <Typography sx={{ color: "#A6A6A6", fontSize: 18, lineHeight: 1 }}>⌄</Typography>
+          {showMonthChevron ? (
+            <Typography sx={{ color: "#A6A6A6", fontSize: 18, lineHeight: 1 }}>⌄</Typography>
+          ) : null}
         </Box>
         <Box sx={{ display: "flex", gap: `${controlsGap}px`, flexShrink: 0 }}>
-          {["‹", "›"].map((arrow) => (
-            <Box
-              key={arrow}
-              component="button"
-              type="button"
-              aria-label={arrow === "‹" ? "предыдущий месяц" : "следующий месяц"}
-              disabled
-              sx={{
-                width: navButtonSize,
-                height: navButtonSize,
-                p: 0,
-                border: "1px solid #E5E5E5",
-                borderRadius: uiRadii.md,
-                backgroundColor: "#FFFFFF",
-                color: "#A6A6A6",
-                fontSize: 30,
-                lineHeight: "38px",
-              }}
-            >
-              {arrow}
-            </Box>
-          ))}
+          {["‹", "›"].map((arrow) => {
+            const isPrevious = arrow === "‹";
+            const onNavigate = isPrevious ? onPreviousMonth : onNextMonth;
+            const disabled = !onNavigate || (isPrevious ? previousDisabled : nextDisabled);
+
+            return (
+              <Box
+                key={arrow}
+                component="button"
+                type="button"
+                aria-label={isPrevious ? "предыдущий месяц" : "следующий месяц"}
+                onClick={onNavigate}
+                disabled={disabled}
+                sx={{
+                  width: navButtonSize,
+                  height: navButtonSize,
+                  p: 0,
+                  border: "1px solid #E5E5E5",
+                  borderRadius: uiRadii.md,
+                  backgroundColor: "#FFFFFF",
+                  color: disabled ? "#A6A6A6" : "#666666",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: disabled ? "default" : "pointer",
+                }}
+              >
+                {isPrevious ? (
+                  <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
+                ) : (
+                  <ChevronRightRoundedIcon sx={{ fontSize: 28 }} />
+                )}
+              </Box>
+            );
+          })}
         </Box>
       </Box>
       <Box
@@ -140,13 +166,14 @@ export default function JacoMonthGridCalendar({
           width: calendarWidth,
         }}
       >
-        {WEEK_DAYS.map((weekday, index) => (
+        {weekdayLabels.map((weekday, index) => (
           <Box
             key={`${weekday}-${index}`}
             sx={{
               width: size,
               height: 24,
-              backgroundColor: "#FFFFFF",
+              backgroundColor:
+                highlightWeekendHeaders && index >= 4 ? uiTableColors.weekend : "#FFFFFF",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -162,18 +189,22 @@ export default function JacoMonthGridCalendar({
           const meta = day ? (getDayMeta?.(dateKey) ?? {}) : {};
           const isWeekend = day ? day.day() === 0 || day.day() === 6 : false;
           const isEmpty = !day;
+          const isDisabled = Boolean(meta.disabled || !onDayClick);
 
           return (
             <Box
               key={day ? dateKey : `empty-${index}`}
               component={day ? "button" : "div"}
               type={day ? "button" : undefined}
-              onClick={day && onDayClick ? () => onDayClick(dateKey) : undefined}
+              disabled={day ? isDisabled : undefined}
+              aria-label={day ? meta.ariaLabel : undefined}
+              title={day ? meta.title : undefined}
+              onClick={day && !isDisabled ? () => onDayClick(dateKey) : undefined}
               sx={{
                 width: size,
-                height: size,
+                height: dayHeight,
                 p: 0,
-                borderRadius: uiRadii.full,
+                borderRadius: renderDayContent ? uiRadii.md : uiRadii.full,
                 border: isEmpty ? "1px solid transparent" : meta.border || "1px solid transparent",
                 backgroundColor: isEmpty ? "transparent" : meta.backgroundColor || "#FFFFFF",
                 color: isEmpty ? "transparent" : meta.color || (isWeekend ? "#A6A6A6" : "#666666"),
@@ -181,11 +212,14 @@ export default function JacoMonthGridCalendar({
                 alignItems: "center",
                 justifyContent: "center",
                 boxSizing: "border-box",
-                cursor: day ? "pointer" : "default",
+                cursor: day && !isDisabled ? "pointer" : "default",
+                opacity: meta.disabled ? 0.55 : 1,
                 font: "inherit",
               }}
             >
-              {day ? (
+              {day && renderDayContent ? (
+                renderDayContent(day, meta)
+              ) : day ? (
                 <Typography
                   component="span"
                   sx={{

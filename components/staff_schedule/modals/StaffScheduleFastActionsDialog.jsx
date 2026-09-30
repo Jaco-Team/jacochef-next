@@ -3,25 +3,41 @@ import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRound
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { Box, IconButton, Stack, Typography } from "@mui/material";
-import { JacoAlert, JacoButton, JacoPeriodSwitch, useJacoConfirm } from "@/design-system/shared/ui";
-import { createStaffScheduleAccess } from "../staffScheduleHelpers";
+import {
+  JacoAlert,
+  JacoAutocomplete,
+  JacoButton,
+  JacoPeriodSwitch,
+  useJacoConfirm,
+} from "@/design-system/shared/ui";
+import {
+  createStaffScheduleAccess,
+  formatEmployeeCount,
+  getScheduleRowFocusKey,
+} from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
   buildPointOptions,
   buildScheduleOptions,
-  buildSmenaOptions,
   EDIT_SCHEDULE_SCOPE,
   getCurrentScheduleType,
   getDefaultScheduleScope,
   getPointLabel,
   getScheduleLabel,
   getSmenaLabel,
-  hasEditDraftChanges,
   inferScheduleScopeFromUser,
 } from "../staffScheduleEditViewModel";
+import {
+  buildCommonFastActionOptions,
+  buildFastActionRequests,
+  canEditFastHoursPeriod,
+  hasFastActionDraftChanges,
+} from "../staffScheduleFastActionsCore.mjs";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
+
+const fastActionsGridPadding = { xs: 2, md: 2.5 };
 
 function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
   return (
@@ -172,18 +188,19 @@ function FastActionsModalTitle({ context, onBack }) {
   );
 }
 
-function BulkUsersField({ count, onOpen }) {
+function BulkUsersField({ count, onOpen, disabled }) {
   return (
-    <Box sx={{ backgroundColor: "#FFFFFF", borderRadius: "12px", p: 1.5 }}>
+    <Box sx={{ minWidth: 0 }}>
       <Typography sx={{ ...staffScheduleModalTypography.fieldLabel, mb: 1 }}>
         Список сотрудников
       </Typography>
       <Box
         role="button"
-        tabIndex={0}
-        onClick={onOpen}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={Boolean(disabled)}
+        onClick={disabled ? undefined : onOpen}
         onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          if (!disabled && (event.key === "Enter" || event.key === " ")) {
             event.preventDefault();
             onOpen?.();
           }
@@ -199,7 +216,7 @@ function BulkUsersField({ count, onOpen }) {
           border: "1px solid #E5E5E5",
           borderRadius: "18px",
           backgroundColor: "#FFFFFF",
-          cursor: "pointer",
+          cursor: disabled ? "default" : "pointer",
         }}
       >
         <Typography sx={staffScheduleModalTypography.fieldValue}>{`${count} человек`}</Typography>
@@ -211,32 +228,30 @@ function BulkUsersField({ count, onOpen }) {
   );
 }
 
-function getBulkScheduleDraftValue(draft, scheduleScope, pendingScheduleType) {
-  return {
-    ...draft,
-    scheduleScope,
-    scheduleType: Number(pendingScheduleType),
-  };
-}
-
-function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDone, doneDisabled }) {
+function InlineActions({
+  cancelLabel = "Отмена",
+  onCancel,
+  doneLabel,
+  onDone,
+  doneDisabled,
+  busy,
+}) {
   return (
     <Stack
       data-testid="fast-actions-buttons"
       direction="row"
-      justifyContent="space-between"
       spacing={1.5}
-      sx={{ width: "100%", justifyContent: "space-between !important" }}
+      sx={{ width: "100%", minWidth: 0, justifyContent: "space-between" }}
     >
       <JacoButton
         compact
-        tone="secondary"
+        tone="danger"
         onClick={onCancel}
+        disabled={busy}
         sx={{
-          minWidth: 120,
+          minWidth: { xs: 0, md: 120 },
           minHeight: 44,
           borderRadius: "12px",
-          color: "#666666",
           fontWeight: 500,
         }}
       >
@@ -244,18 +259,17 @@ function InlineActions({ cancelLabel = "Отмена", onCancel, doneLabel, onDo
       </JacoButton>
       <JacoButton
         compact
+        tone="success"
         onClick={onDone}
-        disabled={doneDisabled}
+        disabled={doneDisabled || busy}
         startIcon={<CheckRoundedIcon />}
         sx={{
-          minWidth: 122,
+          minWidth: { xs: 0, md: 122 },
+          whiteSpace: { xs: "normal", md: "nowrap" },
+          textAlign: "center",
           minHeight: 44,
           borderRadius: "12px",
           fontWeight: 500,
-          "&.Mui-disabled": {
-            backgroundColor: "#CFCFCF",
-            color: "#666666",
-          },
         }}
       >
         {doneLabel}
@@ -360,11 +374,12 @@ export default function StaffScheduleFastActionsDialog({
   onApplyShiftDraft,
   onApplyPointDraft,
   onSaveChanges,
+  onUsersChange,
 }) {
   const user = state?.user;
   const users = state?.users ?? [];
   const isBulk = state?.mode === "bulk";
-  const screen = state?.screen || "hub";
+  const requestedScreen = state?.screen || "hub";
   const draft = state?.draft;
   const saveError = state?.error || "";
   const { canAccess } = useMemo(() => createStaffScheduleAccess(access), [access]);
@@ -372,8 +387,8 @@ export default function StaffScheduleFastActionsDialog({
   const context = useMemo(() => {
     if (isBulk) {
       return {
-        userName: `${users.length} сотрудников`,
-        roleName: "Массовое изменение графика",
+        userName: formatEmployeeCount(users.length),
+        roleName: "Быстрые действия",
         periodLabel: monthId ?? "",
         shiftLabel: "—",
         pointLabel: pointLabel || "—",
@@ -389,10 +404,19 @@ export default function StaffScheduleFastActionsDialog({
     });
   }, [isBulk, monthId, pointLabel, shiftLabel, user, users.length]);
 
-  const canMonth = canAccess("fast_month");
-  const canWeek = canAccess("fast_2_week");
+  const canMonth = canAccess("fast_hours");
+  const canWeek = canMonth;
   const canShift = canAccess("fast_smena");
   const canPoint = canAccess("fast_point");
+  const hasAccess = canMonth || canShift || canPoint;
+  const screen =
+    (requestedScreen === "schedule" && !(canMonth || canWeek)) ||
+    (requestedScreen === "shift" && !canShift) ||
+    (requestedScreen === "point" && !canPoint)
+      ? "hub"
+      : requestedScreen;
+  const busy = Boolean(state?.saving);
+  const pendingUsers = isBulk ? users : user ? [user] : [];
 
   const [scheduleScope, setScheduleScope] = useState(() => getDefaultScheduleScope(canAccess));
   const [pendingScheduleType, setPendingScheduleType] = useState("");
@@ -400,7 +424,6 @@ export default function StaffScheduleFastActionsDialog({
   const [pendingPointId, setPendingPointId] = useState("");
   const [pendingPointCity, setPendingPointCity] = useState("");
   const [isBulkUsersOpen, setIsBulkUsersOpen] = useState(false);
-  const [pendingUsers, setPendingUsers] = useState([]);
   const { confirm, ConfirmDialog } = useJacoConfirm();
 
   useEffect(() => {
@@ -408,10 +431,15 @@ export default function StaffScheduleFastActionsDialog({
       return;
     }
 
-    const nextScope =
+    const preferredScope =
       draft?.scheduleScope ||
-      inferScheduleScopeFromUser(user, selectedPart) ||
+      (!isBulk && inferScheduleScopeFromUser(user, selectedPart)) ||
       getDefaultScheduleScope(canAccess);
+    const nextScope =
+      (preferredScope === EDIT_SCHEDULE_SCOPE.month && canMonth) ||
+      (preferredScope === EDIT_SCHEDULE_SCOPE.week && canWeek)
+        ? preferredScope
+        : getDefaultScheduleScope(canAccess);
 
     setScheduleScope(nextScope);
     setPendingScheduleType(
@@ -430,15 +458,27 @@ export default function StaffScheduleFastActionsDialog({
     setPendingPointId(nextPointId);
     setPendingPointCity(getPointCity(nextPoint?.name || context.pointLabel));
     setIsBulkUsersOpen(false);
-    setPendingUsers(users);
-  }, [canAccess, context.pointLabel, draft, isBulk, selectedPart, state?.open, user]);
+  }, [
+    canAccess,
+    canMonth,
+    canWeek,
+    context.pointLabel,
+    draft,
+    isBulk,
+    requestedScreen,
+    selectedPart,
+    state?.open,
+    user,
+  ]);
 
   const scheduleOptions = useMemo(
     () => buildScheduleOptions(scheduleScope, selectedPart),
     [scheduleScope, selectedPart],
   );
-  const smenaOptions = useMemo(() => buildSmenaOptions(user), [user]);
-  const pointOptions = useMemo(() => buildPointOptions(user), [user]);
+  const { smenaOptions, pointOptions } = useMemo(
+    () => buildCommonFastActionOptions(isBulk ? users : user ? [user] : []),
+    [isBulk, user, users],
+  );
   const cityOptions = useMemo(
     () => buildCityOptions(pointOptions, context.pointLabel),
     [context.pointLabel, pointOptions],
@@ -453,32 +493,81 @@ export default function StaffScheduleFastActionsDialog({
     return withCurrentPointOption(nextOptions, context.pointLabel, pendingPointId);
   }, [context.pointLabel, pendingPointCity, pendingPointId, pointOptions]);
 
-  const scheduleLabel = getScheduleLabel(draft, selectedPart, user) || context.scheduleLabel;
-  const smenaLabel = getSmenaLabel(draft, user, context);
+  const scheduleLabel =
+    getScheduleLabel(draft, selectedPart, isBulk ? null : user) || context.scheduleLabel;
+  const smenaLabel = isBulk
+    ? smenaOptions.find((item) => String(item.id) === String(draft?.smenaId))?.name || "—"
+    : getSmenaLabel(draft, user, context);
   const currentPointLabel = getPointLabel(draft, context);
   const displayedSmenaOptions = useMemo(
     () => withCurrentSmenaOption(smenaOptions, smenaLabel, pendingSmenaId),
     [pendingSmenaId, smenaLabel, smenaOptions],
   );
-  const hasBulkUserChanges = isBulk && pendingUsers.length !== users.length;
-  const hasChanges = isBulk
-    ? Boolean(draft?.scheduleType && draft?.scheduleScope) || hasBulkUserChanges
-    : hasEditDraftChanges(draft, user, selectedPart);
+  const hasChanges = hasFastActionDraftChanges(draft, pendingUsers);
+  const validateDraft = (nextDraft) => {
+    try {
+      return (
+        buildFastActionRequests({
+          draft: nextDraft,
+          users: pendingUsers,
+          mode: state?.mode,
+          access,
+          monthId,
+          selectedPart,
+        }).length > 0
+      );
+    } catch {
+      return false;
+    }
+  };
+  const saveDisabled = !hasChanges || !validateDraft(draft);
 
   const scheduleBaselineType = draft?.scheduleType
     ? String(draft.scheduleType)
     : String(getCurrentScheduleType(user, selectedPart, scheduleScope) ?? "");
   const scheduleBaselineScope = draft?.scheduleScope || scheduleScope;
 
-  const scheduleDoneDisabled = isBulk
-    ? !pendingScheduleType
-    : !pendingScheduleType ||
-      (String(pendingScheduleType) === scheduleBaselineType &&
-        scheduleScope === scheduleBaselineScope);
+  const scheduleDoneDisabled =
+    !canEditFastHoursPeriod(monthId, scheduleScope, selectedPart) ||
+    !pendingScheduleType ||
+    !scheduleOptions.some((item) => String(item.type) === String(pendingScheduleType)) ||
+    (!isBulk &&
+      String(pendingScheduleType) === scheduleBaselineType &&
+      scheduleScope === scheduleBaselineScope);
   const shiftDoneDisabled =
-    !pendingSmenaId || String(pendingSmenaId) === String(user?.smena_id ?? "");
-  const pointDoneDisabled = !pendingPointId;
-  const bulkSaveDisabled = !pendingUsers.length || (!pendingScheduleType && !hasBulkUserChanges);
+    !pendingSmenaId ||
+    !pendingUsers.some((item) => String(item.smena_id) !== String(pendingSmenaId)) ||
+    !smenaOptions.some((item) => String(item.id) === String(pendingSmenaId));
+  const pointDoneDisabled = !pointOptions.some(
+    (item) => String(item.id) === String(pendingPointId),
+  );
+
+  const pendingScreenDraft =
+    screen === "schedule" && !scheduleDoneDisabled
+      ? { ...draft, scheduleScope, scheduleType: Number(pendingScheduleType) }
+      : screen === "shift" && !shiftDoneDisabled
+        ? { ...draft, smenaId: pendingSmenaId }
+        : screen === "point" && !pointDoneDisabled
+          ? {
+              ...draft,
+              point: pointOptions.find((item) => String(item.id) === String(pendingPointId)),
+            }
+          : draft;
+  const hasScreenChanges = JSON.stringify(pendingScreenDraft) !== JSON.stringify(draft);
+  const handleBack = async () => {
+    if (busy) return;
+    if (
+      hasScreenChanges &&
+      !(await confirm({
+        message: "Вернуться без применения выбранного значения?",
+        confirmLabel: "Да, вернуться",
+        confirmTone: "danger",
+        cancelTone: "danger",
+      }))
+    )
+      return;
+    onBackToHub?.();
+  };
 
   const requestRemoveBulkUser = (targetUser) => async () => {
     const accepted = await confirm({
@@ -497,54 +586,55 @@ export default function StaffScheduleFastActionsDialog({
         </Typography>
       ),
       confirmLabel: "Да, удалить",
+      confirmTone: "danger",
+      cancelTone: "danger",
     });
 
     if (!accepted) {
       return;
     }
 
-    setPendingUsers((prev) => prev.filter((item) => String(item?.id) !== String(targetUser?.id)));
+    const targetKey = getScheduleRowFocusKey(targetUser);
+    onUsersChange?.(pendingUsers.filter((item) => getScheduleRowFocusKey(item) !== targetKey));
   };
 
   const handleRequestClose = async () => {
-    if (!hasChanges) {
+    if (busy) return;
+    if (!hasChanges && !hasScreenChanges) {
       onClose?.();
       return;
     }
 
+    const canSavePending = validateDraft(pendingScreenDraft);
     const shouldSave = await confirm({
       message: (
         <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
           Данные были изменены.
           <br />
-          Сохранить изменения?
+          {canSavePending ? "Сохранить изменения?" : "Закрыть без сохранения?"}
         </Typography>
       ),
-      confirmLabel: "Да, сохранить",
+      confirmLabel: canSavePending ? "Да, сохранить" : "Закрыть",
+      confirmTone: canSavePending ? "success" : "danger",
+      cancelTone: "danger",
     });
 
     if (shouldSave) {
-      await onSaveChanges?.();
+      if (canSavePending) await onSaveChanges?.(pendingScreenDraft, pendingUsers);
+      else onClose?.();
       return;
     }
 
-    onClose?.();
+    if (canSavePending) onClose?.();
   };
 
-  let modalTitle = "";
   let content = null;
   let actions = null;
 
-  if (isBulk && screen === "schedule") {
-    modalTitle = monthId ? `Смена часов ${formatMonthLabel(monthId)}` : "Смена часов";
-  }
-
   if (screen === "hub") {
     content = (
-      <Stack spacing={3.25}>
-        <Typography sx={{ ...staffScheduleModalTypography.sectionHeading, mb: -1 }}>
-          Что изменить?
-        </Typography>
+      <Stack spacing={2.5}>
+        <Typography sx={staffScheduleModalTypography.sectionHeading}>Что изменить?</Typography>
 
         {saveError ? (
           <JacoAlert
@@ -555,30 +645,49 @@ export default function StaffScheduleFastActionsDialog({
           </JacoAlert>
         ) : null}
 
+        {isBulk ? (
+          <BulkUsersField
+            count={pendingUsers.length}
+            onOpen={() => setIsBulkUsersOpen(true)}
+            disabled={busy}
+          />
+        ) : null}
+        {!(canMonth || canWeek || canShift || canPoint) ? (
+          <JacoAlert severity="info">Нет доступных быстрых действий</JacoAlert>
+        ) : null}
+        {hasChanges && saveDisabled && !saveError ? (
+          <JacoAlert severity="warning">
+            Выбранные действия недоступны для текущего списка сотрудников. Проверьте выбор смены и
+            кафе.
+          </JacoAlert>
+        ) : null}
         {canMonth || canWeek ? (
           <EditSummaryRow
             label="Часы"
-            value={isBulk ? "Изменить для выбранных сотрудников" : scheduleLabel}
+            value={scheduleLabel === "—" && isBulk ? "Для выбранных сотрудников" : scheduleLabel}
             actionLabel="Изменить"
             onAction={onOpenSchedule}
+            disabled={busy || !pendingUsers.length}
           />
         ) : null}
 
-        {!isBulk && canShift ? (
+        {canShift ? (
           <EditSummaryRow
             label="Смена"
             value={smenaLabel}
             actionLabel="Изменить"
             onAction={onOpenShift}
+            disabled={busy || !smenaOptions.length}
           />
         ) : null}
 
-        {!isBulk && canPoint ? (
+        {canPoint ? (
           <EditSummaryRow
             label="Кафе"
             value={currentPointLabel}
             actionLabel="Изменить"
             onAction={onOpenPoint}
+            disabled={busy || !pointOptions.length}
           />
         ) : null}
       </Stack>
@@ -588,123 +697,72 @@ export default function StaffScheduleFastActionsDialog({
         cancelLabel="Отменить"
         onCancel={handleRequestClose}
         doneLabel="Сохранить изменения"
-        onDone={onSaveChanges}
-        doneDisabled={!hasChanges}
+        onDone={() => onSaveChanges(draft, pendingUsers)}
+        doneDisabled={saveDisabled}
+        busy={busy}
       />
     );
   }
 
   if (screen === "schedule") {
-    if (isBulk) {
-      content = (
-        <Stack spacing={2.5}>
-          <Typography sx={staffScheduleModalTypography.title}>Для выбранных сотрудников</Typography>
-          <BulkUsersField
-            count={pendingUsers.length}
-            onOpen={() => setIsBulkUsersOpen(true)}
-          />
-          <Stack spacing={1.25}>
-            <Typography
-              sx={{
-                fontSize: 16,
-                lineHeight: 1.2,
-                fontWeight: 700,
-                color: "#B1B1B1",
-                textTransform: "uppercase",
+    content = (
+      <Stack>
+        <SubScreenPanel title="СМЕНА ЧАСОВ">
+          <JacoAlert severity="info">
+            Часы изменятся только с сегодняшнего дня. Прошедшие дни сохранятся без изменений.
+          </JacoAlert>
+          {canMonth && canWeek ? (
+            <JacoPeriodSwitch
+              data-testid="fast-actions-scope-tabs"
+              value={scheduleScope}
+              onChange={(_, value) => {
+                setScheduleScope(value);
+                setPendingScheduleType(
+                  isBulk ? "" : String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
+                );
               }}
-            >
-              Смена часов
+              items={[
+                { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
+                { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
+              ]}
+            />
+          ) : null}
+
+          <Box>
+            <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 2 }}>
+              Выбери часовой график
             </Typography>
-            {canMonth && canWeek ? (
-              <JacoPeriodSwitch
-                value={scheduleScope}
-                onChange={(_, value) => {
-                  setScheduleScope(value);
-                  setPendingScheduleType(
-                    String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
-                  );
-                }}
-                items={[
-                  { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
-                  { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
-                ]}
-              />
-            ) : null}
             <StaffScheduleMobileSelectField
               options={scheduleOptions}
               value={pendingScheduleType}
               onChange={(event) => setPendingScheduleType(String(event.target.value))}
               label="Часы"
-              pickerTitle="Выбери часы"
+              pickerTitle="Выбери часовой график"
               allowNone={false}
+              disabled={
+                busy ||
+                !pendingUsers.length ||
+                !canEditFastHoursPeriod(monthId, scheduleScope, selectedPart)
+              }
             />
-          </Stack>
-        </Stack>
-      );
-      actions = (
-        <InlineActions
-          onCancel={handleRequestClose}
-          doneLabel="Сохранить"
-          doneDisabled={bulkSaveDisabled}
-          onDone={() =>
-            onSaveChanges(
-              getBulkScheduleDraftValue(draft, scheduleScope, pendingScheduleType),
-              pendingUsers,
-            )
-          }
-        />
-      );
-    } else {
-      content = (
-        <Stack>
-          <SubScreenPanel title="СМЕНА ЧАСОВ">
-            {canMonth && canWeek ? (
-              <JacoPeriodSwitch
-                data-testid="fast-actions-scope-tabs"
-                value={scheduleScope}
-                onChange={(_, value) => {
-                  setScheduleScope(value);
-                  setPendingScheduleType(
-                    String(getCurrentScheduleType(user, selectedPart, value) ?? ""),
-                  );
-                }}
-                items={[
-                  { id: EDIT_SCHEDULE_SCOPE.month, label: "На месяц" },
-                  { id: EDIT_SCHEDULE_SCOPE.week, label: "На 2 недели" },
-                ]}
-              />
-            ) : null}
-
-            <Box>
-              <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 2 }}>
-                Выбери часовой график
-              </Typography>
-              <StaffScheduleMobileSelectField
-                options={scheduleOptions}
-                value={pendingScheduleType}
-                onChange={(event) => setPendingScheduleType(String(event.target.value))}
-                label="Часы"
-                pickerTitle="Выбери часовой график"
-                allowNone={false}
-              />
-            </Box>
-          </SubScreenPanel>
-        </Stack>
-      );
-      actions = (
-        <InlineActions
-          onCancel={onBackToHub}
-          doneLabel="Готово"
-          doneDisabled={scheduleDoneDisabled}
-          onDone={() =>
-            onApplyScheduleDraft({
-              scheduleScope,
-              scheduleType: Number(pendingScheduleType),
-            })
-          }
-        />
-      );
-    }
+          </Box>
+        </SubScreenPanel>
+      </Stack>
+    );
+    actions = (
+      <InlineActions
+        onCancel={handleBack}
+        doneLabel="Готово"
+        doneDisabled={scheduleDoneDisabled}
+        busy={busy}
+        onDone={() =>
+          onApplyScheduleDraft({
+            scheduleScope,
+            scheduleType: Number(pendingScheduleType),
+          })
+        }
+      />
+    );
   }
 
   if (screen === "shift") {
@@ -726,6 +784,7 @@ export default function StaffScheduleFastActionsDialog({
               label="Смена"
               pickerTitle="Выбери смену"
               allowNone={false}
+              disabled={busy || !smenaOptions.length}
             />
           </Box>
         </SubScreenPanel>
@@ -733,9 +792,10 @@ export default function StaffScheduleFastActionsDialog({
     );
     actions = (
       <InlineActions
-        onCancel={onBackToHub}
+        onCancel={handleBack}
         doneLabel="Готово"
         doneDisabled={shiftDoneDisabled}
+        busy={busy}
         onDone={() => onApplyShiftDraft(pendingSmenaId)}
       />
     );
@@ -765,17 +825,39 @@ export default function StaffScheduleFastActionsDialog({
             <Typography sx={{ ...staffScheduleModalTypography.fieldValue, mb: 1.25 }}>
               Выбери кафе
             </Typography>
-            <StaffScheduleMobileSelectField
+            <JacoAutocomplete
+              disableClearable
+              selectAppearance
+              freeSolo={false}
+              multiple={false}
               options={filteredPointOptions}
-              value={pendingPointId || "current"}
-              onChange={(event) => {
-                const nextValue = String(event.target.value);
+              value={
+                filteredPointOptions.find(
+                  (item) => String(item.id) === (pendingPointId || "current"),
+                ) || null
+              }
+              isOptionEqualToValue={(option, selected) => String(option.id) === String(selected.id)}
+              getOptionKey={(option) => String(option.id)}
+              onChange={(_event, option) => {
+                if (!option) return;
+                const nextValue = String(option.id);
 
                 setPendingPointId(nextValue === "current" ? "" : nextValue);
               }}
               label="Кафе"
-              pickerTitle="Выбери кафе"
-              allowNone={false}
+              placeholder="Введите название кафе"
+              disabled={busy || !pointOptions.length}
+              autocompleteSx={{ width: "100%", minWidth: 0 }}
+              slotProps={{
+                popper: { allowAdaptivePlacement: true },
+                listbox: {
+                  sx: {
+                    maxHeight: "min(280px, calc(100dvh - 160px))",
+                    whiteSpace: "normal",
+                    overflowWrap: "anywhere",
+                  },
+                },
+              }}
             />
           </Box>
         </SubScreenPanel>
@@ -783,9 +865,10 @@ export default function StaffScheduleFastActionsDialog({
     );
     actions = (
       <InlineActions
-        onCancel={onBackToHub}
+        onCancel={handleBack}
         doneLabel="Готово"
         doneDisabled={pointDoneDisabled}
+        busy={busy}
         onDone={() => {
           const selected = pointOptions.find((item) => String(item.id) === String(pendingPointId));
           onApplyPointDraft(selected || null);
@@ -797,49 +880,51 @@ export default function StaffScheduleFastActionsDialog({
   return (
     <>
       <StaffScheduleResponsiveModal
-        open={Boolean(state?.open)}
+        open={Boolean(state?.open) && hasAccess}
         onClose={handleRequestClose}
         title={
-          isBulk ? (
-            modalTitle
-          ) : (
-            <FastActionsModalTitle
-              context={context}
-              onBack={screen === "hub" ? null : onBackToHub}
-            />
-          )
+          <FastActionsModalTitle
+            context={context}
+            onBack={screen === "hub" || busy ? null : handleBack}
+          />
         }
         maxWidth="md"
         actions={actions}
-        titleSx={isBulk ? undefined : { width: "100%" }}
-        titleContainerSx={isBulk ? undefined : { height: "auto", minHeight: 68, py: 1.25 }}
+        titleSx={{ width: "100%" }}
+        titleContainerSx={{ height: "auto", minHeight: 68, px: fastActionsGridPadding, py: 1.25 }}
+        mobileTitleSx={{ maxWidth: "none", textAlign: "left", pr: 4 }}
         contentSx={{
           "&&": {
-            px: 2.5,
-            pt: 3.25,
+            px: fastActionsGridPadding,
+            pt: 2.5,
             pb: 2,
           },
         }}
+        actionsSx={{ px: fastActionsGridPadding }}
       >
         {content}
       </StaffScheduleResponsiveModal>
       <StaffScheduleResponsiveModal
-        open={isBulkUsersOpen}
+        open={isBulkUsersOpen && Boolean(state?.open) && hasAccess}
         onClose={() => setIsBulkUsersOpen(false)}
         title="Сотрудники смены"
         maxWidth="sm"
-        contentSx={{ px: 0, pt: 1.5, pb: 0 }}
-        mobileContentSx={{ px: 0, pt: 1.5, pb: 0 }}
+        titleContainerSx={{ px: fastActionsGridPadding }}
+        contentSx={{ px: fastActionsGridPadding, pt: 1.5, pb: 1.5 }}
+        mobileContentSx={{ px: fastActionsGridPadding, pt: 1.5, pb: 1.5 }}
       >
-        <Box sx={{ px: 2, pb: 1.5 }}>
+        <Box>
           {pendingUsers.map((item) => (
             <Stack
-              key={String(item?.id)}
+              key={getScheduleRowFocusKey(item)}
               direction="row"
-              alignItems="center"
-              justifyContent="space-between"
               spacing={1}
-              sx={{ py: 1.5, borderBottom: "1px solid #E5E5E5" }}
+              sx={{
+                alignItems: "center",
+                justifyContent: "space-between",
+                py: 1.5,
+                borderBottom: "1px solid #E5E5E5",
+              }}
             >
               <Typography sx={staffScheduleModalTypography.fieldValue}>
                 {[item?.user_name, item?.app_name].filter(Boolean).join(", ") || "—"}

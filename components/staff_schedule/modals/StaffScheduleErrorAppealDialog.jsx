@@ -35,7 +35,7 @@ export default function StaffScheduleErrorAppealDialog({ modal, onClose, onSubmi
           <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
             <JacoButton
               compact
-              tone="secondary"
+              tone="danger"
               onClick={onClose}
               sx={{ minWidth: 112 }}
             >
@@ -43,6 +43,7 @@ export default function StaffScheduleErrorAppealDialog({ modal, onClose, onSubmi
             </JacoButton>
             <JacoButton
               compact
+              tone="success"
               onClick={() => onSubmit?.({ type: data?.type, appealText })}
               disabled={!canSubmit}
               sx={{ minWidth: 128 }}

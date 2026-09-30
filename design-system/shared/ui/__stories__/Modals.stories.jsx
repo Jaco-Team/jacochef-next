@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 
-import { JacoButton, JacoResponsiveModalShell } from "@/design-system/shared/ui";
+import { JacoButton, JacoResponsiveModalShell, useJacoConfirm } from "@/design-system/shared/ui";
 
 const meta = {
   title: "Chef Design System/Shared UI/Modals",
@@ -16,6 +16,30 @@ const meta = {
 };
 
 export default meta;
+
+function ActionConfirmation({ destructive = false }) {
+  const { confirm, ConfirmDialog } = useJacoConfirm();
+  return (
+    <>
+      <JacoButton
+        onClick={() =>
+          confirm({
+            message: destructive ? "Закрыть без сохранения?" : "Сохранить изменения?",
+            confirmLabel: destructive ? "Закрыть" : "Сохранить",
+            confirmTone: destructive ? "danger" : "success",
+            cancelLabel: "Отмена",
+            cancelTone: "danger",
+          })
+        }
+      >
+        Открыть подтверждение
+      </JacoButton>
+      <ConfirmDialog />
+    </>
+  );
+}
+export const SaveConfirmation = () => <ActionConfirmation />;
+export const DiscardConfirmation = () => <ActionConfirmation destructive />;
 
 export function ResponsiveModal() {
   const [open, setOpen] = useState(true);

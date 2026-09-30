@@ -1,5 +1,10 @@
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
-import { buildShiftGroups, getVisibleSummaryColumns, toArray } from "./staffScheduleHelpers";
+import {
+  buildShiftGroups,
+  countShiftEmployees,
+  getVisibleSummaryColumns,
+  toArray,
+} from "./staffScheduleHelpers";
 import { buildPeriodRangeLabels } from "./staffSchedulePeriodRange.mjs";
 
 export { buildPeriodRangeLabels } from "./staffSchedulePeriodRange.mjs";
@@ -92,6 +97,7 @@ function buildVisibleRows(rows, selectedShiftId, collapsedShiftIds = []) {
         ...group.header,
         __shiftId: group.id,
         __smenaId: group.smenaId || group.header?.smena_id,
+        __employeeCount: countShiftEmployees(group.rows),
       };
 
       return collapsedShiftIds.includes(group.id) ? [headerRow] : [headerRow, ...group.rows];

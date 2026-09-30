@@ -5,6 +5,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import Grid from "@mui/material/Grid";
 import { Box } from "@mui/material";
 import {
+  JacoAutocomplete,
   JacoButton,
   JacoIconButton,
   JacoPeriodSwitch,
@@ -108,6 +109,8 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
 export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
   const canExportWorkSchedule = page.canExportWorkSchedule;
   const canExportHealthJournal = page.canExportHealthJournal;
+  const selectedPoint =
+    page.points.find((point) => String(point?.id) === String(page.draftPointId)) ?? null;
   const softActionSx = {
     backgroundColor: "#E5E5E5",
     border: "none",
@@ -129,10 +132,11 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         sx={{ mb: 1.5 }}
       >
         <Grid size={{ xs: 12, md: 4 }}>
-          <JacoSelect
-            allowNone={false}
+          <JacoAutocomplete
+            disableClearable
+            selectAppearance
             options={page.points}
-            value={page.draftPointId}
+            value={selectedPoint}
             onChange={page.handlePointChange}
             label="Кафе"
           />

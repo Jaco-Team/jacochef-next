@@ -89,6 +89,8 @@ export default function StaffScheduleSmenaModal({ modal, onClose, onSave, onRequ
         </Typography>
       ),
       confirmLabel: "Да, закрыть",
+      confirmTone: "danger",
+      cancelTone: "danger",
     });
 
     if (accepted) {

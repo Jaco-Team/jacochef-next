@@ -4,7 +4,8 @@ export const STAFF_SCHEDULE_ACCESS_RULES = [
   { key: "com_bonus", label: "Командный бонус", area: "Финансы", status: "useful" },
   { key: "full_h", label: "За часы", area: "Финансы", status: "useful" },
   { key: "errors", label: "Ошибки", area: "Финансы", status: "useful" },
-  { key: "bonus", label: "Бонус директора", area: "Финансы", status: "useful" },
+  { key: "bonus", label: "Бонус", area: "Финансы", status: "useful" },
+  { key: "director_level", label: "Уровень директора", area: "Финансы", status: "useful" },
   { key: "all_price", label: "Всего", area: "Финансы", status: "useful" },
   { key: "withheld", label: "Удержано", area: "Финансы", status: "useful" },
   {
@@ -16,49 +17,35 @@ export const STAFF_SCHEDULE_ACCESS_RULES = [
   { key: "given", label: "Выдано", area: "Финансы", status: "useful" },
   { key: "given_cart", label: "На карты", area: "Финансы", status: "useful" },
   { key: "premia", label: "Премия по ведомости", area: "Финансы", status: "useful" },
-  { key: "salary_block", label: "Блок зарплаты", area: "Финансы", status: "useful_fe_group" },
-  {
-    key: "payroll_actions",
-    label: "Действия с выплатами",
-    area: "Финансы",
-    status: "useful_fe_group",
-  },
   { key: "bonus_of_day", label: "Сумма за период", area: "Итоги", status: "useful" },
   { key: "sums_all", label: "Сводные итоги", area: "Итоги", status: "useful" },
   { key: "rolls", label: "Роллы", area: "Итоги", status: "useful" },
   { key: "pizza", label: "Пицца", area: "Итоги", status: "useful" },
   { key: "over_40_min", label: "Заказы более 40 минут", area: "Итоги", status: "useful" },
-  { key: "footer_stats", label: "Блок итогов", area: "Итоги", status: "useful_fe_group" },
   { key: "full_month", label: "Месячная карточка", area: "График", status: "useful" },
   { key: "day_edit", label: "Редактирование дня", area: "График", status: "useful_missing" },
   { key: "full_day", label: "Полный доступ к дню", area: "График", status: "useful_missing" },
-  {
-    key: "schedule_actions",
-    label: "Панель действий графика",
-    area: "График",
-    status: "useful_fe_group",
-  },
   {
     key: "create_edit_smena",
     label: "Создание/редактирование смен",
     area: "Смены",
     status: "useful",
   },
+  { key: "fast_hours", label: "Часы", area: "Быстрые действия", status: "useful" },
   {
-    key: "smena_actions",
-    label: "Действия со сменами",
-    area: "Смены",
-    status: "useful_fe_group",
+    key: "fast_month",
+    label: "Быстро: месяц (устарело)",
+    area: "Устаревшие",
+    status: "deprecated",
   },
-  { key: "fast_month", label: "Быстро: месяц", area: "Быстрые действия", status: "useful" },
   {
     key: "fast_2_week",
     label: "Быстро: половина месяца",
-    area: "Быстрые действия",
-    status: "useful",
+    area: "Устаревшие",
+    status: "deprecated",
   },
-  { key: "fast_smena", label: "Быстро: смена", area: "Быстрые действия", status: "useful" },
-  { key: "fast_point", label: "Быстро: кафе", area: "Быстрые действия", status: "useful" },
+  { key: "fast_smena", label: "Смена", area: "Быстрые действия", status: "useful" },
+  { key: "fast_point", label: "Кафе", area: "Быстрые действия", status: "useful" },
   { key: "export_excel", label: "Экспорт Excel", area: "Экспорт", status: "useful_missing" },
 ];
 
@@ -87,27 +74,18 @@ const FINANCE_RULES = new Set([
   "full_h",
   "errors",
   "bonus",
+  "director_level",
   "all_price",
   "withheld",
   "test_all_price",
   "given",
   "given_cart",
   "premia",
-  "salary_block",
-  "payroll_actions",
   "bonus_of_day",
   "sums_all",
-  "footer_stats",
 ]);
-const SCHEDULE_RULES = new Set([
-  "full_month",
-  "day_edit",
-  "full_day",
-  "schedule_actions",
-  "create_edit_smena",
-  "smena_actions",
-]);
-const FAST_RULES = new Set(["fast_month", "fast_2_week", "fast_smena", "fast_point"]);
+const SCHEDULE_RULES = new Set(["full_month", "day_edit", "full_day", "create_edit_smena"]);
+const FAST_RULES = new Set(["fast_hours", "fast_smena", "fast_point"]);
 
 export function buildStaffScheduleAccessSkeleton(access = {}) {
   const next = { ...access };
@@ -127,12 +105,13 @@ export function buildStaffScheduleAccessSkeleton(access = {}) {
 export function applyStaffScheduleAccessPreset(access = {}, presetId) {
   const next = buildStaffScheduleAccessSkeleton(access);
 
-  STAFF_SCHEDULE_ACCESS_RULES.forEach(({ key }) => {
+  STAFF_SCHEDULE_ACCESS_RULES.forEach(({ key, status }) => {
     const canFinance = presetId === "finance" && FINANCE_RULES.has(key);
     const canSchedule = presetId === "schedule" && SCHEDULE_RULES.has(key);
     const canFast = presetId === "fast" && FAST_RULES.has(key);
-    const enabled = presetId === "all_on" || canFinance || canSchedule || canFast;
-    const readOnly = presetId === "read_only";
+    const enabled =
+      status !== "deprecated" && (presetId === "all_on" || canFinance || canSchedule || canFast);
+    const readOnly = presetId === "read_only" && status !== "deprecated";
 
     next[`${key}_access`] = enabled ? 1 : 0;
     next[`${key}_view`] = enabled || readOnly ? 1 : 0;

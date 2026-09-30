@@ -31,13 +31,16 @@ import {
   findInvalidTimeRangeIds,
   findOverlappingTimeRangeIds,
   getTimeRangeValidationError,
+  isDayDraftComplete,
+  isEditableDayHalfPeriod,
+  isClosedDayHalfPeriod,
   timeRangesOverlap,
 } from "../staffScheduleModalCore.mjs";
 import StaffScheduleMobileSelectField from "./StaffScheduleMobileSelectField";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
-const TEMPERATURE_SUGGESTIONS = ["36.0", "36,6", "37.0"];
+const TEMPERATURE_SUGGESTIONS = ["36,0", "36,6", "37,0"];
 
 function buildDraft(data) {
   return {
@@ -212,25 +215,27 @@ function TimeRow({ item, onRemove, hasConflict = false }) {
           {formatHourRangeLabel(item.time_start, item.time_end)}
         </Typography>
       </Stack>
-      <JacoIconButton
-        aria-label="Удалить время"
-        onClick={onRemove}
-        disabled={!onRemove}
-        sx={{
-          width: 32,
-          height: 32,
-          border: "none",
-          backgroundColor: "transparent",
-          color: "#BABABA",
-          "&:hover": { backgroundColor: "#F2F2F2" },
-          "&.Mui-disabled": {
-            opacity: 0.38,
-            pointerEvents: "none",
-          },
-        }}
-      >
-        <CloseIcon />
-      </JacoIconButton>
+      {onRemove ? (
+        <JacoIconButton
+          aria-label="Удалить время"
+          onClick={onRemove}
+          disabled={!onRemove}
+          sx={{
+            width: 32,
+            height: 32,
+            border: "none",
+            backgroundColor: "transparent",
+            color: "#BABABA",
+            "&:hover": { backgroundColor: "#F2F2F2" },
+            "&.Mui-disabled": {
+              opacity: 0.38,
+              pointerEvents: "none",
+            },
+          }}
+        >
+          <CloseIcon />
+        </JacoIconButton>
+      ) : null}
     </Box>
   );
 }
@@ -407,16 +412,19 @@ function AddTimeDialog({
       maxWidth="sm"
       paperSx={{ maxWidth: 600 }}
       contentSx={{ px: 2.5, pt: 2.5, pb: 1.5 }}
-      actionsSx={{ px: 2.5, pt: 0, pb: 2.5, borderTop: "none" }}
+      actionsSx={{ px: 2.5, pt: 0, pb: 2.5, borderTop: "none", display: "block" }}
       actions={
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{ width: "100%", justifyContent: "flex-end" }}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "auto minmax(0, 1fr) auto",
+            gap: 1.5,
+            width: "100%",
+          }}
         >
           <JacoButton
             compact
-            tone="secondary"
+            tone="danger"
             onClick={onClose}
             sx={{
               minWidth: 108,
@@ -430,11 +438,12 @@ function AddTimeDialog({
           </JacoButton>
           <JacoButton
             compact
-            tone="primary"
+            tone="success"
             onClick={onSubmit}
             disabled={!canSubmit}
             startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
             sx={{
+              gridColumn: 3,
               minWidth: 130,
               minHeight: 44,
               borderRadius: uiRadii.md,
@@ -443,7 +452,7 @@ function AddTimeDialog({
           >
             Добавить
           </JacoButton>
-        </Stack>
+        </Box>
       }
     >
       <Stack spacing={1.5}>
@@ -469,6 +478,8 @@ function AddTimeDialog({
 }
 
 export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
+  const modalRef = useRef(modal);
+  modalRef.current = modal;
   const [draft, setDraft] = useState(() => buildDraft(modal.data));
   const initialDraftRef = useRef(buildDraft(modal.data));
   const [saveError, setSaveError] = useState("");
@@ -502,9 +513,12 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const appOptions = useMemo(() => modal.data?.otherApps ?? [], [modal.data?.otherApps]);
   const healthOptions = useMemo(() => modal.data?.healthOptions ?? [], [modal.data?.healthOptions]);
   const mentorOptions = useMemo(() => modal.data?.mentorList ?? [], [modal.data?.mentorList]);
-  const canEditHours = Boolean(modal.data?.canEditHours);
-  const canEditAssignment = Boolean(modal.data?.canEditAssignment);
-  const canEditHealth = Boolean(modal.data?.canEditHealth);
+  const dayDate = modal.request?.date || modal.data?.date;
+  const isPeriodEditable = isEditableDayHalfPeriod(dayDate);
+  const isPastPeriod = isClosedDayHalfPeriod(dayDate);
+  const canEditHours = isPeriodEditable && Boolean(modal.data?.canEditHours);
+  const canEditAssignment = isPeriodEditable && Boolean(modal.data?.canEditAssignment);
+  const canEditHealth = isPeriodEditable && Boolean(modal.data?.canEditHealth);
   const canSave = canEditHours || canEditAssignment || canEditHealth;
   const invalidHourIds = useMemo(() => findInvalidTimeRangeIds(draft.hours), [draft.hours]);
   const overlappingHourIds = useMemo(() => findOverlappingTimeRangeIds(draft.hours), [draft.hours]);
@@ -512,8 +526,35 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   const hasHourConflicts = overlappingHourIds.size > 0;
   const hasHourErrors = hasInvalidHours || hasHourConflicts;
   const hasBlockingHourErrors = canEditHours && hasHourErrors;
+  const isDraftComplete = isDayDraftComplete({
+    draft,
+    originalHoursCount: Array.isArray(modal.data?.hours) ? modal.data.hours.length : 0,
+    canEditAssignment,
+    canEditHealth,
+    canEditHours,
+    appOptions,
+    healthOptions,
+  });
+  const canSubmitDay = canSave && isDraftComplete && !hasBlockingHourErrors;
+
+  const isCurrentDayEditable = (section) => {
+    const current = modalRef.current;
+    return (
+      current.open &&
+      current.request === modal.request &&
+      !current.loading &&
+      Boolean(current.data?.[section]) &&
+      isEditableDayHalfPeriod(current.request?.date || current.data?.date)
+    );
+  };
+
+  const updateDraftField = (field, value, section) => {
+    if (!isCurrentDayEditable(section)) return;
+    setDraft((prev) => ({ ...prev, [field]: value }));
+  };
 
   const removeHour = (index) => {
+    if (!isCurrentDayEditable("canEditHours")) return;
     setSaveError("");
     setDraft((prev) => ({
       ...prev,
@@ -521,26 +562,35 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
     }));
   };
 
-  const requestRemoveHour = (item, index) =>
-    withConfirm(() => removeHour(index), {
-      message: (
-        <Typography sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}>
-          Вы действительно хотите удалить
-          <br />
-          время работы{" "}
-          <Box
-            component="span"
-            sx={{ fontWeight: 700 }}
+  const requestRemoveHour =
+    (item, index) =>
+    (...args) => {
+      if (!isCurrentDayEditable("canEditHours")) return;
+      return withConfirm(() => removeHour(index), {
+        message: (
+          <Typography
+            sx={{ color: "#666666", fontSize: 20, textAlign: "center", lineHeight: 1.25 }}
           >
-            {formatHourRangeLabel(item.time_start, item.time_end)}
-          </Box>
-          ?
-        </Typography>
-      ),
-      confirmLabel: "Да, удалить",
-    });
+            Вы действительно хотите удалить
+            <br />
+            время работы{" "}
+            <Box
+              component="span"
+              sx={{ fontWeight: 700 }}
+            >
+              {formatHourRangeLabel(item.time_start, item.time_end)}
+            </Box>
+            ?
+          </Typography>
+        ),
+        confirmLabel: "Да, удалить",
+        confirmTone: "danger",
+        cancelTone: "danger",
+      })(...args);
+    };
 
   const openAddTimeDialog = () => {
+    if (!isCurrentDayEditable("canEditHours")) return;
     setNewTimeStart("10:00");
     setNewTimeEnd("22:00");
     setIsAddTimeOpen(true);
@@ -553,6 +603,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   };
 
   const addHour = () => {
+    if (!isCurrentDayEditable("canEditHours")) return;
     const validationError = getTimeRangeValidationError({
       time_start: newTimeStart,
       time_end: newTimeEnd,
@@ -582,7 +633,12 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
   };
 
   const handleSave = async () => {
-    if (!onSave || !modal.request) {
+    if (
+      !onSave ||
+      !modal.request ||
+      !canSave ||
+      !["canEditHours", "canEditAssignment", "canEditHealth"].some(isCurrentDayEditable)
+    ) {
       return;
     }
 
@@ -595,6 +651,11 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
       setSaveError(
         "Рабочие интервалы пересекаются. Удалите или измените один из них перед сохранением.",
       );
+      return;
+    }
+
+    if (!isDraftComplete) {
+      setSaveError("Заполните обязательные поля и добавьте время работы, если день ещё пуст.");
       return;
     }
 
@@ -613,12 +674,14 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         ),
       );
     } catch (error) {
-      setSaveError(error?.message || "Не удалось сохранить день");
+      if (modalRef.current.request === modal.request)
+        setSaveError(error?.message || "Не удалось сохранить день");
     }
   };
 
   const handleRequestClose = async () => {
-    if (!hasChanges) {
+    if (!modalRef.current.open || modalRef.current.request !== modal.request) return;
+    if (!canSave || !isEditableDayHalfPeriod(dayDate) || !hasChanges) {
       onClose?.();
       return;
     }
@@ -632,7 +695,15 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         </Typography>
       ),
       confirmLabel: "Да, сохранить",
+      confirmTone: "success",
+      cancelTone: "danger",
     });
+
+    if (!modalRef.current.open || modalRef.current.request !== modal.request) return;
+    if (!isEditableDayHalfPeriod(dayDate)) {
+      onClose?.();
+      return;
+    }
 
     if (shouldSave) {
       await handleSave();
@@ -644,14 +715,17 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
 
   const actions =
     modal.loading || !modal.data ? null : (
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{ width: "100%", justifyContent: "flex-end" }}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "auto minmax(0, 1fr) auto",
+          gap: 1.5,
+          width: "100%",
+        }}
       >
         <JacoButton
           compact
-          tone="secondary"
+          tone={canSave ? "danger" : "secondary"}
           onClick={handleRequestClose}
           sx={{
             minWidth: 108,
@@ -661,18 +735,20 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
             fontWeight: 500,
           }}
         >
-          Отменить
+          {canSave ? "Отменить" : "Закрыть"}
         </JacoButton>
-        <JacoButton
-          compact
-          tone="primary"
-          onClick={handleSave}
-          disabled={!canSave || hasBlockingHourErrors}
-          sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
-        >
-          Сохранить
-        </JacoButton>
-      </Stack>
+        {canSave ? (
+          <JacoButton
+            compact
+            tone="success"
+            onClick={handleSave}
+            disabled={!canSubmitDay}
+            sx={{ gridColumn: 3, minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
+          >
+            Сохранить
+          </JacoButton>
+        ) : null}
+      </Box>
     );
 
   return (
@@ -686,12 +762,15 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         titleSx={{ width: "100%" }}
         titleContainerSx={{ height: "auto", minHeight: 68, py: 1.25 }}
         contentSx={{ px: 2.5, pt: 3.25, pb: 1.5 }}
-        actionsSx={{ px: 2.5, pt: 1, pb: 3 }}
+        actionsSx={{ px: 2.5, pt: 1, pb: 3, display: "block" }}
         paperSx={{ maxWidth: 800 }}
       >
         <Stack spacing={2.5}>
           {modal.error ? <JacoAlert severity="error">{modal.error}</JacoAlert> : null}
           {saveError ? <JacoAlert severity="error">{saveError}</JacoAlert> : null}
+          {hasData && isPastPeriod ? (
+            <JacoAlert severity="info">Прошедший период — только просмотр</JacoAlert>
+          ) : null}
 
           {hasData ? (
             <>
@@ -705,10 +784,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   options={appOptions}
                   value={draft.newApp}
                   onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      newApp: event.target.value,
-                    }))
+                    updateDraftField("newApp", event.target.value, "canEditAssignment")
                   }
                   label="Кем работает"
                   pickerTitle="Кем работает"
@@ -722,10 +798,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   options={mentorOptions}
                   value={draft.mentorId}
                   onChange={(event) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      mentorId: event.target.value,
-                    }))
+                    updateDraftField("mentorId", event.target.value, "canEditAssignment")
                   }
                   label="Наставник"
                   pickerTitle="Наставник"
@@ -742,23 +815,26 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <JacoAutocomplete
                       freeSolo
+                      selectAppearance
                       forcePopupIcon
                       clearOnBlur={false}
                       selectOnFocus
                       options={TEMPERATURE_SUGGESTIONS}
-                      value={draft.userTemp}
+                      value={draft.userTemp || null}
                       inputValue={draft.userTemp ?? ""}
                       onChange={(_event, nextValue) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          userTemp: normalizeTemperatureValue(nextValue),
-                        }))
+                        updateDraftField(
+                          "userTemp",
+                          normalizeTemperatureValue(nextValue),
+                          "canEditHealth",
+                        )
                       }
                       onInputChange={(_event, nextValue) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          userTemp: normalizeTemperatureValue(nextValue),
-                        }))
+                        updateDraftField(
+                          "userTemp",
+                          normalizeTemperatureValue(nextValue),
+                          "canEditHealth",
+                        )
                       }
                       label="Температура"
                       placeholder="Введите или выберите"
@@ -770,10 +846,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       options={healthOptions}
                       value={draft.typeHealf}
                       onChange={(event) =>
-                        setDraft((prev) => ({
-                          ...prev,
-                          typeHealf: event.target.value,
-                        }))
+                        updateDraftField("typeHealf", event.target.value, "canEditHealth")
                       }
                       label="Здоровье"
                       pickerTitle="Здоровье"
@@ -802,7 +875,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                   container
                   spacing={1.25}
                 >
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: canEditHours ? 6 : 12 }}>
                     <Stack spacing={1}>
                       {draft.hours.map((item, index) => (
                         <TimeRow
@@ -816,27 +889,29 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
                       ))}
                     </Stack>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <JacoButton
-                      fullWidth
-                      tone="secondary"
-                      startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
-                      onClick={openAddTimeDialog}
-                      disabled={!canEditHours}
-                      sx={{
-                        minHeight: 44,
-                        border: "none",
-                        borderRadius: "12px",
-                        backgroundColor: "#E5E5E5",
-                        color: "#666666",
-                        fontSize: 16,
-                        fontWeight: 500,
-                        "&:hover": { border: "none", backgroundColor: "#DCDCDC" },
-                      }}
-                    >
-                      Добавить время
-                    </JacoButton>
-                  </Grid>
+                  {canEditHours ? (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <JacoButton
+                        fullWidth
+                        tone="secondary"
+                        startIcon={<AddTimeIcon sx={{ fontSize: 18 }} />}
+                        onClick={openAddTimeDialog}
+                        disabled={!canEditHours}
+                        sx={{
+                          minHeight: 44,
+                          border: "none",
+                          borderRadius: "12px",
+                          backgroundColor: "#E5E5E5",
+                          color: "#666666",
+                          fontSize: 16,
+                          fontWeight: 500,
+                          "&:hover": { border: "none", backgroundColor: "#DCDCDC" },
+                        }}
+                      >
+                        Добавить время
+                      </JacoButton>
+                    </Grid>
+                  ) : null}
                 </Grid>
               </Stack>
             </>
@@ -850,7 +925,7 @@ export default function StaffScheduleDayModal({ modal, onClose, onSave }) {
         onClose={() => setIsHistoryOpen(false)}
       />
       <AddTimeDialog
-        open={isAddTimeOpen}
+        open={isAddTimeOpen && canEditHours}
         start={newTimeStart}
         end={newTimeEnd}
         existingHours={draft.hours}

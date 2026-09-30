@@ -140,10 +140,11 @@ export function FreeSoloSuggestions() {
     <StorySurface>
       <JacoAutocomplete
         freeSolo
+        selectAppearance
         forcePopupIcon
         clearOnBlur={false}
         options={["36,0", "36,6", "37,0"]}
-        value={temperature}
+        value={temperature || null}
         inputValue={temperature}
         onChange={(_event, value) => setTemperature(value ?? "")}
         onInputChange={(_event, value) => setTemperature(value)}
@@ -170,6 +171,60 @@ export function UnifiedSelectPopup() {
         ]}
         allowNone={false}
         defaultOpen
+      />
+    </StorySurface>
+  );
+}
+
+export function SelectAppearanceAutocomplete() {
+  const [cafe, setCafe] = useState(cafes[0]);
+
+  return (
+    <StorySurface>
+      <JacoSelect
+        label="Кафе — выбор"
+        value={String(cafe.id)}
+        onChange={(event) =>
+          setCafe(cafes.find((option) => String(option.id) === event.target.value))
+        }
+        options={cafes}
+        allowNone={false}
+      />
+      <JacoAutocomplete
+        label="Кафе — поиск и выбор"
+        options={cafes}
+        value={cafe}
+        onChange={(_event, option) => setCafe(option)}
+        disableClearable
+        selectAppearance
+      />
+    </StorySurface>
+  );
+}
+
+export function SelectAppearanceAutocompletePopup() {
+  const [cafe, setCafe] = useState(cafes[0]);
+
+  return (
+    <StorySurface>
+      <JacoSelect
+        label="Кафе — выбор"
+        value={String(cafe.id)}
+        onChange={(event) =>
+          setCafe(cafes.find((option) => String(option.id) === event.target.value))
+        }
+        options={cafes}
+        allowNone={false}
+      />
+      <JacoAutocomplete
+        label="Кафе — поиск и выбор"
+        options={cafes}
+        value={cafe}
+        onChange={(_event, option) => setCafe(option)}
+        disableClearable
+        selectAppearance
+        open
+        onClose={() => {}}
       />
     </StorySurface>
   );

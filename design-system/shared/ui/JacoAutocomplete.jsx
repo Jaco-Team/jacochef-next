@@ -58,6 +58,7 @@ export default function JacoAutocomplete({
   multiple = false,
   disabled = false,
   unifiedPopup = true,
+  selectAppearance = false,
   autocompleteSx,
   sx,
   slots,
@@ -108,6 +109,34 @@ export default function JacoAutocomplete({
         },
       }
     : {};
+  const selectAppearanceSx = selectAppearance
+    ? {
+        "& .MuiOutlinedInput-root": {
+          height: 44,
+          minHeight: 44,
+          paddingLeft: "16px !important",
+        },
+        "& .MuiAutocomplete-inputRoot .MuiAutocomplete-input": {
+          padding: "0 !important",
+        },
+        "& .MuiAutocomplete-endAdornment": {
+          top: "50%",
+          right: 12,
+          transform: "translateY(-50%)",
+        },
+        "& .MuiAutocomplete-popupIndicator": {
+          padding: 0,
+          color: uiColors.textMuted,
+        },
+        "&.Mui-expanded .MuiOutlinedInput-root": {
+          borderRadius: `${uiRadii.md} ${uiRadii.md} 0 0`,
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: uiColors.primary,
+            borderWidth: 1,
+          },
+        },
+      }
+    : null;
 
   return (
     <Autocomplete
@@ -122,8 +151,17 @@ export default function JacoAutocomplete({
       getOptionLabel={props.getOptionLabel ?? optionLabel}
       isOptionEqualToValue={
         isOptionEqualToValue ??
-        ((option, selectedValue) =>
-          optionLabel(option) === optionLabel(selectedValue) || option?.id === selectedValue?.id)
+        ((option, selectedValue) => {
+          const label = optionLabel(option);
+          const selectedLabel = optionLabel(selectedValue);
+          const optionId = option?.id;
+          const selectedId = selectedValue?.id;
+
+          return (
+            (label !== "" && selectedLabel !== "" && label === selectedLabel) ||
+            (optionId != null && selectedId != null && optionId === selectedId)
+          );
+        })
       }
       filterOptions={
         filterOptions ??
@@ -147,8 +185,11 @@ export default function JacoAutocomplete({
         paper: {
           ...slotProps?.paper,
           sx: {
-            border: `1px solid ${uiColors.border}`,
-            borderRadius: uiRadii.md,
+            marginTop: selectAppearance ? "-1px" : undefined,
+            boxSizing: selectAppearance ? "border-box" : undefined,
+            border: `1px solid ${selectAppearance ? uiColors.primary : uiColors.border}`,
+            borderTop: selectAppearance ? "none" : undefined,
+            borderRadius: selectAppearance ? `0 0 ${uiRadii.md} ${uiRadii.md}` : uiRadii.md,
             boxShadow: uiShadows.popover,
             overflow: "hidden",
             ...slotProps?.paper?.sx,
@@ -159,16 +200,27 @@ export default function JacoAutocomplete({
           sx: {
             py: 0,
             "& .MuiAutocomplete-option": {
-              minHeight: 44,
-              px: 2,
-              color: uiColors.text,
+              minHeight: selectAppearance ? "44px !important" : 44,
+              px: selectAppearance ? "15px" : 2,
+              py: selectAppearance ? 0 : undefined,
+              color: selectAppearance ? uiColors.textStrong : uiColors.text,
               ...uiTypography.body,
+              ...(selectAppearance
+                ? {
+                    '&[aria-selected="true"]': {
+                      backgroundColor: uiColors.primarySoft,
+                      "&.Mui-focused, &:hover": {
+                        backgroundColor: uiColors.primarySoft,
+                      },
+                    },
+                  }
+                : {}),
             },
             ...slotProps?.listbox?.sx,
           },
         },
       }}
-      sx={autocompleteSx}
+      sx={selectAppearance ? [selectAppearanceSx, autocompleteSx].filter(Boolean) : autocompleteSx}
       renderInput={
         renderInput ??
         ((params) => (

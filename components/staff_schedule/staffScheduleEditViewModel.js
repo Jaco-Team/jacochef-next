@@ -194,17 +194,6 @@ export function hasEditDraftChanges(draft, user, selectedPart = 0) {
   return hasScheduleChange || hasSmenaChange || hasPointChange;
 }
 
-export function getDefaultScheduleScope(canUse) {
-  const canMonth = canUse("fast_month");
-  const canWeek = canUse("fast_2_week");
-
-  if (canWeek) {
-    return EDIT_SCHEDULE_SCOPE.week;
-  }
-
-  if (canMonth) {
-    return EDIT_SCHEDULE_SCOPE.month;
-  }
-
+export function getDefaultScheduleScope() {
   return EDIT_SCHEDULE_SCOPE.week;
 }
