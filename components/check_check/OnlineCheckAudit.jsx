@@ -15,6 +15,8 @@ import TableRow from "@mui/material/TableRow";
 import TableContainer from "@mui/material/TableContainer";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import { JacoButton } from "@/design-system/shared/ui";
+import { hasAccountingCorrection } from "./incomeCorrection.mjs";
 
 const statusConfig = {
   ok: { color: "success", border: "success.main", background: "success.lighter" },
@@ -36,6 +38,7 @@ const issueLabels = {
   atol_status_inconsistent: "Некорректный служебный статус АТОЛ",
   atol_duplicate_request: "Повторная отправка в АТОЛ",
   receipt_auto_linked: "Связь восстановлена автоматически",
+  receipt_accounting_correction: "Учётная коррекция без фискального чека",
 };
 
 const formatAmount = (value) =>
@@ -52,11 +55,18 @@ const detailsText = (issue) => {
   if (details.receipt_amount != null) parts.push(`в чеке ${formatAmount(details.receipt_amount)}`);
   if (details.payment_error) parts.push(details.payment_error);
   if (details.checked_through) parts.push(`проверено по ${details.checked_through}`);
+  if (details.accounting_only) parts.push("Только запись Шефа; не чек ОФД");
 
   return parts.join(" · ");
 };
 
-export default function OnlineCheckAudit({ result, onRun, disabled = false, canRepair = false }) {
+export default function OnlineCheckAudit({
+  result,
+  onRun,
+  disabled = false,
+  canRepair = false,
+  onIncomeCorrection,
+}) {
   const config = statusConfig[result?.status] ?? statusConfig.warning;
   const groups = (result?.issues ?? []).reduce((acc, issue) => {
     const key = issue.code || "other";
@@ -127,6 +137,12 @@ export default function OnlineCheckAudit({ result, onRun, disabled = false, canR
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 2 }}>
               <Chip label={`Оплачено: ${summary.paid_count ?? 0}`} />
               <Chip label={`Чеков: ${summary.receipts_count ?? 0}`} />
+              {summary.accounting_corrections_count > 0 && (
+                <Chip
+                  color="warning"
+                  label={`Учётных коррекций (не ОФД): ${summary.accounting_corrections_count}`}
+                />
+              )}
               <Chip
                 label={`Ошибок: ${summary.errors_count ?? 0}`}
                 color={summary.errors_count ? "error" : "default"}
@@ -189,6 +205,9 @@ export default function OnlineCheckAudit({ result, onRun, disabled = false, canR
                             <TableCell>Дата заказа</TableCell>
                             <TableCell>Сумма</TableCell>
                             <TableCell>Что произошло</TableCell>
+                            {code === "receipt_missing" && onIncomeCorrection && (
+                              <TableCell>Действие</TableCell>
+                            )}
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -208,6 +227,28 @@ export default function OnlineCheckAudit({ result, onRun, disabled = false, canR
                                   </Typography>
                                 )}
                               </TableCell>
+                              {code === "receipt_missing" && onIncomeCorrection && (
+                                <TableCell>
+                                  {issue.order_id &&
+                                    (hasAccountingCorrection(result.issues, issue.order_id) ? (
+                                      <Chip
+                                        color="warning"
+                                        size="small"
+                                        label="Учётная запись добавлена"
+                                      />
+                                    ) : (
+                                      <JacoButton
+                                        compact
+                                        tone="outlinePrimary"
+                                        disabled={disabled}
+                                        onClick={() => onIncomeCorrection(issue.order_id)}
+                                        sx={{ whiteSpace: "normal" }}
+                                      >
+                                        Добавить учётную коррекцию прихода
+                                      </JacoButton>
+                                    ))}
+                                </TableCell>
+                              )}
                             </TableRow>
                           ))}
                         </TableBody>
