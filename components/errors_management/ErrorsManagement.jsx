@@ -15,16 +15,13 @@ import {
   Drawer,
   Grid,
   MenuItem,
-  Paper,
   Stack,
-  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
   TextField,
   Typography,
   useMediaQuery,
@@ -34,7 +31,14 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { api_laravel } from "@/src/api_new";
-import { MyDatePickerNew, MySelect } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoCompactTabs,
+  JacoDatePicker,
+  JacoSelect,
+  JacoSurface,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 import JacoSearch from "@/ui/JacoSearch";
 import dayjs from "dayjs";
 
@@ -47,11 +51,7 @@ const DEFAULT_FILTERS = {
   dateTo: dayjs().format("YYYY-MM-DD"),
 };
 const rootSx = { pb: 3 };
-const surfaceSx = { borderRadius: "12px", borderColor: "divider", boxShadow: "none" };
-const tabSx = {
-  minHeight: 48,
-  "& .MuiTab-root": { minHeight: 48, textTransform: "none", fontWeight: 700 },
-};
+const surfaceSx = { boxShadow: "none" };
 const filterSx = { p: { xs: 2, md: 2.5 }, ...surfaceSx };
 const titleSx = { fontSize: { xs: 26, md: 32 }, fontWeight: 700, lineHeight: 1.2 };
 const STATISTICS_SOURCES = [
@@ -62,7 +62,7 @@ const STATISTICS_SOURCES = [
 function EmptyResults({ mode, onAction }) {
   const journal = mode === "journal";
   return (
-    <Paper
+    <JacoSurface
       variant="outlined"
       sx={{ p: { xs: 3, md: 4 }, textAlign: "center", ...surfaceSx }}
     >
@@ -78,16 +78,9 @@ function EmptyResults({ mode, onAction }) {
             ? "За выбранный период жалоб нет."
             : "Измените фильтры или найдите заказ по номеру."}
         </Typography>
-        {journal ? (
-          <Button
-            variant="contained"
-            onClick={onAction}
-          >
-            Перейти к регистрации
-          </Button>
-        ) : null}
+        {journal ? <JacoButton onClick={onAction}>Перейти к регистрации</JacoButton> : null}
       </Stack>
-    </Paper>
+    </JacoSurface>
   );
 }
 
@@ -167,7 +160,7 @@ function ErrorEditor({ value, positions, catalog, solutions, stages, onChange, o
   const requiresIngredient = Boolean(selectedError?.rules?.requires_ingredient);
 
   return (
-    <Paper
+    <JacoSurface
       variant="outlined"
       sx={{ p: 2, ...surfaceSx }}
     >
@@ -347,7 +340,7 @@ function ErrorEditor({ value, positions, catalog, solutions, stages, onChange, o
           </Grid>
         </Grid>
       </Stack>
-    </Paper>
+    </JacoSurface>
   );
 }
 
@@ -451,7 +444,7 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
             <Stack spacing={1}>
               <Typography fontWeight={700}>Позиции заказа</Typography>
               {context.positions?.map((position) => (
-                <Paper
+                <JacoSurface
                   key={position.position_key}
                   variant="outlined"
                   sx={{ p: 1.5, ...surfaceSx }}
@@ -478,7 +471,7 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
                       Ошибка
                     </Button>
                   </Stack>
-                </Paper>
+                </JacoSurface>
               ))}
             </Stack>
             <Button
@@ -508,7 +501,7 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
                 />
               ))}
             </Stack>
-            <TextField
+            <JacoTextInput
               fullWidth
               multiline
               minRows={3}
@@ -516,13 +509,12 @@ function RegistrationDrawer({ selected, onClose, request, onSaved }) {
               value={comment}
               onChange={(event) => setComment(event.target.value)}
             />
-            <Button
-              variant="contained"
+            <JacoButton
               disabled={!errors.length}
               onClick={save}
             >
               Зарегистрировать жалобу
-            </Button>
+            </JacoButton>
           </>
         ) : null}
       </Stack>
@@ -581,7 +573,7 @@ function ComplaintDrawer({ complaint, onClose, request }) {
         ) : null}
         {detail ? (
           <>
-            <Paper
+            <JacoSurface
               variant="outlined"
               sx={{ p: 2, ...surfaceSx }}
             >
@@ -596,11 +588,11 @@ function ComplaintDrawer({ complaint, onClose, request }) {
                 </Typography>
                 <Typography>{detail.common_comment || "—"}</Typography>
               </Stack>
-            </Paper>
+            </JacoSurface>
             <Typography fontWeight={700}>Ошибки</Typography>
             <Stack spacing={1.25}>
               {(detail.errors || []).map((item) => (
-                <Paper
+                <JacoSurface
                   key={item.id}
                   variant="outlined"
                   sx={{ p: 1.5, ...surfaceSx }}
@@ -618,7 +610,7 @@ function ComplaintDrawer({ complaint, onClose, request }) {
                     <Typography variant="body2">Решение: {item.solution_name}</Typography>
                   ) : null}
                   {item.comment ? <Typography variant="body2">{item.comment}</Typography> : null}
-                </Paper>
+                </JacoSurface>
               ))}
             </Stack>
             <Typography fontWeight={700}>История</Typography>
@@ -802,6 +794,19 @@ function ErrorsManagement() {
       ...(field === "cityId" ? { pointId: "" } : {}),
     }));
   const applyStatistics = () => setStatisticsApplied(statisticsDraft);
+  const refreshActiveView = async () => {
+    setLoading(true);
+    setMessage("");
+    try {
+      if (tab === "statistics") await loadStatistics(statisticsApplied);
+      else if (tab === "journal") await loadComplaints(filters);
+      else await loadOrders(filters);
+    } catch {
+      setMessage("Не удалось обновить данные.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box
@@ -830,44 +835,32 @@ function ErrorsManagement() {
           >
             {title}
           </Typography>
-          <Button
-            variant="outlined"
+          <JacoButton
+            fullWidth={mobile}
             startIcon={<RefreshIcon />}
-            onClick={bootstrap}
+            onClick={refreshActiveView}
+            loading={loading}
+            sx={{ minWidth: { sm: 126 }, minHeight: 44, fontWeight: 500 }}
           >
             Обновить
-          </Button>
+          </JacoButton>
         </Box>
         {message ? <Alert severity="error">{message}</Alert> : null}
-        <Paper
-          variant="outlined"
-          sx={surfaceSx}
-        >
-          <Tabs
+        <JacoSurface sx={{ p: 0.5 }}>
+          <JacoCompactTabs
             value={tab}
             onChange={(_, value) => setTab(value)}
-            variant="fullWidth"
-            sx={tabSx}
-          >
-            <Tab
-              value="journal"
-              label="Журнал"
-            />
-            <Tab
-              value="registration"
-              label="Регистрация"
-            />
-            <Tab
-              value="statistics"
-              label="Статистика"
-            />
-          </Tabs>
-        </Paper>
+            items={[
+              { value: "journal", label: "Журнал" },
+              { value: "registration", label: "Регистрация" },
+              { value: "statistics", label: "Статистика" },
+            ]}
+          />
+        </JacoSurface>
         {tab !== "statistics" ? (
           <>
-            <Paper
+            <JacoSurface
               component="form"
-              variant="outlined"
               sx={filterSx}
               onSubmit={(event) => {
                 event.preventDefault();
@@ -880,41 +873,41 @@ function ErrorsManagement() {
                 sx={{ alignItems: "center" }}
               >
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MySelect
+                  <JacoSelect
                     label="Город"
-                    data={cities}
+                    options={cities}
                     value={filters.cityId}
                     multiple={false}
-                    is_none={false}
-                    func={(event) => update("cityId", event.target.value)}
+                    allowNone={false}
+                    onChange={(event) => update("cityId", event.target.value)}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MySelect
+                  <JacoSelect
                     label="Кафе"
-                    data={cafes}
+                    options={cafes}
                     value={filters.pointId}
                     multiple={false}
-                    is_none={false}
-                    func={(event) => update("pointId", event.target.value)}
+                    allowNone={false}
+                    onChange={(event) => update("pointId", event.target.value)}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MyDatePickerNew
+                  <JacoDatePicker
                     label="Дата от"
                     value={filters.dateFrom}
-                    func={(value) => update("dateFrom", value?.format?.("YYYY-MM-DD") || "")}
+                    onChange={(value) => update("dateFrom", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <MyDatePickerNew
+                  <JacoDatePicker
                     label="Дата до"
                     value={filters.dateTo}
-                    func={(value) => update("dateTo", value?.format?.("YYYY-MM-DD") || "")}
+                    onChange={(value) => update("dateTo", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
               </Grid>
-            </Paper>
+            </JacoSurface>
             <Box
               sx={{
                 display: "flex",
@@ -931,12 +924,12 @@ function ErrorsManagement() {
                   minLength={1}
                 />
               </Box>
-              <Button
-                variant="contained"
+              <JacoButton
                 onClick={apply}
+                sx={{ width: { xs: "100%", sm: "auto" } }}
               >
                 Найти
-              </Button>
+              </JacoButton>
             </Box>
             {rows.length === 0 ? (
               <EmptyResults
@@ -946,7 +939,7 @@ function ErrorsManagement() {
             ) : mobile ? (
               <Stack spacing={1.5}>
                 {rows.map((row, index) => (
-                  <Paper
+                  <JacoSurface
                     key={`${orderId(row)}-${index}`}
                     variant="outlined"
                     sx={{ p: 2, ...surfaceSx }}
@@ -986,11 +979,11 @@ function ErrorsManagement() {
                         )}
                       </Stack>
                     </Stack>
-                  </Paper>
+                  </JacoSurface>
                 ))}
               </Stack>
             ) : (
-              <Paper
+              <JacoSurface
                 variant="outlined"
                 sx={surfaceSx}
               >
@@ -1051,14 +1044,13 @@ function ErrorsManagement() {
                     </TableBody>
                   </Table>
                 </TableContainer>
-              </Paper>
+              </JacoSurface>
             )}
           </>
         ) : (
           <Stack spacing={2}>
-            <Paper
+            <JacoSurface
               component="form"
-              variant="outlined"
               sx={filterSx}
               onSubmit={(event) => {
                 event.preventDefault();
@@ -1071,79 +1063,86 @@ function ErrorsManagement() {
                 sx={{ alignItems: "center" }}
               >
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MySelect
+                  <JacoSelect
                     label="Город"
-                    data={cities}
+                    options={cities}
                     value={statisticsDraft.cityId}
                     multiple={false}
-                    is_none={false}
-                    func={(event) => updateStatistics("cityId", event.target.value)}
+                    allowNone={false}
+                    onChange={(event) => updateStatistics("cityId", event.target.value)}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MySelect
+                  <JacoSelect
                     label="Кафе"
-                    data={statisticsCafes}
+                    options={statisticsCafes}
                     value={statisticsDraft.pointId}
                     multiple={false}
-                    is_none={false}
-                    func={(event) => updateStatistics("pointId", event.target.value)}
+                    allowNone={false}
+                    onChange={(event) => updateStatistics("pointId", event.target.value)}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MySelect
+                  <JacoSelect
                     label="Источник"
-                    data={STATISTICS_SOURCES}
+                    options={STATISTICS_SOURCES}
                     value={statisticsDraft.source || ""}
                     multiple={false}
-                    is_none
-                    func={(event) => updateStatistics("source", event.target.value)}
+                    allowNone
+                    noneLabel="Все источники"
+                    onChange={(event) =>
+                      updateStatistics(
+                        "source",
+                        event.target.value === "none" ? "" : event.target.value,
+                      )
+                    }
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MyDatePickerNew
+                  <JacoDatePicker
                     label="Дата от"
                     value={statisticsDraft.dateFrom}
-                    func={(value) =>
+                    onChange={(value) =>
                       updateStatistics("dateFrom", value?.format?.("YYYY-MM-DD") || "")
                     }
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MyDatePickerNew
+                  <JacoDatePicker
                     label="Дата до"
                     value={statisticsDraft.dateTo}
-                    func={(value) =>
+                    onChange={(value) =>
                       updateStatistics("dateTo", value?.format?.("YYYY-MM-DD") || "")
                     }
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <MySelect
+                  <JacoSelect
                     label="Сотрудник"
-                    data={statistics?.employees || []}
+                    options={statistics?.employees || []}
                     value={statisticsDraft.employeeId || ""}
                     multiple={false}
-                    is_none
-                    func={(event) => updateStatistics("employeeId", event.target.value)}
+                    allowNone
+                    noneLabel="Все сотрудники"
+                    onChange={(event) =>
+                      updateStatistics(
+                        "employeeId",
+                        event.target.value === "none" ? "" : event.target.value,
+                      )
+                    }
                   />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                  >
-                    Применить фильтры
-                  </Button>
+                  <JacoButton type="submit">Применить фильтры</JacoButton>
                 </Grid>
               </Grid>
-            </Paper>
+            </JacoSurface>
             <Grid
               container
               spacing={2}
             >
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Paper
+                <JacoSurface
                   variant="outlined"
                   sx={{ p: 2.5, ...surfaceSx }}
                 >
@@ -1154,10 +1153,10 @@ function ErrorsManagement() {
                   >
                     {statistics?.unique_orders ?? "—"}
                   </Typography>
-                </Paper>
+                </JacoSurface>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Paper
+                <JacoSurface
                   variant="outlined"
                   sx={{ p: 2.5, ...surfaceSx }}
                 >
@@ -1168,10 +1167,10 @@ function ErrorsManagement() {
                   >
                     {statistics?.total_errors ?? "—"}
                   </Typography>
-                </Paper>
+                </JacoSurface>
               </Grid>
             </Grid>
-            <Paper
+            <JacoSurface
               variant="outlined"
               sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
             >
@@ -1203,8 +1202,8 @@ function ErrorsManagement() {
                   </TableBody>
                 </Table>
               )}
-            </Paper>
-            <Paper
+            </JacoSurface>
+            <JacoSurface
               variant="outlined"
               sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
             >
@@ -1283,7 +1282,7 @@ function ErrorsManagement() {
                   </Accordion>
                 ))
               )}
-            </Paper>
+            </JacoSurface>
           </Stack>
         )}
       </Stack>

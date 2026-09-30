@@ -2,12 +2,16 @@
 
 import SearchIcon from "@mui/icons-material/Search";
 import { InputAdornment } from "@mui/material";
-import { MySearchInput } from "@/ui/Forms";
+import { JacoTextInput } from "@/design-system/shared/ui";
 
-export default function JacoSearch({ inputAdornment, ...props }) {
+export default function JacoSearch({ inputAdornment, onValueChange, onChange, ...props }) {
   return (
-    <MySearchInput
+    <JacoTextInput
       {...props}
+      onChange={(event) => {
+        onChange?.(event);
+        onValueChange?.(event.target.value);
+      }}
       inputAdornment={{
         startAdornment: (
           <InputAdornment position="start">

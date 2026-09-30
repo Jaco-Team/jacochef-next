@@ -22,6 +22,7 @@ export default function JacoSelect({
   func,
   allowNone,
   is_none,
+  noneLabel = "None",
   label,
   multiple = false,
   disabled = false,
@@ -45,7 +46,9 @@ export default function JacoSelect({
   const labelId = label ? `${selectId}-label` : undefined;
   const normalizedOptions = normalizeOptions(options ?? data);
   const withNone = (allowNone ?? is_none) !== false;
-  const items = withNone ? [{ id: "none", name: "None" }, ...normalizedOptions] : normalizedOptions;
+  const items = withNone
+    ? [{ id: "none", name: noneLabel }, ...normalizedOptions]
+    : normalizedOptions;
   const normalizedValue = multiple
     ? Array.isArray(value)
       ? value.map(String)
@@ -71,7 +74,7 @@ export default function JacoSelect({
   const renderValue = (selected) => {
     if (multiple) {
       if (!Array.isArray(selected) || selected.length === 0) {
-        return "None";
+        return noneLabel;
       }
       return items
         .filter((item) => selected.includes(item.id))
@@ -79,7 +82,7 @@ export default function JacoSelect({
         .join(", ");
     }
 
-    return items.find((item) => item.id === selected)?.name ?? (withNone ? "None" : "");
+    return items.find((item) => item.id === selected)?.name ?? (withNone ? noneLabel : "");
   };
 
   return (
