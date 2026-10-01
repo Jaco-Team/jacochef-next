@@ -44,6 +44,7 @@ export function classifierDraft(catalog, objectType, positionKey = null) {
     error_id: "",
     stage_id: "",
     solution_id: "",
+    error_amount: "",
     comment: "",
   };
   return categories.length === 1 ? completeClassifier(catalog, draft, categories[0].id) : draft;
@@ -185,6 +186,18 @@ export function ErrorEditor({ value, positions, catalog, solutions, stages, onCh
               label="Комментарий"
               value={value.comment || ""}
               onChange={(event) => onChange({ ...value, comment: event.target.value })}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <JacoTextInput
+              type="number"
+              min={0}
+              step={0.01}
+              label="Сумма ошибки"
+              value={value.error_amount || ""}
+              slotProps={{ inputLabel: { shrink: true } }}
+              inputProps={{ inputMode: "decimal" }}
+              onChange={(event) => onChange({ ...value, error_amount: event.target.value })}
             />
           </Grid>
           <Grid size={12}>

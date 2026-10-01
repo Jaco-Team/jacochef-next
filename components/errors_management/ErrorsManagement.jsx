@@ -90,7 +90,7 @@ const COMPLAINT_STATUS_LABELS = {
 function historyFieldLabel(field) {
   if (COMPLAINT_HISTORY_FIELDS[field]) return COMPLAINT_HISTORY_FIELDS[field];
   const errorField = field.match(
-    /^errors\.\d+\.(category_name|error_type_name|error_name|stage_name|solution_name|comment)$/,
+    /^errors\.\d+\.(category_name|error_type_name|error_name|stage_name|solution_name|error_amount|changed_amount|comment)$/,
   )?.[1];
   return {
     category_name: "Категория",
@@ -98,6 +98,8 @@ function historyFieldLabel(field) {
     error_name: "Ошибка",
     stage_name: "Этап возникновения ошибки",
     solution_name: "Решение",
+    error_amount: "Сумма ошибки",
+    changed_amount: "Сумма изменения",
     comment: "Комментарий к ошибке",
   }[errorField];
 }
@@ -133,9 +135,11 @@ function historyFieldOrder(field) {
   if (field.endsWith(".error_name")) return 3;
   if (field.endsWith(".stage_name")) return 4;
   if (field.endsWith(".solution_name")) return 5;
-  if (field.endsWith(".comment")) return 6;
-  if (field === "common_comment") return 7;
-  return 8;
+  if (field.endsWith(".error_amount")) return 6;
+  if (field.endsWith(".changed_amount")) return 7;
+  if (field.endsWith(".comment")) return 8;
+  if (field === "common_comment") return 9;
+  return 10;
 }
 
 const HISTORY_STATUS_LABELS = {
@@ -149,12 +153,27 @@ const HISTORY_STATUS_LABELS = {
 function historyValue(value, field) {
   if (value === null || value === undefined || value === "") return "—";
   if (field === "status") return HISTORY_STATUS_LABELS[value] || String(value);
+  if (["sent_to_cafe_at", "accepted_at", "resolved_at"].includes(field))
+    return historyTimestamp(value);
+  if (field.endsWith(".error_amount") || field.endsWith(".changed_amount"))
+    return amountLabel(value);
   return String(value);
 }
 
 function historyTimestamp(value) {
   const parsed = dayjs(value);
   return parsed.isValid() ? parsed.format("DD.MM.YYYY HH:mm") : value || "—";
+}
+
+function amountLabel(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const amount = Number(value);
+  return Number.isFinite(amount) ? `${amount.toFixed(2)} ₽` : "—";
+}
+
+function complaintStatusLabel(item) {
+  const label = item?.status_label || COMPLAINT_STATUS_LABELS[item?.status] || "—";
+  return item?.status_context ? `${label} · ${item.status_context}` : label;
 }
 
 function DetailField({ label, value, fullWidth = false, emphasized = false }) {
@@ -419,16 +438,34 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
   const [error, setError] = useState("");
   const [pendingCommand, setPendingCommand] = useState(null);
   const [transitioning, setTransitioning] = useState(false);
+  const [resolutionErrors, setResolutionErrors] = useState([]);
 
   useEffect(() => {
     if (!complaint) return;
     setDetail(null);
     setError("");
     setPendingCommand(null);
+    setResolutionErrors([]);
     request("v2/detail", { complaint_id: complaint.id, point_id: complaint.point_id })
       .then((response) => setDetail(response?.data ?? response ?? null))
       .catch(() => setError("Не удалось загрузить жалобу."));
   }, [complaint, request]);
+
+  useEffect(() => {
+    setResolutionErrors(
+      (detail?.errors || []).map((item) => ({
+        id: item.id,
+        solution_id: item.solution_id ? String(item.solution_id) : "",
+        changed_amount: item.changed_amount ?? "",
+      })),
+    );
+  }, [detail?.id, detail?.lock_version]);
+
+  const resolutionSolutions = detail?.resolution_solutions || [];
+  const canResolve =
+    resolutionSolutions.length === 0 ||
+    (resolutionErrors.length === (detail?.errors || []).length &&
+      resolutionErrors.every((item) => Boolean(item.solution_id)));
 
   const cafeContext = useMemo(() => {
     const point = points.find((item) => String(item.id) === String(detail?.point_id));
@@ -456,6 +493,7 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
           point_id: detail.point_id,
           lock_version: detail.lock_version,
           command: pendingCommand,
+          ...(pendingCommand === "resolve" ? { resolution_errors: resolutionErrors } : {}),
         },
         { throwErrors: true, suppressAuthRedirect: true },
       );
@@ -529,7 +567,7 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                 <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 1.25 }}>
                   <DetailField
                     label="Статус"
-                    value={detail.status_label}
+                    value={complaintStatusLabel(detail)}
                     emphasized
                   />
                   <DetailField
@@ -619,8 +657,18 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                       {item.error_type_name ? ` · ${item.error_type_name}` : ""}
                     </Typography>
                     <Typography variant="body2">Этап: {item.stage_name}</Typography>
+                    {item.error_amount != null ? (
+                      <Typography variant="body2">
+                        Сумма ошибки: {amountLabel(item.error_amount)}
+                      </Typography>
+                    ) : null}
                     {item.solution_name ? (
                       <Typography variant="body2">Решение: {item.solution_name}</Typography>
+                    ) : null}
+                    {item.changed_amount != null ? (
+                      <Typography variant="body2">
+                        Сумма изменения: {amountLabel(item.changed_amount)}
+                      </Typography>
                     ) : null}
                     {item.comment ? <Typography variant="body2">{item.comment}</Typography> : null}
                   </JacoSurface>
@@ -686,7 +734,7 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
         open={Boolean(pendingCommand)}
         onClose={() => setPendingCommand(null)}
         title={pendingCommand ? commandLabels[pendingCommand] : ""}
-        maxWidth="xs"
+        maxWidth={pendingCommand === "resolve" ? "sm" : "xs"}
         actions={
           <Stack
             direction="row"
@@ -701,6 +749,7 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
             </JacoButton>
             <JacoButton
               loading={transitioning}
+              disabled={pendingCommand === "resolve" && !canResolve}
               onClick={executeTransition}
             >
               Подтвердить
@@ -708,11 +757,100 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
           </Stack>
         }
       >
-        <Typography>
-          {pendingCommand === "send_to_cafe"
-            ? `Жалоба будет отправлена в кафе: ${cafeContext}.`
-            : "Статус жалобы будет изменён."}
-        </Typography>
+        {pendingCommand === "resolve" ? (
+          <Stack spacing={2}>
+            <Typography>
+              Зафиксируйте решение по каждой ошибке перед завершением рассмотрения.
+            </Typography>
+            {resolutionSolutions.length === 0 ? (
+              <Alert severity="warning">
+                Активные варианты решения не настроены. Укажите сумму изменения, если она известна.
+              </Alert>
+            ) : null}
+            {(detail?.errors || []).map((item) => {
+              const resolution = resolutionErrors.find(
+                (entry) => Number(entry.id) === Number(item.id),
+              ) || {
+                id: item.id,
+                solution_id: "",
+                changed_amount: "",
+              };
+              return (
+                <JacoSurface
+                  key={item.id}
+                  variant="outlined"
+                  sx={{ p: 1.5, ...surfaceSx }}
+                >
+                  <Stack spacing={1.25}>
+                    <Typography fontWeight={700}>{item.error_name}</Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      {item.category_name}
+                      {item.error_type_name ? ` · ${item.error_type_name}` : ""}
+                    </Typography>
+                    <Grid
+                      container
+                      spacing={1.25}
+                    >
+                      <Grid size={{ xs: 12, sm: 7 }}>
+                        <JacoSelect
+                          required={resolutionSolutions.length > 0}
+                          label="Решение"
+                          options={resolutionSolutions}
+                          disabled={resolutionSolutions.length === 0}
+                          value={resolution.solution_id}
+                          allowNone
+                          noneLabel="Выберите решение"
+                          onChange={(event) =>
+                            setResolutionErrors((previous) =>
+                              previous.map((entry) =>
+                                Number(entry.id) === Number(item.id)
+                                  ? {
+                                      ...entry,
+                                      solution_id:
+                                        event.target.value === "none" ? "" : event.target.value,
+                                    }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 5 }}>
+                        <JacoTextInput
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          label="Сумма изменения"
+                          value={resolution.changed_amount}
+                          slotProps={{ inputLabel: { shrink: true } }}
+                          inputProps={{ inputMode: "decimal" }}
+                          onChange={(event) =>
+                            setResolutionErrors((previous) =>
+                              previous.map((entry) =>
+                                Number(entry.id) === Number(item.id)
+                                  ? { ...entry, changed_amount: event.target.value }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </JacoSurface>
+              );
+            })}
+          </Stack>
+        ) : (
+          <Typography>
+            {pendingCommand === "send_to_cafe"
+              ? `Жалоба будет отправлена в кафе: ${cafeContext}.`
+              : "Статус жалобы будет изменён."}
+          </Typography>
+        )}
       </JacoModal>
     </Drawer>
   );
@@ -1093,7 +1231,11 @@ function ErrorsManagement() {
                         <Chip
                           size="small"
                           color={row.status === "resolved" ? "success" : "warning"}
-                          label={row.status_label || row.status || "—"}
+                          label={
+                            tab === "journal"
+                              ? complaintStatusLabel(row)
+                              : row.status_label || row.status || "—"
+                          }
                         />
                       </Stack>
                       <Typography color="text.secondary">
@@ -1101,8 +1243,8 @@ function ErrorsManagement() {
                       </Typography>
                       {tab === "journal" ? (
                         <Typography color="text.secondary">
-                          Ошибок: {row.errors_count ?? "—"} · Сумма: {row.error_amount_total ?? "—"}{" "}
-                          ₽
+                          Ошибок: {row.errors_count ?? "—"} · Сумма:{" "}
+                          {amountLabel(row.error_amount_total)}
                         </Typography>
                       ) : (
                         <Typography>{row.number || "Клиент не указан"}</Typography>
@@ -1111,7 +1253,11 @@ function ErrorsManagement() {
                         direction="row"
                         sx={{ justifyContent: "space-between" }}
                       >
-                        <Typography>{row.order_price || "—"} ₽</Typography>
+                        <Typography>
+                          {amountLabel(
+                            tab === "journal" ? row.order_snapshot?.order_amount : row.order_price,
+                          )}
+                        </Typography>
                         {tab === "registration" ? (
                           <Button
                             size="small"
@@ -1256,13 +1402,13 @@ function ErrorsManagement() {
                                 <Chip
                                   size="small"
                                   color={row.status === "resolved" ? "success" : "warning"}
-                                  label={row.status_label || row.status || "—"}
+                                  label={complaintStatusLabel(row)}
                                 />
                               </TableCell>
-                              <TableCell>{row.error_amount_total ?? "—"} ₽</TableCell>
+                              <TableCell>{amountLabel(row.error_amount_total)}</TableCell>
                               <TableCell>
                                 {row.is_salary_visible
-                                  ? `${row.changed_amount_total ?? "—"} ₽`
+                                  ? amountLabel(row.changed_amount_total)
                                   : "—"}
                               </TableCell>
                             </>
