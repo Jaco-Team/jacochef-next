@@ -37,6 +37,7 @@ import {
   JacoModal,
   JacoSegmentedTabs,
   JacoDatePicker,
+  JacoIconButton,
   JacoSelect,
   JacoSurface,
   JacoTextInput,
@@ -86,19 +87,55 @@ const COMPLAINT_STATUS_LABELS = {
   cancelled: "Отменена",
 };
 
+function historyFieldLabel(field) {
+  if (COMPLAINT_HISTORY_FIELDS[field]) return COMPLAINT_HISTORY_FIELDS[field];
+  const errorField = field.match(
+    /^errors\.\d+\.(category_name|error_type_name|error_name|stage_name|solution_name|comment)$/,
+  )?.[1];
+  return {
+    category_name: "Категория",
+    error_type_name: "Тип ошибки",
+    error_name: "Ошибка",
+    stage_name: "Этап возникновения ошибки",
+    solution_name: "Решение",
+    comment: "Комментарий к ошибке",
+  }[errorField];
+}
+
+function hasHistoryValue(value) {
+  return value !== null && value !== undefined && value !== "";
+}
+
 function historyChanges(item) {
   try {
     const diff = typeof item?.diff_json === "string" ? JSON.parse(item.diff_json) : item?.diff_json;
     if (!diff || typeof diff !== "object") return [];
     return Object.entries(diff)
+      .map(([field, change]) => ({ field, label: historyFieldLabel(field), change }))
       .filter(
-        ([field, change]) =>
-          COMPLAINT_HISTORY_FIELDS[field] && change && typeof change === "object",
+        ({ label, change }) =>
+          label &&
+          change &&
+          typeof change === "object" &&
+          (hasHistoryValue(change.from) || hasHistoryValue(change.to)),
       )
-      .map(([field, change]) => ({ field, ...change }));
+      .map(({ field, label, change }) => ({ field, label, ...change }))
+      .sort((left, right) => historyFieldOrder(left.field) - historyFieldOrder(right.field));
   } catch {
     return [];
   }
+}
+
+function historyFieldOrder(field) {
+  if (field === "status") return 0;
+  if (field.endsWith(".category_name")) return 1;
+  if (field.endsWith(".error_type_name")) return 2;
+  if (field.endsWith(".error_name")) return 3;
+  if (field.endsWith(".stage_name")) return 4;
+  if (field.endsWith(".solution_name")) return 5;
+  if (field.endsWith(".comment")) return 6;
+  if (field === "common_comment") return 7;
+  return 8;
 }
 
 const HISTORY_STATUS_LABELS = {
@@ -113,6 +150,49 @@ function historyValue(value, field) {
   if (value === null || value === undefined || value === "") return "—";
   if (field === "status") return HISTORY_STATUS_LABELS[value] || String(value);
   return String(value);
+}
+
+function historyTimestamp(value) {
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format("DD.MM.YYYY HH:mm") : value || "—";
+}
+
+function DetailField({ label, value, fullWidth = false, emphasized = false }) {
+  return (
+    <Box sx={fullWidth ? { gridColumn: "1 / -1" } : undefined}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        fontWeight={emphasized ? 700 : 500}
+      >
+        {value || "—"}
+      </Typography>
+    </Box>
+  );
+}
+
+function DrawerSection({ title, children, sx }) {
+  return (
+    <JacoSurface
+      variant="outlined"
+      sx={{ p: { xs: 1.5, sm: 2 }, ...surfaceSx, ...sx }}
+    >
+      <Stack spacing={1.25}>
+        <Typography
+          variant="subtitle2"
+          fontWeight={700}
+        >
+          {title}
+        </Typography>
+        {children}
+      </Stack>
+    </JacoSurface>
+  );
 }
 
 function EmptyResults({ mode, onAction }) {
@@ -397,188 +477,211 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
       slotProps={{
         paper: {
           sx: {
-            width: { xs: "100%", sm: "clamp(600px, 40dvw, 760px)" },
-            maxWidth: "100%",
-            p: { xs: 2, md: 3 },
+            width: { xs: "100dvw", sm: "clamp(600px, 40dvw, 760px)" },
+            maxWidth: "100dvw",
+            boxSizing: "border-box",
+            overflow: "hidden",
+            p: 0,
           },
         },
       }}
     >
-      <Stack spacing={2}>
-        <Stack
-          direction="row"
-          sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
-        >
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight={700}
-            >
-              Жалоба №{complaint?.id}
-            </Typography>
-            <Typography color="text.secondary">Заказ №{complaint?.order_id}</Typography>
-          </Box>
-          <Button
-            color="inherit"
-            size="small"
-            startIcon={<CloseIcon />}
-            onClick={onClose}
+      <Box
+        sx={{
+          height: "100%",
+          overflowY: "auto",
+          overflowX: "hidden",
+          p: { xs: 2, sm: 2.5, md: 3 },
+          pb: "calc(env(safe-area-inset-bottom, 0px) + 24px)",
+          boxSizing: "border-box",
+        }}
+      >
+        <Stack spacing={2.5}>
+          <Stack
+            direction="row"
+            sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
           >
-            Закрыть
-          </Button>
-        </Stack>
-        {error ? <Alert severity="error">{error}</Alert> : null}
-        {!detail && !error ? (
-          <Box sx={{ display: "grid", placeItems: "center", py: 5 }}>
-            <CircularProgress />
-          </Box>
-        ) : null}
-        {detail ? (
-          <>
-            <JacoSurface
-              variant="outlined"
-              sx={{ p: 2, ...surfaceSx }}
-            >
-              <Stack spacing={0.5}>
-                <Typography color="text.secondary">Статус</Typography>
-                <Typography fontWeight={700}>{detail.status_label}</Typography>
-                <Typography
-                  color="text.secondary"
-                  mt={1}
-                >
-                  Общий комментарий
-                </Typography>
-                <Typography>{detail.common_comment || "—"}</Typography>
-              </Stack>
-            </JacoSurface>
-            {detail.order && Object.keys(detail.order).length ? (
-              <JacoSurface
-                variant="outlined"
-                sx={{ p: 2, ...surfaceSx }}
+            <Box>
+              <Typography
+                variant="h6"
+                fontWeight={700}
               >
-                <Stack spacing={0.75}>
-                  <Typography fontWeight={700}>Данные заказа</Typography>
-                  <Typography variant="body2">Оформил: {detail.order.placed_by || "—"}</Typography>
-                  {detail.order.client_name ? (
-                    <Typography variant="body2">Клиент: {detail.order.client_name}</Typography>
-                  ) : null}
-                  {detail.order.employee_name ? (
-                    <Typography variant="body2">Сотрудник: {detail.order.employee_name}</Typography>
-                  ) : null}
-                  {detail.order.traffic_source ? (
-                    <Typography variant="body2">Источник: {detail.order.traffic_source}</Typography>
-                  ) : null}
-                  {detail.order.promo_name ? (
-                    <Typography variant="body2">
-                      Промокод в заказе: {detail.order.promo_name}
-                    </Typography>
-                  ) : null}
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    mt={0.5}
+                Жалоба №{complaint?.id}
+              </Typography>
+              <Typography color="text.secondary">Заказ №{complaint?.order_id}</Typography>
+            </Box>
+            <JacoIconButton
+              aria-label="Закрыть жалобу"
+              onClick={onClose}
+            >
+              <CloseIcon fontSize="small" />
+            </JacoIconButton>
+          </Stack>
+          {error ? <Alert severity="error">{error}</Alert> : null}
+          {!detail && !error ? (
+            <Box sx={{ display: "grid", placeItems: "center", py: 5 }}>
+              <CircularProgress />
+            </Box>
+          ) : null}
+          {detail ? (
+            <>
+              <DrawerSection title="Жалоба">
+                <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 1.25 }}>
+                  <DetailField
+                    label="Статус"
+                    value={detail.status_label}
+                    emphasized
+                  />
+                  <DetailField
+                    label="Общий комментарий"
+                    value={detail.common_comment}
+                  />
+                </Box>
+              </DrawerSection>
+              {detail.order && Object.keys(detail.order).length ? (
+                <DrawerSection title="Данные заказа">
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "minmax(0, 1fr)",
+                        sm: "repeat(2, minmax(0, 1fr))",
+                      },
+                      gap: 1.25,
+                    }}
                   >
-                    Комментарий клиента
-                  </Typography>
-                  <Typography variant="body2">{detail.order.customer_comment || "—"}</Typography>
-                </Stack>
-              </JacoSurface>
-            ) : null}
-            {(detail.available_commands || []).length ? (
-              <Stack spacing={1}>
-                <Typography fontWeight={700}>Действия</Typography>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1}
-                >
-                  {detail.available_commands.map((command) => (
-                    <JacoButton
-                      key={command}
-                      onClick={() => setPendingCommand(command)}
-                    >
-                      {commandLabels[command] || command}
-                    </JacoButton>
-                  ))}
-                </Stack>
-              </Stack>
-            ) : null}
-            <Typography fontWeight={700}>Ошибки</Typography>
-            <Stack spacing={1.25}>
-              {(detail.errors || []).map((item) => (
-                <JacoSurface
-                  key={item.id}
-                  variant="outlined"
-                  sx={{ p: 1.5, ...surfaceSx }}
-                >
-                  <Typography fontWeight={700}>{item.error_name}</Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
+                    <DetailField
+                      label="Оформил"
+                      value={detail.order.placed_by}
+                    />
+                    <DetailField
+                      label="Сотрудник"
+                      value={detail.order.employee_name}
+                    />
+                    {detail.order.client_name ? (
+                      <DetailField
+                        label="Клиент"
+                        value={detail.order.client_name}
+                      />
+                    ) : null}
+                    {detail.order.traffic_source ? (
+                      <DetailField
+                        label="Источник"
+                        value={detail.order.traffic_source}
+                      />
+                    ) : null}
+                    {detail.order.promo_name ? (
+                      <DetailField
+                        label="Промокод в заказе"
+                        value={detail.order.promo_name}
+                      />
+                    ) : null}
+                    <DetailField
+                      fullWidth
+                      label="Комментарий клиента"
+                      value={detail.order.customer_comment}
+                    />
+                  </Box>
+                </DrawerSection>
+              ) : null}
+              {(detail.available_commands || []).length ? (
+                <Stack spacing={1}>
+                  <Typography fontWeight={700}>Действия</Typography>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
                   >
-                    {item.category_name}
-                    {item.error_type_name ? ` · ${item.error_type_name}` : ""}
-                  </Typography>
-                  <Typography variant="body2">Этап: {item.stage_name}</Typography>
-                  {item.solution_name ? (
-                    <Typography variant="body2">Решение: {item.solution_name}</Typography>
-                  ) : null}
-                  {item.comment ? <Typography variant="body2">{item.comment}</Typography> : null}
-                </JacoSurface>
-              ))}
-            </Stack>
-            <Typography fontWeight={700}>История</Typography>
-            <Stack spacing={1.25}>
-              {(detail.history || []).map((item) => {
-                const changes = historyChanges(item);
-                return (
+                    {detail.available_commands.map((command) => (
+                      <JacoButton
+                        key={command}
+                        onClick={() => setPendingCommand(command)}
+                      >
+                        {commandLabels[command] || command}
+                      </JacoButton>
+                    ))}
+                  </Stack>
+                </Stack>
+              ) : null}
+              <Typography fontWeight={700}>Ошибки</Typography>
+              <Stack spacing={1.25}>
+                {(detail.errors || []).map((item) => (
                   <JacoSurface
                     key={item.id}
                     variant="outlined"
                     sx={{ p: 1.5, ...surfaceSx }}
                   >
-                    <Stack spacing={0.75}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={700}
-                      >
-                        {item.entity_label || item.event_type}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        {item.actor_name || "Система"} · {item.created_at}
-                      </Typography>
-                      {changes.length ? (
-                        <Stack spacing={0.5}>
-                          {changes.map((change) => (
-                            <Typography
-                              key={change.field}
-                              variant="body2"
-                              color="text.secondary"
-                            >
-                              {COMPLAINT_HISTORY_FIELDS[change.field]}:{" "}
-                              {historyValue(change.from, change.field)} →{" "}
-                              {historyValue(change.to, change.field)}
-                            </Typography>
-                          ))}
-                        </Stack>
-                      ) : (
+                    <Typography fontWeight={700}>{item.error_name}</Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      {item.category_name}
+                      {item.error_type_name ? ` · ${item.error_type_name}` : ""}
+                    </Typography>
+                    <Typography variant="body2">Этап: {item.stage_name}</Typography>
+                    {item.solution_name ? (
+                      <Typography variant="body2">Решение: {item.solution_name}</Typography>
+                    ) : null}
+                    {item.comment ? <Typography variant="body2">{item.comment}</Typography> : null}
+                  </JacoSurface>
+                ))}
+              </Stack>
+              <Typography fontWeight={700}>История</Typography>
+              <Stack spacing={1.25}>
+                {(detail.history || []).map((item) => {
+                  const changes = historyChanges(item);
+                  return (
+                    <JacoSurface
+                      key={item.id}
+                      variant="outlined"
+                      sx={{ p: 1.5, ...surfaceSx }}
+                    >
+                      <Stack spacing={0.75}>
                         <Typography
                           variant="body2"
+                          fontWeight={700}
+                        >
+                          {item.entity_label || item.event_type}
+                        </Typography>
+                        <Typography
+                          variant="caption"
                           color="text.secondary"
                         >
-                          Без изменений полей
+                          {item.actor_name || "Система"} · {historyTimestamp(item.created_at)}
                         </Typography>
-                      )}
-                    </Stack>
-                  </JacoSurface>
-                );
-              })}
-            </Stack>
-          </>
-        ) : null}
-      </Stack>
+                        {changes.length ? (
+                          <Stack spacing={0.5}>
+                            {changes.map((change) => (
+                              <Typography
+                                key={change.field}
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {change.label}:{" "}
+                                {hasHistoryValue(change.from)
+                                  ? `${historyValue(change.from, change.field)} → `
+                                  : ""}
+                                {historyValue(change.to, change.field)}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            Без изменений полей
+                          </Typography>
+                        )}
+                      </Stack>
+                    </JacoSurface>
+                  );
+                })}
+              </Stack>
+            </>
+          ) : null}
+        </Stack>
+      </Box>
       <JacoModal
         open={Boolean(pendingCommand)}
         onClose={() => setPendingCommand(null)}
@@ -1157,7 +1260,11 @@ function ErrorsManagement() {
                                 />
                               </TableCell>
                               <TableCell>{row.error_amount_total ?? "—"} ₽</TableCell>
-                              <TableCell>{row.changed_amount_total ?? "—"} ₽</TableCell>
+                              <TableCell>
+                                {row.is_salary_visible
+                                  ? `${row.changed_amount_total ?? "—"} ₽`
+                                  : "—"}
+                              </TableCell>
                             </>
                           ) : (
                             <>
