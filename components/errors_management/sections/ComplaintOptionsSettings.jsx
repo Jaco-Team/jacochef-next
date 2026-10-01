@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 import AddIcon from "@mui/icons-material/Add";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -21,6 +22,7 @@ import {
   JacoIconButton,
   JacoModal,
   JacoSegmentedTabs,
+  JacoSelect,
   JacoSurface,
   JacoSwitch,
   JacoTextInput,
@@ -69,7 +71,7 @@ function initialDraft(node, context) {
   };
 }
 
-function CatalogNodeEditor({ state, onClose, onSave, saving }) {
+function CatalogNodeEditor({ state, onClose, onSave, saving, error, stages }) {
   const [draft, setDraft] = useState(() => initialDraft(state.node, state.context));
   const isError = draft.kind === "error";
   const title = draft.id ? "Редактировать вариант" : "Добавить вариант";
@@ -83,7 +85,10 @@ function CatalogNodeEditor({ state, onClose, onSave, saving }) {
       ...draft,
       sort_order: Number(draft.sort_order || 0),
       rules: isError
-        ? { requires_ingredient: Boolean(draft.rules?.requires_ingredient) }
+        ? {
+            requires_ingredient: Boolean(draft.rules?.requires_ingredient),
+            stage_ids: (draft.rules?.stage_ids || []).map(Number),
+          }
         : draft.rules,
     });
   };
@@ -116,6 +121,7 @@ function CatalogNodeEditor({ state, onClose, onSave, saving }) {
       }
     >
       <Stack spacing={2}>
+        {error ? <Alert severity="error">{error}</Alert> : null}
         <JacoTextInput
           fullWidth
           required
@@ -144,29 +150,50 @@ function CatalogNodeEditor({ state, onClose, onSave, saving }) {
           }
         />
         {isError ? (
-          <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{ alignItems: "center" }}
-          >
-            <JacoSwitch
-              checked={Boolean(draft.rules?.requires_ingredient)}
+          <Stack spacing={2}>
+            <JacoSelect
+              required
+              multiple
+              label="Этапы возникновения ошибки"
+              options={stages}
+              value={draft.rules?.stage_ids || []}
+              allowNone={false}
               onChange={(event) =>
                 setDraft((current) => ({
                   ...current,
-                  rules: { ...current.rules, requires_ingredient: event.target.checked },
+                  rules: {
+                    ...current.rules,
+                    stage_ids: Array.isArray(event.target.value)
+                      ? event.target.value.map(Number)
+                      : [],
+                  },
                 }))
               }
             />
-            <Box>
-              <Typography fontWeight={700}>Запрашивать продукт из состава</Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-              >
-                Показывается только при регистрации ошибки блюда.
-              </Typography>
-            </Box>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              sx={{ alignItems: "center" }}
+            >
+              <JacoSwitch
+                checked={Boolean(draft.rules?.requires_ingredient)}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    rules: { ...current.rules, requires_ingredient: event.target.checked },
+                  }))
+                }
+              />
+              <Box>
+                <Typography fontWeight={700}>Запрашивать продукт из состава</Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Показывается только при регистрации ошибки блюда.
+                </Typography>
+              </Box>
+            </Stack>
           </Stack>
         ) : null}
         <Stack
@@ -244,7 +271,9 @@ function CatalogItemActions({ node, onEdit, onHistory, onToggle }) {
       <JacoSwitch
         checked={Boolean(node.is_active)}
         onChange={(event) => onToggle(node, event.target.checked)}
-        inputProps={{ "aria-label": `${node.is_active ? "Отключить" : "Включить"} ${node.name}` }}
+        slotProps={{
+          input: { "aria-label": `${node.is_active ? "Отключить" : "Включить"} ${node.name}` },
+        }}
         sx={{ transform: "scale(.78)", transformOrigin: "right center", mr: -0.75 }}
       />
       <JacoIconButton
@@ -294,16 +323,10 @@ function ClassifierTree({ nodes, pointId, onEdit, onCreate, onHistory, onToggle 
                 </Typography>
                 <Chip
                   size="small"
-                  label={category ? `${types.length} типов` : "Не настроено"}
+                  label={
+                    category ? formatPlural(types.length, ["тип", "типа", "типов"]) : "Не настроено"
+                  }
                 />
-                {category ? (
-                  <CatalogItemActions
-                    node={category}
-                    onEdit={onEdit}
-                    onHistory={onHistory}
-                    onToggle={onToggle}
-                  />
-                ) : null}
               </Stack>
             </AccordionSummary>
             <AccordionDetails>
@@ -325,6 +348,24 @@ function ClassifierTree({ nodes, pointId, onEdit, onCreate, onHistory, onToggle 
                 </JacoButton>
               ) : (
                 <Stack spacing={1.25}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center", justifyContent: "space-between" }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      Настройки категории
+                    </Typography>
+                    <CatalogItemActions
+                      node={category}
+                      onEdit={onEdit}
+                      onHistory={onHistory}
+                      onToggle={onToggle}
+                    />
+                  </Stack>
                   {types.map((type) => {
                     const errors = sortNodes(nodesOf(nodes, "error", type.id));
                     return (
@@ -491,12 +532,17 @@ export default function ComplaintOptionsSettings({ request, pointId }) {
 
   const activeNodes = settings.active || [];
   const inactiveNodes = settings.inactive || [];
+  const activeStages = sortNodes(nodesOf(activeNodes, "stage"));
   const openEditor = (node, context = {}) => setEditor({ node, context });
   const saveNode = async (setting) => {
     setSaving(true);
     setError("");
     try {
-      await request("v2/settings/save", { setting });
+      await request(
+        "v2/settings/save",
+        { setting },
+        { throwErrors: true, suppressAuthRedirect: true },
+      );
       setEditor(null);
       await load();
     } catch {
@@ -620,6 +666,8 @@ export default function ComplaintOptionsSettings({ request, pointId }) {
           onClose={() => setEditor(null)}
           onSave={saveNode}
           saving={saving}
+          error={error}
+          stages={activeStages}
         />
       ) : null}
       <CatalogHistory

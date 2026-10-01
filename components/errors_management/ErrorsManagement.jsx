@@ -20,6 +20,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Typography,
@@ -32,6 +33,7 @@ import { api_laravel } from "@/src/api_new";
 import {
   JacoBackdropLoader,
   JacoButton,
+  JacoModal,
   JacoSegmentedTabs,
   JacoDatePicker,
   JacoSelect,
@@ -60,6 +62,49 @@ const STATISTICS_SOURCES = [
   { id: "contact_center", name: "Контакт-центр" },
   { id: "cafe", name: "Кафе" },
 ];
+const COMPLAINT_HISTORY_FIELDS = {
+  status: "Статус",
+  common_comment: "Общий комментарий",
+  sent_to_cafe_at: "Отправлено в кафе",
+  accepted_at: "Принято в работу",
+  resolved_at: "Решение принято",
+};
+const COMPLAINT_STATUS_LABELS = {
+  registered: "В решении",
+  sent_to_cafe: "В решении",
+  accepted_by_cafe: "В решении",
+  resolved: "Решена",
+  cancelled: "Отменена",
+};
+
+function historyChanges(item) {
+  try {
+    const diff = typeof item?.diff_json === "string" ? JSON.parse(item.diff_json) : item?.diff_json;
+    if (!diff || typeof diff !== "object") return [];
+    return Object.entries(diff)
+      .filter(
+        ([field, change]) =>
+          COMPLAINT_HISTORY_FIELDS[field] && change && typeof change === "object",
+      )
+      .map(([field, change]) => ({ field, ...change }));
+  } catch {
+    return [];
+  }
+}
+
+const HISTORY_STATUS_LABELS = {
+  registered: "Зарегистрирована",
+  sent_to_cafe: "Отправлена в кафе",
+  accepted_by_cafe: "Принята кафе",
+  resolved: "Решена",
+  cancelled: "Отменена",
+};
+
+function historyValue(value, field) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (field === "status") return HISTORY_STATUS_LABELS[value] || String(value);
+  return String(value);
+}
 
 function EmptyResults({ mode, onAction }) {
   const journal = mode === "journal";
@@ -96,7 +141,7 @@ function selectOptions(items = []) {
 }
 
 function orderId(row) {
-  return Number(row?.id ?? row?.order_id ?? 0);
+  return Number(row?.order_id ?? row?.id ?? 0);
 }
 
 function pointId(row) {
@@ -136,12 +181,16 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
     setMessage("");
     setLoading(true);
     try {
-      await request("v2/create", {
-        point_id: pointId(selected),
-        order_id: orderId(selected),
-        errors,
-        common_comment: comment,
-      });
+      await request(
+        "v2/create",
+        {
+          point_id: pointId(selected),
+          order_id: orderId(selected),
+          errors,
+          common_comment: comment,
+        },
+        { throwErrors: true, suppressAuthRedirect: true },
+      );
       onSaved();
       onClose();
     } catch {
@@ -276,25 +325,75 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
     </JacoResponsiveModalShell>
   );
 }
-function ComplaintDrawer({ complaint, onClose, request }) {
+function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, points }) {
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState("");
+  const [pendingCommand, setPendingCommand] = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
 
   useEffect(() => {
     if (!complaint) return;
     setDetail(null);
     setError("");
+    setPendingCommand(null);
     request("v2/detail", { complaint_id: complaint.id, point_id: complaint.point_id })
       .then((response) => setDetail(response?.data ?? response ?? null))
       .catch(() => setError("Не удалось загрузить жалобу."));
   }, [complaint, request]);
+
+  const cafeContext = useMemo(() => {
+    const point = points.find((item) => String(item.id) === String(detail?.point_id));
+    const city = cities.find((item) => String(item.id) === String(detail?.city_id));
+    return (
+      [city?.name, point?.addr || point?.name].filter(Boolean).join(" · ") ||
+      "указанное в заказе кафе"
+    );
+  }, [cities, detail?.city_id, detail?.point_id, points]);
+
+  const commandLabels = {
+    send_to_cafe: "Отправить в кафе",
+    accept: "Принять в работу",
+    resolve: "Завершить рассмотрение",
+  };
+  const executeTransition = async () => {
+    if (!pendingCommand || !detail) return;
+    setTransitioning(true);
+    setError("");
+    try {
+      const response = await request(
+        "v2/transition",
+        {
+          complaint_id: detail.id,
+          point_id: detail.point_id,
+          lock_version: detail.lock_version,
+          command: pendingCommand,
+        },
+        { throwErrors: true, suppressAuthRedirect: true },
+      );
+      setDetail(response?.data ?? response ?? null);
+      setPendingCommand(null);
+      onChanged?.();
+    } catch {
+      setError("Не удалось изменить статус жалобы. Обновите детали и повторите действие.");
+    } finally {
+      setTransitioning(false);
+    }
+  };
 
   return (
     <Drawer
       anchor="right"
       open={Boolean(complaint)}
       onClose={onClose}
-      PaperProps={{ sx: { width: { xs: "100%", sm: 560 }, p: { xs: 2, md: 3 } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: "100%", sm: "clamp(600px, 40dvw, 760px)" },
+            maxWidth: "100%",
+            p: { xs: 2, md: 3 },
+          },
+        },
+      }}
     >
       <Stack spacing={2}>
         <Stack
@@ -343,6 +442,57 @@ function ComplaintDrawer({ complaint, onClose, request }) {
                 <Typography>{detail.common_comment || "—"}</Typography>
               </Stack>
             </JacoSurface>
+            {detail.order && Object.keys(detail.order).length ? (
+              <JacoSurface
+                variant="outlined"
+                sx={{ p: 2, ...surfaceSx }}
+              >
+                <Stack spacing={0.75}>
+                  <Typography fontWeight={700}>Данные заказа</Typography>
+                  <Typography variant="body2">Оформил: {detail.order.placed_by || "—"}</Typography>
+                  {detail.order.client_name ? (
+                    <Typography variant="body2">Клиент: {detail.order.client_name}</Typography>
+                  ) : null}
+                  {detail.order.employee_name ? (
+                    <Typography variant="body2">Сотрудник: {detail.order.employee_name}</Typography>
+                  ) : null}
+                  {detail.order.traffic_source ? (
+                    <Typography variant="body2">Источник: {detail.order.traffic_source}</Typography>
+                  ) : null}
+                  {detail.order.promo_name ? (
+                    <Typography variant="body2">
+                      Промокод в заказе: {detail.order.promo_name}
+                    </Typography>
+                  ) : null}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    mt={0.5}
+                  >
+                    Комментарий клиента
+                  </Typography>
+                  <Typography variant="body2">{detail.order.customer_comment || "—"}</Typography>
+                </Stack>
+              </JacoSurface>
+            ) : null}
+            {(detail.available_commands || []).length ? (
+              <Stack spacing={1}>
+                <Typography fontWeight={700}>Действия</Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                >
+                  {detail.available_commands.map((command) => (
+                    <JacoButton
+                      key={command}
+                      onClick={() => setPendingCommand(command)}
+                    >
+                      {commandLabels[command] || command}
+                    </JacoButton>
+                  ))}
+                </Stack>
+              </Stack>
+            ) : null}
             <Typography fontWeight={700}>Ошибки</Typography>
             <Stack spacing={1.25}>
               {(detail.errors || []).map((item) => (
@@ -368,22 +518,90 @@ function ComplaintDrawer({ complaint, onClose, request }) {
               ))}
             </Stack>
             <Typography fontWeight={700}>История</Typography>
-            <Stack spacing={1}>
-              {(detail.history || []).map((item) => (
-                <Box key={item.id}>
-                  <Typography variant="body2">{item.entity_label || item.event_type}</Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
+            <Stack spacing={1.25}>
+              {(detail.history || []).map((item) => {
+                const changes = historyChanges(item);
+                return (
+                  <JacoSurface
+                    key={item.id}
+                    variant="outlined"
+                    sx={{ p: 1.5, ...surfaceSx }}
                   >
-                    {item.actor_name || "Система"} · {item.created_at}
-                  </Typography>
-                </Box>
-              ))}
+                    <Stack spacing={0.75}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={700}
+                      >
+                        {item.entity_label || item.event_type}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                      >
+                        {item.actor_name || "Система"} · {item.created_at}
+                      </Typography>
+                      {changes.length ? (
+                        <Stack spacing={0.5}>
+                          {changes.map((change) => (
+                            <Typography
+                              key={change.field}
+                              variant="body2"
+                              color="text.secondary"
+                            >
+                              {COMPLAINT_HISTORY_FIELDS[change.field]}:{" "}
+                              {historyValue(change.from, change.field)} →{" "}
+                              {historyValue(change.to, change.field)}
+                            </Typography>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Без изменений полей
+                        </Typography>
+                      )}
+                    </Stack>
+                  </JacoSurface>
+                );
+              })}
             </Stack>
           </>
         ) : null}
       </Stack>
+      <JacoModal
+        open={Boolean(pendingCommand)}
+        onClose={() => setPendingCommand(null)}
+        title={pendingCommand ? commandLabels[pendingCommand] : ""}
+        maxWidth="xs"
+        actions={
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ width: "100%", justifyContent: "flex-end" }}
+          >
+            <JacoButton
+              tone="outlinePrimary"
+              onClick={() => setPendingCommand(null)}
+            >
+              Отмена
+            </JacoButton>
+            <JacoButton
+              loading={transitioning}
+              onClick={executeTransition}
+            >
+              Подтвердить
+            </JacoButton>
+          </Stack>
+        }
+      >
+        <Typography>
+          {pendingCommand === "send_to_cafe"
+            ? `Жалоба будет отправлена в кафе: ${cafeContext}.`
+            : "Статус жалобы будет изменён."}
+        </Typography>
+      </JacoModal>
     </Drawer>
   );
 }
@@ -401,6 +619,9 @@ function ErrorsManagement() {
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [orders, setOrders] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [complaintsPage, setComplaintsPage] = useState(0);
+  const [complaintsPerPage, setComplaintsPerPage] = useState(25);
+  const [complaintsTotal, setComplaintsTotal] = useState(0);
   const [selected, setSelected] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [tableOrderIdSearch, setTableOrderIdSearch] = useState("");
@@ -411,7 +632,7 @@ function ErrorsManagement() {
   const [ready, setReady] = useState(false);
 
   const request = useCallback(
-    async (method, data = {}) => api_laravel(moduleName, method, data),
+    async (method, data = {}, config = {}) => api_laravel(moduleName, method, data, config),
     [],
   );
   const loadOrders = useCallback(
@@ -443,13 +664,13 @@ function ErrorsManagement() {
     [request],
   );
   const loadComplaints = useCallback(
-    async (nextFilters) => {
+    async (nextFilters, page = complaintsPage, perPage = complaintsPerPage) => {
       setLoading(true);
       try {
         const orderNumber = nextFilters.orderNumber.trim();
         const response = await request("v2/journal", {
-          page: 1,
-          per_page: 50,
+          page: page + 1,
+          per_page: perPage,
           filters: {
             city_id: nextFilters.cityId || null,
             point_id: nextFilters.pointId || null,
@@ -460,11 +681,12 @@ function ErrorsManagement() {
         });
         const payload = response?.data ?? response;
         setComplaints(Array.isArray(payload?.items) ? payload.items : []);
+        setComplaintsTotal(Number(payload?.total || 0));
       } finally {
         setLoading(false);
       }
     },
-    [request],
+    [complaintsPage, complaintsPerPage, request],
   );
 
   const bootstrap = useCallback(async () => {
@@ -502,8 +724,10 @@ function ErrorsManagement() {
   }, [title]);
   useEffect(() => {
     if (!ready || tab !== "journal") return;
-    loadComplaints(appliedFilters).catch(() => setMessage("Не удалось загрузить журнал."));
-  }, [appliedFilters, loadComplaints, ready, tab]);
+    loadComplaints(appliedFilters, complaintsPage, complaintsPerPage).catch(() =>
+      setMessage("Не удалось загрузить журнал."),
+    );
+  }, [appliedFilters, complaintsPage, complaintsPerPage, loadComplaints, ready, tab]);
   useEffect(() => {
     if (!ready || tab !== "registration") return;
     loadOrders(appliedFilters).catch(() => setMessage("Не удалось загрузить заказы."));
@@ -549,6 +773,7 @@ function ErrorsManagement() {
   };
   const apply = () => {
     setMessage("");
+    setComplaintsPage(0);
     setAppliedFilters(filters);
   };
   const rows = tab === "journal" ? complaints : orders;
@@ -659,8 +884,10 @@ function ErrorsManagement() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <JacoTextInput
-                    placeholder="Номер заказа"
-                    inputProps={{ "aria-label": "Номер заказа" }}
+                    label="Номер заказа"
+                    type="number"
+                    min={1}
+                    inputProps={{ inputMode: "numeric" }}
                     value={filters.orderNumber}
                     onChange={(event) => update("orderNumber", event.target.value)}
                   />
@@ -679,14 +906,16 @@ function ErrorsManagement() {
                 </Grid>
               </Grid>
             </JacoSurface>
-            <Box sx={{ width: { xs: "100%", sm: 360 } }}>
-              <JacoSearch
-                label="Поиск в таблице по ID заказа"
-                value={tableOrderIdSearch}
-                onValueChange={setTableOrderIdSearch}
-                debounceMs={350}
-              />
-            </Box>
+            {rows.length > 0 ? (
+              <Box sx={{ width: { xs: "100%", sm: 360 } }}>
+                <JacoSearch
+                  label="Поиск в таблице по ID заказа"
+                  value={tableOrderIdSearch}
+                  onValueChange={setTableOrderIdSearch}
+                  debounceMs={350}
+                />
+              </Box>
+            ) : null}
             {visibleRows.length === 0 ? (
               tableOrderIdSearch ? (
                 <JacoSurface
@@ -719,11 +948,21 @@ function ErrorsManagement() {
                         <Typography fontWeight={700}>Заказ №{orderId(row)}</Typography>
                         <Chip
                           size="small"
+                          color={row.status === "resolved" ? "success" : "warning"}
                           label={row.status_label || row.status || "—"}
                         />
                       </Stack>
-                      <Typography color="text.secondary">Кафе: {row.point_id || "—"}</Typography>
-                      <Typography>{row.number || "Клиент не указан"}</Typography>
+                      <Typography color="text.secondary">
+                        Кафе: {row.cafe_name || row.point_id || "—"}
+                      </Typography>
+                      {tab === "journal" ? (
+                        <Typography color="text.secondary">
+                          Ошибок: {row.errors_count ?? "—"} · Сумма: {row.error_amount_total ?? "—"}{" "}
+                          ₽
+                        </Typography>
+                      ) : (
+                        <Typography>{row.number || "Клиент не указан"}</Typography>
+                      )}
                       <Stack
                         direction="row"
                         sx={{ justifyContent: "space-between" }}
@@ -760,10 +999,26 @@ function ErrorsManagement() {
                       <TableRow>
                         <TableCell>Заказ</TableCell>
                         <TableCell>Кафе</TableCell>
-                        <TableCell>{tab === "journal" ? "Автор" : "Клиент"}</TableCell>
-                        <TableCell>{tab === "journal" ? "Дата регистрации" : "Адрес"}</TableCell>
-                        <TableCell>Статус</TableCell>
-                        <TableCell>Сумма</TableCell>
+                        {tab === "journal" ? (
+                          <>
+                            <TableCell>Клиент</TableCell>
+                            <TableCell>Адрес</TableCell>
+                            <TableCell>Сумма заказа</TableCell>
+                            <TableCell>Оплата</TableCell>
+                            <TableCell>Общий комментарий</TableCell>
+                            <TableCell>Кто решил жалобу</TableCell>
+                            <TableCell>Статус жалобы</TableCell>
+                            <TableCell>Сумма ошибки</TableCell>
+                            <TableCell>Сумма изменения</TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell>Клиент</TableCell>
+                            <TableCell>Адрес</TableCell>
+                            <TableCell>Статус</TableCell>
+                            <TableCell>Сумма</TableCell>
+                          </>
+                        )}
                         <TableCell />
                       </TableRow>
                     </TableHead>
@@ -777,23 +1032,42 @@ function ErrorsManagement() {
                         >
                           <TableCell>№{orderId(row)}</TableCell>
                           <TableCell>{row.cafe_name || row.point_id || "—"}</TableCell>
-                          <TableCell>
-                            {tab === "journal" ? row.created_by_name || "—" : row.number || "—"}
-                          </TableCell>
-                          <TableCell>
-                            {tab === "journal"
-                              ? row.created_at || "—"
-                              : row.type_order_ === 1
-                                ? `${row.street || ""} ${row.home || ""}`
-                                : row.type_order_addr_new || "—"}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={row.status_label || row.status || "—"}
-                            />
-                          </TableCell>
-                          <TableCell>{row.order_price || "—"} ₽</TableCell>
+                          {tab === "journal" ? (
+                            <>
+                              <TableCell>{row.order_snapshot?.client_name || "—"}</TableCell>
+                              <TableCell>{row.order_snapshot?.delivery_address || "—"}</TableCell>
+                              <TableCell>{row.order_snapshot?.order_amount ?? "—"} ₽</TableCell>
+                              <TableCell>{row.order_snapshot?.payment_method || "—"}</TableCell>
+                              <TableCell>{row.common_comment || "—"}</TableCell>
+                              <TableCell>{row.resolved_by_name || "—"}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  size="small"
+                                  color={row.status === "resolved" ? "success" : "warning"}
+                                  label={row.status_label || row.status || "—"}
+                                />
+                              </TableCell>
+                              <TableCell>{row.error_amount_total ?? "—"} ₽</TableCell>
+                              <TableCell>{row.changed_amount_total ?? "—"} ₽</TableCell>
+                            </>
+                          ) : (
+                            <>
+                              <TableCell>{row.number || "—"}</TableCell>
+                              <TableCell>
+                                {row.type_order_ === 1
+                                  ? `${row.street || ""} ${row.home || ""}`
+                                  : row.type_order_addr_new || "—"}
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  size="small"
+                                  color={row.status === "resolved" ? "success" : "warning"}
+                                  label={row.status_label || row.status || "—"}
+                                />
+                              </TableCell>
+                              <TableCell>{row.order_price || "—"} ₽</TableCell>
+                            </>
+                          )}
                           <TableCell align="right">
                             {tab === "registration" ? (
                               <Button
@@ -811,6 +1085,22 @@ function ErrorsManagement() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                {tab === "journal" ? (
+                  <TablePagination
+                    component="div"
+                    count={complaintsTotal}
+                    page={complaintsPage}
+                    rowsPerPage={complaintsPerPage}
+                    rowsPerPageOptions={[25, 50, 100]}
+                    labelRowsPerPage="Строк на странице"
+                    labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count}`}
+                    onPageChange={(_, page) => setComplaintsPage(page)}
+                    onRowsPerPageChange={(event) => {
+                      setComplaintsPerPage(Number(event.target.value));
+                      setComplaintsPage(0);
+                    }}
+                  />
+                ) : null}
               </JacoSurface>
             )}
           </>
@@ -1061,7 +1351,10 @@ function ErrorsManagement() {
       <ComplaintDrawer
         complaint={selectedComplaint}
         onClose={() => setSelectedComplaint(null)}
+        onChanged={() => loadComplaints(appliedFilters)}
         request={request}
+        cities={cities}
+        points={points}
       />
       <RegistrationDrawer
         selected={selected}
