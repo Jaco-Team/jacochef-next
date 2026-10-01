@@ -22,6 +22,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TableSortLabel,
   TextField,
   Typography,
   useMediaQuery,
@@ -56,7 +57,15 @@ const DEFAULT_FILTERS = {
 };
 const rootSx = { pb: 3 };
 const surfaceSx = { boxShadow: "none" };
-const filterSx = { p: { xs: 2, md: 2.5 }, ...surfaceSx };
+const filterSx = {
+  p: { xs: 2, md: 2.5 },
+  "& .MuiOutlinedInput-notchedOutline legend > span, & .MuiPickersOutlinedInput-notchedOutline legend > span":
+    {
+      fontSize: "12px !important",
+      lineHeight: "18px !important",
+    },
+  ...surfaceSx,
+};
 const titleSx = { fontSize: { xs: 26, md: 32 }, fontWeight: 700, lineHeight: 1.2 };
 const STATISTICS_SOURCES = [
   { id: "contact_center", name: "Контакт-центр" },
@@ -622,6 +631,7 @@ function ErrorsManagement() {
   const [complaintsPage, setComplaintsPage] = useState(0);
   const [complaintsPerPage, setComplaintsPerPage] = useState(25);
   const [complaintsTotal, setComplaintsTotal] = useState(0);
+  const [complaintsSort, setComplaintsSort] = useState({ by: "created_at", direction: "desc" });
   const [selected, setSelected] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [tableOrderIdSearch, setTableOrderIdSearch] = useState("");
@@ -664,13 +674,20 @@ function ErrorsManagement() {
     [request],
   );
   const loadComplaints = useCallback(
-    async (nextFilters, page = complaintsPage, perPage = complaintsPerPage) => {
+    async (
+      nextFilters,
+      page = complaintsPage,
+      perPage = complaintsPerPage,
+      sort = complaintsSort,
+    ) => {
       setLoading(true);
       try {
         const orderNumber = nextFilters.orderNumber.trim();
         const response = await request("v2/journal", {
           page: page + 1,
           per_page: perPage,
+          sort_by: sort.by,
+          sort_direction: sort.direction,
           filters: {
             city_id: nextFilters.cityId || null,
             point_id: nextFilters.pointId || null,
@@ -686,7 +703,7 @@ function ErrorsManagement() {
         setLoading(false);
       }
     },
-    [complaintsPage, complaintsPerPage, request],
+    [complaintsPage, complaintsPerPage, complaintsSort, request],
   );
 
   const bootstrap = useCallback(async () => {
@@ -724,10 +741,18 @@ function ErrorsManagement() {
   }, [title]);
   useEffect(() => {
     if (!ready || tab !== "journal") return;
-    loadComplaints(appliedFilters, complaintsPage, complaintsPerPage).catch(() =>
+    loadComplaints(appliedFilters, complaintsPage, complaintsPerPage, complaintsSort).catch(() =>
       setMessage("Не удалось загрузить журнал."),
     );
-  }, [appliedFilters, complaintsPage, complaintsPerPage, loadComplaints, ready, tab]);
+  }, [
+    appliedFilters,
+    complaintsPage,
+    complaintsPerPage,
+    complaintsSort,
+    loadComplaints,
+    ready,
+    tab,
+  ]);
   useEffect(() => {
     if (!ready || tab !== "registration") return;
     loadOrders(appliedFilters).catch(() => setMessage("Не удалось загрузить заказы."));
@@ -776,6 +801,13 @@ function ErrorsManagement() {
     setComplaintsPage(0);
     setAppliedFilters(filters);
   };
+  const changeComplaintsSort = (by) => {
+    setComplaintsPage(0);
+    setComplaintsSort((current) => ({
+      by,
+      direction: current.by === by && current.direction === "asc" ? "desc" : "asc",
+    }));
+  };
   const rows = tab === "journal" ? complaints : orders;
   const visibleRows = useMemo(() => {
     const query = tableOrderIdSearch.trim();
@@ -821,6 +853,14 @@ function ErrorsManagement() {
           sx={{ minHeight: 42 }}
           value={tab}
           onChange={(_, value) => setTab(value)}
+          variant={mobile ? "scrollable" : "fullWidth"}
+          scrollButtons={false}
+          tabSx={{
+            whiteSpace: "nowrap",
+            flex: { xs: "0 0 auto", sm: 1 },
+            minWidth: { xs: "auto", sm: 0 },
+            px: { xs: 1.5, sm: 2 },
+          }}
           items={[
             { id: "journal", label: "Журнал" },
             { id: "registration", label: "Регистрация" },
@@ -888,6 +928,7 @@ function ErrorsManagement() {
                     type="number"
                     min={1}
                     inputProps={{ inputMode: "numeric" }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={filters.orderNumber}
                     onChange={(event) => update("orderNumber", event.target.value)}
                   />
@@ -997,22 +1038,90 @@ function ErrorsManagement() {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Заказ</TableCell>
-                        <TableCell>Кафе</TableCell>
                         {tab === "journal" ? (
                           <>
+                            <TableCell
+                              sortDirection={
+                                complaintsSort.by === "order_id" ? complaintsSort.direction : false
+                              }
+                            >
+                              <TableSortLabel
+                                active={complaintsSort.by === "order_id"}
+                                direction={
+                                  complaintsSort.by === "order_id"
+                                    ? complaintsSort.direction
+                                    : "asc"
+                                }
+                                onClick={() => changeComplaintsSort("order_id")}
+                              >
+                                Заказ
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell>Кафе</TableCell>
                             <TableCell>Клиент</TableCell>
                             <TableCell>Адрес</TableCell>
                             <TableCell>Сумма заказа</TableCell>
                             <TableCell>Оплата</TableCell>
                             <TableCell>Общий комментарий</TableCell>
                             <TableCell>Кто решил жалобу</TableCell>
-                            <TableCell>Статус жалобы</TableCell>
-                            <TableCell>Сумма ошибки</TableCell>
-                            <TableCell>Сумма изменения</TableCell>
+                            <TableCell
+                              sortDirection={
+                                complaintsSort.by === "status" ? complaintsSort.direction : false
+                              }
+                            >
+                              <TableSortLabel
+                                active={complaintsSort.by === "status"}
+                                direction={
+                                  complaintsSort.by === "status" ? complaintsSort.direction : "asc"
+                                }
+                                onClick={() => changeComplaintsSort("status")}
+                              >
+                                Статус жалобы
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell
+                              sortDirection={
+                                complaintsSort.by === "error_amount"
+                                  ? complaintsSort.direction
+                                  : false
+                              }
+                            >
+                              <TableSortLabel
+                                active={complaintsSort.by === "error_amount"}
+                                direction={
+                                  complaintsSort.by === "error_amount"
+                                    ? complaintsSort.direction
+                                    : "asc"
+                                }
+                                onClick={() => changeComplaintsSort("error_amount")}
+                              >
+                                Сумма ошибки
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell
+                              sortDirection={
+                                complaintsSort.by === "changed_amount"
+                                  ? complaintsSort.direction
+                                  : false
+                              }
+                            >
+                              <TableSortLabel
+                                active={complaintsSort.by === "changed_amount"}
+                                direction={
+                                  complaintsSort.by === "changed_amount"
+                                    ? complaintsSort.direction
+                                    : "asc"
+                                }
+                                onClick={() => changeComplaintsSort("changed_amount")}
+                              >
+                                Сумма изменения
+                              </TableSortLabel>
+                            </TableCell>
                           </>
                         ) : (
                           <>
+                            <TableCell>Заказ</TableCell>
+                            <TableCell>Кафе</TableCell>
                             <TableCell>Клиент</TableCell>
                             <TableCell>Адрес</TableCell>
                             <TableCell>Статус</TableCell>
