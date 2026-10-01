@@ -122,6 +122,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
     canDelete,
     canCreateSiteItem,
     canManageSiteItems,
+    canSyncSiteItemsVk,
     canUseSiteItemPastDate,
     canViewSiteItemsHistory,
   } = useSkladAccess();
@@ -153,6 +154,32 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
   const isEditable = canEditSiteItemForm || canManageSiteItems;
   const canCreate = canCreateSiteItem;
+  const syncSiteItemsVk = useCallback(async () => {
+    setShellState({ isLoading: true });
+
+    try {
+      const response = await api.syncSiteItemsVk();
+
+      if (!response?.st) {
+        throw new Error(response?.text || "Не удалось запустить обновление товаров VK");
+      }
+
+      if (!response?.queued) {
+        throw new Error("Не удалось поставить обновление товаров VK в очередь");
+      }
+
+      showAlert(
+        response?.already_queued
+          ? "Обновление товаров VK уже ожидает обработки"
+          : "Обновление товаров VK поставлено в очередь",
+        true,
+      );
+    } catch (error) {
+      showAlert(error?.message || "Не удалось запустить обновление товаров VK", false);
+    } finally {
+      setShellState({ isLoading: false });
+    }
+  }, [api, setShellState, showAlert]);
   const canDeleteAction = canDelete("site_item");
   const canEditActivity = canEditAccess(access, "is_show", false);
   const canEditCash =
@@ -914,6 +941,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           archiveDialog={archiveDialog}
           isEditable={isEditable}
           canCreate={canCreate}
+          canSyncSiteItemsVk={canSyncSiteItemsVk}
           canManageTags={canManageTags}
           canArchiveAction={canArchiveSiteItems}
           canDeleteAction={canDeleteAction}
@@ -929,6 +957,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           onSaveQuickField={saveQuickField}
           openCreate={openCreate}
           onCreateCategory={openCategoryDialog}
+          onSyncSiteItemsVk={syncSiteItemsVk}
           openEdit={openEdit}
           handleRestoreImage={handleRestoreImage}
           openArchiveDialog={openArchiveDialog}

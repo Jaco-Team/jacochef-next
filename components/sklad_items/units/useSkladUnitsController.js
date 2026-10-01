@@ -6,10 +6,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import {
   Box,
-  Button,
   Chip,
-  IconButton,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -22,7 +19,12 @@ import {
 } from "@mui/material";
 
 import { useConfirm } from "@/src/hooks/useConfirm";
-import { MyTextInput } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoSearchField,
+  JacoSurface,
+} from "@/design-system/shared/ui";
 
 import { useSkladStore } from "../useSkladStore";
 import useSkladAccess from "../useSkladAccess";
@@ -284,7 +286,7 @@ export default function useSkladUnitsController({ showAlert }) {
     normalizeNumber(draft?.con_count, 0) <= 0;
 
   const content = (
-    <Paper
+    <JacoSurface
       sx={{
         width: "100%",
         maxWidth: 1080,
@@ -321,22 +323,21 @@ export default function useSkladUnitsController({ showAlert }) {
             />
           </Stack>
 
-          <Button
-            variant="contained"
+          <JacoButton
             startIcon={<AddIcon />}
             sx={{ whiteSpace: "nowrap", alignSelf: { xs: "flex-start", sm: "center" } }}
             onClick={openCreate}
             disabled={!canCreate}
           >
             Добавить единицу
-          </Button>
+          </JacoButton>
         </Stack>
 
         <Box sx={{ width: "100%", maxWidth: 420 }}>
-          <MyTextInput
+          <JacoSearchField
             label="Поиск"
             value={search}
-            func={(event) => setState({ search: event.target.value })}
+            onValueChange={(value) => setState({ search: value })}
           />
         </Box>
 
@@ -414,13 +415,12 @@ export default function useSkladUnitsController({ showAlert }) {
                       >
                         <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
                           <span>
-                            <IconButton
-                              size="small"
+                            <JacoIconButton
                               onClick={() => openEdit(row)}
                               disabled={!isEditable}
                             >
                               <EditIcon fontSize="small" />
-                            </IconButton>
+                            </JacoIconButton>
                           </span>
                         </Tooltip>
 
@@ -435,9 +435,8 @@ export default function useSkladUnitsController({ showAlert }) {
                             }
                           >
                             <span>
-                              <IconButton
-                                size="small"
-                                color="error"
+                              <JacoIconButton
+                                sx={{ color: "error.main" }}
                                 disabled={deleteBlocked || !isEditable}
                                 onClick={withConfirm(
                                   () => deleteUnit(row),
@@ -445,7 +444,7 @@ export default function useSkladUnitsController({ showAlert }) {
                                 )}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
-                              </IconButton>
+                              </JacoIconButton>
                             </span>
                           </Tooltip>
                         ) : null}
@@ -489,7 +488,7 @@ export default function useSkladUnitsController({ showAlert }) {
       />
 
       <ConfirmDialog />
-    </Paper>
+    </JacoSurface>
   );
 
   return {

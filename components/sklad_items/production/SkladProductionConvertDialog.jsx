@@ -1,9 +1,9 @@
 "use client";
 
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
-import { Button, DialogActions, DialogContent, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
-import MyModal from "@/ui/MyModal";
+import { JacoButton, JacoModal } from "@/design-system/shared/ui";
 
 import { getEntitySingleLabel } from "./production.helpers";
 
@@ -20,44 +20,47 @@ export default function SkladProductionConvertDialog({
   const targetLabel = getEntitySingleLabel(targetType).toLowerCase();
 
   return (
-    <MyModal
+    <JacoModal
       open={open}
       onClose={loading ? undefined : onClose}
       title={`Преобразовать ${sourceLabel} в ${targetLabel}?`}
       maxWidth="sm"
-    >
-      <DialogContent>
-        <Stack spacing={1.5}>
-          <Typography>
-            Запись «{row?.name || ""}» будет перенесена в тип «{getEntitySingleLabel(targetType)}».
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-            }}
+      actions={
+        <Stack
+          direction="row"
+          spacing={1}
+        >
+          <JacoButton
+            tone="secondary"
+            onClick={onClose}
+            disabled={loading}
           >
-            Состав и основные настройки сохранятся. Преобразование недоступно для записи, которая
-            уже используется в других данных.
-          </Typography>
+            Отмена
+          </JacoButton>
+          <JacoButton
+            startIcon={<SwapHorizIcon />}
+            onClick={onConfirm}
+            loading={loading}
+          >
+            Преобразовать
+          </JacoButton>
         </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          disabled={loading}
+      }
+    >
+      <Stack spacing={1.5}>
+        <Typography>
+          Запись «{row?.name || ""}» будет перенесена в тип «{getEntitySingleLabel(targetType)}».
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+          }}
         >
-          Отмена
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<SwapHorizIcon />}
-          onClick={onConfirm}
-          disabled={loading}
-        >
-          {loading ? "Преобразуем..." : "Преобразовать"}
-        </Button>
-      </DialogActions>
-    </MyModal>
+          Состав и основные настройки сохранятся. Преобразование недоступно для записи, которая уже
+          используется в других данных.
+        </Typography>
+      </Stack>
+    </JacoModal>
   );
 }

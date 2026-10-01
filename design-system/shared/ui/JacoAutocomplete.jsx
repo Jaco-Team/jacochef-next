@@ -66,6 +66,8 @@ export default function JacoAutocomplete({
   renderInput,
   filterOptions,
   isOptionEqualToValue,
+  optionKey,
+  getOptionKey,
   ...props
 }) {
   const normalizedOptions = normalizeOptions(options ?? data);
@@ -149,6 +151,10 @@ export default function JacoAutocomplete({
       value={value ?? (multiple ? [] : null)}
       onChange={onChange ?? func}
       getOptionLabel={props.getOptionLabel ?? optionLabel}
+      getOptionKey={
+        getOptionKey ??
+        ((option) => option?.[optionKey] ?? option?.id ?? option?.value ?? optionLabel(option))
+      }
       isOptionEqualToValue={
         isOptionEqualToValue ??
         ((option, selectedValue) => {

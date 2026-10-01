@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 
 import useFullScreen from "@/src/hooks/useFullScreen";
-import { MySelect, MyTextInput } from "@/ui/Forms";
+import { JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
 
 function toNumericString(value) {
   if (value === null || value === undefined || value === "") {
@@ -72,7 +72,7 @@ export default function SkladUnitDialog({
           spacing={2}
         >
           <Grid size={12}>
-            <MyTextInput
+            <JacoTextInput
               label="Название"
               value={draft?.name || ""}
               func={(event) => onFieldChange("name", event.target.value)}
@@ -80,7 +80,7 @@ export default function SkladUnitDialog({
           </Grid>
 
           <Grid size={{ xs: 12, sm: 4 }}>
-            <MyTextInput
+            <JacoTextInput
               label="Базовое количество"
               type="number"
               value={toNumericString(draft?.main_count)}
@@ -89,7 +89,7 @@ export default function SkladUnitDialog({
           </Grid>
 
           <Grid size={{ xs: 12, sm: 4 }}>
-            <MyTextInput
+            <JacoTextInput
               label="Количество в связке"
               type="number"
               value={toNumericString(draft?.con_count)}
@@ -98,7 +98,7 @@ export default function SkladUnitDialog({
           </Grid>
 
           <Grid size={{ xs: 12, sm: 4 }}>
-            <MySelect
+            <JacoSelect
               label="Базовая единица"
               data={unitOptions}
               is_none={false}

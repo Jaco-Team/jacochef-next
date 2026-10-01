@@ -7,6 +7,7 @@ import {
   JacoAutocomplete,
   JacoCityCafe,
   JacoDatePicker,
+  JacoSearchField,
   JacoSelect,
   JacoTextInput,
   JacoTimePicker,
@@ -49,6 +50,7 @@ function StorySurface({ children }) {
 export function BasicFormControls() {
   const [text, setText] = useState("Иванов Иван");
   const [hours, setHours] = useState("8");
+  const [search, setSearch] = useState("Иванов");
   const [cafe, setCafe] = useState("1");
   const [autocomplete, setAutocomplete] = useState(cafes[0]);
   const [date, setDate] = useState(dayjs("2026-08-31"));
@@ -67,6 +69,11 @@ export function BasicFormControls() {
         value={hours}
         onChange={(event) => setHours(event.target.value)}
         inputProps={{ min: 0, max: 24 }}
+      />
+      <JacoSearchField
+        label="Поиск"
+        value={search}
+        onValueChange={setSearch}
       />
       <JacoSelect
         label="Кафе"

@@ -5,12 +5,15 @@ export const SKLAD_TAB_DEFINITIONS = [
     accessGroup: "production",
     description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
-  {
-    key: "warehouse-items",
-    label: "Товары склада",
-    accessGroup: "warehouse_items",
-    description: "Справочник товаров склада с периодами действия и полной историей.",
-  },
+  // Suspended by task-chat clarification: `sklad_items_module_new` remains a
+  // standalone module and is not part of the current consolidation. Its
+  // warehouse flags and permissions are effective in `sklad_items_module_new`.
+  // {
+  //   key: "warehouse-items",
+  //   label: "Товары склада",
+  //   accessGroup: "warehouse_items",
+  //   description: "Справочник товаров склада с периодами действия и полной историей.",
+  // },
   {
     key: "site-items",
     label: "Товары сайта",

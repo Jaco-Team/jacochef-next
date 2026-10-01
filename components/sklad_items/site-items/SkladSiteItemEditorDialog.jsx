@@ -32,8 +32,13 @@ import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
 
-import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import {
+  JacoAutocomplete,
+  JacoDatePicker,
+  JacoModal,
+  JacoSelect,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
 import {
   SkladEmbeddedHistoryTable,
   SkladEmbeddedImageHistoryTable,
@@ -605,7 +610,8 @@ export default function SkladSiteItemEditorDialog({
 
   return (
     <>
-      <MyModal
+      <JacoModal
+        contentWrapper={false}
         open={open}
         onClose={onClose}
         maxWidth="lg"
@@ -667,7 +673,7 @@ export default function SkladSiteItemEditorDialog({
                           spacing={2}
                         >
                           <Grid size={{ xs: 12, md: 8 }}>
-                            <MyTextInput
+                            <JacoTextInput
                               label="Наименование"
                               value={form.name}
                               disabled={!isEditable}
@@ -675,7 +681,7 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }}>
-                            <MyTextInput
+                            <JacoTextInput
                               label="Короткое название"
                               value={form.short_name}
                               disabled={!isEditable}
@@ -691,7 +697,7 @@ export default function SkladSiteItemEditorDialog({
                               }}
                             >
                               <Stack sx={{ minWidth: 0, flex: 1 }}>
-                                <MySelect
+                                <JacoSelect
                                   label="Категория"
                                   data={categoryOptions}
                                   is_none={false}
@@ -712,7 +718,7 @@ export default function SkladSiteItemEditorDialog({
                             </Stack>
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
-                            <MyDatePickerNew
+                            <JacoDatePicker
                               label="Действует с"
                               value={form.date_start}
                               minDate={allowPastDate ? undefined : dayjs().startOf("day")}
@@ -723,7 +729,7 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 3 }}>
-                            <MyDatePickerNew
+                            <JacoDatePicker
                               label="Действует по"
                               value={form.date_end}
                               minDate={
@@ -736,7 +742,7 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }}>
-                            <MyTextInput
+                            <JacoTextInput
                               label="Код 1С"
                               value={form.art}
                               disabled={!isEditable}
@@ -744,7 +750,7 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }}>
-                            <MyTextInput
+                            <JacoTextInput
                               label="Стол"
                               value={form.stol}
                               disabled={!isEditable}
@@ -752,7 +758,7 @@ export default function SkladSiteItemEditorDialog({
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }}>
-                            <MyTextInput
+                            <JacoTextInput
                               label="Кусочков или размер"
                               value={form.count_part}
                               type="number"
@@ -776,7 +782,7 @@ export default function SkladSiteItemEditorDialog({
                             spacing={2}
                           >
                             <Grid size={12}>
-                              <MySelect
+                              <JacoSelect
                                 label="Тип маркировки"
                                 data={MARKING_OPTIONS}
                                 is_none={false}
@@ -786,7 +792,7 @@ export default function SkladSiteItemEditorDialog({
                               />
                             </Grid>
                             <Grid size={12}>
-                              <MyTextInput
+                              <JacoTextInput
                                 label="Код маркировки"
                                 value={form.mark_code}
                                 disabled={!isEditable}
@@ -794,7 +800,7 @@ export default function SkladSiteItemEditorDialog({
                               />
                             </Grid>
                             <Grid size={12}>
-                              <MyTextInput
+                              <JacoTextInput
                                 label="Серия"
                                 value={form.series}
                                 disabled={!isEditable}
@@ -1020,7 +1026,7 @@ export default function SkladSiteItemEditorDialog({
                     title="Теги"
                     description="Теги карточки и промо-маркеры"
                   >
-                    <MyAutocomplite
+                    <JacoAutocomplete
                       multiple
                       label="Теги"
                       data={availableTags}
@@ -1062,7 +1068,7 @@ export default function SkladSiteItemEditorDialog({
                       spacing={2}
                     >
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Вес"
                           value={form.weight}
                           type="number"
@@ -1072,7 +1078,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Белки"
                           value={form.protein}
                           type="number"
@@ -1082,7 +1088,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Жиры"
                           value={form.fat}
                           type="number"
@@ -1092,7 +1098,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Углеводы"
                           value={form.carbohydrates}
                           type="number"
@@ -1102,7 +1108,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Ккал"
                           value={form.kkal}
                           type="number"
@@ -1112,7 +1118,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 6 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Ккал расчет"
                           value={liveKkalPreview}
                           type="number"
@@ -1170,7 +1176,7 @@ export default function SkladSiteItemEditorDialog({
                       spacing={2}
                     >
                       <Grid size={12}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Состав"
                           value={form.tmp_desc}
                           disabled={!isEditable}
@@ -1185,7 +1191,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={12}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Короткое описание"
                           value={form.marc_desc}
                           disabled={!isEditable}
@@ -1200,7 +1206,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={12}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Полное описание"
                           value={form.marc_desc_full}
                           disabled={!isEditable}
@@ -1233,7 +1239,7 @@ export default function SkladSiteItemEditorDialog({
                       spacing={2}
                     >
                       <Grid size={{ xs: 12, md: 4 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Время на 1 этап"
                           value={form.time_stage_1}
                           disabled={!isEditable}
@@ -1242,7 +1248,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Время на 2 этап"
                           value={form.time_stage_2}
                           disabled={!isEditable}
@@ -1251,7 +1257,7 @@ export default function SkladSiteItemEditorDialog({
                         />
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
-                        <MyTextInput
+                        <JacoTextInput
                           label="Время на 3 этап"
                           value={form.time_stage_3}
                           disabled={!isEditable}
@@ -1301,7 +1307,7 @@ export default function SkladSiteItemEditorDialog({
                             return rows.map((item, index) => (
                               <TableRow key={`${stageOption.id}-${index}`}>
                                 <TableCell>
-                                  <MySelect
+                                  <JacoSelect
                                     label=""
                                     data={stagePreparationOptions}
                                     is_none={false}
@@ -1317,14 +1323,14 @@ export default function SkladSiteItemEditorDialog({
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label=""
                                     value={item?.ei_name ?? ""}
                                     disabled
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label=""
                                     value={item?.brutto ?? ""}
                                     disabled={!isEditable}
@@ -1340,7 +1346,7 @@ export default function SkladSiteItemEditorDialog({
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label=""
                                     value={item?.pr_1 ?? ""}
                                     disabled={!isEditable}
@@ -1355,14 +1361,14 @@ export default function SkladSiteItemEditorDialog({
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label=""
                                     value={item?.netto ?? ""}
                                     disabled
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label=""
                                     value={item?.pr_2 ?? ""}
                                     disabled={!isEditable}
@@ -1377,14 +1383,14 @@ export default function SkladSiteItemEditorDialog({
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <MyTextInput
+                                  <JacoTextInput
                                     label=""
                                     value={item?.res ?? ""}
                                     disabled
                                   />
                                 </TableCell>
                                 <TableCell sx={{ width: "12%" }}>
-                                  <MySelect
+                                  <JacoSelect
                                     label=""
                                     data={STAGE_OPTIONS}
                                     is_none={false}
@@ -1457,7 +1463,7 @@ export default function SkladSiteItemEditorDialog({
                           ).map((item, index) => (
                             <TableRow key={`linked-item-${index}`}>
                               <TableCell sx={{ width: "30%" }}>
-                                <MySelect
+                                <JacoSelect
                                   label=""
                                   data={linkedItemOptions}
                                   is_none={false}
@@ -1469,7 +1475,7 @@ export default function SkladSiteItemEditorDialog({
                                 />
                               </TableCell>
                               <TableCell>
-                                <MyTextInput
+                                <JacoTextInput
                                   label=""
                                   value={item?.brutto ?? ""}
                                   disabled={!isEditable}
@@ -1480,7 +1486,7 @@ export default function SkladSiteItemEditorDialog({
                                 />
                               </TableCell>
                               <TableCell>
-                                <MyTextInput
+                                <JacoTextInput
                                   label=""
                                   value={item?.pr_1 ?? ""}
                                   disabled={!isEditable}
@@ -1490,14 +1496,14 @@ export default function SkladSiteItemEditorDialog({
                                 />
                               </TableCell>
                               <TableCell>
-                                <MyTextInput
+                                <JacoTextInput
                                   label=""
                                   value={item?.netto ?? ""}
                                   disabled
                                 />
                               </TableCell>
                               <TableCell>
-                                <MyTextInput
+                                <JacoTextInput
                                   label=""
                                   value={item?.pr_2 ?? ""}
                                   disabled={!isEditable}
@@ -1507,7 +1513,7 @@ export default function SkladSiteItemEditorDialog({
                                 />
                               </TableCell>
                               <TableCell>
-                                <MyTextInput
+                                <JacoTextInput
                                   label=""
                                   value={item?.res ?? ""}
                                   disabled
@@ -1617,8 +1623,9 @@ export default function SkladSiteItemEditorDialog({
             {loading ? "Сохраняем..." : mode === "create" ? "Создать товар" : "Сохранить изменения"}
           </Button>
         </DialogActions>
-      </MyModal>
-      <MyModal
+      </JacoModal>
+      <JacoModal
+        contentWrapper={false}
         open={imagePreviewOpen}
         onClose={() => setImagePreviewOpen(false)}
         maxWidth="md"
@@ -1637,8 +1644,9 @@ export default function SkladSiteItemEditorDialog({
             />
           ) : null}
         </DialogContent>
-      </MyModal>
-      <MyModal
+      </JacoModal>
+      <JacoModal
+        contentWrapper={false}
         open={tagModal.open}
         onClose={closeTagModal}
         maxWidth="sm"
@@ -1650,7 +1658,7 @@ export default function SkladSiteItemEditorDialog({
             sx={{ pt: 1 }}
           >
             {tagModal.mode === "rename" ? (
-              <MySelect
+              <JacoSelect
                 label="Тег"
                 data={renameTagOptions}
                 is_none={false}
@@ -1669,7 +1677,7 @@ export default function SkladSiteItemEditorDialog({
                 }}
               />
             ) : null}
-            <MyTextInput
+            <JacoTextInput
               label="Название"
               value={tagModal.name}
               func={(event) =>
@@ -1691,7 +1699,7 @@ export default function SkladSiteItemEditorDialog({
             {tagModal.loading ? "Сохраняем..." : "Сохранить"}
           </Button>
         </DialogActions>
-      </MyModal>
+      </JacoModal>
     </>
   );
 }

@@ -9,11 +9,13 @@ import { Box, FormControlLabel, Stack, Tooltip, Typography } from "@mui/material
 import {
   JacoButton,
   JacoCheckbox,
+  JacoCheckboxField,
   JacoCompactTabs,
   JacoFieldSwitch,
   JacoIconButton,
   JacoSegmentedTabs,
   JacoSwitch,
+  JacoTabPanel,
 } from "@/design-system/shared/ui";
 
 const meta = {
@@ -194,6 +196,15 @@ export function SelectionControls() {
           disabled
           sx={{ m: 0, gap: 1 }}
         />
+        <JacoCheckboxField
+          checked={boxChecked}
+          onChange={(event) => setBoxChecked(event.target.checked)}
+          label="Показывать в ревизии"
+        />
+        <JacoCheckboxField
+          label="Недоступный выбор"
+          disabled
+        />
       </Stack>
     </StoryCanvas>
   );
@@ -239,6 +250,12 @@ export function Tabs() {
             { id: "settings", label: "Настройки" },
           ]}
         />
+        <JacoTabPanel
+          value={compact}
+          index="main"
+        >
+          Основная вкладка
+        </JacoTabPanel>
       </Stack>
     </StoryCanvas>
   );

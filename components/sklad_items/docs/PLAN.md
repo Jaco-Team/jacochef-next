@@ -1,5 +1,16 @@
 # Sklad Implementation Plan
 
+## Текущая карточка: `feat/sklad_items-43371`
+
+Цель текущей итерации — обновить только оболочку уже работающего `sklad_items`, без смены API-контрактов и без изменения диалогов товаров сайта.
+
+1. Сверить shell с существующими Storybook-примитивами и применить `JacoBackdropLoader`, `JacoAlert`, `JacoButton`, `JacoSurface`, `JacoCompactTabs`; сохранить текущие tab/data flows и современный MUI `Grid`.
+2. Сверить видимость разделов и действий с compact access-контрактом из `ACCESS.md`: отсутствие ключа запрещает действие, edit включает view. Не добавлять permissive FE fallback.
+3. Сохранить `site-items` editor/view/history dialogs полностью без визуальных и поведенческих изменений.
+4. Выполнить только узкую статическую/синтаксическую проверку затронутого shell и access-gate. Исторический phased plan ниже сохраняется как архив решений, а API-источником истины остаётся `API.md` (его FE/BE копии синхронны).
+
+---
+
 Статус: детальный phased plan для нового модуля `sklad_items`.
 
 Pinned execution rule:
@@ -31,7 +42,7 @@ Pinned execution rule:
 - не зависит runtime-архитектурно от старых module classes
 - позволяет переводить FE по section-ам, а не big-bang миграцией
 - не требует включать текущий экран `sklad_items_module_new` в этот FE merge на текущем этапе
-- не строит отдельный `Warehouse items` tab/screen в текущей итерации
+- включает отдельный `Warehouse items` tab в уже реализованный scope
 - использует tabbed UI shell по современному project pattern
 - переиспользует project form controls и modal patterns без копирования legacy page architecture
 
@@ -63,7 +74,7 @@ FE strategy after current backend update:
 - новый модуль строим как единый page shell с tabs
 - каждый tab соответствует legacy business area, а не backend table
 - shared/global fields и dictionaries живут в module-level adapters and scoped lib
-- MUI v7 используем как базовый UI-kit
+- MUI v9 используем как базовый UI-kit
 - existing shared form controls reused as-is; если нужна адаптация, она делается только внутри `components/sklad_items`
 - legacy modules используются только как analytical reference for flows and field meaning
 - new FE runtime integration binds only to canonical `/api/sklad_items/*`, never directly to legacy module APIs
@@ -684,8 +695,8 @@ Deliverables:
 6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete, canonical list flag toggles and canonical create/save flow within current FE scope.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
 8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for working editor/view tabs, archive/unarchive, delete, canonical list flag toggles, canonical save flow, image upload and VK sync trigger; inline tag dictionary mutations are connected, broader tag UX polish remains.
-9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: in progress.
-10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: completed for archive list, view, history handoff and restore-to-active flow; further UX polish and smoke coverage remain pending.
+9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: entity-local history dialogs are live; a standalone cross-entity tab is not exposed because the source contracts and permissions differ.
+10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: archive/restore flows remain entity-local. The cross-entity archive implementation is retained but intentionally unexposed pending a separately accepted audit/search contract.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
 
 ## 8.1. Delivery flow for implementation
@@ -712,7 +723,7 @@ Deliverables:
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
 5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
 6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: completed for current FE scope; canonical create/edit, tag mutation, image upload, VK sync, history handoff, archive/delete flows and strict current API binding are in place, while deeper composition editing remains backend follow-up.
-7. History/archive slice: unified readers live, operational summaries replacing info stubs, archive view/history/restore row actions connected, production/detail modals aligned to module modal pattern. Status: completed.
+7. History/archive slice: entity-local readers and archive/restore row actions are connected; the cross-entity archive reader remains retained but intentionally unexposed because entity contracts differ. Status: completed for the accepted entity-local scope.
 8. Hardening slice: access matrix, smoke tests, migration leftovers and removal of leftover info stubs / temporary explanatory surfaces before finalization. Status: in progress.
 9. Chrome UX walkthrough slice: open `/sklad_items`, check each working tab step by step, fix runtime/UX regressions found there, then rerun reviewer pass on that chunk. Status: pending.
 

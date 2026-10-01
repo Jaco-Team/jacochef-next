@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Stack, Typography } from "@mui/material";
+
+import { JacoButton, JacoModal } from "@/design-system/shared/ui";
 
 export default function SkladDeleteDialog({
   open,
@@ -21,44 +15,46 @@ export default function SkladDeleteDialog({
   onConfirm,
 }) {
   return (
-    <Dialog
+    <JacoModal
       open={open}
       onClose={loading ? undefined : onClose}
-      fullWidth
+      title={title}
       maxWidth="sm"
-    >
-      <DialogTitle sx={{ fontWeight: 700 }}>{title}</DialogTitle>
-      <DialogContent>
-        <Stack spacing={1.5}>
-          {description ? <Typography>{description}</Typography> : null}
-          {warning ? (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
-              {warning}
-            </Typography>
-          ) : null}
+      actions={
+        <Stack
+          direction="row"
+          spacing={1}
+        >
+          <JacoButton
+            tone="secondary"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Отмена
+          </JacoButton>
+          <JacoButton
+            tone="danger"
+            onClick={onConfirm}
+            loading={loading}
+          >
+            {confirmLabel}
+          </JacoButton>
         </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          disabled={loading}
-        >
-          Отмена
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={onConfirm}
-          disabled={loading}
-        >
-          {loading ? "Удаляем..." : confirmLabel}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      }
+    >
+      <Stack spacing={1.5}>
+        {description ? <Typography>{description}</Typography> : null}
+        {warning ? (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
+            {warning}
+          </Typography>
+        ) : null}
+      </Stack>
+    </JacoModal>
   );
 }

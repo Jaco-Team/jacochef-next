@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Stack, useMediaQuery, useTheme } from "@mui/material";
 
+import { useJacoConfirm } from "@/design-system/shared/ui";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemsHistoryDialog from "./SkladSiteItemsHistoryDialog";
 import SkladSiteItemsCatalog from "./SkladSiteItemsCatalog";
@@ -24,6 +25,7 @@ export default function SkladSiteItemsContent({
   archiveDialog,
   isEditable,
   canCreate,
+  canSyncSiteItemsVk,
   canManageTags,
   canArchiveAction,
   canDeleteAction,
@@ -37,6 +39,7 @@ export default function SkladSiteItemsContent({
   setState,
   openCreate,
   onCreateCategory,
+  onSyncSiteItemsVk,
   openEdit,
   handleRestoreImage,
   openArchiveDialog,
@@ -55,6 +58,7 @@ export default function SkladSiteItemsContent({
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
+  const { confirm, ConfirmDialog } = useJacoConfirm();
   const showHistory = modal.open && modal.section === "history";
   const legacyItem = detail?.item ? { ...detail.item, tags_all: detail?.tags_all || tags } : null;
 
@@ -71,6 +75,21 @@ export default function SkladSiteItemsContent({
     }
   };
 
+  const handleSyncSiteItemsVk = async () => {
+    const accepted = await confirm({
+      title: "Обновление товаров VK",
+      message: "Запустить обновление товаров сайта в VK?",
+      cancelLabel: "Отмена",
+      confirmLabel: "Запустить",
+      tone: "danger",
+      confirmTone: "primary",
+    });
+
+    if (accepted) {
+      await onSyncSiteItemsVk?.();
+    }
+  };
+
   return (
     <Stack spacing={2}>
       <SkladSiteItemsCatalog
@@ -80,6 +99,7 @@ export default function SkladSiteItemsContent({
         categories={categories}
         isEditable={isEditable}
         canCreate={canCreate}
+        canSyncSiteItemsVk={canSyncSiteItemsVk}
         canManageTags={canManageTags}
         canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
@@ -89,6 +109,7 @@ export default function SkladSiteItemsContent({
         canViewHistory={canViewHistory}
         setState={setState}
         openCreate={openCreate}
+        onSyncSiteItemsVk={handleSyncSiteItemsVk}
         openTagsEditor={() => setTagsDialogOpen(true)}
         openEdit={openEdit}
         openArchiveDialog={openArchiveDialog}
@@ -170,6 +191,7 @@ export default function SkladSiteItemsContent({
         onClose={closeArchiveDialog}
         onConfirm={confirmArchive}
       />
+      <ConfirmDialog />
     </Stack>
   );
 }

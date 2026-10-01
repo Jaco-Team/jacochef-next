@@ -127,6 +127,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const canDeleteAction = canDelete("recipe");
   const canManageCategories = canCreateProduction || canManageProduction || canDeleteAction;
+  const canEditRevision = Number(access?.production_show_in_rev_edit) === 1;
 
   const refreshProductionCategories = useCallback(async () => {
     const response = await api.getCategories();
@@ -648,6 +649,36 @@ export default function useSkladProductionController({ showAlert }) {
     [activeEntityType, api, closeModal, loadRows, modal, setShellState, setState, showAlert],
   );
 
+  const toggleRevision = useCallback(
+    async (entityType, row, nextValue) => {
+      if (!canEditRevision || !row?.id) {
+        return;
+      }
+
+      setShellState({ isLoading: true });
+
+      try {
+        const saveFlag = entityType === "recipe" ? api.saveRecipeFlag : api.saveSemiFinishedFlag;
+        const response = await saveFlag({
+          id: row.id,
+          type: "show_in_rev",
+          value: nextValue ? 1 : 0,
+        });
+
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка сохранения ревизии");
+        }
+
+        await loadRows();
+      } catch (error) {
+        showAlert(error?.message || "Ошибка сохранения ревизии", false);
+      } finally {
+        setShellState({ isLoading: false });
+      }
+    },
+    [api, canEditRevision, loadRows, setShellState, showAlert],
+  );
+
   const loadEntityDetail = useCallback(
     async (entityType, row) => {
       if (!row?.id) {
@@ -759,6 +790,7 @@ export default function useSkladProductionController({ showAlert }) {
           canConvertProduction={canConvertProduction}
           canViewHistory={canViewProductionHistory}
           canCreateCategory={canCreateProduction}
+          canEditRevision={canEditRevision}
           allowPastDate={canUseProductionPastDate}
           canManageCategories={canManageCategories}
           onCreateCategory={openCategoryManagerDialog}
@@ -769,6 +801,7 @@ export default function useSkladProductionController({ showAlert }) {
           openArchiveDialog={openArchiveDialog}
           openDeleteDialog={openDeleteDialog}
           openConvertDialog={openConvertDialog}
+          onToggleRevision={toggleRevision}
           closeModal={closeModal}
           closeDeleteDialog={closeDeleteDialog}
           closeArchiveDialog={closeArchiveDialog}
