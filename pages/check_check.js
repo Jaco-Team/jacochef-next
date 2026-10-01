@@ -60,6 +60,7 @@ import { formatDateReverse } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { Close } from "@mui/icons-material";
 import ExcelCompareSummary from "@/components/check_check/ExcelCompareSummary";
+import ExcelOperationsButton from "@/components/check_check/ExcelOperationsDialog";
 import MismatchDiagnostics from "@/components/check_check/MismatchDiagnostics";
 import BatchExcelCheck from "@/components/check_check/BatchExcelCheck";
 import OnlineCheckAudit from "@/components/check_check/OnlineCheckAudit";
@@ -73,6 +74,31 @@ import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 
 const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(num);
+
+const getDigitalRubleOperations = (excelCompare) => {
+  if (excelCompare?.st !== true || !Array.isArray(excelCompare?.excel?.operations)) return [];
+
+  return excelCompare.excel.operations
+    .filter(
+      (operation) =>
+        typeof operation?.operation_type === "string" &&
+        operation.operation_type.trim().toLowerCase().replace(/ё/g, "е") ===
+          "оплата цифровым рублем в тст сбербанка",
+    )
+    .map(
+      ({ operation_type, date, date_time, amount, terminal, rrn, kassa, smena, row_number }) => ({
+        operation_type,
+        date,
+        date_time,
+        amount,
+        terminal,
+        rrn,
+        kassa,
+        smena,
+        row_number,
+      }),
+    );
+};
 
 const receiptAmount = (row, field, cashField, bankField) => {
   if (row?.[field] != null) return Number(row[field]) || 0;
@@ -389,11 +415,11 @@ const getExcelStatusIcon = (color) =>
     />
   );
 
-const ExcelAmountCell = ({ excelRow, diffField = "diff_chef_bank" }) => {
+const ExcelAmountCell = ({ excelRow, diffField = "diff_chef_bank", excelCompare, scope }) => {
   const color = getExcelColor(excelRow);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.5 }}>
       <Typography sx={{ fontWeight: "bold", color }}>
         {formatNumber(excelRow?.excel_bank ?? 0)} ₽
       </Typography>
@@ -403,6 +429,10 @@ const ExcelAmountCell = ({ excelRow, diffField = "diff_chef_bank" }) => {
           {formatNumber(excelRow?.[diffField] ?? 0)} ₽
         </Typography>
       )}
+      <ExcelOperationsButton
+        excelCompare={excelCompare}
+        scope={scope}
+      />
     </Box>
   );
 };
@@ -1277,7 +1307,10 @@ class CheckCheck_Accordion extends React.Component {
 
                   {excelCompare && (
                     <TableCell style={{ width: "18%" }}>
-                      <ExcelAmountCell excelRow={excelCompare?.diff?.all} />
+                      <ExcelAmountCell
+                        excelRow={excelCompare?.diff?.all}
+                        excelCompare={excelCompare}
+                      />
                     </TableCell>
                   )}
 
@@ -1628,7 +1661,11 @@ class CheckCheck_Accordion extends React.Component {
 
                           {excelCompare && (
                             <TableCell style={{ width: "18%" }}>
-                              <ExcelAmountCell excelRow={excelDay} />
+                              <ExcelAmountCell
+                                excelRow={excelDay}
+                                excelCompare={excelCompare}
+                                scope={{ date }}
+                              />
                             </TableCell>
                           )}
 
@@ -2061,7 +2098,15 @@ class CheckCheck_Accordion extends React.Component {
 
                                     {excelCompare && (
                                       <TableCell>
-                                        <ExcelAmountCell excelRow={excelSmena} />
+                                        <ExcelAmountCell
+                                          excelRow={excelSmena}
+                                          excelCompare={excelCompare}
+                                          scope={{
+                                            date: row.date,
+                                            kassa: kassaId,
+                                            smena: row.smena,
+                                          }}
+                                        />
                                       </TableCell>
                                     )}
                                   </TableRow>
@@ -3011,6 +3056,7 @@ class CheckCheck_ extends React.Component {
   };
 
   uploadExcel = async (event) => {
+    const revision = this.checkContextRevision;
     const file = event.target.files?.[0];
     event.target.value = "";
 
@@ -3041,6 +3087,7 @@ class CheckCheck_ extends React.Component {
         headers: getAuthHeaders({ "Content-Type": "multipart/form-data" }),
       });
 
+      if (revision !== this.checkContextRevision) return;
       const res = response.data?.data || response.data;
 
       if (!res?.st) {
@@ -3055,6 +3102,7 @@ class CheckCheck_ extends React.Component {
       });
       this.openAlert(true, "Excel файл загружен");
     } catch (error) {
+      if (revision !== this.checkContextRevision) return;
       this.setState({ excelCompare: null, excelFileName: "" });
       this.openAlert(false, "Ошибка загрузки Excel файла");
     } finally {
@@ -3230,6 +3278,11 @@ class CheckCheck_ extends React.Component {
   };
 
   upload_data_1C = async (type) => {
+    if (this.state.needsRefresh) {
+      this.openAlert(false, "Параметры изменились. Нажмите «Показать».");
+      return;
+    }
+
     this.setState({
       confirmDialog: false,
     });
@@ -3238,6 +3291,13 @@ class CheckCheck_ extends React.Component {
     if (!data) return;
 
     data.type = type;
+
+    if (["export", "clear", "clear_export"].includes(type)) {
+      const digitalRubleOperations = getDigitalRubleOperations(this.state.excelCompare);
+      if (digitalRubleOperations.length > 0) {
+        data.digital_ruble_operations = digitalRubleOperations;
+      }
+    }
 
     // включать/выключать debug-режим
     data.debug = false;
@@ -3353,6 +3413,12 @@ class CheckCheck_ extends React.Component {
             </IconButton>
           </DialogTitle>
           <DialogContent>
+            {getDigitalRubleOperations(excelCompare).length > 0 && (
+              <Typography variant="body2">
+                При выгрузке однозначно найденные чеки оплат цифровым рублём из загруженного Excel
+                получат тип оплаты 3 в 1С.
+              </Typography>
+            )}
             <List>
               {Number(acces?.upload_access) === 1 && (
                 <ListItemButton
