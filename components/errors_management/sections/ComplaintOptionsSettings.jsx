@@ -268,20 +268,24 @@ function CatalogItemActions({ node, onEdit, onHistory, onToggle }) {
       spacing={0.5}
       sx={{ alignItems: "center", flexShrink: 0 }}
     >
-      <JacoSwitch
-        checked={Boolean(node.is_active)}
-        onChange={(event) => onToggle(node, event.target.checked)}
-        slotProps={{
-          input: { "aria-label": `${node.is_active ? "Отключить" : "Включить"} ${node.name}` },
-        }}
-        sx={{ transform: "scale(.78)", transformOrigin: "right center", mr: -0.75 }}
-      />
-      <JacoIconButton
-        aria-label={`Редактировать ${node.name}`}
-        onClick={() => onEdit(node)}
-      >
-        <EditOutlinedIcon fontSize="small" />
-      </JacoIconButton>
+      {onToggle ? (
+        <JacoSwitch
+          checked={Boolean(node.is_active)}
+          onChange={(event) => onToggle(node, event.target.checked)}
+          slotProps={{
+            input: { "aria-label": `${node.is_active ? "Отключить" : "Включить"} ${node.name}` },
+          }}
+          sx={{ transform: "scale(.78)", transformOrigin: "right center", mr: -0.75 }}
+        />
+      ) : null}
+      {onEdit ? (
+        <JacoIconButton
+          aria-label={`Редактировать ${node.name}`}
+          onClick={() => onEdit(node)}
+        >
+          <EditOutlinedIcon fontSize="small" />
+        </JacoIconButton>
+      ) : null}
       <JacoIconButton
         aria-label={`История ${node.name}`}
         onClick={() => onHistory(node)}
@@ -331,21 +335,23 @@ function ClassifierTree({ nodes, pointId, onEdit, onCreate, onHistory, onToggle 
             </AccordionSummary>
             <AccordionDetails>
               {!category ? (
-                <JacoButton
-                  compact
-                  tone="outlinePrimary"
-                  startIcon={<AddIcon />}
-                  onClick={() =>
-                    onCreate({
-                      kind: "category",
-                      pointId,
-                      objectType: definition.objectType,
-                      name: definition.name,
-                    })
-                  }
-                >
-                  Настроить раздел
-                </JacoButton>
+                onCreate ? (
+                  <JacoButton
+                    compact
+                    tone="outlinePrimary"
+                    startIcon={<AddIcon />}
+                    onClick={() =>
+                      onCreate({
+                        kind: "category",
+                        pointId,
+                        objectType: definition.objectType,
+                        name: definition.name,
+                      })
+                    }
+                  >
+                    Настроить раздел
+                  </JacoButton>
+                ) : null
               ) : (
                 <Stack spacing={1.25}>
                   <Stack
@@ -419,26 +425,34 @@ function ClassifierTree({ nodes, pointId, onEdit, onCreate, onHistory, onToggle 
                               />
                             </Stack>
                           ))}
-                          <JacoButton
-                            compact
-                            tone="outlinePrimary"
-                            startIcon={<AddIcon />}
-                            onClick={() => onCreate({ kind: "error", parentId: type.id, pointId })}
-                          >
-                            Добавить ошибку
-                          </JacoButton>
+                          {onCreate ? (
+                            <JacoButton
+                              compact
+                              tone="outlinePrimary"
+                              startIcon={<AddIcon />}
+                              onClick={() =>
+                                onCreate({ kind: "error", parentId: type.id, pointId })
+                              }
+                            >
+                              Добавить ошибку
+                            </JacoButton>
+                          ) : null}
                         </Stack>
                       </JacoSurface>
                     );
                   })}
-                  <JacoButton
-                    compact
-                    tone="outlinePrimary"
-                    startIcon={<AddIcon />}
-                    onClick={() => onCreate({ kind: "error_type", parentId: category.id, pointId })}
-                  >
-                    Добавить тип ошибки
-                  </JacoButton>
+                  {onCreate ? (
+                    <JacoButton
+                      compact
+                      tone="outlinePrimary"
+                      startIcon={<AddIcon />}
+                      onClick={() =>
+                        onCreate({ kind: "error_type", parentId: category.id, pointId })
+                      }
+                    >
+                      Добавить тип ошибки
+                    </JacoButton>
+                  ) : null}
                 </Stack>
               )}
             </AccordionDetails>
@@ -465,13 +479,15 @@ function FlatDirectory({ kind, nodes, pointId, onEdit, onCreate, onHistory, onTo
         >
           {label}
         </Typography>
-        <JacoButton
-          compact
-          startIcon={<AddIcon />}
-          onClick={() => onCreate({ kind, pointId })}
-        >
-          {addLabel}
-        </JacoButton>
+        {onCreate ? (
+          <JacoButton
+            compact
+            startIcon={<AddIcon />}
+            onClick={() => onCreate({ kind, pointId })}
+          >
+            {addLabel}
+          </JacoButton>
+        ) : null}
       </Stack>
       {sortNodes(nodesOf(nodes, kind)).map((node) => (
         <JacoSurface
@@ -508,7 +524,7 @@ function FlatDirectory({ kind, nodes, pointId, onEdit, onCreate, onHistory, onTo
   );
 }
 
-export default function ComplaintOptionsSettings({ request, pointId }) {
+export default function ComplaintOptionsSettings({ request, pointId, canEdit }) {
   const [settings, setSettings] = useState({ active: [], inactive: [] });
   const [error, setError] = useState("");
   const [view, setView] = useState("classifier");
@@ -595,10 +611,10 @@ export default function ComplaintOptionsSettings({ request, pointId }) {
         <ClassifierTree
           nodes={activeNodes}
           pointId={pointId ? Number(pointId) : null}
-          onEdit={(node) => openEditor(node)}
-          onCreate={(context) => openEditor(null, context)}
+          onEdit={canEdit ? (node) => openEditor(node) : null}
+          onCreate={canEdit ? (context) => openEditor(null, context) : null}
           onHistory={setHistory}
-          onToggle={toggle}
+          onToggle={canEdit ? toggle : null}
         />
       ) : null}
       {view === "stages" ? (
@@ -606,10 +622,10 @@ export default function ComplaintOptionsSettings({ request, pointId }) {
           kind="stage"
           nodes={activeNodes}
           pointId={pointId ? Number(pointId) : null}
-          onEdit={(node) => openEditor(node)}
-          onCreate={(context) => openEditor(null, context)}
+          onEdit={canEdit ? (node) => openEditor(node) : null}
+          onCreate={canEdit ? (context) => openEditor(null, context) : null}
           onHistory={setHistory}
-          onToggle={toggle}
+          onToggle={canEdit ? toggle : null}
         />
       ) : null}
       {view === "solutions" ? (
@@ -617,10 +633,10 @@ export default function ComplaintOptionsSettings({ request, pointId }) {
           kind="solution"
           nodes={activeNodes}
           pointId={pointId ? Number(pointId) : null}
-          onEdit={(node) => openEditor(node)}
-          onCreate={(context) => openEditor(null, context)}
+          onEdit={canEdit ? (node) => openEditor(node) : null}
+          onCreate={canEdit ? (context) => openEditor(null, context) : null}
           onHistory={setHistory}
-          onToggle={toggle}
+          onToggle={canEdit ? toggle : null}
         />
       ) : null}
       <Divider />
@@ -651,9 +667,9 @@ export default function ComplaintOptionsSettings({ request, pointId }) {
                 </Box>
                 <CatalogItemActions
                   node={node}
-                  onEdit={(item) => openEditor(item)}
+                  onEdit={canEdit ? (item) => openEditor(item) : null}
                   onHistory={setHistory}
-                  onToggle={toggle}
+                  onToggle={canEdit ? toggle : null}
                 />
               </Stack>
             ))}

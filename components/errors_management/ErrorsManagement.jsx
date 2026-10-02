@@ -899,6 +899,7 @@ function ErrorsManagement() {
   const [title, setTitle] = useState("Регистрация ошибок");
   const [cities, setCities] = useState([]);
   const [points, setPoints] = useState([]);
+  const [access, setAccess] = useState({});
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [orders, setOrders] = useState([]);
@@ -996,6 +997,7 @@ function ErrorsManagement() {
       setTitle(payload?.module_info?.name || "Регистрация ошибок");
       setCities(nextCities);
       setPoints(nextPoints);
+      setAccess(payload?.acces || {});
       setFilters(nextFilters);
       setAppliedFilters(nextFilters);
       setStatisticsDraft(nextFilters);
@@ -1147,6 +1149,7 @@ function ErrorsManagement() {
           <ComplaintOptionsSettings
             request={request}
             pointId={filters.pointId}
+            canEdit={Number(access.errors_management_settings_edit) === 1}
           />
         ) : tab !== "statistics" ? (
           <>
