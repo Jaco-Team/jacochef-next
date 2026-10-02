@@ -857,8 +857,10 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                           step={0.01}
                           label="Сумма изменения"
                           value={resolution.changed_amount}
-                          slotProps={{ inputLabel: { shrink: true } }}
-                          inputProps={{ inputMode: "decimal" }}
+                          slotProps={{
+                            htmlInput: { inputMode: "decimal" },
+                            inputLabel: { shrink: true },
+                          }}
                           onChange={(event) =>
                             setResolutionErrors((previous) =>
                               previous.map((entry) =>
@@ -1200,8 +1202,10 @@ function ErrorsManagement() {
                     label="Номер заказа"
                     type="number"
                     min={1}
-                    inputProps={{ inputMode: "numeric" }}
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{
+                      htmlInput: { inputMode: "numeric" },
+                      inputLabel: { shrink: true },
+                    }}
                     value={filters.orderNumber}
                     onChange={(event) => update("orderNumber", event.target.value)}
                   />

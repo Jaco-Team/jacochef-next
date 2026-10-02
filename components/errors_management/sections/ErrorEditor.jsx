@@ -195,8 +195,10 @@ export function ErrorEditor({ value, positions, catalog, solutions, stages, onCh
               step={0.01}
               label="Сумма ошибки"
               value={value.error_amount || ""}
-              slotProps={{ inputLabel: { shrink: true } }}
-              inputProps={{ inputMode: "decimal" }}
+              slotProps={{
+                htmlInput: { inputMode: "decimal" },
+                inputLabel: { shrink: true },
+              }}
               onChange={(event) => onChange({ ...value, error_amount: event.target.value })}
             />
           </Grid>
