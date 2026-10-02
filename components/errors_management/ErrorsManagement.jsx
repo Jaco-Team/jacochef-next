@@ -1505,7 +1505,7 @@ function ErrorsManagement() {
                             <>
                               <TableCell>{row.order_snapshot?.client_name || "—"}</TableCell>
                               <TableCell>{row.order_snapshot?.delivery_address || "—"}</TableCell>
-                              <TableCell>{row.order_snapshot?.order_amount ?? "—"} ₽</TableCell>
+                              <TableCell>{amountLabel(row.order_snapshot?.order_amount)}</TableCell>
                               <TableCell>{row.order_snapshot?.payment_method || "—"}</TableCell>
                               <TableCell>{row.common_comment || "—"}</TableCell>
                               <TableCell>{row.resolved_by_name || "—"}</TableCell>
@@ -1538,7 +1538,7 @@ function ErrorsManagement() {
                                   label={row.status_label || row.status || "—"}
                                 />
                               </TableCell>
-                              <TableCell>{row.order_price || "—"} ₽</TableCell>
+                              <TableCell>{amountLabel(row.order_price)}</TableCell>
                             </>
                           )}
                           <TableCell align="right">
