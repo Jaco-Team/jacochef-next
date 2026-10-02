@@ -597,6 +597,11 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
         </JacoButton>
       </Stack>
       {error ? <Alert severity="error">{error}</Alert> : null}
+      {!canEdit ? (
+        <Alert severity="info">
+          У вас нет права изменять настройки. Доступен просмотр текущих вариантов и их истории.
+        </Alert>
+      ) : null}
       <JacoSegmentedTabs
         size="compact"
         value={view}
