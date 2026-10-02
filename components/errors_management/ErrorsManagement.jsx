@@ -1095,9 +1095,11 @@ function ErrorsManagement() {
     [filters.cityId, points],
   );
   const update = (field, value) => {
+    const cityPoint =
+      field === "cityId" ? points.find((point) => String(point.city_id) === String(value)) : null;
     const next = {
       [field]: value,
-      ...(field === "cityId" ? { pointId: "" } : {}),
+      ...(field === "cityId" ? { pointId: cityPoint?.id || "" } : {}),
     };
     setFilters((previous) => ({ ...previous, ...next }));
     if (["cityId", "pointId", "dateFrom", "dateTo"].includes(field)) {
@@ -1128,9 +1130,11 @@ function ErrorsManagement() {
     [points, statisticsDraft.cityId],
   );
   const updateStatistics = (field, value) => {
+    const cityPoint =
+      field === "cityId" ? points.find((point) => String(point.city_id) === String(value)) : null;
     const next = {
       [field]: value,
-      ...(field === "cityId" ? { pointId: "" } : {}),
+      ...(field === "cityId" ? { pointId: cityPoint?.id || "" } : {}),
     };
     setStatisticsDraft((previous) => ({ ...previous, ...next }));
     if (["cityId", "pointId", "dateFrom", "dateTo"].includes(field)) {
@@ -1177,11 +1181,41 @@ function ErrorsManagement() {
           ]}
         />
         {tab === "settings" ? (
-          <ComplaintOptionsSettings
-            request={request}
-            pointId={filters.pointId}
-            canEdit={Number(access.errors_management_settings_edit) === 1}
-          />
+          <>
+            <JacoSurface sx={filterSx}>
+              <Grid
+                container
+                spacing={1.5}
+                sx={{ alignItems: "center" }}
+              >
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <JacoSelect
+                    label="Город"
+                    options={cities}
+                    value={filters.cityId}
+                    multiple={false}
+                    allowNone={false}
+                    onChange={(event) => update("cityId", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <JacoSelect
+                    label="Кафе"
+                    options={cafes}
+                    value={filters.pointId}
+                    multiple={false}
+                    allowNone={false}
+                    onChange={(event) => update("pointId", event.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            </JacoSurface>
+            <ComplaintOptionsSettings
+              request={request}
+              pointId={filters.pointId}
+              canEdit={Number(access.errors_management_settings_edit) === 1}
+            />
+          </>
         ) : tab !== "statistics" ? (
           <>
             <JacoSurface
