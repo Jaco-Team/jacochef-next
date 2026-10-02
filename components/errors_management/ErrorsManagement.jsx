@@ -615,9 +615,30 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                       value={detail.order.placed_by}
                     />
                     <DetailField
+                      label="Тип заказа"
+                      value={detail.order.order_type_name}
+                    />
+                    <DetailField
                       label="Сотрудник"
                       value={detail.order.employee_name}
                     />
+                    <DetailField
+                      label="Сумма заказа"
+                      value={amountLabel(detail.order.order_amount)}
+                    />
+                    {detail.order.delivery_address ? (
+                      <DetailField
+                        fullWidth
+                        label="Адрес доставки"
+                        value={detail.order.delivery_address}
+                      />
+                    ) : null}
+                    {detail.order.payment_method ? (
+                      <DetailField
+                        label="Оплата"
+                        value={detail.order.payment_method}
+                      />
+                    ) : null}
                     {detail.order.client_name ? (
                       <DetailField
                         label="Клиент"
