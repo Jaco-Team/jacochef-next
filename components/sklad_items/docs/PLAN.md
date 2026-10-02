@@ -691,10 +691,10 @@ Deliverables:
 2. Build `Units` tab on canonical API and finalize dictionary CRUD pattern. Status: completed.
 3. Build `Categories` tab on canonical API and finalize source-aware category handling. Status: completed.
 4. Build `Рецепты и заготовки` tab list/filter shell. Status: completed.
-5. Build shared production editor modal with scoped form helpers and multiline auto-expand fields. Status: completed for canonical basic field editing and create/save flow; composition/category editing remains read-only in current FE scope.
+5. Редактор производства: реализованы canonical create/save, поля, состав и категории с детальными правами редактирования.
 6. Wire production history, convert-type flow, archive and destructive delete path. Status: completed for history, convert shell, archive/unarchive, delete, canonical list flag toggles and canonical create/save flow within current FE scope.
 7. Build `Товары сайта` tab list/filter shell. Status: completed.
-8. Build site-item editor modal, derived calorie preview, tags, images, marking, archive and destructive delete flow. Status: completed for working editor/view tabs, archive/unarchive, delete, canonical list flag toggles, canonical save flow, image upload and VK sync trigger; inline tag dictionary mutations are connected, broader tag UX polish remains.
+8. Редактор товаров сайта: реализованы просмотр/редактирование, состав, категории, теги, изображения, маркировка, архив и удаление. Кнопка VK в текущем UI отсутствует; backend endpoint сохранён.
 9. Build unified `История` tab and 1C-inspired detail modal with comparison highlighting. Status: entity-local history dialogs are live; a standalone cross-entity tab is not exposed because the source contracts and permissions differ.
 10. Build `Архив` tab and archive restore/view flows if contract supports them. Status: archive/restore flows remain entity-local. The cross-entity archive implementation is retained but intentionally unexposed pending a separately accepted audit/search contract.
 11. Run access hardening, migration checklist pass and targeted smoke coverage. Status: pending.
@@ -721,14 +721,19 @@ Deliverables:
 2. Units slice: working list + modal CRUD + delete-state rendering on canonical `units/*`, with its own tab-scoped state/controller on top of the global shell store. Status: completed.
 3. Categories slice: shared category references on canonical bootstrap/detail payloads. Status: completed for current FE scope; dedicated CRUD tab is out of scope.
 4. Production list slice: shared list/filter shell for recipes and semi-finished. Status: completed.
-5. Production editor slice: shared modal, composition rows, multiline auto-expand fields. Status: completed for basic canonical save flow; composition/category editing remains read-only.
-6. Site items slice: list/filter shell, editor modal, derived fields, tags/images/marking/delete. Status: completed for current FE scope; canonical create/edit, tag mutation, image upload, VK sync, history handoff, archive/delete flows and strict current API binding are in place, while deeper composition editing remains backend follow-up.
+5. Production editor slice: реализованы canonical create/save, редактирование состава и категорий по детальным правам; общая таблица показывает и сортирует срок годности рецептов и полуфабрикатов.
+6. Site items slice: реализованы canonical create/edit, состав, категории, теги, изображения, маркировка, история, архив и удаление. VK не показан в текущем UI.
 7. History/archive slice: entity-local readers and archive/restore row actions are connected; the cross-entity archive reader remains retained but intentionally unexposed because entity contracts differ. Status: completed for the accepted entity-local scope.
 8. Hardening slice: access matrix, smoke tests, migration leftovers and removal of leftover info stubs / temporary explanatory surfaces before finalization. Status: in progress.
 9. Chrome UX walkthrough slice: open `/sklad_items`, check each working tab step by step, fix runtime/UX regressions found there, then rerun reviewer pass on that chunk. Status: pending.
 
 Latest chunk status:
 
+- 01.10.2026: восстановлена вкладка «Товары склада» на canonical `items/*` API; list/detail работают с `items_new`, без legacy-перехода.
+- Каждая рабочая вкладка имеет путь `/sklad_items/production|warehouse-items|site-items|units`; обновление и back/forward сохраняют раздел, недоступный ключ заменяется разрешённым. Старый `?tab` заменяется путём без `tab`.
+- Один optional catch-all route сохраняет shell при sibling-навигации; tab-код загружается по требованию, до router/bootstrap readiness лишние разделы не запрашиваются.
+- Вложенные текущие и исторические связи рецептов отображаются в `delete_usage` и блокируют удаление; права полей сохраняются.
+- Исправлено зависание loading при загрузке snapshot истории: завершение загрузки фиксируется до cleanup эффекта; сравнение и отмена будущей версии покрыты браузерным сценарием.
 - shell hardening for the live basic tabs is completed: tab visibility now uses the compact `*_view` / `*_edit` contract and tab reload effects are aligned with the active controller callbacks
 - July 21, 2026 UI hardening chunk completed:
   - site-items and production row statuses now render one primary semantic state plus distinct secondary flags, without duplicate status meanings across the same row
@@ -778,7 +783,7 @@ Contract boundary:
 
 ## 9. Explicit non-goals for current iteration
 
-- no dedicated warehouse-items CRUD tab inside `sklad_items`
+- «Товары склада» восстановлены как самостоятельная вкладка с canonical `items/*`; legacy-экран не используется в runtime
 - no runtime support for legacy route names or payload aliases
 - no broad refactor of shared project controls
 - no storage-layer unification between `jaco_main_rolls` and `jaco_site_rolls`

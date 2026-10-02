@@ -23,7 +23,7 @@
 - недоступные для просмотра поля сохраняют ключ в payload, но получают `null` или пустую коллекцию; это же правило действует для history snapshots и compare
 - запрещённые для редактирования поля backend игнорирует даже при прямом API-запросе; при замене будущей версии база снимка определяется её `revision_key`
 - для `recipe`, `semi_finished`, `site_item` archive реализован через toggle `is_show` + history snapshot
-- для `warehouse_item`, `unit`, `category` archive не поддержан
+- для складского `item`, `unit`, `category` archive не поддержан
 - `history/*` работает по canonical snapshot, а не по raw legacy row
 
 Calculated allergen inference rules:
@@ -39,7 +39,7 @@ Calculated allergen inference rules:
 - для `recipe`, `semi_finished`, `site_item` это full detailed timeline:
   - каждая row уже содержит expanded `snapshot`
   - отдельный `history/get_one` для FE detail-screen не нужен
-- для `warehouse_item` history остается lightweight list slice
+- для `item` history остается lightweight list slice; `warehouse_item` не принимается как history `entity_type`
 - canonical `history/*` остается для cross-screen history tools и compare
 
 Detailed `history` shape:
@@ -84,7 +84,7 @@ History rules:
 - `revision_key` equals stringified `history_id`
 - `changed_at` comes from historical `date_start`/legacy revision start timestamp
 - `recipe`, `semi_finished`, `site_item` rows include both list-meta and full revision `snapshot`
-- `warehouse_item` rows stay lightweight and do not include full `snapshot`
+- `item` rows stay lightweight and do not include full `snapshot`
 - entity-specific rows can contain extra summary fields beyond the base meta fields above
 
 Common delete usage shape:
@@ -183,6 +183,11 @@ Response shape:
 - `production_create`, `production_delete`, `site_items_create`, `site_items_delete`, `units_create` и `units_delete` управляют action controls, а не видимостью вкладки
 - `capabilities.archive.entities` нужен для FE pre-check supported/unsupported archive actions
 
+FE-навигация: `/sklad_items/production`, `/sklad_items/warehouse-items`, `/sklad_items/site-items`, `/sklad_items/units`.
+Старый `?tab=...` заменяется соответствующим путём без `tab`; прочие query сохраняются. Переход между вкладками внутри одного route не повторяет bootstrap.
+Переключение выполняется shallow routing; refresh/bootstrap не сбрасывает выбранную вкладку.
+Недоступный/неизвестный `tab` заменяется первым разрешённым, остальные query-параметры сохраняются.
+
 ## 2. Units
 
 ### `POST|ANY /api/sklad_items/units/list`
@@ -238,12 +243,25 @@ Response:
 ```json
 {
   "st": true,
-  "entity": {
+  "item": {
     "id": 1,
-    "name": ""
-  }
+    "name": "Грамм",
+    "con_id": 1,
+    "main_count": 1,
+    "con_count": 1,
+    "delete_usage": {}
+  },
+  "history": []
 }
 ```
+
+`item` сохраняет существующий полный контракт единицы, включая права удаления и использования. `history` — добавленное поле с максимум 50 последними записями (сначала новые; при одинаковой дате — больший `id`).
+
+Поля записи: `id`, `created_at`, `actor_id`, `actor_name`, `event_type` (`create` / `update`), `diff_json`, `meta_json`. `diff_json` — JSON-строка с изменёнными полями `id`, `name`, `con_id`, `main_count`, `con_count` в виде `{ "field": { "from": null, "to": "value" } }`. Для создания исходное значение `null`; для изменения — предыдущее значение. `meta_json.unit_names` сохраняет названия связанных единиц на момент операции; UI использует их для `con_id`, при отсутствии названия показывает ID, а не текущее переименованное название.
+
+История доступна с `units_view` (или `units_edit`) независимо от разрешения изменения. Автор определяется сервером из доверенного пользователя; FE не передаёт автора в save payload. У старых записей без аудита `history: []`: автор создания не выдумывается. FE также безопасно отображает `history: null` как отсутствие старой истории.
+
+`units/save_new` / `units/save_edit` сохраняют запись аудита атомарно с единицей. Save без изменения полей не создаёт запись. Запрошенный `con_id: 0` по существующей логике преобразуется в собственный ID единицы; аудит отражает конечное сохранённое значение, а не исходный ноль. Payload и ранее возвращаемые поля save/list не изменены.
 
 ### `POST|ANY /api/sklad_items/units/options`
 
@@ -506,8 +524,8 @@ Response:
 
 Scope:
 
-- в `sklad_items` опубликован только read/open contour
-- write/delete/archive для warehouse items в этом модуле не опубликованы
+- опубликован полный read/create/edit/delete contour через `items/*` для `jaco_main_rolls.items_new`
+- права раздела и полей: `warehouse_items_*`; archive endpoint не поддержан
 
 ### `POST|ANY /api/sklad_items/items/list`
 
@@ -602,9 +620,45 @@ Warehouse item detail rules:
   - `delete_usage`
 - `history.rows` returns the recent embedded revision list for this item detail
 - warehouse item detail history is lightweight; full revision open/compare still goes through canonical history endpoints
+- `items/list` и `items/get_one` читают `jaco_main_rolls.items_new`; fallback на legacy `items` не используется
 - `categories`, `units`, `allergens`, `accounting_systems`, `storages`, `apps` are edit references, not a second entity payload
 - `calculated_allergens` is a read-only precaution calculation from the current composition graph; it does not change manual allergen fields
 - `calculated_allergens` contains only two named lists: `allergens` and `possible_allergens`
+
+### `POST|ANY /api/sklad_items/items/save_new`
+
+### `POST|ANY /api/sklad_items/items/save_edit`
+
+Поля карточки допускаются непосредственно в `data` или в `data.item`.
+Обязательные поля: `name`, `category_id`, `ed_izmer_id`, `date_start`; `date_end` не может быть раньше `date_start`.
+Для редактирования нужен `id` (также поддержаны `item_id`, `item.id`), для выбранной редакции — `revision_key`.
+Массивы `allergens`, `allergens_possible`, `storages`, `accounting_systems` содержат выбранные ID.
+В карточке склада раздел «Разгрузка» редактирует `app_id` («Должность в кафе») и `time_min_other` в формате ММ:СС за 1 кг / 1 шт / 1 л товара. Права полей — `apps` и `time` соответственно. Legacy-поля `pf_id`, `time_min`, `time_dop_min` скрыты в интерфейсе, но сохраняются в draft/payload без изменений.
+Раздел «Привязки» складской карточки содержит только хранение и системы учёта. `allergens` и `allergens_possible` здесь не редактируются; ранее сохранённые ID остаются в draft/payload. В производственных карточках поля аллергенов доступны по прежним правилам.
+Права: `warehouse_items_create` / `warehouse_items_edit` и `warehouse_items_<field>_edit`.
+Для новой прошлой даты требуется `warehouse_items_past_date`; неизменённая старая дата сохраняется.
+`pq`: несколько размеров упаковки разделяются `#`, `;`, `/`, `|`, запятой или переводом строки; дробная часть — через точку (`0.5#1`). Новое или изменённое значение приводится к списку с `#` и проверяется сервером; неизменённое историческое значение и поле без права редактирования сохраняются без преобразования.
+Будущая редакция регистрируется как scheduled, current projection заменяется при начале действия.
+Успех: `st`, `text`, `item_id`, `history_id`, temporal metadata редакции.
+
+### `POST|ANY /api/sklad_items/items/save_flag`
+
+`data`: `id`, `type`, `value` (`0|1`). Флаги сохраняют историческую редакцию:
+
+- `active` / `is_show`: право `warehouse_items_activity_edit`
+- `ord` / `show_in_order`: право `warehouse_items_order_edit`
+- `rev` / `show_in_rev`: право `warehouse_items_revision_edit`
+
+### `POST|ANY /api/sklad_items/items/check_art`
+
+`data`: `art`, необязательный `id` для исключения редактируемой позиции.
+Право `warehouse_items_art_view`; ответ `st`, `available`, `items` с совпадениями.
+
+### `POST|ANY /api/sklad_items/items/delete`
+
+`data`: `id` (или `item_id`); право `warehouse_items_delete`.
+Текущие, исторические и scheduled-связи запрещают удаление.
+Успех: `st = true`, `text`, `usage`; запрет: `st = false`, `text`, `usage`, данные сохранены.
 
 ## 5. Recipes
 
@@ -636,6 +690,7 @@ List row fields:
 - `id`
 - `type = recipe`
 - `name`
+- `shelf_life` — строка из последней истории; при отсутствии значения пустая строка, без field-level view/edit — `null`
 - `categories`
 - `ed_izmer_id`
 - `ed_izmer_name`
@@ -876,6 +931,11 @@ Delete is blocked if recipe participates in:
 - `items_rec_new`
 - `items_rec_stages_new`
 - `items_rec_stages_hist_new`
+- `jaco_main_rolls.recipe_items_new`, где `item_id` равен ID рецепта и `type = rec`
+- `jaco_main_rolls.recipe_items_hist_new` с тем же фильтром
+
+Вложенные связи публикуются в `delete_usage.active_relations` и `history_relations` соответственно.
+FE блокирует delete/convert по `can_delete`, а backend повторно проверяет использование перед удалением.
 
 Success/blocked format follows the common delete contract.
 
@@ -1400,7 +1460,9 @@ Response:
 Image rules:
 
 - item-bound mutation only
-- accepts only `jpg/jpeg/png`
+- accepts `jpg/jpeg/png/webp/gif/bmp`, не более 10 МБ; SVG, HEIC и AVIF не поддерживаются
+- сервер декодирует изображение и сохраняет JPG + WebP с качеством 90%; GIF преобразуется в статичный первый кадр, анимированный WebP не поддерживается текущим GD-конвертером
+- размеры обеих выходных версий: 138×138, 146×146, 366×366, 466×466, 585×585, 732×732, 875×875, 1168×1168, 1420×1420, 2000×2000; размеры и остальные response fields не меняются
 - publishes resized assets into existing storage
 - current row keeps stable public alias naming in `img_app`
 - current row image paths point to current alias files
@@ -1737,7 +1799,13 @@ Response:
 
 ## 12. Access Contract
 
-`get_all.access` returns the compact FE access contract. Legacy middleware keys are used only inside backend compatibility mapping.
+`get_all.access` возвращает compact FE access contract и детальные scoped-права; для активного legacy-редактора товаров сайта сохраняются compatibility aliases. Наличие любого детального site-права исключает разрешение всей формы через section-level fallback.
+
+Видимость каждого поля требует его `_view` или `_edit`, редактирование — его `_edit`. Права одной позиции внутри БЖУ, описания, активности, тегов или состава не разрешают соседние поля; действующие групповые aliases сохранены. При edit FE исключает неeditable поля из запроса, сервер сохраняет их из доверенного snapshot. Ключи read-response не удаляются: скрытые значения маскируются `null` / пустой коллекцией, включая историю и производные значения.
+
+Создание production требует `production_create` и `production_name_edit`, `production_shelf_life_edit`, `production_date_start_edit`; `unit` и `date_end` optional. Создание товара сайта требует `site_items_create` и edit-права `name`, `category_id`, `date_start`. Форма показывает недостающие права и блокирует save без них; create-mode исключений матрицы больше нет.
+
+Production-категории читаются по `production_categories_view/edit`, изменяются только по `production_categories_edit`; create/delete дополнительно требуют action-права. Создание site-категории требует `category_id_edit` + `site_items_create`. Исходная семантика site-состава: `stage` → заготовки `pf_stage_*` / `rec_stage_*` / `item_stage_*`, `items` → `item_items`.
 
 Example:
 

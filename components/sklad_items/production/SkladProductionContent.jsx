@@ -2,13 +2,14 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import DisabledByDefaultIcon from "@mui/icons-material/DisabledByDefault";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
-  Chip,
   Grid,
   Stack,
   Table,
@@ -24,13 +25,12 @@ import {
 
 import {
   JacoButton,
-  JacoCheckbox,
   JacoIconButton,
   JacoSearchField,
   JacoSelect,
   JacoSurface,
 } from "@/design-system/shared/ui";
-import { uiRadii } from "@/design-system/shared/tokens";
+import { uiColors, uiRadii } from "@/design-system/shared/tokens";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
@@ -78,7 +78,6 @@ export default function SkladProductionContent({
   canConvertProduction,
   canViewHistory,
   canCreateCategory,
-  canEditRevision,
   allowPastDate,
   canManageCategories,
   setState,
@@ -89,7 +88,6 @@ export default function SkladProductionContent({
   openArchiveDialog,
   openDeleteDialog,
   openConvertDialog,
-  onToggleRevision,
   closeModal,
   closeDeleteDialog,
   closeArchiveDialog,
@@ -229,14 +227,6 @@ export default function SkladProductionContent({
                     Категории
                   </SkladSortableHeader>
                   <SkladSortableHeader
-                    sortKey="shelfLife"
-                    sortBy={sortBy}
-                    sortDirection={sortDirection}
-                    onSort={onSort}
-                  >
-                    Срок годности
-                  </SkladSortableHeader>
-                  <SkladSortableHeader
                     sortKey="dateStart"
                     sortBy={sortBy}
                     sortDirection={sortDirection}
@@ -253,7 +243,8 @@ export default function SkladProductionContent({
                     Действует до
                   </SkladSortableHeader>
                   <TableCell sx={{ minWidth: 116 }}>Обновление</TableCell>
-                  <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
+                  <TableCell align="center">Активность</TableCell>
+                  <TableCell align="center">Ревизия</TableCell>
                   <TableCell
                     align="right"
                     sx={{ width: 220 }}
@@ -272,6 +263,14 @@ export default function SkladProductionContent({
                     Number(row?.delete_usage?.can_delete) === 1;
                   const primaryStatusChip = getPrimaryStatusChip(row);
                   const secondaryStatusChips = getSecondaryStatusChips(row);
+                  const isActive = Number(row?.is_active) === 1;
+                  const isRevision = Number(row?.show_in_rev) === 1;
+                  const ActivityIcon = isActive ? CheckBoxIcon : DisabledByDefaultIcon;
+                  const RevisionIcon = isRevision ? CheckBoxIcon : DisabledByDefaultIcon;
+                  const activityLabel = `Активность: ${isActive ? "Да" : "Нет"}. ${[
+                    primaryStatusChip.label,
+                    ...secondaryStatusChips.map((chip) => chip.label),
+                  ].join(". ")}`;
 
                   return (
                     <TableRow
@@ -288,49 +287,35 @@ export default function SkladProductionContent({
                       <TableCell>
                         {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
                       </TableCell>
-                      <TableCell>{row?.shelf_life || "-"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_update) || "—"}</TableCell>
-                      <TableCell>
-                        <Stack
-                          direction="row"
-                          spacing={0.75}
-                          useFlexGap
-                          sx={{
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                          }}
+                      <TableCell align="center">
+                        <Tooltip
+                          title={activityLabel}
+                          describeChild
                         >
-                          <Chip
-                            key={primaryStatusChip.key}
-                            label={primaryStatusChip.label}
-                            size="small"
-                            color={primaryStatusChip.color}
-                            variant={primaryStatusChip.color === "default" ? "outlined" : "filled"}
-                          />
-                          {secondaryStatusChips.map((chip) => (
-                            <Chip
-                              key={chip.key}
-                              label={chip.label}
-                              size="small"
-                              color={chip.color}
-                              variant="outlined"
+                          <span style={{ display: "inline-flex" }}>
+                            <ActivityIcon
+                              titleAccess={activityLabel}
+                              sx={{
+                                fontSize: 24,
+                                color: isActive ? uiColors.success : uiColors.danger,
+                                clipPath: `inset(3px round ${uiRadii.xs})`,
+                              }}
                             />
-                          ))}
-                          {canEditRevision ? (
-                            <Tooltip title="Показывать в ревизии">
-                              <span>
-                                <JacoCheckbox
-                                  checked={Number(row?.show_in_rev) === 1}
-                                  onChange={(event) =>
-                                    onToggleRevision(entityType, row, event.target.checked)
-                                  }
-                                />
-                              </span>
-                            </Tooltip>
-                          ) : null}
-                        </Stack>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="center">
+                        <RevisionIcon
+                          titleAccess={`Ревизия: ${isRevision ? "Да" : "Нет"}`}
+                          sx={{
+                            fontSize: 24,
+                            color: isRevision ? uiColors.success : uiColors.danger,
+                            clipPath: `inset(3px round ${uiRadii.xs})`,
+                          }}
+                        />
                       </TableCell>
                       <TableCell align="right">
                         <Stack

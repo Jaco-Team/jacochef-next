@@ -200,6 +200,9 @@ async function installSkladMock(page, options = {}) {
       }),
     ],
     nextUnitId: 100,
+    unitHistories: {},
+    unitAuditId: 500,
+    unitAuditActor: { actor_id: 77, actor_name: "E2E Автор единицы" },
     nextProductionId: 200,
     nextSiteItemId: 300,
     nextWarehouseItemId: 400,
@@ -226,6 +229,7 @@ async function installSkladMock(page, options = {}) {
         id: 11,
         name: "E2E_SKLAD_Очень длинное название рецепта для проверки адаптивной таблицы",
         shelf_life: "48 часов",
+        ed_izmer_id: 1,
         date_start: "2026-08-01",
         date_end: "",
         is_active: 1,
@@ -235,7 +239,21 @@ async function installSkladMock(page, options = {}) {
         delete_usage: { can_delete: true, active_relations: [], history_relations: [] },
       },
     ],
-    semiFinished: [],
+    semiFinished: [
+      {
+        id: 12,
+        name: "E2E_SKLAD_Полуфабрикат",
+        shelf_life: "24 часа",
+        ed_izmer_id: 1,
+        date_start: "2026-08-01",
+        date_end: "",
+        is_active: 1,
+        is_show: 1,
+        is_archived: 0,
+        categories: [{ id: 10, name: "E2E_SKLAD_Категория производства" }],
+        delete_usage: { can_delete: true, active_relations: [], history_relations: [] },
+      },
+    ],
     siteItems: [
       {
         id: 21,
@@ -487,23 +505,66 @@ async function installSkladMock(page, options = {}) {
       });
 
     if (method === "get_all") {
-      return respond(bootstrap(state.access));
+      if (options.bootstrapReady) await options.bootstrapReady;
+      return respond({ ...bootstrap(state.access), ...options.catalogs });
     }
 
     if (method === "units/list") {
       return respond({ st: true, list: state.units });
     }
 
+    if (method === "units/get_one") {
+      const item = state.units.find((row) => String(row.id) === String(data.id));
+      const response = JSON.parse(
+        JSON.stringify({ st: Boolean(item), item, history: state.unitHistories[data.id] ?? [] }),
+      );
+      return respond(options.unitDetail ? await options.unitDetail(response, data) : response);
+    }
+
+    const auditUnit = (before, after, eventType) => {
+      const diff = {};
+      for (const field of ["id", "name", "con_id", "main_count", "con_count"]) {
+        const from = before?.[field] ?? null;
+        const to = after[field];
+        if (from !== to) diff[field] = { from, to };
+      }
+      if (!Object.keys(diff).length) return;
+      const id = state.unitAuditId++;
+      const unitNames = Object.fromEntries(state.units.map((row) => [row.id, row.name]));
+      if (
+        before &&
+        Number(before.con_id) === Number(before.id) &&
+        Number(before.con_id) !== Number(after.con_id)
+      )
+        unitNames[before.id] = before.name;
+      const entry = {
+        id,
+        created_at: `2026-10-01 10:00:${String(id - 500).padStart(2, "0")}`,
+        ...state.unitAuditActor,
+        event_type: eventType,
+        diff_json: JSON.stringify(diff),
+        meta_json: JSON.stringify({ unit_names: unitNames }),
+      };
+      state.unitHistories[after.id] = [entry, ...(state.unitHistories[after.id] || [])].slice(
+        0,
+        50,
+      );
+    };
+
     if (method === "units/save_new") {
       const created = unit(state.nextUnitId++, data.name, data);
+      if (!Number(created.con_id)) created.con_id = created.id;
       state.units.push(created);
+      auditUnit(null, created, "create");
       return respond({ st: true, text: "Успешно сохранено", id: created.id });
     }
 
     if (method === "units/save_edit") {
       const index = state.units.findIndex((row) => Number(row.id) === Number(data.id));
       if (index >= 0) {
-        state.units[index] = { ...state.units[index], ...data };
+        const before = state.units[index];
+        state.units[index] = { ...before, ...data, con_id: Number(data.con_id) || Number(data.id) };
+        auditUnit(before, state.units[index], "update");
       }
       return respond({ st: true, text: "Успешно сохранено", id: data.id });
     }
@@ -539,15 +600,16 @@ async function installSkladMock(page, options = {}) {
 
     if (method === "recipes/get_one" || method === "semi-finished/get_one") {
       const source = method.startsWith("recipes/") ? state.recipes : state.semiFinished;
-      const entity = source.find((row) => Number(row.id) === Number(data.id)) || {};
+      const entity = { ...(source.find((row) => Number(row.id) === Number(data.id)) || {}) };
+      for (const field of options.productionDetailOmissions || []) delete entity[field];
       return respond({
         st: true,
         entity,
-        units: [unit(1, "Грамм")],
+        units: options.catalogs?.units || [unit(1, "Грамм")],
         categories: bootstrap(state.access).categories,
-        allergens: [],
+        allergens: options.catalogs?.allergens || [],
         all_storages: [],
-        apps: [],
+        apps: options.catalogs?.apps || [],
         all_items_list: [
           { id: 1, id_name: "1-item", type: "item", name: "Рис вареный НЕЗАПРАВЛЕННЫЙ" },
           { id: 2, id_name: "2-item", type: "item", name: "Коробка для пиццы 35 см" },
@@ -559,7 +621,12 @@ async function installSkladMock(page, options = {}) {
           { id: 8, id_name: "8-item", type: "item", name: "Стикер для салатника" },
         ],
         history: {
-          rows: method.startsWith("recipes/") ? state.productionHistory : [],
+          rows: method.startsWith("recipes/")
+            ? state.productionHistory.map((row) => ({
+                ...row,
+                snapshot: state.historySnapshots[Number(row.revision_key)] || {},
+              }))
+            : [],
           capabilities: {},
           meta: {
             entity_type: method.startsWith("recipes/") ? "recipe" : "semi_finished",
@@ -589,6 +656,17 @@ async function installSkladMock(page, options = {}) {
       return respond({ st: true, text: "Успешно сохранено", id: data.id });
     }
 
+    if (method === "entities/delete") {
+      const source = data.entity_type === "recipe" ? state.recipes : state.semiFinished;
+      const index = source.findIndex((row) => Number(row.id) === Number(data.id));
+      const usage = source[index]?.delete_usage;
+      if (usage?.can_delete === false) {
+        return respond({ st: false, text: "Удаление запрещено: запись используется", usage });
+      }
+      if (index >= 0) source.splice(index, 1);
+      return respond({ st: true, text: "Успешное удаление", usage });
+    }
+
     if (method === "items/list") {
       const search = String(data.search || "")
         .trim()
@@ -596,7 +674,9 @@ async function installSkladMock(page, options = {}) {
       return respond({
         st: true,
         list: state.warehouseItems.filter(
-          (row) => !search || row.name.toLocaleLowerCase("ru").includes(search),
+          (row) =>
+            (!search || row.name.toLocaleLowerCase("ru").includes(search)) &&
+            (!data.category_key || data.category_key === `warehouse_item:${row.category_id}`),
         ),
       });
     }
@@ -609,12 +689,12 @@ async function installSkladMock(page, options = {}) {
       return respond({
         st: true,
         item,
-        categories: bootstrap(state.access).categories,
+        categories: options.catalogs?.categories || bootstrap(state.access).categories,
         units: state.units,
-        allergens: [],
-        storages: [],
-        apps: [],
-        accounting_systems: [],
+        allergens: options.catalogs?.allergens || [],
+        storages: options.catalogs?.storages || [],
+        apps: options.catalogs?.apps || [],
+        accounting_systems: options.catalogs?.accounting_systems || [],
         history: {
           rows: [],
           capabilities: {},
@@ -634,13 +714,13 @@ async function installSkladMock(page, options = {}) {
         delete_state: "allowed",
       };
       state.warehouseItems.push(created);
-      return respond({ st: true, text: "Успешно сохранено", id: created.id });
+      return respond({ st: true, text: "Успешно сохранено", item_id: created.id, history_id: 401 });
     }
 
     if (method === "items/save_edit") {
       const index = state.warehouseItems.findIndex((row) => Number(row.id) === Number(data.id));
       if (index >= 0) state.warehouseItems[index] = { ...state.warehouseItems[index], ...data };
-      return respond({ st: true, text: "Успешно сохранено", id: data.id });
+      return respond({ st: true, text: "Успешно сохранено", item_id: data.id, history_id: 402 });
     }
 
     if (method === "items/delete") {
@@ -658,7 +738,7 @@ async function installSkladMock(page, options = {}) {
         st: true,
         categories: [{ id: 30, name: "E2E_SKLAD_Салаты и закуски" }],
         legacy_categories: [{ id: 7, name: "E2E_SKLAD_Старая категория" }],
-        tags: bootstrap(state.access).tags,
+        tags: options.catalogs?.tags || bootstrap(state.access).tags,
         list: state.siteItems.filter(
           (row) =>
             !search ||
@@ -683,12 +763,13 @@ async function installSkladMock(page, options = {}) {
         },
         cat_list: [{ id: 30, name: "E2E_SKLAD_Салаты и закуски" }],
         cat_list_legacy: [{ id: 7, name: "E2E_SKLAD_Старая категория" }],
-        tags_all: bootstrap(state.access).tags,
+        tags_all: options.catalogs?.tags || bootstrap(state.access).tags,
       });
     }
 
     if (method === "site-items/get_one") {
-      const item = state.siteItems.find((row) => Number(row.id) === Number(data.id)) || {};
+      const item = { ...(state.siteItems.find((row) => Number(row.id) === Number(data.id)) || {}) };
+      for (const field of options.siteDetailOmissions || []) delete item[field];
       const warehouseOptions = [
         ...Array.from({ length: 120 }, (_, index) => ({
           id: 1000 + index,
@@ -853,7 +934,7 @@ async function installSkladMock(page, options = {}) {
       return respond({ st: true, revision_status: "cancelled" });
     }
 
-    return respond({ st: true, list: [] });
+    return respond({ st: false, text: `API mock не реализует ${method}` });
   });
 
   return state;

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
+import dynamic from "next/dynamic";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Box, Grid, Stack, Typography } from "@mui/material";
 
@@ -17,12 +19,23 @@ import {
 } from "@/design-system/shared/ui";
 
 import useSkladApi from "./useSkladApi";
-import SkladUnitsTab from "./units/SkladUnitsTab";
-import SkladProductionTab from "./production/SkladProductionTab";
-import SkladWarehouseItemsTab from "./warehouse-items/SkladWarehouseItemsTab";
-import SkladSiteItemsTab from "./site-items/SkladSiteItemsTab";
 import { getVisibleSkladTabs } from "./skladTabs";
 import { useSkladStore } from "./useSkladStore";
+
+const SkladUnitsTab = dynamic(() => import("./units/SkladUnitsTab"), { ssr: false });
+const SkladProductionTab = dynamic(() => import("./production/SkladProductionTab"), { ssr: false });
+const SkladWarehouseItemsTab = dynamic(() => import("./warehouse-items/SkladWarehouseItemsTab"), {
+  ssr: false,
+});
+const SkladSiteItemsTab = dynamic(() => import("./site-items/SkladSiteItemsTab"), { ssr: false });
+
+function sectionUrl(query, key) {
+  const { section, tab, ...otherQuery } = query;
+  return {
+    pathname: "/sklad_items/[[...section]]",
+    query: { ...otherQuery, section: [key] },
+  };
+}
 
 function normalizeBootstrap(response) {
   return {
@@ -40,6 +53,8 @@ function normalizeBootstrap(response) {
 }
 
 export default function SkladPage() {
+  const router = useRouter();
+  const [bootstrapReady, setBootstrapReady] = useState(false);
   const api = useSkladApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
@@ -47,12 +62,23 @@ export default function SkladPage() {
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
   const access = useSkladStore((state) => state.access);
-  const tab = useSkladStore((state) => state.tab);
   const setBootstrap = useSkladStore((state) => state.setBootstrap);
   const setState = useSkladStore((state) => state.setState);
   const requestRefresh = useSkladStore((state) => state.requestRefresh);
 
   const tabs = useMemo(() => getVisibleSkladTabs({ access }), [access]);
+  const section = router.query.section;
+  const requestedKey = Array.isArray(section)
+    ? section.length === 1
+      ? section[0]
+      : null
+    : section === undefined && typeof router.query.tab === "string"
+      ? router.query.tab
+      : null;
+  const tab = Math.max(
+    0,
+    tabs.findIndex((item) => item.key === requestedKey),
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -73,10 +99,8 @@ export default function SkladPage() {
 
         const nextState = normalizeBootstrap(response);
 
-        setBootstrap({
-          ...nextState,
-          tab: 0,
-        });
+        setBootstrap(nextState);
+        setBootstrapReady(true);
 
         document.title = nextState.moduleName || "Склад";
       } catch (error) {
@@ -98,14 +122,38 @@ export default function SkladPage() {
   }, [api, refreshToken, setBootstrap, setState]);
 
   useEffect(() => {
-    if (tabs.length === 0) {
+    if (!bootstrapReady || !router.isReady || tabs.length === 0) {
       return;
     }
 
-    if (tab > tabs.length - 1) {
-      setState({ tab: 0 });
+    const activeKey = tabs[tab].key;
+    if (
+      !Array.isArray(section) ||
+      section.length !== 1 ||
+      section[0] !== activeKey ||
+      router.query.tab !== undefined
+    ) {
+      router
+        .replace(sectionUrl(router.query, activeKey), undefined, { shallow: true, scroll: false })
+        .catch((error) => {
+          if (!error?.cancelled) showAlert("Не удалось открыть раздел", false);
+        });
     }
-  }, [tab, tabs, setState]);
+  }, [bootstrapReady, router, tab, tabs]);
+
+  const changeTab = async (_, value) => {
+    const nextTab = tabs[value];
+    if (!nextTab || nextTab.key === requestedKey) return;
+
+    try {
+      await router.push(sectionUrl(router.query, nextTab.key), undefined, {
+        shallow: true,
+        scroll: false,
+      });
+    } catch (error) {
+      if (!error?.cancelled) showAlert("Не удалось открыть раздел", false);
+    }
+  };
 
   const renderTabContent = (item) => {
     if (item.key === "units") {
@@ -149,7 +197,10 @@ export default function SkladPage() {
 
   return (
     <>
-      <JacoBackdropLoader open={isLoading} />
+      <JacoBackdropLoader
+        open={isLoading}
+        sx={{ "& .MuiCircularProgress-root": { color: "common.white" } }}
+      />
       <JacoAlert
         isOpen={isAlert}
         onClose={closeAlert}
@@ -205,7 +256,7 @@ export default function SkladPage() {
           >
             <JacoCompactTabs
               value={tabs.length ? tab : 0}
-              onChange={(_, value) => setState({ tab: value })}
+              onChange={changeTab}
               items={tabs.map((item, index) => ({
                 id: item.key,
                 value: index,
@@ -226,7 +277,7 @@ export default function SkladPage() {
             spacing={2}
           >
             <Grid size={12}>
-              {tabs.length ? (
+              {!bootstrapReady || !router.isReady ? null : tabs.length ? (
                 tabs.map((item, index) => (
                   <JacoTabPanel
                     key={item.key}

@@ -1220,14 +1220,15 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
       .then((loaded) => {
         if (active) {
           setSnapshots((current) => ({ ...current, ...Object.fromEntries(loaded) }));
+          setLoading(false);
         }
       })
       .catch((requestError) => {
         if (active) {
           setError(requestError?.message || "Не удалось загрузить выбранную версию.");
+          setLoading(false);
         }
-      })
-      .finally(() => active && setLoading(false));
+      });
 
     return () => {
       active = false;

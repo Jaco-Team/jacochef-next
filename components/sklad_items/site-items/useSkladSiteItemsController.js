@@ -154,6 +154,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
   const isEditable = canEditSiteItemForm || canManageSiteItems;
   const canCreate = canCreateSiteItem;
+  const canCreateCategory = canCreate && canEditAccess(access, "category_id", false);
   const syncSiteItemsVk = useCallback(async () => {
     setShellState({ isLoading: true });
 
@@ -243,10 +244,10 @@ export default function useSkladSiteItemsController({ showAlert }) {
   );
 
   const openCategoryDialog = useCallback(() => {
-    if (canCreate) {
+    if (canCreateCategory) {
       setCategoryDialog({ open: true, loading: false });
     }
-  }, [canCreate]);
+  }, [canCreateCategory]);
 
   const closeCategoryDialog = useCallback(() => {
     setCategoryDialog({ open: false, loading: false });
@@ -254,6 +255,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const createCategory = useCallback(
     async (payload) => {
+      if (!canCreateCategory) return;
       setCategoryDialog({ open: true, loading: true });
 
       try {
@@ -271,7 +273,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         showAlert(error?.message || "Ошибка создания категории", false);
       }
     },
-    [api, closeCategoryDialog, loadRows, showAlert],
+    [api, canCreateCategory, closeCategoryDialog, loadRows, showAlert],
   );
 
   const tagOptions = useMemo(
@@ -581,6 +583,67 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const persistSiteItem = useCallback(
     async (payload, pendingImageFile = null) => {
+      if (
+        modal.mode === "create" &&
+        (!canCreate ||
+          ["name", "date_start", "category_id"].some(
+            (field) => !canEditAccess(access, field, false),
+          ))
+      ) {
+        const text = "Для создания недостаточно прав на обязательные поля";
+        showAlert(text, false);
+        return { st: false, text };
+      }
+      const fieldPayloadKeys = {
+        name: ["name", "link", "img_app"],
+        short_name: ["short_name"],
+        art: ["art"],
+        marc: ["is_mark", "mark_code"],
+        date_start: ["date_start"],
+        date_end: ["date_end"],
+        category_id: ["category_id", "category_id2"],
+        stol: ["stol"],
+        count_part: ["count_part", "size_pizza"],
+        weight: ["weight"],
+        protein: ["protein"],
+        fat: ["fat"],
+        carbohydrates: ["carbohydrates"],
+        tmp_desc: ["tmp_desc"],
+        marc_desc_full: ["marc_desc_full"],
+        marc_desc: ["marc_desc"],
+        tags: ["tags"],
+        is_new: ["is_new"],
+        is_updated: ["is_updated"],
+        is_hit: ["is_hit"],
+        is_spicy: ["is_spicy"],
+        is_price: ["is_price"],
+        is_show: ["is_show"],
+        show_site: ["show_site"],
+        show_program: ["show_program"],
+        time_stage_1: ["time_stage_1"],
+        time_stage_2: ["time_stage_2"],
+        time_stage_3: ["time_stage_3"],
+        stage: [
+          "items_stage",
+          "pf_stage_1",
+          "pf_stage_2",
+          "pf_stage_3",
+          "rec_stage_1",
+          "rec_stage_2",
+          "rec_stage_3",
+          "item_stage_1",
+          "item_stage_2",
+          "item_stage_3",
+        ],
+        items: ["item_items"],
+      };
+      payload = { ...payload };
+      for (const [field, keys] of Object.entries(fieldPayloadKeys)) {
+        if (!canEditAccess(access, field, false)) keys.forEach((key) => delete payload[key]);
+      }
+      if (!canEditAccess(access, "stage", false) && !canEditAccess(access, "items", false)) {
+        ["all_w", "all_w_brutto", "all_w_netto"].forEach((key) => delete payload[key]);
+      }
       const saveItem = modal.mode === "create" ? api.createSiteItem : api.updateSiteItem;
 
       setState({
@@ -643,7 +706,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, closeModal, loadRows, modal, setShellState, setState, showAlert],
+    [access, api, canCreate, closeModal, loadRows, modal, setShellState, setState, showAlert],
   );
 
   const submitDraft = useCallback(
@@ -949,7 +1012,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           canEditCash={canEditCash}
           canEditSort={canEditSort}
           canViewHistory={canViewSiteItemsHistory}
-          canCreateCategory={canCreate}
+          canCreateCategory={canCreateCategory}
           allowPastDate={canUseSiteItemPastDate}
           showAlert={showAlert}
           setState={setState}

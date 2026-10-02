@@ -1,25 +1,21 @@
 "use client";
 
-import CloseIcon from "@mui/icons-material/Close";
+import SkladAutocomplete from "../ui/SkladAutocomplete";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Button,
+  Box,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 
-import useFullScreen from "@/src/hooks/useFullScreen";
-import { JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
+import { JacoButton, JacoResponsiveModalShell, JacoTextInput } from "@/design-system/shared/ui";
+import { uiRadii } from "@/design-system/shared/tokens";
+import SkladUnitHistory from "./SkladUnitHistory";
 
 function toNumericString(value) {
   if (value === null || value === undefined || value === "") {
@@ -39,8 +35,16 @@ export default function SkladUnitDialog({
   onSave,
   isSaveDisabled,
   showUsage = false,
+  history = [],
+  historyLoading = false,
+  historyError = "",
+  onRetryHistory,
+  readOnly = false,
 }) {
-  const fullScreen = useFullScreen();
+  const fieldsDisabled = readOnly || historyLoading || Boolean(historyError);
+  const options = Array.isArray(unitOptions) ? unitOptions : [];
+  const selectedUnit =
+    options.find((option) => String(option.id) === String(draft?.con_id ?? 0)) || null;
   const activeRelations = Array.isArray(draft?.delete_usage?.active_relations)
     ? draft.delete_usage.active_relations
     : [];
@@ -50,68 +54,113 @@ export default function SkladUnitDialog({
   );
 
   return (
-    <Dialog
+    <JacoResponsiveModalShell
       open={open}
       onClose={onClose}
-      fullScreen={fullScreen}
-      fullWidth
+      title={
+        readOnly ? "История единицы" : mode === "edit" ? "Редактирование единицы" : "Новая единица"
+      }
       maxWidth="sm"
-    >
-      <DialogTitle sx={{ fontWeight: 700, pr: 7 }}>
-        {mode === "edit" ? "Редактирование единицы" : "Новая единица"}
-      </DialogTitle>
-      <IconButton
-        onClick={onClose}
-        sx={{ position: "absolute", top: 12, right: 12 }}
-      >
-        <CloseIcon />
-      </IconButton>
-      <DialogContent sx={{ pt: 1 }}>
-        <Grid
-          container
-          spacing={2}
+      actions={
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ width: "100%", justifyContent: "space-between" }}
         >
-          <Grid size={12}>
-            <JacoTextInput
-              label="Название"
-              value={draft?.name || ""}
-              func={(event) => onFieldChange("name", event.target.value)}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <JacoTextInput
-              label="Базовое количество"
-              type="number"
-              value={toNumericString(draft?.main_count)}
-              func={(event) => onFieldChange("main_count", event.target.value)}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <JacoTextInput
-              label="Количество в связке"
-              type="number"
-              value={toNumericString(draft?.con_count)}
-              func={(event) => onFieldChange("con_count", event.target.value)}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <JacoSelect
-              label="Базовая единица"
-              data={unitOptions}
-              is_none={false}
-              value={draft?.con_id ?? 0}
-              func={(event) => onFieldChange("con_id", event.target.value)}
-            />
-          </Grid>
+          <JacoButton
+            tone="danger"
+            onClick={onClose}
+          >
+            {readOnly ? "Закрыть" : "Отмена"}
+          </JacoButton>
+          {!readOnly ? (
+            <JacoButton
+              tone="success"
+              onClick={onSave}
+              disabled={isSaveDisabled}
+            >
+              Сохранить
+            </JacoButton>
+          ) : null}
+        </Stack>
+      }
+    >
+      <Grid
+        container
+        spacing={2}
+      >
+        <Grid size={12}>
+          <JacoTextInput
+            label="Название"
+            disabled={fieldsDisabled}
+            value={draft?.name || ""}
+            func={(event) => onFieldChange("name", event.target.value)}
+          />
         </Grid>
 
-        {showUsage && mode === "edit" && draft?.delete_usage ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <JacoTextInput
+            label="Базовое количество"
+            disabled={fieldsDisabled}
+            type="number"
+            value={toNumericString(draft?.main_count)}
+            func={(event) => onFieldChange("main_count", event.target.value)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <JacoTextInput
+            label="Количество в связке"
+            disabled={fieldsDisabled}
+            type="number"
+            value={toNumericString(draft?.con_count)}
+            func={(event) => onFieldChange("con_count", event.target.value)}
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <SkladAutocomplete
+            label="Базовая единица"
+            disabled={fieldsDisabled}
+            placeholder="Введите название единицы"
+            options={options}
+            value={selectedUnit}
+            disableClearable
+            selectAppearance
+            freeSolo={false}
+            multiple={false}
+            isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+            getOptionKey={(option) => String(option.id)}
+            onChange={(_event, option) => {
+              if (option) onFieldChange("con_id", option.id);
+            }}
+            autocompleteSx={{ width: "100%", minWidth: 0 }}
+            slotProps={{
+              popper: { allowAdaptivePlacement: true },
+              listbox: {
+                sx: {
+                  maxHeight: "min(280px, calc(100dvh - 160px))",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                },
+              },
+            }}
+          />
+        </Grid>
+      </Grid>
+
+      {showUsage && mode !== "create" && draft?.delete_usage ? (
+        <Box sx={{ mt: 2 }}>
           <Accordion
             disableGutters
-            sx={{ mt: 2, border: 1, borderColor: "divider", borderRadius: 1 }}
+            elevation={0}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: uiRadii.md,
+              "&:first-of-type, &:last-of-type": { borderRadius: uiRadii.md },
+              "&::before": { display: "none" },
+            }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Stack
@@ -168,27 +217,16 @@ export default function SkladUnitDialog({
               </Stack>
             </AccordionDetails>
           </Accordion>
-        ) : null}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            justifyContent: "flex-end",
-            width: "100%",
-          }}
-        >
-          <Button onClick={onClose}>Отмена</Button>
-          <Button
-            variant="contained"
-            onClick={onSave}
-            disabled={isSaveDisabled}
-          >
-            Сохранить
-          </Button>
-        </Stack>
-      </DialogActions>
-    </Dialog>
+        </Box>
+      ) : null}
+      {mode !== "create" ? (
+        <SkladUnitHistory
+          history={history}
+          loading={historyLoading}
+          error={historyError}
+          onRetry={onRetryHistory}
+        />
+      ) : null}
+    </JacoResponsiveModalShell>
   );
 }

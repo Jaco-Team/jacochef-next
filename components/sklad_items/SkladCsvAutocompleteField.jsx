@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AddCircleRoundedIcon from "@mui/icons-material/AddCircleRounded";
 import RemoveCircleRoundedIcon from "@mui/icons-material/RemoveCircleRounded";
 import {
-  Autocomplete,
   Box,
   ClickAwayListener,
   IconButton,
@@ -13,6 +12,8 @@ import {
   TextField,
   createFilterOptions,
 } from "@mui/material";
+import { JacoTextInput } from "@/design-system/shared/ui";
+import SkladAutocomplete, { skladAutocompleteInputSx } from "./ui/SkladAutocomplete";
 
 function splitCsvLikeValue(value) {
   if (!value) {
@@ -262,7 +263,7 @@ export default function SkladCsvAutocompleteField({
 
   if (!isEditing) {
     return (
-      <TextField
+      <JacoTextInput
         fullWidth
         size="small"
         label={label}
@@ -302,12 +303,14 @@ export default function SkladCsvAutocompleteField({
         ref={rootRef}
         onBlur={handleContainerBlur}
       >
-        <Autocomplete
+        <SkladAutocomplete
           multiple
           freeSolo
           disableCloseOnSelect
           filterSelectedOptions={false}
           options={filteredOptions}
+          filterOptions={(options) => options}
+          slotProps={{ popper: { allowAdaptivePlacement: true } }}
           value={selectedValues}
           inputValue={inputValue}
           noOptionsText={noOptionsText}
@@ -379,6 +382,7 @@ export default function SkladCsvAutocompleteField({
               label={label}
               placeholder={selectedValues.length ? "Фильтр или новое значение" : placeholder}
               inputRef={inputRef}
+              sx={skladAutocompleteInputSx}
               slotProps={{
                 ...params.slotProps,
 

@@ -12,17 +12,16 @@ import {
   DialogActions,
   DialogContent,
   IconButton,
-  MenuItem,
   Paper,
   Stack,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 
-import { JacoModal, JacoTextInput } from "@/design-system/shared/ui";
+import { JacoModal, JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
+import { uiRadii } from "@/design-system/shared/tokens";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 
 function categoryUsageLabel(category) {
@@ -183,23 +182,14 @@ export default function SkladProductionCategoryManagerDialog({
                     }}
                   />
                   {sourceType === "warehouse_item" ? (
-                    <TextField
-                      select
-                      size="small"
+                    <JacoSelect
                       label="Группа"
                       value={parentId}
                       onChange={(event) => setParentId(event.target.value)}
                       sx={{ minWidth: 220 }}
-                    >
-                      {warehouseParents.map(([id, label]) => (
-                        <MenuItem
-                          key={id}
-                          value={id}
-                        >
-                          {label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      allowNone={false}
+                      options={warehouseParents.map(([id, name]) => ({ id, name }))}
+                    />
                   ) : null}
                   <Button
                     size="small"
@@ -211,7 +201,7 @@ export default function SkladProductionCategoryManagerDialog({
                       !newCategoryName.trim() ||
                       (sourceType === "warehouse_item" && !parentId)
                     }
-                    sx={{ flexShrink: 0 }}
+                    sx={{ flexShrink: 0, borderRadius: uiRadii.md }}
                   >
                     Добавить
                   </Button>

@@ -135,7 +135,7 @@ export function createEmptyProductionDraft() {
     structure: "",
     show_in_rev: 0,
     two_user: 0,
-    is_show: 1,
+    is_show: 0,
     is_archived: 0,
     categories: [],
     items: [],
@@ -307,16 +307,25 @@ export function normalizeProductionSavePayload(draft) {
   return payload;
 }
 
-export function validateProductionDraft(draft) {
-  if (!String(draft?.name || "").trim()) {
+export function validateProductionDraft(draft, canEditField = () => true) {
+  if (canEditField("name") && !String(draft?.name || "").trim()) {
     return "Название обязательно";
   }
 
-  if (!String(draft?.date_start || "").trim()) {
+  if (canEditField("shelf_life") && !String(draft?.shelf_life || "").trim()) {
+    return "Срок годности обязателен";
+  }
+
+  if (canEditField("date_start") && !String(draft?.date_start || "").trim()) {
     return "Дата начала обязательна";
   }
 
-  if (draft?.date_end && draft?.date_start && String(draft.date_end) < String(draft.date_start)) {
+  if (
+    (canEditField("date_start") || canEditField("date_end")) &&
+    draft?.date_end &&
+    draft?.date_start &&
+    String(draft.date_end) < String(draft.date_start)
+  ) {
     return "Дата окончания не может быть раньше даты начала";
   }
 

@@ -1,14 +1,23 @@
+import SkladAutocomplete from "../ui/SkladAutocomplete";
+import {
+  getSiteItemImageFileError,
+  SITE_ITEM_IMAGE_ACCEPT,
+  SITE_ITEM_IMAGE_FORMATS,
+  SITE_ITEM_IMAGE_HELP,
+  SITE_ITEM_IMAGE_MAX_MB,
+} from "./siteItemImageUpload";
 import React from "react";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import dayjs from "dayjs";
 import {
   JacoAlert,
-  JacoAutocomplete,
+  JacoButton,
   JacoDatePicker,
   JacoSelect,
   JacoTextInput,
 } from "@/design-system/shared/ui";
 import Dialog from "@mui/material/Dialog";
+import Alert from "@mui/material/Alert";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -37,7 +46,6 @@ import {
   SITE_ITEMS_MODAL_FIELD_KEYS,
   SITE_ITEMS_MODAL_SECTIONS,
   canEditAccess,
-  canEditSection,
   canViewAccess,
   canViewSection,
   hasAccessValue,
@@ -53,6 +61,12 @@ const blockBackground = "#F3F3F3";
 const blockBorder = "#E5E5E5";
 const textPrimary = "#3C3B3B";
 const textSecondary = "#5E5E5E";
+const dateRangeFieldSx = {
+  "& .MuiInputLabel-root:not(.MuiInputLabel-shrink)": {
+    top: "50%",
+    transform: "translate(14px, -50%)",
+  },
+};
 const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
   /\/+$/,
   "",
@@ -110,7 +124,11 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
     maxFiles: 1,
     timeout: 0,
     parallelUploads: 10,
-    acceptedFiles: "image/jpeg,image/png",
+    acceptedFiles: SITE_ITEM_IMAGE_ACCEPT,
+    maxFilesize: SITE_ITEM_IMAGE_MAX_MB,
+    accept: (file, done) => done(getSiteItemImageFileError(file) || undefined),
+    dictInvalidFileType: `Допустимы только ${SITE_ITEM_IMAGE_FORMATS}`,
+    dictFileTooBig: `Размер изображения не должен превышать ${SITE_ITEM_IMAGE_MAX_MB} МБ`,
     addRemoveLinks: true,
     url: `${apiBaseUrl}/sklad_items/site-items/upload_image`,
   };
@@ -280,13 +298,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
   }
 
   getFieldAccessOrDefault(field, type = "edit", fallback = false) {
-    if (
-      this.props.mode === "create" &&
-      ["name", "date_start", "date_end", "category_id"].includes(field)
-    ) {
-      return true;
-    }
-
     if (type === "view") {
       return canViewAccess(this.props.acces, field, fallback);
     }
@@ -311,14 +322,19 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
       acc[`${field}_edit`] = canEditAccess(rawAccess, field, false);
     });
 
-    if (this.props.mode === "create") {
-      ["name", "date_start", "date_end", "category_id"].forEach((field) => {
-        acc[`${field}_view`] = true;
-        acc[`${field}_edit`] = true;
-      });
-    }
-
     return acc;
+  }
+
+  getMissingCreateFields() {
+    return this.props.mode === "create"
+      ? [
+          ["name", "Наименование"],
+          ["date_start", "Действует С"],
+          ["category_id", "Категория"],
+        ]
+          .filter(([field]) => !this.getFieldAccess(field))
+          .map(([, label]) => label)
+      : [];
   }
 
   getVisibleSections() {
@@ -864,6 +880,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
     });
 
     this.myDropzone.on("queuecomplete", (data) => {
+      if (!this.state.isSaving) return;
       var check_img = false;
 
       this.myDropzone["files"].map((item, key) => {
@@ -1448,12 +1465,25 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
   }
 
   async save() {
-    if (this.state.isSaving) {
+    if (this.state.isSaving || !this.hasAnyEditableField()) {
+      return;
+    }
+
+    const missingCreateFields = this.getMissingCreateFields();
+    if (
+      this.props.mode === "create" &&
+      (!this.hasAccessFlag(this.props.acces?.site_items_create) || missingCreateFields.length)
+    ) {
+      this.setState({
+        openAlert: true,
+        err_status: false,
+        err_text: `Для создания недостаточно прав на обязательные поля: ${missingCreateFields.join(", ")}`,
+      });
       return;
     }
 
     const items_stage = this.state.items_stage;
-    if (items_stage?.not_stage?.length) {
+    if (this.getFieldAccess("stage") && items_stage?.not_stage?.length) {
       this.setState({
         activeTab: "5",
         openAlert: true,
@@ -1610,31 +1640,28 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
       visibleSections.find((section) => section.value === this.state.activeTab) ||
       visibleSections[0] ||
       modalSections[0];
-    const canSave = this.hasAnyEditableField();
-    const canViewTags = canViewSection(this.props.acces, "tags", false);
-    const canEditTags = canEditSection(this.props.acces, "tags", false);
+    const missingCreateFields = this.getMissingCreateFields();
+    const canSave =
+      this.hasAnyEditableField() &&
+      !missingCreateFields.length &&
+      (this.props.mode !== "create" || this.hasAccessFlag(this.props.acces?.site_items_create));
+    const canViewTags = this.getFieldVisibilityOrDefault("tags");
     const canViewDropzone = this.getFieldVisibilityOrDefault("dropzone", false);
-    const canViewPromoMarkers = canViewTags;
+    const canViewPromoMarkers = ["is_new", "is_updated", "is_hit", "is_spicy"].some((field) =>
+      this.getFieldVisibilityOrDefault(field),
+    );
     const canViewDescription = canViewSection(this.props.acces, "description", false);
-    const canEditDescription = canEditSection(this.props.acces, "description", false);
     const canViewActivity = canViewSection(this.props.acces, "activity", false);
-    const canEditActivity = canEditSection(this.props.acces, "activity", false);
-    const canViewComposition = canViewSection(this.props.acces, "composition", false);
-    const canEditComposition = canEditSection(this.props.acces, "composition", false);
+    const canViewComposition = ["time_stage_1", "time_stage_2", "time_stage_3"].some((field) =>
+      this.getFieldVisibilityOrDefault(field),
+    );
     const canViewPortion =
       this.getFieldVisibilityOrDefault("count_part", false) ||
       this.getFieldVisibilityOrDefault("weight", false);
-    const canEditPortion =
-      this.getFieldAccessOrDefault("count_part", "edit", false) ||
-      this.getFieldAccessOrDefault("weight", "edit", false);
     const canViewBju =
       this.getFieldVisibilityOrDefault("protein", false) ||
       this.getFieldVisibilityOrDefault("fat", false) ||
       this.getFieldVisibilityOrDefault("carbohydrates", false);
-    const canEditBju =
-      this.getFieldAccessOrDefault("protein", "edit", false) ||
-      this.getFieldAccessOrDefault("fat", "edit", false) ||
-      this.getFieldAccessOrDefault("carbohydrates", "edit", false);
     const hiddenIf = (condition) => (condition ? { display: "none" } : {});
     const isChecked = (value) => parseInt(value) === 1;
     const canViewMarkingType = this.getFieldVisibilityOrDefault("marc");
@@ -1686,24 +1713,25 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
         md: 2.5,
       },
       bgcolor: "#FAFAFA",
-      "& .MuiOutlinedInput-root, & .MuiPickersOutlinedInput-root": {
-        borderRadius: "14px",
-        color: textPrimary,
-        backgroundColor: "#FFFFFF",
-        "& fieldset": {
-          borderColor: blockBorder,
+      "& .MuiOutlinedInput-root:not(.MuiAutocomplete-inputRoot):not(.MuiSelect-root), & .MuiPickersOutlinedInput-root":
+        {
+          borderRadius: "14px",
+          color: textPrimary,
+          backgroundColor: "#FFFFFF",
+          "& fieldset": {
+            borderColor: blockBorder,
+          },
+          "&:hover fieldset": {
+            borderColor: blockBorder,
+          },
+          "&.Mui-focused fieldset": {
+            borderColor: blockBorder,
+            borderWidth: "2px",
+          },
+          "&.Mui-disabled": {
+            backgroundColor: "#F7F7F7",
+          },
         },
-        "&:hover fieldset": {
-          borderColor: blockBorder,
-        },
-        "&.Mui-focused fieldset": {
-          borderColor: blockBorder,
-          borderWidth: "2px",
-        },
-        "&.Mui-disabled": {
-          backgroundColor: "#F7F7F7",
-        },
-      },
       "& .MuiOutlinedInput-input, & .MuiInputBase-input": {
         color: textPrimary,
         WebkitTextFillColor: textPrimary,
@@ -1718,6 +1746,15 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
           color: textSecondary,
         },
       },
+      "& [data-sklad-description-field] .MuiOutlinedInput-root.Mui-focused:not(.Mui-disabled):not(.Mui-error) fieldset":
+        {
+          borderColor: brandRed,
+          borderWidth: "1px",
+        },
+      "& [data-sklad-description-field] .MuiInputLabel-root.Mui-focused:not(.Mui-disabled):not(.Mui-error)":
+        {
+          color: brandRed,
+        },
       "& .MuiAutocomplete-tag": {
         backgroundColor: blockBackground,
         color: textPrimary,
@@ -2090,7 +2127,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             return (
               <TableRow key={`${stageKey}-${key}`}>
                 <TableCell sx={{ width: "28%" }}>
-                  <JacoAutocomplete
+                  <SkladAutocomplete
+                    disabled={!this.getFieldAccess("stage")}
                     multiple={false}
                     unifiedPopup
                     optionKey="un_id"
@@ -2120,6 +2158,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 </TableCell>
                 <TableCell sx={{ width: "9%" }}>
                   <JacoTextInput
+                    disabled={!this.getFieldAccess("stage")}
                     value={item.brutto}
                     isDecimalMask
                     func={this.changeItemList.bind(this, "brutto", key, stageKey)}
@@ -2128,6 +2167,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 </TableCell>
                 <TableCell sx={{ width: "9%" }}>
                   <JacoTextInput
+                    disabled={!this.getFieldAccess("stage")}
                     value={item.pr_1}
                     type={"number"}
                     onWheel={(e) => e.target.blur()}
@@ -2144,6 +2184,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 </TableCell>
                 <TableCell sx={{ width: "11%" }}>
                   <JacoTextInput
+                    disabled={!this.getFieldAccess("stage")}
                     value={item.pr_2}
                     type={"number"}
                     onWheel={(e) => e.target.blur()}
@@ -2160,6 +2201,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 </TableCell>
                 <TableCell sx={{ width: "11%" }}>
                   <JacoSelect
+                    disabled={!this.getFieldAccess("stage")}
                     is_none={false}
                     data={stages}
                     value={item.stage}
@@ -2171,6 +2213,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   sx={{ width: "3%" }}
                 >
                   <IconButton
+                    disabled={!this.getFieldAccess("stage")}
                     onClick={this.deleteItemData.bind(this, key, stageKey)}
                     sx={actionIconButtonSx}
                   >
@@ -2191,7 +2234,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
         return (
           <TableRow key={`item-row-${key}`}>
             <TableCell sx={{ width: "38%" }}>
-              <JacoAutocomplete
+              <SkladAutocomplete
+                disabled={!this.getFieldAccess("items")}
                 multiple={false}
                 unifiedPopup
                 data={this.getCompositionAutocompleteOptions(
@@ -2212,6 +2256,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             </TableCell>
             <TableCell sx={{ width: "13%" }}>
               <JacoTextInput
+                disabled={!this.getFieldAccess("items")}
                 value={item.brutto}
                 isDecimalMask
                 func={this.changeItemList.bind(this, "brutto", key, "this_items")}
@@ -2220,6 +2265,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             </TableCell>
             <TableCell sx={{ width: "10%" }}>
               <JacoTextInput
+                disabled={!this.getFieldAccess("items")}
                 value={item.pr_1}
                 type={"number"}
                 onWheel={(e) => e.target.blur()}
@@ -2236,6 +2282,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             </TableCell>
             <TableCell sx={{ width: "10%" }}>
               <JacoTextInput
+                disabled={!this.getFieldAccess("items")}
                 value={item.pr_2}
                 type={"number"}
                 onWheel={(e) => e.target.blur()}
@@ -2255,6 +2302,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               sx={{ width: "3%" }}
             >
               <IconButton
+                disabled={!this.getFieldAccess("items")}
                 onClick={this.deleteItemData.bind(this, key, "this_items")}
                 sx={actionIconButtonSx}
               >
@@ -2531,11 +2579,11 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   display: "flex",
                   flexDirection: {
                     xs: "column",
-                    sm: "row",
+                    md: "row",
                   },
                   alignItems: {
                     xs: "stretch",
-                    sm: "center",
+                    md: "center",
                   },
                   justifyContent: "space-between",
                   gap: 1.25,
@@ -2567,32 +2615,34 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   </Typography>
                 </Box>
                 <Stack
-                  direction="row"
+                  direction={{ xs: "column", sm: "row" }}
                   spacing={1}
                   sx={{
                     width: {
                       xs: "100%",
                       sm: "auto",
                     },
+                    minWidth: 0,
                   }}
                 >
                   {(access?.date_start_edit || access?.date_start_view) && (
-                    <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
+                    <Box sx={{ flex: "1 1 0", minWidth: 0, width: { xs: "100%", sm: 200 } }}>
                       <JacoDatePicker
-                        label="С"
+                        label="Действует С"
                         value={this.state.date_start}
                         disabled={!access?.date_start_edit}
-                        sx={this.getErrorFieldSx("date_start")}
+                        sx={{ ...dateRangeFieldSx, ...this.getErrorFieldSx("date_start") }}
                         func={this.changeDateRange.bind(this, "date_start")}
                         minDate={this.props.allowPastDate ? undefined : dayjs(new Date())}
                       />
                     </Box>
                   )}
                   {(access?.date_end_edit || access?.date_end_view) && (
-                    <Box sx={{ flex: "1 1 0", width: { sm: 168 } }}>
+                    <Box sx={{ flex: "1 1 0", minWidth: 0, width: { xs: "100%", sm: 200 } }}>
                       <JacoDatePicker
-                        label="По"
+                        label="Действует по"
                         value={this.state.date_end}
+                        sx={dateRangeFieldSx}
                         disabled={!access?.date_end_edit}
                         func={this.changeDateRange.bind(this, "date_end")}
                         minDate={
@@ -2611,6 +2661,15 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             )}
           </DialogTitle>
           <DialogContent sx={dialogContentSx}>
+            {missingCreateFields.length ? (
+              <Alert
+                severity="warning"
+                sx={{ mb: 2 }}
+              >
+                Для создания недостаточно прав на обязательные поля:{" "}
+                {missingCreateFields.join(", ")}.
+              </Alert>
+            ) : null}
             <TabContext value={this.state.activeTab}>
               <Box
                 sx={{
@@ -2783,7 +2842,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
-                            <JacoAutocomplete
+                            <SkladAutocomplete
                               label="Старая категория"
                               multiple={false}
                               unifiedPopup
@@ -2802,7 +2861,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
-                            <JacoAutocomplete
+                            <SkladAutocomplete
                               label="Новая категория"
                               multiple={false}
                               unifiedPopup
@@ -2839,7 +2898,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             }}
                             style={hiddenIf(!canViewMarkingType)}
                           >
-                            <JacoAutocomplete
+                            <SkladAutocomplete
                               label="Маркировка"
                               data={markingOptions}
                               multiple={false}
@@ -2899,40 +2958,44 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               container
                               spacing={2.5}
                             >
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Кусочков или размер"
-                                  type="number"
-                                  onWheel={(e) => e.target.blur()}
-                                  disabled={!canEditPortion}
-                                  value={this.state.count_part}
-                                  onFocus={() => this.clearFieldError("count_part")}
-                                  sx={this.getErrorFieldSx("count_part")}
-                                  func={this.changeItem.bind(this, "count_part")}
-                                />
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Вес"
-                                  type="number"
-                                  onWheel={(e) => e.target.blur()}
-                                  value={this.state.weight}
-                                  disabled={!canEditPortion}
-                                  onFocus={() => this.clearFieldError("weight")}
-                                  sx={this.getErrorFieldSx("weight")}
-                                  func={this.changeItem.bind(this, "weight")}
-                                />
-                              </Grid>
+                              {this.getFieldVisibilityOrDefault("count_part") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Кусочков или размер"
+                                    type="number"
+                                    onWheel={(e) => e.target.blur()}
+                                    disabled={!this.getFieldAccess("count_part")}
+                                    value={this.state.count_part}
+                                    onFocus={() => this.clearFieldError("count_part")}
+                                    sx={this.getErrorFieldSx("count_part")}
+                                    func={this.changeItem.bind(this, "count_part")}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("weight") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Вес"
+                                    type="number"
+                                    onWheel={(e) => e.target.blur()}
+                                    value={this.state.weight}
+                                    disabled={!this.getFieldAccess("weight")}
+                                    onFocus={() => this.clearFieldError("weight")}
+                                    sx={this.getErrorFieldSx("weight")}
+                                    func={this.changeItem.bind(this, "weight")}
+                                  />
+                                </Grid>
+                              ) : null}
                             </Grid>,
                           )
                         : null}
@@ -2945,81 +3008,95 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               container
                               spacing={2.5}
                             >
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 4,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Белки"
-                                  type="number"
-                                  onWheel={(e) => e.target.blur()}
-                                  value={this.state.protein}
-                                  disabled={!canEditBju}
-                                  onFocus={() => this.clearFieldError("protein")}
-                                  sx={this.getErrorFieldSx("protein")}
-                                  func={this.changeItem.bind(this, "protein")}
-                                />
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 4,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Жиры"
-                                  type="number"
-                                  onWheel={(e) => e.target.blur()}
-                                  value={this.state.fat}
-                                  disabled={!canEditBju}
-                                  onFocus={() => this.clearFieldError("fat")}
-                                  sx={this.getErrorFieldSx("fat")}
-                                  func={this.changeItem.bind(this, "fat")}
-                                />
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 4,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Углеводы"
-                                  type="number"
-                                  onWheel={(e) => e.target.blur()}
-                                  value={this.state.carbohydrates}
-                                  disabled={!canEditBju}
-                                  onFocus={() => this.clearFieldError("carbohydrates")}
-                                  sx={this.getErrorFieldSx("carbohydrates")}
-                                  func={this.changeItem.bind(this, "carbohydrates")}
-                                />
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Калорийность на 100 г, ккал"
-                                  value={this.getCaloriesPer100g()}
-                                  disabled={true}
-                                />
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                <JacoTextInput
-                                  label="Калорийность всего блюда, ккал"
-                                  value={this.getCaloriesForDish()}
-                                  disabled={true}
-                                />
-                              </Grid>
+                              {this.getFieldVisibilityOrDefault("protein") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Белки"
+                                    type="number"
+                                    onWheel={(e) => e.target.blur()}
+                                    value={this.state.protein}
+                                    disabled={!this.getFieldAccess("protein")}
+                                    onFocus={() => this.clearFieldError("protein")}
+                                    sx={this.getErrorFieldSx("protein")}
+                                    func={this.changeItem.bind(this, "protein")}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("fat") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Жиры"
+                                    type="number"
+                                    onWheel={(e) => e.target.blur()}
+                                    value={this.state.fat}
+                                    disabled={!this.getFieldAccess("fat")}
+                                    onFocus={() => this.clearFieldError("fat")}
+                                    sx={this.getErrorFieldSx("fat")}
+                                    func={this.changeItem.bind(this, "fat")}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("carbohydrates") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 4,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Углеводы"
+                                    type="number"
+                                    onWheel={(e) => e.target.blur()}
+                                    value={this.state.carbohydrates}
+                                    disabled={!this.getFieldAccess("carbohydrates")}
+                                    onFocus={() => this.clearFieldError("carbohydrates")}
+                                    sx={this.getErrorFieldSx("carbohydrates")}
+                                    func={this.changeItem.bind(this, "carbohydrates")}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {["protein", "fat", "carbohydrates"].every((field) =>
+                                this.getFieldVisibilityOrDefault(field),
+                              ) ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Калорийность на 100 г, ккал"
+                                    value={this.getCaloriesPer100g()}
+                                    disabled={true}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {["protein", "fat", "carbohydrates"].every((field) =>
+                                this.getFieldVisibilityOrDefault(field),
+                              ) && this.getFieldVisibilityOrDefault("weight") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  <JacoTextInput
+                                    label="Калорийность всего блюда, ккал"
+                                    value={this.getCaloriesForDish()}
+                                    disabled={true}
+                                  />
+                                </Grid>
+                              ) : null}
                             </Grid>,
                           )
                         : null}
@@ -3040,43 +3117,52 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               container
                               spacing={2.5}
                             >
-                              <Grid size={{ xs: 12 }}>
-                                <JacoTextInput
-                                  label="Состав"
-                                  value={this.state.tmp_desc}
-                                  disabled={!canEditDescription}
-                                  onFocus={() => this.clearFieldError("tmp_desc")}
-                                  sx={this.getErrorFieldSx("tmp_desc")}
-                                  func={this.changeItem.bind(this, "tmp_desc")}
-                                  multiline={true}
-                                  minRows={4}
-                                />
-                              </Grid>
-                              <Grid size={{ xs: 12 }}>
-                                <JacoTextInput
-                                  label="Полное описание (в карточке)"
-                                  value={this.state.marc_desc_full}
-                                  disabled={!canEditDescription}
-                                  onFocus={() => this.clearFieldError("marc_desc_full")}
-                                  sx={this.getErrorFieldSx("marc_desc_full")}
-                                  func={this.changeItem.bind(this, "marc_desc_full")}
-                                  multiline={true}
-                                  minRows={4}
-                                />
-                              </Grid>
-                              <Grid size={{ xs: 12 }}>
-                                <JacoTextInput
-                                  label="Короткое описание (в списке)"
-                                  value={this.state.marc_desc}
-                                  maxLength={20}
-                                  disabled={!canEditDescription}
-                                  onFocus={() => this.clearFieldError("marc_desc")}
-                                  sx={this.getErrorFieldSx("marc_desc")}
-                                  func={this.changeItem.bind(this, "marc_desc")}
-                                  multiline={true}
-                                  minRows={3}
-                                />
-                              </Grid>
+                              {this.getFieldVisibilityOrDefault("tmp_desc") ? (
+                                <Grid size={{ xs: 12 }}>
+                                  <JacoTextInput
+                                    label="Состав"
+                                    data-sklad-description-field="tmp_desc"
+                                    value={this.state.tmp_desc}
+                                    disabled={!this.getFieldAccess("tmp_desc")}
+                                    onFocus={() => this.clearFieldError("tmp_desc")}
+                                    sx={this.getErrorFieldSx("tmp_desc")}
+                                    func={this.changeItem.bind(this, "tmp_desc")}
+                                    multiline={true}
+                                    minRows={4}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("marc_desc_full") ? (
+                                <Grid size={{ xs: 12 }}>
+                                  <JacoTextInput
+                                    label="Полное описание (в карточке)"
+                                    data-sklad-description-field="marc_desc_full"
+                                    value={this.state.marc_desc_full}
+                                    disabled={!this.getFieldAccess("marc_desc_full")}
+                                    onFocus={() => this.clearFieldError("marc_desc_full")}
+                                    sx={this.getErrorFieldSx("marc_desc_full")}
+                                    func={this.changeItem.bind(this, "marc_desc_full")}
+                                    multiline={true}
+                                    minRows={4}
+                                  />
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("marc_desc") ? (
+                                <Grid size={{ xs: 12 }}>
+                                  <JacoTextInput
+                                    label="Короткое описание (в списке)"
+                                    data-sklad-description-field="marc_desc"
+                                    value={this.state.marc_desc}
+                                    maxLength={20}
+                                    disabled={!this.getFieldAccess("marc_desc")}
+                                    onFocus={() => this.clearFieldError("marc_desc")}
+                                    sx={this.getErrorFieldSx("marc_desc")}
+                                    func={this.changeItem.bind(this, "marc_desc")}
+                                    multiline={true}
+                                    minRows={3}
+                                  />
+                                </Grid>
+                              ) : null}
                             </Grid>,
                           )
                         : null}
@@ -3097,21 +3183,23 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               container
                               spacing={2.5}
                             >
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                }}
-                              >
-                                <JacoAutocomplete
-                                  label="Теги"
-                                  multiple={true}
-                                  unifiedPopup
-                                  data={this.state.tags_all}
-                                  value={this.state.tags_my}
-                                  disabled={!canEditTags}
-                                  func={this.changeAutocomplite.bind(this, "tags_my")}
-                                />
-                              </Grid>
+                              {this.getFieldVisibilityOrDefault("tags") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                  }}
+                                >
+                                  <SkladAutocomplete
+                                    label="Теги"
+                                    multiple={true}
+                                    unifiedPopup
+                                    data={this.state.tags_all}
+                                    value={this.state.tags_my}
+                                    disabled={!this.getFieldAccess("tags")}
+                                    func={this.changeAutocomplite.bind(this, "tags_my")}
+                                  />
+                                </Grid>
+                              ) : null}
                             </Grid>,
                           )
                         : null}
@@ -3124,58 +3212,66 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               container
                               spacing={2}
                             >
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 3,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "Новинка",
-                                  isChecked(this.state.is_new),
-                                  this.changeItemChecked.bind(this, "is_new"),
-                                  !canEditTags,
-                                )}
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 3,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "Обновлено",
-                                  isChecked(this.state.is_updated),
-                                  this.changeItemChecked.bind(this, "is_updated"),
-                                  !canEditTags,
-                                )}
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 3,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "Хит",
-                                  isChecked(this.state.is_hit),
-                                  this.changeItemChecked.bind(this, "is_hit"),
-                                  !canEditTags,
-                                )}
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 3,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "Острый",
-                                  isChecked(this.state.is_spicy),
-                                  this.changeItemChecked.bind(this, "is_spicy"),
-                                  !canEditTags,
-                                )}
-                              </Grid>
+                              {this.getFieldVisibilityOrDefault("is_new") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 3,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "Новинка",
+                                    isChecked(this.state.is_new),
+                                    this.changeItemChecked.bind(this, "is_new"),
+                                    !this.getFieldAccess("is_new"),
+                                  )}
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("is_updated") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 3,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "Обновлено",
+                                    isChecked(this.state.is_updated),
+                                    this.changeItemChecked.bind(this, "is_updated"),
+                                    !this.getFieldAccess("is_updated"),
+                                  )}
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("is_hit") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 3,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "Хит",
+                                    isChecked(this.state.is_hit),
+                                    this.changeItemChecked.bind(this, "is_hit"),
+                                    !this.getFieldAccess("is_hit"),
+                                  )}
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("is_spicy") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 3,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "Острый",
+                                    isChecked(this.state.is_spicy),
+                                    this.changeItemChecked.bind(this, "is_spicy"),
+                                    !this.getFieldAccess("is_spicy"),
+                                  )}
+                                </Grid>
+                              ) : null}
                             </Grid>,
                           )
                         : null}
@@ -3196,58 +3292,66 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                               container
                               spacing={2}
                             >
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "Установить цену",
-                                  isChecked(this.state.is_price),
-                                  this.changeItemChecked.bind(this, "is_price"),
-                                  !canEditActivity,
-                                )}
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "Активность",
-                                  isChecked(this.state.is_show),
-                                  this.changeItemChecked.bind(this, "is_show"),
-                                  !canEditActivity,
-                                )}
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "На сайте и КЦ",
-                                  isChecked(this.state.show_site),
-                                  this.changeItemChecked.bind(this, "show_site"),
-                                  !canEditActivity,
-                                )}
-                              </Grid>
-                              <Grid
-                                size={{
-                                  xs: 12,
-                                  md: 6,
-                                }}
-                              >
-                                {renderToggleCard(
-                                  "На кассе",
-                                  isChecked(this.state.show_program),
-                                  this.changeItemChecked.bind(this, "show_program"),
-                                  !canEditActivity,
-                                )}
-                              </Grid>
+                              {this.getFieldVisibilityOrDefault("is_price") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "Установить цену",
+                                    isChecked(this.state.is_price),
+                                    this.changeItemChecked.bind(this, "is_price"),
+                                    !this.getFieldAccess("is_price"),
+                                  )}
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("is_show") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "Активность",
+                                    isChecked(this.state.is_show),
+                                    this.changeItemChecked.bind(this, "is_show"),
+                                    !this.getFieldAccess("is_show"),
+                                  )}
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("show_site") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "На сайте и КЦ",
+                                    isChecked(this.state.show_site),
+                                    this.changeItemChecked.bind(this, "show_site"),
+                                    !this.getFieldAccess("show_site"),
+                                  )}
+                                </Grid>
+                              ) : null}
+                              {this.getFieldVisibilityOrDefault("show_program") ? (
+                                <Grid
+                                  size={{
+                                    xs: 12,
+                                    md: 6,
+                                  }}
+                                >
+                                  {renderToggleCard(
+                                    "На кассе",
+                                    isChecked(this.state.show_program),
+                                    this.changeItemChecked.bind(this, "show_program"),
+                                    !this.getFieldAccess("show_program"),
+                                  )}
+                                </Grid>
+                              ) : null}
                             </Grid>,
                           )
                         : null}
@@ -3269,62 +3373,68 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                 container
                                 spacing={2.5}
                               >
-                                <Grid
-                                  size={{
-                                    xs: 12,
-                                    md: 4,
-                                  }}
-                                >
-                                  <JacoTextInput
-                                    label="Время на 1 этап MM:SS"
-                                    value={this.state.time_stage_1}
-                                    disabled={!canEditComposition}
-                                    onFocus={() => this.clearFieldError("time_stage_1")}
-                                    sx={this.getErrorFieldSx("time_stage_1")}
-                                    isTimeMask={true}
-                                    placeholder="MM:SS"
-                                    func={this.changeItem.bind(this, "time_stage_1")}
-                                  />
-                                </Grid>
-                                <Grid
-                                  size={{
-                                    xs: 12,
-                                    md: 4,
-                                  }}
-                                >
-                                  <JacoTextInput
-                                    label="Время на 2 этап MM:SS"
-                                    value={this.state.time_stage_2}
-                                    disabled={!canEditComposition}
-                                    onFocus={() => this.clearFieldError("time_stage_2")}
-                                    sx={this.getErrorFieldSx("time_stage_2")}
-                                    isTimeMask={true}
-                                    placeholder="MM:SS"
-                                    func={this.changeItem.bind(this, "time_stage_2")}
-                                  />
-                                </Grid>
-                                <Grid
-                                  size={{
-                                    xs: 12,
-                                    md: 4,
-                                  }}
-                                >
-                                  <JacoTextInput
-                                    label="Время на 3 этап MM:SS"
-                                    value={this.state.time_stage_3}
-                                    disabled={!canEditComposition}
-                                    onFocus={() => this.clearFieldError("time_stage_3")}
-                                    sx={this.getErrorFieldSx("time_stage_3")}
-                                    isTimeMask={true}
-                                    placeholder="MM:SS"
-                                    func={this.changeItem.bind(this, "time_stage_3")}
-                                  />
-                                </Grid>
+                                {this.getFieldVisibilityOrDefault("time_stage_1") ? (
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      md: 4,
+                                    }}
+                                  >
+                                    <JacoTextInput
+                                      label="Время на 1 этап MM:SS"
+                                      value={this.state.time_stage_1}
+                                      disabled={!this.getFieldAccess("time_stage_1")}
+                                      onFocus={() => this.clearFieldError("time_stage_1")}
+                                      sx={this.getErrorFieldSx("time_stage_1")}
+                                      isTimeMask={true}
+                                      placeholder="MM:SS"
+                                      func={this.changeItem.bind(this, "time_stage_1")}
+                                    />
+                                  </Grid>
+                                ) : null}
+                                {this.getFieldVisibilityOrDefault("time_stage_2") ? (
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      md: 4,
+                                    }}
+                                  >
+                                    <JacoTextInput
+                                      label="Время на 2 этап MM:SS"
+                                      value={this.state.time_stage_2}
+                                      disabled={!this.getFieldAccess("time_stage_2")}
+                                      onFocus={() => this.clearFieldError("time_stage_2")}
+                                      sx={this.getErrorFieldSx("time_stage_2")}
+                                      isTimeMask={true}
+                                      placeholder="MM:SS"
+                                      func={this.changeItem.bind(this, "time_stage_2")}
+                                    />
+                                  </Grid>
+                                ) : null}
+                                {this.getFieldVisibilityOrDefault("time_stage_3") ? (
+                                  <Grid
+                                    size={{
+                                      xs: 12,
+                                      md: 4,
+                                    }}
+                                  >
+                                    <JacoTextInput
+                                      label="Время на 3 этап MM:SS"
+                                      value={this.state.time_stage_3}
+                                      disabled={!this.getFieldAccess("time_stage_3")}
+                                      onFocus={() => this.clearFieldError("time_stage_3")}
+                                      sx={this.getErrorFieldSx("time_stage_3")}
+                                      isTimeMask={true}
+                                      placeholder="MM:SS"
+                                      func={this.changeItem.bind(this, "time_stage_3")}
+                                    />
+                                  </Grid>
+                                ) : null}
                               </Grid>,
                             )
                           : null}
 
-                        {canViewComposition
+                        {this.getFieldVisibilityOrDefault("stage")
                           ? renderSectionCard(
                               "Заготовки",
                               "Состав технологической карты",
@@ -3354,7 +3464,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     {renderPreparationRows("not_stage", "Без этапа")}
                                     <TableRow>
                                       <TableCell>
-                                        <JacoAutocomplete
+                                        <SkladAutocomplete
+                                          disabled={!this.getFieldAccess("stage")}
                                           multiple={false}
                                           unifiedPopup
                                           data={this.getCompositionAutocompleteOptions(
@@ -3441,7 +3552,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                             )
                           : null}
 
-                        {canViewComposition
+                        {this.getFieldVisibilityOrDefault("items")
                           ? renderSectionCard(
                               "Позиции",
                               "Финальные товары",
@@ -3466,7 +3577,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                     {renderItemRows()}
                                     <TableRow>
                                       <TableCell>
-                                        <JacoAutocomplete
+                                        <SkladAutocomplete
+                                          disabled={!this.getFieldAccess("items")}
                                           multiple={false}
                                           unifiedPopup
                                           data={this.getCompositionAutocompleteOptions(
@@ -3581,7 +3693,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                       {renderSectionCard(
                         "Изображение",
                         "Фото для карточки",
-                        "Нужен квадратный исходник 1:1, например 2000x2000. Загружаем только JPG.",
+                        `Нужен квадратный исходник 1:1, например 2000x2000. ${SITE_ITEM_IMAGE_HELP}`,
                         <Grid
                           container
                           spacing={2.5}
@@ -3671,11 +3783,19 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                   ? "#FFFFFF"
                                   : blockBackground,
                                 overflow: "hidden",
+                                "& .dropzone": {
+                                  border: 0,
+                                  borderRadius: "inherit",
+                                  backgroundColor: "transparent",
+                                },
                                 "& .dz-message": {
                                   display: "none",
                                 },
                                 "& .dz-preview": {
                                   margin: 1.5,
+                                },
+                                "& .dropzone .dz-preview.dz-error:hover .dz-error-message": {
+                                  pointerEvents: "none",
                                 },
                                 ...(!access?.dropzone_edit
                                   ? {
@@ -3719,8 +3839,8 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                                       lineHeight: 1.45,
                                     }}
                                   >
-                                    Или нажмите на область загрузки, чтобы выбрать JPG или PNG с
-                                    компьютера.
+                                    Нажмите, чтобы выбрать {SITE_ITEM_IMAGE_FORMATS} с компьютера,
+                                    до {SITE_ITEM_IMAGE_MAX_MB} МБ.
                                   </Typography>
                                 </Stack>
                               ) : null}
@@ -3786,29 +3906,20 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
             >
               Закрыть
             </Button>
-            <Button
-              variant="contained"
+            <JacoButton
+              tone="success"
               onClick={this.save.bind(this)}
               disabled={!canSave || this.state.isSaving}
               sx={{
                 minHeight: 44,
                 px: 2.5,
                 borderRadius: 2,
-                backgroundColor: brandRed,
                 textTransform: "none",
-                boxShadow: "none",
-                "&:hover": {
-                  backgroundColor: brandRed,
-                  boxShadow: "none",
-                },
-                "&.Mui-disabled": {
-                  backgroundColor: "#F0B7BF",
-                  color: "#FFFFFF",
-                },
+                fontWeight: 500,
               }}
             >
               {method === "Новое блюдо" ? "Создать товар" : "Сохранить изменения"}
-            </Button>
+            </JacoButton>
           </DialogActions>
         </Dialog>
       </>

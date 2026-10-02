@@ -126,7 +126,10 @@ export default function useSkladProductionController({ showAlert }) {
   }, [mergedRows, page, rowsPerPage]);
 
   const canDeleteAction = canDelete("recipe");
-  const canManageCategories = canCreateProduction || canManageProduction || canDeleteAction;
+  const canEditCategories = Number(access?.production_categories_edit) === 1;
+  const canManageCategories = canEditCategories || Number(access?.production_categories_view) === 1;
+  const canCreateCategory = canCreateProduction && canEditCategories;
+  const canDeleteCategory = canDeleteAction && canEditCategories;
   const canEditRevision = Number(access?.production_show_in_rev_edit) === 1;
 
   const refreshProductionCategories = useCallback(async () => {
@@ -173,6 +176,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const createCategory = useCallback(
     async (name, sourceType = "semi_finished", parentId = 0) => {
+      if (!canCreateCategory) return false;
       setCategoryManagerDialog((current) => ({ ...current, loading: true }));
       setShellState({ isLoading: true });
 
@@ -199,7 +203,7 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, refreshProductionCategories, setShellState, showAlert],
+    [api, canCreateCategory, refreshProductionCategories, setShellState, showAlert],
   );
 
   const loadRows = useCallback(
@@ -249,6 +253,7 @@ export default function useSkladProductionController({ showAlert }) {
 
   const saveCategory = useCallback(
     async (category, name) => {
+      if (!canEditCategories) return false;
       setCategoryManagerDialog((current) => ({ ...current, loading: true }));
       setShellState({ isLoading: true });
 
@@ -277,11 +282,12 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, loadRows, refreshProductionCategories, setShellState, showAlert],
+    [api, canEditCategories, loadRows, refreshProductionCategories, setShellState, showAlert],
   );
 
   const deleteCategory = useCallback(
     async (category) => {
+      if (!canDeleteCategory) return false;
       setCategoryManagerDialog((current) => ({ ...current, loading: true }));
       setShellState({ isLoading: true });
 
@@ -317,7 +323,16 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [api, categoryId, loadRows, refreshProductionCategories, setShellState, setState, showAlert],
+    [
+      api,
+      canDeleteCategory,
+      categoryId,
+      loadRows,
+      refreshProductionCategories,
+      setShellState,
+      setState,
+      showAlert,
+    ],
   );
 
   useEffect(() => {
@@ -603,16 +618,48 @@ export default function useSkladProductionController({ showAlert }) {
 
   const submitDraft = useCallback(
     async (nextDraft) => {
-      const validationError = validateProductionDraft(nextDraft);
+      const saveMode = modal.mode === "create" ? "create" : "edit";
+      const canEditField = (field) => Number(access?.[`production_${field}_edit`]) === 1;
+      if (
+        saveMode === "create" &&
+        (!canCreateProduction ||
+          ["name", "shelf_life", "date_start"].some((field) => !canEditField(field)))
+      ) {
+        showAlert("Для создания недостаточно прав на обязательные поля", false);
+        return;
+      }
+      if (saveMode === "edit" && !canManageProduction) return;
+      const validationError = validateProductionDraft(nextDraft, canEditField);
 
       if (validationError) {
         showAlert(validationError, false);
         return;
       }
 
-      const saveMode = modal.mode === "create" ? "create" : "edit";
       const saveEntity = getEntitySaveApi(api, activeEntityType, saveMode);
       const payload = normalizeProductionSavePayload(nextDraft);
+      const fieldPayloadKeys = {
+        name: ["name"],
+        shelf_life: ["shelf_life"],
+        unit: ["ed_izmer_id"],
+        date_start: ["date_start"],
+        date_end: ["date_end"],
+        time: ["time_min"],
+        dop_time: ["time_min_dop"],
+        structure: ["structure"],
+        show_in_rev: ["show_in_rev"],
+        two_user: ["two_user"],
+        activity: ["is_show"],
+        allergens: ["allergens"],
+        allergens_diff: ["allergens_possible"],
+        categories: ["categories"],
+        storages: ["storages"],
+        apps: ["apps"],
+        items: ["items", "all_w", "all_w_brutto", "all_w_netto"],
+      };
+      for (const [field, keys] of Object.entries(fieldPayloadKeys)) {
+        if (!canEditField(field)) keys.forEach((key) => delete payload[key]);
+      }
 
       setState({
         modal: {
@@ -646,7 +693,19 @@ export default function useSkladProductionController({ showAlert }) {
         setShellState({ isLoading: false });
       }
     },
-    [activeEntityType, api, closeModal, loadRows, modal, setShellState, setState, showAlert],
+    [
+      access,
+      activeEntityType,
+      api,
+      canCreateProduction,
+      canManageProduction,
+      closeModal,
+      loadRows,
+      modal,
+      setShellState,
+      setState,
+      showAlert,
+    ],
   );
 
   const toggleRevision = useCallback(
@@ -789,7 +848,7 @@ export default function useSkladProductionController({ showAlert }) {
           canManageProduction={canManageProduction}
           canConvertProduction={canConvertProduction}
           canViewHistory={canViewProductionHistory}
-          canCreateCategory={canCreateProduction}
+          canCreateCategory={canCreateCategory}
           canEditRevision={canEditRevision}
           allowPastDate={canUseProductionPastDate}
           canManageCategories={canManageCategories}
@@ -813,9 +872,9 @@ export default function useSkladProductionController({ showAlert }) {
           open={categoryManagerDialog.open}
           loading={categoryManagerDialog.loading}
           categories={categoryManagerDialog.categories}
-          canCreate={canCreateProduction}
-          canEdit={canManageProduction}
-          canDelete={canDeleteAction}
+          canCreate={canCreateCategory}
+          canEdit={canEditCategories}
+          canDelete={canDeleteCategory}
           access={access}
           onClose={closeCategoryManagerDialog}
           onCreate={createCategory}

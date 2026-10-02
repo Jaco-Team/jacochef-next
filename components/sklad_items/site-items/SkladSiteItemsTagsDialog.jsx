@@ -1,11 +1,12 @@
 "use client";
 
+import SkladAutocomplete from "../ui/SkladAutocomplete";
 import { useEffect, useState } from "react";
 
 import { Button, DialogActions, DialogContent, Stack } from "@mui/material";
 
 import { JacoModal } from "@/design-system/shared/ui";
-import { JacoAutocomplete, JacoTextInput } from "@/design-system/shared/ui";
+import { JacoTextInput } from "@/design-system/shared/ui";
 
 export default function SkladSiteItemsTagsDialog({
   open,
@@ -62,7 +63,7 @@ export default function SkladSiteItemsTagsDialog({
           spacing={2}
           sx={{ pt: 1 }}
         >
-          <JacoAutocomplete
+          <SkladAutocomplete
             label="Тег"
             multiple={false}
             unifiedPopup

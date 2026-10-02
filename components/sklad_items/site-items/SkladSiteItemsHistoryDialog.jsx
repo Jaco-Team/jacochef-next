@@ -16,9 +16,7 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Switch,
   Table,
@@ -31,6 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { JacoSelect } from "@/design-system/shared/ui";
 
 import { SkladEmbeddedImageHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import useSkladApi from "../useSkladApi";
@@ -571,22 +570,15 @@ export default function SkladSiteItemsHistoryDialog({
               </Stack>
 
               <Box sx={{ display: { xs: "block", md: "none" }, p: 1.5 }}>
-                <Select
-                  fullWidth
-                  size="small"
+                <JacoSelect
                   value={revisionKey(selectedRow)}
                   onChange={(event) => setSelectedKey(event.target.value)}
-                >
-                  {rows.map((row) => (
-                    <MenuItem
-                      key={revisionKey(row)}
-                      value={revisionKey(row)}
-                    >
-                      {formatHistoryTimestamp(row?.changed_at)} ·{" "}
-                      {formatHistoryDate(row?.effective_date_start)}
-                    </MenuItem>
-                  ))}
-                </Select>
+                  allowNone={false}
+                  options={rows.map((row) => ({
+                    id: revisionKey(row),
+                    name: `${formatHistoryTimestamp(row?.changed_at)} · ${formatHistoryDate(row?.effective_date_start)}`,
+                  }))}
+                />
               </Box>
 
               <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 260 }}>

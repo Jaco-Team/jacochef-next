@@ -23,10 +23,10 @@
 - `API.md` — единственный источник правды для новых запросов/ответов FE
 - `FE-MIGRATION-MAP.md` — только карта соответствий старого FE/legacy route names к новому модулю
 - если старое имя есть только в `FE-MIGRATION-MAP.md`, это не означает, что его можно отправлять в новый backend runtime-ом
-- для history всегда использовать canonical entity names: `item`, `recipe`, `semi_finished`, `site_item`
-- для warehouse items в новом history API использовать `item`, не `warehouse_item`
-- [API.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/API.md) — целевой контракт для новой FE
-- [PLAN.md](/home/ted/JACO/git/test-app-site/app/Chef/Sklad/docs/PLAN.md) — roadmap и migration coverage
+- для history использовать canonical entity names: `item`, `recipe`, `semi_finished`, `site_item`
+- `warehouse_item` используется как dependency/category `source_type`, не как верхнеуровневый history `entity_type`
+- [API.md](API.md) — контракт для новой FE
+- [PLAN.md](PLAN.md) — roadmap и migration coverage
 - этот файл — map `legacy -> new`
 
 ---
@@ -43,16 +43,14 @@
 
 ### 2.2. `sklad_items_module_new`
 
-Важное ограничение текущего scope:
+Вкладка «Товары склада» восстановлена внутри `sklad_items`, без перехода в legacy-модуль:
 
-- `sklad_items_module_new` пока не объединяется в новый CRUD-контур `sklad_items`
-- warehouse `Item` остается shared source entity для нового модуля
-- новый модуль уже использует его как reference/business source и публикует read/open routes `/api/sklad_items/items/*` для интеграции внутри `sklad_items`
-
-Следствие для FE:
-
-- отдельный full CRUD warehouse items пока остается в `sklad_items_module_new`, но read/open contracts уже публикуются и поддерживаются в `sklad_items/items/*`, а history read еще и в `sklad_items/history/item*`
-- но связанные reference/business данные уже должны восприниматься как часть единого домена `sklad_items`
+- чтение: `sklad_items/items/list`, `items/get_one`, `items/get_all_for_new`
+- создание/редактирование: `sklad_items/items/save_new`, `items/save_edit`
+- флаги, проверка артикула, удаление: `sklad_items/items/save_flag`, `items/check_art`, `items/delete`
+- история: `sklad_items/history/item/*`; entity type — `item`
+- list/detail и запись работают с `jaco_main_rolls.items_new`, без fallback на старую `items`
+- `sklad_items_module_new` остаётся независимым legacy-модулем; новые UI-запросы его не вызывают
 
 ### 2.3. `recept_module_new_2`
 
@@ -88,7 +86,7 @@
 - `site_items_new/edit_tag` -> `sklad_items/site-items/tags/save_edit`
 - `site_items_new/saveNewTag` -> `sklad_items/site-items/tags/save_new`
 - `site_items_new/upload_img` -> `sklad_items/site-items/upload_image`
-- `site_items_new/updateVK` -> `sklad_items/site-items/sync_vk`; новый UI показывает action только при `site_items_sync_vk`, требует подтверждение и сообщает только постановку external-worker trigger в очередь
+- `site_items_new/updateVK` -> `sklad_items/site-items/sync_vk`; backend-контракт сохранён, но action VK в текущем UI отсутствует
 
 Правило для новой FE по history `site_item`:
 

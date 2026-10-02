@@ -1,5 +1,6 @@
 "use client";
 
+import SkladAutocomplete from "../ui/SkladAutocomplete";
 import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -32,19 +33,18 @@ import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
 
-import {
-  JacoAutocomplete,
-  JacoDatePicker,
-  JacoModal,
-  JacoSelect,
-  JacoTextInput,
-} from "@/design-system/shared/ui";
+import { JacoDatePicker, JacoModal, JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
 import {
   SkladEmbeddedHistoryTable,
   SkladEmbeddedImageHistoryTable,
 } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
 import { resolveSiteItemImagePreviewUrl, resolveSiteItemImageUrl } from "./siteItemImage";
+import {
+  getSiteItemImageFileError,
+  SITE_ITEM_IMAGE_ACCEPT,
+  SITE_ITEM_IMAGE_HELP,
+} from "./siteItemImageUpload";
 import {
   buildInitialDraft,
   createEmptySiteItemRelations,
@@ -226,30 +226,14 @@ export default function SkladSiteItemEditorDialog({
     fileInputRef.current?.click();
   };
 
-  const isSupportedImageFile = (file) => {
-    if (!file) {
-      return false;
-    }
-
-    const mimeType = String(file.type || "").toLowerCase();
-    const fileName = String(file.name || "").toLowerCase();
-
-    return (
-      mimeType === "image/jpeg" ||
-      mimeType === "image/png" ||
-      fileName.endsWith(".jpg") ||
-      fileName.endsWith(".jpeg") ||
-      fileName.endsWith(".png")
-    );
-  };
-
   const selectImageFile = (file) => {
     if (!file) {
       return;
     }
 
-    if (!isSupportedImageFile(file)) {
-      showAlert?.("Допустимы только JPG и PNG", false);
+    const fileError = getSiteItemImageFileError(file);
+    if (fileError) {
+      showAlert?.(fileError, false);
       return;
     }
 
@@ -886,7 +870,7 @@ export default function SkladSiteItemEditorDialog({
 
                   <SkladSectionCard
                     title="Изображение"
-                    description="Квадратный исходник 1:1. Загрузка JPG или PNG."
+                    description={`Квадратный исходник 1:1. ${SITE_ITEM_IMAGE_HELP}`}
                   >
                     <Grid
                       container
@@ -1015,7 +999,7 @@ export default function SkladSiteItemEditorDialog({
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        accept={SITE_ITEM_IMAGE_ACCEPT}
                         hidden
                         onChange={handleImageInputChange}
                       />
@@ -1026,7 +1010,7 @@ export default function SkladSiteItemEditorDialog({
                     title="Теги"
                     description="Теги карточки и промо-маркеры"
                   >
-                    <JacoAutocomplete
+                    <SkladAutocomplete
                       multiple
                       label="Теги"
                       data={availableTags}
