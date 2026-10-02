@@ -1175,7 +1175,7 @@ function ErrorsManagement() {
             px: { xs: 1.5, sm: 2 },
           }}
           items={[
-            { id: "journal", label: "Журнал" },
+            { id: "journal", label: "Журнал жалоб" },
             { id: "registration", label: "Регистрация" },
             { id: "statistics", label: "Статистика" },
             { id: "settings", label: "Варианты решения жалоб" },
