@@ -53,6 +53,10 @@ const DEFAULT_FILTERS = {
   cityId: "",
   pointId: "",
   orderNumber: "",
+  phone: "",
+  amountFrom: "",
+  amountTo: "",
+  orderType: "",
   dateFrom: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
   dateTo: dayjs().format("YYYY-MM-DD"),
 };
@@ -68,6 +72,12 @@ const filterSx = {
   ...surfaceSx,
 };
 const titleSx = { fontSize: { xs: 26, md: 32 }, fontWeight: 700, lineHeight: 1.2 };
+const ORDER_TYPE_OPTIONS = [
+  { id: "1", name: "Доставка" },
+  { id: "2", name: "Самовывоз" },
+  { id: "3", name: "Зал" },
+  { id: "4", name: "Зал с собой" },
+];
 const STATISTICS_SOURCES = [
   { id: "contact_center", name: "Контакт-центр" },
   { id: "cafe", name: "Кафе" },
@@ -929,15 +939,15 @@ function ErrorsManagement() {
         const response = await request("get_orders", {
           city_id: nextFilters.cityId || "",
           point_id: nextFilters.pointId || 0,
-          type_order: 0,
+          type_order: nextFilters.orderType || 0,
           order_id: orderNumber,
           number_order: orderNumber,
-          sum_from: "",
-          sum_to: "",
+          sum_from: nextFilters.amountFrom || "",
+          sum_to: nextFilters.amountTo || "",
           date_from: orderNumber ? "" : nextFilters.dateFrom || "",
           date_to: orderNumber ? "" : nextFilters.dateTo || "",
-          phone: "",
-          number: "",
+          phone: nextFilters.phone || "",
+          number: nextFilters.phone || "",
           time_from: "",
           time_to: "",
         });
@@ -1198,6 +1208,47 @@ function ErrorsManagement() {
                     label="Дата до"
                     value={filters.dateTo}
                     onChange={(value) => update("dateTo", value?.format?.("YYYY-MM-DD") || "")}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <JacoTextInput
+                    label="Телефон клиента"
+                    value={filters.phone}
+                    slotProps={{ htmlInput: { inputMode: "tel" } }}
+                    onChange={(event) => update("phone", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <JacoTextInput
+                    label="Сумма от"
+                    type="number"
+                    min={0}
+                    value={filters.amountFrom}
+                    slotProps={{ htmlInput: { inputMode: "decimal" } }}
+                    onChange={(event) => update("amountFrom", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <JacoTextInput
+                    label="Сумма до"
+                    type="number"
+                    min={0}
+                    value={filters.amountTo}
+                    slotProps={{ htmlInput: { inputMode: "decimal" } }}
+                    onChange={(event) => update("amountTo", event.target.value)}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <JacoSelect
+                    label="Тип заказа"
+                    options={ORDER_TYPE_OPTIONS}
+                    value={filters.orderType}
+                    multiple={false}
+                    allowNone
+                    noneLabel="Все типы"
+                    onChange={(event) =>
+                      update("orderType", event.target.value === "none" ? "" : event.target.value)
+                    }
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 2 }}>
