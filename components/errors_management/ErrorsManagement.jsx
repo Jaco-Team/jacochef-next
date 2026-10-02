@@ -57,6 +57,7 @@ const DEFAULT_FILTERS = {
   amountFrom: "",
   amountTo: "",
   orderType: "",
+  // Temporary default: keep local stale data queries bounded to the latest seven days.
   dateFrom: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
   dateTo: dayjs().format("YYYY-MM-DD"),
 };
