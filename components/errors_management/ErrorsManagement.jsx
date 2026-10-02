@@ -660,29 +660,49 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                     variant="outlined"
                     sx={{ p: 1.5, ...surfaceSx }}
                   >
-                    <Typography fontWeight={700}>{item.error_name}</Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      {item.category_name}
-                      {item.error_type_name ? ` · ${item.error_type_name}` : ""}
-                    </Typography>
-                    <Typography variant="body2">Этап: {item.stage_name}</Typography>
-                    {item.error_amount != null ? (
-                      <Typography variant="body2">
-                        Сумма ошибки: {amountLabel(item.error_amount)}
-                      </Typography>
-                    ) : null}
-                    {item.solution_name ? (
-                      <Typography variant="body2">Решение: {item.solution_name}</Typography>
-                    ) : null}
-                    {item.changed_amount != null ? (
-                      <Typography variant="body2">
-                        Сумма изменения: {amountLabel(item.changed_amount)}
-                      </Typography>
-                    ) : null}
-                    {item.comment ? <Typography variant="body2">{item.comment}</Typography> : null}
+                    <Stack spacing={0.75}>
+                      <DetailField
+                        label="Ошибка"
+                        value={item.error_name}
+                        emphasized
+                      />
+                      <DetailField
+                        label="Категория"
+                        value={item.category_name}
+                      />
+                      {item.error_type_name ? (
+                        <DetailField
+                          label="Тип ошибки"
+                          value={item.error_type_name}
+                        />
+                      ) : null}
+                      <DetailField
+                        label="Этап"
+                        value={item.stage_name}
+                      />
+                      <DetailField
+                        label="Сумма ошибки"
+                        value={item.error_amount != null ? amountLabel(item.error_amount) : null}
+                      />
+                      {item.solution_name ? (
+                        <DetailField
+                          label="Решение"
+                          value={item.solution_name}
+                        />
+                      ) : null}
+                      <DetailField
+                        label="Сумма изменения"
+                        value={
+                          item.changed_amount != null ? amountLabel(item.changed_amount) : null
+                        }
+                      />
+                      {item.comment ? (
+                        <DetailField
+                          label="Комментарий к ошибке"
+                          value={item.comment}
+                        />
+                      ) : null}
+                    </Stack>
                   </JacoSurface>
                 ))}
               </Stack>
