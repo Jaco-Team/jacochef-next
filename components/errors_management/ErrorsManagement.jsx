@@ -574,6 +574,18 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                     label="Общий комментарий"
                     value={detail.common_comment}
                   />
+                  {detail.resolved_by_name ? (
+                    <DetailField
+                      label="Кто решил жалобу"
+                      value={detail.resolved_by_name}
+                    />
+                  ) : null}
+                  {detail.resolved_at ? (
+                    <DetailField
+                      label="Дата решения"
+                      value={historyTimestamp(detail.resolved_at)}
+                    />
+                  ) : null}
                 </Box>
               </DrawerSection>
               {detail.order && Object.keys(detail.order).length ? (
