@@ -90,6 +90,7 @@ const COMPLAINT_HISTORY_FIELDS = {
   sent_to_cafe_at: "Отправлено в кафе",
   accepted_at: "Принято в работу",
   resolved_at: "Решение принято",
+  resolution_promo_code: "Промокод решения",
 };
 const COMPLAINT_STATUS_LABELS = {
   registered: "В решении",
@@ -151,7 +152,8 @@ function historyFieldOrder(field) {
   if (field.endsWith(".changed_amount")) return 7;
   if (field.endsWith(".comment")) return 8;
   if (field === "common_comment") return 9;
-  return 10;
+  if (field === "resolution_promo_code") return 10;
+  return 11;
 }
 
 const HISTORY_STATUS_LABELS = {
@@ -536,6 +538,7 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
   const [pendingCommand, setPendingCommand] = useState(null);
   const [transitioning, setTransitioning] = useState(false);
   const [resolutionErrors, setResolutionErrors] = useState([]);
+  const [resolutionPromoCode, setResolutionPromoCode] = useState("");
 
   useEffect(() => {
     if (!complaint) return;
@@ -543,6 +546,7 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
     setError("");
     setPendingCommand(null);
     setResolutionErrors([]);
+    setResolutionPromoCode("");
     request("v2/detail", { complaint_id: complaint.id, point_id: complaint.point_id })
       .then((response) => setDetail(response?.data ?? response ?? null))
       .catch(() => setError("Не удалось загрузить жалобу."));
@@ -557,6 +561,10 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
       })),
     );
   }, [detail?.id, detail?.lock_version]);
+
+  useEffect(() => {
+    setResolutionPromoCode(detail?.resolution_promo_code || "");
+  }, [detail?.id, detail?.lock_version, detail?.resolution_promo_code]);
 
   const resolutionSolutions = detail?.resolution_solutions || [];
   const canResolve =
@@ -590,7 +598,9 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
           point_id: detail.point_id,
           lock_version: detail.lock_version,
           command: pendingCommand,
-          ...(pendingCommand === "resolve" ? { resolution_errors: resolutionErrors } : {}),
+          ...(pendingCommand === "resolve"
+            ? { resolution_errors: resolutionErrors, resolution_promo_code: resolutionPromoCode }
+            : {}),
         },
         { throwErrors: true, suppressAuthRedirect: true },
       );
@@ -700,6 +710,18 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                     <DetailField
                       label="Дата решения"
                       value={historyTimestamp(detail.resolved_at)}
+                    />
+                  ) : null}
+                  {detail.resolution_promo_code ? (
+                    <DetailField
+                      label="Промокод решения"
+                      value={detail.resolution_promo_code}
+                    />
+                  ) : null}
+                  {detail.resolution_promo_code ? (
+                    <DetailField
+                      label="Активаций промокода"
+                      value={String(detail.resolution_promo_activations || 0)}
                     />
                   ) : null}
                 </Box>
@@ -1021,6 +1043,13 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                 </JacoSurface>
               );
             })}
+            <JacoTextInput
+              fullWidth
+              label="Выданный промокод"
+              helperText="Необязательно. Укажите код, уже выданный клиенту как решение жалобы."
+              value={resolutionPromoCode}
+              onChange={(event) => setResolutionPromoCode(event.target.value)}
+            />
           </Stack>
         ) : (
           <Typography>
@@ -1537,7 +1566,8 @@ function ErrorsManagement() {
                       {tab === "journal" ? (
                         <Typography color="text.secondary">
                           Ошибок: {row.errors_count ?? "—"} · Сумма:{" "}
-                          {amountLabel(row.error_amount_total)}
+                          {amountLabel(row.error_amount_total)} · Промокоды:{" "}
+                          {row.issued_promos || 0}/{row.activated_promos || 0}
                         </Typography>
                       ) : (
                         <Typography>{row.number || "Клиент не указан"}</Typography>
@@ -1625,6 +1655,8 @@ function ErrorsManagement() {
                             <TableCell>Адрес</TableCell>
                             <TableCell>Сумма заказа</TableCell>
                             <TableCell>Оплата</TableCell>
+                            <TableCell>Выписано промокодов</TableCell>
+                            <TableCell>Активировано промокодов</TableCell>
                             <TableCell>Общий комментарий</TableCell>
                             <TableCell>Кто решил жалобу</TableCell>
                             <TableCell
@@ -1719,6 +1751,8 @@ function ErrorsManagement() {
                               <TableCell>{row.order_snapshot?.delivery_address || "—"}</TableCell>
                               <TableCell>{amountLabel(row.order_snapshot?.order_amount)}</TableCell>
                               <TableCell>{row.order_snapshot?.payment_method || "—"}</TableCell>
+                              <TableCell>{row.issued_promos || 0}</TableCell>
+                              <TableCell>{row.activated_promos || 0}</TableCell>
                               <TableCell>{row.common_comment || "—"}</TableCell>
                               <TableCell>{row.resolved_by_name || "—"}</TableCell>
                               <TableCell>
@@ -1922,6 +1956,34 @@ function ErrorsManagement() {
                         fontWeight={700}
                       >
                         {statistics?.total_errors ?? "—"}
+                      </Typography>
+                    </JacoSurface>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <JacoSurface
+                      variant="outlined"
+                      sx={{ p: 2.5, ...surfaceSx }}
+                    >
+                      <Typography color="text.secondary">Выписано промокодов</Typography>
+                      <Typography
+                        variant="h4"
+                        fontWeight={700}
+                      >
+                        {statistics?.issued_promos ?? "—"}
+                      </Typography>
+                    </JacoSurface>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <JacoSurface
+                      variant="outlined"
+                      sx={{ p: 2.5, ...surfaceSx }}
+                    >
+                      <Typography color="text.secondary">Активировано промокодов</Typography>
+                      <Typography
+                        variant="h4"
+                        fontWeight={700}
+                      >
+                        {statistics?.activated_promos ?? "—"}
                       </Typography>
                     </JacoSurface>
                   </Grid>
