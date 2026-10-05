@@ -4,53 +4,24 @@ import { useMemo } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { Alert, Box, Grid, Stack, Typography } from "@mui/material";
 import { JacoButton, JacoSelect, JacoSurface, JacoTextInput } from "@/design-system/shared/ui";
+import { activeNodes, completeClassifier } from "../complaintClassifier.mjs";
 
 const surfaceSx = { boxShadow: "none" };
-
-function activeNodes(catalog, kind, parentId = null) {
-  return catalog.filter(
-    (node) =>
-      node.kind === kind &&
-      Boolean(node.is_active) &&
-      (parentId === null || Number(node.parent_id) === Number(parentId)),
-  );
-}
-
-function completeClassifier(catalog, draft, categoryId) {
-  const types = activeNodes(catalog, "error_type", categoryId);
-  const errorTypeId = types.length === 1 ? String(types[0].id) : "";
-  const errors = errorTypeId ? activeNodes(catalog, "error", errorTypeId) : [];
-  return {
-    ...draft,
-    category_id: String(categoryId || ""),
-    error_type_id: errorTypeId,
-    error_id: errors.length === 1 ? String(errors[0].id) : "",
-  };
-}
 
 function selectValue(event) {
   return event.target.value === "none" ? "" : event.target.value;
 }
 
-export function classifierDraft(catalog, objectType, positionKey = null) {
-  const categories = activeNodes(catalog, "category").filter((node) =>
-    node.rules?.object_types?.includes(objectType),
-  );
-  const draft = {
-    object_type: objectType,
-    position_key: positionKey,
-    category_id: "",
-    error_type_id: "",
-    error_id: "",
-    stage_id: "",
-    solution_id: "",
-    error_amount: "",
-    comment: "",
-  };
-  return categories.length === 1 ? completeClassifier(catalog, draft, categories[0].id) : draft;
-}
-
-export function ErrorEditor({ value, positions, catalog, solutions, stages, onChange, onRemove }) {
+export function ErrorEditor({
+  value,
+  positions,
+  positionNumber,
+  catalog,
+  solutions,
+  stages,
+  onChange,
+  onRemove,
+}) {
   const position = positions.find((item) => item.position_key === value.position_key);
   const categories = useMemo(
     () =>
@@ -87,7 +58,9 @@ export function ErrorEditor({ value, positions, catalog, solutions, stages, onCh
           gap={1}
           sx={{ alignItems: "center", justifyContent: "space-between" }}
         >
-          <Typography fontWeight={700}>{position?.name || "Ошибка заказа"}</Typography>
+          <Typography fontWeight={700}>
+            {position ? `Позиция №${positionNumber}: ${position.name}` : "Ошибка заказа"}
+          </Typography>
           <JacoButton
             compact
             tone="outlinePrimary"

@@ -13,6 +13,7 @@ import {
   Alert,
   Box,
   Chip,
+  CircularProgress,
   Divider,
   Stack,
   Typography,
@@ -531,12 +532,15 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
   const [editor, setEditor] = useState(null);
   const [history, setHistory] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
+    setLoaded(false);
     setError("");
     try {
       const response = await request("v2/settings", pointId ? { point_id: Number(pointId) } : {});
       setSettings(response?.data ?? response ?? { active: [], inactive: [] });
+      setLoaded(true);
     } catch {
       setError("Не удалось загрузить варианты решений жалоб.");
     }
@@ -612,7 +616,12 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
           { id: "solutions", label: "Решения" },
         ]}
       />
-      {view === "classifier" ? (
+      {!loaded && !error ? (
+        <Box sx={{ display: "grid", placeItems: "center", py: 5 }}>
+          <CircularProgress aria-label="Загрузка настроек" />
+        </Box>
+      ) : null}
+      {loaded && view === "classifier" ? (
         <ClassifierTree
           nodes={activeNodes}
           pointId={pointId ? Number(pointId) : null}
@@ -622,7 +631,7 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
           onToggle={canEdit ? toggle : null}
         />
       ) : null}
-      {view === "stages" ? (
+      {loaded && view === "stages" ? (
         <FlatDirectory
           kind="stage"
           nodes={activeNodes}
@@ -633,7 +642,7 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
           onToggle={canEdit ? toggle : null}
         />
       ) : null}
-      {view === "solutions" ? (
+      {loaded && view === "solutions" ? (
         <FlatDirectory
           kind="solution"
           nodes={activeNodes}
@@ -644,43 +653,47 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
           onToggle={canEdit ? toggle : null}
         />
       ) : null}
-      <Divider />
-      <Accordion disableGutters>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography fontWeight={700}>Неактивные варианты ({inactiveNodes.length})</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Stack spacing={1}>
-            {inactiveNodes.length === 0 ? (
-              <Typography color="text.secondary">Нет неактивных вариантов.</Typography>
-            ) : null}
-            {sortNodes(inactiveNodes).map((node) => (
-              <Stack
-                key={node.id}
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "center" }}
-              >
-                <Box sx={{ flex: 1 }}>
-                  <Typography>{node.name}</Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
+      {loaded ? (
+        <>
+          <Divider />
+          <Accordion disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography fontWeight={700}>Неактивные варианты ({inactiveNodes.length})</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={1}>
+                {inactiveNodes.length === 0 ? (
+                  <Typography color="text.secondary">Нет неактивных вариантов.</Typography>
+                ) : null}
+                {sortNodes(inactiveNodes).map((node) => (
+                  <Stack
+                    key={node.id}
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center" }}
                   >
-                    {node.kind}
-                  </Typography>
-                </Box>
-                <CatalogItemActions
-                  node={node}
-                  onEdit={canEdit ? (item) => openEditor(item) : null}
-                  onHistory={setHistory}
-                  onToggle={canEdit ? toggle : null}
-                />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography>{node.name}</Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                      >
+                        {node.kind}
+                      </Typography>
+                    </Box>
+                    <CatalogItemActions
+                      node={node}
+                      onEdit={canEdit ? (item) => openEditor(item) : null}
+                      onHistory={setHistory}
+                      onToggle={canEdit ? toggle : null}
+                    />
+                  </Stack>
+                ))}
               </Stack>
-            ))}
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
+            </AccordionDetails>
+          </Accordion>
+        </>
+      ) : null}
       {editor ? (
         <CatalogNodeEditor
           state={editor}

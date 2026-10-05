@@ -45,7 +45,8 @@ import {
 } from "@/design-system/shared/ui";
 import JacoSearch from "@/ui/JacoSearch";
 import ComplaintOptionsSettings from "./sections/ComplaintOptionsSettings";
-import { classifierDraft, ErrorEditor } from "./sections/ErrorEditor";
+import { ErrorEditor } from "./sections/ErrorEditor";
+import { classifierDraft, validComplaintError } from "./complaintClassifier.mjs";
 import dayjs from "dayjs";
 
 const moduleName = "errors_management";
@@ -172,6 +173,7 @@ function historyValue(value, field) {
 }
 
 function historyTimestamp(value) {
+  if (!value) return "—";
   const parsed = dayjs(value);
   return parsed.isValid() ? parsed.format("DD.MM.YYYY HH:mm") : value || "—";
 }
@@ -180,6 +182,15 @@ function amountLabel(value) {
   if (value === null || value === undefined || value === "") return "—";
   const amount = Number(value);
   return Number.isFinite(amount) ? `${amount.toFixed(2)} ₽` : "—";
+}
+
+function complaintSourceLabel(source) {
+  return STATISTICS_SOURCES.find((item) => item.id === source)?.name || "—";
+}
+
+function cafeLabel(row, points) {
+  const point = points.find((item) => String(item.id) === String(row.point_id));
+  return row.cafe_name || point?.addr || point?.name || "—";
 }
 
 function complaintStatusLabel(item) {
@@ -272,10 +283,14 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
   const [errors, setErrors] = useState([]);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [confirmClose, setConfirmClose] = useState(false);
 
   useEffect(() => {
     if (!selected) return;
+    setConfirmClose(false);
+    setSaving(false);
     setContext(null);
     setErrors([]);
     setComment("");
@@ -296,8 +311,17 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
   const addOrderError = () => {
     setErrors((previous) => [...previous, classifierDraft(context?.catalog || [], "order")]);
   };
+  const requestClose = () => {
+    if (saving) return;
+    if (errors.length > 0 || comment.trim()) {
+      setConfirmClose(true);
+      return;
+    }
+    onClose();
+  };
   const save = async () => {
     setMessage("");
+    setSaving(true);
     setLoading(true);
     try {
       await request(
@@ -315,6 +339,7 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
     } catch {
       setMessage("Не удалось зарегистрировать жалобу. Проверьте обязательные поля.");
     } finally {
+      setSaving(false);
       setLoading(false);
     }
   };
@@ -326,11 +351,21 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
     );
   }, [cities, context?.order?.city_id, context?.order?.point_id, points]);
 
+  const canSave =
+    errors.length > 0 &&
+    errors.every((error) =>
+      validComplaintError(
+        error,
+        context?.catalog || [],
+        context?.positions || [],
+        context?.stages || [],
+      ),
+    );
   const actions =
     context && !loading ? (
       <JacoButton
         fullWidth
-        disabled={!errors.length}
+        disabled={!canSave}
         onClick={save}
       >
         Зарегистрировать жалобу
@@ -338,110 +373,161 @@ function RegistrationDrawer({ selected, onClose, request, onSaved, cities, point
     ) : null;
 
   return (
-    <JacoResponsiveModalShell
-      open={Boolean(selected)}
-      onClose={onClose}
-      title="Регистрация жалобы"
-      maxWidth="md"
-      actions={actions}
-      mobilePaperSx={{ height: "100vh", maxHeight: "100vh", borderRadius: 0 }}
-      mobileContentSx={{ px: 2, py: 2.5 }}
-      mobileActionsSx={{ px: 2, pt: 1.5, pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
-    >
-      <Stack spacing={2.5}>
-        {message ? <Alert severity="error">{message}</Alert> : null}
-        {loading ? (
-          <Box sx={{ display: "grid", placeItems: "center", minHeight: 240 }}>
-            <CircularProgress />
-          </Box>
-        ) : context ? (
-          <>
-            <JacoSurface sx={{ p: 2 }}>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-              >
-                Заказ №{orderId(selected)}
-              </Typography>
-              <Typography
-                fontWeight={700}
-                mt={0.5}
-              >
-                Кафе: {cafeContext}
-              </Typography>
-            </JacoSurface>
-            <Stack spacing={1.25}>
-              <Typography fontWeight={700}>Позиции заказа</Typography>
-              {context.positions?.map((position) => (
-                <JacoSurface
-                  key={position.position_key}
-                  sx={{ p: 1.5 }}
+    <>
+      <JacoResponsiveModalShell
+        open={Boolean(selected)}
+        onClose={requestClose}
+        title="Регистрация жалобы"
+        maxWidth="md"
+        actions={actions}
+        mobilePaperSx={{ height: "100vh", maxHeight: "100vh", borderRadius: 0 }}
+        mobileContentSx={{ px: 2, py: 2.5 }}
+        mobileActionsSx={{ px: 2, pt: 1.5, pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+      >
+        <Stack spacing={2.5}>
+          {message ? <Alert severity="error">{message}</Alert> : null}
+          {loading ? (
+            <Box sx={{ display: "grid", placeItems: "center", minHeight: 240 }}>
+              <CircularProgress />
+            </Box>
+          ) : context ? (
+            <>
+              <JacoSurface sx={{ p: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
                 >
-                  <Stack
-                    direction="row"
-                    gap={1}
-                    sx={{ alignItems: "center", justifyContent: "space-between" }}
+                  Заказ №{orderId(selected)}
+                </Typography>
+                <Typography
+                  fontWeight={700}
+                  mt={0.5}
+                >
+                  Кафе: {cafeContext}
+                </Typography>
+              </JacoSurface>
+              <Stack spacing={1.25}>
+                <Typography fontWeight={700}>Позиции заказа</Typography>
+                {context.positions?.map((position, positionIndex) => (
+                  <JacoSurface
+                    key={position.position_key}
+                    sx={{ p: 1.5 }}
                   >
-                    <Box>
-                      <Typography fontWeight={600}>{position.name}</Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                      >
-                        {position.total_count} шт.
-                      </Typography>
-                    </Box>
-                    <JacoButton
-                      compact
-                      tone="outlinePrimary"
-                      startIcon={<AddIcon />}
-                      onClick={() => addError(position)}
+                    <Stack
+                      direction="row"
+                      gap={1}
+                      sx={{ alignItems: "center", justifyContent: "space-between" }}
                     >
-                      Ошибка
-                    </JacoButton>
-                  </Stack>
-                </JacoSurface>
-              ))}
-            </Stack>
+                      <Box>
+                        <Typography fontWeight={600}>
+                          Позиция №{positionIndex + 1}: {position.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          {position.total_count} шт.
+                        </Typography>
+                      </Box>
+                      <JacoButton
+                        compact
+                        tone="outlinePrimary"
+                        startIcon={<AddIcon />}
+                        onClick={() => addError(position)}
+                      >
+                        Ошибка
+                      </JacoButton>
+                    </Stack>
+                  </JacoSurface>
+                ))}
+              </Stack>
+              <JacoButton
+                tone="outlinePrimary"
+                startIcon={<AddIcon />}
+                onClick={addOrderError}
+              >
+                Добавить ошибку заказа
+              </JacoButton>
+              <Stack spacing={1.5}>
+                {errors.map((error, index) => (
+                  <ErrorEditor
+                    key={`${error.position_key || "order"}-${index}`}
+                    value={error}
+                    positions={context.positions || []}
+                    positionNumber={
+                      (context.positions || []).findIndex(
+                        (item) => item.position_key === error.position_key,
+                      ) + 1
+                    }
+                    catalog={context.catalog || []}
+                    solutions={context.solutions || []}
+                    stages={context.stages || []}
+                    onChange={(next) =>
+                      setErrors((previous) =>
+                        previous.map((item, itemIndex) => (itemIndex === index ? next : item)),
+                      )
+                    }
+                    onRemove={() =>
+                      setErrors((previous) =>
+                        previous.filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                  />
+                ))}
+              </Stack>
+              {!canSave ? (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  {errors.length === 0
+                    ? "Добавьте ошибку блюда или заказа."
+                    : "Для каждой ошибки выберите категорию, тип, ошибку и этап. Если требуется, укажите продукт из состава."}
+                </Typography>
+              ) : null}
+              <JacoTextInput
+                fullWidth
+                multiline
+                minRows={3}
+                label="Общий комментарий"
+                value={comment}
+                onChange={(event) => setComment(event.target.value)}
+              />
+            </>
+          ) : null}
+        </Stack>
+      </JacoResponsiveModalShell>
+      <JacoModal
+        open={confirmClose}
+        onClose={() => setConfirmClose(false)}
+        title="Закрыть регистрацию?"
+        maxWidth="xs"
+        actions={
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ justifyContent: "flex-end", width: "100%" }}
+          >
             <JacoButton
               tone="outlinePrimary"
-              startIcon={<AddIcon />}
-              onClick={addOrderError}
+              onClick={() => setConfirmClose(false)}
             >
-              Добавить ошибку заказа
+              Продолжить
             </JacoButton>
-            <Stack spacing={1.5}>
-              {errors.map((error, index) => (
-                <ErrorEditor
-                  key={`${error.position_key || "order"}-${index}`}
-                  value={error}
-                  positions={context.positions || []}
-                  catalog={context.catalog || []}
-                  solutions={context.solutions || []}
-                  stages={context.stages || []}
-                  onChange={(next) =>
-                    setErrors((previous) =>
-                      previous.map((item, itemIndex) => (itemIndex === index ? next : item)),
-                    )
-                  }
-                  onRemove={() =>
-                    setErrors((previous) => previous.filter((_, itemIndex) => itemIndex !== index))
-                  }
-                />
-              ))}
-            </Stack>
-            <JacoTextInput
-              fullWidth
-              multiline
-              minRows={3}
-              label="Общий комментарий"
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-            />
-          </>
-        ) : null}
-      </Stack>
-    </JacoResponsiveModalShell>
+            <JacoButton
+              onClick={() => {
+                setConfirmClose(false);
+                onClose();
+              }}
+            >
+              Закрыть без сохранения
+            </JacoButton>
+          </Stack>
+        }
+      >
+        <Typography>Несохранённые ошибки и комментарий будут потеряны.</Typography>
+      </JacoModal>
+    </>
   );
 }
 function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, points }) {
@@ -558,6 +644,13 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                 Жалоба №{complaint?.id}
               </Typography>
               <Typography color="text.secondary">Заказ №{complaint?.order_id}</Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {historyTimestamp(complaint?.created_at)} ·{" "}
+                {complaintSourceLabel(complaint?.source)}
+              </Typography>
             </Box>
             <JacoIconButton
               aria-label="Закрыть жалобу"
@@ -580,6 +673,18 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                     label="Статус"
                     value={complaintStatusLabel(detail)}
                     emphasized
+                  />
+                  <DetailField
+                    label="Канал"
+                    value={complaintSourceLabel(detail.source)}
+                  />
+                  <DetailField
+                    label="Дата регистрации"
+                    value={historyTimestamp(detail.created_at)}
+                  />
+                  <DetailField
+                    label="Кафе"
+                    value={cafeContext}
                   />
                   <DetailField
                     label="Общий комментарий"
@@ -693,11 +798,13 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                     sx={{ p: 1.5, ...surfaceSx }}
                   >
                     <Stack spacing={0.75}>
-                      <DetailField
-                        label="Ошибка"
-                        value={item.error_name}
-                        emphasized
-                      />
+                      {item.position_name ? (
+                        <DetailField
+                          label="Позиция заказа"
+                          value={item.position_name}
+                          emphasized
+                        />
+                      ) : null}
                       <DetailField
                         label="Категория"
                         value={item.category_name}
@@ -708,6 +815,11 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
                           value={item.error_type_name}
                         />
                       ) : null}
+                      <DetailField
+                        label="Ошибка"
+                        value={item.error_name}
+                        emphasized
+                      />
                       <DetailField
                         label="Этап"
                         value={item.stage_name}
@@ -935,7 +1047,9 @@ function ErrorsManagement() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
   const [orders, setOrders] = useState([]);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [complaints, setComplaints] = useState([]);
+  const [complaintsLoaded, setComplaintsLoaded] = useState(false);
   const [complaintsPage, setComplaintsPage] = useState(0);
   const [complaintsPerPage, setComplaintsPerPage] = useState(25);
   const [complaintsTotal, setComplaintsTotal] = useState(0);
@@ -945,6 +1059,7 @@ function ErrorsManagement() {
   const [tableOrderIdSearch, setTableOrderIdSearch] = useState("");
   const [tab, setTab] = useState("journal");
   const [statistics, setStatistics] = useState(null);
+  const [statisticsLoaded, setStatisticsLoaded] = useState(false);
   const [statisticsDraft, setStatisticsDraft] = useState(DEFAULT_FILTERS);
   const [statisticsApplied, setStatisticsApplied] = useState(DEFAULT_FILTERS);
   const [ready, setReady] = useState(false);
@@ -955,6 +1070,8 @@ function ErrorsManagement() {
   );
   const loadOrders = useCallback(
     async (nextFilters) => {
+      setOrdersLoaded(false);
+      setMessage("");
       setLoading(true);
       try {
         const orderNumber = nextFilters.orderNumber.trim();
@@ -975,6 +1092,7 @@ function ErrorsManagement() {
         });
         const payload = response?.data ?? response;
         setOrders(Array.isArray(payload?.orders) ? payload.orders : []);
+        setOrdersLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -988,6 +1106,8 @@ function ErrorsManagement() {
       perPage = complaintsPerPage,
       sort = complaintsSort,
     ) => {
+      setComplaintsLoaded(false);
+      setMessage("");
       setLoading(true);
       try {
         const orderNumber = nextFilters.orderNumber.trim();
@@ -1007,6 +1127,7 @@ function ErrorsManagement() {
         const payload = response?.data ?? response;
         setComplaints(Array.isArray(payload?.items) ? payload.items : []);
         setComplaintsTotal(Number(payload?.total || 0));
+        setComplaintsLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -1040,7 +1161,7 @@ function ErrorsManagement() {
     } finally {
       setLoading(false);
     }
-  }, [loadComplaints, loadOrders, request]);
+  }, [request]);
   useEffect(() => {
     setMounted(true);
     bootstrap();
@@ -1068,6 +1189,8 @@ function ErrorsManagement() {
   }, [appliedFilters, loadOrders, ready, tab]);
   const loadStatistics = useCallback(
     async (nextFilters) => {
+      setStatisticsLoaded(false);
+      setMessage("");
       setLoading(true);
       try {
         const response = await request("v2/statistics", {
@@ -1081,6 +1204,7 @@ function ErrorsManagement() {
           },
         });
         setStatistics(response?.data ?? response ?? null);
+        setStatisticsLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -1109,10 +1233,13 @@ function ErrorsManagement() {
   };
   const apply = () => {
     setMessage("");
+    setComplaintsLoaded(false);
+    setOrdersLoaded(false);
     setComplaintsPage(0);
-    setAppliedFilters(filters);
+    setAppliedFilters({ ...filters });
   };
   const changeComplaintsSort = (by) => {
+    setComplaintsLoaded(false);
     setComplaintsPage(0);
     setComplaintsSort((current) => ({
       by,
@@ -1120,6 +1247,7 @@ function ErrorsManagement() {
     }));
   };
   const rows = tab === "journal" ? complaints : orders;
+  const resultsLoaded = tab === "journal" ? complaintsLoaded : ordersLoaded;
   const visibleRows = useMemo(() => {
     const query = tableOrderIdSearch.trim();
     if (!query) return rows;
@@ -1142,7 +1270,10 @@ function ErrorsManagement() {
       setFilters((previous) => ({ ...previous, ...next }));
     }
   };
-  const applyStatistics = () => setStatisticsApplied(statisticsDraft);
+  const applyStatistics = () => {
+    setStatisticsLoaded(false);
+    setStatisticsApplied({ ...statisticsDraft });
+  };
 
   return (
     <Box
@@ -1212,6 +1343,7 @@ function ErrorsManagement() {
               </Grid>
             </JacoSurface>
             <ComplaintOptionsSettings
+              key={filters.pointId || "all"}
               request={request}
               pointId={filters.pointId}
               canEdit={Number(access.errors_management_settings_edit) === 1}
@@ -1232,7 +1364,7 @@ function ErrorsManagement() {
                 spacing={1.5}
                 sx={{ alignItems: "center" }}
               >
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoSelect
                     label="Город"
                     options={cities}
@@ -1242,7 +1374,7 @@ function ErrorsManagement() {
                     onChange={(event) => update("cityId", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoSelect
                     label="Кафе"
                     options={cafes}
@@ -1252,21 +1384,21 @@ function ErrorsManagement() {
                     onChange={(event) => update("pointId", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoDatePicker
                     label="Дата от"
                     value={filters.dateFrom}
                     onChange={(value) => update("dateFrom", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoDatePicker
                     label="Дата до"
                     value={filters.dateTo}
                     onChange={(value) => update("dateTo", value?.format?.("YYYY-MM-DD") || "")}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoTextInput
                     label="Телефон клиента"
                     value={filters.phone}
@@ -1274,7 +1406,7 @@ function ErrorsManagement() {
                     onChange={(event) => update("phone", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoTextInput
                     label="Сумма от"
                     type="number"
@@ -1284,7 +1416,7 @@ function ErrorsManagement() {
                     onChange={(event) => update("amountFrom", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoTextInput
                     label="Сумма до"
                     type="number"
@@ -1294,7 +1426,7 @@ function ErrorsManagement() {
                     onChange={(event) => update("amountTo", event.target.value)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoSelect
                     label="Тип заказа"
                     options={ORDER_TYPE_OPTIONS}
@@ -1307,7 +1439,7 @@ function ErrorsManagement() {
                     }
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
                   <JacoTextInput
                     label="Номер заказа"
                     type="number"
@@ -1321,7 +1453,7 @@ function ErrorsManagement() {
                   />
                 </Grid>
                 <Grid
-                  size={{ xs: 12, sm: 6, md: 2 }}
+                  size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
                   sx={{ display: "flex", alignItems: "flex-end" }}
                 >
                   <JacoButton
@@ -1334,7 +1466,7 @@ function ErrorsManagement() {
                 </Grid>
               </Grid>
             </JacoSurface>
-            {rows.length > 0 ? (
+            {resultsLoaded && rows.length > 0 ? (
               <Box sx={{ width: { xs: "100%", sm: 360 } }}>
                 <JacoSearch
                   label="Поиск в таблице по ID заказа"
@@ -1344,7 +1476,14 @@ function ErrorsManagement() {
                 />
               </Box>
             ) : null}
-            {visibleRows.length === 0 ? (
+            {!resultsLoaded ? (
+              <JacoSurface
+                variant="outlined"
+                sx={{ p: 4, display: "grid", placeItems: "center", ...surfaceSx }}
+              >
+                {message ? null : <CircularProgress aria-label="Загрузка результатов" />}
+              </JacoSurface>
+            ) : visibleRows.length === 0 ? (
               tableOrderIdSearch ? (
                 <JacoSurface
                   variant="outlined"
@@ -1364,7 +1503,7 @@ function ErrorsManagement() {
               <Stack spacing={1.5}>
                 {visibleRows.map((row, index) => (
                   <JacoSurface
-                    key={`${orderId(row)}-${index}`}
+                    key={tab === "journal" ? `complaint-${row.id}` : `${orderId(row)}-${index}`}
                     variant="outlined"
                     sx={{ p: 2, ...surfaceSx }}
                   >
@@ -1373,7 +1512,12 @@ function ErrorsManagement() {
                         direction="row"
                         sx={{ justifyContent: "space-between", alignItems: "center" }}
                       >
-                        <Typography fontWeight={700}>Заказ №{orderId(row)}</Typography>
+                        <Box>
+                          {tab === "journal" ? (
+                            <Typography fontWeight={700}>Жалоба №{row.id}</Typography>
+                          ) : null}
+                          <Typography fontWeight={700}>Заказ №{orderId(row)}</Typography>
+                        </Box>
                         <Chip
                           size="small"
                           color={row.status === "resolved" ? "success" : "warning"}
@@ -1384,9 +1528,12 @@ function ErrorsManagement() {
                           }
                         />
                       </Stack>
-                      <Typography color="text.secondary">
-                        Кафе: {row.cafe_name || row.point_id || "—"}
-                      </Typography>
+                      <Typography color="text.secondary">Кафе: {cafeLabel(row, points)}</Typography>
+                      {tab === "journal" ? (
+                        <Typography color="text.secondary">
+                          {historyTimestamp(row.created_at)} · {complaintSourceLabel(row.source)}
+                        </Typography>
+                      ) : null}
                       {tab === "journal" ? (
                         <Typography color="text.secondary">
                           Ошибок: {row.errors_count ?? "—"} · Сумма:{" "}
@@ -1450,6 +1597,27 @@ function ErrorsManagement() {
                                 onClick={() => changeComplaintsSort("order_id")}
                               >
                                 Заказ
+                              </TableSortLabel>
+                            </TableCell>
+                            <TableCell>№ жалобы</TableCell>
+                            <TableCell>Канал</TableCell>
+                            <TableCell
+                              sortDirection={
+                                complaintsSort.by === "created_at"
+                                  ? complaintsSort.direction
+                                  : false
+                              }
+                            >
+                              <TableSortLabel
+                                active={complaintsSort.by === "created_at"}
+                                direction={
+                                  complaintsSort.by === "created_at"
+                                    ? complaintsSort.direction
+                                    : "desc"
+                                }
+                                onClick={() => changeComplaintsSort("created_at")}
+                              >
+                                Дата жалобы
                               </TableSortLabel>
                             </TableCell>
                             <TableCell>Кафе</TableCell>
@@ -1530,12 +1698,21 @@ function ErrorsManagement() {
                       {visibleRows.map((row, index) => (
                         <TableRow
                           hover
-                          key={`${orderId(row)}-${index}`}
+                          key={
+                            tab === "journal" ? `complaint-${row.id}` : `${orderId(row)}-${index}`
+                          }
                           onClick={tab === "journal" ? () => setSelectedComplaint(row) : undefined}
                           sx={tab === "journal" ? { cursor: "pointer" } : undefined}
                         >
                           <TableCell>№{orderId(row)}</TableCell>
-                          <TableCell>{row.cafe_name || row.point_id || "—"}</TableCell>
+                          {tab === "journal" ? (
+                            <>
+                              <TableCell>№{row.id}</TableCell>
+                              <TableCell>{complaintSourceLabel(row.source)}</TableCell>
+                              <TableCell>{historyTimestamp(row.created_at)}</TableCell>
+                            </>
+                          ) : null}
+                          <TableCell>{cafeLabel(row, points)}</TableCell>
                           {tab === "journal" ? (
                             <>
                               <TableCell>{row.order_snapshot?.client_name || "—"}</TableCell>
@@ -1707,152 +1884,169 @@ function ErrorsManagement() {
                 </Grid>
               </Grid>
             </JacoSurface>
-            <Grid
-              container
-              spacing={2}
-            >
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <JacoSurface
-                  variant="outlined"
-                  sx={{ p: 2.5, ...surfaceSx }}
-                >
-                  <Typography color="text.secondary">Заказов с ошибками</Typography>
-                  <Typography
-                    variant="h4"
-                    fontWeight={700}
-                  >
-                    {statistics?.unique_orders ?? "—"}
-                  </Typography>
-                </JacoSurface>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <JacoSurface
-                  variant="outlined"
-                  sx={{ p: 2.5, ...surfaceSx }}
-                >
-                  <Typography color="text.secondary">Всего ошибок</Typography>
-                  <Typography
-                    variant="h4"
-                    fontWeight={700}
-                  >
-                    {statistics?.total_errors ?? "—"}
-                  </Typography>
-                </JacoSurface>
-              </Grid>
-            </Grid>
-            <JacoSurface
-              variant="outlined"
-              sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
-            >
-              <Typography
-                fontWeight={700}
-                mb={1.5}
+            {!statisticsLoaded ? (
+              <JacoSurface
+                variant="outlined"
+                sx={{ p: 4, display: "grid", placeItems: "center", ...surfaceSx }}
               >
-                По источнику
-              </Typography>
-              {(statistics?.by_source || []).length === 0 ? (
-                <Typography color="text.secondary">За выбранные фильтры данных нет.</Typography>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Источник</TableCell>
-                      <TableCell align="right">Заказов</TableCell>
-                      <TableCell align="right">Ошибок</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(statistics?.by_source || []).map((row) => (
-                      <TableRow key={row.source}>
-                        <TableCell>{row.source === "cafe" ? "Кафе" : "Контакт-центр"}</TableCell>
-                        <TableCell align="right">{row.unique_orders}</TableCell>
-                        <TableCell align="right">{row.total_errors}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </JacoSurface>
-            <JacoSurface
-              variant="outlined"
-              sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
-            >
-              <Typography
-                fontWeight={700}
-                mb={1.5}
-              >
-                Категории и типы ошибок
-              </Typography>
-              {(statistics?.categories || []).length === 0 ? (
-                <Typography color="text.secondary">За выбранные фильтры данных нет.</Typography>
-              ) : (
-                (statistics?.categories || []).map((category) => (
-                  <Accordion
-                    key={category.name}
-                    disableGutters
-                    elevation={0}
-                    sx={{ borderTop: 1, borderColor: "divider", "&:before": { display: "none" } }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Grid
-                        container
-                        sx={{ width: "100%", alignItems: "center" }}
+                {message ? null : <CircularProgress aria-label="Загрузка статистики" />}
+              </JacoSurface>
+            ) : (
+              <>
+                <Grid
+                  container
+                  spacing={2}
+                >
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <JacoSurface
+                      variant="outlined"
+                      sx={{ p: 2.5, ...surfaceSx }}
+                    >
+                      <Typography color="text.secondary">Заказов с ошибками</Typography>
+                      <Typography
+                        variant="h4"
+                        fontWeight={700}
                       >
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Typography fontWeight={700}>{category.name}</Typography>
-                        </Grid>
-                        <Grid size={{ xs: 4, sm: 2 }}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            Заказов: {category.unique_orders}
-                          </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 4, sm: 2 }}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            Ошибок: {category.total_errors}
-                          </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 4, sm: 2 }}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            {category.share}%
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Тип ошибки</TableCell>
-                            <TableCell align="right">Заказов</TableCell>
-                            <TableCell align="right">Ошибок</TableCell>
-                            <TableCell align="right">Доля</TableCell>
+                        {statistics?.unique_orders ?? "—"}
+                      </Typography>
+                    </JacoSurface>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <JacoSurface
+                      variant="outlined"
+                      sx={{ p: 2.5, ...surfaceSx }}
+                    >
+                      <Typography color="text.secondary">Всего ошибок</Typography>
+                      <Typography
+                        variant="h4"
+                        fontWeight={700}
+                      >
+                        {statistics?.total_errors ?? "—"}
+                      </Typography>
+                    </JacoSurface>
+                  </Grid>
+                </Grid>
+                <JacoSurface
+                  variant="outlined"
+                  sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
+                >
+                  <Typography
+                    fontWeight={700}
+                    mb={1.5}
+                  >
+                    По источнику
+                  </Typography>
+                  {(statistics?.by_source || []).length === 0 ? (
+                    <Typography color="text.secondary">За выбранные фильтры данных нет.</Typography>
+                  ) : (
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Источник</TableCell>
+                          <TableCell align="right">Заказов</TableCell>
+                          <TableCell align="right">Ошибок</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(statistics?.by_source || []).map((row) => (
+                          <TableRow key={row.source}>
+                            <TableCell>
+                              {row.source === "cafe" ? "Кафе" : "Контакт-центр"}
+                            </TableCell>
+                            <TableCell align="right">{row.unique_orders}</TableCell>
+                            <TableCell align="right">{row.total_errors}</TableCell>
                           </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {category.types.map((type) => (
-                            <TableRow key={type.name}>
-                              <TableCell>{type.name}</TableCell>
-                              <TableCell align="right">{type.unique_orders}</TableCell>
-                              <TableCell align="right">{type.total_errors}</TableCell>
-                              <TableCell align="right">{type.share}%</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </AccordionDetails>
-                  </Accordion>
-                ))
-              )}
-            </JacoSurface>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </JacoSurface>
+                <JacoSurface
+                  variant="outlined"
+                  sx={{ p: { xs: 2, md: 2.5 }, ...surfaceSx }}
+                >
+                  <Typography
+                    fontWeight={700}
+                    mb={1.5}
+                  >
+                    Категории и типы ошибок
+                  </Typography>
+                  {(statistics?.categories || []).length === 0 ? (
+                    <Typography color="text.secondary">За выбранные фильтры данных нет.</Typography>
+                  ) : (
+                    (statistics?.categories || []).map((category) => (
+                      <Accordion
+                        key={category.name}
+                        disableGutters
+                        elevation={0}
+                        sx={{
+                          borderTop: 1,
+                          borderColor: "divider",
+                          "&:before": { display: "none" },
+                        }}
+                      >
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Grid
+                            container
+                            sx={{ width: "100%", alignItems: "center" }}
+                          >
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                              <Typography fontWeight={700}>{category.name}</Typography>
+                            </Grid>
+                            <Grid size={{ xs: 4, sm: 2 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                Заказов: {category.unique_orders}
+                              </Typography>
+                            </Grid>
+                            <Grid size={{ xs: 4, sm: 2 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                Ошибок: {category.total_errors}
+                              </Typography>
+                            </Grid>
+                            <Grid size={{ xs: 4, sm: 2 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {category.share}%
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Тип ошибки</TableCell>
+                                <TableCell align="right">Заказов</TableCell>
+                                <TableCell align="right">Ошибок</TableCell>
+                                <TableCell align="right">Доля</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {category.types.map((type) => (
+                                <TableRow key={type.name}>
+                                  <TableCell>{type.name}</TableCell>
+                                  <TableCell align="right">{type.unique_orders}</TableCell>
+                                  <TableCell align="right">{type.total_errors}</TableCell>
+                                  <TableCell align="right">{type.share}%</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))
+                  )}
+                </JacoSurface>
+              </>
+            )}
           </Stack>
         )}
       </Stack>
