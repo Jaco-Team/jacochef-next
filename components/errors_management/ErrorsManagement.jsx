@@ -1323,7 +1323,6 @@ function ErrorsManagement() {
         {message ? <Alert severity="error">{message}</Alert> : null}
         <JacoSegmentedTabs
           size="compact"
-          sx={{ minHeight: 42 }}
           value={tab}
           onChange={(_, value) => setTab(value)}
           variant={mobile ? "scrollable" : "fullWidth"}
