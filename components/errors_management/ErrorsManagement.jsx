@@ -1893,7 +1893,7 @@ function ErrorsManagement() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <JacoSelect
-                    label="Сотрудник"
+                    label="Зарегистрировал"
                     options={statistics?.employees || []}
                     value={statisticsDraft.employeeId || ""}
                     multiple={false}
