@@ -117,6 +117,34 @@ test("order error is valid without position and rejects dish category", () => {
   );
 });
 
+test("cutlery requires its own saved order position", () => {
+  const cutleryCatalog = [
+    { id: 1, kind: "category", is_active: 1, rules: { object_types: ["cutlery"] } },
+    { id: 2, kind: "error_type", parent_id: 1, is_active: 1 },
+    { id: 3, kind: "error", parent_id: 2, is_active: 1, rules: { stage_ids: [20] } },
+  ];
+  const draft = { ...classifierDraft(cutleryCatalog, "cutlery", "cutlery:300"), stage_id: "20" };
+
+  assert.equal(
+    validComplaintError(
+      draft,
+      cutleryCatalog,
+      [{ position_key: "cutlery:300", type: "cutlery" }],
+      stages,
+    ),
+    true,
+  );
+  assert.equal(
+    validComplaintError(
+      draft,
+      cutleryCatalog,
+      [{ position_key: "cutlery:300", type: "dish" }],
+      stages,
+    ),
+    false,
+  );
+});
+
 test("inactive classifier nodes are not auto-selected or accepted", () => {
   const inactiveCategory = catalog.map((node) =>
     node.id === 1 ? { ...node, is_active: 0 } : node,

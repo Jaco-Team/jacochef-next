@@ -63,7 +63,7 @@ export function validComplaintError(error, catalog, positions, stages) {
   const position = positions.find((item) => item.position_key === error.position_key);
   const objectValid =
     category?.rules?.object_types?.includes(error.object_type) &&
-    (["dish", "extra", "delivery"].includes(error.object_type)
+    (["dish", "extra", "cutlery", "delivery"].includes(error.object_type)
       ? position?.type === error.object_type
       : !error.position_key);
   const ingredientValid =

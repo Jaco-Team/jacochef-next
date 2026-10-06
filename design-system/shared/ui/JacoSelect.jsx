@@ -154,12 +154,14 @@ export default function JacoSelect({
                 ...menuSx,
               },
             },
-          },
-          MenuListProps: {
-            ...providedMenuProps?.MenuListProps,
-            sx: {
-              py: 0,
-              ...providedMenuProps?.MenuListProps?.sx,
+            list: {
+              ...providedMenuProps?.MenuListProps,
+              ...providedMenuProps?.slotProps?.list,
+              sx: {
+                py: 0,
+                ...providedMenuProps?.MenuListProps?.sx,
+                ...providedMenuProps?.slotProps?.list?.sx,
+              },
             },
           },
         }}
