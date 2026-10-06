@@ -526,6 +526,76 @@ function ClassifierTree({ nodes, pointId, onEdit, onCreate, onHistory, onToggle 
   );
 }
 
+function InactiveCatalogGroups({ nodes, onEdit, onHistory, onToggle }) {
+  const groups = [
+    { kind: "category", label: "Категории" },
+    { kind: "error_type", label: "Типы ошибок" },
+    { kind: "error", label: "Ошибки" },
+    { kind: "stage", label: "Этапы возникновения ошибки" },
+    { kind: "solution", label: "Варианты решения" },
+  ];
+
+  return (
+    <Stack spacing={1.5}>
+      {groups.map((group) => {
+        const groupNodes = sortNodes(nodesOf(nodes, group.kind));
+        return (
+          <Box key={group.kind}>
+            <Typography
+              fontWeight={700}
+              sx={{ mb: 0.75 }}
+            >
+              {group.label} ({groupNodes.length})
+            </Typography>
+            {groupNodes.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Нет неактивных элементов.
+              </Typography>
+            ) : (
+              <Stack spacing={0.75}>
+                {groupNodes.map((node) => (
+                  <JacoSurface
+                    key={node.id}
+                    variant="outlined"
+                    sx={{ p: 1.25, ...SURFACE_SX }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center" }}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Typography>{node.name}</Typography>
+                        {node.description ? (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            {node.description}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                      <CatalogItemActions
+                        node={node}
+                        onEdit={onEdit}
+                        onHistory={onHistory}
+                        onToggle={onToggle}
+                      />
+                    </Stack>
+                  </JacoSurface>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        );
+      })}
+    </Stack>
+  );
+}
+
 function FlatDirectory({ kind, nodes, pointId, onEdit, onCreate, onHistory, onToggle }) {
   const label = kind === "stage" ? "Этапы возникновения ошибки" : "Варианты решения";
   const addLabel = kind === "stage" ? "Добавить этап" : "Добавить решение";
@@ -723,35 +793,12 @@ export default function ComplaintOptionsSettings({ request, pointId, canEdit }) 
               <Typography fontWeight={700}>Неактивные варианты ({inactiveNodes.length})</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Stack spacing={1}>
-                {inactiveNodes.length === 0 ? (
-                  <Typography color="text.secondary">Нет неактивных вариантов.</Typography>
-                ) : null}
-                {sortNodes(inactiveNodes).map((node) => (
-                  <Stack
-                    key={node.id}
-                    direction="row"
-                    spacing={1}
-                    sx={{ alignItems: "center" }}
-                  >
-                    <Box sx={{ flex: 1 }}>
-                      <Typography>{node.name}</Typography>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        {node.kind}
-                      </Typography>
-                    </Box>
-                    <CatalogItemActions
-                      node={node}
-                      onEdit={canEdit ? (item) => openEditor(item) : null}
-                      onHistory={setHistory}
-                      onToggle={canEdit ? toggle : null}
-                    />
-                  </Stack>
-                ))}
-              </Stack>
+              <InactiveCatalogGroups
+                nodes={inactiveNodes}
+                onEdit={canEdit ? openEditor : null}
+                onHistory={setHistory}
+                onToggle={canEdit ? toggle : null}
+              />
             </AccordionDetails>
           </Accordion>
         </>
