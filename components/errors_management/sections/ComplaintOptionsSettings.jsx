@@ -55,6 +55,43 @@ function sortNodes(nodes) {
   );
 }
 
+const CATALOG_HISTORY_FIELD_LABELS = {
+  name: "Наименование",
+  description: "Описание",
+  sort_order: "Порядок",
+  is_active: "Активность",
+  "rules.requires_ingredient": "Продукт из состава обязателен",
+  "rules.stage_ids": "Доступные этапы",
+};
+
+function catalogHistoryTimestamp(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  return match ? `${match[3]}.${match[2]}.${match[1]} ${match[4]}:${match[5]}` : "—";
+}
+
+function catalogHistoryValue(value, field) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (field === "is_active") return Boolean(Number(value)) ? "Включено" : "Отключено";
+  if (Array.isArray(value)) return value.join(", ") || "—";
+  return String(value);
+}
+
+function catalogHistoryChanges(item) {
+  try {
+    const diff = JSON.parse(item?.diff_json || "{}");
+    return Object.entries(diff)
+      .filter(([field]) => CATALOG_HISTORY_FIELD_LABELS[field])
+      .map(([field, change]) => ({
+        field,
+        label: CATALOG_HISTORY_FIELD_LABELS[field],
+        from: change?.from,
+        to: change?.to,
+      }));
+  } catch {
+    return [];
+  }
+}
+
 function initialDraft(node, context) {
   return {
     id: node?.id || 0,
@@ -240,23 +277,48 @@ function CatalogHistory({ node, request, onClose }) {
         {!error && items.length === 0 ? (
           <Typography color="text.secondary">Изменений пока нет.</Typography>
         ) : null}
-        {items.map((item) => (
-          <JacoSurface
-            key={item.id}
-            variant="outlined"
-            sx={{ p: 1.5, ...SURFACE_SX }}
-          >
-            <Typography fontWeight={700}>
-              {item.event_type === "create" ? "Создание" : "Изменение"}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
+        {items.map((item) => {
+          const changes = catalogHistoryChanges(item);
+          return (
+            <JacoSurface
+              key={item.id}
+              variant="outlined"
+              sx={{ p: 1.5, ...SURFACE_SX }}
             >
-              {item.actor_name || "Система"} · {item.created_at}
-            </Typography>
-          </JacoSurface>
-        ))}
+              <Typography fontWeight={700}>
+                {item.event_type === "create" ? "Создание" : "Изменение"}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {item.actor_name || "Система"} · {catalogHistoryTimestamp(item.created_at)}
+              </Typography>
+              {changes.length > 0 ? (
+                <Stack
+                  spacing={0.5}
+                  sx={{ mt: 1 }}
+                >
+                  {changes.map((change) => (
+                    <Typography
+                      key={change.field}
+                      variant="body2"
+                    >
+                      <Box
+                        component="span"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        {change.label}:{" "}
+                      </Box>
+                      {catalogHistoryValue(change.from, change.field)} →{" "}
+                      {catalogHistoryValue(change.to, change.field)}
+                    </Typography>
+                  ))}
+                </Stack>
+              ) : null}
+            </JacoSurface>
+          );
+        })}
       </Stack>
     </JacoModal>
   );
