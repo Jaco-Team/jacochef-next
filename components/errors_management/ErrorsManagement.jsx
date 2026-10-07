@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -30,7 +30,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
-import { api_laravel } from "@/src/api_new";
+import useApi from "@/src/hooks/useApi";
 import {
   JacoBackdropLoader,
   JacoButton,
@@ -83,6 +83,7 @@ const ORDER_TYPE_OPTIONS = [
 const STATISTICS_SOURCES = [
   { id: "contact_center", name: "Контакт-центр" },
   { id: "cafe", name: "Кафе" },
+  { id: "legacy", name: "Исторический контур" },
 ];
 const COMPLAINT_HISTORY_FIELDS = {
   status: "Статус",
@@ -1064,6 +1065,9 @@ function ComplaintDrawer({ complaint, onClose, onChanged, request, cities, point
 }
 
 function ErrorsManagement() {
+  const { api_laravel } = useApi(moduleName);
+  const apiRef = useRef(api_laravel);
+  apiRef.current = api_laravel;
   const mobileViewport = useMediaQuery("(max-width:667px)", { noSsr: false });
   const [mounted, setMounted] = useState(false);
   const mobile = mounted && mobileViewport;
@@ -1093,10 +1097,13 @@ function ErrorsManagement() {
   const [statisticsApplied, setStatisticsApplied] = useState(DEFAULT_FILTERS);
   const [ready, setReady] = useState(false);
 
-  const request = useCallback(
-    async (method, data = {}, config = {}) => api_laravel(moduleName, method, data, config),
-    [],
-  );
+  const request = useCallback(async (method, data = {}, config = {}) => {
+    const response = await apiRef.current(method, data, config);
+    if (response?.st === false) {
+      throw new Error(response.text || "Не удалось выполнить запрос.");
+    }
+    return response;
+  }, []);
   const loadOrders = useCallback(
     async (nextFilters) => {
       setOrdersLoaded(false);
@@ -2011,9 +2018,7 @@ function ErrorsManagement() {
                       <TableBody>
                         {(statistics?.by_source || []).map((row) => (
                           <TableRow key={row.source}>
-                            <TableCell>
-                              {row.source === "cafe" ? "Кафе" : "Контакт-центр"}
-                            </TableCell>
+                            <TableCell>{complaintSourceLabel(row.source)}</TableCell>
                             <TableCell align="right">{row.unique_orders}</TableCell>
                             <TableCell align="right">{row.total_errors}</TableCell>
                           </TableRow>

@@ -19,6 +19,7 @@
 
 - This repository uses `Next.js` with the `pages` router, `MUI`, and local Laravel API wrappers.
 - Prefer existing project patterns over introducing new abstractions.
+- New modules and newly migrated module flows must use `useApi("module_key")` with an explicit `NEXT_PUBLIC_API_URL`; do not import or call `src/api_new` directly. `api_new` is legacy compatibility only and must not be extended.
 - When a page already has an established visual language, preserve it instead of redesigning it.
 - Prefer focused changes inside the current module over broad refactors.
 - In Reports cost breakdowns, display product volumes with exactly three decimal places and all monetary values, including purchase prices, with exactly two.
