@@ -12,7 +12,7 @@ function selectValue(event) {
   return event.target.value === "none" ? "" : event.target.value;
 }
 
-export function ErrorEditor({
+export function ComplaintErrorEditor({
   value,
   positions,
   positionNumber,

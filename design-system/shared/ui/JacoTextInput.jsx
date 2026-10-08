@@ -100,7 +100,7 @@ export default function JacoTextInput({
       sx={{
         "& .MuiOutlinedInput-root": {
           minHeight: 44,
-          alignItems: "center",
+          height: isMultiline ? "auto" : 44,
           borderRadius: uiRadii.md,
           backgroundColor: props.disabled ? uiStateColors.disabledSurface : uiColors.surface,
           color: uiColors.text,
@@ -117,12 +117,14 @@ export default function JacoTextInput({
         },
         "& input.MuiInputBase-input": {
           ...uiTypography.body,
-          py: 0,
-          alignSelf: "center",
         },
         "& .MuiInputLabel-root": {
           ...uiTypography.label,
           color: uiColors.textMuted,
+          transform: "translate(14px, 13px) scale(1)",
+          "&.MuiInputLabel-shrink": {
+            transform: "translate(14px, -9px) scale(.75)",
+          },
           "&.Mui-focused": {
             color: uiColors.primary,
           },

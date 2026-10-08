@@ -6,6 +6,7 @@ export { default as JacoCompactTabs } from "./JacoCompactTabs";
 export { useJacoConfirm } from "./JacoConfirm";
 export { default as JacoFieldSwitch } from "./JacoFieldSwitch";
 export { default as JacoIconButton } from "./JacoIconButton";
+export { default as JacoInfoLabel } from "./JacoInfoLabel";
 export { default as JacoModal } from "./JacoModal";
 export { default as JacoPeriodSwitch } from "./JacoPeriodSwitch";
 export { default as JacoResponsiveModalShell } from "./JacoResponsiveModalShell";
