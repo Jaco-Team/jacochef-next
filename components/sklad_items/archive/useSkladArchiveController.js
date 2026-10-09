@@ -18,7 +18,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MySelect } from "@/ui/Forms";
+import { JacoSelect } from "@/design-system/shared/ui";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import useSkladApi from "../useSkladApi";
@@ -293,7 +293,7 @@ export default function useSkladArchiveController({ showAlert }) {
     return (
       <Stack spacing={2}>
         <Paper sx={{ p: 2, borderRadius: 3, maxWidth: 280 }}>
-          <MySelect
+          <JacoSelect
             label="Тип сущности"
             data={ARCHIVE_ENTITY_OPTIONS}
             is_none={false}

@@ -1,4 +1,6 @@
 const { defineConfig, devices } = require("@playwright/test");
+const baseURL = process.env.E2E_BASE_URL || "http://localhost:3000";
+const devPort = Number(new URL(baseURL).port || 3000);
 
 module.exports = defineConfig({
   testDir: "./tests/e2e/sklad-items",
@@ -13,10 +15,13 @@ module.exports = defineConfig({
   workers: 1,
   reporter: [["list"], ["html", { outputFolder: "playwright-report/sklad-items", open: "never" }]],
   use: {
-    baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
+    baseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
+      ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } }
+      : {}),
   },
   projects: [
     {
@@ -36,8 +41,8 @@ module.exports = defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- --hostname localhost --port 3000",
-    url: "http://localhost:3000/sklad_items",
+    command: `npm run dev -- --hostname 127.0.0.1 --port ${devPort}`,
+    url: `${baseURL}/sklad_items`,
     reuseExistingServer: true,
     timeout: 120_000,
   },

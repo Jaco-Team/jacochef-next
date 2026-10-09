@@ -1,14 +1,19 @@
 import dayjs from "dayjs";
-import { computePremiumSheet, toArray } from "./staffScheduleHelpers.js";
+import {
+  computePremiumSheet,
+  computeToPaySum,
+  computeTotalSum,
+  createStaffSchedulePolicy,
+  toArray,
+} from "./staffScheduleHelpers.js";
 import { STAFF_SCHEDULE_HOUR_PRESETS, getHourPresetByType } from "./staffScheduleHourPresets.js";
 import {
   buildMonthSavePayload,
   canEditDayHealth,
   canEditDayPeriod,
   canEditMonthByRole,
-  isMegaOnlyRole,
-  isMegaRole,
-  isPastMonth,
+  isEditableMonthDay,
+  isClosedDayHalfPeriod,
 } from "./staffScheduleModalCore.mjs";
 
 export const STAFF_SCHEDULE_HEALTH_OPTIONS = [
@@ -16,6 +21,23 @@ export const STAFF_SCHEDULE_HEALTH_OPTIONS = [
   { id: 2, name: "Здоров" },
   { id: 3, name: "Больничный лист" },
 ];
+
+const PERSONAL_FINANCE_COLUMN_LABELS = {
+  price_p_h: "За 1ч",
+  given: "Выдано",
+  given_cart: "На карты",
+  withheld: "Удержано",
+  my_bonus: "Бонус",
+};
+
+export function buildSummaryActionHeaderData(row, mode, periodLabel) {
+  return {
+    columnLabel: PERSONAL_FINANCE_COLUMN_LABELS[mode] || "",
+    personName: row?.user_name || "",
+    positionName: row?.full_app_name || row?.app_name || "",
+    periodLabel: periodLabel || "",
+  };
+}
 
 function formatDateLabel(value) {
   if (!value) {
@@ -50,16 +72,26 @@ export function hasMonthModalPayload(response) {
 
 export function buildDayModalViewModel(response, context = {}) {
   const info = response?.h_info ?? {};
+  const policy = createStaffSchedulePolicy(context.access);
+  const showBonus =
+    Boolean(response?.show_bonus) && policy.canShowSalaryBlock && policy.canView("bonus");
   const user = info?.user ?? {};
   const hours = toArray(info?.hours);
   const canEditPeriodFields = canEditDayPeriod({
     date: info?.date,
     roleKind: context?.roleKind,
     checkPeriod: context?.checkPeriod,
+    canEditDay: context?.canEditDay,
+    hasDedicatedDayEdit: context?.hasDedicatedDayEdit,
+    referenceDate: context?.referenceDate,
   });
   const canEditHealthFields = canEditDayHealth({
     date: info?.date,
-    hours,
+    roleKind: context?.roleKind,
+    checkPeriod: context?.checkPeriod,
+    canEditDay: context?.canEditDay,
+    hasDedicatedDayEdit: context?.hasDedicatedDayEdit,
+    referenceDate: context?.referenceDate,
   });
 
   return {
@@ -68,14 +100,16 @@ export function buildDayModalViewModel(response, context = {}) {
     personName: user?.user_name || "",
     positionName: user?.app_name || "",
     dateLabel: info?.date || formatDateLabel(info?.date),
+    date: info?.date || "",
+    isPastPeriod: isClosedDayHalfPeriod(info?.date, context?.referenceDate),
     loadTime: user?.my_load_h ?? "",
     averageLoadTime: user?.all_load_h ?? "",
-    bonusValue: response?.show_bonus ? (user?.bonus ?? "") : "",
+    bonusValue: showBonus ? (user?.bonus ?? "") : "",
     loadLabel:
       user?.my_load_h || user?.all_load_h
         ? `${user?.my_load_h ?? "—"} / ${user?.all_load_h ?? "—"}`
         : "",
-    bonusLabel: response?.show_bonus ? (user?.bonus ?? "") : "",
+    bonusLabel: showBonus ? (user?.bonus ?? "") : "",
     newApp: info?.new_app ?? "",
     mentorId: info?.mentor_id ?? "",
     userTemp: info?.user_temp ?? "",
@@ -120,32 +154,19 @@ export function buildMonthModalViewModel(response, context = {}) {
   const user = info?.user ?? {};
   const row = context?.rowData ?? {};
   const periodDays = toArray(context?.periodDays);
-  const canEditMonth = canEditMonthByRole({
-    roleKind: context?.roleKind,
-    monthId: context?.monthId,
-  });
+  const policy = createStaffSchedulePolicy(context.access);
+  const canEditMonth =
+    policy.canOpenMonthCard &&
+    canEditMonthByRole({
+      monthId: context?.monthId,
+    });
   const source = {
     ...row,
     ...user,
   };
-  const rowTotalSum = row?.total_sum;
-  const rowToPaySum = row?.to_pay_sum;
-  const totalSum =
-    rowTotalSum !== undefined && rowTotalSum !== ""
-      ? Number(rowTotalSum)
-      : Number(source?.dop_bonus ?? 0) +
-        Number(source?.dir_price ?? 0) +
-        Number(source?.register_price ?? 0) +
-        Number(source?.dir_price_dop ?? 0) +
-        Number(source?.h_price ?? 0) +
-        Number(source?.my_bonus ?? 0) -
-        Number(source?.err_price ?? 0);
-  const toPaySum =
-    rowToPaySum !== undefined && rowToPaySum !== ""
-      ? Number(rowToPaySum)
-      : source?.app_type === "driver"
-        ? ""
-        : totalSum - Number(source?.given_cart ?? 0) - Number(source?.withheld ?? 0);
+  const totalSum = computeTotalSum(source);
+  const toPaySum = computeToPaySum(source);
+  const canViewFinance = (key) => policy.canShowSalaryBlock && policy.canView(key);
 
   return {
     title: [source?.app_name, source?.user_name].filter(Boolean).join(" "),
@@ -163,17 +184,17 @@ export function buildMonthModalViewModel(response, context = {}) {
       name: item?.name ?? "",
     })),
     summary: {
-      ratePerHour: source?.price_p_h ?? "",
-      ratePerHourExtra: source?.price_p_h_dop ?? "",
-      hoursTotal: source?.h_price ?? "",
-      errors: source?.err_price ?? "",
-      withheld: source?.withheld ?? "",
-      toPay: toPaySum,
-      bonuses: source?.my_bonus ?? 0,
-      total: totalSum,
-      givenCash: source?.given_cash ?? source?.given ?? "",
-      transferred: source?.given_cart ?? "",
-      premiumSheet: computePremiumSheet(source),
+      ratePerHour: canViewFinance("1h") ? (source?.price_p_h ?? "") : "",
+      ratePerHourExtra: canViewFinance("1h_plus") ? (source?.price_p_h_dop ?? "") : "",
+      hoursTotal: canViewFinance("full_h") ? (source?.h_price ?? "") : "",
+      errors: canViewFinance("errors") ? (source?.err_price ?? "") : "",
+      withheld: canViewFinance("withheld") ? (source?.withheld ?? "") : "",
+      toPay: canViewFinance("test_all_price") ? toPaySum : "",
+      bonuses: canViewFinance("bonus") ? (source?.my_bonus ?? 0) : "",
+      total: canViewFinance("all_price") ? totalSum : "",
+      givenCash: canViewFinance("given") ? (source?.given_cash ?? source?.given ?? "") : "",
+      transferred: canViewFinance("given_cart") ? (source?.given_cart ?? "") : "",
+      premiumSheet: canViewFinance("premia") ? computePremiumSheet(source) : "",
     },
     overviewDays: toArray(row?.dates).map((item, index) => {
       const periodDay = periodDays[index] ?? {};
@@ -190,6 +211,11 @@ export function buildMonthModalViewModel(response, context = {}) {
       };
     }),
     canEditMonth,
+    hasPeriodSummary: context?.hasPeriodSummary !== false,
+    recentCustomHours: toArray(response?.recent_custom_hours).map((item) => ({
+      time_start: item?.time_start ?? "",
+      time_end: item?.time_end ?? "",
+    })),
     days: toArray(response?.hours_days).map((item, index) => ({
       id: `${item?.date || "date"}-${index}`,
       date: item?.date ?? "",
@@ -258,4 +284,4 @@ export function toggleMonthDay(draft, date, selectedType) {
   };
 }
 
-export { buildMonthSavePayload };
+export { buildMonthSavePayload, canEditMonthByRole, isEditableMonthDay };

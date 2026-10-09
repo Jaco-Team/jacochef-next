@@ -8,6 +8,7 @@ const DEFAULT_OPTIONS = {
   title: "Предупреждение",
   message: "Подтвердите действие",
   cancelLabel: "Нет",
+  cancelTone: "secondary",
   confirmLabel: "ОК",
   tone: "danger",
   confirmTone: "secondary",
@@ -86,7 +87,7 @@ export function useJacoConfirm() {
         actions={
           <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, width: "100%" }}>
             <JacoButton
-              tone="secondary"
+              tone={state.cancelTone}
               compact
               autoFocus={state.confirmTone === "danger"}
               onClick={handleCancel}

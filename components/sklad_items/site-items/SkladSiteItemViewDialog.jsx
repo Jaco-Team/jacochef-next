@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
@@ -29,7 +29,7 @@ import {
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabPanel from "@mui/lab/TabPanel";
-import MyModal from "@/ui/MyModal";
+import { JacoAlert, JacoModal } from "@/design-system/shared/ui";
 import {
   SkladEmbeddedHistoryTable,
   SkladEmbeddedImageHistoryTable,
@@ -38,6 +38,11 @@ import { formatDateRangeRU } from "../formatDateRangeRU";
 import SkladInfoField from "../ui/SkladInfoField";
 import SkladSectionCard from "../ui/SkladSectionCard";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
+import {
+  getSiteItemImageFileError,
+  SITE_ITEM_IMAGE_ACCEPT,
+  SITE_ITEM_IMAGE_HELP,
+} from "./siteItemImageUpload";
 
 function formatValue(value, fallback = "-") {
   if (value === null || value === undefined || value === "") {
@@ -245,6 +250,8 @@ export default function SkladSiteItemViewDialog({
   onClose,
 }) {
   const fileInputRef = useRef(null);
+  const [uploadFileError, setUploadFileError] = useState("");
+  useEffect(() => setUploadFileError(""), [open, detail?.id]);
   const imageUrl = resolveSiteItemImageUrl(detail?.image, detail?.img_app);
   const isVisible = detail?.is_show ?? 0;
 
@@ -270,15 +277,18 @@ export default function SkladSiteItemViewDialog({
   const handleFileChange = (event) => {
     const file = event.target.files?.[0];
 
-    if (file) {
-      onUploadImage?.(file);
+    if (file && isEditable) {
+      const fileError = getSiteItemImageFileError(file);
+      setUploadFileError(fileError);
+      if (!fileError) onUploadImage?.(file);
     }
 
     event.target.value = "";
   };
 
   return (
-    <MyModal
+    <JacoModal
+      contentWrapper={false}
       open={open}
       onClose={onClose}
       maxWidth="lg"
@@ -290,7 +300,7 @@ export default function SkladSiteItemViewDialog({
           ref={fileInputRef}
           hidden
           type="file"
-          accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+          accept={SITE_ITEM_IMAGE_ACCEPT}
           onChange={handleFileChange}
         />
         {loading ? (
@@ -897,9 +907,12 @@ export default function SkladSiteItemViewDialog({
                 <Stack spacing={2.5}>
                   <SkladSectionCard
                     title="Изображение товара"
-                    subtitle="Текущее изображение и доступные действия"
+                    subtitle={`Текущее изображение и доступные действия. ${SITE_ITEM_IMAGE_HELP}`}
                   >
                     <Stack spacing={2}>
+                      {uploadFileError ? (
+                        <JacoAlert severity="error">{uploadFileError}</JacoAlert>
+                      ) : null}
                       {imageUrl ? (
                         <Box
                           component="img"
@@ -985,6 +998,6 @@ export default function SkladSiteItemViewDialog({
           </TabContext>
         )}
       </DialogContent>
-    </MyModal>
+    </JacoModal>
   );
 }

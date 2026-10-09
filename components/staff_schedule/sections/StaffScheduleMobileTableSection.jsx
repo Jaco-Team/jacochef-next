@@ -24,14 +24,29 @@ import {
   uiColors,
   uiTableColors,
 } from "@/design-system/shared/ui";
-import { CONTROL_RADIUS, DAY_COLUMN_WIDTH } from "../staffScheduleConstants";
-import { getRowBaseColor, getSummaryCellValue, toArray } from "../staffScheduleHelpers";
-import { getHolidayStripeSx } from "../staffSchedulePatterns";
+import { CONTROL_RADIUS, SUMMARY_COLUMN_WIDTH } from "../staffScheduleConstants";
+import {
+  formatEmployeeCount,
+  getRowBaseColor,
+  getScheduleRowFocusKey,
+  getSummaryCellValue,
+  toArray,
+} from "../staffScheduleHelpers";
+import {
+  getHolidayStripeSx,
+  staffScheduleHeaderActionSx,
+  staffScheduleFinancialValueStyle,
+  staffScheduleFinancialFocusSx,
+} from "../staffSchedulePatterns";
+import {
+  canEditStaffScheduleBonus,
+  canEditStaffScheduleFinanceValue,
+} from "../staffScheduleAccess.mjs";
 
 const MOBILE_SELECTION_COLUMN_WIDTH = 34;
 const MOBILE_EMPLOYEE_COLUMN_WIDTH = 150;
-const MOBILE_SUMMARY_LABEL_WIDTH = MOBILE_SELECTION_COLUMN_WIDTH + MOBILE_EMPLOYEE_COLUMN_WIDTH;
-const MOBILE_SUMMARY_COLUMN_WIDTH = 76;
+const MOBILE_DAY_COLUMN_WIDTH = 76;
+const MOBILE_SUMMARY_COLUMN_WIDTH = SUMMARY_COLUMN_WIDTH;
 const MOBILE_CARD_BORDER = "1px solid #ECECEC";
 const MOBILE_CARD_RADIUS = "14px";
 const MOBILE_MIN_FONT_SIZE = 13;
@@ -116,6 +131,7 @@ function buildMobileShiftGroups(rows) {
         shiftId: row?.__shiftId || `shift-${index}`,
         smenaId: row?.__smenaId || row?.smena_id,
         label: row?.data || "Смена",
+        employeeCount: row?.__employeeCount,
         rows: [],
       });
       return groups;
@@ -148,23 +164,31 @@ function MobileScheduleRow({
   canOpenMonth,
   canOpenDayEdit,
   canEditTeamBonus,
+  canEdit,
+  selectedPart,
+  onOpenSummaryAction,
   onChangeTeamBonusForUser,
   periodBonusState,
   hideSelectionColumn,
+  focusedRowKey,
+  onToggleRowFocus,
+  blurFinancials,
 }) {
   const data = row?.data ?? {};
   const selectionColumnWidth = hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH;
-  const rowId = data?.id ? String(data.id) : "";
-  const isSelected = selectedRowIds.includes(rowId);
+  const focusKey = getScheduleRowFocusKey(data);
+  const isSelected = focusKey != null && selectedRowIds.includes(focusKey);
+  const isFocused = focusKey != null && focusedRowKey === focusKey;
+  const isFinancialBlurred = blurFinancials && !isFocused;
   const baseColors = useColors
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
-  const rowSurfaceColor = isSelected
+  const rowSurfaceColor = isFocused
     ? uiTableColors.rowSelected
     : row?.color
       ? uiTableColors.rowMuted
       : "#ffffff";
-  const employeeCellColor = isSelected ? uiTableColors.rowSelected : baseColors.backgroundColor;
+  const employeeCellColor = isFocused ? uiTableColors.rowSelected : baseColors.backgroundColor;
   const employeeMetaColor =
     baseColors.color === "#ffffff" ? "rgba(255, 255, 255, 0.82)" : "#666666";
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
@@ -192,11 +216,13 @@ function MobileScheduleRow({
             justifyContent: "center",
           }}
         >
-          <JacoCheckbox
-            checked={isSelected}
-            onChange={() => onToggleRowSelection(rowId)}
-            disabled={!rowId || String(data?.smena_id ?? "") === "-1"}
-          />
+          {!hideSelectionColumn && String(data?.smena_id ?? "") !== "-1" ? (
+            <JacoCheckbox
+              checked={isSelected}
+              onChange={() => onToggleRowSelection(focusKey)}
+              disabled={!focusKey}
+            />
+          ) : null}
         </Box>
       </TableCell>
 
@@ -208,7 +234,7 @@ function MobileScheduleRow({
           px: 1,
           py: 1,
           backgroundColor: employeeCellColor,
-          color: baseColors.color,
+          color: isFocused ? "#000000" : baseColors.color,
           cursor: canOpenMonth ? "pointer" : "default",
         }}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
@@ -220,11 +246,30 @@ function MobileScheduleRow({
           {data?.user_name || "Без имени"}
         </Typography>
         <Typography
+          component="button"
+          type="button"
+          disabled={!focusKey}
+          aria-pressed={isFocused}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleRowFocus(focusKey);
+          }}
           sx={{
             mt: 0.25,
+            mx: -1,
+            mb: -1,
+            px: 1,
+            py: 0.5,
+            width: "calc(100% + 16px)",
+            minHeight: 24,
+            display: "block",
+            border: 0,
+            background: "none",
             fontSize: MOBILE_MIN_FONT_SIZE,
             lineHeight: 1.2,
-            color: employeeMetaColor,
+            color: isFocused ? "#666666" : employeeMetaColor,
+            textAlign: "left",
+            cursor: focusKey ? "pointer" : "default",
           }}
           noWrap
         >
@@ -236,13 +281,16 @@ function MobileScheduleRow({
         ? toArray(data?.dates).map((day, index) => {
             const info = day?.info ?? {};
             const isHoliday = Boolean(data?.holydays?.[day?.date]);
-            const hasExplicitDayColor = useColors && Boolean(info?.color) && !row?.color;
+            const hasExplicitDayColor =
+              useColors && Boolean(info?.color) && !row?.color && !isFocused;
             const baseBackground = hasExplicitDayColor ? info.color : rowSurfaceColor;
-            const textColor = useColors
-              ? row?.color
-                ? "#000000"
-                : info?.colorT || "#111827"
-              : "#111827";
+            const textColor = isFocused
+              ? "#111827"
+              : useColors
+                ? row?.color
+                  ? "#000000"
+                  : info?.colorT || "#111827"
+                : "#111827";
 
             return (
               <TableCell
@@ -250,13 +298,13 @@ function MobileScheduleRow({
                 align="center"
                 sx={{
                   ...mobileCellDividerSx,
-                  ...getMobileFixedColumnSx(DAY_COLUMN_WIDTH),
+                  ...getMobileFixedColumnSx(MOBILE_DAY_COLUMN_WIDTH),
                   px: 0.25,
                   py: 0.75,
                   fontSize: MOBILE_MIN_FONT_SIZE,
                   fontWeight: 500,
-                  ...(isHoliday
-                    ? getHolidayStripeSx(baseBackground, index, DAY_COLUMN_WIDTH)
+                  ...(isHoliday && !isFocused
+                    ? getHolidayStripeSx(baseBackground, index, MOBILE_DAY_COLUMN_WIDTH)
                     : { backgroundColor: baseBackground }),
                   color: textColor,
                   cursor: canOpenDay ? "pointer" : "default",
@@ -270,6 +318,14 @@ function MobileScheduleRow({
         : null}
 
       {summaryColumns.map((column) => {
+        const canEditFinancialValue = canEditStaffScheduleFinanceValue({
+          columnKey: column.key,
+          row: data,
+          canEdit,
+        });
+        const canEditBonus =
+          column.key === "my_bonus" &&
+          canEditStaffScheduleBonus({ row: data, canEdit, selectedPart });
         const canEditDopBonus =
           column.key === "dop_bonus" &&
           canEditTeamBonus &&
@@ -277,31 +333,69 @@ function MobileScheduleRow({
           Number(data?.check_period) === 1 &&
           String(data?.smena_id ?? "") !== "-1";
         const isPremiumColumn = column.key === "test_all_price" && column.accessKey === "premia";
+        const isClickable =
+          !isFinancialBlurred &&
+          Boolean(canEditDopBonus ? onChangeTeamBonusForUser : onOpenSummaryAction) &&
+          (canEditFinancialValue || canEditBonus || canEditDopBonus);
+        const handleClick = () => {
+          if (canEditDopBonus) onChangeTeamBonusForUser?.(data);
+          else onOpenSummaryAction?.(data, column.key);
+        };
 
         return (
           <TableCell
             key={`${data?.id || data?.user_name}-${column.key}`}
             align="center"
-            onClick={canEditDopBonus ? () => onChangeTeamBonusForUser?.(data) : undefined}
+            data-financial-column={column.key}
+            data-financial-editable={isClickable ? "true" : undefined}
+            role={isClickable ? "button" : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-label={
+              isClickable
+                ? `Изменить ${column.label} — ${data?.user_name || "Сотрудник"} · ${data?.full_app_name || data?.app_name || ""}`
+                : undefined
+            }
+            onClick={isClickable ? handleClick : undefined}
+            onKeyDown={
+              isClickable
+                ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      handleClick();
+                    }
+                  }
+                : undefined
+            }
             sx={{
               ...mobileCellDividerSx,
               ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
               px: 0.5,
               py: 0.75,
               fontSize: MOBILE_MIN_FONT_SIZE,
-              backgroundColor: isPremiumColumn ? uiColors.primary : rowSurfaceColor,
-              color: isPremiumColumn ? "#FFFFFF" : "#5E5E5E",
+              backgroundColor: isFocused
+                ? rowSurfaceColor
+                : isPremiumColumn
+                  ? uiColors.primary
+                  : rowSurfaceColor,
+              color: isPremiumColumn && !isFocused ? "#FFFFFF" : "#5E5E5E",
               whiteSpace: "nowrap",
-              cursor: canEditDopBonus ? "pointer" : "default",
-              "&:hover": canEditDopBonus ? { backgroundColor: uiTableColors.rowHover } : undefined,
+              cursor: isClickable ? "pointer" : "default",
+              ...(isClickable ? staffScheduleFinancialFocusSx : null),
+              "&:hover": isClickable ? { backgroundColor: uiTableColors.rowHover } : undefined,
             }}
           >
             <SmallFont
+              data-financial-value
+              aria-hidden={isFinancialBlurred}
               style={{
                 display: "block",
                 fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
                 lineHeight: "1.1",
                 fontWeight: isPremiumColumn ? 700 : undefined,
+                filter: isFinancialBlurred ? "blur(5px)" : undefined,
+                userSelect: isFinancialBlurred ? "none" : undefined,
+                pointerEvents: isFinancialBlurred ? "none" : undefined,
+                ...(isClickable ? staffScheduleFinancialValueStyle : null),
               }}
             >
               {getSummaryCellValue(column, data)}
@@ -332,18 +426,24 @@ function MobileShiftCard({
   canOpenMonth,
   canOpenDayEdit,
   canEditTeamBonus,
+  canEdit,
+  selectedPart,
+  onOpenSummaryAction,
   onChangeTeamBonusForUser,
   periodBonusState,
   summaryColumns,
   registerScrollContainer,
   onSynchronizedScroll,
   hideSelectionColumn,
+  focusedRowKey,
+  onToggleRowFocus,
+  blurFinancials,
 }) {
   const selectionColumnWidth = hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH;
   const tableMinWidth =
     selectionColumnWidth +
     MOBILE_EMPLOYEE_COLUMN_WIDTH +
-    (isCalendarHidden ? 0 : days.length * DAY_COLUMN_WIDTH) +
+    (isCalendarHidden ? 0 : days.length * MOBILE_DAY_COLUMN_WIDTH) +
     summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
 
   return (
@@ -381,12 +481,22 @@ function MobileShiftCard({
           <ScheduleRoundedIcon sx={{ fontSize: 20, color: "#3C3B3B" }} />
         </Box>
 
-        <Typography
-          sx={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: "#4B5563" }}
-          noWrap
-        >
-          {group?.label || "Смена"}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75, flex: 1, minWidth: 0 }}>
+          <Typography
+            sx={{ minWidth: 0, fontSize: 14, fontWeight: 500, color: "#4B5563" }}
+            noWrap
+          >
+            {group?.label || "Смена"}
+          </Typography>
+          {Number.isInteger(group?.employeeCount) ? (
+            <Typography
+              sx={{ fontSize: 12, color: uiColors.textMuted, flexShrink: 0 }}
+              noWrap
+            >
+              {formatEmployeeCount(group.employeeCount)}
+            </Typography>
+          ) : null}
+        </Box>
 
         <IconButton
           size="small"
@@ -443,29 +553,33 @@ function MobileShiftCard({
                       "width 180ms ease, min-width 180ms ease, max-width 180ms ease, opacity 120ms ease",
                   }}
                 >
-                  <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
-                    <Box
-                      onClick={
-                        showFastActions && hasBulkSelection ? onOpenBulkFastActions : undefined
-                      }
-                      sx={{
-                        ...mobileActionCellSx,
-                        cursor: showFastActions && hasBulkSelection ? "pointer" : "default",
-                        backgroundColor:
-                          showFastActions && hasBulkSelection
-                            ? uiTableColors.bulkActionActive
-                            : uiTableColors.bulkActionInactive,
-                        opacity: showFastActions ? 1 : 0.4,
-                      }}
-                    >
-                      <SwapHorizRoundedIcon
+                  {showFastActions &&
+                  !hideSelectionColumn &&
+                  String(group?.smenaId ?? "") !== "-1" ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 0.5 }}>
+                      <Box
+                        onClick={
+                          showFastActions && hasBulkSelection ? onOpenBulkFastActions : undefined
+                        }
                         sx={{
-                          color: showFastActions && hasBulkSelection ? "#EE2737" : "#666666",
-                          fontSize: 18,
+                          ...mobileActionCellSx,
+                          cursor: showFastActions && hasBulkSelection ? "pointer" : "default",
+                          backgroundColor:
+                            showFastActions && hasBulkSelection
+                              ? uiTableColors.bulkActionActive
+                              : uiTableColors.bulkActionInactive,
+                          opacity: showFastActions ? 1 : 0.4,
                         }}
-                      />
+                      >
+                        <SwapHorizRoundedIcon
+                          sx={{
+                            color: showFastActions && hasBulkSelection ? "#EE2737" : "#666666",
+                            fontSize: 18,
+                          }}
+                        />
+                      </Box>
                     </Box>
-                  </Box>
+                  ) : null}
                 </TableCell>
                 <TableCell
                   data-mobile-employee-column
@@ -493,7 +607,7 @@ function MobileShiftCard({
                           align="center"
                           sx={{
                             ...mobileCellDividerSx,
-                            ...getMobileFixedColumnSx(DAY_COLUMN_WIDTH),
+                            ...getMobileFixedColumnSx(MOBILE_DAY_COLUMN_WIDTH),
                             backgroundColor: isWeekend ? uiTableColors.weekend : "#FFFFFF",
                             color: "#666666",
                             py: 0.7,
@@ -508,18 +622,13 @@ function MobileShiftCard({
                       );
                     })
                   : null}
-                {summaryColumns.map((column) => (
-                  <TableCell
-                    key={`${group.shiftId}-summary-${column.key}`}
-                    align="center"
-                    sx={{
-                      ...mobileCellDividerSx,
-                      ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
-                      py: 0.7,
-                      px: 0.5,
-                      textAlign: "center",
-                    }}
-                  >
+                {summaryColumns.map((column) => {
+                  const canOpenTeamBonus =
+                    column.key === "dop_bonus" &&
+                    canEditTeamBonus &&
+                    !blurFinancials &&
+                    Boolean(onOpenSummaryAction);
+                  const label = (
                     <SmallFont
                       style={{
                         display: "block",
@@ -529,15 +638,47 @@ function MobileShiftCard({
                     >
                       {column.label}
                     </SmallFont>
-                  </TableCell>
-                ))}
+                  );
+                  return (
+                    <TableCell
+                      key={`${group.shiftId}-summary-${column.key}`}
+                      data-salary-header-cell
+                      align="center"
+                      sx={{
+                        ...mobileCellDividerSx,
+                        ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
+                        py: 0.7,
+                        px: 0.5,
+                        textAlign: "center",
+                        whiteSpace: "normal",
+                        wordBreak: "normal",
+                        overflowWrap: "normal",
+                        hyphens: "none",
+                      }}
+                    >
+                      {canOpenTeamBonus ? (
+                        <Box
+                          component="button"
+                          type="button"
+                          aria-label="Изменить командный бонус за выбранный период"
+                          onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
+                          sx={staffScheduleHeaderActionSx}
+                        >
+                          {label}
+                        </Box>
+                      ) : (
+                        label
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             </TableHead>
 
             <TableBody>
               {group.rows.map((row, index) => (
                 <MobileScheduleRow
-                  key={`mobile-row-${group.shiftId}-${row?.data?.id ?? "no-id"}-${row?.data?.smena_id ?? "no-smena"}-${index}`}
+                  key={`mobile-row-${getScheduleRowFocusKey(row?.data) ?? `${group.shiftId}-${index}`}`}
                   row={row}
                   summaryColumns={summaryColumns}
                   isCalendarHidden={isCalendarHidden}
@@ -549,9 +690,15 @@ function MobileShiftCard({
                   canOpenMonth={canOpenMonth}
                   canOpenDayEdit={canOpenDayEdit}
                   canEditTeamBonus={canEditTeamBonus}
+                  canEdit={canEdit}
+                  selectedPart={selectedPart}
+                  onOpenSummaryAction={onOpenSummaryAction}
                   onChangeTeamBonusForUser={onChangeTeamBonusForUser}
                   periodBonusState={periodBonusState}
                   hideSelectionColumn={hideSelectionColumn}
+                  focusedRowKey={focusedRowKey}
+                  onToggleRowFocus={onToggleRowFocus}
+                  blurFinancials={blurFinancials}
                 />
               ))}
             </TableBody>
@@ -580,13 +727,16 @@ function MobileSummaryCard({
   slowOrderValues,
   registerScrollContainer,
   onSynchronizedScroll,
+  blurFinancials,
+  hideSelectionColumn,
 }) {
   const dayCount = isCalendarHidden ? 0 : bonusDayValues.length;
-  const labelColumnWidth = `${MOBILE_SUMMARY_LABEL_WIDTH}px`;
-  const cellTemplate = `${labelColumnWidth} repeat(${dayCount}, ${DAY_COLUMN_WIDTH}px) repeat(${summaryColumns.length}, ${MOBILE_SUMMARY_COLUMN_WIDTH}px)`;
+  const labelColumnWidth =
+    MOBILE_EMPLOYEE_COLUMN_WIDTH + (hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH);
+  const cellTemplate = `${labelColumnWidth}px repeat(${dayCount}, ${MOBILE_DAY_COLUMN_WIDTH}px) repeat(${summaryColumns.length}, ${MOBILE_SUMMARY_COLUMN_WIDTH}px)`;
   const gridWidth =
-    MOBILE_SUMMARY_LABEL_WIDTH +
-    dayCount * DAY_COLUMN_WIDTH +
+    labelColumnWidth +
+    dayCount * MOBILE_DAY_COLUMN_WIDTH +
     summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
 
   const renderMetricRow = (
@@ -606,7 +756,18 @@ function MobileSummaryCard({
         backgroundColor: options.fillColor || "#FFFFFF",
       }}
     >
-      <Box sx={{ ...mobileCellDividerSx, px: 1, py: 1, fontSize: 13, color: "#3C3B3B" }}>
+      <Box
+        sx={{
+          ...mobileCellDividerSx,
+          ...getMobileFixedColumnSx(labelColumnWidth),
+          ...getMobileStickyColumnSx(0, 3, true),
+          px: 1,
+          py: 1,
+          fontSize: 13,
+          color: "#3C3B3B",
+          backgroundColor: options.fillColor || "#FFFFFF",
+        }}
+      >
         {label}
       </Box>
       {!isCalendarHidden
@@ -625,14 +786,26 @@ function MobileSummaryCard({
                 whiteSpace: options.compactValues ? "nowrap" : "normal",
               }}
             >
-              {getValue(item)}
+              <Box
+                component="span"
+                aria-hidden={options.blurValues}
+                sx={{
+                  display: "inline-block",
+                  filter: options.blurValues ? "blur(5px)" : undefined,
+                  userSelect: options.blurValues ? "none" : undefined,
+                }}
+              >
+                {getValue(item)}
+              </Box>
             </Box>
           ))
         : null}
       {summaryColumns.map((column) => (
         <Box
           key={`${label}-${column.key}`}
-          onClick={onSummaryCellClick ? () => onSummaryCellClick(column) : undefined}
+          onClick={
+            !options.blurValues && onSummaryCellClick ? () => onSummaryCellClick(column) : undefined
+          }
           sx={{
             ...mobileCellDividerSx,
             display: "flex",
@@ -642,10 +815,20 @@ function MobileSummaryCard({
             py: 1,
             fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
             color: options.textColor || "#5E5E5E",
-            cursor: onSummaryCellClick ? "pointer" : "default",
+            cursor: !options.blurValues && onSummaryCellClick ? "pointer" : "default",
           }}
         >
-          {getSummaryValue(column)}
+          <Box
+            component="span"
+            aria-hidden={options.blurValues}
+            sx={{
+              display: "inline-block",
+              filter: options.blurValues ? "blur(5px)" : undefined,
+              userSelect: options.blurValues ? "none" : undefined,
+            }}
+          >
+            {getSummaryValue(column)}
+          </Box>
         </Box>
       ))}
     </Box>
@@ -670,8 +853,8 @@ function MobileSummaryCard({
       >
         <Stack
           direction="row"
-          alignItems="center"
           spacing={0.75}
+          sx={{ alignItems: "center" }}
         >
           <SummarySectionIcon sx={{ fontSize: 20, color: "#3C3B3B" }} />
           <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.2 }}>
@@ -697,7 +880,15 @@ function MobileSummaryCard({
             >
               <Box
                 data-mobile-summary-label-column
-                sx={{ ...mobileCellDividerSx, px: 1, py: 0.7, fontWeight: 500 }}
+                sx={{
+                  ...mobileCellDividerSx,
+                  ...getMobileFixedColumnSx(labelColumnWidth),
+                  ...getMobileStickyColumnSx(0, 4, true),
+                  px: 1,
+                  py: 0.7,
+                  fontWeight: 500,
+                  backgroundColor: "#FFFFFF",
+                }}
               >
                 Показатель
               </Box>
@@ -727,19 +918,13 @@ function MobileSummaryCard({
                   </Box>
                 );
               })}
-              {summaryColumns.map((column) => (
-                <Box
-                  key={`summary-column-${column.key}`}
-                  sx={{
-                    ...mobileCellDividerSx,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    px: 0.5,
-                    py: 0.7,
-                    textAlign: "center",
-                  }}
-                >
+              {summaryColumns.map((column) => {
+                const canOpenTeamBonus =
+                  column.key === "dop_bonus" &&
+                  canEditTeamBonus &&
+                  !blurFinancials &&
+                  Boolean(onOpenSummaryAction);
+                const label = (
                   <SmallFont
                     style={{
                       display: "block",
@@ -749,8 +934,36 @@ function MobileSummaryCard({
                   >
                     {column.label}
                   </SmallFont>
-                </Box>
-              ))}
+                );
+                return (
+                  <Box
+                    key={`summary-column-${column.key}`}
+                    sx={{
+                      ...mobileCellDividerSx,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      px: 0.5,
+                      py: 0.7,
+                      textAlign: "center",
+                    }}
+                  >
+                    {canOpenTeamBonus ? (
+                      <Box
+                        component="button"
+                        type="button"
+                        aria-label="Изменить командный бонус за выбранный период"
+                        onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
+                        sx={staffScheduleHeaderActionSx}
+                      >
+                        {label}
+                      </Box>
+                    ) : (
+                      label
+                    )}
+                  </Box>
+                );
+              })}
             </Box>
           ) : null}
 
@@ -787,6 +1000,7 @@ function MobileSummaryCard({
                   compactValues: true,
                   fillColor: "#9BDD7C",
                   textColor: "#5E5E5E",
+                  blurValues: blurFinancials,
                 },
               )
             : null}
@@ -928,6 +1142,8 @@ export default function StaffScheduleMobileTableSection({
   totalsSummaryKeyMap,
   periodBonusSummaryKeyMap,
   canEditTeamBonus,
+  canEdit,
+  selectedPart,
   onChangeTeamBonusForUser,
   periodBonusState,
   canShowPeriodSum,
@@ -938,6 +1154,9 @@ export default function StaffScheduleMobileTableSection({
   canShowSlowOrders,
   slowOrderValues,
   isEmployeeSearchActive = false,
+  focusedRowKey,
+  onToggleRowFocus,
+  blurFinancials,
 }) {
   const mobileShiftGroups = buildMobileShiftGroups(rows);
   const selectedCount = selectedRowIds.length;
@@ -1012,12 +1231,18 @@ export default function StaffScheduleMobileTableSection({
                   canOpenMonth={canOpenMonth}
                   canOpenDayEdit={canOpenDayEdit}
                   canEditTeamBonus={canEditTeamBonus}
+                  canEdit={canEdit}
+                  selectedPart={selectedPart}
+                  onOpenSummaryAction={onOpenSummaryAction}
                   onChangeTeamBonusForUser={onChangeTeamBonusForUser}
                   periodBonusState={periodBonusState}
                   summaryColumns={summaryColumns}
                   registerScrollContainer={registerScrollContainer}
                   onSynchronizedScroll={handleSynchronizedScroll}
-                  hideSelectionColumn={isHorizontallyScrolled}
+                  hideSelectionColumn={!showFastActions || isHorizontallyScrolled}
+                  focusedRowKey={focusedRowKey}
+                  onToggleRowFocus={onToggleRowFocus}
+                  blurFinancials={blurFinancials}
                 />
               ))}
 
@@ -1040,6 +1265,8 @@ export default function StaffScheduleMobileTableSection({
                   slowOrderValues={slowOrderValues}
                   registerScrollContainer={registerScrollContainer}
                   onSynchronizedScroll={handleSynchronizedScroll}
+                  blurFinancials={blurFinancials}
+                  hideSelectionColumn={!showFastActions || isHorizontallyScrolled}
                 />
               ) : null}
             </Stack>

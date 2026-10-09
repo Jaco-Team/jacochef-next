@@ -43,7 +43,7 @@ export default function StaffScheduleExportDialog({
           </JacoButton>
           <JacoButton
             compact
-            tone="secondary"
+            tone="danger"
             onClick={onClose}
             sx={{ minWidth: 112, borderRadius: "8px" }}
           >

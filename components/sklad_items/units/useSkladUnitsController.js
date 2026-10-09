@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import HistoryIcon from "@mui/icons-material/History";
 import {
   Box,
-  Button,
   Chip,
-  IconButton,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -22,7 +20,12 @@ import {
 } from "@mui/material";
 
 import { useConfirm } from "@/src/hooks/useConfirm";
-import { MyTextInput } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoSearchField,
+  JacoSurface,
+} from "@/design-system/shared/ui";
 
 import { useSkladStore } from "../useSkladStore";
 import useSkladAccess from "../useSkladAccess";
@@ -91,11 +94,47 @@ export default function useSkladUnitsController({ showAlert }) {
   const setState = useSkladUnitsStore((state) => state.setState);
   const setDraft = useSkladUnitsStore((state) => state.setDraft);
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
+  const detailRequest = useRef(0);
+  const [detail, setDetail] = useState({ loading: false, error: "", history: [] });
+  useEffect(
+    () => () => {
+      detailRequest.current += 1;
+      resetDraft();
+    },
+    [resetDraft],
+  );
 
   const isEditable = canEdit("units");
   const canCreate = canCreateUnit;
   const canShowUsage = canViewUnitUsage;
   const canDeleteAction = canDelete("unit");
+
+  const loadDetail = useCallback(
+    async (id) => {
+      const requestId = ++detailRequest.current;
+      setDetail({ loading: true, error: "", history: [] });
+      try {
+        const response = await api.getUnit(id);
+        if (requestId !== detailRequest.current) return;
+        if (!response?.st || !response.item || String(response.item.id) !== String(id)) {
+          throw new Error(response?.text || "Не удалось загрузить единицу и историю");
+        }
+        if (response.history != null && !Array.isArray(response.history)) {
+          throw new Error("Некорректные данные истории");
+        }
+        setDraft(response.item);
+        setDetail({ loading: false, error: "", history: response.history || [] });
+      } catch (error) {
+        if (requestId !== detailRequest.current) return;
+        setDetail({
+          loading: false,
+          error: error?.message || "Не удалось загрузить историю",
+          history: [],
+        });
+      }
+    },
+    [api, setDraft],
+  );
 
   const loadUnits = useCallback(async () => {
     setShellState({ isLoading: true });
@@ -123,6 +162,9 @@ export default function useSkladUnitsController({ showAlert }) {
       return;
     }
 
+    detailRequest.current += 1;
+    setDetail({ loading: false, error: "", history: [] });
+
     setState({
       draft: getDefaultUnitDraft(),
       modal: {
@@ -132,9 +174,9 @@ export default function useSkladUnitsController({ showAlert }) {
     });
   }, [canCreate, setState]);
 
-  const openEdit = useCallback(
-    (row) => {
-      if (!isEditable) {
+  const openUnit = useCallback(
+    (row, mode = "edit") => {
+      if (mode === "edit" ? !isEditable : !canShowUsage) {
         return;
       }
 
@@ -149,24 +191,28 @@ export default function useSkladUnitsController({ showAlert }) {
         },
         modal: {
           open: true,
-          mode: "edit",
+          mode,
         },
       });
+      loadDetail(row.id);
     },
-    [isEditable, setState],
+    [canShowUsage, isEditable, loadDetail, setState],
   );
 
   const closeModal = useCallback(() => {
+    detailRequest.current += 1;
+    setDetail({ loading: false, error: "", history: [] });
     resetDraft();
   }, [resetDraft]);
 
   const saveUnit = useCallback(async () => {
-    const canSave = modal.mode === "create" ? canCreate : isEditable;
+    const canSave = modal.mode === "create" ? canCreate : modal.mode === "edit" && isEditable;
 
     if (!canSave) {
       showAlert("Недостаточно прав", false);
       return;
     }
+    if (modal.mode !== "create" && (detail.loading || detail.error)) return;
 
     const normalizedDraft = normalizeUnitDraft(draft);
 
@@ -206,6 +252,7 @@ export default function useSkladUnitsController({ showAlert }) {
     canCreate,
     closeModal,
     draft,
+    detail,
     isEditable,
     loadUnits,
     modal.mode,
@@ -279,14 +326,17 @@ export default function useSkladUnitsController({ showAlert }) {
   }, [draft?.id, rows]);
 
   const isSaveDisabled =
+    (modal.mode !== "create" && (detail.loading || Boolean(detail.error))) ||
     !String(draft?.name || "").trim() ||
     normalizeNumber(draft?.main_count, 0) <= 0 ||
     normalizeNumber(draft?.con_count, 0) <= 0;
 
   const content = (
-    <Paper
+    <JacoSurface
       sx={{
         width: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
         maxWidth: 1080,
         mx: "auto",
         p: { xs: 1.5, sm: 2 },
@@ -321,27 +371,28 @@ export default function useSkladUnitsController({ showAlert }) {
             />
           </Stack>
 
-          <Button
-            variant="contained"
+          <JacoButton
             startIcon={<AddIcon />}
             sx={{ whiteSpace: "nowrap", alignSelf: { xs: "flex-start", sm: "center" } }}
             onClick={openCreate}
             disabled={!canCreate}
           >
             Добавить единицу
-          </Button>
+          </JacoButton>
         </Stack>
 
         <Box sx={{ width: "100%", maxWidth: 420 }}>
-          <MyTextInput
+          <JacoSearchField
             label="Поиск"
             value={search}
-            func={(event) => setState({ search: event.target.value })}
+            onValueChange={(value) => setState({ search: value })}
           />
         </Box>
 
         <TableContainer
           sx={{
+            maxWidth: "100%",
+            boxSizing: "border-box",
             border: 1,
             borderColor: "divider",
             borderRadius: 2,
@@ -414,15 +465,26 @@ export default function useSkladUnitsController({ showAlert }) {
                       >
                         <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
                           <span>
-                            <IconButton
-                              size="small"
-                              onClick={() => openEdit(row)}
+                            <JacoIconButton
+                              aria-label="Редактировать"
+                              onClick={() => openUnit(row)}
                               disabled={!isEditable}
                             >
                               <EditIcon fontSize="small" />
-                            </IconButton>
+                            </JacoIconButton>
                           </span>
                         </Tooltip>
+
+                        {canShowUsage ? (
+                          <Tooltip title="История">
+                            <JacoIconButton
+                              aria-label="История"
+                              onClick={() => openUnit(row, "view")}
+                            >
+                              <HistoryIcon fontSize="small" />
+                            </JacoIconButton>
+                          </Tooltip>
+                        ) : null}
 
                         {canDeleteAction ? (
                           <Tooltip
@@ -435,9 +497,8 @@ export default function useSkladUnitsController({ showAlert }) {
                             }
                           >
                             <span>
-                              <IconButton
-                                size="small"
-                                color="error"
+                              <JacoIconButton
+                                sx={{ color: "error.main" }}
                                 disabled={deleteBlocked || !isEditable}
                                 onClick={withConfirm(
                                   () => deleteUnit(row),
@@ -445,7 +506,7 @@ export default function useSkladUnitsController({ showAlert }) {
                                 )}
                               >
                                 <DeleteOutlineIcon fontSize="small" />
-                              </IconButton>
+                              </JacoIconButton>
                             </span>
                           </Tooltip>
                         ) : null}
@@ -486,10 +547,15 @@ export default function useSkladUnitsController({ showAlert }) {
         onSave={saveUnit}
         isSaveDisabled={isSaveDisabled}
         showUsage={canShowUsage}
+        history={detail.history}
+        historyLoading={detail.loading}
+        historyError={detail.error}
+        onRetryHistory={() => loadDetail(draft.id)}
+        readOnly={modal.mode === "view"}
       />
 
       <ConfirmDialog />
-    </Paper>
+    </JacoSurface>
   );
 
   return {

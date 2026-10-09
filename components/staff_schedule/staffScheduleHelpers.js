@@ -74,6 +74,42 @@ export function getSummaryCellValue(column, row = {}) {
   return row?.[column.key] ?? "";
 }
 
+export function getScheduleRowFocusKey(row = {}) {
+  if (
+    [row?.smena_id, row?.id, row?.app_id].some(
+      (value) => value == null || String(value).trim() === "",
+    )
+  ) {
+    return null;
+  }
+
+  return `${row.smena_id}:${row.id}:${row.app_id}`;
+}
+
+export function getSelectedScheduleRows(visibleRows = [], selectedRowIds = []) {
+  const selectedKeys = new Set(selectedRowIds);
+  const seenKeys = new Set();
+
+  return visibleRows
+    .filter((row) => row?.row !== "header")
+    .map((row) => row?.data)
+    .filter((row) => {
+      const key = getScheduleRowFocusKey(row);
+      if (
+        !key ||
+        !selectedKeys.has(key) ||
+        seenKeys.has(key) ||
+        !(Number(row?.id) > 0) ||
+        !(Number(row?.app_id) > 0) ||
+        !(Number(row?.smena_id) > 0)
+      ) {
+        return false;
+      }
+      seenKeys.add(key);
+      return true;
+    });
+}
+
 export function getRowBaseColor(type, isDimmed) {
   if (isDimmed) {
     return {
@@ -160,4 +196,37 @@ export function buildShiftGroups(rows = []) {
   });
 
   return result;
+}
+
+export function countShiftEmployees(rows = []) {
+  const employeeIds = new Set();
+  let rowsWithoutId = 0;
+
+  toArray(rows).forEach((row) => {
+    const id = row?.data?.id;
+
+    if (id == null || id === "") {
+      rowsWithoutId += 1;
+    } else {
+      employeeIds.add(String(id));
+    }
+  });
+
+  return employeeIds.size + rowsWithoutId;
+}
+
+export function formatEmployeeCount(count) {
+  const value = Math.max(0, Math.trunc(Number(count) || 0));
+  const lastTwoDigits = value % 100;
+  const lastDigit = value % 10;
+  const noun =
+    lastTwoDigits >= 11 && lastTwoDigits <= 14
+      ? "сотрудников"
+      : lastDigit === 1
+        ? "сотрудник"
+        : lastDigit >= 2 && lastDigit <= 4
+          ? "сотрудника"
+          : "сотрудников";
+
+  return `${value} ${noun}`;
 }

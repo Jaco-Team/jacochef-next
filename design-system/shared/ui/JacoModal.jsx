@@ -59,6 +59,9 @@ export default function JacoModal({
   paperSx,
   actionsSx,
   closeButtonSx,
+  contentWrapper = true,
+  containedDesktopScroll = false,
+  desktopMaxHeight = "80dvh",
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -112,17 +115,21 @@ export default function JacoModal({
           >
             {titleNode}
           </Box>
-          <Box
-            sx={{
-              overflowY: "auto",
-              px: 2,
-              pt: 2,
-              pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
-              ...contentSx,
-            }}
-          >
-            {children}
-          </Box>
+          {contentWrapper ? (
+            <Box
+              sx={{
+                overflowY: "auto",
+                px: 2,
+                pt: 2,
+                pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+                ...contentSx,
+              }}
+            >
+              {children}
+            </Box>
+          ) : (
+            children
+          )}
           {actions ? (
             <Box
               sx={{
@@ -153,7 +160,13 @@ export default function JacoModal({
         paper: {
           sx: {
             borderRadius: uiRadii.lg,
-            maxHeight: "calc(100% - 48px)",
+            maxHeight: containedDesktopScroll ? desktopMaxHeight : "calc(100% - 48px)",
+            ...(containedDesktopScroll
+              ? {
+                  display: "flex",
+                  flexDirection: "column",
+                }
+              : {}),
             outline: "none",
             ...paperSx,
           },
@@ -221,24 +234,28 @@ export default function JacoModal({
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent
-        sx={{
-          p: 0,
-          backgroundColor: "#FFFFFF",
-        }}
-      >
-        <Box
+      {contentWrapper ? (
+        <DialogContent
           sx={{
-            px: 3,
-            pt: 2.5,
-            pb: 2,
+            p: 0,
             backgroundColor: "#FFFFFF",
-            ...contentSx,
           }}
         >
-          {children}
-        </Box>
-      </DialogContent>
+          <Box
+            sx={{
+              px: 3,
+              pt: 2.5,
+              pb: 2,
+              backgroundColor: "#FFFFFF",
+              ...contentSx,
+            }}
+          >
+            {children}
+          </Box>
+        </DialogContent>
+      ) : (
+        children
+      )}
       {actions ? (
         <DialogActions
           sx={{ px: 3, py: 2, borderTop: `1px solid ${uiColors.borderLight}`, ...actionsSx }}

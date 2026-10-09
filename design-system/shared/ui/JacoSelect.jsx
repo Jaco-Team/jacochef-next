@@ -50,6 +50,11 @@ export default function JacoSelect({
   const items = withNone
     ? [{ id: "none", name: noneLabel }, ...normalizedOptions]
     : normalizedOptions;
+  const {
+    MenuListProps: legacyMenuListProps,
+    slotProps: providedSlotProps,
+    ...otherMenuProps
+  } = providedMenuProps ?? {};
   const normalizedValue = multiple
     ? Array.isArray(value)
       ? value.map(String)
@@ -143,7 +148,7 @@ export default function JacoSelect({
         renderValue={renderValue}
         IconComponent={KeyboardArrowDownRoundedIcon}
         MenuProps={{
-          ...providedMenuProps,
+          ...otherMenuProps,
           anchorOrigin: providedMenuProps?.anchorOrigin ?? {
             vertical: "bottom",
             horizontal: "left",
@@ -153,9 +158,9 @@ export default function JacoSelect({
             horizontal: "left",
           },
           slotProps: {
-            ...providedMenuProps?.slotProps,
+            ...providedSlotProps,
             paper: {
-              ...providedMenuProps?.slotProps?.paper,
+              ...providedSlotProps?.paper,
               sx: {
                 mt: "-1px",
                 boxSizing: "border-box",
@@ -166,18 +171,25 @@ export default function JacoSelect({
                   : controlRadius,
                 boxShadow: uiShadows.popover,
                 overflow: "hidden",
-                ...providedMenuProps?.slotProps?.paper?.sx,
+                ...providedSlotProps?.paper?.sx,
                 ...menuSx,
               },
             },
-            list: {
-              ...providedMenuProps?.MenuListProps,
-              ...providedMenuProps?.slotProps?.list,
-              sx: {
-                py: 0,
-                ...providedMenuProps?.MenuListProps?.sx,
-                ...providedMenuProps?.slotProps?.list?.sx,
-              },
+            list: (ownerState) => {
+              const legacyListProps =
+                typeof legacyMenuListProps === "function"
+                  ? legacyMenuListProps(ownerState)
+                  : legacyMenuListProps;
+              const providedListProps =
+                typeof providedSlotProps?.list === "function"
+                  ? providedSlotProps.list(ownerState)
+                  : providedSlotProps?.list;
+
+              return {
+                ...legacyListProps,
+                ...providedListProps,
+                sx: [{ py: 0 }, legacyListProps?.sx, providedListProps?.sx].filter(Boolean),
+              };
             },
           },
         }}

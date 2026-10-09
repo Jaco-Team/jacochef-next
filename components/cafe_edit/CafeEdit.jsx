@@ -197,7 +197,7 @@ export default function CafeEdit() {
     if (!acces) return;
     const tabs_data = Object.keys(acces)?.reduce((tabs, key) => {
       if (key.match(/_(access|view|edit)$/)) return tabs;
-      if (!canAccess(key)) return tabs;
+      if (!canView(key)) return tabs;
 
       if (key === "active_point" || key === "organization_point" || key === "telephone_point") {
         const infoName = "Информация о точке";

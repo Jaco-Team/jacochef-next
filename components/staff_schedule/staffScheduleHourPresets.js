@@ -107,8 +107,8 @@ export function isSameHourRange(left = {}, right = {}) {
 
 export function matchesPresetRange(timeStart, timeEnd, preset) {
   return (
-    String(timeStart ?? "") === String(preset?.time_start ?? "") &&
-    String(timeEnd ?? "") === String(preset?.time_end ?? "")
+    normalizeTimeLabel(timeStart) === normalizeTimeLabel(preset?.time_start) &&
+    normalizeTimeLabel(timeEnd) === normalizeTimeLabel(preset?.time_end)
   );
 }
 
@@ -121,5 +121,81 @@ export function isCustomHourRange(item = {}) {
 }
 
 export function buildHourSlotId(item = {}) {
-  return `${Number(item?.type ?? 0)}-${String(item?.time_start ?? "")}-${String(item?.time_end ?? "")}`;
+  return `${normalizeTimeLabel(item?.time_start)}-${normalizeTimeLabel(item?.time_end)}`;
+}
+
+export function getHiddenRecentHourSlotsKey(userId, appId) {
+  if (userId == null || userId === "" || appId == null || appId === "") {
+    return "";
+  }
+
+  return `staff_schedule:hidden_recent_hours:v1:${userId}:${appId}`;
+}
+
+export function readHiddenRecentHourSlots(storage, key) {
+  if (!storage || !key) {
+    return [];
+  }
+
+  try {
+    const value = JSON.parse(storage.getItem(key) || "[]");
+    return Array.isArray(value)
+      ? [...new Set(value.filter((item) => typeof item === "string" && item.startsWith("custom-")))]
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeHiddenRecentHourSlots(storage, key, slotIds) {
+  if (!storage || !key) {
+    return false;
+  }
+
+  try {
+    storage.setItem(key, JSON.stringify(slotIds));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function buildCustomHourSlots(dates = [], recentRanges = []) {
+  const slots = new Map();
+  const candidates = [
+    ...dates.map((item) => ({ item, isRecentOnly: false })),
+    ...recentRanges.map((item) => ({ item, isRecentOnly: true })),
+  ];
+
+  candidates.forEach(({ item, isRecentOnly }) => {
+    const timeStart = normalizeTimeLabel(item?.time_start);
+    const timeEnd = normalizeTimeLabel(item?.time_end);
+
+    if (
+      !timeStart ||
+      !timeEnd ||
+      !isCustomHourRange({ time_start: timeStart, time_end: timeEnd })
+    ) {
+      return;
+    }
+
+    const id = `custom-${buildHourSlotId({ time_start: timeStart, time_end: timeEnd })}`;
+
+    if (!slots.has(id)) {
+      const preset = getHourPresetByType(item?.type ?? 3);
+      slots.set(id, {
+        id,
+        type: Number(item?.type ?? 3),
+        label: formatHourRangeLabel(timeStart, timeEnd),
+        time_start: timeStart,
+        time_end: timeEnd,
+        color: preset.color,
+        textColor: preset.textColor,
+        isCustom: true,
+        isRecentOnly,
+      });
+    }
+  });
+
+  return Array.from(slots.values());
 }

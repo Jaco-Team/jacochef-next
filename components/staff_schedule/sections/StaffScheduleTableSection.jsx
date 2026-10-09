@@ -42,13 +42,25 @@ import {
 } from "../staffScheduleConstants";
 import {
   createStaffSchedulePolicy,
+  formatEmployeeCount,
   getRowBaseColor,
+  getScheduleRowFocusKey,
   getSummaryCellValue,
   hasFastActionsAccess,
   toArray,
 } from "../staffScheduleHelpers";
 import StaffScheduleMobileTableSection from "./StaffScheduleMobileTableSection";
-import { getHolidayStripeSx } from "../staffSchedulePatterns";
+import {
+  getHolidayStripeSx,
+  staffScheduleHeaderActionSx,
+  staffScheduleFinancialValueStyle,
+  staffScheduleFinancialFocusSx,
+} from "../staffSchedulePatterns";
+import {
+  canEditStaffScheduleBonus,
+  canEditStaffScheduleFinanceValue,
+} from "../staffScheduleAccess.mjs";
+import { canUseStaffScheduleFastActionsPeriod } from "../staffSchedulePeriodRange.mjs";
 
 const stickyBaseSx = {
   position: "sticky",
@@ -153,55 +165,64 @@ function ScheduleTableHeaderRow({
   isCalendarHidden,
   positionHeaderLeft,
   onOpenBulkFastActions,
+  onOpenSummaryAction,
+  canEditTeamBonus,
+  blurFinancials,
   stickyZIndex = 6,
 }) {
   return (
     <TableRow sx={{ backgroundColor: "#ffffff" }}>
-      <TableCell
-        sx={{
-          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, stickyZIndex),
-          p: 0,
-        }}
-      >
-        <Box
+      {showFastActions ? (
+        <TableCell
           sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
+            ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, stickyZIndex),
+            p: 0,
           }}
         >
           <Box
-            onClick={hasBulkSelection && showFastActions ? onOpenBulkFastActions : undefined}
             sx={{
-              width: 24,
-              height: 24,
+              width: "100%",
               display: "flex",
-              alignItems: "center",
               justifyContent: "center",
-              border: `1px solid ${uiTableColors.bulkActionBorder}`,
-              borderRadius: "4px",
-              cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
-              pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
-              opacity: hasBulkSelection && showFastActions ? 1 : 0.3,
-              backgroundColor:
-                hasBulkSelection && showFastActions
-                  ? uiTableColors.bulkActionActive
-                  : uiTableColors.bulkActionInactive,
+              alignItems: "center",
             }}
           >
-            <SwapHorizRoundedIcon
+            <Box
+              onClick={hasBulkSelection && showFastActions ? onOpenBulkFastActions : undefined}
               sx={{
-                color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
-                fontSize: 18,
+                width: 24,
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: `1px solid ${uiTableColors.bulkActionBorder}`,
+                borderRadius: "4px",
+                cursor: hasBulkSelection && showFastActions ? "pointer" : "default",
+                pointerEvents: hasBulkSelection && showFastActions ? "auto" : "none",
+                opacity: hasBulkSelection && showFastActions ? 1 : 0.3,
+                backgroundColor:
+                  hasBulkSelection && showFastActions
+                    ? uiTableColors.bulkActionActive
+                    : uiTableColors.bulkActionInactive,
               }}
-            />
+            >
+              <SwapHorizRoundedIcon
+                sx={{
+                  color: hasBulkSelection && showFastActions ? "#EE2737" : "#666666",
+                  fontSize: 18,
+                }}
+              />
+            </Box>
           </Box>
-        </Box>
-      </TableCell>
+        </TableCell>
+      ) : null}
       <TableCell
         sx={{
-          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, stickyZIndex),
+          ...stickyCellSx(
+            EMPLOYEE_COLUMN_WIDTH,
+            showFastActions ? SELECTION_COLUMN_WIDTH : 0,
+            stickyZIndex,
+          ),
           fontWeight: 500,
           whiteSpace: "nowrap",
         }}
@@ -258,25 +279,13 @@ function ScheduleTableHeaderRow({
           ))
         : null}
 
-      {summaryColumns.map((column) => (
-        <TableCell
-          key={`head-bottom-${column.key}`}
-          data-salary-header-cell
-          align="center"
-          sx={{
-            ...tableCellDividerSx,
-            minWidth: SUMMARY_COLUMN_WIDTH,
-            fontWeight: 600,
-            fontSize: SALARY_HEADER_FONT_SIZE,
-            lineHeight: SALARY_HEADER_LINE_HEIGHT,
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            overflowWrap: "anywhere",
-            verticalAlign: "middle",
-            py: 0.75,
-            px: 0.5,
-          }}
-        >
+      {summaryColumns.map((column) => {
+        const canOpenTeamBonus =
+          column.key === "dop_bonus" &&
+          canEditTeamBonus &&
+          !blurFinancials &&
+          Boolean(onOpenSummaryAction);
+        const label = (
           <SmallFont
             style={{
               display: "block",
@@ -289,8 +298,43 @@ function ScheduleTableHeaderRow({
           >
             {column.label}
           </SmallFont>
-        </TableCell>
-      ))}
+        );
+        return (
+          <TableCell
+            key={`head-bottom-${column.key}`}
+            data-salary-header-cell
+            align="center"
+            sx={{
+              ...tableCellDividerSx,
+              minWidth: SUMMARY_COLUMN_WIDTH,
+              fontWeight: 600,
+              fontSize: SALARY_HEADER_FONT_SIZE,
+              lineHeight: SALARY_HEADER_LINE_HEIGHT,
+              whiteSpace: "normal",
+              wordBreak: "normal",
+              overflowWrap: "normal",
+              hyphens: "none",
+              verticalAlign: "middle",
+              py: 0.75,
+              px: 0.5,
+            }}
+          >
+            {canOpenTeamBonus ? (
+              <Box
+                component="button"
+                type="button"
+                aria-label="Изменить командный бонус за выбранный период"
+                onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
+                sx={staffScheduleHeaderActionSx}
+              >
+                {label}
+              </Box>
+            ) : (
+              label
+            )}
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 }
@@ -298,7 +342,7 @@ function ScheduleTableHeaderRow({
 function ScheduleTableColGroup({ dayCount, summaryColumnCount, showFastActions }) {
   return (
     <colgroup>
-      <col style={{ width: SELECTION_COLUMN_WIDTH }} />
+      {showFastActions ? <col style={{ width: SELECTION_COLUMN_WIDTH }} /> : null}
       <col style={{ width: EMPLOYEE_COLUMN_WIDTH }} />
       <col style={{ width: POSITION_COLUMN_WIDTH }} />
       {showFastActions ? <col style={{ width: ACTION_COLUMN_WIDTH }} /> : null}
@@ -336,15 +380,20 @@ function ScheduleRow({
   useColors,
   selectedRowIds,
   onToggleRowSelection,
+  focusedRowKey,
+  onToggleRowFocus,
+  blurFinancials,
 }) {
   const [hoverMode, setHoverMode] = useState(null);
   const data = row?.data ?? {};
-  const rowId = data?.id ? String(data.id) : "";
-  const isSelected = selectedRowIds.includes(rowId);
+  const focusKey = getScheduleRowFocusKey(data);
+  const isSelected = focusKey != null && selectedRowIds.includes(focusKey);
+  const isFocused = focusKey != null && focusedRowKey === focusKey;
+  const isFinancialBlurred = blurFinancials && !isFocused;
   const baseColors = useColors
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
-  const isFullRowHighlighted = isSelected || hoverMode === "row";
+  const isFullRowHighlighted = isFocused;
   const rowSurfaceColor = isFullRowHighlighted
     ? uiTableColors.rowSelected
     : row?.color
@@ -358,33 +407,36 @@ function ScheduleRow({
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
   const canUseFastActions =
     showFastActions && Boolean(onOpenFastActions) && String(data?.smena_id ?? "") !== "-1";
-  const positionStickyLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
+  const selectionColumnWidth = showFastActions ? SELECTION_COLUMN_WIDTH : 0;
+  const positionStickyLeft = selectionColumnWidth + EMPLOYEE_COLUMN_WIDTH;
 
   return (
     <TableRow>
-      <TableCell
-        padding="checkbox"
-        className="checkBox"
-        sx={{
-          ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 5, rowSurfaceColor),
-          p: 0,
-        }}
-        onMouseEnter={() => setHoverMode("row")}
-        onMouseLeave={() => setHoverMode(null)}
-      >
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <JacoCheckbox
-            checked={isSelected}
-            onChange={() => onToggleRowSelection(rowId)}
-            disabled={!rowId || String(data?.smena_id ?? "") === "-1"}
-          />
-        </Box>
-      </TableCell>
+      {showFastActions ? (
+        <TableCell
+          padding="checkbox"
+          className="checkBox"
+          sx={{
+            ...stickyCellSx(SELECTION_COLUMN_WIDTH, 0, 5, rowSurfaceColor),
+            p: 0,
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            {String(data?.smena_id ?? "") !== "-1" ? (
+              <JacoCheckbox
+                checked={isSelected}
+                onChange={() => onToggleRowSelection(focusKey)}
+                disabled={!focusKey}
+              />
+            ) : null}
+          </Box>
+        </TableCell>
+      ) : null}
 
       <TableCell
         sx={{
-          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, SELECTION_COLUMN_WIDTH, 5, employeeCellColor),
-          color: baseColors.color,
+          ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, selectionColumnWidth, 5, employeeCellColor),
+          color: isFocused ? "#000000" : baseColors.color,
           fontWeight: 500,
           py: 0.9,
           px: 1.5,
@@ -406,11 +458,33 @@ function ScheduleRow({
         sx={{
           ...stickyCellSx(POSITION_COLUMN_WIDTH, positionStickyLeft, 5, rowSurfaceColor),
           ...(showFastActions ? null : stickyBoundarySx),
-          py: 0.9,
-          px: 1.5,
+          p: 0,
         }}
       >
-        <Typography sx={{ fontSize: 13, color: "#666666", lineHeight: 1.25 }}>
+        <Typography
+          component="button"
+          type="button"
+          disabled={!focusKey}
+          aria-pressed={isFocused}
+          onClick={() => onToggleRowFocus(focusKey)}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            height: "100%",
+            px: 1.5,
+            py: 0.9,
+            border: 0,
+            background: "none",
+            fontSize: 13,
+            color: "#666666",
+            lineHeight: 1.25,
+            textAlign: "left",
+            cursor: focusKey ? "pointer" : "default",
+          }}
+        >
           {data?.app_name || "—"}
         </Typography>
       </TableCell>
@@ -452,13 +526,16 @@ function ScheduleRow({
         ? toArray(data?.dates).map((day, index) => {
             const info = day?.info ?? {};
             const isHoliday = Boolean(data?.holydays?.[day?.date]);
-            const hasExplicitDayColor = useColors && Boolean(info?.color) && !row?.color;
+            const hasExplicitDayColor =
+              useColors && Boolean(info?.color) && !row?.color && !isFocused;
             const baseBackground = hasExplicitDayColor ? info.color : rowSurfaceColor;
-            const textColor = useColors
-              ? row?.color
-                ? "#000000"
-                : info?.colorT || "#111827"
-              : "#111827";
+            const textColor = isFocused
+              ? "#111827"
+              : useColors
+                ? row?.color
+                  ? "#000000"
+                  : info?.colorT || "#111827"
+                : "#111827";
 
             return (
               <TableCell
@@ -471,7 +548,7 @@ function ScheduleRow({
                   py: 0.5,
                   fontSize: 11,
                   fontWeight: 500,
-                  ...(isHoliday
+                  ...(isHoliday && !isFocused
                     ? getHolidayStripeSx(baseBackground, index, DAY_COLUMN_WIDTH)
                     : { backgroundColor: baseBackground }),
                   color: textColor,
@@ -493,18 +570,14 @@ function ScheduleRow({
 
       {summaryColumns.map((column) =>
         (() => {
-          const isDriver = data?.app_type === "driver";
-          const canEditPrice =
-            column.key === "price_p_h" && canEdit("1h") && toArray(data?.price_arr).length;
-          const canEditGiven = column.key === "given" && canEdit("given") && !isDriver;
-          const canEditGivenCart =
-            column.key === "given_cart" && canEdit("given_cart") && !isDriver;
-          const canEditWithheld = column.key === "withheld" && canEdit("withheld");
+          const canEditFinancialValue = canEditStaffScheduleFinanceValue({
+            columnKey: column.key,
+            row: data,
+            canEdit,
+          });
           const canEditDirBonus =
             column.key === "my_bonus" &&
-            canEdit("bonus") &&
-            Number(selectedPart) === 1 &&
-            data?.app_type === "dir";
+            canEditStaffScheduleBonus({ row: data, canEdit, selectedPart });
           const canEditDopBonus =
             column.key === "dop_bonus" &&
             canEdit("com_bonus") &&
@@ -513,12 +586,9 @@ function ScheduleRow({
             String(data?.smena_id ?? "") !== "-1";
           const isPremiumColumn = column.key === "test_all_price" && column.accessKey === "premia";
           const isClickable =
-            canEditPrice ||
-            canEditGiven ||
-            canEditGivenCart ||
-            canEditWithheld ||
-            canEditDirBonus ||
-            canEditDopBonus;
+            !isFinancialBlurred &&
+            Boolean(canEditDopBonus ? onChangeTeamBonusForUser : onOpenSummaryAction) &&
+            (canEditFinancialValue || canEditDirBonus || canEditDopBonus);
 
           const handleClick = () => {
             if (canEditDopBonus) {
@@ -535,20 +605,42 @@ function ScheduleRow({
             <TableCell
               key={`${data?.id || data?.user_name}-${column.key}`}
               align="center"
+              data-financial-column={column.key}
+              data-financial-editable={isClickable ? "true" : undefined}
+              role={isClickable ? "button" : undefined}
+              tabIndex={isClickable ? 0 : undefined}
+              aria-label={
+                isClickable
+                  ? `Изменить ${column.label} — ${data?.user_name || "Сотрудник"} · ${data?.full_app_name || data?.app_name || ""}`
+                  : undefined
+              }
               onClick={isClickable ? handleClick : undefined}
+              onKeyDown={
+                isClickable
+                  ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleClick();
+                      }
+                    }
+                  : undefined
+              }
               sx={{
                 ...tableCellDividerSx,
                 minWidth: SUMMARY_COLUMN_WIDTH,
                 fontSize: 11.5,
                 px: 0.75,
                 cursor: isClickable ? "pointer" : "default",
-                backgroundColor: isPremiumColumn
-                  ? uiColors.primary
-                  : isFullRowHighlighted || !canEditDirBonus
-                    ? rowSurfaceColor
-                    : uiTableColors.rowHover,
-                color: isPremiumColumn ? "#FFFFFF" : undefined,
+                backgroundColor: isFocused
+                  ? rowSurfaceColor
+                  : isPremiumColumn
+                    ? uiColors.primary
+                    : isFullRowHighlighted || !canEditDirBonus
+                      ? rowSurfaceColor
+                      : uiTableColors.rowHover,
+                color: isPremiumColumn && !isFocused ? "#FFFFFF" : undefined,
                 fontWeight: isPremiumColumn ? 700 : undefined,
+                ...(isClickable ? staffScheduleFinancialFocusSx : null),
                 "&:hover": isClickable
                   ? {
                       backgroundColor: isPremiumColumn
@@ -562,7 +654,20 @@ function ScheduleRow({
                   : undefined,
               }}
             >
-              {getSummaryCellValue(column, data)}
+              <Box
+                component="span"
+                data-financial-value
+                aria-hidden={isFinancialBlurred}
+                sx={{
+                  display: "inline-block",
+                  filter: isFinancialBlurred ? "blur(5px)" : undefined,
+                  userSelect: isFinancialBlurred ? "none" : undefined,
+                  pointerEvents: isFinancialBlurred ? "none" : undefined,
+                  ...(isClickable ? staffScheduleFinancialValueStyle : null),
+                }}
+              >
+                {getSummaryCellValue(column, data)}
+              </Box>
             </TableCell>
           );
         })(),
@@ -575,7 +680,9 @@ function ShiftHeaderRow({
   shiftId,
   smenaId,
   label,
+  employeeCount,
   stickyColumnCount,
+  stickyWidth,
   middleColSpan,
   collapsed,
   onToggle,
@@ -591,6 +698,8 @@ function ShiftHeaderRow({
         colSpan={stickyColumnCount}
         onClick={handleToggle}
         sx={{
+          ...stickyCellSx(stickyWidth, 0, 4, headerBg),
+          ...stickyBoundarySx,
           backgroundColor: headerBg,
           color: "#4B5563",
           py: 0.75,
@@ -622,12 +731,22 @@ function ShiftHeaderRow({
           >
             <ScheduleRoundedIcon sx={{ fontSize: 20, color: "#3C3B3B" }} />
           </Box>
-          <Typography
-            sx={{ fontSize: 15, fontWeight: 500, minWidth: 0 }}
-            noWrap
-          >
-            {label || "Смена"}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75, flex: 1, minWidth: 0 }}>
+            <Typography
+              sx={{ fontSize: 15, fontWeight: 500, minWidth: 0 }}
+              noWrap
+            >
+              {label || "Смена"}
+            </Typography>
+            {Number.isInteger(employeeCount) ? (
+              <Typography
+                sx={{ fontSize: 13, color: uiColors.textMuted, flexShrink: 0 }}
+                noWrap
+              >
+                {formatEmployeeCount(employeeCount)}
+              </Typography>
+            ) : null}
+          </Box>
         </Stack>
       </TableCell>
 
@@ -691,6 +810,7 @@ function SummaryMetricRow({
   getValue,
   getSummaryValue,
   onSummaryCellClick,
+  blurValues = false,
 }) {
   return (
     <TableRow>
@@ -726,21 +846,31 @@ function SummaryMetricRow({
             whiteSpace: compactValues ? "nowrap" : undefined,
           }}
         >
-          {compactValues ? (
-            <SmallFont
-              style={{
-                display: "block",
-                fontSize: "0.65rem",
-                lineHeight: 1.1,
-              }}
-            >
-              {getValue ? getValue(item) : ""}
-            </SmallFont>
-          ) : getValue ? (
-            getValue(item)
-          ) : (
-            ""
-          )}
+          <Box
+            component="div"
+            aria-hidden={blurValues}
+            sx={{
+              display: "inline-block",
+              filter: blurValues ? "blur(5px)" : undefined,
+              userSelect: blurValues ? "none" : undefined,
+            }}
+          >
+            {compactValues ? (
+              <SmallFont
+                style={{
+                  display: "block",
+                  fontSize: "0.65rem",
+                  lineHeight: 1.1,
+                }}
+              >
+                {getValue ? getValue(item) : ""}
+              </SmallFont>
+            ) : getValue ? (
+              getValue(item)
+            ) : (
+              ""
+            )}
+          </Box>
         </TableCell>
       ))}
 
@@ -748,7 +878,7 @@ function SummaryMetricRow({
         <TableCell
           key={`${label}-${column.key}`}
           align="center"
-          onClick={onSummaryCellClick ? () => onSummaryCellClick(column) : undefined}
+          onClick={!blurValues && onSummaryCellClick ? () => onSummaryCellClick(column) : undefined}
           sx={{
             ...tableCellDividerSx,
             minWidth: SUMMARY_COLUMN_WIDTH,
@@ -756,29 +886,40 @@ function SummaryMetricRow({
             fontSize: compactValues ? 13.2 : 12,
             color: "#5E5E5E",
             whiteSpace: compactValues ? "nowrap" : undefined,
-            cursor: onSummaryCellClick ? "pointer" : "default",
-            "&:hover": onSummaryCellClick
-              ? {
-                  backgroundColor: "#F7F7F7",
-                }
-              : undefined,
+            cursor: !blurValues && onSummaryCellClick ? "pointer" : "default",
+            "&:hover":
+              !blurValues && onSummaryCellClick
+                ? {
+                    backgroundColor: "#F7F7F7",
+                  }
+                : undefined,
           }}
         >
-          {compactValues ? (
-            <SmallFont
-              style={{
-                display: "block",
-                fontSize: "0.65rem",
-                lineHeight: 1.1,
-              }}
-            >
-              {getSummaryValue ? getSummaryValue(column) : ""}
-            </SmallFont>
-          ) : getSummaryValue ? (
-            getSummaryValue(column)
-          ) : (
-            ""
-          )}
+          <Box
+            component="div"
+            aria-hidden={blurValues}
+            sx={{
+              display: "inline-block",
+              filter: blurValues ? "blur(5px)" : undefined,
+              userSelect: blurValues ? "none" : undefined,
+            }}
+          >
+            {compactValues ? (
+              <SmallFont
+                style={{
+                  display: "block",
+                  fontSize: "0.65rem",
+                  lineHeight: 1.1,
+                }}
+              >
+                {getSummaryValue ? getSummaryValue(column) : ""}
+              </SmallFont>
+            ) : getSummaryValue ? (
+              getSummaryValue(column)
+            ) : (
+              ""
+            )}
+          </Box>
         </TableCell>
       ))}
     </TableRow>
@@ -786,6 +927,8 @@ function SummaryMetricRow({
 }
 
 export default function StaffScheduleTableSection({
+  pointId,
+  monthId,
   period,
   rows,
   shownShiftCount,
@@ -818,6 +961,8 @@ export default function StaffScheduleTableSection({
 }) {
   const [isColorLegendOpen, setIsColorLegendOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const [focusedRowKey, setFocusedRowKey] = useState(null);
+  const [blurFinancials, setBlurFinancials] = useState(false);
   const [stickyHeader, setStickyHeader] = useState({
     visible: false,
     left: 0,
@@ -840,14 +985,22 @@ export default function StaffScheduleTableSection({
     () => filterScheduleRowsByEmployee(allRows, normalizedEmployeeSearch),
     [allRows, normalizedEmployeeSearch],
   );
+  useEffect(() => {
+    setFocusedRowKey(null);
+  }, [pointId, period?.id, period?.rows]);
+  const handleToggleRowFocus = useCallback((rowKey) => {
+    setFocusedRowKey((current) => (current === rowKey ? null : rowKey));
+  }, []);
   const filteredShiftCount = normalizedEmployeeSearch
     ? visibleRows.filter((row) => row?.row === "header").length
     : shownShiftCount;
   const { canView, canEdit, canShowFooterStats, canOpenMonthCard, canOpenDayCard, canManageSmena } =
     useMemo(() => createStaffSchedulePolicy(access), [access]);
   const renderedDayCount = isCalendarHidden ? 0 : days.length;
-  const showFastActions = hasFastActionsAccess(access);
-  const stickyColumnCount = 3 + (showFastActions ? 1 : 0);
+  const showFastActions =
+    hasFastActionsAccess(access) && canUseStaffScheduleFastActionsPeriod(monthId, selectedPart);
+  const selectionColumnWidth = showFastActions ? SELECTION_COLUMN_WIDTH : 0;
+  const stickyColumnCount = 2 + (showFastActions ? 2 : 0);
   const colSpan = stickyColumnCount + renderedDayCount + summaryColumns.length;
   const shiftHeaderMiddleColSpan = Math.max(colSpan - stickyColumnCount - 1, 0);
   const canShowRolls = canView("rolls");
@@ -860,17 +1013,17 @@ export default function StaffScheduleTableSection({
   const canEditSmena = canManageSmena;
   const canCreateSmena = canManageSmena;
   const canEditTeamBonus = canEdit("com_bonus");
-  const canOpenDirectorLevel = graphKind !== "other";
-  const hasBulkSelection = selectedRowIds.length > 0;
+  const canOpenDirectorLevel = canEdit("director_level");
+  const hasBulkSelection = showFastActions && selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
-  const positionHeaderLeft = SELECTION_COLUMN_WIDTH + EMPLOYEE_COLUMN_WIDTH;
+  const positionHeaderLeft = selectionColumnWidth + EMPLOYEE_COLUMN_WIDTH;
   const summaryLabelWidth =
-    SELECTION_COLUMN_WIDTH +
+    selectionColumnWidth +
     EMPLOYEE_COLUMN_WIDTH +
     POSITION_COLUMN_WIDTH +
     (showFastActions ? ACTION_COLUMN_WIDTH : 0);
   const tableWidth =
-    SELECTION_COLUMN_WIDTH +
+    selectionColumnWidth +
     EMPLOYEE_COLUMN_WIDTH +
     POSITION_COLUMN_WIDTH +
     (showFastActions ? ACTION_COLUMN_WIDTH : 0) +
@@ -1095,6 +1248,11 @@ export default function StaffScheduleTableSection({
           value={employeeSearch}
           onChange={setEmployeeSearch}
         />
+        <JacoFieldSwitch
+          label="Скрыть финансовые показатели"
+          checked={blurFinancials}
+          onChange={(_, checked) => setBlurFinancials(checked)}
+        />
         <StaffScheduleMobileTableSection
           shownShiftCount={filteredShiftCount}
           rows={visibleRows}
@@ -1111,6 +1269,9 @@ export default function StaffScheduleTableSection({
           useColors={useColors}
           selectedRowIds={selectedRowIds}
           onToggleRowSelection={onToggleRowSelection}
+          focusedRowKey={focusedRowKey}
+          onToggleRowFocus={handleToggleRowFocus}
+          blurFinancials={blurFinancials}
           onClearRowSelection={onClearRowSelection}
           onOpenMonth={onOpenMonth}
           onOpenDay={onOpenDay}
@@ -1123,6 +1284,8 @@ export default function StaffScheduleTableSection({
           totalsSummaryKeyMap={totalsSummaryKeyMap}
           periodBonusSummaryKeyMap={periodBonusSummaryKeyMap}
           canEditTeamBonus={canEditTeamBonus}
+          canEdit={canEdit}
+          selectedPart={selectedPart}
           onChangeTeamBonusForUser={onChangeTeamBonusForUser}
           periodBonusState={periodBonusState}
           canShowPeriodSum={canShowPeriodSum}
@@ -1231,6 +1394,14 @@ export default function StaffScheduleTableSection({
                 }
               />
             </Box>
+
+            <Box sx={{ minWidth: toolbarControlMinWidth }}>
+              <JacoFieldSwitch
+                label="Скрыть финансовые показатели"
+                checked={blurFinancials}
+                onChange={(_, checked) => setBlurFinancials(checked)}
+              />
+            </Box>
           </Stack>
         </Stack>
 
@@ -1286,6 +1457,9 @@ export default function StaffScheduleTableSection({
                     isCalendarHidden={isCalendarHidden}
                     positionHeaderLeft={positionHeaderLeft}
                     onOpenBulkFastActions={onOpenBulkFastActions}
+                    onOpenSummaryAction={onOpenSummaryAction}
+                    canEditTeamBonus={canEditTeamBonus}
+                    blurFinancials={blurFinancials}
                     stickyZIndex={8}
                   />
                 </TableHead>
@@ -1331,6 +1505,9 @@ export default function StaffScheduleTableSection({
                 isCalendarHidden={isCalendarHidden}
                 positionHeaderLeft={positionHeaderLeft}
                 onOpenBulkFastActions={onOpenBulkFastActions}
+                onOpenSummaryAction={onOpenSummaryAction}
+                canEditTeamBonus={canEditTeamBonus}
+                blurFinancials={blurFinancials}
               />
             </TableHead>
 
@@ -1356,7 +1533,9 @@ export default function StaffScheduleTableSection({
                         shiftId={shiftId}
                         smenaId={row?.__smenaId || row?.smena_id}
                         label={row?.data}
+                        employeeCount={row?.__employeeCount}
                         stickyColumnCount={stickyColumnCount}
+                        stickyWidth={summaryLabelWidth}
                         middleColSpan={shiftHeaderMiddleColSpan}
                         collapsed={collapsedShiftIds.includes(shiftId)}
                         onToggle={onToggleShiftCollapse}
@@ -1369,7 +1548,7 @@ export default function StaffScheduleTableSection({
 
                 return (
                   <ScheduleRow
-                    key={`row-${row?.data?.id || row?.data?.smena_id || row?.data?.user_name || "x"}-${index}`}
+                    key={`row-${getScheduleRowFocusKey(row?.data) ?? index}`}
                     row={row}
                     summaryColumns={summaryColumns}
                     onOpenDay={onOpenDay}
@@ -1387,6 +1566,9 @@ export default function StaffScheduleTableSection({
                     useColors={useColors}
                     selectedRowIds={selectedRowIds}
                     onToggleRowSelection={onToggleRowSelection}
+                    focusedRowKey={focusedRowKey}
+                    onToggleRowFocus={handleToggleRowFocus}
+                    blurFinancials={blurFinancials}
                   />
                 );
               })}
@@ -1461,6 +1643,7 @@ export default function StaffScheduleTableSection({
                   compactValues
                   fillColor="#9BDD7C"
                   textColor="#5E5E5E"
+                  blurValues={blurFinancials}
                   getValue={(item) => item?.res ?? ""}
                   getSummaryValue={(column) => {
                     if (column.key === "dop_bonus" && canEditTeamBonus) {

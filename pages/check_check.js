@@ -60,13 +60,45 @@ import { formatDateReverse } from "@/src/helpers/ui/formatDate";
 import MyAlert from "@/ui/MyAlert";
 import { Close } from "@mui/icons-material";
 import ExcelCompareSummary from "@/components/check_check/ExcelCompareSummary";
+import ExcelOperationsButton from "@/components/check_check/ExcelOperationsDialog";
 import MismatchDiagnostics from "@/components/check_check/MismatchDiagnostics";
 import BatchExcelCheck from "@/components/check_check/BatchExcelCheck";
 import OnlineCheckAudit from "@/components/check_check/OnlineCheckAudit";
+import IncomeCorrectionDialog from "@/components/check_check/IncomeCorrectionDialog";
+import {
+  canAddIncomeCorrection,
+  hasAccountingCorrection,
+} from "@/components/check_check/incomeCorrection.mjs";
+import { JacoButton } from "@/design-system/shared/ui";
 import TabPanel from "@/ui/TabPanel/TabPanel";
 import a11yProps from "@/ui/TabPanel/a11yProps";
 
 const formatNumber = (num) => new Intl.NumberFormat("ru-RU").format(num);
+
+const getDigitalRubleOperations = (excelCompare) => {
+  if (excelCompare?.st !== true || !Array.isArray(excelCompare?.excel?.operations)) return [];
+
+  return excelCompare.excel.operations
+    .filter(
+      (operation) =>
+        typeof operation?.operation_type === "string" &&
+        operation.operation_type.trim().toLowerCase().replace(/ё/g, "е") ===
+          "оплата цифровым рублем в тст сбербанка",
+    )
+    .map(
+      ({ operation_type, date, date_time, amount, terminal, rrn, kassa, smena, row_number }) => ({
+        operation_type,
+        date,
+        date_time,
+        amount,
+        terminal,
+        rrn,
+        kassa,
+        smena,
+        row_number,
+      }),
+    );
+};
 
 const receiptAmount = (row, field, cashField, bankField) => {
   if (row?.[field] != null) return Number(row[field]) || 0;
@@ -383,11 +415,11 @@ const getExcelStatusIcon = (color) =>
     />
   );
 
-const ExcelAmountCell = ({ excelRow, diffField = "diff_chef_bank" }) => {
+const ExcelAmountCell = ({ excelRow, diffField = "diff_chef_bank", excelCompare, scope }) => {
   const color = getExcelColor(excelRow);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.5 }}>
       <Typography sx={{ fontWeight: "bold", color }}>
         {formatNumber(excelRow?.excel_bank ?? 0)} ₽
       </Typography>
@@ -397,6 +429,10 @@ const ExcelAmountCell = ({ excelRow, diffField = "diff_chef_bank" }) => {
           {formatNumber(excelRow?.[diffField] ?? 0)} ₽
         </Typography>
       )}
+      <ExcelOperationsButton
+        excelCompare={excelCompare}
+        scope={scope}
+      />
     </Box>
   );
 };
@@ -493,7 +529,14 @@ const status = [
 
 class CheckCheck_Accordion_online extends React.Component {
   render() {
-    const { orders = [], title = "Не фискализированные онлайн заказы", onCorrection } = this.props;
+    const {
+      orders = [],
+      title = "Не фискализированные онлайн заказы",
+      onCorrection,
+      onIncomeCorrection,
+      disabled,
+      accountingIssues,
+    } = this.props;
     const showAction = typeof onCorrection === "function";
 
     return (
@@ -523,6 +566,8 @@ class CheckCheck_Accordion_online extends React.Component {
                   <TableCell>Дата / время заказа</TableCell>
                   <TableCell>Тип оплаты</TableCell>
                   <TableCell>Сумма заказа</TableCell>
+                  {showAction && <TableCell>Действие</TableCell>}
+                  {onIncomeCorrection && <TableCell>Учётная коррекция</TableCell>}
                 </TableRow>
               </TableHead>
 
@@ -550,6 +595,27 @@ class CheckCheck_Accordion_online extends React.Component {
                         >
                           Коррекция возврата
                         </Button>
+                      </TableCell>
+                    )}
+                    {onIncomeCorrection && (
+                      <TableCell>
+                        {hasAccountingCorrection(accountingIssues, order.id) ? (
+                          <Chip
+                            color="warning"
+                            size="small"
+                            label="Запись Шефа добавлена; чека ОФД нет"
+                          />
+                        ) : (
+                          <JacoButton
+                            compact
+                            tone="outlinePrimary"
+                            disabled={disabled}
+                            onClick={() => onIncomeCorrection(order.id)}
+                            sx={{ whiteSpace: "normal" }}
+                          >
+                            Добавить учётную коррекцию прихода
+                          </JacoButton>
+                        )}
                       </TableCell>
                     )}
                   </TableRow>
@@ -1241,7 +1307,10 @@ class CheckCheck_Accordion extends React.Component {
 
                   {excelCompare && (
                     <TableCell style={{ width: "18%" }}>
-                      <ExcelAmountCell excelRow={excelCompare?.diff?.all} />
+                      <ExcelAmountCell
+                        excelRow={excelCompare?.diff?.all}
+                        excelCompare={excelCompare}
+                      />
                     </TableCell>
                   )}
 
@@ -1592,7 +1661,11 @@ class CheckCheck_Accordion extends React.Component {
 
                           {excelCompare && (
                             <TableCell style={{ width: "18%" }}>
-                              <ExcelAmountCell excelRow={excelDay} />
+                              <ExcelAmountCell
+                                excelRow={excelDay}
+                                excelCompare={excelCompare}
+                                scope={{ date }}
+                              />
                             </TableCell>
                           )}
 
@@ -2025,7 +2098,15 @@ class CheckCheck_Accordion extends React.Component {
 
                                     {excelCompare && (
                                       <TableCell>
-                                        <ExcelAmountCell excelRow={excelSmena} />
+                                        <ExcelAmountCell
+                                          excelRow={excelSmena}
+                                          excelCompare={excelCompare}
+                                          scope={{
+                                            date: row.date,
+                                            kassa: kassaId,
+                                            smena: row.smena,
+                                          }}
+                                        />
                                       </TableCell>
                                     )}
                                   </TableRow>
@@ -2723,6 +2804,7 @@ class CheckCheck_Modal extends React.Component {
 class CheckCheck_ extends React.Component {
   constructor(props) {
     super(props);
+    this.checkContextRevision = 0;
 
     this.state = {
       module: "check_check",
@@ -2763,6 +2845,7 @@ class CheckCheck_ extends React.Component {
       excelCompare: null,
       excelFileName: "",
       onlineAudit: null,
+      incomeCorrectionContext: null,
     };
   }
 
@@ -2810,8 +2893,10 @@ class CheckCheck_ extends React.Component {
   };
 
   changeDateRange = (field, newDate) => {
+    this.checkContextRevision += 1;
     this.setState({
       [field]: newDate,
+      incomeCorrectionContext: null,
       needsRefresh: true,
       excelCompare: null,
       excelFileName: "",
@@ -2822,8 +2907,10 @@ class CheckCheck_ extends React.Component {
   };
 
   changeSort = (type, event) => {
+    this.checkContextRevision += 1;
     this.setState({
       [type]: event.target.value,
+      incomeCorrectionContext: null,
       needsRefresh: true,
       excelCompare: null,
       excelFileName: "",
@@ -2834,8 +2921,10 @@ class CheckCheck_ extends React.Component {
   };
 
   changeKass = (data, event, value) => {
+    this.checkContextRevision += 1;
     this.setState({
       [data]: value,
+      incomeCorrectionContext: null,
       needsRefresh: true,
       excelCompare: null,
       excelFileName: "",
@@ -2870,6 +2959,7 @@ class CheckCheck_ extends React.Component {
   }
 
   getOrders = async () => {
+    const revision = this.checkContextRevision;
     const data = this.check_data();
     if (!data) return;
 
@@ -2878,6 +2968,7 @@ class CheckCheck_ extends React.Component {
     }
 
     const res = await this.getData("get_orders", data);
+    if (revision !== this.checkContextRevision) return;
 
     // console.log('getOrders res', res);
 
@@ -2898,7 +2989,42 @@ class CheckCheck_ extends React.Component {
     }
   };
 
+  openIncomeCorrection = (orderId) => {
+    const { date_start, date_end, point_id, points, acces, is_load } = this.state;
+    if (!canAddIncomeCorrection(acces) || is_load || !orderId || !date_start || !date_end) return;
+    const point = points.find((item) => Number(item.id) === Number(point_id));
+    if (!point) return;
+    this.setState({
+      incomeCorrectionContext: {
+        point,
+        order_id: orderId,
+        date_start: dayjs(date_start).format("YYYY-MM-DD"),
+        date_end: dayjs(date_end).format("YYYY-MM-DD"),
+      },
+    });
+  };
+
+  closeIncomeCorrection = () => this.setState({ incomeCorrectionContext: null });
+
+  incomeCorrectionSaved = async (response) => {
+    this.closeIncomeCorrection();
+    this.openAlert(
+      true,
+      response.text || "Учётная запись добавлена. Фискальный чек не создавался.",
+    );
+    try {
+      await this.getOrders();
+      await this.auditOnline();
+    } catch {
+      this.openAlert(
+        false,
+        "Запись сохранена, но не удалось обновить проверку. Нажмите «Показать» и запустите автопроверку снова.",
+      );
+    }
+  };
+
   auditOnline = async () => {
+    const revision = this.checkContextRevision;
     const { date_start, date_end, point_id, points, acces } = this.state;
 
     if (!date_start || !date_end || !point_id) {
@@ -2919,6 +3045,7 @@ class CheckCheck_ extends React.Component {
       auto_repair: Number(acces?.resolve_access) === 1,
     });
 
+    if (revision !== this.checkContextRevision) return;
     if (!res.st) {
       this.setState({ onlineAudit: null });
       this.openAlert(false, res.text);
@@ -2929,6 +3056,7 @@ class CheckCheck_ extends React.Component {
   };
 
   uploadExcel = async (event) => {
+    const revision = this.checkContextRevision;
     const file = event.target.files?.[0];
     event.target.value = "";
 
@@ -2959,6 +3087,7 @@ class CheckCheck_ extends React.Component {
         headers: getAuthHeaders({ "Content-Type": "multipart/form-data" }),
       });
 
+      if (revision !== this.checkContextRevision) return;
       const res = response.data?.data || response.data;
 
       if (!res?.st) {
@@ -2973,6 +3102,7 @@ class CheckCheck_ extends React.Component {
       });
       this.openAlert(true, "Excel файл загружен");
     } catch (error) {
+      if (revision !== this.checkContextRevision) return;
       this.setState({ excelCompare: null, excelFileName: "" });
       this.openAlert(false, "Ошибка загрузки Excel файла");
     } finally {
@@ -3148,6 +3278,11 @@ class CheckCheck_ extends React.Component {
   };
 
   upload_data_1C = async (type) => {
+    if (this.state.needsRefresh) {
+      this.openAlert(false, "Параметры изменились. Нажмите «Показать».");
+      return;
+    }
+
     this.setState({
       confirmDialog: false,
     });
@@ -3156,6 +3291,13 @@ class CheckCheck_ extends React.Component {
     if (!data) return;
 
     data.type = type;
+
+    if (["export", "clear", "clear_export"].includes(type)) {
+      const digitalRubleOperations = getDigitalRubleOperations(this.state.excelCompare);
+      if (digitalRubleOperations.length > 0) {
+        data.digital_ruble_operations = digitalRubleOperations;
+      }
+    }
 
     // включать/выключать debug-режим
     data.debug = false;
@@ -3215,6 +3357,7 @@ class CheckCheck_ extends React.Component {
       excelCompare,
       excelFileName,
       onlineAudit,
+      incomeCorrectionContext,
     } = this.state;
 
     const canAct = summ_ofd != null && summ_chef != null && !needsRefresh;
@@ -3233,6 +3376,13 @@ class CheckCheck_ extends React.Component {
 
     return (
       <>
+        <IncomeCorrectionDialog
+          context={incomeCorrectionContext}
+          canAdd={canAddIncomeCorrection(acces)}
+          getData={this.getData}
+          onClose={this.closeIncomeCorrection}
+          onSuccess={this.incomeCorrectionSaved}
+        />
         <Backdrop
           style={{ zIndex: 2000 }}
           open={is_load}
@@ -3263,6 +3413,12 @@ class CheckCheck_ extends React.Component {
             </IconButton>
           </DialogTitle>
           <DialogContent>
+            {getDigitalRubleOperations(excelCompare).length > 0 && (
+              <Typography variant="body2">
+                При выгрузке однозначно найденные чеки оплат цифровым рублём из загруженного Excel
+                получат тип оплаты 3 в 1С.
+              </Typography>
+            )}
             <List>
               {Number(acces?.upload_access) === 1 && (
                 <ListItemButton
@@ -3457,8 +3613,11 @@ class CheckCheck_ extends React.Component {
               <OnlineCheckAudit
                 result={onlineAudit}
                 onRun={this.auditOnline}
-                disabled={!date_start || !date_end || !point_id}
+                disabled={is_load || !date_start || !date_end || !point_id}
                 canRepair={Number(acces?.resolve_access) === 1}
+                onIncomeCorrection={
+                  canAddIncomeCorrection(acces) ? this.openIncomeCorrection : undefined
+                }
               />
             </Grid>
           )}
@@ -3678,7 +3837,14 @@ class CheckCheck_ extends React.Component {
 
           {unfisc_online_orders?.length > 0 && Number(acces?.check_access) === 1 && (
             <Grid size={12}>
-              <CheckCheck_Accordion_online orders={unfisc_online_orders} />
+              <CheckCheck_Accordion_online
+                orders={unfisc_online_orders}
+                onIncomeCorrection={
+                  canAddIncomeCorrection(acces) ? this.openIncomeCorrection : undefined
+                }
+                disabled={is_load || needsRefresh}
+                accountingIssues={onlineAudit?.issues}
+              />
             </Grid>
           )}
 

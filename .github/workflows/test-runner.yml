@@ -27,6 +27,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve SmartCaptcha client key
+        id: smartcaptcha
+        env:
+          SMARTCAPTCHA_CLIENT_KEY: ${{ vars.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+        run: |
+          key="$SMARTCAPTCHA_CLIENT_KEY"
+          if [ -z "$key" ]; then
+            key="$(awk -F= '/^NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=/{print $2; exit}' .env.example)"
+          fi
+          if [ -z "$key" ]; then
+            echo "SmartCaptcha client key is missing" >&2
+            exit 1
+          fi
+          echo "client_key=$key" >> "$GITHUB_OUTPUT"
+
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
@@ -36,7 +51,7 @@ jobs:
           push: true
           build-args: |
             NEXT_PUBLIC_API_URL=https://apichef2.jacochef.ru/api/
-            NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=${{ vars.NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+            NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY=${{ steps.smartcaptcha.outputs.client_key }}
             MUI_STYLE_ENGINE=sc
             BUILD_SHA=${{ github.sha }}
           labels: |

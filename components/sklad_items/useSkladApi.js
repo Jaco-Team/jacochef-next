@@ -18,6 +18,7 @@ export default function useSkladApi() {
     return {
       getBootstrap: (payload = {}) => request("get_all", payload),
       getUnits: () => request("units/list"),
+      getUnit: (id) => request("units/get_one", { id }),
       getCategories: (sourceType) => request("categories/list", { source_type: sourceType }),
       createCategory: (payload) => request("categories/save_new", payload),
       updateCategory: (payload) => request("categories/save_edit", payload),
@@ -59,6 +60,7 @@ export default function useSkladApi() {
       saveSiteItemFlag: (payload) => request("site-items/save_flag", payload),
       createSiteItemTag: (payload) => request("site-items/tags/save_new", payload),
       updateSiteItemTag: (payload) => request("site-items/tags/save_edit", payload),
+      syncSiteItemsVk: () => request("site-items/sync_vk"),
       uploadSiteItemImage: (file, payload) => upload("site-items/upload_image", file, payload),
       restoreSiteItemImage: (payload) => request("site-items/restore_image", payload),
       historyList: (payload = {}) => request("history/list", payload),

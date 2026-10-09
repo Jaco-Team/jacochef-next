@@ -42,7 +42,6 @@ export const useSkladStore = create((set) => ({
       apps: payload.apps ?? [],
       tags: payload.tags ?? [],
       accountingSystems: payload.accountingSystems ?? [],
-      tab: payload.tab ?? defaultState.tab,
     });
   },
 }));

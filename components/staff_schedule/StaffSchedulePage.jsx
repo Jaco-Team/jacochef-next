@@ -76,6 +76,8 @@ export default function StaffSchedulePage() {
       >
         <Grid size={12}>
           <StaffScheduleTableSection
+            pointId={page.pointId}
+            monthId={page.monthId}
             period={page.view.activePeriod}
             rows={page.view.visibleRows}
             shownShiftCount={page.view.shownShiftCount}
@@ -126,6 +128,7 @@ export default function StaffSchedulePage() {
         modal={page.monthModal}
         onClose={page.handleCloseMonthModal}
         onSave={page.handleSaveMonthModal}
+        onNavigateMonth={page.handleNavigateMonthModal}
       />
       <StaffScheduleSmenaModal
         modal={page.smenaModal}
@@ -146,6 +149,7 @@ export default function StaffSchedulePage() {
       <page.ConfirmDialog />
       <StaffScheduleFastActionsDialog
         state={page.fastActions}
+        onUsersChange={page.handleFastActionsUsersChange}
         access={page.access}
         selectedPart={page.selectedPart}
         monthId={page.monthId}

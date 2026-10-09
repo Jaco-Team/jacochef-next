@@ -46,6 +46,7 @@ export default function useSkladAccess() {
       canConvertProduction: canAccess("production_convert"),
       canManageSiteItems: canEdit("site_items"),
       canCreateSiteItem: canAccess("site_items_create"),
+      canSyncSiteItemsVk: canAccess("site_items_sync_vk"),
       canUseSiteItemPastDate: canAccess("site_items_past_date"),
       canDelete: (entityType) => {
         if (entityType === "recipe" || entityType === "semi_finished") {

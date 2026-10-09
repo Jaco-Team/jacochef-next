@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button, DialogActions, DialogContent, Stack } from "@mui/material";
 
-import { MySelect, MyTextInput } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import { JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
+import { JacoModal } from "@/design-system/shared/ui";
 
 export default function SkladSiteCategoryDialog({
   open,
@@ -32,7 +32,8 @@ export default function SkladSiteCategoryDialog({
   };
 
   return (
-    <MyModal
+    <JacoModal
+      contentWrapper={false}
       open={open}
       onClose={loading ? undefined : onClose}
       title="Новая категория товаров сайта"
@@ -40,14 +41,14 @@ export default function SkladSiteCategoryDialog({
     >
       <DialogContent>
         <Stack spacing={2}>
-          <MyTextInput
+          <JacoTextInput
             label="Название"
             value={name}
             disabled={loading}
             func={(event) => setName(event.target.value)}
             autoFocus
           />
-          <MySelect
+          <JacoSelect
             label="Родительская категория"
             data={[{ id: "0", name: "Без родительской категории" }, ...parentOptions]}
             is_none={false}
@@ -77,6 +78,6 @@ export default function SkladSiteCategoryDialog({
           </Button>
         </Stack>
       </DialogActions>
-    </MyModal>
+    </JacoModal>
   );
 }

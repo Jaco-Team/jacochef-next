@@ -1,5 +1,6 @@
 "use client";
 
+import SkladAutocomplete from "../ui/SkladAutocomplete";
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import AddIcon from "@mui/icons-material/Add";
@@ -10,11 +11,7 @@ import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Alert,
-  Button,
-  DialogActions,
-  DialogContent,
   Grid,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -23,23 +20,23 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
   Typography,
 } from "@mui/material";
 import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
+import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
 import {
-  MyAutocomplite,
-  MyCheckBox,
-  MyDatePickerNew,
-  MySelect,
-  MyTextInput,
-  MyTimeInput,
-} from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
-import SkladCsvAutocompleteField from "../SkladCsvAutocompleteField";
+  JacoButton,
+  JacoCheckboxField,
+  JacoDatePicker,
+  JacoIconButton,
+  JacoModal,
+  JacoSelect,
+  JacoTextInput,
+  JacoTimePicker,
+} from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
 import {
@@ -55,7 +52,24 @@ import {
   normalizeItemOptions,
   normalizeOptions,
   normalizeSelectedOptions,
+  recalculateProductionRow,
 } from "./productionEditor.helpers";
+
+const dateRangeFieldSx = {
+  "& .MuiInputLabel-root:not(.MuiInputLabel-shrink)": {
+    top: "50%",
+    transform: "translate(14px, -50%)",
+  },
+};
+
+function getValidProductionDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = dayjs(value);
+  return date.isValid() && date.format("YYYY-MM-DD") === value ? date : null;
+}
 
 function formatMetricValue(value) {
   if (value === null || value === undefined || value === "") {
@@ -89,32 +103,57 @@ export default function SkladProductionEditorDialog({
   onClose,
 }) {
   const [activeTab, setActiveTab] = useState(canViewHistory ? initialTab : "main");
-  const [form, setForm] = useState(() => buildInitialDraft(draft));
+  const [form, setForm] = useState(() => ({
+    ...buildInitialDraft(draft),
+    ...(mode === "create" ? { two_user: null } : {}),
+  }));
 
   const isRecipe = entityType === "recipe";
-  const createRequiredFields = ["name", "shelf_life", "unit", "date_start", "date_end"];
-  const canEditField = (field) =>
-    isEditable &&
-    (Number(access?.[`production_${field}_edit`]) === 1 ||
-      (mode === "create" && createRequiredFields.includes(field)));
+  const canEditField = (field) => isEditable && Number(access?.[`production_${field}_edit`]) === 1;
+  const canViewField = (field) =>
+    Number(access?.[`production_${field}_view`]) === 1 ||
+    Number(access?.[`production_${field}_edit`]) === 1;
+  const missingCreateFields =
+    mode === "create"
+      ? [
+          ["name", "Название"],
+          ["shelf_life", "Срок годности"],
+          ["date_start", "Действует С"],
+        ]
+          .filter(([field]) => !canEditField(field))
+          .map(([, label]) => label)
+      : [];
   const canEditItems = canEditField("items");
+  const startDate = getValidProductionDate(form.date_start);
+  const endDate = getValidProductionDate(form.date_end);
+  const dateRangeError =
+    (canEditField("date_start") && form.date_start && !startDate) ||
+    (canEditField("date_end") && form.date_end && !endDate)
+      ? "Введите корректную дату начала и окончания"
+      : (canEditField("date_start") || canEditField("date_end")) &&
+          startDate &&
+          endDate &&
+          endDate.isBefore(startDate, "day")
+        ? "Дата окончания не может быть раньше даты начала"
+        : "";
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setForm(buildInitialDraft(draft));
+    setForm({
+      ...buildInitialDraft(draft),
+      ...(mode === "create" ? { two_user: null } : {}),
+    });
     setActiveTab(canViewHistory ? initialTab : "main");
-  }, [canViewHistory, draft, initialTab, open]);
+  }, [canViewHistory, draft, initialTab, mode, open]);
 
   const unitOptions = useMemo(() => {
-    const options = [{ id: "", name: "Выберите единицу" }].concat(
-      (units || []).map((item) => ({
-        id: String(item?.id ?? ""),
-        name: item?.name || String(item?.id || ""),
-      })),
-    );
+    const options = (units || []).map((item) => ({
+      id: String(item?.id ?? ""),
+      name: item?.name || String(item?.id || ""),
+    }));
 
     if (
       form.ed_izmer_id &&
@@ -169,11 +208,26 @@ export default function SkladProductionEditorDialog({
     setForm((prev) => ({ ...prev, [key]: Array.isArray(value) ? value : [] }));
   };
 
+  const updateAppointments = (_, value, reason, details) => {
+    const isNotRequired = (option) =>
+      String(option?.name ?? "")
+        .trim()
+        .toLocaleLowerCase("ru") === "не требуется";
+    const nextValue =
+      reason === "selectOption" && details?.option
+        ? isNotRequired(details.option)
+          ? [details.option]
+          : value.filter((option) => !isNotRequired(option))
+        : value;
+
+    updateRelationField("apps", nextValue);
+  };
+
   const updateCompositionRow = (index, key, value) => {
     setForm((prev) => ({
       ...prev,
       items: (Array.isArray(prev?.items) ? prev.items : []).map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [key]: value } : item,
+        itemIndex === index ? recalculateProductionRow({ ...item, [key]: value }, key) : item,
       ),
     }));
   };
@@ -257,74 +311,113 @@ export default function SkladProductionEditorDialog({
   const submitLabel = mode === "create" ? "Создать" : "Сохранить изменения";
 
   return (
-    <MyModal
+    <JacoModal
       open={open}
       onClose={onClose}
       maxWidth="lg"
-      containedDesktopScroll
       title={
         mode === "create"
           ? `Новый ${entityLabel.toLowerCase()}`
           : `Редактирование: ${draft?.name || entityLabel}`
       }
+      actions={
+        <Stack
+          direction="row"
+          spacing={1}
+        >
+          <JacoButton
+            tone="secondary"
+            onClick={onClose}
+          >
+            Закрыть
+          </JacoButton>
+          <JacoButton
+            tone="success"
+            disabled={!isEditable || missingCreateFields.length > 0 || Boolean(dateRangeError)}
+            loading={loading}
+            onClick={() => {
+              if (isEditable && !missingCreateFields.length && !dateRangeError) {
+                onSubmit?.(form);
+              }
+            }}
+          >
+            {submitLabel}
+          </JacoButton>
+        </Stack>
+      }
     >
-      <DialogContent dividers>
-        <Stack spacing={2}>
-          {!isEditable ? (
-            <Alert
-              severity="warning"
-              sx={{ borderRadius: 2 }}
-            >
-              Недостаточно прав для сохранения этой карточки. Поля доступны только для просмотра.
-            </Alert>
-          ) : null}
+      <Stack spacing={2}>
+        {missingCreateFields.length ? (
+          <Alert severity="warning">
+            Для создания недостаточно прав на обязательные поля: {missingCreateFields.join(", ")}.
+          </Alert>
+        ) : null}
+        {!isEditable ? (
+          <Alert
+            severity="warning"
+            sx={{ borderRadius: 2 }}
+          >
+            Недостаточно прав для сохранения этой карточки. Поля доступны только для просмотра.
+          </Alert>
+        ) : null}
 
-          {loading ? (
-            <Alert
-              severity="info"
-              sx={{ borderRadius: 2 }}
+        {loading ? (
+          <Alert
+            severity="info"
+            sx={{ borderRadius: 2 }}
+          >
+            Загружаем данные карточки...
+          </Alert>
+        ) : (
+          <TabContext value={activeTab}>
+            <TabList
+              onChange={(_, nextValue) => setActiveTab(nextValue)}
+              variant="scrollable"
+              allowScrollButtonsMobile
+              sx={{
+                borderBottom: 1,
+                borderColor: "divider",
+                "& .MuiTab-root": {
+                  minHeight: 44,
+                  textTransform: "none",
+                  alignItems: "center",
+                  gap: 1,
+                },
+              }}
             >
-              Загружаем данные карточки...
-            </Alert>
-          ) : (
-            <TabContext value={activeTab}>
-              <Tabs
-                value={activeTab}
-                onChange={(_, nextValue) => setActiveTab(nextValue)}
-                variant="scrollable"
-                allowScrollButtonsMobile
-                sx={{
-                  borderBottom: 1,
-                  borderColor: "divider",
-                  "& .MuiTab-root": {
-                    minHeight: 44,
-                    textTransform: "none",
-                    alignItems: "center",
-                    gap: 1,
-                  },
-                }}
-              >
-                <Tab
-                  value="main"
-                  icon={<InfoOutlinedIcon fontSize="small" />}
-                  iconPosition="start"
-                  label="Карточка"
-                />
-                {canViewHistory ? (
-                  <Tab
-                    value="history"
-                    icon={<HistoryOutlinedIcon fontSize="small" />}
-                    iconPosition="start"
-                    label="История"
-                  />
-                ) : null}
-              </Tabs>
-
-              <TabPanel
+              <Tab
                 value="main"
-                sx={{ p: 0, pt: 2 }}
-              >
-                <Stack spacing={2}>
+                icon={<InfoOutlinedIcon fontSize="small" />}
+                iconPosition="start"
+                label="Карточка"
+              />
+              {canViewHistory ? (
+                <Tab
+                  value="history"
+                  icon={<HistoryOutlinedIcon fontSize="small" />}
+                  iconPosition="start"
+                  label="История"
+                />
+              ) : null}
+            </TabList>
+
+            <TabPanel
+              value="main"
+              sx={{ p: 0, pt: 2 }}
+            >
+              <Stack spacing={2}>
+                {[
+                  "name",
+                  "shelf_life",
+                  "unit",
+                  "date_start",
+                  "date_end",
+                  "time",
+                  "dop_time",
+                  "two_user",
+                  "activity",
+                  "show_in_rev",
+                ].some(canViewField) ? (
                   <SkladSectionCard
                     icon={<InfoOutlinedIcon fontSize="small" />}
                     title="Основные"
@@ -333,99 +426,129 @@ export default function SkladProductionEditorDialog({
                       container
                       spacing={1.5}
                     >
-                      <Grid size={12}>
-                        <MyTextInput
-                          label="Название"
-                          value={form.name}
-                          disabled={!canEditField("name")}
-                          func={(event) => updateField("name", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={12}>
-                        <MyTextInput
-                          label="Срок годности"
-                          value={form.shelf_life}
-                          disabled={!canEditField("shelf_life")}
-                          func={(event) => updateField("shelf_life", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <MySelect
-                          label="Единица"
-                          data={unitOptions}
-                          is_none={false}
-                          value={safeUnitValue}
-                          disabled={!canEditField("unit")}
-                          func={(event) => updateField("ed_izmer_id", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <MyDatePickerNew
-                          label="Действует с"
-                          value={form.date_start}
-                          minDate={allowPastDate ? undefined : dayjs().startOf("day")}
-                          disabled={!canEditField("date_start")}
-                          func={(value) =>
-                            updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
-                          }
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <MyDatePickerNew
-                          label="Действует по"
-                          value={form.date_end}
-                          minDate={
-                            form.date_start ? dayjs(form.date_start) : dayjs().startOf("day")
-                          }
-                          clearable
-                          customActions
-                          disabled={!canEditField("date_end")}
-                          func={(value) =>
-                            updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
-                          }
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTimeInput
-                          label="Время приготовления"
-                          value={form.time_min}
-                          disabled={!canEditField("time")}
-                          func={(event) => updateField("time_min", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <MyTimeInput
-                          label="Доп. время"
-                          value={form.time_min_dop}
-                          disabled={!canEditField("dop_time")}
-                          func={(event) => updateField("time_min_dop", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 2 }}>
-                        <MyTextInput
-                          label="Выход"
-                          value={form.all_w}
-                          disabled={!canEditItems}
-                          func={(event) => updateField("all_w", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 2 }}>
-                        <MyTextInput
-                          label="Брутто"
-                          value={form.all_w_brutto}
-                          disabled={!canEditItems}
-                          func={(event) => updateField("all_w_brutto", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 2 }}>
-                        <MyTextInput
-                          label="Нетто"
-                          value={form.all_w_netto}
-                          disabled={!canEditItems}
-                          func={(event) => updateField("all_w_netto", event.target.value)}
-                        />
-                      </Grid>
-                      <Grid size={12}>
+                      {canViewField("name") ? (
+                        <Grid size={12}>
+                          <JacoTextInput
+                            label="Название"
+                            value={form.name}
+                            disabled={!canEditField("name")}
+                            onChange={(event) => updateField("name", event.target.value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("shelf_life") ? (
+                        <Grid size={12}>
+                          <JacoTextInput
+                            label="Срок годности"
+                            value={form.shelf_life}
+                            multiline
+                            minRows={3}
+                            disabled={!canEditField("shelf_life")}
+                            onChange={(event) => updateField("shelf_life", event.target.value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("unit") ? (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <SkladAutocomplete
+                            label="Единица измерения"
+                            options={unitOptions}
+                            value={
+                              unitOptions.find(
+                                (item) => String(item.id) === String(safeUnitValue),
+                              ) ?? null
+                            }
+                            multiple={false}
+                            freeSolo={false}
+                            isOptionEqualToValue={(option, value) =>
+                              String(option.id) === String(value.id)
+                            }
+                            disabled={!canEditField("unit")}
+                            onChange={(_event, option) =>
+                              updateField("ed_izmer_id", option?.id ?? "")
+                            }
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("date_start") ? (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <JacoDatePicker
+                            label="Действует С"
+                            sx={dateRangeFieldSx}
+                            value={form.date_start}
+                            minDate={allowPastDate ? undefined : dayjs().startOf("day")}
+                            maxDate={endDate ?? undefined}
+                            disabled={!canEditField("date_start")}
+                            onChange={(value) =>
+                              updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
+                            }
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("date_end") ? (
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <JacoDatePicker
+                            label="Действует по"
+                            sx={dateRangeFieldSx}
+                            value={form.date_end}
+                            minDate={startDate ?? dayjs().startOf("day")}
+                            clearable
+                            customActions
+                            disabled={!canEditField("date_end")}
+                            onChange={(value) =>
+                              updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
+                            }
+                          />
+                        </Grid>
+                      ) : null}
+                      {dateRangeError ? (
+                        <Grid size={12}>
+                          <Alert
+                            severity="error"
+                            sx={{ borderRadius: 2 }}
+                          >
+                            {dateRangeError}
+                          </Alert>
+                        </Grid>
+                      ) : null}
+                      {canViewField("time") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <JacoTimePicker
+                            label="Время приготовления"
+                            value={form.time_min}
+                            disabled={!canEditField("time")}
+                            onChange={(event) => updateField("time_min", event.target.value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("dop_time") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <JacoTimePicker
+                            label="Доп. время"
+                            value={form.time_min_dop}
+                            disabled={!canEditField("dop_time")}
+                            onChange={(event) => updateField("time_min_dop", event.target.value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("two_user") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <JacoSelect
+                            label="Количество сотрудников"
+                            value={form.two_user === null ? "" : form.two_user ? "1" : "0"}
+                            options={[
+                              { id: 0, name: "Один сотрудник" },
+                              { id: 1, name: "Два сотрудника" },
+                            ]}
+                            allowNone={false}
+                            disabled={!canEditField("two_user")}
+                            onChange={(event) =>
+                              updateField("two_user", event.target.value === "1")
+                            }
+                          />
+                        </Grid>
+                      ) : null}
+                      <Grid size={{ xs: 12, md: 6 }}>
                         <Stack
                           direction="row"
                           spacing={1}
@@ -434,29 +557,31 @@ export default function SkladProductionEditorDialog({
                             flexWrap: "wrap",
                           }}
                         >
-                          <MyCheckBox
-                            label="Активность"
-                            value={form.is_show}
-                            disabled={!canEditField("activity")}
-                            func={(event) => updateField("is_show", event.target.checked)}
-                          />
-                          <MyCheckBox
-                            label="Показывать в ревизии"
-                            value={form.show_in_rev}
-                            disabled={!canEditField("show_in_rev")}
-                            func={(event) => updateField("show_in_rev", event.target.checked)}
-                          />
-                          <MyCheckBox
-                            label="Требуется 2 сотрудника"
-                            value={form.two_user}
-                            disabled={!canEditField("two_user")}
-                            func={(event) => updateField("two_user", event.target.checked)}
-                          />
+                          {canViewField("activity") ? (
+                            <JacoCheckboxField
+                              label="Активность"
+                              checked={Boolean(form.is_show)}
+                              disabled={!canEditField("activity")}
+                              onChange={(event) => updateField("is_show", event.target.checked)}
+                            />
+                          ) : null}
+                          {canViewField("show_in_rev") ? (
+                            <JacoCheckboxField
+                              label="Показывать в ревизии"
+                              checked={Boolean(form.show_in_rev)}
+                              disabled={!canEditField("show_in_rev")}
+                              onChange={(event) => updateField("show_in_rev", event.target.checked)}
+                            />
+                          ) : null}
                         </Stack>
                       </Grid>
                     </Grid>
                   </SkladSectionCard>
+                ) : null}
 
+                {["categories", "allergens", "storages", "allergens_diff", "apps"].some(
+                  canViewField,
+                ) ? (
                   <SkladSectionCard
                     icon={<LocalShippingOutlinedIcon fontSize="small" />}
                     title="Привязки"
@@ -465,310 +590,295 @@ export default function SkladProductionEditorDialog({
                       container
                       spacing={1.5}
                     >
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Stack
-                          direction="row"
-                          spacing={0.5}
-                          sx={{
-                            alignItems: "center",
-                          }}
-                        >
-                          <Stack sx={{ minWidth: 0, flex: 1 }}>
-                            <MyAutocomplite
-                              multiple
-                              label="Категории"
-                              data={categoryOptions}
-                              value={selectedCategories}
-                              disabled={!canEditField("categories")}
-                              func={(_, value) => updateRelationField("categories", value)}
-                            />
+                      {canViewField("categories") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            sx={{
+                              alignItems: "center",
+                            }}
+                          >
+                            <Stack sx={{ minWidth: 0, flex: 1 }}>
+                              <SkladAutocomplete
+                                multiple
+                                label="Категории"
+                                data={categoryOptions}
+                                value={selectedCategories}
+                                disabled={!canEditField("categories")}
+                                func={(_, value) => updateRelationField("categories", value)}
+                              />
+                            </Stack>
+                            {canCreateCategory && canEditField("categories") ? (
+                              <JacoIconButton
+                                aria-label="Добавить категорию"
+                                onClick={onCreateCategory}
+                              >
+                                <AddIcon fontSize="small" />
+                              </JacoIconButton>
+                            ) : null}
                           </Stack>
-                          {canCreateCategory && canEditField("categories") ? (
-                            <IconButton
-                              size="small"
-                              aria-label="Добавить категорию"
-                              onClick={onCreateCategory}
-                            >
-                              <AddIcon fontSize="small" />
-                            </IconButton>
-                          ) : null}
-                        </Stack>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <MyAutocomplite
-                          multiple
-                          label="Аллергены"
-                          data={allergenOptions}
-                          value={selectedAllergens}
-                          disabled={!canEditField("allergens")}
-                          func={(_, value) => updateRelationField("allergens", value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <MyAutocomplite
-                          multiple
-                          label="Места хранения"
-                          data={storageOptions}
-                          value={selectedStorages}
-                          disabled={!canEditField("storages")}
-                          func={(_, value) => updateRelationField("storages", value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <MyAutocomplite
-                          multiple
-                          label="Возможные аллергены"
-                          data={allergenOptions}
-                          value={selectedPossibleAllergens}
-                          disabled={!canEditField("allergens_diff")}
-                          func={(_, value) => updateRelationField("allergens_possible", value)}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <MyAutocomplite
-                          multiple
-                          label="Должности в кафе"
-                          data={appOptions}
-                          value={selectedApps}
-                          disabled={!canEditField("apps")}
-                          func={(_, value) => updateRelationField("apps", value)}
-                        />
-                      </Grid>
+                        </Grid>
+                      ) : null}
+                      {canViewField("allergens") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <SkladAutocomplete
+                            multiple
+                            label="Аллергены"
+                            data={allergenOptions}
+                            value={selectedAllergens}
+                            disabled={!canEditField("allergens")}
+                            func={(_, value) => updateRelationField("allergens", value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("storages") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <SkladAutocomplete
+                            multiple
+                            label="Места хранения"
+                            data={storageOptions}
+                            value={selectedStorages}
+                            disabled={!canEditField("storages")}
+                            func={(_, value) => updateRelationField("storages", value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("allergens_diff") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <SkladAutocomplete
+                            multiple
+                            label="Возможные аллергены"
+                            data={allergenOptions}
+                            value={selectedPossibleAllergens}
+                            disabled={!canEditField("allergens_diff")}
+                            func={(_, value) => updateRelationField("allergens_possible", value)}
+                          />
+                        </Grid>
+                      ) : null}
+                      {canViewField("apps") ? (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <SkladAutocomplete
+                            multiple
+                            label="Должности в кафе"
+                            data={appOptions}
+                            value={selectedApps}
+                            disabled={!canEditField("apps")}
+                            func={updateAppointments}
+                          />
+                        </Grid>
+                      ) : null}
                     </Grid>
                   </SkladSectionCard>
+                ) : null}
 
+                {canViewField("items") || (!isRecipe && canViewField("structure")) ? (
                   <SkladSectionCard
                     icon={<Inventory2OutlinedIcon fontSize="small" />}
                     title={isRecipe ? "Номенклатура" : "Состав"}
                   >
-                    {isRecipe ? (
-                      <>
-                        {form.items.length ? (
-                          <TableContainer>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>Номенклатура</TableCell>
-                                  <TableCell>Единица измерения</TableCell>
-                                  <TableCell align="right">Брутто</TableCell>
-                                  <TableCell align="right">% потери при ХО</TableCell>
-                                  <TableCell align="right">Нетто</TableCell>
-                                  <TableCell align="right">% потери при ГО</TableCell>
-                                  <TableCell align="right">Выход</TableCell>
-                                  {canEditItems ? <TableCell align="right" /> : null}
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {form.items.map((item, index) => (
-                                  <TableRow key={getCompositionRowKey(item, index)}>
-                                    <TableCell sx={{ minWidth: 260 }}>
-                                      {canEditItems ? (
-                                        <MyAutocomplite
-                                          multiple={false}
-                                          data={itemOptions}
-                                          optionKey="id"
-                                          getOptionKey={(option) => option?.id || ""}
-                                          getOptionLabel={(option) => option?.name || ""}
-                                          isOptionEqualToValue={(option, value) =>
-                                            String(option?.id || "") === String(value?.id || "")
-                                          }
-                                          value={
-                                            itemOptions.find(
-                                              (option) =>
-                                                String(option?.id || "") ===
-                                                String(getCompositionItemId(item)),
-                                            ) ||
-                                            (getCompositionItemId(item)
-                                              ? {
-                                                  id: getCompositionItemId(item),
-                                                  name: getCompositionItemName(item),
-                                                  source_id: item?.item_id || "",
-                                                  type_rec: item?.type_rec || "item",
-                                                  ei_name: getCompositionUnitName(item),
-                                                }
-                                              : null)
-                                          }
-                                          filterOptions={filterProductionCompositionOptions}
-                                          disabled={!canEditItems}
-                                          func={(_, value) => updateCompositionItem(index, value)}
-                                        />
-                                      ) : (
-                                        getCompositionItemName(item)
-                                      )}
-                                    </TableCell>
-                                    <TableCell>{getCompositionUnitName(item)}</TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={item?.brutto ?? ""}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(
-                                              index,
-                                              "brutto",
-                                              event.target.value,
-                                            )
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(item?.brutto)
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={getCompositionLoss(item)}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "pr_1", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(getCompositionLoss(item))
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={item?.netto ?? ""}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "netto", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(item?.netto)
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={item?.pr_2 ?? ""}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "pr_2", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(item?.pr_2)
-                                      )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                      {canEditItems ? (
-                                        <MyTextInput
-                                          label=""
-                                          value={getCompositionOutput(item)}
-                                          disabled={!canEditItems}
-                                          func={(event) =>
-                                            updateCompositionRow(index, "res", event.target.value)
-                                          }
-                                        />
-                                      ) : (
-                                        formatMetricValue(getCompositionOutput(item))
-                                      )}
-                                    </TableCell>
-                                    {canEditItems ? (
-                                      <TableCell align="right">
-                                        <IconButton
-                                          color="error"
-                                          onClick={() => removeCompositionRow(index)}
-                                        >
-                                          <CloseIcon />
-                                        </IconButton>
-                                      </TableCell>
-                                    ) : null}
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        ) : null}
-                        {canEditItems ? (
-                          <TableContainer sx={{ mt: form.items.length ? 1.5 : 0 }}>
-                            <Table size="small">
-                              <TableBody>
-                                <TableRow>
+                    <>
+                      {!isRecipe && canViewField("structure") ? (
+                        <Stack sx={{ mb: 1.5 }}>
+                          <JacoTextInput
+                            label="Состав"
+                            multiline
+                            minRows={3}
+                            value={form.structure}
+                            disabled={!canEditField("structure")}
+                            onChange={(event) => updateField("structure", event.target.value)}
+                          />
+                        </Stack>
+                      ) : null}
+                      {canViewField("items") && form.items.length ? (
+                        <TableContainer>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Номенклатура</TableCell>
+                                <TableCell>Единица измерения</TableCell>
+                                <TableCell align="right">Брутто</TableCell>
+                                <TableCell align="right">% потери при ХО</TableCell>
+                                <TableCell align="right">Нетто</TableCell>
+                                <TableCell align="right">% потери при ГО</TableCell>
+                                <TableCell align="right">Выход</TableCell>
+                                {canEditItems ? <TableCell align="right" /> : null}
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {form.items.map((item, index) => (
+                                <TableRow key={getCompositionRowKey(item, index)}>
                                   <TableCell sx={{ minWidth: 260 }}>
-                                    <MyAutocomplite
-                                      multiple={false}
-                                      data={itemOptions.filter(
-                                        (option) =>
-                                          !form.items.some(
-                                            (item) =>
-                                              String(item?.item_option_key || "") ===
-                                              String(option?.id || ""),
-                                          ),
-                                      )}
-                                      optionKey="id"
-                                      getOptionKey={(option) => option?.id || ""}
-                                      getOptionLabel={(option) => option?.name || ""}
-                                      isOptionEqualToValue={(option, value) =>
-                                        String(option?.id || "") === String(value?.id || "")
-                                      }
-                                      value={null}
-                                      placeholder="Выберите номенклатуру"
-                                      filterOptions={filterProductionCompositionOptions}
-                                      disabled={!canEditItems}
-                                      func={(_, value) => appendCompositionItem(value)}
-                                    />
+                                    {canEditItems ? (
+                                      <SkladAutocomplete
+                                        multiple={false}
+                                        data={itemOptions}
+                                        optionKey="id"
+                                        getOptionKey={(option) => option?.id || ""}
+                                        getOptionLabel={(option) => option?.name || ""}
+                                        isOptionEqualToValue={(option, value) =>
+                                          String(option?.id || "") === String(value?.id || "")
+                                        }
+                                        value={
+                                          itemOptions.find(
+                                            (option) =>
+                                              String(option?.id || "") ===
+                                              String(getCompositionItemId(item)),
+                                          ) ||
+                                          (getCompositionItemId(item)
+                                            ? {
+                                                id: getCompositionItemId(item),
+                                                name: getCompositionItemName(item),
+                                                source_id: item?.item_id || "",
+                                                type_rec: item?.type_rec || "item",
+                                                ei_name: getCompositionUnitName(item),
+                                              }
+                                            : null)
+                                        }
+                                        filterOptions={filterProductionCompositionOptions}
+                                        disabled={!canEditItems}
+                                        func={(_, value) => updateCompositionItem(index, value)}
+                                      />
+                                    ) : (
+                                      getCompositionItemName(item)
+                                    )}
                                   </TableCell>
-                                  <TableCell>-</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell align="right">0</TableCell>
-                                  <TableCell />
+                                  <TableCell>{getCompositionUnitName(item)}</TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <JacoTextInput
+                                        label=""
+                                        value={item?.brutto ?? ""}
+                                        disabled={!canEditItems}
+                                        func={(event) =>
+                                          updateCompositionRow(index, "brutto", event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      formatMetricValue(item?.brutto)
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <JacoTextInput
+                                        label=""
+                                        value={getCompositionLoss(item)}
+                                        disabled={!canEditItems}
+                                        func={(event) =>
+                                          updateCompositionRow(index, "pr_1", event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      formatMetricValue(getCompositionLoss(item))
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <JacoTextInput
+                                        label=""
+                                        value={item?.netto ?? ""}
+                                        disabled
+                                      />
+                                    ) : (
+                                      formatMetricValue(item?.netto)
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <JacoTextInput
+                                        label=""
+                                        value={item?.pr_2 ?? ""}
+                                        disabled={!canEditItems}
+                                        func={(event) =>
+                                          updateCompositionRow(index, "pr_2", event.target.value)
+                                        }
+                                      />
+                                    ) : (
+                                      formatMetricValue(item?.pr_2)
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    {canEditItems ? (
+                                      <JacoTextInput
+                                        label=""
+                                        value={getCompositionOutput(item)}
+                                        disabled
+                                      />
+                                    ) : (
+                                      formatMetricValue(getCompositionOutput(item))
+                                    )}
+                                  </TableCell>
+                                  {canEditItems ? (
+                                    <TableCell align="right">
+                                      <JacoIconButton onClick={() => removeCompositionRow(index)}>
+                                        <CloseIcon />
+                                      </JacoIconButton>
+                                    </TableCell>
+                                  ) : null}
                                 </TableRow>
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        ) : null}
-                      </>
-                    ) : (
-                      <SkladCsvAutocompleteField
-                        label="Состав"
-                        value={form.structure}
-                        disabled={!canEditField("structure")}
-                        onChange={(nextValue) => updateField("structure", nextValue)}
-                        placeholder="Введите состав через запятую"
-                      />
-                    )}
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      ) : null}
+                      {canEditItems ? (
+                        <TableContainer
+                          sx={{ mt: form.items.length ? 1.5 : 0, width: { xs: "100%", md: "50%" } }}
+                        >
+                          <Table size="small">
+                            <TableBody>
+                              <TableRow>
+                                <TableCell sx={{ minWidth: 260 }}>
+                                  <SkladAutocomplete
+                                    multiple={false}
+                                    data={itemOptions.filter(
+                                      (option) =>
+                                        !form.items.some(
+                                          (item) =>
+                                            String(item?.item_option_key || "") ===
+                                            String(option?.id || ""),
+                                        ),
+                                    )}
+                                    optionKey="id"
+                                    getOptionKey={(option) => option?.id || ""}
+                                    getOptionLabel={(option) => option?.name || ""}
+                                    isOptionEqualToValue={(option, value) =>
+                                      String(option?.id || "") === String(value?.id || "")
+                                    }
+                                    value={null}
+                                    placeholder="Выберите номенклатуру"
+                                    filterOptions={filterProductionCompositionOptions}
+                                    disabled={!canEditItems}
+                                    func={(_, value) => appendCompositionItem(value)}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      ) : null}
+                    </>
                   </SkladSectionCard>
-                </Stack>
-              </TabPanel>
+                ) : null}
+              </Stack>
+            </TabPanel>
 
-              {canViewHistory ? (
-                <TabPanel
-                  value="history"
-                  sx={{ p: 0, pt: 2 }}
+            {canViewHistory ? (
+              <TabPanel
+                value="history"
+                sx={{ p: 0, pt: 2 }}
+              >
+                <SkladSectionCard
+                  icon={<HistoryOutlinedIcon fontSize="small" />}
+                  title="История"
                 >
-                  <SkladSectionCard
-                    icon={<HistoryOutlinedIcon fontSize="small" />}
-                    title="История"
-                  >
-                    <SkladEmbeddedHistoryTable history={form.history} />
-                  </SkladSectionCard>
-                </TabPanel>
-              ) : null}
-            </TabContext>
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose}>Закрыть</Button>
-        <Button
-          variant="contained"
-          disabled={!isEditable || loading}
-          onClick={() => onSubmit?.(form)}
-        >
-          {loading ? "Сохраняем..." : submitLabel}
-        </Button>
-      </DialogActions>
-    </MyModal>
+                  <SkladEmbeddedHistoryTable history={form.history} />
+                </SkladSectionCard>
+              </TabPanel>
+            ) : null}
+          </TabContext>
+        )}
+      </Stack>
+    </JacoModal>
   );
 }

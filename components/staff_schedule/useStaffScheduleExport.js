@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { createStaffSchedulePolicy, openExportDownloadUrl } from "./staffScheduleHelpers";
 
@@ -17,21 +17,37 @@ function createExportDialogState(overrides = {}) {
 export default function useStaffScheduleExport({ api, access, pointId }) {
   const [dialog, setDialog] = useState(() => createExportDialogState());
   const policy = createStaffSchedulePolicy(access);
+  const canExport = policy.canExportWorkSchedule;
+  const accessRef = useRef(access);
+  accessRef.current = access;
+  const exportGeneration = useRef(0);
+  useEffect(() => {
+    if (!canExport) {
+      exportGeneration.current += 1;
+      setDialog(createExportDialogState());
+    }
+  }, [canExport]);
 
-  const open = useCallback((mode) => {
-    const today = dayjs().format("YYYY-MM-DD");
+  const open = useCallback(
+    (mode) => {
+      if (!canExport || !["ws", "hj"].includes(mode)) return;
+      const today = dayjs().format("YYYY-MM-DD");
+      exportGeneration.current += 1;
 
-    setDialog(
-      createExportDialogState({
-        open: true,
-        mode,
-        dateStart: today,
-        dateEnd: today,
-      }),
-    );
-  }, []);
+      setDialog(
+        createExportDialogState({
+          open: true,
+          mode,
+          dateStart: today,
+          dateEnd: today,
+        }),
+      );
+    },
+    [canExport],
+  );
 
   const close = useCallback(() => {
+    exportGeneration.current += 1;
     setDialog(createExportDialogState());
   }, []);
 
@@ -52,9 +68,16 @@ export default function useStaffScheduleExport({ api, access, pointId }) {
   }, []);
 
   const download = useCallback(async () => {
-    if (!pointId || !dialog.dateStart || !dialog.dateEnd) {
+    if (
+      !createStaffSchedulePolicy(accessRef.current).canExportWorkSchedule ||
+      !dialog.open ||
+      !pointId ||
+      !dialog.dateStart ||
+      !dialog.dateEnd
+    ) {
       return;
     }
+    const generation = exportGeneration.current;
 
     setDialog((prev) => ({
       ...prev,
@@ -71,6 +94,12 @@ export default function useStaffScheduleExport({ api, access, pointId }) {
       const response =
         dialog.mode === "hj" ? await api.downloadHJ(payload) : await api.downloadWS(payload);
 
+      if (
+        generation !== exportGeneration.current ||
+        !createStaffSchedulePolicy(accessRef.current).canExportWorkSchedule
+      )
+        return;
+
       if (response?.st === false) {
         throw new Error(response?.text || "Не удалось выгрузить файл");
       }
@@ -81,13 +110,14 @@ export default function useStaffScheduleExport({ api, access, pointId }) {
 
       close();
     } catch (requestError) {
+      if (generation !== exportGeneration.current) return;
       setDialog((prev) => ({
         ...prev,
         loading: false,
         error: requestError?.message || "Не удалось выгрузить файл",
       }));
     }
-  }, [api, close, dialog.dateEnd, dialog.dateStart, dialog.mode, pointId]);
+  }, [api, close, dialog.dateEnd, dialog.dateStart, dialog.mode, dialog.open, pointId]);
 
   return {
     dialog,

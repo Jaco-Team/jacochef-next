@@ -3,6 +3,8 @@ import React from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
+import { JacoAlert } from "@/design-system/shared/ui";
+import ExcelOperationsButton from "./ExcelOperationsDialog";
 
 const StatItem = ({ label, value, color = "default" }) => (
   <Chip
@@ -23,6 +25,17 @@ export default function ExcelCompareSummary({ excelCompare, formatNumber }) {
   const daysMismatch = Number(stats.days_mismatch) || 0;
   const rowsUsed = Number(upload.rows_used) || 0;
   const rowsTotal = Number(upload.rows_total) || 0;
+  const unknownOperations = excelCompare?.warnings?.unknown_operations;
+  const unknownTypes = excelCompare?.warnings?.unknown_operation_types;
+  const hasUnknownDetails = Array.isArray(unknownOperations);
+  const hasUnknown = hasUnknownDetails
+    ? unknownOperations.length > 0
+    : Array.isArray(unknownTypes) && unknownTypes.length > 0;
+  const displayedUnknownTypes = hasUnknownDetails
+    ? [...new Set(unknownOperations.map((row) => row.operation_type).filter(Boolean))]
+    : Array.isArray(unknownTypes)
+      ? unknownTypes
+      : [];
 
   return (
     <Paper sx={{ p: 1.5 }}>
@@ -41,6 +54,26 @@ export default function ExcelCompareSummary({ excelCompare, formatNumber }) {
             label="Ошибок"
             value={formatNumber(daysMismatch)}
             color="error"
+          />
+        )}
+      </Box>
+      {hasUnknown && (
+        <Box sx={{ mt: 1.5 }}>
+          <JacoAlert severity="warning">
+            {hasUnknownDetails
+              ? `Не учтены операции с неизвестным типом: ${unknownOperations.length}. Сверка может быть неполной.`
+              : "В файле найдены неизвестные типы операций. Для детализации загрузите файл повторно после обновления сервера."}
+            {displayedUnknownTypes.length > 0 && ` Типы: ${displayedUnknownTypes.join(", ")}.`}
+          </JacoAlert>
+        </Box>
+      )}
+      <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", gap: 1 }}>
+        <ExcelOperationsButton excelCompare={excelCompare} />
+        {hasUnknown && (
+          <ExcelOperationsButton
+            excelCompare={excelCompare}
+            onlyUnknown
+            label="Показать пропущенные операции"
           />
         )}
       </Box>

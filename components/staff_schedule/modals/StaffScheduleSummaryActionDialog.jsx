@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
-import { Box, Stack, Typography } from "@mui/material";
+import { alpha, Box, Stack, Typography } from "@mui/material";
 import {
   JacoAlert,
   JacoButton,
@@ -34,7 +34,26 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
   const options = useMemo(() => modal?.data?.options ?? [], [modal?.data?.options]);
   const isListMode = options.length > 0;
   const isTeamBonusMode = modal?.mode === "dop_bonus_toggle";
-  const modalTitle = isTeamBonusMode && modal?.data?.title ? modal.data.title : "Изменение";
+  const hasPersonalHeader = Boolean(modal?.data?.columnLabel);
+  const modalTitle = hasPersonalHeader ? (
+    <Box
+      component="span"
+      data-staff-schedule-finance-header
+      sx={{ display: "inline-flex", flexDirection: "column", minWidth: 0, maxWidth: "100%" }}
+    >
+      <Box component="span">
+        {[modal.data.columnLabel, modal.data.periodLabel].filter(Boolean).join(" · ")}
+      </Box>
+      <Box
+        component="span"
+        sx={{ fontSize: 14, lineHeight: 1.3, color: "#666666" }}
+      >
+        {[modal.data.personName, modal.data.positionName].filter(Boolean).join(" · ")}
+      </Box>
+    </Box>
+  ) : (
+    modal?.data?.title || "Изменение"
+  );
   const initialValue = buildInitialValue(modal);
   const hasChanges = String(value) !== String(initialValue);
 
@@ -56,6 +75,8 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
         </Typography>
       ),
       confirmLabel: "Да, сохранить",
+      confirmTone: "success",
+      cancelTone: "danger",
     });
 
     if (!accepted) {
@@ -74,30 +95,44 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
   };
 
   const actions = (
-    <Stack
-      direction="row"
-      justifyContent="space-between"
-      spacing={1.5}
-      sx={{ width: "100%", flex: "1 1 100%", minWidth: 0 }}
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "auto minmax(0, 1fr) auto",
+        gap: 1.5,
+        width: "100%",
+      }}
     >
       <JacoButton
         compact
-        tone="secondary"
+        tone="danger"
         onClick={onClose}
-        sx={{ minWidth: 108, minHeight: 44, borderRadius: "12px", fontSize: 16, fontWeight: 500 }}
+        sx={{
+          minWidth: 108,
+          minHeight: 44,
+          borderRadius: "12px",
+          fontSize: 16,
+          fontWeight: 500,
+        }}
       >
         Отмена
       </JacoButton>
       <JacoButton
         compact
-        tone="primary"
+        tone="success"
         onClick={handleSave}
         disabled={value === "" || !hasChanges}
-        sx={{ minWidth: 112, minHeight: 44, borderRadius: "12px", fontSize: 16 }}
+        sx={{
+          gridColumn: 3,
+          minWidth: 112,
+          minHeight: 44,
+          borderRadius: "12px",
+          fontSize: 16,
+        }}
       >
         Сохранить
       </JacoButton>
-    </Stack>
+    </Box>
   );
 
   return (
@@ -106,6 +141,8 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
         open={modal.open}
         onClose={onClose}
         title={modalTitle}
+        titleContainerSx={hasPersonalHeader ? { height: "auto", minHeight: 64, py: 1 } : undefined}
+        mobileTitleContainerSx={hasPersonalHeader ? { minHeight: 72, py: 1.5 } : undefined}
         maxWidth="sm"
         paperSx={{ maxWidth: 520 }}
         contentSx={{ px: 2.5, pt: 2.5, pb: 2 }}
@@ -114,17 +151,15 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
           px: 2.5,
           pt: 1,
           pb: 2.5,
-          justifyContent: "stretch",
-          "& > *": { width: "100%", flex: "1 1 100%" },
+          display: "block",
         }}
       >
-        <Stack spacing={2}>
+        <Stack
+          spacing={2}
+          data-staff-schedule-finance-content
+        >
           {modal.error ? <JacoAlert severity="error">{modal.error}</JacoAlert> : null}
           {saveError ? <JacoAlert severity="error">{saveError}</JacoAlert> : null}
-
-          {modal?.data?.title && !isTeamBonusMode ? (
-            <Typography sx={staffScheduleModalTypography.fieldValue}>{modal.data.title}</Typography>
-          ) : null}
 
           {isListMode ? (
             <JacoSelectableList sx={{ p: 0 }}>
@@ -134,12 +169,7 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
                 const isApproveOption = isTeamBonusMode && Number(optionValue) === 1;
                 const isRejectOption = isTeamBonusMode && Number(optionValue) === 2;
                 const optionColor = isApproveOption ? uiColors.success : uiColors.danger;
-                const optionHoverColor = isApproveOption
-                  ? "rgba(22, 163, 74, 0.08)"
-                  : uiColors.dangerSoft;
-                const optionSelectedColor = isApproveOption
-                  ? "rgba(22, 163, 74, 0.14)"
-                  : "rgba(221, 26, 50, 0.12)";
+                const optionTextColor = isApproveOption ? uiColors.successHover : uiColors.danger;
                 const optionLabel = selected
                   ? isApproveOption
                     ? "Выдано"
@@ -156,16 +186,24 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
                     sx={{
                       minHeight: 52,
                       px: 2,
-                      color: isTeamBonusMode && selected ? optionColor : "#666666",
+                      color: isTeamBonusMode ? optionTextColor : "#666666",
+                      backgroundColor: isTeamBonusMode ? alpha(optionColor, 0.07) : undefined,
                       "&:hover": {
-                        backgroundColor: isTeamBonusMode ? optionHoverColor : "#F5F5F5",
+                        backgroundColor: isTeamBonusMode ? alpha(optionColor, 0.23) : "#F5F5F5",
                       },
                       "&.Mui-selected": {
-                        backgroundColor: isTeamBonusMode ? optionSelectedColor : "#E5E5E5",
+                        backgroundColor: isTeamBonusMode ? alpha(optionColor, 0.19) : "#E5E5E5",
                       },
                       "&.Mui-selected:hover": {
-                        backgroundColor: isTeamBonusMode ? optionSelectedColor : "#DCDCDC",
+                        backgroundColor: isTeamBonusMode ? alpha(optionColor, 0.3) : "#DCDCDC",
                       },
+                      ...(isTeamBonusMode
+                        ? {
+                            "&.Mui-focusVisible": {
+                              backgroundColor: alpha(optionColor, selected ? 0.3 : 0.23),
+                            },
+                          }
+                        : {}),
                     }}
                   >
                     <Stack
@@ -185,7 +223,7 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
                         {optionLabel ?? ""}
                       </Typography>
                       {isTeamBonusMode && selected ? (
-                        <CheckRoundedIcon sx={{ fontSize: 20, color: optionColor }} />
+                        <CheckRoundedIcon sx={{ fontSize: 20, color: optionTextColor }} />
                       ) : null}
                     </Stack>
                   </JacoSelectableListItem>

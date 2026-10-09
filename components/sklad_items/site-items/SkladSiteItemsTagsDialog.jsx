@@ -1,11 +1,12 @@
 "use client";
 
+import SkladAutocomplete from "../ui/SkladAutocomplete";
 import { useEffect, useState } from "react";
 
 import { Button, DialogActions, DialogContent, Stack } from "@mui/material";
 
-import MyModal from "@/ui/MyModal";
-import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
+import { JacoModal } from "@/design-system/shared/ui";
+import { JacoTextInput } from "@/design-system/shared/ui";
 
 export default function SkladSiteItemsTagsDialog({
   open,
@@ -50,7 +51,8 @@ export default function SkladSiteItemsTagsDialog({
   };
 
   return (
-    <MyModal
+    <JacoModal
+      contentWrapper={false}
       open={open}
       onClose={loading ? undefined : onClose}
       maxWidth="sm"
@@ -61,7 +63,7 @@ export default function SkladSiteItemsTagsDialog({
           spacing={2}
           sx={{ pt: 1 }}
         >
-          <MyAutocomplite
+          <SkladAutocomplete
             label="Тег"
             multiple={false}
             unifiedPopup
@@ -73,7 +75,7 @@ export default function SkladSiteItemsTagsDialog({
               setName(value?.name || "");
             }}
           />
-          <MyTextInput
+          <JacoTextInput
             label="Новое название"
             value={name}
             disabled={loading}
@@ -96,6 +98,6 @@ export default function SkladSiteItemsTagsDialog({
           {loading ? "Сохраняем..." : "Сохранить"}
         </Button>
       </DialogActions>
-    </MyModal>
+    </JacoModal>
   );
 }

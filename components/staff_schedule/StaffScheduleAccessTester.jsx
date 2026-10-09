@@ -21,6 +21,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Close, Edit } from "@mui/icons-material";
+import { JacoButton } from "@/design-system/shared/ui";
 import { createStaffSchedulePolicy } from "./staffScheduleHelpers";
 import {
   STAFF_SCHEDULE_ACCESS_PRESETS,
@@ -303,13 +304,18 @@ export default function StaffScheduleAccessTester({ page }) {
           >
             Добавить отсутствующие ключи
           </Button>
-          <Button onClick={() => setOpen(false)}>Отмена</Button>
-          <Button
-            variant="contained"
+          <JacoButton
+            tone="danger"
+            onClick={() => setOpen(false)}
+          >
+            Отмена
+          </JacoButton>
+          <JacoButton
+            tone="success"
             onClick={applyChanges}
           >
             Применить
-          </Button>
+          </JacoButton>
         </DialogActions>
       </Dialog>
     </>

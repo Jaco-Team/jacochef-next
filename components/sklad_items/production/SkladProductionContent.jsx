@@ -2,17 +2,15 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import DisabledByDefaultIcon from "@mui/icons-material/DisabledByDefault";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
-  Button,
-  Chip,
   Grid,
-  IconButton,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -25,7 +23,14 @@ import {
   Typography,
 } from "@mui/material";
 
-import { MySearchInput, MySelect } from "@/ui/Forms";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoSearchField,
+  JacoSelect,
+  JacoSurface,
+} from "@/design-system/shared/ui";
+import { uiColors, uiRadii } from "@/design-system/shared/tokens";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
@@ -92,108 +97,105 @@ export default function SkladProductionContent({
 }) {
   return (
     <>
-      <Paper sx={{ p: 2.5, borderRadius: 3 }}>
-        <Stack spacing={2}>
-          <Grid
-            container
-            spacing={2}
-            sx={{
-              alignItems: "stretch",
-            }}
-          >
-            <Grid size={{ xs: 12, md: 4 }}>
-              <MySearchInput
-                label="Поиск"
-                placeholder="Название рецепта или полуфабриката"
-                value={search}
-                onValueChange={(nextValue) =>
-                  setState({
-                    search: nextValue,
-                    page: 0,
-                  })
-                }
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Stack
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  alignItems: "center",
-                }}
-              >
-                <Stack sx={{ minWidth: 0, flex: 1 }}>
-                  <SkladCategorySelect
-                    label="Категория"
-                    data={categoryOptions}
-                    is_none={false}
-                    value={categoryId}
-                    func={(event) => {
-                      setState({
-                        categoryId: event.target.value,
-                        page: 0,
-                      });
-                    }}
-                  />
-                </Stack>
-                {canManageCategories ? (
-                  <Tooltip title="Управление категориями">
-                    <IconButton
-                      size="small"
-                      aria-label="Управление категориями"
-                      onClick={onManageCategories}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                ) : null}
-              </Stack>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <MySelect
-                label="Показать"
-                data={PRODUCTION_ARCHIVE_MODE_OPTIONS}
-                is_none={false}
-                value={archiveMode}
-                func={(event) =>
-                  setState({
-                    archiveMode: event.target.value,
-                    page: 0,
-                  })
-                }
-              />
-            </Grid>
-
-            <Grid size={12}>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                sx={{
-                  justifyContent: "flex-start",
-                }}
-              >
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  disabled={!canCreateProduction}
-                  onClick={() => openCreate("recipe")}
-                >
-                  Добавить рецепт
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  disabled={!canCreateProduction}
-                  onClick={() => openCreate("semi_finished")}
-                >
-                  Добавить полуфабрикат
-                </Button>
-              </Stack>
-            </Grid>
+      <Stack spacing={2}>
+        <Grid
+          container
+          spacing={2}
+          sx={{
+            alignItems: "stretch",
+          }}
+        >
+          <Grid size={{ xs: 12, md: 4 }}>
+            <JacoSearchField
+              label="Поиск"
+              placeholder="Название рецепта или полуфабриката"
+              value={search}
+              onValueChange={(nextValue) =>
+                setState({
+                  search: nextValue,
+                  page: 0,
+                })
+              }
+            />
           </Grid>
 
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{
+                alignItems: "center",
+              }}
+            >
+              <Stack sx={{ minWidth: 0, flex: 1 }}>
+                <SkladCategorySelect
+                  label="Категория"
+                  data={categoryOptions}
+                  is_none={false}
+                  value={categoryId}
+                  func={(event) => {
+                    setState({
+                      categoryId: event.target.value,
+                      page: 0,
+                    });
+                  }}
+                />
+              </Stack>
+              {canManageCategories ? (
+                <Tooltip title="Управление категориями">
+                  <JacoIconButton
+                    aria-label="Управление категориями"
+                    onClick={onManageCategories}
+                  >
+                    <EditIcon fontSize="small" />
+                  </JacoIconButton>
+                </Tooltip>
+              ) : null}
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <JacoSelect
+              label="Показать"
+              options={PRODUCTION_ARCHIVE_MODE_OPTIONS}
+              allowNone={false}
+              value={archiveMode}
+              onChange={(event) =>
+                setState({
+                  archiveMode: event.target.value,
+                  page: 0,
+                })
+              }
+            />
+          </Grid>
+
+          <Grid size={12}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
+              sx={{
+                justifyContent: "flex-start",
+              }}
+            >
+              <JacoButton
+                startIcon={<AddIcon />}
+                disabled={!canCreateProduction}
+                onClick={() => openCreate("recipe")}
+              >
+                Добавить рецепт
+              </JacoButton>
+              <JacoButton
+                startIcon={<AddIcon />}
+                disabled={!canCreateProduction}
+                onClick={() => openCreate("semi_finished")}
+              >
+                Добавить полуфабрикат
+              </JacoButton>
+            </Stack>
+          </Grid>
+        </Grid>
+
+        <JacoSurface sx={{ border: "none", borderRadius: uiRadii.lg, overflow: "hidden" }}>
           <TableContainer sx={{ maxHeight: "50dvh", overflow: "auto" }}>
             <Table
               size="small"
@@ -207,6 +209,7 @@ export default function SkladProductionContent({
             >
               <TableHead>
                 <TableRow>
+                  <TableCell sx={{ width: 116 }}>Тип</TableCell>
                   <SkladSortableHeader
                     sortKey="name"
                     sortBy={sortBy}
@@ -224,14 +227,6 @@ export default function SkladProductionContent({
                     Категории
                   </SkladSortableHeader>
                   <SkladSortableHeader
-                    sortKey="shelfLife"
-                    sortBy={sortBy}
-                    sortDirection={sortDirection}
-                    onSort={onSort}
-                  >
-                    Срок годности
-                  </SkladSortableHeader>
-                  <SkladSortableHeader
                     sortKey="dateStart"
                     sortBy={sortBy}
                     sortDirection={sortDirection}
@@ -247,7 +242,9 @@ export default function SkladProductionContent({
                   >
                     Действует до
                   </SkladSortableHeader>
-                  <TableCell sx={{ minWidth: 220 }}>Статус</TableCell>
+                  <TableCell sx={{ minWidth: 116 }}>Обновление</TableCell>
+                  <TableCell align="center">Активность</TableCell>
+                  <TableCell align="center">Ревизия</TableCell>
                   <TableCell
                     align="right"
                     sx={{ width: 220 }}
@@ -266,12 +263,21 @@ export default function SkladProductionContent({
                     Number(row?.delete_usage?.can_delete) === 1;
                   const primaryStatusChip = getPrimaryStatusChip(row);
                   const secondaryStatusChips = getSecondaryStatusChips(row);
+                  const isActive = Number(row?.is_active) === 1;
+                  const isRevision = Number(row?.show_in_rev) === 1;
+                  const ActivityIcon = isActive ? CheckBoxIcon : DisabledByDefaultIcon;
+                  const RevisionIcon = isRevision ? CheckBoxIcon : DisabledByDefaultIcon;
+                  const activityLabel = `Активность: ${isActive ? "Да" : "Нет"}. ${[
+                    primaryStatusChip.label,
+                    ...secondaryStatusChips.map((chip) => chip.label),
+                  ].join(". ")}`;
 
                   return (
                     <TableRow
                       key={getRowKey(entityType, row)}
                       hover
                     >
+                      <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
                       <TableCell
                         onClick={() => openEdit(entityType, row, "main")}
                         sx={{ cursor: "pointer" }}
@@ -281,36 +287,35 @@ export default function SkladProductionContent({
                       <TableCell>
                         {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
                       </TableCell>
-                      <TableCell>{row?.shelf_life || "-"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
-                      <TableCell>
-                        <Stack
-                          direction="row"
-                          spacing={0.75}
-                          useFlexGap
-                          sx={{
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                          }}
+                      <TableCell>{formatDateRU(row?.date_update) || "—"}</TableCell>
+                      <TableCell align="center">
+                        <Tooltip
+                          title={activityLabel}
+                          describeChild
                         >
-                          <Chip
-                            key={primaryStatusChip.key}
-                            label={primaryStatusChip.label}
-                            size="small"
-                            color={primaryStatusChip.color}
-                            variant={primaryStatusChip.color === "default" ? "outlined" : "filled"}
-                          />
-                          {secondaryStatusChips.map((chip) => (
-                            <Chip
-                              key={chip.key}
-                              label={chip.label}
-                              size="small"
-                              color={chip.color}
-                              variant="outlined"
+                          <span style={{ display: "inline-flex" }}>
+                            <ActivityIcon
+                              titleAccess={activityLabel}
+                              sx={{
+                                fontSize: 24,
+                                color: isActive ? uiColors.success : uiColors.danger,
+                                clipPath: `inset(3px round ${uiRadii.xs})`,
+                              }}
                             />
-                          ))}
-                        </Stack>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="center">
+                        <RevisionIcon
+                          titleAccess={`Ревизия: ${isRevision ? "Да" : "Нет"}`}
+                          sx={{
+                            fontSize: 24,
+                            color: isRevision ? uiColors.success : uiColors.danger,
+                            clipPath: `inset(3px round ${uiRadii.xs})`,
+                          }}
+                        />
                       </TableCell>
                       <TableCell align="right">
                         <Stack
@@ -324,26 +329,24 @@ export default function SkladProductionContent({
                             title={canCreateOrEdit ? "Открыть редактор" : "Открыть карточку"}
                           >
                             <span>
-                              <IconButton
-                                size="small"
+                              <JacoIconButton
                                 aria-label="Редактировать"
                                 onClick={() => openEdit(entityType, row, "main")}
                               >
                                 <EditIcon fontSize="small" />
-                              </IconButton>
+                              </JacoIconButton>
                             </span>
                           </Tooltip>
 
                           {canViewHistory ? (
                             <Tooltip title="Открыть вкладку истории">
                               <span>
-                                <IconButton
-                                  size="small"
+                                <JacoIconButton
                                   aria-label="Открыть историю"
                                   onClick={() => openEdit(entityType, row, "history")}
                                 >
                                   <HistoryOutlinedIcon fontSize="small" />
-                                </IconButton>
+                                </JacoIconButton>
                               </span>
                             </Tooltip>
                           ) : null}
@@ -361,14 +364,13 @@ export default function SkladProductionContent({
                               }
                             >
                               <span>
-                                <IconButton
-                                  size="small"
+                                <JacoIconButton
                                   aria-label={`Преобразовать ${getEntitySingleLabel(entityType).toLowerCase()}`}
                                   disabled={Number(row?.is_archived) === 1 || !canDelete}
                                   onClick={() => openConvertDialog(entityType, row)}
                                 >
                                   <SwapHorizIcon fontSize="small" />
-                                </IconButton>
+                                </JacoIconButton>
                               </span>
                             </Tooltip>
                           ) : null}
@@ -380,8 +382,7 @@ export default function SkladProductionContent({
                               }
                             >
                               <span>
-                                <IconButton
-                                  size="small"
+                                <JacoIconButton
                                   disabled={!canCreateOrEdit}
                                   onClick={() => openArchiveDialog(entityType, row)}
                                 >
@@ -390,7 +391,7 @@ export default function SkladProductionContent({
                                   ) : (
                                     <ArchiveOutlinedIcon fontSize="small" />
                                   )}
-                                </IconButton>
+                                </JacoIconButton>
                               </span>
                             </Tooltip>
                           ) : null}
@@ -399,25 +400,21 @@ export default function SkladProductionContent({
                             canDelete ? (
                               <Tooltip title="Удалить">
                                 <span>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
+                                  <JacoIconButton
+                                    sx={{ color: "error.main" }}
                                     disabled={!canCreateOrEdit}
                                     onClick={() => openDeleteDialog(entityType, row)}
                                   >
                                     <DeleteOutlineIcon fontSize="small" />
-                                  </IconButton>
+                                  </JacoIconButton>
                                 </span>
                               </Tooltip>
                             ) : (
                               <Tooltip title={getDeleteHint(row)}>
                                 <span>
-                                  <IconButton
-                                    size="small"
-                                    disabled
-                                  >
+                                  <JacoIconButton disabled>
                                     <DeleteOutlineIcon fontSize="small" />
-                                  </IconButton>
+                                  </JacoIconButton>
                                 </span>
                               </Tooltip>
                             )
@@ -430,7 +427,7 @@ export default function SkladProductionContent({
 
                 {mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={9}>
                       <Typography
                         sx={{
                           color: "text.secondary",
@@ -460,8 +457,8 @@ export default function SkladProductionContent({
             rowsPerPageOptions={[25, 50, 100]}
             labelRowsPerPage="Строк на странице:"
           />
-        </Stack>
-      </Paper>
+        </JacoSurface>
+      </Stack>
       <SkladProductionEditorDialog
         open={modal.open}
         loading={modal.loading}

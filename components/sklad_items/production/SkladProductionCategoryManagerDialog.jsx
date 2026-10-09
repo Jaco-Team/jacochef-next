@@ -12,18 +12,16 @@ import {
   DialogActions,
   DialogContent,
   IconButton,
-  MenuItem,
   Paper,
   Stack,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 
-import { MyTextInput } from "@/ui/Forms";
-import MyModal from "@/ui/MyModal";
+import { JacoModal, JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
+import { uiRadii } from "@/design-system/shared/tokens";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 
 function categoryUsageLabel(category) {
@@ -140,7 +138,8 @@ export default function SkladProductionCategoryManagerDialog({
 
   return (
     <>
-      <MyModal
+      <JacoModal
+        contentWrapper={false}
         open={open}
         onClose={loading ? undefined : onClose}
         title="Категории"
@@ -158,10 +157,7 @@ export default function SkladProductionCategoryManagerDialog({
                 value="semi_finished"
                 label="Рецепты и полуфабрикаты"
               />
-              <Tab
-                value="warehouse_item"
-                label="Товары склада"
-              />
+              {/* Suspended warehouse-item category scope; keep its logic/access wiring for later reactivation. */}
             </Tabs>
             {canCreateSource ? (
               <Paper
@@ -171,9 +167,9 @@ export default function SkladProductionCategoryManagerDialog({
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={1}
-                  alignItems={{ xs: "stretch", sm: "center" }}
+                  sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                 >
-                  <MyTextInput
+                  <JacoTextInput
                     label="Новая категория"
                     value={newCategoryName}
                     disabled={loading}
@@ -186,23 +182,14 @@ export default function SkladProductionCategoryManagerDialog({
                     }}
                   />
                   {sourceType === "warehouse_item" ? (
-                    <TextField
-                      select
-                      size="small"
+                    <JacoSelect
                       label="Группа"
                       value={parentId}
                       onChange={(event) => setParentId(event.target.value)}
                       sx={{ minWidth: 220 }}
-                    >
-                      {warehouseParents.map(([id, label]) => (
-                        <MenuItem
-                          key={id}
-                          value={id}
-                        >
-                          {label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      allowNone={false}
+                      options={warehouseParents.map(([id, name]) => ({ id, name }))}
+                    />
                   ) : null}
                   <Button
                     size="small"
@@ -214,7 +201,7 @@ export default function SkladProductionCategoryManagerDialog({
                       !newCategoryName.trim() ||
                       (sourceType === "warehouse_item" && !parentId)
                     }
-                    sx={{ flexShrink: 0 }}
+                    sx={{ flexShrink: 0, borderRadius: uiRadii.md }}
                   >
                     Добавить
                   </Button>
@@ -237,14 +224,14 @@ export default function SkladProductionCategoryManagerDialog({
                   <Stack
                     direction={{ xs: "column", sm: "row" }}
                     spacing={1.5}
-                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{ alignItems: { xs: "stretch", sm: "center" } }}
                   >
                     <Stack
                       spacing={0.25}
                       sx={{ minWidth: 0, flex: 1 }}
                     >
                       {isEditing ? (
-                        <MyTextInput
+                        <JacoTextInput
                           label="Название категории"
                           value={name}
                           disabled={loading}
@@ -256,7 +243,7 @@ export default function SkladProductionCategoryManagerDialog({
                           <Stack
                             direction="row"
                             spacing={1}
-                            alignItems="center"
+                            sx={{ alignItems: "center" }}
                           >
                             <Typography
                               fontWeight={600}
@@ -284,7 +271,7 @@ export default function SkladProductionCategoryManagerDialog({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      justifyContent="flex-end"
+                      sx={{ justifyContent: "flex-end" }}
                     >
                       {isEditing ? (
                         <>
@@ -377,7 +364,7 @@ export default function SkladProductionCategoryManagerDialog({
             Закрыть
           </Button>
         </DialogActions>
-      </MyModal>
+      </JacoModal>
 
       <SkladDeleteDialog
         open={Boolean(deleteCategory)}

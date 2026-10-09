@@ -43,6 +43,12 @@ Supporting docs:
 - local QA checklist: `TEST-PLAN.md`
 - automated test entrypoint: `tests/README.md`
 
+## Документация
+
+- Актуальный FE-контракт хранится только в `fe-api.md`; checklist локальной проверки — в `TEST-PLAN.md`.
+- Этот README сохраняет историю и устройство модуля, а не дублирует контракт или runbook.
+- Backend cutover и operational-порядок ведутся в `test-app-site/app/Chef/Staff_schedule/RUNBOOK.md`.
+
 ## API / Local DB Status
 
 Current module API calls are routed through `useStaffScheduleApi -> useApi("staff_schedule")`.
