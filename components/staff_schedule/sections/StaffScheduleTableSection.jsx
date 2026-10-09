@@ -394,16 +394,9 @@ function ScheduleRow({
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
   const isFullRowHighlighted = isFocused;
-  const rowSurfaceColor = isFullRowHighlighted
-    ? uiTableColors.rowSelected
-    : row?.color
-      ? uiTableColors.rowMuted
-      : uiColors.surface;
-  const employeeCellColor = isFullRowHighlighted
-    ? uiTableColors.rowSelected
-    : hoverMode === "name"
-      ? uiTableColors.nameHover
-      : baseColors.backgroundColor;
+  const rowSurfaceColor = row?.color ? uiTableColors.rowMuted : uiColors.surface;
+  const employeeCellColor =
+    hoverMode === "name" ? uiTableColors.nameHover : baseColors.backgroundColor;
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
   const canUseFastActions =
     showFastActions && Boolean(onOpenFastActions) && String(data?.smena_id ?? "") !== "-1";
@@ -436,7 +429,7 @@ function ScheduleRow({
       <TableCell
         sx={{
           ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, selectionColumnWidth, 5, employeeCellColor),
-          color: isFocused ? "#000000" : baseColors.color,
+          color: baseColors.color,
           fontWeight: 500,
           py: 0.9,
           px: 1.5,
@@ -479,10 +472,11 @@ function ScheduleRow({
             border: 0,
             background: "none",
             fontSize: 13,
-            color: "#666666",
+            color: "#000000",
             lineHeight: 1.25,
             textAlign: "left",
             cursor: focusKey ? "pointer" : "default",
+            boxShadow: isFocused ? `inset 0 0 0 2px ${uiColors.primary}` : "none",
           }}
         >
           {data?.app_name || "—"}
@@ -526,16 +520,13 @@ function ScheduleRow({
         ? toArray(data?.dates).map((day, index) => {
             const info = day?.info ?? {};
             const isHoliday = Boolean(data?.holydays?.[day?.date]);
-            const hasExplicitDayColor =
-              useColors && Boolean(info?.color) && !row?.color && !isFocused;
+            const hasExplicitDayColor = useColors && Boolean(info?.color) && !row?.color;
             const baseBackground = hasExplicitDayColor ? info.color : rowSurfaceColor;
-            const textColor = isFocused
-              ? "#111827"
-              : useColors
-                ? row?.color
-                  ? "#000000"
-                  : info?.colorT || "#111827"
-                : "#111827";
+            const textColor = useColors
+              ? row?.color
+                ? "#000000"
+                : info?.colorT || "#111827"
+              : "#111827";
 
             return (
               <TableCell
@@ -548,7 +539,7 @@ function ScheduleRow({
                   py: 0.5,
                   fontSize: 11,
                   fontWeight: 500,
-                  ...(isHoliday && !isFocused
+                  ...(isHoliday
                     ? getHolidayStripeSx(baseBackground, index, DAY_COLUMN_WIDTH)
                     : { backgroundColor: baseBackground }),
                   color: textColor,
@@ -819,9 +810,9 @@ function SummaryMetricRow({
         sx={{
           ...tableCellDividerSx,
           minWidth: labelWidth,
-          fontSize: 14,
+          fontSize: 16,
           lineHeight: 1.3,
-          color: "#3C3B3B",
+          color: "#000000",
           py: 1.25,
           px: 1.25,
           whiteSpace: "normal",
@@ -841,8 +832,9 @@ function SummaryMetricRow({
             px: 0.25,
             py: 0.75,
             backgroundColor: fillColor,
-            color: textColor,
-            fontSize: compactValues ? 13.2 : 12,
+            color: "#000000",
+            fontSize: compactValues ? 14 : 13,
+            fontWeight: 600,
             whiteSpace: compactValues ? "nowrap" : undefined,
           }}
         >
@@ -883,8 +875,9 @@ function SummaryMetricRow({
             ...tableCellDividerSx,
             minWidth: SUMMARY_COLUMN_WIDTH,
             px: 0.5,
-            fontSize: compactValues ? 13.2 : 12,
-            color: "#5E5E5E",
+            fontSize: compactValues ? 14 : 13,
+            color: "#000000",
+            fontWeight: 600,
             whiteSpace: compactValues ? "nowrap" : undefined,
             cursor: !blurValues && onSummaryCellClick ? "pointer" : "default",
             "&:hover":

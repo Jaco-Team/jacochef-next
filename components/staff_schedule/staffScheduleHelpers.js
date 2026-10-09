@@ -50,11 +50,14 @@ export function getVisibleSummaryColumns(access = {}) {
     { key: "err_price", label: "Ошибки", accessKey: "errors" },
     { key: "my_bonus", label: "Бонус", accessKey: "bonus" },
     { key: "total_sum", label: "Всего", accessKey: "all_price", computed: true },
-    { key: "withheld", label: "Удержано", accessKey: "withheld" },
+    {
+      key: "withheld",
+      label: "Удержано по исполнительному листу",
+      accessKey: "withheld",
+    },
     { key: "to_pay_sum", label: "К выплате", accessKey: "test_all_price", computed: true },
     { key: "given", label: "Выдано", accessKey: "given" },
     { key: "given_cart", label: "На карты", accessKey: "given_cart" },
-    { key: "test_all_price", label: "Премия по ведомости", accessKey: "premia" },
   ].filter((item) => canView(item.accessKey));
 }
 
