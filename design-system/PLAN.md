@@ -49,7 +49,7 @@
 - `components/staff_schedule/README.md` уже ссылается на тот же Figma-файл как на источник истины для нового экрана.
 - `components/staff_schedule/FIGMA.md` содержит заметки по Figma для fast actions modal и change point subscreen.
 - `components/staff_schedule/MOBILE.md` содержит правила мобильной композиции, восстановленные из Figma и скриншотов.
-- `doc/layout/mobile/staff_schedule.md` хранит подробные Figma mobile notes и список кадров, которые нужно экспортировать при доступе к Figma.
+- `components/staff_schedule/MOBILE_FIGMA_NOTES.md` хранит подробные Figma mobile notes и список кадров, которые нужно экспортировать при доступе к Figma.
 - Ветка `feat/staff_schedule-41639` содержит тот же `design-system/shared/ui` набор, что и текущая ветка; фактического перезаписывания `design-system/shared/ui` не требуется.
 - `design-system/shared/ui` принят как канонический слой переиспользуемых UI-компонентов дизайн-системы. Публичный API продуктовых UI-компонентов использует префикс `Jaco*`, чтобы не конфликтовать с MUI-компонентами и legacy `My*` wrappers; нейтральные primitives остаются без префикса (`SmallFont`), а shared custom icons живут в `design-system/shared/icons`.
 - `design-system/shared/tokens` принят как канонический слой дизайн-токенов.
