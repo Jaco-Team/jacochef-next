@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Box, Grid, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
@@ -1036,60 +1035,19 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
               </Stack>
 
               {modal.data.hasPeriodSummary ? (
-                <>
-                  <Stack spacing={1}>
-                    <Typography
-                      sx={{
-                        fontSize: 18,
-                        fontWeight: 700,
-                        color: "#A6A6A6",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      График
-                    </Typography>
-                    {monthDays.length ? <MonthOverviewStrip days={monthDays} /> : null}
-                  </Stack>
-
-                  <Stack spacing={1}>
-                    <Typography
-                      sx={{
-                        fontSize: 18,
-                        fontWeight: 700,
-                        color: "#A6A6A6",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Расчёт
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: {
-                          xs: "repeat(2, minmax(0, 1fr))",
-                          sm: "repeat(4, minmax(0, 1fr))",
-                        },
-                        gap: 0.5,
-                      }}
-                    >
-                      {overviewCards.map((card) => (
-                        <Box
-                          key={card.key}
-                          sx={
-                            card.key === "premium"
-                              ? { gridColumn: { xs: "1 / -1", sm: "span 2" } }
-                              : null
-                          }
-                        >
-                          <SummaryCard
-                            label={card.label}
-                            value={card.value}
-                          />
-                        </Box>
-                      ))}
-                    </Box>
-                  </Stack>
-                </>
+                <Stack spacing={1}>
+                  <Typography
+                    sx={{
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: "#A6A6A6",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    График
+                  </Typography>
+                  {monthDays.length ? <MonthOverviewStrip days={monthDays} /> : null}
+                </Stack>
               ) : null}
 
               <Stack
@@ -1097,8 +1055,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
                 sx={{ justifyContent: "flex-end" }}
               >
                 <JacoButton
-                  tone="primary"
-                  startIcon={<CheckRoundedIcon sx={{ fontSize: 18 }} />}
+                  tone="secondary"
                   onClick={openAssignmentDialog}
                   disabled={!canEditMonth}
                   sx={{
@@ -1112,6 +1069,47 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
                   Заполнить часы
                 </JacoButton>
               </Stack>
+
+              {modal.data.hasPeriodSummary ? (
+                <Stack spacing={1}>
+                  <Typography
+                    sx={{
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: "#A6A6A6",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Расчёт
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "repeat(2, minmax(0, 1fr))",
+                        sm: "repeat(4, minmax(0, 1fr))",
+                      },
+                      gap: 0.5,
+                    }}
+                  >
+                    {overviewCards.map((card) => (
+                      <Box
+                        key={card.key}
+                        sx={
+                          card.key === "premium"
+                            ? { gridColumn: { xs: "1 / -1", sm: "span 2" } }
+                            : null
+                        }
+                      >
+                        <SummaryCard
+                          label={card.label}
+                          value={card.value}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                </Stack>
+              ) : null}
             </>
           ) : null}
         </Stack>

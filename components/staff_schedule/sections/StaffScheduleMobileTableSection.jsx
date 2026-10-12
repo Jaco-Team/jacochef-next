@@ -238,9 +238,27 @@ function MobileScheduleRow({
           cursor: canOpenMonth ? "pointer" : "default",
         }}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
+        role={canOpenMonth ? "button" : undefined}
+        tabIndex={canOpenMonth ? 0 : undefined}
+        onKeyDown={
+          canOpenMonth
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onOpenMonth(data);
+                }
+              }
+            : undefined
+        }
       >
         <Typography
-          sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.25 }}
+          sx={{
+            fontSize: 14,
+            fontWeight: 500,
+            lineHeight: 1.25,
+            textDecoration: canOpenMonth ? "underline dotted" : "none",
+            textUnderlineOffset: "3px",
+          }}
           noWrap
         >
           {data?.user_name || "Без имени"}
@@ -270,6 +288,12 @@ function MobileScheduleRow({
             color: isFocused ? "#666666" : employeeMetaColor,
             textAlign: "left",
             cursor: focusKey ? "pointer" : "default",
+            textDecoration: focusKey ? "underline dotted" : "none",
+            textUnderlineOffset: "3px",
+            "&:focus-visible": {
+              outline: `2px solid ${uiColors.primary}`,
+              outlineOffset: -2,
+            },
           }}
           noWrap
         >

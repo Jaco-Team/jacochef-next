@@ -122,6 +122,14 @@ export function canEditStaffScheduleBonus({ row, canEdit, selectedPart }) {
   );
 }
 
+export function hasAlternativeStaffScheduleRate(row = {}) {
+  const currentRate = String(row?.price_p_h ?? "");
+
+  return (
+    Array.isArray(row?.price_arr) && row.price_arr.some((option) => String(option) !== currentRate)
+  );
+}
+
 export function canEditStaffScheduleFinanceValue({ columnKey, row, canEdit } = {}) {
   const permission = {
     price_p_h: "1h",
@@ -130,7 +138,7 @@ export function canEditStaffScheduleFinanceValue({ columnKey, row, canEdit } = {
     withheld: "withheld",
   }[columnKey];
   if (!permission || !canEdit?.(permission)) return false;
-  return columnKey !== "price_p_h" || (Array.isArray(row?.price_arr) && row.price_arr.length > 0);
+  return columnKey !== "price_p_h" || hasAlternativeStaffScheduleRate(row);
 }
 
 export function getEditableStaffScheduleBonusRow({ rows, request, monthId, selectedPart, access }) {

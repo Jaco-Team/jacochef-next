@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   canEditStaffScheduleFinanceValue,
   createStaffScheduleAccess,
+  hasAlternativeStaffScheduleRate,
 } from "../../../components/staff_schedule/staffScheduleAccess.mjs";
 
 const columns = { price_p_h: "1h", given: "given", given_cart: "given_cart", withheld: "withheld" };
@@ -39,7 +40,7 @@ test("each financial cell requires its own detailed edit/access permission", () 
   }
 });
 
-test("rate editing retains the requirement for available rate options", () => {
+test("rate editing requires an alternative rate option", () => {
   const canEdit = createStaffScheduleAccess({ "1h_edit": 1 }).canEdit;
   for (const row of [
     undefined,
@@ -54,10 +55,20 @@ test("rate editing retains the requirement for available rate options", () => {
   assert.equal(
     canEditStaffScheduleFinanceValue({
       columnKey: "price_p_h",
-      row: { price_arr: [300] },
+      row: { price_p_h: 200, price_arr: [300] },
       canEdit,
     }),
     true,
+  );
+  assert.equal(hasAlternativeStaffScheduleRate({ price_p_h: 0, price_arr: [0] }), false);
+  assert.equal(hasAlternativeStaffScheduleRate({ price_p_h: 200, price_arr: [200, 300] }), true);
+  assert.equal(
+    canEditStaffScheduleFinanceValue({
+      columnKey: "price_p_h",
+      row: { price_p_h: 0, price_arr: [0] },
+      canEdit,
+    }),
+    false,
   );
 });
 
@@ -106,9 +117,9 @@ test("desktop and mobile use the same gate, accessible whole-cell actions and ed
     );
     assert.match(
       source,
-      /canEditStaffScheduleFinanceValue\(\{ columnKey: column\.key, row: data, canEdit \}\)/,
+      /canEditStaffScheduleFinanceValue\(\{\s*columnKey: column\.key,\s*row: data,\s*canEdit,?\s*\}\)/,
     );
-    assert.match(source, /isClickable = !isFinancialBlurred/);
+    assert.match(source, /isClickable\s*=\s*!isFinancialBlurred/);
     assert.match(source, /role=\{isClickable \? "button" : undefined\}/);
     assert.match(source, /tabIndex=\{isClickable \? 0 : undefined\}/);
     assert.match(source, /onClick=\{isClickable \? handleClick : undefined\}/);
