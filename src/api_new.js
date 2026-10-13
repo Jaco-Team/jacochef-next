@@ -1,5 +1,6 @@
 import queryString from "query-string";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const PROD_API_BASE_URL = "http://127.0.0.1:8000/api";
 const LOCAL_API_BASE_URL = "http://localhost:8080/api";
@@ -47,6 +48,28 @@ export function createLegacyToken(login, userId) {
   }
 
   return window.btoa(`${login}-_-${userId}`);
+}
+
+export function storeAuthSession(payload, login) {
+  storeAuthToken(payload?.token);
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const legacyToken = payload?.legacy_token || createLegacyToken(login, payload?.user_id);
+  if (legacyToken) {
+    localStorage.setItem("token", legacyToken);
+    Cookies.set("token", legacyToken, {
+      expires: 60,
+      sameSite: "lax",
+      secure: window.location.protocol === "https:",
+    });
+  }
+
+  if (payload?.expires_at) {
+    localStorage.setItem("auth_expires_at", payload.expires_at);
+  }
 }
 
 export function getAuthHeaders(headers = {}) {

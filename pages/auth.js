@@ -15,10 +15,8 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 
-import Cookies from "js-cookie";
-
 import { EyeShow, EyeHide } from "@/ui/icons";
-import { api_laravel, createLegacyToken, storeAuthToken } from "@/src/api_new";
+import { api_laravel, storeAuthSession } from "@/src/api_new";
 
 const SmartCaptcha = dynamic(
   () => import("@yandex/smart-captcha").then((mod) => mod.SmartCaptcha),
@@ -31,6 +29,12 @@ const AUTH_RED = "#a30021";
 const AUTH_TEXT = "#1a1a1a";
 const AUTH_MUTED = "#8b8b8b";
 const AUTH_BORDER = "#e6e6e6";
+const MIN_PASSWORD_LENGTH = 8;
+const DELIVERY_CHANNELS = [
+  { value: "sms", label: "SMS" },
+  { value: "telegram", label: "Telegram" },
+  { value: "voice", label: "Звонок" },
+];
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -140,6 +144,7 @@ export default function Auth() {
 
   const openRecovery = () => {
     setRecoveryStep("request");
+    setRetryAfter(0);
     setFormError("");
     setRecoveryMessage("");
     resetCaptcha();
@@ -147,6 +152,7 @@ export default function Auth() {
 
   const returnToLogin = () => {
     setRecoveryStep("login");
+    setRetryAfter(0);
     setConfirmationCode("");
     setNewPassword("");
     setRecoveryMessage("");
@@ -196,21 +202,7 @@ export default function Auth() {
         return;
       }
 
-      storeAuthToken(payload.token);
-
-      const legacyToken = payload.legacy_token || createLegacyToken(phone, payload.user_id);
-      if (legacyToken) {
-        localStorage.setItem("token", legacyToken);
-        Cookies.set("token", legacyToken, {
-          expires: 60,
-          sameSite: "lax",
-          secure: window.location.protocol === "https:",
-        });
-      }
-
-      if (payload.expires_at) {
-        localStorage.setItem("auth_expires_at", payload.expires_at);
-      }
+      storeAuthSession(payload, phone);
 
       window.location.pathname = "/";
     } catch (error) {
@@ -238,8 +230,12 @@ export default function Auth() {
       return;
     }
 
-    if (SMARTCAPTCHA_CLIENT_KEY && !captchaToken) {
-      setFormError("Пожалуйста, подтвердите, что вы не робот");
+    if (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken) {
+      setFormError(
+        SMARTCAPTCHA_CLIENT_KEY
+          ? "Пожалуйста, подтвердите, что вы не робот"
+          : "Защита CAPTCHA временно недоступна. Обратитесь к администратору.",
+      );
       return;
     }
 
@@ -292,8 +288,8 @@ export default function Auth() {
   }
 
   async function submitNewPassword() {
-    if (!/^\d{6}$/.test(confirmationCode) || !newPassword) {
-      setFormError("Введите шестизначный код и новый пароль");
+    if (!/^\d{6}$/.test(confirmationCode) || newPassword.length < MIN_PASSWORD_LENGTH) {
+      setFormError("Введите шестизначный код и новый пароль не короче 8 символов");
       return;
     }
 
@@ -319,19 +315,7 @@ export default function Auth() {
         return;
       }
 
-      storeAuthToken(payload.token);
-      const legacyToken = payload.legacy_token || createLegacyToken(phone, payload.user_id);
-      if (legacyToken) {
-        localStorage.setItem("token", legacyToken);
-        Cookies.set("token", legacyToken, {
-          expires: 60,
-          sameSite: "lax",
-          secure: window.location.protocol === "https:",
-        });
-      }
-      if (payload.expires_at) {
-        localStorage.setItem("auth_expires_at", payload.expires_at);
-      }
+      storeAuthSession(payload, phone);
       window.location.pathname = "/";
     } catch (error) {
       const status = error?.response?.status;
@@ -526,21 +510,14 @@ export default function Auth() {
                   value={deliveryChannel}
                   onChange={(event) => setDeliveryChannel(event.target.value)}
                 >
-                  <FormControlLabel
-                    value="sms"
-                    control={<Radio size="small" />}
-                    label="SMS"
-                  />
-                  <FormControlLabel
-                    value="telegram"
-                    control={<Radio size="small" />}
-                    label="Telegram"
-                  />
-                  <FormControlLabel
-                    value="voice"
-                    control={<Radio size="small" />}
-                    label="Звонок"
-                  />
+                  {DELIVERY_CHANNELS.map((channel) => (
+                    <FormControlLabel
+                      key={channel.value}
+                      value={channel.value}
+                      control={<Radio size="small" />}
+                      label={channel.label}
+                    />
+                  ))}
                 </RadioGroup>
                 {deliveryChannel === "telegram" ? (
                   <Typography sx={{ fontSize: 12, color: AUTH_MUTED, mt: 0.25 }}>
@@ -656,9 +633,8 @@ export default function Auth() {
               disabled={
                 isLoad ||
                 retryAfter > 0 ||
-                (SMARTCAPTCHA_CLIENT_KEY &&
-                  (captchaRequired || recoveryStep === "request") &&
-                  !captchaToken)
+                ((captchaRequired || recoveryStep === "request") &&
+                  (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken))
               }
               sx={{
                 py: 1.5,
@@ -734,14 +710,7 @@ export default function Auth() {
 }
 
 export async function getServerSideProps({ req, res }) {
-  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
 
   return {
     props: {},
