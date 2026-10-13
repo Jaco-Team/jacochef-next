@@ -60,18 +60,35 @@ export function getAuthHeaders(headers = {}) {
   };
 }
 
+function isSameOriginApi(apiBaseUrl) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return new URL(apiBaseUrl, window.location.origin).origin === window.location.origin;
+}
+
 export const credentialsConfig = {
-  withCredentials: false,
-  withXSRFToken: false,
+  get withCredentials() {
+    return isSameOriginApi(PROD_API_BASE_URL);
+  },
+  get withXSRFToken() {
+    return isSameOriginApi(PROD_API_BASE_URL);
+  },
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
   get headers() {
     return getAuthHeaders();
   },
 };
 
-function getLaravelRequestConfig(config = {}) {
+function getLaravelRequestConfig(apiBaseUrl, config = {}) {
   return {
     ...credentialsConfig,
+    withCredentials: false,
+    withXSRFToken: false,
     ...config,
+    ...(isSameOriginApi(apiBaseUrl) ? sessionCredentialsConfig : {}),
     headers: getAuthHeaders(config.headers),
   };
 }
@@ -132,6 +149,86 @@ function requestSanctum(apiBaseUrl, dop_type = {}) {
     });
 }
 
+const sameOriginCsrfState = new Map();
+
+function getSameOriginLaravelBase(config) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const requestUrl = new URL(axios.getUri(config), window.location.origin);
+  for (const apiBaseUrl of [PROD_API_BASE_URL, LOCAL_API_BASE_URL]) {
+    const base = new URL(apiBaseUrl, window.location.origin);
+    const apiPath = base.pathname.replace(/\/+$/, "");
+    if (
+      base.origin === window.location.origin &&
+      requestUrl.origin === base.origin &&
+      (requestUrl.pathname === apiPath || requestUrl.pathname.startsWith(`${apiPath}/`))
+    ) {
+      return apiBaseUrl;
+    }
+  }
+
+  return null;
+}
+
+function hasXsrfCookie() {
+  return typeof document !== "undefined" && document.cookie.split(";").some(
+    (cookie) => /^XSRF-TOKEN=.+/.test(cookie.trim()),
+  );
+}
+
+function ensureSameOriginCsrf(apiBaseUrl) {
+  const origin = getApiOrigin(apiBaseUrl);
+  const existing = sameOriginCsrfState.get(origin);
+  if (existing?.promise) {
+    return existing.promise;
+  }
+  if (existing?.ready && hasXsrfCookie()) {
+    return Promise.resolve();
+  }
+
+  const state = { ready: false, promise: null };
+  sameOriginCsrfState.set(origin, state);
+  state.promise = requestSanctum(apiBaseUrl, { timeout: 15000 })
+    .then(() => {
+      if (!hasXsrfCookie()) {
+        throw new Error("CSRF cookie is unavailable. Refresh the page and try again.");
+      }
+      state.ready = true;
+    })
+    .finally(() => {
+      state.promise = null;
+    });
+  return state.promise;
+}
+
+axios.interceptors.request.use(async (config) => {
+  if (!["post", "put", "patch", "delete"].includes((config.method || "get").toLowerCase())) {
+    return config;
+  }
+
+  const apiBaseUrl = getSameOriginLaravelBase(config);
+  if (apiBaseUrl) {
+    await ensureSameOriginCsrf(apiBaseUrl);
+    Object.assign(config, sessionCredentialsConfig);
+  }
+  return config;
+});
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 419 && error.config) {
+      const apiBaseUrl = getSameOriginLaravelBase(error.config);
+      if (apiBaseUrl) {
+        sameOriginCsrfState.delete(getApiOrigin(apiBaseUrl));
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 export function sanctum(dop_type = {}) {
   return requestSanctum(PROD_API_BASE_URL, dop_type);
 }
@@ -150,7 +247,7 @@ export function api_laravel(module = "", method = "", data = {}, dop_type = {}) 
     data: JSON.stringify(data),
   });
 
-  const config = getLaravelRequestConfig(dop_type);
+  const config = getLaravelRequestConfig(PROD_API_BASE_URL, dop_type);
 
   return axios
     .post(urlApi_dev, this_data, config)
@@ -191,7 +288,7 @@ export function api_laravel_local(module = "", method = "", data = {}, dop_type 
   });
 
   return axios
-    .post(urlApi_dev, this_data, getLaravelRequestConfig(dop_type))
+    .post(urlApi_dev, this_data, getLaravelRequestConfig(LOCAL_API_BASE_URL, dop_type))
     .then((response) => {
       if (typeof response.data == "string") {
         return {
@@ -233,7 +330,7 @@ export function api_laravel_local_upload(module = "", method = "", file, data = 
     .post(
       urlApi_dev,
       formData,
-      getLaravelRequestConfig({
+      getLaravelRequestConfig(LOCAL_API_BASE_URL, {
         ...dop_type,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -278,7 +375,7 @@ export function api_laravel_upload(module = "", method = "", file, data = {}, do
     .post(
       url,
       formData,
-      getLaravelRequestConfig({
+      getLaravelRequestConfig(PROD_API_BASE_URL, {
         ...dop_type,
         headers: {
           "Content-Type": "multipart/form-data",
