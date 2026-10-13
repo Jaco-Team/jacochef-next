@@ -230,12 +230,8 @@ export default function Auth() {
       return;
     }
 
-    if (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken) {
-      setFormError(
-        SMARTCAPTCHA_CLIENT_KEY
-          ? "Пожалуйста, подтвердите, что вы не робот"
-          : "Защита CAPTCHA временно недоступна. Обратитесь к администратору.",
-      );
+    if (SMARTCAPTCHA_CLIENT_KEY && !captchaToken) {
+      setFormError("Пожалуйста, подтвердите, что вы не робот");
       return;
     }
 
@@ -633,8 +629,9 @@ export default function Auth() {
               disabled={
                 isLoad ||
                 retryAfter > 0 ||
-                ((captchaRequired || recoveryStep === "request") &&
-                  (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken))
+                (SMARTCAPTCHA_CLIENT_KEY &&
+                  (captchaRequired || recoveryStep === "request") &&
+                  !captchaToken)
               }
               sx={{
                 py: 1.5,
