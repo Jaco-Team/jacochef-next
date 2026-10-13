@@ -25,7 +25,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: chef-frontend-publish-${{ github.ref }}
+  group: chef-frontend-publish-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 env:
   IMAGE_REPOSITORY: ghcr.io/jaco-team/jaco-chef-frontend

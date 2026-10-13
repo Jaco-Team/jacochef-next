@@ -10,7 +10,7 @@ import subprocess
 
 
 ENV_EXCLUDES = [".env", ".env.*", "**/.env", "**/.env.*", ".sentryclirc", "**/.sentryclirc"]
-WEIGHT_SUFFIXES = (".gguf", ".safetensors", ".onnx", ".pt", ".pth", ".ckpt")
+WEIGHT_SUFFIXES = (".gguf", ".safetensors", ".onnx", ".pt", ".pth", ".ckpt", ".bin", ".pkl", ".h5", ".npz", ".tflite")
 WEIGHT_EXCLUDES = ["**/*" + suffix for suffix in WEIGHT_SUFFIXES]
 # Reviewed Dockerfile -> its Docker build context, both relative to the repository root.
 DOCKERFILES = {
