@@ -87,7 +87,7 @@ import DraggableImage from "@/components/billing/DraggableImage";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import MyAlert from "@/ui/MyAlert";
 import { formatDateReverse } from "@/src/helpers/ui/formatDate";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf } from "@/src/api_new";
 import { Link } from "@mui/material";
 
 const types = [
@@ -1736,7 +1736,14 @@ var dropzoneOptions_bill = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -1822,7 +1829,14 @@ var dropzoneOptions_bill_factur = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -7206,6 +7220,10 @@ class Billing_Edit_ extends React.Component {
     };
 
     try {
+      await prepareBillingUploads([
+        DropzoneMain && this.getPendingDropzoneFiles(DropzoneMain).length ? DropzoneMain : null,
+        parseInt(type) == 2 && DropzoneDop && this.getPendingDropzoneFiles(DropzoneDop).length ? DropzoneDop : null,
+      ]);
       const res = await this.getData("save_edit", data);
 
       if (res.st === true) {

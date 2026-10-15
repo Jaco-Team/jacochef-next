@@ -76,7 +76,7 @@ import {
 } from "@/components/billing/BillingPageCommon";
 import DraggableImage from "@/components/billing/DraggableImage";
 import MyAlert from "@/ui/MyAlert";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf } from "@/src/api_new";
 import { Link } from "@mui/material";
 
 const types = [
@@ -1571,7 +1571,14 @@ var dropzoneOptions_bill = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -1655,7 +1662,14 @@ var dropzoneOptions_bill_factur = {
       //window.location.pathname = "/billing";
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -5270,7 +5284,7 @@ class Billing_Edit_ extends React.Component {
 
         const failedFiles = dropzone.files.filter((file) => file?.status === "error");
         const ambiguousFiles = failedFiles.filter(
-          (file) => file?.xhr && Number(file.xhr.status) === 0,
+          (file) => file?.xhr && !file?.chefCsrfFailure && Number(file.xhr.status) === 0,
         );
 
         resolve({
@@ -5798,6 +5812,10 @@ class Billing_Edit_ extends React.Component {
     };
 
     try {
+      await prepareBillingUploads([
+        this.getPendingDropzoneFiles(this.myDropzone).length ? this.myDropzone : null,
+        parseInt(type) == 2 && DropzoneDop && this.getPendingDropzoneFiles(DropzoneDop).length ? DropzoneDop : null,
+      ]);
       const res = await this.getData("save_new", data);
 
       if (res.st === true) {
