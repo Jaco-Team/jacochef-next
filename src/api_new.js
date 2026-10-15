@@ -405,3 +405,126 @@ export function api_laravel_upload(module = "", method = "", file, data = {}, do
       }
     });
 }
+
+
+// Dropzone 6.0.0-beta.2 uses raw XHR; the Axios interceptor does not cover it.
+function billingUploadTrustedApiBase(dropzone) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  let requestUrl;
+  try {
+    requestUrl = new URL(dropzone.options.url, window.location.origin);
+  } catch (_) {
+    return null;
+  }
+  const pageHostname = new URL(window.location.origin).hostname;
+  for (const apiBaseUrl of [PROD_API_BASE_URL, LOCAL_API_BASE_URL]) {
+    const base = new URL(apiBaseUrl, window.location.origin);
+    if (
+      apiBaseUrl === LOCAL_API_BASE_URL &&
+      pageHostname !== "localhost" &&
+      pageHostname !== "127.0.0.1"
+    ) {
+      continue;
+    }
+    const apiPath = base.pathname.replace(/\/+$/, "");
+    if (
+      requestUrl.origin === base.origin &&
+      !requestUrl.username &&
+      !requestUrl.password &&
+      ["bill-items/upload", "bill-ex-items/upload"].some(
+        (path) => requestUrl.pathname === `${apiPath}/${path}`,
+      )
+    ) {
+      return apiBaseUrl;
+    }
+  }
+  return null;
+}
+
+function billingUploadApiBase(dropzone) {
+  const apiBaseUrl = billingUploadTrustedApiBase(dropzone);
+  return apiBaseUrl && isSameOriginApi(apiBaseUrl) ? apiBaseUrl : null;
+}
+
+function billingUploadXsrfCookie() {
+  const values = document.cookie.split(";")
+    .map((cookie) => cookie.trim())
+    .filter((cookie) => cookie.startsWith("XSRF-TOKEN="));
+  if (values.length !== 1) {
+    throw new Error("Upload CSRF cookie is unavailable. Refresh the page and try again.");
+  }
+  let token;
+  try {
+    token = decodeURIComponent(values[0].slice("XSRF-TOKEN=".length));
+  } catch (_) {
+    throw new Error("Upload CSRF cookie is invalid. Refresh the page and try again.");
+  }
+  if (!token || token.length > 8192 || /[^\x21-\x7e]/.test(token)) {
+    throw new Error("Upload CSRF cookie is invalid. Refresh the page and try again.");
+  }
+  return token;
+}
+
+export async function prepareBillingUploads(dropzones) {
+  await Promise.all(dropzones.filter(Boolean).map(async (dropzone) => {
+    const apiBaseUrl = billingUploadApiBase(dropzone);
+    if (apiBaseUrl) {
+      await ensureSameOriginCsrf(apiBaseUrl);
+      billingUploadXsrfCookie();
+      return;
+    }
+    if (billingUploadTrustedApiBase(dropzone) && !getAuthToken()) {
+      throw new Error("Upload authorization is unavailable. Sign in and try again.");
+    }
+  }));
+}
+
+export function resetBillingUploadCsrf(dropzone, xhr) {
+  if (Number(xhr?.status) !== 419) {
+    return;
+  }
+  const apiBaseUrl = billingUploadApiBase(dropzone);
+  if (apiBaseUrl) {
+    sameOriginCsrfState.delete(getApiOrigin(apiBaseUrl));
+  }
+}
+
+export function setBillingUploadCsrf(dropzone, file, xhr) {
+  const trustedApiBaseUrl = billingUploadTrustedApiBase(dropzone);
+  if (!trustedApiBaseUrl) {
+    return true;
+  }
+  const sameOriginApiBaseUrl = billingUploadApiBase(dropzone);
+  try {
+    if (xhr.readyState !== 1) {
+      throw new Error("Upload request is unavailable.");
+    }
+    if (sameOriginApiBaseUrl) {
+      const token = billingUploadXsrfCookie();
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("X-XSRF-TOKEN", token);
+    }
+    const authToken = getAuthToken();
+    if (!sameOriginApiBaseUrl && !authToken) {
+      throw new Error("Upload authorization is unavailable.");
+    }
+    if (authToken) {
+      xhr.setRequestHeader("Authorization", `Bearer ${authToken}`);
+    }
+    return true;
+  } catch (_) {
+    if (sameOriginApiBaseUrl) {
+      sameOriginCsrfState.delete(getApiOrigin(sameOriginApiBaseUrl));
+    }
+    // abort() resets OPENED to UNSENT; Dropzone submitRequest then refuses send.
+    xhr.abort();
+    file.chefCsrfFailure = true;
+    file.status = "error";
+    dropzone.emit("error", file, "Изображение не отправлено: обнови страницу и повтори загрузку.", xhr);
+    dropzone.emit("complete", file);
+    return false;
+  }
+}
