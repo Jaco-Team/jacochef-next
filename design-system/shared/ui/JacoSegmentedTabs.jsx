@@ -18,7 +18,8 @@ export default function JacoSegmentedTabs({
       onChange={onChange}
       variant="fullWidth"
       sx={{
-        minHeight: isCompact ? 46 : 58,
+        boxSizing: "border-box",
+        minHeight: isCompact ? 44 : 58,
         p: isCompact ? 0.5 : `${uiControl.segmentPadding}px`,
         borderRadius: uiRadii.md,
         backgroundColor: uiColors.surfaceMuted,

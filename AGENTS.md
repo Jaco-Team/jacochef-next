@@ -19,6 +19,7 @@
 
 - This repository uses `Next.js` with the `pages` router, `MUI`, and local Laravel API wrappers.
 - Prefer existing project patterns over introducing new abstractions.
+- New modules and newly migrated module flows must use `useApi("module_key")` with an explicit `NEXT_PUBLIC_API_URL`; do not import or call `src/api_new` directly. `api_new` is legacy compatibility only and must not be extended.
 - When a page already has an established visual language, preserve it instead of redesigning it.
 - Prefer focused changes inside the current module over broad refactors.
 - In Reports cost breakdowns, display product volumes with exactly three decimal places and all monetary values, including purchase prices, with exactly two.
@@ -138,3 +139,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Architecture Before Implementation
+
+For multi-step business modules, establish and document the full solution before editing implementation code: current business process, task-derived target process, backend contract, data ownership, legacy compatibility, authorization, responsive UI flows, and test strategy. Reuse existing project and design-system patterns. Do not deliver isolated visual or local-state patches before the durable backend contract and acceptance flow are defined. Keep task UI aligned with the documented business process and update the contract/plan when implementation facts change.
+
+## Commit messages
+
+Use `feat:`, `fix:`, `refactor:`, or `docs:` followed by a brief lowercase recap. Check recent commits before creating or rewriting a commit.

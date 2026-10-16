@@ -13,6 +13,7 @@ import {
   JacoCompactTabs,
   JacoFieldSwitch,
   JacoIconButton,
+  JacoInfoLabel,
   JacoSegmentedTabs,
   JacoSwitch,
   JacoTabPanel,
@@ -256,6 +257,28 @@ export function Tabs() {
         >
           Основная вкладка
         </JacoTabPanel>
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function InfoLabels() {
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        <JacoInfoLabel
+          variant="subtitle2"
+          fontWeight={700}
+          tooltip="Выписано / Активировано: сколько промокодов создано для решения жалоб и сколько из них применено в заказах."
+        >
+          Промокоды
+        </JacoInfoLabel>
+        <JacoInfoLabel
+          variant="body2"
+          tooltip="Сумма изменения показывает корректировку суммы заказа после рассмотрения жалобы."
+        >
+          Сумма изменения
+        </JacoInfoLabel>
       </Stack>
     </StoryCanvas>
   );

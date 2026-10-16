@@ -1,6 +1,6 @@
-import ErrorsManagement from "@/components/errors_management/ErrorsManagement";
+import ErrorsManagementPage from "@/components/errors_management/ErrorsManagementPage";
 
-export default ErrorsManagement;
+export default ErrorsManagementPage;
 
 export async function getServerSideProps({ res }) {
   res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
