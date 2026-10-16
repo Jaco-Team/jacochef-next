@@ -35,6 +35,11 @@ const DELIVERY_CHANNELS = [
   { value: "telegram", label: "Telegram" },
   { value: "voice", label: "Звонок" },
 ];
+const RECOVERY_GUIDANCE = {
+  sms: "Введите 6 цифр из SMS и задайте новый пароль.",
+  telegram: "Введите 6 цифр из Telegram и задайте новый пароль.",
+  voice: "Введите 6 продиктованных цифр и задайте новый пароль.",
+};
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -80,6 +85,7 @@ export default function Auth() {
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [captchaRequired, setCaptchaRequired] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [resendAfter, setResendAfter] = useState(0);
   const [recoveryStep, setRecoveryStep] = useState("login");
   const [deliveryChannel, setDeliveryChannel] = useState("sms");
   const [confirmationCode, setConfirmationCode] = useState("");
@@ -98,6 +104,18 @@ export default function Auth() {
     return () => window.clearInterval(timer);
   }, [retryAfter]);
 
+  useEffect(() => {
+    if (resendAfter <= 0) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setResendAfter((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [resendAfter]);
+
   const resetCaptcha = () => {
     setCaptchaToken("");
     setCaptchaResetKey((prev) => prev + 1);
@@ -112,6 +130,11 @@ export default function Auth() {
     if (Number.isFinite(seconds) && seconds > 0) {
       setRetryAfter(Math.ceil(seconds));
     }
+  };
+
+  const applyResendState = (payload) => {
+    const seconds = Number(payload?.resend_after || 0);
+    setResendAfter(Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : 0);
   };
 
   const checkPhone = (event) => {
@@ -145,6 +168,7 @@ export default function Auth() {
   const openRecovery = () => {
     setRecoveryStep("request");
     setRetryAfter(0);
+    setResendAfter(0);
     setFormError("");
     setRecoveryMessage("");
     resetCaptcha();
@@ -153,6 +177,7 @@ export default function Auth() {
   const returnToLogin = () => {
     setRecoveryStep("login");
     setRetryAfter(0);
+    setResendAfter(0);
     setConfirmationCode("");
     setNewPassword("");
     setRecoveryMessage("");
@@ -224,7 +249,7 @@ export default function Auth() {
     }
   }
 
-  async function requestPasswordReset() {
+  async function sendPasswordResetCode({ isResend = false } = {}) {
     if (!phoneIsValid()) {
       setFormError("Введите корректный номер телефона");
       return;
@@ -263,8 +288,12 @@ export default function Auth() {
       }
 
       applySecurityState(payload);
+      applyResendState(payload);
       setRecoveryMessage(
-        payload.text || "Если номер зарегистрирован, код подтверждения будет отправлен.",
+        payload.text ||
+          (isResend
+            ? "Код подтверждения отправлен повторно."
+            : "Если номер зарегистрирован, код подтверждения будет отправлен."),
       );
       setRecoveryStep("verify");
       resetCaptcha();
@@ -282,6 +311,9 @@ export default function Auth() {
       setIsLoad(false);
     }
   }
+
+  const requestPasswordReset = () => sendPasswordResetCode();
+  const resendPasswordResetCode = () => sendPasswordResetCode({ isResend: true });
 
   async function submitNewPassword() {
     if (!/^\d{6}$/.test(confirmationCode) || newPassword.length < MIN_PASSWORD_LENGTH) {
@@ -443,7 +475,7 @@ export default function Auth() {
               ? "Введите номер телефона и пароль, чтобы продолжить работу в приложении."
               : recoveryStep === "request"
                 ? "Выберите способ получения кода и подтвердите номер телефона."
-                : "Введите код из сообщения или звонка и задайте новый пароль."}
+                : RECOVERY_GUIDANCE[deliveryChannel] || RECOVERY_GUIDANCE.sms}
           </Typography>
 
           <Box
@@ -515,11 +547,6 @@ export default function Auth() {
                     />
                   ))}
                 </RadioGroup>
-                {deliveryChannel === "telegram" ? (
-                  <Typography sx={{ fontSize: 12, color: AUTH_MUTED, mt: 0.25 }}>
-                    Telegram доступен, если вы ранее поделились номером с ботом.
-                  </Typography>
-                ) : null}
               </FormControl>
             ) : null}
 
@@ -572,7 +599,8 @@ export default function Auth() {
               </>
             ) : null}
 
-            {SMARTCAPTCHA_CLIENT_KEY && (captchaRequired || recoveryStep === "request") ? (
+            {SMARTCAPTCHA_CLIENT_KEY &&
+            (captchaRequired || recoveryStep === "request" || recoveryStep === "verify") ? (
               <Box sx={{ mb: 2 }}>
                 <SmartCaptcha
                   key={captchaResetKey}
@@ -581,6 +609,35 @@ export default function Auth() {
                   onSuccess={setCaptchaToken}
                   onTokenExpired={resetCaptcha}
                 />
+              </Box>
+            ) : null}
+
+            {recoveryStep === "verify" ? (
+              <Box sx={{ mb: 2, textAlign: "center" }}>
+                <Button
+                  type="button"
+                  variant="text"
+                  onClick={resendPasswordResetCode}
+                  disabled={
+                    isLoad ||
+                    retryAfter > 0 ||
+                    resendAfter > 0 ||
+                    (SMARTCAPTCHA_CLIENT_KEY && !captchaToken)
+                  }
+                  sx={{
+                    color: AUTH_RED,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: "none",
+                  }}
+                >
+                  {deliveryChannel === "voice" ? "Позвонить еще раз" : "Отправить код еще раз"}
+                </Button>
+                {resendAfter > 0 ? (
+                  <Typography sx={{ fontSize: 12, color: AUTH_MUTED }}>
+                    Повторная отправка будет доступна через {resendAfter} с
+                  </Typography>
+                ) : null}
               </Box>
             ) : null}
 
