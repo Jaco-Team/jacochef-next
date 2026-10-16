@@ -1,9 +1,8 @@
 import queryString from "query-string";
 import axios from "axios";
+import Cookies from "js-cookie";
 
-const PROD_API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api"
-).replace(/\/+$/, "");
+const PROD_API_BASE_URL = "http://127.0.0.1:8000/api";
 const LOCAL_API_BASE_URL = "http://localhost:8080/api";
 const AUTH_TOKEN_STORAGE_KEY = "chef_auth_token";
 
@@ -49,6 +48,28 @@ export function createLegacyToken(login, userId) {
   }
 
   return window.btoa(`${login}-_-${userId}`);
+}
+
+export function storeAuthSession(payload, login) {
+  storeAuthToken(payload?.token);
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const legacyToken = payload?.legacy_token || createLegacyToken(login, payload?.user_id);
+  if (legacyToken) {
+    localStorage.setItem("token", legacyToken);
+    Cookies.set("token", legacyToken, {
+      expires: 60,
+      sameSite: "lax",
+      secure: window.location.protocol === "https:",
+    });
+  }
+
+  if (payload?.expires_at) {
+    localStorage.setItem("auth_expires_at", payload.expires_at);
+  }
 }
 
 export function getAuthHeaders(headers = {}) {
@@ -97,7 +118,7 @@ export function api(module = "", method = "", data = {}, dop_type = {}) {
   //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
 
-  const urlApi_dev = "https://jacochef.ru/api/index_new.php";
+  const urlApi_dev = "http://127.0.0.1:8000/api/index_new.php";
 
   const this_data = queryString.stringify({
     method: method,

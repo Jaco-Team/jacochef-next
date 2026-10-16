@@ -12,9 +12,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
 import Link from "next/link";
 
-import { api_laravel, createLegacyToken, storeAuthToken } from "@/src/api_new";
-
-import Cookies from "js-cookie";
+import { api_laravel, storeAuthSession } from "@/src/api_new";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
 
@@ -303,20 +301,7 @@ export default function Registration() {
           applyRetryAfter(saveRes);
           setFormError(saveRes.text || "Не удалось сохранить пароль");
         } else {
-          storeAuthToken(saveRes.token);
-
-          const legacyToken = saveRes.legacy_token || createLegacyToken(phone, saveRes.user_id);
-          if (legacyToken) {
-            localStorage.setItem("token", legacyToken);
-            Cookies.set("token", legacyToken, {
-              expires: 60,
-              sameSite: "lax",
-              secure: window.location.protocol === "https:",
-            });
-          }
-          if (saveRes.expires_at) {
-            localStorage.setItem("auth_expires_at", saveRes.expires_at);
-          }
+          storeAuthSession(saveRes, phone);
           setTimeout(() => {
             window.location.pathname = "/";
           }, 300);
