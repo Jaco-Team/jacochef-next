@@ -92,9 +92,9 @@ function harness(options = {}) {
   }
   const executable =
     source.replace(/^import .+;$/gm, "").replace(/^export /gm, "") +
-    "\n({ api, api_laravel, api_laravel_local, api_laravel_upload, api_laravel_local_upload, credentialsConfig });";
+    "\n({ api, api_laravel, api_laravel_local, api_laravel_upload, api_laravel_local_upload, credentialsConfig, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf });";
   const exports = vm.runInNewContext(executable, context);
-  return { ...exports, axios, requests, document, FormData };
+  return { ...exports, axios, requests, document, FormData, storage };
 }
 
 const posts = (requests) => requests.filter((request) => request.method === "post");
@@ -220,4 +220,100 @@ test("a vanished cookie triggers a new bootstrap", async () => {
   client.document.cookie = "";
   await client.api_laravel("test", "second");
   assert.equal(gets(client.requests).length, 2);
+});
+
+
+test("raw invoice upload uses current CSRF and bearer headers for the trusted same-origin API", async () => {
+  const client = harness();
+  const zone = { options: { url: "https://jacosoft-dop.ru/api/bill-items/upload" } };
+  await client.prepareBillingUploads([zone]);
+  assert.equal(gets(client.requests).length, 1);
+  client.document.cookie = "XSRF-TOKEN=latest%3Dtoken";
+  const headers = {};
+  const xhr = {
+    readyState: 1,
+    withCredentials: false,
+    setRequestHeader(name, value) { headers[name] = value; },
+  };
+  assert.equal(client.setBillingUploadCsrf(zone, {}, xhr), true);
+  assert.equal(xhr.withCredentials, true);
+  assert.deepEqual(headers, {
+    "X-XSRF-TOKEN": "latest=token",
+    Authorization: "Bearer bearer-123",
+  });
+  client.resetBillingUploadCsrf(zone, { status: 419 });
+  await client.prepareBillingUploads([zone]);
+  assert.equal(gets(client.requests).length, 2);
+});
+
+test("invalid invoice CSRF cookie aborts before raw POST without exposing credentials", async () => {
+  const client = harness();
+  const events = [];
+  const zone = {
+    options: { url: "https://jacosoft-dop.ru/api/bill-ex-items/upload" },
+    emit(name, ...args) { events.push([name, ...args]); },
+  };
+  await client.prepareBillingUploads([zone]);
+  client.document.cookie = "XSRF-TOKEN=%ZZ";
+  const file = {};
+  const xhr = {
+    readyState: 1,
+    aborted: false,
+    abort() { this.aborted = true; this.readyState = 0; },
+    setRequestHeader() { throw Error("must not send a header"); },
+  };
+  assert.equal(client.setBillingUploadCsrf(zone, file, xhr), false);
+  assert.equal(xhr.aborted, true);
+  assert.equal(file.status, "error");
+  assert.equal(file.chefCsrfFailure, true);
+  assert.deepEqual(events.map(([name]) => name), ["error", "complete"]);
+  assert.equal(events[0][2].includes("%ZZ"), false);
+});
+
+test("cross-origin invoice upload sends fresh bearer only to the configured API endpoint", async () => {
+  const client = harness({ apiBase: "https://apichef2.jacochef.ru/api" });
+  const zone = { options: { url: "https://apichef2.jacochef.ru/api/bill-items/upload" } };
+  await client.prepareBillingUploads([zone]);
+  assert.equal(gets(client.requests).length, 0);
+  client.storage.set("chef_auth_token", "updated-token");
+  const headers = {};
+  const xhr = {
+    readyState: 1,
+    withCredentials: false,
+    setRequestHeader(name, value) { headers[name] = value; },
+  };
+  assert.equal(client.setBillingUploadCsrf(zone, {}, xhr), true);
+  assert.deepEqual(headers, { Authorization: "Bearer updated-token" });
+  assert.equal(xhr.withCredentials, false);
+});
+
+test("unknown upload origins and unrelated API paths receive no bearer or CSRF header", async () => {
+  const client = harness({ apiBase: "https://apichef2.jacochef.ru/api" });
+  for (const url of [
+    "https://attacker.example/api/bill-items/upload",
+    "https://apichef2.jacochef.ru/other/bill-items/upload",
+    "https://apichef2.jacochef.ru/api/unrelated",
+    "http://localhost:8080/api/bill-items/upload",
+  ]) {
+    const zone = { options: { url } };
+    await client.prepareBillingUploads([zone]);
+    const headers = {};
+    const xhr = {
+      readyState: 1,
+      withCredentials: false,
+      setRequestHeader(name, value) { headers[name] = value; },
+    };
+    assert.equal(client.setBillingUploadCsrf(zone, {}, xhr), true);
+    assert.deepEqual(headers, {});
+    assert.equal(xhr.withCredentials, false);
+  }
+  assert.equal(gets(client.requests).length, 0);
+});
+
+test("cross-origin upload without bearer is blocked before document save", async () => {
+  const client = harness({ apiBase: "https://apichef2.jacochef.ru/api" });
+  client.storage.delete("chef_auth_token");
+  const zone = { options: { url: "https://apichef2.jacochef.ru/api/bill-ex-items/upload" } };
+  await assert.rejects(client.prepareBillingUploads([zone]));
+  assert.equal(gets(client.requests).length, 0);
 });
