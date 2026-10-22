@@ -32,11 +32,15 @@ export function buildHistoryLogItems(history) {
     }));
 }
 
+function compareRu(left, right) {
+  return String(left || "").localeCompare(String(right || ""), "ru");
+}
+
 export function groupArticlesBySection(articles, modules) {
   const moduleByKey = new Map(
     (Array.isArray(modules) ? modules : []).map((module) => [module.key_query, module]),
   );
-  const groups = new Map();
+  const sections = new Map();
 
   (Array.isArray(articles) ? articles : []).forEach((article) => {
     if (!article?.module_key) {
@@ -44,28 +48,67 @@ export function groupArticlesBySection(articles, modules) {
     }
 
     const module = moduleByKey.get(article.module_key);
-    const groupName = module?.group || "Без раздела";
+    const sectionName = module?.group || "Без раздела";
+    const moduleName = module?.name || article.module_key;
+    const articleGroup = String(article.group_name || "").trim() || "Без группы";
     const item = {
       ...article,
-      title: String(article.title || module?.name || article.module_key).trim(),
-      group: groupName,
-      groupSort: module?.groupSort ?? 999,
+      title: String(article.title || moduleName).trim(),
+      group: articleGroup,
+      moduleName,
       module: module || null,
     };
 
-    if (!groups.has(groupName)) {
-      groups.set(groupName, { name: groupName, sort: item.groupSort, items: [] });
+    if (!sections.has(sectionName)) {
+      sections.set(sectionName, {
+        name: sectionName,
+        sort: module?.groupSort ?? 999,
+        modules: new Map(),
+      });
     }
 
-    groups.get(groupName).items.push(item);
+    const section = sections.get(sectionName);
+    if (!section.modules.has(article.module_key)) {
+      section.modules.set(article.module_key, {
+        key: article.module_key,
+        name: moduleName,
+        sort: module?.sort ?? 999,
+        groups: new Map(),
+      });
+    }
+
+    const moduleBucket = section.modules.get(article.module_key);
+    if (!moduleBucket.groups.has(articleGroup)) {
+      moduleBucket.groups.set(articleGroup, { name: articleGroup, items: [] });
+    }
+
+    moduleBucket.groups.get(articleGroup).items.push(item);
   });
 
-  return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      items: group.items.sort((left, right) => left.title.localeCompare(right.title, "ru")),
+  return [...sections.values()]
+    .map((section) => ({
+      ...section,
+      modules: [...section.modules.values()]
+        .map((module) => ({
+          ...module,
+          groups: [...module.groups.values()]
+            .map((group) => ({
+              ...group,
+              items: group.items.sort((left, right) => compareRu(left.title, right.title)),
+            }))
+            .sort((left, right) => {
+              if (left.name === "Без группы") {
+                return 1;
+              }
+              if (right.name === "Без группы") {
+                return -1;
+              }
+              return compareRu(left.name, right.name);
+            }),
+        }))
+        .sort((left, right) => left.sort - right.sort || compareRu(left.name, right.name)),
     }))
-    .sort((left, right) => left.sort - right.sort || left.name.localeCompare(right.name, "ru"));
+    .sort((left, right) => left.sort - right.sort || compareRu(left.name, right.name));
 }
 
 export function buildModuleOptions(fullMenu) {
@@ -123,6 +166,10 @@ export function buildModuleOptions(fullMenu) {
 
       return left.name.localeCompare(right.name, "ru");
     });
+}
+
+export function hasDocumentationAccess(access, key) {
+  return Number(access?.[key]) === 1;
 }
 
 export function getDocumentationTitle(fullMenu) {

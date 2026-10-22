@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -24,8 +25,42 @@ import {
   uiTypography,
 } from "@/design-system/shared/ui";
 
+import { normalizeEntityId } from "./accessBlocks";
 import DocumentationArticleContent from "./DocumentationArticleContent";
 import { groupArticlesBySection, unwrapArticlePayload } from "./moduleOptions";
+
+function pdfFileName(title) {
+  const safe = String(title || "статья")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+
+  return `${safe || "статья"}.pdf`;
+}
+
+async function readDownloadError(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value.text === "function") {
+    try {
+      const raw = await value.text();
+      const parsed = JSON.parse(raw);
+      const payload = parsed?.data && typeof parsed.data === "object" ? parsed.data : parsed;
+      return payload?.text || "";
+    } catch {
+      return "";
+    }
+  }
+
+  return value?.text || value?.data?.text || "";
+}
+
+function articleKey(article) {
+  return article?.id != null && article.id !== "" ? article.id : article?.module_key;
+}
 
 function matchesQuery(article, query) {
   if (!query) {
@@ -34,7 +69,13 @@ function matchesQuery(article, query) {
 
   const normalized = query.toLowerCase();
 
-  return [article.title, article.group, article.module_key].some((value) =>
+  return [
+    article.title,
+    article.group,
+    article.group_name,
+    article.module_key,
+    article.moduleName,
+  ].some((value) =>
     String(value || "")
       .toLowerCase()
       .includes(normalized),
@@ -96,8 +137,12 @@ export default function DocumentationLibraryTab({
   modulesLoading,
   refreshKey,
   showAlert,
-  activeKey,
-  onActiveKeyChange: setActiveKey,
+  activeId,
+  preferredModuleKey,
+  onActiveIdChange: setActiveId,
+  canEdit = false,
+  canDownloadPdf = false,
+  canCreate = false,
   onEdit,
   onCreate,
 }) {
@@ -107,7 +152,9 @@ export default function DocumentationLibraryTab({
   const [articles, setArticles] = useState([]);
   const [query, setQuery] = useState("");
   const [articleLoading, setArticleLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [activeArticle, setActiveArticle] = useState(null);
+  const preferredAppliedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -153,23 +200,41 @@ export default function DocumentationLibraryTab({
     let active = true;
 
     async function loadArticle() {
-      if (!activeKey) {
-        setActiveArticle(null);
+      if (!activeId || listLoading) {
+        if (!activeId) {
+          setActiveArticle(null);
+        }
         return;
       }
+
+      const item = articles.find((article) => String(articleKey(article)) === String(activeId));
+      const request =
+        item?.id != null && item.id !== ""
+          ? { article_id: normalizeEntityId(item.id) }
+          : item?.module_key
+            ? { module_key: item.module_key }
+            : /^\d+$/.test(String(activeId))
+              ? { article_id: normalizeEntityId(activeId) }
+              : { module_key: activeId };
 
       setArticleLoading(true);
 
       try {
-        const response = await api_laravel("get_article", { module_key: activeKey });
+        const response = await api_laravel("get_article", request);
         const payload = unwrapArticlePayload(response);
 
         if (!active) {
           return;
         }
 
-        if (payload?.st === false || !payload?.article) {
+        if (payload?.st === false) {
           showAlert(false, payload?.text || "Статья не найдена");
+          setActiveArticle(null);
+          return;
+        }
+
+        if (!payload?.article) {
+          showAlert(false, "Статья не найдена");
           setActiveArticle(null);
           return;
         }
@@ -192,30 +257,101 @@ export default function DocumentationLibraryTab({
     return () => {
       active = false;
     };
-  }, [activeKey, api_laravel, refreshKey, showAlert]);
+  }, [activeId, api_laravel, articles, listLoading, refreshKey, showAlert]);
 
   const groups = useMemo(() => groupArticlesBySection(articles, modules), [articles, modules]);
 
   const filteredGroups = useMemo(
     () =>
       groups
-        .map((group) => ({
-          ...group,
-          items: group.items.filter((article) => matchesQuery(article, query)),
+        .map((section) => ({
+          ...section,
+          modules: section.modules
+            .map((module) => ({
+              ...module,
+              groups: module.groups
+                .map((group) => ({
+                  ...group,
+                  items: group.items.filter((article) => matchesQuery(article, query)),
+                }))
+                .filter((group) => group.items.length > 0),
+            }))
+            .filter((module) => module.groups.length > 0),
         }))
-        .filter((group) => group.items.length > 0),
+        .filter((section) => section.modules.length > 0),
     [groups, query],
   );
 
   const activeItem = useMemo(
     () =>
-      groups.flatMap((group) => group.items).find((item) => item.module_key === activeKey) || null,
-    [activeKey, groups],
+      groups
+        .flatMap((section) => section.modules)
+        .flatMap((module) => module.groups)
+        .flatMap((group) => group.items)
+        .find((item) => String(articleKey(item)) === String(activeId)) || null,
+    [activeId, groups],
   );
 
+  useEffect(() => {
+    if (preferredAppliedRef.current || activeId || listLoading || !preferredModuleKey) {
+      return;
+    }
+
+    const first = articles.find((article) => article.module_key === preferredModuleKey);
+    if (!first) {
+      return;
+    }
+
+    preferredAppliedRef.current = true;
+    setActiveId(articleKey(first));
+  }, [activeId, articles, listLoading, preferredModuleKey, setActiveId]);
+
+  const downloadPdf = async () => {
+    const articleId = activeArticle?.id ?? activeItem?.id;
+    if (articleId == null || articleId === "") {
+      return;
+    }
+
+    setPdfLoading(true);
+
+    try {
+      const response = await api_laravel(
+        "download_article_pdf",
+        { article_id: normalizeEntityId(articleId) },
+        { responseType: "blob" },
+      );
+      const blob = response instanceof Blob ? response : new Blob([response]);
+      if (blob.type !== "application/pdf") {
+        const errorText = await readDownloadError(blob);
+        if (errorText || blob.type.includes("json") || blob.type.startsWith("text/")) {
+          showAlert(false, errorText || "Не удалось скачать PDF");
+          return;
+        }
+      }
+
+      const url = window.URL.createObjectURL(
+        blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = pdfFileName(activeArticle?.title || activeItem?.title);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      showAlert(
+        false,
+        (await readDownloadError(error?.response?.data)) || "Не удалось скачать PDF",
+      );
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   const loading = listLoading || modulesLoading;
-  const showList = !isMobile || !activeKey;
-  const showReader = !isMobile || Boolean(activeKey);
+  const showList = !isMobile || !activeId;
+  const showReader = !isMobile || Boolean(activeId);
 
   if (!loading && articles.length === 0) {
     return (
@@ -223,14 +359,20 @@ export default function DocumentationLibraryTab({
         <EmptyState
           icon={<MenuBookOutlinedIcon />}
           title="Пока нет готовых статей"
-          text="Создайте первую статью о модуле во вкладке редактора — она сразу появится здесь."
+          text={
+            canCreate
+              ? "Создайте первую статью о модуле во вкладке редактора — она сразу появится здесь."
+              : "Готовых статей пока нет."
+          }
           action={
-            <JacoButton
-              compact
-              onClick={onCreate}
-            >
-              Создать статью
-            </JacoButton>
+            canCreate ? (
+              <JacoButton
+                compact
+                onClick={onCreate}
+              >
+                Создать статью
+              </JacoButton>
+            ) : null
           }
         />
       </JacoSurface>
@@ -284,76 +426,136 @@ export default function DocumentationLibraryTab({
                   Ничего не найдено
                 </Typography>
               ) : (
-                filteredGroups.map((group) => (
-                  <Box
-                    key={group.name}
-                    sx={{ mb: 2 }}
-                  >
-                    <Stack
-                      direction="row"
-                      sx={{ alignItems: "center", justifyContent: "space-between", px: 1, mb: 0.5 }}
+                filteredGroups.map((section) => {
+                  const sectionCount = section.modules.reduce(
+                    (sum, module) =>
+                      sum +
+                      module.groups.reduce((groupSum, group) => groupSum + group.items.length, 0),
+                    0,
+                  );
+
+                  return (
+                    <Box
+                      key={section.name}
+                      sx={{ mb: 2 }}
                     >
-                      <Typography
+                      <Stack
+                        direction="row"
                         sx={{
-                          ...uiTypography.compactLabel,
-                          fontWeight: 600,
-                          letterSpacing: "0.04em",
-                          textTransform: "uppercase",
-                          color: uiColors.textMuted,
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          px: 1,
+                          mb: 0.5,
                         }}
                       >
-                        {group.name}
-                      </Typography>
-                      <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.textSubtle }}>
-                        {group.items.length}
-                      </Typography>
-                    </Stack>
-                    <List
-                      dense
-                      disablePadding
-                    >
-                      {group.items.map((item) => {
-                        const selected = item.module_key === activeKey;
-
-                        return (
-                          <JacoSelectableListItem
-                            key={item.module_key}
-                            selected={selected}
-                            onClick={() => setActiveKey(item.module_key)}
+                        <Typography
+                          sx={{
+                            ...uiTypography.compactLabel,
+                            fontWeight: 600,
+                            letterSpacing: "0.04em",
+                            textTransform: "uppercase",
+                            color: uiColors.textMuted,
+                          }}
+                        >
+                          {section.name}
+                        </Typography>
+                        <Typography
+                          sx={{ ...uiTypography.compactLabel, color: uiColors.textSubtle }}
+                        >
+                          {sectionCount}
+                        </Typography>
+                      </Stack>
+                      {section.modules.map((module) => (
+                        <Box
+                          key={module.key}
+                          sx={{ mb: 1 }}
+                        >
+                          <Typography
                             sx={{
-                              minHeight: 44,
+                              px: 1,
                               mb: 0.5,
-                              px: 1.5,
-                              borderRadius: uiRadii.md,
-                              color: uiColors.text,
-                              transition: "background-color 120ms ease",
-                              "&:hover": { backgroundColor: uiColors.surfaceMuted },
-                              "&.Mui-selected, &.Mui-selected:hover": {
-                                backgroundColor: uiColors.primarySoft,
-                                color: uiColors.primary,
-                              },
+                              ...uiTypography.label,
+                              fontWeight: 500,
+                              color: uiColors.textStrong,
                             }}
                           >
-                            <Typography
-                              sx={{
-                                ...uiTypography.label,
-                                fontWeight: selected ? 500 : 400,
-                                flex: 1,
-                                minWidth: 0,
-                              }}
-                            >
-                              {item.title}
-                            </Typography>
-                            <ChevronRightRoundedIcon
-                              fontSize="small"
-                              sx={{ color: selected ? uiColors.primary : uiColors.textSubtle }}
-                            />
-                          </JacoSelectableListItem>
-                        );
-                      })}
-                    </List>
-                  </Box>
-                ))
+                            {module.name}
+                          </Typography>
+                          {module.groups.map((group) => {
+                            const showGroup =
+                              module.groups.length > 1 || group.name !== "Без группы";
+
+                            return (
+                              <Box key={`${module.key}-${group.name}`}>
+                                {showGroup ? (
+                                  <Typography
+                                    sx={{
+                                      px: 1,
+                                      mb: 0.5,
+                                      ...uiTypography.compactLabel,
+                                      color: uiColors.textMuted,
+                                    }}
+                                  >
+                                    {group.name}
+                                  </Typography>
+                                ) : null}
+                                <List
+                                  dense
+                                  disablePadding
+                                >
+                                  {group.items.map((item) => {
+                                    const key = articleKey(item);
+                                    const selected = String(key) === String(activeId);
+
+                                    return (
+                                      <JacoSelectableListItem
+                                        key={String(key)}
+                                        selected={selected}
+                                        onClick={() => setActiveId(key)}
+                                        sx={{
+                                          minHeight: 44,
+                                          mb: 0.5,
+                                          px: 1.5,
+                                          borderRadius: uiRadii.md,
+                                          color: uiColors.text,
+                                          transition: "background-color 120ms ease",
+                                          "&:hover": { backgroundColor: uiColors.surfaceMuted },
+                                          "&.Mui-selected, &.Mui-selected:hover": {
+                                            backgroundColor: uiColors.primarySoft,
+                                            color: uiColors.primary,
+                                          },
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            ...uiTypography.label,
+                                            fontWeight: selected ? 500 : 400,
+                                            flex: 1,
+                                            minWidth: 0,
+                                          }}
+                                        >
+                                          {item.title}
+                                        </Typography>
+                                        <ChevronRightRoundedIcon
+                                          fontSize="small"
+                                          sx={{
+                                            color: selected
+                                              ? uiColors.primary
+                                              : uiColors.textSubtle,
+                                          }}
+                                        />
+                                      </JacoSelectableListItem>
+                                    );
+                                  })}
+                                </List>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                })
               )}
             </Box>
           </JacoSurface>
@@ -366,20 +568,20 @@ export default function DocumentationLibraryTab({
           sx={{ height: "max-content" }}
         >
           <JacoSurface sx={{ p: { xs: 2, md: 4 }, minHeight: { md: 480 } }}>
-            {!activeKey ? (
+            {!activeId ? (
               <EmptyState
                 icon={<MenuBookOutlinedIcon />}
                 title="Выберите статью"
-                text="Откройте модуль из списка слева, чтобы прочитать его документацию."
+                text="Откройте статью из списка слева. У одного модуля может быть несколько статей в разных группах."
               />
             ) : (
-              <Box sx={{ maxWidth: 860, mx: "auto" }}>
+              <Box>
                 {isMobile ? (
                   <JacoButton
                     tone="secondary"
                     compact
                     startIcon={<ArrowBackRoundedIcon fontSize="small" />}
-                    onClick={() => setActiveKey(null)}
+                    onClick={() => setActiveId(null)}
                     sx={{ mb: 2 }}
                   >
                     К списку
@@ -401,7 +603,14 @@ export default function DocumentationLibraryTab({
                         color: uiColors.primary,
                       }}
                     >
-                      {activeItem?.group || "Документация"}
+                      {[
+                        activeItem?.moduleName,
+                        activeItem?.group && activeItem.group !== "Без группы"
+                          ? activeItem.group
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "Документация"}
                     </Typography>
                     <Typography
                       component="h2"
@@ -418,18 +627,42 @@ export default function DocumentationLibraryTab({
                     <Box sx={{ mt: 1 }}>
                       <ArticleMeta article={activeArticle || activeItem} />
                     </Box>
+                    {String(activeArticle?.html || "").includes("doc-access-hidden") ? (
+                      <Typography sx={{ mt: 1, ...uiTypography.label, color: uiColors.textMuted }}>
+                        Часть статьи скрыта ограничениями доступа
+                      </Typography>
+                    ) : null}
                   </Box>
 
-                  {activeItem?.module ? (
-                    <JacoButton
-                      tone="secondary"
-                      compact
-                      startIcon={<EditOutlinedIcon fontSize="small" />}
-                      onClick={() => onEdit(activeItem.module)}
-                    >
-                      Редактировать
-                    </JacoButton>
-                  ) : null}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    sx={{ flexWrap: "wrap" }}
+                  >
+                    {canDownloadPdf && (activeArticle?.id != null || activeItem?.id != null) ? (
+                      <JacoButton
+                        tone="secondary"
+                        compact
+                        loading={pdfLoading}
+                        disabled={articleLoading}
+                        startIcon={<FileDownloadOutlinedIcon fontSize="small" />}
+                        onClick={downloadPdf}
+                      >
+                        Скачать PDF
+                      </JacoButton>
+                    ) : null}
+                    {canEdit && activeItem?.module ? (
+                      <JacoButton
+                        tone="secondary"
+                        compact
+                        startIcon={<EditOutlinedIcon fontSize="small" />}
+                        onClick={() => onEdit(activeItem.module, activeItem.id ?? null)}
+                      >
+                        Редактировать
+                      </JacoButton>
+                    ) : null}
+                  </Stack>
                 </Stack>
 
                 <Divider sx={{ my: 3, borderColor: uiColors.border }} />

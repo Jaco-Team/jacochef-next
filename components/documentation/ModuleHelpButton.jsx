@@ -14,9 +14,16 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { JacoButton, uiColors, uiRadii, uiTypography } from "@/design-system/shared/ui";
+import {
+  JacoAutocomplete,
+  JacoButton,
+  uiColors,
+  uiRadii,
+  uiTypography,
+} from "@/design-system/shared/ui";
 import useApi from "@/src/hooks/useApi";
 
+import { normalizeEntityId } from "./accessBlocks";
 import DocumentationArticleContent from "./DocumentationArticleContent";
 import { unwrapArticlePayload } from "./moduleOptions";
 
@@ -38,6 +45,8 @@ export default function ModuleHelpButton({ fullMenu, sx }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
   const [article, setArticle] = useState(null);
 
   const moduleKey = getCurrentModuleKey(router.asPath);
@@ -56,25 +65,108 @@ export default function ModuleHelpButton({ fullMenu, sx }) {
 
     let active = true;
 
-    async function loadArticle() {
+    async function loadArticles() {
       setLoading(true);
       setFailed(false);
       setArticle(null);
+      setArticles([]);
+      setSelectedId(null);
+      let deferLoading = false;
 
       try {
-        const response = await api_laravel("get_article", { module_key: moduleKey });
+        let nextArticles = [];
+        let listLoaded = false;
+        try {
+          const response = await api_laravel("get_module_articles", { module_key: moduleKey });
+          const payload = unwrapArticlePayload(response);
+          if (payload?.st !== false && Array.isArray(payload?.articles)) {
+            nextArticles = payload.articles;
+            listLoaded = true;
+          }
+        } catch {
+          listLoaded = false;
+        }
+
+        if (!listLoaded) {
+          const response = await api_laravel("get_article", { module_key: moduleKey });
+          const payload = unwrapArticlePayload(response);
+          if (!active) {
+            return;
+          }
+          if (payload?.st === false) {
+            setFailed(true);
+            return;
+          }
+          nextArticles = payload?.article ? [payload.article] : [];
+          setArticles(nextArticles);
+          setSelectedId(nextArticles[0]?.id ?? nextArticles[0]?.module_key ?? null);
+          setArticle(payload?.article || null);
+          return;
+        }
+
+        if (!active) {
+          return;
+        }
+
+        const first = nextArticles[0];
+        deferLoading = Boolean(first?.id != null && first.id !== "" && !first.html);
+        setArticles(nextArticles);
+        setSelectedId(first?.id ?? null);
+      } catch {
+        if (active) {
+          setFailed(true);
+        }
+      } finally {
+        if (active && !deferLoading) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadArticles();
+
+    return () => {
+      active = false;
+    };
+  }, [api_laravel, moduleKey, open]);
+
+  useEffect(() => {
+    if (!open || selectedId == null || articles.length === 0) {
+      return undefined;
+    }
+
+    const selected = articles.find(
+      (item) => String(item.id ?? item.module_key) === String(selectedId),
+    );
+    if (selected?.html) {
+      setArticle(selected);
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadArticle() {
+      setLoading(true);
+      setFailed(false);
+
+      try {
+        const request =
+          selected?.id != null && selected.id !== ""
+            ? { article_id: normalizeEntityId(selected.id) }
+            : { module_key: moduleKey };
+        const response = await api_laravel("get_article", request);
         const payload = unwrapArticlePayload(response);
 
         if (!active) {
           return;
         }
 
-        if (payload?.st === false) {
+        if (payload?.st === false || !payload?.article) {
           setFailed(true);
           return;
         }
 
-        setArticle(payload?.article || null);
+        setArticle(payload.article);
       } catch {
         if (active) {
           setFailed(true);
@@ -91,7 +183,7 @@ export default function ModuleHelpButton({ fullMenu, sx }) {
     return () => {
       active = false;
     };
-  }, [api_laravel, moduleKey, open]);
+  }, [api_laravel, articles, moduleKey, open, selectedId]);
 
   if (!module) {
     return null;
@@ -99,11 +191,19 @@ export default function ModuleHelpButton({ fullMenu, sx }) {
 
   const goToDocumentation = (tab) => {
     setOpen(false);
-    router.push({
-      pathname: "/documentation",
-      query: tab ? { module: moduleKey, tab } : { module: moduleKey },
-    });
+    const articleId = article?.id ?? selectedId;
+    const query = { module: moduleKey };
+    if (articleId != null && articleId !== "" && articleId !== moduleKey) {
+      query.article = articleId;
+    }
+    if (tab) {
+      query.tab = tab;
+    }
+    router.push({ pathname: "/documentation", query });
   };
+
+  const selectedOption =
+    articles.find((item) => String(item.id ?? item.module_key) === String(selectedId)) || null;
 
   return (
     <>
@@ -185,6 +285,24 @@ export default function ModuleHelpButton({ fullMenu, sx }) {
         </Stack>
 
         <Box sx={{ flex: 1, overflowY: "auto", px: 3, py: 3 }}>
+          {!loading && articles.length > 1 ? (
+            <Box sx={{ mb: 2 }}>
+              <JacoAutocomplete
+                label="Статья"
+                options={articles}
+                value={selectedOption}
+                groupBy={(option) => option.group_name || "Без группы"}
+                getOptionLabel={(option) => option?.title || module.name}
+                isOptionEqualToValue={(option, value) =>
+                  String(option?.id ?? option?.module_key) ===
+                  String(value?.id ?? value?.module_key)
+                }
+                onChange={(_event, next) => setSelectedId(next?.id ?? next?.module_key ?? null)}
+                selectAppearance
+                disableClearable
+              />
+            </Box>
+          ) : null}
           {loading ? (
             <Stack spacing={1.5}>
               {Array.from({ length: 8 }).map((_, index) => (
@@ -223,7 +341,7 @@ export default function ModuleHelpButton({ fullMenu, sx }) {
                 Справка ещё не написана
               </Typography>
               <Typography sx={{ ...uiTypography.label, color: uiColors.textMuted, maxWidth: 320 }}>
-                Для этого модуля пока нет статьи в базе знаний.
+                Для этого модуля пока нет статей в базе знаний.
               </Typography>
             </Stack>
           )}
