@@ -10,12 +10,13 @@ import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
-import Link from "next/link";
-
-import Cookies from "js-cookie";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 
 import { EyeShow, EyeHide } from "@/ui/icons";
-import { api_laravel, createLegacyToken, storeAuthToken } from "@/src/api_new";
+import { api_laravel, storeAuthSession } from "@/src/api_new";
 
 const SmartCaptcha = dynamic(
   () => import("@yandex/smart-captcha").then((mod) => mod.SmartCaptcha),
@@ -28,6 +29,17 @@ const AUTH_RED = "#a30021";
 const AUTH_TEXT = "#1a1a1a";
 const AUTH_MUTED = "#8b8b8b";
 const AUTH_BORDER = "#e6e6e6";
+const MIN_PASSWORD_LENGTH = 8;
+const DELIVERY_CHANNELS = [
+  { value: "sms", label: "SMS" },
+  { value: "telegram", label: "Telegram" },
+  { value: "voice", label: "Звонок" },
+];
+const RECOVERY_GUIDANCE = {
+  sms: "Введите 6 цифр из SMS и задайте новый пароль.",
+  telegram: "Введите 6 цифр из Telegram и задайте новый пароль.",
+  voice: "Введите 6 продиктованных цифр и задайте новый пароль.",
+};
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -73,6 +85,12 @@ export default function Auth() {
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [captchaRequired, setCaptchaRequired] = useState(false);
   const [retryAfter, setRetryAfter] = useState(0);
+  const [resendAfter, setResendAfter] = useState(0);
+  const [recoveryStep, setRecoveryStep] = useState("login");
+  const [deliveryChannel, setDeliveryChannel] = useState("sms");
+  const [confirmationCode, setConfirmationCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [recoveryMessage, setRecoveryMessage] = useState("");
 
   useEffect(() => {
     if (retryAfter <= 0) {
@@ -85,6 +103,18 @@ export default function Auth() {
 
     return () => window.clearInterval(timer);
   }, [retryAfter]);
+
+  useEffect(() => {
+    if (resendAfter <= 0) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setResendAfter((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [resendAfter]);
 
   const resetCaptcha = () => {
     setCaptchaToken("");
@@ -100,6 +130,11 @@ export default function Auth() {
     if (Number.isFinite(seconds) && seconds > 0) {
       setRetryAfter(Math.ceil(seconds));
     }
+  };
+
+  const applyResendState = (payload) => {
+    const seconds = Number(payload?.resend_after || 0);
+    setResendAfter(Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : 0);
   };
 
   const checkPhone = (event) => {
@@ -128,13 +163,30 @@ export default function Auth() {
     }
   };
 
+  const phoneIsValid = () => /^(?:\+7\d{10}|8\d{10})$/.test(phone);
+
+  const openRecovery = () => {
+    setRecoveryStep("request");
+    setRetryAfter(0);
+    setResendAfter(0);
+    setFormError("");
+    setRecoveryMessage("");
+    resetCaptcha();
+  };
+
+  const returnToLogin = () => {
+    setRecoveryStep("login");
+    setRetryAfter(0);
+    setResendAfter(0);
+    setConfirmationCode("");
+    setNewPassword("");
+    setRecoveryMessage("");
+    setFormError("");
+    resetCaptcha();
+  };
+
   async function login() {
-    if (
-      !password.trim() ||
-      !phone ||
-      (phone.startsWith("+7") && phone.length < 12) ||
-      (phone.startsWith("8") && phone.length < 11)
-    ) {
+    if (!password.trim() || !phoneIsValid()) {
       setFormError("Пожалуйста, заполните все поля корректно: телефон и пароль");
       return;
     }
@@ -175,21 +227,7 @@ export default function Auth() {
         return;
       }
 
-      storeAuthToken(payload.token);
-
-      const legacyToken = payload.legacy_token || createLegacyToken(phone, payload.user_id);
-      if (legacyToken) {
-        localStorage.setItem("token", legacyToken);
-        Cookies.set("token", legacyToken, {
-          expires: 60,
-          sameSite: "lax",
-          secure: window.location.protocol === "https:",
-        });
-      }
-
-      if (payload.expires_at) {
-        localStorage.setItem("auth_expires_at", payload.expires_at);
-      }
+      storeAuthSession(payload, phone);
 
       window.location.pathname = "/";
     } catch (error) {
@@ -211,8 +249,128 @@ export default function Auth() {
     }
   }
 
+  async function sendPasswordResetCode({ isResend = false } = {}) {
+    if (!phoneIsValid()) {
+      setFormError("Введите корректный номер телефона");
+      return;
+    }
+
+    if (SMARTCAPTCHA_CLIENT_KEY && !captchaToken) {
+      setFormError("Пожалуйста, подтвердите, что вы не робот");
+      return;
+    }
+
+    if (retryAfter > 0) {
+      return;
+    }
+
+    setIsLoad(true);
+    setFormError("");
+
+    try {
+      const res = await api_laravel(
+        "auth",
+        "check_phone",
+        {
+          login: phone,
+          captcha_token: captchaToken,
+          delivery_channel: deliveryChannel,
+        },
+        { throwErrors: true },
+      );
+      const payload = res?.data ?? res;
+
+      if (!payload || payload.st === false) {
+        applySecurityState(payload);
+        setFormError(payload?.text || "Не удалось запросить код. Попробуйте позже.");
+        resetCaptcha();
+        return;
+      }
+
+      applySecurityState(payload);
+      applyResendState(payload);
+      setRecoveryMessage(
+        payload.text ||
+          (isResend
+            ? "Код подтверждения отправлен повторно."
+            : "Если номер зарегистрирован, код подтверждения будет отправлен."),
+      );
+      setRecoveryStep("verify");
+      resetCaptcha();
+    } catch (error) {
+      const status = error?.response?.status;
+      const payload = error?.response?.data?.data ?? error?.response?.data;
+      applySecurityState(payload, error?.response?.headers?.["retry-after"]);
+      setFormError(
+        status === 429
+          ? "Слишком много запросов. Попробуйте немного позже."
+          : payload?.text || payload?.message || "Не удалось запросить код. Попробуйте позже.",
+      );
+      resetCaptcha();
+    } finally {
+      setIsLoad(false);
+    }
+  }
+
+  const requestPasswordReset = () => sendPasswordResetCode();
+  const resendPasswordResetCode = () => sendPasswordResetCode({ isResend: true });
+
+  async function submitNewPassword() {
+    if (!/^\d{6}$/.test(confirmationCode) || newPassword.length < MIN_PASSWORD_LENGTH) {
+      setFormError("Введите шестизначный код и новый пароль не короче 8 символов");
+      return;
+    }
+
+    if (retryAfter > 0) {
+      return;
+    }
+
+    setIsLoad(true);
+    setFormError("");
+
+    try {
+      const res = await api_laravel(
+        "auth",
+        "save_new_pwd",
+        { login: phone, code: confirmationCode, pwd: newPassword },
+        { throwErrors: true },
+      );
+      const payload = res?.data ?? res;
+
+      if (!payload || payload.st === false) {
+        applySecurityState(payload);
+        setFormError(payload?.text || "Не удалось обновить пароль. Попробуйте позже.");
+        return;
+      }
+
+      storeAuthSession(payload, phone);
+      window.location.pathname = "/";
+    } catch (error) {
+      const status = error?.response?.status;
+      const payload = error?.response?.data?.data ?? error?.response?.data;
+      applySecurityState(payload, error?.response?.headers?.["retry-after"]);
+      setFormError(
+        status === 429
+          ? "Слишком много запросов. Попробуйте немного позже."
+          : payload?.text || payload?.message || "Не удалось обновить пароль. Попробуйте позже.",
+      );
+    } finally {
+      setIsLoad(false);
+    }
+  }
+
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (recoveryStep === "request") {
+      requestPasswordReset();
+      return;
+    }
+
+    if (recoveryStep === "verify") {
+      submitNewPassword();
+      return;
+    }
+
     login();
   };
 
@@ -285,7 +443,7 @@ export default function Auth() {
               mb: 1,
             }}
           >
-            Авторизация
+            {recoveryStep === "login" ? "Авторизация" : "Восстановление доступа"}
           </Typography>
 
           <Typography
@@ -298,7 +456,11 @@ export default function Auth() {
               mb: 1,
             }}
           >
-            Вход в аккаунт
+            {recoveryStep === "login"
+              ? "Вход в аккаунт"
+              : recoveryStep === "request"
+                ? "Восстановление пароля"
+                : "Новый пароль"}
           </Typography>
 
           <Typography
@@ -309,7 +471,11 @@ export default function Auth() {
               mb: 3,
             }}
           >
-            Введите номер телефона и пароль, чтобы продолжить работу в приложении.
+            {recoveryStep === "login"
+              ? "Введите номер телефона и пароль, чтобы продолжить работу в приложении."
+              : recoveryStep === "request"
+                ? "Выберите способ получения кода и подтвердите номер телефона."
+                : RECOVERY_GUIDANCE[deliveryChannel] || RECOVERY_GUIDANCE.sms}
           </Typography>
 
           <Box
@@ -323,45 +489,118 @@ export default function Auth() {
               label="Номер телефона"
               name="phone"
               autoComplete="tel"
-              autoFocus
+              autoFocus={recoveryStep !== "verify"}
               value={phone}
               onChange={checkPhone}
               sx={{ ...fieldSx, mb: 2 }}
             />
 
-            <TextField
-              variant="outlined"
-              fullWidth
-              name="password"
-              label="Пароль"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              value={password}
-              onChange={setLogin}
-              sx={{ ...fieldSx, mb: 2 }}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                        disableRipple
-                      >
-                        {showPassword ? (
-                          <EyeShow style={{ fontSize: 26 }} />
-                        ) : (
-                          <EyeHide style={{ fontSize: 26 }} />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+            {recoveryStep === "login" ? (
+              <TextField
+                variant="outlined"
+                fullWidth
+                name="password"
+                label="Пароль"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                value={password}
+                onChange={setLogin}
+                sx={{ ...fieldSx, mb: 2 }}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          disableRipple
+                        >
+                          {showPassword ? (
+                            <EyeShow style={{ fontSize: 26 }} />
+                          ) : (
+                            <EyeHide style={{ fontSize: 26 }} />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            ) : null}
 
-            {SMARTCAPTCHA_CLIENT_KEY && captchaRequired ? (
+            {recoveryStep === "request" ? (
+              <FormControl sx={{ width: "100%", mb: 2 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 600, color: AUTH_TEXT, mb: 0.75 }}>
+                  Получить код
+                </Typography>
+                <RadioGroup
+                  value={deliveryChannel}
+                  onChange={(event) => setDeliveryChannel(event.target.value)}
+                >
+                  {DELIVERY_CHANNELS.map((channel) => (
+                    <FormControlLabel
+                      key={channel.value}
+                      value={channel.value}
+                      control={<Radio size="small" />}
+                      label={channel.label}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+            ) : null}
+
+            {recoveryStep === "verify" ? (
+              <>
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  label="Код подтверждения"
+                  name="confirmationCode"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  value={confirmationCode}
+                  onChange={(event) =>
+                    setConfirmationCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  sx={{ ...fieldSx, mb: 2 }}
+                />
+                <TextField
+                  variant="outlined"
+                  fullWidth
+                  label="Новый пароль"
+                  name="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value.replaceAll(" ", ""))}
+                  sx={{ ...fieldSx, mb: 2 }}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                            disableRipple
+                          >
+                            {showPassword ? (
+                              <EyeShow style={{ fontSize: 26 }} />
+                            ) : (
+                              <EyeHide style={{ fontSize: 26 }} />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              </>
+            ) : null}
+
+            {SMARTCAPTCHA_CLIENT_KEY &&
+            (captchaRequired || recoveryStep === "request" || recoveryStep === "verify") ? (
               <Box sx={{ mb: 2 }}>
                 <SmartCaptcha
                   key={captchaResetKey}
@@ -371,6 +610,49 @@ export default function Auth() {
                   onTokenExpired={resetCaptcha}
                 />
               </Box>
+            ) : null}
+
+            {recoveryStep === "verify" ? (
+              <Box sx={{ mb: 2, textAlign: "center" }}>
+                <Button
+                  type="button"
+                  variant="text"
+                  onClick={resendPasswordResetCode}
+                  disabled={
+                    isLoad ||
+                    retryAfter > 0 ||
+                    resendAfter > 0 ||
+                    (SMARTCAPTCHA_CLIENT_KEY && !captchaToken)
+                  }
+                  sx={{
+                    color: AUTH_RED,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: "none",
+                  }}
+                >
+                  {deliveryChannel === "voice" ? "Позвонить еще раз" : "Отправить код еще раз"}
+                </Button>
+                {resendAfter > 0 ? (
+                  <Typography sx={{ fontSize: 12, color: AUTH_MUTED }}>
+                    Повторная отправка будет доступна через {resendAfter} с
+                  </Typography>
+                ) : null}
+              </Box>
+            ) : null}
+
+            {recoveryMessage ? (
+              <Typography
+                sx={{
+                  mb: 2,
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  color: AUTH_MUTED,
+                  textAlign: "center",
+                }}
+              >
+                {recoveryMessage}
+              </Typography>
             ) : null}
 
             {formError ? (
@@ -404,7 +686,9 @@ export default function Auth() {
               disabled={
                 isLoad ||
                 retryAfter > 0 ||
-                (captchaRequired && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken))
+                (SMARTCAPTCHA_CLIENT_KEY &&
+                  (captchaRequired || recoveryStep === "request") &&
+                  !captchaToken)
               }
               sx={{
                 py: 1.5,
@@ -425,31 +709,52 @@ export default function Auth() {
                 },
               }}
             >
-              {retryAfter > 0 ? "Попробуйте позже" : "Войти"}
+              {retryAfter > 0
+                ? "Попробуйте позже"
+                : recoveryStep === "request"
+                  ? "Получить код"
+                  : recoveryStep === "verify"
+                    ? "Сохранить пароль"
+                    : "Войти"}
             </Button>
 
             <Box sx={{ mt: 3, textAlign: "center" }}>
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  color: AUTH_MUTED,
-                  mb: 0.5,
-                }}
-              >
-                Не получается войти?
-              </Typography>
-              <Link
-                href="/registration"
-                style={{
-                  color: AUTH_RED,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  textDecoration: "underline",
-                  textUnderlineOffset: "3px",
-                }}
-              >
-                Восстановить пароль
-              </Link>
+              {recoveryStep === "login" ? (
+                <>
+                  <Typography sx={{ fontSize: 13, color: AUTH_MUTED, mb: 0.5 }}>
+                    Не получается войти?
+                  </Typography>
+                  <Button
+                    type="button"
+                    variant="text"
+                    onClick={openRecovery}
+                    sx={{
+                      color: AUTH_RED,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      textTransform: "none",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Восстановить пароль
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  variant="text"
+                  onClick={returnToLogin}
+                  sx={{
+                    color: AUTH_RED,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Вернуться ко входу
+                </Button>
+              )}
             </Box>
           </Box>
         </Paper>
@@ -459,14 +764,7 @@ export default function Auth() {
 }
 
 export async function getServerSideProps({ req, res }) {
-  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=3600");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
-  );
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,DELETE,PATCH,POST,PUT");
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
 
   return {
     props: {},
