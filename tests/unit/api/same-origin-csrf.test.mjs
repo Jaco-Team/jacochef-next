@@ -119,6 +119,59 @@ test("SSO navigation trusts only the fixed configured backend web endpoint", () 
   assert.equal(relative.getTrustedSsoLoginUrl("https://jacosoft-dop.ru/auth/sso/login"), "https://jacosoft-dop.ru/auth/sso/login");
 });
 
+test("production SSO config keeps the same-origin API and trusts its canonical backend login", async () => {
+  const expected = "https://apichef2.jacochef.ru/auth/sso/login";
+  const payload = { data: { st: true, enabled: true, login_url: expected } };
+  const client = harness({ getHandler: () => ({ status: 200, data: payload }) });
+  const response = await client.getSsoConfig();
+  const config = response?.data ?? response;
+  assert.equal(config.st, true);
+  assert.equal(config.enabled, true);
+  assert.equal(client.getTrustedSsoLoginUrl(config.login_url), expected);
+  assert.equal(client.requests.length, 1);
+  assert.equal(client.requests[0].url, "https://jacosoft-dop.ru/api/auth/sso/config");
+  assert.equal(client.requests[0].config.withCredentials, true);
+  assert.equal(client.requests[0].config.withXSRFToken, false);
+});
+
+test("production SSO mapping rejects every URL outside the fixed canonical endpoint", () => {
+  const client = harness();
+  const expected = "https://apichef2.jacochef.ru/auth/sso/login";
+  for (const value of [
+    "https://jacosoft-dop.ru/auth/sso/login",
+    "https://apichef.jacochef.ru/auth/sso/login",
+    "http://apichef2.jacochef.ru/auth/sso/login",
+    "https://apichef2.jacochef.ru:8443/auth/sso/login",
+    "https://apichef2.jacochef.ru.evil.invalid/auth/sso/login",
+    "https://evil-apichef2.jacochef.ru/auth/sso/login",
+    "https://user@apichef2.jacochef.ru/auth/sso/login",
+    "https://user:secret@apichef2.jacochef.ru/auth/sso/login",
+    "https://apichef2.jacochef.ru/other",
+    `${expected}/`,
+    `${expected}?redirect=https://untrusted.invalid`,
+    `${expected}#token`,
+    "/auth/sso/login",
+    "//apichef2.jacochef.ru/auth/sso/login",
+    "javascript:alert(1)",
+  ]) assert.equal(client.getTrustedSsoLoginUrl(value), "", value);
+});
+
+test("production SSO mapping does not expand trust for other API bases or local development", () => {
+  const productionLogin = "https://apichef2.jacochef.ru/auth/sso/login";
+  for (const apiBase of [
+    "http://jacosoft-dop.ru/api",
+    "https://jacosoft-dop.ru:8443/api",
+    "https://jacosoft-dop.ru.evil.invalid/api",
+    "https://user:secret@jacosoft-dop.ru/api",
+    "https://jacosoft-dop.ru/api?redirect=1",
+    "https://jacosoft-dop.ru/api#token",
+  ]) assert.equal(harness({ apiBase }).getTrustedSsoLoginUrl(productionLogin), "", apiBase);
+
+  const local = harness({ origin: "http://localhost:3000", apiBase: "http://localhost:8080/api" });
+  assert.equal(local.getTrustedSsoLoginUrl("http://localhost:8080/auth/sso/login"), "http://localhost:8080/auth/sso/login");
+  assert.equal(local.getTrustedSsoLoginUrl(productionLogin), "");
+});
+
 test("auth session persists API-issued bearer and legacy credentials", () => {
   const client = harness();
   client.storeAuthSession({ token: "new-token", legacy_token: "issued-legacy", expires_at: "2026-11-01" }, "80000000000");

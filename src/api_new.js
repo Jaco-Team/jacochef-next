@@ -275,6 +275,10 @@ export function getTrustedSsoLoginUrl(value) {
     if (!["https:", "http:"].includes(apiUrl.protocol) || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) return "";
     const expected = new URL(apiUrl.href);
     expected.pathname = `${apiUrl.pathname.replace(/\/api\/?$/i, "").replace(/\/$/, "")}/auth/sso/login`;
+    // Production proxies API requests on the frontend host, but SSO uses its fixed backend host.
+    if (PROD_API_BASE_URL === "https://jacosoft-dop.ru/api") {
+      expected.href = "https://apichef2.jacochef.ru/auth/sso/login";
+    }
     const target = new URL(value);
     return target.href === expected.href && !target.username && !target.password ? expected.href : "";
   } catch {
