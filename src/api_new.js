@@ -2,7 +2,9 @@ import queryString from "query-string";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const PROD_API_BASE_URL = "http://127.0.0.1:8000/api";
+const PROD_API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api"
+).replace(/\/+$/, "");
 const LOCAL_API_BASE_URL = "http://localhost:8080/api";
 const AUTH_TOKEN_STORAGE_KEY = "chef_auth_token";
 
@@ -118,7 +120,7 @@ export function api(module = "", method = "", data = {}, dop_type = {}) {
   //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
 
-  const urlApi_dev = "http://127.0.0.1:8000/api/index_new.php";
+  const urlApi_dev = "https://jacochef.ru/api/index_new.php";
 
   const this_data = queryString.stringify({
     method: method,
@@ -256,6 +258,28 @@ export function sanctum(dop_type = {}) {
 
 export function sanctum_local(dop_type = {}) {
   return requestSanctum(LOCAL_API_BASE_URL, dop_type);
+}
+
+export function getSsoConfig() {
+  return axios.get(`${PROD_API_BASE_URL}/auth/sso/config`, {
+    timeout: 15000,
+    withCredentials: isSameOriginApi(PROD_API_BASE_URL),
+    withXSRFToken: false,
+  }).then((response) => response.data);
+}
+
+export function getTrustedSsoLoginUrl(value) {
+  if (typeof value !== "string" || !value) return "";
+  try {
+    const apiUrl = new URL(PROD_API_BASE_URL, typeof window !== "undefined" ? window.location.origin : undefined);
+    if (!["https:", "http:"].includes(apiUrl.protocol) || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) return "";
+    const expected = new URL(apiUrl.href);
+    expected.pathname = `${apiUrl.pathname.replace(/\/api\/?$/i, "").replace(/\/$/, "")}/auth/sso/login`;
+    const target = new URL(value);
+    return target.href === expected.href && !target.username && !target.password ? expected.href : "";
+  } catch {
+    return "";
+  }
 }
 
 export function api_laravel(module = "", method = "", data = {}, dop_type = {}) {

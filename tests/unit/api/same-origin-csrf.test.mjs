@@ -9,6 +9,7 @@ function harness(options = {}) {
   const origin = options.origin || "https://jacosoft-dop.ru";
   const apiBase = options.apiBase || "https://jacosoft-dop.ru/api";
   const requests = [];
+  const cookies = [];
   const requestInterceptors = [];
   const responseInterceptors = [];
   const document = { cookie: options.cookie || "" };
@@ -72,6 +73,7 @@ function harness(options = {}) {
   }
   const context = {
     axios,
+    Cookies: { set: (...args) => cookies.push(args) },
     queryString: { stringify: JSON.stringify },
     URL,
     FormData,
@@ -85,19 +87,63 @@ function harness(options = {}) {
   };
   if (!options.ssr) {
     context.window = {
-      location: { origin },
+      location: { origin, protocol: new URL(origin).protocol },
       btoa: (value) => Buffer.from(value).toString("base64"),
     };
     context.document = document;
   }
   const executable =
     source.replace(/^import .+;$/gm, "").replace(/^export /gm, "") +
-    "\n({ api, api_laravel, api_laravel_local, api_laravel_upload, api_laravel_local_upload, credentialsConfig, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf });";
+    "\n({ api, api_laravel, api_laravel_local, api_laravel_upload, api_laravel_local_upload, credentialsConfig, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf, storeAuthSession, getSsoConfig, getTrustedSsoLoginUrl });";
   const exports = vm.runInNewContext(executable, context);
-  return { ...exports, axios, requests, document, FormData, storage };
+  return { ...exports, axios, requests, document, FormData, storage, cookies };
 }
 
 const posts = (requests) => requests.filter((request) => request.method === "post");
+
+test("SSO config uses a read-only GET on the configured API without a CSRF bootstrap", async () => {
+  const payload = { data: { st: true, enabled: false, login_url: null } };
+  const client = harness({ getHandler: () => ({ status: 200, data: payload }) });
+  assert.deepEqual(await client.getSsoConfig(), payload);
+  assert.equal(client.requests.length, 1);
+  assert.equal(client.requests[0].method, "get");
+  assert.equal(client.requests[0].url, "https://jacosoft-dop.ru/api/auth/sso/config");
+});
+
+test("SSO navigation trusts only the fixed configured backend web endpoint", () => {
+  const client = harness({ apiBase: "https://api.example.invalid/api" });
+  const expected = "https://api.example.invalid/auth/sso/login";
+  assert.equal(client.getTrustedSsoLoginUrl(expected), expected);
+  for (const value of [undefined, "", "/auth/sso/login", "//api.example.invalid/auth/sso/login", "javascript:alert(1)", "https://untrusted.invalid/auth/sso/login", "https://api.example.invalid/other", `${expected}?redirect=https://untrusted.invalid`, `${expected}#token`, "https://user:secret@api.example.invalid/auth/sso/login", "https://api.example.invalid.evil.invalid/auth/sso/login"]) assert.equal(client.getTrustedSsoLoginUrl(value), "");
+  const relative = harness({ apiBase: "/api" });
+  assert.equal(relative.getTrustedSsoLoginUrl("https://jacosoft-dop.ru/auth/sso/login"), "https://jacosoft-dop.ru/auth/sso/login");
+});
+
+test("auth session persists API-issued bearer and legacy credentials", () => {
+  const client = harness();
+  client.storeAuthSession({ token: "new-token", legacy_token: "issued-legacy", expires_at: "2026-11-01" }, "80000000000");
+  assert.equal(client.storage.get("chef_auth_token"), "new-token");
+  assert.equal(client.storage.get("token"), "issued-legacy");
+  assert.equal(client.storage.get("auth_expires_at"), "2026-11-01");
+  assert.equal(client.cookies[0][0], "token");
+  assert.equal(client.cookies[0][1], "issued-legacy");
+  assert.equal(client.cookies[0][2].secure, true);
+  assert.equal(client.cookies[0][2].sameSite, "lax");
+});
+
+test("password reset bearer responses retain legacy compatibility on local HTTP", () => {
+  const client = harness({ origin: "http://localhost:3000" });
+  client.storeAuthSession({ token: "reset-token", user_id: 123 }, "80000000000");
+  assert.equal(client.storage.get("token"), Buffer.from("80000000000-_-123").toString("base64"));
+  assert.equal(client.cookies[0][2].secure, false);
+});
+
+test("auth session persistence is safe during SSR", () => {
+  const client = harness({ ssr: true });
+  client.storeAuthSession({ token: "new-token", legacy_token: "issued-legacy" }, "80000000000");
+  assert.equal(client.storage.get("chef_auth_token"), "bearer-123");
+  assert.equal(client.cookies.length, 0);
+});
 const gets = (requests) => requests.filter((request) => request.method === "get");
 
 test("same-origin writes share one CSRF bootstrap and send session credentials", async () => {
