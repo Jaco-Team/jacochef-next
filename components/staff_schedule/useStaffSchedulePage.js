@@ -30,6 +30,7 @@ import { getAvailablePayoutAmount } from "./staffSchedulePayroll.mjs";
 import {
   getEditableStaffScheduleBonusRow,
   getStaffScheduleFinancialReadSignature,
+  hasAlternativeStaffScheduleRate,
   hasRevokedFinancialReadPermission,
 } from "./staffScheduleAccess.mjs";
 import { canUseStaffScheduleFastActionsPeriod } from "./staffSchedulePeriodRange.mjs";
@@ -857,10 +858,14 @@ export default function useStaffSchedulePage() {
       const periodStartDate = getPartStartDate(monthId, selectedPart);
 
       if (key === "price_p_h") {
-        const options = toArray(row?.price_arr).map((item) => ({
-          id: item,
-          name: String(item),
-        }));
+        if (!hasAlternativeStaffScheduleRate(row)) {
+          return;
+        }
+
+        const currentRate = String(row?.price_p_h ?? "");
+        const options = toArray(row?.price_arr)
+          .filter((item) => String(item) !== currentRate)
+          .map((item) => ({ id: item, name: String(item) }));
 
         if (!options.length) {
           return;

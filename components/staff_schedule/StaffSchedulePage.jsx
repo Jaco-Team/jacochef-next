@@ -15,6 +15,8 @@ import StaffScheduleMobileScheduleControls from "./sections/StaffScheduleMobileS
 import StaffScheduleTableSection from "./sections/StaffScheduleTableSection";
 import StaffScheduleAccessTester from "./StaffScheduleAccessTester";
 
+const SHOW_ACCESS_TESTER = false;
+
 export default function StaffSchedulePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -172,7 +174,7 @@ export default function StaffSchedulePage() {
         onDateEndChange={page.handleExportDateEndChange}
         onDownload={page.handleExportDownload}
       />
-      <StaffScheduleAccessTester page={page} />
+      {SHOW_ACCESS_TESTER ? <StaffScheduleAccessTester page={page} /> : null}
     </Box>
   );
 }

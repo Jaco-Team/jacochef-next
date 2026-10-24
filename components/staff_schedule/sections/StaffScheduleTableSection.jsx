@@ -394,16 +394,9 @@ function ScheduleRow({
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
   const isFullRowHighlighted = isFocused;
-  const rowSurfaceColor = isFullRowHighlighted
-    ? uiTableColors.rowSelected
-    : row?.color
-      ? uiTableColors.rowMuted
-      : uiColors.surface;
-  const employeeCellColor = isFullRowHighlighted
-    ? uiTableColors.rowSelected
-    : hoverMode === "name"
-      ? uiTableColors.nameHover
-      : baseColors.backgroundColor;
+  const rowSurfaceColor = row?.color ? uiTableColors.rowMuted : uiColors.surface;
+  const employeeCellColor =
+    hoverMode === "name" ? uiTableColors.nameHover : baseColors.backgroundColor;
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
   const canUseFastActions =
     showFastActions && Boolean(onOpenFastActions) && String(data?.smena_id ?? "") !== "-1";
@@ -436,7 +429,7 @@ function ScheduleRow({
       <TableCell
         sx={{
           ...stickyCellSx(EMPLOYEE_COLUMN_WIDTH, selectionColumnWidth, 5, employeeCellColor),
-          color: isFocused ? "#000000" : baseColors.color,
+          color: baseColors.color,
           fontWeight: 500,
           py: 0.9,
           px: 1.5,
@@ -445,9 +438,28 @@ function ScheduleRow({
         onMouseEnter={() => setHoverMode("name")}
         onMouseLeave={() => setHoverMode(null)}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
+        role={canOpenMonth ? "button" : undefined}
+        tabIndex={canOpenMonth ? 0 : undefined}
+        onKeyDown={
+          canOpenMonth
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onOpenMonth(data);
+                }
+              }
+            : undefined
+        }
       >
         <Typography
-          sx={{ fontSize: 14, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden" }}
+          sx={{
+            fontSize: 14,
+            lineHeight: 1.25,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textDecoration: canOpenMonth ? "underline dotted" : "none",
+            textUnderlineOffset: "3px",
+          }}
           noWrap
         >
           {data?.user_name || "Без имени"}
@@ -479,10 +491,17 @@ function ScheduleRow({
             border: 0,
             background: "none",
             fontSize: 13,
-            color: "#666666",
+            color: "#000000",
             lineHeight: 1.25,
             textAlign: "left",
             cursor: focusKey ? "pointer" : "default",
+            boxShadow: isFocused ? `inset 0 0 0 2px ${uiColors.primary}` : "none",
+            textDecoration: focusKey ? "underline dotted" : "none",
+            textUnderlineOffset: "3px",
+            "&:focus-visible": {
+              outline: `2px solid ${uiColors.primary}`,
+              outlineOffset: -2,
+            },
           }}
         >
           {data?.app_name || "—"}
@@ -511,9 +530,11 @@ function ScheduleRow({
               sx={{
                 width: 32,
                 height: 32,
-                border: "none",
-                backgroundColor: "transparent",
+                border: "1px solid #D1D5DB",
+                borderRadius: "6px",
+                backgroundColor: "#FFFFFF",
                 color: "#666666",
+                "&:hover": { backgroundColor: "#F3F4F6" },
               }}
             >
               <SwapHorizRoundedIcon fontSize="small" />
@@ -526,16 +547,13 @@ function ScheduleRow({
         ? toArray(data?.dates).map((day, index) => {
             const info = day?.info ?? {};
             const isHoliday = Boolean(data?.holydays?.[day?.date]);
-            const hasExplicitDayColor =
-              useColors && Boolean(info?.color) && !row?.color && !isFocused;
+            const hasExplicitDayColor = useColors && Boolean(info?.color) && !row?.color;
             const baseBackground = hasExplicitDayColor ? info.color : rowSurfaceColor;
-            const textColor = isFocused
-              ? "#111827"
-              : useColors
-                ? row?.color
-                  ? "#000000"
-                  : info?.colorT || "#111827"
-                : "#111827";
+            const textColor = useColors
+              ? row?.color
+                ? "#000000"
+                : info?.colorT || "#111827"
+              : "#111827";
 
             return (
               <TableCell
@@ -548,7 +566,7 @@ function ScheduleRow({
                   py: 0.5,
                   fontSize: 11,
                   fontWeight: 500,
-                  ...(isHoliday && !isFocused
+                  ...(isHoliday
                     ? getHolidayStripeSx(baseBackground, index, DAY_COLUMN_WIDTH)
                     : { backgroundColor: baseBackground }),
                   color: textColor,
@@ -819,9 +837,9 @@ function SummaryMetricRow({
         sx={{
           ...tableCellDividerSx,
           minWidth: labelWidth,
-          fontSize: 14,
+          fontSize: 16,
           lineHeight: 1.3,
-          color: "#3C3B3B",
+          color: "#000000",
           py: 1.25,
           px: 1.25,
           whiteSpace: "normal",
@@ -841,8 +859,9 @@ function SummaryMetricRow({
             px: 0.25,
             py: 0.75,
             backgroundColor: fillColor,
-            color: textColor,
-            fontSize: compactValues ? 13.2 : 12,
+            color: "#000000",
+            fontSize: compactValues ? 14 : 13,
+            fontWeight: 600,
             whiteSpace: compactValues ? "nowrap" : undefined,
           }}
         >
@@ -883,8 +902,9 @@ function SummaryMetricRow({
             ...tableCellDividerSx,
             minWidth: SUMMARY_COLUMN_WIDTH,
             px: 0.5,
-            fontSize: compactValues ? 13.2 : 12,
-            color: "#5E5E5E",
+            fontSize: compactValues ? 14 : 13,
+            color: "#000000",
+            fontWeight: 600,
             whiteSpace: compactValues ? "nowrap" : undefined,
             cursor: !blurValues && onSummaryCellClick ? "pointer" : "default",
             "&:hover":
@@ -972,6 +992,7 @@ export default function StaffScheduleTableSection({
   const tableRef = useRef(null);
   const tableHeadRef = useRef(null);
   const tableContainerRef = useRef(null);
+  const topScrollContainerRef = useRef(null);
   const stickyHeaderContainerRef = useRef(null);
   const isSyncingScrollRef = useRef(false);
   const stickyTopRef = useRef(0);
@@ -1065,12 +1086,16 @@ export default function StaffScheduleTableSection({
   }, []);
 
   const scheduleScrollPosition = useCallback(
-    (source, target) => {
-      if (!source || !target || target.scrollLeft === source.scrollLeft) {
+    (source, targets) => {
+      const scrollTargets = targets.filter(
+        (target) => target && target !== source && target.scrollLeft !== source.scrollLeft,
+      );
+
+      if (!source || scrollTargets.length === 0) {
         return;
       }
 
-      pendingScrollSyncRef.current = { source, target };
+      pendingScrollSyncRef.current = { source, targets: scrollTargets };
 
       if (scrollSyncRafRef.current) {
         return;
@@ -1082,7 +1107,7 @@ export default function StaffScheduleTableSection({
         pendingScrollSyncRef.current = null;
 
         if (pending) {
-          syncScrollPosition(pending.source, pending.target);
+          pending.targets.forEach((target) => syncScrollPosition(pending.source, target));
         }
       });
     },
@@ -1129,9 +1154,10 @@ export default function StaffScheduleTableSection({
         : nextState;
     });
 
-    if (stickyHeaderContainerRef.current) {
-      scheduleScrollPosition(currentContainer, stickyHeaderContainerRef.current);
-    }
+    scheduleScrollPosition(currentContainer, [
+      stickyHeaderContainerRef.current,
+      topScrollContainerRef.current,
+    ]);
   }, [scheduleScrollPosition]);
 
   const scheduleStickyHeaderPosition = useCallback(() => {
@@ -1161,25 +1187,39 @@ export default function StaffScheduleTableSection({
         return;
       }
 
-      if (stickyHeaderContainerRef.current && tableContainerRef.current) {
-        scheduleScrollPosition(tableContainerRef.current, stickyHeaderContainerRef.current);
-      }
+      scheduleScrollPosition(tableContainerRef.current, [
+        stickyHeaderContainerRef.current,
+        topScrollContainerRef.current,
+      ]);
     };
     const handleStickyHeaderScroll = () => {
       if (isSyncingScrollRef.current) {
         return;
       }
 
-      if (stickyHeaderContainerRef.current && tableContainerRef.current) {
-        scheduleScrollPosition(stickyHeaderContainerRef.current, tableContainerRef.current);
+      scheduleScrollPosition(stickyHeaderContainerRef.current, [
+        tableContainerRef.current,
+        topScrollContainerRef.current,
+      ]);
+    };
+    const handleTopScroll = () => {
+      if (isSyncingScrollRef.current) {
+        return;
       }
+
+      scheduleScrollPosition(topScrollContainerRef.current, [
+        tableContainerRef.current,
+        stickyHeaderContainerRef.current,
+      ]);
     };
     const currentContainer = tableContainerRef.current;
+    const currentTopScrollContainer = topScrollContainerRef.current;
     const currentStickyHeaderContainer = stickyHeaderContainerRef.current;
 
     window.addEventListener("scroll", handleWindowChange, { passive: true });
     window.addEventListener("resize", handleResize);
     currentContainer?.addEventListener("scroll", handleTableScroll, { passive: true });
+    currentTopScrollContainer?.addEventListener("scroll", handleTopScroll, { passive: true });
     currentStickyHeaderContainer?.addEventListener("scroll", handleStickyHeaderScroll, {
       passive: true,
     });
@@ -1188,6 +1228,7 @@ export default function StaffScheduleTableSection({
       window.removeEventListener("scroll", handleWindowChange);
       window.removeEventListener("resize", handleResize);
       currentContainer?.removeEventListener("scroll", handleTableScroll);
+      currentTopScrollContainer?.removeEventListener("scroll", handleTopScroll);
       currentStickyHeaderContainer?.removeEventListener("scroll", handleStickyHeaderScroll);
     };
   }, [
@@ -1468,13 +1509,30 @@ export default function StaffScheduleTableSection({
           </Box>
         ) : null}
 
+        <Box
+          ref={topScrollContainerRef}
+          aria-label="Горизонтальная прокрутка графика"
+          sx={{
+            display: { xs: "none", md: "block" },
+            overflowX: "auto",
+            overflowY: "hidden",
+            height: 16,
+            border: "1px solid #ECECEC",
+            borderBottom: 0,
+            borderRadius: `${CONTROL_RADIUS} ${CONTROL_RADIUS} 0 0`,
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <Box sx={{ width: tableWidth, height: 1 }} />
+        </Box>
+
         <TableContainer
           ref={tableContainerRef}
           sx={{
             overflowX: "auto",
             WebkitOverflowScrolling: "touch",
             border: "1px solid #ECECEC",
-            borderRadius: CONTROL_RADIUS,
+            borderRadius: { xs: CONTROL_RADIUS, md: `0 0 ${CONTROL_RADIUS} ${CONTROL_RADIUS}` },
           }}
         >
           <Table
