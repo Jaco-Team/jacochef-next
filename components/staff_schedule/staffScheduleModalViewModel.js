@@ -26,7 +26,7 @@ const PERSONAL_FINANCE_COLUMN_LABELS = {
   price_p_h: "За 1ч",
   given: "Выдано",
   given_cart: "На карты",
-  withheld: "Удержано",
+  withheld: "Удержано по исполнительному листу",
   my_bonus: "Бонус",
 };
 

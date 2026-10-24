@@ -173,10 +173,10 @@ test("salary fields require individual readable flags and ignore removed group d
     "test_all_price",
     "given",
     "given_cart",
-    "premia",
   ];
   assert.deepEqual(getVisibleSummaryColumns({}), []);
   assert.deepEqual(getVisibleSummaryColumns({ salary_block_access: 1 }), []);
+  assert.deepEqual(getVisibleSummaryColumns({ premia_view: 1 }), []);
   for (const key of keys)
     for (const suffix of ["view", "edit", "access"]) {
       const access = { [`${key}_${suffix}`]: 1 };
