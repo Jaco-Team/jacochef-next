@@ -57,6 +57,12 @@ export default function StaffSchedulePage() {
           </Grid>
         ) : null}
 
+        {page.isArchiveMonth ? (
+          <Grid size={12}>
+            <JacoAlert severity="info">Архивный месяц — только просмотр</JacoAlert>
+          </Grid>
+        ) : null}
+
         {isMobile ? (
           <Grid size={12}>
             <StaffScheduleMobileScheduleControls
@@ -86,7 +92,6 @@ export default function StaffSchedulePage() {
             summaryColumns={page.view.summaryColumns}
             access={page.access}
             graphKind={page.effectiveGraphKind}
-            directorLevel={page.directorLevel}
             periodBonusState={page.periodBonusState}
             onOpenDay={page.handleOpenDayModal}
             onOpenMonth={page.handleOpenMonthModal}
@@ -131,6 +136,9 @@ export default function StaffSchedulePage() {
         onClose={page.handleCloseMonthModal}
         onSave={page.handleSaveMonthModal}
         onNavigateMonth={page.handleNavigateMonthModal}
+        finance={page.monthFinance}
+        onEditFinance={page.handleEditMonthFinance}
+        loadPayoutHistory={page.loadPayoutHistory}
       />
       <StaffScheduleSmenaModal
         modal={page.smenaModal}
@@ -142,6 +150,7 @@ export default function StaffSchedulePage() {
         modal={page.summaryActionModal}
         onClose={page.handleCloseSummaryAction}
         onSave={page.handleSaveSummaryAction}
+        loadPayoutHistory={page.loadPayoutHistory}
       />
       <StaffScheduleErrorAppealDialog
         modal={page.errorAppealModal}

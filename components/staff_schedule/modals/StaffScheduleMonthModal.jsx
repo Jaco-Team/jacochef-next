@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Box, Grid, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { alpha, Box, ButtonBase, Grid, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import {
   JacoAlert,
   JacoButton,
@@ -16,7 +18,6 @@ import {
   buildHourSlotId,
   buildCustomHourSlots,
   formatHourRangeLabel,
-  formatWorkedHours,
   getHiddenRecentHourSlotsKey,
   getHourPresetByType,
   normalizeTimeLabel,
@@ -31,9 +32,10 @@ import {
   MONTH_TYPE_PRESETS,
 } from "../staffScheduleModalViewModel";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
+import StaffSchedulePayoutHistoryList, { usePayoutHistory } from "./StaffSchedulePayoutHistoryList";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
-const CUSTOM_HOUR_COLORS = ["#D92D5F", "#4CC5EA", "#FFB800"];
+const CUSTOM_HOUR_COLORS = ["#926EAE", "#4CC5EA", "#FFB800"];
 const CALENDAR_WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
 function getBrowserStorage() {
@@ -60,7 +62,8 @@ function buildOverviewCards(summary = {}) {
     { key: "total", label: "ВСЕГО", value: formatCurrency(summary.total) },
     { key: "givenCash", label: "ВЫДАНО", value: formatCurrency(summary.givenCash) },
     { key: "transferred", label: "ПЕРЕЧИСЛЕНО", value: formatCurrency(summary.transferred) },
-    { key: "premium", label: "ПРЕМИЯ", value: formatCurrency(summary.premiumSheet) },
+    { key: "opening", label: "ОСТАТОК НА НАЧАЛО", value: formatCurrency(summary.openingBalance) },
+    { key: "difference", label: "РАЗНИЦА", value: formatCurrency(summary.difference) },
   ];
 }
 
@@ -145,89 +148,253 @@ function SummaryCard({ label, value }) {
   );
 }
 
-function hasMonthDraftChanges(left, right) {
-  return JSON.stringify(left) !== JSON.stringify(right);
+const FINANCE_GROUP_TITLES = { accrual: "Начисления", payout: "Выплаты" };
+
+function FinanceRow({ item, onEdit, isLast }) {
+  const canEdit = item.editable && Boolean(item.action);
+  const rowSx = {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto 20px",
+    alignItems: "center",
+    columnGap: 1,
+    boxSizing: "border-box",
+    width: "100%",
+    minHeight: 44,
+    m: 0,
+    px: 1.5,
+    py: 0.75,
+    textAlign: "left",
+    borderBottom: isLast ? "none" : "1px solid #F0F0F0",
+    backgroundColor: "#FFFFFF",
+  };
+  const content = (
+    <>
+      <Typography component="span" sx={{ display: "block", m: 0, fontSize: 14, lineHeight: 1.3, color: "#374151" }}>
+        {item.label}
+      </Typography>
+      <Typography
+        component="span"
+        sx={{
+          display: "block",
+          m: 0,
+          fontSize: 15,
+          fontWeight: 700,
+          lineHeight: 1.3,
+          whiteSpace: "nowrap",
+          textAlign: "right",
+          fontVariantNumeric: "tabular-nums",
+          color: item.negative ? "#D92D20" : "#111827",
+        }}
+      >
+        {item.value}
+      </Typography>
+      <Box component="span" sx={{ display: "flex", justifyContent: "center" }}>
+        {canEdit ? <EditOutlinedIcon aria-hidden="true" sx={{ fontSize: 16, color: "#6B7280" }} /> : null}
+      </Box>
+    </>
+  );
+
+  if (!canEdit) {
+    return <Box sx={rowSx}>{content}</Box>;
+  }
+
+  return (
+    <ButtonBase
+      onClick={() => onEdit?.(item)}
+      aria-label={`Изменить: ${item.label}`}
+      sx={{
+        ...rowSx,
+        "&:hover": { backgroundColor: "#F7F7F7" },
+        "&.Mui-focusVisible": { outline: "2px solid #CC0033", outlineOffset: -2 },
+      }}
+    >
+      {content}
+    </ButtonBase>
+  );
 }
 
-function MonthOverviewStrip({ days }) {
-  return (
-    <Box sx={{ overflowX: "auto", pb: 0.5 }}>
-      <Box sx={{ display: "inline-flex", minWidth: "100%", gap: 0.25 }}>
-        {days.map((item) => {
-          const preset = getHourPresetByType(item.type);
-          const hasHours = Boolean(item.hoursLabel || item.time_start || item.time_end);
-          const backgroundColor = item.backgroundColor || (hasHours ? preset.color : "#FFFFFF");
-          const textColor = item.textColor || (hasHours ? preset.textColor : "#666666");
+function FinanceSection({ finance, onEdit, loadPayoutHistory }) {
+  const history = usePayoutHistory({
+    enabled: Boolean(finance.historyRequest),
+    request: finance.historyRequest,
+    load: loadPayoutHistory,
+    reloadKey: finance.historyKey,
+  });
 
+  return (
+    <Stack spacing={1.5}>
+      <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#A6A6A6", textTransform: "uppercase" }}>
+        Расчёт{finance.periodLabel ? ` · ${finance.periodLabel}` : ""}
+      </Typography>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+          gap: 1.5,
+          alignItems: "start",
+        }}
+      >
+        {["accrual", "payout"].map((group) => {
+          const items = finance.items.filter((item) => item.group === group);
+          if (!items.length) return null;
           return (
             <Box
-              key={item.id}
-              sx={{
-                width: 52,
-                flex: "0 0 auto",
-                border: "1px solid #ECECEC",
-                backgroundColor: "#FFFFFF",
-              }}
+              key={group}
+              sx={{ border: "1px solid #E5E7EB", borderRadius: "12px", overflow: "hidden" }}
             >
-              <Box
+              <Typography
                 sx={{
-                  px: 0.25,
-                  py: 0.625,
-                  backgroundColor: item.isWeekend ? "#FFE9BD" : "#FFFFFF",
-                  textAlign: "center",
+                  px: 1.5,
+                  py: 1,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#374151",
+                  backgroundColor: "#F9FAFB",
+                  borderBottom: "1px solid #E5E7EB",
                 }}
               >
-                <Typography sx={{ fontSize: 12, lineHeight: 1, color: "#666666" }}>
-                  {item.weekdayShort}
-                </Typography>
-                <Typography sx={{ mt: 0.5, fontSize: 14, lineHeight: 1, color: "#666666" }}>
-                  {item.dayNumber}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  minHeight: 44,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor,
-                  color: textColor,
-                }}
-              >
-                <Typography sx={{ fontSize: 14, lineHeight: 1, fontWeight: 500 }}>
-                  {hasHours
-                    ? item.hoursLabel || formatWorkedHours(item.time_start, item.time_end) || ""
-                    : ""}
-                </Typography>
-              </Box>
+                {FINANCE_GROUP_TITLES[group]}
+              </Typography>
+              {items.map((item, index) => (
+                <FinanceRow
+                  key={item.key}
+                  item={item}
+                  onEdit={onEdit}
+                  isLast={index === items.length - 1}
+                />
+              ))}
             </Box>
           );
         })}
       </Box>
+      <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
+        Строки с карандашом можно изменить.
+      </Typography>
+      <StaffSchedulePayoutHistoryList
+        state={history}
+        title="История выплат за период"
+        emptyText="Выплат за период ещё не было"
+        showType
+      />
+    </Stack>
+  );
+}
+
+function hasMonthDraftChanges(left, right) {
+  return JSON.stringify(left) !== JSON.stringify(right);
+}
+
+const CALENDAR_WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const CALENDAR_WEEKEND = new Set(["Пт", "Сб", "Вс"]);
+
+function buildCalendarWeeks(days) {
+  const firstDate = dayjs(days[0]?.date);
+  const offset = firstDate.isValid() ? (firstDate.day() + 6) % 7 : 0;
+  const cells = [...Array(offset).fill(null), ...days];
+  while (cells.length % 7) cells.push(null);
+  const weeks = [];
+  for (let index = 0; index < cells.length; index += 7) weeks.push(cells.slice(index, index + 7));
+  return weeks;
+}
+
+function MonthOverviewCalendar({ days }) {
+  const weeks = useMemo(() => buildCalendarWeeks(days), [days]);
+
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+        gap: 0.5,
+      }}
+    >
+      {CALENDAR_WEEKDAYS.map((weekday) => (
+        <Typography
+          key={weekday}
+          sx={{
+            py: 0.5,
+            fontSize: 12,
+            fontWeight: 600,
+            textAlign: "center",
+            color: CALENDAR_WEEKEND.has(weekday) ? "#B54708" : "#6B7280",
+          }}
+        >
+          {weekday}
+        </Typography>
+      ))}
+      {weeks.flat().map((item, index) => {
+        if (!item) {
+          return <Box key={`empty-${index}`} />;
+        }
+
+        const hours = item.hoursLabel || "";
+        const hasHours = Boolean(hours);
+
+        return (
+          <Box
+            key={item.id}
+            sx={{
+              position: "relative",
+              height: 48,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "8px",
+              border: "1px solid",
+              borderColor: hasHours ? "transparent" : "#ECECEC",
+              backgroundColor: hasHours ? item.backgroundColor || "#E5E7EB" : item.isWeekend ? "#FFF8EB" : "#FFFFFF",
+              color: hasHours ? item.textColor || "#111827" : "#9CA3AF",
+            }}
+          >
+            <Typography
+              component="span"
+              sx={{ position: "absolute", top: 3, left: 6, fontSize: 11, lineHeight: 1, color: "inherit", opacity: 0.75 }}
+            >
+              {item.dayNumber}
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1, color: "inherit" }}
+            >
+              {hours}
+            </Typography>
+          </Box>
+        );
+      })}
     </Box>
   );
 }
 
-function HourSlotCard({ slot, selected, onClick, onRemove = null, maxWidth = "none" }) {
+function HourSlotCard({ slot, selected, onClick, onRemove = null }) {
   return (
     <Stack
       direction="row"
-      spacing={1}
-      sx={{ width: "fit-content", maxWidth, alignItems: "center" }}
+      spacing={0.5}
+      sx={{ width: "100%", alignItems: "center" }}
     >
-      <Box
+      <ButtonBase
+        role="radio"
+        aria-checked={selected}
         onClick={onClick}
         sx={{
-          minHeight: 36,
+          flex: "1 1 auto",
+          minHeight: 40,
           minWidth: 0,
           px: 1,
+          justifyContent: "flex-start",
           borderRadius: "10px",
-          border: selected ? `1px solid ${slot.color}` : "1px solid #E5E5E5",
-          backgroundColor: "#FFFFFF",
+          // Рамка всегда 1px, выделение — тенью, чтобы размер карточки не менялся.
+          border: `1px solid ${selected ? slot.color : "#E5E5E5"}`,
+          backgroundColor: selected ? alpha(slot.color, 0.16) : "#FFFFFF",
+          boxShadow: selected
+            ? `inset 0 0 0 1px ${slot.color}, 0 0 0 3px ${alpha(slot.color, 0.18)}`
+            : "none",
           display: "flex",
           alignItems: "center",
           gap: 1,
-          cursor: "pointer",
+          transition: "background-color 120ms ease, box-shadow 120ms ease",
+          "&:hover": { backgroundColor: selected ? alpha(slot.color, 0.22) : "#F7F7F7" },
+          "&.Mui-focusVisible": { outline: `2px solid ${slot.color}`, outlineOffset: 2 },
         }}
       >
         <Box
@@ -239,10 +406,25 @@ function HourSlotCard({ slot, selected, onClick, onRemove = null, maxWidth = "no
             flexShrink: 0,
           }}
         />
-        <Typography sx={{ fontSize: 14, color: "#666666", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+        <Typography
+          noWrap
+          sx={{
+            flex: "1 1 auto",
+            minWidth: 0,
+            textAlign: "left",
+            fontSize: 14,
+            lineHeight: 1.2,
+            color: selected ? "#111827" : "#666666",
+            fontWeight: selected ? 700 : 400,
+          }}
+        >
           {formatHourRangeLabel(slot.time_start, slot.time_end)}
         </Typography>
-      </Box>
+        <CheckRoundedIcon
+          aria-hidden="true"
+          sx={{ fontSize: 18, color: "#111827", flexShrink: 0, visibility: selected ? "visible" : "hidden" }}
+        />
+      </ButtonBase>
       {onRemove ? (
         <Box
           onClick={(event) => {
@@ -443,17 +625,18 @@ function AssignmentDialog({
   error,
   onClose,
   onSave,
+  onShowOverview = null,
 }) {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const isNarrowPhone = useMediaQuery("(max-width: 359px)");
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const allSlots = [...buildPresetSlots(), ...customSlots];
+  const activeSlot = allSlots.find((slot) => slot.id === activeSlotId) ?? null;
   const daysMap = new Map(draft.dates.map((item) => [item.date, item]));
   const calendarSize = isNarrowPhone ? 34 : isXs ? 40 : isDesktop ? 68 : 56;
   const calendarDayHeight = isXs ? 60 : isDesktop ? 76 : 68;
   const calendarGap = isNarrowPhone ? 3 : isXs ? 4 : 8;
-  const customChipMaxWidth = isXs ? 150 : 172;
   const hasPastDays = Boolean(monthValue && dayjs(`${monthValue}-01`).isBefore(dayjs(), "day"));
 
   return (
@@ -484,8 +667,19 @@ function AssignmentDialog({
         <Stack
           direction="row"
           spacing={1.25}
-          sx={{ width: "100%", justifyContent: "flex-end" }}
+          sx={{ width: "100%", justifyContent: "flex-end", alignItems: "center" }}
         >
+          {onShowOverview ? (
+            <JacoButton
+              compact
+              tone="secondary"
+              onClick={onShowOverview}
+              disabled={loading}
+              sx={{ minHeight: 44, mr: "auto !important" }}
+            >
+              Обзор и расчёт
+            </JacoButton>
+          ) : null}
           <JacoButton
             compact
             tone="danger"
@@ -525,11 +719,14 @@ function AssignmentDialog({
                 Часовой промежуток
               </Typography>
               <Box
+                role="radiogroup"
+                aria-label="Часовой промежуток"
                 sx={{
                   display: "flex",
-                  flexWrap: "wrap",
+                  flexDirection: "column",
                   gap: 1,
-                  alignItems: "center",
+                  width: "100%",
+                  maxWidth: { xs: 320, md: "none" },
                 }}
               >
                 {allSlots.map((slot) => (
@@ -543,31 +740,43 @@ function AssignmentDialog({
                         ? () => onDeleteCustomSlot?.(slot.id)
                         : null
                     }
-                    maxWidth={slot.isCustom ? customChipMaxWidth : "none"}
                   />
                 ))}
-                <JacoButton
-                  tone="secondary"
-                  aria-label="Добавить временной промежуток"
-                  onClick={onOpenCustomTime}
-                  disabled={!canEditMonth || loading}
-                  sx={{
-                    alignSelf: "flex-start",
-                    width: 40,
-                    minWidth: 40,
-                    minHeight: 40,
-                    p: 0,
-                    borderRadius: "10px",
-                    backgroundColor: "#E5E5E5",
-                    color: "#8A8A8A",
-                    "&:hover": {
-                      backgroundColor: "#DADADA",
-                    },
-                  }}
-                >
-                  <AddRoundedIcon sx={{ fontSize: 22 }} />
-                </JacoButton>
               </Box>
+              <JacoButton
+                tone="secondary"
+                onClick={onOpenCustomTime}
+                disabled={!canEditMonth || loading}
+                startIcon={<AddRoundedIcon sx={{ fontSize: 20 }} />}
+                sx={{
+                  width: "100%",
+                  maxWidth: { xs: 320, md: "none" },
+                  minHeight: 40,
+                  justifyContent: "flex-start",
+                  px: 1.25,
+                  borderRadius: "10px",
+                  border: "1px dashed #C8C8C8",
+                  backgroundColor: "transparent",
+                  color: "#666666",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  "&:hover": { backgroundColor: "#F5F5F5", border: "1px dashed #A6A6A6" },
+                }}
+              >
+                Свой промежуток
+              </JacoButton>
+              {activeSlot && canEditMonth ? (
+                <Typography sx={{ fontSize: 13, lineHeight: 1.4, color: "#666666" }}>
+                  Выбрано:{" "}
+                  <Box
+                    component="span"
+                    sx={{ fontWeight: 700, color: "#111827", whiteSpace: "nowrap" }}
+                  >
+                    {formatHourRangeLabel(activeSlot.time_start, activeSlot.time_end)}
+                  </Box>
+                  . Нажмите на день в календаре, чтобы поставить эти часы.
+                </Typography>
+              ) : null}
             </Stack>
           </Box>
 
@@ -696,13 +905,23 @@ function AssignmentDialog({
   );
 }
 
-export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavigateMonth }) {
+export default function StaffScheduleMonthModal({
+  modal,
+  onClose,
+  onSave,
+  onNavigateMonth,
+  finance = null,
+  onEditFinance,
+  loadPayoutHistory,
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { withConfirm, ConfirmDialog } = useJacoConfirm();
   const [draft, setDraft] = useState(() => buildMonthModalDraft(modal.data));
   const [saveError, setSaveError] = useState("");
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
+  // Клик по сотруднику сразу открывает заполнение часов; обзор месяца — по кнопке внутри.
+  const [isOverviewMode, setIsOverviewMode] = useState(false);
   const [editorDraft, setEditorDraft] = useState(() => buildMonthModalDraft(modal.data));
   const [editorCustomSlots, setEditorCustomSlots] = useState([]);
   const [hiddenRecentSlotIds, setHiddenRecentSlotIds] = useState([]);
@@ -734,6 +953,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
     if (!modal.open) {
       setIsAssignmentOpen(false);
       setIsCustomTimeOpen(false);
+      setIsOverviewMode(false);
       return;
     }
 
@@ -829,32 +1049,44 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
     setIsAssignmentOpen(true);
   };
 
-  const closeAssignmentDialog = () => {
+  const isFillMode = modal.open && !isOverviewMode;
+
+  const confirmDiscardAssignment = (action) => {
     if (!hasAssignmentChanges) {
-      setIsAssignmentOpen(false);
-      setIsCustomTimeOpen(false);
+      action();
       return;
     }
 
-    withConfirm(
-      () => {
-        setIsAssignmentOpen(false);
-        setIsCustomTimeOpen(false);
-      },
-      {
-        message: (
-          <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
-            Данные были изменены.
-            <br />
-            Закрыть без сохранения?
-          </Typography>
-        ),
-        confirmLabel: "Да, закрыть",
-        confirmTone: "danger",
-        cancelTone: "danger",
-      },
-    )();
+    withConfirm(action, {
+      message: (
+        <Typography sx={{ ...staffScheduleModalTypography.title, textAlign: "center" }}>
+          Данные были изменены.
+          <br />
+          Закрыть без сохранения?
+        </Typography>
+      ),
+      confirmLabel: "Да, закрыть",
+      confirmTone: "danger",
+      cancelTone: "danger",
+    })();
   };
+
+  const showOverview = () =>
+    confirmDiscardAssignment(() => {
+      setIsCustomTimeOpen(false);
+      setIsOverviewMode(true);
+    });
+
+  const closeAssignmentDialog = () =>
+    confirmDiscardAssignment(() => {
+      setIsCustomTimeOpen(false);
+      if (isFillMode) {
+        onClose?.();
+      } else {
+        setIsAssignmentOpen(false);
+      }
+    });
+
 
   const handleEditorDayClick = (date) => {
     if (!canEditMonth || modal.loading || !activeSlot || !isEditableMonthDay(date)) {
@@ -1012,7 +1244,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
   return (
     <>
       <StaffScheduleResponsiveModal
-        open={modal.open}
+        open={modal.open && isOverviewMode}
         onClose={handleRequestClose}
         title="Данные сотрудника"
         maxWidth="md"
@@ -1034,43 +1266,51 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
                 </Typography>
               </Stack>
 
-              {modal.data.hasPeriodSummary ? (
-                <Stack spacing={1}>
-                  <Typography
+              <Stack spacing={1}>
+                <Stack
+                  direction={isMobile ? "column" : "row"}
+                  spacing={1}
+                  sx={{ alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between" }}
+                >
+                  {modal.data.hasPeriodSummary ? (
+                    <Typography
+                      sx={{
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: "#A6A6A6",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      График{finance?.periodLabel ? ` · ${finance.periodLabel}` : ""}
+                    </Typography>
+                  ) : (
+                    <Box />
+                  )}
+                  <JacoButton
+                    tone="secondary"
+                    onClick={openAssignmentDialog}
+                    disabled={!canEditMonth}
                     sx={{
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: "#A6A6A6",
-                      textTransform: "uppercase",
+                      minHeight: 38,
+                      px: 2.5,
+                      borderRadius: "14px",
+                      fontSize: 16,
+                      width: isMobile ? "100%" : "auto",
                     }}
                   >
-                    График
-                  </Typography>
-                  {monthDays.length ? <MonthOverviewStrip days={monthDays} /> : null}
+                    Заполнить часы
+                  </JacoButton>
                 </Stack>
-              ) : null}
-
-              <Stack
-                direction="row"
-                sx={{ justifyContent: "flex-end" }}
-              >
-                <JacoButton
-                  tone="secondary"
-                  onClick={openAssignmentDialog}
-                  disabled={!canEditMonth}
-                  sx={{
-                    minHeight: 38,
-                    px: 2.5,
-                    borderRadius: "14px",
-                    fontSize: 16,
-                    width: isMobile ? "100%" : "auto",
-                  }}
-                >
-                  Заполнить часы
-                </JacoButton>
+                {modal.data.hasPeriodSummary && monthDays.length ? <MonthOverviewCalendar days={monthDays} /> : null}
               </Stack>
 
-              {modal.data.hasPeriodSummary ? (
+              {modal.data.hasPeriodSummary && finance?.items?.length ? (
+                <FinanceSection
+                  finance={finance}
+                  onEdit={onEditFinance}
+                  loadPayoutHistory={loadPayoutHistory}
+                />
+              ) : modal.data.hasPeriodSummary ? (
                 <Stack spacing={1}>
                   <Typography
                     sx={{
@@ -1093,14 +1333,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
                     }}
                   >
                     {overviewCards.map((card) => (
-                      <Box
-                        key={card.key}
-                        sx={
-                          card.key === "premium"
-                            ? { gridColumn: { xs: "1 / -1", sm: "span 2" } }
-                            : null
-                        }
-                      >
+                      <Box key={card.key}>
                         <SummaryCard
                           label={card.label}
                           value={card.value}
@@ -1116,7 +1349,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
       </StaffScheduleResponsiveModal>
 
       <AssignmentDialog
-        open={isAssignmentOpen}
+        open={isAssignmentOpen || isFillMode}
         monthValue={monthValue}
         draft={editorDraft}
         customSlots={editorCustomSlots.filter(
@@ -1135,6 +1368,7 @@ export default function StaffScheduleMonthModal({ modal, onClose, onSave, onNavi
         error={modal.error}
         onClose={closeAssignmentDialog}
         onSave={handleSaveAssignment}
+        onShowOverview={isFillMode ? showOverview : null}
       />
 
       <CustomTimeDialog

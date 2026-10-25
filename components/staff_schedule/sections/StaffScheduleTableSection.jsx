@@ -45,7 +45,12 @@ import {
   formatEmployeeCount,
   getRowBaseColor,
   getScheduleRowFocusKey,
+  formatCompactAmount,
+  formatFullAmount,
+  getSamePersonTint,
+  getSamePersonTitle,
   getSummaryCellValue,
+  isNegativeBalanceValue,
   hasFastActionsAccess,
   toArray,
 } from "../staffScheduleHelpers";
@@ -393,10 +398,21 @@ function ScheduleRow({
   const baseColors = useColors
     ? getRowBaseColor(data?.type, Boolean(row?.color))
     : { backgroundColor: "#ffffff", color: "#000000" };
-  const isFullRowHighlighted = isFocused;
-  const rowSurfaceColor = row?.color ? uiTableColors.rowMuted : uiColors.surface;
+  // Выбранная строка подсвечивается серым, но цвета дней и отметки сотрудника сохраняются.
+  const rowSurfaceColor = isFocused
+    ? uiTableColors.rowSelected
+    : row?.color
+      ? uiTableColors.rowMuted
+      : uiColors.surface;
+  const samePersonTint = getSamePersonTint(data);
   const employeeCellColor =
-    hoverMode === "name" ? uiTableColors.nameHover : baseColors.backgroundColor;
+    hoverMode === "name"
+      ? uiTableColors.nameHover
+      : samePersonTint && baseColors.backgroundColor === "#ffffff"
+        ? samePersonTint
+        : isFocused && baseColors.backgroundColor === "#ffffff"
+          ? uiTableColors.rowSelected
+          : baseColors.backgroundColor;
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
   const canUseFastActions =
     showFastActions && Boolean(onOpenFastActions) && String(data?.smena_id ?? "") !== "-1";
@@ -435,6 +451,7 @@ function ScheduleRow({
           px: 1.5,
           cursor: canOpenMonth ? "pointer" : "default",
         }}
+        title={getSamePersonTitle(data)}
         onMouseEnter={() => setHoverMode("name")}
         onMouseLeave={() => setHoverMode(null)}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
@@ -495,7 +512,6 @@ function ScheduleRow({
             lineHeight: 1.25,
             textAlign: "left",
             cursor: focusKey ? "pointer" : "default",
-            boxShadow: isFocused ? `inset 0 0 0 2px ${uiColors.primary}` : "none",
             textDecoration: focusKey ? "underline dotted" : "none",
             textUnderlineOffset: "3px",
             "&:focus-visible": {
@@ -588,6 +604,7 @@ function ScheduleRow({
 
       {summaryColumns.map((column) =>
         (() => {
+          const isValueBlurred = isFinancialBlurred && !column.public;
           const canEditFinancialValue = canEditStaffScheduleFinanceValue({
             columnKey: column.key,
             row: data,
@@ -653,7 +670,7 @@ function ScheduleRow({
                   ? rowSurfaceColor
                   : isPremiumColumn
                     ? uiColors.primary
-                    : isFullRowHighlighted || !canEditDirBonus
+                    : isFocused || !canEditDirBonus
                       ? rowSurfaceColor
                       : uiTableColors.rowHover,
                 color: isPremiumColumn && !isFocused ? "#FFFFFF" : undefined,
@@ -663,7 +680,7 @@ function ScheduleRow({
                   ? {
                       backgroundColor: isPremiumColumn
                         ? uiColors.primaryHover
-                        : isFullRowHighlighted
+                        : isFocused
                           ? rowSurfaceColor
                           : canEditDirBonus
                             ? "#DCDCDC"
@@ -675,12 +692,15 @@ function ScheduleRow({
               <Box
                 component="span"
                 data-financial-value
-                aria-hidden={isFinancialBlurred}
+                aria-hidden={isValueBlurred}
                 sx={{
                   display: "inline-block",
-                  filter: isFinancialBlurred ? "blur(5px)" : undefined,
-                  userSelect: isFinancialBlurred ? "none" : undefined,
-                  pointerEvents: isFinancialBlurred ? "none" : undefined,
+                  filter: isValueBlurred ? "blur(5px)" : undefined,
+                  userSelect: isValueBlurred ? "none" : undefined,
+                  pointerEvents: isValueBlurred ? "none" : undefined,
+                  ...(isNegativeBalanceValue(column, getSummaryCellValue(column, data))
+                    ? { color: "#D92D20", fontWeight: 600 }
+                    : null),
                   ...(isClickable ? staffScheduleFinancialValueStyle : null),
                 }}
               >
@@ -826,6 +846,7 @@ function SummaryMetricRow({
   fillColor = "#ffffff",
   textColor = "#5E5E5E",
   getValue,
+  getTitle,
   getSummaryValue,
   onSummaryCellClick,
   blurValues = false,
@@ -852,6 +873,7 @@ function SummaryMetricRow({
         <TableCell
           key={`${label}-${index}`}
           align="center"
+          title={!blurValues && getTitle ? getTitle(item) || undefined : undefined}
           className={compactValues ? "min_block min_size" : "min_block"}
           sx={{
             ...tableCellDividerSx,
@@ -955,7 +977,6 @@ export default function StaffScheduleTableSection({
   summaryColumns,
   access,
   graphKind,
-  directorLevel,
   periodBonusState,
   selectedPart,
   onOpenDay,
@@ -1034,7 +1055,6 @@ export default function StaffScheduleTableSection({
   const canEditSmena = canManageSmena;
   const canCreateSmena = canManageSmena;
   const canEditTeamBonus = canEdit("com_bonus");
-  const canOpenDirectorLevel = canEdit("director_level");
   const hasBulkSelection = showFastActions && selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = selectionColumnWidth + EMPLOYEE_COLUMN_WIDTH;
@@ -1660,32 +1680,6 @@ export default function StaffScheduleTableSection({
                         </Typography>
                       </Stack>
 
-                      {/*
-                    {canOpenDirectorLevel ? (
-                      <JacoButton
-                        compact
-                        tone="secondary"
-                        onClick={() => onOpenSummaryAction?.(null, "dir_lv")}
-                        sx={{
-                          minHeight: 32,
-                          px: 1.5,
-                          border: "none",
-                          borderRadius: uiRadii.sm,
-                          backgroundColor: "#FFFFFF",
-                          color: "#666666",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          whiteSpace: "nowrap",
-                          "&:hover": {
-                            border: "none",
-                            backgroundColor: "#F7F7F7",
-                          },
-                        }}
-                      >
-                        {`Уровень директора: ${directorLevel ?? 0}`}
-                      </JacoButton>
-                    ) : null}
-                    */}
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -1702,7 +1696,8 @@ export default function StaffScheduleTableSection({
                   fillColor="#9BDD7C"
                   textColor="#5E5E5E"
                   blurValues={blurFinancials}
-                  getValue={(item) => item?.res ?? ""}
+                  getValue={(item) => formatCompactAmount(item?.res)}
+                  getTitle={(item) => formatFullAmount(item?.res)}
                   getSummaryValue={(column) => {
                     if (column.key === "dop_bonus" && canEditTeamBonus) {
                       if (!periodBonusState) {

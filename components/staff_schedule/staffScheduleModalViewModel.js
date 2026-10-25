@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import {
-  computePremiumSheet,
   computeToPaySum,
   computeTotalSum,
   createStaffSchedulePolicy,
@@ -26,7 +25,7 @@ const PERSONAL_FINANCE_COLUMN_LABELS = {
   price_p_h: "За 1ч",
   given: "Выдано",
   given_cart: "На карты",
-  withheld: "Удержано по исполнительному листу",
+  withheld: "Удержано по исп. листу",
   my_bonus: "Бонус",
 };
 
@@ -194,7 +193,8 @@ export function buildMonthModalViewModel(response, context = {}) {
       total: canViewFinance("all_price") ? totalSum : "",
       givenCash: canViewFinance("given") ? (source?.given_cash ?? source?.given ?? "") : "",
       transferred: canViewFinance("given_cart") ? (source?.given_cart ?? "") : "",
-      premiumSheet: canViewFinance("premia") ? computePremiumSheet(source) : "",
+      openingBalance: canViewFinance("test_all_price") ? (source?.opening_balance ?? "") : "",
+      difference: canViewFinance("test_all_price") ? (source?.salary_difference ?? "") : "",
     },
     overviewDays: toArray(row?.dates).map((item, index) => {
       const periodDay = periodDays[index] ?? {};

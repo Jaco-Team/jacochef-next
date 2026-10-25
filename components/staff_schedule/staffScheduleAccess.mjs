@@ -42,8 +42,7 @@ export function createStaffSchedulePolicy(access = {}) {
     canView("given") ||
     canView("withheld") ||
     canView("given_cart") ||
-    canView("test_all_price") ||
-    canView("premia");
+    canView("test_all_price");
   const canShowPayrollActions = canEdit("given") || canEdit("given_cart") || canEdit("withheld");
   const canShowFastActionsPanel =
     canAccess("fast_hours") || canAccess("fast_smena") || canAccess("fast_point");
@@ -55,9 +54,13 @@ export function createStaffSchedulePolicy(access = {}) {
     canView("over_40_min") ||
     canView("sums_all");
   const canOpenMonthCard = canAccess("full_month");
-  const canOpenDayCard = canEdit("day_edit") || canAccess("full_day") || canAccess("full_month");
+  // В архивном месяце карточка дня не открывается: full_month даёт только просмотр месяца.
+  const canOpenDayCard =
+    access?.staff_schedule_archive !== true &&
+    (canEdit("day_edit") || canAccess("full_day") || canAccess("full_month"));
   const canExportWorkSchedule = canAccess("export_excel");
-  const canEditDirectorLevel = canEdit("director_level");
+  const canViewRates = canView("rates");
+  const canEditRates = canEdit("rates");
   const canEditSummaryAction = (mode) => {
     const key = {
       price_p_h: "1h",
@@ -65,7 +68,6 @@ export function createStaffSchedulePolicy(access = {}) {
       given_cart: "given_cart",
       withheld: "withheld",
       my_bonus: "bonus",
-      dir_lv: "director_level",
       dop_bonus_toggle: "com_bonus",
       dop_bonus_user: "com_bonus",
     }[mode];
@@ -83,7 +85,8 @@ export function createStaffSchedulePolicy(access = {}) {
     canOpenDayCard,
     canExportWorkSchedule,
     canExportHealthJournal: canExportWorkSchedule,
-    canEditDirectorLevel,
+    canViewRates,
+    canEditRates,
     canEditSummaryAction,
   };
 }
@@ -102,7 +105,6 @@ export function getStaffScheduleFinancialReadSignature(access = {}) {
     "test_all_price",
     "given",
     "given_cart",
-    "premia",
   ]
     .map((key) => Number(policy.canShowSalaryBlock && policy.canView(key)))
     .join("");
@@ -162,4 +164,38 @@ export function getEditableStaffScheduleBonusRow({ rows, request, monthId, selec
   })
     ? row
     : null;
+}
+
+// Показатели, которые в таблице меняются по клику; остальные считаются.
+export const EDITABLE_FINANCE_KEYS = new Set([
+  "price_p_h",
+  "dop_bonus",
+  "my_bonus",
+  "withheld",
+  "given",
+  "given_cart",
+]);
+
+/**
+ * То же правило, что у ячеек финансов в таблице: "summary" — окно ввода, "team_bonus" — командный бонус, null — нельзя.
+ */
+export function getStaffScheduleFinanceAction({
+  columnKey,
+  row,
+  canEdit,
+  selectedPart,
+  periodBonusState,
+} = {}) {
+  if (columnKey === "dop_bonus") {
+    return canEdit?.("com_bonus") &&
+      [1, 2].includes(Number(periodBonusState)) &&
+      Number(row?.check_period) === 1 &&
+      String(row?.smena_id ?? "") !== "-1"
+      ? "team_bonus"
+      : null;
+  }
+  if (columnKey === "my_bonus") {
+    return canEditStaffScheduleBonus({ row, canEdit, selectedPart }) ? "summary" : null;
+  }
+  return canEditStaffScheduleFinanceValue({ columnKey, row, canEdit }) ? "summary" : null;
 }

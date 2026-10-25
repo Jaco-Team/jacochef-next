@@ -117,13 +117,22 @@ test("the quick category and local presets expose the three canonical permission
     const access = applyStaffScheduleAccessPreset({}, preset);
     for (const key of ["fast_hours", "fast_smena", "fast_point"])
       assert.equal(access[`${key}_access`], 1);
-    for (const key of ["fast_month", "fast_2_week"]) assert.equal(access[`${key}_access`], 0);
+    // Устаревшие быстрые часы удалены: пресеты их не выдают.
+    for (const key of ["fast_month", "fast_2_week"]) assert.equal(access[`${key}_access`] ?? 0, 0);
   }
   assert.equal(
     createStaffSchedulePolicy(applyStaffScheduleAccessPreset({}, "schedule"))
       .canShowFastActionsPanel,
     false,
   );
+});
+
+test("director level is retired and no right opens it", () => {
+  for (const access of [{ director_level_edit: 1 }, { director_level_access: 1 }]) {
+    const policy = createStaffSchedulePolicy(access);
+    assert.equal(policy.canEditSummaryAction("dir_lv"), false);
+    assert.equal("canEditDirectorLevel" in policy, false);
+  }
 });
 
 test("finance operations follow edit/access inheritance only, with independent grants", () => {
@@ -133,7 +142,6 @@ test("finance operations follow edit/access inheritance only, with independent g
     given_cart: "given_cart",
     withheld: "withheld",
     my_bonus: "bonus",
-    dir_lv: "director_level",
     dop_bonus_toggle: "com_bonus",
     dop_bonus_user: "com_bonus",
   };
@@ -147,7 +155,6 @@ test("finance operations follow edit/access inheritance only, with independent g
             [`${key}_access`]: access,
           });
           assert.equal(policy.canEditSummaryAction(mode), Boolean(edit || access));
-          if (mode === "dir_lv") assert.equal(policy.canEditDirectorLevel, Boolean(edit || access));
           for (const [otherMode, otherKey] of Object.entries(modes)) {
             if (otherKey !== key) assert.equal(policy.canEditSummaryAction(otherMode), false);
           }
@@ -174,22 +181,22 @@ test("salary fields require individual readable flags and ignore removed group d
     "given",
     "given_cart",
   ];
-  assert.deepEqual(getVisibleSummaryColumns({}), []);
-  assert.deepEqual(getVisibleSummaryColumns({ salary_block_access: 1 }), []);
-  assert.deepEqual(getVisibleSummaryColumns({ premia_view: 1 }), []);
+  // «Всего часов» не финансовая и видна всем; финансовые колонки — только по правам.
+  const finance = (access) => getVisibleSummaryColumns(access).filter((column) => !column.public);
+  assert.deepEqual(getVisibleSummaryColumns({}).map((column) => column.key), ["worked_hours"]);
+  assert.deepEqual(finance({ salary_block_access: 1 }), []);
+  assert.deepEqual(finance({ premia_view: 1 }), []);
+  // «К выплате» открывает ещё «Остаток на начало» и «Разницу».
+  const expected = (key) =>
+    key === "test_all_price" ? ["opening_balance", "to_pay_sum", "salary_difference"] : null;
   for (const key of keys)
     for (const suffix of ["view", "edit", "access"]) {
       const access = { [`${key}_${suffix}`]: 1 };
-      assert.deepEqual(
-        getVisibleSummaryColumns(access).map((column) => column.accessKey),
-        [key],
-      );
-      assert.deepEqual(
-        getVisibleSummaryColumns({ ...access, salary_block_access: 0 }).map(
-          (column) => column.accessKey,
-        ),
-        [key],
-      );
+      for (const value of [access, { ...access, salary_block_access: 0 }]) {
+        const columns = finance(value);
+        assert.deepEqual([...new Set(columns.map((column) => column.accessKey))], [key]);
+        if (expected(key)) assert.deepEqual(columns.map((column) => column.key), expected(key));
+      }
     }
 });
 
