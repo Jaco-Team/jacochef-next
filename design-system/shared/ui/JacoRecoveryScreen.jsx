@@ -9,6 +9,7 @@ import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CheckIcon from "@mui/icons-material/Check";
 import LoginRoundedIcon from "@mui/icons-material/LoginRounded";
+import LockResetOutlinedIcon from "@mui/icons-material/LockResetOutlined";
 import JacoButton from "./JacoButton";
 import JacoTextInput from "./JacoTextInput";
 import JacoPeriodSwitch from "./JacoPeriodSwitch";
@@ -172,7 +173,7 @@ export default function JacoRecoveryScreen({
           {!ssoAvailable || ssoChecking ? <Typography id={`${instanceId}-sso-status`} sx={{ mt: 1, fontSize: 12, lineHeight: 1.5, color: MUTED, textAlign: "center" }}>{ssoChecking ? "Проверяем доступность SSO…" : "Вход через SSO пока недоступен"}</Typography> : null}
         </Box> : null}
         {step === "request" ? <Button type="button" fullWidth onClick={onLogin} disabled={loading} sx={{ mt: 2, minHeight: 32, fontSize: 13, color: MUTED, textTransform: "none", "&:hover": { color: CRIMSON, bgcolor: "transparent" }, "&.Mui-focusVisible": FOCUS }}>← Вернуться ко входу</Button> : null}
-        {step === "login" ? <Button type="button" fullWidth onClick={onBack} disabled={loading} sx={{ mt: 2, color: MUTED, fontSize: 13, textTransform: "none", "&:hover": { color: CRIMSON }, "&.Mui-focusVisible": FOCUS }}>Восстановить пароль</Button> : null}
+        {step === "login" ? <JacoButton type="button" tone="secondary" fullWidth startIcon={<LockResetOutlinedIcon sx={{ fontSize: 20 }} />} onClick={onBack} disabled={loading} sx={{ mt: 2, height: 48, minHeight: 48, borderRadius: "12px", fontSize: 15, color: "#374151", borderColor: "#E5E7EB", "&:hover": { bgcolor: "#F9FAFB", borderColor: "#9CA3AF" }, "&.Mui-focusVisible": FOCUS }}>Восстановить пароль</JacoButton> : null}
       </Box>
     </Paper>
     </>

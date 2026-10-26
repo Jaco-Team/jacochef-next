@@ -412,7 +412,7 @@ test("shared recovery reuses the delivery switch and keeps clean phone fields wi
     React: { createElement: (type, props, ...children) => ({ type, props: { ...props, children: children.flat(Infinity) } }), Fragment: "Fragment" },
     useId: () => "phone-preview",
   };
-  for (const name of ["Box", "Button", "GlobalStyles", "IconButton", "InputAdornment", "Paper", "Typography", "ArrowBackIcon", "SmsOutlinedIcon", "TelegramIcon", "PhoneOutlinedIcon", "VisibilityOutlinedIcon", "VisibilityOffOutlinedIcon", "CheckCircleRoundedIcon", "CheckIcon", "LoginRoundedIcon", "JacoButton", "JacoTextInput", "JacoPeriodSwitch"]) context[name] = name;
+  for (const name of ["Box", "Button", "GlobalStyles", "IconButton", "InputAdornment", "Paper", "Typography", "ArrowBackIcon", "SmsOutlinedIcon", "TelegramIcon", "PhoneOutlinedIcon", "VisibilityOutlinedIcon", "VisibilityOffOutlinedIcon", "CheckCircleRoundedIcon", "CheckIcon", "LoginRoundedIcon", "LockResetOutlinedIcon", "JacoButton", "JacoTextInput", "JacoPeriodSwitch"]) context[name] = name;
   const View = vm.runInNewContext(viewExecutable, context);
   const findPhone = (node) => {
     if (!node || typeof node !== "object") return undefined;
