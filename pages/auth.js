@@ -197,6 +197,12 @@ export default function Auth() {
     } finally { setIsLoad(false); }
   }
 
+  const resendPasswordResetCode = () => {
+    if (isLoad || retryAfter > 0 || resendAfter > 0) return;
+    if (SMARTCAPTCHA_CLIENT_KEY) return editRecoveryRequest();
+    return sendPasswordResetCode();
+  };
+
   const handlePasswordFailure = (message) => {
     setFormError(message);
     if (isRecoveryCodeError(message)) {
@@ -249,7 +255,8 @@ export default function Auth() {
     if (recoveryStep === "password") return submitNewPassword();
     if (recoveryStep === "login") return login();
   };
-  const showCaptcha = SMARTCAPTCHA_CLIENT_KEY && (recoveryStep === "request" || recoveryStep === "code" || (recoveryStep === "login" && captchaRequired));
+  const showCaptcha = SMARTCAPTCHA_CLIENT_KEY && (recoveryStep === "request" || (recoveryStep === "login" && captchaRequired));
+  const securityBlocked = (recoveryStep === "request" && Boolean(SMARTCAPTCHA_CLIENT_KEY) && !captchaToken) || (recoveryStep === "login" && captchaRequired && (!SMARTCAPTCHA_CLIENT_KEY || !captchaToken));
   const securityContent = showCaptcha ? <SmartCaptcha key={captchaResetKey} sitekey={SMARTCAPTCHA_CLIENT_KEY} language="ru" onSuccess={setCaptchaToken} onTokenExpired={resetCaptcha} /> : null;
 
   return (
@@ -274,7 +281,7 @@ export default function Auth() {
         ssoChecking={ssoState.checking}
         ssoStarting={ssoState.starting}
         onSsoLogin={startSsoLogin}
-        securityBlocked={Boolean((recoveryStep === "login" ? captchaRequired : true) && ((SMARTCAPTCHA_CLIENT_KEY && !captchaToken) || (recoveryStep === "login" && captchaRequired && !SMARTCAPTCHA_CLIENT_KEY)))}
+        securityBlocked={Boolean(securityBlocked)}
         onPhoneChange={changePhone}
         onPhoneBlur={() => setPhoneTouched(true)}
         onChannelChange={changeChannel}
@@ -285,7 +292,7 @@ export default function Auth() {
         onSubmit={handleSubmit}
         onBack={recoveryStep === "login" ? openRecovery : recoveryStep === "password" ? () => { setRecoveryStep("code"); setFormError(""); } : editRecoveryRequest}
         onLogin={recoveryStep === "success" ? () => { window.location.pathname = "/"; } : returnToLogin}
-        onResend={sendPasswordResetCode}
+        onResend={resendPasswordResetCode}
         onChangeChannel={editRecoveryRequest}
       />
     </Box>

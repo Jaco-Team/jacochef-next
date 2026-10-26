@@ -258,7 +258,7 @@ test("malformed or unsuccessful save responses never show success or persist a s
   }
 });
 
-test("resend and changing channels cannot bypass the shared server cooldown or reuse a CAPTCHA token", async () => {
+test("resend and changing channels cannot bypass the shared server cooldown", async () => {
   const page = harness({ captchaKey: "test-key", response: () => ({ data: { st: true, resend_after: 60 } }) });
   await page.recovery();
   await page.submit();
@@ -267,14 +267,46 @@ test("resend and changing channels cannot bypass the shared server cooldown or r
   await page.submit();
   assert.equal(page.requests[0].data.captcha_token, "test-captcha");
   assert.equal(page.props().resendAfter, 60);
-  assert.equal(page.props().securityBlocked, true);
+  assert.equal(page.props().securityContent, null);
+  assert.equal(page.props().securityBlocked, false);
   await page.invoke("onResend");
   assert.equal(page.requests.length, 1);
+  assert.equal(page.props().step, "code");
   await page.invoke("onChangeChannel");
   await page.invoke("onChannelChange", "telegram");
   await page.captcha();
   await page.submit();
   assert.equal(page.requests.length, 1);
+});
+
+test("resend requests a fresh CAPTCHA on the request screen while preserving the phone and channel", async () => {
+  const page = harness({ captchaKey: "test-key" });
+  await page.recovery();
+  await page.invoke("onChannelChange", "telegram");
+  await page.captcha();
+  const firstChallenge = page.props().securityContent.props.key;
+  await page.submit();
+  assert.equal(page.requests.length, 1);
+  assert.equal(page.props().securityContent, null);
+  await page.invoke("onCodeChange", "123456");
+  await page.invoke("onResend");
+  assert.equal(page.props().step, "request");
+  assert.equal(page.props().phone, "89879340391");
+  assert.equal(page.props().channel, "telegram");
+  assert.equal(page.props().code, "");
+  assert.ok(page.props().securityContent);
+  assert.equal(page.props().securityBlocked, true);
+  assert.notEqual(page.props().securityContent.props.key, firstChallenge);
+  await page.submit();
+  assert.equal(page.requests.length, 1);
+  await page.captcha();
+  await page.submit();
+  assert.equal(page.requests.length, 2);
+  assert.equal(page.requests[1].data.delivery_channel, "telegram");
+  assert.equal(page.requests[1].data.captcha_token, "test-captcha");
+  assert.equal(page.props().step, "code");
+  assert.equal(page.props().securityContent, null);
+  assert.equal(page.props().securityBlocked, false);
 });
 
 test("previous login CAPTCHA requirement does not block local OTP continuation or final save", async () => {
@@ -285,15 +317,38 @@ test("previous login CAPTCHA requirement does not block local OTP continuation o
   await page.invoke("onBack");
   await page.captcha();
   await page.submit();
-  assert.equal(page.props().securityBlocked, true);
+  assert.equal(page.props().securityContent, null);
+  assert.equal(page.props().securityBlocked, false);
   await page.invoke("onCodeChange", "123456");
   await page.submit();
   assert.equal(page.props().step, "password");
+  assert.equal(page.props().securityContent, null);
+  assert.equal(page.props().securityBlocked, false);
   await page.invoke("onPasswordChange", "Password123");
   await page.invoke("onRepeatedPasswordChange", "Password123");
   await page.submit();
   assert.equal(page.props().step, "success");
   assert.equal(page.sessions.length, 1);
+});
+
+test("invalid OTP retries stay CAPTCHA-free through code entry and password entry", async () => {
+  const page = harness({ captchaKey: "test-key", response: ({ method }) => ({ data: method === "save_new_pwd" ? { st: false, text: "Код подтверждения неверен или истёк" } : { st: true } }) });
+  await page.recovery();
+  await page.captcha();
+  await page.submit();
+  await page.invoke("onCodeChange", "123456");
+  await page.submit();
+  await page.invoke("onPasswordChange", "Password123");
+  await page.invoke("onRepeatedPasswordChange", "Password123");
+  await page.submit();
+  assert.equal(page.props().step, "code");
+  assert.equal(page.props().securityContent, null);
+  assert.equal(page.props().securityBlocked, false);
+  await page.invoke("onCodeChange", "654321");
+  await page.submit();
+  assert.equal(page.props().step, "password");
+  assert.equal(page.props().securityContent, null);
+  assert.equal(page.props().securityBlocked, false);
 });
 
 test("HTTP429 Retry-After blocks handlers and remains active when navigating away and back", async () => {
