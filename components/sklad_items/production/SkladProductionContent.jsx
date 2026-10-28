@@ -182,14 +182,7 @@ export default function SkladProductionContent({
                 disabled={!canCreateProduction}
                 onClick={() => openCreate("recipe")}
               >
-                Добавить рецепт
-              </JacoButton>
-              <JacoButton
-                startIcon={<AddIcon />}
-                disabled={!canCreateProduction}
-                onClick={() => openCreate("semi_finished")}
-              >
-                Добавить полуфабрикат
+                Добавить рецепт или полуфабрикат
               </JacoButton>
             </Stack>
           </Grid>
@@ -481,6 +474,7 @@ export default function SkladProductionContent({
         canCreateCategory={canCreateCategory}
         allowPastDate={allowPastDate}
         onCreateCategory={onCreateCategory}
+        onChangeEntityType={(entityType) => setState({ activeEntityType: entityType })}
         onSubmit={submitDraft}
         onClose={closeModal}
       />

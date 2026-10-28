@@ -99,6 +99,7 @@ export default function SkladProductionEditorDialog({
   allowPastDate = false,
   initialTab = "main",
   onCreateCategory,
+  onChangeEntityType,
   onSubmit,
   onClose,
 }) {
@@ -347,6 +348,19 @@ export default function SkladProductionEditorDialog({
       }
     >
       <Stack spacing={2}>
+        {mode === "create" ? (
+          <JacoSelect
+            label="Тип"
+            value={entityType}
+            options={[
+              { id: "recipe", name: "Рецепт" },
+              { id: "semi_finished", name: "Полуфабрикат" },
+            ]}
+            allowNone={false}
+            disabled={loading || !isEditable}
+            onChange={(event) => onChangeEntityType?.(event.target.value)}
+          />
+        ) : null}
         {missingCreateFields.length ? (
           <Alert severity="warning">
             Для создания недостаточно прав на обязательные поля: {missingCreateFields.join(", ")}.
