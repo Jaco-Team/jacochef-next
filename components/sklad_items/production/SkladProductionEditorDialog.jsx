@@ -111,6 +111,8 @@ export default function SkladProductionEditorDialog({
 
   const isRecipe = entityType === "recipe";
   const compositionTotals = useMemo(() => calculateProductionTotals(form.items), [form.items]);
+  const formatTotal = (value) =>
+    Number(value).toLocaleString("ru-RU", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const canEditField = (field) => isEditable && Number(access?.[`production_${field}_edit`]) === 1;
   const canViewField = (field) =>
     Number(access?.[`production_${field}_view`]) === 1 ||
@@ -634,7 +636,7 @@ export default function SkladProductionEditorDialog({
                     title="Техническая карта"
                   >
                     <>
-                      {canViewField("items") && form.items.length ? (
+                      {canViewField("items") ? (
                         <TableContainer>
                           <Table size="small">
                             <TableHead>
@@ -693,6 +695,9 @@ export default function SkladProductionEditorDialog({
                                       <JacoTextInput
                                         label=""
                                         value={item?.brutto ?? ""}
+                                        inputProps={{
+                                          "aria-label": `Брутто: ${getCompositionItemName(item)}`,
+                                        }}
                                         disabled={!canEditItems}
                                         func={(event) =>
                                           updateCompositionRow(index, "brutto", event.target.value)
@@ -707,6 +712,9 @@ export default function SkladProductionEditorDialog({
                                       <JacoTextInput
                                         label=""
                                         value={getCompositionLoss(item)}
+                                        inputProps={{
+                                          "aria-label": `Потери при ХО: ${getCompositionItemName(item)}`,
+                                        }}
                                         disabled={!canEditItems}
                                         func={(event) =>
                                           updateCompositionRow(index, "pr_1", event.target.value)
@@ -721,6 +729,9 @@ export default function SkladProductionEditorDialog({
                                       <JacoTextInput
                                         label=""
                                         value={item?.netto ?? ""}
+                                        inputProps={{
+                                          "aria-label": `Нетто: ${getCompositionItemName(item)}`,
+                                        }}
                                         disabled
                                       />
                                     ) : (
@@ -732,6 +743,9 @@ export default function SkladProductionEditorDialog({
                                       <JacoTextInput
                                         label=""
                                         value={item?.pr_2 ?? ""}
+                                        inputProps={{
+                                          "aria-label": `Потери при ГО: ${getCompositionItemName(item)}`,
+                                        }}
                                         disabled={!canEditItems}
                                         func={(event) =>
                                           updateCompositionRow(index, "pr_2", event.target.value)
@@ -746,6 +760,9 @@ export default function SkladProductionEditorDialog({
                                       <JacoTextInput
                                         label=""
                                         value={getCompositionOutput(item)}
+                                        inputProps={{
+                                          "aria-label": `Выход: ${getCompositionItemName(item)}`,
+                                        }}
                                         disabled
                                       />
                                     ) : (
@@ -754,67 +771,64 @@ export default function SkladProductionEditorDialog({
                                   </TableCell>
                                   {canEditItems ? (
                                     <TableCell align="right">
-                                      <JacoIconButton onClick={() => removeCompositionRow(index)}>
+                                      <JacoIconButton
+                                        aria-label={`Удалить из техкарты: ${getCompositionItemName(item)}`}
+                                        onClick={() => removeCompositionRow(index)}
+                                      >
                                         <CloseIcon />
                                       </JacoIconButton>
                                     </TableCell>
                                   ) : null}
                                 </TableRow>
                               ))}
+                              {canEditItems ? (
+                                <TableRow>
+                                  <TableCell sx={{ minWidth: 260 }}>
+                                    <SkladAutocomplete
+                                      key={`composition-add-${form.items.length}`}
+                                      multiple={false}
+                                      data={itemOptions.filter(
+                                        (option) =>
+                                          !form.items.some(
+                                            (item) =>
+                                              String(item?.item_option_key || "") ===
+                                              String(option?.id || ""),
+                                          ),
+                                      )}
+                                      optionKey="id"
+                                      getOptionKey={(option) => option?.id || ""}
+                                      getOptionLabel={(option) => option?.name || ""}
+                                      isOptionEqualToValue={(option, value) =>
+                                        String(option?.id || "") === String(value?.id || "")
+                                      }
+                                      value={null}
+                                      placeholder="Выберите номенклатуру"
+                                      filterOptions={filterProductionCompositionOptions}
+                                      disabled={!canEditItems}
+                                      func={(_, value) => appendCompositionItem(value)}
+                                    />
+                                  </TableCell>
+                                  <TableCell colSpan={7} />
+                                </TableRow>
+                              ) : null}
                             </TableBody>
                             <TableFooter>
                               <TableRow>
                                 <TableCell colSpan={2}>Итого</TableCell>
                                 <TableCell align="right">
-                                  {formatMetricValue(compositionTotals.all_w_brutto)}
+                                  {formatTotal(compositionTotals.all_w_brutto)}
                                 </TableCell>
                                 <TableCell />
                                 <TableCell align="right">
-                                  {formatMetricValue(compositionTotals.all_w_netto)}
+                                  {formatTotal(compositionTotals.all_w_netto)}
                                 </TableCell>
                                 <TableCell />
                                 <TableCell align="right">
-                                  {formatMetricValue(compositionTotals.all_w)}
+                                  {formatTotal(compositionTotals.all_w)}
                                 </TableCell>
                                 {canEditItems ? <TableCell /> : null}
                               </TableRow>
                             </TableFooter>
-                          </Table>
-                        </TableContainer>
-                      ) : null}
-                      {canEditItems ? (
-                        <TableContainer
-                          sx={{ mt: form.items.length ? 1.5 : 0, width: { xs: "100%", md: "50%" } }}
-                        >
-                          <Table size="small">
-                            <TableBody>
-                              <TableRow>
-                                <TableCell sx={{ minWidth: 260 }}>
-                                  <SkladAutocomplete
-                                    multiple={false}
-                                    data={itemOptions.filter(
-                                      (option) =>
-                                        !form.items.some(
-                                          (item) =>
-                                            String(item?.item_option_key || "") ===
-                                            String(option?.id || ""),
-                                        ),
-                                    )}
-                                    optionKey="id"
-                                    getOptionKey={(option) => option?.id || ""}
-                                    getOptionLabel={(option) => option?.name || ""}
-                                    isOptionEqualToValue={(option, value) =>
-                                      String(option?.id || "") === String(value?.id || "")
-                                    }
-                                    value={null}
-                                    placeholder="Выберите номенклатуру"
-                                    filterOptions={filterProductionCompositionOptions}
-                                    disabled={!canEditItems}
-                                    func={(_, value) => appendCompositionItem(value)}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
                           </Table>
                         </TableContainer>
                       ) : null}
