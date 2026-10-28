@@ -1088,17 +1088,19 @@ test("warehouse category search reveals ancestors and preserves filter payload",
     .toBeLessThanOrEqual(1);
 });
 
-test("production append row contains only nomenclature", async ({ page }, testInfo) => {
+test("production technical card calculates and saves an added ingredient", async ({
+  page,
+}, testInfo) => {
   const state = await installSkladMock(page, { access: FULL_ACCESS });
   await page.goto("/sklad_items/production");
   await page
     .getByRole("row", { name: /E2E_SKLAD_Полуфабрикат/ })
-    .getByRole("button", { name: "Редактировать" })
+    .getByRole("button", { name: /Открыть карточку: E2E_SKLAD_Полуфабрикат/ })
     .click();
   const dialog = page.getByRole("dialog"),
     append = dialog.getByPlaceholder("Выберите номенклатуру", { exact: true });
   const appendRow = append.locator("xpath=ancestor::tr[1]");
-  await expect(appendRow.getByRole("cell")).toHaveCount(1);
+  await expect(appendRow.getByRole("cell")).toHaveCount(2);
   await expect(appendRow).toHaveText("");
   await append.evaluate((node) => node.scrollIntoView({ block: "center" }));
   await page.screenshot({
@@ -1116,7 +1118,7 @@ test("production append row contains only nomenclature", async ({ page }, testIn
   await itemRow.getByRole("textbox").nth(3).fill("10");
   await expect(itemRow.getByRole("textbox").nth(2)).toHaveValue("9");
   await expect(itemRow.getByRole("textbox").nth(4)).toHaveValue("8.1");
-  await expect(appendRow.getByRole("cell")).toHaveCount(1);
+  await expect(appendRow.getByRole("cell")).toHaveCount(2);
   await dialog.getByRole("button", { name: "Сохранить изменения", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(
