@@ -32,6 +32,8 @@ import { useEffect, useMemo, useState } from "react";
 import { resolveSiteItemImageUrl } from "../site-items/siteItemImage";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { collectVisibleChanges } from "./historyChangeSummary.mjs";
+import SkladHistoryChangeSummary from "./SkladHistoryChangeSummary";
 
 function formatValue(value, fallback = "") {
   if (value === null || value === undefined || value === "") {
@@ -1248,6 +1250,13 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
 
   const selectedSnapshot = snapshots[revisionKey(selectedRow)] || selectedRow?.snapshot || null;
   const compareSnapshot = snapshots[revisionKey(compareRow)] || compareRow?.snapshot || null;
+  const visibleChanges =
+    selectedSnapshot && compareSnapshot
+      ? collectVisibleChanges(
+          snapshotFieldRows(selectedSnapshot, entityType),
+          snapshotFieldRows(compareSnapshot, entityType),
+        )
+      : [];
 
   const resolveOnDate = async () => {
     if (!resolvedDate) return;
@@ -1575,6 +1584,15 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
               ) : null}
             </Grid>
           </Grid>
+
+          <SkladHistoryChangeSummary
+            row={selectedRow}
+            changes={visibleChanges}
+            hasPrevious={Boolean(compareRow)}
+            ready={
+              !loading && Boolean(selectedSnapshot) && (!compareRow || Boolean(compareSnapshot))
+            }
+          />
 
           {loading && !selectedSnapshot ? (
             <Stack

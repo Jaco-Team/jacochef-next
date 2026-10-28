@@ -32,6 +32,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { JacoSelect } from "@/design-system/shared/ui";
 
 import { SkladEmbeddedImageHistoryTable } from "../history/SkladEmbeddedHistoryTable";
+import SkladHistoryChangeSummary from "../history/SkladHistoryChangeSummary";
 import useSkladApi from "../useSkladApi";
 import { canEditAccess } from "./skladSiteItemsAccess";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
@@ -470,6 +471,40 @@ export default function SkladSiteItemsHistoryDialog({
   };
 
   const currentSection = historySections.find((section) => section.id === activeSection);
+  const visibleChanges =
+    comparison.current && comparison.previous
+      ? [...historySections.flatMap((section) => section.fields), ...compositionTotals]
+          .filter(
+            (field) =>
+              canViewHistoryField(access, field) && comparison.changedFields.has(field.key),
+          )
+          .map((field) => ({
+            field: field.key,
+            label: field.label,
+            from: formatHistoryValue(field, comparison.previous),
+            to: formatHistoryValue(field, comparison.current),
+          }))
+      : [];
+  if (
+    comparison.current &&
+    comparison.previous &&
+    canViewHistoryField(access, { access: "composition" })
+  ) {
+    for (const section of compositionSections) {
+      const collection = comparison.collections[section.key];
+      if (
+        collection.removed.length ||
+        collection.rows.some((row) => row.historyStatus !== "unchanged")
+      ) {
+        visibleChanges.push({
+          field: section.key,
+          label: section.title,
+          from: "Предыдущий состав",
+          to: "См. изменения состава ниже",
+        });
+      }
+    }
+  }
 
   return (
     <Dialog
@@ -602,7 +637,15 @@ export default function SkladSiteItemsHistoryDialog({
                         key={revisionKey(row)}
                         hover
                         selected={revisionKey(row) === revisionKey(selectedRow)}
+                        tabIndex={0}
+                        aria-selected={revisionKey(row) === revisionKey(selectedRow)}
                         onClick={() => setSelectedKey(revisionKey(row))}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedKey(revisionKey(row));
+                          }
+                        }}
                         sx={{ cursor: "pointer", "&.Mui-selected": { bgcolor: changedBackground } }}
                       >
                         <TableCell>{formatHistoryTimestamp(row?.changed_at)}</TableCell>
@@ -677,6 +720,15 @@ export default function SkladSiteItemsHistoryDialog({
                 </Stack>
               </Stack>
             </Paper>
+
+            <SkladHistoryChangeSummary
+              row={selectedRow}
+              changes={visibleChanges}
+              hasPrevious={Boolean(previousRow)}
+              ready={
+                !loading && Boolean(selectedSnapshot) && (!previousRow || Boolean(previousSnapshot))
+              }
+            />
 
             <Stack
               direction={{ xs: "column", md: "row" }}
