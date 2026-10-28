@@ -1,15 +1,15 @@
 export const SKLAD_TAB_DEFINITIONS = [
   {
-    key: "production",
-    label: "Рецепты и полуфабрикаты",
-    accessGroup: "production",
-    description: "Общий production contour для recipes и semi-finished на canonical API.",
-  },
-  {
     key: "warehouse-items",
     label: "Товары склада",
     accessGroup: "warehouse_items",
     description: "Справочник товаров склада с периодами действия и полной историей.",
+  },
+  {
+    key: "production",
+    label: "Рецепты и полуфабрикаты",
+    accessGroup: "production",
+    description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
   {
     key: "site-items",
