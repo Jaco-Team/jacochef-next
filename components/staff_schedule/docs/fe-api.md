@@ -656,16 +656,20 @@
 ### `POST|ANY /api/staff_schedule/get_payout_history`
 
 Назначение:
+
 - история выплат сотрудника за половину месяца для окна заполнения «Выдано», «На карты», «Удержано по исп. листу»
 
 Вход:
+
 - `data.date` — начало периода `YYYY-MM-01` или `YYYY-MM-16`
 - `data.user_id`, `data.app_id` (`data.smena_id` допускается и не используется: история хранится без смены)
 
 Права:
+
 - возвращаются только типы, которые пользователь может читать: `1` — `given`, `2` — `given_cart`, `3` — `withheld` (`view`, `edit` или `access`); без права ни на один тип — `st = false`, `Нет доступа`
 
 Выход:
+
 - `history[]` от новых к старым: `type`, `type_label`, `price` (новое значение), `old_price` (предыдущее значение того же типа за период или `null`), `user_name` (кто изменил), `date_update`
 
 Источник — `cafe_smena_given_history`, только чтение. В неё пишут и `save_user_give_price` / `save_user_give_cart_price` / `save_user_withheld`, и legacy `work_schedule`, поэтому в истории видны выплаты из обоих модулей.
@@ -843,6 +847,7 @@
 Права: чтение `rates`.
 
 Выход:
+
 - `module_info`
 - `points[]`: `id`, `city_id`, `base`, `name` — все кафе, как в `app_per_h`
 - `periods[]`: `value` (`YYYY-MM-DD`, начало периода), `end_date` — три ближайших периода 1–15 / 16–конец
@@ -853,6 +858,7 @@
 Вход: `data.point_id`. Права: чтение `rates`.
 
 Выход:
+
 - `positions[]` (по отделам: `appointment_units.sort`, должности без отдела в конце; внутри — `kind`, `sort`): `app_id`, `app_name`, `is_graph`, `unit_id` (`0` — без отдела), `unit_name`, `price` (текущая ставка из `staff_schedule_position_rates`, `0` — нет), `legacy_prices` (`min`, `avg`, `max` из `app_per_h_new`, только чтение), `has_legacy_spread` (три старые ставки различаются)
 - `coefficients`: `k_rolls`, `k_pizza` (может быть `null`)
 - `rate_history[]`: `id`, `app_id`, `app_name`, `price`, `old_price`, `date_start`, `source` (`manual` / `seed`), `created_at`, `creator`, `applied_at`, `deleted_at`, `deleter`, `status` (`applied` / `planned` / `deleted`), `can_delete`
@@ -864,6 +870,7 @@
 Права: редактирование `rates`.
 
 Вход:
+
 - `data.date_start` — одно из значений `periods[].value`
 - `data.points[]` — id кафе (или объекты с `id`)
 - `data.positions[]`: `app_id`, `price` — пустое значение или `0` ставку не меняет; допускается запятая
