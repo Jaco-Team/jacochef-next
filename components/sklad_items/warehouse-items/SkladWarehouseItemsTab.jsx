@@ -39,6 +39,7 @@ import {
 import SkladAutocomplete from "../ui/SkladAutocomplete";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladItemNameButton from "../SkladItemNameButton";
+import SkladBooleanStatus from "../SkladBooleanStatus";
 import { formatDateRU } from "../formatDateRangeRU";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -451,8 +452,18 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                         <TableCell>
                           <StatusChip row={row} />
                         </TableCell>
-                        <TableCell>{Number(row.show_in_order) ? "Да" : "Нет"}</TableCell>
-                        <TableCell>{Number(row.show_in_rev) ? "Да" : "Нет"}</TableCell>
+                        <TableCell>
+                          <SkladBooleanStatus
+                            label="Заявка"
+                            value={row.show_in_order}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <SkladBooleanStatus
+                            label="Ревизия"
+                            value={row.show_in_rev}
+                          />
+                        </TableCell>
                         <TableCell align="right">
                           <Stack
                             direction="row"

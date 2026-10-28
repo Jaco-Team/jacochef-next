@@ -34,6 +34,7 @@ import { uiColors, uiRadii } from "@/design-system/shared/tokens";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladItemNameButton from "../SkladItemNameButton";
+import SkladBooleanStatus from "../SkladBooleanStatus";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladSortableHeader from "../table/SkladSortableHeader";
 import { formatDateRU } from "../formatDateRangeRU";
@@ -259,9 +260,7 @@ export default function SkladProductionContent({
                   const primaryStatusChip = getPrimaryStatusChip(row);
                   const secondaryStatusChips = getSecondaryStatusChips(row);
                   const isActive = Number(row?.is_active) === 1;
-                  const isRevision = Number(row?.show_in_rev) === 1;
                   const ActivityIcon = isActive ? CheckBoxIcon : DisabledByDefaultIcon;
-                  const RevisionIcon = isRevision ? CheckBoxIcon : DisabledByDefaultIcon;
                   const activityLabel = `Активность: ${isActive ? "Да" : "Нет"}. ${[
                     primaryStatusChip.label,
                     ...secondaryStatusChips.map((chip) => chip.label),
@@ -303,13 +302,9 @@ export default function SkladProductionContent({
                         </Tooltip>
                       </TableCell>
                       <TableCell align="center">
-                        <RevisionIcon
-                          titleAccess={`Ревизия: ${isRevision ? "Да" : "Нет"}`}
-                          sx={{
-                            fontSize: 24,
-                            color: isRevision ? uiColors.success : uiColors.danger,
-                            clipPath: `inset(3px round ${uiRadii.xs})`,
-                          }}
+                        <SkladBooleanStatus
+                          label="Ревизия"
+                          value={row?.show_in_rev}
                         />
                       </TableCell>
                       <TableCell align="right">
