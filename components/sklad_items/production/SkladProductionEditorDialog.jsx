@@ -7,7 +7,6 @@ import AddIcon from "@mui/icons-material/Add";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Alert,
@@ -92,7 +91,6 @@ export default function SkladProductionEditorDialog({
   categories = [],
   allergens = [],
   storages = [],
-  apps = [],
   allItemsList = [],
   access = {},
   isEditable = false,
@@ -181,7 +179,6 @@ export default function SkladProductionEditorDialog({
   const categoryOptions = useMemo(() => normalizeOptions(categories), [categories]);
   const allergenOptions = useMemo(() => normalizeOptions(allergens), [allergens]);
   const storageOptions = useMemo(() => normalizeOptions(storages), [storages]);
-  const appOptions = useMemo(() => normalizeOptions(apps), [apps]);
   const itemOptions = useMemo(() => normalizeItemOptions(allItemsList), [allItemsList]);
 
   const selectedCategories = useMemo(
@@ -200,31 +197,12 @@ export default function SkladProductionEditorDialog({
     () => normalizeSelectedOptions(form.storages, storageOptions),
     [form.storages, storageOptions],
   );
-  const selectedApps = useMemo(
-    () => normalizeSelectedOptions(form.apps, appOptions),
-    [appOptions, form.apps],
-  );
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const updateRelationField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: Array.isArray(value) ? value : [] }));
-  };
-
-  const updateAppointments = (_, value, reason, details) => {
-    const isNotRequired = (option) =>
-      String(option?.name ?? "")
-        .trim()
-        .toLocaleLowerCase("ru") === "не требуется";
-    const nextValue =
-      reason === "selectOption" && details?.option
-        ? isNotRequired(details.option)
-          ? [details.option]
-          : value.filter((option) => !isNotRequired(option))
-        : value;
-
-    updateRelationField("apps", nextValue);
   };
 
   const updateCompositionRow = (index, key, value) => {
@@ -351,29 +329,27 @@ export default function SkladProductionEditorDialog({
       }
     >
       <Stack spacing={2}>
-        {mode === "create" ? (
-          <Stack spacing={0.5}>
-            <JacoSelect
-              label="Тип"
-              value={entityType}
-              options={[
-                { id: "recipe", name: "Рецепт" },
-                { id: "semi_finished", name: "Полуфабрикат" },
-              ]}
-              allowNone={false}
-              disabled={loading || !isEditable || form.items.length > 0}
-              onChange={(event) => onChangeEntityType?.(event.target.value)}
-            />
-            {form.items.length > 0 ? (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                Чтобы изменить тип, сначала удалите номенклатуру.
-              </Typography>
-            ) : null}
-          </Stack>
-        ) : null}
+        <Stack spacing={0.5}>
+          <JacoSelect
+            label="Тип"
+            value={entityType}
+            options={[
+              { id: "recipe", name: "Рецепт" },
+              { id: "semi_finished", name: "Полуфабрикат" },
+            ]}
+            allowNone={false}
+            disabled={mode !== "create" || loading || !isEditable || form.items.length > 0}
+            onChange={(event) => onChangeEntityType?.(event.target.value)}
+          />
+          {mode === "create" && form.items.length > 0 ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+            >
+              Чтобы изменить тип, сначала удалите номенклатуру.
+            </Typography>
+          ) : null}
+        </Stack>
         {missingCreateFields.length ? (
           <Alert severity="warning">
             Для создания недостаточно прав на обязательные поля: {missingCreateFields.join(", ")}.
@@ -433,220 +409,197 @@ export default function SkladProductionEditorDialog({
               sx={{ p: 0, pt: 2 }}
             >
               <Stack spacing={2}>
-                {[
-                  "name",
-                  "shelf_life",
-                  "unit",
-                  "date_start",
-                  "date_end",
-                  "time",
-                  "dop_time",
-                  "two_user",
-                  "activity",
-                  "show_in_rev",
-                ].some(canViewField) ? (
-                  <SkladSectionCard
-                    icon={<InfoOutlinedIcon fontSize="small" />}
-                    title="Основные"
-                  >
-                    <Grid
-                      container
-                      spacing={1.5}
-                    >
-                      {canViewField("name") ? (
-                        <Grid size={12}>
-                          <JacoTextInput
-                            label="Название"
-                            value={form.name}
-                            disabled={!canEditField("name")}
-                            onChange={(event) => updateField("name", event.target.value)}
-                          />
-                        </Grid>
-                      ) : null}
-                      {canViewField("shelf_life") ? (
-                        <Grid size={12}>
-                          <JacoTextInput
-                            label="Срок годности"
-                            value={form.shelf_life}
-                            multiline
-                            minRows={3}
-                            disabled={!canEditField("shelf_life")}
-                            onChange={(event) => updateField("shelf_life", event.target.value)}
-                          />
-                        </Grid>
-                      ) : null}
-                      {canViewField("unit") ? (
-                        <Grid size={{ xs: 12, md: 4 }}>
+                <Grid
+                  container
+                  spacing={1.5}
+                >
+                  {canViewField("categories") ? (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{
+                          alignItems: "center",
+                        }}
+                      >
+                        <Stack sx={{ minWidth: 0, flex: 1 }}>
                           <SkladAutocomplete
-                            label="Единица измерения"
-                            options={unitOptions}
-                            value={
-                              unitOptions.find(
-                                (item) => String(item.id) === String(safeUnitValue),
-                              ) ?? null
-                            }
-                            multiple={false}
-                            freeSolo={false}
-                            isOptionEqualToValue={(option, value) =>
-                              String(option.id) === String(value.id)
-                            }
-                            disabled={!canEditField("unit")}
-                            onChange={(_event, option) =>
-                              updateField("ed_izmer_id", option?.id ?? "")
-                            }
+                            multiple
+                            label="Категории"
+                            data={categoryOptions}
+                            value={selectedCategories}
+                            disabled={!canEditField("categories")}
+                            func={(_, value) => updateRelationField("categories", value)}
                           />
-                        </Grid>
-                      ) : null}
-                      {canViewField("date_start") ? (
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <JacoDatePicker
-                            label="Действует С"
-                            sx={dateRangeFieldSx}
-                            value={form.date_start}
-                            minDate={allowPastDate ? undefined : dayjs().startOf("day")}
-                            maxDate={endDate ?? undefined}
-                            disabled={!canEditField("date_start")}
-                            onChange={(value) =>
-                              updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
-                            }
-                          />
-                        </Grid>
-                      ) : null}
-                      {canViewField("date_end") ? (
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <JacoDatePicker
-                            label="Действует по"
-                            sx={dateRangeFieldSx}
-                            value={form.date_end}
-                            minDate={startDate ?? dayjs().startOf("day")}
-                            clearable
-                            customActions
-                            disabled={!canEditField("date_end")}
-                            onChange={(value) =>
-                              updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
-                            }
-                          />
-                        </Grid>
-                      ) : null}
-                      {dateRangeError ? (
-                        <Grid size={12}>
-                          <Alert
-                            severity="error"
-                            sx={{ borderRadius: 2 }}
-                          >
-                            {dateRangeError}
-                          </Alert>
-                        </Grid>
-                      ) : null}
-                      {canViewField("time") ? (
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <JacoTimePicker
-                            label="Время приготовления"
-                            value={form.time_min}
-                            disabled={!canEditField("time")}
-                            onChange={(event) => updateField("time_min", event.target.value)}
-                          />
-                        </Grid>
-                      ) : null}
-                      {canViewField("dop_time") ? (
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <JacoTimePicker
-                            label="Доп. время"
-                            value={form.time_min_dop}
-                            disabled={!canEditField("dop_time")}
-                            onChange={(event) => updateField("time_min_dop", event.target.value)}
-                          />
-                        </Grid>
-                      ) : null}
-                      {canViewField("two_user") ? (
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <JacoSelect
-                            label="Количество сотрудников"
-                            value={form.two_user === null ? "" : form.two_user ? "1" : "0"}
-                            options={[
-                              { id: 0, name: "Один сотрудник" },
-                              { id: 1, name: "Два сотрудника" },
-                            ]}
-                            allowNone={false}
-                            disabled={!canEditField("two_user")}
-                            onChange={(event) =>
-                              updateField("two_user", event.target.value === "1")
-                            }
-                          />
-                        </Grid>
-                      ) : null}
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          useFlexGap
-                          sx={{
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          {canViewField("activity") ? (
-                            <JacoCheckboxField
-                              label="Активность"
-                              checked={Boolean(form.is_show)}
-                              disabled={!canEditField("activity")}
-                              onChange={(event) => updateField("is_show", event.target.checked)}
-                            />
-                          ) : null}
-                          {canViewField("show_in_rev") ? (
-                            <JacoCheckboxField
-                              label="Показывать в ревизии"
-                              checked={Boolean(form.show_in_rev)}
-                              disabled={!canEditField("show_in_rev")}
-                              onChange={(event) => updateField("show_in_rev", event.target.checked)}
-                            />
-                          ) : null}
                         </Stack>
-                      </Grid>
-                    </Grid>
-                  </SkladSectionCard>
-                ) : null}
-
-                {["categories", "allergens", "storages", "allergens_diff", "apps"].some(
-                  canViewField,
-                ) ? (
-                  <SkladSectionCard
-                    icon={<LocalShippingOutlinedIcon fontSize="small" />}
-                    title="Привязки"
-                  >
-                    <Grid
-                      container
-                      spacing={1.5}
-                    >
-                      {canViewField("categories") ? (
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Stack
-                            direction="row"
-                            spacing={0.5}
-                            sx={{
-                              alignItems: "center",
-                            }}
+                        {canCreateCategory && canEditField("categories") ? (
+                          <JacoIconButton
+                            aria-label="Добавить категорию"
+                            onClick={onCreateCategory}
                           >
-                            <Stack sx={{ minWidth: 0, flex: 1 }}>
-                              <SkladAutocomplete
-                                multiple
-                                label="Категории"
-                                data={categoryOptions}
-                                value={selectedCategories}
-                                disabled={!canEditField("categories")}
-                                func={(_, value) => updateRelationField("categories", value)}
-                              />
-                            </Stack>
-                            {canCreateCategory && canEditField("categories") ? (
-                              <JacoIconButton
-                                aria-label="Добавить категорию"
-                                onClick={onCreateCategory}
-                              >
-                                <AddIcon fontSize="small" />
-                              </JacoIconButton>
-                            ) : null}
-                          </Stack>
-                        </Grid>
-                      ) : null}
+                            <AddIcon fontSize="small" />
+                          </JacoIconButton>
+                        ) : null}
+                      </Stack>
+                    </Grid>
+                  ) : null}
+                  {canViewField("name") ? (
+                    <Grid size={12}>
+                      <JacoTextInput
+                        label="Название"
+                        value={form.name}
+                        disabled={!canEditField("name")}
+                        onChange={(event) => updateField("name", event.target.value)}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("unit") ? (
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <SkladAutocomplete
+                        label="Единица измерения"
+                        options={unitOptions}
+                        value={
+                          unitOptions.find((item) => String(item.id) === String(safeUnitValue)) ??
+                          null
+                        }
+                        multiple={false}
+                        freeSolo={false}
+                        isOptionEqualToValue={(option, value) =>
+                          String(option.id) === String(value.id)
+                        }
+                        disabled={!canEditField("unit")}
+                        onChange={(_event, option) => updateField("ed_izmer_id", option?.id ?? "")}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("storages") ? (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <SkladAutocomplete
+                        multiple
+                        label="Места хранения"
+                        data={storageOptions}
+                        value={selectedStorages}
+                        disabled={!canEditField("storages")}
+                        func={(_, value) => updateRelationField("storages", value)}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("shelf_life") ? (
+                    <Grid size={12}>
+                      <JacoTextInput
+                        label="Срок годности"
+                        value={form.shelf_life}
+                        multiline
+                        minRows={3}
+                        disabled={!canEditField("shelf_life")}
+                        onChange={(event) => updateField("shelf_life", event.target.value)}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("show_in_rev") ? (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <JacoCheckboxField
+                        label="Показывать в ревизии"
+                        checked={Boolean(form.show_in_rev)}
+                        disabled={!canEditField("show_in_rev")}
+                        onChange={(event) => updateField("show_in_rev", event.target.checked)}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("time") ? (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <JacoTimePicker
+                        label="Время приготовления"
+                        value={form.time_min}
+                        disabled={!canEditField("time")}
+                        onChange={(event) => updateField("time_min", event.target.value)}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("dop_time") ? (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <JacoTimePicker
+                        label="Доп. время"
+                        value={form.time_min_dop}
+                        disabled={!canEditField("dop_time")}
+                        onChange={(event) => updateField("time_min_dop", event.target.value)}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("two_user") ? (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <JacoSelect
+                        label="Количество сотрудников"
+                        value={form.two_user === null ? "" : form.two_user ? "1" : "0"}
+                        options={[
+                          { id: 0, name: "Один сотрудник" },
+                          { id: 1, name: "Два сотрудника" },
+                        ]}
+                        allowNone={false}
+                        disabled={!canEditField("two_user")}
+                        onChange={(event) => updateField("two_user", event.target.value === "1")}
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("date_start") ? (
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <JacoDatePicker
+                        label="Действует С"
+                        sx={dateRangeFieldSx}
+                        value={form.date_start}
+                        minDate={allowPastDate ? undefined : dayjs().startOf("day")}
+                        maxDate={endDate ?? undefined}
+                        disabled={!canEditField("date_start")}
+                        onChange={(value) =>
+                          updateField("date_start", value?.format?.("YYYY-MM-DD") || "")
+                        }
+                      />
+                    </Grid>
+                  ) : null}
+                  {canViewField("date_end") ? (
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <JacoDatePicker
+                        label="Действует по"
+                        sx={dateRangeFieldSx}
+                        value={form.date_end}
+                        minDate={startDate ?? dayjs().startOf("day")}
+                        clearable
+                        customActions
+                        disabled={!canEditField("date_end")}
+                        onChange={(value) =>
+                          updateField("date_end", value?.format?.("YYYY-MM-DD") || "")
+                        }
+                      />
+                    </Grid>
+                  ) : null}
+                  {dateRangeError ? (
+                    <Grid size={12}>
+                      <Alert
+                        severity="error"
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {dateRangeError}
+                      </Alert>
+                    </Grid>
+                  ) : null}
+                </Grid>
+
+                {!isRecipe && canViewField("structure") ? (
+                  <JacoTextInput
+                    label="Состав"
+                    multiline
+                    minRows={3}
+                    value={form.structure}
+                    disabled={!canEditField("structure")}
+                    onChange={(event) => updateField("structure", event.target.value)}
+                  />
+                ) : null}
+                <Grid
+                  container
+                  spacing={1.5}
+                >
+                  {!isRecipe ? (
+                    <>
                       {canViewField("allergens") ? (
                         <Grid size={{ xs: 12, md: 6 }}>
                           <SkladAutocomplete
@@ -656,18 +609,6 @@ export default function SkladProductionEditorDialog({
                             value={selectedAllergens}
                             disabled={!canEditField("allergens")}
                             func={(_, value) => updateRelationField("allergens", value)}
-                          />
-                        </Grid>
-                      ) : null}
-                      {canViewField("storages") ? (
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <SkladAutocomplete
-                            multiple
-                            label="Места хранения"
-                            data={storageOptions}
-                            value={selectedStorages}
-                            disabled={!canEditField("storages")}
-                            func={(_, value) => updateRelationField("storages", value)}
                           />
                         </Grid>
                       ) : null}
@@ -683,40 +624,16 @@ export default function SkladProductionEditorDialog({
                           />
                         </Grid>
                       ) : null}
-                      {canViewField("apps") ? (
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <SkladAutocomplete
-                            multiple
-                            label="Должности в кафе"
-                            data={appOptions}
-                            value={selectedApps}
-                            disabled={!canEditField("apps")}
-                            func={updateAppointments}
-                          />
-                        </Grid>
-                      ) : null}
-                    </Grid>
-                  </SkladSectionCard>
-                ) : null}
+                    </>
+                  ) : null}
+                </Grid>
 
-                {canViewField("items") || (!isRecipe && canViewField("structure")) ? (
+                {canViewField("items") ? (
                   <SkladSectionCard
                     icon={<Inventory2OutlinedIcon fontSize="small" />}
-                    title={isRecipe ? "Номенклатура" : "Состав"}
+                    title="Техническая карта"
                   >
                     <>
-                      {!isRecipe && canViewField("structure") ? (
-                        <Stack sx={{ mb: 1.5 }}>
-                          <JacoTextInput
-                            label="Состав"
-                            multiline
-                            minRows={3}
-                            value={form.structure}
-                            disabled={!canEditField("structure")}
-                            onChange={(event) => updateField("structure", event.target.value)}
-                          />
-                        </Stack>
-                      ) : null}
                       {canViewField("items") && form.items.length ? (
                         <TableContainer>
                           <Table size="small">
