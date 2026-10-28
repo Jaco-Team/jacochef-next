@@ -31,7 +31,9 @@ export default function useSkladApi() {
         request("categories/save_edit", { id, source_type: "semi_finished", name }),
       deleteProductionCategory: (id) =>
         request("categories/delete", { id, source_type: "semi_finished" }),
+      getSiteCategories: () => request("site-items/categories/list"),
       createSiteCategory: (payload) => request("site-items/categories/save_new", payload),
+      updateSiteCategory: (payload) => request("site-items/categories/save_edit", payload),
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
       deleteUnit: (id) => request("units/delete", { id }),

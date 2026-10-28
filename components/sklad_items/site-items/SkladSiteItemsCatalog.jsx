@@ -9,6 +9,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import SyncIcon from "@mui/icons-material/Sync";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import {
@@ -106,6 +107,7 @@ export default function SkladSiteItemsCatalog({
   openCreate,
   onSyncSiteItemsVk,
   openTagsEditor,
+  onManageCategories,
   openEdit,
   openDeleteDialog,
   onSaveQuickField,
@@ -360,9 +362,23 @@ export default function SkladSiteItemsCatalog({
                     );
                   })}
                 </Box>
-                <Typography sx={{ fontSize: 13, color: textSecondary }}>
-                  {groupedRows.length} категорий · {visibleRows.length} товаров
-                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center", justifyContent: "flex-end" }}
+                >
+                  <Typography sx={{ fontSize: 13, color: textSecondary }}>
+                    {groupedRows.length} категорий · {visibleRows.length} товаров
+                  </Typography>
+                  <Tooltip title="Управление категориями">
+                    <JacoIconButton
+                      aria-label="Управление категориями товаров сайта"
+                      onClick={onManageCategories}
+                    >
+                      <SettingsOutlinedIcon />
+                    </JacoIconButton>
+                  </Tooltip>
+                </Stack>
               </Stack>
             </Stack>
           </JacoSurface>

@@ -1013,6 +1013,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           canEditSort={canEditSort}
           canViewHistory={canViewSiteItemsHistory}
           canCreateCategory={canCreateCategory}
+          canEditCategory={isEditable && canEditAccess(access, "category_id", false)}
           allowPastDate={canUseSiteItemPastDate}
           showAlert={showAlert}
           setState={setState}
