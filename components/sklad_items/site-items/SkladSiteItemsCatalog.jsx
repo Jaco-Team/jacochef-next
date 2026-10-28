@@ -39,6 +39,7 @@ import {
 } from "@/design-system/shared/ui";
 
 import { formatDateRU } from "../formatDateRangeRU";
+import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
 
 const brandRed = "#DD1A32";
 const blockBackground = "#F3F3F3";
@@ -113,6 +114,7 @@ export default function SkladSiteItemsCatalog({
   const [sortOrder, setSortOrder] = useState("asc");
   const [expandedCategories, setExpandedCategories] = useState([]);
   const [sortDrafts, setSortDrafts] = useState({});
+  const [historyCategory, setHistoryCategory] = useState(null);
 
   const counts = useMemo(
     () => ({
@@ -439,6 +441,16 @@ export default function SkladSiteItemsCatalog({
                     <AccordionDetails
                       sx={{ px: 0, pt: 0, pb: 2, backgroundColor: blockBackground }}
                     >
+                      {Number(category.id) > 0 ? (
+                        <JacoButton
+                          tone="secondary"
+                          onClick={() =>
+                            setHistoryCategory({ ...category, source_type: "site_item" })
+                          }
+                        >
+                          История категории
+                        </JacoButton>
+                      ) : null}
                       <TableContainer
                         component={JacoSurface}
                         sx={{
@@ -711,6 +723,10 @@ export default function SkladSiteItemsCatalog({
           )}
         </Stack>
       </Box>
+      <SkladCategoryHistoryDialog
+        category={historyCategory}
+        onClose={() => setHistoryCategory(null)}
+      />
     </Stack>
   );
 }

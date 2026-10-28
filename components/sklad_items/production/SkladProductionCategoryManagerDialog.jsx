@@ -5,6 +5,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import {
   Button,
@@ -23,6 +24,7 @@ import {
 import { JacoModal, JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
 import { uiRadii } from "@/design-system/shared/tokens";
 import SkladDeleteDialog from "../SkladDeleteDialog";
+import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
 
 function categoryUsageLabel(category) {
   if (category?.source_type === "warehouse_item") {
@@ -46,6 +48,7 @@ export default function SkladProductionCategoryManagerDialog({
   open,
   loading = false,
   categories = [],
+  initialSourceType = "semi_finished",
   canCreate = false,
   canEdit = false,
   canDelete = false,
@@ -59,7 +62,8 @@ export default function SkladProductionCategoryManagerDialog({
   const [name, setName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [deleteCategory, setDeleteCategory] = useState(null);
-  const [sourceType, setSourceType] = useState("semi_finished");
+  const [sourceType, setSourceType] = useState(initialSourceType);
+  const [historyCategory, setHistoryCategory] = useState(null);
   const [parentId, setParentId] = useState("");
 
   useEffect(() => {
@@ -68,10 +72,11 @@ export default function SkladProductionCategoryManagerDialog({
       setName("");
       setNewCategoryName("");
       setDeleteCategory(null);
-      setSourceType("semi_finished");
+      setSourceType(initialSourceType);
+      setHistoryCategory(null);
       setParentId("");
     }
-  }, [open]);
+  }, [open, initialSourceType]);
 
   const startEditing = (category) => {
     setEditingId(category.id);
@@ -117,16 +122,26 @@ export default function SkladProductionCategoryManagerDialog({
     }
   };
 
-  const visibleCategories = categories.filter((category) => category?.source_type === sourceType);
+  const visibleCategories = categories.filter(
+    (category) => category?.source_type === sourceType && Number(category?.id) > 0,
+  );
   const warehouseParents = Array.from(
     new Map(
       categories
-        .filter((category) => category?.source_type === "warehouse_item" && category?.is_group)
+        .filter(
+          (category) =>
+            category?.source_type === "warehouse_item" &&
+            category?.is_group &&
+            Number(category.id) > 0,
+        )
         .map((category) => [Number(category.id), category.name]),
     ),
   );
   const canCreateSource =
-    sourceType === "warehouse_item" ? Number(access?.warehouse_items_create) === 1 : canCreate;
+    sourceType === "warehouse_item"
+      ? Number(access?.warehouse_items_create) === 1 &&
+        Number(access?.warehouse_items_categories_edit) === 1
+      : canCreate;
   const canEditCategory = (category) =>
     category?.source_type === "warehouse_item"
       ? !category?.is_group && Number(access?.warehouse_items_categories_edit) === 1
@@ -154,10 +169,13 @@ export default function SkladProductionCategoryManagerDialog({
               scrollButtons="auto"
             >
               <Tab
-                value="semi_finished"
-                label="Рецепты и полуфабрикаты"
+                value={initialSourceType}
+                label={
+                  initialSourceType === "warehouse_item"
+                    ? "Товары склада"
+                    : "Рецепты и полуфабрикаты"
+                }
               />
-              {/* Suspended warehouse-item category scope; keep its logic/access wiring for later reactivation. */}
             </Tabs>
             {canCreateSource ? (
               <Paper
@@ -314,6 +332,17 @@ export default function SkladProductionCategoryManagerDialog({
                               </span>
                             </Tooltip>
                           ) : null}
+                          <Tooltip title="История категории">
+                            <span>
+                              <IconButton
+                                onClick={() => setHistoryCategory(category)}
+                                disabled={loading}
+                                aria-label={`История категории ${category.name}`}
+                              >
+                                <HistoryOutlinedIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
                           {canDeleteCategory(category) ? (
                             <Tooltip
                               title={
@@ -350,8 +379,9 @@ export default function SkladProductionCategoryManagerDialog({
               variant="body2"
               color="text.secondary"
             >
-              Удалить можно только категорию без связанных рецептов, полуфабрикатов и записей
-              истории.
+              {sourceType === "warehouse_item"
+                ? "Удалить можно только категорию без товаров, подкатегорий и связанных записей истории."
+                : "Удалить можно только категорию без связанных рецептов, полуфабрикатов и записей истории."}
             </Typography>
           </Stack>
         </DialogContent>
@@ -365,6 +395,11 @@ export default function SkladProductionCategoryManagerDialog({
           </Button>
         </DialogActions>
       </JacoModal>
+
+      <SkladCategoryHistoryDialog
+        category={historyCategory}
+        onClose={() => setHistoryCategory(null)}
+      />
 
       <SkladDeleteDialog
         open={Boolean(deleteCategory)}

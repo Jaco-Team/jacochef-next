@@ -543,7 +543,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
               <Stack
                 direction="row"
                 spacing={0.5}
-                alignItems="center"
+                sx={{ alignItems: "center" }}
               >
                 <SkladAutocomplete
                   label="Категория"
@@ -556,25 +556,34 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   freeSolo={false}
                   autocompleteSx={{ flex: 1, minWidth: 0 }}
                 />
+              </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{ alignItems: "center" }}
+              >
+                <JacoSelect
+                  label="Показать"
+                  value={stateFilter}
+                  onChange={(event) => {
+                    setStateFilter(event.target.value);
+                    revealFilterRef.current = true;
+                    setGroupPages({});
+                  }}
+                  allowNone={false}
+                  options={STATE_OPTIONS.map(([id, name]) => ({ id, name }))}
+                />
                 <Tooltip title="Управление категориями">
-                  <JacoIconButton onClick={openCategoryManager}>
+                  <JacoIconButton
+                    aria-label="Управление категориями"
+                    onClick={openCategoryManager}
+                  >
                     <SettingsOutlinedIcon />
                   </JacoIconButton>
                 </Tooltip>
               </Stack>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <JacoSelect
-                label="Показать"
-                value={stateFilter}
-                onChange={(event) => {
-                  setStateFilter(event.target.value);
-                  revealFilterRef.current = true;
-                  setGroupPages({});
-                }}
-                allowNone={false}
-                options={STATE_OPTIONS.map(([id, name]) => ({ id, name }))}
-              />
             </Grid>
             <Grid size={12}>
               <JacoButton
@@ -638,6 +647,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
         onConfirm={confirmDelete}
       />
       <SkladProductionCategoryManagerDialog
+        initialSourceType="warehouse_item"
         open={categoryManager.open}
         loading={categoryManager.loading}
         categories={categoryManager.categories}

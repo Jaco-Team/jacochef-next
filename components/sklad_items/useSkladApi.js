@@ -20,6 +20,8 @@ export default function useSkladApi() {
       getUnits: () => request("units/list"),
       getUnit: (id) => request("units/get_one", { id }),
       getCategories: (sourceType) => request("categories/list", { source_type: sourceType }),
+      getCategoryHistory: (sourceType, id) =>
+        request("categories/history", { source_type: sourceType, id }),
       createCategory: (payload) => request("categories/save_new", payload),
       updateCategory: (payload) => request("categories/save_edit", payload),
       deleteCategory: (payload) => request("categories/delete", payload),
