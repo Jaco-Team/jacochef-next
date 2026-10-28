@@ -12,6 +12,7 @@ import {
   JacoBackdropLoader,
   JacoButton,
   JacoCompactTabs,
+  JacoModal,
   JacoSurface,
   JacoTabPanel,
   uiColors,
@@ -28,6 +29,10 @@ const SkladWarehouseItemsTab = dynamic(() => import("./warehouse-items/SkladWare
   ssr: false,
 });
 const SkladSiteItemsTab = dynamic(() => import("./site-items/SkladSiteItemsTab"), { ssr: false });
+const AllergensPage = dynamic(() => import("@/components/allergens/AllergensPage"), { ssr: false });
+const SkladStoragePage = dynamic(() => import("@/components/sklad_storage/SkladStoragePage"), {
+  ssr: false,
+});
 
 function sectionUrl(query, key) {
   const { section, tab, ...otherQuery } = query;
@@ -41,6 +46,7 @@ function normalizeBootstrap(response) {
   return {
     moduleName: response?.module_info?.name || "Склад",
     access: response?.access || {},
+    linkedModules: response?.linked_modules || {},
     summary: response?.summary || {},
     units: response?.units || [],
     categories: response?.categories || [],
@@ -55,6 +61,7 @@ function normalizeBootstrap(response) {
 export default function SkladPage() {
   const router = useRouter();
   const [bootstrapReady, setBootstrapReady] = useState(false);
+  const [storageOpen, setStorageOpen] = useState(false);
   const api = useSkladApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
@@ -62,11 +69,15 @@ export default function SkladPage() {
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
   const access = useSkladStore((state) => state.access);
+  const linkedModules = useSkladStore((state) => state.linkedModules);
   const setBootstrap = useSkladStore((state) => state.setBootstrap);
   const setState = useSkladStore((state) => state.setState);
   const requestRefresh = useSkladStore((state) => state.requestRefresh);
 
-  const tabs = useMemo(() => getVisibleSkladTabs({ access }), [access]);
+  const tabs = useMemo(
+    () => getVisibleSkladTabs({ access, linkedModules }),
+    [access, linkedModules],
+  );
   const section = router.query.section;
   const requestedKey = Array.isArray(section)
     ? section.length === 1
@@ -150,12 +161,17 @@ export default function SkladPage() {
         shallow: true,
         scroll: false,
       });
+      if (requestedKey === "allergens") requestRefresh();
     } catch (error) {
       if (!error?.cancelled) showAlert("Не удалось открыть раздел", false);
     }
   };
 
   const renderTabContent = (item) => {
+    if (item.key === "allergens") {
+      return <AllergensPage embedded />;
+    }
+
     if (item.key === "units") {
       return (
         <SkladUnitsTab
@@ -207,6 +223,17 @@ export default function SkladPage() {
         status={alertStatus}
         text={alertMessage}
       />
+      <JacoModal
+        open={storageOpen && linkedModules.sklad_storage === true}
+        onClose={() => {
+          setStorageOpen(false);
+          requestRefresh();
+        }}
+        title="Места хранения"
+        maxWidth="lg"
+      >
+        {storageOpen && linkedModules.sklad_storage === true ? <SkladStoragePage embedded /> : null}
+      </JacoModal>
       <Grid
         container
         spacing={3}
@@ -229,10 +256,19 @@ export default function SkladPage() {
             <Grid size={{ xs: 12, md: "auto" }}>
               <Stack
                 direction="row"
+                spacing={1}
                 sx={{
                   justifyContent: { xs: "flex-start", md: "flex-end" },
                 }}
               >
+                {bootstrapReady && linkedModules.sklad_storage === true ? (
+                  <JacoButton
+                    tone="secondary"
+                    onClick={() => setStorageOpen(true)}
+                  >
+                    Места хранения
+                  </JacoButton>
+                ) : null}
                 <JacoButton
                   startIcon={<RefreshIcon />}
                   onClick={() => requestRefresh()}
