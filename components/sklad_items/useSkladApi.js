@@ -33,6 +33,8 @@ export default function useSkladApi() {
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
       deleteUnit: (id) => request("units/delete", { id }),
+      getProductionCreationReferences: (entityType) =>
+        request("production/creation_references", { entity_type: entityType }),
       getRecipes: (payload = {}) => request("recipes/list", payload),
       getRecipe: (id) => request("recipes/get_one", { id }),
       createRecipe: (payload) => request("recipes/save_new", payload),

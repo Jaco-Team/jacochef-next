@@ -49,6 +49,7 @@ import { PRODUCTION_ARCHIVE_MODE_OPTIONS } from "./useSkladProductionStore";
 
 export default function SkladProductionContent({
   activeEntityType,
+  creationItems,
   search,
   categoryId,
   archiveMode,
@@ -467,7 +468,11 @@ export default function SkladProductionContent({
         allergens={detail?.ref_allergens?.length ? detail.ref_allergens : shellAllergens}
         storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
         apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
-        allItemsList={detail?.all_items_list || draft?.all_items_list || []}
+        allItemsList={
+          modal.mode === "create"
+            ? creationItems
+            : detail?.all_items_list || draft?.all_items_list || []
+        }
         access={access}
         isEditable={modal.mode === "create" ? canCreateProduction : canManageProduction}
         canViewHistory={canViewHistory}

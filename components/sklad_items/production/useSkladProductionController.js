@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -25,6 +25,8 @@ import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkl
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
+  const showAlertRef = useRef(showAlert);
+  showAlertRef.current = showAlert;
   const {
     access,
     canArchiveProduction,
@@ -44,6 +46,7 @@ export default function useSkladProductionController({ showAlert }) {
   const shellStorages = useSkladStore((state) => state.storages);
   const shellApps = useSkladStore((state) => state.apps);
 
+  const [creationReferences, setCreationReferences] = useState({ type: null, items: [] });
   const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
   const rowsByType = useSkladProductionStore((state) => state.rowsByType);
   const search = useSkladProductionStore((state) => state.search);
@@ -596,6 +599,26 @@ export default function useSkladProductionController({ showAlert }) {
     showAlert,
   ]);
 
+  useEffect(() => {
+    if (!modal.open || modal.mode !== "create" || !canCreateProduction) return;
+    let cancelled = false;
+    setCreationReferences({ type: null, items: [] });
+    api
+      .getProductionCreationReferences(activeEntityType)
+      .then((response) => {
+        if (cancelled) return;
+        if (!response?.st) throw new Error(response?.text || "Ошибка загрузки номенклатуры");
+        setCreationReferences({ type: activeEntityType, items: response.all_items_list || [] });
+      })
+      .catch((error) => {
+        if (!cancelled)
+          showAlertRef.current(error?.message || "Ошибка загрузки номенклатуры", false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeEntityType, api, canCreateProduction, modal.mode, modal.open]);
+
   const openCreate = useCallback(
     (entityType) => {
       setState({
@@ -820,6 +843,9 @@ export default function useSkladProductionController({ showAlert }) {
       <>
         <SkladProductionContent
           activeEntityType={activeEntityType}
+          creationItems={
+            creationReferences.type === activeEntityType ? creationReferences.items : []
+          }
           search={search}
           categoryId={categoryId}
           archiveMode={archiveMode}

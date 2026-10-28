@@ -352,17 +352,27 @@ export default function SkladProductionEditorDialog({
     >
       <Stack spacing={2}>
         {mode === "create" ? (
-          <JacoSelect
-            label="Тип"
-            value={entityType}
-            options={[
-              { id: "recipe", name: "Рецепт" },
-              { id: "semi_finished", name: "Полуфабрикат" },
-            ]}
-            allowNone={false}
-            disabled={loading || !isEditable}
-            onChange={(event) => onChangeEntityType?.(event.target.value)}
-          />
+          <Stack spacing={0.5}>
+            <JacoSelect
+              label="Тип"
+              value={entityType}
+              options={[
+                { id: "recipe", name: "Рецепт" },
+                { id: "semi_finished", name: "Полуфабрикат" },
+              ]}
+              allowNone={false}
+              disabled={loading || !isEditable || form.items.length > 0}
+              onChange={(event) => onChangeEntityType?.(event.target.value)}
+            />
+            {form.items.length > 0 ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+              >
+                Чтобы изменить тип, сначала удалите номенклатуру.
+              </Typography>
+            ) : null}
+          </Stack>
         ) : null}
         {missingCreateFields.length ? (
           <Alert severity="warning">

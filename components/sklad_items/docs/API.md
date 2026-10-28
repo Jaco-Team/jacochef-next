@@ -1852,3 +1852,7 @@ Rules:
 
 - runtime aliases are not part of this contract
 - FE should use only canonical routes and canonical payloads from this file
+
+## Справочник состава для создания продукции
+
+`production/creation_references` принимает `entity_type: recipe | semi_finished` и возвращает `all_items_list`: для рецепта доступны существующие варианты рецептов, полуфабрикатов и складских товаров, для полуфабриката — складские товары. Требуется `production_create`; при отсутствии `production_items_view` список скрывается. Значения и права совпадают с чтением карточек; неизвестный тип отклоняется.
