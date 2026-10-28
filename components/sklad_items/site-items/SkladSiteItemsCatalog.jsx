@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
@@ -41,6 +40,7 @@ import {
 
 import { formatDateRU } from "../formatDateRangeRU";
 import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
+import SkladItemNameButton from "../SkladItemNameButton";
 
 const brandRed = "#DD1A32";
 const blockBackground = "#F3F3F3";
@@ -94,7 +94,6 @@ export default function SkladSiteItemsCatalog({
   archiveMode,
   rows,
   categories,
-  isEditable,
   canCreate,
   canSyncSiteItemsVk,
   canManageTags,
@@ -564,7 +563,12 @@ export default function SkladSiteItemsCatalog({
                                     slotProps={{ htmlInput: { min: 0, step: 1 } }}
                                   />
                                 </TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>{row?.name || "—"}</TableCell>
+                                <TableCell>
+                                  <SkladItemNameButton
+                                    name={row?.name}
+                                    onClick={() => openEdit(row, "main")}
+                                  />
+                                </TableCell>
                                 <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                                 <TableCell>
@@ -579,14 +583,6 @@ export default function SkladSiteItemsCatalog({
                                       justifyContent: "center",
                                     }}
                                   >
-                                    <Tooltip title={isEditable ? "Редактировать" : "Открыть"}>
-                                      <JacoIconButton
-                                        aria-label="Редактировать"
-                                        onClick={() => openEdit(row, "main")}
-                                      >
-                                        <EditIcon fontSize="small" />
-                                      </JacoIconButton>
-                                    </Tooltip>
                                     {canViewHistory ? (
                                       <Tooltip title="История изменений">
                                         <JacoIconButton
@@ -623,7 +619,7 @@ export default function SkladSiteItemsCatalog({
                         spacing={1}
                         sx={{ display: { xs: "flex", md: "none" }, mx: 1 }}
                       >
-                        {category.items.map((row, index) => (
+                        {category.items.map((row) => (
                           <JacoSurface
                             key={row.id}
                             data-testid={`site-item-${row.id}`}
@@ -631,9 +627,10 @@ export default function SkladSiteItemsCatalog({
                             sx={{ p: 1.5, borderRadius: 2.5 }}
                           >
                             <Stack spacing={1.25}>
-                              <Typography sx={{ fontSize: 16, fontWeight: 700 }}>
-                                {index + 1}. {row?.name || "Без названия"}
-                              </Typography>
+                              <SkladItemNameButton
+                                name={row?.name}
+                                onClick={() => openEdit(row, "main")}
+                              />
                               <Box
                                 sx={{
                                   display: "grid",
@@ -700,15 +697,6 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1,
                                 }}
                               >
-                                <JacoButton
-                                  tone="secondary"
-                                  startIcon={<EditIcon />}
-                                  aria-label="Редактировать"
-                                  onClick={() => openEdit(row, "main")}
-                                  sx={{ flex: 1 }}
-                                >
-                                  {isEditable ? "Изменить" : "Открыть"}
-                                </JacoButton>
                                 {canViewHistory ? (
                                   <JacoButton
                                     tone="secondary"

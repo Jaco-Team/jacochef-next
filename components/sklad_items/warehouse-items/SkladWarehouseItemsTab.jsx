@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -39,6 +38,7 @@ import {
 
 import SkladAutocomplete from "../ui/SkladAutocomplete";
 import SkladDeleteDialog from "../SkladDeleteDialog";
+import SkladItemNameButton from "../SkladItemNameButton";
 import { formatDateRU } from "../formatDateRangeRU";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -434,7 +434,13 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                         key={row.id}
                         hover
                       >
-                        <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
+                        <TableCell>
+                          <SkladItemNameButton
+                            name={row.name}
+                            disabled={!canManageWarehouseItems}
+                            onClick={() => openEditor(row)}
+                          />
+                        </TableCell>
                         <TableCell>{row.ed_izmer_name || "—"}</TableCell>
                         <TableCell>
                           {formatDateRU(row.effective_date_start || row.date_start) || "—"}
@@ -450,18 +456,8 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                         <TableCell align="right">
                           <Stack
                             direction="row"
-                            justifyContent="flex-end"
+                            sx={{ justifyContent: "flex-end" }}
                           >
-                            <Tooltip title="Редактировать">
-                              <span>
-                                <JacoIconButton
-                                  disabled={!canManageWarehouseItems}
-                                  onClick={() => openEditor(row)}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </JacoIconButton>
-                              </span>
-                            </Tooltip>
                             {canViewWarehouseItemsHistory ? (
                               <Tooltip title="История">
                                 <JacoIconButton onClick={() => openEditor(row, true)}>

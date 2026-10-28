@@ -33,6 +33,7 @@ import {
 import { uiColors, uiRadii } from "@/design-system/shared/tokens";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
+import SkladItemNameButton from "../SkladItemNameButton";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladSortableHeader from "../table/SkladSortableHeader";
 import { formatDateRU } from "../formatDateRangeRU";
@@ -272,11 +273,11 @@ export default function SkladProductionContent({
                       hover
                     >
                       <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
-                      <TableCell
-                        onClick={() => openEdit(entityType, row, "main")}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
+                      <TableCell>
+                        <SkladItemNameButton
+                          name={row?.name}
+                          onClick={() => openEdit(entityType, row, "main")}
+                        />
                       </TableCell>
                       <TableCell>
                         {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
@@ -319,19 +320,6 @@ export default function SkladProductionContent({
                             justifyContent: "flex-end",
                           }}
                         >
-                          <Tooltip
-                            title={canCreateOrEdit ? "Открыть редактор" : "Открыть карточку"}
-                          >
-                            <span>
-                              <JacoIconButton
-                                aria-label="Редактировать"
-                                onClick={() => openEdit(entityType, row, "main")}
-                              >
-                                <EditIcon fontSize="small" />
-                              </JacoIconButton>
-                            </span>
-                          </Tooltip>
-
                           {canViewHistory ? (
                             <Tooltip title="Открыть вкладку истории">
                               <span>
