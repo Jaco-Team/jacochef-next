@@ -1603,6 +1603,8 @@ Rules:
 
 ### `POST|ANY /api/sklad_items/entities/delete`
 
+For `unit`, `recipe`, `semi_finished`, and `site_item`, category fields are not required. Category deletion requires an explicit `source_type` (`warehouse_item` or `semi_finished`) and the category identifier; its source-specific permissions still apply.
+
 Request:
 
 ```json
