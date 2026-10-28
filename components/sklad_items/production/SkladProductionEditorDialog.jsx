@@ -18,6 +18,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TableRow,
   Typography,
@@ -41,6 +42,7 @@ import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable"
 import SkladSectionCard from "../ui/SkladSectionCard";
 import {
   buildInitialDraft,
+  calculateProductionTotals,
   dedupeSelectOptions,
   filterProductionCompositionOptions,
   getCompositionItemId,
@@ -110,6 +112,7 @@ export default function SkladProductionEditorDialog({
   }));
 
   const isRecipe = entityType === "recipe";
+  const compositionTotals = useMemo(() => calculateProductionTotals(form.items), [form.items]);
   const canEditField = (field) => isEditable && Number(access?.[`production_${field}_edit`]) === 1;
   const canViewField = (field) =>
     Number(access?.[`production_${field}_view`]) === 1 ||
@@ -832,6 +835,23 @@ export default function SkladProductionEditorDialog({
                                 </TableRow>
                               ))}
                             </TableBody>
+                            <TableFooter>
+                              <TableRow>
+                                <TableCell colSpan={2}>Итого</TableCell>
+                                <TableCell align="right">
+                                  {formatMetricValue(compositionTotals.all_w_brutto)}
+                                </TableCell>
+                                <TableCell />
+                                <TableCell align="right">
+                                  {formatMetricValue(compositionTotals.all_w_netto)}
+                                </TableCell>
+                                <TableCell />
+                                <TableCell align="right">
+                                  {formatMetricValue(compositionTotals.all_w)}
+                                </TableCell>
+                                {canEditItems ? <TableCell /> : null}
+                              </TableRow>
+                            </TableFooter>
                           </Table>
                         </TableContainer>
                       ) : null}
