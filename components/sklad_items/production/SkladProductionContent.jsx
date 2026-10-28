@@ -379,6 +379,7 @@ export default function SkladProductionContent({
                                 <span>
                                   <JacoIconButton
                                     sx={{ color: "error.main" }}
+                                    aria-label={`Удалить: ${row.name}`}
                                     disabled={!canCreateOrEdit}
                                     onClick={() => openDeleteDialog(entityType, row)}
                                   >
@@ -388,8 +389,16 @@ export default function SkladProductionContent({
                               </Tooltip>
                             ) : (
                               <Tooltip title={getDeleteHint(row)}>
-                                <span>
-                                  <JacoIconButton disabled>
+                                <span
+                                  role="img"
+                                  tabIndex={0}
+                                  aria-label={`${row.name}: ${getDeleteHint(row)}`}
+                                >
+                                  <JacoIconButton
+                                    disabled
+                                    aria-hidden="true"
+                                    tabIndex={-1}
+                                  >
                                     <DeleteOutlineIcon fontSize="small" />
                                   </JacoIconButton>
                                 </span>

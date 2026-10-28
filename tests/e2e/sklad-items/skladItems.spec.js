@@ -3268,12 +3268,16 @@ test("рецепты: текущие и исторические вложенн�
   }
   await page.goto("/sklad_items/production");
   for (const index of [0, 1]) {
-    await expect(
-      page
-        .getByRole("row", { name: new RegExp(`Вложенный рецепт ${index}`) })
-        .getByRole("button")
-        .last(),
-    ).toBeDisabled();
+    const reason = page
+      .getByRole("row", { name: new RegExp(`Вложенный рецепт ${index}`) })
+      .getByRole("img", { name: /Удаление заблокировано/ });
+    await expect(reason).toHaveAttribute("tabindex", "0");
+    await expect(reason).toHaveAccessibleName(
+      new RegExp(index ? "источников исторических связей: 1" : "источников активных связей: 1"),
+    );
+    await reason.focus();
+    await expect(reason).toBeFocused();
+    await page.keyboard.press("Enter");
   }
   expect(state.requests.some((request) => request.method === "entities/delete")).toBeFalsy();
 });

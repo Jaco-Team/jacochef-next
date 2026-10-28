@@ -38,11 +38,11 @@ export function getDeleteHint(row) {
   const parts = [];
 
   if (activeCount) {
-    parts.push(`активные связи: ${activeCount}`);
+    parts.push(`источников активных связей: ${activeCount}`);
   }
 
   if (historyCount) {
-    parts.push(`история: ${historyCount}`);
+    parts.push(`источников исторических связей: ${historyCount}`);
   }
 
   return parts.length ? `Удаление заблокировано, ${parts.join(", ")}` : "Удаление заблокировано";
@@ -55,11 +55,11 @@ export function getDeleteError(response) {
   const counts = [];
 
   if (activeCount) {
-    counts.push(`активные связи: ${activeCount}`);
+    counts.push(`источников активных связей: ${activeCount}`);
   }
 
   if (historyCount) {
-    counts.push(`история: ${historyCount}`);
+    counts.push(`источников исторических связей: ${historyCount}`);
   }
 
   return counts.length
