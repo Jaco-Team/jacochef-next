@@ -29,7 +29,7 @@ const SkladWarehouseItemsTab = dynamic(() => import("./warehouse-items/SkladWare
   ssr: false,
 });
 const SkladSiteItemsTab = dynamic(() => import("./site-items/SkladSiteItemsTab"), { ssr: false });
-const AllergensPage = dynamic(() => import("@/components/allergens/AllergensPage"), { ssr: false });
+const SkladAllergensTab = dynamic(() => import("./allergens/SkladAllergensTab"), { ssr: false });
 const SkladStoragePage = dynamic(() => import("@/components/sklad_storage/SkladStoragePage"), {
   ssr: false,
 });
@@ -169,7 +169,13 @@ export default function SkladPage() {
 
   const renderTabContent = (item) => {
     if (item.key === "allergens") {
-      return <AllergensPage embedded />;
+      return (
+        <SkladAllergensTab
+          allowed={linkedModules.allergens === true}
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+        />
+      );
     }
 
     if (item.key === "units") {
