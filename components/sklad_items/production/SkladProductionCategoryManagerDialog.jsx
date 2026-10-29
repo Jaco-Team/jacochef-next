@@ -23,16 +23,19 @@ import {
 
 import { JacoModal, JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
 import { uiRadii } from "@/design-system/shared/tokens";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
 
-function categoryUsageLabel(category) {
+function categoryUsageLabel(category, count) {
   if (category?.source_type === "warehouse_item") {
     if (category?.is_group) {
       return `Группа складских категорий · Подкатегорий: ${Number(category?.delete_usage?.active?.find?.((entry) => entry?.source === "items_cat.parent_id")?.count) || 0}`;
     }
 
-    return `${category?.parent_name || "Некорректная legacy-группа"} · Товары: ${Number(category?.warehouse_items_count) || 0}`;
+    const parentName = category?.parent_name || "Некорректная legacy-группа";
+    const warehouseCount = Number(category?.warehouse_items_count) || 0;
+    return warehouseCount === count ? parentName : `${parentName} · Товары: ${warehouseCount}`;
   }
   const recipes = Number(category?.recipes_count) || 0;
   const semiFinished = Number(category?.semi_finished_count) || 0;
@@ -269,16 +272,27 @@ export default function SkladProductionCategoryManagerDialog({
                             >
                               {category.name}
                             </Typography>
-                            <Chip
-                              size="small"
-                              label={count}
-                            />
+                            {category?.source_type === "warehouse_item" ? (
+                              <Tooltip title={formatPlural(count, ["товар", "товара", "товаров"])}>
+                                <Chip
+                                  size="small"
+                                  label={count}
+                                  tabIndex={0}
+                                  aria-label={formatPlural(count, ["товар", "товара", "товаров"])}
+                                />
+                              </Tooltip>
+                            ) : (
+                              <Chip
+                                size="small"
+                                label={count}
+                              />
+                            )}
                           </Stack>
                           <Typography
                             variant="body2"
                             color="text.secondary"
                           >
-                            {categoryUsageLabel(category)}
+                            {categoryUsageLabel(category, count)}
                             {category?.is_group ? " · Группа" : ""}
                             {category?.is_legacy_invalid ? " · Некорректный legacy-родитель" : ""}
                           </Typography>
