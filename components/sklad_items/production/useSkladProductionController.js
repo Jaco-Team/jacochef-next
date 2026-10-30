@@ -114,9 +114,7 @@ export default function useSkladProductionController({ showAlert }) {
   const productionSort = useSkladTableSort(filteredRows, {
     name: (row) => row?.name,
     categories: (row) =>
-      row?.entityType === "recipe"
-        ? "Рецепты"
-        : (row?.categories || []).map((item) => item?.name).join(", "),
+      (Array.isArray(row?.categories) ? row.categories : []).map((item) => item?.name).join(", "),
     shelfLife: (row) => row?.shelf_life,
     dateStart: (row) => row?.date_start,
     dateEnd: (row) => row?.date_end,

@@ -30,7 +30,7 @@ import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
 function categoryUsageLabel(category, count) {
   if (category?.source_type === "warehouse_item") {
     if (category?.is_group) {
-      return `Группа складских категорий · Подкатегорий: ${Number(category?.delete_usage?.active?.find?.((entry) => entry?.source === "items_cat.parent_id")?.count) || 0}`;
+      return `Группа складских категорий · Подкатегорий: ${Number(category?.delete_usage?.active_relations?.find?.((entry) => entry?.source === "items_cat.parent_id")?.count) || 0}`;
     }
 
     const parentName = category?.parent_name || "Некорректная legacy-группа";

@@ -541,6 +541,8 @@ Response:
 }
 ```
 
+Each list row includes `art` (1C code). The value is `null` when `warehouse_items_art_view` is not granted; clients must respect the same view permission.
+
 ### `POST|ANY /api/sklad_items/items/get_all_for_new`
 
 Response:
@@ -1310,6 +1312,7 @@ Main rules:
 - `image_history` is a separate lightweight timeline for image changes
 - `image_history.current.image` is the current live image state
 - `image_history.rows[]` returns changed image revisions with `before_image` and `after_image`
+- `image_history.rows[].changed_at` is derived from the snapshot `date_start` (effective date), not the image action timestamp. This endpoint does not establish the actual image action time.
 - `image_history.capabilities.restore = true`
 - `composition_source.pf` = direct `site_item -> pf` links
 - `composition_source.recipes` = direct `site_item -> recipe` links
@@ -1664,6 +1667,10 @@ Request:
 Returns a compact period list. Full snapshots are requested only after a period is selected.
 
 Additional temporal fields are `revision_status`, `effective_date_start`, `effective_date_end`, `previous_revision_key`, `next_revision_key`, `applied_now`, `can_edit_schedule`, and `can_cancel_schedule`. Existing fields are preserved. `mode=periods` hides cancelled/superseded events; the UI's “Все записи” mode shows them and legacy rows.
+
+In revision lists and details, `source` remains the history source/table identifier. The additive `revision_source` identifies the effective-registry provenance without replacing `source`; unregistered legacy revisions have `revision_source: null`. For `user`, `flag`, `image`, and `image_restore`, `revision_saved_at` is the recorded registration timestamp for the corresponding action. For `bootstrap`, it is the baseline registration time, not the original edit time; for unregistered or unknown provenance the original edit time is unavailable. The legacy `changed_at` comes from the revision effective start date and must not be presented as the actual edit timestamp.
+
+Revision list metadata, including nested embedded history rows, is subject to the same entity and field-view permissions as revision snapshots; unavailable fields are redacted on the server. Historical snapshots for the four supported entity types retain only known fields and known nested relation shapes; denied values are redacted and unmapped fields are omitted. When both revision snapshots are available, comparison changes, counts and sections are recomputed from the redacted snapshots; without a pair, opaque nested changes are not returned. These rules apply to existing data and do not imply backfilled audit events or a complete event timeline.
 
 ### `POST|ANY /api/sklad_items/history/get_one`
 

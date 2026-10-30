@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -144,6 +144,17 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const archiveDialog = useSkladSiteItemsStore((state) => state.archiveDialog);
   const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+  const catalogRequest = useRef(0);
+
+  useEffect(
+    () => () => {
+      catalogRequest.current += 1;
+    },
+    [],
+  );
+
   const [categoryDialog, setCategoryDialog] = useState({ open: false, loading: false });
 
   const canViewSiteItemForm = SITE_ITEMS_MODAL_FIELD_KEYS.some((field) =>
@@ -191,7 +202,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
-      setShellState({ isLoading: true });
+      const requestId = ++catalogRequest.current;
+      setCatalogLoading(true);
+      setCatalogError("");
 
       try {
         const response = await api.getSiteItems({
@@ -203,6 +216,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
           throw new Error(response?.text || "Ошибка загрузки товаров сайта");
         }
 
+        if (requestId !== catalogRequest.current) return;
+
         setState({
           rows: Array.isArray(response?.list) ? response.list : [],
           categories: Array.isArray(response?.categories) ? response.categories : [],
@@ -210,12 +225,15 @@ export default function useSkladSiteItemsController({ showAlert }) {
           ...(resetPage ? { page: 0 } : {}),
         });
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки товаров сайта", false);
+        if (requestId !== catalogRequest.current) return;
+        const message = error?.message || "Ошибка загрузки товаров сайта";
+        setCatalogError(message);
+        showAlert(message, false);
       } finally {
-        setShellState({ isLoading: false });
+        if (requestId === catalogRequest.current) setCatalogLoading(false);
       }
     },
-    [api, search, setShellState, setState, showAlert],
+    [api, search, setState, showAlert],
   );
 
   const categoryOptions = useMemo(
@@ -988,6 +1006,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
           categoryOptions={categoryOptions}
           tagOptions={tagOptions}
           rows={rows}
+          catalogLoading={catalogLoading}
+          catalogError={catalogError}
           paginatedRows={paginatedRows}
           sortBy={siteItemSort.sortBy}
           sortDirection={siteItemSort.sortDirection}

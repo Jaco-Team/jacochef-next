@@ -5,7 +5,7 @@ import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import DisabledByDefaultIcon from "@mui/icons-material/DisabledByDefault";
-import EditIcon from "@mui/icons-material/Edit";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
@@ -98,6 +98,8 @@ export default function SkladProductionContent({
   confirmDelete,
   confirmArchive,
 }) {
+  const canViewUnit = Number(access?.production_unit_view) === 1;
+
   return (
     <>
       <Stack spacing={2}>
@@ -145,12 +147,12 @@ export default function SkladProductionContent({
                 />
               </Stack>
               {canManageCategories ? (
-                <Tooltip title="Управление категориями">
+                <Tooltip title="Управление категориями рецептов и полуфабрикатов">
                   <JacoIconButton
-                    aria-label="Управление категориями"
+                    aria-label="Управление категориями рецептов и полуфабрикатов"
                     onClick={onManageCategories}
                   >
-                    <EditIcon fontSize="small" />
+                    <SettingsOutlinedIcon />
                   </JacoIconButton>
                 </Tooltip>
               ) : null}
@@ -214,6 +216,7 @@ export default function SkladProductionContent({
                   >
                     Название
                   </SkladSortableHeader>
+                  {canViewUnit ? <TableCell>Единица</TableCell> : null}
                   <SkladSortableHeader
                     sortKey="categories"
                     sortBy={sortBy}
@@ -278,9 +281,8 @@ export default function SkladProductionContent({
                           onClick={() => openEdit(entityType, row, "main")}
                         />
                       </TableCell>
-                      <TableCell>
-                        {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
-                      </TableCell>
+                      {canViewUnit ? <TableCell>{row?.ed_izmer_name || "—"}</TableCell> : null}
+                      <TableCell>{formatCategories(row?.categories)}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_update) || "—"}</TableCell>
@@ -413,7 +415,7 @@ export default function SkladProductionContent({
 
                 {mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={canViewUnit ? 10 : 9}>
                       <Typography
                         sx={{
                           color: "text.secondary",

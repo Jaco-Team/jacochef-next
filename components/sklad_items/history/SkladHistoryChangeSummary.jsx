@@ -2,6 +2,7 @@
 
 import { Alert, Typography } from "@mui/material";
 import HistoryLog from "@/ui/history/HistoryLog";
+import { revisionSavedAt } from "./revisionSavedAt.mjs";
 
 export default function SkladHistoryChangeSummary({ row, changes, hasPrevious, ready }) {
   if (!ready) return null;
@@ -23,10 +24,11 @@ export default function SkladHistoryChangeSummary({ row, changes, hasPrevious, r
     <HistoryLog
       title="Изменения выбранной версии"
       defaultExpanded
+      dateLabel="Время сохранения"
       history={[
         {
           id: row?.revision_key || row?.history_id,
-          created_at: row?.changed_at,
+          created_at: revisionSavedAt(row),
           actor_name: row?.changed_by || "Неизвестно",
           diff_json: diff,
         },

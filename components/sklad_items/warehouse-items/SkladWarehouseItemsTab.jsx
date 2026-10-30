@@ -426,6 +426,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                       <TableCell>Статус</TableCell>
                       <TableCell>Заявка</TableCell>
                       <TableCell>Ревизия</TableCell>
+                      {Number(access?.warehouse_items_art_view) === 1 ? (
+                        <TableCell>Код 1С</TableCell>
+                      ) : null}
                       <TableCell align="right">Действия</TableCell>
                     </TableRow>
                   </TableHead>
@@ -464,6 +467,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                             value={row.show_in_rev}
                           />
                         </TableCell>
+                        {Number(access?.warehouse_items_art_view) === 1 ? (
+                          <TableCell>{row.art || "—"}</TableCell>
+                        ) : null}
                         <TableCell align="right">
                           <Stack
                             direction="row"
@@ -563,6 +569,14 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   freeSolo={false}
                   autocompleteSx={{ flex: 1, minWidth: 0 }}
                 />
+                <Tooltip title="Управление категориями товаров склада">
+                  <JacoIconButton
+                    aria-label="Управление категориями товаров склада"
+                    onClick={openCategoryManager}
+                  >
+                    <SettingsOutlinedIcon />
+                  </JacoIconButton>
+                </Tooltip>
               </Stack>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -582,14 +596,6 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   allowNone={false}
                   options={STATE_OPTIONS.map(([id, name]) => ({ id, name }))}
                 />
-                <Tooltip title="Управление категориями">
-                  <JacoIconButton
-                    aria-label="Управление категориями"
-                    onClick={openCategoryManager}
-                  >
-                    <SettingsOutlinedIcon />
-                  </JacoIconButton>
-                </Tooltip>
               </Stack>
             </Grid>
             <Grid size={12}>

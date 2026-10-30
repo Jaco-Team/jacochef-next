@@ -16,6 +16,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  CircularProgress,
   InputAdornment,
   Stack,
   Table,
@@ -93,6 +94,9 @@ export default function SkladSiteItemsCatalog({
   search,
   archiveMode,
   rows,
+  loading,
+  error,
+  onRetry,
   categories,
   canCreate,
   canSyncSiteItemsVk,
@@ -284,21 +288,35 @@ export default function SkladSiteItemsCatalog({
                       : "Активные позиции, сгруппированные по категориям"}
                   </Typography>
                 </Box>
-                <JacoTextInput
-                  placeholder="Поиск по названию"
-                  value={search}
-                  onChange={(event) => setState({ search: event.target.value, page: 0 })}
-                  sx={{ width: { xs: "100%", lg: 320 }, backgroundColor: "#fff" }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{ alignItems: "center" }}
+                >
+                  <JacoTextInput
+                    placeholder="Поиск по названию"
+                    value={search}
+                    onChange={(event) => setState({ search: event.target.value, page: 0 })}
+                    sx={{ width: { xs: "100%", lg: 320 }, backgroundColor: "#fff" }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                  <Tooltip title="Управление категориями товаров сайта">
+                    <JacoIconButton
+                      aria-label="Управление категориями товаров сайта"
+                      onClick={onManageCategories}
+                    >
+                      <SettingsOutlinedIcon />
+                    </JacoIconButton>
+                  </Tooltip>
+                </Stack>
               </Stack>
 
               <Stack
@@ -369,20 +387,34 @@ export default function SkladSiteItemsCatalog({
                   <Typography sx={{ fontSize: 13, color: textSecondary }}>
                     {groupedRows.length} категорий · {visibleRows.length} товаров
                   </Typography>
-                  <Tooltip title="Управление категориями">
-                    <JacoIconButton
-                      aria-label="Управление категориями товаров сайта"
-                      onClick={onManageCategories}
-                    >
-                      <SettingsOutlinedIcon />
-                    </JacoIconButton>
-                  </Tooltip>
                 </Stack>
               </Stack>
             </Stack>
           </JacoSurface>
 
-          {groupedRows.length ? (
+          {loading ? (
+            <JacoSurface
+              role="status"
+              sx={{ p: 5, textAlign: "center", borderRadius: 2.5 }}
+            >
+              <CircularProgress size={28} />
+              <Typography sx={{ mt: 1, color: textSecondary }}>Загрузка товаров сайта…</Typography>
+            </JacoSurface>
+          ) : error ? (
+            <JacoSurface
+              role="alert"
+              sx={{ p: 5, textAlign: "center", borderRadius: 2.5 }}
+            >
+              <Typography>{error}</Typography>
+              <JacoButton
+                tone="secondary"
+                onClick={() => onRetry()}
+                sx={{ mt: 2 }}
+              >
+                Повторить
+              </JacoButton>
+            </JacoSurface>
+          ) : groupedRows.length ? (
             <Stack spacing={1.25}>
               <Stack
                 direction="row"

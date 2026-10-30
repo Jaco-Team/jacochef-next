@@ -33,6 +33,7 @@ import { JacoSelect } from "@/design-system/shared/ui";
 
 import { SkladEmbeddedImageHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladHistoryChangeSummary from "../history/SkladHistoryChangeSummary";
+import { formatRevisionSavedAt } from "../history/revisionSavedAt.mjs";
 import useSkladApi from "../useSkladApi";
 import { canEditAccess } from "./skladSiteItemsAccess";
 import { resolveSiteItemImageUrl } from "./siteItemImage";
@@ -43,7 +44,6 @@ import {
   compositionTotals,
   formatCompositionNumber,
   formatHistoryDate,
-  formatHistoryTimestamp,
   formatHistoryValue,
   getCompositionRowName,
   historySections,
@@ -611,7 +611,7 @@ export default function SkladSiteItemsHistoryDialog({
                   allowNone={false}
                   options={rows.map((row) => ({
                     id: revisionKey(row),
-                    name: `${formatHistoryTimestamp(row?.changed_at)} · ${formatHistoryDate(row?.effective_date_start)}`,
+                    name: `Действует с ${formatHistoryDate(row?.effective_date_start || row?.date_start)} · время сохранения: ${formatRevisionSavedAt(row)}`,
                   }))}
                 />
               </Box>
@@ -624,7 +624,7 @@ export default function SkladSiteItemsHistoryDialog({
                 >
                   <TableHead>
                     <TableRow>
-                      <TableCell>Сохранено</TableCell>
+                      <TableCell>Время сохранения</TableCell>
                       <TableCell>Автор</TableCell>
                       <TableCell>Действует с</TableCell>
                       <TableCell>Действует по</TableCell>
@@ -648,7 +648,7 @@ export default function SkladSiteItemsHistoryDialog({
                         }}
                         sx={{ cursor: "pointer", "&.Mui-selected": { bgcolor: changedBackground } }}
                       >
-                        <TableCell>{formatHistoryTimestamp(row?.changed_at)}</TableCell>
+                        <TableCell>{formatRevisionSavedAt(row)}</TableCell>
                         <TableCell>{row?.changed_by || "Неизвестно"}</TableCell>
                         <TableCell>{formatHistoryDate(row?.effective_date_start)}</TableCell>
                         <TableCell>{formatHistoryDate(row?.effective_date_end)}</TableCell>

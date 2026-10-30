@@ -631,13 +631,16 @@ test("warehouse pack separators hint and labels preserve unchanged legacy values
   page,
 }, testInfo) => {
   const state = await installSkladMock(page, { access: { ...FULL_ACCESS } });
-  Object.assign(state.warehouseItems[0], { pq: "legacy ; 2||3", max_count_in_m: "" });
+  Object.assign(state.warehouseItems[0], { pq: "legacy#2||3", max_count_in_m: "" });
   await page.goto("/sklad_items/warehouse-items");
   await expandWarehouseGroups(page);
   const row = page.getByRole("row", { name: /E2E_SKLAD_Коробка для пиццы/ }),
     dialog = page.getByRole("dialog");
   const save = dialog.getByRole("button", { name: "Сохранить изменения", exact: true });
   await row.getByRole("button").first().click();
+  await expect(
+    dialog.getByRole("textbox", { name: "Количество в упаковке", exact: true }),
+  ).toHaveValue("legacy; 2||3");
   const max = dialog.getByRole("spinbutton", {
     name: "Максимальное количество веса за последние 30 дней",
     exact: true,
@@ -658,12 +661,12 @@ test("warehouse pack separators hint and labels preserve unchanged legacy values
   await save.click();
   await expect(dialog).toHaveCount(0);
   expect(state.requests.findLast(({ method }) => method === "items/save_edit").data.pq).toBe(
-    "legacy ; 2||3",
+    "legacy#2||3",
   );
   await row.getByRole("button").first().click();
   const pq = dialog.getByRole("textbox", { name: "Количество в упаковке", exact: true });
-  await pq.fill("# 0.5 ; 1 / 2 | 3, 4 # 5 ;");
-  await expect(pq).toHaveValue("# 0.5 ; 1 / 2 | 3, 4 # 5 ;");
+  await pq.fill("0.5; 1; 2; 3; 4; 5");
+  await expect(pq).toHaveValue("0.5; 1; 2; 3; 4; 5");
   const hint = dialog.getByRole("button", {
     name: "Подсказка о количестве в упаковке",
     exact: true,
@@ -671,7 +674,7 @@ test("warehouse pack separators hint and labels preserve unchanged legacy values
   await hint.scrollIntoViewIfNeeded();
   await hint.click();
   await expect(page.getByRole("tooltip")).toHaveText(
-    "Несколько значений можно указать через #, ;, /, | или запятую. Дробные значения — через точку, например 0.5#1.",
+    "Несколько значений разделяйте точкой с запятой. Дробные значения указывайте через точку, например 0.5; 1.",
   );
   await page.screenshot({
     path: testInfo.outputPath("warehouse-pack-hint.png"),

@@ -4,6 +4,8 @@
 
 Связанные документы:
 
+- [Структура данных и источники наполнения](../../../../test-app-site/app/Chef/Sklad/docs/DATA-STRUCTURE.md) — схема сущностей и основа обсуждения рефакторинга
+
 - canonical API contract: `API.md`
 - исходный сырой scope: `TASK.md`
 - план реализации: `PLAN.md`

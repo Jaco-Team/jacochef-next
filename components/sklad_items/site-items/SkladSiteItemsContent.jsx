@@ -16,6 +16,8 @@ export default function SkladSiteItemsContent({
   search,
   archiveMode,
   rows,
+  catalogLoading,
+  catalogError,
   modal,
   detail,
   draft,
@@ -100,6 +102,9 @@ export default function SkladSiteItemsContent({
         search={search}
         archiveMode={archiveMode}
         rows={rows}
+        loading={catalogLoading}
+        error={catalogError}
+        onRetry={loadRows}
         categories={categories}
         isEditable={isEditable}
         canCreate={canCreate}

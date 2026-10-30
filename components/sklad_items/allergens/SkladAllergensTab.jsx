@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
@@ -24,6 +24,7 @@ import {
   JacoTextInput,
 } from "@/design-system/shared/ui";
 import SkladItemNameButton from "../SkladItemNameButton";
+import { sortAllergens } from "./sortAllergens.mjs";
 
 async function request(method, payload = {}) {
   const response = await api_laravel("allergens", method, payload);
@@ -45,6 +46,7 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
   const [loadError, setLoadError] = useState("");
   const alive = useRef(true);
   const requestId = useRef(0);
+  const editedInput = useRef(null);
 
   const load = useCallback(
     async ({ preserveSort = false } = {}) => {
@@ -79,9 +81,23 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
     };
   }, [load, refreshToken]);
 
+  useLayoutEffect(() => {
+    const input = editedInput.current;
+    editedInput.current = null;
+    if (!input?.isConnected) return;
+    if (document.activeElement === document.body) {
+      input.focus({ preventScroll: true });
+    }
+    if (document.activeElement !== input) return;
+    const bounds = input.getBoundingClientRect();
+    if (bounds.top < 0 || bounds.bottom > document.documentElement.clientHeight) {
+      input.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }, [sortDraft]);
+
   const filtered = useMemo(() => {
     const value = search.trim().toLocaleLowerCase("ru");
-    return value
+    const visible = value
       ? rows.filter((row) =>
           [row.name, row.dop_name].some((part) =>
             String(part || "")
@@ -90,7 +106,8 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
           ),
         )
       : rows;
-  }, [rows, search]);
+    return sortAllergens(visible, sortDraft);
+  }, [rows, search, sortDraft]);
 
   const save = async () => {
     if (!modal || busy || allowed !== true) return;
@@ -140,9 +157,10 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
       min={0}
       step={1}
       value={sortDraft[row.id] ?? row.sort ?? ""}
-      onChange={(event) =>
-        setSortDraft((current) => ({ ...current, [row.id]: event.target.value }))
-      }
+      onChange={(event) => {
+        editedInput.current = event.currentTarget;
+        setSortDraft((current) => ({ ...current, [row.id]: event.target.value }));
+      }}
       disabled={busy}
       inputProps={{ "aria-label": `Сортировка: ${row.name}` }}
       sx={{ width: 110 }}

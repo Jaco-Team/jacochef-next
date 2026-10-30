@@ -33,6 +33,7 @@ import { resolveSiteItemImageUrl } from "../site-items/siteItemImage";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { collectVisibleChanges } from "./historyChangeSummary.mjs";
+import { formatRevisionSavedAt } from "./revisionSavedAt.mjs";
 import SkladHistoryChangeSummary from "./SkladHistoryChangeSummary";
 
 function formatValue(value, fallback = "") {
@@ -1341,7 +1342,7 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
             >
               <TableHead>
                 <TableRow>
-                  <TableCell>Сохранено</TableCell>
+                  <TableCell>Время сохранения</TableCell>
                   <TableCell>Автор</TableCell>
                   <TableCell>Действует с</TableCell>
                   <TableCell>Действует по</TableCell>
@@ -1369,7 +1370,7 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
                       }}
                       sx={{ cursor: "pointer" }}
                     >
-                      <TableCell>{formatDate(row?.changed_at, true) || "—"}</TableCell>
+                      <TableCell>{formatRevisionSavedAt(row)}</TableCell>
                       <TableCell>{row?.changed_by || "Неизвестно"}</TableCell>
                       <TableCell>
                         {formatDate(row?.effective_date_start || row?.date_start) || "—"}
@@ -1509,7 +1510,7 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
                   color: "text.secondary",
                 }}
               >
-                {formatDate(selectedRow?.changed_at, true) || "—"} ·{" "}
+                Время сохранения: {formatRevisionSavedAt(selectedRow)} ·{" "}
                 {selectedRow?.changed_by || "Неизвестно"}
               </Typography>
             </Stack>
@@ -1677,7 +1678,7 @@ export function SkladEmbeddedImageHistoryTable({
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={formatDate(row?.changed_at, true) || "—"}
+                    label={`Действует с: ${formatDate(row?.changed_at) || "—"}`}
                   />
                 </Grid>
                 <Grid size={{ xs: 6, md: 4 }}>

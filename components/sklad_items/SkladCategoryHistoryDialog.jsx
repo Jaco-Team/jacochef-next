@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 import { JacoButton, JacoModal } from "@/design-system/shared/ui";
 import HistoryLog from "@/ui/history/HistoryLog";
+import { presentCategoryHistory } from "./history/categoryHistoryPresenter.mjs";
 import useSkladApi from "./useSkladApi";
 
 export default function SkladCategoryHistoryDialog({ category, onClose }) {
@@ -67,7 +68,7 @@ export default function SkladCategoryHistoryDialog({ category, onClose }) {
             События до подключения истории могут отсутствовать.
           </Typography>
           <HistoryLog
-            history={state.rows}
+            history={presentCategoryHistory(state.rows, sourceType)}
             defaultExpanded
           />
         </>

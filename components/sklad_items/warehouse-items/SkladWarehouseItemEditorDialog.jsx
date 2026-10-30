@@ -393,10 +393,11 @@ export default function SkladWarehouseItemEditorDialog({
                   <Grid size={{ xs: 12, md: 3 }}>{field("art", "art", "Код 1С")}</Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
                     {field("pq", "pq", "Количество в упаковке", {
+                      value: String(draft?.pq ?? "").replace(/\s*#\s*/g, "; "),
                       onChange: (event) => set("pq", sanitizePackQuantity(event.target.value)),
                       inputAdornment: (
                         <Tooltip
-                          title="Несколько значений можно указать через #, ;, /, | или запятую. Дробные значения — через точку, например 0.5#1."
+                          title="Несколько значений разделяйте точкой с запятой. Дробные значения указывайте через точку, например 0.5; 1."
                           open={packHintOpen}
                           onOpen={() => setPackHintOpen(true)}
                           onClose={() => setPackHintOpen(false)}

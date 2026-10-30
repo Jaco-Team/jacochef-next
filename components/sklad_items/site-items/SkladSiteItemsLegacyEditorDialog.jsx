@@ -2089,20 +2089,13 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               >
                 {label}
               </Typography>
-              <Typography
-                sx={{
-                  mt: 0.5,
-                  color: textSecondary,
-                  fontSize: 13,
-                  lineHeight: "18px",
-                }}
-              >
-                {disabled
-                  ? "Поле доступно только для просмотра"
-                  : value
-                    ? "Переключатель включен"
-                    : "Нажмите, чтобы включить"}
-              </Typography>
+              {disabled ? (
+                <Typography
+                  sx={{ mt: 0.5, color: textSecondary, fontSize: 13, lineHeight: "18px" }}
+                >
+                  Поле доступно только для просмотра
+                </Typography>
+              ) : null}
             </Box>
           </Box>
         </Paper>
@@ -2537,17 +2530,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                 >
                   {method === "Новое блюдо" ? "Новый товар сайта" : method}
                 </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.75,
-                    maxWidth: 720,
-                    color: textSecondary,
-                    fontSize: 14,
-                    lineHeight: "20px",
-                  }}
-                >
-                  {activeSection.description}
-                </Typography>
               </Box>
               <IconButton
                 onClick={this.onClose.bind(this)}
@@ -2779,7 +2761,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                       {renderSectionCard(
                         "Основные данные",
                         "Карточка блюда",
-                        "Заполните ключевые поля карточки: название, код, категорию и параметры для зала.",
+                        null,
                         <Grid
                           container
                           spacing={2.5}
@@ -2953,7 +2935,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                         ? renderSectionCard(
                             "Порция",
                             "Размер и выход порции",
-                            "Поля используются для базовых параметров блюда и отображения в карточке.",
+                            null,
                             <Grid
                               container
                               spacing={2.5}
@@ -3112,7 +3094,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                         ? renderSectionCard(
                             "Описание",
                             "Тексты для карточки",
-                            "Соберите текстовую часть блюда: состав, полное описание и короткий анонс для списка.",
+                            null,
                             <Grid
                               container
                               spacing={2.5}
@@ -3178,7 +3160,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                         ? renderSectionCard(
                             "Теги",
                             "Подборка тегов",
-                            "Теги помогают быстрее находить блюдо и формировать тематические подборки.",
+                            null,
                             <Grid
                               container
                               spacing={2.5}
@@ -3207,7 +3189,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                         ? renderSectionCard(
                             "Промо-маркеры",
                             "Визуальные акценты",
-                            "Настройте ярлыки, которые будут выделять блюдо на витрине и в подборках.",
+                            null,
                             <Grid
                               container
                               spacing={2}
@@ -3287,7 +3269,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                         ? renderSectionCard(
                             "Активность",
                             "Публикация и продажи",
-                            "Определите, где блюдо доступно и должно ли участвовать в сценариях показа и продаж.",
+                            null,
                             <Grid
                               container
                               spacing={2}
@@ -3438,7 +3420,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                           ? renderSectionCard(
                               "Заготовки",
                               "Состав технологической карты",
-                              "Добавляйте заготовки, управляйте потерями и перемещайте их по этапам.",
+                              null,
                               <Box sx={tableWrapperSx}>
                                 <Table sx={tableSx}>
                                   <TableHead>
@@ -3556,7 +3538,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                           ? renderSectionCard(
                               "Позиции",
                               "Финальные товары",
-                              "Управляйте позициями, которые формируют итоговый состав блюда.",
+                              null,
                               <Box sx={tableWrapperSx}>
                                 <Table sx={positionTableSx}>
                                   <TableHead>
