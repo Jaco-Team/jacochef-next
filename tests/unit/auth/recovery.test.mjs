@@ -148,7 +148,7 @@ test("recovery defaults to SMS and rejects invalid phones without an API request
 });
 
 for (const channel of ["sms", "telegram", "voice"]) {
-  test(`recovery and resend retain ${channel} and the neutral API message`, async () => {
+  test(`recovery and resend retain ${channel} and the queued-request message`, async () => {
     const page = harness();
     await page.recovery();
     await page.invoke("onChannelChange", channel);
@@ -159,11 +159,77 @@ for (const channel of ["sms", "telegram", "voice"]) {
       options: { throwErrors: true },
     });
     assert.equal(page.props().step, "code");
-    assert.match(page.props().recoveryMessage, /Если номер зарегистрирован/);
+    assert.equal(page.props().recoveryMessage, "Запрос на отправку кода принят. Дождитесь сообщения.");
     await page.invoke("onResend");
     assert.equal(page.requests[1].data.delivery_channel, channel);
   });
 }
+
+const accountNotFoundMessage = "Аккаунт с таким номером не найден. Проверьте номер телефона — можно вводить через +7 или 8.";
+
+test("a missing account stays on phone entry and exposes the server message beside the number", async () => {
+  const page = harness({ response: () => ({ data: { st: false, error_code: "account_not_found", text: accountNotFoundMessage } }) });
+  await page.recovery("+7 (999) 123-45-67");
+  await page.invoke("onChannelChange", "telegram");
+  await page.submit();
+  assert.equal(page.props().step, "request");
+  assert.equal(page.props().phone, "+7 (999) 123-45-67");
+  assert.equal(page.props().channel, "telegram");
+  assert.equal(page.props().phoneError, true);
+  assert.equal(page.props().phoneErrorText, accountNotFoundMessage);
+  assert.equal(page.props().recoveryMessage, "");
+  assert.equal(page.props().resendAfter, 0);
+  assert.equal(page.sessions.length, 0);
+  await page.phone("8 (999) 765-43-21");
+  assert.equal(page.props().phoneError, false);
+  assert.equal(page.props().error, "");
+});
+
+test("a missing account discovered on resend returns to phone entry and clears stale recovery data", async () => {
+  let calls = 0;
+  const page = harness({ response: () => ({ data: ++calls === 1 ? { st: true, text: "Запрос на отправку кода принят. Дождитесь сообщения." } : { st: false, error_code: "account_not_found", text: accountNotFoundMessage } }) });
+  await page.recovery();
+  await page.submit();
+  await page.invoke("onCodeChange", "123456");
+  await page.submit();
+  await page.invoke("onPasswordChange", "Password123");
+  await page.invoke("onRepeatedPasswordChange", "Password123");
+  await page.invoke("onBack");
+  await page.invoke("onResend");
+  assert.equal(page.props().step, "request");
+  assert.equal(page.props().phone, "89879340391");
+  assert.equal(page.props().code, "");
+  assert.equal(page.props().password, "");
+  assert.equal(page.props().repeatedPassword, "");
+  assert.equal(page.props().recoveryMessage, "");
+  assert.equal(page.props().phoneErrorText, accountNotFoundMessage);
+  assert.equal(page.props().resendAfter, 0);
+});
+
+test("HTTP account-not-found errors show the same phone feedback while preserving rate limiting", async () => {
+  const page = harness({ response: () => { throw { response: { status: 404, headers: {}, data: { data: { st: false, error_code: "account_not_found", text: accountNotFoundMessage, retry_after: 90 } } } }; } });
+  await page.recovery();
+  await page.submit();
+  assert.equal(page.props().step, "request");
+  assert.equal(page.props().phoneErrorText, accountNotFoundMessage);
+  assert.equal(page.props().retryAfter, 90);
+  await page.phone("89997654321");
+  await page.submit();
+  assert.equal(page.requests.length, 1);
+  assert.equal(page.props().retryAfter, 90);
+});
+
+test("delivery failures and malformed request responses do not advance to code entry", async () => {
+  for (const payload of [{}, { st: false, error_code: "delivery_failed", text: "Не удалось отправить код. Попробуйте позже." }]) {
+    const page = harness({ response: () => ({ data: payload }) });
+    await page.recovery();
+    await page.submit();
+    assert.equal(page.props().step, "request");
+    assert.equal(page.props().phoneError, false);
+    assert.equal(page.props().error, payload.text || "Не удалось запросить код. Попробуйте позже.");
+    assert.equal(page.props().recoveryMessage, "");
+  }
+});
 
 for (const [phone, login] of [["8 (987) 934-03-91", "89879340391"], ["+7 (987) 934-03-91", "+79879340391"], ["7 987 934 03 91", "+79879340391"], ["9879340391", "+79879340391"]]) {
   test(`masked phone ${phone} preserves the exact expected API login prefix`, async () => {
@@ -375,6 +441,11 @@ test("shared recovery reuses the delivery switch and keeps clean phone fields wi
     assert.equal(helper.props.role, "alert");
     assert.deepEqual(helper.props.children, ["Введите номер в формате +7 или 8"]);
   }
+  const accountError = findPhone(View({ step: "request", phoneError: true, phoneErrorText: accountNotFoundMessage, error: accountNotFoundMessage }));
+  assert.deepEqual(accountError.children.find(Boolean).props.children, [accountNotFoundMessage]);
+  const codeView = JSON.stringify(View({ step: "code", phone: "+79991234567" }));
+  assert.match(codeView, /Код подтверждения для номера/);
+  assert.doesNotMatch(codeView, /Код отправлен на/);
   const findSwitch = (node) => {
     if (!node || typeof node !== "object") return undefined;
     if (node.type === "JacoPeriodSwitch") return node.props;

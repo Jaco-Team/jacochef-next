@@ -22,13 +22,14 @@ export function RecoveryFrame({ step = "request", channel = "sms", error = "", p
         ssoStarting={ssoStarting}
         onSsoLogin={() => {}}
         phoneError={step === "request" && Boolean(error)}
+        phoneErrorText={error}
         onPhoneChange={change("phone")}
         onChannelChange={change("channel")}
         onCodeChange={change("code")}
         onPasswordChange={change("password")}
         onRepeatedPasswordChange={change("repeatedPassword")}
         resendAfter={step === "code" ? 59 : 0}
-        recoveryMessage={step === "code" ? "Если номер зарегистрирован, код подтверждения будет отправлен." : ""}
+        recoveryMessage={step === "code" ? "Запрос на отправку кода принят. Дождитесь сообщения." : ""}
         onSubmit={(event) => event.preventDefault()}
         onBack={() => {}}
         onLogin={() => {}}
@@ -67,6 +68,8 @@ export function RecoveryGallery() {
 
 export const Default = () => <RecoveryFrame />;
 export const Error = () => <RecoveryFrame phone="8 (123) 456-78-90" error="Введите номер в формате +7 или 8" />;
+export const AccountNotFound = () => <RecoveryFrame phone="8 (999) 123-45-67" error="Аккаунт с таким номером не найден. Проверьте номер телефона — можно вводить через +7 или 8." />;
+export const AccountNotFoundMobile = () => <RecoveryFrame mobile phone="8 (999) 123-45-67" error="Аккаунт с таким номером не найден. Проверьте номер телефона — можно вводить через +7 или 8." />;
 export const Telegram = () => <RecoveryFrame channel="telegram" phone="8 (987) 934-03-91" />;
 export const Code = () => <RecoveryFrame step="code" phone="8 (987) 934-03-91" />;
 export const Password = () => <RecoveryFrame step="password" />;
