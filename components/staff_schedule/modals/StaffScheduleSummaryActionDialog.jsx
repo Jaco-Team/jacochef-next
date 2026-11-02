@@ -12,15 +12,34 @@ import {
 } from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "./StaffScheduleResponsiveModal";
 import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
+import { filterPayoutHistoryByMode, hasPayoutHistory } from "../staffSchedulePayoutHistory.mjs";
+import StaffSchedulePayoutHistoryList, { usePayoutHistory } from "./StaffSchedulePayoutHistoryList";
 
 function buildInitialValue(modal) {
   return modal?.data?.value ?? "";
 }
 
-export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSave }) {
+export default function StaffScheduleSummaryActionDialog({
+  modal,
+  onClose,
+  onSave,
+  loadPayoutHistory,
+}) {
   const [value, setValue] = useState(() => buildInitialValue(modal));
   const [saveError, setSaveError] = useState("");
   const { confirm, ConfirmDialog } = useJacoConfirm();
+  const withHistory = modal.open && hasPayoutHistory(modal?.mode) && Boolean(loadPayoutHistory);
+
+  const history = usePayoutHistory({
+    enabled: withHistory,
+    request: modal.request,
+    load: loadPayoutHistory,
+    reloadKey: modal.request,
+  });
+  const ownHistory = useMemo(
+    () => (history.status === "ready" ? { ...history, rows: filterPayoutHistoryByMode(history.rows, modal?.mode) } : history),
+    [history, modal?.mode],
+  );
 
   useEffect(() => {
     if (!modal.open) {
@@ -256,6 +275,12 @@ export default function StaffScheduleSummaryActionDialog({ modal, onClose, onSav
               ) : null}
             </Stack>
           )}
+
+          <StaffSchedulePayoutHistoryList
+            state={ownHistory}
+            title="История изменений за период"
+            emptyText="Изменений за период ещё не было"
+          />
         </Stack>
       </StaffScheduleResponsiveModal>
       <ConfirmDialog />

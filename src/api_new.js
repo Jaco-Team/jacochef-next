@@ -1,5 +1,6 @@
 import queryString from "query-string";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const PROD_API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api"
@@ -49,6 +50,28 @@ export function createLegacyToken(login, userId) {
   }
 
   return window.btoa(`${login}-_-${userId}`);
+}
+
+export function storeAuthSession(payload, login) {
+  storeAuthToken(payload?.token);
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const legacyToken = payload?.legacy_token || createLegacyToken(login, payload?.user_id);
+  if (legacyToken) {
+    localStorage.setItem("token", legacyToken);
+    Cookies.set("token", legacyToken, {
+      expires: 60,
+      sameSite: "lax",
+      secure: window.location.protocol === "https:",
+    });
+  }
+
+  if (payload?.expires_at) {
+    localStorage.setItem("auth_expires_at", payload.expires_at);
+  }
 }
 
 export function getAuthHeaders(headers = {}) {
@@ -235,6 +258,32 @@ export function sanctum(dop_type = {}) {
 
 export function sanctum_local(dop_type = {}) {
   return requestSanctum(LOCAL_API_BASE_URL, dop_type);
+}
+
+export function getSsoConfig() {
+  return axios.get(`${PROD_API_BASE_URL}/auth/sso/config`, {
+    timeout: 15000,
+    withCredentials: isSameOriginApi(PROD_API_BASE_URL),
+    withXSRFToken: false,
+  }).then((response) => response.data);
+}
+
+export function getTrustedSsoLoginUrl(value) {
+  if (typeof value !== "string" || !value) return "";
+  try {
+    const apiUrl = new URL(PROD_API_BASE_URL, typeof window !== "undefined" ? window.location.origin : undefined);
+    if (!["https:", "http:"].includes(apiUrl.protocol) || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) return "";
+    const expected = new URL(apiUrl.href);
+    expected.pathname = `${apiUrl.pathname.replace(/\/api\/?$/i, "").replace(/\/$/, "")}/auth/sso/login`;
+    // Production proxies API requests on the frontend host, but SSO uses its fixed backend host.
+    if (PROD_API_BASE_URL === "https://jacosoft-dop.ru/api") {
+      expected.href = "https://apichef2.jacochef.ru/auth/sso/login";
+    }
+    const target = new URL(value);
+    return target.href === expected.href && !target.username && !target.password ? expected.href : "";
+  } catch {
+    return "";
+  }
 }
 
 export function api_laravel(module = "", method = "", data = {}, dop_type = {}) {

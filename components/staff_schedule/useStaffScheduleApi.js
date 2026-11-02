@@ -54,13 +54,13 @@ export default function useStaffScheduleApi() {
       saveFastTimeArrMounth: (payload) => request("save_fastTime_arr_mounth", payload),
       saveFastTimeArrTwoWeek: (payload) => request("save_fastTime_arr_two_week", payload),
       saveUserPriceH: (payload) => request("save_userPriceH", payload),
-      saveDirLv: (payload) => request("save_dir_lv", payload),
       saveDopBonus: (payload) => request("save_dop_bonus", payload),
       saveDopBonusUser: (payload) => request("save_dop_bonus_user", payload),
       deleteDopBonusUser: (payload) => request("del_dop_bonus_user", payload),
       saveUserGivePrice: (payload) => request("save_user_give_price", payload),
       saveUserGiveCartPrice: (payload) => request("save_user_give_cart_price", payload),
       saveUserWithheld: (payload) => request("save_user_withheld", payload),
+      getPayoutHistory: (payload) => request("get_payout_history", payload),
       saveDirBonus: (payload) => request("save_dirBonus", payload),
       getMyErrOrder: (payload) => request("get_my_err_order", payload),
       getMyErrCam: (payload) => request("get_my_err_cam", payload),
@@ -68,6 +68,10 @@ export default function useStaffScheduleApi() {
       saveFakeCam: (payload) => request("save_fake_cam", payload),
       downloadWS: (payload) => request("downloadWS", payload),
       downloadHJ: (payload) => request("downloadHJ", payload),
+      getRates: () => request("get_rates"),
+      getRatesPoint: (payload) => request("get_rates_point", payload),
+      saveRates: (payload) => request("save_rates", payload),
+      deleteRatesHistory: (payload) => request("delete_rates_history", payload),
     };
   }, []);
 }

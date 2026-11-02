@@ -2,6 +2,8 @@ import HealthAndSafetyOutlinedIcon from "@mui/icons-material/HealthAndSafetyOutl
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
+import Link from "next/link";
 import Grid from "@mui/material/Grid";
 import { Box } from "@mui/material";
 import {
@@ -30,6 +32,8 @@ const secondaryActionButtonSx = {
 
 const shiftSelectWidth = { xs: "100%", md: 240 };
 
+export const STAFF_SCHEDULE_RATES_HREF = "/staff_schedule/rates";
+
 function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
   return (
     <Box
@@ -48,6 +52,18 @@ function DesktopHeaderActions({ page, canExportWorkSchedule, softActionSx }) {
       >
         Обновить
       </JacoButton>
+
+      {page.canOpenRates ? (
+        <JacoIconButton
+          component={Link}
+          href={STAFF_SCHEDULE_RATES_HREF}
+          aria-label="Ставки и коэффициенты"
+          title="Ставки и коэффициенты"
+          sx={softActionSx}
+        >
+          <PaymentsOutlinedIcon fontSize="small" />
+        </JacoIconButton>
+      ) : null}
 
       {canExportWorkSchedule ? (
         <>
@@ -91,7 +107,22 @@ function MobileHeaderActions({ page, canExportHealthJournal }) {
         </Grid>
       ) : null}
 
-      <Grid size={canExportHealthJournal ? { xs: 12, sm: 6 } : 12}>
+      {page.canOpenRates ? (
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <JacoButton
+            fullWidth
+            tone="secondary"
+            component={Link}
+            href={STAFF_SCHEDULE_RATES_HREF}
+            startIcon={<PaymentsOutlinedIcon />}
+            sx={secondaryActionButtonSx}
+          >
+            Ставки
+          </JacoButton>
+        </Grid>
+      ) : null}
+
+      <Grid size={canExportHealthJournal || page.canOpenRates ? { xs: 12, sm: 6 } : 12}>
         <JacoButton
           fullWidth
           startIcon={<RefreshIcon />}

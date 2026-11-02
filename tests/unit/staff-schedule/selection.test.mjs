@@ -83,10 +83,14 @@ test("desktop and mobile highlighting and financial visibility depend on focus, 
     ),
     "utf8",
   );
-  assert.match(desktop, /const isFullRowHighlighted = isFocused;/);
   assert.doesNotMatch(desktop, /setHoverMode\("row"\)/);
-  assert.match(mobile, /const rowSurfaceColor = isFocused\s*\?/);
-  assert.match(mobile, /const employeeCellColor = isFocused \?/);
+  // Выбранная строка серая, но цвета дней и отметки сотрудника не перекрываются; рамок нет.
+  for (const source of [desktop, mobile]) {
+    assert.match(source, /const rowSurfaceColor = isFocused\s*\?\s*uiTableColors\.rowSelected/);
+    assert.match(source, /isFocused && baseColors\.backgroundColor === "#ffffff"/);
+    assert.doesNotMatch(source, /inset 0 0 0 2px \$\{uiColors\.primary\}/);
+  }
+  assert.doesNotMatch(mobile, /!row\?\.color && !isFocused/);
   for (const source of [desktop, mobile]) {
     assert.match(source, /const isFinancialBlurred = blurFinancials && !isFocused;/);
     assert.match(source, /selectedRowIds\.includes\(focusKey\)/);
@@ -209,7 +213,7 @@ test("finance, month and export entry/save handlers recheck rights without calle
   assert.match(exportHook, /generation !== exportGeneration\.current/);
   assert.doesNotMatch(desktop, /graphKind !== "other"/);
   assert.doesNotMatch(desktop, /!isDriver/);
-  assert.match(desktop, /const canOpenDirectorLevel = canEdit\("director_level"\)/);
+  assert.doesNotMatch(desktop, /director_level|Уровень директора/);
 });
 
 test("revoking finance reads closes cached financial modals and invalidates pending day/month reads", () => {
@@ -227,7 +231,7 @@ test("revoking finance reads closes cached financial modals and invalidates pend
   );
   assert.match(
     page,
-    /if \(summaryActionRef\.current\.mode !== "dir_lv"\) summaryActionState\.close\(\)/,
+    /monthModalState\.close\(\);\s*summaryActionState\.close\(\);/,
   );
   assert.match(page, /generation !== dayRequestGeneration\.current/);
   assert.match(page, /generation !== monthRequestGeneration\.current/);

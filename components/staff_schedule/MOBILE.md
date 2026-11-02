@@ -8,7 +8,7 @@
 
 ## Source Of Truth
 
-- `doc/layout/mobile/staff_schedule.md`
+- `MOBILE_FIGMA_NOTES.md`
 - mobile screenshots provided during the current task
 - legacy mobile sheet pattern already used in older modules
 

@@ -86,8 +86,8 @@ test("keeps the compact holiday stripes continuous between day cells", async ({ 
 test("centers color swatches against the complete legend item", async ({ page }) => {
   await page.goto(colorLegendStoryUrl);
 
-  const item = page.getByTestId("color-legend-item-7");
-  const swatch = page.getByTestId("color-legend-swatch-7");
+  const item = page.getByTestId("color-legend-item-0-2");
+  const swatch = page.getByTestId("color-legend-swatch-0-2");
   const itemBox = await item.boundingBox();
   const swatchBox = await swatch.boundingBox();
 

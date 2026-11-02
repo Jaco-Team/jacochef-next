@@ -10,6 +10,7 @@ export { default as JacoIconButton } from "./JacoIconButton";
 export { default as JacoModal } from "./JacoModal";
 export { default as JacoPeriodSwitch } from "./JacoPeriodSwitch";
 export { default as JacoResponsiveModalShell } from "./JacoResponsiveModalShell";
+export { default as JacoRadioCard } from "./JacoRadioCard";
 export { default as JacoSelectableList } from "./JacoSelectableList";
 export { default as JacoSelectableListItem } from "./JacoSelectableListItem";
 export { default as JacoSegmentedTabs } from "./JacoSegmentedTabs";

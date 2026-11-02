@@ -272,7 +272,7 @@ export function BannerModal({
             }}
           >
             <MyAutocomplite
-              label="Позиции (вместо промика)"
+              label="Позиции"
               multiple={true}
               disabled={!canEdit("banners")}
               data={itemOptions}
@@ -288,7 +288,7 @@ export function BannerModal({
             }}
           >
             <MyAutocomplite
-              label="Промокод (вместо позиций)"
+              label="Промокод"
               multiple={false}
               disabled={!canEdit("banners")}
               data={promos || null}
