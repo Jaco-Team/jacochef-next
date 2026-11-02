@@ -125,10 +125,10 @@ export function canEditStaffScheduleBonus({ row, canEdit, selectedPart }) {
 }
 
 export function hasAlternativeStaffScheduleRate(row = {}) {
-  const currentRate = String(row?.price_p_h ?? "");
+  const currentRate = Number(row?.price_p_h ?? "");
 
   return (
-    Array.isArray(row?.price_arr) && row.price_arr.some((option) => String(option) !== currentRate)
+    Array.isArray(row?.price_arr) && row.price_arr.some((option) => Number(option) !== currentRate)
   );
 }
 

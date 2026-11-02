@@ -104,24 +104,39 @@ export function getSummaryCellValue(column, row = {}) {
     return computePremiumSheet(row);
   }
 
-  return row?.[column.key] ?? "";
+  const value = row?.[column.key] ?? "";
+  return WHOLE_RUBLE_KEYS.has(column.key) ? toWholeRubles(value) : dropZeroFraction(value);
+}
+
+/** Ставка и выплаты считаются в целых рублях: копейки из БД («300.00») не показываем. */
+export const WHOLE_RUBLE_KEYS = new Set(["price_p_h", "given", "given_cart", "withheld"]);
+
+export function toWholeRubles(value) {
+  if (value === null || value === undefined || value === "") {
+    return value ?? "";
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? String(Math.round(number)) : value;
+}
+
+function dropZeroFraction(value) {
+  return typeof value === "string" && /^-?\d+\.0+$/.test(value) ? value.replace(/\.0+$/, "") : value;
+}
+
+/** Должность всегда полным названием; короткое — только если полного нет в ответе. */
+export function getPositionName(row) {
+  return row?.full_app_name || row?.app_name || "";
 }
 
 /**
- * Сумма за день в узкой ячейке: от тысячи — в тысячах с одним знаком («53,8к»), иначе целым числом.
+ * Сумма за день в ячейке: целые рубли с разделителем разрядов, без знака валюты («53 790»).
  */
-export function formatCompactAmount(value) {
+export function formatDayAmount(value) {
   if (value === null || value === undefined || value === "") {
     return "";
   }
   const number = Number(value);
-  if (!Number.isFinite(number)) {
-    return String(value);
-  }
-  if (Math.abs(number) < 1000) {
-    return String(Math.round(number));
-  }
-  return `${(number / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })}к`;
+  return Number.isFinite(number) ? Math.round(number).toLocaleString("ru-RU") : String(value);
 }
 
 export function formatFullAmount(value) {

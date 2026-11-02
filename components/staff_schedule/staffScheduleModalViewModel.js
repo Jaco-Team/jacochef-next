@@ -4,6 +4,7 @@ import {
   computeTotalSum,
   createStaffSchedulePolicy,
   toArray,
+  getPositionName,
 } from "./staffScheduleHelpers.js";
 import { STAFF_SCHEDULE_HOUR_PRESETS, getHourPresetByType } from "./staffScheduleHourPresets.js";
 import {
@@ -33,7 +34,7 @@ export function buildSummaryActionHeaderData(row, mode, periodLabel) {
   return {
     columnLabel: PERSONAL_FINANCE_COLUMN_LABELS[mode] || "",
     personName: row?.user_name || "",
-    positionName: row?.full_app_name || row?.app_name || "",
+    positionName: getPositionName(row),
     periodLabel: periodLabel || "",
   };
 }
@@ -95,9 +96,9 @@ export function buildDayModalViewModel(response, context = {}) {
 
   return {
     title: user?.user_name || "Сведения о сотруднике",
-    subtitle: user?.app_name || "",
+    subtitle: getPositionName(user),
     personName: user?.user_name || "",
-    positionName: user?.app_name || "",
+    positionName: getPositionName(user),
     dateLabel: info?.date || formatDateLabel(info?.date),
     date: info?.date || "",
     isPastPeriod: isClosedDayHalfPeriod(info?.date, context?.referenceDate),
@@ -168,10 +169,10 @@ export function buildMonthModalViewModel(response, context = {}) {
   const canViewFinance = (key) => policy.canShowSalaryBlock && policy.canView(key);
 
   return {
-    title: [source?.app_name, source?.user_name].filter(Boolean).join(" "),
+    title: [getPositionName(source), source?.user_name].filter(Boolean).join(" "),
     subtitle: info?.date ? formatDateLabel(info.date) : "",
     personName: source?.user_name || "",
-    positionName: source?.app_name || "",
+    positionName: getPositionName(source),
     newApp: info?.new_app ?? "",
     mentorId: info?.mentor_id ?? "",
     otherApps: toArray(response?.other_app).map((item) => ({

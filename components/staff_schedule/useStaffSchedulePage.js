@@ -11,6 +11,7 @@ import {
   getSummaryCellValue,
   isNegativeBalanceValue,
   toArray,
+  toWholeRubles,
 } from "./staffScheduleHelpers";
 import {
   buildGraphState,
@@ -852,10 +853,10 @@ export default function useStaffSchedulePage() {
           return;
         }
 
-        const currentRate = String(row?.price_p_h ?? "");
+        const currentRate = String(toWholeRubles(row?.price_p_h ?? ""));
         const options = toArray(row?.price_arr)
-          .filter((item) => String(item) !== currentRate)
-          .map((item) => ({ id: item, name: String(item) }));
+          .filter((item) => String(toWholeRubles(item)) !== currentRate)
+          .map((item) => ({ id: item, name: String(toWholeRubles(item)) }));
 
         if (!options.length) {
           return;
@@ -872,7 +873,7 @@ export default function useStaffSchedulePage() {
           },
           data: {
             ...buildSummaryActionHeaderData(row, key, monthId),
-            value: row?.price_p_h ?? "",
+            value: toWholeRubles(row?.price_p_h ?? ""),
             options,
           },
         });
@@ -891,9 +892,11 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Выданная сумма",
-            value: Object.prototype.hasOwnProperty.call(row, "given_cash")
-              ? (row.given_cash ?? "")
-              : (row?.given ?? ""),
+            value: toWholeRubles(
+              Object.prototype.hasOwnProperty.call(row, "given_cash")
+                ? (row.given_cash ?? "")
+                : (row?.given ?? ""),
+            ),
             fullAmount: getAvailablePayoutAmount(row, accessRef.current, "given"),
           },
         });
@@ -912,7 +915,7 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Выданная сумма",
-            value: row?.given_cart ?? "",
+            value: toWholeRubles(row?.given_cart ?? ""),
             fullAmount: getAvailablePayoutAmount(row, accessRef.current, "given_cart"),
           },
         });
@@ -931,7 +934,7 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Удержанная сумма",
-            value: row?.withheld ?? "",
+            value: toWholeRubles(row?.withheld ?? ""),
           },
         });
         return;

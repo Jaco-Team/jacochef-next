@@ -29,12 +29,13 @@ import {
   formatEmployeeCount,
   getRowBaseColor,
   getScheduleRowFocusKey,
-  formatCompactAmount,
+  formatDayAmount,
   getSamePersonTint,
   getSamePersonTitle,
   getSummaryCellValue,
   isNegativeBalanceValue,
   toArray,
+  getPositionName,
 } from "../staffScheduleHelpers";
 import {
   getHolidayStripeSx,
@@ -309,7 +310,7 @@ function MobileScheduleRow({
           }}
           noWrap
         >
-          {data?.app_name || "—"}
+          {getPositionName(data) || "—"}
         </Typography>
       </TableCell>
 
@@ -818,8 +819,9 @@ function MobileSummaryCard({
                 justifyContent: "center",
                 px: 0.25,
                 py: 1,
-                fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
-                color: options.textColor || "#5E5E5E",
+                fontSize: options.compactValues ? 15 : MOBILE_MIN_FONT_SIZE,
+                fontWeight: options.compactValues ? 700 : undefined,
+                color: options.compactValues ? "#000000" : options.textColor || "#5E5E5E",
                 whiteSpace: options.compactValues ? "nowrap" : "normal",
               }}
             >
@@ -850,8 +852,9 @@ function MobileSummaryCard({
             justifyContent: "center",
             px: 0.5,
             py: 1,
-            fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
-            color: options.textColor || "#5E5E5E",
+            fontSize: options.compactValues ? 15 : MOBILE_MIN_FONT_SIZE,
+            fontWeight: options.compactValues ? 700 : undefined,
+            color: options.compactValues ? "#000000" : options.textColor || "#5E5E5E",
             cursor: !options.blurValues && onSummaryCellClick ? "pointer" : "default",
           }}
         >
@@ -1006,9 +1009,9 @@ function MobileSummaryCard({
 
           {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length)
             ? renderMetricRow(
-                "Сумма за период",
+                "Сумма за период, ₽",
                 bonusDayValues,
-                (item) => formatCompactAmount(item?.res),
+                (item) => formatDayAmount(item?.res),
                 (column) => {
                   if (column.key === "dop_bonus" && canEditTeamBonus) {
                     if (!periodBonusState) {

@@ -38,7 +38,7 @@ export const STAFF_SCHEDULE_ACCESS_RULES = [
   { key: "full_month", label: "Расстановка часов на месяц", area: "График", status: "useful" },
   {
     key: "history_year",
-    label: "Графики за последний год (только просмотр)",
+    label: "Графики за прошлые годы (только просмотр)",
     area: "График",
     status: "useful",
   },

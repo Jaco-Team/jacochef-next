@@ -8,7 +8,7 @@ import { getVisibleSummaryColumns } from "../../../components/staff_schedule/sta
 const PERMISSION_LABELS = {
   full_month: "Расстановка часов на месяц",
   create_edit_smena: "Новая смена / Редактирование смены",
-  history_year: "Графики за последний год (только просмотр)",
+  history_year: "Графики за прошлые годы (только просмотр)",
   fast_hours: "Часы",
   fast_smena: "Смена",
   fast_point: "Сменить кафе",

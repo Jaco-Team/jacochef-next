@@ -51,18 +51,28 @@ test("worked hours column is first, public and formatted in hours", async () => 
   assert.equal(getSummaryCellValue(WORKED_HOURS_COLUMN, {}), "");
 });
 
-test("period sum fits a narrow day cell and keeps the full amount for the tooltip", async () => {
-  const { formatCompactAmount, formatFullAmount } = await import(
+test("period sum shows whole rubles in full; rates and payouts drop kopecks; positions are full", async () => {
+  const { formatDayAmount, formatFullAmount, getSummaryCellValue, toWholeRubles, getPositionName } = await import(
     "../../../components/staff_schedule/staffScheduleHelpers.js"
   );
-  assert.equal(formatCompactAmount(53789.6), "53,8к");
-  assert.equal(formatCompactAmount(62694.8), "62,7к");
-  assert.equal(formatCompactAmount(1000), "1к");
-  assert.equal(formatCompactAmount(999.6), "1000");
-  assert.equal(formatCompactAmount(-1500), "-1,5к");
-  assert.equal(formatCompactAmount(""), "");
-  assert.equal(formatFullAmount(53789.6).replace(/\s/g, " "), "53 790 ₽");
+  const plain = (value) => value.replace(/\s/g, " ");
+  assert.equal(plain(formatDayAmount(53789.6)), "53 790");
+  assert.equal(plain(formatDayAmount(-4600)), "-4 600");
+  assert.equal(formatDayAmount(999.4), "999");
+  assert.equal(formatDayAmount(""), "");
+  assert.equal(plain(formatFullAmount(53789.6)), "53 790 ₽");
   assert.equal(formatFullAmount(""), "");
+
+  for (const key of ["price_p_h", "given", "given_cart", "withheld"]) {
+    assert.equal(getSummaryCellValue({ key }, { [key]: "44794.00" }), "44794");
+  }
+  assert.equal(getSummaryCellValue({ key: "dop_bonus" }, { dop_bonus: "320.00" }), "320");
+  assert.equal(getSummaryCellValue({ key: "dop_bonus" }, { dop_bonus: "320.50" }), "320.50");
+  assert.equal(toWholeRubles("300.00"), "300");
+  assert.equal(toWholeRubles(""), "");
+
+  assert.equal(getPositionName({ app_name: "Рег. упр.", full_app_name: "Региональный управляющий" }), "Региональный управляющий");
+  assert.equal(getPositionName({ app_name: "Повар" }), "Повар");
 });
 
 test("rows of one person get the same subtle tint and a tooltip with the other rows", async () => {
