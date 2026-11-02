@@ -103,7 +103,6 @@ export default function SkladSiteItemsCatalog({
   canSyncSiteItemsVk,
   canManageTags,
   canDeleteAction,
-  canEditActivity,
   canEditCash,
   canEditSort,
   canViewHistory,
@@ -522,7 +521,7 @@ export default function SkladSiteItemsCatalog({
                       ) : null}
                     </Box>
                     <AccordionDetails
-                      sx={{ px: 0, pt: 0, pb: 2, backgroundColor: blockBackground }}
+                      sx={{ px: 0, pt: 1, pb: 2, backgroundColor: blockBackground }}
                     >
                       <TableContainer
                         component={JacoSurface}
@@ -531,8 +530,8 @@ export default function SkladSiteItemsCatalog({
                         tabIndex={0}
                         sx={{
                           display: { xs: "none", md: "block" },
-                          mx: 2,
-                          width: "calc(100% - 32px)",
+                          mx: 1,
+                          width: "calc(100% - 16px)",
                           borderRadius: 2.5,
                           border: `1px solid ${blockBorder}`,
                           overflowX: "auto",
@@ -554,7 +553,6 @@ export default function SkladSiteItemsCatalog({
                               }}
                             >
                               <TableCell sx={{ width: "40px" }}>№</TableCell>
-                              <TableCell sx={{ width: "70px" }}>Активность</TableCell>
                               <TableCell sx={{ width: "70px" }}>Касса</TableCell>
                               <TableCell sx={{ minWidth: "110px" }}>
                                 <TableSortLabel {...sortProps("sort")}>Сортировка</TableSortLabel>
@@ -592,14 +590,6 @@ export default function SkladSiteItemsCatalog({
                                 hover
                               >
                                 <TableCell>{index + 1}</TableCell>
-                                <TableCell align="center">
-                                  <JacoCheckbox
-                                    inputProps={{ "aria-label": `Активность: ${row.name}` }}
-                                    checked={Number(row?.is_show) === 1}
-                                    disabled={!canEditActivity}
-                                    onChange={quickCheck(row, "is_show")}
-                                  />
-                                </TableCell>
                                 <TableCell align="center">
                                   <JacoCheckbox
                                     inputProps={{ "aria-label": `Касса: ${row.name}` }}
@@ -739,33 +729,28 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1,
                                 }}
                               >
-                                {[
-                                  ["Активность", "is_show", canEditActivity],
-                                  ["Касса", "show_program", canEditCash],
-                                ].map(([label, field, canEditField]) => (
-                                  <Box
-                                    key={field}
-                                    sx={{
-                                      flex: "1 1 130px",
-                                      px: 1.25,
-                                      py: 0.75,
-                                      border: `1px solid ${blockBorder}`,
-                                      borderRadius: 2,
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "space-between",
-                                    }}
-                                  >
-                                    <Typography sx={{ fontSize: 13, color: textSecondary }}>
-                                      {label}
-                                    </Typography>
-                                    <JacoCheckbox
-                                      checked={Number(row?.[field]) === 1}
-                                      disabled={!canEditField}
-                                      onChange={quickCheck(row, field)}
-                                    />
-                                  </Box>
-                                ))}
+                                <Box
+                                  sx={{
+                                    flex: "1 1 130px",
+                                    px: 1.25,
+                                    py: 0.75,
+                                    border: `1px solid ${blockBorder}`,
+                                    borderRadius: 2,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                  }}
+                                >
+                                  <Typography sx={{ fontSize: 13, color: textSecondary }}>
+                                    Касса
+                                  </Typography>
+                                  <JacoCheckbox
+                                    inputProps={{ "aria-label": `Касса: ${row.name}` }}
+                                    checked={Number(row?.show_program) === 1}
+                                    disabled={!canEditCash}
+                                    onChange={quickCheck(row, "show_program")}
+                                  />
+                                </Box>
                               </Stack>
                               <Stack
                                 direction="row"

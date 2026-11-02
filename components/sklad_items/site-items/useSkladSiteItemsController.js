@@ -193,7 +193,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
     }
   }, [api, setShellState, showAlert]);
   const canDeleteAction = canDelete("site_item");
-  const canEditActivity = canEditAccess(access, "is_show", false);
   const canEditCash =
     hasAccessValue(access?.kassa_edit) || canEditAccess(access, "show_program", false);
   const canEditSort = canEditAccess(access, "sort", false);
@@ -1028,7 +1027,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
           canManageTags={canManageTags}
           canArchiveAction={canArchiveSiteItems}
           canDeleteAction={canDeleteAction}
-          canEditActivity={canEditActivity}
           canEditCash={canEditCash}
           canEditSort={canEditSort}
           canViewHistory={canViewSiteItemsHistory}

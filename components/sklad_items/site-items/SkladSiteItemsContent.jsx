@@ -32,7 +32,6 @@ export default function SkladSiteItemsContent({
   canManageTags,
   canArchiveAction,
   canDeleteAction,
-  canEditActivity,
   canEditCash,
   canEditSort,
   canViewHistory,
@@ -112,7 +111,6 @@ export default function SkladSiteItemsContent({
         canManageTags={canManageTags}
         canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
-        canEditActivity={canEditActivity}
         canEditCash={canEditCash}
         canEditSort={canEditSort}
         canViewHistory={canViewHistory}
