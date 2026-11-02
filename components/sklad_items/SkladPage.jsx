@@ -12,7 +12,6 @@ import {
   JacoBackdropLoader,
   JacoButton,
   JacoCompactTabs,
-  JacoModal,
   JacoSurface,
   JacoTabPanel,
   uiColors,
@@ -30,7 +29,7 @@ const SkladWarehouseItemsTab = dynamic(() => import("./warehouse-items/SkladWare
 });
 const SkladSiteItemsTab = dynamic(() => import("./site-items/SkladSiteItemsTab"), { ssr: false });
 const SkladAllergensTab = dynamic(() => import("./allergens/SkladAllergensTab"), { ssr: false });
-const SkladStoragePage = dynamic(() => import("@/components/sklad_storage/SkladStoragePage"), {
+const SkladStorageTab = dynamic(() => import("./storage/SkladStorageTab"), {
   ssr: false,
 });
 
@@ -61,7 +60,6 @@ function normalizeBootstrap(response) {
 export default function SkladPage() {
   const router = useRouter();
   const [bootstrapReady, setBootstrapReady] = useState(false);
-  const [storageOpen, setStorageOpen] = useState(false);
   const api = useSkladApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
@@ -168,6 +166,17 @@ export default function SkladPage() {
   };
 
   const renderTabContent = (item) => {
+    if (item.key === "storage") {
+      return (
+        <SkladStorageTab
+          allowed={linkedModules.sklad_storage === true}
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+          onChanged={requestRefresh}
+        />
+      );
+    }
+
     if (item.key === "allergens") {
       return (
         <SkladAllergensTab
@@ -229,17 +238,6 @@ export default function SkladPage() {
         status={alertStatus}
         text={alertMessage}
       />
-      <JacoModal
-        open={storageOpen && linkedModules.sklad_storage === true}
-        onClose={() => {
-          setStorageOpen(false);
-          requestRefresh();
-        }}
-        title="Места хранения"
-        maxWidth="lg"
-      >
-        {storageOpen && linkedModules.sklad_storage === true ? <SkladStoragePage embedded /> : null}
-      </JacoModal>
       <Grid
         container
         spacing={3}
@@ -267,14 +265,6 @@ export default function SkladPage() {
                   justifyContent: { xs: "flex-start", md: "flex-end" },
                 }}
               >
-                {bootstrapReady && linkedModules.sklad_storage === true ? (
-                  <JacoButton
-                    tone="secondary"
-                    onClick={() => setStorageOpen(true)}
-                  >
-                    Места хранения
-                  </JacoButton>
-                ) : null}
                 <JacoButton
                   startIcon={<RefreshIcon />}
                   onClick={() => requestRefresh()}

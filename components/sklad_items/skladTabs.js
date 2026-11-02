@@ -23,6 +23,7 @@ export const SKLAD_TAB_DEFINITIONS = [
     accessGroup: "units",
     description: "Справочник единиц измерения и их базовые CRUD-операции.",
   },
+  { key: "storage", label: "Места хранения", linkedModule: "sklad_storage" },
   { key: "allergens", label: "Аллергены", linkedModule: "allergens" },
 ];
 

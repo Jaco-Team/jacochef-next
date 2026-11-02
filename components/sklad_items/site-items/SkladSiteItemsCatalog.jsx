@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import HistoryIcon from "@mui/icons-material/History";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import SyncIcon from "@mui/icons-material/Sync";
@@ -455,93 +456,129 @@ export default function SkladSiteItemsCatalog({
                       "&.Mui-expanded": { m: 0 },
                     }}
                   >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
-                      sx={{
-                        px: { xs: 1.5, lg: 2 },
-                        minHeight: 56,
-                        "&.Mui-expanded": { minHeight: 56 },
-                        "& .MuiAccordionSummary-content": { alignItems: "center", gap: 1.25 },
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 16, fontWeight: 600, color: textPrimary }}>
-                        {category.name}
-                      </Typography>
-                      <Box
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
                         sx={{
-                          minWidth: 28,
-                          height: 24,
-                          px: 1,
-                          borderRadius: 999,
-                          backgroundColor: blockBackground,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: textSecondary,
+                          flex: 1,
+                          minWidth: 0,
+                          px: { xs: 1.5, lg: 2 },
+                          minHeight: 56,
+                          "&.Mui-expanded": { minHeight: 56 },
+                          "& .MuiAccordionSummary-content": { alignItems: "center", gap: 1.25 },
                         }}
                       >
-                        {category.items.length}
-                      </Box>
-                    </AccordionSummary>
+                        <Typography sx={{ fontSize: 16, fontWeight: 600, color: textPrimary }}>
+                          {category.name}
+                        </Typography>
+                        <Box
+                          sx={{
+                            minWidth: 28,
+                            height: 24,
+                            px: 1,
+                            borderRadius: 999,
+                            backgroundColor: blockBackground,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: textSecondary,
+                          }}
+                        >
+                          {category.items.length}
+                        </Box>
+                      </AccordionSummary>
+                      {Number(category.id) > 0 ? (
+                        <Tooltip title="История категории">
+                          <Box
+                            component="span"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`История категории: ${category.name}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setHistoryCategory({ ...category, source_type: "site_item" });
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setHistoryCategory({ ...category, source_type: "site_item" });
+                              }
+                            }}
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              p: 1,
+                              borderRadius: 1,
+                              cursor: "pointer",
+                              "&:focus-visible": { outline: "2px solid currentColor" },
+                            }}
+                          >
+                            <HistoryIcon fontSize="small" />
+                          </Box>
+                        </Tooltip>
+                      ) : null}
+                    </Box>
                     <AccordionDetails
                       sx={{ px: 0, pt: 0, pb: 2, backgroundColor: blockBackground }}
                     >
-                      {Number(category.id) > 0 ? (
-                        <JacoButton
-                          tone="secondary"
-                          onClick={() =>
-                            setHistoryCategory({ ...category, source_type: "site_item" })
-                          }
-                        >
-                          История категории
-                        </JacoButton>
-                      ) : null}
                       <TableContainer
                         component={JacoSurface}
+                        role="region"
+                        aria-label={`Товары категории ${category.name}`}
+                        tabIndex={0}
                         sx={{
                           display: { xs: "none", md: "block" },
                           mx: 2,
+                          width: "calc(100% - 32px)",
                           borderRadius: 2.5,
                           border: `1px solid ${blockBorder}`,
-                          overflow: "hidden",
+                          overflowX: "auto",
                         }}
                       >
                         <Table
                           size="small"
-                          sx={{ tableLayout: "fixed" }}
+                          sx={{ minWidth: 960 }}
                         >
                           <TableHead>
                             <TableRow
-                              sx={{ "& th": { bgcolor: blockBackground, fontWeight: 700 } }}
+                              sx={{
+                                "& th": {
+                                  bgcolor: blockBackground,
+                                  fontWeight: 700,
+                                  fontSize: { md: "0.75rem", lg: "0.875rem" },
+                                  whiteSpace: "nowrap",
+                                },
+                              }}
                             >
-                              <TableCell sx={{ width: "4%" }}>№</TableCell>
-                              <TableCell sx={{ width: "8%" }}>Активность</TableCell>
-                              <TableCell sx={{ width: "7%" }}>Касса</TableCell>
-                              <TableCell sx={{ width: "8%" }}>
+                              <TableCell sx={{ width: "40px" }}>№</TableCell>
+                              <TableCell sx={{ width: "70px" }}>Активность</TableCell>
+                              <TableCell sx={{ width: "70px" }}>Касса</TableCell>
+                              <TableCell sx={{ minWidth: "110px" }}>
                                 <TableSortLabel {...sortProps("sort")}>Сортировка</TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "23%" }}>
+                              <TableCell sx={{ minWidth: "160px" }}>
                                 <TableSortLabel {...sortProps("name")}>Название</TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "10%" }}>
+                              <TableCell sx={{ minWidth: "110px" }}>
                                 <TableSortLabel {...sortProps("date_start")}>
                                   Действует с
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "9%" }}>
+                              <TableCell sx={{ width: "70px" }}>
                                 <TableSortLabel {...sortProps("date_end")}>по</TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "12%" }}>
+                              <TableCell sx={{ minWidth: "100px" }}>
                                 <TableSortLabel {...sortProps("update_item")}>
                                   Обновление
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "9%" }}>Код для 1С</TableCell>
+                              <TableCell sx={{ minWidth: "100px" }}>Код для 1С</TableCell>
                               <TableCell
                                 align="center"
-                                sx={{ width: "10%" }}
+                                sx={{ minWidth: "100px" }}
                               >
                                 Действия
                               </TableCell>
@@ -557,6 +594,7 @@ export default function SkladSiteItemsCatalog({
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell align="center">
                                   <JacoCheckbox
+                                    inputProps={{ "aria-label": `Активность: ${row.name}` }}
                                     checked={Number(row?.is_show) === 1}
                                     disabled={!canEditActivity}
                                     onChange={quickCheck(row, "is_show")}
@@ -564,6 +602,7 @@ export default function SkladSiteItemsCatalog({
                                 </TableCell>
                                 <TableCell align="center">
                                   <JacoCheckbox
+                                    inputProps={{ "aria-label": `Касса: ${row.name}` }}
                                     checked={Number(row?.show_program) === 1}
                                     disabled={!canEditCash}
                                     onChange={quickCheck(row, "show_program")}
@@ -572,6 +611,7 @@ export default function SkladSiteItemsCatalog({
                                 <TableCell>
                                   <JacoTextInput
                                     type="number"
+                                    sx={{ minWidth: 88, width: 88 }}
                                     value={sortDrafts[row.id] ?? row?.sort ?? 0}
                                     disabled={!canEditSort}
                                     onClick={(event) => event.stopPropagation()}
@@ -592,7 +632,13 @@ export default function SkladSiteItemsCatalog({
                                         onSaveQuickField?.(row, "sort", value);
                                       }
                                     }}
-                                    slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                                    slotProps={{
+                                      htmlInput: {
+                                        min: 0,
+                                        step: 1,
+                                        "aria-label": `Сортировка: ${row.name}`,
+                                      },
+                                    }}
                                   />
                                 </TableCell>
                                 <TableCell>

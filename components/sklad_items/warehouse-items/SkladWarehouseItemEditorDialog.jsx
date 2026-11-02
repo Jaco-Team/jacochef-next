@@ -10,7 +10,7 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
 import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
-import { Box, Grid, Stack, Tab, Tabs, Tooltip } from "@mui/material";
+import { Box, Grid, Stack, Tab, Tabs } from "@mui/material";
 
 import {
   JacoButton,
@@ -27,6 +27,7 @@ import {
 } from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
+import SkladCsvAutocompleteField from "../SkladCsvAutocompleteField";
 
 const TODAY = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Samara" });
 const dateRangeFieldSx = {
@@ -42,16 +43,12 @@ function ids(value) {
     .filter(Boolean);
 }
 
-function sanitizePackQuantity(value) {
-  return String(value ?? "").replace(/[^\d\p{P}\s|]/gu, "");
-}
-
 function normalizePackQuantity(value) {
   return String(value ?? "")
     .trim()
-    .replace(/\s*(?:[#;,/|\r\n]+)\s*/g, "#")
-    .replace(/#+/g, "#")
-    .replace(/^#|#$/g, "");
+    .replace(/\s*(?:[#;,/|\r\n]+)\s*/g, ",")
+    .replace(/,+/g, ",")
+    .replace(/^,|,$/g, "");
 }
 
 function normalize(item = {}) {
@@ -135,13 +132,11 @@ export default function SkladWarehouseItemEditorDialog({
   onSave,
 }) {
   const [tab, setTab] = useState(0);
-  const [packHintOpen, setPackHintOpen] = useState(false);
   const [draft, setDraft] = useState(() => normalize(detail?.item));
 
   useEffect(() => {
     setDraft(normalize(detail?.item));
     setTab(detail?.initialHistoryTab ? 1 : 0);
-    setPackHintOpen(false);
   }, [detail, open]);
 
   const canView = (field) =>
@@ -392,34 +387,17 @@ export default function SkladWarehouseItemEditorDialog({
                 >
                   <Grid size={{ xs: 12, md: 3 }}>{field("art", "art", "Код 1С")}</Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
-                    {field("pq", "pq", "Количество в упаковке", {
-                      value: String(draft?.pq ?? "").replace(/\s*#\s*/g, "; "),
-                      onChange: (event) => set("pq", sanitizePackQuantity(event.target.value)),
-                      inputAdornment: (
-                        <Tooltip
-                          title="Несколько значений разделяйте точкой с запятой. Дробные значения указывайте через точку, например 0.5; 1."
-                          open={packHintOpen}
-                          onOpen={() => setPackHintOpen(true)}
-                          onClose={() => setPackHintOpen(false)}
-                          enterTouchDelay={0}
-                        >
-                          <JacoIconButton
-                            aria-label="Подсказка о количестве в упаковке"
-                            onClick={() => setPackHintOpen(true)}
-                            onFocus={() => setPackHintOpen(true)}
-                            onBlur={() => setPackHintOpen(false)}
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              border: "none",
-                              backgroundColor: "transparent",
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </JacoIconButton>
-                        </Tooltip>
-                      ),
-                    })}
+                    {canView("pq") ? (
+                      <SkladCsvAutocompleteField
+                        label="Количество в упаковке"
+                        value={String(draft?.pq ?? "").replace(/\s*(?:[#;,/|\r\n]+)\s*/g, ", ")}
+                        onChange={(value) => set("pq", value)}
+                        disabled={!canEdit("pq")}
+                        placeholder="Введите количество"
+                        validateNewValue={(value) => /^\d+(?:\.\d+)?$/.test(value)}
+                        invalidValueText="Введите число; для дробной части используйте точку"
+                      />
+                    ) : null}
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
                     {field("percent", "percent", "% заявки", { type: "number" })}
