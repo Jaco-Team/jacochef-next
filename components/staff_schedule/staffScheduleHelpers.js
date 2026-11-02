@@ -92,6 +92,10 @@ export function getSummaryCellValue(column, row = {}) {
     return formatWorkedMinutes(row?.worked_min);
   }
 
+  if (Number(row?.finance_hidden) === 1) {
+    return "—";
+  }
+
   if (column.key === "total_sum") {
     return computeTotalSum(row);
   }

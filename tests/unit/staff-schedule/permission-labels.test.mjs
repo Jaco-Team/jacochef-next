@@ -12,6 +12,7 @@ const PERMISSION_LABELS = {
   fast_hours: "Часы",
   fast_smena: "Смена",
   fast_point: "Сменить кафе",
+  salary_all: "Зарплата всех сотрудников",
   "1h": "За 1ч",
   "1h_plus": "За 1ч + доп.",
   com_bonus: "Командный бонус",

@@ -213,6 +213,7 @@ export function buildMonthModalViewModel(response, context = {}) {
     }),
     canEditMonth,
     hasPeriodSummary: context?.hasPeriodSummary !== false,
+    financeHidden: Number(row?.finance_hidden) === 1 || Number(user?.finance_hidden) === 1,
     recentCustomHours: toArray(response?.recent_custom_hours).map((item) => ({
       time_start: item?.time_start ?? "",
       time_end: item?.time_end ?? "",

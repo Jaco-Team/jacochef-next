@@ -1057,7 +1057,7 @@ export default function StaffScheduleTableSection({
   const canOpenDayEdit = canOpenDayCard;
   const canEditSmena = canManageSmena;
   const canCreateSmena = canManageSmena;
-  const canEditTeamBonus = canEdit("com_bonus");
+  const canEditTeamBonus = canEdit("com_bonus") && canView("salary_all");
   const hasBulkSelection = showFastActions && selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = selectionColumnWidth + EMPLOYEE_COLUMN_WIDTH;

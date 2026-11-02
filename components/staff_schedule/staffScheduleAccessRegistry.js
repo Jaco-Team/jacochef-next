@@ -1,4 +1,10 @@
 export const STAFF_SCHEDULE_ACCESS_RULES = [
+  {
+    key: "salary_all",
+    label: "Зарплата всех сотрудников",
+    area: "Финансы",
+    status: "useful",
+  },
   { key: "1h", label: "За 1ч", area: "Финансы", status: "useful" },
   { key: "1h_plus", label: "За 1ч + доп.", area: "Финансы", status: "useful" },
   { key: "com_bonus", label: "Командный бонус", area: "Финансы", status: "useful" },

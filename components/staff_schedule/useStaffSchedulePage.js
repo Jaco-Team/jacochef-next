@@ -1332,7 +1332,7 @@ export default function useStaffSchedulePage() {
         String(item?.data?.app_id) === String(request.app_id) &&
         String(item?.data?.smena_id) === String(request.smena_id),
     )?.data;
-    if (!row) {
+    if (!row || Number(row.finance_hidden) === 1) {
       return null;
     }
     const items = view.summaryColumns.map((column) => {

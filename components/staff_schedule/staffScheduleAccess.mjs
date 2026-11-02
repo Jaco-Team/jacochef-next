@@ -116,8 +116,14 @@ export function hasRevokedFinancialReadPermission(previous, current) {
   );
 }
 
+/** Чужая строка без права salary_all: бэк отдаёт finance_hidden = 1 и обнулённые суммы. */
+export function isStaffScheduleFinanceHidden(row) {
+  return Number(row?.finance_hidden) === 1;
+}
+
 export function canEditStaffScheduleBonus({ row, canEdit, selectedPart }) {
   return (
+    !isStaffScheduleFinanceHidden(row) &&
     Number(selectedPart) === 1 &&
     Boolean(canEdit?.("bonus")) &&
     (row?.can_edit_bonus === true || row?.can_edit_bonus === 1)
@@ -139,7 +145,7 @@ export function canEditStaffScheduleFinanceValue({ columnKey, row, canEdit } = {
     given_cart: "given_cart",
     withheld: "withheld",
   }[columnKey];
-  if (!permission || !canEdit?.(permission)) return false;
+  if (!permission || !canEdit?.(permission) || isStaffScheduleFinanceHidden(row)) return false;
   return columnKey !== "price_p_h" || hasAlternativeStaffScheduleRate(row);
 }
 
@@ -186,6 +192,9 @@ export function getStaffScheduleFinanceAction({
   selectedPart,
   periodBonusState,
 } = {}) {
+  if (isStaffScheduleFinanceHidden(row)) {
+    return null;
+  }
   if (columnKey === "dop_bonus") {
     return canEdit?.("com_bonus") &&
       [1, 2].includes(Number(periodBonusState)) &&
