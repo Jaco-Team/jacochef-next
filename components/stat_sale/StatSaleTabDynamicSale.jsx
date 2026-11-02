@@ -26,7 +26,7 @@ import axios from "axios";
 import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
-import { JacoSegmentedTabs } from "@/design-system/shared/ui";
+import { JacoCompactTabs, JacoSegmentedTabs } from "@/design-system/shared/ui";
 import {
   buildDynamicSaleView,
   indexRowsByPeriod,
@@ -34,6 +34,13 @@ import {
   SALES_SOURCE_LABELS,
   SALES_SOURCE_TABS,
 } from "@/components/stat_sale/statSaleDynamicSaleUtils";
+
+const SALES_METRIC_TABS = [
+  { id: "orders", label: "Заказы" },
+  { id: "rolly", label: "Роллы" },
+  { id: "pizza", label: "Пицца" },
+  { id: "accounts", label: "Аккаунты" },
+];
 
 class StatSale_Tab_DynamicSale extends React.Component {
   constructor(props) {
@@ -78,6 +85,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
         pizza: "total",
       },
       analyticsResetKey: 0,
+      metricTab: "orders",
+      headerStickOffset: 48,
       loading: false,
     };
   }
@@ -132,7 +141,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
         this.setState({ is_load: true });
 
         const response = await axios.post(
-          (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/stat_sale/export_data_dynamics",
+          (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
+            /\/+$/,
+            "",
+          ) + "/stat_sale/export_data_dynamics",
           {
             method: "export_data_dynamics",
             module: "orders_by_hour",
@@ -350,14 +362,24 @@ class StatSale_Tab_DynamicSale extends React.Component {
     }));
   }
 
-  changeAnalyticsSource(metric, source) {
-    this.setState((prevState) => ({
+  changeAnalyticsSource(_metric, source) {
+    this.setState({
       analyticsSources: {
-        ...prevState.analyticsSources,
-        [metric]: source,
+        orders: source,
+        rolly: source,
+        pizza: source,
       },
-    }));
+    });
   }
+
+  measureHeaderRow = (node) => {
+    if (!node) return;
+
+    const height = Math.round(node.getBoundingClientRect().height);
+    if (height > 0 && Math.abs(height - this.state.headerStickOffset) > 1) {
+      this.setState({ headerStickOffset: height });
+    }
+  };
 
   renderPizzaTable(pizzaArr, title, options = {}) {
     const {
@@ -366,6 +388,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
       showFactYoY = true,
       preserveAccountPercentDecimals = false,
       sourceRows = null,
+      headerContent = null,
     } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(String(value ?? "").replace(",", "."));
@@ -428,7 +451,17 @@ class StatSale_Tab_DynamicSale extends React.Component {
       transition: "background-color 0.2s ease",
     };
 
-    if (!pizzaArr.length) return null;
+    if (!pizzaArr.length && !headerContent) return null;
+
+    const headerStickOffset = this.state.headerStickOffset;
+    const stickyHeadSx = (backgroundColor, row = 1) => ({
+      ...cellSx,
+      backgroundColor,
+      position: "sticky",
+      top: row === 1 ? 0 : Math.max(headerStickOffset - 1, 0),
+      zIndex: row === 1 ? 5 : 4,
+      backgroundClip: "padding-box",
+    });
 
     const renderDataRow = (row, index, rowOptions = {}) => {
       const { source = null, expanded = false } = rowOptions;
@@ -584,142 +617,168 @@ class StatSale_Tab_DynamicSale extends React.Component {
     return (
       <Grid
         size={{ xs: 12, sm: 12 }}
-        sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
+        sx={{ mt: 3, mb: 5 }}
       >
-        <TableContainer
-          component={Paper}
+        <Paper
           sx={{
             margin: "20px auto",
             borderRadius: "12px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            overflow: "hidden",
             "& .MuiTableCell-root": {
               borderColor: "#e0e0e0",
             },
           }}
         >
-          <Typography
-            variant="h6"
-            sx={{ p: 2, fontWeight: "bold", textAlign: "left", borderBottom: "2px solid #f0f0f0" }}
-          >
-            {title}
-          </Typography>
-          <Table
-            sx={{ minWidth: 650 }}
-            aria-label="food table"
-          >
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  rowSpan={2}
-                  sx={cellSx}
-                >
-                  Период
-                </TableCell>
-                <TableCell
-                  colSpan={planFulfillment ? 1 : 2}
-                  sx={{ ...cellSx, backgroundColor: "#e8f5e9" }}
-                >
-                  План
-                </TableCell>
-                <TableCell
-                  colSpan={factColumnCount}
-                  sx={{ ...cellSx, backgroundColor: "#fff3e0" }}
-                >
-                  Факт
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во, шт</TableCell>
-                {!planFulfillment && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка, %</TableCell>
-                )}
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во, шт</TableCell>
-                {showFactYoY && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика г/г, %</TableCell>
-                )}
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м, %</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
-                  {planFulfillment ? "План/Факт, %" : "Загрузка, %"}
-                </TableCell>
-                {hasPlanFact && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>План/Факт, %</TableCell>
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {yearGroups.map((group) => {
-                const expanded = this.isYearExpanded(tableKey, group.year, yearGroups);
-
-                return (
-                  <React.Fragment key={`${tableKey}-${group.year}`}>
-                    <TableRow
-                      hover={yearGroups.length > 1}
-                      onClick={() => this.toggleYear(tableKey, group.year, yearGroups)}
-                      sx={{
-                        cursor: yearGroups.length > 1 ? "pointer" : "default",
-                        "& .MuiTableCell-root": {
-                          backgroundColor: "#f5f5f5",
-                        },
-                      }}
+          {headerContent ?? (
+            <Typography
+              variant="h6"
+              sx={{
+                p: 2,
+                fontWeight: "bold",
+                textAlign: "left",
+                borderBottom: "2px solid #f0f0f0",
+              }}
+            >
+              {title}
+            </Typography>
+          )}
+          {pizzaArr.length ? (
+            <TableContainer
+              sx={{
+                maxHeight: "calc(100vh - 320px)",
+                overflow: "auto",
+              }}
+            >
+              <Table
+                stickyHeader
+                sx={{ minWidth: 650, borderCollapse: "separate", borderSpacing: 0 }}
+                aria-label="food table"
+              >
+                <TableHead>
+                  <TableRow ref={this.measureHeaderRow}>
+                    <TableCell
+                      rowSpan={2}
+                      sx={stickyHeadSx("#fafafa", 1)}
                     >
-                      <TableCell
-                        colSpan={columnCount}
-                        sx={{
-                          ...bodyCellSx,
-                          padding: "8px 12px",
-                          textAlign: "left",
-                        }}
-                      >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          {yearGroups.length > 1 ? (
-                            <IconButton
-                              size="small"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                this.toggleYear(tableKey, group.year, yearGroups);
-                              }}
-                              aria-label={`${expanded ? "Свернуть" : "Развернуть"} ${group.year} год`}
-                              aria-expanded={expanded}
-                            >
-                              {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
-                            </IconButton>
-                          ) : null}
-                          <Typography sx={{ fontWeight: 700 }}>{group.year} год</Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "text.secondary" }}
-                          >
-                            {group.items.length} мес.
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                    {expanded
-                      ? group.items.map((row, index) => {
-                          const monthExpanded = this.isMonthExpanded(tableKey, row.periodKey);
+                      Период
+                    </TableCell>
+                    <TableCell
+                      colSpan={planFulfillment ? 1 : 2}
+                      sx={stickyHeadSx("#e8f5e9", 1)}
+                    >
+                      План
+                    </TableCell>
+                    <TableCell
+                      colSpan={factColumnCount}
+                      sx={stickyHeadSx("#fff3e0", 1)}
+                    >
+                      Факт
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>Кол-во, шт</TableCell>
+                    {!planFulfillment && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>Загрузка, %</TableCell>
+                    )}
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>Кол-во, шт</TableCell>
+                    {showFactYoY && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>Динамика г/г, %</TableCell>
+                    )}
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>Динамика м/м, %</TableCell>
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>Динамика, шт</TableCell>
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>
+                      {planFulfillment ? "План/Факт, %" : "Загрузка, %"}
+                    </TableCell>
+                    {hasPlanFact && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>План/Факт, %</TableCell>
+                    )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {yearGroups.map((group) => {
+                    const expanded = this.isYearExpanded(tableKey, group.year, yearGroups);
 
-                          return (
-                            <React.Fragment key={`${tableKey}-${row.periodKey}`}>
-                              {renderDataRow(row, index, { expanded: monthExpanded })}
-                              {monthExpanded && sourceRowsByPeriod
-                                ? SALES_SOURCE_KEYS.map((source) => {
-                                    const sourceRow = sourceRowsByPeriod[source]?.[row.periodKey];
-                                    return sourceRow
-                                      ? renderDataRow(sourceRow, index, { source })
-                                      : null;
-                                  })
-                                : null}
-                            </React.Fragment>
-                          );
-                        })
-                      : null}
-                  </React.Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    return (
+                      <React.Fragment key={`${tableKey}-${group.year}`}>
+                        <TableRow
+                          hover={yearGroups.length > 1}
+                          onClick={() => this.toggleYear(tableKey, group.year, yearGroups)}
+                          sx={{
+                            cursor: yearGroups.length > 1 ? "pointer" : "default",
+                            "& .MuiTableCell-root": {
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        >
+                          <TableCell
+                            colSpan={columnCount}
+                            sx={{
+                              ...bodyCellSx,
+                              padding: "8px 12px",
+                              textAlign: "left",
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              {yearGroups.length > 1 ? (
+                                <IconButton
+                                  size="small"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    this.toggleYear(tableKey, group.year, yearGroups);
+                                  }}
+                                  aria-label={`${expanded ? "Свернуть" : "Развернуть"} ${group.year} год`}
+                                  aria-expanded={expanded}
+                                >
+                                  {expanded ? (
+                                    <KeyboardArrowDownIcon />
+                                  ) : (
+                                    <KeyboardArrowRightIcon />
+                                  )}
+                                </IconButton>
+                              ) : null}
+                              <Typography sx={{ fontWeight: 700 }}>{group.year} год</Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{ color: "text.secondary" }}
+                              >
+                                {group.items.length} мес.
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                        {expanded
+                          ? group.items.map((row, index) => {
+                              const monthExpanded = this.isMonthExpanded(tableKey, row.periodKey);
+
+                              return (
+                                <React.Fragment key={`${tableKey}-${row.periodKey}`}>
+                                  {renderDataRow(row, index, { expanded: monthExpanded })}
+                                  {monthExpanded && sourceRowsByPeriod
+                                    ? SALES_SOURCE_KEYS.map((source) => {
+                                        const sourceRow =
+                                          sourceRowsByPeriod[source]?.[row.periodKey];
+                                        return sourceRow
+                                          ? renderDataRow(sourceRow, index, { source })
+                                          : null;
+                                      })
+                                    : null}
+                                </React.Fragment>
+                              );
+                            })
+                          : null}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography sx={{ p: 3, color: "text.secondary" }}>
+              Нет данных за выбранный период
+            </Typography>
+          )}
+        </Paper>
       </Grid>
     );
   }
@@ -733,6 +792,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
     planFactTitle,
     progressTitle,
     tableOptions = {},
+    headerContent = null,
   }) {
     const { analyticsResetKey, analyticsSources, annualPlanTotalsBySource, linesBySource } =
       this.state;
@@ -755,6 +815,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
           ...tableOptions,
           tableKey: metric,
           sourceRows: tableSourceRows,
+          headerContent,
         })}
         {totalRows.length ? (
           <Grid size={{ xs: 12 }}>
@@ -802,6 +863,113 @@ class StatSale_Tab_DynamicSale extends React.Component {
         ) : null}
       </>
     );
+  }
+
+  renderMetricHeader() {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          borderBottom: "2px solid #f0f0f0",
+          pr: 2,
+        }}
+      >
+        <JacoCompactTabs
+          value={this.state.metricTab}
+          onChange={(_event, value) => this.setState({ metricTab: value })}
+          items={SALES_METRIC_TABS}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          aria-label="Показатель динамики продаж"
+          sx={{ minHeight: 56, px: 1, minWidth: 0 }}
+          tabSx={{
+            minHeight: 56,
+            px: 2,
+            fontSize: "1.125rem",
+            fontWeight: 700,
+          }}
+        />
+        {this.state.metricTab === "accounts" ? (
+          <Typography
+            variant="body2"
+            sx={{ color: "text.secondary", flexShrink: 0 }}
+          >
+            Данные по всем кафе
+          </Typography>
+        ) : null}
+      </Box>
+    );
+  }
+
+  renderActiveSalesMetric() {
+    const headerContent = this.renderMetricHeader();
+    const { metricTab, accountArr } = this.state;
+
+    if (metricTab === "rolly") {
+      return this.renderSalesMetric({
+        metric: "rolly",
+        title: "Роллы",
+        totalRows: this.state.rollyArr,
+        totalLine: this.state.rollyLine,
+        yearlyTitle: "Динамика роллов по годам",
+        planFactTitle: "План / Факт — Роллы",
+        progressTitle: "Выполнение плана по роллам",
+        headerContent,
+      });
+    }
+
+    if (metricTab === "pizza") {
+      return this.renderSalesMetric({
+        metric: "pizza",
+        title: "Пицца",
+        totalRows: this.state.pizzaArr,
+        totalLine: this.state.pizzaLine,
+        yearlyTitle: "Динамика пиццы по годам",
+        planFactTitle: "План / Факт — Пицца",
+        progressTitle: "Выполнение плана по пицце",
+        headerContent,
+      });
+    }
+
+    if (metricTab === "accounts") {
+      return (
+        <>
+          {this.renderPizzaTable(accountArr, "Аккаунты", {
+            planFulfillment: true,
+            showFactYoY: false,
+            preserveAccountPercentDecimals: true,
+            headerContent,
+          })}
+          {accountArr.length ? (
+            <Grid size={{ xs: 12, sm: 12 }}>
+              <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+                <ProgressTimeline
+                  data={accountArr}
+                  title="Выполнение плана по аккаунтам"
+                  resetKey={this.state.analyticsResetKey}
+                />
+              </Box>
+            </Grid>
+          ) : null}
+        </>
+      );
+    }
+
+    return this.renderSalesMetric({
+      metric: "orders",
+      title: "Заказы",
+      totalRows: this.state.orderArr,
+      totalLine: this.state.ordersLine,
+      yearlyTitle: "Динамика заказов по годам",
+      planFactTitle: "План / Факт — Заказы",
+      progressTitle: "Выполнение плана по заказам",
+      tableOptions: { planFulfillment: true },
+      headerContent,
+    });
   }
 
   render() {
@@ -857,50 +1025,13 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {this.renderSalesMetric({
-              metric: "orders",
-              title: "Заказы",
-              totalRows: orderArr,
-              totalLine: this.state.ordersLine,
-              yearlyTitle: "Динамика заказов по годам",
-              planFactTitle: "План / Факт — Заказы",
-              progressTitle: "Выполнение плана по заказам",
-              tableOptions: { planFulfillment: true },
-            })}
-            {this.renderSalesMetric({
-              metric: "rolly",
-              title: "Роллы",
-              totalRows: rollyArr,
-              totalLine: this.state.rollyLine,
-              yearlyTitle: "Динамика роллов по годам",
-              planFactTitle: "План / Факт — Роллы",
-              progressTitle: "Выполнение плана по роллам",
-            })}
-            {this.renderSalesMetric({
-              metric: "pizza",
-              title: "Пицца",
-              totalRows: pizzaArr,
-              totalLine: this.state.pizzaLine,
-              yearlyTitle: "Динамика пиццы по годам",
-              planFactTitle: "План / Факт — Пицца",
-              progressTitle: "Выполнение плана по пицце",
-            })}
-            {this.renderPizzaTable(accountArr, "Аккаунты (данные по всем кафе)", {
-              planFulfillment: true,
-              showFactYoY: false,
-              preserveAccountPercentDecimals: true,
-            })}
-            {accountArr.length ? (
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
-                  <ProgressTimeline
-                    data={accountArr}
-                    title="Выполнение плана по аккаунтам"
-                    resetKey={this.state.analyticsResetKey}
-                  />
-                </Box>
-              </Grid>
-            ) : null}
+            {this.state.res?.st ||
+            orderArr.length ||
+            rollyArr.length ||
+            pizzaArr.length ||
+            accountArr.length
+              ? this.renderActiveSalesMetric()
+              : null}
           </Grid>
         </TabPanel>
       </Grid>
