@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
 import SkladSiteItemsContent from "./SkladSiteItemsContent";
 import SkladSiteCategoryDialog from "./SkladSiteCategoryDialog";
@@ -511,7 +512,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       const response = await api.archiveEntity({
         entity_type: "site_item",
         id: row.id,
-        value: nextArchived,
+        is_archived: nextArchived,
       });
 
       if (!response?.st) {
@@ -529,7 +530,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           row,
         },
       });
-      showAlert(error?.message || "Ошибка изменения архива", false);
+      showAlert(getSkladApiError(error, "Ошибка изменения архива"), false);
     } finally {
       setShellState({ isLoading: false });
     }
@@ -717,8 +718,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
             loading: false,
           },
         });
-        showAlert(error?.message || "Ошибка сохранения", false);
-        return { st: false, text: error?.message || "Ошибка сохранения" };
+        const message = getSkladApiError(error, "Ошибка сохранения");
+        showAlert(message, false);
+        return { st: false, text: message };
       } finally {
         setShellState({ isLoading: false });
       }

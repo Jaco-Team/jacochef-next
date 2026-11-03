@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
@@ -43,6 +45,7 @@ import SkladBooleanStatus from "../SkladBooleanStatus";
 import { formatDateRU } from "../formatDateRangeRU";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
 import SkladWarehouseItemEditorDialog from "./SkladWarehouseItemEditorDialog";
 import SkladProductionCategoryManagerDialog from "../production/SkladProductionCategoryManagerDialog";
@@ -102,6 +105,8 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   const revealFilterRef = useRef(false);
   const [editor, setEditor] = useState({ open: false, detail: null, loading: false });
   const [remove, setRemove] = useState({ open: false, row: null, loading: false });
+  const [archive, setArchive] = useState({ open: false, row: null, loading: false });
+  const canArchiveWarehouseItem = Number(access?.warehouse_items_activity_edit) === 1;
   const [categoryManager, setCategoryManager] = useState({
     open: false,
     loading: false,
@@ -309,9 +314,30 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
       await loadRows();
     } catch (error) {
       setEditor((current) => ({ ...current, loading: false }));
-      showAlert(error?.message || "Ошибка сохранения товара склада", false);
+      showAlert(getSkladApiError(error, "Ошибка сохранения товара склада"), false);
     } finally {
       setShellState({ isLoading: false });
+    }
+  };
+
+  const confirmArchive = async () => {
+    const row = archive.row;
+    if (!row?.id || !canArchiveWarehouseItem) return;
+    const isArchived = Number(row.is_archived) === 1;
+    setArchive((current) => ({ ...current, loading: true }));
+    try {
+      const response = await api.archiveEntity({
+        entity_type: "item",
+        id: row.id,
+        is_archived: isArchived ? 0 : 1,
+      });
+      if (!response?.st) throw new Error(response?.text || "Ошибка изменения архива");
+      setArchive({ open: false, row: null, loading: false });
+      showAlert(response?.text || "Успешно сохранено", true);
+      await loadRows();
+    } catch (error) {
+      setArchive((current) => ({ ...current, loading: false }));
+      showAlert(getSkladApiError(error, "Ошибка изменения архива"), false);
     }
   };
 
@@ -482,6 +508,24 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                                 </JacoIconButton>
                               </Tooltip>
                             ) : null}
+                            {canArchiveWarehouseItem ? (
+                              <Tooltip
+                                title={
+                                  Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"
+                                }
+                              >
+                                <JacoIconButton
+                                  aria-label={`${Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"}: ${row.name}`}
+                                  onClick={() => setArchive({ open: true, row, loading: false })}
+                                >
+                                  {Number(row.is_archived) === 1 ? (
+                                    <UnarchiveOutlinedIcon fontSize="small" />
+                                  ) : (
+                                    <ArchiveOutlinedIcon fontSize="small" />
+                                  )}
+                                </JacoIconButton>
+                              </Tooltip>
+                            ) : null}
                             <Tooltip title="Удалить">
                               <span>
                                 <JacoIconButton
@@ -649,6 +693,19 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
         allowPastDate={canUseWarehouseItemPastDate}
         onClose={() => setEditor({ open: false, detail: null, loading: false })}
         onSave={save}
+      />
+      <SkladDeleteDialog
+        open={archive.open}
+        loading={archive.loading}
+        title={
+          Number(archive.row?.is_archived) === 1
+            ? "Вернуть товар склада из архива?"
+            : "Отправить товар склада в архив?"
+        }
+        description={archive.row?.name || ""}
+        confirmLabel={Number(archive.row?.is_archived) === 1 ? "Вернуть" : "В архив"}
+        onClose={() => setArchive({ open: false, row: null, loading: false })}
+        onConfirm={confirmArchive}
       />
       <SkladDeleteDialog
         open={remove.open}
