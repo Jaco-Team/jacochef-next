@@ -8,7 +8,7 @@ import { useJacoConfirm } from "@/design-system/shared/ui";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemsHistoryDialog from "./SkladSiteItemsHistoryDialog";
 import SkladSiteItemsCatalog from "./SkladSiteItemsCatalog";
-import { SkladSiteItemsLegacyEditorDialog } from "./SkladSiteItemsLegacyEditorDialog";
+import { SkladSiteItemsEditorDialog } from "./SkladSiteItemsEditorDialog";
 import SkladSiteItemsTagsDialog from "./SkladSiteItemsTagsDialog";
 import SkladSiteCategoryManagerDialog from "./SkladSiteCategoryManagerDialog";
 
@@ -56,7 +56,7 @@ export default function SkladSiteItemsContent({
   handleCreateTag,
   handleRenameTag,
   submitDraft,
-  submitLegacyDraft,
+  submitEditorDraft,
   onSaveQuickField,
 }) {
   const theme = useTheme();
@@ -67,7 +67,7 @@ export default function SkladSiteItemsContent({
   const showHistory = modal.open && modal.section === "history";
   const legacyItem = detail?.item ? { ...detail.item, tags_all: detail?.tags_all || tags } : null;
 
-  const handleLegacyData = async (method, data = {}) => {
+  const handleEditorData = async (method, data = {}) => {
     if (method !== "saveNewTag") {
       return { st: false, text: "Действие недоступно в sklad_items" };
     }
@@ -141,7 +141,7 @@ export default function SkladSiteItemsContent({
         showAlert={showAlert}
       />
 
-      <SkladSiteItemsLegacyEditorDialog
+      <SkladSiteItemsEditorDialog
         open={modal.open && !showHistory && !modal.loading && Boolean(legacyItem)}
         mode={modal.mode}
         method={
@@ -162,8 +162,8 @@ export default function SkladSiteItemsContent({
         acces={access}
         fullScreen={fullScreen}
         allowPastDate={allowPastDate}
-        save={submitLegacyDraft}
-        getData={handleLegacyData}
+        save={submitEditorDraft}
+        getData={handleEditorData}
         update={() => null}
         onClose={closeModal}
       />

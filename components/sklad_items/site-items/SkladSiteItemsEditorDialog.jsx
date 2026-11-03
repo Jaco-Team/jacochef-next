@@ -117,7 +117,7 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
-export class SkladSiteItemsLegacyEditorDialog extends React.Component {
+export class SkladSiteItemsEditorDialog extends React.Component {
   dropzoneOptions = {
     autoProcessQueue: false,
     autoQueue: true,
@@ -1782,7 +1782,6 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
 
     const mobileTabListSx = {
       minHeight: "auto",
-      mb: 2,
       "& .MuiTabs-scroller": {
         overflowY: "visible !important",
       },
@@ -2557,7 +2556,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
               <Box
                 sx={{
                   mt: 1.5,
-                  p: 1.25,
+                  p: 2,
                   display: "flex",
                   flexDirection: {
                     xs: "column",
@@ -2675,6 +2674,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                       xs: "block",
                       lg: "none",
                     },
+                    pt: 1.5,
                   }}
                 >
                   <Tabs
@@ -2750,7 +2750,7 @@ export class SkladSiteItemsLegacyEditorDialog extends React.Component {
                   sx={{
                     flex: 1,
                     minWidth: 0,
-                    mt: 2.5,
+                    mt: { xs: 0, lg: 2.5 },
                   }}
                 >
                   <TabPanel

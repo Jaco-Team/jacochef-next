@@ -742,7 +742,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [persistSiteItem, showAlert],
   );
 
-  const submitLegacyDraft = useCallback(
+  const submitEditorDraft = useCallback(
     async (nextDraft, pendingImageFile = null) =>
       persistSiteItem(legacySavePayload(nextDraft), pendingImageFile),
     [persistSiteItem],
@@ -1054,7 +1054,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           handleCreateTag={handleCreateTag}
           handleRenameTag={handleRenameTag}
           submitDraft={submitDraft}
-          submitLegacyDraft={submitLegacyDraft}
+          submitEditorDraft={submitEditorDraft}
         />
         <SkladSiteCategoryDialog
           open={categoryDialog.open}
