@@ -107,6 +107,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   const [remove, setRemove] = useState({ open: false, row: null, loading: false });
   const [archive, setArchive] = useState({ open: false, row: null, loading: false });
   const canArchiveWarehouseItem = Number(access?.warehouse_items_activity_edit) === 1;
+  const canClearArchiveFlags =
+    Number(access?.warehouse_items_order_edit) === 1 &&
+    Number(access?.warehouse_items_revision_edit) === 1;
   const [categoryManager, setCategoryManager] = useState({
     open: false,
     loading: false,
@@ -324,6 +327,10 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
     const row = archive.row;
     if (!row?.id || !canArchiveWarehouseItem) return;
     const isArchived = Number(row.is_archived) === 1;
+    if (!isArchived && !canClearArchiveFlags) {
+      showAlert("Недостаточно прав для изменения признаков заявки и ревизии", false);
+      return;
+    }
     setArchive((current) => ({ ...current, loading: true }));
     try {
       const response = await api.archiveEntity({
@@ -446,15 +453,15 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   <TableHead>
                     <TableRow>
                       <TableCell>Название</TableCell>
+                      {Number(access?.warehouse_items_art_view) === 1 ? (
+                        <TableCell>Код 1С</TableCell>
+                      ) : null}
                       <TableCell>Единица</TableCell>
                       <TableCell>Действует с</TableCell>
                       <TableCell>Действует по</TableCell>
                       <TableCell>Статус</TableCell>
                       <TableCell>Заявка</TableCell>
                       <TableCell>Ревизия</TableCell>
-                      {Number(access?.warehouse_items_art_view) === 1 ? (
-                        <TableCell>Код 1С</TableCell>
-                      ) : null}
                       <TableCell align="right">Действия</TableCell>
                     </TableRow>
                   </TableHead>
@@ -471,6 +478,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                             onClick={() => openEditor(row)}
                           />
                         </TableCell>
+                        {Number(access?.warehouse_items_art_view) === 1 ? (
+                          <TableCell>{row.art || "—"}</TableCell>
+                        ) : null}
                         <TableCell>{row.ed_izmer_name || "—"}</TableCell>
                         <TableCell>
                           {formatDateRU(row.effective_date_start || row.date_start) || "—"}
@@ -493,9 +503,6 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                             value={row.show_in_rev}
                           />
                         </TableCell>
-                        {Number(access?.warehouse_items_art_view) === 1 ? (
-                          <TableCell>{row.art || "—"}</TableCell>
-                        ) : null}
                         <TableCell align="right">
                           <Stack
                             direction="row"
@@ -508,24 +515,30 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                                 </JacoIconButton>
                               </Tooltip>
                             ) : null}
-                            {canArchiveWarehouseItem ? (
+                            {
                               <Tooltip
                                 title={
                                   Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"
                                 }
                               >
-                                <JacoIconButton
-                                  aria-label={`${Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"}: ${row.name}`}
-                                  onClick={() => setArchive({ open: true, row, loading: false })}
-                                >
-                                  {Number(row.is_archived) === 1 ? (
-                                    <UnarchiveOutlinedIcon fontSize="small" />
-                                  ) : (
-                                    <ArchiveOutlinedIcon fontSize="small" />
-                                  )}
-                                </JacoIconButton>
+                                <span>
+                                  <JacoIconButton
+                                    disabled={
+                                      !canArchiveWarehouseItem ||
+                                      (Number(row.is_archived) !== 1 && !canClearArchiveFlags)
+                                    }
+                                    aria-label={`${Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"}: ${row.name}`}
+                                    onClick={() => setArchive({ open: true, row, loading: false })}
+                                  >
+                                    {Number(row.is_archived) === 1 ? (
+                                      <UnarchiveOutlinedIcon fontSize="small" />
+                                    ) : (
+                                      <ArchiveOutlinedIcon fontSize="small" />
+                                    )}
+                                  </JacoIconButton>
+                                </span>
                               </Tooltip>
-                            ) : null}
+                            }
                             <Tooltip title="Удалить">
                               <span>
                                 <JacoIconButton

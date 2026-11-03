@@ -560,6 +560,7 @@ export default function SkladSiteItemsCatalog({
                               <TableCell sx={{ minWidth: "160px" }}>
                                 <TableSortLabel {...sortProps("name")}>Название</TableSortLabel>
                               </TableCell>
+                              <TableCell sx={{ minWidth: "100px" }}>Код для 1С</TableCell>
                               <TableCell sx={{ minWidth: "110px" }}>
                                 <TableSortLabel {...sortProps("date_start")}>
                                   Действует с
@@ -573,7 +574,6 @@ export default function SkladSiteItemsCatalog({
                                   Обновление
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ minWidth: "100px" }}>Код для 1С</TableCell>
                               <TableCell
                                 align="center"
                                 sx={{ minWidth: "100px" }}
@@ -637,12 +637,12 @@ export default function SkladSiteItemsCatalog({
                                     onClick={() => openEdit(row, "main")}
                                   />
                                 </TableCell>
+                                <TableCell>{row?.art || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                                 <TableCell>
                                   {formatDateRU(row?.date_update || row?.update_item) || "—"}
                                 </TableCell>
-                                <TableCell>{row?.art || "—"}</TableCell>
                                 <TableCell align="center">
                                   <Stack
                                     direction="row"
@@ -706,6 +706,7 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1.25,
                                 }}
                               >
+                                <FieldValue label="Код 1С">{row?.art}</FieldValue>
                                 <FieldValue label="Действует с">
                                   {formatDateRU(row?.date_start)}
                                 </FieldValue>
@@ -718,7 +719,6 @@ export default function SkladSiteItemsCatalog({
                                 >
                                   {formatDateRU(row?.date_update || row?.update_item)}
                                 </FieldValue>
-                                <FieldValue label="Код 1С">{row?.art}</FieldValue>
                                 <FieldValue label="Сортировка">{row?.sort}</FieldValue>
                               </Box>
                               <Stack
