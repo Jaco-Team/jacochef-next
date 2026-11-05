@@ -157,29 +157,27 @@ export default function SkladProductionContent({
             </Stack>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
-            <JacoSegmentedTabs
-              size="compact"
-              variant="standard"
-              sx={{ width: "fit-content", maxWidth: "100%" }}
-              aria-label="Показать рецепты и полуфабрикаты"
-              value={archiveMode}
-              onChange={(_, value) => setState({ archiveMode: value, page: 0 })}
-              items={[
-                { id: "active", label: `Активные${modeCounts ? ` (${modeCounts.active})` : ""}` },
-                { id: "archive", label: `Архив${modeCounts ? ` (${modeCounts.archive})` : ""}` },
-              ]}
-            />
-          </Grid>
-
           <Grid size={12}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={1.5}
               sx={{
                 justifyContent: "flex-start",
+                alignItems: { xs: "stretch", sm: "center" },
               }}
             >
+              <JacoSegmentedTabs
+                size="compact"
+                variant="standard"
+                sx={{ width: "fit-content", maxWidth: "100%" }}
+                aria-label="Показать рецепты и полуфабрикаты"
+                value={archiveMode}
+                onChange={(_, value) => setState({ archiveMode: value, page: 0 })}
+                items={[
+                  { id: "active", label: `Активные${modeCounts ? ` (${modeCounts.active})` : ""}` },
+                  { id: "archive", label: `Архив${modeCounts ? ` (${modeCounts.archive})` : ""}` },
+                ]}
+              />
               <JacoButton
                 startIcon={<AddIcon />}
                 disabled={!canCreateProduction}
