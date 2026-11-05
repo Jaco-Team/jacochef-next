@@ -24,6 +24,7 @@ import {
   JacoTextInput,
 } from "@/design-system/shared/ui";
 import SkladItemNameButton from "../SkladItemNameButton";
+import { interactiveRowProps } from "../table/interactiveRow";
 import { sortAllergens } from "./sortAllergens.mjs";
 
 async function request(method, payload = {}) {
@@ -261,21 +262,24 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
                 </TableHead>
                 <TableBody>
                   {filtered.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <SkladItemNameButton
-                          name={row.name}
-                          onClick={() =>
-                            setModal({
-                              id: row.id,
-                              name: row.name || "",
-                              dop_name: row.dop_name || "",
-                            })
-                          }
-                        />
-                      </TableCell>
+                    <TableRow
+                      key={row.id}
+                      {...interactiveRowProps(
+                        row.name,
+                        () =>
+                          setModal({
+                            id: row.id,
+                            name: row.name || "",
+                            dop_name: row.dop_name || "",
+                          }),
+                        !busy,
+                      )}
+                    >
+                      <TableCell>{row.name || "—"}</TableCell>
                       <TableCell>{row.dop_name || "—"}</TableCell>
-                      <TableCell>{sortInput(row)}</TableCell>
+                      <TableCell onClick={(event) => event.stopPropagation()}>
+                        {sortInput(row)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

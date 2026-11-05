@@ -23,6 +23,7 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import {
   JacoButton,
   JacoIconButton,
+  JacoSegmentedTabs,
   JacoSearchField,
   JacoSurface,
 } from "@/design-system/shared/ui";
@@ -32,6 +33,7 @@ import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { getDefaultUnitDraft, useSkladUnitsStore } from "./useSkladUnitsStore";
 import SkladUnitDialog from "./SkladUnitDialog";
+import { interactiveRowProps } from "../table/interactiveRow";
 
 function normalizeNumber(value, fallback = 0) {
   const parsed = Number(value);
@@ -96,6 +98,7 @@ export default function useSkladUnitsController({ showAlert }) {
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
   const detailRequest = useRef(0);
   const [detail, setDetail] = useState({ loading: false, error: "", history: [] });
+  const [view, setView] = useState("active");
   useEffect(
     () => () => {
       detailRequest.current += 1;
@@ -286,22 +289,22 @@ export default function useSkladUnitsController({ showAlert }) {
     [api, canDeleteAction, loadUnits, setShellState, showAlert],
   );
 
+  const activeRows = useMemo(
+    () => rows.filter((row) => (row?.delete_usage?.active_relations?.length ?? 0) > 0),
+    [rows],
+  );
+
   const filteredRows = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-
-    if (!normalizedSearch) {
-      return rows;
-    }
-
-    return rows.filter((row) => {
+    const visibleRows = view === "active" ? activeRows : rows;
+    return visibleRows.filter((row) => {
       const haystack = [row?.name, row?.main_count, row?.con_count]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-
       return haystack.includes(normalizedSearch);
     });
-  }, [rows, search]);
+  }, [activeRows, rows, search, view]);
 
   const unitOptions = useMemo(() => {
     const baseOptions = [{ id: 0, name: "Без привязки" }];
@@ -389,6 +392,19 @@ export default function useSkladUnitsController({ showAlert }) {
           />
         </Box>
 
+        <JacoSegmentedTabs
+          size="compact"
+          variant="standard"
+          sx={{ width: "fit-content", maxWidth: "100%" }}
+          value={view}
+          onChange={(_, nextView) => setView(nextView)}
+          aria-label="Фильтр единиц измерения"
+          items={[
+            { id: "active", label: `Активные (${activeRows.length})` },
+            { id: "all", label: `Все (${rows.length})` },
+          ]}
+        />
+
         <TableContainer
           sx={{
             maxWidth: "100%",
@@ -442,10 +458,14 @@ export default function useSkladUnitsController({ showAlert }) {
                 return (
                   <TableRow
                     key={row.id}
-                    hover
+                    {...interactiveRowProps(
+                      row?.name,
+                      () => openUnit(row, isEditable ? "edit" : "view"),
+                      isEditable || canShowUsage,
+                    )}
                   >
                     <TableCell>
-                      <Typography sx={{ fontWeight: 600 }}>{row?.name || "—"}</Typography>
+                      <Typography>{row?.name || "—"}</Typography>
                     </TableCell>
                     <TableCell>
                       <Typography
@@ -455,7 +475,10 @@ export default function useSkladUnitsController({ showAlert }) {
                         {conversionLabel}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell
+                      align="right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <Stack
                         direction="row"
                         spacing={0.5}

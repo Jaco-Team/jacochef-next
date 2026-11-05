@@ -26,6 +26,8 @@ import {
   JacoTextInput,
 } from "@/design-system/shared/ui";
 
+import { interactiveRowProps } from "../table/interactiveRow";
+
 const CATALOGS = [
   {
     key: "list",
@@ -278,10 +280,21 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
                 </TableHead>
                 <TableBody>
                   {rows.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow
+                      key={item.id}
+                      {...interactiveRowProps(
+                        item.name,
+                        () => setModal({ id: item.id, name: item.name || "" }),
+                        !busy,
+                      )}
+                    >
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{sortInput(item)}</TableCell>
-                      <TableCell>{edit(item)}</TableCell>
+                      <TableCell onClick={(event) => event.stopPropagation()}>
+                        {sortInput(item)}
+                      </TableCell>
+                      <TableCell onClick={(event) => event.stopPropagation()}>
+                        {edit(item)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -41,6 +41,7 @@ import {
 } from "@/design-system/shared/ui";
 
 import { formatDateRU } from "../formatDateRangeRU";
+import { interactiveRowProps } from "../table/interactiveRow";
 import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
 import SkladItemNameButton from "../SkladItemNameButton";
 
@@ -587,10 +588,13 @@ export default function SkladSiteItemsCatalog({
                               <TableRow
                                 key={row.id}
                                 data-testid={`site-item-${row.id}`}
-                                hover
+                                {...interactiveRowProps(row?.name, () => openEdit(row, "main"))}
                               >
                                 <TableCell>{index + 1}</TableCell>
-                                <TableCell align="center">
+                                <TableCell
+                                  align="center"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
                                   <JacoCheckbox
                                     inputProps={{ "aria-label": `Касса: ${row.name}` }}
                                     checked={Number(row?.show_program) === 1}
@@ -631,19 +635,17 @@ export default function SkladSiteItemsCatalog({
                                     }}
                                   />
                                 </TableCell>
-                                <TableCell>
-                                  <SkladItemNameButton
-                                    name={row?.name}
-                                    onClick={() => openEdit(row, "main")}
-                                  />
-                                </TableCell>
+                                <TableCell>{row?.name || "—"}</TableCell>
                                 <TableCell>{row?.art || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                                 <TableCell>
                                   {formatDateRU(row?.date_update || row?.update_item) || "—"}
                                 </TableCell>
-                                <TableCell align="center">
+                                <TableCell
+                                  align="center"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
                                   <Stack
                                     direction="row"
                                     spacing={0.5}

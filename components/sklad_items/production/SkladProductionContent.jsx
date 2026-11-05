@@ -2,9 +2,7 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import DisabledByDefaultIcon from "@mui/icons-material/DisabledByDefault";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -25,16 +23,17 @@ import {
 
 import {
   JacoButton,
+  JacoCheckbox,
   JacoIconButton,
   JacoSearchField,
   JacoSelect,
   JacoSurface,
 } from "@/design-system/shared/ui";
-import { uiColors, uiRadii } from "@/design-system/shared/tokens";
+import { uiRadii } from "@/design-system/shared/tokens";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
-import SkladItemNameButton from "../SkladItemNameButton";
 import SkladBooleanStatus from "../SkladBooleanStatus";
+import { interactiveRowProps } from "../table/interactiveRow";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladSortableHeader from "../table/SkladSortableHeader";
 import { formatDateRU } from "../formatDateRangeRU";
@@ -45,7 +44,6 @@ import {
   getEntitySingleLabel,
   getPrimaryStatusChip,
   getRowKey,
-  getSecondaryStatusChips,
 } from "./production.helpers";
 import { PRODUCTION_ARCHIVE_MODE_OPTIONS } from "./useSkladProductionStore";
 
@@ -261,25 +259,22 @@ export default function SkladProductionContent({
                     row?.delete_usage?.can_delete === true ||
                     Number(row?.delete_usage?.can_delete) === 1;
                   const primaryStatusChip = getPrimaryStatusChip(row);
-                  const secondaryStatusChips = getSecondaryStatusChips(row);
                   const isActive = Number(row?.is_active) === 1;
-                  const ActivityIcon = isActive ? CheckBoxIcon : DisabledByDefaultIcon;
-                  const activityLabel = `Активность: ${isActive ? "Да" : "Нет"}. ${[
+                  const activityLabel = [
                     primaryStatusChip.label,
-                    ...secondaryStatusChips.map((chip) => chip.label),
-                  ].join(". ")}`;
+                    isActive && Number(row?.is_scheduled) === 1 ? "Есть новая версия" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
 
                   return (
                     <TableRow
                       key={getRowKey(entityType, row)}
-                      hover
+                      {...interactiveRowProps(row?.name, () => openEdit(entityType, row, "main"))}
                     >
                       <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
-                      <TableCell>
-                        <SkladItemNameButton
-                          name={row?.name}
-                          onClick={() => openEdit(entityType, row, "main")}
-                        />
+                      <TableCell sx={{ overflowWrap: "anywhere" }}>
+                        {row?.name || "Без названия"}
                       </TableCell>
                       {canViewUnit ? <TableCell>{row?.ed_izmer_name || "—"}</TableCell> : null}
                       <TableCell>{formatCategories(row?.categories)}</TableCell>
@@ -291,14 +286,18 @@ export default function SkladProductionContent({
                           title={activityLabel}
                           describeChild
                         >
-                          <span style={{ display: "inline-flex" }}>
-                            <ActivityIcon
-                              titleAccess={activityLabel}
-                              sx={{
-                                fontSize: 24,
-                                color: isActive ? uiColors.success : uiColors.danger,
-                                clipPath: `inset(3px round ${uiRadii.xs})`,
-                              }}
+                          <span
+                            role="img"
+                            aria-label={activityLabel}
+                            tabIndex={0}
+                            style={{ display: "inline-flex" }}
+                          >
+                            <JacoCheckbox
+                              checked={isActive}
+                              readOnly
+                              tabIndex={-1}
+                              aria-hidden="true"
+                              sx={{ pointerEvents: "none" }}
                             />
                           </span>
                         </Tooltip>
@@ -309,7 +308,10 @@ export default function SkladProductionContent({
                           value={row?.show_in_rev}
                         />
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell
+                        align="right"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <Stack
                           direction="row"
                           spacing={1}

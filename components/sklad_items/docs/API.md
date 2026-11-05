@@ -228,6 +228,7 @@ Notes:
 - `items` is a compact preview, capped on backend side
 - active warehouse-item usage includes both `jaco_main_rolls.items` (managed by `sklad_items_module_new`) and `jaco_main_rolls.items_new`
 - historical warehouse-item usage includes both `jaco_main_rolls.items_hist` and `jaco_main_rolls.items_hist_new`
+- Unit current usage includes references from both old and new recipe and semi-finished catalogs; these are counted separately and are not deduplicated. Unit-to-unit conversion references exclude self references. This is not a guarantee that every external usage source is covered.
 - `history_relations` remains count-only
 
 ### `POST|ANY /api/sklad_items/units/get_one`

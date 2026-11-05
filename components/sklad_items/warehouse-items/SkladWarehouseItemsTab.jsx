@@ -40,8 +40,8 @@ import {
 
 import SkladAutocomplete from "../ui/SkladAutocomplete";
 import SkladDeleteDialog from "../SkladDeleteDialog";
-import SkladItemNameButton from "../SkladItemNameButton";
 import SkladBooleanStatus from "../SkladBooleanStatus";
+import { interactiveRowProps } from "../table/interactiveRow";
 import { formatDateRU } from "../formatDateRangeRU";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
@@ -469,15 +469,13 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                     {visibleRows.map((row) => (
                       <TableRow
                         key={row.id}
-                        hover
+                        {...interactiveRowProps(
+                          row.name,
+                          () => openEditor(row),
+                          canManageWarehouseItems,
+                        )}
                       >
-                        <TableCell>
-                          <SkladItemNameButton
-                            name={row.name}
-                            disabled={!canManageWarehouseItems}
-                            onClick={() => openEditor(row)}
-                          />
-                        </TableCell>
+                        <TableCell>{row.name || "—"}</TableCell>
                         {Number(access?.warehouse_items_art_view) === 1 ? (
                           <TableCell>{row.art || "—"}</TableCell>
                         ) : null}
@@ -503,7 +501,10 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                             value={row.show_in_rev}
                           />
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell
+                          align="right"
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           <Stack
                             direction="row"
                             sx={{ justifyContent: "flex-end" }}
