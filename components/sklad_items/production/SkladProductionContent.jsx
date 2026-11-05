@@ -26,7 +26,7 @@ import {
   JacoCheckbox,
   JacoIconButton,
   JacoSearchField,
-  JacoSelect,
+  JacoSegmentedTabs,
   JacoSurface,
 } from "@/design-system/shared/ui";
 import { uiRadii } from "@/design-system/shared/tokens";
@@ -45,7 +45,6 @@ import {
   getPrimaryStatusChip,
   getRowKey,
 } from "./production.helpers";
-import { PRODUCTION_ARCHIVE_MODE_OPTIONS } from "./useSkladProductionStore";
 
 export default function SkladProductionContent({
   activeEntityType,
@@ -53,6 +52,7 @@ export default function SkladProductionContent({
   search,
   categoryId,
   archiveMode,
+  modeCounts,
   categoryOptions,
   mergedRows,
   paginatedRows,
@@ -158,17 +158,17 @@ export default function SkladProductionContent({
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <JacoSelect
-              label="Показать"
-              options={PRODUCTION_ARCHIVE_MODE_OPTIONS}
-              allowNone={false}
+            <JacoSegmentedTabs
+              size="compact"
+              variant="standard"
+              sx={{ width: "fit-content", maxWidth: "100%" }}
+              aria-label="Показать рецепты и полуфабрикаты"
               value={archiveMode}
-              onChange={(event) =>
-                setState({
-                  archiveMode: event.target.value,
-                  page: 0,
-                })
-              }
+              onChange={(_, value) => setState({ archiveMode: value, page: 0 })}
+              items={[
+                { id: "active", label: `Активные${modeCounts ? ` (${modeCounts.active})` : ""}` },
+                { id: "archive", label: `Архив${modeCounts ? ` (${modeCounts.archive})` : ""}` },
+              ]}
             />
           </Grid>
 

@@ -48,11 +48,14 @@ export default function useSkladProductionController({ showAlert }) {
   const shellApps = useSkladStore((state) => state.apps);
 
   const [creationReferences, setCreationReferences] = useState({ type: null, items: [] });
+  const [modeCounts, setModeCounts] = useState(null);
+  const listRequestId = useRef(0);
   const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
   const rowsByType = useSkladProductionStore((state) => state.rowsByType);
   const search = useSkladProductionStore((state) => state.search);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
-  const archiveMode = useSkladProductionStore((state) => state.archiveMode);
+  const selectedArchiveMode = useSkladProductionStore((state) => state.archiveMode);
+  const archiveMode = selectedArchiveMode === "archive" ? "archive" : "active";
   const page = useSkladProductionStore((state) => state.page);
   const rowsPerPage = useSkladProductionStore((state) => state.rowsPerPage);
   const modal = useSkladProductionStore((state) => state.modal);
@@ -210,6 +213,8 @@ export default function useSkladProductionController({ showAlert }) {
 
   const loadRows = useCallback(
     async ({ resetPage = false, categoryIdOverride } = {}) => {
+      const requestId = ++listRequestId.current;
+      setModeCounts(null);
       setShellState({ isLoading: true });
 
       try {
@@ -220,6 +225,7 @@ export default function useSkladProductionController({ showAlert }) {
           search: String(search || "").trim(),
           category_id: selectedCategoryId && !isRecipeCategory ? Number(selectedCategoryId) : null,
           archive_mode: archiveMode,
+          with_counts: true,
         };
 
         const [recipesResponse, semiFinishedResponse] = await Promise.all([
@@ -235,6 +241,21 @@ export default function useSkladProductionController({ showAlert }) {
           throw new Error(semiFinishedResponse?.text || "Ошибка загрузки списка полуфабрикатов");
         }
 
+        if (requestId !== listRequestId.current) return;
+        const counts = isRecipeCategory
+          ? [recipesResponse?.counts]
+          : [recipesResponse?.counts, semiFinishedResponse?.counts];
+        if (
+          counts.some(
+            (value) => !Number.isInteger(value?.active) || !Number.isInteger(value?.archive),
+          )
+        ) {
+          throw new Error("Не удалось загрузить количество рецептов и полуфабрикатов");
+        }
+        setModeCounts({
+          active: counts.reduce((total, value) => total + value.active, 0),
+          archive: counts.reduce((total, value) => total + value.archive, 0),
+        });
         setState({
           rowsByType: {
             recipe: Array.isArray(recipesResponse?.list) ? recipesResponse.list : [],
@@ -245,9 +266,12 @@ export default function useSkladProductionController({ showAlert }) {
           ...(resetPage ? { page: 0 } : {}),
         });
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки списка", false);
+        if (requestId === listRequestId.current) {
+          setState({ rowsByType: { recipe: [], semi_finished: [] } });
+          showAlert(error?.message || "Ошибка загрузки списка", false);
+        }
       } finally {
-        setShellState({ isLoading: false });
+        if (requestId === listRequestId.current) setShellState({ isLoading: false });
       }
     },
     [api, archiveMode, categoryId, search, setShellState, setState, showAlert],
@@ -848,6 +872,7 @@ export default function useSkladProductionController({ showAlert }) {
           search={search}
           categoryId={categoryId}
           archiveMode={archiveMode}
+          modeCounts={modeCounts}
           categoryOptions={categoryOptions}
           mergedRows={mergedRows}
           paginatedRows={paginatedRows}

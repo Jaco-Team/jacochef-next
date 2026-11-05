@@ -281,7 +281,13 @@ function formatProductionValue(field, snapshot, entityType) {
     case "ed_izmer":
       return formatValue(snapshot?.unit_name || snapshot?.ei_name || snapshot?.ed_izmer_name);
     case "two_user":
-      return Number(snapshot?.two_user) === 1 ? "Два сотрудника" : "Один сотрудник";
+      if (
+        snapshot?.two_user === null ||
+        snapshot?.two_user === undefined ||
+        snapshot?.two_user === ""
+      )
+        return "";
+      return Number(snapshot.two_user) === 1 ? "Два сотрудника" : "Один сотрудник";
     case "show_in_rev":
       return formatBoolean(snapshot?.show_in_rev);
     case "date_start":
@@ -650,7 +656,7 @@ function revisionStatusColor(status) {
   }[status || "legacy"];
 }
 
-function previousEffectiveRevision(rows, selectedRow) {
+export function previousEffectiveRevision(rows, selectedRow) {
   if (!selectedRow) return null;
 
   const explicitKey = String(selectedRow?.previous_revision_key || "");
@@ -682,7 +688,7 @@ function assertHistoryResponse(response, fallback) {
   return response;
 }
 
-function snapshotFieldRows(snapshot, entityType) {
+export function snapshotFieldRows(snapshot, entityType) {
   if (!snapshot) {
     return [];
   }

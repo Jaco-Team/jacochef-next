@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditIcon from "@mui/icons-material/Edit";
-import HistoryIcon from "@mui/icons-material/History";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import {
   Box,
   Chip,
@@ -504,7 +504,7 @@ export default function useSkladUnitsController({ showAlert }) {
                               aria-label="История"
                               onClick={() => openUnit(row, "view")}
                             >
-                              <HistoryIcon fontSize="small" />
+                              <HistoryOutlinedIcon fontSize="small" />
                             </JacoIconButton>
                           </Tooltip>
                         ) : null}

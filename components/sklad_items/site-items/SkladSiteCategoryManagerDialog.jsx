@@ -1,5 +1,7 @@
 "use client";
 
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Box, Stack, Typography } from "@mui/material";
 import { JacoButton, JacoModal, JacoSelect, JacoTextInput } from "@/design-system/shared/ui";
@@ -186,6 +188,7 @@ export default function SkladSiteCategoryManagerDialog({
                   tone="secondary"
                   disabled={state.loading}
                   onClick={() => setHistoryCategory({ ...category, source_type: "site_item" })}
+                  startIcon={<HistoryOutlinedIcon fontSize="small" />}
                 >
                   История
                 </JacoButton>

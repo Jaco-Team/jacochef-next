@@ -2,12 +2,6 @@
 
 import { create } from "zustand";
 
-export const PRODUCTION_ARCHIVE_MODE_OPTIONS = [
-  { id: "active", name: "Активные" },
-  { id: "all", name: "Все" },
-  { id: "archive", name: "Архив" },
-];
-
 export const PRODUCTION_RECIPE_CATEGORY_ID = "__recipes__";
 
 export const useSkladProductionStore = create((set) => ({

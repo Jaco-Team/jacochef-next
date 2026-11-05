@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import HistoryIcon from "@mui/icons-material/History";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import SyncIcon from "@mui/icons-material/Sync";
@@ -309,14 +308,6 @@ export default function SkladSiteItemsCatalog({
                       },
                     }}
                   />
-                  <Tooltip title="Управление категориями товаров сайта">
-                    <JacoIconButton
-                      aria-label="Управление категориями товаров сайта"
-                      onClick={onManageCategories}
-                    >
-                      <SettingsOutlinedIcon />
-                    </JacoIconButton>
-                  </Tooltip>
                 </Stack>
               </Stack>
 
@@ -393,6 +384,46 @@ export default function SkladSiteItemsCatalog({
             </Stack>
           </JacoSurface>
 
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              alignItems: { xs: "stretch", sm: "center" },
+              justifyContent: "space-between",
+              px: 0.25,
+            }}
+          >
+            <Typography sx={{ color: textSecondary, fontSize: 13 }}>
+              {groupedRows.length ? "Выберите категорию, чтобы увидеть товары" : ""}
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}
+            >
+              <JacoButton
+                compact
+                tone="secondary"
+                startIcon={<SettingsOutlinedIcon />}
+                onClick={onManageCategories}
+                aria-label="Управление категориями товаров сайта"
+              >
+                Управление категориями
+              </JacoButton>
+              {groupedRows.length > 0 && !loading && !error ? (
+                <JacoButton
+                  compact
+                  tone="secondary"
+                  startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+                  onClick={toggleAll}
+                  sx={{ color: textSecondary, textTransform: "none" }}
+                >
+                  {allExpanded ? "Свернуть все" : "Развернуть все"}
+                </JacoButton>
+              ) : null}
+            </Stack>
+          </Stack>
+
           {loading ? (
             <JacoSurface
               role="status"
@@ -417,28 +448,6 @@ export default function SkladSiteItemsCatalog({
             </JacoSurface>
           ) : groupedRows.length ? (
             <Stack spacing={1.25}>
-              <Stack
-                direction="row"
-                sx={{
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  px: 0.25,
-                }}
-              >
-                <Typography sx={{ color: textSecondary, fontSize: 13 }}>
-                  Выберите категорию, чтобы увидеть товары
-                </Typography>
-                <JacoButton
-                  compact
-                  tone="secondary"
-                  startIcon={allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
-                  onClick={toggleAll}
-                  sx={{ color: textSecondary, textTransform: "none" }}
-                >
-                  {allExpanded ? "Свернуть все" : "Развернуть все"}
-                </JacoButton>
-              </Stack>
-
               {groupedRows.map((category) => {
                 const key = categoryKey(category);
                 return (
@@ -516,7 +525,7 @@ export default function SkladSiteItemsCatalog({
                               "&:focus-visible": { outline: "2px solid currentColor" },
                             }}
                           >
-                            <HistoryIcon fontSize="small" />
+                            <HistoryOutlinedIcon fontSize="small" />
                           </Box>
                         </Tooltip>
                       ) : null}
@@ -659,7 +668,7 @@ export default function SkladSiteItemsCatalog({
                                           aria-label="История"
                                           onClick={() => openEdit(row, "history")}
                                         >
-                                          <EditNoteIcon fontSize="small" />
+                                          <HistoryOutlinedIcon fontSize="small" />
                                         </JacoIconButton>
                                       </Tooltip>
                                     ) : null}
@@ -765,7 +774,7 @@ export default function SkladSiteItemsCatalog({
                                 {canViewHistory ? (
                                   <JacoButton
                                     tone="secondary"
-                                    startIcon={<EditNoteIcon />}
+                                    startIcon={<HistoryOutlinedIcon />}
                                     onClick={() => openEdit(row, "history")}
                                     sx={{ flex: 1 }}
                                   >

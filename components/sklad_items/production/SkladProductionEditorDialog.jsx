@@ -38,6 +38,7 @@ import {
   JacoTimePicker,
 } from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
+import SkladProductionHistorySimple from "./SkladProductionHistorySimple";
 import SkladSectionCard from "../ui/SkladSectionCard";
 import {
   buildInitialDraft,
@@ -104,6 +105,7 @@ export default function SkladProductionEditorDialog({
   onClose,
 }) {
   const [activeTab, setActiveTab] = useState(canViewHistory ? initialTab : "main");
+  const [extendedHistory, setExtendedHistory] = useState(false);
   const [form, setForm] = useState(() => ({
     ...buildInitialDraft(draft),
     ...(mode === "create" ? { two_user: null } : {}),
@@ -151,6 +153,7 @@ export default function SkladProductionEditorDialog({
       ...(mode === "create" ? { two_user: null } : {}),
     });
     setActiveTab(canViewHistory ? initialTab : "main");
+    setExtendedHistory(false);
   }, [canViewHistory, draft, initialTab, mode, open]);
 
   const unitOptions = useMemo(() => {
@@ -843,12 +846,27 @@ export default function SkladProductionEditorDialog({
                 value="history"
                 sx={{ p: 0, pt: 2 }}
               >
-                <SkladSectionCard
-                  icon={<HistoryOutlinedIcon fontSize="small" />}
-                  title="История"
-                >
-                  <SkladEmbeddedHistoryTable history={form.history} />
-                </SkladSectionCard>
+                <Stack spacing={2}>
+                  <Stack
+                    direction="row"
+                    sx={{ justifyContent: "flex-end" }}
+                  >
+                    <JacoButton
+                      tone="secondary"
+                      onClick={() => setExtendedHistory((value) => !value)}
+                    >
+                      {extendedHistory ? "Обычная история" : "Расширенная история"}
+                    </JacoButton>
+                  </Stack>
+                  {extendedHistory ? (
+                    <SkladEmbeddedHistoryTable history={form.history} />
+                  ) : (
+                    <SkladProductionHistorySimple
+                      history={form.history}
+                      access={access}
+                    />
+                  )}
+                </Stack>
               </TabPanel>
             ) : null}
           </TabContext>

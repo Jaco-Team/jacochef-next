@@ -678,7 +678,8 @@ Request:
   "data": {
     "search": "",
     "category_id": null,
-    "archive_mode": "active"
+    "archive_mode": "active",
+    "with_counts": true
   }
 }
 ```
@@ -688,7 +689,8 @@ Response:
 ```json
 {
   "st": true,
-  "list": []
+  "list": [],
+  "counts": { "active": 0, "archive": 0 }
 }
 ```
 
@@ -708,6 +710,8 @@ List row fields:
 - `show_in_rev`
 - `delete_state`
 - `delete_usage`
+
+When `with_counts` is true, `counts` contains the active and archived totals for this entity type after the same search and category filters, independently of `archive_mode`. Scheduled entities count as active; archive counts exclude never-applied cancelled projections, matching the list filters. Without `with_counts`, the response remains unchanged. The same contract applies to `semi-finished/list`.
 
 ### `POST|ANY /api/sklad_items/recipes/get_one`
 
