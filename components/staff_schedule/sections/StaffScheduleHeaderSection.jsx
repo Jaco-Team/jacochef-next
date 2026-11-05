@@ -155,6 +155,8 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
     },
   };
 
+  const selectedMonth = page.months?.find((month) => month.id === page.draftMonthId) ?? null;
+
   return (
     <Box>
       <Grid
@@ -174,12 +176,14 @@ export default function StaffScheduleHeaderSection({ page, isMobile = false }) {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <JacoSelect
-            allowNone={false}
+          <JacoAutocomplete
+            disableClearable
+            selectAppearance
             options={page.months}
-            value={page.draftMonthId}
-            onChange={page.handleMonthChange}
+            value={selectedMonth}
+            onChange={(_, month) => month && page.handleMonthChange({ target: { value: month.id } })}
             label="Месяц"
+            noOptionsText="Месяц не найден"
           />
         </Grid>
 

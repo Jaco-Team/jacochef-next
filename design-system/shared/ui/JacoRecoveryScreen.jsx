@@ -99,7 +99,7 @@ function RecoveryCodeInput({ code, onChange, error, errorKey, disabled, errorId 
 
 export default function JacoRecoveryScreen({
   step = "request", phone = "", channel = "sms", code = "", password = "", repeatedPassword = "", loginPassword = "",
-  loading = false, error = "", errorKey = 0, phoneError = false, resendAfter = 0, retryAfter = 0, recoveryMessage = "", securityContent = null,
+  loading = false, error = "", errorKey = 0, phoneError = false, phoneErrorText = RECOVERY_PHONE_ERROR, resendAfter = 0, retryAfter = 0, recoveryMessage = "", securityContent = null,
   securityBlocked = false, onPhoneChange, onPhoneBlur, onChannelChange, onCodeChange, onPasswordChange, onRepeatedPasswordChange, onLoginPasswordChange, onSubmit, onBack, onLogin, onResend, onChangeChannel,
   ssoAvailable = false, ssoChecking = false, ssoStarting = false, onSsoLogin,
 }) {
@@ -122,11 +122,11 @@ export default function JacoRecoveryScreen({
       {step === "success" ? <CheckCircleRoundedIcon aria-hidden="true" sx={{ fontSize: 48, color: "#15803D", mb: 3 }} /> : null}
       <Typography component="h1" id={ids.title} sx={{ m: 0, fontSize: 24, lineHeight: 1.35, letterSpacing: "-0.025em", fontWeight: 600, mb: 1 }}>{title}</Typography>
       {step === "request" || step === "login" ? <Typography sx={{ fontSize: 14, lineHeight: 1.5, color: MUTED, mb: 3 }}>{step === "request" ? "Отправим код подтверждения на ваш номер" : "Введите номер телефона и пароль"}</Typography> : null}
-      {step === "code" ? <Typography sx={{ fontSize: 14, lineHeight: 1.6, color: MUTED, mb: 3 }}>Код отправлен на{" "}<br /><Box component="span" sx={{ color: "#374151", whiteSpace: "nowrap" }}>{maskedRecoveryPhone(phone)}</Box>{" "}<Button type="button" variant="text" onClick={onBack} disabled={loading} sx={{ minWidth: 0, p: 0, ml: 0.5, fontSize: 14, textTransform: "none", color: CRIMSON, "&.Mui-focusVisible": FOCUS }}>Изменить</Button></Typography> : null}
+      {step === "code" ? <Typography sx={{ fontSize: 14, lineHeight: 1.6, color: MUTED, mb: 3 }}>Код подтверждения для номера{" "}<br /><Box component="span" sx={{ color: "#374151", whiteSpace: "nowrap" }}>{maskedRecoveryPhone(phone)}</Box>{" "}<Button type="button" variant="text" onClick={onBack} disabled={loading} sx={{ minWidth: 0, p: 0, ml: 0.5, fontSize: 14, textTransform: "none", color: CRIMSON, "&.Mui-focusVisible": FOCUS }}>Изменить</Button></Typography> : null}
       {step === "password" ? <Typography sx={{ color: MUTED, fontSize: 14, lineHeight: 1.5, mb: 3 }}>Используйте строчные и заглавные латинские буквы и цифры</Typography> : null}
       {step === "success" ? <Typography sx={{ color: MUTED, fontSize: 14, lineHeight: 1.5, mb: 4 }}>Теперь вы можете войти с новым паролем</Typography> : null}
       <Box component="form" noValidate onSubmit={onSubmit}>
-        {step === "request" || step === "login" ? <RecoveryField id={ids.phone} label="Номер телефона" name="phone" type="tel" autoComplete="tel" value={phone} onChange={(event) => onPhoneChange?.(parseRecoveryPhone(event.target.value).display)} onBlur={onPhoneBlur} disabled={loading} placeholder="+7 (999) 123-45-67" error={phoneError} slotProps={{ htmlInput: { "aria-describedby": phoneError ? ids.phoneHelper : undefined, "aria-invalid": phoneError } }}>{phoneError ? <Typography id={ids.phoneHelper} role="alert" sx={{ fontSize: 12, lineHeight: 1.5, color: "#B91C1C", mt: 1 }}>{RECOVERY_PHONE_ERROR}</Typography> : null}</RecoveryField> : null}
+        {step === "request" || step === "login" ? <RecoveryField id={ids.phone} label="Номер телефона" name="phone" type="tel" autoComplete="tel" value={phone} onChange={(event) => onPhoneChange?.(parseRecoveryPhone(event.target.value).display)} onBlur={onPhoneBlur} disabled={loading} placeholder="+7 (999) 123-45-67" error={phoneError} slotProps={{ htmlInput: { "aria-describedby": phoneError ? ids.phoneHelper : undefined, "aria-invalid": phoneError } }}>{phoneError ? <Typography id={ids.phoneHelper} role="alert" sx={{ fontSize: 12, lineHeight: 1.5, color: "#B91C1C", mt: 1 }}>{phoneErrorText || RECOVERY_PHONE_ERROR}</Typography> : null}</RecoveryField> : null}
         {step === "login" ? <Box sx={{ mt: 3 }}><RecoveryPasswordField id={`${instanceId}-login-password`} label="Пароль" value={loginPassword} onChange={onLoginPasswordChange} disabled={loading} autoComplete="current-password" /></Box> : null}
         {step === "request" ? <Box sx={{ mt: 3 }}>
           <Typography id={ids.channel} sx={{ fontSize: 14, lineHeight: 1.5, fontWeight: 500, mb: 1 }}>Способ получения кода</Typography>

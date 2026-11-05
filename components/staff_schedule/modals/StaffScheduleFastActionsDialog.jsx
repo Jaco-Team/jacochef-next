@@ -14,6 +14,7 @@ import {
   createStaffScheduleAccess,
   formatEmployeeCount,
   getScheduleRowFocusKey,
+  getPositionName,
 } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -584,7 +585,7 @@ export default function StaffScheduleFastActionsDialog({
             component="span"
             sx={{ fontWeight: 700 }}
           >
-            {[targetUser?.user_name, targetUser?.app_name].filter(Boolean).join(" ") ||
+            {[targetUser?.user_name, getPositionName(targetUser)].filter(Boolean).join(" ") ||
               "сотрудника"}
           </Box>
           ?
@@ -935,7 +936,7 @@ export default function StaffScheduleFastActionsDialog({
               }}
             >
               <Typography sx={staffScheduleModalTypography.fieldValue}>
-                {[item?.user_name, item?.app_name].filter(Boolean).join(", ") || "—"}
+                {[item?.user_name, getPositionName(item)].filter(Boolean).join(", ") || "—"}
               </Typography>
               <Box
                 component="button"

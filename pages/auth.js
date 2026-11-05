@@ -29,6 +29,7 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState("");
   const [repeatedPassword, setRepeatedPassword] = useState("");
   const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [recoveryPhoneError, setRecoveryPhoneError] = useState("");
   const [codeErrorKey, setCodeErrorKey] = useState(0);
   const [ssoState, setSsoState] = useState({ checking: true, loginUrl: "", starting: false });
   const ssoStartInProgress = useRef(false);
@@ -89,6 +90,7 @@ export default function Auth() {
   const changePhone = (value) => {
     setPhone(value);
     setFormError("");
+    setRecoveryPhoneError("");
     setConfirmationCode("");
     setNewPassword("");
     setRepeatedPassword("");
@@ -97,6 +99,7 @@ export default function Auth() {
     setRecoveryStep("request");
     setPhoneTouched(false);
     setFormError("");
+    setRecoveryPhoneError("");
     setRecoveryMessage("");
     resetCaptcha();
   };
@@ -107,6 +110,7 @@ export default function Auth() {
     setRepeatedPassword("");
     setRecoveryMessage("");
     setFormError("");
+    setRecoveryPhoneError("");
     setPhoneTouched(false);
     resetCaptcha();
   };
@@ -116,6 +120,7 @@ export default function Auth() {
     setNewPassword("");
     setRepeatedPassword("");
     setFormError("");
+    setRecoveryPhoneError("");
     resetCaptcha();
   };
   const changeChannel = (value) => {
@@ -124,6 +129,22 @@ export default function Auth() {
     setNewPassword("");
     setRepeatedPassword("");
     setFormError("");
+    setRecoveryPhoneError("");
+  };
+
+  const handleRecoveryRequestFailure = (payload, fallback) => {
+    const message = payload?.text || payload?.message || fallback;
+    setFormError(message);
+    if (payload?.error_code === "account_not_found") {
+      setRecoveryStep("request");
+      setRecoveryPhoneError(message);
+      setPhoneTouched(true);
+      setConfirmationCode("");
+      setNewPassword("");
+      setRepeatedPassword("");
+      setRecoveryMessage("");
+      setResendAfter(0);
+    }
   };
 
   async function login() {
@@ -171,17 +192,18 @@ export default function Auth() {
     }
     setIsLoad(true);
     setFormError("");
+    setRecoveryPhoneError("");
     try {
       const res = await api_laravel("auth", "check_phone", { login: normalizedPhone.apiValue, captcha_token: captchaToken, delivery_channel: deliveryChannel }, { throwErrors: true });
       const payload = res?.data ?? res;
       applySecurityState(payload);
-      if (!payload || payload.st === false) {
-        setFormError(payload?.text || "Не удалось запросить код. Попробуйте позже.");
+      if (!payload || payload.st !== true) {
+        handleRecoveryRequestFailure(payload, "Не удалось запросить код. Попробуйте позже.");
         resetCaptcha();
         return;
       }
       applyResendState(payload);
-      setRecoveryMessage(payload.text || "Если номер зарегистрирован, код подтверждения будет отправлен.");
+      setRecoveryMessage(payload.text || "Запрос на отправку кода принят. Дождитесь сообщения.");
       setConfirmationCode("");
       setNewPassword("");
       setRepeatedPassword("");
@@ -192,7 +214,11 @@ export default function Auth() {
       const status = error?.response?.status;
       const payload = error?.response?.data?.data ?? error?.response?.data;
       applySecurityState(payload, error?.response?.headers?.["retry-after"]);
-      setFormError(status === 429 ? "Слишком много запросов. Попробуйте немного позже." : payload?.text || payload?.message || "Не удалось запросить код. Попробуйте позже.");
+      if (status === 429) {
+        setFormError("Слишком много запросов. Попробуйте немного позже.");
+      } else {
+        handleRecoveryRequestFailure(payload, "Не удалось запросить код. Попробуйте позже.");
+      }
       resetCaptcha();
     } finally { setIsLoad(false); }
   }
@@ -265,7 +291,8 @@ export default function Auth() {
         loading={isLoad}
         error={formError}
         errorKey={codeErrorKey}
-        phoneError={recoveryStep === "request" && phoneTouched && !normalizedPhone.valid}
+        phoneError={recoveryStep === "request" && (Boolean(recoveryPhoneError) || (phoneTouched && !normalizedPhone.valid))}
+        phoneErrorText={recoveryPhoneError || RECOVERY_PHONE_ERROR}
         resendAfter={resendAfter}
         retryAfter={retryAfter}
         recoveryMessage={recoveryMessage}

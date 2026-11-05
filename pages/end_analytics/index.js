@@ -36,6 +36,7 @@ import MyAlert from "@/ui/MyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
 import AiAnalystTab, { AI_ANALYST_SOURCES } from "@/components/end_analytics/AiAnalystTab";
+import MarketingTab from "@/components/end_analytics/MarketingTab";
 import {
   DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
   END_ANALYTICS_COLUMNS,
@@ -569,6 +570,7 @@ function EndPage() {
   const accessApi = handleUserAccess(access || {});
   const canViewAnalytics = access !== null && accessApi.userCan("access", "analytics");
   const canViewAiAnalyst = access !== null && accessApi.userCan("access", "ai_analyst");
+  const canViewMarketing = access !== null && accessApi.userCan("access", "marketing");
   const canExportReport = access !== null && accessApi.userCan("access", "export");
 
   useEffect(() => {
@@ -584,7 +586,9 @@ function EndPage() {
           ? 0
           : nextAccessApi.userCan("access", "ai_analyst")
             ? 1
-            : false,
+            : nextAccessApi.userCan("access", "marketing")
+              ? 2
+              : false,
       );
       setCities(data.cities);
       const availableModels = Array.isArray(data.ai_models) ? data.ai_models : [];
@@ -2456,7 +2460,7 @@ function EndPage() {
           <Box sx={{ display: "flex", gap: 1 }}></Box>
         </Box>
       </Grid>
-      {(canViewAnalytics || canViewAiAnalyst) && (
+      {(canViewAnalytics || canViewAiAnalyst || canViewMarketing) && (
         <Grid size={{ xs: 12 }}>
           <Tabs
             value={activeTab}
@@ -2480,10 +2484,16 @@ function EndPage() {
                 label="AI аналитик"
               />
             )}
+            {canViewMarketing && (
+              <Tab
+                value={2}
+                label="Маркетинг"
+              />
+            )}
           </Tabs>
         </Grid>
       )}
-      {access !== null && !canViewAnalytics && !canViewAiAnalyst && (
+      {access !== null && !canViewAnalytics && !canViewAiAnalyst && !canViewMarketing && (
         <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3 }}>
             <Typography
@@ -2494,6 +2504,14 @@ function EndPage() {
               Нет доступа к вкладкам модуля
             </Typography>
           </Paper>
+        </Grid>
+      )}
+      {activeTab === 2 && canViewMarketing && (
+        <Grid size={{ xs: 12 }}>
+          <MarketingTab
+            cities={cities}
+            onError={showError}
+          />
         </Grid>
       )}
       {activeTab === 1 && canViewAiAnalyst && (

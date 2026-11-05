@@ -1310,7 +1310,7 @@ export default function StaffScheduleMonthModal({
                   onEdit={onEditFinance}
                   loadPayoutHistory={loadPayoutHistory}
                 />
-              ) : modal.data.hasPeriodSummary ? (
+              ) : modal.data.hasPeriodSummary && !modal.data.financeHidden ? (
                 <Stack spacing={1}>
                   <Typography
                     sx={{
