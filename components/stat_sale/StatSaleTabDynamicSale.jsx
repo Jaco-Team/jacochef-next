@@ -29,7 +29,9 @@ import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLi
 import { JacoCompactTabs, JacoSegmentedTabs } from "@/design-system/shared/ui";
 import {
   buildDynamicSaleView,
+  buildMetricLineMap,
   indexRowsByPeriod,
+  mergeLineMaps,
   SALES_SOURCE_KEYS,
   SALES_SOURCE_LABELS,
   SALES_SOURCE_TABS,
@@ -267,10 +269,20 @@ class StatSale_Tab_DynamicSale extends React.Component {
         annualPlanTotals: totalView.annualPlanTotals,
         sourceRows,
         annualPlanTotalsBySource,
-        pizzaLine: res.pizza_line ?? {},
-        rollyLine: res.rolly_line ?? {},
-        ordersLine: res.orders_line ?? {},
-        linesBySource: res.lines_by_source ?? {},
+        pizzaLine: mergeLineMaps(buildMetricLineMap(res.res, "pizza"), res.pizza_line),
+        rollyLine: mergeLineMaps(buildMetricLineMap(res.res, "rolly"), res.rolly_line),
+        ordersLine: mergeLineMaps(buildMetricLineMap(res.res, "orders"), res.orders_line),
+        linesBySource: SALES_SOURCE_KEYS.reduce((lines, source) => {
+          const monthMap = res.res_by_source?.[source];
+          const fallback = res.lines_by_source?.[source] ?? {};
+
+          lines[source] = {
+            orders: mergeLineMaps(buildMetricLineMap(monthMap, "orders"), fallback.orders),
+            rolly: mergeLineMaps(buildMetricLineMap(monthMap, "rolly"), fallback.rolly),
+            pizza: mergeLineMaps(buildMetricLineMap(monthMap, "pizza"), fallback.pizza),
+          };
+          return lines;
+        }, {}),
         analyticsSources: {
           orders: "total",
           rolly: "total",

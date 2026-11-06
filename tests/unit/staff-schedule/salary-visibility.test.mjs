@@ -18,7 +18,7 @@ test("hidden salary rows show a dash instead of zero, hours stay visible", async
   for (const key of ["price_p_h", "given", "given_cart", "all_price", "to_pay_sum", "salary_difference"]) {
     assert.equal(getSummaryCellValue({ key }, hidden), "—", key);
   }
-  assert.equal(getSummaryCellValue(WORKED_HOURS_COLUMN, hidden), "1:30");
+  assert.equal(getSummaryCellValue(WORKED_HOURS_COLUMN, hidden).replace(/\u00A0/g, " "), "1 ч 30 мин");
   assert.equal(getSummaryCellValue({ key: "given" }, { finance_hidden: 0, given: "500.00" }), "500");
 });
 
@@ -41,4 +41,30 @@ test("overview skips the finance block for hidden rows and team bonus toggle nee
   assert.match(read("useStaffSchedulePage.js"), /if \(!row \|\| Number\(row\.finance_hidden\) === 1\) \{/);
   assert.match(read("modals/StaffScheduleMonthModal.jsx"), /modal\.data\.hasPeriodSummary && !modal\.data\.financeHidden \?/);
   assert.match(read("sections/StaffScheduleTableSection.jsx"), /canEdit\("com_bonus"\) && canView\("salary_all"\)/);
+});
+
+test("team bonus button color shows the decision: neutral, granted, refused", async () => {
+  const { getTeamBonusHeaderActionSx, getTeamBonusStatusText } = await import(
+    "../../../components/staff_schedule/staffSchedulePatterns.js"
+  );
+  const none = getTeamBonusHeaderActionSx(0);
+  const granted = getTeamBonusHeaderActionSx(1);
+  const refused = getTeamBonusHeaderActionSx(2);
+
+  assert.equal(new Set([none.backgroundColor, granted.backgroundColor, refused.backgroundColor]).size, 3);
+  assert.match(none.border, /#A6A6A6/);
+  assert.match(granted.border, /#16A34A/);
+  assert.match(refused.border, /#DD1A32/);
+  assert.deepEqual(getTeamBonusHeaderActionSx(undefined), none);
+  assert.equal(none.cursor, "pointer");
+  assert.equal(getTeamBonusStatusText(0), "Командный бонус: решение не принято");
+  assert.equal(getTeamBonusStatusText(1), "Командный бонус: выдан");
+  assert.equal(getTeamBonusStatusText("2"), "Командный бонус: отказано");
+
+  for (const path of ["sections/StaffScheduleTableSection.jsx", "sections/StaffScheduleMobileTableSection.jsx"]) {
+    const source = readFileSync(new URL(`../../../components/staff_schedule/${path}`, import.meta.url), "utf8");
+    assert.match(source, /\{canOpenTeamBonus \? \(\s+<Box\s+component="button"[\s\S]*?sx=\{getTeamBonusHeaderActionSx\(periodBonusState\)\}/, path);
+  }
+  const desktop = readFileSync(new URL("../../../components/staff_schedule/sections/StaffScheduleTableSection.jsx", import.meta.url), "utf8");
+  assert.equal((desktop.match(/positionHeaderLeft=\{positionHeaderLeft\}\s+periodBonusState=\{periodBonusState\}/g) ?? []).length, 2);
 });
