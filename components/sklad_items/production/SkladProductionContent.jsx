@@ -46,6 +46,8 @@ import {
   getRowKey,
 } from "./production.helpers";
 
+const SHOW_ACTIVITY_COLUMN = false;
+
 export default function SkladProductionContent({
   activeEntityType,
   creationItems,
@@ -238,7 +240,7 @@ export default function SkladProductionContent({
                     Действует до
                   </SkladSortableHeader>
                   <TableCell sx={{ minWidth: 116 }}>Обновление</TableCell>
-                  <TableCell align="center">Активность</TableCell>
+                  {SHOW_ACTIVITY_COLUMN ? <TableCell align="center">Активность</TableCell> : null}
                   <TableCell align="center">Ревизия</TableCell>
                   <TableCell
                     align="right"
@@ -279,29 +281,32 @@ export default function SkladProductionContent({
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_update) || "—"}</TableCell>
-                      <TableCell align="center">
-                        <Tooltip
-                          title={activityLabel}
-                          describeChild
-                        >
-                          <span
-                            role="img"
-                            aria-label={activityLabel}
-                            tabIndex={0}
-                            style={{ display: "inline-flex" }}
+                      {SHOW_ACTIVITY_COLUMN ? (
+                        <TableCell align="center">
+                          <Tooltip
+                            title={activityLabel}
+                            describeChild
                           >
-                            <JacoCheckbox
-                              checked={isActive}
-                              readOnly
-                              tabIndex={-1}
-                              aria-hidden="true"
-                              sx={{ pointerEvents: "none" }}
-                            />
-                          </span>
-                        </Tooltip>
-                      </TableCell>
+                            <span
+                              role="img"
+                              aria-label={activityLabel}
+                              tabIndex={0}
+                              style={{ display: "inline-flex" }}
+                            >
+                              <JacoCheckbox
+                                checked={isActive}
+                                readOnly
+                                tabIndex={-1}
+                                aria-hidden="true"
+                                sx={{ pointerEvents: "none" }}
+                              />
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                      ) : null}
                       <TableCell align="center">
                         <SkladBooleanStatus
+                          colorize
                           label="Ревизия"
                           value={row?.show_in_rev}
                         />
@@ -415,7 +420,7 @@ export default function SkladProductionContent({
 
                 {mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={canViewUnit ? 10 : 9}>
+                    <TableCell colSpan={(canViewUnit ? 9 : 8) + Number(SHOW_ACTIVITY_COLUMN)}>
                       <Typography
                         sx={{
                           color: "text.secondary",

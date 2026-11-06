@@ -497,6 +497,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                         </TableCell>
                         <TableCell>
                           <SkladBooleanStatus
+                            colorize
                             label="Ревизия"
                             value={row.show_in_rev}
                           />
