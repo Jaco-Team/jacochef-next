@@ -41,13 +41,22 @@ test("worked hours column is first, public and formatted in hours", async () => 
     assert.equal(getVisibleSummaryColumns(access)[0], WORKED_HOURS_COLUMN);
   }
   assert.equal(WORKED_HOURS_COLUMN.public, true);
-  assert.equal(formatWorkedMinutes(1080), "18");
-  assert.equal(formatWorkedMinutes(1050), "17:30");
-  assert.equal(formatWorkedMinutes(7400), "123:20");
-  assert.equal(formatWorkedMinutes(65), "1:05");
-  assert.equal(formatWorkedMinutes(0), "0");
+  const plain = (value) => value.replace(/\u00A0/g, " ");
+  assert.equal(plain(formatWorkedMinutes(1080)), "18 ч");
+  assert.equal(plain(formatWorkedMinutes(1050)), "17 ч 30 мин");
+  assert.equal(plain(formatWorkedMinutes(8745)), "145 ч 45 мин");
+  assert.equal(plain(formatWorkedMinutes(65)), "1 ч 5 мин");
+  assert.equal(plain(formatWorkedMinutes(30)), "0 ч 30 мин");
+  assert.equal(plain(formatWorkedMinutes(0)), "0 ч");
   assert.equal(formatWorkedMinutes(""), "");
-  assert.equal(getSummaryCellValue(WORKED_HOURS_COLUMN, { worked_min: 90 }), "1:30");
+  assert.equal(WORKED_HOURS_COLUMN.label, "Отработано");
+  const { formatDayHoursTitle } = await import("../../../components/staff_schedule/staffScheduleHelpers.js");
+  assert.equal(plain(formatDayHoursTitle("7:45")), "7 ч 45 мин");
+  assert.equal(plain(formatDayHoursTitle("12")), "12 ч");
+  assert.equal(plain(formatDayHoursTitle(6)), "6 ч");
+  assert.equal(formatDayHoursTitle(""), undefined);
+  assert.equal(formatDayHoursTitle(undefined), undefined);
+  assert.equal(plain(getSummaryCellValue(WORKED_HOURS_COLUMN, { worked_min: 90 })), "1 ч 30 мин");
   assert.equal(getSummaryCellValue(WORKED_HOURS_COLUMN, {}), "");
 });
 

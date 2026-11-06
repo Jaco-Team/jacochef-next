@@ -45,7 +45,7 @@ test("cards are grouped into accruals and payouts and formatted as money or hour
     assert.equal(getFinanceGroup(key), "payout", key);
   }
   assert.equal(formatFinanceCardValue({ key: "given" }, 12400).replace(/\s/g, " "), "12 400 ₽");
-  assert.equal(formatFinanceCardValue({ key: "worked_hours" }, "123:20"), "123:20");
+  assert.equal(formatFinanceCardValue({ key: "worked_hours" }, "123 ч 20 мин"), "123 ч 20 мин");
   assert.equal(formatFinanceCardValue({ key: "given" }, ""), "—");
 });
 

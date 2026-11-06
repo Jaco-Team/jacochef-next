@@ -181,7 +181,7 @@ test("salary fields require individual readable flags and ignore removed group d
     "given",
     "given_cart",
   ];
-  // «Всего часов» не финансовая и видна всем; финансовые колонки — только по правам.
+  // «Отработано» не финансовая и видна всем; финансовые колонки — только по правам.
   const finance = (access) => getVisibleSummaryColumns(access).filter((column) => !column.public);
   assert.deepEqual(getVisibleSummaryColumns({}).map((column) => column.key), ["worked_hours"]);
   assert.deepEqual(finance({ salary_block_access: 1 }), []);

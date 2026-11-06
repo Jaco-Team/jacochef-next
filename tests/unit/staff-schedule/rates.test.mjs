@@ -125,3 +125,14 @@ test("schedule header links to rates only for users with rates read right", () =
   assert.equal((source.match(/\{page\.canOpenRates \? \(/g) ?? []).length, 2);
   assert.match(source, /STAFF_SCHEDULE_RATES_HREF = "\/staff_schedule\/rates"/);
 });
+
+test("save dialog picks cafes with the storybook city picker, top filter stays a single select", () => {
+  const source = readFileSync(
+    new URL("../../../components/staff_schedule/rates/StaffScheduleRatesPage.jsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /<JacoCityCafe[\s\S]*?value=\{saveDialog\.points\}/);
+  assert.doesNotMatch(source, /withAll/);
+  assert.doesNotMatch(source, /formatSelectedPoints/);
+  assert.match(source, /<JacoAutocomplete\s+disableClearable\s+selectAppearance\s+label="Кафе"/);
+});
