@@ -6,6 +6,7 @@ import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
 import SkladProductionContent from "./SkladProductionContent";
 import SkladProductionCategoryManagerDialog from "./SkladProductionCategoryManagerDialog";
 import SkladProductionConvertDialog from "./SkladProductionConvertDialog";
@@ -26,6 +27,7 @@ import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkl
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("production");
   const showAlertRef = useRef(showAlert);
   showAlertRef.current = showAlert;
   const {
@@ -40,6 +42,7 @@ export default function useSkladProductionController({ showAlert }) {
   } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const listPending = useSkladStore((state) => state.listLoading.production.pending);
   const summary = useSkladStore((state) => state.summary);
   const shellUnits = useSkladStore((state) => state.units);
   const categories = useSkladStore((state) => state.categories);
@@ -214,8 +217,8 @@ export default function useSkladProductionController({ showAlert }) {
   const loadRows = useCallback(
     async ({ resetPage = false, categoryIdOverride } = {}) => {
       const requestId = ++listRequestId.current;
+      const listLoadId = beginListLoad("production");
       setModeCounts(null);
-      setShellState({ isLoading: true });
 
       try {
         const selectedCategoryId =
@@ -241,7 +244,11 @@ export default function useSkladProductionController({ showAlert }) {
           throw new Error(semiFinishedResponse?.text || "Ошибка загрузки списка полуфабрикатов");
         }
 
-        if (requestId !== listRequestId.current) return;
+        if (
+          requestId !== listRequestId.current ||
+          useSkladStore.getState().listLoading.production.id !== listLoadId
+        )
+          return;
         const counts = isRecipeCategory
           ? [recipesResponse?.counts]
           : [recipesResponse?.counts, semiFinishedResponse?.counts];
@@ -266,15 +273,18 @@ export default function useSkladProductionController({ showAlert }) {
           ...(resetPage ? { page: 0 } : {}),
         });
       } catch (error) {
-        if (requestId === listRequestId.current) {
+        if (
+          requestId === listRequestId.current &&
+          useSkladStore.getState().listLoading.production.id === listLoadId
+        ) {
           setState({ rowsByType: { recipe: [], semi_finished: [] } });
           showAlert(error?.message || "Ошибка загрузки списка", false);
         }
       } finally {
-        if (requestId === listRequestId.current) setShellState({ isLoading: false });
+        finishListLoad("production", listLoadId);
       }
     },
-    [api, archiveMode, categoryId, search, setShellState, setState, showAlert],
+    [api, archiveMode, beginListLoad, categoryId, finishListLoad, search, setState, showAlert],
   );
 
   const saveCategory = useCallback(
@@ -872,6 +882,7 @@ export default function useSkladProductionController({ showAlert }) {
           search={search}
           categoryId={categoryId}
           archiveMode={archiveMode}
+          listPending={listPending}
           modeCounts={modeCounts}
           categoryOptions={categoryOptions}
           mergedRows={mergedRows}

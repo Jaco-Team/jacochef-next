@@ -47,6 +47,7 @@ import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
 import SkladWarehouseItemEditorDialog from "./SkladWarehouseItemEditorDialog";
 import SkladProductionCategoryManagerDialog from "../production/SkladProductionCategoryManagerDialog";
 
@@ -84,6 +85,7 @@ function StatusChip({ row }) {
 
 export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("warehouse-items");
   const {
     access,
     canCreateWarehouseItem,
@@ -93,6 +95,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
     canDelete,
   } = useSkladAccess();
   const categories = useSkladStore((state) => state.categories);
+  const listPending = useSkladStore((state) => state.listLoading["warehouse-items"].pending);
   const setShellState = useSkladStore((state) => state.setState);
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
@@ -170,12 +173,13 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   );
 
   const loadRows = useCallback(async () => {
-    setShellState({ isLoading: true });
+    const requestId = beginListLoad("warehouse-items");
     try {
       const response = await api.getWarehouseItems({
         search: search.trim(),
         category_key: categoryKey || null,
       });
+      if (useSkladStore.getState().listLoading["warehouse-items"].id !== requestId) return;
       if (!response?.st) throw new Error(response?.text || "Ошибка загрузки товаров склада");
       const filter = JSON.stringify([search.trim(), categoryKey]);
       revealFilterRef.current = appliedFilterRef.current !== filter;
@@ -183,11 +187,13 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
       setRows(Array.isArray(response?.list) ? response.list : []);
       setGroupPages({});
     } catch (error) {
-      showAlert(error?.message || "Ошибка загрузки товаров склада", false);
+      if (useSkladStore.getState().listLoading["warehouse-items"].id === requestId) {
+        showAlert(error?.message || "Ошибка загрузки товаров склада", false);
+      }
     } finally {
-      setShellState({ isLoading: false });
+      finishListLoad("warehouse-items", requestId);
     }
-  }, [api, categoryKey, search, setShellState, showAlert]);
+  }, [api, beginListLoad, categoryKey, finishListLoad, search, showAlert]);
 
   const loadRowsRef = useRef(loadRows);
 
@@ -196,9 +202,10 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   }, [loadRows]);
 
   useEffect(() => {
+    beginListLoad("warehouse-items");
     const timer = setTimeout(() => loadRowsRef.current(), 250);
     return () => clearTimeout(timer);
-  }, [categoryKey, refreshToken, search]);
+  }, [beginListLoad, categoryKey, refreshToken, search]);
 
   const filteredRows = useMemo(
     () => rows.filter((row) => stateFilter === "all" || stateOf(row) === stateFilter),
@@ -674,8 +681,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
             sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
           >
             <Typography color="text.secondary">
-              {new Set(filteredRows.map((row) => Number(row.category_id) || null)).size} категорий ·{" "}
-              {filteredRows.length} товаров
+              {listPending
+                ? "Загрузка товаров…"
+                : `${new Set(filteredRows.map((row) => Number(row.category_id) || null)).size} категорий · ${filteredRows.length} товаров`}
             </Typography>
             <JacoButton
               compact
@@ -688,7 +696,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
             </JacoButton>
           </Stack>
           {groupedRows.map(renderGroup)}
-          {!groupedRows.length ? (
+          {!listPending && !groupedRows.length ? (
             <Typography
               color="text.secondary"
               align="center"

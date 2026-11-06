@@ -29,6 +29,7 @@ import {
 } from "@/design-system/shared/ui";
 
 import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { getDefaultUnitDraft, useSkladUnitsStore } from "./useSkladUnitsStore";
@@ -85,10 +86,12 @@ function formatUnitAmount(value) {
 
 export default function useSkladUnitsController({ showAlert }) {
   const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("units");
   const { ConfirmDialog, withConfirm } = useConfirm();
   const { canEdit, canDelete, canCreateUnit, canViewUnitUsage } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const listPending = useSkladStore((state) => state.listLoading.units.pending);
   const rows = useSkladUnitsStore((state) => state.rows);
   const search = useSkladUnitsStore((state) => state.search);
   const modal = useSkladUnitsStore((state) => state.modal);
@@ -140,11 +143,12 @@ export default function useSkladUnitsController({ showAlert }) {
   );
 
   const loadUnits = useCallback(async () => {
-    setShellState({ isLoading: true });
+    const requestId = beginListLoad("units");
 
     try {
       const response = await api.getUnits();
 
+      if (useSkladStore.getState().listLoading.units.id !== requestId) return;
       if (!response?.st) {
         throw new Error(response?.text || "Ошибка загрузки единиц измерения");
       }
@@ -154,11 +158,13 @@ export default function useSkladUnitsController({ showAlert }) {
       setState({ rows: list });
       setShellState({ units: list });
     } catch (error) {
-      showAlert(error?.message || "Ошибка загрузки единиц измерения", false);
+      if (useSkladStore.getState().listLoading.units.id === requestId) {
+        showAlert(error?.message || "Ошибка загрузки единиц измерения", false);
+      }
     } finally {
-      setShellState({ isLoading: false });
+      finishListLoad("units", requestId);
     }
-  }, [api, setShellState, setState, showAlert]);
+  }, [api, beginListLoad, finishListLoad, setShellState, setState, showAlert]);
 
   const openCreate = useCallback(() => {
     if (!canCreate) {
@@ -369,7 +375,7 @@ export default function useSkladUnitsController({ showAlert }) {
               Единицы измерения
             </Typography>
             <Chip
-              label={rows.length}
+              label={listPending ? "…" : rows.length}
               size="small"
             />
           </Stack>
@@ -400,8 +406,8 @@ export default function useSkladUnitsController({ showAlert }) {
           onChange={(_, nextView) => setView(nextView)}
           aria-label="Фильтр единиц измерения"
           items={[
-            { id: "active", label: `Активные (${activeRows.length})` },
-            { id: "all", label: `Все (${rows.length})` },
+            { id: "active", label: listPending ? "Активные" : `Активные (${activeRows.length})` },
+            { id: "all", label: listPending ? "Все" : `Все (${rows.length})` },
           ]}
         />
 
@@ -539,7 +545,7 @@ export default function useSkladUnitsController({ showAlert }) {
                 );
               })}
 
-              {filteredRows.length === 0 ? (
+              {!listPending && filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={3}

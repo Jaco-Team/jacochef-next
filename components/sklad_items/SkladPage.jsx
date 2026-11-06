@@ -64,6 +64,7 @@ export default function SkladPage() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const isLoading = useSkladStore((state) => state.isLoading);
+  const listLoading = useSkladStore((state) => state.listLoading);
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
   const access = useSkladStore((state) => state.access);
@@ -229,7 +230,7 @@ export default function SkladPage() {
   return (
     <>
       <JacoBackdropLoader
-        open={isLoading}
+        open={isLoading || (bootstrapReady && Boolean(listLoading[tabs[tab]?.key]?.pending))}
         sx={{ "& .MuiCircularProgress-root": { color: "common.white" } }}
       />
       <JacoAlert

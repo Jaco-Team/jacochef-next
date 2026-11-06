@@ -54,6 +54,7 @@ export default function SkladProductionContent({
   search,
   categoryId,
   archiveMode,
+  listPending,
   modeCounts,
   categoryOptions,
   mergedRows,
@@ -418,7 +419,7 @@ export default function SkladProductionContent({
                   );
                 })}
 
-                {mergedRows.length === 0 ? (
+                {!listPending && mergedRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={(canViewUnit ? 9 : 8) + Number(SHOW_ACTIVITY_COLUMN)}>
                       <Typography
@@ -435,21 +436,23 @@ export default function SkladProductionContent({
             </Table>
           </TableContainer>
 
-          <TablePagination
-            component="div"
-            count={mergedRows.length}
-            page={page}
-            onPageChange={(_, nextPage) => setState({ page: nextPage })}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(event) =>
-              setState({
-                rowsPerPage: Number(event.target.value) || 25,
-                page: 0,
-              })
-            }
-            rowsPerPageOptions={[25, 50, 100]}
-            labelRowsPerPage="Строк на странице:"
-          />
+          {!listPending ? (
+            <TablePagination
+              component="div"
+              count={mergedRows.length}
+              page={page}
+              onPageChange={(_, nextPage) => setState({ page: nextPage })}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) =>
+                setState({
+                  rowsPerPage: Number(event.target.value) || 25,
+                  page: 0,
+                })
+              }
+              rowsPerPageOptions={[25, 50, 100]}
+              labelRowsPerPage="Строк на странице:"
+            />
+          ) : null}
         </JacoSurface>
       </Stack>
       <SkladProductionEditorDialog
