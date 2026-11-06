@@ -211,10 +211,6 @@ export class SkladSiteItemsEditorDialog extends React.Component {
     return this.props.method === "Новое блюдо";
   }
 
-  needsOldCategoryInput() {
-    return this.isNewItem() || Number(this.props.item?.category_id || 0) <= 0;
-  }
-
   getEditableFieldValue(value, blankZero = false) {
     if (value === null || value === undefined) {
       return "";
@@ -588,9 +584,7 @@ export class SkladSiteItemsEditorDialog extends React.Component {
         label: "Старая категория",
         tab: "0",
         missing:
-          this.needsOldCategoryInput() &&
-          this.getFieldAccess("category_id") &&
-          this.isEmptySelectValue(this.state.category_id),
+          this.getFieldAccess("category_id") && this.isEmptySelectValue(this.state.category_id),
       },
       {
         key: "category_id2",
@@ -1528,7 +1522,7 @@ export class SkladSiteItemsEditorDialog extends React.Component {
       img_app: this.state.img_app,
       link: this.props.item?.link,
       tags: this.state.tags_my,
-      ...(this.needsOldCategoryInput() ? { category_id: this.state.category_id?.id || "" } : {}),
+      category_id: this.state.category_id?.id || "",
       category_id2: this.state.category_id2?.id || "",
       size_pizza: parseInt(this.state.category_id2?.id) === 14 ? this.state.count_part : 0,
       count_part: parseInt(this.state.category_id2?.id) !== 14 ? this.state.count_part : 0,
@@ -2823,29 +2817,6 @@ export class SkladSiteItemsEditorDialog extends React.Component {
                               func={this.changeItem.bind(this, "art")}
                             />
                           </Grid>
-                          {this.needsOldCategoryInput() ? (
-                            <Grid
-                              size={{
-                                xs: 12,
-                                md: 3,
-                              }}
-                              style={hiddenIf(
-                                !access?.category_id_edit && !access?.category_id_view,
-                              )}
-                            >
-                              <SkladAutocomplete
-                                label="Старая категория"
-                                multiple={false}
-                                unifiedPopup
-                                data={categoryLegacy}
-                                disabled={!access?.category_id_edit}
-                                value={this.state.category_id}
-                                onFocus={() => this.clearFieldError("category_id")}
-                                sx={this.getErrorFieldSx("category_id")}
-                                func={(event, value) => this.updateFieldValue("category_id", value)}
-                              />
-                            </Grid>
-                          ) : null}
                           <Grid
                             size={{
                               xs: 12,
@@ -2854,7 +2825,26 @@ export class SkladSiteItemsEditorDialog extends React.Component {
                             style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
                           >
                             <SkladAutocomplete
-                              label={this.needsOldCategoryInput() ? "Новая категория" : "Категория"}
+                              label="Старая категория"
+                              multiple={false}
+                              unifiedPopup
+                              data={categoryLegacy}
+                              disabled={!access?.category_id_edit}
+                              value={this.state.category_id}
+                              onFocus={() => this.clearFieldError("category_id")}
+                              sx={this.getErrorFieldSx("category_id")}
+                              func={(event, value) => this.updateFieldValue("category_id", value)}
+                            />
+                          </Grid>
+                          <Grid
+                            size={{
+                              xs: 12,
+                              md: 3,
+                            }}
+                            style={hiddenIf(!access?.category_id_edit && !access?.category_id_view)}
+                          >
+                            <SkladAutocomplete
+                              label="Новая категория"
                               multiple={false}
                               unifiedPopup
                               data={category}
