@@ -104,7 +104,8 @@ export default function SkladProductionEditorDialog({
   onSubmit,
   onClose,
 }) {
-  const [activeTab, setActiveTab] = useState(canViewHistory ? initialTab : "main");
+  const showHistory = mode !== "create" && canViewHistory;
+  const [activeTab, setActiveTab] = useState(showHistory ? initialTab : "main");
   const [extendedHistory, setExtendedHistory] = useState(false);
   const [form, setForm] = useState(() => ({
     ...buildInitialDraft(draft),
@@ -152,9 +153,9 @@ export default function SkladProductionEditorDialog({
       ...buildInitialDraft(draft),
       ...(mode === "create" ? { two_user: null } : {}),
     });
-    setActiveTab(canViewHistory ? initialTab : "main");
+    setActiveTab(showHistory ? initialTab : "main");
     setExtendedHistory(false);
-  }, [canViewHistory, draft, initialTab, mode, open]);
+  }, [showHistory, draft, initialTab, mode, open]);
 
   const unitOptions = useMemo(() => {
     const options = (units || []).map((item) => ({
@@ -399,7 +400,7 @@ export default function SkladProductionEditorDialog({
                 iconPosition="start"
                 label="Карточка"
               />
-              {canViewHistory ? (
+              {showHistory ? (
                 <Tab
                   value="history"
                   icon={<HistoryOutlinedIcon fontSize="small" />}
@@ -841,7 +842,7 @@ export default function SkladProductionEditorDialog({
               </Stack>
             </TabPanel>
 
-            {canViewHistory ? (
+            {showHistory ? (
               <TabPanel
                 value="history"
                 sx={{ p: 0, pt: 2 }}
