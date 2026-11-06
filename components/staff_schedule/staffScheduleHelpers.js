@@ -38,12 +38,22 @@ export function getPartStartDate(monthId, selectedPart = 0) {
 // Не финансовая колонка: видна всем, не размывается и не зависит от прав.
 export const WORKED_HOURS_COLUMN = {
   key: "worked_hours",
-  label: "Всего часов",
+  label: "Отработано",
   accessKey: null,
   public: true,
 };
 
-// Как в ячейках дней: целые часы — «109», с минутами — «123:20».
+// Неразрывные пробелы держат значение в одну строку: «145 ч 45 мин», целые часы — «120 ч».
+function formatHoursAndMinutes(hours, minutes) {
+  return minutes ? `${hours}\u00A0ч\u00A0${minutes}\u00A0мин` : `${hours}\u00A0ч`;
+}
+
+/** Подсказка к ячейке дня: «7:45» → «7 ч 45 мин», «12» → «12 ч». */
+export function formatDayHoursTitle(value) {
+  const match = String(value ?? "").match(/^(\d+)(?::(\d{1,2}))?$/);
+  return match ? formatHoursAndMinutes(Number(match[1]), Number(match[2] ?? 0)) : undefined;
+}
+
 export function formatWorkedMinutes(minutes) {
   if (minutes === null || minutes === undefined || minutes === "") {
     return "";
@@ -55,7 +65,7 @@ export function formatWorkedMinutes(minutes) {
   const hours = Math.floor(Math.abs(total) / 60);
   const rest = Math.abs(total) % 60;
   const sign = total < 0 ? "-" : "";
-  return rest ? `${sign}${hours}:${String(rest).padStart(2, "0")}` : `${sign}${hours}`;
+  return `${sign}${formatHoursAndMinutes(hours, rest)}`;
 }
 
 export function getVisibleSummaryColumns(access = {}) {
@@ -92,6 +102,10 @@ export function getSummaryCellValue(column, row = {}) {
     return formatWorkedMinutes(row?.worked_min);
   }
 
+  if (Number(row?.finance_hidden) === 1) {
+    return "—";
+  }
+
   if (column.key === "total_sum") {
     return computeTotalSum(row);
   }
@@ -104,24 +118,39 @@ export function getSummaryCellValue(column, row = {}) {
     return computePremiumSheet(row);
   }
 
-  return row?.[column.key] ?? "";
+  const value = row?.[column.key] ?? "";
+  return WHOLE_RUBLE_KEYS.has(column.key) ? toWholeRubles(value) : dropZeroFraction(value);
+}
+
+/** Ставка и выплаты считаются в целых рублях: копейки из БД («300.00») не показываем. */
+export const WHOLE_RUBLE_KEYS = new Set(["price_p_h", "given", "given_cart", "withheld"]);
+
+export function toWholeRubles(value) {
+  if (value === null || value === undefined || value === "") {
+    return value ?? "";
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? String(Math.round(number)) : value;
+}
+
+function dropZeroFraction(value) {
+  return typeof value === "string" && /^-?\d+\.0+$/.test(value) ? value.replace(/\.0+$/, "") : value;
+}
+
+/** Должность всегда полным названием; короткое — только если полного нет в ответе. */
+export function getPositionName(row) {
+  return row?.full_app_name || row?.app_name || "";
 }
 
 /**
- * Сумма за день в узкой ячейке: от тысячи — в тысячах с одним знаком («53,8к»), иначе целым числом.
+ * Сумма за день в ячейке: целые рубли с разделителем разрядов, без знака валюты («53 790»).
  */
-export function formatCompactAmount(value) {
+export function formatDayAmount(value) {
   if (value === null || value === undefined || value === "") {
     return "";
   }
   const number = Number(value);
-  if (!Number.isFinite(number)) {
-    return String(value);
-  }
-  if (Math.abs(number) < 1000) {
-    return String(Math.round(number));
-  }
-  return `${(number / 1000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })}к`;
+  return Number.isFinite(number) ? Math.round(number).toLocaleString("ru-RU") : String(value);
 }
 
 export function formatFullAmount(value) {

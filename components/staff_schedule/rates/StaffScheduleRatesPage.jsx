@@ -19,6 +19,7 @@ import {
   JacoAutocomplete,
   JacoBackdropLoader,
   JacoButton,
+  JacoCityCafe,
   JacoIconButton,
   JacoModal,
   JacoPeriodSwitch,
@@ -404,28 +405,14 @@ function SaveDialog({ page }) {
           value={saveDialog.dateStart}
           onChange={(event) => page.updateSaveDialog({ dateStart: event.target.value })}
         />
-        <JacoAutocomplete
+        <JacoCityCafe
           label="Кафе"
-          placeholder={saveDialog.points.length ? undefined : "Выберите кафе"}
-          multiple
-          selectAppearance
-          disableClearable
-          disableCloseOnSelect
-          options={page.points}
+          placeholder="Выберите кафе"
+          withOrganizationMode={false}
+          compact
+          points={page.points}
           value={saveDialog.points}
-          onChange={(_, value) => page.updateSaveDialog({ points: value })}
-          renderValue={(selected) => (
-            <Box
-              component="span"
-              sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-            >
-              {formatSelectedPoints(selected, page.points.length)}
-            </Box>
-          )}
-          autocompleteSx={{
-            "& .MuiOutlinedInput-root": { flexWrap: "nowrap" },
-            "& .MuiAutocomplete-inputRoot .MuiAutocomplete-input": { minWidth: "24px !important" },
-          }}
+          onChange={(value) => page.updateSaveDialog({ points: value || [] })}
         />
         <Typography sx={{ fontSize: 13, color: "#6B7280" }}>
           Ставка заменит ставку всех сотрудников этой должности в выбранных кафе с начала периода,
@@ -435,12 +422,6 @@ function SaveDialog({ page }) {
       </Stack>
     </JacoModal>
   );
-}
-
-function formatSelectedPoints(selected, total) {
-  if (!selected.length) return "";
-  if (total > 1 && selected.length === total) return "Все кафе";
-  return selected.length === 1 ? selected[0].name : `${selected[0].name} и ещё ${selected.length - 1}`;
 }
 
 export default function StaffScheduleRatesPage() {

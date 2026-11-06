@@ -13,8 +13,8 @@ export const EMPTY_PERIOD = {
 };
 
 export const EMPLOYEE_COLUMN_WIDTH = 170;
-export const POSITION_COLUMN_WIDTH = 150;
-export const DAY_COLUMN_WIDTH = 42;
+export const POSITION_COLUMN_WIDTH = 190;
+export const DAY_COLUMN_WIDTH = 56;
 export const SUMMARY_COLUMN_WIDTH = 84;
 export const SELECTION_COLUMN_WIDTH = 44;
 export const ACTION_COLUMN_WIDTH = 44;

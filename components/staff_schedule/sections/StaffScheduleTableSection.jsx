@@ -45,7 +45,7 @@ import {
   formatEmployeeCount,
   getRowBaseColor,
   getScheduleRowFocusKey,
-  formatCompactAmount,
+  formatDayAmount,
   formatFullAmount,
   getSamePersonTint,
   getSamePersonTitle,
@@ -53,11 +53,14 @@ import {
   isNegativeBalanceValue,
   hasFastActionsAccess,
   toArray,
+  getPositionName,
+  formatDayHoursTitle,
 } from "../staffScheduleHelpers";
 import StaffScheduleMobileTableSection from "./StaffScheduleMobileTableSection";
 import {
   getHolidayStripeSx,
-  staffScheduleHeaderActionSx,
+  getTeamBonusHeaderActionSx,
+  getTeamBonusStatusText,
   staffScheduleFinancialValueStyle,
   staffScheduleFinancialFocusSx,
 } from "../staffSchedulePatterns";
@@ -173,6 +176,7 @@ function ScheduleTableHeaderRow({
   onOpenSummaryAction,
   canEditTeamBonus,
   blurFinancials,
+  periodBonusState,
   stickyZIndex = 6,
 }) {
   return (
@@ -299,7 +303,7 @@ function ScheduleTableHeaderRow({
               fontWeight: 600,
               textAlign: "center",
             }}
-            title={column.label}
+            title={canOpenTeamBonus ? getTeamBonusStatusText(periodBonusState) : column.label}
           >
             {column.label}
           </SmallFont>
@@ -328,9 +332,9 @@ function ScheduleTableHeaderRow({
               <Box
                 component="button"
                 type="button"
-                aria-label="Изменить командный бонус за выбранный период"
+                aria-label={`Изменить командный бонус за выбранный период. ${getTeamBonusStatusText(periodBonusState)}`}
                 onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
-                sx={staffScheduleHeaderActionSx}
+                sx={getTeamBonusHeaderActionSx(periodBonusState)}
               >
                 {label}
               </Box>
@@ -504,12 +508,12 @@ function ScheduleRow({
             width: "100%",
             height: "100%",
             px: 1.5,
-            py: 0.9,
+            py: 0.5,
             border: 0,
             background: "none",
             fontSize: 13,
             color: "#000000",
-            lineHeight: 1.25,
+            lineHeight: 1.2,
             textAlign: "left",
             cursor: focusKey ? "pointer" : "default",
             textDecoration: focusKey ? "underline dotted" : "none",
@@ -520,7 +524,18 @@ function ScheduleRow({
             },
           }}
         >
-          {data?.app_name || "—"}
+          <Box
+            component="span"
+            title={getPositionName(data) || undefined}
+            sx={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {getPositionName(data) || "—"}
+          </Box>
         </Typography>
       </TableCell>
 
@@ -595,6 +610,7 @@ function ScheduleRow({
                     : undefined,
                 }}
                 onClick={canOpenDay ? () => onOpenDay(data, day?.date) : undefined}
+                title={formatDayHoursTitle(info?.hours)}
               >
                 {info?.hours || ""}
               </TableCell>
@@ -664,7 +680,7 @@ function ScheduleRow({
                 ...tableCellDividerSx,
                 minWidth: SUMMARY_COLUMN_WIDTH,
                 fontSize: 11.5,
-                px: 0.75,
+                px: column.key === "worked_hours" ? 0.25 : 0.75,
                 cursor: isClickable ? "pointer" : "default",
                 backgroundColor: isFocused
                   ? rowSurfaceColor
@@ -874,7 +890,7 @@ function SummaryMetricRow({
           key={`${label}-${index}`}
           align="center"
           title={!blurValues && getTitle ? getTitle(item) || undefined : undefined}
-          className={compactValues ? "min_block min_size" : "min_block"}
+          className="min_block"
           sx={{
             ...tableCellDividerSx,
             minWidth: DAY_COLUMN_WIDTH,
@@ -882,9 +898,10 @@ function SummaryMetricRow({
             py: 0.75,
             backgroundColor: fillColor,
             color: "#000000",
-            fontSize: compactValues ? 14 : 13,
-            fontWeight: 600,
+            fontSize: compactValues ? 15 : 13,
+            fontWeight: compactValues ? 700 : 600,
             whiteSpace: compactValues ? "nowrap" : undefined,
+            letterSpacing: compactValues ? "-0.2px" : undefined,
           }}
         >
           <Box
@@ -896,21 +913,7 @@ function SummaryMetricRow({
               userSelect: blurValues ? "none" : undefined,
             }}
           >
-            {compactValues ? (
-              <SmallFont
-                style={{
-                  display: "block",
-                  fontSize: "0.65rem",
-                  lineHeight: 1.1,
-                }}
-              >
-                {getValue ? getValue(item) : ""}
-              </SmallFont>
-            ) : getValue ? (
-              getValue(item)
-            ) : (
-              ""
-            )}
+            {getValue ? getValue(item) : ""}
           </Box>
         </TableCell>
       ))}
@@ -924,9 +927,9 @@ function SummaryMetricRow({
             ...tableCellDividerSx,
             minWidth: SUMMARY_COLUMN_WIDTH,
             px: 0.5,
-            fontSize: compactValues ? 14 : 13,
+            fontSize: compactValues ? 15 : 13,
             color: "#000000",
-            fontWeight: 600,
+            fontWeight: compactValues ? 700 : 600,
             whiteSpace: compactValues ? "nowrap" : undefined,
             cursor: !blurValues && onSummaryCellClick ? "pointer" : "default",
             "&:hover":
@@ -946,27 +949,33 @@ function SummaryMetricRow({
               userSelect: blurValues ? "none" : undefined,
             }}
           >
-            {compactValues ? (
-              <SmallFont
-                style={{
-                  display: "block",
-                  fontSize: "0.65rem",
-                  lineHeight: 1.1,
-                }}
-              >
-                {getSummaryValue ? getSummaryValue(column) : ""}
-              </SmallFont>
-            ) : getSummaryValue ? (
-              getSummaryValue(column)
-            ) : (
-              ""
-            )}
+            {getSummaryValue ? getSummaryValue(column) : ""}
           </Box>
         </TableCell>
       ))}
     </TableRow>
   );
 }
+
+/** Полоса прокрутки, видимая всегда (в том числе при скрытых системных полосах macOS). */
+const VISIBLE_SCROLLBAR_SX = {
+  overflowX: "scroll",
+  overflowY: "hidden",
+  backgroundColor: "#FFFFFF",
+  // scrollbar-color отключает ::-webkit-scrollbar в Chromium, поэтому только для остальных браузеров.
+  "@supports not selector(::-webkit-scrollbar)": {
+    scrollbarWidth: "auto",
+    scrollbarColor: "#B8B8B8 #F3F3F3",
+  },
+  "&::-webkit-scrollbar": { height: 12 },
+  "&::-webkit-scrollbar-track": { backgroundColor: "#F3F3F3" },
+  "&::-webkit-scrollbar-thumb": {
+    backgroundColor: "#B8B8B8",
+    borderRadius: 6,
+    border: "2px solid #F3F3F3",
+  },
+  "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#8F8F8F" },
+};
 
 export default function StaffScheduleTableSection({
   pointId,
@@ -1014,8 +1023,9 @@ export default function StaffScheduleTableSection({
   const tableHeadRef = useRef(null);
   const tableContainerRef = useRef(null);
   const topScrollContainerRef = useRef(null);
+  const bottomScrollContainerRef = useRef(null);
   const stickyHeaderContainerRef = useRef(null);
-  const isSyncingScrollRef = useRef(false);
+  const lastSyncedScrollLeftRef = useRef(0);
   const stickyTopRef = useRef(0);
   const stickyHeaderSyncRafRef = useRef(null);
   const scrollSyncRafRef = useRef(null);
@@ -1054,7 +1064,7 @@ export default function StaffScheduleTableSection({
   const canOpenDayEdit = canOpenDayCard;
   const canEditSmena = canManageSmena;
   const canCreateSmena = canManageSmena;
-  const canEditTeamBonus = canEdit("com_bonus");
+  const canEditTeamBonus = canEdit("com_bonus") && canView("salary_all");
   const hasBulkSelection = showFastActions && selectedRowIds.length > 0;
   const useColors = colorMode !== "plain";
   const positionHeaderLeft = selectionColumnWidth + EMPLOYEE_COLUMN_WIDTH;
@@ -1063,6 +1073,8 @@ export default function StaffScheduleTableSection({
     EMPLOYEE_COLUMN_WIDTH +
     POSITION_COLUMN_WIDTH +
     (showFastActions ? ACTION_COLUMN_WIDTH : 0);
+  // Таблица появляется после загрузки графика; подписки на прокрутку зависят от её контейнеров.
+  const isTableRendered = !isMobile && (isGraphLoading || days.length > 0 || allRows.length > 0);
   const tableWidth =
     selectionColumnWidth +
     EMPLOYEE_COLUMN_WIDTH +
@@ -1093,46 +1105,35 @@ export default function StaffScheduleTableSection({
       (!isCalendarHidden && canShowPizza) ||
       (!isCalendarHidden && canShowSlowOrders));
 
-  const syncScrollPosition = useCallback((source, target) => {
-    if (!source || !target || target.scrollLeft === source.scrollLeft) {
+  const scheduleScrollPosition = useCallback((source, targets) => {
+    if (!source) {
       return;
     }
 
-    isSyncingScrollRef.current = true;
-    target.scrollLeft = source.scrollLeft;
-    requestAnimationFrame(() => {
-      isSyncingScrollRef.current = false;
-    });
-  }, []);
+    pendingScrollSyncRef.current = { source, targets };
 
-  const scheduleScrollPosition = useCallback(
-    (source, targets) => {
-      const scrollTargets = targets.filter(
-        (target) => target && target !== source && target.scrollLeft !== source.scrollLeft,
-      );
+    if (scrollSyncRafRef.current) {
+      return;
+    }
 
-      if (!source || scrollTargets.length === 0) {
+    scrollSyncRafRef.current = requestAnimationFrame(() => {
+      scrollSyncRafRef.current = null;
+      const pending = pendingScrollSyncRef.current;
+      pendingScrollSyncRef.current = null;
+
+      if (!pending) {
         return;
       }
 
-      pendingScrollSyncRef.current = { source, targets: scrollTargets };
-
-      if (scrollSyncRafRef.current) {
-        return;
-      }
-
-      scrollSyncRafRef.current = requestAnimationFrame(() => {
-        scrollSyncRafRef.current = null;
-        const pending = pendingScrollSyncRef.current;
-        pendingScrollSyncRef.current = null;
-
-        if (pending) {
-          pending.targets.forEach((target) => syncScrollPosition(pending.source, target));
+      const scrollLeft = pending.source.scrollLeft;
+      lastSyncedScrollLeftRef.current = scrollLeft;
+      pending.targets.forEach((target) => {
+        if (target && target !== pending.source && Math.abs(target.scrollLeft - scrollLeft) >= 1) {
+          target.scrollLeft = scrollLeft;
         }
       });
-    },
-    [syncScrollPosition],
-  );
+    });
+  }, []);
 
   const refreshStickyTop = useCallback(() => {
     const appToolbar = document.querySelector(".MuiAppBar-root .MuiToolbar-root");
@@ -1177,6 +1178,7 @@ export default function StaffScheduleTableSection({
     scheduleScrollPosition(currentContainer, [
       stickyHeaderContainerRef.current,
       topScrollContainerRef.current,
+      bottomScrollContainerRef.current,
     ]);
   }, [scheduleScrollPosition]);
 
@@ -1202,44 +1204,50 @@ export default function StaffScheduleTableSection({
       refreshStickyTop();
       scheduleStickyHeaderPosition();
     };
-    const handleTableScroll = () => {
-      if (isSyncingScrollRef.current) {
-        return;
+    // Отличает прокрутку пользователем от эха нашей записи; последнее положение не теряется.
+    const followScroll = (source, targets) => {
+      if (source && Math.abs(source.scrollLeft - lastSyncedScrollLeftRef.current) >= 1) {
+        scheduleScrollPosition(source, targets);
       }
-
-      scheduleScrollPosition(tableContainerRef.current, [
+    };
+    const handleTableScroll = () => {
+      followScroll(tableContainerRef.current, [
         stickyHeaderContainerRef.current,
         topScrollContainerRef.current,
+        bottomScrollContainerRef.current,
       ]);
     };
     const handleStickyHeaderScroll = () => {
-      if (isSyncingScrollRef.current) {
-        return;
-      }
-
-      scheduleScrollPosition(stickyHeaderContainerRef.current, [
+      followScroll(stickyHeaderContainerRef.current, [
         tableContainerRef.current,
         topScrollContainerRef.current,
+        bottomScrollContainerRef.current,
       ]);
     };
     const handleTopScroll = () => {
-      if (isSyncingScrollRef.current) {
-        return;
-      }
-
-      scheduleScrollPosition(topScrollContainerRef.current, [
+      followScroll(topScrollContainerRef.current, [
         tableContainerRef.current,
         stickyHeaderContainerRef.current,
+        bottomScrollContainerRef.current,
+      ]);
+    };
+    const handleBottomScroll = () => {
+      followScroll(bottomScrollContainerRef.current, [
+        tableContainerRef.current,
+        stickyHeaderContainerRef.current,
+        topScrollContainerRef.current,
       ]);
     };
     const currentContainer = tableContainerRef.current;
     const currentTopScrollContainer = topScrollContainerRef.current;
+    const currentBottomScrollContainer = bottomScrollContainerRef.current;
     const currentStickyHeaderContainer = stickyHeaderContainerRef.current;
 
     window.addEventListener("scroll", handleWindowChange, { passive: true });
     window.addEventListener("resize", handleResize);
     currentContainer?.addEventListener("scroll", handleTableScroll, { passive: true });
     currentTopScrollContainer?.addEventListener("scroll", handleTopScroll, { passive: true });
+    currentBottomScrollContainer?.addEventListener("scroll", handleBottomScroll, { passive: true });
     currentStickyHeaderContainer?.addEventListener("scroll", handleStickyHeaderScroll, {
       passive: true,
     });
@@ -1249,9 +1257,11 @@ export default function StaffScheduleTableSection({
       window.removeEventListener("resize", handleResize);
       currentContainer?.removeEventListener("scroll", handleTableScroll);
       currentTopScrollContainer?.removeEventListener("scroll", handleTopScroll);
+      currentBottomScrollContainer?.removeEventListener("scroll", handleBottomScroll);
       currentStickyHeaderContainer?.removeEventListener("scroll", handleStickyHeaderScroll);
     };
   }, [
+    isTableRendered,
     refreshStickyTop,
     scheduleScrollPosition,
     scheduleStickyHeaderPosition,
@@ -1371,7 +1381,8 @@ export default function StaffScheduleTableSection({
       <JacoSurface
         sx={{
           borderRadius: uiRadii.lg,
-          overflow: "hidden",
+          // clip обрезает углы, но не мешает закреплённой снизу полосе прокрутки, в отличие от hidden.
+          overflow: "clip",
           border: "none",
         }}
       >
@@ -1482,14 +1493,8 @@ export default function StaffScheduleTableSection({
           >
             <TableContainer
               ref={stickyHeaderContainerRef}
-              sx={{
-                overflowX: "auto",
-                overflowY: "hidden",
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": {
-                  display: "none",
-                },
-              }}
+              aria-label="Горизонтальная прокрутка графика"
+              sx={VISIBLE_SCROLLBAR_SX}
             >
               <Table
                 size="small"
@@ -1517,6 +1522,7 @@ export default function StaffScheduleTableSection({
                     showFastActions={showFastActions}
                     isCalendarHidden={isCalendarHidden}
                     positionHeaderLeft={positionHeaderLeft}
+                    periodBonusState={periodBonusState}
                     onOpenBulkFastActions={onOpenBulkFastActions}
                     onOpenSummaryAction={onOpenSummaryAction}
                     canEditTeamBonus={canEditTeamBonus}
@@ -1533,17 +1539,14 @@ export default function StaffScheduleTableSection({
           ref={topScrollContainerRef}
           aria-label="Горизонтальная прокрутка графика"
           sx={{
+            ...VISIBLE_SCROLLBAR_SX,
             display: { xs: "none", md: "block" },
-            overflowX: "auto",
-            overflowY: "hidden",
-            height: 16,
             border: "1px solid #ECECEC",
             borderBottom: 0,
             borderRadius: `${CONTROL_RADIUS} ${CONTROL_RADIUS} 0 0`,
-            backgroundColor: "#FFFFFF",
           }}
         >
-          <Box sx={{ width: tableWidth, height: 1 }} />
+          <Box sx={{ width: tableWidth, height: "1px" }} />
         </Box>
 
         <TableContainer
@@ -1552,7 +1555,9 @@ export default function StaffScheduleTableSection({
             overflowX: "auto",
             WebkitOverflowScrolling: "touch",
             border: "1px solid #ECECEC",
-            borderRadius: { xs: CONTROL_RADIUS, md: `0 0 ${CONTROL_RADIUS} ${CONTROL_RADIUS}` },
+            borderRadius: { xs: CONTROL_RADIUS, md: 0 },
+            scrollbarWidth: { md: "none" },
+            "&::-webkit-scrollbar": { display: { md: "none" } },
           }}
         >
           <Table
@@ -1582,6 +1587,7 @@ export default function StaffScheduleTableSection({
                 showFastActions={showFastActions}
                 isCalendarHidden={isCalendarHidden}
                 positionHeaderLeft={positionHeaderLeft}
+                periodBonusState={periodBonusState}
                 onOpenBulkFastActions={onOpenBulkFastActions}
                 onOpenSummaryAction={onOpenSummaryAction}
                 canEditTeamBonus={canEditTeamBonus}
@@ -1687,7 +1693,7 @@ export default function StaffScheduleTableSection({
 
               {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length) ? (
                 <SummaryMetricRow
-                  label="Сумма за период"
+                  label="Сумма за период, ₽"
                   values={!isCalendarHidden ? bonusDayValues : []}
                   summaryColumns={summaryColumns}
                   stickyColumnCount={stickyColumnCount}
@@ -1696,7 +1702,7 @@ export default function StaffScheduleTableSection({
                   fillColor="#9BDD7C"
                   textColor="#5E5E5E"
                   blurValues={blurFinancials}
-                  getValue={(item) => formatCompactAmount(item?.res)}
+                  getValue={(item) => formatDayAmount(item?.res)}
                   getTitle={(item) => formatFullAmount(item?.res)}
                   getSummaryValue={(column) => {
                     if (column.key === "dop_bonus" && canEditTeamBonus) {
@@ -1762,6 +1768,24 @@ export default function StaffScheduleTableSection({
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Box
+          ref={bottomScrollContainerRef}
+          aria-label="Горизонтальная прокрутка графика"
+          sx={{
+            ...VISIBLE_SCROLLBAR_SX,
+            display: { xs: "none", md: "block" },
+            position: "sticky",
+            bottom: 0,
+            zIndex: 6,
+            border: "1px solid #ECECEC",
+            borderTop: 0,
+            borderRadius: `0 0 ${CONTROL_RADIUS} ${CONTROL_RADIUS}`,
+            boxShadow: "0 -4px 10px rgba(15, 23, 42, 0.06)",
+          }}
+        >
+          <Box sx={{ width: tableWidth, height: "1px" }} />
+        </Box>
 
         <StaffScheduleColorLegendModal
           open={isColorLegendOpen}

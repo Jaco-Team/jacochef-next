@@ -11,6 +11,7 @@ import {
   getSummaryCellValue,
   isNegativeBalanceValue,
   toArray,
+  toWholeRubles,
 } from "./staffScheduleHelpers";
 import {
   buildGraphState,
@@ -53,6 +54,7 @@ export default function useStaffSchedulePage() {
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isGraphLoading, setIsGraphLoading] = useState(false);
+  const graphRequestGeneration = useRef(0);
   const [isMutationLoading, setIsMutationLoading] = useState(false);
   const [error, setError] = useState("");
   const [moduleName, setModuleName] = useState("График работы");
@@ -160,6 +162,10 @@ export default function useStaffSchedulePage() {
         return false;
       }
 
+      // Кафе или месяц могут смениться до ответа: применяется только последний запрос.
+      graphRequestGeneration.current += 1;
+      const generation = graphRequestGeneration.current;
+
       setIsGraphLoading(true);
       setError("");
 
@@ -168,6 +174,10 @@ export default function useStaffSchedulePage() {
           point_id: nextPointId,
           month: nextMonthId,
         });
+
+        if (generation !== graphRequestGeneration.current) {
+          return false;
+        }
 
         if (response?.st === false || !hasGraphPayload(response)) {
           throw new Error(response?.text || "Не удалось загрузить график");
@@ -180,10 +190,14 @@ export default function useStaffSchedulePage() {
         }
         return true;
       } catch (requestError) {
-        setError(requestError?.message || "Не удалось загрузить график");
+        if (generation === graphRequestGeneration.current) {
+          setError(requestError?.message || "Не удалось загрузить график");
+        }
         return false;
       } finally {
-        setIsGraphLoading(false);
+        if (generation === graphRequestGeneration.current) {
+          setIsGraphLoading(false);
+        }
       }
     },
     [api, pickAccessMap],
@@ -368,22 +382,44 @@ export default function useStaffSchedulePage() {
     if (summaryActionRef.current.mode === "my_bonus") summaryActionState.close();
   }, [selectedPart, pointId, monthId, dayModalState.close, summaryActionState.close]);
 
-  const handlePointChange = useCallback((_event, option) => {
-    setDraftPointId(option?.id ?? "");
-  }, []);
+  const applyFilters = useCallback(
+    async (nextPointId, nextMonthId) => {
+      const didLoad = await loadGraph(nextPointId, nextMonthId);
 
-  const handleMonthChange = useCallback((event) => {
-    setDraftMonthId(event.target.value);
-  }, []);
+      if (didLoad) {
+        setPointId(nextPointId);
+        setMonthId(nextMonthId);
+      }
+    },
+    [loadGraph],
+  );
 
-  const handleApplyFilters = useCallback(async () => {
-    const didLoad = await loadGraph(draftPointId, draftMonthId);
+  const handlePointChange = useCallback(
+    (_event, option) => {
+      const nextPointId = option?.id ?? "";
+      setDraftPointId(nextPointId);
+      if (String(nextPointId) !== String(draftPointId)) {
+        applyFilters(nextPointId, draftMonthId);
+      }
+    },
+    [applyFilters, draftMonthId, draftPointId],
+  );
 
-    if (didLoad) {
-      setPointId(draftPointId);
-      setMonthId(draftMonthId);
-    }
-  }, [draftMonthId, draftPointId, loadGraph]);
+  const handleMonthChange = useCallback(
+    (event) => {
+      const nextMonthId = event.target.value;
+      setDraftMonthId(nextMonthId);
+      if (nextMonthId !== draftMonthId) {
+        applyFilters(draftPointId, nextMonthId);
+      }
+    },
+    [applyFilters, draftMonthId, draftPointId],
+  );
+
+  const handleApplyFilters = useCallback(
+    () => applyFilters(draftPointId, draftMonthId),
+    [applyFilters, draftMonthId, draftPointId],
+  );
 
   const handleReload = useCallback(async () => {
     await loadGraph(pointId, monthId);
@@ -852,10 +888,10 @@ export default function useStaffSchedulePage() {
           return;
         }
 
-        const currentRate = String(row?.price_p_h ?? "");
+        const currentRate = String(toWholeRubles(row?.price_p_h ?? ""));
         const options = toArray(row?.price_arr)
-          .filter((item) => String(item) !== currentRate)
-          .map((item) => ({ id: item, name: String(item) }));
+          .filter((item) => String(toWholeRubles(item)) !== currentRate)
+          .map((item) => ({ id: item, name: String(toWholeRubles(item)) }));
 
         if (!options.length) {
           return;
@@ -872,7 +908,7 @@ export default function useStaffSchedulePage() {
           },
           data: {
             ...buildSummaryActionHeaderData(row, key, monthId),
-            value: row?.price_p_h ?? "",
+            value: toWholeRubles(row?.price_p_h ?? ""),
             options,
           },
         });
@@ -891,9 +927,11 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Выданная сумма",
-            value: Object.prototype.hasOwnProperty.call(row, "given_cash")
-              ? (row.given_cash ?? "")
-              : (row?.given ?? ""),
+            value: toWholeRubles(
+              Object.prototype.hasOwnProperty.call(row, "given_cash")
+                ? (row.given_cash ?? "")
+                : (row?.given ?? ""),
+            ),
             fullAmount: getAvailablePayoutAmount(row, accessRef.current, "given"),
           },
         });
@@ -912,7 +950,7 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Выданная сумма",
-            value: row?.given_cart ?? "",
+            value: toWholeRubles(row?.given_cart ?? ""),
             fullAmount: getAvailablePayoutAmount(row, accessRef.current, "given_cart"),
           },
         });
@@ -931,7 +969,7 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Удержанная сумма",
-            value: row?.withheld ?? "",
+            value: toWholeRubles(row?.withheld ?? ""),
           },
         });
         return;
@@ -1329,7 +1367,7 @@ export default function useStaffSchedulePage() {
         String(item?.data?.app_id) === String(request.app_id) &&
         String(item?.data?.smena_id) === String(request.smena_id),
     )?.data;
-    if (!row) {
+    if (!row || Number(row.finance_hidden) === 1) {
       return null;
     }
     const items = view.summaryColumns.map((column) => {

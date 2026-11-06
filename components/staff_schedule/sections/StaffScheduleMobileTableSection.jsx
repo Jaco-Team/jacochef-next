@@ -29,16 +29,19 @@ import {
   formatEmployeeCount,
   getRowBaseColor,
   getScheduleRowFocusKey,
-  formatCompactAmount,
+  formatDayAmount,
   getSamePersonTint,
   getSamePersonTitle,
   getSummaryCellValue,
   isNegativeBalanceValue,
   toArray,
+  getPositionName,
+  formatDayHoursTitle,
 } from "../staffScheduleHelpers";
 import {
   getHolidayStripeSx,
-  staffScheduleHeaderActionSx,
+  getTeamBonusHeaderActionSx,
+  getTeamBonusStatusText,
   staffScheduleFinancialValueStyle,
   staffScheduleFinancialFocusSx,
 } from "../staffSchedulePatterns";
@@ -309,7 +312,7 @@ function MobileScheduleRow({
           }}
           noWrap
         >
-          {data?.app_name || "—"}
+          {getPositionName(data) || "—"}
         </Typography>
       </TableCell>
 
@@ -343,6 +346,7 @@ function MobileScheduleRow({
                   cursor: canOpenDay ? "pointer" : "default",
                 }}
                 onClick={canOpenDay ? () => onOpenDay(data, day?.date) : undefined}
+                title={formatDayHoursTitle(info?.hours)}
               >
                 {info?.hours || ""}
               </TableCell>
@@ -403,7 +407,7 @@ function MobileScheduleRow({
             sx={{
               ...mobileCellDividerSx,
               ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
-              px: 0.5,
+              px: column.key === "worked_hours" ? 0.25 : 0.5,
               py: 0.75,
               fontSize: MOBILE_MIN_FONT_SIZE,
               backgroundColor: isFocused
@@ -423,7 +427,7 @@ function MobileScheduleRow({
               aria-hidden={isValueBlurred}
               style={{
                 display: "block",
-                fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                fontSize: column.key === "worked_hours" ? "12px" : `${MOBILE_MIN_FONT_SIZE}px`,
                 lineHeight: "1.1",
                 fontWeight: isPremiumColumn ? 700 : undefined,
                 filter: isValueBlurred ? "blur(5px)" : undefined,
@@ -669,7 +673,7 @@ function MobileShiftCard({
                     <SmallFont
                       style={{
                         display: "block",
-                        fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                        fontSize: canOpenTeamBonus ? "12px" : `${MOBILE_MIN_FONT_SIZE}px`,
                         lineHeight: "1.15",
                       }}
                     >
@@ -697,9 +701,9 @@ function MobileShiftCard({
                         <Box
                           component="button"
                           type="button"
-                          aria-label="Изменить командный бонус за выбранный период"
+                          aria-label={`Изменить командный бонус за выбранный период. ${getTeamBonusStatusText(periodBonusState)}`}
                           onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
-                          sx={staffScheduleHeaderActionSx}
+                          sx={getTeamBonusHeaderActionSx(periodBonusState)}
                         >
                           {label}
                         </Box>
@@ -818,8 +822,9 @@ function MobileSummaryCard({
                 justifyContent: "center",
                 px: 0.25,
                 py: 1,
-                fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
-                color: options.textColor || "#5E5E5E",
+                fontSize: options.compactValues ? 15 : MOBILE_MIN_FONT_SIZE,
+                fontWeight: options.compactValues ? 700 : undefined,
+                color: options.compactValues ? "#000000" : options.textColor || "#5E5E5E",
                 whiteSpace: options.compactValues ? "nowrap" : "normal",
               }}
             >
@@ -850,8 +855,9 @@ function MobileSummaryCard({
             justifyContent: "center",
             px: 0.5,
             py: 1,
-            fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
-            color: options.textColor || "#5E5E5E",
+            fontSize: options.compactValues ? 15 : MOBILE_MIN_FONT_SIZE,
+            fontWeight: options.compactValues ? 700 : undefined,
+            color: options.compactValues ? "#000000" : options.textColor || "#5E5E5E",
             cursor: !options.blurValues && onSummaryCellClick ? "pointer" : "default",
           }}
         >
@@ -965,7 +971,7 @@ function MobileSummaryCard({
                   <SmallFont
                     style={{
                       display: "block",
-                      fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                      fontSize: canOpenTeamBonus ? "12px" : `${MOBILE_MIN_FONT_SIZE}px`,
                       lineHeight: "1.15",
                     }}
                   >
@@ -989,9 +995,9 @@ function MobileSummaryCard({
                       <Box
                         component="button"
                         type="button"
-                        aria-label="Изменить командный бонус за выбранный период"
+                        aria-label={`Изменить командный бонус за выбранный период. ${getTeamBonusStatusText(periodBonusState)}`}
                         onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
-                        sx={staffScheduleHeaderActionSx}
+                        sx={getTeamBonusHeaderActionSx(periodBonusState)}
                       >
                         {label}
                       </Box>
@@ -1006,9 +1012,9 @@ function MobileSummaryCard({
 
           {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length)
             ? renderMetricRow(
-                "Сумма за период",
+                "Сумма за период, ₽",
                 bonusDayValues,
-                (item) => formatCompactAmount(item?.res),
+                (item) => formatDayAmount(item?.res),
                 (column) => {
                   if (column.key === "dop_bonus" && canEditTeamBonus) {
                     if (!periodBonusState) {
