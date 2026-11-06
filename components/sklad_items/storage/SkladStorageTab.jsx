@@ -129,36 +129,59 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
     }
   };
 
-  const saveSort = async (item) => {
-    const raw = drafts[catalog.key][item.id];
-    if (raw === undefined || busy || allowed !== true) return;
-    const value = String(raw).trim();
-    if (!/^\d+$/.test(value)) {
+  const saveSort = async () => {
+    if (busy || loading || allowed !== true) return;
+    const catalogKey = catalog.key;
+    const entries = Object.entries(drafts[catalogKey]).map(([id, raw]) => ({
+      id,
+      value: String(raw).trim(),
+    }));
+    if (!entries.length) return;
+    if (entries.some(({ value }) => !/^\d+$/.test(value))) {
       showAlert("Укажите целый неотрицательный порядок сортировки", false);
       return;
     }
-    if (value === String(item.sort)) {
-      setDrafts((old) => {
-        const next = { ...old[catalog.key] };
-        delete next[item.id];
-        return { ...old, [catalog.key]: next };
-      });
-      return;
-    }
+
+    const changed = entries.filter(({ id, value }) => {
+      const item = catalogs[catalogKey].find((row) => String(row.id) === id);
+      return item && value !== String(item.sort);
+    });
+    const unchanged = entries.filter(({ id, value }) => {
+      const item = catalogs[catalogKey].find((row) => String(row.id) === id);
+      return item && value === String(item.sort);
+    });
     setBusy(true);
+    const succeeded = [...unchanged];
+    const failed = entries
+      .filter(({ id }) => !catalogs[catalogKey].some((row) => String(row.id) === id))
+      .map((entry) => ({ ...entry, message: "Запись не найдена в справочнике" }));
     try {
-      await request(catalog.sortMethod, { id: item.id, value });
-      onChanged();
-      if (alive.current) {
-        setDrafts((old) => {
-          const next = { ...old[catalog.key] };
-          delete next[item.id];
-          return { ...old, [catalog.key]: next };
+      for (const entry of changed) {
+        if (!alive.current) break;
+        try {
+          await request(catalog.sortMethod, { id: entry.id, value: entry.value });
+          succeeded.push(entry);
+        } catch (err) {
+          failed.push({ ...entry, message: err?.message || "Ошибка сохранения" });
+        }
+      }
+      if (!alive.current) return;
+      setDrafts((old) => {
+        const next = { ...old[catalogKey] };
+        succeeded.forEach(({ id, value }) => {
+          if (String(next[id]).trim() === value) delete next[id];
         });
+        return { ...old, [catalogKey]: next };
+      });
+      if (succeeded.length > unchanged.length) onChanged();
+      if (failed.length) {
+        showAlert(
+          `Сохранено: ${succeeded.length - unchanged.length}, не сохранено: ${failed.length}. ${failed[0].message}`,
+          false,
+        );
+      } else {
         showAlert("Порядок сохранён", true);
       }
-    } catch (err) {
-      if (alive.current) showAlert(err?.message || "Ошибка сохранения порядка", false);
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -174,7 +197,6 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
         const value = event.target.value;
         setDrafts((old) => ({ ...old, [catalog.key]: { ...old[catalog.key], [item.id]: value } }));
       }}
-      onBlur={() => saveSort(item)}
       disabled={busy || loading}
       inputProps={{ "aria-label": `Сортировка: ${item.name}` }}
       sx={{ width: 110 }}
@@ -196,8 +218,10 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
         <JacoCompactTabs
           value={catalogIndex}
           onChange={(_, value) => {
-            setCatalogIndex(value);
-            setSearch("");
+            if (!busy) {
+              setCatalogIndex(value);
+              setSearch("");
+            }
           }}
           items={CATALOGS.map((item, value) => ({ id: item.key, value, label: item.label }))}
           aria-label="Справочники мест хранения"
@@ -232,13 +256,26 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
             Добавить {catalog.singular}
           </JacoButton>
         </Stack>
-        <JacoSearchField
-          label="Поиск"
-          value={search}
-          minLength={1}
-          onValueChange={setSearch}
-          sx={{ maxWidth: { sm: 360 } }}
-        />
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+        >
+          <JacoSearchField
+            label="Поиск"
+            value={search}
+            minLength={1}
+            onValueChange={setSearch}
+            sx={{ width: "100%", maxWidth: { sm: 360 } }}
+          />
+          <JacoButton
+            tone="secondary"
+            onClick={saveSort}
+            disabled={busy || loading || Boolean(error) || !Object.keys(drafts[catalog.key]).length}
+            sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
+          >
+            Сохранить порядок
+          </JacoButton>
+        </Stack>
         {loading ? (
           <Typography role="status">Загрузка справочника…</Typography>
         ) : error ? (
