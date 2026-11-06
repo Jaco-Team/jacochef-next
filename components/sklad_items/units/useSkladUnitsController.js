@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import {
   Box,
@@ -492,18 +491,6 @@ export default function useSkladUnitsController({ showAlert }) {
                           justifyContent: "flex-end",
                         }}
                       >
-                        <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
-                          <span>
-                            <JacoIconButton
-                              aria-label="Редактировать"
-                              onClick={() => openUnit(row)}
-                              disabled={!isEditable}
-                            >
-                              <EditIcon fontSize="small" />
-                            </JacoIconButton>
-                          </span>
-                        </Tooltip>
-
                         {canShowUsage ? (
                           <Tooltip title="История">
                             <JacoIconButton

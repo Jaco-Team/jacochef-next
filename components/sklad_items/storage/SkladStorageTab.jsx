@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   Box,
   Chip,
@@ -19,7 +18,6 @@ import { api_laravel } from "@/src/api_new";
 import {
   JacoButton,
   JacoCompactTabs,
-  JacoIconButton,
   JacoResponsiveModalShell,
   JacoSearchField,
   JacoSurface,
@@ -27,6 +25,7 @@ import {
 } from "@/design-system/shared/ui";
 
 import { interactiveRowProps } from "../table/interactiveRow";
+import SkladItemNameButton from "../SkladItemNameButton";
 
 const CATALOGS = [
   {
@@ -181,15 +180,6 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
       sx={{ width: 110 }}
     />
   );
-  const edit = (item) => (
-    <JacoIconButton
-      aria-label={`Редактировать: ${item.name}`}
-      disabled={busy}
-      onClick={() => setModal({ id: item.id, name: item.name || "" })}
-    >
-      <EditOutlinedIcon />
-    </JacoIconButton>
-  );
 
   return (
     <JacoSurface
@@ -275,7 +265,6 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
                   <TableRow>
                     <TableCell>Название</TableCell>
                     <TableCell>Сортировка</TableCell>
-                    <TableCell>Действия</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -292,9 +281,6 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
                       <TableCell onClick={(event) => event.stopPropagation()}>
                         {sortInput(item)}
                       </TableCell>
-                      <TableCell onClick={(event) => event.stopPropagation()}>
-                        {edit(item)}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -310,13 +296,11 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
                   sx={{ p: 1.5 }}
                 >
                   <Stack spacing={1}>
-                    <Stack
-                      direction="row"
-                      sx={{ justifyContent: "space-between", alignItems: "center" }}
-                    >
-                      <Typography>{item.name}</Typography>
-                      {edit(item)}
-                    </Stack>
+                    <SkladItemNameButton
+                      name={item.name}
+                      onClick={() => setModal({ id: item.id, name: item.name || "" })}
+                      disabled={busy}
+                    />
                     <Stack
                       direction="row"
                       sx={{ justifyContent: "space-between", alignItems: "center" }}
