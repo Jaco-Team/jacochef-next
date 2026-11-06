@@ -1493,14 +1493,8 @@ export default function StaffScheduleTableSection({
           >
             <TableContainer
               ref={stickyHeaderContainerRef}
-              sx={{
-                overflowX: "auto",
-                overflowY: "hidden",
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": {
-                  display: "none",
-                },
-              }}
+              aria-label="Горизонтальная прокрутка графика"
+              sx={VISIBLE_SCROLLBAR_SX}
             >
               <Table
                 size="small"

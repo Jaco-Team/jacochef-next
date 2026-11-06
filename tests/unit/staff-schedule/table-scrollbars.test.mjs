@@ -28,3 +28,7 @@ test("scroll listeners attach when the table appears and the last position is no
   assert.doesNotMatch(source, /isSyncingScrollRef/);
   assert.match(source, /const scrollLeft = pending\.source\.scrollLeft;/);
 });
+
+test("pinned header shows the same scrollbar right under it", () => {
+  assert.match(source, /ref=\{stickyHeaderContainerRef\}[\s\S]{0,120}sx=\{VISIBLE_SCROLLBAR_SX\}/);
+});
