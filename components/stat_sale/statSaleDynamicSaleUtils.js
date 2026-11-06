@@ -221,3 +221,28 @@ export const indexRowsByPeriod = (rows = []) =>
     if (row?.periodKey) result[row.periodKey] = row;
     return result;
   }, {});
+
+const METRIC_LINE_FIELDS = {
+  orders: "orders",
+  rolly: "rolly",
+  pizza: "pizza",
+};
+
+export const buildMetricLineMap = (monthMap, metric) => {
+  const field = METRIC_LINE_FIELDS[metric];
+  if (!field || !monthMap || typeof monthMap !== "object") return {};
+
+  return Object.entries(monthMap).reduce((line, [key, value]) => {
+    const raw = value?.[field];
+    if (raw === null || raw === undefined || raw === "") return line;
+
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed)) line[key] = parsed;
+    return line;
+  }, {});
+};
+
+export const mergeLineMaps = (primary, fallback) => ({
+  ...(fallback && typeof fallback === "object" ? fallback : {}),
+  ...(primary && typeof primary === "object" ? primary : {}),
+});

@@ -67,6 +67,22 @@ const yearIntersectsRange = (year, range) => {
   return months.some((_, index) => isMonthSelected(year, index + 1, range));
 };
 
+const getYearsInRange = (dateStart, dateEnd) => {
+  const start = parsePeriod(dateStart);
+  const end = parsePeriod(dateEnd);
+  if (!start || !end) return null;
+
+  const from = Math.min(start.year, end.year);
+  const to = Math.max(start.year, end.year);
+  const years = [];
+
+  for (let year = to; year >= from; year -= 1) {
+    years.push(year);
+  }
+
+  return years;
+};
+
 const calculateMonthlyAverage = (groupedData, range) => {
   const monthlySums = new Array(12).fill(0);
   const monthlyCounts = new Array(12).fill(0);
@@ -97,10 +113,12 @@ export default function StatSaleYearlyLineChart({
 }) {
   const groupedData = groupByYear(rawData);
   const selectedRange = getSelectedRange(dateStart, dateEnd);
-  const years = Object.keys(groupedData)
-    .map(Number)
-    .filter((year) => yearIntersectsRange(year, selectedRange))
-    .sort((a, b) => b - a);
+  const years = (
+    getYearsInRange(dateStart, dateEnd) ??
+    Object.keys(groupedData)
+      .map(Number)
+      .sort((a, b) => b - a)
+  ).filter((year) => yearIntersectsRange(year, selectedRange));
   const averageValues = calculateMonthlyAverage(groupedData, selectedRange);
   const series = [
     ...(averageValues.some((value) => value !== null)
@@ -117,6 +135,7 @@ export default function StatSaleYearlyLineChart({
       name: year.toString(),
       color: yearColorPalette[index % yearColorPalette.length],
       includedInAverage: true,
+      showEmpty: true,
       values: months.map((_, monthIndex) => {
         const month = monthIndex + 1;
         if (!isMonthSelected(year, month, selectedRange)) return null;
