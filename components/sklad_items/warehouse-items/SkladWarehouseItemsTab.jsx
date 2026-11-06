@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -39,10 +40,14 @@ import {
 
 import SkladAutocomplete from "../ui/SkladAutocomplete";
 import SkladDeleteDialog from "../SkladDeleteDialog";
+import SkladBooleanStatus from "../SkladBooleanStatus";
+import { interactiveRowProps } from "../table/interactiveRow";
 import { formatDateRU } from "../formatDateRangeRU";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
 import SkladWarehouseItemEditorDialog from "./SkladWarehouseItemEditorDialog";
 import SkladProductionCategoryManagerDialog from "../production/SkladProductionCategoryManagerDialog";
 
@@ -80,6 +85,7 @@ function StatusChip({ row }) {
 
 export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("warehouse-items");
   const {
     access,
     canCreateWarehouseItem,
@@ -89,6 +95,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
     canDelete,
   } = useSkladAccess();
   const categories = useSkladStore((state) => state.categories);
+  const listPending = useSkladStore((state) => state.listLoading["warehouse-items"].pending);
   const setShellState = useSkladStore((state) => state.setState);
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
@@ -101,6 +108,11 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   const revealFilterRef = useRef(false);
   const [editor, setEditor] = useState({ open: false, detail: null, loading: false });
   const [remove, setRemove] = useState({ open: false, row: null, loading: false });
+  const [archive, setArchive] = useState({ open: false, row: null, loading: false });
+  const canArchiveWarehouseItem = Number(access?.warehouse_items_activity_edit) === 1;
+  const canClearArchiveFlags =
+    Number(access?.warehouse_items_order_edit) === 1 &&
+    Number(access?.warehouse_items_revision_edit) === 1;
   const [categoryManager, setCategoryManager] = useState({
     open: false,
     loading: false,
@@ -161,12 +173,13 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   );
 
   const loadRows = useCallback(async () => {
-    setShellState({ isLoading: true });
+    const requestId = beginListLoad("warehouse-items");
     try {
       const response = await api.getWarehouseItems({
         search: search.trim(),
         category_key: categoryKey || null,
       });
+      if (useSkladStore.getState().listLoading["warehouse-items"].id !== requestId) return;
       if (!response?.st) throw new Error(response?.text || "Ошибка загрузки товаров склада");
       const filter = JSON.stringify([search.trim(), categoryKey]);
       revealFilterRef.current = appliedFilterRef.current !== filter;
@@ -174,11 +187,13 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
       setRows(Array.isArray(response?.list) ? response.list : []);
       setGroupPages({});
     } catch (error) {
-      showAlert(error?.message || "Ошибка загрузки товаров склада", false);
+      if (useSkladStore.getState().listLoading["warehouse-items"].id === requestId) {
+        showAlert(error?.message || "Ошибка загрузки товаров склада", false);
+      }
     } finally {
-      setShellState({ isLoading: false });
+      finishListLoad("warehouse-items", requestId);
     }
-  }, [api, categoryKey, search, setShellState, showAlert]);
+  }, [api, beginListLoad, categoryKey, finishListLoad, search, showAlert]);
 
   const loadRowsRef = useRef(loadRows);
 
@@ -187,9 +202,10 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
   }, [loadRows]);
 
   useEffect(() => {
+    beginListLoad("warehouse-items");
     const timer = setTimeout(() => loadRowsRef.current(), 250);
     return () => clearTimeout(timer);
-  }, [categoryKey, refreshToken, search]);
+  }, [beginListLoad, categoryKey, refreshToken, search]);
 
   const filteredRows = useMemo(
     () => rows.filter((row) => stateFilter === "all" || stateOf(row) === stateFilter),
@@ -308,9 +324,34 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
       await loadRows();
     } catch (error) {
       setEditor((current) => ({ ...current, loading: false }));
-      showAlert(error?.message || "Ошибка сохранения товара склада", false);
+      showAlert(getSkladApiError(error, "Ошибка сохранения товара склада"), false);
     } finally {
       setShellState({ isLoading: false });
+    }
+  };
+
+  const confirmArchive = async () => {
+    const row = archive.row;
+    if (!row?.id || !canArchiveWarehouseItem) return;
+    const isArchived = Number(row.is_archived) === 1;
+    if (!isArchived && !canClearArchiveFlags) {
+      showAlert("Недостаточно прав для изменения признаков заявки и ревизии", false);
+      return;
+    }
+    setArchive((current) => ({ ...current, loading: true }));
+    try {
+      const response = await api.archiveEntity({
+        entity_type: "item",
+        id: row.id,
+        is_archived: isArchived ? 0 : 1,
+      });
+      if (!response?.st) throw new Error(response?.text || "Ошибка изменения архива");
+      setArchive({ open: false, row: null, loading: false });
+      showAlert(response?.text || "Успешно сохранено", true);
+      await loadRows();
+    } catch (error) {
+      setArchive((current) => ({ ...current, loading: false }));
+      showAlert(getSkladApiError(error, "Ошибка изменения архива"), false);
     }
   };
 
@@ -419,6 +460,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   <TableHead>
                     <TableRow>
                       <TableCell>Название</TableCell>
+                      {Number(access?.warehouse_items_art_view) === 1 ? (
+                        <TableCell>Код 1С</TableCell>
+                      ) : null}
                       <TableCell>Единица</TableCell>
                       <TableCell>Действует с</TableCell>
                       <TableCell>Действует по</TableCell>
@@ -432,9 +476,16 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                     {visibleRows.map((row) => (
                       <TableRow
                         key={row.id}
-                        hover
+                        {...interactiveRowProps(
+                          row.name,
+                          () => openEditor(row),
+                          canManageWarehouseItems,
+                        )}
                       >
-                        <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
+                        <TableCell>{row.name || "—"}</TableCell>
+                        {Number(access?.warehouse_items_art_view) === 1 ? (
+                          <TableCell>{row.art || "—"}</TableCell>
+                        ) : null}
                         <TableCell>{row.ed_izmer_name || "—"}</TableCell>
                         <TableCell>
                           {formatDateRU(row.effective_date_start || row.date_start) || "—"}
@@ -445,23 +496,27 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                         <TableCell>
                           <StatusChip row={row} />
                         </TableCell>
-                        <TableCell>{Number(row.show_in_order) ? "Да" : "Нет"}</TableCell>
-                        <TableCell>{Number(row.show_in_rev) ? "Да" : "Нет"}</TableCell>
-                        <TableCell align="right">
+                        <TableCell>
+                          <SkladBooleanStatus
+                            label="Заявка"
+                            value={row.show_in_order}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <SkladBooleanStatus
+                            colorize
+                            label="Ревизия"
+                            value={row.show_in_rev}
+                          />
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           <Stack
                             direction="row"
-                            justifyContent="flex-end"
+                            sx={{ justifyContent: "flex-end" }}
                           >
-                            <Tooltip title="Редактировать">
-                              <span>
-                                <JacoIconButton
-                                  disabled={!canManageWarehouseItems}
-                                  onClick={() => openEditor(row)}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </JacoIconButton>
-                              </span>
-                            </Tooltip>
                             {canViewWarehouseItemsHistory ? (
                               <Tooltip title="История">
                                 <JacoIconButton onClick={() => openEditor(row, true)}>
@@ -469,6 +524,30 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                                 </JacoIconButton>
                               </Tooltip>
                             ) : null}
+                            {
+                              <Tooltip
+                                title={
+                                  Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"
+                                }
+                              >
+                                <span>
+                                  <JacoIconButton
+                                    disabled={
+                                      !canArchiveWarehouseItem ||
+                                      (Number(row.is_archived) !== 1 && !canClearArchiveFlags)
+                                    }
+                                    aria-label={`${Number(row.is_archived) === 1 ? "Вернуть из архива" : "В архив"}: ${row.name}`}
+                                    onClick={() => setArchive({ open: true, row, loading: false })}
+                                  >
+                                    {Number(row.is_archived) === 1 ? (
+                                      <UnarchiveOutlinedIcon fontSize="small" />
+                                    ) : (
+                                      <ArchiveOutlinedIcon fontSize="small" />
+                                    )}
+                                  </JacoIconButton>
+                                </span>
+                              </Tooltip>
+                            }
                             <Tooltip title="Удалить">
                               <span>
                                 <JacoIconButton
@@ -543,7 +622,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
               <Stack
                 direction="row"
                 spacing={0.5}
-                alignItems="center"
+                sx={{ alignItems: "center" }}
               >
                 <SkladAutocomplete
                   label="Категория"
@@ -556,25 +635,34 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
                   freeSolo={false}
                   autocompleteSx={{ flex: 1, minWidth: 0 }}
                 />
-                <Tooltip title="Управление категориями">
-                  <JacoIconButton onClick={openCategoryManager}>
+                <Tooltip title="Управление категориями товаров склада">
+                  <JacoIconButton
+                    aria-label="Управление категориями товаров склада"
+                    onClick={openCategoryManager}
+                  >
                     <SettingsOutlinedIcon />
                   </JacoIconButton>
                 </Tooltip>
               </Stack>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <JacoSelect
-                label="Показать"
-                value={stateFilter}
-                onChange={(event) => {
-                  setStateFilter(event.target.value);
-                  revealFilterRef.current = true;
-                  setGroupPages({});
-                }}
-                allowNone={false}
-                options={STATE_OPTIONS.map(([id, name]) => ({ id, name }))}
-              />
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{ alignItems: "center" }}
+              >
+                <JacoSelect
+                  label="Показать"
+                  value={stateFilter}
+                  onChange={(event) => {
+                    setStateFilter(event.target.value);
+                    revealFilterRef.current = true;
+                    setGroupPages({});
+                  }}
+                  allowNone={false}
+                  options={STATE_OPTIONS.map(([id, name]) => ({ id, name }))}
+                />
+              </Stack>
             </Grid>
             <Grid size={12}>
               <JacoButton
@@ -593,8 +681,9 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
             sx={{ justifyContent: "space-between", alignItems: { sm: "center" } }}
           >
             <Typography color="text.secondary">
-              {new Set(filteredRows.map((row) => Number(row.category_id) || null)).size} категорий ·{" "}
-              {filteredRows.length} товаров
+              {listPending
+                ? "Загрузка товаров…"
+                : `${new Set(filteredRows.map((row) => Number(row.category_id) || null)).size} категорий · ${filteredRows.length} товаров`}
             </Typography>
             <JacoButton
               compact
@@ -607,7 +696,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
             </JacoButton>
           </Stack>
           {groupedRows.map(renderGroup)}
-          {!groupedRows.length ? (
+          {!listPending && !groupedRows.length ? (
             <Typography
               color="text.secondary"
               align="center"
@@ -629,6 +718,19 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
         onSave={save}
       />
       <SkladDeleteDialog
+        open={archive.open}
+        loading={archive.loading}
+        title={
+          Number(archive.row?.is_archived) === 1
+            ? "Вернуть товар склада из архива?"
+            : "Отправить товар склада в архив?"
+        }
+        description={archive.row?.name || ""}
+        confirmLabel={Number(archive.row?.is_archived) === 1 ? "Вернуть" : "В архив"}
+        onClose={() => setArchive({ open: false, row: null, loading: false })}
+        onConfirm={confirmArchive}
+      />
+      <SkladDeleteDialog
         open={remove.open}
         loading={remove.loading}
         title="Удалить товар склада?"
@@ -638,6 +740,7 @@ export default function SkladWarehouseItemsTab({ showAlert, refreshToken }) {
         onConfirm={confirmDelete}
       />
       <SkladProductionCategoryManagerDialog
+        initialSourceType="warehouse_item"
         open={categoryManager.open}
         loading={categoryManager.loading}
         categories={categoryManager.categories}

@@ -31,7 +31,7 @@
 ## Locked scope and rules
 
 - Build a standalone `orders_extended` page/module. Do not modify `site_clients` behavior as part of this task.
-- Use the known API contract from `components/orders_extended/API.md` only:
+- Use the known API contract from `components/orders_extended/docs/API.md` only:
   - `useApi("orders_extended")`
   - `get_all` with `st: true` and confirmed dictionaries;
   - `get_orders_more` with the expanded filter contract;

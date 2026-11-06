@@ -4,7 +4,7 @@
 
 Implement a new BI module under `components/bi/cafe_performance` based on:
 
-- local API contract in `components/bi/cafe_performance/README.md`
+- local API contract in `components/bi/cafe_performance/docs/README.md`
 - visual and UX reference from `https://aroma-stats.lovable.app/`
 - existing repo patterns from `components/bi/dds`, `components/ads`, `ui/Forms`, `ui/TabPanel`, `src/hooks/useApi`
 

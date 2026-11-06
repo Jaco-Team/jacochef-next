@@ -14,6 +14,7 @@ export { default as JacoRadioCard } from "./JacoRadioCard";
 export { default as JacoSelectableList } from "./JacoSelectableList";
 export { default as JacoSelectableListItem } from "./JacoSelectableListItem";
 export { default as JacoSegmentedTabs } from "./JacoSegmentedTabs";
+export { default as JacoStatusChip } from "./JacoStatusChip";
 export { default as JacoSurface } from "./JacoSurface";
 export { default as JacoSwitch } from "./JacoSwitch";
 export { default as JacoTabPanel } from "./JacoTabPanel";

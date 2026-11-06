@@ -16,11 +16,7 @@ export default function SkladSiteItemsTab({ showAlert, refreshToken }) {
 
   useEffect(() => {
     loadRowsRef.current({ resetPage: true });
-  }, [archiveMode, categoryId, search, tagId]);
-
-  useEffect(() => {
-    loadRowsRef.current();
-  }, [refreshToken]);
+  }, [archiveMode, categoryId, search, tagId, refreshToken]);
 
   return content;
 }
