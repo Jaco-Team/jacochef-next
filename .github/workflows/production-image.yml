@@ -1,5 +1,6 @@
 # Public build configuration is supplied by the OpenBao controller via dispatch.
 name: Chef Frontend Publish
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('jaco-chef-frontend/{0}', inputs.build_request_id) || 'Chef Frontend checks' }}
 on:
   push:
     branches: [main]
