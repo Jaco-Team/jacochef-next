@@ -7,10 +7,18 @@ export default function useCleaningsApi() {
   apiRef.current = api_laravel;
 
   return useMemo(() => {
-    const request = (method, payload = {}) => apiRef.current(method, payload);
+    const request = (method, payload = {}, options = {}) =>
+      apiRef.current(method, payload, options);
 
     return {
       getBootstrap: () => request("get_all"),
+      getLampsBootstrap: () => request("lamps/bootstrap"),
+      getLamps: (payload) => request("lamps", payload),
+      getLampHistory: (payload) => request("lamps/history", payload),
+      saveLamp: (payload) => request("lamps/save", payload),
+      saveLampActivity: (payload) => request("lamps/activity/save", payload),
+      replaceLamp: (payload) => request("lamps/replace", payload),
+      exportLamps: (payload) => request("lamps/export", payload, { responseType: "blob" }),
       getTemplates: () => request("templates"),
       getCategories: () => request("categories"),
       getCafes: (payload) => request("cafes", payload),

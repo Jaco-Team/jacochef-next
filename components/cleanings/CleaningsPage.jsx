@@ -8,6 +8,7 @@ import {
   Grid,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -23,6 +24,7 @@ import ControlView, { AddManualCleaningDialog } from "./ControlCleaningsPage";
 import PreparationControlView, { PreparationEditDialog } from "./ControlPreparationsPage";
 import { ControlActionConfirmDialog, PreparationActionConfirmDialog } from "./ControlDialogs";
 import useCleaningsPage from "./useCleaningsPage";
+import CleaningsLampsView from "./CleaningsLampsView";
 
 export default function CleaningsPage({
   initialSection = "templates",
@@ -117,18 +119,25 @@ export default function CleaningsPage({
                     if (tab.value === "control") {
                       return page.canView("control_cleanings") || page.canView("control_pf");
                     }
+                    if (tab.value === "lamps") return page.canView("lamps");
                     return true;
                   })
                   .map((tab) => (
-                    <ToggleButton
+                    <Tooltip
                       key={tab.value}
-                      component={Link}
-                      href={tab.href}
-                      value={tab.value}
-                      onClick={() => page.setSection(tab.value)}
+                      title={tab.description || ""}
+                      arrow
+                      placement="bottom"
                     >
-                      {tab.label}
-                    </ToggleButton>
+                      <ToggleButton
+                        component={Link}
+                        href={tab.href}
+                        value={tab.value}
+                        onClick={() => page.setSection(tab.value)}
+                      >
+                        {tab.label}
+                      </ToggleButton>
+                    </Tooltip>
                   ))}
               </ToggleButtonGroup>
 
@@ -282,15 +291,21 @@ export default function CleaningsPage({
                     return true;
                   })
                   .map((tab) => (
-                    <ToggleButton
+                    <Tooltip
                       key={tab.value}
-                      component={Link}
-                      href={tab.href}
-                      value={tab.value}
-                      onClick={() => page.setControlKind(tab.value)}
+                      title={tab.description || ""}
+                      arrow
+                      placement="bottom"
                     >
-                      {tab.label}
-                    </ToggleButton>
+                      <ToggleButton
+                        component={Link}
+                        href={tab.href}
+                        value={tab.value}
+                        onClick={() => page.setControlKind(tab.value)}
+                      >
+                        {tab.label}
+                      </ToggleButton>
+                    </Tooltip>
                   ))}
               </ToggleButtonGroup>
             </Box>
@@ -335,6 +350,17 @@ export default function CleaningsPage({
                 canEdit={page.canEdit("control_pf")}
               />
             ) : null}
+          </Grid>
+        ) : null}
+
+        {page.section === "lamps" ? (
+          <Grid size={12}>
+            <CleaningsLampsView
+              locations={page.locations}
+              canEdit={page.canEdit("lamps")}
+              canExport={page.canAccess("lamps_export_excel")}
+              showAlert={page.showAlert}
+            />
           </Grid>
         ) : null}
 

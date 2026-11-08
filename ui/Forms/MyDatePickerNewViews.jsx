@@ -2,6 +2,7 @@
 
 import { NoSsr } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { ruRU } from "@mui/x-date-pickers/locales";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 
@@ -11,6 +12,7 @@ export function MyDatePickerNewViews(props) {
       <LocalizationProvider
         dateAdapter={AdapterDayjs}
         adapterLocale="ru"
+        localeText={ruRU.components.MuiLocalizationProvider.defaultProps.localeText}
       >
         <DatePicker
           className={"datePicker"}
