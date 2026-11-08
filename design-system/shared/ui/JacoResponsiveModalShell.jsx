@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import {
@@ -138,6 +139,22 @@ export default function JacoResponsiveModalShell({
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down(desktopBreakpoint));
+  const triggerRef = useRef(null);
+  const wasOpenRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (open && !wasOpenRef.current && typeof document !== "undefined") {
+      triggerRef.current = document.activeElement;
+    }
+    wasOpenRef.current = open;
+  }, [open]);
+
+  const restoreTriggerFocus = () => {
+    const trigger = triggerRef.current;
+    if (trigger instanceof HTMLElement && document.contains(trigger)) {
+      trigger.focus({ preventScroll: true });
+    }
+  };
 
   if (isMobile) {
     return (
@@ -148,7 +165,10 @@ export default function JacoResponsiveModalShell({
         onOpen={() => {}}
         disableDiscovery
         disableSwipeToOpen
-        ModalProps={{ keepMounted: true }}
+        ModalProps={{
+          disableRestoreFocus: true,
+          onTransitionExited: restoreTriggerFocus,
+        }}
         slotProps={{
           paper: {
             sx: {
@@ -231,6 +251,9 @@ export default function JacoResponsiveModalShell({
           sx: {
             borderRadius: uiRadii.lg,
             maxHeight: "calc(100% - 48px)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
             outline: "none",
             ...paperSx,
           },
@@ -241,6 +264,7 @@ export default function JacoResponsiveModalShell({
         sx={{
           px: 2.5,
           py: 1.5,
+          flexShrink: 0,
           borderBottom: `1px solid ${uiColors.borderLight}`,
           backgroundColor: "#F7F7F7",
           ...titleContainerSx,
@@ -290,7 +314,14 @@ export default function JacoResponsiveModalShell({
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0, backgroundColor: "#FFFFFF" }}>
+      <DialogContent
+        sx={{
+          p: 0,
+          minHeight: 0,
+          overflowY: "auto",
+          backgroundColor: "#FFFFFF",
+        }}
+      >
         <Box
           sx={{
             px: 3,
@@ -309,6 +340,7 @@ export default function JacoResponsiveModalShell({
           sx={{
             px: 3,
             py: 2,
+            flexShrink: 0,
             borderTop: `1px solid ${uiColors.borderLight}`,
             ...actionsSx,
           }}

@@ -1,18 +1,22 @@
 "use client";
 
-import { Close, ExpandMore } from "@mui/icons-material";
+import {
+  ErrorOutline,
+  LocalOfferOutlined,
+  ReceiptLongOutlined,
+  ScheduleOutlined,
+} from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
+  Box,
+  Chip,
+  Stack,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableFooter,
   TableHead,
   TableRow,
@@ -20,264 +24,346 @@ import {
 } from "@mui/material";
 import { memo } from "react";
 
+import { JacoResponsiveModalShell, JacoSurface } from "@/design-system/shared/ui";
+import { formatRUR } from "@/src/helpers/utils/i18n";
+
+function OrderDetailField({ label, value, fullWidth = false }) {
+  if (value === null || value === undefined || value === "") return null;
+
+  return (
+    <Box sx={fullWidth ? { gridColumn: "1 / -1" } : undefined}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+      >
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        fontWeight={500}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+function orderAmount(value) {
+  return formatRUR(value, false);
+}
+
 const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails = false }) => {
   if (!orderObj) return null;
 
-  const { order, order_items = [], err_order = null } = orderObj;
-  const showIntercom = !hideDeliveryDetails && parseInt(order?.type_order_) === 1;
+  const { order = {}, order_items: orderItems = [], err_order: errOrder = null } = orderObj;
+  const isDelivery = Number(order.type_order_) === 1;
+  const isPreorder = Number(order.is_preorder) === 1;
+  const showIntercom = !hideDeliveryDetails && isDelivery;
+  const orderType = hideDeliveryDetails
+    ? ""
+    : [order.type_order, order.type_order_addr_new].filter(Boolean).join(" · ");
+  const expectedTime = ![0, "0", "00:00:00", null, undefined].includes(order.time_to_client)
+    ? order.time_to_client
+    : "";
+  const remainingTime = ![0, "0", "00:00:00", null, undefined].includes(order.time)
+    ? `${order.text_time || ""}${order.time}`.trim()
+    : "";
+  const promisedTime =
+    !hideDeliveryDetails && !isPreorder
+      ? [expectedTime, remainingTime].filter(Boolean).join(" · ")
+      : "";
 
   return (
-    <Dialog
+    <JacoResponsiveModalShell
       open={open}
       onClose={onClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-      fullWidth={true}
-      maxWidth={"md"}
-      fullScreen={false}
+      title={`Заказ №${order.order_id || "—"}`}
+      maxWidth="md"
+      contentSx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 2.5 }, pb: { xs: 2.5, sm: 3 } }}
+      mobileContentSx={{ px: 2, pt: 2, pb: 2.5 }}
     >
-      <DialogTitle className="button">
-        <Typography
-          style={{
-            fontWeight: "bold",
-            alignSelf: "center",
-          }}
+      <Stack spacing={2}>
+        <JacoSurface
+          variant="outlined"
+          sx={{ p: { xs: 1.5, sm: 2 } }}
         >
-          Заказ #{order?.order_id}
-        </Typography>
-        <IconButton
-          onClick={onClose}
-          style={{ cursor: "pointer" }}
-        >
-          <Close />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Grid
-          container
-          spacing={0}
-        >
-          {hideDeliveryDetails ? null : (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <span>
-                {order?.type_order}: {order?.type_order_addr_new}
-              </span>
-            </Grid>
-          )}
-
-          {showIntercom ? (
-            parseInt(order?.fake_dom) === 0 ? (
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <b style={{ color: "red", fontWeight: 900 }}>Домофон не работает</b>
-              </Grid>
-            ) : (
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <b style={{ color: "green", fontWeight: 900 }}>Домофон работает</b>
-              </Grid>
-            )
-          ) : null}
-          <Grid
-            size={{
-              xs: 12,
-            }}
-          >
-            <span>
-              {order?.time_order_name}: {order?.time_order}
-            </span>
-          </Grid>
-
-          {!hideDeliveryDetails && order?.number?.length > 1 ? (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <b>Телефон: </b>
-              <span>{order?.number}</span>
-            </Grid>
-          ) : null}
-
-          {order?.delete_reason?.length > 0 ? (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <span style={{ color: "red" }}>Удален: {order?.date_time_delete}</span>
-            </Grid>
-          ) : null}
-          {order?.delete_reason?.length > 0 ? (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <span style={{ color: "red" }}>{order?.delete_reason}</span>
-            </Grid>
-          ) : null}
-
-          {hideDeliveryDetails || parseInt(order?.is_preorder) == 1 ? null : (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <span>
-                {"Обещали: " + order?.time_to_client + " / "}
-                {order?.text_time}
-                {order?.time}
-              </span>
-            </Grid>
-          )}
-
-          {order?.promo_name == null || order?.promo_name?.length == 0 ? null : (
-            <>
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <b>Промокод: </b>
-                <span>{order?.promo_name}</span>
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                }}
-              >
-                <span className="noSpace">{order?.promo_text}</span>
-              </Grid>
-            </>
-          )}
-
-          {order?.comment == null || order?.comment.length == 0 ? null : (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <b>Комментарий: </b>
-              <span>{order?.comment}</span>
-            </Grid>
-          )}
-
-          {order?.sdacha == null || parseInt(order?.sdacha) == 0 ? null : (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <b>Сдача: </b>
-              <span>{order?.sdacha}</span>
-            </Grid>
-          )}
-
-          <Grid
-            size={{
-              xs: 12,
-            }}
-          >
-            <b>Сумма заказа: </b>
-            <span>{order?.sum_order} р</span>
-          </Grid>
-
-          {order?.check_pos_drive == null || !order?.check_pos_drive ? null : (
-            <Grid
-              size={{
-                xs: 12,
-              }}
-            >
-              <b>Довоз оформлен: </b>
-              <span>{order?.check_pos_drive?.comment}</span>
-            </Grid>
-          )}
-
-          <Grid
-            size={{
-              xs: 12,
-            }}
-          >
-            <Table
-              size={"small"}
-              style={{ marginTop: 15 }}
-            >
-              <TableBody>
-                {order_items?.map((item, key) => (
-                  <TableRow key={key}>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.count ? `${item.count} шт` : ""}</TableCell>
-                    <TableCell>{item.price ? `${item.price} р` : ""}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TableCell style={{ fontWeight: "bold", color: "#000" }}>Сумма заказа</TableCell>
-                  <TableCell></TableCell>
-                  <TableCell
-                    style={{
-                      fontWeight: "bold",
-                      color: "#000",
-                    }}
-                  >
-                    {`${order?.sum_order}`} р
-                  </TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </Grid>
-
-          {!err_order ? null : (
-            <Grid
-              size={{
-                xs: 12,
-              }}
+          <Stack spacing={1.5}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
               sx={{
-                mt: 3,
+                justifyContent: orderType ? "space-between" : "flex-end",
+                alignItems: { sm: "center" },
               }}
             >
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography style={{ fontWeight: "bold" }}>Ошибка</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell style={{ width: "20%" }}>Дата создания</TableCell>
-                        <TableCell style={{ width: "30%" }}>Проблема</TableCell>
-                        <TableCell style={{ width: "30%" }}>Решение</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      <TableRow hover>
-                        <TableCell>{err_order?.date_time_desc}</TableCell>
-                        <TableCell>{err_order?.order_desc}</TableCell>
-                        <TableCell>{err_order?.text_win}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </AccordionDetails>
-              </Accordion>
-            </Grid>
-          )}
-        </Grid>
-      </DialogContent>
-    </Dialog>
+              {orderType ? (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center", minWidth: 0 }}
+                >
+                  <ReceiptLongOutlined
+                    color="action"
+                    fontSize="small"
+                  />
+                  <Typography
+                    variant="body2"
+                    fontWeight={700}
+                  >
+                    {orderType}
+                  </Typography>
+                </Stack>
+              ) : null}
+              {order.sum_order !== null && order.sum_order !== undefined ? (
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                >
+                  {orderAmount(order.sum_order)}
+                </Typography>
+              ) : null}
+            </Stack>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                gap: 1.5,
+              }}
+            >
+              <OrderDetailField
+                label={order.time_order_name || "Время заказа"}
+                value={order.time_order}
+              />
+              <OrderDetailField
+                label="Ожидаемое время"
+                value={promisedTime}
+              />
+              {!hideDeliveryDetails && order.number?.length > 1 ? (
+                <OrderDetailField
+                  label="Телефон"
+                  value={order.number}
+                />
+              ) : null}
+              <OrderDetailField
+                label="Сдача"
+                value={Number(order.sdacha) ? order.sdacha : null}
+              />
+              <OrderDetailField
+                fullWidth
+                label="Комментарий клиента"
+                value={order.comment}
+              />
+            </Box>
+            {showIntercom ? (
+              <Chip
+                size="small"
+                color={Number.parseInt(order.fake_dom, 10) === 0 ? "error" : "success"}
+                variant="outlined"
+                label={
+                  Number.parseInt(order.fake_dom, 10) === 0
+                    ? "Домофон не работает"
+                    : "Домофон работает"
+                }
+                sx={{ alignSelf: "flex-start" }}
+              />
+            ) : null}
+            {order.delete_reason ? (
+              <Box sx={{ borderLeft: 3, borderColor: "error.main", pl: 1.25 }}>
+                <Typography
+                  variant="body2"
+                  fontWeight={700}
+                  color="error.main"
+                >
+                  Заказ удалён {order.date_time_delete || ""}
+                </Typography>
+                <Typography variant="body2">{order.delete_reason}</Typography>
+              </Box>
+            ) : null}
+            {order.check_pos_drive?.comment ? (
+              <Box sx={{ borderLeft: 3, borderColor: "warning.main", pl: 1.25 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  Довоз оформлен
+                </Typography>
+                <Typography variant="body2">{order.check_pos_drive.comment}</Typography>
+              </Box>
+            ) : null}
+          </Stack>
+        </JacoSurface>
+
+        {order.promo_name ? (
+          <JacoSurface
+            variant="outlined"
+            sx={{ p: 1.5 }}
+          >
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "flex-start" }}
+            >
+              <LocalOfferOutlined
+                color="success"
+                fontSize="small"
+                sx={{ mt: 0.25 }}
+              />
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  Промокод
+                </Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight={700}
+                >
+                  {order.promo_name}
+                </Typography>
+                {order.promo_text ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.25 }}
+                  >
+                    {order.promo_text}
+                  </Typography>
+                ) : null}
+              </Box>
+            </Stack>
+          </JacoSurface>
+        ) : null}
+
+        <Box>
+          <Typography
+            variant="subtitle1"
+            fontWeight={700}
+            sx={{ mb: 1 }}
+          >
+            Состав заказа
+          </Typography>
+          <JacoSurface
+            variant="outlined"
+            sx={{ overflow: "hidden" }}
+          >
+            <TableContainer>
+              <Table
+                size="small"
+                aria-label="Состав заказа"
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Позиция</TableCell>
+                    <TableCell align="right">Количество</TableCell>
+                    <TableCell align="right">Сумма</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {orderItems.map((item, index) => (
+                    <TableRow
+                      key={`${item.id || item.name || "item"}-${index}`}
+                      hover
+                    >
+                      <TableCell>{item.name || "—"}</TableCell>
+                      <TableCell align="right">{item.count ? `${item.count} шт.` : "—"}</TableCell>
+                      <TableCell align="right">
+                        {item.price !== null && item.price !== undefined
+                          ? orderAmount(item.price)
+                          : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {orderItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                        >
+                          Позиции заказа не найдены.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      sx={{ fontWeight: 700 }}
+                    >
+                      Итого
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {orderAmount(order.sum_order)}
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
+          </JacoSurface>
+        </Box>
+
+        {errOrder ? (
+          <Accordion
+            disableGutters
+            elevation={0}
+            sx={{
+              border: 1,
+              borderColor: "error.light",
+              borderRadius: "12px !important",
+              overflow: "hidden",
+              "&:before": { display: "none" },
+            }}
+          >
+            <AccordionSummary expandIcon={<ScheduleOutlined fontSize="small" />}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: "center" }}
+              >
+                <ErrorOutline
+                  color="error"
+                  fontSize="small"
+                />
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={700}
+                >
+                  История ошибки заказа
+                </Typography>
+              </Stack>
+            </AccordionSummary>
+            <AccordionDetails sx={{ pt: 0 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" },
+                  gap: 1.5,
+                }}
+              >
+                <OrderDetailField
+                  label="Дата"
+                  value={errOrder.date_time_desc}
+                />
+                <OrderDetailField
+                  label="Проблема"
+                  value={errOrder.order_desc}
+                />
+                <OrderDetailField
+                  label="Решение"
+                  value={errOrder.text_win}
+                />
+              </Box>
+            </AccordionDetails>
+          </Accordion>
+        ) : null}
+      </Stack>
+    </JacoResponsiveModalShell>
   );
 };
 
