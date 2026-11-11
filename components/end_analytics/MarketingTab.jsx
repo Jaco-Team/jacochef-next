@@ -182,7 +182,8 @@ function Funnel({ steps }) {
   return (
     <Box sx={{ display: "grid", gap: 1 }}>
       {steps.map((step, index) => {
-        const prev = index > 0 ? steps[index - 1].visits : null;
+        // Шаги не строго последовательны (в корзину добавляют и из каталога), поэтому доля — от визитов.
+        const share = index > 0 && top ? step.visits / top : null;
         return (
           <Box
             key={step.step}
@@ -208,7 +209,7 @@ function Funnel({ steps }) {
               sx={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}
             >
               {int(step.visits)}
-              {prev ? ` · ${pct(step.visits / prev, 0)} от пред.` : ""}
+              {share !== null ? ` · ${pct(share)} визитов` : ""}
             </Typography>
           </Box>
         );
@@ -406,7 +407,13 @@ export default function MarketingTab({ cities, onError }) {
             ["Выручка", rub(kpi.revenue)],
             ["Средний чек", rub(kpi.avg_check)],
             ["Новые клиенты", int(kpi.new_clients), `${pct(kpi.new_share)} заказов`],
-            ["Расход", rub(kpi.spend), "ручные расходы End_analytics"],
+            [
+              "Расход",
+              rub(kpi.spend),
+              kpi.spend_ads === undefined
+                ? "реклама и ручные расходы"
+                : `реклама ${rub(kpi.spend_ads)} · ручные ${rub(kpi.spend_manual)}`,
+            ],
             ["CAC", rub(kpi.cac), "расход / новые клиенты"],
             ["ДРР", pct(kpi.drr), "расход / выручка"],
             ["Конверсия визита", pct(kpi.conversion, 2), `${int(kpi.visits)} визитов`],
@@ -425,7 +432,7 @@ export default function MarketingTab({ cities, onError }) {
 
           <Section
             title="Каналы: первое и последнее касание"
-            hint="Первое касание — откуда человек пришёл впервые, последнее — визит, в котором заказал. CAC — по новым клиентам первого касания. Красным — CAC выше среднего по всем каналам."
+            hint="Первое касание — откуда человек пришёл впервые, последнее — визит, в котором заказал. Переходы внутри нашего сайта и возвраты со страницы оплаты источником не считаются. CAC — по новым клиентам первого касания. Красным — CAC выше среднего по всем каналам."
           >
             <SortableTable
               rows={report.channels}
@@ -450,7 +457,7 @@ export default function MarketingTab({ cities, onError }) {
 
           <Section
             title="Кампании (utm_campaign, последнее касание)"
-            hint="Расход — из ручных расходов с той же кампанией. Красным — ДРР выше 30%."
+            hint="Расход — из рекламного кабинета (кампания определяется по её номеру в метке) и из ручных расходов с той же кампанией. Красным — ДРР выше 30%."
           >
             <SortableTable
               rows={report.campaigns}
@@ -478,7 +485,7 @@ export default function MarketingTab({ cities, onError }) {
           {report.funnel.length > 0 && (
             <Section
               title="Воронка визита"
-              hint="Визиты Umami, в которых было действие; «Оплатили онлайн» — только онлайн-оплаты на сайте."
+              hint="Визиты Umami, в которых было действие; процент — доля от всех визитов. «Оформили заказ» — подтверждённый заказ с любой оплатой: онлайн и при получении."
             >
               <Funnel steps={report.funnel} />
             </Section>
