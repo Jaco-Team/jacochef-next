@@ -15,6 +15,14 @@ export default function StatSaleTabs({ activeTab, fullScreen, onChange, canAcces
         variant={fullScreen ? "scrollable" : "fullWidth"}
         scrollButtons={false}
       >
+        {canAccess("dashboard") && (
+          <Tab
+            value={5}
+            label="Дашборд"
+            {...a11yProps(5)}
+            sx={{ minWidth: "fit-content", flex: 1 }}
+          />
+        )}
         {canAccess("sale") && (
           <Tab
             value={0}
