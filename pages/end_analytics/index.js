@@ -35,7 +35,10 @@ import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import MyAlert from "@/ui/MyAlert";
 import handleUserAccess from "@/src/helpers/access/handleUserAccess";
 import EndAnalyticsColumnsDialog from "@/components/end_analytics/EndAnalyticsColumnsDialog";
-import AiAnalystTab, { AI_ANALYST_SOURCES } from "@/components/end_analytics/AiAnalystTab";
+import AiAnalystTab, {
+  AI_ANALYST_SOURCES,
+  DEFAULT_AI_COMPARISON,
+} from "@/components/end_analytics/AiAnalystTab";
 import MarketingTab from "@/components/end_analytics/MarketingTab";
 import {
   DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS,
@@ -547,7 +550,16 @@ function EndPage() {
   const [columnsDialogOpen, setColumnsDialogOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_END_ANALYTICS_VISIBLE_COLUMNS);
   const [activeTab, setActiveTab] = useState(false);
-  const [aiSource, setAiSource] = useState(null);
+  const [aiSources, setAiSources] = useState([]);
+  const [aiSourceOptions, setAiSourceOptions] = useState(AI_ANALYST_SOURCES);
+  const [aiComparison, setAiComparison] = useState(DEFAULT_AI_COMPARISON);
+  const [siteDataHistoryTotal, setSiteDataHistoryTotal] = useState(0);
+  const [attributionLoading, setAttributionLoading] = useState(false);
+  const attributionRequestRef = useRef(null);
+  const [aiDevices, setAiDevices] = useState(null);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [aiAdInsights, setAiAdInsights] = useState(null);
+  const [adInsightsLoading, setAdInsightsLoading] = useState(false);
   const [aiModels, setAiModels] = useState([
     { id: "auto", name: "Автоматически", description: "Модель выбирается сервером" },
   ]);
@@ -599,6 +611,10 @@ function EndPage() {
         );
       }
       setSiteDataHistory(data.site_data_history || []);
+      setSiteDataHistoryTotal(Number(data.site_data_history_total) || 0);
+      if (Array.isArray(data.ai_sources) && data.ai_sources.length) {
+        setAiSourceOptions(data.ai_sources);
+      }
       const initialThreads = Array.isArray(data.ai_chat_threads) ? data.ai_chat_threads : [];
       if (initialThreads.length) {
         const savedThreadId =
@@ -747,7 +763,127 @@ function EndPage() {
     const data = await getData("get_all");
     if (data?.module_info) {
       setSiteDataHistory(data.site_data_history || []);
+      setSiteDataHistoryTotal(Number(data.site_data_history_total) || 0);
     }
+  };
+
+  // Атрибуция считается по журналу визитов несколько секунд, поэтому догружается после отчёта.
+  const loadAttribution = async (requestId, analysis) => {
+    if (!requestId || !analysis || analysis.attribution) {
+      attributionRequestRef.current = null;
+      setAttributionLoading(false);
+      return;
+    }
+
+    attributionRequestRef.current = requestId;
+    setAttributionLoading(true);
+    try {
+      const result = await api_laravel("end_analytics", "get_attribution", {
+        site_data_request_id: requestId,
+      });
+      const data = result?.data && typeof result.data === "object" ? result.data : result;
+      if (attributionRequestRef.current !== requestId) return;
+      if (data?.st && data.attribution) {
+        setAiAnalysis((current) =>
+          current ? { ...current, attribution: data.attribution } : current,
+        );
+        setAiSiteDataSnapshot((current) =>
+          current?.ai_analysis
+            ? { ...current, ai_analysis: { ...current.ai_analysis, attribution: data.attribution } }
+            : current,
+        );
+      }
+    } catch (_) {
+      // Блок атрибуции необязателен: отчёт остаётся доступным без него.
+    } finally {
+      if (attributionRequestRef.current === requestId) {
+        setAttributionLoading(false);
+      }
+    }
+  };
+
+  const loadAdInsights = async () => {
+    const requestId = siteDataRequestId;
+    if (!requestId || adInsightsLoading) return;
+
+    setAdInsightsLoading(true);
+    try {
+      const result = await api_laravel("end_analytics", "get_ad_insights", {
+        site_data_request_id: requestId,
+      });
+      const data = result?.data && typeof result.data === "object" ? result.data : result;
+      if (data?.st && Array.isArray(data.sections)) {
+        setAiAdInsights({ requestId, data: { sections: data.sections } });
+      } else {
+        showError(data?.text || "Не удалось собрать детали рекламы");
+      }
+    } catch (_) {
+      showError("Не удалось собрать детали рекламы");
+    } finally {
+      setAdInsightsLoading(false);
+    }
+  };
+
+  const loadDevices = async () => {
+    const requestId = siteDataRequestId;
+    if (!requestId || devicesLoading) return;
+
+    setDevicesLoading(true);
+    try {
+      const result = await api_laravel("end_analytics", "get_devices", {
+        site_data_request_id: requestId,
+      });
+      const data = result?.data && typeof result.data === "object" ? result.data : result;
+      if (data?.st && data.devices) {
+        setAiDevices({ requestId, data: { ...data.devices, tables: data.tables || [] } });
+      } else {
+        showError(data?.text || "Не удалось посчитать устройства");
+      }
+    } catch (_) {
+      showError("Не удалось посчитать устройства");
+    } finally {
+      setDevicesLoading(false);
+    }
+  };
+
+  const clearAiReport = () => {
+    attributionRequestRef.current = null;
+    setAttributionLoading(false);
+    setAiAnalysis(null);
+    setSiteDataRequestId(null);
+    setDailyMetrics([]);
+    setTrafficSourceMetrics([]);
+    setAiSiteDataSnapshot(null);
+  };
+
+  const deleteSiteDataHistory = async (ids) => {
+    const data = await getData("delete_site_data_history", { ids });
+    if (data?.st === false || !data) {
+      showError(data?.text || "Не удалось удалить отчёт");
+      return;
+    }
+
+    setSiteDataHistory(data.site_data_history || []);
+    setSiteDataHistoryTotal(Number(data.total) || 0);
+    if (ids.some((id) => Number(id) === Number(siteDataRequestId))) {
+      clearAiReport();
+    }
+  };
+
+  const loadMoreSiteDataHistory = async () => {
+    const data = await getData("get_site_data_history_list", {
+      limit: 50,
+      offset: siteDataHistory.length,
+    });
+    if (data?.st === false || !data) {
+      showError(data?.text || "Не удалось загрузить историю");
+      return;
+    }
+
+    const known = new Set(siteDataHistory.map((item) => Number(item.id)));
+    const next = (data.site_data_history || []).filter((item) => !known.has(Number(item.id)));
+    setSiteDataHistory((current) => [...current, ...next]);
+    setSiteDataHistoryTotal(Number(data.total) || 0);
   };
 
   const mapAiChatToMessages = (aiChat) => {
@@ -771,11 +907,16 @@ function EndPage() {
       if (item?.answer) {
         messages.push({
           id: `${item.id || "message"}-assistant`,
+          messageId: item.id || null,
+          question: item.prompt || "",
           role: "assistant",
           text: item.answer,
           dataRefs: item.context_meta?.data_refs || [],
           limitations: item.context_meta?.limitations || [],
           aiModelName: item.context_meta?.ai_model_name || null,
+          tables: item.context_meta?.tables || [],
+          suggestions: item.context_meta?.suggestions || [],
+          feedback: item.context_meta?.feedback || null,
         });
       } else if (item?.status === "error") {
         messages.push({
@@ -792,6 +933,7 @@ function EndPage() {
           role: "assistant",
           text: "AI анализирует данные. Можно перейти в другую вкладку — ответ появится здесь после завершения.",
           isPending: true,
+          stage: item.context_meta?.stage || null,
           dataRefs: item.context_meta?.data_refs || [],
           aiModelName: item.context_meta?.ai_model_name || null,
         });
@@ -889,6 +1031,68 @@ function EndPage() {
     return messages;
   };
 
+  // Опрос во время ответа: запрашиваем только сообщения новее уже загруженных.
+  const pollChatThreadMessages = async (threadId) => {
+    const known = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId))?.messages;
+    const settled = (Array.isArray(known) ? known : []).filter(
+      (message) => message?.id && message.status !== "processing",
+    );
+    const afterId = settled.reduce((max, message) => Math.max(max, Number(message.id) || 0), 0);
+    if (!afterId) {
+      return loadChatThreadMessages(threadId);
+    }
+
+    const result = await api_laravel("end_analytics", "get_ai_chat_thread_messages", {
+      thread_id: threadId,
+      after_id: afterId,
+    });
+    const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+    if (data?.st === false || !data?.partial) {
+      return loadChatThreadMessages(threadId);
+    }
+    const fresh = Array.isArray(data.messages) ? data.messages : data.items || [];
+    const messages = [...settled, ...fresh];
+    setAiChatThreads((current) =>
+      current.map((thread) =>
+        Number(thread.id) === Number(threadId) ? { ...thread, messages } : thread,
+      ),
+    );
+    if (Number(activeChatThreadIdRef.current) === Number(threadId)) {
+      setHistoryChatMessages(mapAiChatToMessages(messages));
+    }
+    return messages;
+  };
+
+  const rateAiChatMessage = async (messageId, rating) => {
+    const result = await api_laravel("end_analytics", "rate_ai_chat_message", {
+      chat_message_id: messageId,
+      rating,
+    });
+    const data = result?.data && typeof result.data === "object" ? result.data : result || {};
+    if (data?.st === false) {
+      showError(data?.text || "Не удалось сохранить оценку");
+      return;
+    }
+    const feedback = Number(data?.feedback?.rating) ? data.feedback : null;
+    setAiChatThreads((current) =>
+      current.map((thread) => ({
+        ...thread,
+        messages: Array.isArray(thread.messages)
+          ? thread.messages.map((message) =>
+              Number(message.id) === Number(messageId)
+                ? { ...message, context_meta: { ...(message.context_meta || {}), feedback } }
+                : message,
+            )
+          : thread.messages,
+      })),
+    );
+    setHistoryChatMessages((current) =>
+      (Array.isArray(current) ? current : []).map((message) =>
+        Number(message.messageId) === Number(messageId) ? { ...message, feedback } : message,
+      ),
+    );
+  };
+
   const selectChatThread = async (threadId) => {
     const selected = aiChatThreads.find((thread) => Number(thread.id) === Number(threadId));
     rememberActiveChatThread(selected?.id ?? null);
@@ -913,7 +1117,7 @@ function EndPage() {
       if (chatPollInFlightRef.current) return;
       chatPollInFlightRef.current = true;
       try {
-        await loadChatThreadMessages(activeChatThreadId);
+        await pollChatThreadMessages(activeChatThreadId);
       } finally {
         chatPollInFlightRef.current = false;
       }
@@ -923,17 +1127,32 @@ function EndPage() {
   }, [activeChatThreadId, historyChatMessages]);
 
   const applyAiRequest = () => {
+    if (aiComparison.mode === "custom" && (!aiComparison.dateStart || !aiComparison.dateEnd)) {
+      showError("Укажите обе даты периода сравнения");
+      return;
+    }
+
     setAiAnalysis(null);
     setSiteDataRequestId(null);
     setDailyMetrics([]);
     setTrafficSourceMetrics([]);
     setAiSiteDataSnapshot(null);
 
+    const sourceNames = aiSources.map((item) => item?.name).filter(Boolean);
+    const isCustomComparison = aiComparison.mode === "custom";
+
     getData("get_site_data", {
       ...form,
-      comparisonMode: "previous_period",
+      comparisonMode: aiComparison.mode,
+      comparisonDateStart: isCustomComparison
+        ? dayjs(aiComparison.dateStart).format("YYYY-MM-DD")
+        : null,
+      comparisonDateEnd: isCustomComparison
+        ? dayjs(aiComparison.dateEnd).format("YYYY-MM-DD")
+        : null,
       typeOrder: [{ id: 2, name: "Сайт" }],
-      src_source: aiSource?.name || "",
+      src_source: sourceNames.length === 1 ? sourceNames[0] : "",
+      src_sources: sourceNames,
       dateStart: dayjs(form.dateStart).format("YYYY-MM-DD"),
       dateEnd: dayjs(form.dateEnd).format("YYYY-MM-DD"),
     }).then(async (data) => {
@@ -948,6 +1167,7 @@ function EndPage() {
         }
         setAiSiteDataSnapshot(snapshot);
         setLastUpdate(dayjs().format("HH:mm"));
+        loadAttribution(snapshot.site_data_request_id, snapshot.ai_analysis);
         await refreshSiteDataHistory();
       } else {
         setAiAnalysis(null);
@@ -985,9 +1205,23 @@ function EndPage() {
           ...current,
           ...requestPayload,
         }));
-        setAiSource(
-          AI_ANALYST_SOURCES.find((item) => item.name === requestPayload.src_source) || null,
+        const savedSources =
+          Array.isArray(requestPayload.src_sources) && requestPayload.src_sources.length
+            ? requestPayload.src_sources
+            : requestPayload.src_source
+              ? [requestPayload.src_source]
+              : [];
+        setAiSources(
+          savedSources.map(
+            (name) =>
+              aiSourceOptions.find((item) => item.name === name) || { id: `saved_${name}`, name },
+          ),
         );
+        setAiComparison({
+          mode: requestPayload.comparisonMode || DEFAULT_AI_COMPARISON.mode,
+          dateStart: requestPayload.comparisonDateStart || null,
+          dateEnd: requestPayload.comparisonDateEnd || null,
+        });
       }
 
       setAiAnalysis(snapshot.ai_analysis || null);
@@ -998,6 +1232,7 @@ function EndPage() {
         applyChatThreads(restoreChatThreads(snapshot.ai_chat_threads, snapshot.ai_chat));
       }
       setAiSiteDataSnapshot(snapshot);
+      loadAttribution(snapshot.site_data_request_id ?? requestId, snapshot.ai_analysis);
       if (snapshot.analytics_meta) {
         setAnalyticsMeta(snapshot.analytics_meta);
       }
@@ -1115,7 +1350,7 @@ function EndPage() {
     }
   };
 
-  const sendAiChat = async (prompt) => {
+  const sendAiChat = async (prompt, options = {}) => {
     const idempotencyKey =
       typeof window !== "undefined" && window.crypto?.randomUUID
         ? window.crypto.randomUUID().replaceAll("-", "")
@@ -1160,7 +1395,7 @@ function EndPage() {
           site_data_request_id: siteDataRequestId,
           thread_id: requestThreadId,
           idempotency_key: idempotencyKey,
-          ai_model: aiModel?.id || "auto",
+          ai_model: options.modelId || aiModel?.id || "auto",
         },
         { throwErrors: true },
       );
@@ -1269,12 +1504,9 @@ function EndPage() {
       dateStart: standardForm.dateStart,
       dateEnd: standardForm.dateEnd,
     }));
-    setAiSource(null);
-    setAiAnalysis(null);
-    setSiteDataRequestId(null);
-    setDailyMetrics([]);
-    setTrafficSourceMetrics([]);
-    setAiSiteDataSnapshot(null);
+    setAiSources([]);
+    setAiComparison(DEFAULT_AI_COMPARISON);
+    clearAiReport();
   };
 
   const refreshData = () => {
@@ -1283,6 +1515,12 @@ function EndPage() {
 
   const showError = (text) => {
     setErrStatus(false);
+    setErrText(text);
+    setOpenAlert(true);
+  };
+
+  const showNotice = (text) => {
+    setErrStatus(true);
     setErrText(text);
     setOpenAlert(true);
   };
@@ -2519,7 +2757,9 @@ function EndPage() {
           <AiAnalystTab
             cities={cities}
             form={form}
-            source={aiSource}
+            sources={aiSources}
+            sourceOptions={aiSourceOptions}
+            comparison={aiComparison}
             models={aiModels}
             model={aiModel}
             analysis={aiAnalysis}
@@ -2527,26 +2767,48 @@ function EndPage() {
             trafficSourceMetrics={trafficSourceMetrics}
             siteDataRequestId={siteDataRequestId}
             history={siteDataHistory}
+            historyTotal={siteDataHistoryTotal}
             historyChatMessages={historyChatMessages}
             chatThreads={aiChatThreads}
             activeChatThreadId={activeChatThreadId}
             onCitiesChange={handleCitiesChange}
             onFieldChange={setField}
-            onSourceChange={setAiSource}
+            onSourcesChange={setAiSources}
+            onComparisonChange={setAiComparison}
             onModelChange={setAiModel}
             onApply={applyAiRequest}
             onReset={resetAiFilters}
             onSendChat={sendAiChat}
+            onRateChatMessage={rateAiChatMessage}
             onSelectChatThread={selectChatThread}
             onCreateChatThread={createAiChatThread}
             onUpdateChatThread={updateAiChatThread}
             onDeleteChatThread={deleteAiChatThread}
             onSelectHistory={loadSiteDataHistoryItem}
+            onDeleteHistory={deleteSiteDataHistory}
+            onLoadMoreHistory={loadMoreSiteDataHistory}
             onExport={exportAiReport}
             canExport={canExportReport}
             canExportData={Boolean(aiSiteDataSnapshot)}
             onAnalyze={analyzeAiReport}
             canAnalyze={Boolean(aiSiteDataSnapshot)}
+            onError={showError}
+            onNotice={showNotice}
+            attributionLoading={attributionLoading}
+            devices={
+              aiDevices && Number(aiDevices.requestId) === Number(siteDataRequestId)
+                ? aiDevices.data
+                : null
+            }
+            devicesLoading={devicesLoading}
+            onLoadDevices={loadDevices}
+            adInsights={
+              aiAdInsights && Number(aiAdInsights.requestId) === Number(siteDataRequestId)
+                ? aiAdInsights.data
+                : null
+            }
+            adInsightsLoading={adInsightsLoading}
+            onLoadAdInsights={loadAdInsights}
           />
         </Grid>
       )}
