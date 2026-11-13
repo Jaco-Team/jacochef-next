@@ -1,15 +1,15 @@
 export const SKLAD_TAB_DEFINITIONS = [
   {
-    key: "production",
-    label: "Рецепты и полуфабрикаты",
-    accessGroup: "production",
-    description: "Общий production contour для recipes и semi-finished на canonical API.",
-  },
-  {
     key: "warehouse-items",
     label: "Товары склада",
     accessGroup: "warehouse_items",
     description: "Справочник товаров склада с периодами действия и полной историей.",
+  },
+  {
+    key: "production",
+    label: "Рецепты и полуфабрикаты",
+    accessGroup: "production",
+    description: "Общий production contour для recipes и semi-finished на canonical API.",
   },
   {
     key: "site-items",
@@ -23,10 +23,13 @@ export const SKLAD_TAB_DEFINITIONS = [
     accessGroup: "units",
     description: "Справочник единиц измерения и их базовые CRUD-операции.",
   },
+  { key: "storage", label: "Места хранения", linkedModule: "sklad_storage" },
+  { key: "allergens", label: "Аллергены", linkedModule: "allergens" },
 ];
 
-export function getVisibleSkladTabs({ access = {} } = {}) {
+export function getVisibleSkladTabs({ access = {}, linkedModules = {} } = {}) {
   return SKLAD_TAB_DEFINITIONS.filter((tab) => {
+    if (tab.linkedModule) return linkedModules[tab.linkedModule] === true;
     return (
       Number(access?.[`${tab.accessGroup}_view`]) === 1 ||
       Number(access?.[`${tab.accessGroup}_edit`]) === 1

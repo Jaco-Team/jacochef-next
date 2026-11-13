@@ -8,13 +8,16 @@ import { useJacoConfirm } from "@/design-system/shared/ui";
 import SkladDeleteDialog from "../SkladDeleteDialog";
 import SkladSiteItemsHistoryDialog from "./SkladSiteItemsHistoryDialog";
 import SkladSiteItemsCatalog from "./SkladSiteItemsCatalog";
-import { SkladSiteItemsLegacyEditorDialog } from "./SkladSiteItemsLegacyEditorDialog";
+import { SkladSiteItemsEditorDialog } from "./SkladSiteItemsEditorDialog";
 import SkladSiteItemsTagsDialog from "./SkladSiteItemsTagsDialog";
+import SkladSiteCategoryManagerDialog from "./SkladSiteCategoryManagerDialog";
 
 export default function SkladSiteItemsContent({
   search,
   archiveMode,
   rows,
+  catalogLoading,
+  catalogError,
   modal,
   detail,
   draft,
@@ -29,11 +32,12 @@ export default function SkladSiteItemsContent({
   canManageTags,
   canArchiveAction,
   canDeleteAction,
-  canEditActivity,
   canEditCash,
   canEditSort,
   canViewHistory,
   canCreateCategory,
+  canEditCategory,
+  loadRows,
   allowPastDate,
   showAlert,
   setState,
@@ -52,17 +56,18 @@ export default function SkladSiteItemsContent({
   handleCreateTag,
   handleRenameTag,
   submitDraft,
-  submitLegacyDraft,
+  submitEditorDraft,
   onSaveQuickField,
 }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { confirm, ConfirmDialog } = useJacoConfirm();
   const showHistory = modal.open && modal.section === "history";
   const legacyItem = detail?.item ? { ...detail.item, tags_all: detail?.tags_all || tags } : null;
 
-  const handleLegacyData = async (method, data = {}) => {
+  const handleEditorData = async (method, data = {}) => {
     if (method !== "saveNewTag") {
       return { st: false, text: "Действие недоступно в sklad_items" };
     }
@@ -96,6 +101,9 @@ export default function SkladSiteItemsContent({
         search={search}
         archiveMode={archiveMode}
         rows={rows}
+        loading={catalogLoading}
+        error={catalogError}
+        onRetry={loadRows}
         categories={categories}
         isEditable={isEditable}
         canCreate={canCreate}
@@ -103,7 +111,6 @@ export default function SkladSiteItemsContent({
         canManageTags={canManageTags}
         canArchiveAction={canArchiveAction}
         canDeleteAction={canDeleteAction}
-        canEditActivity={canEditActivity}
         canEditCash={canEditCash}
         canEditSort={canEditSort}
         canViewHistory={canViewHistory}
@@ -111,10 +118,19 @@ export default function SkladSiteItemsContent({
         openCreate={openCreate}
         onSyncSiteItemsVk={handleSyncSiteItemsVk}
         openTagsEditor={() => setTagsDialogOpen(true)}
+        onManageCategories={() => setCategoriesOpen(true)}
         openEdit={openEdit}
         openArchiveDialog={openArchiveDialog}
         openDeleteDialog={openDeleteDialog}
         onSaveQuickField={onSaveQuickField}
+      />
+
+      <SkladSiteCategoryManagerDialog
+        open={categoriesOpen}
+        onClose={() => setCategoriesOpen(false)}
+        onChanged={loadRows}
+        canCreate={canCreateCategory}
+        canEdit={canEditCategory}
       />
 
       <SkladSiteItemsTagsDialog
@@ -125,7 +141,7 @@ export default function SkladSiteItemsContent({
         showAlert={showAlert}
       />
 
-      <SkladSiteItemsLegacyEditorDialog
+      <SkladSiteItemsEditorDialog
         open={modal.open && !showHistory && !modal.loading && Boolean(legacyItem)}
         mode={modal.mode}
         method={
@@ -146,8 +162,8 @@ export default function SkladSiteItemsContent({
         acces={access}
         fullScreen={fullScreen}
         allowPastDate={allowPastDate}
-        save={submitLegacyDraft}
-        getData={handleLegacyData}
+        save={submitEditorDraft}
+        getData={handleEditorData}
         update={() => null}
         onClose={closeModal}
       />

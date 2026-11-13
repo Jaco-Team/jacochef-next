@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
 import SkladSiteItemsContent from "./SkladSiteItemsContent";
 import SkladSiteCategoryDialog from "./SkladSiteCategoryDialog";
@@ -144,6 +145,17 @@ export default function useSkladSiteItemsController({ showAlert }) {
   const archiveDialog = useSkladSiteItemsStore((state) => state.archiveDialog);
   const deleteDialog = useSkladSiteItemsStore((state) => state.deleteDialog);
   const setState = useSkladSiteItemsStore((state) => state.setState);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+  const catalogRequest = useRef(0);
+
+  useEffect(
+    () => () => {
+      catalogRequest.current += 1;
+    },
+    [],
+  );
+
   const [categoryDialog, setCategoryDialog] = useState({ open: false, loading: false });
 
   const canViewSiteItemForm = SITE_ITEMS_MODAL_FIELD_KEYS.some((field) =>
@@ -182,7 +194,6 @@ export default function useSkladSiteItemsController({ showAlert }) {
     }
   }, [api, setShellState, showAlert]);
   const canDeleteAction = canDelete("site_item");
-  const canEditActivity = canEditAccess(access, "is_show", false);
   const canEditCash =
     hasAccessValue(access?.kassa_edit) || canEditAccess(access, "show_program", false);
   const canEditSort = canEditAccess(access, "sort", false);
@@ -191,7 +202,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
 
   const loadRows = useCallback(
     async ({ resetPage = false } = {}) => {
-      setShellState({ isLoading: true });
+      const requestId = ++catalogRequest.current;
+      setCatalogLoading(true);
+      setCatalogError("");
 
       try {
         const response = await api.getSiteItems({
@@ -203,6 +216,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
           throw new Error(response?.text || "Ошибка загрузки товаров сайта");
         }
 
+        if (requestId !== catalogRequest.current) return;
+
         setState({
           rows: Array.isArray(response?.list) ? response.list : [],
           categories: Array.isArray(response?.categories) ? response.categories : [],
@@ -210,12 +225,15 @@ export default function useSkladSiteItemsController({ showAlert }) {
           ...(resetPage ? { page: 0 } : {}),
         });
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки товаров сайта", false);
+        if (requestId !== catalogRequest.current) return;
+        const message = error?.message || "Ошибка загрузки товаров сайта";
+        setCatalogError(message);
+        showAlert(message, false);
       } finally {
-        setShellState({ isLoading: false });
+        if (requestId === catalogRequest.current) setCatalogLoading(false);
       }
     },
-    [api, search, setShellState, setState, showAlert],
+    [api, search, setState, showAlert],
   );
 
   const categoryOptions = useMemo(
@@ -494,7 +512,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
       const response = await api.archiveEntity({
         entity_type: "site_item",
         id: row.id,
-        value: nextArchived,
+        is_archived: nextArchived,
       });
 
       if (!response?.st) {
@@ -512,7 +530,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           row,
         },
       });
-      showAlert(error?.message || "Ошибка изменения архива", false);
+      showAlert(getSkladApiError(error, "Ошибка изменения архива"), false);
     } finally {
       setShellState({ isLoading: false });
     }
@@ -700,8 +718,9 @@ export default function useSkladSiteItemsController({ showAlert }) {
             loading: false,
           },
         });
-        showAlert(error?.message || "Ошибка сохранения", false);
-        return { st: false, text: error?.message || "Ошибка сохранения" };
+        const message = getSkladApiError(error, "Ошибка сохранения");
+        showAlert(message, false);
+        return { st: false, text: message };
       } finally {
         setShellState({ isLoading: false });
       }
@@ -723,7 +742,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
     [persistSiteItem, showAlert],
   );
 
-  const submitLegacyDraft = useCallback(
+  const submitEditorDraft = useCallback(
     async (nextDraft, pendingImageFile = null) =>
       persistSiteItem(legacySavePayload(nextDraft), pendingImageFile),
     [persistSiteItem],
@@ -988,6 +1007,8 @@ export default function useSkladSiteItemsController({ showAlert }) {
           categoryOptions={categoryOptions}
           tagOptions={tagOptions}
           rows={rows}
+          catalogLoading={catalogLoading}
+          catalogError={catalogError}
           paginatedRows={paginatedRows}
           sortBy={siteItemSort.sortBy}
           sortDirection={siteItemSort.sortDirection}
@@ -1008,11 +1029,11 @@ export default function useSkladSiteItemsController({ showAlert }) {
           canManageTags={canManageTags}
           canArchiveAction={canArchiveSiteItems}
           canDeleteAction={canDeleteAction}
-          canEditActivity={canEditActivity}
           canEditCash={canEditCash}
           canEditSort={canEditSort}
           canViewHistory={canViewSiteItemsHistory}
           canCreateCategory={canCreateCategory}
+          canEditCategory={isEditable && canEditAccess(access, "category_id", false)}
           allowPastDate={canUseSiteItemPastDate}
           showAlert={showAlert}
           setState={setState}
@@ -1033,7 +1054,7 @@ export default function useSkladSiteItemsController({ showAlert }) {
           handleCreateTag={handleCreateTag}
           handleRenameTag={handleRenameTag}
           submitDraft={submitDraft}
-          submitLegacyDraft={submitLegacyDraft}
+          submitEditorDraft={submitEditorDraft}
         />
         <SkladSiteCategoryDialog
           open={categoryDialog.open}

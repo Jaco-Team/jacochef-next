@@ -2,10 +2,8 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import DisabledByDefaultIcon from "@mui/icons-material/DisabledByDefault";
-import EditIcon from "@mui/icons-material/Edit";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
@@ -25,14 +23,17 @@ import {
 
 import {
   JacoButton,
+  JacoCheckbox,
   JacoIconButton,
   JacoSearchField,
-  JacoSelect,
+  JacoSegmentedTabs,
   JacoSurface,
 } from "@/design-system/shared/ui";
-import { uiColors, uiRadii } from "@/design-system/shared/tokens";
+import { uiRadii } from "@/design-system/shared/tokens";
 
 import SkladDeleteDialog from "../SkladDeleteDialog";
+import SkladBooleanStatus from "../SkladBooleanStatus";
+import { interactiveRowProps } from "../table/interactiveRow";
 import SkladProductionEditorDialog from "./SkladProductionEditorDialog";
 import SkladSortableHeader from "../table/SkladSortableHeader";
 import { formatDateRU } from "../formatDateRangeRU";
@@ -43,15 +44,18 @@ import {
   getEntitySingleLabel,
   getPrimaryStatusChip,
   getRowKey,
-  getSecondaryStatusChips,
 } from "./production.helpers";
-import { PRODUCTION_ARCHIVE_MODE_OPTIONS } from "./useSkladProductionStore";
+
+const SHOW_ACTIVITY_COLUMN = false;
 
 export default function SkladProductionContent({
   activeEntityType,
+  creationItems,
   search,
   categoryId,
   archiveMode,
+  listPending,
+  modeCounts,
   categoryOptions,
   mergedRows,
   paginatedRows,
@@ -95,6 +99,8 @@ export default function SkladProductionContent({
   confirmDelete,
   confirmArchive,
 }) {
+  const canViewUnit = Number(access?.production_unit_view) === 1;
+
   return (
     <>
       <Stack spacing={2}>
@@ -142,31 +148,16 @@ export default function SkladProductionContent({
                 />
               </Stack>
               {canManageCategories ? (
-                <Tooltip title="Управление категориями">
+                <Tooltip title="Управление категориями рецептов и полуфабрикатов">
                   <JacoIconButton
-                    aria-label="Управление категориями"
+                    aria-label="Управление категориями рецептов и полуфабрикатов"
                     onClick={onManageCategories}
                   >
-                    <EditIcon fontSize="small" />
+                    <SettingsOutlinedIcon />
                   </JacoIconButton>
                 </Tooltip>
               ) : null}
             </Stack>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <JacoSelect
-              label="Показать"
-              options={PRODUCTION_ARCHIVE_MODE_OPTIONS}
-              allowNone={false}
-              value={archiveMode}
-              onChange={(event) =>
-                setState({
-                  archiveMode: event.target.value,
-                  page: 0,
-                })
-              }
-            />
           </Grid>
 
           <Grid size={12}>
@@ -175,21 +166,27 @@ export default function SkladProductionContent({
               spacing={1.5}
               sx={{
                 justifyContent: "flex-start",
+                alignItems: { xs: "stretch", sm: "center" },
               }}
             >
+              <JacoSegmentedTabs
+                size="compact"
+                variant="standard"
+                sx={{ width: "fit-content", maxWidth: "100%" }}
+                aria-label="Показать рецепты и полуфабрикаты"
+                value={archiveMode}
+                onChange={(_, value) => setState({ archiveMode: value, page: 0 })}
+                items={[
+                  { id: "active", label: `Активные${modeCounts ? ` (${modeCounts.active})` : ""}` },
+                  { id: "archive", label: `Архив${modeCounts ? ` (${modeCounts.archive})` : ""}` },
+                ]}
+              />
               <JacoButton
                 startIcon={<AddIcon />}
                 disabled={!canCreateProduction}
                 onClick={() => openCreate("recipe")}
               >
-                Добавить рецепт
-              </JacoButton>
-              <JacoButton
-                startIcon={<AddIcon />}
-                disabled={!canCreateProduction}
-                onClick={() => openCreate("semi_finished")}
-              >
-                Добавить полуфабрикат
+                Добавить рецепт или полуфабрикат
               </JacoButton>
             </Stack>
           </Grid>
@@ -218,6 +215,7 @@ export default function SkladProductionContent({
                   >
                     Название
                   </SkladSortableHeader>
+                  {canViewUnit ? <TableCell>Единица</TableCell> : null}
                   <SkladSortableHeader
                     sortKey="categories"
                     sortBy={sortBy}
@@ -243,7 +241,7 @@ export default function SkladProductionContent({
                     Действует до
                   </SkladSortableHeader>
                   <TableCell sx={{ minWidth: 116 }}>Обновление</TableCell>
-                  <TableCell align="center">Активность</TableCell>
+                  {SHOW_ACTIVITY_COLUMN ? <TableCell align="center">Активность</TableCell> : null}
                   <TableCell align="center">Ревизия</TableCell>
                   <TableCell
                     align="right"
@@ -262,62 +260,62 @@ export default function SkladProductionContent({
                     row?.delete_usage?.can_delete === true ||
                     Number(row?.delete_usage?.can_delete) === 1;
                   const primaryStatusChip = getPrimaryStatusChip(row);
-                  const secondaryStatusChips = getSecondaryStatusChips(row);
                   const isActive = Number(row?.is_active) === 1;
-                  const isRevision = Number(row?.show_in_rev) === 1;
-                  const ActivityIcon = isActive ? CheckBoxIcon : DisabledByDefaultIcon;
-                  const RevisionIcon = isRevision ? CheckBoxIcon : DisabledByDefaultIcon;
-                  const activityLabel = `Активность: ${isActive ? "Да" : "Нет"}. ${[
+                  const activityLabel = [
                     primaryStatusChip.label,
-                    ...secondaryStatusChips.map((chip) => chip.label),
-                  ].join(". ")}`;
+                    isActive && Number(row?.is_scheduled) === 1 ? "Есть новая версия" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
 
                   return (
                     <TableRow
                       key={getRowKey(entityType, row)}
-                      hover
+                      {...interactiveRowProps(row?.name, () => openEdit(entityType, row, "main"))}
                     >
                       <TableCell>{getEntitySingleLabel(entityType)}</TableCell>
-                      <TableCell
-                        onClick={() => openEdit(entityType, row, "main")}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <Typography sx={{ fontWeight: 600 }}>{row?.name || "-"}</Typography>
+                      <TableCell sx={{ overflowWrap: "anywhere" }}>
+                        {row?.name || "Без названия"}
                       </TableCell>
-                      <TableCell>
-                        {entityType === "recipe" ? "Рецепты" : formatCategories(row?.categories)}
-                      </TableCell>
+                      {canViewUnit ? <TableCell>{row?.ed_izmer_name || "—"}</TableCell> : null}
+                      <TableCell>{formatCategories(row?.categories)}</TableCell>
                       <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                       <TableCell>{formatDateRU(row?.date_update) || "—"}</TableCell>
+                      {SHOW_ACTIVITY_COLUMN ? (
+                        <TableCell align="center">
+                          <Tooltip
+                            title={activityLabel}
+                            describeChild
+                          >
+                            <span
+                              role="img"
+                              aria-label={activityLabel}
+                              tabIndex={0}
+                              style={{ display: "inline-flex" }}
+                            >
+                              <JacoCheckbox
+                                checked={isActive}
+                                readOnly
+                                tabIndex={-1}
+                                aria-hidden="true"
+                                sx={{ pointerEvents: "none" }}
+                              />
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                      ) : null}
                       <TableCell align="center">
-                        <Tooltip
-                          title={activityLabel}
-                          describeChild
-                        >
-                          <span style={{ display: "inline-flex" }}>
-                            <ActivityIcon
-                              titleAccess={activityLabel}
-                              sx={{
-                                fontSize: 24,
-                                color: isActive ? uiColors.success : uiColors.danger,
-                                clipPath: `inset(3px round ${uiRadii.xs})`,
-                              }}
-                            />
-                          </span>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell align="center">
-                        <RevisionIcon
-                          titleAccess={`Ревизия: ${isRevision ? "Да" : "Нет"}`}
-                          sx={{
-                            fontSize: 24,
-                            color: isRevision ? uiColors.success : uiColors.danger,
-                            clipPath: `inset(3px round ${uiRadii.xs})`,
-                          }}
+                        <SkladBooleanStatus
+                          colorize
+                          label="Ревизия"
+                          value={row?.show_in_rev}
                         />
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell
+                        align="right"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         <Stack
                           direction="row"
                           spacing={1}
@@ -325,19 +323,6 @@ export default function SkladProductionContent({
                             justifyContent: "flex-end",
                           }}
                         >
-                          <Tooltip
-                            title={canCreateOrEdit ? "Открыть редактор" : "Открыть карточку"}
-                          >
-                            <span>
-                              <JacoIconButton
-                                aria-label="Редактировать"
-                                onClick={() => openEdit(entityType, row, "main")}
-                              >
-                                <EditIcon fontSize="small" />
-                              </JacoIconButton>
-                            </span>
-                          </Tooltip>
-
                           {canViewHistory ? (
                             <Tooltip title="Открыть вкладку истории">
                               <span>
@@ -402,6 +387,7 @@ export default function SkladProductionContent({
                                 <span>
                                   <JacoIconButton
                                     sx={{ color: "error.main" }}
+                                    aria-label={`Удалить: ${row.name}`}
                                     disabled={!canCreateOrEdit}
                                     onClick={() => openDeleteDialog(entityType, row)}
                                   >
@@ -411,8 +397,16 @@ export default function SkladProductionContent({
                               </Tooltip>
                             ) : (
                               <Tooltip title={getDeleteHint(row)}>
-                                <span>
-                                  <JacoIconButton disabled>
+                                <span
+                                  role="img"
+                                  tabIndex={0}
+                                  aria-label={`${row.name}: ${getDeleteHint(row)}`}
+                                >
+                                  <JacoIconButton
+                                    disabled
+                                    aria-hidden="true"
+                                    tabIndex={-1}
+                                  >
                                     <DeleteOutlineIcon fontSize="small" />
                                   </JacoIconButton>
                                 </span>
@@ -425,9 +419,9 @@ export default function SkladProductionContent({
                   );
                 })}
 
-                {mergedRows.length === 0 ? (
+                {!listPending && mergedRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={(canViewUnit ? 9 : 8) + Number(SHOW_ACTIVITY_COLUMN)}>
                       <Typography
                         sx={{
                           color: "text.secondary",
@@ -442,21 +436,23 @@ export default function SkladProductionContent({
             </Table>
           </TableContainer>
 
-          <TablePagination
-            component="div"
-            count={mergedRows.length}
-            page={page}
-            onPageChange={(_, nextPage) => setState({ page: nextPage })}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(event) =>
-              setState({
-                rowsPerPage: Number(event.target.value) || 25,
-                page: 0,
-              })
-            }
-            rowsPerPageOptions={[25, 50, 100]}
-            labelRowsPerPage="Строк на странице:"
-          />
+          {!listPending ? (
+            <TablePagination
+              component="div"
+              count={mergedRows.length}
+              page={page}
+              onPageChange={(_, nextPage) => setState({ page: nextPage })}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) =>
+                setState({
+                  rowsPerPage: Number(event.target.value) || 25,
+                  page: 0,
+                })
+              }
+              rowsPerPageOptions={[25, 50, 100]}
+              labelRowsPerPage="Строк на странице:"
+            />
+          ) : null}
         </JacoSurface>
       </Stack>
       <SkladProductionEditorDialog
@@ -474,13 +470,18 @@ export default function SkladProductionContent({
         allergens={detail?.ref_allergens?.length ? detail.ref_allergens : shellAllergens}
         storages={detail?.all_storages?.length ? detail.all_storages : shellStorages}
         apps={detail?.ref_apps?.length ? detail.ref_apps : shellApps}
-        allItemsList={detail?.all_items_list || draft?.all_items_list || []}
+        allItemsList={
+          modal.mode === "create"
+            ? creationItems
+            : detail?.all_items_list || draft?.all_items_list || []
+        }
         access={access}
         isEditable={modal.mode === "create" ? canCreateProduction : canManageProduction}
         canViewHistory={canViewHistory}
         canCreateCategory={canCreateCategory}
         allowPastDate={allowPastDate}
         onCreateCategory={onCreateCategory}
+        onChangeEntityType={(entityType) => setState({ activeEntityType: entityType })}
         onSubmit={submitDraft}
         onClose={closeModal}
       />

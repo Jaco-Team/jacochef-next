@@ -38,6 +38,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { MyAutocomplite, MyTextInput } from "@/ui/Forms";
 import useFullScreen from "@/src/hooks/useFullScreen";
 import HistoryLog from "@/ui/history/HistoryLog";
+import { orderSkladPermissionGroups } from "./skladPermissionGroups.mjs";
 import {
   SITE_ITEMS_NEW_MODULE_KEY,
   normalizeCategoryDisplayName,
@@ -170,6 +171,9 @@ const groupModuleFeatures = (features = [], moduleKey = "") => {
     groupsByKey.get(key).items.push({ feature, featureIndex });
   });
 
+  if (String(moduleKey) === "sklad_items") {
+    return orderSkladPermissionGroups(groups);
+  }
   return groups;
 };
 
