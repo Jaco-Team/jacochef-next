@@ -630,7 +630,7 @@ Warehouse item detail rules:
   - `show_in_order`
   - `show_in_rev`
   - `is_show`
-  - `w_pf`, `w_trash`, `w_item`, `two_user` — `0|1`, `null` without `warehouse_items_properties_view`; the editor must send them back on save, otherwise `items/save_edit` stores `0`
+  - `w_pf`, `w_trash`, `w_item`, `two_user` — `0|1`, `null` without `warehouse_items_properties_view`
   - `is_archived`
   - `date_start`
   - `date_end`
@@ -659,6 +659,8 @@ Warehouse item detail rules:
 Раздел «Привязки» складской карточки содержит только хранение и системы учёта. `allergens` и `allergens_possible` здесь не редактируются; ранее сохранённые ID остаются в draft/payload. В производственных карточках поля аллергенов доступны по прежним правилам.
 Права: `warehouse_items_create` / `warehouse_items_edit` и `warehouse_items_<field>_edit`.
 Для новой прошлой даты требуется `warehouse_items_past_date`; неизменённая старая дата сохраняется.
+`items/save_edit` меняет только поля, присутствующие в запросе: поле, которого в `data` нет (например, `pf_id`, `is_main`, `sort`), сохраняет текущее значение. Чтобы очистить поле, его нужно передать явно.
+
 `pq`: несколько размеров упаковки разделяются `#`, `;`, `/`, `|` или переводом строки. Запятая между цифрами — дробная часть и заменяется точкой (`0,5; 1` → `0.5#1`); вариантов она не разделяет, поэтому `1, 5` отклоняется. Новое или изменённое значение приводится к списку с `#` и проверяется сервером; неизменённое историческое значение и поле без права редактирования сохраняются без преобразования.
 Будущая редакция регистрируется как scheduled, current projection заменяется при начале действия.
 Успех: `st`, `text`, `item_id`, `history_id`, temporal metadata редакции.
