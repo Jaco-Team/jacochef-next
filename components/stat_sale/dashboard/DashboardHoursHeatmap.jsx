@@ -101,7 +101,7 @@ export default function DashboardHoursHeatmap({ grid, slots, colors }) {
               }}
             >
               {sortedColors.map((stop) => (
-                <span key={stop.percent}>{formatChange(stop.percent).replace(",0", "")}</span>
+                <span key={stop.percent}>{formatChange(stop.percent)}</span>
               ))}
             </Box>
           </Box>

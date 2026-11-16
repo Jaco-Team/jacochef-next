@@ -3,7 +3,7 @@ import Typography from "@mui/material/Typography";
 
 import { uiColors } from "@/design-system/shared/ui";
 
-import { changeColor, formatChange, formatDecimal, splitPointName } from "./dashboardFormat";
+import { changeColor, formatChange, formatPercent, splitPointName } from "./dashboardFormat";
 
 const EFFICIENCY_SCALE = 120;
 
@@ -123,7 +123,7 @@ export default function DashboardCafeRating({ cafes, metric, ratingBy }) {
                 color: byEfficiency ? uiColors.textStrong : changeColor(value),
               }}
             >
-              {!hasValue ? "—" : byEfficiency ? formatDecimal(value, 1) : formatChange(value)}
+              {!hasValue ? "—" : byEfficiency ? formatPercent(value) : formatChange(value)}
             </Typography>
           </Box>
         );

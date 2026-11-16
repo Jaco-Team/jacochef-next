@@ -5,7 +5,9 @@ import { Box, Button, Collapse, Typography } from "@mui/material";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-const months = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
+import { calculateYAxisBounds } from "./utils";
+
+const months =["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
 const monthNames = [
   "Январь",
   "Февраль",
@@ -25,48 +27,6 @@ const formatValue = (value) =>
   Number(value || 0)
     .toFixed(0)
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-
-const getNiceStep = (roughStep) => {
-  if (!Number.isFinite(roughStep) || roughStep <= 0) return 1;
-
-  const exponent = Math.floor(Math.log10(roughStep));
-  const fraction = roughStep / 10 ** exponent;
-  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
-
-  return niceFraction * 10 ** exponent;
-};
-
-const calculateYAxisBounds = (seriesItems) => {
-  const values = seriesItems
-    .flatMap((item) => item.values ?? [])
-    .filter((value) => value !== null && value !== undefined && value !== "")
-    .map(Number)
-    .filter(Number.isFinite);
-  const nonZeroValues = values.filter((value) => value !== 0);
-
-  if (!nonZeroValues.length) {
-    return { min: 0, max: 1 };
-  }
-
-  const minValue = Math.min(...nonZeroValues);
-  const maxValue = Math.max(...nonZeroValues);
-  const span = maxValue - minValue || Math.abs(maxValue) || 1;
-  const padding = span * 0.1;
-  const hasZero = values.some((value) => value === 0);
-  const rawMin = hasZero && minValue >= 0 ? 0 : minValue - padding;
-  const rawMax = maxValue + padding;
-  const step = getNiceStep((rawMax - rawMin) / 5);
-  const min =
-    minValue >= 0
-      ? Math.max(0, Math.floor(rawMin / step) * step)
-      : Math.floor(rawMin / step) * step;
-  const max = Math.ceil(rawMax / step) * step;
-
-  return {
-    min,
-    max: max > min ? max : min + step,
-  };
-};
 
 const buildSharedTooltip = ({ month, seriesItems, valueSuffix }) => {
   const rows = seriesItems

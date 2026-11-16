@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 
 import { uiColors, uiRadii } from "@/design-system/shared/ui";
 
-import { changeColor, formatChange, formatDecimal, formatInt, formatMetric } from "./dashboardFormat";
+import { changeColor, formatChange, formatInt, formatMetric, formatPercent } from "./dashboardFormat";
 
 const gridSx = {
   display: "grid",
@@ -148,7 +148,7 @@ export default function DashboardKpiCards({ cards, selected, onSelect, loading }
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {card.progress === null ? "—" : `${formatDecimal(card.progress, 1)}%`}
+                    {card.progress === null ? "—" : `${formatPercent(card.progress)}%`}
                   </Typography>
                 </Box>
               </Box>

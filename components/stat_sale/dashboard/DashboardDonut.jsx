@@ -5,7 +5,7 @@ import Typography from "@mui/material/Typography";
 
 import { uiColors } from "@/design-system/shared/ui";
 
-import { formatDecimal, formatInt, OTHER_COLOR } from "./dashboardFormat";
+import { formatInt, formatPercent, OTHER_COLOR } from "./dashboardFormat";
 
 const SIZE = 180;
 const STROKE = 36;
@@ -23,6 +23,9 @@ const tooltipSlotProps = {
     },
   },
 };
+
+/** Целая доля для подписи: shareRounded задаёт родитель, чтобы сумма по списку оставалась 100. */
+const shareText = (item) => formatPercent(item.shareRounded ?? item.share);
 
 function SegmentTooltip({ item }) {
   const hasCount = item.count !== null && item.count !== undefined;
@@ -47,7 +50,7 @@ function SegmentTooltip({ item }) {
       </Box>
       <Box sx={{ fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
         {hasCount ? `${formatInt(item.count)} ${item.unit ?? "шт"} · ` : ""}
-        {formatDecimal(item.share, 1)}%
+        {shareText(item)}%
       </Box>
     </Box>
   );
@@ -55,7 +58,7 @@ function SegmentTooltip({ item }) {
 
 /**
  * Кольцевая диаграмма без подписей внутри, с тултипом на сегменте, и легенда справа.
- * items: [{ key, name, hint?, detail?, share, color, count?, unit? }] — share в процентах;
+ * items: [{ key, name, hint?, detail?, share, shareRounded?, color, count?, unit? }] — share в процентах;
  * hint виден в легенде и тултипе, detail — только в тултипе.
  * Сегменты и легенда — по убыванию доли, элементы с last: true («Остальные») в конце.
  */
@@ -194,7 +197,7 @@ export default function DashboardDonut({ items: sourceItems, ariaLabel }) {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {formatDecimal(item.share, 1)}%
+              {shareText(item)}%
             </Typography>
           </Box>
         ))}

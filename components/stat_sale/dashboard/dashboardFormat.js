@@ -20,11 +20,41 @@ export function formatDecimal(value, digits = 1) {
   return decimalFormatters[digits].format(Number(value) || 0);
 }
 
-/** Изменение в процентах без «+»: минус сохраняется, null — прочерк. */
+/** Процент до целого; −0 превращается в 0. */
+export function roundPercent(value) {
+  const rounded = Math.round(Number(value) || 0);
+  return rounded === 0 ? 0 : rounded;
+}
+
+/** Целый процент без знака «%»: прогресс, эффективность, доля. */
+export function formatPercent(value) {
+  return formatInt(roundPercent(value));
+}
+
+/** Изменение в целых процентах без «+»: минус сохраняется, null — прочерк. */
 export function formatChange(value) {
   if (value === null || value === undefined) return "—";
-  const rounded = Math.round(Number(value) * 10) / 10;
-  return `${rounded < 0 ? "−" : ""}${formatDecimal(Math.abs(rounded), 1)}`;
+  const rounded = roundPercent(value);
+  return `${rounded < 0 ? "−" : ""}${formatInt(Math.abs(rounded))}`;
+}
+
+/** Целые доли с сохранением суммы (метод наибольших остатков): 88,4 + 5,4 + 6,2 → 89 + 5 + 6. */
+export function roundShares(values) {
+  const numbers = values.map((value) => Math.max(0, Number(value) || 0));
+  const result = numbers.map(Math.floor);
+  let rest = Math.round(numbers.reduce((sum, value) => sum + value, 0)) - result.reduce((sum, value) => sum + value, 0);
+
+  numbers
+    .map((value, index) => ({ index, fraction: value - result[index] }))
+    .sort((a, b) => b.fraction - a.fraction || a.index - b.index)
+    .forEach(({ index }) => {
+      if (rest > 0) {
+        result[index] += 1;
+        rest -= 1;
+      }
+    });
+
+  return result;
 }
 
 /** pluralRu(5, ["заказ", "заказа", "заказов"]) → «заказов». */
@@ -37,9 +67,12 @@ export function pluralRu(value, [one, few, many]) {
   return many;
 }
 
+/** Цвет по округлённому значению: то, что показано как 0, — нейтральное. */
 export function changeColor(value) {
   if (value === null || value === undefined) return uiColors.text;
-  return Number(value) < 0 ? NEGATIVE_COLOR : POSITIVE_COLOR;
+  const rounded = roundPercent(value);
+  if (rounded === 0) return uiColors.text;
+  return rounded < 0 ? NEGATIVE_COLOR : POSITIVE_COLOR;
 }
 
 export function formatMetric(key, value) {

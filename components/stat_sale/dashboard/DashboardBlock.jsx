@@ -5,11 +5,16 @@ import Typography from "@mui/material/Typography";
 
 import { JacoSurface, uiColors } from "@/design-system/shared/ui";
 
-/** Блок дашборда: заголовок, подзаголовок, действия справа, собственная загрузка и ошибка. */
+/**
+ * Блок дашборда: заголовок, подзаголовок, действия, собственная загрузка и ошибка.
+ * actions — справа от заголовка (переносятся вниз, если не помещаются).
+ * toolbar — всегда отдельной строкой под заголовком: место табов не зависит от длины текста.
+ */
 export default function DashboardBlock({
   title,
   subtitle,
   actions,
+  toolbar,
   loading = false,
   error = "",
   hasData = true,
@@ -47,7 +52,7 @@ export default function DashboardBlock({
             gap: 1.5,
           }}
         >
-          <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0, maxWidth: "100%" }}>
             {title ? (
               <Typography
                 component="h2"
@@ -66,9 +71,11 @@ export default function DashboardBlock({
         </Box>
       ) : null}
 
+      {toolbar ? <Box sx={{ mt: 1.5, display: "flex", maxWidth: "100%" }}>{toolbar}</Box> : null}
+
       <Box
         sx={{
-          mt: title || actions ? 2 : 0,
+          mt: title || actions || toolbar ? 2 : 0,
           flex: 1,
           minHeight,
           opacity: loading && hasData ? 0.55 : 1,

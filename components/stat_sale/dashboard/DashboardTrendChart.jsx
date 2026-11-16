@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 
 import { uiColors } from "@/design-system/shared/ui";
 
+import { calculateYAxisBounds } from "../utils";
 import { formatMetric } from "./dashboardFormat";
 
 const CURRENT_COLOR = 0xdd1a32;
@@ -39,24 +40,37 @@ export function TrendLegend({ currentLabel, prevLabel }) {
   );
 }
 
-/** Линии «выбранный период» и «тот же период прошлого года» по выбранной метрике. */
-export default function DashboardTrendChart({ points, metric, currentName, prevName }) {
+const toNumber = (value) => (value === null || value === undefined ? null : Number(value));
+const toText = (metric, value) => (value === null || value === undefined ? "—" : formatMetric(metric, value));
+
+/**
+ * Линии «выбранный период» и «тот же период прошлого года» по выбранной метрике.
+ * source: "total" — все направления, иначе ключ направления из point.by_source (site, cafe, kc).
+ */
+export default function DashboardTrendChart({ points, metric, source = "total", currentName, prevName }) {
   const chartRef = useRef(null);
 
   const data = useMemo(
     () =>
-      (points ?? []).map((point) => ({
-        label: point.label,
-        current: Number(point.current?.[metric] ?? 0),
-        prev: Number(point.prev_year?.[metric] ?? 0),
-        currentText: formatMetric(metric, point.current?.[metric]),
-        prevText: formatMetric(metric, point.prev_year?.[metric]),
-      })),
-    [points, metric],
+      (points ?? []).map((point) => {
+        const values = source === "total" ? point : point.by_source?.[source];
+        const current = values?.current?.[metric];
+        const prev = values?.prev_year?.[metric];
+
+        return {
+          label: point.label,
+          current: toNumber(current),
+          prev: toNumber(prev),
+          currentText: toText(metric, current),
+          prevText: toText(metric, prev),
+        };
+      }),
+    [points, metric, source],
   );
+  const hasValues = data.some((item) => item.current !== null || item.prev !== null);
 
   useLayoutEffect(() => {
-    if (!chartRef.current || data.length === 0) return undefined;
+    if (!chartRef.current || !hasValues) return undefined;
 
     let root;
     let disposed = false;
@@ -106,10 +120,16 @@ export default function DashboardTrendChart({ points, metric, currentName, prevN
       const yRenderer = am5xy.AxisRendererY.new(root, { minGridDistance: 40 });
       yRenderer.grid.template.setAll({ stroke: am5.color(0xe8ebf0), strokeOpacity: 1 });
       yRenderer.labels.template.setAll({ fontSize: 12, fill: am5.color(0x5e5e5e), paddingRight: 8 });
+      // Ось по данным, как в «Динамике продаж»: без пустого места под линиями.
+      const bounds = calculateYAxisBounds([
+        { values: data.map((item) => item.current) },
+        { values: data.map((item) => item.prev) },
+      ]);
       const yAxis = chart.yAxes.push(
         am5xy.ValueAxis.new(root, {
-          min: metric === "avg_check" || metric === "orders_per_client" ? undefined : 0,
-          extraMax: 0.08,
+          min: bounds.min,
+          max: bounds.max,
+          strictMinMax: true,
           numberFormat: axisFormat(metric),
           renderer: yRenderer,
         }),
@@ -200,7 +220,25 @@ export default function DashboardTrendChart({ points, metric, currentName, prevN
       disposed = true;
       root?.dispose();
     };
-  }, [data, metric, currentName, prevName]);
+  }, [data, hasValues, metric, currentName, prevName]);
+
+  if (!hasValues) {
+    return (
+      <Box
+        sx={{
+          height: 300,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          fontSize: 14,
+          color: uiColors.text,
+        }}
+      >
+        По этому направлению показатель не считается
+      </Box>
+    );
+  }
 
   return (
     <Box

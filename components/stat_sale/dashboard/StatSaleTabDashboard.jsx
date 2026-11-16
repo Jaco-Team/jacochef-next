@@ -23,7 +23,7 @@ import DashboardHoursHeatmap from "./DashboardHoursHeatmap";
 import DashboardKpiCards from "./DashboardKpiCards";
 import DashboardSalesTable from "./DashboardSalesTable";
 import DashboardTrendChart, { TrendLegend } from "./DashboardTrendChart";
-import { CHART_PALETTE, OTHER_COLOR, pluralRu } from "./dashboardFormat";
+import { CHART_PALETTE, formatDecimal, formatInt, OTHER_COLOR, pluralRu, roundShares } from "./dashboardFormat";
 
 const MODULE = "stat_sale";
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
@@ -45,6 +45,35 @@ const HOURS_TABS = [
   { id: "rolls", label: "Роллы" },
   { id: "pizza", label: "Пицца" },
 ];
+
+const CHART_SOURCE_TABS = [
+  { id: "total", label: "Общие" },
+  { id: "site", label: "Сайт" },
+  { id: "cafe", label: "Кафе" },
+  { id: "kc", label: "КЦ" },
+];
+
+// Цвета закреплены за направлениями, чтобы не менялись при переключении карточек.
+const SOURCE_COLORS = {
+  site: CHART_PALETTE[0],
+  cafe: CHART_PALETTE[1],
+  kc: CHART_PALETTE[2],
+};
+
+// Метрики-суммы: по ним считается доля направления. У средних доли нет, в кольце — доля заказов.
+const ADDITIVE_METRICS = ["orders", "rolls", "pizza", "revenue"];
+
+const COUNT_COLUMN = { header: "Кол-во, шт", format: formatInt };
+const SOURCE_VALUE_COLUMNS = {
+  revenue: { header: "Выручка, ₽", format: formatInt },
+  avg_check: { header: "Ср. чек, ₽", format: formatInt },
+  orders_per_client: { header: "Заказов на клиента", format: (value) => formatDecimal(value, 2) },
+};
+
+function sourceUnit(metric, count) {
+  if (metric === "orders") return pluralRu(count, ["заказ", "заказа", "заказов"]);
+  return metric === "revenue" ? "₽" : "шт";
+}
 
 const DAYPART_COLORS = {
   morning: "#F7B8C0",
@@ -108,6 +137,7 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
   const [metric, setMetric] = useState("orders");
   const [salesTab, setSalesTab] = useState("categories");
   const [hoursMetric, setHoursMetric] = useState("orders");
+  const [chartSource, setChartSource] = useState("total");
   const [overview, setOverview] = useState(emptyBlock);
   const [sales, setSales] = useState(emptyBlock);
   const [hours, setHours] = useState(emptyBlock);
@@ -172,9 +202,51 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
   const ratingByEfficiency = selectedCard?.rating_by === "efficiency";
   const anyLoading = overview.loading || sales.loading || hours.loading;
 
+  // Блок «Продажи по направлениям» следует за выбранной карточкой.
+  const sourceView = useMemo(() => {
+    const list = overviewData?.sources ?? [];
+    const additive = ADDITIVE_METRICS.includes(metricKey);
+    const shareMetric = additive ? metricKey : "orders";
+    const tableShares = additive ? roundShares(list.map((source) => source.metrics?.[metricKey]?.share)) : [];
+    const donutShares = roundShares(list.map((source) => source.metrics?.[shareMetric]?.share));
+
+    return {
+      additive,
+      column: SOURCE_VALUE_COLUMNS[metricKey] ?? COUNT_COLUMN,
+      rows: list.map((source, index) => {
+        const values = source.metrics?.[metricKey] ?? {};
+        return {
+          key: `source-${source.key}`,
+          name: source.name,
+          color: SOURCE_COLORS[source.key] ?? OTHER_COLOR,
+          count: values.fact,
+          share: additive ? values.share : null,
+          shareRounded: additive ? tableShares[index] : null,
+          mom: values.mom,
+          yoy: values.yoy,
+        };
+      }),
+      donutItems: list.map((source, index) => {
+        const values = source.metrics?.[shareMetric] ?? {};
+        return {
+          key: `source-${source.key}`,
+          name: source.name,
+          color: SOURCE_COLORS[source.key] ?? OTHER_COLOR,
+          share: values.share ?? 0,
+          shareRounded: donutShares[index],
+          count: values.fact,
+          unit: sourceUnit(shareMetric, values.fact),
+        };
+      }),
+    };
+  }, [overviewData, metricKey]);
+
   const salesTabConfig = SALES_TABS.find((tab) => tab.id === salesTab) ?? SALES_TABS[0];
-  const salesRows = useMemo(() => {
+  const { salesRows, salesOther } = useMemo(() => {
     const list = sales.data?.[salesTabConfig.id] ?? [];
+    const other = salesTabConfig.id === "items" ? (sales.data?.items_other ?? null) : null;
+    // Целые доли считаются по всему списку сразу, вместе с «Остальными», чтобы сумма оставалась 100.
+    const shares = roundShares([...list.map((row) => row.share), ...(other ? [other.share] : [])]);
     // Цвет по месту в рейтинге: самая крупная строка — основной красный, точки таблицы совпадают с кольцом.
     const rankByIndex = new Map(
       list
@@ -182,7 +254,7 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
         .sort((a, b) => b.count - a.count)
         .map((item, rank) => [item.index, rank]),
     );
-    return list.map((row, index) => {
+    const rows = list.map((row, index) => {
       let hint;
       if (salesTabConfig.id === "items") hint = row.category_name;
       if (salesTabConfig.id === "subcategories" && row.parent_name !== row.name) hint = row.parent_name;
@@ -193,10 +265,16 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
         color: CHART_PALETTE[rankByIndex.get(index) % CHART_PALETTE.length],
         count: row.count,
         share: row.share,
+        shareRounded: shares[index],
         mom: row.mom,
         yoy: row.yoy,
       };
     });
+
+    return {
+      salesRows: rows,
+      salesOther: other ? { ...other, shareRounded: shares[list.length] } : null,
+    };
   }, [sales.data, salesTabConfig.id]);
 
   const salesDonutItems = useMemo(() => {
@@ -205,28 +283,33 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
       name: row.name,
       detail: row.hint,
       share: row.share,
+      shareRounded: row.shareRounded,
       count: row.count,
       color: row.color,
     }));
-    if (salesTabConfig.id === "items" && sales.data?.items_other) {
+    if (salesOther) {
       items.push({
         key: "items-other",
         name: "Остальные товары",
-        share: sales.data.items_other.share,
-        count: sales.data.items_other.count,
+        share: salesOther.share,
+        shareRounded: salesOther.shareRounded,
+        count: salesOther.count,
         color: OTHER_COLOR,
         last: true,
       });
     }
     return items;
-  }, [salesRows, salesTabConfig.id, sales.data]);
+  }, [salesRows, salesOther]);
 
   const hoursData = hours.data?.metrics?.[hoursMetric];
-  const daypartItems = (hoursData?.dayparts ?? []).map((part) => ({
+  const dayparts = hoursData?.dayparts ?? [];
+  const daypartShares = roundShares(dayparts.map((part) => part.share));
+  const daypartItems = dayparts.map((part, index) => ({
     key: part.key,
     name: part.name,
     hint: part.hours,
     share: part.share,
+    shareRounded: daypartShares[index],
     count: part.count,
     unit: hoursMetric === "orders" ? pluralRu(part.count, ["заказ", "заказа", "заказов"]) : "шт",
     color: DAYPART_COLORS[part.key] ?? OTHER_COLOR,
@@ -316,6 +399,15 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
                   />
                 ) : null
               }
+              toolbar={
+                <JacoSegmentedTabs
+                  size="compact"
+                  items={CHART_SOURCE_TABS}
+                  value={chartSource}
+                  onChange={(_, value) => setChartSource(value)}
+                  sx={segmentedSx(420)}
+                />
+              }
               loading={overview.loading}
               error={overview.error}
               hasData={Boolean(overviewData?.chart?.points?.length)}
@@ -324,6 +416,7 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
               <DashboardTrendChart
                 points={overviewData?.chart?.points}
                 metric={metricKey}
+                source={chartSource}
                 currentName={periodLabel}
                 prevName={prevYearLabel}
               />
@@ -361,9 +454,51 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
 
           <Grid size={{ xs: 12, lg: 8 }}>
             <DashboardBlock
+              title="Продажи по направлениям"
+              subtitle={
+                selectedCard
+                  ? `${selectedCard.title} · ${sourceView.additive ? "сайт, кафе и колл-центр" : "доля для средних показателей не считается"}`
+                  : undefined
+              }
+              loading={overview.loading}
+              error={overview.error}
+              hasData={sourceView.rows.length > 0}
+              minHeight={160}
+            >
+              <DashboardSalesTable
+                key={`sources-${metricKey}`}
+                rows={sourceView.rows}
+                nameHeader="Направление"
+                valueHeader={sourceView.column.header}
+                formatValue={sourceView.column.format}
+                defaultSort={null}
+              />
+            </DashboardBlock>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardBlock
+              title="Структура по направлениям"
+              subtitle={
+                selectedCard ? (sourceView.additive ? `Доля · ${selectedCard.title}` : "Доля заказов") : undefined
+              }
+              loading={overview.loading}
+              error={overview.error}
+              hasData={sourceView.donutItems.length > 0}
+              minHeight={160}
+            >
+              <DashboardDonut
+                items={sourceView.donutItems}
+                ariaLabel="Структура продаж по направлениям"
+              />
+            </DashboardBlock>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <DashboardBlock
               title="Продажи по категориям и блюдам"
               subtitle={SALES_NOTES[salesTabConfig.id]}
-              actions={
+              toolbar={
                 <JacoSegmentedTabs
                   size="compact"
                   items={SALES_TABS}
@@ -378,6 +513,7 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
               minHeight={220}
             >
               <DashboardSalesTable
+                key={salesTabConfig.id}
                 rows={salesRows}
                 nameHeader={salesTabConfig.header}
               />
@@ -408,7 +544,7 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
                   ? `Изменение к тем же дням недели прошлого года, % · ${rangeLabel(hours.data.period)} к ${rangeLabel(hours.data.prev_period)}`
                   : undefined
               }
-              actions={
+              toolbar={
                 <JacoSegmentedTabs
                   size="compact"
                   items={HOURS_TABS}
