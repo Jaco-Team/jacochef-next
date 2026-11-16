@@ -45,7 +45,6 @@ function normalizeBootstrap(response) {
   return {
     moduleName: response?.module_info?.name || "Склад",
     access: response?.access || {},
-    linkedModules: response?.linked_modules || {},
     summary: response?.summary || {},
     units: response?.units || [],
     categories: response?.categories || [],
@@ -68,14 +67,13 @@ export default function SkladPage() {
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
   const access = useSkladStore((state) => state.access);
-  const linkedModules = useSkladStore((state) => state.linkedModules);
   const setBootstrap = useSkladStore((state) => state.setBootstrap);
   const setState = useSkladStore((state) => state.setState);
   const requestRefresh = useSkladStore((state) => state.requestRefresh);
 
   const tabs = useMemo(
-    () => getVisibleSkladTabs({ access, linkedModules }),
-    [access, linkedModules],
+    () => getVisibleSkladTabs({ access }),
+    [access],
   );
   const section = router.query.section;
   const requestedKey = Array.isArray(section)
@@ -166,11 +164,14 @@ export default function SkladPage() {
     }
   };
 
+  const canEditGroup = (group) => Number(access?.[`${group}_edit`]) === 1;
+
   const renderTabContent = (item) => {
     if (item.key === "storage") {
       return (
         <SkladStorageTab
-          allowed={linkedModules.sklad_storage === true}
+          allowed={canEditGroup("storage_places") || Number(access?.storage_places_view) === 1}
+          canEdit={canEditGroup("storage_places")}
           showAlert={showAlert}
           refreshToken={refreshToken}
           onChanged={requestRefresh}
@@ -181,7 +182,8 @@ export default function SkladPage() {
     if (item.key === "allergens") {
       return (
         <SkladAllergensTab
-          allowed={linkedModules.allergens === true}
+          allowed={canEditGroup("allergen_catalog") || Number(access?.allergen_catalog_view) === 1}
+          canEdit={canEditGroup("allergen_catalog")}
           showAlert={showAlert}
           refreshToken={refreshToken}
         />

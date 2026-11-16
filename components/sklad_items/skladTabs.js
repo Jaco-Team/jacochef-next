@@ -23,13 +23,12 @@ export const SKLAD_TAB_DEFINITIONS = [
     accessGroup: "units",
     description: "Справочник единиц измерения и их базовые CRUD-операции.",
   },
-  { key: "storage", label: "Места хранения", linkedModule: "sklad_storage" },
-  { key: "allergens", label: "Аллергены", linkedModule: "allergens" },
+  { key: "storage", label: "Места хранения", accessGroup: "storage_places" },
+  { key: "allergens", label: "Аллергены", accessGroup: "allergen_catalog" },
 ];
 
-export function getVisibleSkladTabs({ access = {}, linkedModules = {} } = {}) {
+export function getVisibleSkladTabs({ access = {} } = {}) {
   return SKLAD_TAB_DEFINITIONS.filter((tab) => {
-    if (tab.linkedModule) return linkedModules[tab.linkedModule] === true;
     return (
       Number(access?.[`${tab.accessGroup}_view`]) === 1 ||
       Number(access?.[`${tab.accessGroup}_edit`]) === 1

@@ -28,7 +28,7 @@ import { interactiveRowProps } from "../table/interactiveRow";
 import { sortAllergens } from "./sortAllergens.mjs";
 
 async function request(method, payload = {}) {
-  const response = await api_laravel("allergens", method, payload);
+  const response = await api_laravel("sklad_items", `allergens/${method}`, payload);
   if (!response?.data || response.data.st === false) {
     throw new Error(
       response?.data?.text || response?.text || "Не удалось выполнить запрос к аллергенам",
@@ -37,7 +37,10 @@ async function request(method, payload = {}) {
   return response.data;
 }
 
-export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) {
+export default function SkladAllergensTab({ showAlert, refreshToken, allowed, canEdit }) {
+  const openEditor = (value) => {
+    if (canEdit === true) setModal(value);
+  };
   const [rows, setRows] = useState([]);
   const [sortDraft, setSortDraft] = useState({});
   const [search, setSearch] = useState("");
@@ -111,7 +114,7 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
   }, [rows, search, sortDraft]);
 
   const save = async () => {
-    if (!modal || busy || allowed !== true) return;
+    if (!modal || busy || canEdit !== true) return;
     setBusy(true);
     try {
       const payload = { name: modal.name, dop_name: modal.dop_name };
@@ -129,7 +132,7 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
   };
 
   const saveSort = async () => {
-    if (busy || allowed !== true) return;
+    if (busy || canEdit !== true) return;
     const aller = Object.entries(sortDraft).map(([id, sort]) => ({
       id: Number(id),
       sort: String(sort).trim(),
@@ -162,7 +165,7 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
         editedInput.current = event.currentTarget;
         setSortDraft((current) => ({ ...current, [row.id]: event.target.value }));
       }}
-      disabled={busy}
+      disabled={busy || canEdit !== true}
       inputProps={{ "aria-label": `Сортировка: ${row.name}` }}
       sx={{ width: 110 }}
     />
@@ -203,8 +206,8 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
           </Stack>
           <JacoButton
             startIcon={<AddIcon />}
-            onClick={() => setModal({ name: "", dop_name: "" })}
-            disabled={busy || loading || Boolean(loadError)}
+            onClick={() => openEditor({ name: "", dop_name: "" })}
+            disabled={busy || loading || Boolean(loadError) || canEdit !== true}
             sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
           >
             Добавить аллерген
@@ -267,12 +270,12 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
                       {...interactiveRowProps(
                         row.name,
                         () =>
-                          setModal({
+                          openEditor({
                             id: row.id,
                             name: row.name || "",
                             dop_name: row.dop_name || "",
                           }),
-                        !busy,
+                        !busy && canEdit === true,
                       )}
                     >
                       <TableCell>{row.name || "—"}</TableCell>
@@ -298,8 +301,9 @@ export default function SkladAllergensTab({ showAlert, refreshToken, allowed }) 
                     <SkladItemNameButton
                       name={row.name}
                       onClick={() =>
-                        setModal({ id: row.id, name: row.name || "", dop_name: row.dop_name || "" })
+                        openEditor({ id: row.id, name: row.name || "", dop_name: row.dop_name || "" })
                       }
+                      disabled={canEdit !== true}
                     />
                     <Typography
                       variant="body2"

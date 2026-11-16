@@ -13,7 +13,6 @@ const defaultState = {
   },
   refreshToken: 0,
   access: {},
-  linkedModules: {},
   summary: {},
   units: [],
   categories: [],
@@ -57,7 +56,6 @@ export const useSkladStore = create((set) => ({
     set({
       moduleName: payload.moduleName ?? "",
       access: payload.access ?? {},
-      linkedModules: payload.linkedModules ?? {},
       summary: payload.summary ?? {},
       units: payload.units ?? [],
       categories: payload.categories ?? [],

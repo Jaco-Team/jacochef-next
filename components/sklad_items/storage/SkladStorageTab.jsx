@@ -47,14 +47,17 @@ const CATALOGS = [
 ];
 
 async function request(method, data = {}) {
-  const response = await api_laravel("sklad_storage", method, data);
+  const response = await api_laravel("sklad_items", `storages/${method}`, data);
   if (!response?.data || response.data.st === false) {
     throw new Error(response?.data?.text || "Не удалось выполнить запрос к справочнику");
   }
   return response.data;
 }
 
-export default function SkladStorageTab({ allowed, showAlert, refreshToken, onChanged }) {
+export default function SkladStorageTab({ allowed, canEdit, showAlert, refreshToken, onChanged }) {
+  const openEditor = (value) => {
+    if (canEdit === true) setModal(value);
+  };
   const [catalogIndex, setCatalogIndex] = useState(0);
   const [catalogs, setCatalogs] = useState({ list: [], accounting_system: [] });
   const [search, setSearch] = useState("");
@@ -106,7 +109,7 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
   }, [catalogs, catalog.key, search]);
 
   const save = async () => {
-    if (!modal || busy || allowed !== true) return;
+    if (!modal || busy || canEdit !== true) return;
     const name = modal.name.trim();
     if (!name) {
       showAlert("Укажите название", false);
@@ -130,7 +133,7 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
   };
 
   const saveSort = async () => {
-    if (busy || loading || allowed !== true) return;
+    if (busy || loading || canEdit !== true) return;
     const catalogKey = catalog.key;
     const entries = Object.entries(drafts[catalogKey]).map(([id, raw]) => ({
       id,
@@ -197,7 +200,7 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
         const value = event.target.value;
         setDrafts((old) => ({ ...old, [catalog.key]: { ...old[catalog.key], [item.id]: value } }));
       }}
-      disabled={busy || loading}
+      disabled={busy || loading || canEdit !== true}
       inputProps={{ "aria-label": `Сортировка: ${item.name}` }}
       sx={{ width: 110 }}
     />
@@ -249,8 +252,8 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
           </Stack>
           <JacoButton
             startIcon={<AddIcon />}
-            onClick={() => setModal({ name: "" })}
-            disabled={busy || loading || Boolean(error)}
+            onClick={() => openEditor({ name: "" })}
+            disabled={busy || loading || Boolean(error) || canEdit !== true}
             sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
           >
             Добавить {catalog.singular}
@@ -310,8 +313,8 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
                       key={item.id}
                       {...interactiveRowProps(
                         item.name,
-                        () => setModal({ id: item.id, name: item.name || "" }),
-                        !busy,
+                        () => openEditor({ id: item.id, name: item.name || "" }),
+                        !busy && canEdit === true,
                       )}
                     >
                       <TableCell>{item.name}</TableCell>
@@ -335,8 +338,8 @@ export default function SkladStorageTab({ allowed, showAlert, refreshToken, onCh
                   <Stack spacing={1}>
                     <SkladItemNameButton
                       name={item.name}
-                      onClick={() => setModal({ id: item.id, name: item.name || "" })}
-                      disabled={busy}
+                      onClick={() => openEditor({ id: item.id, name: item.name || "" })}
+                      disabled={busy || canEdit !== true}
                     />
                     <Stack
                       direction="row"
