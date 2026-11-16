@@ -10,7 +10,23 @@ import { formatInt, formatPercent, OTHER_COLOR } from "./dashboardFormat";
 const SIZE = 180;
 const STROKE = 36;
 const RADIUS = (SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const CENTER = SIZE / 2;
+// Сегмент на всё кольцо рисуется окружностью: дуга с совпавшими концами не отрисуется.
+const FULL_CIRCLE = 99.999;
+
+/** Точка на окружности кольца: 0% — «12 часов», дальше по часовой стрелке. */
+function pointAt(percent) {
+  const angle = (percent / 100) * 2 * Math.PI - Math.PI / 2;
+  return `${(CENTER + RADIUS * Math.cos(angle)).toFixed(3)} ${(CENTER + RADIUS * Math.sin(angle)).toFixed(3)}`;
+}
+
+/**
+ * Сегмент — отдельная дуга от start до end (в процентах окружности).
+ * Пунктир по окружности (stroke-dasharray) здесь не годится: в точке замыкания браузер рисует клин.
+ */
+function arcPath(start, end) {
+  return `M ${pointAt(start)} A ${RADIUS} ${RADIUS} 0 ${end - start > 50 ? 1 : 0} 1 ${pointAt(end)}`;
+}
 
 const tooltipSlotProps = {
   tooltip: {
@@ -74,10 +90,9 @@ export default function DashboardDonut({ items: sourceItems, ariaLabel }) {
   const arcs = items
     .filter((item) => Number(item.share) > 0)
     .map((item) => {
-      const length = (Number(item.share) * scale * CIRCUMFERENCE) / 100;
-      const arc = { item, length, offset };
-      offset += length;
-      return arc;
+      const start = offset;
+      offset += Number(item.share) * scale;
+      return { item, start, end: Math.min(offset, 100) };
     });
 
   const dimmed = (key) => activeKey !== null && activeKey !== key;
@@ -100,38 +115,48 @@ export default function DashboardDonut({ items: sourceItems, ariaLabel }) {
         sx={{ width: SIZE, height: SIZE, flex: "none" }}
       >
         <circle
-          cx={SIZE / 2}
-          cy={SIZE / 2}
+          cx={CENTER}
+          cy={CENTER}
           r={RADIUS}
           fill="none"
           stroke={OTHER_COLOR}
           strokeWidth={STROKE}
         />
-        {arcs.map(({ item, length, offset: arcOffset }) => (
-          <Tooltip
-            key={item.key}
-            title={<SegmentTooltip item={item} />}
-            followCursor
-            placement="top"
-            slotProps={tooltipSlotProps}
-          >
-            <circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={RADIUS}
-              fill="none"
-              stroke={item.color}
-              strokeWidth={STROKE}
-              strokeDasharray={`${length} ${CIRCUMFERENCE - length}`}
-              strokeDashoffset={-arcOffset}
-              transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-              opacity={dimmed(item.key) ? 0.35 : 1}
-              style={{ cursor: "pointer", transition: "opacity 0.15s" }}
-              onMouseEnter={() => setActiveKey(item.key)}
-              onMouseLeave={() => setActiveKey(null)}
-            />
-          </Tooltip>
-        ))}
+        {arcs.map(({ item, start, end }) => {
+          const segmentProps = {
+            fill: "none",
+            stroke: item.color,
+            strokeWidth: STROKE,
+            opacity: dimmed(item.key) ? 0.35 : 1,
+            style: { cursor: "pointer", transition: "opacity 0.15s" },
+            onMouseEnter: () => setActiveKey(item.key),
+            onMouseLeave: () => setActiveKey(null),
+          };
+
+          return (
+            <Tooltip
+              key={item.key}
+              title={<SegmentTooltip item={item} />}
+              followCursor
+              placement="top"
+              slotProps={tooltipSlotProps}
+            >
+              {end - start >= FULL_CIRCLE ? (
+                <circle
+                  cx={CENTER}
+                  cy={CENTER}
+                  r={RADIUS}
+                  {...segmentProps}
+                />
+              ) : (
+                <path
+                  d={arcPath(start, end)}
+                  {...segmentProps}
+                />
+              )}
+            </Tooltip>
+          );
+        })}
       </Box>
 
       <Box
