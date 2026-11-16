@@ -27,7 +27,6 @@ import {
 } from "@/design-system/shared/ui";
 import { SkladEmbeddedHistoryTable } from "../history/SkladEmbeddedHistoryTable";
 import SkladSectionCard from "../ui/SkladSectionCard";
-import SkladCsvAutocompleteField from "../SkladCsvAutocompleteField";
 
 const TODAY = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Samara" });
 const dateRangeFieldSx = {
@@ -43,13 +42,24 @@ function ids(value) {
     .filter(Boolean);
 }
 
-function normalizePackQuantity(value) {
+// Количество в упаковке: значения разделяются ; или #, запятая между цифрами — дробная часть.
+function parsePackQuantity(value) {
   return String(value ?? "")
-    .trim()
-    .replace(/\s*(?:[#;,/|\r\n]+)\s*/g, ",")
-    .replace(/,+/g, ",")
-    .replace(/^,|,$/g, "");
+    .replace(/(\d),(?=\d)/g, "$1.")
+    .split(/\s*[#;/|\r\n]+\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
+
+function normalizePackQuantity(value) {
+  return parsePackQuantity(value).join("#");
+}
+
+function formatPackQuantity(value) {
+  return String(value ?? "").replace(/\s*#\s*/g, "; ");
+}
+
+const PACK_VALUE_PATTERN = /^\d+(?:\.\d+)?$/;
 
 function normalize(item = {}) {
   if (!item?.id) {
@@ -90,6 +100,7 @@ function normalize(item = {}) {
 
   return {
     ...item,
+    pq: formatPackQuantity(item?.pq),
     date_start: item?.effective_date_start || item?.date_start || "",
     date_end: item?.effective_date_end || item?.date_end || "",
     category_id: Number(item?.category_id || 0),
@@ -133,6 +144,7 @@ export default function SkladWarehouseItemEditorDialog({
 }) {
   const [tab, setTab] = useState(0);
   const [draft, setDraft] = useState(() => normalize(detail?.item));
+  const [packPreviewIndex, setPackPreviewIndex] = useState(0);
 
   useEffect(() => {
     setDraft(normalize(detail?.item));
@@ -144,6 +156,8 @@ export default function SkladWarehouseItemEditorDialog({
     Number(access?.[`warehouse_items_${field}_edit`]) === 1;
   const canEdit = (field) => Number(access?.[`warehouse_items_${field}_edit`]) === 1;
   const set = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const packValues = useMemo(() => parsePackQuantity(draft?.pq), [draft?.pq]);
+  const packInvalid = packValues.filter((value) => !PACK_VALUE_PATTERN.test(value));
   const categories = useMemo(
     () =>
       (detail?.categories || []).filter(
@@ -173,7 +187,7 @@ export default function SkladWarehouseItemEditorDialog({
       (!detail?.item?.id || String(draft?.pq ?? "") !== String(normalize(detail?.item).pq ?? ""));
     onSave({
       ...draft,
-      pq: normalizePq ? normalizePackQuantity(draft?.pq) : draft?.pq,
+      pq: normalizePq ? normalizePackQuantity(draft?.pq) : (detail?.item?.pq ?? draft?.pq),
       id: detail?.item?.id || null,
     });
   };
@@ -388,14 +402,38 @@ export default function SkladWarehouseItemEditorDialog({
                   <Grid size={{ xs: 12, md: 3 }}>{field("art", "art", "Код 1С")}</Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
                     {canView("pq") ? (
-                      <SkladCsvAutocompleteField
+                      <JacoTextInput
+                        size="small"
+                        fullWidth
                         label="Количество в упаковке"
-                        value={String(draft?.pq ?? "").replace(/\s*(?:[#;,/|\r\n]+)\s*/g, ", ")}
-                        onChange={(value) => set("pq", value)}
+                        value={draft?.pq ?? ""}
+                        onChange={(event) =>
+                          set("pq", event.target.value.replace(/[^\d.,;#/|\s]/g, ""))
+                        }
                         disabled={!canEdit("pq")}
-                        placeholder="Введите количество"
-                        validateNewValue={(value) => /^\d+(?:\.\d+)?$/.test(value)}
-                        invalidValueText="Введите число; для дробной части используйте точку"
+                        placeholder="Например: 0,5; 1"
+                        error={packInvalid.length > 0}
+                        helperText={
+                          packInvalid.length > 0
+                            ? `Не число: ${packInvalid.join(" · ")}`
+                            : "Разделитель значений — ; или #"
+                        }
+                      />
+                    ) : null}
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    {canView("pq") ? (
+                      <JacoSelect
+                        label="Проверка значений"
+                        value={
+                          packValues.length
+                            ? String(Math.min(packPreviewIndex, packValues.length - 1))
+                            : ""
+                        }
+                        onChange={(event) => setPackPreviewIndex(Number(event.target.value) || 0)}
+                        disabled={packValues.length === 0}
+                        allowNone={false}
+                        options={packValues.map((value, index) => ({ id: String(index), name: value }))}
                       />
                     ) : null}
                   </Grid>

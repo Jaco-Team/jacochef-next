@@ -11,6 +11,7 @@
 - входной payload передается через `data`
 - success: `{"st": true, ...}`
 - error: `{"st": false, "text": "..."}`
+- при непредвиденной ошибке `text` = общее сообщение метода + `: ` + причина; для ошибок БД причина — ответ драйвера без SQL и значений. Клиент показывает `text` как есть
 
 Общие правила:
 
@@ -548,6 +549,19 @@ Response:
 
 Each list row includes `art` (1C code). The value is `null` when `warehouse_items_art_view` is not granted; clients must respect the same view permission.
 
+### Вкладки «Места хранения» и «Аллергены»
+
+Payload и ответы совпадают с одноимёнными методами модулей `sklad_storage` и `allergens`; отличается только проверка доступа — права `sklad_items`.
+
+| Route | Право |
+|---|---|
+| `/api/sklad_items/storages/get_all`, `get_one`, `get_one_as` | `storage_places_view` |
+| `/api/sklad_items/storages/save_new`, `save_new_as`, `save_edit`, `save_edit_as`, `save_sort`, `save_sort_as` | `storage_places_edit` |
+| `/api/sklad_items/allergens/get_all` | `allergen_catalog_view` |
+| `/api/sklad_items/allergens/save_new`, `save_edit`, `save_sort` | `allergen_catalog_edit` |
+
+`_edit` включает `_view`. Без права ответ `{"st": false, "text": "Недостаточно прав для выполнения действия"}`. Поле `linked_modules` в `get_all` сохранено для совместимости, вкладки по нему больше не открываются.
+
 ### `POST|ANY /api/sklad_items/items/get_all_for_new`
 
 Response:
@@ -616,6 +630,7 @@ Warehouse item detail rules:
   - `show_in_order`
   - `show_in_rev`
   - `is_show`
+  - `w_pf`, `w_trash`, `w_item`, `two_user` — `0|1`, `null` without `warehouse_items_properties_view`; the editor must send them back on save, otherwise `items/save_edit` stores `0`
   - `is_archived`
   - `date_start`
   - `date_end`
@@ -644,7 +659,7 @@ Warehouse item detail rules:
 Раздел «Привязки» складской карточки содержит только хранение и системы учёта. `allergens` и `allergens_possible` здесь не редактируются; ранее сохранённые ID остаются в draft/payload. В производственных карточках поля аллергенов доступны по прежним правилам.
 Права: `warehouse_items_create` / `warehouse_items_edit` и `warehouse_items_<field>_edit`.
 Для новой прошлой даты требуется `warehouse_items_past_date`; неизменённая старая дата сохраняется.
-`pq`: несколько размеров упаковки разделяются `#`, `;`, `/`, `|`, запятой или переводом строки; дробная часть — через точку (`0.5#1`). Новое или изменённое значение приводится к списку с `#` и проверяется сервером; неизменённое историческое значение и поле без права редактирования сохраняются без преобразования.
+`pq`: несколько размеров упаковки разделяются `#`, `;`, `/`, `|` или переводом строки. Запятая между цифрами — дробная часть и заменяется точкой (`0,5; 1` → `0.5#1`); вариантов она не разделяет, поэтому `1, 5` отклоняется. Новое или изменённое значение приводится к списку с `#` и проверяется сервером; неизменённое историческое значение и поле без права редактирования сохраняются без преобразования.
 Будущая редакция регистрируется как scheduled, current projection заменяется при начале действия.
 Успех: `st`, `text`, `item_id`, `history_id`, temporal metadata редакции.
 
@@ -664,7 +679,7 @@ Warehouse item detail rules:
 ### `POST|ANY /api/sklad_items/items/delete`
 
 `data`: `id` (или `item_id`); право `warehouse_items_delete`.
-Текущие, исторические и scheduled-связи запрещают удаление.
+Текущие и исторические связи в таблицах нового контура (`*_new`) и scheduled-редакции запрещают удаление. Заявки поставщикам (`order_post_rec*`) относятся к старому каталогу и не проверяются.
 Успех: `st = true`, `text`, `usage`; запрет: `st = false`, `text`, `usage`, данные сохранены.
 
 ## 5. Recipes
@@ -1080,8 +1095,9 @@ Delete is blocked if semi-finished participates in:
 - `items_pf_stages_new`
 - `items_all_pf_new`
 - `recipe_items_new`
-- `order_post_rec`
 - related history-tail usage
+
+`order_post_rec*` относится к старому каталогу и не проверяется.
 
 ## 7. Convert Recipe <-> Semi-finished
 
@@ -1423,12 +1439,13 @@ Thin alias over `entities/archive` with `entity_type = site_item`.
 
 ### `POST|ANY /api/sklad_items/site-items/delete`
 
-Delete checks:
+Delete checks (только таблицы нового каталога):
 
-- current links in `jaco_site_rolls`
-- historical links in `jaco_site_rolls`
-- sales usage in `jaco_rolls_*` databases where `order_items` exists
-- historical sales usage where `order_items_full_log` exists
+- `items_items_new` — товар входит в состав другого товара сайта
+- `banners_items_new`
+- `items_items_hist_new` — ссылка в сохранённой версии состава
+
+Заказы точек (`order_items`, `order_items_full_log`) и таблицы старого каталога (города, цены, пуши, VK, маркировка, рекомендации) ссылаются на ID старого каталога и не проверяются. При переводе продаж на новый каталог проверку по заказам нужно вернуть.
 
 Response format follows the common delete contract.
 
