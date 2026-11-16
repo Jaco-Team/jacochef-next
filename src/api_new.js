@@ -5,7 +5,10 @@ import Cookies from "js-cookie";
 const PROD_API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api"
 ).replace(/\/+$/, "");
-const LOCAL_API_BASE_URL = "http://localhost:8080/api";
+const LOCAL_API_BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:8000/api"
+    : "http://localhost:8080/api";
 const AUTH_TOKEN_STORAGE_KEY = "chef_auth_token";
 
 function getApiOrigin(apiBaseUrl) {
@@ -120,7 +123,10 @@ export function api(module = "", method = "", data = {}, dop_type = {}) {
   //const urlApi_dev = 'http://127.0.0.1:8000/api/'+module+'/'+method;
   //const urlApi_dev = 'https://79.174.91.113/api/'+module+'/'+method;
 
-  const urlApi_dev = "https://jacochef.ru/api/index_new.php";
+  const urlApi_dev =
+    process.env.NODE_ENV === "development"
+      ? "http://127.0.0.1:8000/api/index_new.php"
+      : "https://jacochef.ru/api/index_new.php";
 
   const this_data = queryString.stringify({
     method: method,
@@ -196,8 +202,9 @@ function getSameOriginLaravelBase(config) {
 }
 
 function hasXsrfCookie() {
-  return typeof document !== "undefined" && document.cookie.split(";").some(
-    (cookie) => /^XSRF-TOKEN=.+/.test(cookie.trim()),
+  return (
+    typeof document !== "undefined" &&
+    document.cookie.split(";").some((cookie) => /^XSRF-TOKEN=.+/.test(cookie.trim()))
   );
 }
 
@@ -261,18 +268,30 @@ export function sanctum_local(dop_type = {}) {
 }
 
 export function getSsoConfig() {
-  return axios.get(`${PROD_API_BASE_URL}/auth/sso/config`, {
-    timeout: 15000,
-    withCredentials: isSameOriginApi(PROD_API_BASE_URL),
-    withXSRFToken: false,
-  }).then((response) => response.data);
+  return axios
+    .get(`${PROD_API_BASE_URL}/auth/sso/config`, {
+      timeout: 15000,
+      withCredentials: isSameOriginApi(PROD_API_BASE_URL),
+      withXSRFToken: false,
+    })
+    .then((response) => response.data);
 }
 
 export function getTrustedSsoLoginUrl(value) {
   if (typeof value !== "string" || !value) return "";
   try {
-    const apiUrl = new URL(PROD_API_BASE_URL, typeof window !== "undefined" ? window.location.origin : undefined);
-    if (!["https:", "http:"].includes(apiUrl.protocol) || apiUrl.username || apiUrl.password || apiUrl.search || apiUrl.hash) return "";
+    const apiUrl = new URL(
+      PROD_API_BASE_URL,
+      typeof window !== "undefined" ? window.location.origin : undefined,
+    );
+    if (
+      !["https:", "http:"].includes(apiUrl.protocol) ||
+      apiUrl.username ||
+      apiUrl.password ||
+      apiUrl.search ||
+      apiUrl.hash
+    )
+      return "";
     const expected = new URL(apiUrl.href);
     expected.pathname = `${apiUrl.pathname.replace(/\/api\/?$/i, "").replace(/\/$/, "")}/auth/sso/login`;
     // Production proxies API requests on the frontend host, but SSO uses its fixed backend host.
@@ -280,7 +299,9 @@ export function getTrustedSsoLoginUrl(value) {
       expected.href = "https://apichef2.jacochef.ru/auth/sso/login";
     }
     const target = new URL(value);
-    return target.href === expected.href && !target.username && !target.password ? expected.href : "";
+    return target.href === expected.href && !target.username && !target.password
+      ? expected.href
+      : "";
   } catch {
     return "";
   }
@@ -455,7 +476,6 @@ export function api_laravel_upload(module = "", method = "", file, data = {}, do
     });
 }
 
-
 // Dropzone 6.0.0-beta.2 uses raw XHR; the Axios interceptor does not cover it.
 function billingUploadTrustedApiBase(dropzone) {
   if (typeof window === "undefined") {
@@ -499,7 +519,8 @@ function billingUploadApiBase(dropzone) {
 }
 
 function billingUploadXsrfCookie() {
-  const values = document.cookie.split(";")
+  const values = document.cookie
+    .split(";")
     .map((cookie) => cookie.trim())
     .filter((cookie) => cookie.startsWith("XSRF-TOKEN="));
   if (values.length !== 1) {
@@ -518,17 +539,19 @@ function billingUploadXsrfCookie() {
 }
 
 export async function prepareBillingUploads(dropzones) {
-  await Promise.all(dropzones.filter(Boolean).map(async (dropzone) => {
-    const apiBaseUrl = billingUploadApiBase(dropzone);
-    if (apiBaseUrl) {
-      await ensureSameOriginCsrf(apiBaseUrl);
-      billingUploadXsrfCookie();
-      return;
-    }
-    if (billingUploadTrustedApiBase(dropzone) && !getAuthToken()) {
-      throw new Error("Upload authorization is unavailable. Sign in and try again.");
-    }
-  }));
+  await Promise.all(
+    dropzones.filter(Boolean).map(async (dropzone) => {
+      const apiBaseUrl = billingUploadApiBase(dropzone);
+      if (apiBaseUrl) {
+        await ensureSameOriginCsrf(apiBaseUrl);
+        billingUploadXsrfCookie();
+        return;
+      }
+      if (billingUploadTrustedApiBase(dropzone) && !getAuthToken()) {
+        throw new Error("Upload authorization is unavailable. Sign in and try again.");
+      }
+    }),
+  );
 }
 
 export function resetBillingUploadCsrf(dropzone, xhr) {
@@ -572,7 +595,12 @@ export function setBillingUploadCsrf(dropzone, file, xhr) {
     xhr.abort();
     file.chefCsrfFailure = true;
     file.status = "error";
-    dropzone.emit("error", file, "Изображение не отправлено: обнови страницу и повтори загрузку.", xhr);
+    dropzone.emit(
+      "error",
+      file,
+      "Изображение не отправлено: обнови страницу и повтори загрузку.",
+      xhr,
+    );
     dropzone.emit("complete", file);
     return false;
   }

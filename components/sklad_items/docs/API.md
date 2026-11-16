@@ -102,6 +102,10 @@ Common delete usage shape:
 }
 ```
 
+## Представление истории товара сайта
+
+Упрощённый диалог группирует редакции по подтверждённой дате сохранения и по раскрытию загружает существующие снимки для сравнения; записи без достоверной даты собраны отдельно. Прежний подробный диалог доступен как «Расширенная история». Контракт API и запись не изменены: редакции обрабатывает модульный `SkladHistoryService`, а не глобальный `HistoryService`, используемый для аудита категорий и единиц.
+
 ## 1. Module Open
 
 ### `POST|ANY /api/sklad_items/get_all`
@@ -224,6 +228,7 @@ Notes:
 - `items` is a compact preview, capped on backend side
 - active warehouse-item usage includes both `jaco_main_rolls.items` (managed by `sklad_items_module_new`) and `jaco_main_rolls.items_new`
 - historical warehouse-item usage includes both `jaco_main_rolls.items_hist` and `jaco_main_rolls.items_hist_new`
+- Unit current usage includes references from both old and new recipe and semi-finished catalogs; these are counted separately and are not deduplicated. Unit-to-unit conversion references exclude self references. This is not a guarantee that every external usage source is covered.
 - `history_relations` remains count-only
 
 ### `POST|ANY /api/sklad_items/units/get_one`
@@ -541,6 +546,8 @@ Response:
 }
 ```
 
+Each list row includes `art` (1C code). The value is `null` when `warehouse_items_art_view` is not granted; clients must respect the same view permission.
+
 ### `POST|ANY /api/sklad_items/items/get_all_for_new`
 
 Response:
@@ -671,7 +678,8 @@ Request:
   "data": {
     "search": "",
     "category_id": null,
-    "archive_mode": "active"
+    "archive_mode": "active",
+    "with_counts": true
   }
 }
 ```
@@ -681,7 +689,8 @@ Response:
 ```json
 {
   "st": true,
-  "list": []
+  "list": [],
+  "counts": { "active": 0, "archive": 0 }
 }
 ```
 
@@ -701,6 +710,8 @@ List row fields:
 - `show_in_rev`
 - `delete_state`
 - `delete_usage`
+
+When `with_counts` is true, `counts` contains the active and archived totals for this entity type after the same search and category filters, independently of `archive_mode`. Scheduled entities count as active; archive counts exclude never-applied cancelled projections, matching the list filters. Without `with_counts`, the response remains unchanged. The same contract applies to `semi-finished/list`.
 
 ### `POST|ANY /api/sklad_items/recipes/get_one`
 
@@ -1310,6 +1321,7 @@ Main rules:
 - `image_history` is a separate lightweight timeline for image changes
 - `image_history.current.image` is the current live image state
 - `image_history.rows[]` returns changed image revisions with `before_image` and `after_image`
+- `image_history.rows[].changed_at` is derived from the snapshot `date_start` (effective date), not the image action timestamp. This endpoint does not establish the actual image action time.
 - `image_history.capabilities.restore = true`
 - `composition_source.pf` = direct `site_item -> pf` links
 - `composition_source.recipes` = direct `site_item -> recipe` links
@@ -1603,6 +1615,8 @@ Rules:
 
 ### `POST|ANY /api/sklad_items/entities/delete`
 
+For `unit`, `recipe`, `semi_finished`, and `site_item`, category fields are not required. Category deletion requires an explicit `source_type` (`warehouse_item` or `semi_finished`) and the category identifier; its source-specific permissions still apply.
+
 Request:
 
 ```json
@@ -1662,6 +1676,10 @@ Request:
 Returns a compact period list. Full snapshots are requested only after a period is selected.
 
 Additional temporal fields are `revision_status`, `effective_date_start`, `effective_date_end`, `previous_revision_key`, `next_revision_key`, `applied_now`, `can_edit_schedule`, and `can_cancel_schedule`. Existing fields are preserved. `mode=periods` hides cancelled/superseded events; the UI's “Все записи” mode shows them and legacy rows.
+
+In revision lists and details, `source` remains the history source/table identifier. The additive `revision_source` identifies the effective-registry provenance without replacing `source`; unregistered legacy revisions have `revision_source: null`. For `user`, `flag`, `image`, and `image_restore`, `revision_saved_at` is the recorded registration timestamp for the corresponding action. For `bootstrap`, it is the baseline registration time, not the original edit time; for unregistered or unknown provenance the original edit time is unavailable. The legacy `changed_at` comes from the revision effective start date and must not be presented as the actual edit timestamp.
+
+Revision list metadata, including nested embedded history rows, is subject to the same entity and field-view permissions as revision snapshots; unavailable fields are redacted on the server. Historical snapshots for the four supported entity types retain only known fields and known nested relation shapes; denied values are redacted and unmapped fields are omitted. When both revision snapshots are available, comparison changes, counts and sections are recomputed from the redacted snapshots; without a pair, opaque nested changes are not returned. These rules apply to existing data and do not imply backfilled audit events or a complete event timeline.
 
 ### `POST|ANY /api/sklad_items/history/get_one`
 
@@ -1852,3 +1870,17 @@ Rules:
 
 - runtime aliases are not part of this contract
 - FE should use only canonical routes and canonical payloads from this file
+
+## Справочник состава для создания продукции
+
+`production/creation_references` принимает `entity_type: recipe | semi_finished` и возвращает `all_items_list`: для рецепта доступны существующие варианты рецептов, полуфабрикатов и складских товаров, для полуфабриката — складские товары. Требуется `production_create`; при отсутствии `production_items_view` список скрывается. Значения и права совпадают с чтением карточек; неизвестный тип отклоняется.
+
+## История категорий
+
+`categories/history` принимает `source_type` (`warehouse_item`, `semi_finished` или `site_item`) и положительный `id`, возвращает до 50 событий `history` по выбранному источнику и идентификатору. Нужен просмотр соответствующего раздела; события разных источников не смешиваются. Создание, изменение и удаление категорий склада и производства через API `sklad_items`, а также создание и переименование категории сайта через этот API записываются с автором в `change_events` в одной транзакции с изменением; вызовы других модулей не охватываются. Старые события не восстанавливаются. История категорий сайта доступна в управлении категориями и в раскрытых группах каталога.
+
+## Связанные справочники
+
+`get_all` возвращает `linked_modules.allergens` и `linked_modules.sklad_storage` как логические признаки доступа текущего пользователя к самостоятельным модулям. При отсутствии записи доступ закрыт. UI открывает аллергены отдельной вкладкой, а места хранения — в настройках; чтение и запись продолжают выполняться исходными API `allergens` и `sklad_storage` с их серверной проверкой доступа. Изменения этих справочников инвалидируют соответствующие `sklad:ref:*` кэши.
+
+`site-items/categories/save_edit` принимает `id` и `name`; требуются права изменения товаров сайта и поля категории с учётом действующей legacy-модели доступа. Изменяется только `category_new.name`: `name_app`, `short_name`, родитель и другие данные сохраняются. Проверяется уникальность среди соседних категорий, изменение и событие истории транзакционны. Перенос по иерархии и удаление категорий сайта этим методом не поддерживаются.

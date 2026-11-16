@@ -6,8 +6,14 @@ const defaultState = {
   module: "sklad_items",
   moduleName: "",
   isLoading: false,
+  listLoading: {
+    "warehouse-items": { pending: true, id: 0 },
+    production: { pending: true, id: 0 },
+    units: { pending: true, id: 0 },
+  },
   refreshToken: 0,
   access: {},
+  linkedModules: {},
   summary: {},
   units: [],
   categories: [],
@@ -26,6 +32,23 @@ export const useSkladStore = create((set) => ({
     set(payload);
   },
 
+  beginListLoad(section) {
+    let requestId;
+    set((state) => {
+      requestId = (state.listLoading[section]?.id ?? 0) + 1;
+      return { listLoading: { ...state.listLoading, [section]: { pending: true, id: requestId } } };
+    });
+    return requestId;
+  },
+
+  finishListLoad(section, requestId) {
+    set((state) =>
+      state.listLoading[section]?.id === requestId
+        ? { listLoading: { ...state.listLoading, [section]: { pending: false, id: requestId } } }
+        : {},
+    );
+  },
+
   requestRefresh() {
     set((state) => ({ refreshToken: state.refreshToken + 1 }));
   },
@@ -34,6 +57,7 @@ export const useSkladStore = create((set) => ({
     set({
       moduleName: payload.moduleName ?? "",
       access: payload.access ?? {},
+      linkedModules: payload.linkedModules ?? {},
       summary: payload.summary ?? {},
       units: payload.units ?? [],
       categories: payload.categories ?? [],

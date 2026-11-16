@@ -3,18 +3,23 @@ import queryString from "query-string";
 export default function api(module = "", method = "", data = {}) {
   // Legacy jacochef.ru API returns Access-Control-Allow-Origin: *.
   // Do NOT use credentials: "include" here — browsers reject * + credentials.
-  return fetch("https://jacochef.ru/api/index_new.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+  return fetch(
+    process.env.NODE_ENV === "development"
+      ? "http://127.0.0.1:8000/api/index_new.php"
+      : "https://jacochef.ru/api/index_new.php",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: queryString.stringify({
+        method: method,
+        module: module,
+        version: 2,
+        data: JSON.stringify(data),
+      }),
     },
-    body: queryString.stringify({
-      method: method,
-      module: module,
-      version: 2,
-      data: JSON.stringify(data),
-    }),
-  })
+  )
     .then((res) => res.json())
     .then((json) => {
       console.log(window.location.pathname);

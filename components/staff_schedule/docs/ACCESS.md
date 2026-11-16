@@ -15,31 +15,31 @@ This file is for FE behavior review and local E2E planning.
 
 ## Current FE Gates
 
-| Area                              | FE gate                                                                             | What it unlocks                                                       |
-| --------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Schedule table                    | `full_month_access`                                                                 | open month employee modal                                             |
-| Day cell modal                    | `full_day_access`, `day_edit_access`/`day_edit_edit`, or legacy `full_month_access` | open day employee modal                                               |
-| Fast actions panel                | any of `fast_hours_access`, `fast_smena_access`, `fast_point_access`                | checkboxes, desktop row actions and mobile bulk bar                   |
-| Bulk or single fast action: hours | `fast_hours_access`                                                                 | both month and half-month schedule templates                          |
-| Bulk or single fast action: shift | `fast_smena_access`                                                                 | shift reassignment                                                    |
-| Bulk or single fast action: point | `fast_point_access`                                                                 | cafe reassignment                                                     |
-| Shift management                  | `create_edit_smena_access`                                                          | create, edit, delete shift                                            |
-| Payroll summary block             | any detailed finance read right (`view`, `edit` or `access`)                        | only individually readable salary columns                             |
-| Payroll edit actions              | any edit/access of `given`, `given_cart`, `withheld`                                | only individually authorized payout actions                           |
-| Footer statistics                 | any read right of `bonus_of_day`, `sums_all`, `rolls`, `pizza`, `over_40_min`       | only individually readable lower summary rows                         |
-| Work-schedule export              | `export_excel_access`                                                               | WS export entry                                                       |
-| Health-journal export             | `export_excel_access`                                                               | HJ export entry, same right as WS                                     |
-| Hourly rate                       | `1h_edit` or `1h_access`                                                            | edit and save rate                                                    |
-| Cash payout                       | `given_edit` or `given_access`                                                      | edit and save for any employee type                                   |
-| Card payout                       | `given_cart_edit` or `given_cart_access`                                            | edit and save for any employee type                                   |
-| Team bonus                        | `com_bonus_edit` or `com_bonus_access`                                              | period decision and individual grant/refusal                          |
-| Rates page                        | `rates_view`, `rates_edit` or `rates_access`                                        | header entry and read-only `/staff_schedule/rates`                    |
-| Rates save / planned delete       | `rates_edit` or `rates_access`                                                      | editable rates and coefficients, save dialog, delete planned history  |
-| Month list                        | `history_year` read right                                                           | 12 past months + next instead of 2 past + current + next              |
-| Archive month (older than previous) | always read-only                                                                  | edit/access stripped except `full_month`, `export_excel`; backend rejects writes |
-| Director level (retired)          | none                                                                                | removed from UI; `director_level` is a retired group, `save_dir_lv` always refuses |
-| Month overview finance cards      | same rules as table finance cells (`getStaffScheduleFinanceAction`)                 | editable cards open the table dialogs; without edit right the card is disabled |
-| Payout history                    | read right of `given`, `given_cart` or `withheld`                                   | history block in payout dialogs, only readable payout types           |
+| Area                                | FE gate                                                                             | What it unlocks                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Schedule table                      | `full_month_access`                                                                 | open month employee modal                                                          |
+| Day cell modal                      | `full_day_access`, `day_edit_access`/`day_edit_edit`, or legacy `full_month_access` | open day employee modal                                                            |
+| Fast actions panel                  | any of `fast_hours_access`, `fast_smena_access`, `fast_point_access`                | checkboxes, desktop row actions and mobile bulk bar                                |
+| Bulk or single fast action: hours   | `fast_hours_access`                                                                 | both month and half-month schedule templates                                       |
+| Bulk or single fast action: shift   | `fast_smena_access`                                                                 | shift reassignment                                                                 |
+| Bulk or single fast action: point   | `fast_point_access`                                                                 | cafe reassignment                                                                  |
+| Shift management                    | `create_edit_smena_access`                                                          | create, edit, delete shift                                                         |
+| Payroll summary block               | any detailed finance read right (`view`, `edit` or `access`)                        | only individually readable salary columns                                          |
+| Payroll edit actions                | any edit/access of `given`, `given_cart`, `withheld`                                | only individually authorized payout actions                                        |
+| Footer statistics                   | any read right of `bonus_of_day`, `sums_all`, `rolls`, `pizza`, `over_40_min`       | only individually readable lower summary rows                                      |
+| Work-schedule export                | `export_excel_access`                                                               | WS export entry                                                                    |
+| Health-journal export               | `export_excel_access`                                                               | HJ export entry, same right as WS                                                  |
+| Hourly rate                         | `1h_edit` or `1h_access`                                                            | edit and save rate                                                                 |
+| Cash payout                         | `given_edit` or `given_access`                                                      | edit and save for any employee type                                                |
+| Card payout                         | `given_cart_edit` or `given_cart_access`                                            | edit and save for any employee type                                                |
+| Team bonus                          | `com_bonus_edit` or `com_bonus_access`                                              | period decision and individual grant/refusal                                       |
+| Rates page                          | `rates_view`, `rates_edit` or `rates_access`                                        | header entry and read-only `/staff_schedule/rates`                                 |
+| Rates save / planned delete         | `rates_edit` or `rates_access`                                                      | editable rates and coefficients, save dialog, delete planned history               |
+| Month list                          | `history_year` read right                                                           | 12 past months + next instead of 2 past + current + next                           |
+| Archive month (older than previous) | always read-only                                                                    | edit/access stripped except `full_month`, `export_excel`; backend rejects writes   |
+| Director level (retired)            | none                                                                                | removed from UI; `director_level` is a retired group, `save_dir_lv` always refuses |
+| Month overview finance cards        | same rules as table finance cells (`getStaffScheduleFinanceAction`)                 | editable cards open the table dialogs; without edit right the card is disabled     |
+| Payout history                      | read right of `given`, `given_cart` or `withheld`                                   | history block in payout dialogs, only readable payout types                        |
 
 The **Быстрые действия** category contains exactly three independent action permissions: **Часы**, **Смена**, **Кафе**. Only `*_access = 1` grants an action; `view`/`edit`, legacy hours keys and `full_month` do not. No role-based quick-action gate is used. With no action permission, all entry points and checkboxes are hidden, an open modal is closed, and selection/drafts are discarded on revocation. Each requested block is checked again before saving, including after a confirmation dialog.
 

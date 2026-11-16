@@ -150,6 +150,8 @@ export default function SkladCsvAutocompleteField({
   disabled = false,
   placeholder = "Введите значение",
   noOptionsText = "Нет совпадений",
+  validateNewValue,
+  invalidValueText,
 }) {
   const rootRef = useRef(null);
   const inputRef = useRef(null);
@@ -178,7 +180,10 @@ export default function SkladCsvAutocompleteField({
     [inputValue, normalizedOptions],
   );
 
-  const canAddInput = inputValue.trim() && !hasExactInputMatch;
+  const invalidInput = Boolean(
+    inputValue.trim() && validateNewValue && !validateNewValue(inputValue.trim()),
+  );
+  const canAddInput = inputValue.trim() && !hasExactInputMatch && !invalidInput;
 
   const filteredOptions = useMemo(() => {
     const baseOptions = filter(normalizedOptions, {
@@ -216,7 +221,7 @@ export default function SkladCsvAutocompleteField({
   const addValue = (rawValue) => {
     const candidate = String(rawValue ?? "").trim();
 
-    if (!candidate) {
+    if (!candidate || (validateNewValue && !validateNewValue(candidate))) {
       return;
     }
 
@@ -381,6 +386,8 @@ export default function SkladCsvAutocompleteField({
               size="small"
               label={label}
               placeholder={selectedValues.length ? "Фильтр или новое значение" : placeholder}
+              error={invalidInput}
+              helperText={invalidInput ? invalidValueText : undefined}
               inputRef={inputRef}
               sx={skladAutocompleteInputSx}
               slotProps={{

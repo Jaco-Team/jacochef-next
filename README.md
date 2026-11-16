@@ -3,7 +3,7 @@
 
 ## Docker
 
-Development и production-запуск описаны в [Docker-инструкции](docs/docker.md).
+Development и production-запуск описаны в [Docker-инструкции](docs/docker.md). Документация модулей и планы собраны в [указателе документации](docs/README.md).
 
 - package.json declares dev, build, start, lint/format helpers, pm2 deployment flows for local/dev/prod, and a Sentry sourcemap step, so
   releases are handled via npm run deploy:\* followed by pm2 + Sentry CLI (package.json:8, package.json:16, package.json:20).

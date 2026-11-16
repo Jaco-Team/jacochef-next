@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { getSkladApiError } from "../skladApiError";
 import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
 import SkladProductionContent from "./SkladProductionContent";
 import SkladProductionCategoryManagerDialog from "./SkladProductionCategoryManagerDialog";
 import SkladProductionConvertDialog from "./SkladProductionConvertDialog";
@@ -25,6 +27,9 @@ import { PRODUCTION_RECIPE_CATEGORY_ID, useSkladProductionStore } from "./useSkl
 
 export default function useSkladProductionController({ showAlert }) {
   const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("production");
+  const showAlertRef = useRef(showAlert);
+  showAlertRef.current = showAlert;
   const {
     access,
     canArchiveProduction,
@@ -37,6 +42,7 @@ export default function useSkladProductionController({ showAlert }) {
   } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const listPending = useSkladStore((state) => state.listLoading.production.pending);
   const summary = useSkladStore((state) => state.summary);
   const shellUnits = useSkladStore((state) => state.units);
   const categories = useSkladStore((state) => state.categories);
@@ -44,11 +50,15 @@ export default function useSkladProductionController({ showAlert }) {
   const shellStorages = useSkladStore((state) => state.storages);
   const shellApps = useSkladStore((state) => state.apps);
 
+  const [creationReferences, setCreationReferences] = useState({ type: null, items: [] });
+  const [modeCounts, setModeCounts] = useState(null);
+  const listRequestId = useRef(0);
   const activeEntityType = useSkladProductionStore((state) => state.activeEntityType);
   const rowsByType = useSkladProductionStore((state) => state.rowsByType);
   const search = useSkladProductionStore((state) => state.search);
   const categoryId = useSkladProductionStore((state) => state.categoryId);
-  const archiveMode = useSkladProductionStore((state) => state.archiveMode);
+  const selectedArchiveMode = useSkladProductionStore((state) => state.archiveMode);
+  const archiveMode = selectedArchiveMode === "archive" ? "archive" : "active";
   const page = useSkladProductionStore((state) => state.page);
   const rowsPerPage = useSkladProductionStore((state) => state.rowsPerPage);
   const modal = useSkladProductionStore((state) => state.modal);
@@ -111,9 +121,7 @@ export default function useSkladProductionController({ showAlert }) {
   const productionSort = useSkladTableSort(filteredRows, {
     name: (row) => row?.name,
     categories: (row) =>
-      row?.entityType === "recipe"
-        ? "Рецепты"
-        : (row?.categories || []).map((item) => item?.name).join(", "),
+      (Array.isArray(row?.categories) ? row.categories : []).map((item) => item?.name).join(", "),
     shelfLife: (row) => row?.shelf_life,
     dateStart: (row) => row?.date_start,
     dateEnd: (row) => row?.date_end,
@@ -208,7 +216,9 @@ export default function useSkladProductionController({ showAlert }) {
 
   const loadRows = useCallback(
     async ({ resetPage = false, categoryIdOverride } = {}) => {
-      setShellState({ isLoading: true });
+      const requestId = ++listRequestId.current;
+      const listLoadId = beginListLoad("production");
+      setModeCounts(null);
 
       try {
         const selectedCategoryId =
@@ -218,6 +228,7 @@ export default function useSkladProductionController({ showAlert }) {
           search: String(search || "").trim(),
           category_id: selectedCategoryId && !isRecipeCategory ? Number(selectedCategoryId) : null,
           archive_mode: archiveMode,
+          with_counts: true,
         };
 
         const [recipesResponse, semiFinishedResponse] = await Promise.all([
@@ -233,6 +244,25 @@ export default function useSkladProductionController({ showAlert }) {
           throw new Error(semiFinishedResponse?.text || "Ошибка загрузки списка полуфабрикатов");
         }
 
+        if (
+          requestId !== listRequestId.current ||
+          useSkladStore.getState().listLoading.production.id !== listLoadId
+        )
+          return;
+        const counts = isRecipeCategory
+          ? [recipesResponse?.counts]
+          : [recipesResponse?.counts, semiFinishedResponse?.counts];
+        if (
+          counts.some(
+            (value) => !Number.isInteger(value?.active) || !Number.isInteger(value?.archive),
+          )
+        ) {
+          throw new Error("Не удалось загрузить количество рецептов и полуфабрикатов");
+        }
+        setModeCounts({
+          active: counts.reduce((total, value) => total + value.active, 0),
+          archive: counts.reduce((total, value) => total + value.archive, 0),
+        });
         setState({
           rowsByType: {
             recipe: Array.isArray(recipesResponse?.list) ? recipesResponse.list : [],
@@ -243,12 +273,18 @@ export default function useSkladProductionController({ showAlert }) {
           ...(resetPage ? { page: 0 } : {}),
         });
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки списка", false);
+        if (
+          requestId === listRequestId.current &&
+          useSkladStore.getState().listLoading.production.id === listLoadId
+        ) {
+          setState({ rowsByType: { recipe: [], semi_finished: [] } });
+          showAlert(error?.message || "Ошибка загрузки списка", false);
+        }
       } finally {
-        setShellState({ isLoading: false });
+        finishListLoad("production", listLoadId);
       }
     },
-    [api, archiveMode, categoryId, search, setShellState, setState, showAlert],
+    [api, archiveMode, beginListLoad, categoryId, finishListLoad, search, setState, showAlert],
   );
 
   const saveCategory = useCallback(
@@ -560,7 +596,7 @@ export default function useSkladProductionController({ showAlert }) {
       const response = await api.archiveEntity({
         entity_type: entityType,
         id: row.id,
-        value: nextArchived,
+        is_archived: nextArchived,
       });
 
       if (!response?.st) {
@@ -579,7 +615,7 @@ export default function useSkladProductionController({ showAlert }) {
           entityType,
         },
       });
-      showAlert(error?.message || "Ошибка изменения архива", false);
+      showAlert(getSkladApiError(error, "Ошибка изменения архива"), false);
     } finally {
       setShellState({ isLoading: false });
     }
@@ -595,6 +631,26 @@ export default function useSkladProductionController({ showAlert }) {
     setState,
     showAlert,
   ]);
+
+  useEffect(() => {
+    if (!modal.open || modal.mode !== "create" || !canCreateProduction) return;
+    let cancelled = false;
+    setCreationReferences({ type: null, items: [] });
+    api
+      .getProductionCreationReferences(activeEntityType)
+      .then((response) => {
+        if (cancelled) return;
+        if (!response?.st) throw new Error(response?.text || "Ошибка загрузки номенклатуры");
+        setCreationReferences({ type: activeEntityType, items: response.all_items_list || [] });
+      })
+      .catch((error) => {
+        if (!cancelled)
+          showAlertRef.current(error?.message || "Ошибка загрузки номенклатуры", false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeEntityType, api, canCreateProduction, modal.mode, modal.open]);
 
   const openCreate = useCallback(
     (entityType) => {
@@ -688,7 +744,7 @@ export default function useSkladProductionController({ showAlert }) {
           },
           draft: nextDraft,
         });
-        showAlert(error?.message || "Ошибка сохранения", false);
+        showAlert(getSkladApiError(error, "Ошибка сохранения"), false);
       } finally {
         setShellState({ isLoading: false });
       }
@@ -820,9 +876,14 @@ export default function useSkladProductionController({ showAlert }) {
       <>
         <SkladProductionContent
           activeEntityType={activeEntityType}
+          creationItems={
+            creationReferences.type === activeEntityType ? creationReferences.items : []
+          }
           search={search}
           categoryId={categoryId}
           archiveMode={archiveMode}
+          listPending={listPending}
+          modeCounts={modeCounts}
           categoryOptions={categoryOptions}
           mergedRows={mergedRows}
           paginatedRows={paginatedRows}

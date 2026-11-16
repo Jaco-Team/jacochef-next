@@ -32,6 +32,9 @@ import { useEffect, useMemo, useState } from "react";
 import { resolveSiteItemImageUrl } from "../site-items/siteItemImage";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
+import { collectVisibleChanges } from "./historyChangeSummary.mjs";
+import { formatRevisionSavedAt } from "./revisionSavedAt.mjs";
+import SkladHistoryChangeSummary from "./SkladHistoryChangeSummary";
 
 function formatValue(value, fallback = "") {
   if (value === null || value === undefined || value === "") {
@@ -278,7 +281,13 @@ function formatProductionValue(field, snapshot, entityType) {
     case "ed_izmer":
       return formatValue(snapshot?.unit_name || snapshot?.ei_name || snapshot?.ed_izmer_name);
     case "two_user":
-      return Number(snapshot?.two_user) === 1 ? "Два сотрудника" : "Один сотрудник";
+      if (
+        snapshot?.two_user === null ||
+        snapshot?.two_user === undefined ||
+        snapshot?.two_user === ""
+      )
+        return "";
+      return Number(snapshot.two_user) === 1 ? "Два сотрудника" : "Один сотрудник";
     case "show_in_rev":
       return formatBoolean(snapshot?.show_in_rev);
     case "date_start":
@@ -647,7 +656,7 @@ function revisionStatusColor(status) {
   }[status || "legacy"];
 }
 
-function previousEffectiveRevision(rows, selectedRow) {
+export function previousEffectiveRevision(rows, selectedRow) {
   if (!selectedRow) return null;
 
   const explicitKey = String(selectedRow?.previous_revision_key || "");
@@ -679,7 +688,7 @@ function assertHistoryResponse(response, fallback) {
   return response;
 }
 
-function snapshotFieldRows(snapshot, entityType) {
+export function snapshotFieldRows(snapshot, entityType) {
   if (!snapshot) {
     return [];
   }
@@ -1248,6 +1257,13 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
 
   const selectedSnapshot = snapshots[revisionKey(selectedRow)] || selectedRow?.snapshot || null;
   const compareSnapshot = snapshots[revisionKey(compareRow)] || compareRow?.snapshot || null;
+  const visibleChanges =
+    selectedSnapshot && compareSnapshot
+      ? collectVisibleChanges(
+          snapshotFieldRows(selectedSnapshot, entityType),
+          snapshotFieldRows(compareSnapshot, entityType),
+        )
+      : [];
 
   const resolveOnDate = async () => {
     if (!resolvedDate) return;
@@ -1332,7 +1348,7 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
             >
               <TableHead>
                 <TableRow>
-                  <TableCell>Сохранено</TableCell>
+                  <TableCell>Время сохранения</TableCell>
                   <TableCell>Автор</TableCell>
                   <TableCell>Действует с</TableCell>
                   <TableCell>Действует по</TableCell>
@@ -1360,7 +1376,7 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
                       }}
                       sx={{ cursor: "pointer" }}
                     >
-                      <TableCell>{formatDate(row?.changed_at, true) || "—"}</TableCell>
+                      <TableCell>{formatRevisionSavedAt(row)}</TableCell>
                       <TableCell>{row?.changed_by || "Неизвестно"}</TableCell>
                       <TableCell>
                         {formatDate(row?.effective_date_start || row?.date_start) || "—"}
@@ -1500,7 +1516,7 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
                   color: "text.secondary",
                 }}
               >
-                {formatDate(selectedRow?.changed_at, true) || "—"} ·{" "}
+                Время сохранения: {formatRevisionSavedAt(selectedRow)} ·{" "}
                 {selectedRow?.changed_by || "Неизвестно"}
               </Typography>
             </Stack>
@@ -1575,6 +1591,15 @@ export function SkladEmbeddedHistoryTable({ history, emptyText = "История
               ) : null}
             </Grid>
           </Grid>
+
+          <SkladHistoryChangeSummary
+            row={selectedRow}
+            changes={visibleChanges}
+            hasPrevious={Boolean(compareRow)}
+            ready={
+              !loading && Boolean(selectedSnapshot) && (!compareRow || Boolean(compareSnapshot))
+            }
+          />
 
           {loading && !selectedSnapshot ? (
             <Stack
@@ -1659,7 +1684,7 @@ export function SkladEmbeddedImageHistoryTable({
                   <Chip
                     size="small"
                     variant="outlined"
-                    label={formatDate(row?.changed_at, true) || "—"}
+                    label={`Действует с: ${formatDate(row?.changed_at) || "—"}`}
                   />
                 </Grid>
                 <Grid size={{ xs: 6, md: 4 }}>

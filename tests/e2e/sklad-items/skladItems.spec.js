@@ -631,13 +631,16 @@ test("warehouse pack separators hint and labels preserve unchanged legacy values
   page,
 }, testInfo) => {
   const state = await installSkladMock(page, { access: { ...FULL_ACCESS } });
-  Object.assign(state.warehouseItems[0], { pq: "legacy ; 2||3", max_count_in_m: "" });
+  Object.assign(state.warehouseItems[0], { pq: "legacy#2||3", max_count_in_m: "" });
   await page.goto("/sklad_items/warehouse-items");
   await expandWarehouseGroups(page);
   const row = page.getByRole("row", { name: /E2E_SKLAD_Коробка для пиццы/ }),
     dialog = page.getByRole("dialog");
   const save = dialog.getByRole("button", { name: "Сохранить изменения", exact: true });
   await row.getByRole("button").first().click();
+  await expect(
+    dialog.getByRole("textbox", { name: "Количество в упаковке", exact: true }),
+  ).toHaveValue("legacy; 2||3");
   const max = dialog.getByRole("spinbutton", {
     name: "Максимальное количество веса за последние 30 дней",
     exact: true,
@@ -658,12 +661,12 @@ test("warehouse pack separators hint and labels preserve unchanged legacy values
   await save.click();
   await expect(dialog).toHaveCount(0);
   expect(state.requests.findLast(({ method }) => method === "items/save_edit").data.pq).toBe(
-    "legacy ; 2||3",
+    "legacy#2||3",
   );
   await row.getByRole("button").first().click();
   const pq = dialog.getByRole("textbox", { name: "Количество в упаковке", exact: true });
-  await pq.fill("# 0.5 ; 1 / 2 | 3, 4 # 5 ;");
-  await expect(pq).toHaveValue("# 0.5 ; 1 / 2 | 3, 4 # 5 ;");
+  await pq.fill("0.5; 1; 2; 3; 4; 5");
+  await expect(pq).toHaveValue("0.5; 1; 2; 3; 4; 5");
   const hint = dialog.getByRole("button", {
     name: "Подсказка о количестве в упаковке",
     exact: true,
@@ -671,7 +674,7 @@ test("warehouse pack separators hint and labels preserve unchanged legacy values
   await hint.scrollIntoViewIfNeeded();
   await hint.click();
   await expect(page.getByRole("tooltip")).toHaveText(
-    "Несколько значений можно указать через #, ;, /, | или запятую. Дробные значения — через точку, например 0.5#1.",
+    "Несколько значений разделяйте точкой с запятой. Дробные значения указывайте через точку, например 0.5; 1.",
   );
   await page.screenshot({
     path: testInfo.outputPath("warehouse-pack-hint.png"),
@@ -1088,17 +1091,19 @@ test("warehouse category search reveals ancestors and preserves filter payload",
     .toBeLessThanOrEqual(1);
 });
 
-test("production append row contains only nomenclature", async ({ page }, testInfo) => {
+test("production technical card calculates and saves an added ingredient", async ({
+  page,
+}, testInfo) => {
   const state = await installSkladMock(page, { access: FULL_ACCESS });
   await page.goto("/sklad_items/production");
   await page
     .getByRole("row", { name: /E2E_SKLAD_Полуфабрикат/ })
-    .getByRole("button", { name: "Редактировать" })
+    .getByRole("button", { name: /Открыть карточку: E2E_SKLAD_Полуфабрикат/ })
     .click();
   const dialog = page.getByRole("dialog"),
     append = dialog.getByPlaceholder("Выберите номенклатуру", { exact: true });
   const appendRow = append.locator("xpath=ancestor::tr[1]");
-  await expect(appendRow.getByRole("cell")).toHaveCount(1);
+  await expect(appendRow.getByRole("cell")).toHaveCount(2);
   await expect(appendRow).toHaveText("");
   await append.evaluate((node) => node.scrollIntoView({ block: "center" }));
   await page.screenshot({
@@ -1116,7 +1121,7 @@ test("production append row contains only nomenclature", async ({ page }, testIn
   await itemRow.getByRole("textbox").nth(3).fill("10");
   await expect(itemRow.getByRole("textbox").nth(2)).toHaveValue("9");
   await expect(itemRow.getByRole("textbox").nth(4)).toHaveValue("8.1");
-  await expect(appendRow.getByRole("cell")).toHaveCount(1);
+  await expect(appendRow.getByRole("cell")).toHaveCount(2);
   await dialog.getByRole("button", { name: "Сохранить изменения", exact: true }).click();
   await expect(dialog).toHaveCount(0);
   expect(
@@ -3266,12 +3271,16 @@ test("рецепты: текущие и исторические вложенн�
   }
   await page.goto("/sklad_items/production");
   for (const index of [0, 1]) {
-    await expect(
-      page
-        .getByRole("row", { name: new RegExp(`Вложенный рецепт ${index}`) })
-        .getByRole("button")
-        .last(),
-    ).toBeDisabled();
+    const reason = page
+      .getByRole("row", { name: new RegExp(`Вложенный рецепт ${index}`) })
+      .getByRole("img", { name: /Удаление заблокировано/ });
+    await expect(reason).toHaveAttribute("tabindex", "0");
+    await expect(reason).toHaveAccessibleName(
+      new RegExp(index ? "источников исторических связей: 1" : "источников активных связей: 1"),
+    );
+    await reason.focus();
+    await expect(reason).toBeFocused();
+    await page.keyboard.press("Enter");
   }
   expect(state.requests.some((request) => request.method === "entities/delete")).toBeFalsy();
 });
