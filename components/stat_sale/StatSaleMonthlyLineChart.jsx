@@ -7,7 +7,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import { calculateYAxisBounds } from "./utils";
 
-const months =["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
+const months = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
 const monthNames = [
   "Январь",
   "Февраль",
@@ -23,24 +23,25 @@ const monthNames = [
   "Декабрь",
 ];
 
-const formatValue = (value) =>
+const formatValue = (value, decimals = 0) =>
   Number(value || 0)
-    .toFixed(0)
+    .toFixed(decimals)
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-const buildSharedTooltip = ({ month, seriesItems, valueSuffix }) => {
+const buildSharedTooltip = ({ month, seriesItems, valueSuffix, valueDecimals = 0 }) => {
   const rows = seriesItems
     .map((item) => ({
       ...item,
       value: item.values[month.index],
     }))
     .filter((item) => item.value !== null && item.value !== undefined);
+  const suffixText = valueSuffix ? ` ${valueSuffix}` : "";
 
   return [
     `[bold]${month.fullName}[/]`,
     ...rows.map(
       (item) =>
-        `[#${item.color.replace("#", "")}]●[/] ${item.name}: [bold]${formatValue(item.value)}[/] ${valueSuffix}`,
+        `[#${item.color.replace("#", "")}]●[/] ${item.name}: [bold]${formatValue(item.value, valueDecimals)}[/]${suffixText}`,
     ),
   ].join("\n");
 };
@@ -49,6 +50,7 @@ export default function StatSaleMonthlyLineChart({
   title,
   series = [],
   valueSuffix = "шт",
+  valueDecimals = 0,
   emptyText = "Нет данных для отображения",
   height = 560,
   collapsible = false,
@@ -171,7 +173,7 @@ export default function StatSaleMonthlyLineChart({
         am5xy.ValueAxis.new(root, {
           strictMinMax: true,
           renderer: yRenderer,
-          numberFormat: "#,###",
+          numberFormat: valueDecimals > 0 ? `#,###.${"0".repeat(valueDecimals)}` : "#,###",
         }),
       );
 
@@ -223,6 +225,7 @@ export default function StatSaleMonthlyLineChart({
             month: { name: month, fullName: monthNames[index], index },
             seriesItems: tooltipSeriesItems,
             valueSuffix,
+            valueDecimals,
           }),
         }));
 
@@ -360,7 +363,7 @@ export default function StatSaleMonthlyLineChart({
       seriesByNameRef.current = new Map();
       root?.dispose();
     };
-  }, [chartSeries, expanded, valueSuffix]);
+  }, [chartSeries, expanded, valueSuffix, valueDecimals]);
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>

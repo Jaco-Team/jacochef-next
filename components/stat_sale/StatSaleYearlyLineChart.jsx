@@ -110,6 +110,8 @@ export default function StatSaleYearlyLineChart({
   collapsible = false,
   defaultExpanded = true,
   resetKey,
+  valueSuffix = "шт",
+  valueDecimals = 0,
 }) {
   const groupedData = groupByYear(rawData);
   const selectedRange = getSelectedRange(dateStart, dateEnd);
@@ -148,7 +150,8 @@ export default function StatSaleYearlyLineChart({
     <StatSaleMonthlyLineChart
       title={title}
       series={series}
-      valueSuffix="шт"
+      valueSuffix={valueSuffix}
+      valueDecimals={valueDecimals}
       collapsible={collapsible}
       defaultExpanded={defaultExpanded}
       resetKey={resetKey}

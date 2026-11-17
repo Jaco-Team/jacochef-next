@@ -1,5 +1,5 @@
 export const SALES_SOURCE_TABS = [
-  { id: "total", label: "Тотал" },
+  { id: "total", label: "Общие данные" },
   { id: "site", label: "Сайт" },
   { id: "cafe", label: "Кафе" },
   { id: "kc", label: "КЦ" },
@@ -246,3 +246,442 @@ export const mergeLineMaps = (primary, fallback) => ({
   ...(fallback && typeof fallback === "object" ? fallback : {}),
   ...(primary && typeof primary === "object" ? primary : {}),
 });
+
+const MONTH_NAMES_RU = [
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь",
+];
+
+const DYNAMICS_SOURCE_FIELDS = {
+  site: "res_site",
+  cafe: "res_cafe",
+  kc: "res_kc",
+};
+
+const SALE_SOURCE_BY_PARAMETER = {
+  сайт: "site",
+  кафе: "cafe",
+  кц: "kc",
+  "контакт-центр": "kc",
+  "контакт центр": "kc",
+  тотал: "total",
+  итого: "total",
+  все: "total",
+  "все кафе": "total",
+};
+
+const readNumber = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(String(value).replace(/\s/g, "").replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const roundMetric = (value, decimals) => {
+  const parsed = readNumber(value);
+  if (parsed === null) return null;
+  const factor = 10 ** decimals;
+  return Math.round(parsed * factor) / factor;
+};
+
+const parseMonthKey = (value) => {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{1,2})/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isFinite(year) || month < 1 || month > 12) return null;
+
+  return { year, month, key: `${year}-${month}` };
+};
+
+const emptySourceMaps = () => ({ site: {}, cafe: {}, kc: {} });
+
+const mapMonthFacts = (monthMap, getMetric) => {
+  const result = {};
+
+  Object.entries(monthMap ?? {}).forEach(([key, value]) => {
+    const period = parseMonthKey(key);
+    if (!period || !value || typeof value !== "object") return;
+
+    const metric = getMetric(value);
+    if (!metric || metric.fact === null || metric.fact === undefined) return;
+
+    result[period.key] = {
+      fact: metric.fact,
+      plan: metric.plan ?? null,
+      month_name: value.month_name || MONTH_NAMES_RU[period.month - 1],
+    };
+  });
+
+  return result;
+};
+
+const firstMetricMap = (...maps) => {
+  const result = {};
+
+  maps.forEach((map) => {
+    Object.entries(map ?? {}).forEach(([key, value]) => {
+      if (result[key] || value?.fact === null || value?.fact === undefined) return;
+      result[key] = value;
+    });
+  });
+
+  return result;
+};
+
+const explicitOrdersPerActive = (value) => {
+  const fact = readNumber(value?.orders_per_active);
+  if (fact === null) return null;
+
+  return {
+    fact,
+    plan: readNumber(value?.orders_per_active_plan),
+  };
+};
+
+const derivedOrdersPerActive = (value) => {
+  const orders = readNumber(value?.orders ?? value?.order);
+  const activeAccounts = readNumber(value?.active ?? value?.register ?? value?.registred);
+  if (orders === null || !activeAccounts) return null;
+
+  return {
+    fact: roundMetric(orders / activeAccounts, 2),
+    plan: null,
+  };
+};
+
+const ordersPerActiveMetric = (value) =>
+  explicitOrdersPerActive(value) ?? derivedOrdersPerActive(value);
+
+const efficiencyMetric = (value) => {
+  const fact = readNumber(value?.percent_fact ?? value?.effect);
+  if (fact !== null) {
+    return {
+      fact,
+      plan: readNumber(value?.effect_plan ?? value?.percent_fact_plan),
+    };
+  }
+
+  const orderFact = readNumber(value?.orders ?? value?.order);
+  const orderPlan = readNumber(value?.orders_plan ?? value?.order_plan);
+  if (orderFact === null || !orderPlan) return null;
+
+  return {
+    fact: roundMetric(calcPercent(orderFact, orderPlan), 2),
+    plan: 100,
+  };
+};
+
+const revenueMetric = (value) => {
+  const fact = readNumber(value?.summ);
+  if (fact === null) return null;
+
+  return {
+    fact,
+    plan: readNumber(value?.summ_plan),
+  };
+};
+
+const averageCheckMetric = (value) => {
+  const explicit = readNumber(value?.average_check);
+  if (explicit !== null) {
+    return {
+      fact: explicit,
+      plan: readNumber(value?.average_check_plan),
+    };
+  }
+
+  const summ = readNumber(value?.summ);
+  const orders = readNumber(value?.orders ?? value?.order);
+  if (summ === null || !orders) return null;
+
+  return {
+    fact: roundMetric(summ / orders, 0),
+    plan: null,
+  };
+};
+
+const buildClientsMetricMaps = (dataList) => {
+  const buckets = {};
+  const tables = Array.isArray(dataList) ? dataList : [];
+
+  tables.forEach((table) => {
+    if (!Array.isArray(table)) return;
+
+    const pointItems = table.filter((item) => item?.point_id);
+    const sourceItems = pointItems.length ? pointItems : table;
+
+    sourceItems.forEach((item) => {
+      const period = parseMonthKey(item?.month);
+      if (!period) return;
+
+      if (!buckets[period.key]) {
+        buckets[period.key] = {
+          orders: 0,
+          registred: 0,
+          summ: 0,
+          hasOrders: false,
+          hasRegistered: false,
+          hasSumm: false,
+        };
+      }
+
+      const bucket = buckets[period.key];
+      const orders = readNumber(item?.orders);
+      const registred = readNumber(item?.registred);
+      const summ = readNumber(item?.summ);
+
+      if (orders !== null) {
+        bucket.orders += orders;
+        bucket.hasOrders = true;
+      }
+      if (registred !== null) {
+        bucket.registred += registred;
+        bucket.hasRegistered = true;
+      }
+      if (summ !== null) {
+        bucket.summ += summ;
+        bucket.hasSumm = true;
+      }
+    });
+  });
+
+  const ordersPerActive = {};
+  const revenue = {};
+  const averageCheck = {};
+
+  Object.entries(buckets).forEach(([key, bucket]) => {
+    const period = parseMonthKey(key);
+    if (!period) return;
+
+    const month_name = MONTH_NAMES_RU[period.month - 1];
+
+    if (bucket.hasOrders && bucket.hasRegistered && bucket.registred) {
+      ordersPerActive[key] = {
+        fact: roundMetric(bucket.orders / bucket.registred, 2),
+        plan: null,
+        month_name,
+      };
+    }
+    if (bucket.hasSumm) {
+      revenue[key] = { fact: bucket.summ, plan: null, month_name };
+    }
+    if (bucket.hasSumm && bucket.hasOrders && bucket.orders) {
+      averageCheck[key] = {
+        fact: roundMetric(bucket.summ / bucket.orders, 0),
+        plan: null,
+        month_name,
+      };
+    }
+  });
+
+  return { ordersPerActive, revenue, averageCheck };
+};
+
+const buildSaleEfficiencyMaps = (saleList) => {
+  const maps = { total: {}, ...emptySourceMaps() };
+  const rows = Array.isArray(saleList?.rows) ? saleList.rows : [];
+
+  rows.forEach((row) => {
+    const label = String(row?.parameter ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+    const source = SALE_SOURCE_BY_PARAMETER[label];
+    if (!source || !row?.data || typeof row.data !== "object") return;
+
+    Object.entries(row.data).forEach(([rawMonth, cell]) => {
+      const period = parseMonthKey(rawMonth);
+      const fact = readNumber(cell?.percent_fact);
+      if (!period || fact === null) return;
+
+      maps[source][period.key] = {
+        fact,
+        plan: null,
+        month_name: MONTH_NAMES_RU[period.month - 1],
+      };
+    });
+  });
+
+  return maps;
+};
+
+const paySourceMaps = (payRes, getMetric) => ({
+  total: mapMonthFacts(payRes?.res, getMetric),
+  sources: SALES_SOURCE_KEYS.reduce((sources, source) => {
+    sources[source] = mapMonthFacts(payRes?.res_by_source?.[source], getMetric);
+    return sources;
+  }, emptySourceMaps()),
+});
+
+const dynamicsSourceMaps = (dynamicsRes, getMetric) => {
+  if (!dynamicsRes?.st) {
+    return { total: {}, sources: emptySourceMaps() };
+  }
+
+  return {
+    total: mapMonthFacts(dynamicsRes.res, getMetric),
+    sources: SALES_SOURCE_KEYS.reduce((sources, source) => {
+      sources[source] = mapMonthFacts(dynamicsRes[DYNAMICS_SOURCE_FIELDS[source]], getMetric);
+      return sources;
+    }, emptySourceMaps()),
+  };
+};
+
+export const buildScalarMetricView = ({ monthMap, selectedStartIndex, selectedEndIndex }) => {
+  const rows = [];
+  const entries = getEntries(monthMap);
+  const byPeriod = new Map(entries.map((entry) => [entry.periodIndex, entry]));
+
+  entries.forEach((entry) => {
+    const { key, value, year, month, periodIndex } = entry;
+    if (periodIndex < selectedStartIndex || periodIndex > selectedEndIndex) return;
+
+    const fact = readNumber(value?.fact);
+    if (fact === null) return;
+
+    const plan = readNumber(value?.plan);
+    const previous = byPeriod.get(periodIndex - 1);
+    const previousYear = byPeriod.get(periodIndex - 12);
+    const prevFact = previous ? readNumber(previous.value?.fact) : null;
+    const prevYearFact = previousYear ? readNumber(previousYear.value?.fact) : null;
+
+    rows.push({
+      periodKey: key,
+      year: String(year),
+      monthNumber: month,
+      month: value?.month_name || MONTH_NAMES_RU[month - 1],
+      planQty: plan,
+      planLoad: plan ? calcPercent(fact, plan) : null,
+      factQty: fact,
+      planFact: plan ? calcPercent(fact, plan) : null,
+      factYoYPct: prevYearFact === null ? null : calcPercent(fact - prevYearFact, prevYearFact),
+      factYoYQty: prevYearFact === null ? null : fact - prevYearFact,
+      factDynPct: prevFact === null ? null : calcPercent(fact - prevFact, prevFact),
+      factDynQty: prevFact === null ? null : fact - prevFact,
+      factLoad: plan ? calcPercent(fact, plan) : null,
+    });
+  });
+
+  return rows;
+};
+
+export const rowsToLineMap = (rows = []) =>
+  rows.reduce((line, row) => {
+    const fact = readNumber(row?.factQty);
+    if (row?.periodKey && fact !== null) line[row.periodKey] = fact;
+    return line;
+  }, {});
+
+const viewPair = (totalMap, sourceMaps, selectedStartIndex, selectedEndIndex) => ({
+  total: buildScalarMetricView({ monthMap: totalMap, selectedStartIndex, selectedEndIndex }),
+  sources: SALES_SOURCE_KEYS.reduce((sources, source) => {
+    sources[source] = buildScalarMetricView({
+      monthMap: sourceMaps?.[source],
+      selectedStartIndex,
+      selectedEndIndex,
+    });
+    return sources;
+  }, {}),
+});
+
+const linePair = (rows) => ({
+  total: rowsToLineMap(rows.total),
+  sources: SALES_SOURCE_KEYS.reduce((sources, source) => {
+    sources[source] = rowsToLineMap(rows.sources[source]);
+    return sources;
+  }, {}),
+});
+
+export const assembleExtraSaleMetrics = ({
+  payRes,
+  clientsRes,
+  saleRes,
+  dynamicsRes,
+  selectedStartIndex,
+  selectedEndIndex,
+}) => {
+  const clients = clientsRes?.st
+    ? buildClientsMetricMaps(clientsRes.data_list)
+    : { ordersPerActive: {}, revenue: {}, averageCheck: {} };
+  const sale = saleRes?.st
+    ? buildSaleEfficiencyMaps(saleRes.data_sale_list)
+    : { total: {}, ...emptySourceMaps() };
+  const payOrders = paySourceMaps(payRes, ordersPerActiveMetric);
+  const payEfficiency = paySourceMaps(payRes, efficiencyMetric);
+  const payRevenue = paySourceMaps(payRes, revenueMetric);
+  const payAverageCheck = paySourceMaps(payRes, averageCheckMetric);
+  const dynamicsOrders = dynamicsSourceMaps(dynamicsRes, ordersPerActiveMetric);
+  const dynamicsEfficiency = dynamicsSourceMaps(dynamicsRes, efficiencyMetric);
+  const dynamicsRevenue = dynamicsSourceMaps(dynamicsRes, revenueMetric);
+  const dynamicsAverageCheck = dynamicsSourceMaps(dynamicsRes, averageCheckMetric);
+
+  const metrics = {
+    ordersPerActive: viewPair(
+      firstMetricMap(clients.ordersPerActive, payOrders.total, dynamicsOrders.total),
+      {
+        site: firstMetricMap(payOrders.sources.site, dynamicsOrders.sources.site),
+        cafe: firstMetricMap(payOrders.sources.cafe, dynamicsOrders.sources.cafe),
+        kc: firstMetricMap(payOrders.sources.kc, dynamicsOrders.sources.kc),
+      },
+      selectedStartIndex,
+      selectedEndIndex,
+    ),
+    efficiency: viewPair(
+      firstMetricMap(sale.total, payEfficiency.total, dynamicsEfficiency.total),
+      {
+        site: firstMetricMap(
+          sale.site,
+          payEfficiency.sources.site,
+          dynamicsEfficiency.sources.site,
+        ),
+        cafe: firstMetricMap(
+          sale.cafe,
+          payEfficiency.sources.cafe,
+          dynamicsEfficiency.sources.cafe,
+        ),
+        kc: firstMetricMap(sale.kc, payEfficiency.sources.kc, dynamicsEfficiency.sources.kc),
+      },
+      selectedStartIndex,
+      selectedEndIndex,
+    ),
+    revenue: viewPair(
+      firstMetricMap(clients.revenue, payRevenue.total, dynamicsRevenue.total),
+      {
+        site: firstMetricMap(payRevenue.sources.site, dynamicsRevenue.sources.site),
+        cafe: firstMetricMap(payRevenue.sources.cafe, dynamicsRevenue.sources.cafe),
+        kc: firstMetricMap(payRevenue.sources.kc, dynamicsRevenue.sources.kc),
+      },
+      selectedStartIndex,
+      selectedEndIndex,
+    ),
+    averageCheck: viewPair(
+      firstMetricMap(clients.averageCheck, payAverageCheck.total, dynamicsAverageCheck.total),
+      {
+        site: firstMetricMap(payAverageCheck.sources.site, dynamicsAverageCheck.sources.site),
+        cafe: firstMetricMap(payAverageCheck.sources.cafe, dynamicsAverageCheck.sources.cafe),
+        kc: firstMetricMap(payAverageCheck.sources.kc, dynamicsAverageCheck.sources.kc),
+      },
+      selectedStartIndex,
+      selectedEndIndex,
+    ),
+  };
+
+  return {
+    rows: metrics,
+    lines: Object.keys(metrics).reduce((lines, metric) => {
+      lines[metric] = linePair(metrics[metric]);
+      return lines;
+    }, {}),
+  };
+};
