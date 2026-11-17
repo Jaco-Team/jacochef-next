@@ -47,7 +47,7 @@ import TableContainer from "@mui/material/TableContainer";
 import Checkbox from "@mui/material/Checkbox";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import DriversMap from "@/ui/DriversMap/DriversMap";
-import { MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import { styled } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
@@ -127,6 +127,8 @@ class Concenter_ extends React.Component {
 
       number: "",
       addr: "",
+      drivers: [],
+      driver: null,
     };
   }
 
@@ -189,6 +191,8 @@ class Concenter_ extends React.Component {
       {
         number: "",
         addr: "",
+        driver: null,
+        drivers: [],
         city_id,
         need_point_list: need_points,
         point_id,
@@ -245,13 +249,36 @@ class Concenter_ extends React.Component {
       data.date !== dayjs(this.state.date).format("YYYY-MM-DD")
     ) return;
 
+    const orders = Array.isArray(res?.orders) ? res.orders : [];
+    const drivers = this.collectDrivers(orders);
+    const driver = drivers.find((item) => item.id === this.state.driver?.id) ?? null;
+
     this.setState(
       {
-        orders: Array.isArray(res?.orders) ? res.orders : [],
+        orders,
+        drivers,
+        driver,
         err_info: res?.err_info ?? {},
       },
       () => this.filterNumber(),
     );
+  }
+
+  collectDrivers(orders) {
+    const drivers = new Map();
+
+    orders.forEach((order) => {
+      const id = Number(order.driver_id);
+      if (id > 0 && !drivers.has(id)) {
+        drivers.set(id, { id, name: order.driver || String(id) });
+      }
+    });
+
+    return [...drivers.values()].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }
+
+  changeDriver(event, value) {
+    this.setState({ driver: value ?? null }, () => this.filterNumber());
   }
 
   btnGetOrders() {
@@ -461,6 +488,12 @@ class Concenter_ extends React.Component {
         (item) =>
           (item.street + " " + item.home).toLowerCase().indexOf(this.state.addr.toLowerCase()) !==
           -1,
+      );
+    }
+
+    if (this.state.driver && this.hasAccess(this.state.acces?.driver_access)) {
+      renderOrders = renderOrders.filter(
+        (item) => Number(item.driver_id) === this.state.driver.id,
       );
     }
 
@@ -1257,6 +1290,23 @@ class Concenter_ extends React.Component {
             />
           </Grid>
 
+          {this.hasAccess(this.state.acces?.driver_access) && (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyAutocomplite
+                label="Водитель"
+                multiple={false}
+                data={this.state.drivers}
+                value={this.state.driver}
+                func={this.changeDriver.bind(this)}
+              />
+            </Grid>
+          )}
+
           <Grid
             size={{
               xs: 12,
@@ -1437,6 +1487,9 @@ class Concenter_ extends React.Component {
                           <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>
                         )}
 
+                        {this.hasAccess(acces?.driver_take_time_access) && (
+                          <TableCell>Курьер взял заказ</TableCell>
+                        )}
                         <TableCell>Тип</TableCell>
                         <TableCell>Статус</TableCell>
 
@@ -1602,6 +1655,11 @@ class Concenter_ extends React.Component {
                             </TableCell>
                           )}
 
+                          {this.hasAccess(acces?.driver_take_time_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.driver_take_time}
+                            </TableCell>
+                          )}
                           <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
                             {item.type_order}
                           </TableCell>
