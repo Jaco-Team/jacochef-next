@@ -35,10 +35,14 @@ test("financial column geometry stays shared by headers, rows, totals and sticky
     "../../../components/staff_schedule/sections/StaffScheduleMobileTableSection.jsx",
   );
   assert.match(constants, /SUMMARY_COLUMN_WIDTH = 84/);
-  assert.match(desktop, /style=\{\{ width: SUMMARY_COLUMN_WIDTH \}\}/);
-  assert.match(desktop, /summaryColumns\.length \* SUMMARY_COLUMN_WIDTH/);
+  assert.match(constants, /WORKED_HOURS_COLUMN_WIDTH = 100/);
+  assert.match(constants, /column\?\.key === "worked_hours" \? WORKED_HOURS_COLUMN_WIDTH : SUMMARY_COLUMN_WIDTH/);
+  assert.match(desktop, /style=\{\{ width: getSummaryColumnWidth\(column\) \}\}/);
+  assert.match(desktop, /getSummaryColumnsWidth\(summaryColumns\)/);
+  assert.doesNotMatch(desktop, /summaryColumns\.length \* SUMMARY_COLUMN_WIDTH/);
   assert.equal((desktop.match(/<ScheduleTableHeaderRow\s/g) || []).length, 2);
-  assert.match(mobile, /MOBILE_SUMMARY_COLUMN_WIDTH = SUMMARY_COLUMN_WIDTH/);
-  assert.match(mobile, /summaryColumns\.length \* MOBILE_SUMMARY_COLUMN_WIDTH/);
-  assert.match(mobile, /getMobileFixedColumnSx\(MOBILE_SUMMARY_COLUMN_WIDTH\)/);
+  assert.equal((desktop.match(/<ScheduleTableColGroup[^>]*summaryColumns=\{summaryColumns\}/gs) || []).length, 2);
+  assert.doesNotMatch(mobile, /MOBILE_SUMMARY_COLUMN_WIDTH/);
+  assert.equal((mobile.match(/getSummaryColumnsWidth\(summaryColumns\)/g) || []).length, 2);
+  assert.equal((mobile.match(/getMobileFixedColumnSx\(getSummaryColumnWidth\(column\)\)/g) || []).length, 2);
 });

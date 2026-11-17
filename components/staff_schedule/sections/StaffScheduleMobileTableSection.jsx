@@ -24,7 +24,11 @@ import {
   uiColors,
   uiTableColors,
 } from "@/design-system/shared/ui";
-import { CONTROL_RADIUS, SUMMARY_COLUMN_WIDTH } from "../staffScheduleConstants";
+import {
+  CONTROL_RADIUS,
+  getSummaryColumnWidth,
+  getSummaryColumnsWidth,
+} from "../staffScheduleConstants";
 import {
   formatEmployeeCount,
   getRowBaseColor,
@@ -53,7 +57,6 @@ import {
 const MOBILE_SELECTION_COLUMN_WIDTH = 34;
 const MOBILE_EMPLOYEE_COLUMN_WIDTH = 150;
 const MOBILE_DAY_COLUMN_WIDTH = 76;
-const MOBILE_SUMMARY_COLUMN_WIDTH = SUMMARY_COLUMN_WIDTH;
 const MOBILE_CARD_BORDER = "1px solid #ECECEC";
 const MOBILE_CARD_RADIUS = "14px";
 const MOBILE_MIN_FONT_SIZE = 13;
@@ -406,7 +409,7 @@ function MobileScheduleRow({
             }
             sx={{
               ...mobileCellDividerSx,
-              ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
+              ...getMobileFixedColumnSx(getSummaryColumnWidth(column)),
               px: column.key === "worked_hours" ? 0.25 : 0.5,
               py: 0.75,
               fontSize: MOBILE_MIN_FONT_SIZE,
@@ -485,7 +488,7 @@ function MobileShiftCard({
     selectionColumnWidth +
     MOBILE_EMPLOYEE_COLUMN_WIDTH +
     (isCalendarHidden ? 0 : days.length * MOBILE_DAY_COLUMN_WIDTH) +
-    summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
+    getSummaryColumnsWidth(summaryColumns);
 
   return (
     <Box sx={mobileCardSx}>
@@ -687,7 +690,7 @@ function MobileShiftCard({
                       align="center"
                       sx={{
                         ...mobileCellDividerSx,
-                        ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
+                        ...getMobileFixedColumnSx(getSummaryColumnWidth(column)),
                         py: 0.7,
                         px: 0.5,
                         textAlign: "center",
@@ -774,11 +777,11 @@ function MobileSummaryCard({
   const dayCount = isCalendarHidden ? 0 : bonusDayValues.length;
   const labelColumnWidth =
     MOBILE_EMPLOYEE_COLUMN_WIDTH + (hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH);
-  const cellTemplate = `${labelColumnWidth}px repeat(${dayCount}, ${MOBILE_DAY_COLUMN_WIDTH}px) repeat(${summaryColumns.length}, ${MOBILE_SUMMARY_COLUMN_WIDTH}px)`;
+  const cellTemplate = `${labelColumnWidth}px repeat(${dayCount}, ${MOBILE_DAY_COLUMN_WIDTH}px) ${summaryColumns.map((column) => `${getSummaryColumnWidth(column)}px`).join(" ")}`;
   const gridWidth =
     labelColumnWidth +
     dayCount * MOBILE_DAY_COLUMN_WIDTH +
-    summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
+    getSummaryColumnsWidth(summaryColumns);
 
   const renderMetricRow = (
     label,
