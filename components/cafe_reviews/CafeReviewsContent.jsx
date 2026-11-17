@@ -1,8 +1,9 @@
-import { Button, Grid, Paper } from "@mui/material";
+import { Grid } from "@mui/material";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import { JacoButton, JacoSurface, uiColors } from "@/design-system/shared/ui";
 import CafeReviewsSectionContent, { FilterSurface } from "./CafeReviewsSectionContent";
 import CafeReviewsSectionTabs from "./CafeReviewsSectionTabs";
-import { blockBackground, desktopOnlySx, mobileOnlySx } from "./shared";
+import { desktopOnlySx, mobileOnlySx } from "./shared";
 
 export default function CafeReviewsContent({ page, isDesktop, visibleSections }) {
   const showFilters = page.section !== "links";
@@ -24,31 +25,30 @@ export default function CafeReviewsContent({ page, isDesktop, visibleSections })
             size={12}
             sx={desktopOnlySx}
           >
-            <Paper
+            <JacoSurface
               component="section"
               aria-label="Фильтры"
-              sx={{ p: 2, borderRadius: "12px", bgcolor: blockBackground, boxShadow: "none" }}
+              sx={{ p: 2, bgcolor: uiColors.surfaceMuted }}
             >
               <FilterSurface
                 page={page}
                 idPrefix="cafe-reviews-filters-desktop"
               />
-            </Paper>
+            </JacoSurface>
           </Grid>
 
           <Grid
             size={12}
             sx={mobileOnlySx}
           >
-            <Button
+            <JacoButton
               fullWidth
-              variant="outlined"
+              tone="secondary"
               startIcon={<FilterAltOutlinedIcon />}
               onClick={() => page.setFiltersOpen(true)}
-              sx={{ minHeight: 44, borderRadius: "12px", textTransform: "none" }}
             >
               Фильтры
-            </Button>
+            </JacoButton>
           </Grid>
         </>
       ) : null}

@@ -1,28 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  TextField,
   ClickAwayListener,
-  IconButton,
+  Divider,
+  Stack,
   Typography,
 } from "@mui/material";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
@@ -30,19 +17,38 @@ import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
 import {
-  blockBackground,
-  blockBorder,
+  JacoAlert,
+  JacoButton,
+  JacoIconButton,
+  JacoModal,
+  JacoSelect,
+  JacoStatusChip,
+  JacoSurface,
+  JacoTextInput,
+  uiColors,
+  uiRadii,
+  uiTypography,
+  useJacoConfirm,
+} from "@/design-system/shared/ui";
+import {
   DetailRow,
   formatDateTime,
   getOptionLabel,
   RatingValue,
   SeverityChip,
   StatusChip,
-  textSecondary,
   ZoneChip,
 } from "./shared";
 import CafeReviewPhotoGallery from "./CafeReviewPhotoGallery";
-import { useConfirm } from "@/src/hooks/useConfirm";
+
+const sectionTitleSx = { ...uiTypography.bodyMedium, color: uiColors.textStrong };
+const bodyTextSx = { ...uiTypography.label, color: uiColors.textStrong };
+const mutedTextSx = { ...uiTypography.label, color: uiColors.text };
+const accordionSx = {
+  backgroundColor: "transparent",
+  "&::before": { display: "none" },
+};
+const wrapChipSx = { height: "auto", "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 } };
 
 const terminalStatuses = ["resolved", "dismissed"];
 const validStatusTransitions = {
@@ -69,7 +75,7 @@ function getIssueLabel(issueCode, issues) {
 function Section({ title, children }) {
   return (
     <Box component="section">
-      <Typography sx={{ fontSize: 16, fontWeight: 800, mb: 1 }}>{title}</Typography>
+      <Typography sx={{ ...sectionTitleSx, mb: 1.5 }}>{title}</Typography>
       {children}
     </Box>
   );
@@ -77,17 +83,18 @@ function Section({ title, children }) {
 
 function IssueList({ issues }) {
   if (!issues.length) {
-    return <Typography sx={{ color: textSecondary }}>Причины не отмечены</Typography>;
+    return <Typography sx={mutedTextSx}>Причины не отмечены</Typography>;
   }
 
   return (
     <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
       {issues.map((issue) => (
-        <Chip
+        <JacoStatusChip
           key={issue.id ?? issue.code}
-          label={issue.name || issue.code}
+          tone="neutral"
           variant="outlined"
-          sx={{ height: "auto", "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 } }}
+          label={issue.name || issue.code}
+          sx={wrapChipSx}
         />
       ))}
     </Box>
@@ -96,7 +103,7 @@ function IssueList({ issues }) {
 
 function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
   if (!events.length) {
-    return <Typography sx={{ color: textSecondary }}>Событий пока нет</Typography>;
+    return <Typography sx={mutedTextSx}>Событий пока нет</Typography>;
   }
 
   return (
@@ -109,16 +116,15 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
           component="li"
           key={event.id}
           sx={{
-            borderLeft: "3px solid",
-            borderColor: "primary.light",
+            borderLeft: `2px solid ${uiColors.border}`,
             pl: 1.5,
           }}
         >
-          <Typography sx={{ fontSize: 13, color: textSecondary }}>
+          <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text }}>
             {formatDateTime(event.created_at)}
             {event.actor.name ? ` · ${event.actor.name}` : ""}
           </Typography>
-          <Typography sx={{ fontWeight: 700, mt: 0.25 }}>
+          <Typography sx={{ ...bodyTextSx, fontWeight: 600, mt: 0.25 }}>
             {{
               ai_analysis_generated: "AI-анализ сформирован",
               ai_suggestion_accepted: "AI-рекомендация принята",
@@ -128,20 +134,20 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
               "Обновление"}
           </Typography>
           {event.status_from || event.status_to ? (
-            <Typography sx={{ fontSize: 14, mt: 0.25 }}>
+            <Typography sx={{ ...bodyTextSx, mt: 0.25 }}>
               Статус: {getOptionLabel(dictionaries.statuses, event.status_from)} →{" "}
               {getOptionLabel(dictionaries.statuses, event.status_to)}
             </Typography>
           ) : null}
           {event.severity ? (
-            <Typography sx={{ fontSize: 14, mt: 0.25 }}>
+            <Typography sx={{ ...bodyTextSx, mt: 0.25 }}>
               Критичность: {getOptionLabel(dictionaries.severities, event.severity)}
             </Typography>
           ) : null}
           {event.comment ? (
             <Box sx={{ mt: 0.5 }}>
               {event.comment_type ? (
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+                <Typography sx={{ ...mutedTextSx, fontWeight: 600 }}>
                   {{
                     operator: "Комментарий оператора",
                     ai_recommendation: "Рекомендации AI",
@@ -149,13 +155,13 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
                   }[event.comment_type] || "Комментарий"}
                 </Typography>
               ) : null}
-              <Typography sx={{ fontSize: 14, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+              <Typography sx={{ ...bodyTextSx, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
                 {event.comment}
               </Typography>
             </Box>
           ) : null}
           {event.decision ? (
-            <Typography sx={{ fontSize: 14, mt: 0.25 }}>
+            <Typography sx={{ ...bodyTextSx, mt: 0.25 }}>
               Решение: {event.decision === "accepted" ? "принято" : "отклонено"}
             </Typography>
           ) : null}
@@ -177,29 +183,36 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [additionalContext, setAdditionalContext] = useState("");
   const [reanalyzeAttachment, setReanalyzeAttachment] = useState(null);
-  const { withConfirm, ConfirmDialog } = useConfirm();
+  const { withConfirm, ConfirmDialog } = useJacoConfirm();
 
   if (!analysis) {
     const runAnalysis = withConfirm(
       () => onReanalyze({ incidentId: incident.id, additionalContext: "" }),
-      "Запустить AI-анализ сейчас?",
+      {
+        title: "AI-анализ",
+        message: "Запустить AI-анализ сейчас?",
+        tone: "success",
+        confirmLabel: "Запустить",
+        confirmTone: "success",
+        cancelLabel: "Отмена",
+      },
     );
 
     return (
       <Stack spacing={1.25}>
-        <Alert severity="info">
+        <JacoAlert severity="info">
           AI-анализ ещё не готов или недоступен. Решение по инциденту принимает оператор.
-        </Alert>
+        </JacoAlert>
         {canDecide ? (
-          <Button
-            variant="outlined"
-            color="error"
+          <JacoButton
+            tone="outlinePrimary"
+            compact
             startIcon={<RefreshOutlinedIcon />}
             onClick={runAnalysis}
-            sx={{ alignSelf: "flex-start", textTransform: "none", borderRadius: "12px" }}
+            sx={{ alignSelf: "flex-start" }}
           >
             Запустить
-          </Button>
+          </JacoButton>
         ) : null}
         <ConfirmDialog />
       </Stack>
@@ -233,27 +246,24 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
   };
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{ p: 1.75, borderRadius: "12px", borderColor: blockBorder, bgcolor: "#FFFDF7" }}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+    <JacoSurface sx={{ p: 2, borderRadius: uiRadii.md, bgcolor: uiColors.surfaceMuted }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
         <AutoAwesomeOutlinedIcon
           aria-hidden="true"
-          color="primary"
+          sx={{ color: uiColors.primary }}
         />
-        <Typography sx={{ fontWeight: 800 }}>AI-рекомендация</Typography>
+        <Typography sx={sectionTitleSx}>AI-рекомендация</Typography>
         {analysis.confidence ? (
-          <Chip
-            size="small"
-            label={`Уверенность ${Math.round(analysis.confidence * 100)}%`}
+          <JacoStatusChip
+            tone="neutral"
             variant="outlined"
+            label={`Уверенность ${Math.round(analysis.confidence * 100)}%`}
           />
         ) : null}
       </Box>
       <Stack spacing={1.5}>
         <DetailRow label="Резюме">
-          <Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+          <Typography sx={{ ...bodyTextSx, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
             {analysis.summary_ru || "—"}
           </Typography>
         </DetailRow>
@@ -263,10 +273,10 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
             options={dictionaries.severities}
           />
           {analysis.suggested_category ? (
-            <Chip
-              size="small"
-              label={`Категория: ${aiCategoryLabels[analysis.suggested_category] || analysis.suggested_category}`}
+            <JacoStatusChip
+              tone="neutral"
               variant="outlined"
+              label={`Категория: ${aiCategoryLabels[analysis.suggested_category] || analysis.suggested_category}`}
             />
           ) : null}
         </Box>
@@ -274,7 +284,7 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
           <DetailRow label="Рекомендуемые действия">
             <Box
               component="ul"
-              sx={{ mt: 0.5, mb: 0, pl: 2.5 }}
+              sx={{ ...bodyTextSx, mt: 0.5, mb: 0, pl: 2.5 }}
             >
               {analysis.recommended_actions.map((action, index) => (
                 <li key={`${action}-${index}`}>{action}</li>
@@ -286,7 +296,7 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
           <DetailRow label="Основания">
             <Box
               component="ul"
-              sx={{ mt: 0.5, mb: 0, pl: 2.5 }}
+              sx={{ ...bodyTextSx, mt: 0.5, mb: 0, pl: 2.5 }}
             >
               {analysis.evidence.map((evidence, index) => (
                 <li key={`${evidence.issue_code || evidence.photo_id || evidence.text}-${index}`}>
@@ -307,118 +317,110 @@ function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onRejec
         {analysis.pii_detected || analysis.image_uncertain ? (
           <Stack spacing={0.75}>
             {analysis.pii_detected ? (
-              <Alert severity="warning">В данных может содержаться персональная информация.</Alert>
+              <JacoAlert severity="warning">
+                В данных может содержаться персональная информация.
+              </JacoAlert>
             ) : null}
             {analysis.image_uncertain ? (
-              <Alert severity="warning">
+              <JacoAlert severity="warning">
                 Анализ изображений неуверенный. Проверьте фотографии вручную.
-              </Alert>
+              </JacoAlert>
             ) : null}
           </Stack>
         ) : null}
         {hasDecision ? (
-          <Alert
+          <JacoAlert
             severity={analysis.human_decision === "accepted" ? "success" : "info"}
             icon={<CheckCircleOutlineIcon />}
           >
             {decisionLabels[analysis.human_decision] || analysis.human_decision}
-          </Alert>
+          </JacoAlert>
         ) : null}
         {canDecide && !reanalyzeOpen && analysis.human_decision !== "accepted" ? (
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {!hasDecision ? (
               <>
-                <Button
-                  variant="contained"
-                  color="success"
+                <JacoButton
+                  tone="success"
+                  compact
                   onClick={() => onApply(analysis)}
                   disabled={!analysis.suggested_severity}
-                  sx={{ textTransform: "none", borderRadius: "12px", boxShadow: "none" }}
                 >
                   Принять
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
+                </JacoButton>
+                <JacoButton
+                  tone="outlinePrimary"
+                  compact
                   onClick={() => onReject(analysis)}
-                  sx={{ textTransform: "none", borderRadius: "12px" }}
                 >
                   Отклонить
-                </Button>
+                </JacoButton>
               </>
             ) : null}
-            <Button
-              variant="contained"
-              color="error"
-              aria-label="Повторить AI-анализ"
-              title="Повторить AI-анализ"
+            <JacoButton
+              tone="secondary"
+              compact
+              startIcon={<RefreshOutlinedIcon />}
               onClick={() => setReanalyzeOpen(true)}
-              sx={{
-                minWidth: 40,
-                width: 40,
-                height: 40,
-                p: 0,
-                borderRadius: "12px",
-                boxShadow: "none",
-              }}
             >
-              <RefreshOutlinedIcon />
-            </Button>
+              Повторить анализ
+            </JacoButton>
           </Box>
         ) : null}
         {canDecide && reanalyzeOpen ? (
           <ClickAwayListener onClickAway={cancelReanalyze}>
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.75 }}>
-              <TextField
+            <Stack spacing={1}>
+              <JacoTextInput
                 autoFocus
                 fullWidth
                 multiline
                 minRows={2}
                 maxRows={4}
-                size="small"
+                label="Пояснение для повторного анализа"
                 value={additionalContext}
                 onChange={(event) => setAdditionalContext(event.target.value)}
                 placeholder="Дополнительная информация по инциденту"
-                slotProps={{
-                  htmlInput: { maxLength: 2000 },
-                }}
+                inputProps={{ maxLength: 2000 }}
               />
-              <Button
-                component="label"
-                variant="outlined"
-                size="small"
-                sx={{ textTransform: "none", borderRadius: "12px", alignSelf: "stretch" }}
-              >
-                {reanalyzeAttachment ? `Фото: ${reanalyzeAttachment.name}` : "Добавить фото"}
-                <input
-                  hidden
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => setReanalyzeAttachment(event.target.files?.[0] || null)}
-                />
-              </Button>
-              <IconButton
-                color="success"
-                aria-label="Отправить дополнительный контекст"
-                disabled={!additionalContext.trim() && !reanalyzeAttachment}
-                onClick={submitReanalyze}
-                sx={{ mt: 0.25 }}
-              >
-                <ArrowForwardIcon />
-              </IconButton>
-              <IconButton
-                color="error"
-                aria-label="Отменить повторный анализ"
-                onClick={cancelReanalyze}
-                sx={{ mt: 0.25 }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <JacoButton
+                  component="label"
+                  tone="secondary"
+                  compact
+                  startIcon={<AttachFileIcon />}
+                  sx={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {reanalyzeAttachment ? `Фото: ${reanalyzeAttachment.name}` : "Добавить фото"}
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => setReanalyzeAttachment(event.target.files?.[0] || null)}
+                  />
+                </JacoButton>
+                <Box sx={{ flex: 1 }} />
+                <JacoButton
+                  tone="secondary"
+                  compact
+                  onClick={cancelReanalyze}
+                >
+                  Отмена
+                </JacoButton>
+                <JacoButton
+                  tone="success"
+                  compact
+                  endIcon={<ArrowForwardIcon />}
+                  disabled={!additionalContext.trim() && !reanalyzeAttachment}
+                  onClick={submitReanalyze}
+                >
+                  Отправить
+                </JacoButton>
+              </Box>
+            </Stack>
           </ClickAwayListener>
         ) : null}
       </Stack>
-    </Paper>
+    </JacoSurface>
   );
 }
 
@@ -431,12 +433,12 @@ function AiAnalysisSection({ analysis, children }) {
   }, [analysis?.id, decision]);
 
   const status = !analysis
-    ? { label: "Не проанализирован", color: "default" }
+    ? { label: "Не проанализирован", tone: "neutral", variant: "outlined" }
     : decision === "accepted"
-      ? { label: "Принято", color: "success" }
+      ? { label: "Принято", tone: "success", variant: "soft" }
       : decision === "rejected"
-        ? { label: "Отклонено", color: "default" }
-        : { label: "Готово к проверке", color: "warning" };
+        ? { label: "Отклонено", tone: "neutral", variant: "soft" }
+        : { label: "Готово к проверке", tone: "warning", variant: "soft" };
 
   return (
     <Accordion
@@ -444,10 +446,7 @@ function AiAnalysisSection({ analysis, children }) {
       elevation={0}
       expanded={expanded}
       onChange={(_, nextExpanded) => setExpanded(nextExpanded)}
-      sx={{
-        backgroundColor: "transparent",
-        "&::before": { display: "none" },
-      }}
+      sx={accordionSx}
     >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
@@ -457,12 +456,11 @@ function AiAnalysisSection({ analysis, children }) {
           "& .MuiAccordionSummary-content": { my: 0.75, alignItems: "center", gap: 1 },
         }}
       >
-        <Typography sx={{ fontSize: 16, fontWeight: 800 }}>AI-анализ</Typography>
-        <Chip
-          size="small"
+        <Typography sx={sectionTitleSx}>AI-анализ</Typography>
+        <JacoStatusChip
+          tone={status.tone}
+          variant={status.variant}
           label={status.label}
-          color={status.color}
-          variant="outlined"
         />
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 0.5, pb: 0 }}>{children}</AccordionDetails>
@@ -547,22 +545,23 @@ export default function CafeReviewDetail({
         sx={{ p: 3, textAlign: "center" }}
       >
         {showClose ? (
-          <Button
+          <JacoButton
+            tone="secondary"
+            compact
             onClick={onClose}
             startIcon={<CloseIcon />}
-            sx={{ mb: 2, textTransform: "none" }}
+            sx={{ mb: 2 }}
           >
             Закрыть
-          </Button>
+          </JacoButton>
         ) : null}
-        <Typography sx={{ color: "error.main", mb: 1.5 }}>{error}</Typography>
-        <Button
-          variant="outlined"
+        <Typography sx={{ color: uiColors.danger, mb: 1.5 }}>{error}</Typography>
+        <JacoButton
+          tone="outlinePrimary"
           onClick={onRetry}
-          sx={{ textTransform: "none", borderRadius: "12px" }}
         >
           Повторить
-        </Button>
+        </JacoButton>
       </Box>
     );
   }
@@ -571,7 +570,7 @@ export default function CafeReviewDetail({
     if (loading) return null;
 
     return (
-      <Box sx={{ p: 3, textAlign: "center", color: textSecondary }}>
+      <Box sx={{ p: 3, textAlign: "center", color: uiColors.text }}>
         Выберите запись, чтобы открыть детали
       </Box>
     );
@@ -638,24 +637,26 @@ export default function CafeReviewDetail({
         }}
       >
         {showClose ? (
-          <Button
+          <JacoButton
+            tone="secondary"
+            compact
             onClick={onClose}
             startIcon={<CloseIcon />}
             aria-label="Закрыть детали"
-            sx={{ justifySelf: "end", textTransform: "none" }}
+            sx={{ justifySelf: "end" }}
           >
             Закрыть
-          </Button>
+          </JacoButton>
         ) : null}
         <Box>
           <Typography
             id={`${idPrefix}-title`}
             component="h2"
-            sx={{ fontSize: 22, fontWeight: 800 }}
+            sx={{ fontSize: 20, lineHeight: 1.3, fontWeight: 600, color: uiColors.textStrong }}
           >
             {kind === "incident" ? `Инцидент №${incident?.id}` : `Отзыв №${review.id}`}
           </Typography>
-          <Typography sx={{ color: textSecondary, mt: 0.25 }}>
+          <Typography sx={{ ...mutedTextSx, mt: 0.25 }}>
             {formatDateTime(review.completed_at || review.created_at)}
           </Typography>
         </Box>
@@ -679,7 +680,7 @@ export default function CafeReviewDetail({
             ) : null}
           </Box>
           <DetailRow label="Кафе">
-            <Typography>
+            <Typography sx={bodyTextSx}>
               {review.point_name || "—"}
               {review.city_name ? ` · ${review.city_name}` : ""}
             </Typography>
@@ -694,24 +695,16 @@ export default function CafeReviewDetail({
           ) : null}
         </Box>
 
-        <Divider />
+        <Divider sx={{ borderColor: uiColors.borderLight }} />
         <Section title="Причины">
           <IssueList issues={detail.issues || []} />
         </Section>
         <Section title="Комментарий гостя">
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 1.5,
-              borderRadius: "12px",
-              borderColor: blockBorder,
-              bgcolor: blockBackground,
-            }}
-          >
-            <Typography sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+          <JacoSurface sx={{ p: 1.5, borderRadius: uiRadii.md, bgcolor: uiColors.surfaceMuted }}>
+            <Typography sx={{ ...bodyTextSx, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
               {review.comment || "Комментарий не оставлен"}
             </Typography>
-          </Paper>
+          </JacoSurface>
         </Section>
 
         <CafeReviewPhotoGallery
@@ -721,83 +714,62 @@ export default function CafeReviewDetail({
         />
 
         {kind === "review" && incident && canOpenIncident ? (
-          <Button
-            variant="outlined"
+          <JacoButton
+            tone="outlinePrimary"
+            compact
             onClick={() => onOpenIncident(incident.id)}
-            sx={{ justifySelf: "start", textTransform: "none", borderRadius: "12px" }}
+            sx={{ justifySelf: "start" }}
           >
             Открыть инцидент
-          </Button>
+          </JacoButton>
         ) : null}
 
         {kind === "review" && review.status === "completed" && !incident && canEdit ? (
-          <Button
-            variant="outlined"
+          <JacoButton
+            tone="outlinePrimary"
+            compact
             onClick={() => setConfirmAction({ type: "mark-incident" })}
-            sx={{ justifySelf: "start", textTransform: "none", borderRadius: "12px" }}
+            sx={{ justifySelf: "start" }}
           >
             Отметить как инцидент
-          </Button>
+          </JacoButton>
         ) : null}
 
         {kind === "incident" && incident ? (
           <>
-            <Divider />
+            <Divider sx={{ borderColor: uiColors.borderLight }} />
             <Section title="Работа с инцидентом">
               {canEdit ? (
-                <Stack spacing={1.5}>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                  >
-                    <InputLabel id={`${idPrefix}-incident-status-label`}>Статус</InputLabel>
-                    <Select
-                      labelId={`${idPrefix}-incident-status-label`}
-                      id={`${idPrefix}-incident-status`}
-                      value={incidentStatusValue}
-                      label="Статус"
-                      onChange={(event) => {
-                        const nextStatus = event.target.value;
-                        setStatus(nextStatus);
-                        if (nextStatus === incident.status) setAttachment(null);
-                      }}
-                      sx={{ borderRadius: "12px" }}
-                    >
-                      {incidentStatusOptions.map((option) => (
-                        <MenuItem
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl
-                    fullWidth
-                    size="small"
-                  >
-                    <InputLabel id={`${idPrefix}-incident-severity-label`}>Критичность</InputLabel>
-                    <Select
-                      labelId={`${idPrefix}-incident-severity-label`}
-                      id={`${idPrefix}-incident-severity`}
-                      value={severity}
-                      label="Критичность"
-                      onChange={(event) => setSeverity(event.target.value)}
-                      sx={{ borderRadius: "12px" }}
-                    >
-                      {dictionaries.severities.map((option) => (
-                        <MenuItem
-                          key={option.value}
-                          value={option.value}
-                        >
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <TextField
+                <Stack spacing={2}>
+                  <JacoSelect
+                    id={`${idPrefix}-incident-status`}
+                    label="Статус"
+                    allowNone={false}
+                    options={incidentStatusOptions.map((option) => ({
+                      id: option.value,
+                      name: option.label,
+                    }))}
+                    value={incidentStatusValue}
+                    onChange={(event) => {
+                      const nextStatus = event.target.value;
+                      setStatus(nextStatus);
+                      if (nextStatus === incident.status) setAttachment(null);
+                    }}
+                  />
+                  <JacoSelect
+                    id={`${idPrefix}-incident-severity`}
+                    label="Критичность"
+                    allowNone={false}
+                    options={dictionaries.severities.map((option) => ({
+                      id: option.value,
+                      name: option.label,
+                    }))}
+                    value={severity}
+                    onChange={(event) => setSeverity(event.target.value)}
+                  />
+                  <JacoTextInput
                     id={`${idPrefix}-incident-comment`}
+                    fullWidth
                     label="Комментарий оператора"
                     value={comment}
                     onChange={(event) => setComment(event.target.value)}
@@ -810,19 +782,19 @@ export default function CafeReviewDetail({
                     }
                     minRows={3}
                     multiline
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
-                    slotProps={{
-                      htmlInput: { maxLength: 2000 },
-                    }}
+                    inputProps={{ maxLength: 2000 }}
                   />
                   {status !== incident.status ? (
-                    <Button
+                    <JacoButton
                       component="label"
-                      variant="outlined"
+                      tone="secondary"
+                      compact
+                      startIcon={<AttachFileIcon />}
                       sx={{
                         alignSelf: "flex-start",
-                        textTransform: "none",
-                        borderRadius: "12px",
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                       }}
                     >
                       {attachment ? `Фото: ${attachment.name}` : "Прикрепить фото (необязательно)"}
@@ -832,24 +804,18 @@ export default function CafeReviewDetail({
                         accept="image/jpeg,image/png,image/webp"
                         onChange={(event) => setAttachment(event.target.files?.[0] || null)}
                       />
-                    </Button>
+                    </JacoButton>
                   ) : null}
-                  <Button
-                    variant="contained"
+                  <JacoButton
                     onClick={() => setConfirmAction({ type: "save" })}
                     disabled={!hasChanges || (commentRequired && !comment.trim())}
-                    sx={{
-                      alignSelf: "flex-start",
-                      textTransform: "none",
-                      borderRadius: "12px",
-                      boxShadow: "none",
-                    }}
+                    sx={{ alignSelf: "flex-start" }}
                   >
                     Сохранить изменения
-                  </Button>
+                  </JacoButton>
                 </Stack>
               ) : (
-                <Alert severity="info">У вас нет прав на изменение инцидента.</Alert>
+                <JacoAlert severity="info">У вас нет прав на изменение инцидента.</JacoAlert>
               )}
             </Section>
             {canViewAi ? (
@@ -875,10 +841,7 @@ export default function CafeReviewDetail({
               disableGutters
               elevation={0}
               defaultExpanded={false}
-              sx={{
-                backgroundColor: "transparent",
-                "&::before": { display: "none" },
-              }}
+              sx={accordionSx}
             >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
@@ -888,7 +851,7 @@ export default function CafeReviewDetail({
                   "& .MuiAccordionSummary-content": { my: 1 },
                 }}
               >
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>История событий</Typography>
+                <Typography sx={sectionTitleSx}>История событий</Typography>
               </AccordionSummary>
               <AccordionDetails sx={{ px: 0, pb: 0 }}>
                 <EventTimeline
@@ -902,36 +865,31 @@ export default function CafeReviewDetail({
           </>
         ) : null}
       </Box>
-      <Dialog
+      <JacoModal
         open={Boolean(confirmAction)}
         onClose={() => setConfirmAction(null)}
+        title={confirmTitle}
         maxWidth="xs"
-        fullWidth
-        aria-labelledby={`${idPrefix}-incident-confirm-title`}
-        slotProps={{ backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.3)" } } }}
+        actions={
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, width: "100%" }}>
+            <JacoButton
+              tone="secondary"
+              compact
+              onClick={() => setConfirmAction(null)}
+            >
+              Отмена
+            </JacoButton>
+            <JacoButton
+              compact
+              onClick={runConfirmedAction}
+            >
+              Подтвердить
+            </JacoButton>
+          </Box>
+        }
       >
-        <DialogTitle id={`${idPrefix}-incident-confirm-title`}>{confirmTitle}</DialogTitle>
-        <DialogContent>
-          <Typography sx={{ color: textSecondary }}>
-            Действие будет зафиксировано в истории инцидента.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => setConfirmAction(null)}
-            sx={{ textTransform: "none" }}
-          >
-            Отмена
-          </Button>
-          <Button
-            variant="contained"
-            onClick={runConfirmedAction}
-            sx={{ textTransform: "none", borderRadius: "12px", boxShadow: "none" }}
-          >
-            Подтвердить
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography sx={mutedTextSx}>Действие будет зафиксировано в истории инцидента.</Typography>
+      </JacoModal>
     </>
   );
 }

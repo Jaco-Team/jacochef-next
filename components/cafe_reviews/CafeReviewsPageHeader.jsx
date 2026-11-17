@@ -1,6 +1,8 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { brandRed, CAFE_REVIEWS_AUTO_REFRESH_MINUTES, textSecondary, white } from "./shared";
+import { JacoButton, uiColors } from "@/design-system/shared/ui";
+import { CAFE_REVIEWS_AUTO_REFRESH_MINUTES } from "./shared";
 
 export default function CafeReviewsPageHeader({
   title,
@@ -29,50 +31,38 @@ export default function CafeReviewsPageHeader({
           sx={{
             fontSize: 28,
             "@media (min-width: 668px)": { fontSize: 32 },
-            fontWeight: 700,
+            lineHeight: 1.2,
+            fontWeight: 600,
+            color: uiColors.textStrong,
           }}
         >
           {title}
         </Typography>
-        <Typography sx={{ color: textSecondary, mt: 0.5 }}>
+        <Typography sx={{ color: uiColors.text, mt: 0.5 }}>
           Контроль обратной связи и работа с инцидентами
         </Typography>
       </Box>
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", justifyContent: "flex-end" }}>
-        <Button
-          variant="outlined"
+        <JacoButton
+          tone="secondary"
+          compact
           startIcon={<RefreshIcon />}
           onClick={onRefresh}
           disabled={refreshDisabled}
-          sx={{ minHeight: 40, px: 1.5, borderRadius: "12px", textTransform: "none" }}
         >
           Обновить
-        </Button>
-        <Button
-          variant={autoRefreshEnabled ? "contained" : "outlined"}
-          startIcon={<RefreshIcon />}
+        </JacoButton>
+        <JacoButton
+          tone={autoRefreshEnabled ? "primary" : "secondary"}
+          compact
+          startIcon={<AutorenewIcon />}
           onClick={onToggleAutoRefresh}
           disabled={refreshDisabled}
           aria-pressed={autoRefreshEnabled}
           title={`Автообновление каждые ${CAFE_REVIEWS_AUTO_REFRESH_MINUTES} мин.`}
-          sx={{
-            minHeight: 40,
-            minWidth: 0,
-            px: 1.5,
-            borderRadius: "12px",
-            textTransform: "none",
-            ...(autoRefreshEnabled
-              ? {
-                  color: white,
-                  bgcolor: brandRed,
-                  borderColor: brandRed,
-                  "&:hover": { bgcolor: brandRed, filter: "brightness(0.9)" },
-                }
-              : {}),
-          }}
         >
-          {CAFE_REVIEWS_AUTO_REFRESH_MINUTES}'
-        </Button>
+          Авто · {CAFE_REVIEWS_AUTO_REFRESH_MINUTES} мин
+        </JacoButton>
       </Box>
     </Box>
   );

@@ -1,10 +1,11 @@
-import { Button, Grid, Paper, Typography } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
+import { JacoButton, JacoSurface, uiColors } from "@/design-system/shared/ui";
 import CafeReviewsFilters from "./CafeReviewsFilters";
 import CafeReviewsLinks from "./CafeReviewsLinks";
 import CafeReviewsList from "./CafeReviewsList";
 import CafeReviewsOverview from "./CafeReviewsOverview";
 import CafeReviewDetail from "./CafeReviewDetail";
-import { blockBackground, blockBorder, desktopOnlySx, tabletOnlySx } from "./shared";
+import { desktopOnlySx, tabletOnlySx } from "./shared";
 
 function FilterSurface({ page, idPrefix, compact = false }) {
   const isIncidentSection = page.section === "incidents";
@@ -68,20 +69,18 @@ function DetailContent({ page, idPrefix, showClose = false }) {
 function ContentState({ error, onRetry, children }) {
   if (error) {
     return (
-      <Paper
+      <JacoSurface
         role="alert"
-        variant="outlined"
-        sx={{ p: 3, textAlign: "center", borderRadius: "12px" }}
+        sx={{ p: 3, textAlign: "center" }}
       >
-        <Typography sx={{ color: "error.main", mb: 1.5 }}>{error}</Typography>
-        <Button
-          variant="outlined"
+        <Typography sx={{ color: uiColors.danger, mb: 1.5 }}>{error}</Typography>
+        <JacoButton
+          tone="outlinePrimary"
           onClick={onRetry}
-          sx={{ textTransform: "none", borderRadius: "12px" }}
         >
           Повторить
-        </Button>
-      </Paper>
+        </JacoButton>
+      </JacoSurface>
     );
   }
 
@@ -101,14 +100,12 @@ function TabletFilters({ page, idPrefix }) {
         },
       }}
     >
-      <Paper
+      <JacoSurface
         component="aside"
         aria-label="Фильтры"
         sx={{
           p: 1.5,
-          borderRadius: "12px",
-          bgcolor: blockBackground,
-          boxShadow: "none",
+          bgcolor: uiColors.surfaceMuted,
           position: "sticky",
           top: 80,
         }}
@@ -118,7 +115,7 @@ function TabletFilters({ page, idPrefix }) {
           idPrefix={idPrefix}
           compact
         />
-      </Paper>
+      </JacoSurface>
     </Grid>
   );
 }
@@ -225,11 +222,8 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
             },
           }}
         >
-          <Paper
-            variant="outlined"
+          <JacoSurface
             sx={{
-              borderRadius: "12px",
-              borderColor: blockBorder,
               maxHeight: "50dvh",
               overflowY: "auto",
             }}
@@ -238,7 +232,7 @@ export default function CafeReviewsSectionContent({ page, isDesktop }) {
               page={page}
               idPrefix="cafe-reviews-detail-desktop"
             />
-          </Paper>
+          </JacoSurface>
         </Grid>
       ) : null}
     </>

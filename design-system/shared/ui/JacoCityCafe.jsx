@@ -13,6 +13,7 @@ import {
   ButtonGroup,
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import { uiColors, uiControl, uiRadii, uiStateColors, uiTypography } from "../tokens";
 
 // TODO: для того, чтобы это привести в порядок, Helper->getMyPointsList должен возвращать
 // атомарные данные cityId и cityName, но придется весь фронт обойти и автокомплиты привести
@@ -377,15 +378,31 @@ export default function JacoCityCafe({
           {...params}
           label={label}
           placeholder={placeholder}
-          sx={
-            compact
-              ? {
-                  "& .MuiInputBase-root": { minHeight: 40 },
-                  "& .MuiInputBase-input": { fontSize: 14 },
-                  "& .MuiInputLabel-root": { fontSize: 13 },
-                }
-              : undefined
-          }
+          sx={{
+            // Same control geometry as JacoTextInput and JacoSelect.
+            "& .MuiOutlinedInput-root": {
+              minHeight: compact ? uiControl.compactHeight : uiControl.height,
+              alignItems: "center",
+              borderRadius: uiRadii.md,
+              backgroundColor: disabled ? uiStateColors.disabledSurface : uiColors.surface,
+              color: uiColors.text,
+              "& fieldset": { borderColor: uiColors.border },
+              "&:hover fieldset": { borderColor: uiColors.border },
+              "&.Mui-focused fieldset": { borderColor: uiColors.primary, borderWidth: 1 },
+            },
+            "& .MuiInputBase-input": {
+              ...uiTypography.body,
+              ...(compact ? { fontSize: 14 } : null),
+            },
+            "& .MuiInputLabel-root": {
+              ...uiTypography.label,
+              ...(compact ? { fontSize: 13 } : null),
+              color: uiColors.textMuted,
+              transform: `translate(16px, ${compact ? 11 : 13}px) scale(1)`,
+              "&.MuiInputLabel-shrink": { transform: "translate(16px, -9px) scale(0.75)" },
+              "&.Mui-focused": { color: uiColors.primary },
+            },
+          }}
         />
       )}
       limitTags={compact ? 1 : 2}

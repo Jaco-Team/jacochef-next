@@ -1,20 +1,16 @@
 import { useEffect, useMemo } from "react";
+import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
 import {
-  Backdrop,
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  Paper,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
-import MyAlert from "@/ui/MyAlert";
+  JacoAlert,
+  JacoBackdropLoader,
+  JacoButton,
+  JacoSurface,
+  uiColors,
+} from "@/design-system/shared/ui";
 import CafeReviewsContent from "./CafeReviewsContent";
 import CafeReviewsPageHeader from "./CafeReviewsPageHeader";
 import CafeReviewsResponsiveOverlays from "./CafeReviewsResponsiveOverlays";
 import useCafeReviewsPage from "./useCafeReviewsPage";
-import { blockBorder } from "./shared";
 
 const sections = [
   { value: "overview", label: "Обзор", accessKey: "reviews" },
@@ -46,15 +42,13 @@ export default function CafeReviewsPage() {
 
   return (
     <Box>
-      <Backdrop
+      <JacoBackdropLoader
         open={
           page.bootstrapLoading || page.contentLoading || page.detailLoading || page.mutationLoading
         }
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
-      <MyAlert
+        sx={{ color: uiColors.surface }}
+      />
+      <JacoAlert
         isOpen={page.isAlert}
         onClose={page.closeAlert}
         status={page.alertStatus}
@@ -78,22 +72,20 @@ export default function CafeReviewsPage() {
 
         {!page.bootstrapReady && !page.bootstrapLoading ? (
           <Grid size={12}>
-            <Paper
+            <JacoSurface
               role="alert"
-              variant="outlined"
-              sx={{ p: 4, textAlign: "center", borderRadius: "12px", borderColor: blockBorder }}
+              sx={{ p: 4, textAlign: "center" }}
             >
-              <Typography sx={{ color: "error.main", mb: 1.5 }}>
+              <Typography sx={{ color: uiColors.danger, mb: 1.5 }}>
                 {page.bootstrapError || "Не удалось загрузить модуль"}
               </Typography>
-              <Button
-                variant="outlined"
+              <JacoButton
+                tone="outlinePrimary"
                 onClick={page.loadBootstrap}
-                sx={{ textTransform: "none", borderRadius: "12px" }}
               >
                 Повторить
-              </Button>
-            </Paper>
+              </JacoButton>
+            </JacoSurface>
           </Grid>
         ) : hasAccess ? (
           <CafeReviewsContent
@@ -103,13 +95,12 @@ export default function CafeReviewsPage() {
           />
         ) : page.bootstrapReady ? (
           <Grid size={12}>
-            <Paper
+            <JacoSurface
               role="status"
-              variant="outlined"
-              sx={{ p: 4, textAlign: "center", borderRadius: "12px", borderColor: blockBorder }}
+              sx={{ p: 4, textAlign: "center", color: uiColors.text }}
             >
               У вас нет доступа к отзывам кафе.
-            </Paper>
+            </JacoSurface>
           </Grid>
         ) : null}
       </Grid>
