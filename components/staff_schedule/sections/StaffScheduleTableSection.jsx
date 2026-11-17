@@ -39,6 +39,8 @@ import {
   POSITION_COLUMN_WIDTH,
   SELECTION_COLUMN_WIDTH,
   SUMMARY_COLUMN_WIDTH,
+  getSummaryColumnWidth,
+  getSummaryColumnsWidth,
 } from "../staffScheduleConstants";
 import {
   createStaffSchedulePolicy,
@@ -315,7 +317,7 @@ function ScheduleTableHeaderRow({
             align="center"
             sx={{
               ...tableCellDividerSx,
-              minWidth: SUMMARY_COLUMN_WIDTH,
+              minWidth: getSummaryColumnWidth(column),
               fontWeight: 600,
               fontSize: SALARY_HEADER_FONT_SIZE,
               lineHeight: SALARY_HEADER_LINE_HEIGHT,
@@ -348,7 +350,7 @@ function ScheduleTableHeaderRow({
   );
 }
 
-function ScheduleTableColGroup({ dayCount, summaryColumnCount, showFastActions }) {
+function ScheduleTableColGroup({ dayCount, summaryColumns, showFastActions }) {
   return (
     <colgroup>
       {showFastActions ? <col style={{ width: SELECTION_COLUMN_WIDTH }} /> : null}
@@ -361,10 +363,10 @@ function ScheduleTableColGroup({ dayCount, summaryColumnCount, showFastActions }
           style={{ width: DAY_COLUMN_WIDTH }}
         />
       ))}
-      {Array.from({ length: summaryColumnCount }).map((_, index) => (
+      {summaryColumns.map((column) => (
         <col
-          key={`summary-col-${index}`}
-          style={{ width: SUMMARY_COLUMN_WIDTH }}
+          key={`summary-col-${column.key}`}
+          style={{ width: getSummaryColumnWidth(column) }}
         />
       ))}
     </colgroup>
@@ -678,7 +680,7 @@ function ScheduleRow({
               }
               sx={{
                 ...tableCellDividerSx,
-                minWidth: SUMMARY_COLUMN_WIDTH,
+                minWidth: getSummaryColumnWidth(column),
                 fontSize: 11.5,
                 px: column.key === "worked_hours" ? 0.25 : 0.75,
                 cursor: isClickable ? "pointer" : "default",
@@ -738,6 +740,7 @@ function ShiftHeaderRow({
   stickyColumnCount,
   stickyWidth,
   middleColSpan,
+  toggleColumnWidth = SUMMARY_COLUMN_WIDTH,
   collapsed,
   onToggle,
   onEdit,
@@ -829,8 +832,8 @@ function ShiftHeaderRow({
           backgroundColor: headerBg,
           py: 0.75,
           px: 0.5,
-          minWidth: SUMMARY_COLUMN_WIDTH,
-          width: SUMMARY_COLUMN_WIDTH,
+          minWidth: toggleColumnWidth,
+          width: toggleColumnWidth,
         }}
       >
         <IconButton
@@ -925,7 +928,7 @@ function SummaryMetricRow({
           onClick={!blurValues && onSummaryCellClick ? () => onSummaryCellClick(column) : undefined}
           sx={{
             ...tableCellDividerSx,
-            minWidth: SUMMARY_COLUMN_WIDTH,
+            minWidth: getSummaryColumnWidth(column),
             px: 0.5,
             fontSize: compactValues ? 15 : 13,
             color: "#000000",
@@ -1081,7 +1084,7 @@ export default function StaffScheduleTableSection({
     POSITION_COLUMN_WIDTH +
     (showFastActions ? ACTION_COLUMN_WIDTH : 0) +
     renderedDayCount * DAY_COLUMN_WIDTH +
-    summaryColumns.length * SUMMARY_COLUMN_WIDTH;
+    getSummaryColumnsWidth(summaryColumns);
   const toolbarControlMinWidth = { xs: "100%", md: 240 };
   const bonusDayValues = toArray(period?.meta?.bonus);
   const slowOrderValues = toArray(period?.meta?.order_stat);
@@ -1511,7 +1514,7 @@ export default function StaffScheduleTableSection({
               >
                 <ScheduleTableColGroup
                   dayCount={renderedDayCount}
-                  summaryColumnCount={summaryColumns.length}
+                  summaryColumns={summaryColumns}
                   showFastActions={showFastActions}
                 />
                 <TableHead>
@@ -1576,7 +1579,7 @@ export default function StaffScheduleTableSection({
           >
             <ScheduleTableColGroup
               dayCount={renderedDayCount}
-              summaryColumnCount={summaryColumns.length}
+              summaryColumns={summaryColumns}
               showFastActions={showFastActions}
             />
             <TableHead ref={tableHeadRef}>
@@ -1621,6 +1624,7 @@ export default function StaffScheduleTableSection({
                         stickyColumnCount={stickyColumnCount}
                         stickyWidth={summaryLabelWidth}
                         middleColSpan={shiftHeaderMiddleColSpan}
+                        toggleColumnWidth={getSummaryColumnWidth(summaryColumns.at(-1))}
                         collapsed={collapsedShiftIds.includes(shiftId)}
                         onToggle={onToggleShiftCollapse}
                         onEdit={onOpenEditSmena}
