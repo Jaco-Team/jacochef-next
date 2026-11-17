@@ -179,11 +179,33 @@ function EventTimeline({ events, dictionaries, getPhoto, idPrefix }) {
   );
 }
 
-function AiPanel({ analysis, incident, dictionaries, canDecide, onApply, onReject, onReanalyze }) {
+function AiPanel({
+  analysis,
+  incident,
+  reviewStatus,
+  dictionaries,
+  canDecide,
+  onApply,
+  onReject,
+  onReanalyze,
+}) {
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [additionalContext, setAdditionalContext] = useState("");
   const [reanalyzeAttachment, setReanalyzeAttachment] = useState(null);
   const { withConfirm, ConfirmDialog } = useJacoConfirm();
+
+  // The backend analyses only fully submitted reviews; legacy "blocked" and
+  // unfinished ones would just come back with an error.
+  if (!analysis && reviewStatus && reviewStatus !== "completed") {
+    return (
+      <JacoAlert severity="info">
+        {reviewStatus === "blocked"
+          ? "AI-анализ недоступен: отправка этого отзыва была заблокирована."
+          : "AI-анализ недоступен: гость не завершил отправку отзыва."}{" "}
+        Решение по инциденту принимает оператор.
+      </JacoAlert>
+    );
+  }
 
   if (!analysis) {
     const runAnalysis = withConfirm(
@@ -823,6 +845,7 @@ export default function CafeReviewDetail({
                 <AiPanel
                   analysis={detail.ai_analysis}
                   incident={incident}
+                  reviewStatus={review?.status}
                   dictionaries={dictionaries}
                   canDecide={canDecideAi}
                   onApply={(analysis) => setConfirmAction({ type: "apply-ai", analysis })}
