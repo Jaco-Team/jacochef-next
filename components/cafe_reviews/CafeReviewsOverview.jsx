@@ -18,10 +18,14 @@ import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import {
   blockBackground,
   blockBorder,
+  brandRed,
   desktopOnlySx,
   mobileOnlySx,
+  tableHeaderBackground,
   tabletOnlySx,
+  textPrimary,
   textSecondary,
+  white,
 } from "./shared";
 
 const kpiDefinitions = [
@@ -53,23 +57,69 @@ function KpiCards({ summary }) {
           <Paper
             key={key}
             variant="outlined"
-            sx={{ p: 2, borderRadius: "12px", borderColor: blockBorder, minWidth: 0 }}
+            sx={{
+              position: "relative",
+              display: "flex",
+              alignItems: "stretch",
+              overflow: "hidden",
+              minHeight: 112,
+              p: 1.75,
+              borderRadius: "12px",
+              borderColor: blockBorder,
+              minWidth: 0,
+              bgcolor: white,
+            }}
           >
             <Icon
               aria-hidden="true"
-              sx={{ color: "primary.main", mb: 1 }}
-            />
-            <Typography
               sx={{
-                fontSize: 22,
-                "@media (min-width: 991px)": { fontSize: 28 },
-                fontWeight: 800,
-                lineHeight: 1.1,
+                position: "absolute",
+                right: 12,
+                bottom: 4,
+                zIndex: 0,
+                color: brandRed,
+                opacity: 0.12,
+                fontSize: 104,
+                pointerEvents: "none",
+              }}
+            />
+            <Box
+              sx={{
+                position: "relative",
+                zIndex: 1,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                minWidth: 0,
+                width: "100%",
+                pb: 0.75,
               }}
             >
-              {decimals ? Number(value).toFixed(decimals) : value}
-            </Typography>
-            <Typography sx={{ mt: 0.75, color: textSecondary, fontSize: 13 }}>{label}</Typography>
+              <Box
+                component="div"
+                sx={{
+                  color: textSecondary,
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  lineHeight: 1.25,
+                }}
+              >
+                {label}
+              </Box>
+              <Box
+                component="div"
+                sx={{
+                  mt: 1,
+                  color: textPrimary,
+                  fontSize: 34,
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                {decimals ? Number(value).toFixed(decimals) : value}
+              </Box>
+            </Box>
           </Paper>
         );
       })}
@@ -209,7 +259,7 @@ export default function CafeReviewsOverview({ dashboard }) {
               >
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#F7F7F7" }}>
+                    <TableRow sx={{ bgcolor: tableHeaderBackground }}>
                       <TableCell>Кафе</TableCell>
                       <TableCell align="right">Отзывы</TableCell>
                       <TableCell align="right">С фото</TableCell>

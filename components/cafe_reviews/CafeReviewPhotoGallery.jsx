@@ -12,7 +12,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import BrokenImageOutlinedIcon from "@mui/icons-material/BrokenImageOutlined";
 import { blockBorder, textSecondary } from "./shared";
 
-export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
+export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix, title = "Фото" }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activePhoto, setActivePhoto] = useState(null);
@@ -79,7 +79,7 @@ export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
         id={`${idPrefix}-photos-title`}
         sx={{ fontSize: 16, fontWeight: 800, mb: 1 }}
       >
-        Фото
+        {title}
       </Typography>
       {loading ? (
         <Box
