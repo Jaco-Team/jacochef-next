@@ -67,7 +67,7 @@ const COUNT_COLUMN = { header: "Кол-во, шт", format: formatInt };
 const SOURCE_VALUE_COLUMNS = {
   revenue: { header: "Выручка, ₽", format: formatInt },
   avg_check: { header: "Ср. чек, ₽", format: formatInt },
-  orders_per_client: { header: "Заказов на клиента", format: (value) => formatDecimal(value, 2) },
+  orders_per_client: { header: "Ср. заказ на акт. акк.", format: (value) => formatDecimal(value, 2) },
 };
 
 function sourceUnit(metric, count) {
@@ -425,10 +425,10 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardBlock
-              title="Эффективность кафе"
+              title="Выполнение плана по кафе"
               subtitle={
                 selectedCard
-                  ? `${selectedCard.title} · ${ratingByEfficiency ? "факт к цели, %" : "г/г, %"}`
+                  ? `${selectedCard.title} · ${ratingByEfficiency ? "факт к плану, %" : "г/г, %"}`
                   : undefined
               }
               loading={overview.loading}
@@ -443,11 +443,8 @@ export default function StatSaleTabDashboard({ points, openAlert }) {
               />
               <Typography component="div" sx={{ mt: 2, fontSize: 12, lineHeight: 1.45, color: uiColors.text }}>
                 {ratingByEfficiency
-                  ? "Цель кафе — равная доля цели сети. Черта — 100%."
+                  ? "Черта показывает 100% доли кафе в месячном плане сети за выбранные дни."
                   : "Для показателей без цели — изменение к тому же периоду прошлого года."}
-                {overviewData?.cafes?.some((cafe) => cafe.selected)
-                  ? " Показаны кафе города, выбранное выделено."
-                  : ""}
               </Typography>
             </DashboardBlock>
           </Grid>
