@@ -2083,7 +2083,7 @@ const useStore = create((set, get) => ({
       if (point && vendors.length === 1 && docs.length) {
         const data = {
           point_id: point.id,
-          vendor_id: vendor?.id,
+          vendor_id: get().vendor?.id ?? vendors[0]?.id,
         };
 
         const res = await get().getData("get_vendor_items", data);
@@ -5932,6 +5932,7 @@ class Billing_Edit_ extends React.Component {
       closeDialog,
       bill,
       bill_list,
+      bill_items,
       is_horizontal,
       is_vertical,
     } = this.props.store;
