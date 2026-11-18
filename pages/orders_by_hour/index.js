@@ -872,7 +872,7 @@ function OrdersPage() {
 
   const exportExcel = async () => {
     try {
-      const url = "https://apichef2.jacochef.ru/api/orders_by_hour/exportExcel";
+      const url = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/orders_by_hour/exportExcel";
       const response = await axios.post(
         url,
         JSON.stringify({

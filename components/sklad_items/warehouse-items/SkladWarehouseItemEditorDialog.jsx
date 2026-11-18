@@ -10,7 +10,7 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
 import LinkOutlinedIcon from "@mui/icons-material/LinkOutlined";
-import { Box, Grid, Stack, Tab, Tabs, Tooltip } from "@mui/material";
+import { Box, Grid, Stack, Tab, Tabs } from "@mui/material";
 
 import {
   JacoButton,
@@ -42,17 +42,24 @@ function ids(value) {
     .filter(Boolean);
 }
 
-function sanitizePackQuantity(value) {
-  return String(value ?? "").replace(/[^\d\p{P}\s|]/gu, "");
+// Количество в упаковке: значения разделяются ; или #, запятая между цифрами — дробная часть.
+function parsePackQuantity(value) {
+  return String(value ?? "")
+    .replace(/(\d),(?=\d)/g, "$1.")
+    .split(/\s*[#;/|\r\n]+\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
 function normalizePackQuantity(value) {
-  return String(value ?? "")
-    .trim()
-    .replace(/\s*(?:[#;,/|\r\n]+)\s*/g, "#")
-    .replace(/#+/g, "#")
-    .replace(/^#|#$/g, "");
+  return parsePackQuantity(value).join("#");
 }
+
+function formatPackQuantity(value) {
+  return String(value ?? "").replace(/\s*#\s*/g, "; ");
+}
+
+const PACK_VALUE_PATTERN = /^\d+(?:\.\d+)?$/;
 
 function normalize(item = {}) {
   if (!item?.id) {
@@ -93,6 +100,7 @@ function normalize(item = {}) {
 
   return {
     ...item,
+    pq: formatPackQuantity(item?.pq),
     date_start: item?.effective_date_start || item?.date_start || "",
     date_end: item?.effective_date_end || item?.date_end || "",
     category_id: Number(item?.category_id || 0),
@@ -135,13 +143,12 @@ export default function SkladWarehouseItemEditorDialog({
   onSave,
 }) {
   const [tab, setTab] = useState(0);
-  const [packHintOpen, setPackHintOpen] = useState(false);
   const [draft, setDraft] = useState(() => normalize(detail?.item));
+  const [packPreviewIndex, setPackPreviewIndex] = useState(0);
 
   useEffect(() => {
     setDraft(normalize(detail?.item));
     setTab(detail?.initialHistoryTab ? 1 : 0);
-    setPackHintOpen(false);
   }, [detail, open]);
 
   const canView = (field) =>
@@ -149,6 +156,8 @@ export default function SkladWarehouseItemEditorDialog({
     Number(access?.[`warehouse_items_${field}_edit`]) === 1;
   const canEdit = (field) => Number(access?.[`warehouse_items_${field}_edit`]) === 1;
   const set = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const packValues = useMemo(() => parsePackQuantity(draft?.pq), [draft?.pq]);
+  const packInvalid = packValues.filter((value) => !PACK_VALUE_PATTERN.test(value));
   const categories = useMemo(
     () =>
       (detail?.categories || []).filter(
@@ -178,7 +187,7 @@ export default function SkladWarehouseItemEditorDialog({
       (!detail?.item?.id || String(draft?.pq ?? "") !== String(normalize(detail?.item).pq ?? ""));
     onSave({
       ...draft,
-      pq: normalizePq ? normalizePackQuantity(draft?.pq) : draft?.pq,
+      pq: normalizePq ? normalizePackQuantity(draft?.pq) : (detail?.item?.pq ?? draft?.pq),
       id: detail?.item?.id || null,
     });
   };
@@ -392,33 +401,41 @@ export default function SkladWarehouseItemEditorDialog({
                 >
                   <Grid size={{ xs: 12, md: 3 }}>{field("art", "art", "Код 1С")}</Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
-                    {field("pq", "pq", "Количество в упаковке", {
-                      onChange: (event) => set("pq", sanitizePackQuantity(event.target.value)),
-                      inputAdornment: (
-                        <Tooltip
-                          title="Несколько значений можно указать через #, ;, /, | или запятую. Дробные значения — через точку, например 0.5#1."
-                          open={packHintOpen}
-                          onOpen={() => setPackHintOpen(true)}
-                          onClose={() => setPackHintOpen(false)}
-                          enterTouchDelay={0}
-                        >
-                          <JacoIconButton
-                            aria-label="Подсказка о количестве в упаковке"
-                            onClick={() => setPackHintOpen(true)}
-                            onFocus={() => setPackHintOpen(true)}
-                            onBlur={() => setPackHintOpen(false)}
-                            sx={{
-                              width: 28,
-                              height: 28,
-                              border: "none",
-                              backgroundColor: "transparent",
-                            }}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </JacoIconButton>
-                        </Tooltip>
-                      ),
-                    })}
+                    {canView("pq") ? (
+                      <JacoTextInput
+                        size="small"
+                        fullWidth
+                        label="Количество в упаковке"
+                        value={draft?.pq ?? ""}
+                        onChange={(event) =>
+                          set("pq", event.target.value.replace(/[^\d.,;#/|\s]/g, ""))
+                        }
+                        disabled={!canEdit("pq")}
+                        placeholder="Например: 0,5; 1"
+                        error={packInvalid.length > 0}
+                        helperText={
+                          packInvalid.length > 0
+                            ? `Не число: ${packInvalid.join(" · ")}`
+                            : "Разделитель значений — ; или #"
+                        }
+                      />
+                    ) : null}
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    {canView("pq") ? (
+                      <JacoSelect
+                        label="Проверка значений"
+                        value={
+                          packValues.length
+                            ? String(Math.min(packPreviewIndex, packValues.length - 1))
+                            : ""
+                        }
+                        onChange={(event) => setPackPreviewIndex(Number(event.target.value) || 0)}
+                        disabled={packValues.length === 0}
+                        allowNone={false}
+                        options={packValues.map((value, index) => ({ id: String(index), name: value }))}
+                      />
+                    ) : null}
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
                     {field("percent", "percent", "% заявки", { type: "number" })}

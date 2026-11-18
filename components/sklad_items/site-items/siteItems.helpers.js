@@ -244,21 +244,4 @@ export function validateSiteItemDraft(draft) {
   return null;
 }
 
-export function getDeleteError(response) {
-  const usage = response?.usage ?? {};
-  const activeCount = Array.isArray(usage?.active_relations) ? usage.active_relations.length : 0;
-  const historyCount = Array.isArray(usage?.history_relations) ? usage.history_relations.length : 0;
-  const counts = [];
-
-  if (activeCount) {
-    counts.push(`активные связи: ${activeCount}`);
-  }
-
-  if (historyCount) {
-    counts.push(`история: ${historyCount}`);
-  }
-
-  return counts.length
-    ? `${response?.text || "Удаление запрещено"} (${counts.join(", ")})`
-    : response?.text || "Удаление запрещено";
-}
+export { getDeleteError } from "./siteItemDeleteFeedback.mjs";

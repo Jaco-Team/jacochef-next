@@ -76,7 +76,7 @@ import {
 } from "@/components/billing/BillingPageCommon";
 import DraggableImage from "@/components/billing/DraggableImage";
 import MyAlert from "@/ui/MyAlert";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf } from "@/src/api_new";
 import { Link } from "@mui/material";
 
 const types = [
@@ -942,7 +942,7 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-const API_URL = "https://apichef2.jacochef.ru/api";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "");
 // const API_URL = "http://127.0.0.1:8000/api";
 const url_bill = `${API_URL}/bill-items/upload`;
 const url_bill_ex = `${API_URL}/bill-ex-items/upload`;
@@ -1571,7 +1571,14 @@ var dropzoneOptions_bill = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -1655,7 +1662,14 @@ var dropzoneOptions_bill_factur = {
       //window.location.pathname = "/billing";
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -2069,7 +2083,7 @@ const useStore = create((set, get) => ({
       if (point && vendors.length === 1 && docs.length) {
         const data = {
           point_id: point.id,
-          vendor_id: vendor?.id,
+          vendor_id: get().vendor?.id ?? vendors[0]?.id,
         };
 
         const res = await get().getData("get_vendor_items", data);
@@ -5270,7 +5284,7 @@ class Billing_Edit_ extends React.Component {
 
         const failedFiles = dropzone.files.filter((file) => file?.status === "error");
         const ambiguousFiles = failedFiles.filter(
-          (file) => file?.xhr && Number(file.xhr.status) === 0,
+          (file) => file?.xhr && !file?.chefCsrfFailure && Number(file.xhr.status) === 0,
         );
 
         resolve({
@@ -5798,6 +5812,10 @@ class Billing_Edit_ extends React.Component {
     };
 
     try {
+      await prepareBillingUploads([
+        this.getPendingDropzoneFiles(this.myDropzone).length ? this.myDropzone : null,
+        parseInt(type) == 2 && DropzoneDop && this.getPendingDropzoneFiles(DropzoneDop).length ? DropzoneDop : null,
+      ]);
       const res = await this.getData("save_new", data);
 
       if (res.st === true) {
@@ -5914,6 +5932,7 @@ class Billing_Edit_ extends React.Component {
       closeDialog,
       bill,
       bill_list,
+      bill_items,
       is_horizontal,
       is_vertical,
     } = this.props.store;

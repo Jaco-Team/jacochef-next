@@ -15,6 +15,7 @@ import {
   JacoIconButton,
   JacoInfoLabel,
   JacoSegmentedTabs,
+  JacoStatusChip,
   JacoSwitch,
   JacoTabPanel,
 } from "@/design-system/shared/ui";
@@ -206,6 +207,42 @@ export function SelectionControls() {
           label="Недоступный выбор"
           disabled
         />
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function StatusChips() {
+  const tones = ["success", "warning", "danger", "neutral"];
+  const variants = [
+    { id: "filled", hint: "Состояние требует внимания" },
+    { id: "soft", hint: "Обычное состояние" },
+    { id: "outlined", hint: "Состояние не задано" },
+  ];
+
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        {variants.map((variant) => (
+          <Stack
+            key={variant.id}
+            direction="row"
+            spacing={1.5}
+            sx={{ alignItems: "center", flexWrap: "wrap" }}
+          >
+            <Typography sx={{ width: 220, color: "text.secondary" }}>
+              {variant.id} · {variant.hint}
+            </Typography>
+            {tones.map((tone) => (
+              <JacoStatusChip
+                key={tone}
+                tone={tone}
+                variant={variant.id}
+                label={tone}
+              />
+            ))}
+          </Stack>
+        ))}
       </Stack>
     </StoryCanvas>
   );

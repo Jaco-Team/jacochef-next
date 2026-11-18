@@ -90,7 +90,7 @@ These are source-data exceptions, not candidates for an automatic rewrite.
 
 ### Site items
 
-The visible composite site-item flow intentionally mounts `SkladSiteItemsLegacyEditorDialog`, preserving the existing modal instead of substituting the new unfinished alternative editor. The preserved modal retains:
+The visible composite site-item flow intentionally mounts `SkladSiteItemsEditorDialog`, preserving the existing modal instead of substituting the new unfinished alternative editor. The preserved modal retains:
 
 - marketing, category, marking, description, tag, image and stage fields;
 - the staged composition matrix, per-stage timings and derived totals;

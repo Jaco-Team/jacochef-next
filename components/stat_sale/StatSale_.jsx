@@ -21,6 +21,7 @@ import StatSale_Tab_Clients from "./StatSaleTabClients";
 import StatSale_Tab_Dynamic from "./StatSaleTabDynamic";
 import StatSale_Tab_DynamicSale from "./StatSaleTabDynamicSale";
 import StatSale_Tab_Sett from "./settings/StatSaleSettingsTab";
+import StatSaleTabDashboard from "./dashboard/StatSaleTabDashboard";
 
 dayjs.locale("ru");
 
@@ -68,9 +69,7 @@ class StatSale_ extends React.Component {
       points: data.points,
       cities: data.cities,
       acces: data.acces ?? {},
-      activeTab: availableTabs.includes(this.state.activeTab)
-        ? this.state.activeTab
-        : (availableTabs[0] ?? 0),
+      activeTab: availableTabs[0] ?? 0,
     });
 
     document.title = data.module_info?.name;
@@ -88,6 +87,7 @@ class StatSale_ extends React.Component {
     const canAccess = (key) => userCan("access", key);
     const tabs = [];
 
+    if (canAccess("dashboard")) tabs.push(5);
     if (canAccess("sale")) tabs.push(0);
     if (canAccess("client")) tabs.push(1);
     if (canAccess("dynamic")) tabs.push(2);
@@ -433,6 +433,13 @@ class StatSale_ extends React.Component {
             />
           </Grid>
 
+          {/* Дашборд */}
+          {this.state.activeTab === 5 && (
+            <StatSaleTabDashboard
+              points={this.state.points}
+              openAlert={this.openAlert}
+            />
+          )}
           {/* Продажи */}
           {this.state.activeTab === 0 && (
             <StatSale_Tab_Sale

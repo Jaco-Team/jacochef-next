@@ -4,9 +4,14 @@ import useStaffScheduleApi from "./useStaffScheduleApi";
 import { EMPTY_PERIOD } from "./staffScheduleConstants";
 import {
   createStaffSchedulePolicy,
+  formatFinanceCardValue,
   getActiveMonthId,
+  getFinanceGroup,
   getPartStartDate,
+  getSummaryCellValue,
+  isNegativeBalanceValue,
   toArray,
+  toWholeRubles,
 } from "./staffScheduleHelpers";
 import {
   buildGraphState,
@@ -27,9 +32,17 @@ import useStaffScheduleFastActions from "./useStaffScheduleFastActions";
 import useResourceModalState from "./useResourceModalState";
 import { buildCamErrorModalData, buildOrderErrorModalData } from "./staffScheduleErrorViewModel";
 import { getAvailablePayoutAmount } from "./staffSchedulePayroll.mjs";
+import { buildPayoutHistoryRequest, hasPayoutHistory } from "./staffSchedulePayoutHistory.mjs";
 import {
+  buildStaffScheduleArchiveAccess,
+  isStaffScheduleArchiveMonth,
+} from "./staffScheduleArchive.mjs";
+import {
+  EDITABLE_FINANCE_KEYS,
   getEditableStaffScheduleBonusRow,
+  getStaffScheduleFinanceAction,
   getStaffScheduleFinancialReadSignature,
+  hasAlternativeStaffScheduleRate,
   hasRevokedFinancialReadPermission,
 } from "./staffScheduleAccess.mjs";
 import { canUseStaffScheduleFastActionsPeriod } from "./staffSchedulePeriodRange.mjs";
@@ -41,6 +54,7 @@ export default function useStaffSchedulePage() {
 
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isGraphLoading, setIsGraphLoading] = useState(false);
+  const graphRequestGeneration = useRef(0);
   const [isMutationLoading, setIsMutationLoading] = useState(false);
   const [error, setError] = useState("");
   const [moduleName, setModuleName] = useState("График работы");
@@ -50,7 +64,12 @@ export default function useStaffSchedulePage() {
   const [monthId, setMonthId] = useState("");
   const [draftPointId, setDraftPointId] = useState("");
   const [draftMonthId, setDraftMonthId] = useState("");
-  const [access, setAccess] = useState({});
+  const [rawAccess, setAccess] = useState({});
+  const isArchiveMonth = isStaffScheduleArchiveMonth(monthId);
+  const access = useMemo(
+    () => (isArchiveMonth ? buildStaffScheduleArchiveAccess(rawAccess) : rawAccess),
+    [isArchiveMonth, rawAccess],
+  );
   const accessRef = useRef(access);
   accessRef.current = access;
   const [devRoleKind, setDevRoleKind] = useState("");
@@ -126,17 +145,6 @@ export default function useStaffSchedulePage() {
   const monthModalRef = useRef(monthModal);
   monthModalRef.current = monthModal;
   const errorAppealModal = errorAppealState.state;
-  const directorLevelOptions = useMemo(
-    () =>
-      Array.from({ length: 41 }, (_, index) => {
-        const value = index - 20;
-        return {
-          id: value,
-          name: `${value} уровень`,
-        };
-      }),
-    [],
-  );
 
   const pickAccessMap = useCallback((payload) => {
     const nextAccess = payload?.access ?? payload?.acces;
@@ -154,6 +162,10 @@ export default function useStaffSchedulePage() {
         return false;
       }
 
+      // Кафе или месяц могут смениться до ответа: применяется только последний запрос.
+      graphRequestGeneration.current += 1;
+      const generation = graphRequestGeneration.current;
+
       setIsGraphLoading(true);
       setError("");
 
@@ -162,6 +174,10 @@ export default function useStaffSchedulePage() {
           point_id: nextPointId,
           month: nextMonthId,
         });
+
+        if (generation !== graphRequestGeneration.current) {
+          return false;
+        }
 
         if (response?.st === false || !hasGraphPayload(response)) {
           throw new Error(response?.text || "Не удалось загрузить график");
@@ -174,10 +190,14 @@ export default function useStaffSchedulePage() {
         }
         return true;
       } catch (requestError) {
-        setError(requestError?.message || "Не удалось загрузить график");
+        if (generation === graphRequestGeneration.current) {
+          setError(requestError?.message || "Не удалось загрузить график");
+        }
         return false;
       } finally {
-        setIsGraphLoading(false);
+        if (generation === graphRequestGeneration.current) {
+          setIsGraphLoading(false);
+        }
       }
     },
     [api, pickAccessMap],
@@ -296,7 +316,7 @@ export default function useStaffSchedulePage() {
       dayModalState.close();
       monthModalSourceRowRef.current = null;
       monthModalState.close();
-      if (summaryActionRef.current.mode !== "dir_lv") summaryActionState.close();
+      summaryActionState.close();
     }
     previousFinancialReadSignature.current = financialReadSignature;
   }, [
@@ -362,22 +382,44 @@ export default function useStaffSchedulePage() {
     if (summaryActionRef.current.mode === "my_bonus") summaryActionState.close();
   }, [selectedPart, pointId, monthId, dayModalState.close, summaryActionState.close]);
 
-  const handlePointChange = useCallback((_event, option) => {
-    setDraftPointId(option?.id ?? "");
-  }, []);
+  const applyFilters = useCallback(
+    async (nextPointId, nextMonthId) => {
+      const didLoad = await loadGraph(nextPointId, nextMonthId);
 
-  const handleMonthChange = useCallback((event) => {
-    setDraftMonthId(event.target.value);
-  }, []);
+      if (didLoad) {
+        setPointId(nextPointId);
+        setMonthId(nextMonthId);
+      }
+    },
+    [loadGraph],
+  );
 
-  const handleApplyFilters = useCallback(async () => {
-    const didLoad = await loadGraph(draftPointId, draftMonthId);
+  const handlePointChange = useCallback(
+    (_event, option) => {
+      const nextPointId = option?.id ?? "";
+      setDraftPointId(nextPointId);
+      if (String(nextPointId) !== String(draftPointId)) {
+        applyFilters(nextPointId, draftMonthId);
+      }
+    },
+    [applyFilters, draftMonthId, draftPointId],
+  );
 
-    if (didLoad) {
-      setPointId(draftPointId);
-      setMonthId(draftMonthId);
-    }
-  }, [draftMonthId, draftPointId, loadGraph]);
+  const handleMonthChange = useCallback(
+    (event) => {
+      const nextMonthId = event.target.value;
+      setDraftMonthId(nextMonthId);
+      if (nextMonthId !== draftMonthId) {
+        applyFilters(draftPointId, nextMonthId);
+      }
+    },
+    [applyFilters, draftMonthId, draftPointId],
+  );
+
+  const handleApplyFilters = useCallback(
+    () => applyFilters(draftPointId, draftMonthId),
+    [applyFilters, draftMonthId, draftPointId],
+  );
 
   const handleReload = useCallback(async () => {
     await loadGraph(pointId, monthId);
@@ -814,21 +856,6 @@ export default function useStaffSchedulePage() {
   const handleOpenSummaryAction = useCallback(
     (row, key) => {
       if (!createStaffSchedulePolicy(accessRef.current).canEditSummaryAction(key)) return;
-      if (key === "dir_lv") {
-        summaryActionState.openReady({
-          mode: key,
-          request: {
-            date: monthId,
-            point_id: pointId,
-          },
-          data: {
-            title: `Изменение уровня директора ${monthId}`,
-            value: graph?.add_lv ?? 0,
-            options: directorLevelOptions,
-          },
-        });
-        return;
-      }
 
       if (key === "dop_bonus_toggle") {
         summaryActionState.openReady({
@@ -857,10 +884,14 @@ export default function useStaffSchedulePage() {
       const periodStartDate = getPartStartDate(monthId, selectedPart);
 
       if (key === "price_p_h") {
-        const options = toArray(row?.price_arr).map((item) => ({
-          id: item,
-          name: String(item),
-        }));
+        if (!hasAlternativeStaffScheduleRate(row)) {
+          return;
+        }
+
+        const currentRate = String(toWholeRubles(row?.price_p_h ?? ""));
+        const options = toArray(row?.price_arr)
+          .filter((item) => String(toWholeRubles(item)) !== currentRate)
+          .map((item) => ({ id: item, name: String(toWholeRubles(item)) }));
 
         if (!options.length) {
           return;
@@ -877,7 +908,7 @@ export default function useStaffSchedulePage() {
           },
           data: {
             ...buildSummaryActionHeaderData(row, key, monthId),
-            value: row?.price_p_h ?? "",
+            value: toWholeRubles(row?.price_p_h ?? ""),
             options,
           },
         });
@@ -896,9 +927,11 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Выданная сумма",
-            value: Object.prototype.hasOwnProperty.call(row, "given_cash")
-              ? (row.given_cash ?? "")
-              : (row?.given ?? ""),
+            value: toWholeRubles(
+              Object.prototype.hasOwnProperty.call(row, "given_cash")
+                ? (row.given_cash ?? "")
+                : (row?.given ?? ""),
+            ),
             fullAmount: getAvailablePayoutAmount(row, accessRef.current, "given"),
           },
         });
@@ -917,7 +950,7 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Выданная сумма",
-            value: row?.given_cart ?? "",
+            value: toWholeRubles(row?.given_cart ?? ""),
             fullAmount: getAvailablePayoutAmount(row, accessRef.current, "given_cart"),
           },
         });
@@ -936,7 +969,7 @@ export default function useStaffSchedulePage() {
           data: {
             ...buildSummaryActionHeaderData(row, key, periodStartDate),
             label: "Удержанная сумма",
-            value: row?.withheld ?? "",
+            value: toWholeRubles(row?.withheld ?? ""),
           },
         });
         return;
@@ -967,14 +1000,17 @@ export default function useStaffSchedulePage() {
       }
     },
     [
-      directorLevelOptions,
-      graph?.add_lv,
       monthId,
       periodBonusState,
       pointId,
       selectedPart,
       summaryActionState,
     ],
+  );
+
+  const loadPayoutHistory = useCallback(
+    (request) => api.getPayoutHistory(buildPayoutHistoryRequest(request)),
+    [api],
   );
 
   const handleCloseSummaryAction = useCallback(() => {
@@ -1135,10 +1171,6 @@ export default function useStaffSchedulePage() {
             throw new Error("Нет доступа к изменению бонуса сотрудника");
           }
           response = await api.saveDirBonus({ ...request, bonus: value });
-        }
-
-        if (mode === "dir_lv") {
-          response = await api.saveDirLv({ ...request, dir_lv: value });
         }
 
         if (mode === "dop_bonus_toggle") {
@@ -1322,6 +1354,85 @@ export default function useStaffSchedulePage() {
     fastActions.state.saving ||
     exportActions.dialog.loading;
 
+  // Финансы открытого сотрудника берутся из живой строки графика, поэтому обновляются после сохранения.
+  const monthFinance = useMemo(() => {
+    const request = monthModal.request;
+    if (!monthModal.open || !request || request.date !== monthId) {
+      return null;
+    }
+    const row = toArray(view.activePeriod?.rows).find(
+      (item) =>
+        item?.row !== "header" &&
+        String(item?.data?.id) === String(request.user_id) &&
+        String(item?.data?.app_id) === String(request.app_id) &&
+        String(item?.data?.smena_id) === String(request.smena_id),
+    )?.data;
+    if (!row || Number(row.finance_hidden) === 1) {
+      return null;
+    }
+    const items = view.summaryColumns.map((column) => {
+      const value = getSummaryCellValue(column, row);
+      const editable = EDITABLE_FINANCE_KEYS.has(column.key);
+      return {
+        key: column.key,
+        label: column.label,
+        group: getFinanceGroup(column.key),
+        value: formatFinanceCardValue(column, value),
+        negative: isNegativeBalanceValue(column, value),
+        editable,
+        action: editable
+          ? getStaffScheduleFinanceAction({
+              columnKey: column.key,
+              row,
+              canEdit: dayAccess.canEdit,
+              selectedPart,
+              periodBonusState,
+            })
+          : null,
+      };
+    });
+    const payoutItems = items.filter((item) => hasPayoutHistory(item.key));
+    const historyRequest = payoutItems.length
+      ? {
+          date: getPartStartDate(monthId, selectedPart),
+          user_id: row.id,
+          app_id: row.app_id,
+          smena_id: row.smena_id,
+        }
+      : null;
+    return {
+      row,
+      items,
+      periodLabel: view.activePeriod?.label ?? "",
+      historyRequest,
+      historyKey: historyRequest
+        ? JSON.stringify([historyRequest, payoutItems.map((item) => item.value)])
+        : "",
+    };
+  }, [
+    monthModal.open,
+    monthModal.request,
+    monthId,
+    view.activePeriod,
+    view.summaryColumns,
+    dayAccess,
+    selectedPart,
+    periodBonusState,
+  ]);
+
+  const handleEditMonthFinance = useCallback(
+    (item) => {
+      const row = monthFinance?.row;
+      if (!row || !item?.action) return;
+      if (item.action === "team_bonus") {
+        handleChangeTeamBonusForUser(row);
+        return;
+      }
+      handleOpenSummaryAction(row, item.key);
+    },
+    [monthFinance, handleChangeTeamBonusForUser, handleOpenSummaryAction],
+  );
+
   return {
     isLoading,
     isBootstrapping,
@@ -1352,12 +1463,16 @@ export default function useStaffSchedulePage() {
     pointLabel,
     graphKind: graph.kind,
     effectiveGraphKind,
-    directorLevel: graph.add_lv,
     periodBonusState,
     exportDialog: exportActions.dialog,
     canExportWorkSchedule: exportActions.canExportWorkSchedule,
     canExportHealthJournal: exportActions.canExportHealthJournal,
     canManageSmena: dayAccess.canManageSmena,
+    canOpenRates: dayAccess.canViewRates,
+    monthFinance,
+    handleEditMonthFinance,
+    isArchiveMonth,
+    loadPayoutHistory,
     ConfirmDialog,
     setAccess,
     setDevRoleKind,

@@ -2,7 +2,6 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 import {
   Autocomplete,
   TextField,
-  Checkbox,
   ListItemText,
   IconButton,
   Box,
@@ -13,6 +12,8 @@ import {
   ButtonGroup,
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import { uiColors, uiControl, uiRadii, uiShadows, uiStateColors, uiTypography } from "../tokens";
+import JacoCheckbox from "./JacoCheckbox";
 
 // TODO: для того, чтобы это привести в порядок, Helper->getMyPointsList должен возвращать
 // атомарные данные cityId и cityName, но придется весь фронт обойти и автокомплиты привести
@@ -377,15 +378,31 @@ export default function JacoCityCafe({
           {...params}
           label={label}
           placeholder={placeholder}
-          sx={
-            compact
-              ? {
-                  "& .MuiInputBase-root": { minHeight: 40 },
-                  "& .MuiInputBase-input": { fontSize: 14 },
-                  "& .MuiInputLabel-root": { fontSize: 13 },
-                }
-              : undefined
-          }
+          sx={{
+            // Same control geometry as JacoTextInput and JacoSelect.
+            "& .MuiOutlinedInput-root": {
+              minHeight: compact ? uiControl.compactHeight : uiControl.height,
+              alignItems: "center",
+              borderRadius: uiRadii.md,
+              backgroundColor: disabled ? uiStateColors.disabledSurface : uiColors.surface,
+              color: uiColors.text,
+              "& fieldset": { borderColor: uiColors.border },
+              "&:hover fieldset": { borderColor: uiColors.border },
+              "&.Mui-focused fieldset": { borderColor: uiColors.primary, borderWidth: 1 },
+            },
+            "& .MuiInputBase-input": {
+              ...uiTypography.body,
+              ...(compact ? { fontSize: 14 } : null),
+            },
+            "& .MuiInputLabel-root": {
+              ...uiTypography.label,
+              ...(compact ? { fontSize: 13 } : null),
+              color: uiColors.textMuted,
+              transform: `translate(16px, ${compact ? 11 : 13}px) scale(1)`,
+              "&.MuiInputLabel-shrink": { transform: "translate(16px, -9px) scale(0.75)" },
+              "&.Mui-focused": { color: uiColors.primary },
+            },
+          }}
         />
       )}
       limitTags={compact ? 1 : 2}
@@ -399,18 +416,21 @@ export default function JacoCityCafe({
             key={getOptionKey(option) || key}
             {...restProps}
           >
-            <Checkbox
-              size="small"
-              sx={compact ? { p: 0.5 } : undefined}
+            <JacoCheckbox
               checked={allSelected || selected}
               onMouseDown={(e) => e.preventDefault()}
+              tabIndex={-1}
             />
             <ListItemText
-              sx={{ my: 0 }}
+              sx={{ my: 0, minWidth: 0 }}
               primary={
                 <Typography
                   noWrap
-                  sx={{ fontSize: compact ? 14 : undefined }}
+                  sx={{
+                    ...(isAll ? uiTypography.bodyMedium : uiTypography.body),
+                    ...(compact ? { fontSize: 14 } : null),
+                    color: uiColors.textStrong,
+                  }}
                 >
                   {option.name}
                 </Typography>
@@ -419,10 +439,7 @@ export default function JacoCityCafe({
                 !isAll && (
                   <Typography
                     noWrap
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: compact ? 12 : undefined,
-                    }}
+                    sx={{ ...uiTypography.compactLabel, color: uiColors.textMuted }}
                   >
                     {option.cityName}
                   </Typography>
@@ -465,20 +482,19 @@ export default function JacoCityCafe({
             sx={{
               [`& .${autocompleteClasses.groupLabel}`]: {
                 zIndex: 1,
-                background: "var(--mui-palette-background-paper)",
+                backgroundColor: uiColors.surface,
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                // py: 1,
+                minHeight: compact ? uiControl.compactHeight : uiControl.height,
                 cursor: "pointer",
-                "&:hover": { backgroundColor: "action.hover" },
+                "&:hover": { backgroundColor: uiStateColors.hover },
               },
               [`& .${autocompleteClasses.groupUl}`]: {
-                pl: 5,
+                pl: 4.5,
                 display: isOpen ? "block" : "none",
               },
-              borderTop: "1px solid",
-              borderColor: "divider",
+              borderTop: `1px solid ${uiColors.borderLight}`,
             }}
           >
             <div
@@ -490,7 +506,8 @@ export default function JacoCityCafe({
             >
               <IconButton
                 size="small"
-                sx={compact ? { p: 0.25 } : undefined}
+                aria-label={isOpen ? "Свернуть" : "Развернуть"}
+                sx={{ p: 0.25, color: uiColors.text }}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -500,9 +517,7 @@ export default function JacoCityCafe({
                 {isOpen ? <ExpandLess /> : <ExpandMore />}
               </IconButton>
 
-              <Checkbox
-                size="small"
-                sx={{ p: 0 }}
+              <JacoCheckbox
                 indeterminate={some && !all}
                 checked={all || allSelected}
                 onMouseDown={(e) => e.preventDefault()}
@@ -515,8 +530,10 @@ export default function JacoCityCafe({
                 primary={
                   <Typography
                     sx={{
+                      ...uiTypography.bodyMedium,
                       fontWeight: 600,
-                      fontSize: compact ? 14 : undefined,
+                      ...(compact ? { fontSize: 14 } : null),
+                      color: uiColors.textStrong,
                     }}
                   >
                     {entityName}
@@ -534,15 +551,47 @@ export default function JacoCityCafe({
       slotProps={{
         paper: {
           sx: {
-            [`& .${autocompleteClasses.option}`]: { py: compact ? 0.25 : 0, px: 1 },
-            [`& .${autocompleteClasses.groupLabel}`]: { py: compact ? 0.5 : 1, px: 0 },
-            [`& .${autocompleteClasses.listbox}`]: { maxHeight: compact ? 280 : 420 },
+            mt: 0.5,
+            border: `1px solid ${uiColors.border}`,
+            borderRadius: uiRadii.md,
+            boxShadow: uiShadows.popover,
+            overflow: "hidden",
+            [`& .${autocompleteClasses.listbox}`]: {
+              py: 0,
+              maxHeight: compact ? 280 : 420,
+            },
+            // Listbox-scoped so it wins over MUI's own listbox option colours.
+            [`& .${autocompleteClasses.listbox} .${autocompleteClasses.option}`]: {
+              gap: 1.5,
+              minHeight: compact ? uiControl.compactHeight : uiControl.height,
+              py: 0.75,
+              px: 1.5,
+              "&.Mui-focused": { backgroundColor: uiStateColors.hover },
+              '&[aria-selected="true"], &[aria-selected="true"].Mui-focused': {
+                backgroundColor: uiColors.primarySoft,
+              },
+            },
+            [`& .${autocompleteClasses.groupLabel}`]: { py: 0, px: 1, lineHeight: "normal" },
+            [`& .${autocompleteClasses.noOptions}`]: {
+              ...uiTypography.label,
+              color: uiColors.textMuted,
+            },
             position: "relative",
           },
-          elevation: 3,
+          elevation: 0,
         },
         popper: { sx: { zIndex: 1300 } },
-        tag: { size: "small" },
+        chip: {
+          size: "small",
+          sx: {
+            height: 26,
+            borderRadius: uiRadii.sm,
+            backgroundColor: uiColors.surfaceMuted,
+            color: uiColors.textStrong,
+            ...uiTypography.label,
+            "& .MuiChip-deleteIcon": { color: uiColors.textMuted, fontSize: 18 },
+          },
+        },
       }}
     />
   );

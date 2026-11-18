@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
-import HistoryIcon from "@mui/icons-material/History";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import {
   Box,
   Chip,
@@ -23,15 +22,18 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import {
   JacoButton,
   JacoIconButton,
+  JacoSegmentedTabs,
   JacoSearchField,
   JacoSurface,
 } from "@/design-system/shared/ui";
 
 import { useSkladStore } from "../useSkladStore";
+import useSkladListLoading from "../useSkladListLoading";
 import useSkladAccess from "../useSkladAccess";
 import useSkladApi from "../useSkladApi";
 import { getDefaultUnitDraft, useSkladUnitsStore } from "./useSkladUnitsStore";
 import SkladUnitDialog from "./SkladUnitDialog";
+import { interactiveRowProps } from "../table/interactiveRow";
 
 function normalizeNumber(value, fallback = 0) {
   const parsed = Number(value);
@@ -83,10 +85,12 @@ function formatUnitAmount(value) {
 
 export default function useSkladUnitsController({ showAlert }) {
   const api = useSkladApi();
+  const { beginListLoad, finishListLoad } = useSkladListLoading("units");
   const { ConfirmDialog, withConfirm } = useConfirm();
   const { canEdit, canDelete, canCreateUnit, canViewUnitUsage } = useSkladAccess();
 
   const setShellState = useSkladStore((state) => state.setState);
+  const listPending = useSkladStore((state) => state.listLoading.units.pending);
   const rows = useSkladUnitsStore((state) => state.rows);
   const search = useSkladUnitsStore((state) => state.search);
   const modal = useSkladUnitsStore((state) => state.modal);
@@ -96,6 +100,7 @@ export default function useSkladUnitsController({ showAlert }) {
   const resetDraft = useSkladUnitsStore((state) => state.resetDraft);
   const detailRequest = useRef(0);
   const [detail, setDetail] = useState({ loading: false, error: "", history: [] });
+  const [view, setView] = useState("active");
   useEffect(
     () => () => {
       detailRequest.current += 1;
@@ -137,11 +142,12 @@ export default function useSkladUnitsController({ showAlert }) {
   );
 
   const loadUnits = useCallback(async () => {
-    setShellState({ isLoading: true });
+    const requestId = beginListLoad("units");
 
     try {
       const response = await api.getUnits();
 
+      if (useSkladStore.getState().listLoading.units.id !== requestId) return;
       if (!response?.st) {
         throw new Error(response?.text || "Ошибка загрузки единиц измерения");
       }
@@ -151,11 +157,13 @@ export default function useSkladUnitsController({ showAlert }) {
       setState({ rows: list });
       setShellState({ units: list });
     } catch (error) {
-      showAlert(error?.message || "Ошибка загрузки единиц измерения", false);
+      if (useSkladStore.getState().listLoading.units.id === requestId) {
+        showAlert(error?.message || "Ошибка загрузки единиц измерения", false);
+      }
     } finally {
-      setShellState({ isLoading: false });
+      finishListLoad("units", requestId);
     }
-  }, [api, setShellState, setState, showAlert]);
+  }, [api, beginListLoad, finishListLoad, setShellState, setState, showAlert]);
 
   const openCreate = useCallback(() => {
     if (!canCreate) {
@@ -286,22 +294,22 @@ export default function useSkladUnitsController({ showAlert }) {
     [api, canDeleteAction, loadUnits, setShellState, showAlert],
   );
 
+  const activeRows = useMemo(
+    () => rows.filter((row) => (row?.delete_usage?.active_relations?.length ?? 0) > 0),
+    [rows],
+  );
+
   const filteredRows = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-
-    if (!normalizedSearch) {
-      return rows;
-    }
-
-    return rows.filter((row) => {
+    const visibleRows = view === "active" ? activeRows : rows;
+    return visibleRows.filter((row) => {
       const haystack = [row?.name, row?.main_count, row?.con_count]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-
       return haystack.includes(normalizedSearch);
     });
-  }, [rows, search]);
+  }, [activeRows, rows, search, view]);
 
   const unitOptions = useMemo(() => {
     const baseOptions = [{ id: 0, name: "Без привязки" }];
@@ -366,7 +374,7 @@ export default function useSkladUnitsController({ showAlert }) {
               Единицы измерения
             </Typography>
             <Chip
-              label={rows.length}
+              label={listPending ? "…" : rows.length}
               size="small"
             />
           </Stack>
@@ -388,6 +396,19 @@ export default function useSkladUnitsController({ showAlert }) {
             onValueChange={(value) => setState({ search: value })}
           />
         </Box>
+
+        <JacoSegmentedTabs
+          size="compact"
+          variant="standard"
+          sx={{ width: "fit-content", maxWidth: "100%" }}
+          value={view}
+          onChange={(_, nextView) => setView(nextView)}
+          aria-label="Фильтр единиц измерения"
+          items={[
+            { id: "active", label: listPending ? "Активные" : `Активные (${activeRows.length})` },
+            { id: "all", label: listPending ? "Все" : `Все (${rows.length})` },
+          ]}
+        />
 
         <TableContainer
           sx={{
@@ -442,10 +463,14 @@ export default function useSkladUnitsController({ showAlert }) {
                 return (
                   <TableRow
                     key={row.id}
-                    hover
+                    {...interactiveRowProps(
+                      row?.name,
+                      () => openUnit(row, isEditable ? "edit" : "view"),
+                      isEditable || canShowUsage,
+                    )}
                   >
                     <TableCell>
-                      <Typography sx={{ fontWeight: 600 }}>{row?.name || "—"}</Typography>
+                      <Typography>{row?.name || "—"}</Typography>
                     </TableCell>
                     <TableCell>
                       <Typography
@@ -455,7 +480,10 @@ export default function useSkladUnitsController({ showAlert }) {
                         {conversionLabel}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell
+                      align="right"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <Stack
                         direction="row"
                         spacing={0.5}
@@ -463,25 +491,13 @@ export default function useSkladUnitsController({ showAlert }) {
                           justifyContent: "flex-end",
                         }}
                       >
-                        <Tooltip title={isEditable ? "Редактировать" : "Недостаточно прав"}>
-                          <span>
-                            <JacoIconButton
-                              aria-label="Редактировать"
-                              onClick={() => openUnit(row)}
-                              disabled={!isEditable}
-                            >
-                              <EditIcon fontSize="small" />
-                            </JacoIconButton>
-                          </span>
-                        </Tooltip>
-
                         {canShowUsage ? (
                           <Tooltip title="История">
                             <JacoIconButton
                               aria-label="История"
                               onClick={() => openUnit(row, "view")}
                             >
-                              <HistoryIcon fontSize="small" />
+                              <HistoryOutlinedIcon fontSize="small" />
                             </JacoIconButton>
                           </Tooltip>
                         ) : null}
@@ -516,7 +532,7 @@ export default function useSkladUnitsController({ showAlert }) {
                 );
               })}
 
-              {filteredRows.length === 0 ? (
+              {!listPending && filteredRows.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={3}

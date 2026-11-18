@@ -5,6 +5,8 @@ import { Box, Button, Collapse, Typography } from "@mui/material";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
+import { calculateYAxisBounds } from "./utils";
+
 const months = ["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"];
 const monthNames = [
   "Январь",
@@ -21,66 +23,25 @@ const monthNames = [
   "Декабрь",
 ];
 
-const formatValue = (value) =>
+const formatValue = (value, decimals = 0) =>
   Number(value || 0)
-    .toFixed(0)
+    .toFixed(decimals)
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-const getNiceStep = (roughStep) => {
-  if (!Number.isFinite(roughStep) || roughStep <= 0) return 1;
-
-  const exponent = Math.floor(Math.log10(roughStep));
-  const fraction = roughStep / 10 ** exponent;
-  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
-
-  return niceFraction * 10 ** exponent;
-};
-
-const calculateYAxisBounds = (seriesItems) => {
-  const values = seriesItems
-    .flatMap((item) => item.values ?? [])
-    .filter((value) => value !== null && value !== undefined && value !== "")
-    .map(Number)
-    .filter(Number.isFinite);
-  const nonZeroValues = values.filter((value) => value !== 0);
-
-  if (!nonZeroValues.length) {
-    return { min: 0, max: 1 };
-  }
-
-  const minValue = Math.min(...nonZeroValues);
-  const maxValue = Math.max(...nonZeroValues);
-  const span = maxValue - minValue || Math.abs(maxValue) || 1;
-  const padding = span * 0.1;
-  const hasZero = values.some((value) => value === 0);
-  const rawMin = hasZero && minValue >= 0 ? 0 : minValue - padding;
-  const rawMax = maxValue + padding;
-  const step = getNiceStep((rawMax - rawMin) / 5);
-  const min =
-    minValue >= 0
-      ? Math.max(0, Math.floor(rawMin / step) * step)
-      : Math.floor(rawMin / step) * step;
-  const max = Math.ceil(rawMax / step) * step;
-
-  return {
-    min,
-    max: max > min ? max : min + step,
-  };
-};
-
-const buildSharedTooltip = ({ month, seriesItems, valueSuffix }) => {
+const buildSharedTooltip = ({ month, seriesItems, valueSuffix, valueDecimals = 0 }) => {
   const rows = seriesItems
     .map((item) => ({
       ...item,
       value: item.values[month.index],
     }))
     .filter((item) => item.value !== null && item.value !== undefined);
+  const suffixText = valueSuffix ? ` ${valueSuffix}` : "";
 
   return [
     `[bold]${month.fullName}[/]`,
     ...rows.map(
       (item) =>
-        `[#${item.color.replace("#", "")}]●[/] ${item.name}: [bold]${formatValue(item.value)}[/] ${valueSuffix}`,
+        `[#${item.color.replace("#", "")}]●[/] ${item.name}: [bold]${formatValue(item.value, valueDecimals)}[/]${suffixText}`,
     ),
   ].join("\n");
 };
@@ -89,6 +50,7 @@ export default function StatSaleMonthlyLineChart({
   title,
   series = [],
   valueSuffix = "шт",
+  valueDecimals = 0,
   emptyText = "Нет данных для отображения",
   height = 560,
   collapsible = false,
@@ -96,7 +58,9 @@ export default function StatSaleMonthlyLineChart({
   resetKey,
 }) {
   const chartRef = useRef(null);
+  const seriesByNameRef = useRef(new Map());
   const [expanded, setExpanded] = useState(collapsible ? defaultExpanded : true);
+  const [hiddenSeries, setHiddenSeries] = useState([]);
 
   useEffect(() => {
     if (collapsible) setExpanded(defaultExpanded);
@@ -105,7 +69,10 @@ export default function StatSaleMonthlyLineChart({
   const chartSeries = useMemo(
     () =>
       series
-        .filter((item) => item?.values?.some((value) => value !== null && value !== undefined))
+        .filter(
+          (item) =>
+            item?.showEmpty || item?.values?.some((value) => value !== null && value !== undefined),
+        )
         .map((item) => ({
           ...item,
           color: item.color || "#000000",
@@ -113,6 +80,10 @@ export default function StatSaleMonthlyLineChart({
         })),
     [series],
   );
+
+  useEffect(() => {
+    setHiddenSeries([]);
+  }, [chartSeries]);
 
   useLayoutEffect(() => {
     if (!expanded || !chartRef.current || !chartSeries.length) return;
@@ -128,6 +99,7 @@ export default function StatSaleMonthlyLineChart({
 
       if (disposed || !chartRef.current) return;
 
+      seriesByNameRef.current = new Map();
       root = am5.Root.new(chartRef.current);
       root.locale = am5locales_ru_RU.default;
       root.setThemes([am5themes_Animated.default.new(root)]);
@@ -201,7 +173,7 @@ export default function StatSaleMonthlyLineChart({
         am5xy.ValueAxis.new(root, {
           strictMinMax: true,
           renderer: yRenderer,
-          numberFormat: "#,###",
+          numberFormat: valueDecimals > 0 ? `#,###.${"0".repeat(valueDecimals)}` : "#,###",
         }),
       );
 
@@ -253,6 +225,7 @@ export default function StatSaleMonthlyLineChart({
             month: { name: month, fullName: monthNames[index], index },
             seriesItems: tooltipSeriesItems,
             valueSuffix,
+            valueDecimals,
           }),
         }));
 
@@ -376,32 +349,9 @@ export default function StatSaleMonthlyLineChart({
       updateYAxisBounds();
 
       cursor.set("snapToSeries", chart.series.values);
-
-      const legend = chart.children.push(
-        am5.Legend.new(root, {
-          centerX: am5.p50,
-          x: am5.p50,
-          marginTop: 14,
-          marginBottom: 0,
-          layout: root.horizontalLayout,
-          clickTarget: "itemContainer",
-        }),
+      seriesByNameRef.current = new Map(
+        createdSeries.map((entry) => [entry.item.name, entry.series]),
       );
-      legend.labels.template.setAll({
-        fontSize: 13,
-        fontWeight: "600",
-        fill: am5.color(0x222222),
-      });
-      legend.labels.template.adapters.add("fontWeight", (fontWeight, target) => {
-        const context = target.dataItem?.dataContext;
-        const name = typeof context?.get === "function" ? context.get("name") : context?.name;
-        return name === mainSeries?.name ? "700" : fontWeight;
-      });
-      legend.markers.template.setAll({
-        width: 14,
-        height: 14,
-      });
-      legend.data.setAll(chart.series.values);
 
       chart.appear(600, 100);
     };
@@ -410,9 +360,10 @@ export default function StatSaleMonthlyLineChart({
 
     return () => {
       disposed = true;
+      seriesByNameRef.current = new Map();
       root?.dispose();
     };
-  }, [chartSeries, expanded, valueSuffix]);
+  }, [chartSeries, expanded, valueSuffix, valueDecimals]);
 
   return (
     <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>
@@ -453,13 +404,80 @@ export default function StatSaleMonthlyLineChart({
         unmountOnExit
       >
         {chartSeries.length ? (
-          <Box
-            ref={chartRef}
-            sx={{
-              width: "100%",
-              height,
-            }}
-          />
+          <>
+            <Box
+              ref={chartRef}
+              sx={{
+                width: "100%",
+                height,
+              }}
+            />
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                alignItems: "center",
+                columnGap: 2,
+                rowGap: 1,
+                mt: 1.5,
+                px: 1,
+              }}
+            >
+              {chartSeries.map((item) => {
+                const hidden = hiddenSeries.includes(item.name);
+
+                return (
+                  <Box
+                    key={item.name}
+                    component="button"
+                    type="button"
+                    onClick={() => {
+                      const series = seriesByNameRef.current.get(item.name);
+                      if (!series) return;
+
+                      const willHide = series.get("visible") !== false;
+                      if (willHide) series.hide();
+                      else series.show();
+                      setHiddenSeries((current) =>
+                        willHide
+                          ? [...current, item.name]
+                          : current.filter((name) => name !== item.name),
+                      );
+                    }}
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      p: 0,
+                      border: 0,
+                      bgcolor: "transparent",
+                      color: "#222222",
+                      fontFamily: "inherit",
+                      fontSize: 13,
+                      fontWeight: item.isMain ? 700 : 600,
+                      lineHeight: 1.3,
+                      cursor: "pointer",
+                      opacity: hidden ? 0.35 : 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 14,
+                        height: 14,
+                        flexShrink: 0,
+                        borderRadius: "50%",
+                        boxSizing: "border-box",
+                        bgcolor: item.strokeDasharray ? "transparent" : item.color,
+                        border: item.strokeDasharray ? `2px dashed ${item.color}` : 0,
+                      }}
+                    />
+                    {item.name}
+                  </Box>
+                );
+              })}
+            </Box>
+          </>
         ) : (
           <Typography
             color="textSecondary"

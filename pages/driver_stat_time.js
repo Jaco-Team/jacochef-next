@@ -66,6 +66,19 @@ class DriverStatTime_Modal extends React.Component {
   }
 
   getMap(addr, driver) {
+    const hasDriverPosition =
+      Array.isArray(driver) &&
+      driver.length === 2 &&
+      driver.every(
+        (coordinate) =>
+          (typeof coordinate === "number" ||
+            (typeof coordinate === "string" && coordinate.trim() !== "")) &&
+          Number.isFinite(Number(coordinate)),
+      ) &&
+      Math.abs(Number(driver[0])) <= 90 &&
+      Math.abs(Number(driver[1])) <= 180 &&
+      (Number(driver[0]) !== 0 || Number(driver[1]) !== 0);
+
     if (!this.map) {
       ymaps.ready(() => {
         this.map = new ymaps.Map(
@@ -87,21 +100,23 @@ class DriverStatTime_Modal extends React.Component {
           },
         );
 
-        // местонахождение курьера
-        let myPlacemark2 = new ymaps.Placemark(
-          driver,
-          {},
-          {
-            iconLayout: "default#image",
-            iconImageHref: "/Car.png",
-            iconImageSize: [30, 30],
-            iconImageOffset: [-12, -24],
-            iconContentOffset: [15, 15],
-          },
-        );
-
         this.map.geoObjects.add(myPlacemark);
-        this.map.geoObjects.add(myPlacemark2);
+
+        if (hasDriverPosition) {
+          let myPlacemark2 = new ymaps.Placemark(
+            driver,
+            {},
+            {
+              iconLayout: "default#image",
+              iconImageHref: "/Car.png",
+              iconImageSize: [30, 30],
+              iconImageOffset: [-12, -24],
+              iconContentOffset: [15, 15],
+            },
+          );
+
+          this.map.geoObjects.add(myPlacemark2);
+        }
       });
     } else {
       this.map.geoObjects.removeAll();
@@ -120,21 +135,23 @@ class DriverStatTime_Modal extends React.Component {
         },
       );
 
-      // местонахождение курьера
-      let myPlacemark2 = new ymaps.Placemark(
-        driver,
-        {},
-        {
-          iconLayout: "default#image",
-          iconImageHref: "/Car.png",
-          iconImageSize: [30, 30],
-          iconImageOffset: [-12, -24],
-          iconContentOffset: [15, 15],
-        },
-      );
-
       this.map.geoObjects.add(myPlacemark);
-      this.map.geoObjects.add(myPlacemark2);
+
+      if (hasDriverPosition) {
+        let myPlacemark2 = new ymaps.Placemark(
+          driver,
+          {},
+          {
+            iconLayout: "default#image",
+            iconImageHref: "/Car.png",
+            iconImageSize: [30, 30],
+            iconImageOffset: [-12, -24],
+            iconContentOffset: [15, 15],
+          },
+        );
+
+        this.map.geoObjects.add(myPlacemark2);
+      }
     }
   }
 
@@ -541,7 +558,7 @@ class DriverStatTime_ extends React.Component {
                         {parseInt(this.state.dop_show) == 0 ? (
                           false
                         ) : (
-                          <TableCell>{row.dist}</TableCell>
+                          <TableCell>{row.dist_text ?? row.dist}</TableCell>
                         )}
                       </TableRow>
                     ))}

@@ -35,14 +35,48 @@ export function getPartStartDate(monthId, selectedPart = 0) {
   return `${monthId}-${Number(selectedPart) === 0 ? "01" : "16"}`;
 }
 
+// Не финансовая колонка: видна всем, не размывается и не зависит от прав.
+export const WORKED_HOURS_COLUMN = {
+  key: "worked_hours",
+  label: "Отработано",
+  accessKey: null,
+  public: true,
+};
+
+// Неразрывные пробелы держат значение в одну строку: «145 ч 45 мин», целые часы — «120 ч».
+function formatHoursAndMinutes(hours, minutes) {
+  return minutes ? `${hours}\u00A0ч\u00A0${minutes}\u00A0мин` : `${hours}\u00A0ч`;
+}
+
+/** Подсказка к ячейке дня: «7:45» → «7 ч 45 мин», «12» → «12 ч». */
+export function formatDayHoursTitle(value) {
+  const match = String(value ?? "").match(/^(\d+)(?::(\d{1,2}))?$/);
+  return match ? formatHoursAndMinutes(Number(match[1]), Number(match[2] ?? 0)) : undefined;
+}
+
+export function formatWorkedMinutes(minutes) {
+  if (minutes === null || minutes === undefined || minutes === "") {
+    return "";
+  }
+  const total = Math.round(Number(minutes));
+  if (!Number.isFinite(total)) {
+    return "";
+  }
+  const hours = Math.floor(Math.abs(total) / 60);
+  const rest = Math.abs(total) % 60;
+  const sign = total < 0 ? "-" : "";
+  return `${sign}${formatHoursAndMinutes(hours, rest)}`;
+}
+
 export function getVisibleSummaryColumns(access = {}) {
   const { canShowSalaryBlock, canView } = createStaffSchedulePolicy(access);
 
   if (!canShowSalaryBlock) {
-    return [];
+    return [WORKED_HOURS_COLUMN];
   }
 
   return [
+    WORKED_HOURS_COLUMN,
     { key: "price_p_h", label: "За 1ч", accessKey: "1h" },
     { key: "price_p_h_dop", label: "За 1ч + доп.", accessKey: "1h_plus" },
     { key: "dop_bonus", label: "Командный бонус", accessKey: "com_bonus" },
@@ -50,15 +84,28 @@ export function getVisibleSummaryColumns(access = {}) {
     { key: "err_price", label: "Ошибки", accessKey: "errors" },
     { key: "my_bonus", label: "Бонус", accessKey: "bonus" },
     { key: "total_sum", label: "Всего", accessKey: "all_price", computed: true },
-    { key: "withheld", label: "Удержано", accessKey: "withheld" },
+    {
+      key: "withheld",
+      label: "Удержано по исп. листу",
+      accessKey: "withheld",
+    },
+    { key: "opening_balance", label: "Остаток на начало", accessKey: "test_all_price" },
     { key: "to_pay_sum", label: "К выплате", accessKey: "test_all_price", computed: true },
     { key: "given", label: "Выдано", accessKey: "given" },
     { key: "given_cart", label: "На карты", accessKey: "given_cart" },
-    { key: "test_all_price", label: "Премия по ведомости", accessKey: "premia" },
-  ].filter((item) => canView(item.accessKey));
+    { key: "salary_difference", label: "Разница", accessKey: "test_all_price" },
+  ].filter((item) => item.public || canView(item.accessKey));
 }
 
 export function getSummaryCellValue(column, row = {}) {
+  if (column.key === "worked_hours") {
+    return formatWorkedMinutes(row?.worked_min);
+  }
+
+  if (Number(row?.finance_hidden) === 1) {
+    return "—";
+  }
+
   if (column.key === "total_sum") {
     return computeTotalSum(row);
   }
@@ -71,7 +118,93 @@ export function getSummaryCellValue(column, row = {}) {
     return computePremiumSheet(row);
   }
 
-  return row?.[column.key] ?? "";
+  const value = row?.[column.key] ?? "";
+  return WHOLE_RUBLE_KEYS.has(column.key) ? toWholeRubles(value) : dropZeroFraction(value);
+}
+
+/** Ставка и выплаты считаются в целых рублях: копейки из БД («300.00») не показываем. */
+export const WHOLE_RUBLE_KEYS = new Set(["price_p_h", "given", "given_cart", "withheld"]);
+
+export function toWholeRubles(value) {
+  if (value === null || value === undefined || value === "") {
+    return value ?? "";
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? String(Math.round(number)) : value;
+}
+
+function dropZeroFraction(value) {
+  return typeof value === "string" && /^-?\d+\.0+$/.test(value) ? value.replace(/\.0+$/, "") : value;
+}
+
+/** Должность всегда полным названием; короткое — только если полного нет в ответе. */
+export function getPositionName(row) {
+  return row?.full_app_name || row?.app_name || "";
+}
+
+/**
+ * Сумма за день в ячейке: целые рубли с разделителем разрядов, без знака валюты («53 790»).
+ */
+export function formatDayAmount(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(number).toLocaleString("ru-RU") : String(value);
+}
+
+export function formatFullAmount(value) {
+  const number = Number(value);
+  return value === "" || value == null || !Number.isFinite(number)
+    ? ""
+    : `${Math.round(number).toLocaleString("ru-RU")} ₽`;
+}
+
+// Едва заметные, но различимые оттенки для строк одного человека; не пересекаются с цветами медкнижки и смен.
+export const SAME_PERSON_TINTS = ["#E8F0FC", "#E3F5F0", "#F0E9FA", "#FCEFE4", "#EAF4E4", "#FBE9F0"];
+
+export function getSamePersonTint(row = {}) {
+  const group = Number(row?.same_person_group);
+  return group > 0 ? SAME_PERSON_TINTS[(group - 1) % SAME_PERSON_TINTS.length] : null;
+}
+
+export function getSamePersonTitle(row = {}) {
+  const others = Array.isArray(row?.same_person_with) ? row.same_person_with : [];
+  return others.length ? `Этот же человек в графике: ${others.join(", ")}` : undefined;
+}
+
+const ACCRUAL_FINANCE_KEYS = new Set([
+  "worked_hours",
+  "price_p_h",
+  "price_p_h_dop",
+  "dop_bonus",
+  "h_price",
+  "err_price",
+  "my_bonus",
+  "total_sum",
+]);
+
+export function getFinanceGroup(columnKey) {
+  return ACCRUAL_FINANCE_KEYS.has(columnKey) ? "accrual" : "payout";
+}
+
+export function formatFinanceCardValue(column, value) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+  if (column?.key === "worked_hours") {
+    return String(value);
+  }
+  const number = Number(value);
+  return Number.isFinite(number)
+    ? `${number.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽`
+    : String(value);
+}
+
+export const BALANCE_COLUMN_KEYS = new Set(["opening_balance", "salary_difference"]);
+
+export function isNegativeBalanceValue(column, value) {
+  return BALANCE_COLUMN_KEYS.has(column?.key) && Number(value) < 0;
 }
 
 export function getScheduleRowFocusKey(row = {}) {

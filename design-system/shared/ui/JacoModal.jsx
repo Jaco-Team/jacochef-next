@@ -179,6 +179,7 @@ export default function JacoModal({
           py: 1.5,
           borderBottom: `1px solid ${uiColors.borderLight}`,
           backgroundColor: "#F7F7F7",
+          flexShrink: 0,
           ...titleContainerSx,
         }}
       >
@@ -239,6 +240,13 @@ export default function JacoModal({
           sx={{
             p: 0,
             backgroundColor: "#FFFFFF",
+            ...(containedDesktopScroll
+              ? {
+                  flex: "1 1 auto",
+                  minHeight: 0,
+                  overflowY: "auto",
+                }
+              : {}),
           }}
         >
           <Box
@@ -258,7 +266,13 @@ export default function JacoModal({
       )}
       {actions ? (
         <DialogActions
-          sx={{ px: 3, py: 2, borderTop: `1px solid ${uiColors.borderLight}`, ...actionsSx }}
+          sx={{
+            px: 3,
+            py: 2,
+            borderTop: `1px solid ${uiColors.borderLight}`,
+            flexShrink: 0,
+            ...actionsSx,
+          }}
         >
           {actions}
         </DialogActions>

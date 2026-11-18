@@ -138,7 +138,7 @@ export default function CrmPage() {
       //"http://127.0.0.1:8000/api/crm/export_segment"
 
       const response = await axios.post(
-        "https://apichef2.jacochef.ru/api/crm/export_segment",
+        (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/crm/export_segment",
         payload,
         {
           ...credentialsConfig,

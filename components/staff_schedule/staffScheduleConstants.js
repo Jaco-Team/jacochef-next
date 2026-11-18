@@ -13,8 +13,18 @@ export const EMPTY_PERIOD = {
 };
 
 export const EMPLOYEE_COLUMN_WIDTH = 170;
-export const POSITION_COLUMN_WIDTH = 150;
-export const DAY_COLUMN_WIDTH = 42;
+export const POSITION_COLUMN_WIDTH = 190;
+export const DAY_COLUMN_WIDTH = 56;
 export const SUMMARY_COLUMN_WIDTH = 84;
+// «999 ч 59 мин» в одну строку при фактическом шрифте ячейки 14px.
+export const WORKED_HOURS_COLUMN_WIDTH = 100;
+
+export function getSummaryColumnWidth(column) {
+  return column?.key === "worked_hours" ? WORKED_HOURS_COLUMN_WIDTH : SUMMARY_COLUMN_WIDTH;
+}
+
+export function getSummaryColumnsWidth(columns = []) {
+  return columns.reduce((sum, column) => sum + getSummaryColumnWidth(column), 0);
+}
 export const SELECTION_COLUMN_WIDTH = 44;
 export const ACTION_COLUMN_WIDTH = 44;

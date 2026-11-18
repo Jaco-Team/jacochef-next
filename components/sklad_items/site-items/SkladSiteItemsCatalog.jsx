@@ -4,11 +4,11 @@ import { useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import EditIcon from "@mui/icons-material/Edit";
-import EditNoteIcon from "@mui/icons-material/EditNote";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import SyncIcon from "@mui/icons-material/Sync";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import {
@@ -16,6 +16,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  CircularProgress,
   InputAdornment,
   Stack,
   Table,
@@ -39,6 +40,9 @@ import {
 } from "@/design-system/shared/ui";
 
 import { formatDateRU } from "../formatDateRangeRU";
+import { interactiveRowProps } from "../table/interactiveRow";
+import SkladCategoryHistoryDialog from "../SkladCategoryHistoryDialog";
+import SkladItemNameButton from "../SkladItemNameButton";
 
 const brandRed = "#DD1A32";
 const blockBackground = "#F3F3F3";
@@ -91,13 +95,14 @@ export default function SkladSiteItemsCatalog({
   search,
   archiveMode,
   rows,
+  loading,
+  error,
+  onRetry,
   categories,
-  isEditable,
   canCreate,
   canSyncSiteItemsVk,
   canManageTags,
   canDeleteAction,
-  canEditActivity,
   canEditCash,
   canEditSort,
   canViewHistory,
@@ -105,6 +110,7 @@ export default function SkladSiteItemsCatalog({
   openCreate,
   onSyncSiteItemsVk,
   openTagsEditor,
+  onManageCategories,
   openEdit,
   openDeleteDialog,
   onSaveQuickField,
@@ -113,6 +119,7 @@ export default function SkladSiteItemsCatalog({
   const [sortOrder, setSortOrder] = useState("asc");
   const [expandedCategories, setExpandedCategories] = useState([]);
   const [sortDrafts, setSortDrafts] = useState({});
+  const [historyCategory, setHistoryCategory] = useState(null);
 
   const counts = useMemo(
     () => ({
@@ -281,21 +288,27 @@ export default function SkladSiteItemsCatalog({
                       : "Активные позиции, сгруппированные по категориям"}
                   </Typography>
                 </Box>
-                <JacoTextInput
-                  placeholder="Поиск по названию"
-                  value={search}
-                  onChange={(event) => setState({ search: event.target.value, page: 0 })}
-                  sx={{ width: { xs: "100%", lg: 320 }, backgroundColor: "#fff" }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{ alignItems: "center" }}
+                >
+                  <JacoTextInput
+                    placeholder="Поиск по названию"
+                    value={search}
+                    onChange={(event) => setState({ search: event.target.value, page: 0 })}
+                    sx={{ width: { xs: "100%", lg: 320 }, backgroundColor: "#fff" }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ color: textSecondary, fontSize: 20 }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                </Stack>
               </Stack>
 
               <Stack
@@ -358,26 +371,46 @@ export default function SkladSiteItemsCatalog({
                     );
                   })}
                 </Box>
-                <Typography sx={{ fontSize: 13, color: textSecondary }}>
-                  {groupedRows.length} категорий · {visibleRows.length} товаров
-                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ alignItems: "center", justifyContent: "flex-end" }}
+                >
+                  <Typography sx={{ fontSize: 13, color: textSecondary }}>
+                    {groupedRows.length} категорий · {visibleRows.length} товаров
+                  </Typography>
+                </Stack>
               </Stack>
             </Stack>
           </JacoSurface>
 
-          {groupedRows.length ? (
-            <Stack spacing={1.25}>
-              <Stack
-                direction="row"
-                sx={{
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  px: 0.25,
-                }}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              alignItems: { xs: "stretch", sm: "center" },
+              justifyContent: "space-between",
+              px: 0.25,
+            }}
+          >
+            <Typography sx={{ color: textSecondary, fontSize: 13 }}>
+              {groupedRows.length ? "Выберите категорию, чтобы увидеть товары" : ""}
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}
+            >
+              <JacoButton
+                compact
+                tone="secondary"
+                startIcon={<SettingsOutlinedIcon />}
+                onClick={onManageCategories}
+                aria-label="Управление категориями товаров сайта"
               >
-                <Typography sx={{ color: textSecondary, fontSize: 13 }}>
-                  Выберите категорию, чтобы увидеть товары
-                </Typography>
+                Управление категориями
+              </JacoButton>
+              {groupedRows.length > 0 && !loading && !error ? (
                 <JacoButton
                   compact
                   tone="secondary"
@@ -387,8 +420,34 @@ export default function SkladSiteItemsCatalog({
                 >
                   {allExpanded ? "Свернуть все" : "Развернуть все"}
                 </JacoButton>
-              </Stack>
+              ) : null}
+            </Stack>
+          </Stack>
 
+          {loading ? (
+            <JacoSurface
+              role="status"
+              sx={{ p: 5, textAlign: "center", borderRadius: 2.5 }}
+            >
+              <CircularProgress size={28} />
+              <Typography sx={{ mt: 1, color: textSecondary }}>Загрузка товаров сайта…</Typography>
+            </JacoSurface>
+          ) : error ? (
+            <JacoSurface
+              role="alert"
+              sx={{ p: 5, textAlign: "center", borderRadius: 2.5 }}
+            >
+              <Typography>{error}</Typography>
+              <JacoButton
+                tone="secondary"
+                onClick={() => onRetry()}
+                sx={{ mt: 2 }}
+              >
+                Повторить
+              </JacoButton>
+            </JacoSurface>
+          ) : groupedRows.length ? (
+            <Stack spacing={1.25}>
               {groupedRows.map((category) => {
                 const key = categoryKey(category);
                 return (
@@ -406,83 +465,128 @@ export default function SkladSiteItemsCatalog({
                       "&.Mui-expanded": { m: 0 },
                     }}
                   >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
-                      sx={{
-                        px: { xs: 1.5, lg: 2 },
-                        minHeight: 56,
-                        "&.Mui-expanded": { minHeight: 56 },
-                        "& .MuiAccordionSummary-content": { alignItems: "center", gap: 1.25 },
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 16, fontWeight: 600, color: textPrimary }}>
-                        {category.name}
-                      </Typography>
-                      <Box
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <AccordionSummary
+                        expandIcon={<ExpandMoreIcon sx={{ color: textSecondary }} />}
                         sx={{
-                          minWidth: 28,
-                          height: 24,
-                          px: 1,
-                          borderRadius: 999,
-                          backgroundColor: blockBackground,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: textSecondary,
+                          flex: 1,
+                          minWidth: 0,
+                          px: { xs: 1.5, lg: 2 },
+                          minHeight: 56,
+                          "&.Mui-expanded": { minHeight: 56 },
+                          "& .MuiAccordionSummary-content": { alignItems: "center", gap: 1.25 },
                         }}
                       >
-                        {category.items.length}
-                      </Box>
-                    </AccordionSummary>
+                        <Typography sx={{ fontSize: 16, fontWeight: 600, color: textPrimary }}>
+                          {category.name}
+                        </Typography>
+                        <Box
+                          sx={{
+                            minWidth: 28,
+                            height: 24,
+                            px: 1,
+                            borderRadius: 999,
+                            backgroundColor: blockBackground,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: textSecondary,
+                          }}
+                        >
+                          {category.items.length}
+                        </Box>
+                      </AccordionSummary>
+                      {Number(category.id) > 0 ? (
+                        <Tooltip title="История категории">
+                          <Box
+                            component="span"
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`История категории: ${category.name}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setHistoryCategory({ ...category, source_type: "site_item" });
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setHistoryCategory({ ...category, source_type: "site_item" });
+                              }
+                            }}
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              p: 1,
+                              borderRadius: 1,
+                              cursor: "pointer",
+                              "&:focus-visible": { outline: "2px solid currentColor" },
+                            }}
+                          >
+                            <HistoryOutlinedIcon fontSize="small" />
+                          </Box>
+                        </Tooltip>
+                      ) : null}
+                    </Box>
                     <AccordionDetails
-                      sx={{ px: 0, pt: 0, pb: 2, backgroundColor: blockBackground }}
+                      sx={{ px: 0, pt: 1, pb: 2, backgroundColor: blockBackground }}
                     >
                       <TableContainer
                         component={JacoSurface}
+                        role="region"
+                        aria-label={`Товары категории ${category.name}`}
+                        tabIndex={0}
                         sx={{
                           display: { xs: "none", md: "block" },
-                          mx: 2,
+                          mx: 1,
+                          width: "calc(100% - 16px)",
                           borderRadius: 2.5,
                           border: `1px solid ${blockBorder}`,
-                          overflow: "hidden",
+                          overflowX: "auto",
                         }}
                       >
                         <Table
                           size="small"
-                          sx={{ tableLayout: "fixed" }}
+                          sx={{ minWidth: 960 }}
                         >
                           <TableHead>
                             <TableRow
-                              sx={{ "& th": { bgcolor: blockBackground, fontWeight: 700 } }}
+                              sx={{
+                                "& th": {
+                                  bgcolor: blockBackground,
+                                  fontWeight: 700,
+                                  fontSize: { md: "0.75rem", lg: "0.875rem" },
+                                  whiteSpace: "nowrap",
+                                },
+                              }}
                             >
-                              <TableCell sx={{ width: "4%" }}>№</TableCell>
-                              <TableCell sx={{ width: "8%" }}>Активность</TableCell>
-                              <TableCell sx={{ width: "7%" }}>Касса</TableCell>
-                              <TableCell sx={{ width: "8%" }}>
+                              <TableCell sx={{ width: "40px" }}>№</TableCell>
+                              <TableCell sx={{ width: "70px" }}>Касса</TableCell>
+                              <TableCell sx={{ minWidth: "110px" }}>
                                 <TableSortLabel {...sortProps("sort")}>Сортировка</TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "23%" }}>
+                              <TableCell sx={{ minWidth: "160px" }}>
                                 <TableSortLabel {...sortProps("name")}>Название</TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "10%" }}>
+                              <TableCell sx={{ minWidth: "100px" }}>Код для 1С</TableCell>
+                              <TableCell sx={{ minWidth: "110px" }}>
                                 <TableSortLabel {...sortProps("date_start")}>
                                   Действует с
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "9%" }}>
+                              <TableCell sx={{ width: "70px" }}>
                                 <TableSortLabel {...sortProps("date_end")}>по</TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "12%" }}>
+                              <TableCell sx={{ minWidth: "100px" }}>
                                 <TableSortLabel {...sortProps("update_item")}>
                                   Обновление
                                 </TableSortLabel>
                               </TableCell>
-                              <TableCell sx={{ width: "9%" }}>Код для 1С</TableCell>
                               <TableCell
                                 align="center"
-                                sx={{ width: "10%" }}
+                                sx={{ minWidth: "100px" }}
                               >
                                 Действия
                               </TableCell>
@@ -493,18 +597,15 @@ export default function SkladSiteItemsCatalog({
                               <TableRow
                                 key={row.id}
                                 data-testid={`site-item-${row.id}`}
-                                hover
+                                {...interactiveRowProps(row?.name, () => openEdit(row, "main"))}
                               >
                                 <TableCell>{index + 1}</TableCell>
-                                <TableCell align="center">
+                                <TableCell
+                                  align="center"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
                                   <JacoCheckbox
-                                    checked={Number(row?.is_show) === 1}
-                                    disabled={!canEditActivity}
-                                    onChange={quickCheck(row, "is_show")}
-                                  />
-                                </TableCell>
-                                <TableCell align="center">
-                                  <JacoCheckbox
+                                    inputProps={{ "aria-label": `Касса: ${row.name}` }}
                                     checked={Number(row?.show_program) === 1}
                                     disabled={!canEditCash}
                                     onChange={quickCheck(row, "show_program")}
@@ -513,6 +614,7 @@ export default function SkladSiteItemsCatalog({
                                 <TableCell>
                                   <JacoTextInput
                                     type="number"
+                                    sx={{ minWidth: 88, width: 88 }}
                                     value={sortDrafts[row.id] ?? row?.sort ?? 0}
                                     disabled={!canEditSort}
                                     onClick={(event) => event.stopPropagation()}
@@ -533,17 +635,26 @@ export default function SkladSiteItemsCatalog({
                                         onSaveQuickField?.(row, "sort", value);
                                       }
                                     }}
-                                    slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                                    slotProps={{
+                                      htmlInput: {
+                                        min: 0,
+                                        step: 1,
+                                        "aria-label": `Сортировка: ${row.name}`,
+                                      },
+                                    }}
                                   />
                                 </TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>{row?.name || "—"}</TableCell>
+                                <TableCell>{row?.name || "—"}</TableCell>
+                                <TableCell>{row?.art || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_start) || "—"}</TableCell>
                                 <TableCell>{formatDateRU(row?.date_end) || "—"}</TableCell>
                                 <TableCell>
                                   {formatDateRU(row?.date_update || row?.update_item) || "—"}
                                 </TableCell>
-                                <TableCell>{row?.art || "—"}</TableCell>
-                                <TableCell align="center">
+                                <TableCell
+                                  align="center"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
                                   <Stack
                                     direction="row"
                                     spacing={0.5}
@@ -551,21 +662,13 @@ export default function SkladSiteItemsCatalog({
                                       justifyContent: "center",
                                     }}
                                   >
-                                    <Tooltip title={isEditable ? "Редактировать" : "Открыть"}>
-                                      <JacoIconButton
-                                        aria-label="Редактировать"
-                                        onClick={() => openEdit(row, "main")}
-                                      >
-                                        <EditIcon fontSize="small" />
-                                      </JacoIconButton>
-                                    </Tooltip>
                                     {canViewHistory ? (
                                       <Tooltip title="История изменений">
                                         <JacoIconButton
                                           aria-label="История"
                                           onClick={() => openEdit(row, "history")}
                                         >
-                                          <EditNoteIcon fontSize="small" />
+                                          <HistoryOutlinedIcon fontSize="small" />
                                         </JacoIconButton>
                                       </Tooltip>
                                     ) : null}
@@ -595,7 +698,7 @@ export default function SkladSiteItemsCatalog({
                         spacing={1}
                         sx={{ display: { xs: "flex", md: "none" }, mx: 1 }}
                       >
-                        {category.items.map((row, index) => (
+                        {category.items.map((row) => (
                           <JacoSurface
                             key={row.id}
                             data-testid={`site-item-${row.id}`}
@@ -603,9 +706,10 @@ export default function SkladSiteItemsCatalog({
                             sx={{ p: 1.5, borderRadius: 2.5 }}
                           >
                             <Stack spacing={1.25}>
-                              <Typography sx={{ fontSize: 16, fontWeight: 700 }}>
-                                {index + 1}. {row?.name || "Без названия"}
-                              </Typography>
+                              <SkladItemNameButton
+                                name={row?.name}
+                                onClick={() => openEdit(row, "main")}
+                              />
                               <Box
                                 sx={{
                                   display: "grid",
@@ -613,6 +717,7 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1.25,
                                 }}
                               >
+                                <FieldValue label="Код 1С">{row?.art}</FieldValue>
                                 <FieldValue label="Действует с">
                                   {formatDateRU(row?.date_start)}
                                 </FieldValue>
@@ -625,7 +730,6 @@ export default function SkladSiteItemsCatalog({
                                 >
                                   {formatDateRU(row?.date_update || row?.update_item)}
                                 </FieldValue>
-                                <FieldValue label="Код 1С">{row?.art}</FieldValue>
                                 <FieldValue label="Сортировка">{row?.sort}</FieldValue>
                               </Box>
                               <Stack
@@ -636,33 +740,28 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1,
                                 }}
                               >
-                                {[
-                                  ["Активность", "is_show", canEditActivity],
-                                  ["Касса", "show_program", canEditCash],
-                                ].map(([label, field, canEditField]) => (
-                                  <Box
-                                    key={field}
-                                    sx={{
-                                      flex: "1 1 130px",
-                                      px: 1.25,
-                                      py: 0.75,
-                                      border: `1px solid ${blockBorder}`,
-                                      borderRadius: 2,
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "space-between",
-                                    }}
-                                  >
-                                    <Typography sx={{ fontSize: 13, color: textSecondary }}>
-                                      {label}
-                                    </Typography>
-                                    <JacoCheckbox
-                                      checked={Number(row?.[field]) === 1}
-                                      disabled={!canEditField}
-                                      onChange={quickCheck(row, field)}
-                                    />
-                                  </Box>
-                                ))}
+                                <Box
+                                  sx={{
+                                    flex: "1 1 130px",
+                                    px: 1.25,
+                                    py: 0.75,
+                                    border: `1px solid ${blockBorder}`,
+                                    borderRadius: 2,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                  }}
+                                >
+                                  <Typography sx={{ fontSize: 13, color: textSecondary }}>
+                                    Касса
+                                  </Typography>
+                                  <JacoCheckbox
+                                    inputProps={{ "aria-label": `Касса: ${row.name}` }}
+                                    checked={Number(row?.show_program) === 1}
+                                    disabled={!canEditCash}
+                                    onChange={quickCheck(row, "show_program")}
+                                  />
+                                </Box>
                               </Stack>
                               <Stack
                                 direction="row"
@@ -672,19 +771,10 @@ export default function SkladSiteItemsCatalog({
                                   gap: 1,
                                 }}
                               >
-                                <JacoButton
-                                  tone="secondary"
-                                  startIcon={<EditIcon />}
-                                  aria-label="Редактировать"
-                                  onClick={() => openEdit(row, "main")}
-                                  sx={{ flex: 1 }}
-                                >
-                                  {isEditable ? "Изменить" : "Открыть"}
-                                </JacoButton>
                                 {canViewHistory ? (
                                   <JacoButton
                                     tone="secondary"
-                                    startIcon={<EditNoteIcon />}
+                                    startIcon={<HistoryOutlinedIcon />}
                                     onClick={() => openEdit(row, "history")}
                                     sx={{ flex: 1 }}
                                   >
@@ -711,6 +801,10 @@ export default function SkladSiteItemsCatalog({
           )}
         </Stack>
       </Box>
+      <SkladCategoryHistoryDialog
+        category={historyCategory}
+        onClose={() => setHistoryCategory(null)}
+      />
     </Stack>
   );
 }

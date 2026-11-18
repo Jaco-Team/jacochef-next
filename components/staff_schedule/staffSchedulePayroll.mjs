@@ -54,5 +54,12 @@ export function getAvailablePayoutAmount(row = {}, access = {}, mode) {
     )
   )
     return null;
-  return Number(values[0]) - Number(values[1]) - Number(values[2] ?? 0);
+  // Остаток на начало периода (долг или переплата) входит во «Всю сумму».
+  const opening = Number(row.opening_balance);
+  return (
+    Number(values[0]) -
+    Number(values[1]) -
+    Number(values[2] ?? 0) +
+    (row.opening_balance !== "" && Number.isFinite(opening) ? opening : 0)
+  );
 }

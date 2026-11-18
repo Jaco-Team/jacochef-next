@@ -29,30 +29,69 @@ const groupByYear = (data) => {
   return grouped;
 };
 
-const getYearsFromRange = (dateStart, dateEnd) => {
-  const startYear = Number(String(dateStart ?? "").slice(0, 4));
-  const endYear = Number(String(dateEnd ?? "").slice(0, 4));
+const toPeriodIndex = (year, month) => year * 12 + (month - 1);
 
-  if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) return null;
+const parsePeriod = (value) => {
+  const match = String(value ?? "").match(/^(\d{4})-(\d{1,2})/);
+  if (!match) return null;
 
-  const from = Math.min(startYear, endYear);
-  const to = Math.max(startYear, endYear);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isFinite(year) || month < 1 || month > 12) return null;
+
+  return { year, month };
+};
+
+const getSelectedRange = (dateStart, dateEnd) => {
+  const start = parsePeriod(dateStart);
+  const end = parsePeriod(dateEnd);
+  if (!start || !end) return null;
+
+  const startIndex = toPeriodIndex(start.year, start.month);
+  const endIndex = toPeriodIndex(end.year, end.month);
+
+  return {
+    from: Math.min(startIndex, endIndex),
+    to: Math.max(startIndex, endIndex),
+  };
+};
+
+const isMonthSelected = (year, month, range) => {
+  if (!range) return true;
+  const index = toPeriodIndex(year, month);
+  return index >= range.from && index <= range.to;
+};
+
+const yearIntersectsRange = (year, range) => {
+  if (!range) return true;
+  return months.some((_, index) => isMonthSelected(year, index + 1, range));
+};
+
+const getYearsInRange = (dateStart, dateEnd) => {
+  const start = parsePeriod(dateStart);
+  const end = parsePeriod(dateEnd);
+  if (!start || !end) return null;
+
+  const from = Math.min(start.year, end.year);
+  const to = Math.max(start.year, end.year);
   const years = [];
 
-  for (let year = from; year <= to; year++) {
+  for (let year = to; year >= from; year -= 1) {
     years.push(year);
   }
 
   return years;
 };
 
-const calculateMonthlyAverage = (groupedData, averageYears) => {
+const calculateMonthlyAverage = (groupedData, range) => {
   const monthlySums = new Array(12).fill(0);
   const monthlyCounts = new Array(12).fill(0);
   Object.entries(groupedData).forEach(([year, yearData]) => {
-    if (averageYears?.length && !averageYears.includes(Number(year))) return;
+    const numericYear = Number(year);
+    if (!yearIntersectsRange(numericYear, range)) return;
 
     for (let month = 1; month <= 12; month++) {
+      if (!isMonthSelected(numericYear, month, range)) continue;
       const value = yearData[month];
       if (value !== null && value !== undefined) {
         monthlySums[month - 1] += value;
@@ -71,13 +110,18 @@ export default function StatSaleYearlyLineChart({
   collapsible = false,
   defaultExpanded = true,
   resetKey,
+  valueSuffix = "шт",
+  valueDecimals = 0,
 }) {
   const groupedData = groupByYear(rawData);
-  const years = Object.keys(groupedData)
-    .map(Number)
-    .sort((a, b) => b - a);
-  const averageYears = getYearsFromRange(dateStart, dateEnd);
-  const averageValues = calculateMonthlyAverage(groupedData, averageYears);
+  const selectedRange = getSelectedRange(dateStart, dateEnd);
+  const years = (
+    getYearsInRange(dateStart, dateEnd) ??
+    Object.keys(groupedData)
+      .map(Number)
+      .sort((a, b) => b - a)
+  ).filter((year) => yearIntersectsRange(year, selectedRange));
+  const averageValues = calculateMonthlyAverage(groupedData, selectedRange);
   const series = [
     ...(averageValues.some((value) => value !== null)
       ? [
@@ -92,8 +136,13 @@ export default function StatSaleYearlyLineChart({
     ...years.map((year, index) => ({
       name: year.toString(),
       color: yearColorPalette[index % yearColorPalette.length],
-      includedInAverage: !averageYears?.length || averageYears.includes(year),
-      values: months.map((_, index) => groupedData[year]?.[index + 1] ?? null),
+      includedInAverage: true,
+      showEmpty: true,
+      values: months.map((_, monthIndex) => {
+        const month = monthIndex + 1;
+        if (!isMonthSelected(year, month, selectedRange)) return null;
+        return groupedData[year]?.[month] ?? null;
+      }),
     })),
   ];
 
@@ -101,7 +150,8 @@ export default function StatSaleYearlyLineChart({
     <StatSaleMonthlyLineChart
       title={title}
       series={series}
-      valueSuffix="шт"
+      valueSuffix={valueSuffix}
+      valueDecimals={valueDecimals}
       collapsible={collapsible}
       defaultExpanded={defaultExpanded}
       resetKey={resetKey}

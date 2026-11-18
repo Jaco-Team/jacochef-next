@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
+import SmsOutlinedIcon from "@mui/icons-material/SmsOutlined";
+import TelegramIcon from "@mui/icons-material/Telegram";
+import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 
 import JacoPeriodSwitch from "./JacoPeriodSwitch";
 
@@ -106,6 +109,38 @@ export function Disabled() {
         items={periodItems}
         disabled
       />
+    </StoryCanvas>
+  );
+}
+
+function DeliveryChannelSwitch({ disabled = false }) {
+  const [channel, setChannel] = useState("telegram");
+  const items = [
+    { id: "sms", text: "SMS", Icon: SmsOutlinedIcon },
+    { id: "telegram", text: "Telegram", Icon: TelegramIcon },
+    { id: "voice", text: "Звонок", Icon: PhoneOutlinedIcon },
+  ].map(({ id, text, Icon }) => ({
+    id,
+    label: <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}><Icon aria-hidden="true" sx={{ fontSize: 18 }} />{text}</Box>,
+  }));
+  return (
+    <JacoPeriodSwitch
+      aria-label="Способ получения кода"
+      items={items}
+      value={channel}
+      onChange={(_event, nextChannel) => setChannel(nextChannel)}
+      disabled={disabled}
+      tabSx={{ px: 0.5, fontSize: 13, whiteSpace: "nowrap", display: "flex", alignItems: "center", justifyContent: "center", "& > span": { display: "inline-flex", alignItems: "center", justifyContent: "center" } }}
+    />
+  );
+}
+
+export function DeliveryChannels() {
+  return (
+    <StoryCanvas title="Способ получения кода" description="Три варианта с иконками; тот же компонент, клавиатурная навигация и анимация плашки.">
+      <Box sx={{ width: 356, maxWidth: "100%" }}><DeliveryChannelSwitch /></Box>
+      <Box sx={{ width: 311, maxWidth: "100%" }}><DeliveryChannelSwitch /></Box>
+      <Box sx={{ width: 311, maxWidth: "100%" }}><DeliveryChannelSwitch disabled /></Box>
     </StoryCanvas>
   );
 }

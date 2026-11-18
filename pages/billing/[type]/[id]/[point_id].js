@@ -87,7 +87,7 @@ import DraggableImage from "@/components/billing/DraggableImage";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import MyAlert from "@/ui/MyAlert";
 import { formatDateReverse } from "@/src/helpers/ui/formatDate";
-import { api_laravel, api_laravel_local } from "@/src/api_new";
+import { api_laravel, api_laravel_local, prepareBillingUploads, setBillingUploadCsrf, resetBillingUploadCsrf } from "@/src/api_new";
 import { Link } from "@mui/material";
 
 const types = [
@@ -211,10 +211,10 @@ var global_point_id = 0;
 var type_bill = "bill";
 var bill_type = 0;
 var is_return = false;
-const url_bill = "https://apichef2.jacochef.ru/api/bill-items/upload";
-const url_bill_ex = "https://apichef2.jacochef.ru/api/bill-ex-items/upload";
+const url_bill = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/bill-items/upload";
+const url_bill_ex = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "") + "/bill-ex-items/upload";
 // const API_URL = "http://127.0.0.1:8000/api";
-const API_URL = "https://apichef2.jacochef.ru/api";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(/\/+$/, "");
 // const url_ocr = `${API_URL}/ocr/files/pipeline`;
 const url_ocr = `${API_URL}/ocr/files/lilt-pipeline`;
 
@@ -1736,7 +1736,14 @@ var dropzoneOptions_bill = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -1822,7 +1829,14 @@ var dropzoneOptions_bill_factur = {
       }
     });
 
+    this.on("error", function (file, message, xhr) {
+      resetBillingUploadCsrf(myDropzone, xhr);
+    });
+
     this.on("sending", function (file, xhr, data) {
+      if (!setBillingUploadCsrf(myDropzone, file, xhr)) {
+        return;
+      }
       //var point = document.getElementById('point_id').value;
 
       i++;
@@ -3945,6 +3959,7 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
 }
 
 function VendorItemsTableView({ showPriceWarnings = true }) {
+  const [bill, vendors] = useStore((state) => [state.bill, state.vendors]);
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3952,6 +3967,7 @@ function VendorItemsTableView({ showPriceWarnings = true }) {
     state.allPrice_w_nds,
     state.err_items,
   ]);
+  const vendorId = bill?.vendor_id ?? bill?.vendors?.[0]?.id ?? vendors?.[0]?.id ?? null;
 
   let summ_nds = 0;
 
@@ -7206,6 +7222,10 @@ class Billing_Edit_ extends React.Component {
     };
 
     try {
+      await prepareBillingUploads([
+        DropzoneMain && this.getPendingDropzoneFiles(DropzoneMain).length ? DropzoneMain : null,
+        parseInt(type) == 2 && DropzoneDop && this.getPendingDropzoneFiles(DropzoneDop).length ? DropzoneDop : null,
+      ]);
       const res = await this.getData("save_edit", data);
 
       if (res.st === true) {

@@ -47,7 +47,7 @@ import TableContainer from "@mui/material/TableContainer";
 import Checkbox from "@mui/material/Checkbox";
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import DriversMap from "@/ui/DriversMap/DriversMap";
-import { MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
+import { MyAutocomplite, MyDatePickerNew, MySelect, MyTextInput } from "@/ui/Forms";
 import { styled } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 
@@ -127,30 +127,39 @@ class Concenter_ extends React.Component {
 
       number: "",
       addr: "",
+      drivers: [],
+      driver: null,
     };
   }
 
   async componentDidMount() {
     let data = await this.getData("get_all");
-    let need_points = data.points.filter(
-      (item) => parseInt(item.city_id) == parseInt(data.cities[0].id),
+    if (!data) return;
+
+    const cities = Array.isArray(data.cities) ? data.cities : [];
+    const points = Array.isArray(data.points) ? data.points : [];
+    const city_id = cities[0]?.id ?? "";
+    const need_points = city_id === ""
+      ? []
+      : points.filter((item) => Number(item.city_id) === Number(city_id));
+    const point_id = Number(need_points[0]?.id) || 0;
+
+    this.setState(
+      {
+        module_name: data.module_info?.name ?? "",
+        cities,
+        city_id,
+        point_list: points,
+        need_point_list: need_points,
+        point_id,
+        acces: data.acces,
+      },
+      () => {
+        if (point_id > 0) this.getOrders();
+      },
     );
 
-    this.setState({
-      module_name: data.module_info.name,
-      cities: data.cities,
-      city_id: data.cities[0].id,
-      point_list: data.points,
-      need_point_list: need_points,
-      point_id: parseInt(need_points[0].id),
-      acces: data.acces,
-    });
-
-    document.title = data.module_info.name;
-
-    setTimeout(() => {
-      this.getOrders();
-    }, 300);
+    if (data.module_info?.name) document.title = data.module_info.name;
   }
 
   getData = (method, data = {}) => {
@@ -172,62 +181,104 @@ class Concenter_ extends React.Component {
   };
 
   changeCity(event) {
-    this.setState({
-      number: "",
-      addr: "",
-    });
-
-    let data = event.target.value;
-
-    let need_points = this.state.point_list?.filter(
-      (item, key) => parseInt(item.city_id) == parseInt(data),
+    const city_id = event.target.value;
+    const need_points = this.state.point_list.filter(
+      (item) => Number(item.city_id) === Number(city_id),
     );
+    const point_id = Number(need_points[0]?.id) || 0;
 
-    this.setState({
-      city_id: data,
-      need_point_list: need_points,
-      point_id: parseInt(need_points[0]?.id),
-      indexTab: 0,
-    });
-
-    setTimeout(() => {
-      this.getOrders();
-    }, 300);
+    this.setState(
+      {
+        number: "",
+        addr: "",
+        driver: null,
+        drivers: [],
+        city_id,
+        need_point_list: need_points,
+        point_id,
+        indexTab: 0,
+        orders: [],
+        ordersRender: [],
+        err_info: {},
+      },
+      () => {
+        if (point_id > 0) this.getOrders();
+      },
+    );
   }
 
   async changePoint(point_id, index) {
     //let point_id = event.target.id;
     //point_id = point_id.split('-')[2]
 
-    this.setState({
-      point_id: point_id,
-      indexTab: index,
-    });
+    const selectedPointId = Number(point_id);
+    if (!this.state.need_point_list.some((item) => Number(item.id) === selectedPointId)) return;
 
-    setTimeout(() => {
-      this.getOrders();
-    }, 300);
+    this.setState(
+      {
+        point_id: selectedPointId,
+        indexTab: index,
+        orders: [],
+        ordersRender: [],
+        err_info: {},
+      },
+      () => this.getOrders(),
+    );
   }
 
   async getOrders() {
+    const point_id = Number(this.state.point_id);
+    if (
+      !Number.isInteger(point_id) ||
+      point_id <= 0 ||
+      !this.state.need_point_list.some((item) => Number(item.id) === point_id)
+    ) {
+      this.setState({ orders: [], ordersRender: [], err_info: {} });
+      return;
+    }
+
     let data = {
-      point_id: this.state.point_id,
+      point_id,
       date: dayjs(this.state.date).format("YYYY-MM-DD"),
       sort: this.state.sort,
     };
 
     let res = await this.getData("get_orders", data);
+    if (
+      point_id !== Number(this.state.point_id) ||
+      data.date !== dayjs(this.state.date).format("YYYY-MM-DD")
+    ) return;
 
-    // console.log( res )
+    const orders = Array.isArray(res?.orders) ? res.orders : [];
+    const drivers = this.collectDrivers(orders);
+    const driver = drivers.find((item) => item.id === this.state.driver?.id) ?? null;
 
-    this.setState({
-      orders: res.orders,
-      err_info: res.err_info,
+    this.setState(
+      {
+        orders,
+        drivers,
+        driver,
+        err_info: res?.err_info ?? {},
+      },
+      () => this.filterNumber(),
+    );
+  }
+
+  collectDrivers(orders) {
+    const drivers = new Map();
+
+    orders.forEach((order) => {
+      const id = Number(order.driver_id);
+      if (id > 0 && !drivers.has(id)) {
+        drivers.set(id, { id, name: order.driver || String(id) });
+      }
     });
 
-    setTimeout(() => {
-      this.filterNumber();
-    }, 300);
+    return [...drivers.values()].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }
+
+  changeDriver(event, value) {
+    this.setState({ driver: value ?? null }, () => this.filterNumber());
   }
 
   btnGetOrders() {
@@ -437,6 +488,12 @@ class Concenter_ extends React.Component {
         (item) =>
           (item.street + " " + item.home).toLowerCase().indexOf(this.state.addr.toLowerCase()) !==
           -1,
+      );
+    }
+
+    if (this.state.driver && this.hasAccess(this.state.acces?.driver_access)) {
+      renderOrders = renderOrders.filter(
+        (item) => Number(item.driver_id) === this.state.driver.id,
       );
     }
 
@@ -1233,6 +1290,23 @@ class Concenter_ extends React.Component {
             />
           </Grid>
 
+          {this.hasAccess(this.state.acces?.driver_access) && (
+            <Grid
+              size={{
+                xs: 12,
+                sm: 3,
+              }}
+            >
+              <MyAutocomplite
+                label="Водитель"
+                multiple={false}
+                data={this.state.drivers}
+                value={this.state.driver}
+                func={this.changeDriver.bind(this)}
+              />
+            </Grid>
+          )}
+
           <Grid
             size={{
               xs: 12,
@@ -1413,6 +1487,9 @@ class Concenter_ extends React.Component {
                           <TableCell>Время по проге/Реал время ДОСТАВКИ</TableCell>
                         )}
 
+                        {this.hasAccess(acces?.driver_take_time_access) && (
+                          <TableCell>Курьер взял заказ</TableCell>
+                        )}
                         <TableCell>Тип</TableCell>
                         <TableCell>Статус</TableCell>
 
@@ -1578,6 +1655,11 @@ class Concenter_ extends React.Component {
                             </TableCell>
                           )}
 
+                          {this.hasAccess(acces?.driver_take_time_access) && (
+                            <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
+                              {item.driver_take_time}
+                            </TableCell>
+                          )}
                           <TableCell style={{ color: "inherit", fontWeight: "inherit" }}>
                             {item.type_order}
                           </TableCell>

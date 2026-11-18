@@ -28,6 +28,10 @@ const SkladWarehouseItemsTab = dynamic(() => import("./warehouse-items/SkladWare
   ssr: false,
 });
 const SkladSiteItemsTab = dynamic(() => import("./site-items/SkladSiteItemsTab"), { ssr: false });
+const SkladAllergensTab = dynamic(() => import("./allergens/SkladAllergensTab"), { ssr: false });
+const SkladStorageTab = dynamic(() => import("./storage/SkladStorageTab"), {
+  ssr: false,
+});
 
 function sectionUrl(query, key) {
   const { section, tab, ...otherQuery } = query;
@@ -59,6 +63,7 @@ export default function SkladPage() {
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
 
   const isLoading = useSkladStore((state) => state.isLoading);
+  const listLoading = useSkladStore((state) => state.listLoading);
   const refreshToken = useSkladStore((state) => state.refreshToken);
   const moduleName = useSkladStore((state) => state.moduleName);
   const access = useSkladStore((state) => state.access);
@@ -66,7 +71,10 @@ export default function SkladPage() {
   const setState = useSkladStore((state) => state.setState);
   const requestRefresh = useSkladStore((state) => state.requestRefresh);
 
-  const tabs = useMemo(() => getVisibleSkladTabs({ access }), [access]);
+  const tabs = useMemo(
+    () => getVisibleSkladTabs({ access }),
+    [access],
+  );
   const section = router.query.section;
   const requestedKey = Array.isArray(section)
     ? section.length === 1
@@ -150,12 +158,38 @@ export default function SkladPage() {
         shallow: true,
         scroll: false,
       });
+      if (requestedKey === "allergens") requestRefresh();
     } catch (error) {
       if (!error?.cancelled) showAlert("Не удалось открыть раздел", false);
     }
   };
 
+  const canEditGroup = (group) => Number(access?.[`${group}_edit`]) === 1;
+
   const renderTabContent = (item) => {
+    if (item.key === "storage") {
+      return (
+        <SkladStorageTab
+          allowed={canEditGroup("storage_places") || Number(access?.storage_places_view) === 1}
+          canEdit={canEditGroup("storage_places")}
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+          onChanged={requestRefresh}
+        />
+      );
+    }
+
+    if (item.key === "allergens") {
+      return (
+        <SkladAllergensTab
+          allowed={canEditGroup("allergen_catalog") || Number(access?.allergen_catalog_view) === 1}
+          canEdit={canEditGroup("allergen_catalog")}
+          showAlert={showAlert}
+          refreshToken={refreshToken}
+        />
+      );
+    }
+
     if (item.key === "units") {
       return (
         <SkladUnitsTab
@@ -198,7 +232,7 @@ export default function SkladPage() {
   return (
     <>
       <JacoBackdropLoader
-        open={isLoading}
+        open={isLoading || (bootstrapReady && Boolean(listLoading[tabs[tab]?.key]?.pending))}
         sx={{ "& .MuiCircularProgress-root": { color: "common.white" } }}
       />
       <JacoAlert
@@ -229,6 +263,7 @@ export default function SkladPage() {
             <Grid size={{ xs: 12, md: "auto" }}>
               <Stack
                 direction="row"
+                spacing={1}
                 sx={{
                   justifyContent: { xs: "flex-start", md: "flex-end" },
                 }}

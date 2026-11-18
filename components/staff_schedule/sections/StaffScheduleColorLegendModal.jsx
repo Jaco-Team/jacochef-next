@@ -3,91 +3,75 @@ import { JacoButton } from "@/design-system/shared/ui";
 import StaffScheduleResponsiveModal from "../modals/StaffScheduleResponsiveModal";
 import { getHourPresetByType } from "../staffScheduleHourPresets";
 
-const monthFullPreset = getHourPresetByType(0);
-const monthFirstHalfPreset = getHourPresetByType(1);
-const monthSecondHalfPreset = getHourPresetByType(2);
-const monthCustomPreset = getHourPresetByType(3);
+const fullPreset = getHourPresetByType(0);
+const morningPreset = getHourPresetByType(1);
+const eveningPreset = getHourPresetByType(2);
+const customPreset = getHourPresetByType(3);
 
-const colorLegendItems = [
+const colorLegendGroups = [
   {
-    label: "Обычный сотрудник",
-    description: "Белый фон в колонке сотрудника.",
-    color: "#FFFFFF",
-    textColor: "#111827",
-    border: true,
+    title: "Поле сотрудника",
+    sample: "ФИО",
+    items: [
+      {
+        label: "Медкнижка скоро истекает",
+        description: "До окончания осталось меньше 14 дней.",
+        color: "#ffcc00",
+        textColor: "#111827",
+      },
+      {
+        label: "Медкнижка просрочена или не сдана",
+        color: "#cc0033",
+        textColor: "#FFFFFF",
+      },
+      {
+        label: "Один человек в нескольких строках",
+        description: "Наведите на фамилию, чтобы увидеть остальные строки.",
+        color: "#E8F0FC",
+        textColor: "#111827",
+        border: true,
+      },
+    ],
   },
   {
-    label: "Особый тип сотрудника",
-    description: "Желтый фон имени для типа 2.",
-    color: "#ffcc00",
-    textColor: "#111827",
+    title: "Смена в ячейке дня",
+    sample: "12",
+    items: [
+      { label: "Полный день 10:00–22:00", color: fullPreset.color, textColor: fullPreset.textColor },
+      { label: "Утро 10:00–16:00", color: morningPreset.color, textColor: morningPreset.textColor },
+      { label: "Вечер 16:00–22:00", color: eveningPreset.color, textColor: eveningPreset.textColor },
+      {
+        label: "Своё время или несколько интервалов",
+        color: customPreset.color,
+        textColor: customPreset.textColor,
+      },
+      {
+        label: "Отпуск / выходной по заявлению",
+        description: "Красная штриховка поверх цвета смены.",
+        gradient: `repeating-linear-gradient(-45deg, ${fullPreset.color}, ${fullPreset.color} 8px, rgba(255, 0, 0, 0.3) 8px, rgba(255, 0, 0, 0.3) 12px)`,
+        textColor: "#111827",
+      },
+    ],
   },
   {
-    label: "Критический тип сотрудника",
-    description: "Красный фон имени для типа 3.",
-    color: "#cc0033",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Приглушенная строка",
-    description: "Серый фон, когда строка отмечена как выключенная/без цветов.",
-    color: "#D3D3D3",
-    textColor: "#111827",
-  },
-  {
-    label: "Рабочий день 10:00 - 22:00",
-    description: "Полная рабочая смена.",
-    color: monthFullPreset.color,
-    textColor: monthFullPreset.textColor,
-  },
-  {
-    label: "Рабочий день 10:00 - 16:00",
-    description: "Первая половина рабочей смены.",
-    color: monthFirstHalfPreset.color,
-    textColor: monthFirstHalfPreset.textColor,
-  },
-  {
-    label: "Рабочий день 16:00 - 22:00",
-    description: "Вторая половина рабочей смены.",
-    color: monthSecondHalfPreset.color,
-    textColor: monthSecondHalfPreset.textColor,
-  },
-  {
-    label: "Нестандартный график",
-    description: "Один нестандартный интервал или несколько интервалов в день.",
-    color: monthCustomPreset.color,
-    textColor: monthCustomPreset.textColor,
-  },
-  {
-    label: "Нет температуры",
-    description: "Сегодня есть рабочий день, но не заполнена температура.",
-    color: "#45161c",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Красная отметка дня",
-    description: "Пользовательская backend-отметка my_color_day: red или pink.",
-    color: "#d5265b",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Черная отметка дня",
-    description: "Пользовательская backend-отметка my_color_day: black.",
-    color: "#000000",
-    textColor: "#FFFFFF",
-  },
-  {
-    label: "Выходной/праздник",
-    description: "Красная диагональная штриховка поверх цвета смены.",
-    gradient:
-      "repeating-linear-gradient(-45deg, #98e38d, #98e38d 8px, rgba(255, 0, 0, 0.3) 8px, rgba(255, 0, 0, 0.3) 12px)",
-    textColor: "#111827",
-  },
-  {
-    label: "Бонус дня",
-    description: "Зеленая подсветка текущего бонусного дня в нижних строках.",
-    color: "#CFF4C8",
-    textColor: "#111827",
+    title: "Отметки поверх смены",
+    sample: "12",
+    items: [
+      {
+        label: "Не отмечена температура",
+        description: "Только для сегодняшнего рабочего дня.",
+        color: "#45161c",
+        textColor: "#FFFFFF",
+      },
+      {
+        label: "Загрузка повара 80–90%",
+        description: "Считается автоматически по заказам, только для поваров.",
+        color: "#ffba00",
+        textColor: "#FFFFFF",
+      },
+      { label: "Загрузка повара 50–80%", color: "#d5265b", textColor: "#FFFFFF" },
+      { label: "Загрузка повара ниже 50%", color: "#000000", textColor: "#FFFFFF" },
+    ],
   },
 ];
 
@@ -109,43 +93,58 @@ export default function StaffScheduleColorLegendModal({ open, onClose }) {
         </Box>
       }
     >
-      <Stack spacing={1.25}>
-        {colorLegendItems.map((item, index) => (
+      <Stack spacing={2.25}>
+        {colorLegendGroups.map((group, groupIndex) => (
           <Stack
-            key={item.label}
-            direction="row"
-            spacing={1.5}
-            alignItems="center"
-            data-testid={`color-legend-item-${index}`}
-            sx={{ alignItems: "center !important" }}
+            key={group.title}
+            spacing={1}
           >
-            <Box
-              data-testid={`color-legend-swatch-${index}`}
-              sx={{
-                width: 42,
-                height: 28,
-                flexShrink: 0,
-                borderRadius: "6px",
-                border: item.border ? "1px solid #E5E5E5" : "none",
-                background: item.gradient || item.color,
-                color: item.textColor,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 700,
-              }}
+            <Typography
+              sx={{ fontSize: 12, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.4 }}
             >
-              12
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
-                {item.label}
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "#666666", lineHeight: 1.35 }}>
-                {item.description}
-              </Typography>
-            </Box>
+              {group.title}
+            </Typography>
+            {group.items.map((item, itemIndex) => {
+              const index = `${groupIndex}-${itemIndex}`;
+              return (
+                <Stack
+                  key={item.label}
+                  direction="row"
+                  spacing={1.5}
+                  alignItems="center"
+                  data-testid={`color-legend-item-${index}`}
+                  sx={{ alignItems: "center !important" }}
+                >
+                  <Box
+                    data-testid={`color-legend-swatch-${index}`}
+                    sx={{
+                      width: 42,
+                      height: 28,
+                      flexShrink: 0,
+                      borderRadius: "6px",
+                      border: item.border ? "1px solid #E5E5E5" : "none",
+                      background: item.gradient || item.color,
+                      color: item.textColor,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {group.sample}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{item.label}</Typography>
+                    {item.description ? (
+                      <Typography sx={{ fontSize: 13, color: "#666666", lineHeight: 1.35 }}>
+                        {item.description}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                </Stack>
+              );
+            })}
           </Stack>
         ))}
       </Stack>

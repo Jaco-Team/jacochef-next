@@ -41,9 +41,16 @@ import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ScheduleSendIcon from "@mui/icons-material/ScheduleSend";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
+import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import { MyAutocomplite, MyDatePickerNew } from "@/ui/Forms";
 import AiDailyMetricsChart from "@/components/end_analytics/AiDailyMetricsChart";
 import AiTrafficSourcesChart from "@/components/end_analytics/AiTrafficSourcesChart";
+import AiReportSchedulesDialog from "@/components/end_analytics/AiReportSchedulesDialog";
 
 const PRIMARY_COLOR = "#cc0033";
 
@@ -53,6 +60,7 @@ const EXPORT_FORMATS = [
   { value: "pdf", label: "PDF (.pdf)" },
 ];
 
+// Запасной список: актуальные источники приходят с сервера в get_all (ai_sources).
 export const AI_ANALYST_SOURCES = [
   { id: 1, name: "bing" },
   { id: 2, name: "direct" },
@@ -63,8 +71,37 @@ export const AI_ANALYST_SOURCES = [
   { id: 7, name: "rassylka" },
   { id: 8, name: "referral" },
   { id: 9, name: "vk" },
-  { id: 10, name: "ya" },
   { id: 11, name: "yandex" },
+];
+
+export const AI_COMPARISON_MODES = [
+  { id: 1, key: "previous_period", name: "Предыдущий период" },
+  { id: 2, key: "previous_month", name: "Те же даты прошлого месяца" },
+  { id: 3, key: "previous_year", name: "Те же даты прошлого года" },
+  { id: 4, key: "custom", name: "Свой период" },
+];
+
+export const DEFAULT_AI_COMPARISON = { mode: "previous_period", dateStart: null, dateEnd: null };
+
+const HISTORY_COLLAPSED_COUNT = 8;
+
+// Памятка в окне «Как работает AI-аналитик»: когда какая модель чата уместна.
+const AI_MODEL_GUIDE = [
+  [
+    "Автоматически",
+    "Подходит почти всегда: сервер сам берёт быструю модель для справочных вопросов и подробную — для разборов.",
+    "Оставьте этот режим, если не уверены.",
+  ],
+  [
+    "Быстрая — YandexGPT 5.1",
+    "Когда нужны цифры и ответ за 3–8 секунд: показатели за период, топы товаров, сравнение периодов, список кампаний.",
+    "«Покажи продажи только по пиццам», «Сравни с прошлым месяцем».",
+  ],
+  [
+    "Подробная — DeepSeek V4.1 Flash",
+    "Когда нужен разбор и можно подождать 10–20 секунд: причины изменений, решения по бюджету, выводы по атрибуции.",
+    "«Почему изменился CPA?», «На какие кампании перераспределить бюджет?»",
+  ],
 ];
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -125,11 +162,7 @@ const BASIS_LABELS = {
 
 const METRIC_CONFIG = [
   { key: "spend", dailyKey: "spend", label: "Расходы", color: "#3975ea" },
-  {
-    key: "attributed_orders",
-    label: "Атрибут. заказы",
-    color: "#2eaf6d",
-  },
+  { key: "crm_orders", dailyKey: "orders", label: "Заказы", color: "#2eaf6d" },
   { key: "cpa", dailyKey: "cpa", label: "CPA", color: "#8b5cf6" },
   { key: "ctr", dailyKey: "ctr", label: "CTR", color: "#f59e0b" },
   { key: "romi", label: "ROMI", color: "#20b8bd" },
@@ -137,8 +170,7 @@ const METRIC_CONFIG = [
 
 const SECONDARY_METRICS = [
   ["crm_revenue", "Выручка CRM"],
-  ["crm_orders", "Заказы CRM"],
-  ["attributed_revenue", "Атрибут. выручка"],
+  ["average_check", "Средний чек"],
   ["visits", "Визиты"],
   ["conversion", "Конверсия"],
   ["clicks", "Клики"],
@@ -392,6 +424,230 @@ const MarkdownMessage = ({ text }) => {
 };
 
 const MemoizedMarkdownMessage = React.memo(MarkdownMessage);
+
+const CHAT_TABLE_PREVIEW_ROWS = 12;
+
+const CHAT_STAGE_LABELS = {
+  plan: "Разбираю вопрос…",
+  data: "Получаю данные…",
+  answer: "Формулирую ответ…",
+  check: "Проверяю цифры…",
+};
+
+const CHAT_STARTER_QUESTIONS = [
+  "Куда перераспределить бюджет?",
+  "Почему изменилась конверсия?",
+  "Покажи топ-10 позиций по выручке",
+  "Какие новинки появились за период?",
+];
+
+// ID подробной модели из списка сервера: кнопка «Разобрать подробнее» переспрашивает через неё.
+const DEEP_CHAT_MODEL_ID = "deepseek41";
+
+const chatTablesToText = (tables) =>
+  (Array.isArray(tables) ? tables : [])
+    .map((table) =>
+      [
+        table.title,
+        (table.columns || []).map((column) => column.label).join("\t"),
+        ...(table.rows || []).map((row) => row.join("\t")),
+      ].join("\n"),
+    )
+    .join("\n\n");
+
+// Таблицы к ответу строит сервер: здесь только показ, без пересчёта.
+const ChatAnswerTable = React.memo(function ChatAnswerTable({ table }) {
+  const [expanded, setExpanded] = useState(false);
+  const rows = Array.isArray(table?.rows) ? table.rows : [];
+  const columns = Array.isArray(table?.columns) ? table.columns : [];
+  const visibleRows = expanded ? rows : rows.slice(0, CHAT_TABLE_PREVIEW_ROWS);
+  const cellSx = (column, isHead) => ({
+    px: 1,
+    py: 0.5,
+    textAlign: column?.align === "right" ? "right" : "left",
+    whiteSpace: column?.align === "right" ? "nowrap" : "normal",
+    // Текстовая колонка не сжимается до одной буквы: таблица прокручивается по горизонтали.
+    minWidth: column?.align === "right" ? undefined : 96,
+    maxWidth: column?.align === "right" ? undefined : 280,
+    wordBreak: "normal",
+    overflowWrap: "break-word",
+    borderBottom: "1px solid #eef0f3",
+    fontSize: 12,
+    fontWeight: isHead ? 600 : 400,
+    color: isHead ? "text.secondary" : "text.primary",
+    fontVariantNumeric: "tabular-nums",
+    verticalAlign: "top",
+  });
+
+  if (!rows.length || !columns.length) return null;
+
+  return (
+    <Box sx={{ mt: 1.25 }}>
+      {table.title ? (
+        <Typography
+          variant="caption"
+          sx={{ display: "block", fontWeight: 600, mb: 0.5 }}
+        >
+          {table.title}
+        </Typography>
+      ) : null}
+      <Box sx={{ overflowX: "auto", border: "1px solid #eef0f3", borderRadius: 1.5 }}>
+        <Box
+          component="table"
+          sx={{
+            borderCollapse: "collapse",
+            width: "max-content",
+            minWidth: "100%",
+            backgroundColor: "white",
+          }}
+        >
+          <Box component="thead">
+            <Box component="tr">
+              {columns.map((column, columnIndex) => (
+                <Box
+                  component="th"
+                  key={`head_${columnIndex}`}
+                  sx={{ ...cellSx(column, true), backgroundColor: "#f8f9fb" }}
+                >
+                  {column.label}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+          <Box component="tbody">
+            {visibleRows.map((row, rowIndex) => (
+              <Box
+                component="tr"
+                key={`row_${rowIndex}`}
+              >
+                {columns.map((column, columnIndex) => (
+                  <Box
+                    component="td"
+                    key={`cell_${rowIndex}_${columnIndex}`}
+                    sx={cellSx(column, false)}
+                  >
+                    {row[columnIndex] ?? "—"}
+                  </Box>
+                ))}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+      {rows.length > CHAT_TABLE_PREVIEW_ROWS ? (
+        <Button
+          size="small"
+          onClick={() => setExpanded((value) => !value)}
+          sx={{ mt: 0.25, textTransform: "none", fontSize: 12 }}
+        >
+          {expanded ? "Свернуть" : `Показать все строки (${rows.length})`}
+        </Button>
+      ) : null}
+      {table.note ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 0.25 }}
+        >
+          {table.note}
+        </Typography>
+      ) : null}
+    </Box>
+  );
+});
+
+const ChatAnswerFooter = React.memo(function ChatAnswerFooter({
+  message,
+  canAskDeeper,
+  disabled,
+  onCopy,
+  onRate,
+  onAskDeeper,
+}) {
+  const rating = Number(message?.feedback?.rating) || 0;
+  const iconSx = { fontSize: 16 };
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, mt: 0.75, flexWrap: "wrap" }}>
+      {message.aiModelName ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mr: 0.75 }}
+        >
+          {message.aiModelName}
+        </Typography>
+      ) : null}
+      <Tooltip title="Скопировать ответ">
+        <IconButton
+          size="small"
+          aria-label="Скопировать ответ"
+          onClick={() => onCopy(message)}
+        >
+          <ContentCopyIcon sx={iconSx} />
+        </IconButton>
+      </Tooltip>
+      {message.messageId ? (
+        <>
+          <Tooltip title="Ответ полезен">
+            <IconButton
+              size="small"
+              aria-label="Ответ полезен"
+              color={rating === 1 ? "primary" : "default"}
+              onClick={() => onRate(message, rating === 1 ? 0 : 1)}
+            >
+              {rating === 1 ? <ThumbUpAltIcon sx={iconSx} /> : <ThumbUpOffAltIcon sx={iconSx} />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Ответ не помог">
+            <IconButton
+              size="small"
+              aria-label="Ответ не помог"
+              color={rating === -1 ? "primary" : "default"}
+              onClick={() => onRate(message, rating === -1 ? 0 : -1)}
+            >
+              {rating === -1 ? (
+                <ThumbDownAltIcon sx={iconSx} />
+              ) : (
+                <ThumbDownOffAltIcon sx={iconSx} />
+              )}
+            </IconButton>
+          </Tooltip>
+        </>
+      ) : null}
+      {canAskDeeper && message.question ? (
+        <Button
+          size="small"
+          disabled={disabled}
+          onClick={() => onAskDeeper(message)}
+          sx={{ textTransform: "none", fontSize: 12, ml: 0.5 }}
+        >
+          Разобрать подробнее
+        </Button>
+      ) : null}
+    </Box>
+  );
+});
+
+const ChatQuestionChips = React.memo(function ChatQuestionChips({ questions, disabled, onSelect }) {
+  if (!Array.isArray(questions) || questions.length === 0) return null;
+
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+      {questions.map((question) => (
+        <Chip
+          key={question}
+          label={question}
+          size="small"
+          variant="outlined"
+          disabled={disabled}
+          onClick={() => onSelect(question)}
+          sx={{ backgroundColor: "white", maxWidth: "100%" }}
+        />
+      ))}
+    </Box>
+  );
+});
 
 const ChatComposer = React.memo(function ChatComposer({ canChat, loading, threadId, onSend }) {
   const [value, setValue] = useState("");
@@ -750,6 +1006,301 @@ const DetailCard = ({ section, data }) => {
   );
 };
 
+const formatOrdersShare = (value) =>
+  Number(value || 0).toLocaleString("ru-RU", { maximumFractionDigits: 1 });
+
+// Объявления, фразы, запросы, площадки, аудитория и поведение: считаются по запросу.
+const AdInsightsSection = ({ insights, loading, onLoad }) => (
+  <Paper
+    variant="outlined"
+    sx={{ p: 2, borderRadius: 2, borderColor: "#e8ebf0" }}
+  >
+    <SectionHeader title="Реклама в деталях" />
+    {!insights ? (
+      loading ? (
+        <>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 1 }}
+          >
+            Собираем объявления, фразы, запросы и аудиторию…
+          </Typography>
+          <LinearProgress />
+        </>
+      ) : (
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={onLoad}
+          sx={{ textTransform: "none" }}
+        >
+          Показать объявления, фразы, запросы, площадки и аудиторию
+        </Button>
+      )
+    ) : (
+      (insights.sections || []).map((section, sectionIndex) => (
+        <Box
+          key={`insight_${sectionIndex}`}
+          sx={{ mt: sectionIndex === 0 ? 0 : 2.5 }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 700 }}
+          >
+            {section.title}
+          </Typography>
+          {section.reason ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {section.reason}
+            </Typography>
+          ) : null}
+          {section.summary ? <Typography variant="body2">{section.summary}</Typography> : null}
+          {(section.tables || []).map((table, tableIndex) => (
+            <ChatAnswerTable
+              key={`insight_${sectionIndex}_${tableIndex}`}
+              table={table}
+            />
+          ))}
+          {section.method ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 0.5 }}
+            >
+              {section.method}
+            </Typography>
+          ) : null}
+        </Box>
+      ))
+    )}
+  </Paper>
+);
+
+// Отчёт по устройствам считается по запросу: журнал визитов большой.
+const DevicesSection = ({ devices, loading, onLoad }) => (
+  <Paper
+    variant="outlined"
+    sx={{ p: 2, borderRadius: 2, borderColor: "#e8ebf0" }}
+  >
+    <SectionHeader title="Устройства" />
+    {!devices ? (
+      loading ? (
+        <>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 1 }}
+          >
+            Считаем визиты по устройствам…
+          </Typography>
+          <LinearProgress />
+        </>
+      ) : (
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={onLoad}
+          sx={{ textTransform: "none" }}
+        >
+          Показать визиты и заказы по устройствам
+        </Button>
+      )
+    ) : (
+      <>
+        {devices.reason ? (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+          >
+            {devices.reason}
+          </Typography>
+        ) : null}
+        {(devices.tables || []).map((table, index) => (
+          <ChatAnswerTable
+            key={`devices_${index}`}
+            table={table}
+          />
+        ))}
+        {devices.coverage?.linked_share != null ? (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 1 }}
+          >
+            С визитами связано {devices.coverage.linked_orders} из {devices.coverage.orders} заказов
+            сайта ({String(devices.coverage.linked_share).replace(".", ",")}%).
+          </Typography>
+        ) : null}
+        {devices.method ? (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 0.5 }}
+          >
+            {devices.method}
+          </Typography>
+        ) : null}
+      </>
+    )}
+  </Paper>
+);
+
+const AttributionSection = ({ attribution, loading }) => {
+  if (!attribution) {
+    return loading ? (
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, borderColor: "#e8ebf0" }}
+      >
+        <SectionHeader title="Атрибуция заказов" />
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 1 }}
+        >
+          Считаем цепочки касаний посетителей…
+        </Typography>
+        <LinearProgress />
+      </Paper>
+    ) : null;
+  }
+
+  const channels = (attribution.channels || []).filter(
+    (item) => Number(item.data_driven_orders) >= 0.5 || Number(item.last_touch_orders) >= 1,
+  );
+  const coverage = attribution.coverage || {};
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{ p: 2, borderRadius: 2, borderColor: "#e8ebf0" }}
+    >
+      <SectionHeader
+        title={`Атрибуция заказов: ${attribution.model_label || "—"}`}
+        status={attribution.status}
+        reason={attribution.reason}
+      />
+      {attribution.status === "unavailable" ? null : (
+        <>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 1.5 }}
+          >
+            {`Период ${formatPeriod(attribution.period)}, учитываются касания за ${
+              attribution.lookback_days
+            } дней до заказа. С визитами связано ${formatOrdersShare(
+              coverage.linked_share,
+            )}% заказов сайта; ${formatOrdersShare(
+              coverage.multi_touch_share,
+            )}% заказов сделаны после нескольких каналов.`}
+          </Typography>
+          <Box sx={{ overflowX: "auto" }}>
+            <Box
+              component="table"
+              sx={{
+                width: "100%",
+                borderCollapse: "collapse",
+                "& th, & td": {
+                  p: 1,
+                  borderBottom: "1px solid #eef0f3",
+                  textAlign: "right",
+                  whiteSpace: "nowrap",
+                  fontSize: 14,
+                },
+                "& th": {
+                  color: "text.secondary",
+                  fontWeight: 600,
+                  fontSize: 12,
+                  whiteSpace: "normal",
+                  verticalAlign: "bottom",
+                },
+                "& th:first-of-type, & td:first-of-type": { textAlign: "left" },
+              }}
+            >
+              <thead>
+                <tr>
+                  <th>Канал</th>
+                  <th>Касаний</th>
+                  <th>Заказы по последнему касанию</th>
+                  <th>Заказы на основе данных</th>
+                  <th>Разница</th>
+                  <th>Выручка на основе данных</th>
+                </tr>
+              </thead>
+              <tbody>
+                {channels.map((item) => {
+                  const difference =
+                    item.difference_percent === null || item.difference_percent === undefined
+                      ? null
+                      : Number(item.difference_percent);
+
+                  return (
+                    <tr key={item.name}>
+                      <td>{item.name}</td>
+                      <td>{Number(item.touches || 0).toLocaleString("ru-RU")}</td>
+                      <td>{formatOrdersShare(item.last_touch_orders)}</td>
+                      <td>
+                        <strong>{formatOrdersShare(item.data_driven_orders)}</strong>
+                      </td>
+                      <Box
+                        component="td"
+                        sx={{
+                          color:
+                            difference === null || Math.abs(difference) < 5
+                              ? "text.secondary"
+                              : difference > 0
+                                ? "success.main"
+                                : "error.main",
+                        }}
+                      >
+                        {difference === null
+                          ? "—"
+                          : `${difference > 0 ? "+" : ""}${formatOrdersShare(difference)}%`}
+                      </Box>
+                      <td>{formatHistoryMoney(item.data_driven_revenue)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Box>
+          </Box>
+          {(attribution.insights || []).length > 0 ? (
+            <Box
+              component="ul"
+              sx={{ mt: 1.5, mb: 0, pl: 2.5 }}
+            >
+              {attribution.insights.map((text, index) => (
+                <Typography
+                  key={`attribution_insight_${index}`}
+                  component="li"
+                  variant="body2"
+                  sx={{ mb: 0.5 }}
+                >
+                  {text}
+                </Typography>
+              ))}
+            </Box>
+          ) : null}
+          {attribution.method ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 1 }}
+            >
+              {attribution.method}
+            </Typography>
+          ) : null}
+        </>
+      )}
+    </Paper>
+  );
+};
+
 const formatHistoryPeriod = (item) => {
   if (!item?.date_start || !item?.date_end) return "Период не указан";
   return `${dayjs(item.date_start).format("DD.MM.YYYY")} — ${dayjs(item.date_end).format(
@@ -868,7 +1419,9 @@ const getThreadPreviewText = (thread) => {
 export default function AiAnalystTab({
   cities,
   form,
-  source,
+  sources = [],
+  sourceOptions = AI_ANALYST_SOURCES,
+  comparison = DEFAULT_AI_COMPARISON,
   models = [],
   model = null,
   analysis,
@@ -876,26 +1429,40 @@ export default function AiAnalystTab({
   trafficSourceMetrics = [],
   siteDataRequestId,
   history = [],
+  historyTotal = 0,
   historyChatMessages = null,
   chatThreads = [],
   activeChatThreadId = null,
   onCitiesChange,
   onFieldChange,
-  onSourceChange,
+  onSourcesChange,
+  onComparisonChange,
   onModelChange,
   onApply,
   onReset,
   onSendChat,
+  onRateChatMessage,
   onSelectChatThread,
   onCreateChatThread,
   onUpdateChatThread,
   onDeleteChatThread,
   onSelectHistory,
+  onDeleteHistory,
+  onLoadMoreHistory,
   onExport,
   canExport = false,
   canExportData = false,
   onAnalyze,
   canAnalyze = false,
+  onError,
+  onNotice,
+  attributionLoading = false,
+  devices = null,
+  devicesLoading = false,
+  onLoadDevices,
+  adInsights = null,
+  adInsightsLoading = false,
+  onLoadAdInsights,
 }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -907,6 +1474,10 @@ export default function AiAnalystTab({
   const [aiGuideOpen, setAiGuideOpen] = useState(false);
   const [renameChatOpen, setRenameChatOpen] = useState(false);
   const [deleteChatOpen, setDeleteChatOpen] = useState(false);
+  const [historyDeleteTarget, setHistoryDeleteTarget] = useState(null);
+  const [historyDeleting, setHistoryDeleting] = useState(false);
+  const [historyShowAll, setHistoryShowAll] = useState(false);
+  const [schedulesOpen, setSchedulesOpen] = useState(false);
   const [chatTitle, setChatTitle] = useState("");
   const chatListRef = useRef(null);
   const chatRequestInFlightRef = useRef(false);
@@ -930,7 +1501,7 @@ export default function AiAnalystTab({
   const hasPendingChatMessage = chatMessages.some((message) => message?.isPending);
   const canSendChat = canChat && !hasPendingChatMessage;
 
-  const handleSendChat = async (prompt) => {
+  const handleSendChat = async (prompt, options = {}) => {
     if (!prompt || chatRequestInFlightRef.current || !canSendChat || !onSendChat) return;
 
     chatRequestInFlightRef.current = true;
@@ -938,7 +1509,7 @@ export default function AiAnalystTab({
     setChatLoading(true);
 
     try {
-      const data = await onSendChat(prompt);
+      const data = await onSendChat(prompt, options);
       if (data?.st === false) {
         if (!data?.chat_synced) {
           setChatMessages((prev) => [
@@ -979,6 +1550,36 @@ export default function AiAnalystTab({
     }
   };
 
+  const handleCopyChatAnswer = async (message) => {
+    const text = [message?.text, chatTablesToText(message?.tables)].filter(Boolean).join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      onNotice?.("Ответ скопирован");
+    } catch (_) {
+      onError?.("Не удалось скопировать ответ");
+    }
+  };
+
+  const handleRateChatAnswer = (message, rating) => {
+    if (message?.messageId) {
+      onRateChatMessage?.(message.messageId, rating);
+    }
+  };
+
+  const deepChatModel = (Array.isArray(models) ? models : []).find(
+    (item) => item?.id === DEEP_CHAT_MODEL_ID,
+  );
+  const handleAskDeeper = (message) => {
+    if (message?.question && deepChatModel) {
+      handleSendChat(message.question, { modelId: deepChatModel.id });
+    }
+  };
+  const lastAssistantIndex = chatMessages.reduce(
+    (found, message, index) =>
+      message?.role === "assistant" && !message.isPending && !message.isError ? index : found,
+    -1,
+  );
+
   const handleCreateChat = async () => {
     setChatMenuAnchor(null);
     await onCreateChatThread?.();
@@ -1010,6 +1611,25 @@ export default function AiAnalystTab({
     await onDeleteChatThread?.(activeChatThreadId);
     setDeleteChatOpen(false);
   };
+
+  const confirmDeleteHistory = async () => {
+    const ids = historyDeleteTarget?.ids || [];
+    if (!ids.length || historyDeleting) return;
+
+    setHistoryDeleting(true);
+    try {
+      await onDeleteHistory?.(ids);
+      setHistoryDeleteTarget(null);
+    } finally {
+      setHistoryDeleting(false);
+    }
+  };
+
+  const visibleHistory = historyShowAll ? history : history.slice(0, HISTORY_COLLAPSED_COUNT);
+  const hiddenHistoryCount = history.length - visibleHistory.length;
+  const comparisonMode =
+    AI_COMPARISON_MODES.find((item) => item.key === comparison?.mode) || AI_COMPARISON_MODES[0];
+  const isCustomComparison = comparisonMode.key === "custom";
 
   const handleExportClick = (fileType) => {
     if (!canExport) return;
@@ -1084,12 +1704,12 @@ export default function AiAnalystTab({
                 </Typography>
                 <Chip
                   size="small"
-                  label={history.length}
+                  label={Math.max(Number(historyTotal) || 0, history.length)}
                   variant="outlined"
                 />
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
+            <AccordionDetails sx={{ pt: 0 }}>
               {history.length === 0 ? (
                 <Typography
                   variant="body2"
@@ -1098,100 +1718,157 @@ export default function AiAnalystTab({
                   Сохранённых отчётов пока нет
                 </Typography>
               ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {history.map((item, index) => {
-                    const itemId = item.site_data_request_id ?? item.id;
-                    const isActive = siteDataRequestId === itemId;
-                    const previousItem = history[index + 1] || null;
-                    const deltaSummary = getHistoryDeltaSummary(item, previousItem);
-
-                    return (
-                      <Paper
-                        key={itemId}
-                        variant="outlined"
-                        onClick={() => onSelectHistory?.(item)}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 2,
-                          cursor: "pointer",
-                          borderColor: isActive ? PRIMARY_COLOR : "#e8ebf0",
-                          backgroundColor: isActive ? "#fff5f7" : "white",
-                          "&:hover": {
-                            borderColor: PRIMARY_COLOR,
-                            backgroundColor: "#fffafb",
-                          },
-                        }}
+                <>
+                  {onDeleteHistory ? (
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
+                      <Button
+                        size="small"
+                        color="error"
+                        startIcon={<DeleteIcon fontSize="small" />}
+                        onClick={() =>
+                          setHistoryDeleteTarget({
+                            ids: history.map((item) => item.site_data_request_id ?? item.id),
+                            label: `Отчётов к удалению: ${history.length}`,
+                          })
+                        }
                       >
+                        Удалить все
+                      </Button>
+                    </Box>
+                  ) : null}
+                  <Box sx={{ border: "1px solid #e8ebf0", borderRadius: 2, overflow: "hidden" }}>
+                    {visibleHistory.map((item, index) => {
+                      const itemId = item.site_data_request_id ?? item.id;
+                      const isActive = siteDataRequestId === itemId;
+                      const previousItem = history[index + 1] || null;
+                      const deltaSummary = getHistoryDeltaSummary(item, previousItem);
+                      const sourcesText = Array.isArray(item.sources)
+                        ? item.sources.join(", ")
+                        : "";
+                      const title = `${formatHistoryCity(item)}, ${formatHistoryPeriod(item)}`;
+
+                      return (
                         <Box
+                          key={itemId}
+                          onClick={() => onSelectHistory?.(item)}
                           sx={{
                             display: "flex",
-                            flexWrap: "wrap",
-                            justifyContent: "space-between",
-                            gap: 1,
-                            mb: 0.75,
+                            alignItems: "center",
+                            gap: 1.5,
+                            px: 1.5,
+                            py: 0.75,
+                            cursor: "pointer",
+                            borderTop: index === 0 ? "none" : "1px solid #eef0f3",
+                            backgroundColor: isActive ? "#fff5f7" : "white",
+                            "&:hover": { backgroundColor: "#fffafb" },
                           }}
                         >
+                          <Box sx={{ minWidth: 0, flex: "1 1 auto" }}>
+                            <Typography
+                              variant="body2"
+                              noWrap
+                              title={
+                                [
+                                  item.ai_summary,
+                                  deltaSummary && `К предыдущему отчёту: ${deltaSummary}`,
+                                ]
+                                  .filter(Boolean)
+                                  .join("\n") || undefined
+                              }
+                            >
+                              <Box
+                                component="span"
+                                sx={{ fontWeight: 700 }}
+                              >
+                                {formatHistoryCity(item)}
+                              </Box>
+                              {` · ${formatHistoryPeriod(item)}`}
+                              {sourcesText ? ` · ${sourcesText}` : ""}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                              sx={{ display: "block" }}
+                            >
+                              {`Заказы: ${Number(item.orders || 0).toLocaleString("ru-RU")} · Выручка: ${formatHistoryMoney(item.revenue)}`}
+                              {Number(item.chat_messages_count || 0) > 0
+                                ? ` · в чате: ${Number(item.chat_messages_count)}`
+                                : ""}
+                            </Typography>
+                          </Box>
+                          {item.origin === "schedule" ? (
+                            <Chip
+                              size="small"
+                              variant="outlined"
+                              label="По расписанию"
+                            />
+                          ) : null}
                           <Typography
-                            variant="body2"
-                            fontWeight={700}
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ whiteSpace: "nowrap", display: { xs: "none", sm: "block" } }}
                           >
-                            {formatHistoryCity(item)}
+                            {item.created_at
+                              ? dayjs(item.created_at).format("DD.MM.YYYY HH:mm")
+                              : ""}
                           </Typography>
                           <Chip
                             size="small"
                             label={STATUS_LABELS[item.ai_status] || item.ai_status || "—"}
                             color={STATUS_COLORS[item.ai_status] || "default"}
                             variant="outlined"
+                            sx={{ display: { xs: "none", md: "inline-flex" } }}
                           />
+                          {onDeleteHistory ? (
+                            <Tooltip title="Удалить отчёт">
+                              <IconButton
+                                size="small"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setHistoryDeleteTarget({ ids: [itemId], label: title });
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          ) : null}
                         </Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: "block", mb: 0.75 }}
-                        >
-                          {formatHistoryPeriod(item)}
-                          {item.created_at
-                            ? ` · создан ${dayjs(item.created_at).format("DD.MM.YYYY HH:mm")}`
-                            : ""}
-                        </Typography>
-                        {deltaSummary ? (
-                          <Typography
-                            variant="body2"
-                            sx={{ mb: 0.75 }}
-                            title={item.ai_summary || undefined}
-                          >
-                            {deltaSummary}
-                          </Typography>
-                        ) : (
-                          item.ai_summary && (
-                            <Typography
-                              variant="body2"
-                              sx={{ mb: 0.75 }}
-                            >
-                              {item.ai_summary}
-                            </Typography>
-                          )
-                        )}
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-                          <Typography variant="caption">
-                            Заказы: {Number(item.orders || 0).toLocaleString("ru-RU")}
-                          </Typography>
-                          <Typography variant="caption">
-                            Выручка: {formatHistoryMoney(item.revenue)}
-                          </Typography>
-                          <Typography variant="caption">CTR: {Number(item.ctr || 0)}%</Typography>
-                          <Typography variant="caption">CPA: {Number(item.cpa || 0)}%</Typography>
-                          <Typography variant="caption">
-                            Конверсии: {Number(item.conversion || 0)}%
-                          </Typography>
-                          <Typography variant="caption">
-                            Сообщений в чате: {Number(item.chat_messages_count || 0)}
-                          </Typography>
-                        </Box>
-                      </Paper>
-                    );
-                  })}
-                </Box>
+                      );
+                    })}
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
+                    {hiddenHistoryCount > 0 ? (
+                      <Button
+                        size="small"
+                        onClick={() => setHistoryShowAll(true)}
+                      >
+                        {`Показать ещё ${hiddenHistoryCount}`}
+                      </Button>
+                    ) : null}
+                    {historyShowAll && history.length > HISTORY_COLLAPSED_COUNT ? (
+                      <Button
+                        size="small"
+                        onClick={() => setHistoryShowAll(false)}
+                      >
+                        Свернуть
+                      </Button>
+                    ) : null}
+                    {hiddenHistoryCount === 0 &&
+                    historyTotal > history.length &&
+                    onLoadMoreHistory ? (
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          setHistoryShowAll(true);
+                          onLoadMoreHistory();
+                        }}
+                      >
+                        {`Загрузить ещё (всего ${historyTotal})`}
+                      </Button>
+                    ) : null}
+                  </Box>
+                </>
               )}
             </AccordionDetails>
           </Accordion>
@@ -1235,15 +1912,58 @@ export default function AiAnalystTab({
 
               <Grid size={{ xs: 12, sm: 3 }}>
                 <MyAutocomplite
-                  label="Источник"
-                  data={AI_ANALYST_SOURCES}
-                  multiple={false}
-                  value={source}
-                  func={(event, data) => onSourceChange(data)}
+                  label="Источники"
+                  data={sourceOptions}
+                  multiple={true}
+                  value={sources}
+                  isOptionEqualToValue={(option, value) => option?.name === value?.name}
+                  func={(event, data) => onSourcesChange?.(Array.isArray(data) ? data : [])}
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 4 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <MyAutocomplite
+                  label="Сравнить с"
+                  data={AI_COMPARISON_MODES}
+                  multiple={false}
+                  disableClearable={true}
+                  value={comparisonMode}
+                  func={(event, data) =>
+                    onComparisonChange?.({
+                      ...comparison,
+                      mode: data?.key || DEFAULT_AI_COMPARISON.mode,
+                    })
+                  }
+                />
+              </Grid>
+
+              {isCustomComparison ? (
+                <>
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <MyDatePickerNew
+                      label="Сравнение от"
+                      customActions={true}
+                      value={comparison?.dateStart ? dayjs(comparison.dateStart) : null}
+                      maxDate={
+                        comparison?.dateEnd ? dayjs(comparison.dateEnd) : dayjs().subtract(1, "day")
+                      }
+                      func={(value) => onComparisonChange?.({ ...comparison, dateStart: value })}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <MyDatePickerNew
+                      label="Сравнение до"
+                      customActions={true}
+                      value={comparison?.dateEnd ? dayjs(comparison.dateEnd) : null}
+                      minDate={comparison?.dateStart ? dayjs(comparison.dateStart) : undefined}
+                      maxDate={dayjs().subtract(1, "day")}
+                      func={(value) => onComparisonChange?.({ ...comparison, dateEnd: value })}
+                    />
+                  </Grid>
+                </>
+              ) : null}
+
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <MyAutocomplite
                   label="Модель чата"
                   data={models}
@@ -1260,9 +1980,16 @@ export default function AiAnalystTab({
               </Grid>
 
               <Grid
-                size={{ xs: 12, sm: 8 }}
+                size={{ xs: 12, sm: "grow" }}
                 sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1 }}
               >
+                <StyledButton
+                  variant="outlined"
+                  onClick={() => setSchedulesOpen(true)}
+                  startIcon={<ScheduleSendIcon />}
+                >
+                  Расписание
+                </StyledButton>
                 <StyledButton
                   variant="outlined"
                   onClick={onReset}
@@ -1503,6 +2230,35 @@ export default function AiAnalystTab({
                 </Paper>
               </Grid>
 
+              {analysis.attribution || attributionLoading ? (
+                <Grid size={{ xs: 12 }}>
+                  <AttributionSection
+                    attribution={analysis.attribution}
+                    loading={attributionLoading}
+                  />
+                </Grid>
+              ) : null}
+
+              {onLoadAdInsights ? (
+                <Grid size={{ xs: 12 }}>
+                  <AdInsightsSection
+                    insights={adInsights}
+                    loading={adInsightsLoading}
+                    onLoad={onLoadAdInsights}
+                  />
+                </Grid>
+              ) : null}
+
+              {onLoadDevices ? (
+                <Grid size={{ xs: 12 }}>
+                  <DevicesSection
+                    devices={devices}
+                    loading={devicesLoading}
+                    onLoad={onLoadDevices}
+                  />
+                </Grid>
+              ) : null}
+
               {analysis.data_quality && (
                 <Grid size={{ xs: 12 }}>
                   <Paper
@@ -1511,15 +2267,16 @@ export default function AiAnalystTab({
                   >
                     <SectionHeader title="Качество данных" />
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      <Chip
-                        size="small"
-                        color={analysis.data_quality.attribution_available ? "success" : "warning"}
-                        label={
-                          analysis.data_quality.attribution_available
-                            ? "Атрибуция доступна"
-                            : "Атрибуция частичная"
-                        }
-                      />
+                      <Tooltip
+                        title="Показатели отчёта относят заказ к источнику, сохранённому у него при оформлении. Вклад всех касаний — в блоке «Атрибуция заказов»."
+                        arrow
+                      >
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label="Основа показателей: UTM заказа (последнее касание)"
+                        />
+                      </Tooltip>
                       <Chip
                         size="small"
                         variant="outlined"
@@ -2059,14 +2816,30 @@ export default function AiAnalystTab({
               )}
 
               {canChat && chatMessages.length === 0 && !chatLoading && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  align="center"
-                  sx={{ mt: 6 }}
+                <Box
+                  sx={{
+                    mt: 5,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1.5,
+                  }}
                 >
-                  Задайте вопрос по текущему отчёту AI-анализа
-                </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    align="center"
+                  >
+                    Задайте вопрос по текущему отчёту AI-анализа или начните с готового
+                  </Typography>
+                  <Box sx={{ maxWidth: 520 }}>
+                    <ChatQuestionChips
+                      questions={CHAT_STARTER_QUESTIONS}
+                      disabled={!canSendChat}
+                      onSelect={handleSendChat}
+                    />
+                  </Box>
+                </Box>
               )}
 
               {chatMessages.map((message, index) => (
@@ -2080,7 +2853,9 @@ export default function AiAnalystTab({
                 >
                   <Box
                     sx={{
-                      maxWidth: "88%",
+                      maxWidth:
+                        message.role === "assistant" && message.tables?.length ? "100%" : "88%",
+                      minWidth: 0,
                       px: 1.5,
                       py: 1,
                       borderRadius: 2,
@@ -2103,19 +2878,40 @@ export default function AiAnalystTab({
                     {message.isPending ? (
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <CircularProgress size={14} />
-                        <Typography variant="body2">{message.text}</Typography>
+                        <Typography variant="body2">
+                          {CHAT_STAGE_LABELS[message.stage] || message.text}
+                        </Typography>
                       </Box>
                     ) : message.role === "assistant" && !message.isError ? (
                       <>
                         <MemoizedMarkdownMessage text={message.text} />
-                        {message.aiModelName ? (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block", mt: 0.75 }}
-                          >
-                            {message.aiModelName}
-                          </Typography>
+                        {(Array.isArray(message.tables) ? message.tables : []).map(
+                          (table, tableIndex) => (
+                            <ChatAnswerTable
+                              key={`${message.id || index}_table_${tableIndex}`}
+                              table={table}
+                            />
+                          ),
+                        )}
+                        <ChatAnswerFooter
+                          message={message}
+                          canAskDeeper={
+                            Boolean(deepChatModel) &&
+                            !String(message.aiModelName || "").includes("DeepSeek")
+                          }
+                          disabled={!canSendChat}
+                          onCopy={handleCopyChatAnswer}
+                          onRate={handleRateChatAnswer}
+                          onAskDeeper={handleAskDeeper}
+                        />
+                        {index === lastAssistantIndex ? (
+                          <Box sx={{ mt: 1 }}>
+                            <ChatQuestionChips
+                              questions={message.suggestions}
+                              disabled={!canSendChat}
+                              onSelect={handleSendChat}
+                            />
+                          </Box>
                         ) : null}
                       </>
                     ) : (
@@ -2333,6 +3129,63 @@ export default function AiAnalystTab({
               </Grid>
             ))}
           </Grid>
+
+          <Typography
+            variant="subtitle1"
+            fontWeight={700}
+            sx={{ mb: 1.5 }}
+          >
+            Какую модель выбрать
+          </Typography>
+          <Grid
+            container
+            spacing={1.5}
+            alignItems="stretch"
+            sx={{ mb: 1.5 }}
+          >
+            {AI_MODEL_GUIDE.map(([title, when, examples]) => (
+              <Grid
+                key={title}
+                size={{ xs: 12, sm: 4 }}
+                sx={{ display: "flex" }}
+              >
+                <Paper
+                  variant="outlined"
+                  sx={{ p: 2, width: "100%", flex: 1, borderRadius: 2, borderColor: "#e3e7ed" }}
+                >
+                  <Typography
+                    variant="body2"
+                    fontWeight={700}
+                    sx={{ mb: 0.75 }}
+                  >
+                    {title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.75 }}
+                  >
+                    {when}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                  >
+                    {examples}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 3 }}
+          >
+            Если выбранная модель не ответила, вопрос автоматически уходит резервной YandexGPT Pro —
+            под ответом будет подпись «YandexGPT Pro (резервная)». Модель можно менять между
+            вопросами в одном чате.
+          </Typography>
 
           <Grid
             container
@@ -2644,6 +3497,48 @@ export default function AiAnalystTab({
             color="error"
             variant="contained"
             onClick={confirmDeleteChat}
+          >
+            Удалить
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <AiReportSchedulesDialog
+        open={schedulesOpen}
+        onClose={() => setSchedulesOpen(false)}
+        cities={cities}
+        sourceOptions={sourceOptions}
+        onError={onError}
+        onNotice={onNotice}
+      />
+      <Dialog
+        open={Boolean(historyDeleteTarget)}
+        onClose={() => (historyDeleting ? null : setHistoryDeleteTarget(null))}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>
+          {(historyDeleteTarget?.ids?.length || 0) > 1 ? "Удалить отчёты?" : "Удалить отчёт?"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            {(historyDeleteTarget?.ids?.length || 0) > 1
+              ? `${historyDeleteTarget?.label}. Восстановить их не получится.`
+              : `Отчёт «${historyDeleteTarget?.label}» будет удалён. Восстановить его не получится.`}{" "}
+            Переписка в чатах сохранится.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setHistoryDeleteTarget(null)}
+            disabled={historyDeleting}
+          >
+            Отмена
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmDeleteHistory}
+            disabled={historyDeleting}
           >
             Удалить
           </Button>

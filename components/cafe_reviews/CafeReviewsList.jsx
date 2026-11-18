@@ -1,29 +1,45 @@
 import {
   Box,
-  Chip,
-  IconButton,
-  Pagination,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import {
-  blockBorder,
+  JacoIconButton,
+  JacoStatusChip,
+  JacoSurface,
+  uiColors,
+  uiRadii,
+  uiStateColors,
+  uiTableColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
+import {
   desktopOnlySx,
   EmptyState,
   formatDateTime,
   RatingValue,
   SeverityChip,
   StatusChip,
-  textSecondary,
+  tableCellSx,
+  tableHeadCellSx,
+  ZoneChip,
 } from "./shared";
+
+const sortLabelSx = {
+  color: "inherit",
+  fontWeight: "inherit",
+  "&:hover, &.Mui-active": { color: uiColors.textStrong },
+  "&.Mui-active .MuiTableSortLabel-icon": { color: uiColors.primary },
+};
 
 function activateWithKeyboard(event, callback) {
   if (event.key === "Enter" || event.key === " ") {
@@ -32,91 +48,179 @@ function activateWithKeyboard(event, callback) {
   }
 }
 
-function DesktopTable({ kind, items, dictionaries, selectedId, onOpen }) {
+function DesktopTable({
+  kind,
+  items,
+  dictionaries,
+  selectedId,
+  onOpen,
+  showActions = false,
+  sort,
+  direction,
+  onSort,
+}) {
   const isIncident = kind === "incident";
+  const sortable = (label, key) => (
+    <TableSortLabel
+      active={sort === key}
+      direction={sort === key ? direction : "desc"}
+      onClick={() => onSort(key)}
+      sx={sortLabelSx}
+    >
+      {label}
+    </TableSortLabel>
+  );
 
   return (
-    <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{ ...desktopOnlySx, borderRadius: "12px", borderColor: blockBorder }}
-    >
-      <Table
-        size="small"
-        aria-label={isIncident ? "Список инцидентов" : "Список отзывов"}
-      >
-        <TableHead>
-          <TableRow sx={{ bgcolor: "#F7F7F7" }}>
-            <TableCell>Дата</TableCell>
-            <TableCell>Кафе</TableCell>
-            <TableCell>Оценка</TableCell>
-            {isIncident ? <TableCell>Критичность</TableCell> : null}
-            <TableCell>Статус</TableCell>
-            <TableCell align="center">Причины</TableCell>
-            <TableCell align="center">Фото</TableCell>
-            <TableCell align="right">Действие</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow
-              key={item.id}
-              hover
-              selected={String(selectedId) === String(item.id)}
-            >
-              <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDateTime(item.created_at)}</TableCell>
-              <TableCell>
-                <Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-                  {item.point_name || "—"}
-                </Typography>
-                {item.city_name ? (
-                  <Typography sx={{ color: textSecondary, fontSize: 12 }}>
-                    {item.city_name}
-                  </Typography>
-                ) : null}
-              </TableCell>
-              <TableCell>
-                <RatingValue value={item.rating} />
-              </TableCell>
+    <JacoSurface sx={{ ...desktopOnlySx, overflow: "hidden" }}>
+      <TableContainer sx={{ maxHeight: "60dvh" }}>
+        <Table
+          size="small"
+          stickyHeader
+          aria-label={isIncident ? "Список инцидентов" : "Список отзывов"}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell sx={tableHeadCellSx}>{sortable("Дата", "created_at")}</TableCell>
+              <TableCell sx={tableHeadCellSx}>Кафе</TableCell>
+              <TableCell sx={tableHeadCellSx}>{sortable("Оценка", "rating")}</TableCell>
               {isIncident ? (
-                <TableCell>
-                  <SeverityChip
-                    value={item.severity}
-                    options={dictionaries.severities}
-                  />
+                <TableCell sx={tableHeadCellSx}>{sortable("Критичность", "severity")}</TableCell>
+              ) : null}
+              <TableCell sx={tableHeadCellSx}>{sortable("Статус", "status")}</TableCell>
+              <TableCell
+                align="center"
+                sx={tableHeadCellSx}
+              >
+                {sortable("Причины", "issues_count")}
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={tableHeadCellSx}
+              >
+                Фото
+              </TableCell>
+              {showActions ? (
+                <TableCell
+                  align="right"
+                  sx={tableHeadCellSx}
+                >
+                  Действия
                 </TableCell>
               ) : null}
-              <TableCell>
-                <StatusChip
-                  value={item.status}
-                  options={dictionaries.statuses}
-                />
-              </TableCell>
-              <TableCell align="center">{item.issues_count}</TableCell>
-              <TableCell align="center">
-                {item.has_photos ? (
-                  <PhotoCameraOutlinedIcon
-                    fontSize="small"
-                    aria-label="Есть фото"
-                  />
-                ) : (
-                  "—"
-                )}
-              </TableCell>
-              <TableCell align="right">
-                <IconButton
-                  size="small"
-                  onClick={() => onOpen(item.id)}
-                  aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
-                >
-                  <VisibilityOutlinedIcon fontSize="small" />
-                </IconButton>
-              </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {items.map((item) => {
+              const isSelected = String(selectedId) === String(item.id);
+
+              return (
+                <TableRow
+                  key={item.id}
+                  aria-selected={isSelected}
+                  tabIndex={0}
+                  role="button"
+                  onClick={() => onOpen(item.id)}
+                  onKeyDown={(event) => activateWithKeyboard(event, () => onOpen(item.id))}
+                  sx={{
+                    cursor: "pointer",
+                    backgroundColor: isSelected ? uiStateColors.selectedSoft : "transparent",
+                    "&:hover": {
+                      backgroundColor: isSelected
+                        ? uiStateColors.selectedSoft
+                        : uiTableColors.rowHover,
+                    },
+                    "&:focus-visible": {
+                      outline: `2px solid ${uiColors.primary}`,
+                      outlineOffset: -2,
+                    },
+                    "&:last-of-type td": { borderBottom: 0 },
+                  }}
+                >
+                  <TableCell sx={{ ...tableCellSx, whiteSpace: "nowrap" }}>
+                    {formatDateTime(item.created_at)}
+                  </TableCell>
+                  <TableCell sx={tableCellSx}>
+                    <Typography sx={{ ...uiTypography.label, fontWeight: 600, color: "inherit" }}>
+                      {item.point_name || "—"}
+                    </Typography>
+                    {item.city_name ? (
+                      <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text }}>
+                        {item.city_name}
+                      </Typography>
+                    ) : null}
+                    {item.zone_code || item.zone_label ? (
+                      <Box sx={{ mt: 0.5 }}>
+                        <ZoneChip
+                          code={item.zone_code}
+                          label={item.zone_label}
+                        />
+                      </Box>
+                    ) : null}
+                  </TableCell>
+                  <TableCell sx={tableCellSx}>
+                    <RatingValue
+                      value={item.rating}
+                      isIncident={isIncident || item.is_incident}
+                    />
+                  </TableCell>
+                  {isIncident ? (
+                    <TableCell sx={tableCellSx}>
+                      <SeverityChip
+                        value={item.severity}
+                        options={dictionaries.severities}
+                      />
+                    </TableCell>
+                  ) : null}
+                  <TableCell sx={tableCellSx}>
+                    <StatusChip
+                      value={item.status}
+                      options={dictionaries.statuses}
+                      highlightNew={isIncident}
+                    />
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={tableCellSx}
+                  >
+                    {item.issues_count}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ ...tableCellSx, color: uiColors.text }}
+                  >
+                    {item.has_photos ? (
+                      <PhotoCameraOutlinedIcon
+                        fontSize="small"
+                        aria-label="Есть фото"
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  {showActions ? (
+                    <TableCell
+                      align="right"
+                      sx={tableCellSx}
+                    >
+                      <JacoIconButton
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpen(item.id);
+                        }}
+                        aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
+                      >
+                        <VisibilityOutlinedIcon fontSize="small" />
+                      </JacoIconButton>
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </JacoSurface>
   );
 }
 
@@ -131,79 +235,93 @@ function ResponsiveCards({ kind, items, dictionaries, selectedId, onOpen }) {
         "@media (min-width: 991px)": { display: "none" },
       }}
     >
-      {items.map((item) => (
-        <Paper
-          key={item.id}
-          variant="outlined"
-          role="button"
-          tabIndex={0}
-          aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
-          onClick={() => onOpen(item.id)}
-          onKeyDown={(event) => activateWithKeyboard(event, () => onOpen(item.id))}
-          sx={{
-            p: 1.5,
-            borderRadius: "12px",
-            borderColor: String(selectedId) === String(item.id) ? "primary.main" : blockBorder,
-            cursor: "pointer",
-            "&:focus-visible": { outline: "3px solid", outlineColor: "primary.light" },
-          }}
-        >
-          <Box
-            sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "start" }}
+      {items.map((item) => {
+        const isSelected = String(selectedId) === String(item.id);
+
+        return (
+          <JacoSurface
+            key={item.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Открыть ${isIncident ? "инцидент" : "отзыв"} ${item.id}`}
+            onClick={() => onOpen(item.id)}
+            onKeyDown={(event) => activateWithKeyboard(event, () => onOpen(item.id))}
+            sx={{
+              p: 2,
+              borderRadius: uiRadii.md,
+              borderColor: isSelected ? uiColors.primary : uiColors.border,
+              backgroundColor: isSelected ? uiStateColors.selectedSoft : uiColors.surface,
+              cursor: "pointer",
+              "&:focus-visible": { outline: `3px solid ${uiStateColors.focusRing}` },
+            }}
           >
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 800 }}>{item.point_name || "Кафе"}</Typography>
-              <Typography sx={{ color: textSecondary, fontSize: 12 }}>
-                {formatDateTime(item.created_at)}
-              </Typography>
-            </Box>
-            <RatingValue value={item.rating} />
-          </Box>
-          <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 1.25 }}>
-            <StatusChip
-              value={item.status}
-              options={dictionaries.statuses}
-            />
-            {isIncident ? (
-              <SeverityChip
-                value={item.severity}
-                options={dictionaries.severities}
-              />
-            ) : null}
-            {item.issues_count ? (
-              <Chip
-                size="small"
-                label={`Причин: ${item.issues_count}`}
-                variant="outlined"
-              />
-            ) : null}
-            {item.has_photos ? (
-              <Chip
-                size="small"
-                icon={<PhotoCameraOutlinedIcon />}
-                label="Есть фото"
-                variant="outlined"
-              />
-            ) : null}
-          </Box>
-          {item.comment || item.review_comment ? (
-            <Typography
-              sx={{
-                mt: 1.25,
-                color: textSecondary,
-                fontSize: 14,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                overflowWrap: "anywhere",
-              }}
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", gap: 1, alignItems: "start" }}
             >
-              {item.comment || item.review_comment}
-            </Typography>
-          ) : null}
-        </Paper>
-      ))}
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
+                  {item.point_name || "Кафе"}
+                </Typography>
+                <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text }}>
+                  {formatDateTime(item.created_at)}
+                </Typography>
+              </Box>
+              <RatingValue
+                value={item.rating}
+                isIncident={isIncident || item.is_incident}
+              />
+            </Box>
+            <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap", mt: 1.25 }}>
+              <StatusChip
+                value={item.status}
+                options={dictionaries.statuses}
+                highlightNew={isIncident}
+              />
+              <ZoneChip
+                code={item.zone_code}
+                label={item.zone_label}
+              />
+              {isIncident ? (
+                <SeverityChip
+                  value={item.severity}
+                  options={dictionaries.severities}
+                />
+              ) : null}
+              {item.issues_count ? (
+                <JacoStatusChip
+                  tone="neutral"
+                  variant="outlined"
+                  label={`Причин: ${item.issues_count}`}
+                />
+              ) : null}
+              {item.has_photos ? (
+                <JacoStatusChip
+                  tone="neutral"
+                  variant="outlined"
+                  icon={<PhotoCameraOutlinedIcon />}
+                  label="Есть фото"
+                />
+              ) : null}
+            </Box>
+            {item.comment || item.review_comment ? (
+              <Typography
+                sx={{
+                  ...uiTypography.label,
+                  mt: 1.25,
+                  color: uiColors.text,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {item.comment || item.review_comment}
+              </Typography>
+            ) : null}
+          </JacoSurface>
+        );
+      })}
     </Box>
   );
 }
@@ -216,9 +334,13 @@ export default function CafeReviewsList({
   onOpen,
   pagination,
   onPageChange,
+  onRowsPerPageChange,
+  sort,
+  direction,
+  onSort,
 }) {
   return (
-    <Box>
+    <Box sx={{ pb: 4 }}>
       {items.length ? (
         <>
           <DesktopTable
@@ -227,6 +349,9 @@ export default function CafeReviewsList({
             dictionaries={dictionaries}
             selectedId={selectedId}
             onOpen={onOpen}
+            sort={sort}
+            direction={direction}
+            onSort={onSort}
           />
           <ResponsiveCards
             kind={kind}
@@ -243,17 +368,19 @@ export default function CafeReviewsList({
             : "Нет отзывов по выбранным фильтрам"}
         </EmptyState>
       )}
-      {pagination.total_pages > 1 ? (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-          <Pagination
-            page={pagination.page}
-            count={pagination.total_pages}
-            onChange={onPageChange}
-            color="primary"
-            shape="rounded"
-            aria-label="Навигация по страницам"
-          />
-        </Box>
+      {pagination.total > 0 ? (
+        <TablePagination
+          component="div"
+          count={pagination.total}
+          page={Math.max(0, pagination.page - 1)}
+          onPageChange={(event, page) => onPageChange(event, page + 1)}
+          onRowsPerPageChange={onRowsPerPageChange}
+          rowsPerPage={pagination.per_page}
+          rowsPerPageOptions={[20, 50, 100]}
+          labelRowsPerPage="Записей на странице:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} из ${count}`}
+          sx={{ mt: 1.5, color: uiColors.text }}
+        />
       ) : null}
     </Box>
   );

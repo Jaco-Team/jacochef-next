@@ -14,6 +14,7 @@ import {
   createStaffScheduleAccess,
   formatEmployeeCount,
   getScheduleRowFocusKey,
+  getPositionName,
 } from "../staffScheduleHelpers";
 import {
   buildEditDialogContext,
@@ -39,7 +40,7 @@ import { staffScheduleModalTypography } from "./staffScheduleModalTypography";
 
 const fastActionsGridPadding = { xs: 2, md: 2.5 };
 
-function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
+function EditSummaryRow({ label, value, description, actionLabel, onAction, disabled }) {
   return (
     <Box
       sx={{
@@ -65,6 +66,11 @@ function EditSummaryRow({ label, value, actionLabel, onAction, disabled }) {
         <Typography sx={{ ...staffScheduleModalTypography.fieldValue, wordBreak: "break-word" }}>
           {value || "—"}
         </Typography>
+        {description ? (
+          <Typography sx={{ mt: 0.25, fontSize: 12, lineHeight: 1.3, color: "#666666" }}>
+            {description}
+          </Typography>
+        ) : null}
       </Box>
       {onAction ? (
         <JacoButton
@@ -579,7 +585,7 @@ export default function StaffScheduleFastActionsDialog({
             component="span"
             sx={{ fontWeight: 700 }}
           >
-            {[targetUser?.user_name, targetUser?.app_name].filter(Boolean).join(" ") ||
+            {[targetUser?.user_name, getPositionName(targetUser)].filter(Boolean).join(" ") ||
               "сотрудника"}
           </Box>
           ?
@@ -665,6 +671,7 @@ export default function StaffScheduleFastActionsDialog({
           <EditSummaryRow
             label="Часы"
             value={scheduleLabel === "—" && isBulk ? "Для выбранных сотрудников" : scheduleLabel}
+            description="Шаблон применяется к сегодняшнему и будущим дням; прошедшие дни не меняются."
             actionLabel="Изменить"
             onAction={onOpenSchedule}
             disabled={busy || !pendingUsers.length}
@@ -675,6 +682,7 @@ export default function StaffScheduleFastActionsDialog({
           <EditSummaryRow
             label="Смена"
             value={smenaLabel}
+            description="Меняет смену сотрудника с начала выбранного периода."
             actionLabel="Изменить"
             onAction={onOpenShift}
             disabled={busy || !smenaOptions.length}
@@ -685,6 +693,7 @@ export default function StaffScheduleFastActionsDialog({
           <EditSummaryRow
             label="Кафе"
             value={currentPointLabel}
+            description="Переводит сотрудника в другое кафе и доступную для него смену."
             actionLabel="Изменить"
             onAction={onOpenPoint}
             disabled={busy || !pointOptions.length}
@@ -927,7 +936,7 @@ export default function StaffScheduleFastActionsDialog({
               }}
             >
               <Typography sx={staffScheduleModalTypography.fieldValue}>
-                {[item?.user_name, item?.app_name].filter(Boolean).join(", ") || "—"}
+                {[item?.user_name, getPositionName(item)].filter(Boolean).join(", ") || "—"}
               </Typography>
               <Box
                 component="button"

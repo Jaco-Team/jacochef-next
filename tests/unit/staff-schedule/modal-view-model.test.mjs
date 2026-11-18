@@ -264,12 +264,18 @@ test("month permissions are role-independent and financial fields stay individua
     );
   }
   const zero = buildMonthModalViewModel(
-    { h_info: { user: { total_sum: 0, to_pay_sum: "", premium_sheet: 0, h_price: 1000 } } },
-    { access: { all_price_view: 1, test_all_price_view: 1, premia_view: 1 } },
+    {
+      h_info: {
+        user: { total_sum: 0, to_pay_sum: "", opening_balance: -150, salary_difference: 0, h_price: 1000 },
+      },
+    },
+    { access: { all_price_view: 1, test_all_price_view: 1 } },
   );
   assert.equal(zero.summary.total, 0);
   assert.equal(zero.summary.toPay, "");
-  assert.equal(zero.summary.premiumSheet, 0);
+  assert.equal(zero.summary.openingBalance, -150);
+  assert.equal(zero.summary.difference, 0);
+  assert.equal("premiumSheet" in zero.summary, false);
 });
 
 test("an other-role user with full-month day access may edit today without a dedicated role exception", () => {

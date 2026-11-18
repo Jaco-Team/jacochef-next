@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useId, useLayoutEffect, useRef } from "react";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import {
@@ -40,6 +40,7 @@ const mobileIconButtonSx = {
 
 function MobileSheetHeader({
   title,
+  titleId,
   onBack,
   onClose,
   titleSx,
@@ -90,6 +91,7 @@ function MobileSheetHeader({
 
       <Typography
         component="span"
+        id={titleId}
         sx={{
           maxWidth: "calc(100% - 88px)",
           textAlign: "center",
@@ -137,6 +139,7 @@ export default function JacoResponsiveModalShell({
   mobileTitleSx,
   mobileTitleContainerSx,
 }) {
+  const titleId = useId();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down(desktopBreakpoint));
   const triggerRef = useRef(null);
@@ -171,6 +174,7 @@ export default function JacoResponsiveModalShell({
         }}
         slotProps={{
           paper: {
+            "aria-labelledby": title ? titleId : undefined,
             sx: {
               borderTopLeftRadius: uiRadii.sheet,
               borderTopRightRadius: uiRadii.sheet,
@@ -193,6 +197,7 @@ export default function JacoResponsiveModalShell({
         >
           <MobileSheetHeader
             title={title}
+            titleId={titleId}
             onBack={onBack}
             onClose={onClose}
             titleSx={{ ...titleSx, ...mobileTitleSx }}

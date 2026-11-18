@@ -21,6 +21,7 @@ import TableRow from "@mui/material/TableRow";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import ScienceOutlinedIcon from "@mui/icons-material/ScienceOutlined";
 
 import MyAlert from "@/ui/MyAlert";
 import { MySelect } from "@/ui/Forms";
@@ -367,6 +368,27 @@ class SiteSale2EmployeePromos_ extends React.Component {
     });
   }
 
+  async testConfig() {
+    const savedConfig = this.state.scheduled_config || this.state.config;
+
+    if (!savedConfig?.id) {
+      this.showAlert(false, "Сначала сохраните шаблон");
+      return;
+    }
+
+    const res = await this.getData("test_employee_promo_config", { config_id: savedConfig.id });
+
+    if (!res || res.st === false) {
+      this.showAlert(
+        false,
+        (res && (res.text_err || res.text)) || "Не удалось выдать тестовый промокод",
+      );
+      return;
+    }
+
+    this.showAlert(true, res.text || "Тестовый промокод выдан");
+  }
+
   async saveConfig(payload) {
     const promoCity = this.state.selectedPromoCity;
     const isCreating = this.state.settingsView === "create";
@@ -707,15 +729,33 @@ class SiteSale2EmployeePromos_ extends React.Component {
               </Typography>
             </Box>
           ) : (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.5 }}
-            >
-              {editingScheduled
-                ? "Редактируется запланированная версия шаблона."
-                : "Редактируется текущий активный шаблон."}
-            </Typography>
+            <>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+              >
+                {editingScheduled
+                  ? "Редактируется запланированная версия шаблона."
+                  : "Редактируется текущий активный шаблон."}
+              </Typography>
+              <Box sx={{ mt: 1.5, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ScienceOutlinedIcon />}
+                  onClick={this.testConfig.bind(this)}
+                >
+                  Протестировать
+                </Button>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >
+                  Промокод по сохранённому шаблону сразу появится в вашем личном кабинете.
+                  Несохранённые изменения формы не учитываются.
+                </Typography>
+              </Box>
+            </>
           )}
         </Paper>
 

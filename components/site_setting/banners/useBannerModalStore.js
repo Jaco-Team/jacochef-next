@@ -2,6 +2,7 @@
 
 import { formatDate } from "@/src/helpers/ui/formatDate";
 import { create } from "zustand";
+import { applyBannerAutocomplete } from "./bannerFieldsCore.mjs";
 // import { devtools } from 'zustand/middleware';
 
 const bannerNew = {
@@ -153,12 +154,7 @@ export const useBannerModalStore = create((set, get) => ({
   changeAutoComplete: (field, event, newValue) => {
     const { banner } = get();
     if (!banner) return;
-    const updatedThisBan = {
-      ...banner.this_ban,
-      [field]: newValue,
-      ...(field === "items" && { promo_id: null }),
-      ...(field === "promo_id" && { items: [] }),
-    };
+    const updatedThisBan = applyBannerAutocomplete(banner.this_ban, field, newValue);
     const updatedBanner = {
       ...banner,
       this_ban: updatedThisBan,

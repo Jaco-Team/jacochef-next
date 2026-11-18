@@ -26,14 +26,36 @@ import axios from "axios";
 import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
-import { JacoSegmentedTabs } from "@/design-system/shared/ui";
+import { JacoCompactTabs, JacoSegmentedTabs } from "@/design-system/shared/ui";
 import {
+  assembleExtraSaleMetrics,
   buildDynamicSaleView,
+  buildMetricLineMap,
   indexRowsByPeriod,
+  mergeLineMaps,
   SALES_SOURCE_KEYS,
   SALES_SOURCE_LABELS,
   SALES_SOURCE_TABS,
 } from "@/components/stat_sale/statSaleDynamicSaleUtils";
+
+const SALES_METRIC_TABS = [
+  { id: "orders", label: "Заказы" },
+  { id: "rolly", label: "Роллы" },
+  { id: "pizza", label: "Пицца" },
+  { id: "accounts", label: "Аккаунты" },
+  { id: "efficiency", label: "Эффективность" },
+  { id: "revenue", label: "Выручка" },
+];
+
+const ANALYTICS_SOURCE_DEFAULTS = {
+  orders: "total",
+  rolly: "total",
+  pizza: "total",
+  ordersPerActive: "total",
+  efficiency: "total",
+  revenue: "total",
+  averageCheck: "total",
+};
 
 class StatSale_Tab_DynamicSale extends React.Component {
   constructor(props) {
@@ -72,12 +94,18 @@ class StatSale_Tab_DynamicSale extends React.Component {
       },
       annualPlanTotalsBySource: {},
       linesBySource: {},
-      analyticsSources: {
-        orders: "total",
-        rolly: "total",
-        pizza: "total",
-      },
+      ordersPerActiveArr: [],
+      efficiencyArr: [],
+      revenueArr: [],
+      averageCheckArr: [],
+      ordersPerActiveLine: {},
+      efficiencyLine: {},
+      revenueLine: {},
+      averageCheckLine: {},
+      analyticsSources: { ...ANALYTICS_SOURCE_DEFAULTS },
       analyticsResetKey: 0,
+      metricTab: "orders",
+      headerStickOffset: 48,
       loading: false,
     };
   }
@@ -132,7 +160,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
         this.setState({ is_load: true });
 
         const response = await axios.post(
-          "https://apichef2.jacochef.ru/api/stat_sale/export_data_dynamics",
+          (process.env.NEXT_PUBLIC_API_URL || "https://apichef2.jacochef.ru/api").replace(
+            /\/+$/,
+            "",
+          ) + "/stat_sale/export_data_dynamics",
           {
             method: "export_data_dynamics",
             module: "orders_by_hour",
@@ -211,7 +242,22 @@ class StatSale_Tab_DynamicSale extends React.Component {
     }
 
     this.setState({ loading: true });
-    const res = await this.props.getData("get_dynamics_pay", data);
+
+    let derivedStart = requestStart;
+    const historyStart = selectedStart.subtract(1, "year");
+    if (derivedStart.isAfter(historyStart, "month")) derivedStart = historyStart;
+
+    const derivedRange = {
+      date_start: derivedStart.format("YYYY-MM"),
+      date_end: requestEnd.format("YYYY-MM"),
+    };
+
+    const [res, clientsRes, saleRes, dynamicsRes] = await Promise.all([
+      this.props.getData("get_dynamics_pay", data),
+      this.props.getData("get_data_clients", { ...derivedRange, point: point ?? [] }),
+      this.props.getData("get_data_sale", { ...derivedRange, point: point ?? [] }),
+      this.props.getData("get_dynamics", { ...derivedRange, points: point }),
+    ]);
     this.setState({ loading: false });
 
     if (res.st) {
@@ -230,11 +276,23 @@ class StatSale_Tab_DynamicSale extends React.Component {
         views[source] = buildView(res.res_by_source?.[source]);
         return views;
       }, {});
+      const extras = assembleExtraSaleMetrics({
+        payRes: res,
+        clientsRes,
+        saleRes,
+        dynamicsRes,
+        selectedStartIndex,
+        selectedEndIndex,
+      });
       const sourceRows = SALES_SOURCE_KEYS.reduce((rows, source) => {
         rows[source] = {
           orders: sourceViews[source].orders,
           rolly: sourceViews[source].rolly,
           pizza: sourceViews[source].pizza,
+          ordersPerActive: extras.rows.ordersPerActive.sources[source],
+          efficiency: extras.rows.efficiency.sources[source],
+          revenue: extras.rows.revenue.sources[source],
+          averageCheck: extras.rows.averageCheck.sources[source],
         };
         return rows;
       }, {});
@@ -252,18 +310,36 @@ class StatSale_Tab_DynamicSale extends React.Component {
         rollyArr: totalView.rolly,
         orderArr: totalView.orders,
         accountArr: totalView.accounts,
+        ordersPerActiveArr: extras.rows.ordersPerActive.total,
+        efficiencyArr: extras.rows.efficiency.total,
+        revenueArr: extras.rows.revenue.total,
+        averageCheckArr: extras.rows.averageCheck.total,
         annualPlanTotals: totalView.annualPlanTotals,
         sourceRows,
         annualPlanTotalsBySource,
-        pizzaLine: res.pizza_line ?? {},
-        rollyLine: res.rolly_line ?? {},
-        ordersLine: res.orders_line ?? {},
-        linesBySource: res.lines_by_source ?? {},
-        analyticsSources: {
-          orders: "total",
-          rolly: "total",
-          pizza: "total",
-        },
+        pizzaLine: mergeLineMaps(buildMetricLineMap(res.res, "pizza"), res.pizza_line),
+        rollyLine: mergeLineMaps(buildMetricLineMap(res.res, "rolly"), res.rolly_line),
+        ordersLine: mergeLineMaps(buildMetricLineMap(res.res, "orders"), res.orders_line),
+        ordersPerActiveLine: extras.lines.ordersPerActive.total,
+        efficiencyLine: extras.lines.efficiency.total,
+        revenueLine: extras.lines.revenue.total,
+        averageCheckLine: extras.lines.averageCheck.total,
+        linesBySource: SALES_SOURCE_KEYS.reduce((lines, source) => {
+          const monthMap = res.res_by_source?.[source];
+          const fallback = res.lines_by_source?.[source] ?? {};
+
+          lines[source] = {
+            orders: mergeLineMaps(buildMetricLineMap(monthMap, "orders"), fallback.orders),
+            rolly: mergeLineMaps(buildMetricLineMap(monthMap, "rolly"), fallback.rolly),
+            pizza: mergeLineMaps(buildMetricLineMap(monthMap, "pizza"), fallback.pizza),
+            ordersPerActive: extras.lines.ordersPerActive.sources[source],
+            efficiency: extras.lines.efficiency.sources[source],
+            revenue: extras.lines.revenue.sources[source],
+            averageCheck: extras.lines.averageCheck.sources[source],
+          };
+          return lines;
+        }, {}),
+        analyticsSources: { ...ANALYTICS_SOURCE_DEFAULTS },
         expandedTableYears: {},
         expandedTableMonths: {},
         analyticsResetKey: prevState.analyticsResetKey + 1,
@@ -350,14 +426,23 @@ class StatSale_Tab_DynamicSale extends React.Component {
     }));
   }
 
-  changeAnalyticsSource(metric, source) {
+  changeAnalyticsSource(_metric, source) {
     this.setState((prevState) => ({
-      analyticsSources: {
-        ...prevState.analyticsSources,
-        [metric]: source,
-      },
+      analyticsSources: Object.keys(prevState.analyticsSources).reduce((sources, metric) => {
+        sources[metric] = source;
+        return sources;
+      }, {}),
     }));
   }
+
+  measureHeaderRow = (node) => {
+    if (!node) return;
+
+    const height = Math.round(node.getBoundingClientRect().height);
+    if (height > 0 && Math.abs(height - this.state.headerStickOffset) > 1) {
+      this.setState({ headerStickOffset: height });
+    }
+  };
 
   renderPizzaTable(pizzaArr, title, options = {}) {
     const {
@@ -366,19 +451,50 @@ class StatSale_Tab_DynamicSale extends React.Component {
       showFactYoY = true,
       preserveAccountPercentDecimals = false,
       sourceRows = null,
+      headerContent = null,
+      quantityDecimals = 0,
+      padFractionDigits = false,
+      quantityHeader = "Кол-во, шт",
+      dynamicsHeader = "Динамика, шт",
     } = options;
     const getSafeNumber = (value) => {
       const parsed = Number(String(value ?? "").replace(",", "."));
       return Number.isFinite(parsed) ? parsed : 0;
     };
-    const formatQuantity = (value) =>
-      value !== null && value !== undefined
-        ? getSafeNumber(value).toLocaleString("ru-RU").replace(/\s/g, " ")
-        : "";
-    const hasPlanFact = pizzaArr.some((row) => row.planFact !== null && row.planFact !== undefined);
+    const formatQuantity = (value) => {
+      if (value === null || value === undefined || value === "") return "";
+
+      const numericValue = getSafeNumber(value);
+      if (!quantityDecimals) {
+        return numericValue.toLocaleString("ru-RU").replace(/\s/g, " ");
+      }
+
+      return numericValue
+        .toLocaleString("ru-RU", {
+          minimumFractionDigits: padFractionDigits ? quantityDecimals : 0,
+          maximumFractionDigits: quantityDecimals,
+        })
+        .replace(/\s/g, " ");
+    };
+    const planCandidates = [
+      ...pizzaArr,
+      ...SALES_SOURCE_KEYS.flatMap((source) =>
+        Array.isArray(sourceRows?.[source]) ? sourceRows[source] : [],
+      ),
+    ];
+    const showPlan =
+      options.showPlan ??
+      planCandidates.some(
+        (row) => row?.planQty !== null && row?.planQty !== undefined && row?.planQty !== "",
+      );
+    const showFactLoad = showPlan;
+    const hasPlanFact =
+      showPlan && pizzaArr.some((row) => row.planFact !== null && row.planFact !== undefined);
     const yearGroups = this.getYearGroups(pizzaArr);
-    const factColumnCount = 4 + (showFactYoY ? 1 : 0) + (hasPlanFact ? 1 : 0);
-    const columnCount = 1 + (planFulfillment ? 1 : 2) + factColumnCount;
+    const factColumnCount =
+      1 + (showFactYoY ? 1 : 0) + 2 + (showFactLoad ? 1 : 0) + (hasPlanFact ? 1 : 0);
+    const planColumnCount = showPlan ? (planFulfillment ? 1 : 2) : 0;
+    const columnCount = 1 + planColumnCount + factColumnCount;
 
     const formatPercent = (value) => {
       const numericValue = getSafeNumber(value);
@@ -387,29 +503,45 @@ class StatSale_Tab_DynamicSale extends React.Component {
         ? String(Number(numericValue.toFixed(2)))
         : String(Math.round(numericValue));
     };
-    const renderColoredValue = (value, { threshold = 0, formatter = formatPercent } = {}) => (
-      <Typography
-        component="span"
-        sx={{
-          color:
-            threshold === 0 && getSafeNumber(value) === 0
-              ? "text.secondary"
-              : getSafeNumber(value) >= threshold
-                ? "success.main"
-                : "error.main",
-          fontWeight: 700,
-          fontSize: "0.85rem",
-        }}
-      >
-        {formatter(value)}
-      </Typography>
-    );
+    const renderColoredValue = (value, { threshold = 0, formatter = formatPercent } = {}) => {
+      if (value === null || value === undefined || value === "") {
+        return (
+          <Typography
+            component="span"
+            sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.85rem" }}
+          >
+            —
+          </Typography>
+        );
+      }
+
+      return (
+        <Typography
+          component="span"
+          sx={{
+            color:
+              threshold === 0 && getSafeNumber(value) === 0
+                ? "text.secondary"
+                : getSafeNumber(value) >= threshold
+                  ? "success.main"
+                  : "error.main",
+            fontWeight: 700,
+            fontSize: "0.85rem",
+          }}
+        >
+          {formatter(value)}
+        </Typography>
+      );
+    };
     const sourceRowsByPeriod = sourceRows
       ? SALES_SOURCE_KEYS.reduce((result, source) => {
           result[source] = indexRowsByPeriod(sourceRows[source] ?? []);
           return result;
         }, {})
       : null;
+    const hasSourceRows = sourceRowsByPeriod
+      ? SALES_SOURCE_KEYS.some((source) => Object.keys(sourceRowsByPeriod[source] ?? {}).length > 0)
+      : false;
 
     const cellSx = {
       border: "1px solid #e0e0e0",
@@ -428,12 +560,22 @@ class StatSale_Tab_DynamicSale extends React.Component {
       transition: "background-color 0.2s ease",
     };
 
-    if (!pizzaArr.length) return null;
+    if (!pizzaArr.length && !headerContent) return null;
+
+    const headerStickOffset = this.state.headerStickOffset;
+    const stickyHeadSx = (backgroundColor, row = 1) => ({
+      ...cellSx,
+      backgroundColor,
+      position: "sticky",
+      top: row === 1 ? 0 : Math.max(headerStickOffset - 1, 0),
+      zIndex: row === 1 ? 5 : 4,
+      backgroundClip: "padding-box",
+    });
 
     const renderDataRow = (row, index, rowOptions = {}) => {
       const { source = null, expanded = false } = rowOptions;
       const isSourceRow = Boolean(source);
-      const canExpand = !isSourceRow && Boolean(sourceRowsByPeriod);
+      const canExpand = !isSourceRow && hasSourceRows;
       const rowBackground = isSourceRow ? "#f7f9fc" : index % 2 === 0 ? "#fafafa" : "white";
 
       return (
@@ -480,27 +622,21 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 >
                   {row.month}
                 </Typography>
-                {canExpand ? (
-                  <Typography
-                    component="span"
-                    sx={{ color: "text.secondary", fontWeight: 600, fontSize: "0.75rem" }}
-                  >
-                    Тотал
-                  </Typography>
-                ) : null}
               </Box>
             )}
           </TableCell>
-          <TableCell
-            sx={{
-              ...bodyCellSx,
-              fontWeight: "500",
-              backgroundColor: rowBackground,
-            }}
-          >
-            {formatQuantity(row.planQty)}
-          </TableCell>
-          {!planFulfillment && (
+          {showPlan && (
+            <TableCell
+              sx={{
+                ...bodyCellSx,
+                fontWeight: "500",
+                backgroundColor: rowBackground,
+              }}
+            >
+              {formatQuantity(row.planQty)}
+            </TableCell>
+          )}
+          {showPlan && !planFulfillment && (
             <TableCell
               sx={{
                 ...bodyCellSx,
@@ -550,23 +686,25 @@ class StatSale_Tab_DynamicSale extends React.Component {
           >
             {renderColoredValue(row.factDynQty, { formatter: formatQuantity })}
           </TableCell>
-          <TableCell
-            sx={{
-              ...bodyCellSx,
-              backgroundColor: rowBackground,
-            }}
-          >
-            {planFulfillment ? (
-              renderColoredValue(row.planLoad, { threshold: 100 })
-            ) : (
-              <Typography
-                component="span"
-                sx={{ color: "primary.main", fontWeight: 700, fontSize: "0.85rem" }}
-              >
-                {formatPercent(row.factLoad)}
-              </Typography>
-            )}
-          </TableCell>
+          {showFactLoad && (
+            <TableCell
+              sx={{
+                ...bodyCellSx,
+                backgroundColor: rowBackground,
+              }}
+            >
+              {planFulfillment ? (
+                renderColoredValue(row.planLoad, { threshold: 100 })
+              ) : (
+                <Typography
+                  component="span"
+                  sx={{ color: "primary.main", fontWeight: 700, fontSize: "0.85rem" }}
+                >
+                  {formatPercent(row.factLoad)}
+                </Typography>
+              )}
+            </TableCell>
+          )}
           {hasPlanFact && (
             <TableCell
               sx={{
@@ -584,142 +722,174 @@ class StatSale_Tab_DynamicSale extends React.Component {
     return (
       <Grid
         size={{ xs: 12, sm: 12 }}
-        sx={{ mt: 3, mb: 5, position: "relative", overflow: "hidden" }}
+        sx={{ mt: 3, mb: 5 }}
       >
-        <TableContainer
-          component={Paper}
+        <Paper
           sx={{
             margin: "20px auto",
             borderRadius: "12px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            overflow: "hidden",
             "& .MuiTableCell-root": {
               borderColor: "#e0e0e0",
             },
           }}
         >
-          <Typography
-            variant="h6"
-            sx={{ p: 2, fontWeight: "bold", textAlign: "left", borderBottom: "2px solid #f0f0f0" }}
-          >
-            {title}
-          </Typography>
-          <Table
-            sx={{ minWidth: 650 }}
-            aria-label="food table"
-          >
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  rowSpan={2}
-                  sx={cellSx}
-                >
-                  Период
-                </TableCell>
-                <TableCell
-                  colSpan={planFulfillment ? 1 : 2}
-                  sx={{ ...cellSx, backgroundColor: "#e8f5e9" }}
-                >
-                  План
-                </TableCell>
-                <TableCell
-                  colSpan={factColumnCount}
-                  sx={{ ...cellSx, backgroundColor: "#fff3e0" }}
-                >
-                  Факт
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во, шт</TableCell>
-                {!planFulfillment && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Загрузка, %</TableCell>
-                )}
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Кол-во, шт</TableCell>
-                {showFactYoY && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика г/г, %</TableCell>
-                )}
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика м/м, %</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>Динамика, шт</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>
-                  {planFulfillment ? "План/Факт, %" : "Загрузка, %"}
-                </TableCell>
-                {hasPlanFact && (
-                  <TableCell sx={{ ...cellSx, fontWeight: "bold" }}>План/Факт, %</TableCell>
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {yearGroups.map((group) => {
-                const expanded = this.isYearExpanded(tableKey, group.year, yearGroups);
-
-                return (
-                  <React.Fragment key={`${tableKey}-${group.year}`}>
-                    <TableRow
-                      hover={yearGroups.length > 1}
-                      onClick={() => this.toggleYear(tableKey, group.year, yearGroups)}
-                      sx={{
-                        cursor: yearGroups.length > 1 ? "pointer" : "default",
-                        "& .MuiTableCell-root": {
-                          backgroundColor: "#f5f5f5",
-                        },
-                      }}
+          {headerContent ?? (
+            <Typography
+              variant="h6"
+              sx={{
+                p: 2,
+                fontWeight: "bold",
+                textAlign: "left",
+                borderBottom: "2px solid #f0f0f0",
+              }}
+            >
+              {title}
+            </Typography>
+          )}
+          {pizzaArr.length ? (
+            <TableContainer
+              sx={{
+                maxHeight: "calc(100vh - 320px)",
+                overflow: "auto",
+              }}
+            >
+              <Table
+                stickyHeader
+                sx={{ minWidth: 650, borderCollapse: "separate", borderSpacing: 0 }}
+                aria-label="food table"
+              >
+                <TableHead>
+                  <TableRow ref={this.measureHeaderRow}>
+                    <TableCell
+                      rowSpan={2}
+                      sx={stickyHeadSx("#fafafa", 1)}
                     >
+                      Период
+                    </TableCell>
+                    {showPlan && (
                       <TableCell
-                        colSpan={columnCount}
-                        sx={{
-                          ...bodyCellSx,
-                          padding: "8px 12px",
-                          textAlign: "left",
-                        }}
+                        colSpan={planFulfillment ? 1 : 2}
+                        sx={stickyHeadSx("#e8f5e9", 1)}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          {yearGroups.length > 1 ? (
-                            <IconButton
-                              size="small"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                this.toggleYear(tableKey, group.year, yearGroups);
-                              }}
-                              aria-label={`${expanded ? "Свернуть" : "Развернуть"} ${group.year} год`}
-                              aria-expanded={expanded}
-                            >
-                              {expanded ? <KeyboardArrowDownIcon /> : <KeyboardArrowRightIcon />}
-                            </IconButton>
-                          ) : null}
-                          <Typography sx={{ fontWeight: 700 }}>{group.year} год</Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "text.secondary" }}
-                          >
-                            {group.items.length} мес.
-                          </Typography>
-                        </Box>
+                        План
                       </TableCell>
-                    </TableRow>
-                    {expanded
-                      ? group.items.map((row, index) => {
-                          const monthExpanded = this.isMonthExpanded(tableKey, row.periodKey);
+                    )}
+                    <TableCell
+                      colSpan={factColumnCount}
+                      sx={stickyHeadSx("#fff3e0", 1)}
+                    >
+                      Факт
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    {showPlan && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>{quantityHeader}</TableCell>
+                    )}
+                    {showPlan && !planFulfillment && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>Загрузка, %</TableCell>
+                    )}
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>{quantityHeader}</TableCell>
+                    {showFactYoY && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>Динамика г/г, %</TableCell>
+                    )}
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>Динамика м/м, %</TableCell>
+                    <TableCell sx={stickyHeadSx("#fafafa", 2)}>{dynamicsHeader}</TableCell>
+                    {showFactLoad && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>
+                        {planFulfillment ? "План/Факт, %" : "Загрузка, %"}
+                      </TableCell>
+                    )}
+                    {hasPlanFact && (
+                      <TableCell sx={stickyHeadSx("#fafafa", 2)}>План/Факт, %</TableCell>
+                    )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {yearGroups.map((group) => {
+                    const expanded = this.isYearExpanded(tableKey, group.year, yearGroups);
 
-                          return (
-                            <React.Fragment key={`${tableKey}-${row.periodKey}`}>
-                              {renderDataRow(row, index, { expanded: monthExpanded })}
-                              {monthExpanded && sourceRowsByPeriod
-                                ? SALES_SOURCE_KEYS.map((source) => {
-                                    const sourceRow = sourceRowsByPeriod[source]?.[row.periodKey];
-                                    return sourceRow
-                                      ? renderDataRow(sourceRow, index, { source })
-                                      : null;
-                                  })
-                                : null}
-                            </React.Fragment>
-                          );
-                        })
-                      : null}
-                  </React.Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    return (
+                      <React.Fragment key={`${tableKey}-${group.year}`}>
+                        <TableRow
+                          hover={yearGroups.length > 1}
+                          onClick={() => this.toggleYear(tableKey, group.year, yearGroups)}
+                          sx={{
+                            cursor: yearGroups.length > 1 ? "pointer" : "default",
+                            "& .MuiTableCell-root": {
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        >
+                          <TableCell
+                            colSpan={columnCount}
+                            sx={{
+                              ...bodyCellSx,
+                              padding: "8px 12px",
+                              textAlign: "left",
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              {yearGroups.length > 1 ? (
+                                <IconButton
+                                  size="small"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    this.toggleYear(tableKey, group.year, yearGroups);
+                                  }}
+                                  aria-label={`${expanded ? "Свернуть" : "Развернуть"} ${group.year} год`}
+                                  aria-expanded={expanded}
+                                >
+                                  {expanded ? (
+                                    <KeyboardArrowDownIcon />
+                                  ) : (
+                                    <KeyboardArrowRightIcon />
+                                  )}
+                                </IconButton>
+                              ) : null}
+                              <Typography sx={{ fontWeight: 700 }}>{group.year} год</Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{ color: "text.secondary" }}
+                              >
+                                {group.items.length} мес.
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                        {expanded
+                          ? group.items.map((row, index) => {
+                              const monthExpanded = this.isMonthExpanded(tableKey, row.periodKey);
+
+                              return (
+                                <React.Fragment key={`${tableKey}-${row.periodKey}`}>
+                                  {renderDataRow(row, index, { expanded: monthExpanded })}
+                                  {monthExpanded && sourceRowsByPeriod
+                                    ? SALES_SOURCE_KEYS.map((source) => {
+                                        const sourceRow =
+                                          sourceRowsByPeriod[source]?.[row.periodKey];
+                                        return sourceRow
+                                          ? renderDataRow(sourceRow, index, { source })
+                                          : null;
+                                      })
+                                    : null}
+                                </React.Fragment>
+                              );
+                            })
+                          : null}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography sx={{ p: 3, color: "text.secondary" }}>
+              Нет данных за выбранный период
+            </Typography>
+          )}
+        </Paper>
       </Grid>
     );
   }
@@ -733,6 +903,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
     planFactTitle,
     progressTitle,
     tableOptions = {},
+    headerContent = null,
+    valueSuffix = "шт",
+    valueDecimals = 0,
+    showProgress = true,
   }) {
     const { analyticsResetKey, analyticsSources, annualPlanTotalsBySource, linesBySource } =
       this.state;
@@ -744,6 +918,10 @@ class StatSale_Tab_DynamicSale extends React.Component {
     const selectedLine =
       selectedSource === "total" ? totalLine : (linesBySource?.[selectedSource]?.[metric] ?? {});
     const annualPlanTotal = annualPlanTotalsBySource?.[selectedSource]?.[metric] ?? null;
+    const hasPlan = selectedRows.some(
+      (row) => row?.planQty !== null && row?.planQty !== undefined && row?.planQty !== "",
+    );
+    const hasChartData = selectedRows.length > 0 || Object.keys(selectedLine).length > 0;
     const tableSourceRows = SALES_SOURCE_KEYS.reduce((result, source) => {
       result[source] = this.state.sourceRows?.[source]?.[metric] ?? [];
       return result;
@@ -755,6 +933,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
           ...tableOptions,
           tableKey: metric,
           sourceRows: tableSourceRows,
+          headerContent,
         })}
         {totalRows.length ? (
           <Grid size={{ xs: 12 }}>
@@ -778,6 +957,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
             collapsible
             defaultExpanded={false}
             resetKey={analyticsResetKey}
+            valueSuffix={valueSuffix}
+            valueDecimals={valueDecimals}
           />
         ) : null}
         {selectedRows.length ? (
@@ -785,9 +966,31 @@ class StatSale_Tab_DynamicSale extends React.Component {
             data={selectedRows}
             title={planFactTitle}
             resetKey={analyticsResetKey}
+            valueSuffix={valueSuffix}
+            valueDecimals={valueDecimals}
           />
         ) : null}
-        {selectedRows.length ? (
+        {!hasChartData ? (
+          <Grid size={{ xs: 12 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                maxWidth: 900,
+                mx: "auto",
+                my: 3,
+                p: 3,
+                borderRadius: "12px",
+                borderColor: "#e0e0e0",
+                textAlign: "center",
+              }}
+            >
+              <Typography sx={{ color: "text.secondary" }}>
+                Нет данных для графиков по источнику «{SALES_SOURCE_LABELS[selectedSource]}»
+              </Typography>
+            </Paper>
+          </Grid>
+        ) : null}
+        {showProgress && hasPlan && selectedRows.length ? (
           <Grid size={{ xs: 12 }}>
             <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
               <ProgressTimeline
@@ -804,9 +1007,206 @@ class StatSale_Tab_DynamicSale extends React.Component {
     );
   }
 
+  renderMetricHeader() {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          borderBottom: "2px solid #f0f0f0",
+          pr: 2,
+        }}
+      >
+        <JacoCompactTabs
+          value={this.state.metricTab}
+          onChange={(_event, value) => this.setState({ metricTab: value })}
+          items={SALES_METRIC_TABS}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          aria-label="Показатель динамики продаж"
+          sx={{ minHeight: 56, px: 1, minWidth: 0 }}
+          tabSx={{
+            minHeight: 56,
+            px: 2,
+            fontSize: "1.125rem",
+            fontWeight: 700,
+          }}
+        />
+        {this.state.metricTab === "accounts" ? (
+          <Typography
+            variant="body2"
+            sx={{ color: "text.secondary", flexShrink: 0 }}
+          >
+            Данные по всем кафе
+          </Typography>
+        ) : null}
+      </Box>
+    );
+  }
+
+  renderActiveSalesMetric() {
+    const headerContent = this.renderMetricHeader();
+    const { metricTab, accountArr } = this.state;
+
+    if (metricTab === "rolly") {
+      return this.renderSalesMetric({
+        metric: "rolly",
+        title: "Роллы",
+        totalRows: this.state.rollyArr,
+        totalLine: this.state.rollyLine,
+        yearlyTitle: "Динамика роллов по годам",
+        planFactTitle: "План / Факт — Роллы",
+        progressTitle: "Выполнение плана по роллам",
+        headerContent,
+      });
+    }
+
+    if (metricTab === "pizza") {
+      return this.renderSalesMetric({
+        metric: "pizza",
+        title: "Пицца",
+        totalRows: this.state.pizzaArr,
+        totalLine: this.state.pizzaLine,
+        yearlyTitle: "Динамика пиццы по годам",
+        planFactTitle: "План / Факт — Пицца",
+        progressTitle: "Выполнение плана по пицце",
+        headerContent,
+      });
+    }
+
+    if (metricTab === "efficiency") {
+      return this.renderSalesMetric({
+        metric: "efficiency",
+        title: "Эффективность",
+        totalRows: this.state.efficiencyArr,
+        totalLine: this.state.efficiencyLine,
+        yearlyTitle: "Эффективность по годам",
+        planFactTitle: "Динамика эффективности",
+        progressTitle: "Выполнение плана по эффективности",
+        valueSuffix: "%",
+        valueDecimals: 2,
+        showProgress: false,
+        tableOptions: {
+          quantityDecimals: 2,
+          quantityHeader: "Эффект-ть, %",
+          dynamicsHeader: "Динамика, п.п.",
+        },
+        headerContent,
+      });
+    }
+
+    if (metricTab === "revenue") {
+      return (
+        <>
+          {this.renderSalesMetric({
+            metric: "revenue",
+            title: "Выручка",
+            totalRows: this.state.revenueArr,
+            totalLine: this.state.revenueLine,
+            yearlyTitle: "Выручка по годам",
+            planFactTitle: "Динамика выручки",
+            progressTitle: "Выполнение плана по выручке",
+            valueSuffix: "руб",
+            tableOptions: {
+              quantityHeader: "Сумма, руб",
+              dynamicsHeader: "Динамика, руб",
+            },
+            headerContent,
+          })}
+          {this.renderSalesMetric({
+            metric: "averageCheck",
+            title: "Средний чек",
+            totalRows: this.state.averageCheckArr,
+            totalLine: this.state.averageCheckLine,
+            yearlyTitle: "Средний чек по годам",
+            planFactTitle: "Динамика среднего чека",
+            progressTitle: "Выполнение плана по среднему чеку",
+            valueSuffix: "руб",
+            showProgress: false,
+            tableOptions: {
+              quantityHeader: "Чек, руб",
+              dynamicsHeader: "Динамика, руб",
+            },
+          })}
+        </>
+      );
+    }
+
+    if (metricTab === "accounts") {
+      return (
+        <>
+          {this.renderPizzaTable(accountArr, "Аккаунты", {
+            planFulfillment: true,
+            showFactYoY: false,
+            preserveAccountPercentDecimals: true,
+            headerContent,
+          })}
+          {accountArr.length ? (
+            <Grid size={{ xs: 12, sm: 12 }}>
+              <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
+                <ProgressTimeline
+                  data={accountArr}
+                  title="Выполнение плана по аккаунтам"
+                  resetKey={this.state.analyticsResetKey}
+                />
+              </Box>
+            </Grid>
+          ) : null}
+        </>
+      );
+    }
+
+    return (
+      <>
+        {this.renderSalesMetric({
+          metric: "orders",
+          title: "Заказы",
+          totalRows: this.state.orderArr,
+          totalLine: this.state.ordersLine,
+          yearlyTitle: "Динамика заказов по годам",
+          planFactTitle: "План / Факт — Заказы",
+          progressTitle: "Выполнение плана по заказам",
+          tableOptions: { planFulfillment: true },
+          headerContent,
+        })}
+        {this.renderSalesMetric({
+          metric: "ordersPerActive",
+          title: "Ср. кол-во заказов на активного клиента",
+          totalRows: this.state.ordersPerActiveArr,
+          totalLine: this.state.ordersPerActiveLine,
+          yearlyTitle: "Ср. кол-во заказов на активного клиента по годам",
+          planFactTitle: "Динамика среднего количества заказов",
+          progressTitle: "Выполнение плана по среднему количеству заказов",
+          valueSuffix: "",
+          valueDecimals: 2,
+          showProgress: false,
+          tableOptions: {
+            quantityDecimals: 2,
+            padFractionDigits: true,
+            quantityHeader: "Значение",
+            dynamicsHeader: "Динамика",
+          },
+        })}
+      </>
+    );
+  }
+
   render() {
     const { activeTab } = this.props;
-    const { loading, pizzaArr, rollyArr, orderArr, accountArr } = this.state;
+    const {
+      loading,
+      pizzaArr,
+      rollyArr,
+      orderArr,
+      accountArr,
+      ordersPerActiveArr,
+      efficiencyArr,
+      revenueArr,
+      averageCheckArr,
+    } = this.state;
 
     return (
       <Grid
@@ -857,50 +1257,17 @@ class StatSale_Tab_DynamicSale extends React.Component {
                 {loading ? "Загрузка..." : "Показать"}
               </Button>
             </Grid>
-            {this.renderSalesMetric({
-              metric: "orders",
-              title: "Заказы",
-              totalRows: orderArr,
-              totalLine: this.state.ordersLine,
-              yearlyTitle: "Динамика заказов по годам",
-              planFactTitle: "План / Факт — Заказы",
-              progressTitle: "Выполнение плана по заказам",
-              tableOptions: { planFulfillment: true },
-            })}
-            {this.renderSalesMetric({
-              metric: "rolly",
-              title: "Роллы",
-              totalRows: rollyArr,
-              totalLine: this.state.rollyLine,
-              yearlyTitle: "Динамика роллов по годам",
-              planFactTitle: "План / Факт — Роллы",
-              progressTitle: "Выполнение плана по роллам",
-            })}
-            {this.renderSalesMetric({
-              metric: "pizza",
-              title: "Пицца",
-              totalRows: pizzaArr,
-              totalLine: this.state.pizzaLine,
-              yearlyTitle: "Динамика пиццы по годам",
-              planFactTitle: "План / Факт — Пицца",
-              progressTitle: "Выполнение плана по пицце",
-            })}
-            {this.renderPizzaTable(accountArr, "Аккаунты (данные по всем кафе)", {
-              planFulfillment: true,
-              showFactYoY: false,
-              preserveAccountPercentDecimals: true,
-            })}
-            {accountArr.length ? (
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Box sx={{ width: { xs: "100%", md: "66.6667%" }, mx: "auto", mt: 1, mb: 5 }}>
-                  <ProgressTimeline
-                    data={accountArr}
-                    title="Выполнение плана по аккаунтам"
-                    resetKey={this.state.analyticsResetKey}
-                  />
-                </Box>
-              </Grid>
-            ) : null}
+            {this.state.res?.st ||
+            orderArr.length ||
+            rollyArr.length ||
+            pizzaArr.length ||
+            accountArr.length ||
+            ordersPerActiveArr.length ||
+            efficiencyArr.length ||
+            revenueArr.length ||
+            averageCheckArr.length
+              ? this.renderActiveSalesMetric()
+              : null}
           </Grid>
         </TabPanel>
       </Grid>

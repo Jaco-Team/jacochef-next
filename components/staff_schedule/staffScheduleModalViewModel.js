@@ -1,10 +1,10 @@
 import dayjs from "dayjs";
 import {
-  computePremiumSheet,
   computeToPaySum,
   computeTotalSum,
   createStaffSchedulePolicy,
   toArray,
+  getPositionName,
 } from "./staffScheduleHelpers.js";
 import { STAFF_SCHEDULE_HOUR_PRESETS, getHourPresetByType } from "./staffScheduleHourPresets.js";
 import {
@@ -26,7 +26,7 @@ const PERSONAL_FINANCE_COLUMN_LABELS = {
   price_p_h: "За 1ч",
   given: "Выдано",
   given_cart: "На карты",
-  withheld: "Удержано",
+  withheld: "Удержано по исп. листу",
   my_bonus: "Бонус",
 };
 
@@ -34,7 +34,7 @@ export function buildSummaryActionHeaderData(row, mode, periodLabel) {
   return {
     columnLabel: PERSONAL_FINANCE_COLUMN_LABELS[mode] || "",
     personName: row?.user_name || "",
-    positionName: row?.full_app_name || row?.app_name || "",
+    positionName: getPositionName(row),
     periodLabel: periodLabel || "",
   };
 }
@@ -96,9 +96,9 @@ export function buildDayModalViewModel(response, context = {}) {
 
   return {
     title: user?.user_name || "Сведения о сотруднике",
-    subtitle: user?.app_name || "",
+    subtitle: getPositionName(user),
     personName: user?.user_name || "",
-    positionName: user?.app_name || "",
+    positionName: getPositionName(user),
     dateLabel: info?.date || formatDateLabel(info?.date),
     date: info?.date || "",
     isPastPeriod: isClosedDayHalfPeriod(info?.date, context?.referenceDate),
@@ -169,10 +169,10 @@ export function buildMonthModalViewModel(response, context = {}) {
   const canViewFinance = (key) => policy.canShowSalaryBlock && policy.canView(key);
 
   return {
-    title: [source?.app_name, source?.user_name].filter(Boolean).join(" "),
+    title: [getPositionName(source), source?.user_name].filter(Boolean).join(" "),
     subtitle: info?.date ? formatDateLabel(info.date) : "",
     personName: source?.user_name || "",
-    positionName: source?.app_name || "",
+    positionName: getPositionName(source),
     newApp: info?.new_app ?? "",
     mentorId: info?.mentor_id ?? "",
     otherApps: toArray(response?.other_app).map((item) => ({
@@ -194,7 +194,8 @@ export function buildMonthModalViewModel(response, context = {}) {
       total: canViewFinance("all_price") ? totalSum : "",
       givenCash: canViewFinance("given") ? (source?.given_cash ?? source?.given ?? "") : "",
       transferred: canViewFinance("given_cart") ? (source?.given_cart ?? "") : "",
-      premiumSheet: canViewFinance("premia") ? computePremiumSheet(source) : "",
+      openingBalance: canViewFinance("test_all_price") ? (source?.opening_balance ?? "") : "",
+      difference: canViewFinance("test_all_price") ? (source?.salary_difference ?? "") : "",
     },
     overviewDays: toArray(row?.dates).map((item, index) => {
       const periodDay = periodDays[index] ?? {};
@@ -212,6 +213,7 @@ export function buildMonthModalViewModel(response, context = {}) {
     }),
     canEditMonth,
     hasPeriodSummary: context?.hasPeriodSummary !== false,
+    financeHidden: Number(row?.finance_hidden) === 1 || Number(user?.finance_hidden) === 1,
     recentCustomHours: toArray(response?.recent_custom_hours).map((item) => ({
       time_start: item?.time_start ?? "",
       time_end: item?.time_end ?? "",

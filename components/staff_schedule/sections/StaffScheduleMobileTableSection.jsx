@@ -24,17 +24,28 @@ import {
   uiColors,
   uiTableColors,
 } from "@/design-system/shared/ui";
-import { CONTROL_RADIUS, SUMMARY_COLUMN_WIDTH } from "../staffScheduleConstants";
+import {
+  CONTROL_RADIUS,
+  getSummaryColumnWidth,
+  getSummaryColumnsWidth,
+} from "../staffScheduleConstants";
 import {
   formatEmployeeCount,
   getRowBaseColor,
   getScheduleRowFocusKey,
+  formatDayAmount,
+  getSamePersonTint,
+  getSamePersonTitle,
   getSummaryCellValue,
+  isNegativeBalanceValue,
   toArray,
+  getPositionName,
+  formatDayHoursTitle,
 } from "../staffScheduleHelpers";
 import {
   getHolidayStripeSx,
-  staffScheduleHeaderActionSx,
+  getTeamBonusHeaderActionSx,
+  getTeamBonusStatusText,
   staffScheduleFinancialValueStyle,
   staffScheduleFinancialFocusSx,
 } from "../staffSchedulePatterns";
@@ -46,7 +57,6 @@ import {
 const MOBILE_SELECTION_COLUMN_WIDTH = 34;
 const MOBILE_EMPLOYEE_COLUMN_WIDTH = 150;
 const MOBILE_DAY_COLUMN_WIDTH = 76;
-const MOBILE_SUMMARY_COLUMN_WIDTH = SUMMARY_COLUMN_WIDTH;
 const MOBILE_CARD_BORDER = "1px solid #ECECEC";
 const MOBILE_CARD_RADIUS = "14px";
 const MOBILE_MIN_FONT_SIZE = 13;
@@ -188,7 +198,14 @@ function MobileScheduleRow({
     : row?.color
       ? uiTableColors.rowMuted
       : "#ffffff";
-  const employeeCellColor = isFocused ? uiTableColors.rowSelected : baseColors.backgroundColor;
+  // Как на компьютере: строка серая, цвета дней и отметки сотрудника сохраняются.
+  const samePersonTint = getSamePersonTint(data);
+  const employeeCellColor =
+    samePersonTint && baseColors.backgroundColor === "#ffffff"
+      ? samePersonTint
+      : isFocused && baseColors.backgroundColor === "#ffffff"
+        ? uiTableColors.rowSelected
+        : baseColors.backgroundColor;
   const employeeMetaColor =
     baseColors.color === "#ffffff" ? "rgba(255, 255, 255, 0.82)" : "#666666";
   const canOpenDay = Boolean(onOpenDay) && canOpenDayEdit && String(data?.smena_id ?? "") !== "-1";
@@ -234,13 +251,32 @@ function MobileScheduleRow({
           px: 1,
           py: 1,
           backgroundColor: employeeCellColor,
-          color: isFocused ? "#000000" : baseColors.color,
+          color: baseColors.color,
           cursor: canOpenMonth ? "pointer" : "default",
         }}
+        title={getSamePersonTitle(data)}
         onClick={canOpenMonth ? () => onOpenMonth(data) : undefined}
+        role={canOpenMonth ? "button" : undefined}
+        tabIndex={canOpenMonth ? 0 : undefined}
+        onKeyDown={
+          canOpenMonth
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onOpenMonth(data);
+                }
+              }
+            : undefined
+        }
       >
         <Typography
-          sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.25 }}
+          sx={{
+            fontSize: 14,
+            fontWeight: 500,
+            lineHeight: 1.25,
+            textDecoration: canOpenMonth ? "underline dotted" : "none",
+            textUnderlineOffset: "3px",
+          }}
           noWrap
         >
           {data?.user_name || "Без имени"}
@@ -267,13 +303,19 @@ function MobileScheduleRow({
             background: "none",
             fontSize: MOBILE_MIN_FONT_SIZE,
             lineHeight: 1.2,
-            color: isFocused ? "#666666" : employeeMetaColor,
+            color: employeeMetaColor,
             textAlign: "left",
             cursor: focusKey ? "pointer" : "default",
+            textDecoration: focusKey ? "underline dotted" : "none",
+            textUnderlineOffset: "3px",
+            "&:focus-visible": {
+              outline: `2px solid ${uiColors.primary}`,
+              outlineOffset: -2,
+            },
           }}
           noWrap
         >
-          {data?.app_name || "—"}
+          {getPositionName(data) || "—"}
         </Typography>
       </TableCell>
 
@@ -281,16 +323,13 @@ function MobileScheduleRow({
         ? toArray(data?.dates).map((day, index) => {
             const info = day?.info ?? {};
             const isHoliday = Boolean(data?.holydays?.[day?.date]);
-            const hasExplicitDayColor =
-              useColors && Boolean(info?.color) && !row?.color && !isFocused;
+            const hasExplicitDayColor = useColors && Boolean(info?.color) && !row?.color;
             const baseBackground = hasExplicitDayColor ? info.color : rowSurfaceColor;
-            const textColor = isFocused
-              ? "#111827"
-              : useColors
-                ? row?.color
-                  ? "#000000"
-                  : info?.colorT || "#111827"
-                : "#111827";
+            const textColor = useColors
+              ? row?.color
+                ? "#000000"
+                : info?.colorT || "#111827"
+              : "#111827";
 
             return (
               <TableCell
@@ -303,13 +342,14 @@ function MobileScheduleRow({
                   py: 0.75,
                   fontSize: MOBILE_MIN_FONT_SIZE,
                   fontWeight: 500,
-                  ...(isHoliday && !isFocused
+                  ...(isHoliday
                     ? getHolidayStripeSx(baseBackground, index, MOBILE_DAY_COLUMN_WIDTH)
                     : { backgroundColor: baseBackground }),
                   color: textColor,
                   cursor: canOpenDay ? "pointer" : "default",
                 }}
                 onClick={canOpenDay ? () => onOpenDay(data, day?.date) : undefined}
+                title={formatDayHoursTitle(info?.hours)}
               >
                 {info?.hours || ""}
               </TableCell>
@@ -318,6 +358,7 @@ function MobileScheduleRow({
         : null}
 
       {summaryColumns.map((column) => {
+        const isValueBlurred = isFinancialBlurred && !column.public;
         const canEditFinancialValue = canEditStaffScheduleFinanceValue({
           columnKey: column.key,
           row: data,
@@ -368,8 +409,8 @@ function MobileScheduleRow({
             }
             sx={{
               ...mobileCellDividerSx,
-              ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
-              px: 0.5,
+              ...getMobileFixedColumnSx(getSummaryColumnWidth(column)),
+              px: column.key === "worked_hours" ? 0.25 : 0.5,
               py: 0.75,
               fontSize: MOBILE_MIN_FONT_SIZE,
               backgroundColor: isFocused
@@ -386,15 +427,18 @@ function MobileScheduleRow({
           >
             <SmallFont
               data-financial-value
-              aria-hidden={isFinancialBlurred}
+              aria-hidden={isValueBlurred}
               style={{
                 display: "block",
-                fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                fontSize: column.key === "worked_hours" ? "12px" : `${MOBILE_MIN_FONT_SIZE}px`,
                 lineHeight: "1.1",
                 fontWeight: isPremiumColumn ? 700 : undefined,
-                filter: isFinancialBlurred ? "blur(5px)" : undefined,
-                userSelect: isFinancialBlurred ? "none" : undefined,
-                pointerEvents: isFinancialBlurred ? "none" : undefined,
+                filter: isValueBlurred ? "blur(5px)" : undefined,
+                userSelect: isValueBlurred ? "none" : undefined,
+                pointerEvents: isValueBlurred ? "none" : undefined,
+                ...(isNegativeBalanceValue(column, getSummaryCellValue(column, data))
+                  ? { color: "#D92D20", fontWeight: 600 }
+                  : null),
                 ...(isClickable ? staffScheduleFinancialValueStyle : null),
               }}
             >
@@ -444,7 +488,7 @@ function MobileShiftCard({
     selectionColumnWidth +
     MOBILE_EMPLOYEE_COLUMN_WIDTH +
     (isCalendarHidden ? 0 : days.length * MOBILE_DAY_COLUMN_WIDTH) +
-    summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
+    getSummaryColumnsWidth(summaryColumns);
 
   return (
     <Box sx={mobileCardSx}>
@@ -632,7 +676,7 @@ function MobileShiftCard({
                     <SmallFont
                       style={{
                         display: "block",
-                        fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                        fontSize: canOpenTeamBonus ? "12px" : `${MOBILE_MIN_FONT_SIZE}px`,
                         lineHeight: "1.15",
                       }}
                     >
@@ -646,7 +690,7 @@ function MobileShiftCard({
                       align="center"
                       sx={{
                         ...mobileCellDividerSx,
-                        ...getMobileFixedColumnSx(MOBILE_SUMMARY_COLUMN_WIDTH),
+                        ...getMobileFixedColumnSx(getSummaryColumnWidth(column)),
                         py: 0.7,
                         px: 0.5,
                         textAlign: "center",
@@ -660,9 +704,9 @@ function MobileShiftCard({
                         <Box
                           component="button"
                           type="button"
-                          aria-label="Изменить командный бонус за выбранный период"
+                          aria-label={`Изменить командный бонус за выбранный период. ${getTeamBonusStatusText(periodBonusState)}`}
                           onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
-                          sx={staffScheduleHeaderActionSx}
+                          sx={getTeamBonusHeaderActionSx(periodBonusState)}
                         >
                           {label}
                         </Box>
@@ -733,11 +777,11 @@ function MobileSummaryCard({
   const dayCount = isCalendarHidden ? 0 : bonusDayValues.length;
   const labelColumnWidth =
     MOBILE_EMPLOYEE_COLUMN_WIDTH + (hideSelectionColumn ? 0 : MOBILE_SELECTION_COLUMN_WIDTH);
-  const cellTemplate = `${labelColumnWidth}px repeat(${dayCount}, ${MOBILE_DAY_COLUMN_WIDTH}px) repeat(${summaryColumns.length}, ${MOBILE_SUMMARY_COLUMN_WIDTH}px)`;
+  const cellTemplate = `${labelColumnWidth}px repeat(${dayCount}, ${MOBILE_DAY_COLUMN_WIDTH}px) ${summaryColumns.map((column) => `${getSummaryColumnWidth(column)}px`).join(" ")}`;
   const gridWidth =
     labelColumnWidth +
     dayCount * MOBILE_DAY_COLUMN_WIDTH +
-    summaryColumns.length * MOBILE_SUMMARY_COLUMN_WIDTH;
+    getSummaryColumnsWidth(summaryColumns);
 
   const renderMetricRow = (
     label,
@@ -781,8 +825,9 @@ function MobileSummaryCard({
                 justifyContent: "center",
                 px: 0.25,
                 py: 1,
-                fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
-                color: options.textColor || "#5E5E5E",
+                fontSize: options.compactValues ? 15 : MOBILE_MIN_FONT_SIZE,
+                fontWeight: options.compactValues ? 700 : undefined,
+                color: options.compactValues ? "#000000" : options.textColor || "#5E5E5E",
                 whiteSpace: options.compactValues ? "nowrap" : "normal",
               }}
             >
@@ -813,8 +858,9 @@ function MobileSummaryCard({
             justifyContent: "center",
             px: 0.5,
             py: 1,
-            fontSize: options.compactValues ? 13.2 : MOBILE_MIN_FONT_SIZE,
-            color: options.textColor || "#5E5E5E",
+            fontSize: options.compactValues ? 15 : MOBILE_MIN_FONT_SIZE,
+            fontWeight: options.compactValues ? 700 : undefined,
+            color: options.compactValues ? "#000000" : options.textColor || "#5E5E5E",
             cursor: !options.blurValues && onSummaryCellClick ? "pointer" : "default",
           }}
         >
@@ -928,7 +974,7 @@ function MobileSummaryCard({
                   <SmallFont
                     style={{
                       display: "block",
-                      fontSize: `${MOBILE_MIN_FONT_SIZE}px`,
+                      fontSize: canOpenTeamBonus ? "12px" : `${MOBILE_MIN_FONT_SIZE}px`,
                       lineHeight: "1.15",
                     }}
                   >
@@ -952,9 +998,9 @@ function MobileSummaryCard({
                       <Box
                         component="button"
                         type="button"
-                        aria-label="Изменить командный бонус за выбранный период"
+                        aria-label={`Изменить командный бонус за выбранный период. ${getTeamBonusStatusText(periodBonusState)}`}
                         onClick={() => onOpenSummaryAction(null, "dop_bonus_toggle")}
-                        sx={staffScheduleHeaderActionSx}
+                        sx={getTeamBonusHeaderActionSx(periodBonusState)}
                       >
                         {label}
                       </Box>
@@ -969,9 +1015,9 @@ function MobileSummaryCard({
 
           {canShowTotals || (!isCalendarHidden && canShowPeriodSum && bonusDayValues.length)
             ? renderMetricRow(
-                "Сумма за период",
+                "Сумма за период, ₽",
                 bonusDayValues,
-                (item) => item?.res ?? "",
+                (item) => formatDayAmount(item?.res),
                 (column) => {
                   if (column.key === "dop_bonus" && canEditTeamBonus) {
                     if (!periodBonusState) {

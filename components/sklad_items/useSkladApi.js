@@ -20,6 +20,8 @@ export default function useSkladApi() {
       getUnits: () => request("units/list"),
       getUnit: (id) => request("units/get_one", { id }),
       getCategories: (sourceType) => request("categories/list", { source_type: sourceType }),
+      getCategoryHistory: (sourceType, id) =>
+        request("categories/history", { source_type: sourceType, id }),
       createCategory: (payload) => request("categories/save_new", payload),
       updateCategory: (payload) => request("categories/save_edit", payload),
       deleteCategory: (payload) => request("categories/delete", payload),
@@ -29,10 +31,14 @@ export default function useSkladApi() {
         request("categories/save_edit", { id, source_type: "semi_finished", name }),
       deleteProductionCategory: (id) =>
         request("categories/delete", { id, source_type: "semi_finished" }),
+      getSiteCategories: () => request("site-items/categories/list"),
       createSiteCategory: (payload) => request("site-items/categories/save_new", payload),
+      updateSiteCategory: (payload) => request("site-items/categories/save_edit", payload),
       createUnit: (payload) => request("units/save_new", payload),
       updateUnit: (payload) => request("units/save_edit", payload),
       deleteUnit: (id) => request("units/delete", { id }),
+      getProductionCreationReferences: (entityType) =>
+        request("production/creation_references", { entity_type: entityType }),
       getRecipes: (payload = {}) => request("recipes/list", payload),
       getRecipe: (id) => request("recipes/get_one", { id }),
       createRecipe: (payload) => request("recipes/save_new", payload),
