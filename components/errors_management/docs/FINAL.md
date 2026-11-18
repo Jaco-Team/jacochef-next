@@ -1,7 +1,7 @@
 # Итоговый обзор
 
-v2 жалоба — единственный write source нового процесса. Legacy остаётся read-only для заказов и historical statistics. Frontend разделён на page, page hook, sections and domain helpers; backend — controller/service/repository.
+v2-жалоба — единственный источник записи нового процесса. Legacy только читает заказы и историческую статистику. Frontend разделён на страницу, hook страницы, секции и чистые помощники; backend — controller/service/repository.
 
-Сервер валидирует каталог, ингредиент, этап, позицию, кафе и transition. Order source и промокод решения хранятся снимком; historical adapter изолирован и не пишет legacy.
+Права, команды и видимость телефона приходят с backend в `get_all.permissions`; frontend их только применяет. Доменные ошибки v2 отображаются в формах.
 
-Нет известного дефекта, блокирующего PR. До production acceptance остаются реальные роли/кафе и isolated HTTP coverage из [валидации](./VALIDATION.md).
+До production acceptance остаются: проверка на backend этого раунда (контракт реализуется параллельно), реальные роли и кафе, isolated HTTP coverage из [валидации](./VALIDATION.md).

@@ -3,9 +3,20 @@
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import { Box, Stack, Tooltip } from "@mui/material";
-import { JacoIconButton, JacoSwitch } from "@/design-system/shared/ui";
+import { JacoIconButton, JacoStatusChip, JacoSwitch } from "@/design-system/shared/ui";
+import { isInheritedNode } from "./catalogModel.mjs";
 
-export default function CatalogItemActions({ node, onEdit, onHistory, onToggle }) {
+export default function CatalogItemActions({
+  node,
+  pointId = null,
+  isEditable,
+  onEdit: providedEdit,
+  onHistory,
+  onToggle: providedToggle,
+}) {
+  const editable = isEditable ? isEditable(node) : true;
+  const onEdit = editable ? providedEdit : null;
+  const onToggle = editable ? providedToggle : null;
   return (
     <Stack
       direction="row"
@@ -13,6 +24,23 @@ export default function CatalogItemActions({ node, onEdit, onHistory, onToggle }
       onClick={(event) => event.stopPropagation()}
       sx={{ alignItems: "center", flexShrink: 0 }}
     >
+      {isInheritedNode(node, pointId) ? (
+        <Tooltip
+          title="Общий вариант для всех кафе. Изменяется в области «Все кафе (общие)»."
+          arrow
+        >
+          <Box
+            component="span"
+            sx={{ display: "inline-flex" }}
+          >
+            <JacoStatusChip
+              label="Общий"
+              tone="neutral"
+              variant="outlined"
+            />
+          </Box>
+        </Tooltip>
+      ) : null}
       {onToggle ? (
         <Tooltip
           title={node.is_active ? "Отключить вариант" : "Включить вариант"}

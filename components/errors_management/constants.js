@@ -1,22 +1,52 @@
 import dayjs from "dayjs";
+import { complaintStatusOptions } from "./complaintStatusModel.mjs";
 
 export const MODULE_NAME = "errors_management";
 
-export const DEFAULT_FILTERS = {
-  cityId: "",
-  pointId: "",
-  orderNumber: "",
-  phone: "",
-  amountFrom: "",
-  amountTo: "",
-  orderType: "",
-  orderSource: "",
-  orderStages: [],
-  complaintStatuses: [],
-  // Temporary default: keep local stale data queries bounded to the latest seven days.
-  dateFrom: dayjs().subtract(6, "day").format("YYYY-MM-DD"),
-  dateTo: dayjs().format("YYYY-MM-DD"),
-};
+const today = () => dayjs().format("YYYY-MM-DD");
+const lastWeekStart = () => dayjs().subtract(6, "day").format("YYYY-MM-DD");
+
+export function journalFilterDefaults(scope = {}) {
+  return {
+    cityId: scope.cityId || "",
+    pointId: scope.pointId || "",
+    orderNumber: "",
+    orderSource: "",
+    registrationSource: "",
+    complaintStatuses: [],
+    dateFrom: lastWeekStart(),
+    dateTo: today(),
+  };
+}
+
+export function orderFilterDefaults(scope = {}) {
+  return {
+    cityId: scope.cityId || "",
+    pointId: scope.pointId || "",
+    orderNumber: "",
+    phone: "",
+    amountFrom: "",
+    amountTo: "",
+    orderType: "",
+    orderSource: "",
+    orderStages: [],
+    dateFrom: today(),
+    dateTo: today(),
+    timeFrom: "",
+    timeTo: "",
+  };
+}
+
+export function statisticsFilterDefaults(scope = {}) {
+  return {
+    cityId: scope.cityId || "",
+    pointId: scope.pointId || "",
+    orderSource: "",
+    employeeId: "",
+    dateFrom: lastWeekStart(),
+    dateTo: today(),
+  };
+}
 
 export const ORDER_TYPE_OPTIONS = [
   { id: "1", name: "Доставка" },
@@ -45,11 +75,7 @@ export const ORDER_STAGE_OPTIONS = [
   { id: "6", name: "У клиента" },
 ];
 
-export const COMPLAINT_STATUS_OPTIONS = [
-  { id: "draft", name: "Черновик" },
-  { id: "registered", name: "В решении" },
-  { id: "sent_to_cafe", name: "Отправлена в кафе" },
-  { id: "accepted_by_cafe", name: "Принята кафе" },
-  { id: "resolved", name: "Решена" },
-  { id: "cancelled", name: "Отменена" },
-];
+export const COMPLAINT_STATUS_OPTIONS = complaintStatusOptions();
+
+export const ALL_POINTS_LABEL = "Все точки в городе";
+export const GLOBAL_SCOPE_LABEL = "Все кафе (общие)";

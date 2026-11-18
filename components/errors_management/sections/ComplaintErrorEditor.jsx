@@ -2,11 +2,35 @@
 
 import { useMemo } from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import { Alert, Box, Grid, Stack, Typography } from "@mui/material";
-import { JacoButton, JacoSelect, JacoSurface, JacoTextInput } from "@/design-system/shared/ui";
-import { activeNodes, completeClassifier } from "../complaintClassifier.mjs";
+import { Grid, Stack, Typography } from "@mui/material";
+import {
+  JacoAlert,
+  JacoButton,
+  JacoSelect,
+  JacoSurface,
+  JacoTextInput,
+} from "@/design-system/shared/ui";
+import {
+  activeNodes,
+  changeClassifier,
+  positionQuantityLimit,
+  validQuantity,
+} from "../complaintClassifier.mjs";
+import FieldMessage from "./FieldMessage";
+import StageHint from "./StageHint";
 
 const surfaceSx = { boxShadow: "none" };
+const EDITOR_FIELDS = [
+  "category_id",
+  "error_type_id",
+  "error_id",
+  "ingredient_id",
+  "stage_id",
+  "quantity",
+  "comment",
+  "error_amount",
+  "solution_id",
+];
 
 function selectValue(event) {
   return event.target.value === "none" ? "" : event.target.value;
@@ -19,6 +43,7 @@ export function ComplaintErrorEditor({
   catalog,
   solutions,
   stages,
+  serverErrors = [],
   onChange,
   onRemove,
 }) {
@@ -46,6 +71,11 @@ export function ComplaintErrorEditor({
   }, [selectedError, stages]);
   const selectedStage = configuredStages.find((node) => String(node.id) === String(value.stage_id));
   const requiresIngredient = Boolean(selectedError?.rules?.requires_ingredient);
+  const quantityLimit = positionQuantityLimit(position);
+  const quantityValid = validQuantity(value, position);
+  const change = (field, nextValue) => onChange(changeClassifier(catalog, value, field, nextValue));
+  const fieldError = (field) => serverErrors.find((entry) => entry.field === field)?.message;
+  const otherErrors = serverErrors.filter((entry) => !EDITOR_FIELDS.includes(entry.field));
 
   return (
     <JacoSurface
@@ -70,8 +100,16 @@ export function ComplaintErrorEditor({
             Удалить
           </JacoButton>
         </Stack>
+        {otherErrors.map((entry) => (
+          <JacoAlert
+            key={entry.field}
+            severity="error"
+          >
+            {entry.message}
+          </JacoAlert>
+        ))}
         {categories.length === 0 ? (
-          <Alert severity="warning">Для выбранной позиции варианты ошибок не настроены.</Alert>
+          <JacoAlert severity="warning">Для выбранной позиции варианты ошибок не настроены.</JacoAlert>
         ) : null}
         <Grid
           container
@@ -86,8 +124,9 @@ export function ComplaintErrorEditor({
               value={value.category_id}
               allowNone
               noneLabel="Выберите категорию"
-              onChange={(event) => onChange(completeClassifier(catalog, value, selectValue(event)))}
+              onChange={(event) => change("category_id", selectValue(event))}
             />
+            <FieldMessage>{fieldError("category_id")}</FieldMessage>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
             <JacoSelect
@@ -98,10 +137,9 @@ export function ComplaintErrorEditor({
               value={value.error_type_id}
               allowNone
               noneLabel="Выберите тип ошибки"
-              onChange={(event) =>
-                onChange({ ...value, error_type_id: selectValue(event), error_id: "" })
-              }
+              onChange={(event) => change("error_type_id", selectValue(event))}
             />
+            <FieldMessage>{fieldError("error_type_id")}</FieldMessage>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
             <JacoSelect
@@ -112,8 +150,9 @@ export function ComplaintErrorEditor({
               value={value.error_id}
               allowNone
               noneLabel="Выберите ошибку"
-              onChange={(event) => onChange({ ...value, error_id: selectValue(event) })}
+              onChange={(event) => change("error_id", selectValue(event))}
             />
+            <FieldMessage>{fieldError("error_id")}</FieldMessage>
           </Grid>
           {requiresIngredient ? (
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -124,24 +163,41 @@ export function ComplaintErrorEditor({
                 value={value.ingredient_id}
                 allowNone
                 noneLabel="Выберите продукт"
-                onChange={(event) => onChange({ ...value, ingredient_id: selectValue(event) })}
+                onChange={(event) => change("ingredient_id", selectValue(event))}
               />
+              <FieldMessage>{fieldError("ingredient_id")}</FieldMessage>
             </Grid>
           ) : null}
           <Grid size={{ xs: 12, sm: 6 }}>
             {value.error_id && configuredStages.length === 0 ? (
-              <Alert severity="warning">Для выбранной ошибки этапы не настроены.</Alert>
+              <JacoAlert
+                severity="warning"
+                sx={{ mb: 1 }}
+              >
+                Для выбранной ошибки этапы не настроены.
+              </JacoAlert>
             ) : null}
-            <JacoSelect
-              required
-              label="Этап возникновения ошибки"
-              options={configuredStages}
-              disabled={!value.error_id || configuredStages.length === 0}
-              value={value.stage_id}
-              allowNone
-              noneLabel="Выберите этап"
-              onChange={(event) => onChange({ ...value, stage_id: selectValue(event) })}
-            />
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ alignItems: "flex-start" }}
+            >
+              <JacoSelect
+                required
+                label="Этап возникновения ошибки"
+                options={configuredStages}
+                disabled={!value.error_id || configuredStages.length === 0}
+                value={value.stage_id}
+                allowNone
+                noneLabel="Выберите этап"
+                onChange={(event) => change("stage_id", selectValue(event))}
+              />
+              <StageHint
+                stages={configuredStages}
+                selectedIds={value.stage_id ? [value.stage_id] : []}
+              />
+            </Stack>
+            <FieldMessage>{fieldError("stage_id")}</FieldMessage>
             {selectedStage?.description ? (
               <Typography
                 variant="caption"
@@ -151,6 +207,22 @@ export function ComplaintErrorEditor({
               </Typography>
             ) : null}
           </Grid>
+          {quantityLimit > 1 ? (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <JacoTextInput
+                type="number"
+                label="Количество"
+                value={value.quantity ?? 1}
+                error={!quantityValid || Boolean(fieldError("quantity"))}
+                helperText={fieldError("quantity") || `От 1 до ${quantityLimit} шт.`}
+                slotProps={{
+                  htmlInput: { min: 1, max: quantityLimit, step: 1, inputMode: "numeric" },
+                  inputLabel: { shrink: true },
+                }}
+                onChange={(event) => onChange({ ...value, quantity: event.target.value })}
+              />
+            </Grid>
+          ) : null}
           <Grid size={12}>
             <JacoTextInput
               fullWidth
@@ -158,18 +230,20 @@ export function ComplaintErrorEditor({
               minRows={2}
               label="Комментарий"
               value={value.comment || ""}
+              error={Boolean(fieldError("comment"))}
+              helperText={fieldError("comment")}
               onChange={(event) => onChange({ ...value, comment: event.target.value })}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <JacoTextInput
               type="number"
-              min={0}
-              step={0.01}
               label="Сумма ошибки"
               value={value.error_amount || ""}
+              error={Boolean(fieldError("error_amount"))}
+              helperText={fieldError("error_amount")}
               slotProps={{
-                htmlInput: { inputMode: "decimal" },
+                htmlInput: { min: 0, step: 0.01, inputMode: "decimal" },
                 inputLabel: { shrink: true },
               }}
               onChange={(event) => onChange({ ...value, error_amount: event.target.value })}
@@ -184,6 +258,7 @@ export function ComplaintErrorEditor({
               noneLabel="Не выбрано"
               onChange={(event) => onChange({ ...value, solution_id: selectValue(event) })}
             />
+            <FieldMessage>{fieldError("solution_id")}</FieldMessage>
           </Grid>
         </Grid>
       </Stack>

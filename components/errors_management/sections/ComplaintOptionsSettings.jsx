@@ -6,18 +6,24 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
   Divider,
   Stack,
   Typography,
 } from "@mui/material";
-import { JacoButton, JacoSegmentedTabs } from "@/design-system/shared/ui";
+import { JacoAlert, JacoButton, JacoSegmentedTabs } from "@/design-system/shared/ui";
+import { requestErrorText, requestFieldErrors } from "../requestErrors.mjs";
 import CatalogHistory from "./settings/CatalogHistory";
 import CatalogNodeEditor from "./settings/CatalogNodeEditor";
 import CatalogTree, { InactiveCatalogGroups } from "./settings/CatalogTree";
 import FlatDirectory from "./settings/FlatDirectory";
-import { nodesOf, sortNodes } from "./settings/catalogModel.mjs";
+import {
+  allowsIngredient,
+  canEditCatalogNode,
+  nodeRules,
+  nodesOf,
+  sortNodes,
+} from "./settings/catalogModel.mjs";
 
 const INACTIVE_VIEWS = {
   classifier: { kinds: ["category", "error_type", "error"], title: "Неактивные элементы" },
@@ -25,9 +31,43 @@ const INACTIVE_VIEWS = {
   solutions: { kinds: ["solution"], title: "Неактивные решения" },
 };
 
-export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLoading }) {
+const NO_ERROR = { text: "", fields: {} };
+
+function ScopeNotice({ canEdit, pointId, scopeLabel }) {
+  if (!canEdit) {
+    return (
+      <JacoAlert severity="info">
+        У вас нет права изменять настройки. Доступен просмотр текущих вариантов и их истории.
+      </JacoAlert>
+    );
+  }
+  if (pointId) {
+    return (
+      <JacoAlert severity="info">
+        Показаны общие варианты и варианты кафе «{scopeLabel}». Новые варианты создаются только для
+        этого кафе. Общие варианты (метка «Общий») изменяются в области «Все кафе (общие)».
+      </JacoAlert>
+    );
+  }
+  return (
+    <JacoAlert severity="info">
+      Общие варианты применяются во всех кафе. Чтобы добавить вариант только для одного кафе,
+      выберите его в поле «Область настроек».
+    </JacoAlert>
+  );
+}
+
+export default function ComplaintOptionsSettings({
+  api,
+  pointId,
+  scopeLabel,
+  canEdit,
+  siteCategories,
+  withLoading,
+}) {
   const [settings, setSettings] = useState({ active: [], inactive: [] });
   const [error, setError] = useState("");
+  const [editorError, setEditorError] = useState(NO_ERROR);
   const [view, setView] = useState("classifier");
   const [editor, setEditor] = useState(null);
   const [history, setHistory] = useState(null);
@@ -39,14 +79,14 @@ export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLo
     setError("");
     try {
       const response = await withLoading(() =>
-        api.getSettings(pointId ? { point_id: Number(pointId) } : {}),
+        api.getSettings(pointId ? { point_id: pointId } : {}),
       );
       setSettings(response?.data ?? response ?? { active: [], inactive: [] });
       setLoaded(true);
-    } catch {
-      setError("Не удалось загрузить варианты решений жалоб.");
+    } catch (loadError) {
+      setError(requestErrorText(loadError, "Не удалось загрузить варианты решений жалоб."));
     }
-  }, [api, pointId]);
+  }, [api, pointId, withLoading]);
   useEffect(() => {
     load();
   }, [load]);
@@ -57,28 +97,53 @@ export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLo
     inactiveView.kinds.includes(node.kind),
   );
   const activeStages = sortNodes(nodesOf(activeNodes, "stage"));
-  const openEditor = (node, context = {}) => setEditor({ node, context });
-  const saveNode = async (setting) => {
+  const visibleNodes = [...activeNodes, ...(settings.inactive || [])];
+  const isEditable = (node) => canEditCatalogNode(node, pointId, canEdit);
+  const openEditor = (node, context = {}) => {
+    setEditorError(NO_ERROR);
+    setEditor({ node, context });
+  };
+  const saveNode = async (setting, { fromEditor = false } = {}) => {
     setSaving(true);
     setError("");
+    setEditorError(NO_ERROR);
     try {
-      await withLoading(() =>
-        api.saveSetting({ setting }, { throwErrors: true, suppressAuthRedirect: true }),
-      );
+      await withLoading(() => api.saveSetting({ setting }));
       setEditor(null);
       await load();
-    } catch {
-      setError("Не удалось сохранить настройку. Проверьте право на редактирование.");
+    } catch (saveError) {
+      const text = requestErrorText(
+        saveError,
+        "Не удалось сохранить настройку. Проверьте соединение и повторите попытку.",
+      );
+      if (fromEditor) {
+        setEditorError({ text, fields: requestFieldErrors(saveError) });
+      } else {
+        setError(text);
+      }
     } finally {
       setSaving(false);
     }
   };
   const toggle = (node, isActive) =>
-    saveNode({ ...node, is_active: isActive, rules: node.rules || {} });
+    saveNode({
+      ...node,
+      is_active: isActive,
+      rules: nodeRules(node.kind, node.rules || {}, {
+        allowIngredient: allowsIngredient(visibleNodes, node),
+      }),
+    });
   const edit = canEdit ? (node) => openEditor(node) : null;
-  const create = canEdit ? (context) => openEditor(null, context) : null;
+  const create = canEdit ? (context) => openEditor(null, { ...context, pointId }) : null;
   const toggleNode = canEdit ? toggle : null;
-  const numericPointId = pointId ? Number(pointId) : null;
+  const treeProps = {
+    pointId,
+    isEditable,
+    onEdit: edit,
+    onCreate: create,
+    onHistory: setHistory,
+    onToggle: toggleNode,
+  };
 
   return (
     <Stack spacing={2.5}>
@@ -105,12 +170,12 @@ export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLo
           Обновить
         </JacoButton>
       </Stack>
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {!canEdit ? (
-        <Alert severity="info">
-          У вас нет права изменять настройки. Доступен просмотр текущих вариантов и их истории.
-        </Alert>
-      ) : null}
+      {error ? <JacoAlert severity="error">{error}</JacoAlert> : null}
+      <ScopeNotice
+        canEdit={canEdit}
+        pointId={pointId}
+        scopeLabel={scopeLabel}
+      />
       <JacoSegmentedTabs
         size="compact"
         value={view}
@@ -124,33 +189,22 @@ export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLo
       {loaded && view === "classifier" ? (
         <CatalogTree
           nodes={activeNodes}
-          pointId={numericPointId}
-          onEdit={edit}
-          onCreate={create}
-          onHistory={setHistory}
-          onToggle={toggleNode}
+          stages={activeStages}
+          {...treeProps}
         />
       ) : null}
       {loaded && view === "stages" ? (
         <FlatDirectory
           kind="stage"
           nodes={activeNodes}
-          pointId={numericPointId}
-          onEdit={edit}
-          onCreate={create}
-          onHistory={setHistory}
-          onToggle={toggleNode}
+          {...treeProps}
         />
       ) : null}
       {loaded && view === "solutions" ? (
         <FlatDirectory
           kind="solution"
           nodes={activeNodes}
-          pointId={numericPointId}
-          onEdit={edit}
-          onCreate={create}
-          onHistory={setHistory}
-          onToggle={toggleNode}
+          {...treeProps}
         />
       ) : null}
       {loaded && inactiveNodes.length ? (
@@ -166,17 +220,14 @@ export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLo
               {view === "classifier" ? (
                 <InactiveCatalogGroups
                   nodes={inactiveNodes}
-                  onEdit={canEdit ? openEditor : null}
-                  onHistory={setHistory}
-                  onToggle={toggleNode}
+                  {...treeProps}
                 />
               ) : (
                 <FlatDirectory
                   kind={view === "stages" ? "stage" : "solution"}
                   nodes={inactiveNodes}
-                  onEdit={edit}
-                  onHistory={setHistory}
-                  onToggle={toggleNode}
+                  {...treeProps}
+                  onCreate={null}
                   showHeader={false}
                 />
               )}
@@ -188,10 +239,13 @@ export default function ComplaintOptionsSettings({ api, pointId, canEdit, withLo
         <CatalogNodeEditor
           state={editor}
           onClose={() => setEditor(null)}
-          onSave={saveNode}
+          onSave={(setting) => saveNode(setting, { fromEditor: true })}
           saving={saving}
-          error={error}
+          error={editorError}
           stages={activeStages}
+          nodes={visibleNodes}
+          siteCategories={siteCategories}
+          scopeLabel={scopeLabel}
         />
       ) : null}
       <CatalogHistory

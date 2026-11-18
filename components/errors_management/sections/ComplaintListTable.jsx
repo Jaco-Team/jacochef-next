@@ -1,27 +1,59 @@
 "use client";
 
 import {
-  Button,
-  Chip,
+  Box,
+  Link,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   TableSortLabel,
+  Typography,
 } from "@mui/material";
-import { JacoInfoLabel, JacoSurface } from "@/design-system/shared/ui";
+import {
+  JacoButton,
+  JacoInfoLabel,
+  JacoStatusChip,
+  JacoSurface,
+  uiColors,
+} from "@/design-system/shared/ui";
+import { complaintStatusAppearance } from "../complaintStatusModel.mjs";
 import {
   amountLabel,
   cafeLabel,
   complaintStatusLabel,
   historyTimestamp,
+  orderAddressLabel,
   orderId,
   orderSourceLabel,
+  orderTimeLabel,
   workflowSourceLabel,
 } from "../errorsManagementViewModel.mjs";
+import ComplaintPagination from "./ComplaintPagination";
+import { removedErrorsRowSx } from "./ComplaintStatusLegend";
+
+const deletedRowSx = {
+  backgroundColor: uiColors.primarySoft,
+  "&:hover": { backgroundColor: `${uiColors.primarySoft} !important` },
+};
+
+const stickyCellSx = (backgroundColor = uiColors.surface) => ({
+  position: "sticky",
+  left: 0,
+  zIndex: 2,
+  backgroundColor,
+  boxShadow: `2px 0 0 0 ${uiColors.borderLight}`,
+});
+
+const stickyActionSx = (backgroundColor = uiColors.surface) => ({
+  position: "sticky",
+  right: 0,
+  zIndex: 2,
+  backgroundColor,
+  boxShadow: `-2px 0 0 0 ${uiColors.borderLight}`,
+});
 
 function SortableHeader({ field, sort, onSort, children }) {
   return (
@@ -34,6 +66,34 @@ function SortableHeader({ field, sort, onSort, children }) {
         {children}
       </TableSortLabel>
     </TableCell>
+  );
+}
+
+function HeaderHint({ tooltip, children }) {
+  return (
+    <JacoInfoLabel
+      variant="inherit"
+      tooltip={tooltip}
+    >
+      {children}
+    </JacoInfoLabel>
+  );
+}
+
+function OrderLink({ row, onOpenOrder }) {
+  return (
+    <Link
+      component="button"
+      type="button"
+      underline="hover"
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpenOrder(row);
+      }}
+      sx={{ fontWeight: 600, fontSize: "inherit" }}
+    >
+      №{orderId(row)}
+    </Link>
   );
 }
 
@@ -62,12 +122,9 @@ function JournalHeaders({ sort, onSort }) {
       <TableCell>Сумма</TableCell>
       <TableCell>Оплата</TableCell>
       <TableCell>
-        <JacoInfoLabel
-          variant="inherit"
-          tooltip="Выписано / Активировано: количество промокодов, созданных для решения жалобы, и количество применённых клиентами."
-        >
+        <HeaderHint tooltip="Выписано / Активировано: количество промокодов, созданных для решения жалобы, и количество применённых клиентами.">
           Промокоды
-        </JacoInfoLabel>
+        </HeaderHint>
       </TableCell>
       <TableCell>Комментарий</TableCell>
       <TableCell>Решил</TableCell>
@@ -83,46 +140,38 @@ function JournalHeaders({ sort, onSort }) {
         sort={sort}
         onSort={onSort}
       >
-        <JacoInfoLabel
-          variant="inherit"
-          tooltip="Сумма по зарегистрированным ошибкам заказа."
-        >
+        <HeaderHint tooltip="Сумма по действующим ошибкам заказа. Снятые ошибки не учитываются.">
           Сумма ошибки
-        </JacoInfoLabel>
+        </HeaderHint>
       </SortableHeader>
       <SortableHeader
         field="changed_amount"
         sort={sort}
         onSort={onSort}
       >
-        <JacoInfoLabel
-          variant="inherit"
-          tooltip="Корректировка суммы заказа после рассмотрения жалобы."
-        >
+        <HeaderHint tooltip="Корректировка суммы заказа после рассмотрения жалобы. Пока жалоба у кафе, сумма скрыта.">
           Сумма изменения
-        </JacoInfoLabel>
+        </HeaderHint>
       </SortableHeader>
+      <TableCell />
     </>
   );
 }
 
-function RegistrationHeaders() {
+function JournalRow({ row, points, onOpenOrder, onOpenComplaint }) {
+  const appearance = complaintStatusAppearance(row.status);
   return (
-    <>
-      <TableCell>Заказ</TableCell>
-      <TableCell>Кафе</TableCell>
-      <TableCell>Источник заказа</TableCell>
-      <TableCell>Клиент</TableCell>
-      <TableCell>Адрес</TableCell>
-      <TableCell>Статус</TableCell>
-      <TableCell>Сумма</TableCell>
-    </>
-  );
-}
-
-function JournalCells({ row, points }) {
-  return (
-    <>
+    <TableRow
+      hover
+      onClick={() => onOpenComplaint(row)}
+      sx={{ cursor: "pointer", ...(row.has_removed_errors ? removedErrorsRowSx : {}) }}
+    >
+      <TableCell>
+        <OrderLink
+          row={row}
+          onOpenOrder={onOpenOrder}
+        />
+      </TableCell>
       <TableCell>№{row.id}</TableCell>
       <TableCell>{workflowSourceLabel(row.source)}</TableCell>
       <TableCell>{historyTimestamp(row.created_at)}</TableCell>
@@ -137,37 +186,174 @@ function JournalCells({ row, points }) {
       <TableCell>{row.common_comment || "—"}</TableCell>
       <TableCell>{row.resolved_by_name || "—"}</TableCell>
       <TableCell>
-        <Chip
-          size="small"
-          color={row.status === "resolved" ? "success" : "warning"}
+        <JacoStatusChip
           label={complaintStatusLabel(row)}
+          tone={appearance.tone}
+          variant={appearance.variant}
         />
       </TableCell>
       <TableCell>{amountLabel(row.error_amount_total)}</TableCell>
       <TableCell>{row.is_salary_visible ? amountLabel(row.changed_amount_total) : "—"}</TableCell>
-    </>
+      <TableCell align="right">
+        <JacoButton
+          compact
+          variant="text"
+          tone="outlinePrimary"
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpenComplaint(row);
+          }}
+        >
+          Открыть детали
+        </JacoButton>
+      </TableCell>
+    </TableRow>
   );
 }
 
-function RegistrationCells({ row, points }) {
+const ORDER_COLUMNS = [
+  { id: "cafe", label: "Кафе", value: (row, points) => cafeLabel(row, points) },
+  { id: "channel", label: "Канал заказа", value: (row) => orderSourceLabel(row.order_source) },
+  { id: "placed_by", label: "Оформил", value: (row) => row.type_user || "—" },
+  { id: "client", label: "Клиент", phone: true, value: (row) => row.number || "—" },
+  { id: "address", label: "Адрес", value: (row) => orderAddressLabel(row) },
+  {
+    id: "opened",
+    label: "Открыт",
+    tooltip: "Время открытия заказа",
+    value: (row) => orderTimeLabel(row.date_time_order),
+  },
+  {
+    id: "table",
+    label: "Выход на стол",
+    tooltip: "Время выхода на стол",
+    value: (row) => orderTimeLabel(row.start_stol, "04:00:00"),
+  },
+  {
+    id: "preorder",
+    label: "Ко времени",
+    value: (row) => (Number.parseInt(row.is_preorder, 10) === 1 ? row.need_time || "—" : "—"),
+  },
+  {
+    id: "kitchen_closed",
+    label: "Закрыт кухней",
+    tooltip: "Время закрытия заказа на кухне",
+    value: (row) => orderTimeLabel(row.give_data_time, "00:00:00"),
+  },
+  {
+    id: "cook_time",
+    label: "На готовку",
+    tooltip: "Время на готовку",
+    value: (row) => orderTimeLabel(row.cook_time),
+  },
+  {
+    id: "received",
+    label: "Получен",
+    tooltip: "Время получения клиентом",
+    value: (row) => orderTimeLabel(row.close_order),
+  },
+  { id: "to_time", label: "До просрочки", value: (row) => orderTimeLabel(row.to_time) },
+  { id: "dif", label: "Разница", value: (row) => orderTimeLabel(row.dif) },
+  { id: "cooking", label: "Готовка", value: (row) => orderTimeLabel(row.diff2) },
+  {
+    id: "promised",
+    label: "Обещ. время",
+    tooltip: "Обещанное время",
+    value: (row) => orderTimeLabel(row.unix_time_to_client),
+  },
+  {
+    id: "delivery_time",
+    label: "Доставка: план/факт",
+    tooltip: "Время по программе / реальное время доставки",
+    value: (row) => orderTimeLabel(row.time_dev_text),
+  },
+  { id: "type", label: "Тип", value: (row) => row.type_order || "—" },
+  { id: "status", label: "Статус", value: (row) => row.status || "—" },
+  { id: "amount", label: "Сумма", value: (row) => amountLabel(row.order_price) },
+  { id: "payment", label: "Оплата", value: (row) => row.type_pay || "—" },
+  { id: "driver", label: "Водитель", value: (row) => row.driver || "—" },
+];
+
+function OrdersTable({ rows, points, canSeePhone, onOpenOrder, onRegister }) {
+  const columns = ORDER_COLUMNS.filter((column) => canSeePhone || !column.phone);
   return (
     <>
-      <TableCell>{cafeLabel(row, points)}</TableCell>
-      <TableCell>{orderSourceLabel(row.order_source)}</TableCell>
-      <TableCell>{row.number || "—"}</TableCell>
-      <TableCell>
-        {row.type_order_ === 1
-          ? `${row.street || ""} ${row.home || ""}`
-          : row.type_order_addr_new || "—"}
-      </TableCell>
-      <TableCell>
-        <Chip
+      <Box sx={{ px: 2, pt: 1.5, pb: 0.5, borderBottom: `1px solid ${uiColors.borderLight}` }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+        >
+          Прокрутите таблицу вправо, чтобы увидеть все колонки
+        </Typography>
+      </Box>
+      <TableContainer sx={{ maxHeight: "70vh", overflowX: "auto" }}>
+        <Table
           size="small"
-          color={row.status === "resolved" ? "success" : "warning"}
-          label={row.status_label || row.status || "—"}
-        />
-      </TableCell>
-      <TableCell>{amountLabel(row.order_price)}</TableCell>
+          stickyHeader
+          sx={{ minWidth: 2200, "& td, & th": { whiteSpace: "nowrap" } }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ ...stickyCellSx(), zIndex: 3 }}>Заказ</TableCell>
+              {columns.map((column) => (
+                <TableCell key={column.id}>
+                  {column.tooltip ? (
+                    <HeaderHint tooltip={column.tooltip}>{column.label}</HeaderHint>
+                  ) : (
+                    column.label
+                  )}
+                </TableCell>
+              ))}
+              <TableCell sx={{ ...stickyActionSx(), zIndex: 3 }} />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row, index) => {
+              const deleted = Number(row.is_delete) === 1;
+              const background = deleted ? uiColors.primarySoft : uiColors.surface;
+              return (
+                <TableRow
+                  hover
+                  key={`${row.point_id}-${orderId(row)}-${index}`}
+                  sx={deleted ? deletedRowSx : undefined}
+                >
+                  <TableCell sx={stickyCellSx(background)}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <OrderLink
+                        row={row}
+                        onOpenOrder={onOpenOrder}
+                      />
+                      {deleted ? (
+                        <JacoStatusChip
+                          label="Удалён"
+                          tone="danger"
+                          variant="soft"
+                        />
+                      ) : null}
+                    </Box>
+                  </TableCell>
+                  {columns.map((column) => (
+                    <TableCell key={column.id}>{column.value(row, points)}</TableCell>
+                  ))}
+                  <TableCell
+                    align="right"
+                    sx={stickyActionSx(background)}
+                  >
+                    <JacoButton
+                      compact
+                      variant="text"
+                      tone="outlinePrimary"
+                      onClick={() => onRegister(row)}
+                    >
+                      Зарегистрировать
+                    </JacoButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </>
   );
 }
@@ -176,6 +362,7 @@ export default function ComplaintListTable({
   rows,
   mode,
   points,
+  canSeePhone,
   sort,
   onSort,
   onOpenOrder,
@@ -183,86 +370,48 @@ export default function ComplaintListTable({
   onRegister,
   pagination,
 }) {
-  const journal = mode === "journal";
+  if (mode !== "journal") {
+    return (
+      <JacoSurface
+        variant="outlined"
+        sx={{ overflow: "hidden" }}
+      >
+        <OrdersTable
+          rows={rows}
+          points={points}
+          canSeePhone={canSeePhone}
+          onOpenOrder={onOpenOrder}
+          onRegister={onRegister}
+        />
+      </JacoSurface>
+    );
+  }
   return (
     <JacoSurface variant="outlined">
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
-              {journal ? (
-                <JournalHeaders
-                  sort={sort}
-                  onSort={onSort}
-                />
-              ) : (
-                <RegistrationHeaders />
-              )}
-              <TableCell />
+              <JournalHeaders
+                sort={sort}
+                onSort={onSort}
+              />
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row, index) => (
-              <TableRow
-                hover
-                key={journal ? `complaint-${row.id}` : `${orderId(row)}-${index}`}
-                onClick={journal ? () => onOpenComplaint(row) : undefined}
-                sx={journal ? { cursor: "pointer" } : undefined}
-              >
-                <TableCell>
-                  <Button
-                    variant="text"
-                    size="small"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenOrder(row);
-                    }}
-                    sx={{ minWidth: 0, p: 0, textTransform: "none" }}
-                  >
-                    №{orderId(row)}
-                  </Button>
-                </TableCell>
-                {journal ? (
-                  <JournalCells
-                    row={row}
-                    points={points}
-                  />
-                ) : (
-                  <RegistrationCells
-                    row={row}
-                    points={points}
-                  />
-                )}
-                <TableCell align="right">
-                  {journal ? (
-                    <Button size="small">Открыть детали</Button>
-                  ) : (
-                    <Button
-                      size="small"
-                      onClick={() => onRegister(row)}
-                    >
-                      Зарегистрировать
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
+            {rows.map((row) => (
+              <JournalRow
+                key={`complaint-${row.id}`}
+                row={row}
+                points={points}
+                onOpenOrder={onOpenOrder}
+                onOpenComplaint={onOpenComplaint}
+              />
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-      {journal ? (
-        <TablePagination
-          component="div"
-          count={pagination.total}
-          page={pagination.page}
-          rowsPerPage={pagination.perPage}
-          rowsPerPageOptions={[25, 50, 100]}
-          labelRowsPerPage="Строк на странице"
-          labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count}`}
-          onPageChange={(_, page) => pagination.onPageChange(page)}
-          onRowsPerPageChange={(event) => pagination.onPerPageChange(Number(event.target.value))}
-        />
-      ) : null}
+      {pagination ? <ComplaintPagination pagination={pagination} /> : null}
     </JacoSurface>
   );
 }

@@ -48,7 +48,6 @@ export function MySearchInput({
         commitValue(nextValue);
       }}
       inputAdornment={{
-        ...props.inputAdornment,
         endAdornment: localValue ? (
           <IconButton
             size="small"

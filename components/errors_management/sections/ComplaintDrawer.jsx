@@ -2,10 +2,17 @@
 
 import CloseIcon from "@mui/icons-material/Close";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
-import { Alert, Box, Chip, Drawer, Stack, Typography } from "@mui/material";
-import { JacoButton, JacoIconButton, JacoSurface } from "@/design-system/shared/ui";
+import { Box, Drawer, Stack, Typography } from "@mui/material";
 import {
-  complaintStatusColor,
+  JacoAlert,
+  JacoButton,
+  JacoIconButton,
+  JacoStatusChip,
+  JacoSurface,
+} from "@/design-system/shared/ui";
+import { complaintStatusAppearance } from "../complaintStatusModel.mjs";
+import { canRemoveError } from "../errorsManagementPermissions.mjs";
+import {
   complaintStatusLabel,
   historyTimestamp,
   workflowSourceLabel,
@@ -15,7 +22,53 @@ import ComplaintHistory from "./complaint/ComplaintHistory";
 import ComplaintOrderAccordion from "./complaint/ComplaintOrderAccordion";
 import ComplaintResolutionModal, { COMMAND_LABELS } from "./complaint/ComplaintResolutionModal";
 import ComplaintSummary from "./complaint/ComplaintSummary";
+import RemoveErrorModal from "./complaint/RemoveErrorModal";
 import useComplaintDetail from "./complaint/useComplaintDetail";
+
+function CommandActions({ commands, onSelect }) {
+  if (!commands.length) return null;
+  const workflow = commands.filter((command) => command !== "cancel");
+  const canCancel = commands.includes("cancel");
+  return (
+    <JacoSurface
+      variant="outlined"
+      sx={{ p: 1.5 }}
+    >
+      <Stack spacing={1.25}>
+        <Typography
+          variant="subtitle2"
+          fontWeight={700}
+        >
+          Следующее действие
+        </Typography>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          useFlexGap
+          sx={{ flexWrap: "wrap" }}
+        >
+          {workflow.map((command) => (
+            <JacoButton
+              key={command}
+              onClick={() => onSelect(command)}
+            >
+              {COMMAND_LABELS[command] || command}
+            </JacoButton>
+          ))}
+          {canCancel ? (
+            <JacoButton
+              tone="outlinePrimary"
+              onClick={() => onSelect("cancel")}
+              sx={{ ml: { sm: "auto" } }}
+            >
+              {COMMAND_LABELS.cancel}
+            </JacoButton>
+          ) : null}
+        </Stack>
+      </Stack>
+    </JacoSurface>
+  );
+}
 
 export default function ComplaintDrawer({
   complaint,
@@ -25,6 +78,7 @@ export default function ComplaintDrawer({
   api,
   cities,
   points,
+  permissions,
   withLoading,
 }) {
   const complaintDetail = useComplaintDetail({
@@ -32,15 +86,20 @@ export default function ComplaintDrawer({
     api,
     cities,
     points,
+    permissions,
     onChanged,
     withLoading,
   });
   const {
     detail,
     error,
+    reload,
+    commands,
     pendingCommand,
     setPendingCommand,
+    commandError,
     transitioning,
+    activeErrors,
     resolutions,
     setResolutions,
     promoCode,
@@ -49,7 +108,14 @@ export default function ComplaintDrawer({
     canResolve,
     cafeContext,
     executeTransition,
+    removal,
+    openRemoval,
+    changeRemovalComment,
+    closeRemoval,
+    confirmRemoval,
   } = complaintDetail;
+  const status = detail?.status || complaint?.status;
+  const appearance = complaintStatusAppearance(status);
 
   return (
     <Drawer
@@ -123,13 +189,13 @@ export default function ComplaintDrawer({
               useFlexGap
               sx={{ flexWrap: "wrap" }}
             >
-              <Chip
-                size="small"
-                color={complaintStatusColor(detail?.status || complaint?.status)}
+              <JacoStatusChip
                 label={complaintStatusLabel(detail || complaint)}
+                tone={appearance.tone}
+                variant={appearance.variant}
               />
-              <Chip
-                size="small"
+              <JacoStatusChip
+                tone="neutral"
                 variant="outlined"
                 icon={<StorefrontOutlinedIcon />}
                 label={workflowSourceLabel(detail?.source || complaint?.source)}
@@ -147,46 +213,42 @@ export default function ComplaintDrawer({
           }}
         >
           <Stack spacing={2.5}>
-            {error ? <Alert severity="error">{error}</Alert> : null}
+            {error ? (
+              <JacoAlert
+                severity="error"
+                action={
+                  <JacoButton
+                    compact
+                    variant="text"
+                    tone="outlinePrimary"
+                    onClick={reload}
+                  >
+                    Обновить
+                  </JacoButton>
+                }
+              >
+                {error}
+              </JacoAlert>
+            ) : null}
             {detail ? (
               <>
                 <ComplaintSummary
                   detail={detail}
                   cafeContext={cafeContext}
                 />
-                {(detail.available_commands || []).length ? (
-                  <JacoSurface
-                    variant="outlined"
-                    sx={{ p: 1.5 }}
-                  >
-                    <Stack spacing={1.25}>
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={700}
-                      >
-                        Следующее действие
-                      </Typography>
-                      <Stack
-                        direction={{ xs: "column", sm: "row" }}
-                        spacing={1}
-                      >
-                        {detail.available_commands.map((command) => (
-                          <JacoButton
-                            key={command}
-                            onClick={() => setPendingCommand(command)}
-                          >
-                            {COMMAND_LABELS[command] || command}
-                          </JacoButton>
-                        ))}
-                      </Stack>
-                    </Stack>
-                  </JacoSurface>
-                ) : null}
+                <CommandActions
+                  commands={commands}
+                  onSelect={setPendingCommand}
+                />
                 <ComplaintOrderAccordion
                   detail={detail}
                   onOpenOrder={onOpenOrder}
                 />
-                <ComplaintErrors errors={detail.errors} />
+                <ComplaintErrors
+                  errors={detail.errors}
+                  canRemove={(item) => canRemoveError(item, permissions)}
+                  onRemove={openRemoval}
+                />
                 <ComplaintHistory history={detail.history} />
               </>
             ) : null}
@@ -195,17 +257,24 @@ export default function ComplaintDrawer({
       </Box>
       <ComplaintResolutionModal
         command={pendingCommand}
-        detail={detail}
+        errors={activeErrors}
         cafeContext={cafeContext}
         solutions={solutions}
         resolutions={resolutions}
         promoCode={promoCode}
         transitioning={transitioning}
         canResolve={canResolve}
+        commandError={commandError}
         onClose={() => setPendingCommand(null)}
         onConfirm={executeTransition}
         onResolutionsChange={setResolutions}
         onPromoCodeChange={setPromoCode}
+      />
+      <RemoveErrorModal
+        state={removal}
+        onChange={changeRemovalComment}
+        onClose={closeRemoval}
+        onConfirm={confirmRemoval}
       />
     </Drawer>
   );

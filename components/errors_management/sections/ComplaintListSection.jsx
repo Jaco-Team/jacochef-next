@@ -1,23 +1,13 @@
 "use client";
 
-import { Box, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { JacoButton, JacoSurface } from "@/design-system/shared/ui";
-import JacoSearch from "@/ui/JacoSearch";
 import ComplaintListFilters from "./ComplaintListFilters";
 import ComplaintListMobileCards from "./ComplaintListMobileCards";
 import ComplaintListTable from "./ComplaintListTable";
+import ComplaintStatusLegend from "./ComplaintStatusLegend";
 
-function EmptyResults({ mode, filtered, onRegister }) {
-  if (filtered) {
-    return (
-      <JacoSurface
-        variant="outlined"
-        sx={{ p: { xs: 3, md: 4 }, textAlign: "center" }}
-      >
-        <Typography color="text.secondary">По указанному ID заказа ничего не найдено.</Typography>
-      </JacoSurface>
-    );
-  }
+function EmptyResults({ mode, canRegister, onRegister }) {
   const journal = mode === "journal";
   return (
     <JacoSurface
@@ -33,16 +23,19 @@ function EmptyResults({ mode, filtered, onRegister }) {
         </Typography>
         <Typography color="text.secondary">
           {journal
-            ? "За выбранный период жалоб нет."
+            ? "По выбранным фильтрам жалоб нет."
             : "Измените фильтры или найдите заказ по номеру."}
         </Typography>
-        {journal ? <JacoButton onClick={onRegister}>Перейти к регистрации</JacoButton> : null}
+        {journal && canRegister ? (
+          <JacoButton onClick={onRegister}>Перейти к регистрации</JacoButton>
+        ) : null}
       </Stack>
     </JacoSurface>
   );
 }
 
 export default function ComplaintListSection({ model }) {
+  const journal = model.mode === "journal";
   const pagination = {
     total: model.complaintsTotal,
     page: model.complaintsPage,
@@ -61,45 +54,40 @@ export default function ComplaintListSection({ model }) {
         cities={model.cities}
         cafes={model.cafes}
         mode={model.mode}
+        canSeePhone={model.canSeePhone}
         onChange={model.update}
         onApply={model.apply}
       />
-      {model.resultsLoaded && model.rows.length > 0 ? (
-        <Box sx={{ width: { xs: "100%", sm: 360 } }}>
-          <JacoSearch
-            label="ID заказа"
-            value={model.tableOrderIdSearch}
-            onValueChange={model.setTableOrderIdSearch}
-            debounceMs={350}
-          />
-        </Box>
-      ) : null}
-      {!model.resultsLoaded ? null : model.visibleRows.length === 0 ? (
+      {journal ? <ComplaintStatusLegend /> : null}
+      {!model.resultsLoaded ? null : model.rows.length === 0 ? (
         <EmptyResults
           mode={model.mode}
-          filtered={Boolean(model.tableOrderIdSearch)}
+          canRegister={model.canRegister}
           onRegister={model.openRegistration}
         />
       ) : model.mobile ? (
         <ComplaintListMobileCards
-          rows={model.visibleRows}
+          rows={model.rows}
           mode={model.mode}
           points={model.points}
+          canSeePhone={model.canSeePhone}
           onOpenOrder={model.openOrderDetails}
           onOpenComplaint={model.setSelectedComplaint}
           onRegister={model.setSelected}
+          pagination={journal ? pagination : null}
         />
       ) : (
         <ComplaintListTable
-          rows={model.visibleRows}
+          rows={model.rows}
           mode={model.mode}
           points={model.points}
+          canSeePhone={model.canSeePhone}
           sort={model.complaintsSort}
           onSort={model.changeComplaintsSort}
           onOpenOrder={model.openOrderDetails}
           onOpenComplaint={model.setSelectedComplaint}
           onRegister={model.setSelected}
-          pagination={pagination}
+          pagination={journal ? pagination : null}
         />
       )}
     </>

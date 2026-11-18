@@ -3,10 +3,14 @@
 import { Grid } from "@mui/material";
 import { JacoSelect, JacoSurface } from "@/design-system/shared/ui";
 import ComplaintOptionsSettings from "./ComplaintOptionsSettings";
-import { filterSx } from "../constants";
+import { GLOBAL_SCOPE_LABEL, filterSx } from "../constants";
+import { scopePointId } from "./settings/catalogModel.mjs";
 
 export default function ComplaintSettingsSection({ model }) {
-  const { access, api, cafes, cities, filters, update, withLoading } = model;
+  const { api, canEdit, cafes, cities, points, scope, siteCategories, updateScope, withLoading } =
+    model;
+  const pointId = scopePointId(scope.pointId);
+  const point = points.find((item) => Number(item.id) === pointId);
   return (
     <>
       <JacoSurface sx={filterSx}>
@@ -19,29 +23,34 @@ export default function ComplaintSettingsSection({ model }) {
             <JacoSelect
               label="Город"
               options={cities}
-              value={filters.cityId}
+              value={scope.cityId}
               multiple={false}
               allowNone={false}
-              onChange={(event) => update("cityId", event.target.value)}
+              onChange={(event) => updateScope("cityId", event.target.value)}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <JacoSelect
-              label="Кафе"
+              label="Область настроек"
               options={cafes}
-              value={filters.pointId}
+              value={scope.pointId}
               multiple={false}
-              allowNone={false}
-              onChange={(event) => update("pointId", event.target.value)}
+              allowNone
+              noneLabel={GLOBAL_SCOPE_LABEL}
+              onChange={(event) =>
+                updateScope("pointId", event.target.value === "none" ? "" : event.target.value)
+              }
             />
           </Grid>
         </Grid>
       </JacoSurface>
       <ComplaintOptionsSettings
-        key={filters.pointId || "all"}
+        key={pointId || "global"}
         api={api}
-        pointId={filters.pointId}
-        canEdit={Number(access.errors_management_settings_edit) === 1}
+        pointId={pointId}
+        scopeLabel={point?.addr || point?.name || GLOBAL_SCOPE_LABEL}
+        canEdit={canEdit}
+        siteCategories={siteCategories}
         withLoading={withLoading}
       />
     </>

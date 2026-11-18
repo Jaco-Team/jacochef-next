@@ -1,17 +1,42 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery, useTheme } from "@mui/material";
 import useOrderDetailsModal from "@/components/shared/order/useOrderDetailsModal";
-import { DEFAULT_FILTERS } from "./constants";
+import { journalFilterDefaults, orderFilterDefaults, statisticsFilterDefaults } from "./constants";
+import {
+  availableTabs,
+  normalizePermissions,
+  orderForViewer,
+  resolveTab,
+} from "./errorsManagementPermissions.mjs";
 import { orderId, pointId } from "./errorsManagementViewModel.mjs";
+import { journalOrderFilters, orderSearchPeriod } from "./orderSearchModel.mjs";
+import { requestErrorText } from "./requestErrors.mjs";
 import useErrorsManagementApi from "./useErrorsManagementApi";
 
+const SCOPE_FIELDS = ["cityId", "pointId"];
+const DATE_FIELDS = ["dateFrom", "dateTo"];
+
 function selectOptions(items = []) {
-  return items.filter(Boolean).map((item) => ({
+  return (Array.isArray(items) ? items : []).filter(Boolean).map((item) => ({
     id: String(item.id),
     name: item.name || item.addr || String(item.id),
     addr: item.addr || item.name || "",
     city_id: String(item.city_id ?? ""),
   }));
+}
+
+function siteCategoryOptions(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item?.id !== undefined && item?.id !== null)
+    .map((item) => ({ id: String(item.id), name: item.name || String(item.id) }));
+}
+
+function cafesOf(points, cityId) {
+  return points.filter((item) => !cityId || item.city_id === String(cityId));
+}
+
+function payloadOf(response) {
+  return response?.data ?? response;
 }
 
 export default function useErrorsManagementPage() {
@@ -20,29 +45,44 @@ export default function useErrorsManagementPage() {
   const mobile = useMediaQuery(theme.breakpoints.down(667), { noSsr: false });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
   const [title, setTitle] = useState("Регистрация ошибок");
   const [cities, setCities] = useState([]);
   const [points, setPoints] = useState([]);
-  const [access, setAccess] = useState({});
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState(DEFAULT_FILTERS);
-  const [orders, setOrders] = useState([]);
-  const [ordersLoaded, setOrdersLoaded] = useState(false);
+  const [siteCategories, setSiteCategories] = useState([]);
+  const [permissions, setPermissions] = useState(() => normalizePermissions(null));
+  const [tab, setTabState] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  const [journalDraft, setJournalDraft] = useState(() => journalFilterDefaults());
+  const [journalApplied, setJournalApplied] = useState(() => journalFilterDefaults());
   const [complaints, setComplaints] = useState([]);
   const [complaintsLoaded, setComplaintsLoaded] = useState(false);
   const [complaintsPage, setComplaintsPage] = useState(0);
   const [complaintsPerPage, setComplaintsPerPage] = useState(25);
   const [complaintsTotal, setComplaintsTotal] = useState(0);
   const [complaintsSort, setComplaintsSort] = useState({ by: "created_at", direction: "desc" });
-  const [selected, setSelected] = useState(null);
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [tableOrderIdSearch, setTableOrderIdSearch] = useState("");
-  const [tab, setTab] = useState("journal");
+  const complaintsRequestRef = useRef(0);
+
+  const [orderDraft, setOrderDraft] = useState(() => orderFilterDefaults());
+  const [orderApplied, setOrderApplied] = useState(() => orderFilterDefaults());
+  const [orders, setOrders] = useState([]);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
+  const ordersRequestRef = useRef(0);
+
+  const [statisticsDraft, setStatisticsDraft] = useState(() => statisticsFilterDefaults());
+  const [statisticsApplied, setStatisticsApplied] = useState(() => statisticsFilterDefaults());
   const [statistics, setStatistics] = useState(null);
   const [statisticsLoaded, setStatisticsLoaded] = useState(false);
-  const [statisticsDraft, setStatisticsDraft] = useState(DEFAULT_FILTERS);
-  const [statisticsApplied, setStatisticsApplied] = useState(DEFAULT_FILTERS);
-  const [ready, setReady] = useState(false);
+
+  const [settingsScope, setSettingsScope] = useState({ cityId: "", pointId: "" });
+
+  const [selected, setSelected] = useState(null);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+
+  const tabs = useMemo(() => availableTabs(permissions), [permissions]);
+  const canSeePhone = permissions.tel;
+
   const withLoading = useCallback(async (operation) => {
     setLoading(true);
     try {
@@ -61,11 +101,19 @@ export default function useErrorsManagementPage() {
     (row) => orderDetails.openOrder({ point_id: pointId(row), order_id: orderId(row) }),
     [orderDetails.openOrder],
   );
+  const visibleOrderDetails = useMemo(
+    () => ({ ...orderDetails, order: orderForViewer(orderDetails.order, canSeePhone) }),
+    [canSeePhone, orderDetails],
+  );
+
   const loadOrders = useCallback(
     async (nextFilters) => {
+      const requestId = ordersRequestRef.current + 1;
+      ordersRequestRef.current = requestId;
       setOrdersLoaded(false);
       setMessage("");
-      const orderNumber = nextFilters.orderNumber.trim();
+      const orderNumber = String(nextFilters.orderNumber || "").trim();
+      const phone = canSeePhone ? String(nextFilters.phone || "").trim() : "";
       const response = await withLoading(() =>
         api.listOrders({
           city_id: nextFilters.cityId || "",
@@ -75,22 +123,23 @@ export default function useErrorsManagementPage() {
           number_order: orderNumber,
           sum_from: nextFilters.amountFrom || "",
           sum_to: nextFilters.amountTo || "",
-          date_from: orderNumber ? "" : nextFilters.dateFrom || "",
-          date_to: orderNumber ? "" : nextFilters.dateTo || "",
-          phone: nextFilters.phone || "",
+          ...orderSearchPeriod(nextFilters),
+          phone,
+          number: phone,
           order_source: nextFilters.orderSource || "",
           order_stages: nextFilters.orderStages || [],
-          number: nextFilters.phone || "",
-          time_from: "",
-          time_to: "",
+          time_from: nextFilters.timeFrom || "",
+          time_to: nextFilters.timeTo || "",
         }),
       );
-      const payload = response?.data ?? response;
+      if (ordersRequestRef.current !== requestId) return;
+      const payload = payloadOf(response);
       setOrders(Array.isArray(payload?.orders) ? payload.orders : []);
       setOrdersLoaded(true);
     },
-    [api, withLoading],
+    [api, canSeePhone, withLoading],
   );
+
   const loadComplaints = useCallback(
     async (
       nextFilters,
@@ -98,9 +147,10 @@ export default function useErrorsManagementPage() {
       perPage = complaintsPerPage,
       sort = complaintsSort,
     ) => {
+      const requestId = complaintsRequestRef.current + 1;
+      complaintsRequestRef.current = requestId;
       setComplaintsLoaded(false);
       setMessage("");
-      const orderNumber = nextFilters.orderNumber.trim();
       const response = await withLoading(() =>
         api.listComplaints({
           page: page + 1,
@@ -110,15 +160,15 @@ export default function useErrorsManagementPage() {
           filters: {
             city_id: nextFilters.cityId || null,
             point_id: nextFilters.pointId || null,
-            order_id: orderNumber || null,
-            date_from: orderNumber ? null : nextFilters.dateFrom || null,
-            date_to: orderNumber ? null : nextFilters.dateTo || null,
-            source: nextFilters.orderSource || null,
+            ...journalOrderFilters(nextFilters),
+            order_source: nextFilters.orderSource || null,
+            registration_source: nextFilters.registrationSource || null,
             statuses: nextFilters.complaintStatuses || [],
           },
         }),
       );
-      const payload = response?.data ?? response;
+      if (complaintsRequestRef.current !== requestId) return;
+      const payload = payloadOf(response);
       setComplaints(Array.isArray(payload?.items) ? payload.items : []);
       setComplaintsTotal(Number(payload?.total || 0));
       setComplaintsLoaded(true);
@@ -126,54 +176,6 @@ export default function useErrorsManagementPage() {
     [api, complaintsPage, complaintsPerPage, complaintsSort, withLoading],
   );
 
-  const bootstrap = useCallback(async () => {
-    setReady(false);
-    setMessage("");
-    try {
-      const response = await withLoading(() => api.bootstrap());
-      const payload = response?.data ?? response;
-      const nextCities = selectOptions(payload?.cities);
-      const nextPoints = selectOptions(payload?.points);
-      const cityId = String(payload?.city_id || nextCities[0]?.id || "");
-      const firstCafe = nextPoints.find((point) => point.city_id === cityId) || nextPoints[0];
-      const nextFilters = { ...DEFAULT_FILTERS, cityId, pointId: firstCafe?.id || "" };
-      setTitle(payload?.module_info?.name || "Регистрация ошибок");
-      setCities(nextCities);
-      setPoints(nextPoints);
-      setAccess(payload?.acces || {});
-      setFilters(nextFilters);
-      setAppliedFilters(nextFilters);
-      setStatisticsDraft(nextFilters);
-      setStatisticsApplied(nextFilters);
-      setReady(true);
-    } catch {
-      setMessage("Не удалось загрузить модуль.");
-    }
-  }, [api, withLoading]);
-  useEffect(() => {
-    bootstrap();
-  }, [bootstrap]);
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
-  useEffect(() => {
-    if (!ready || tab !== "journal") return;
-    loadComplaints(appliedFilters, complaintsPage, complaintsPerPage, complaintsSort).catch(() =>
-      setMessage("Не удалось загрузить журнал."),
-    );
-  }, [
-    appliedFilters,
-    complaintsPage,
-    complaintsPerPage,
-    complaintsSort,
-    loadComplaints,
-    ready,
-    tab,
-  ]);
-  useEffect(() => {
-    if (!ready || tab !== "registration") return;
-    loadOrders(appliedFilters).catch(() => setMessage("Не удалось загрузить заказы."));
-  }, [appliedFilters, loadOrders, ready, tab]);
   const loadStatistics = useCallback(
     async (nextFilters) => {
       setStatisticsLoaded(false);
@@ -190,37 +192,121 @@ export default function useErrorsManagementPage() {
           },
         }),
       );
-      setStatistics(response?.data ?? response ?? null);
+      setStatistics(payloadOf(response) ?? null);
       setStatisticsLoaded(true);
     },
     [api, withLoading],
   );
+
+  const bootstrap = useCallback(async () => {
+    setReady(false);
+    setMessage("");
+    try {
+      const response = await withLoading(() => api.bootstrap());
+      const payload = payloadOf(response);
+      const nextCities = selectOptions(payload?.cities);
+      const nextPoints = selectOptions(payload?.points);
+      const cityId = String(payload?.city_id || nextCities[0]?.id || "");
+      const firstCafe = nextPoints.find((point) => point.city_id === cityId) || nextPoints[0];
+      const scope = { cityId, pointId: firstCafe?.id || "" };
+      const nextPermissions = normalizePermissions(payload?.permissions);
+      setTitle(payload?.module_info?.name || "Регистрация ошибок");
+      setCities(nextCities);
+      setPoints(nextPoints);
+      setSiteCategories(siteCategoryOptions(payload?.site_cats));
+      setPermissions(nextPermissions);
+      setTabState((current) => resolveTab(current, availableTabs(nextPermissions)));
+      setJournalDraft(journalFilterDefaults(scope));
+      setJournalApplied(journalFilterDefaults(scope));
+      setOrderDraft(orderFilterDefaults(scope));
+      setOrderApplied(orderFilterDefaults(scope));
+      setStatisticsDraft(statisticsFilterDefaults(scope));
+      setStatisticsApplied(statisticsFilterDefaults(scope));
+      setSettingsScope({ cityId, pointId: "" });
+      setReady(true);
+    } catch (error) {
+      setMessage(requestErrorText(error, "Не удалось загрузить модуль."));
+    }
+  }, [api, withLoading]);
+
+  useEffect(() => {
+    bootstrap();
+  }, [bootstrap]);
+  useEffect(() => {
+    document.title = title;
+  }, [title]);
+  useEffect(() => {
+    if (!ready || tab !== "journal") return;
+    loadComplaints(journalApplied, complaintsPage, complaintsPerPage, complaintsSort).catch(
+      (error) => setMessage(requestErrorText(error, "Не удалось загрузить журнал.")),
+    );
+  }, [
+    complaintsPage,
+    complaintsPerPage,
+    complaintsSort,
+    journalApplied,
+    loadComplaints,
+    ready,
+    tab,
+  ]);
+  useEffect(() => {
+    if (!ready || tab !== "registration") return;
+    loadOrders(orderApplied).catch((error) =>
+      setMessage(requestErrorText(error, "Не удалось загрузить заказы.")),
+    );
+  }, [loadOrders, orderApplied, ready, tab]);
   useEffect(() => {
     if (!ready || tab !== "statistics") return;
-    loadStatistics(statisticsApplied).catch(() => setMessage("Не удалось загрузить статистику."));
+    loadStatistics(statisticsApplied).catch((error) =>
+      setMessage(requestErrorText(error, "Не удалось загрузить статистику.")),
+    );
   }, [loadStatistics, ready, statisticsApplied, tab]);
-  const cafes = useMemo(
-    () => points.filter((item) => !filters.cityId || item.city_id === filters.cityId),
-    [filters.cityId, points],
+
+  const scopePatch = useCallback(
+    (field, value) => {
+      if (field !== "cityId") return { [field]: value };
+      const cityPoint = points.find((point) => point.city_id === String(value));
+      return { cityId: value, pointId: cityPoint?.id || "" };
+    },
+    [points],
   );
-  const update = (field, value) => {
-    const cityPoint =
-      field === "cityId" ? points.find((point) => String(point.city_id) === String(value)) : null;
-    const next = {
-      [field]: value,
-      ...(field === "cityId" ? { pointId: cityPoint?.id || "" } : {}),
-    };
-    setFilters((previous) => ({ ...previous, ...next }));
-    if (["cityId", "pointId", "dateFrom", "dateTo"].includes(field)) {
-      setStatisticsDraft((previous) => ({ ...previous, ...next }));
-    }
+
+  const setters = { journal: setJournalDraft, orders: setOrderDraft, statistics: setStatisticsDraft };
+  const updateFilters = (target, field, value) => {
+    const patch = scopePatch(field, value);
+    setters[target]((previous) => ({ ...previous, ...patch }));
+    Object.entries(setters).forEach(([key, setDraft]) => {
+      if (key === target) return;
+      const syncScope = SCOPE_FIELDS.includes(field);
+      const syncDates =
+        DATE_FIELDS.includes(field) && [target, key].every((item) => item !== "orders");
+      if (syncScope || syncDates) setDraft((previous) => ({ ...previous, ...patch }));
+    });
   };
-  const apply = () => {
+
+  const setTab = useCallback(
+    (value) => {
+      if (tabs.some((item) => item.id === value)) setTabState(value);
+    },
+    [tabs],
+  );
+
+  const listTarget = tab === "registration" ? "orders" : "journal";
+  const listFilters = listTarget === "orders" ? orderDraft : journalDraft;
+  const listCafes = useMemo(
+    () => cafesOf(points, listFilters.cityId),
+    [listFilters.cityId, points],
+  );
+  const applyList = () => {
     setMessage("");
+    if (listTarget === "orders") {
+      setOrdersLoaded(false);
+      setOrderApplied({ ...orderDraft });
+      return;
+    }
     setComplaintsLoaded(false);
-    setOrdersLoaded(false);
     setComplaintsPage(0);
-    setAppliedFilters({ ...filters });
+    setJournalApplied({ ...journalDraft });
   };
   const changeComplaintsSort = (by) => {
     setComplaintsLoaded(false);
@@ -230,67 +316,78 @@ export default function useErrorsManagementPage() {
       direction: current.by === by && current.direction === "asc" ? "desc" : "asc",
     }));
   };
-  const rows = tab === "journal" ? complaints : orders;
-  const resultsLoaded = tab === "journal" ? complaintsLoaded : ordersLoaded;
-  const visibleRows = useMemo(() => {
-    const query = tableOrderIdSearch.trim();
-    if (!query) return rows;
-    return rows.filter((row) => String(orderId(row)).includes(query));
-  }, [rows, tableOrderIdSearch]);
   const statisticsCafes = useMemo(
-    () =>
-      points.filter((item) => !statisticsDraft.cityId || item.city_id === statisticsDraft.cityId),
+    () => cafesOf(points, statisticsDraft.cityId),
     [points, statisticsDraft.cityId],
   );
-  const updateStatistics = (field, value) => {
-    const cityPoint =
-      field === "cityId" ? points.find((point) => String(point.city_id) === String(value)) : null;
-    const next = {
-      [field]: value,
-      ...(field === "cityId" ? { pointId: cityPoint?.id || "" } : {}),
-    };
-    setStatisticsDraft((previous) => ({ ...previous, ...next }));
-    if (["cityId", "pointId", "dateFrom", "dateTo"].includes(field)) {
-      setFilters((previous) => ({ ...previous, ...next }));
-    }
-  };
   const applyStatistics = () => {
     setStatisticsLoaded(false);
     setStatisticsApplied({ ...statisticsDraft });
   };
-  const openComplaint = useCallback((complaint) => {
-    setSelectedComplaint(complaint);
-  }, []);
-  const openRegistration = useCallback((order) => {
-    setSelected(order);
-  }, []);
+  const settingsCafes = useMemo(
+    () => cafesOf(points, settingsScope.cityId),
+    [points, settingsScope.cityId],
+  );
+  const updateSettingsScope = (field, value) =>
+    setSettingsScope((previous) =>
+      field === "cityId" ? { cityId: value, pointId: "" } : { ...previous, [field]: value },
+    );
+
+  const openComplaint = useCallback((complaint) => setSelectedComplaint(complaint), []);
+  const openRegistration = useCallback((order) => setSelected(order), []);
+  const refreshJournal = useCallback(
+    () =>
+      loadComplaints(journalApplied).catch((error) =>
+        setMessage(requestErrorText(error, "Не удалось обновить журнал.")),
+      ),
+    [journalApplied, loadComplaints],
+  );
+  const registrationSaved = useCallback(
+    (detail) => {
+      setNotice(detail?.id ? `Жалоба №${detail.id} зарегистрирована.` : "Жалоба зарегистрирована.");
+      loadOrders(orderApplied).catch((error) =>
+        setMessage(requestErrorText(error, "Не удалось обновить заказы.")),
+      );
+    },
+    [loadOrders, orderApplied],
+  );
 
   return {
-    shell: { loading, message, mobile, tab, title, setTab, withLoading },
+    shell: {
+      loading,
+      message,
+      notice,
+      closeNotice: () => setNotice(""),
+      mobile,
+      ready,
+      tab,
+      tabs,
+      title,
+      setTab,
+    },
     complaintList: {
-      apply,
-      cafes,
+      apply: applyList,
+      cafes: listCafes,
+      canRegister: tabs.some((item) => item.id === "registration"),
+      canSeePhone,
       changeComplaintsSort,
       cities,
       complaintsPage,
       complaintsPerPage,
       complaintsSort,
       complaintsTotal,
-      filters,
+      filters: listFilters,
       mobile,
       mode: tab,
       openOrderDetails,
       points,
-      resultsLoaded,
-      rows,
+      resultsLoaded: listTarget === "orders" ? ordersLoaded : complaintsLoaded,
+      rows: listTarget === "orders" ? orders : complaints,
       setComplaintsPage,
       setComplaintsPerPage,
       setSelected: openRegistration,
       setSelectedComplaint: openComplaint,
-      setTableOrderIdSearch,
-      tableOrderIdSearch,
-      update,
-      visibleRows,
+      update: (field, value) => updateFilters(listTarget, field, value),
       openRegistration: () => setTab("registration"),
     },
     statisticsSection: {
@@ -301,17 +398,28 @@ export default function useErrorsManagementPage() {
       statisticsCafes,
       statisticsDraft,
       statisticsLoaded,
-      updateStatistics,
+      updateStatistics: (field, value) => updateFilters("statistics", field, value),
     },
-    settingsSection: { access, api, cafes, cities, filters, update, withLoading },
+    settingsSection: {
+      api,
+      canEdit: permissions.settings_edit,
+      cafes: settingsCafes,
+      cities,
+      points,
+      scope: settingsScope,
+      siteCategories,
+      updateScope: updateSettingsScope,
+      withLoading,
+    },
     complaintDrawer: {
       api,
       cities,
       complaint: selectedComplaint,
+      permissions,
       points,
       close: () => setSelectedComplaint(null),
       openOrder: openOrderDetails,
-      refresh: () => loadComplaints(appliedFilters),
+      refresh: refreshJournal,
       withLoading,
     },
     registrationDrawer: {
@@ -320,9 +428,9 @@ export default function useErrorsManagementPage() {
       points,
       selected,
       close: () => setSelected(null),
-      saved: apply,
+      saved: registrationSaved,
       withLoading,
     },
-    orderDetails,
+    orderDetails: visibleOrderDetails,
   };
 }

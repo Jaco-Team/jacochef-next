@@ -256,6 +256,67 @@ export function EmptySelectPlaceholder() {
   );
 }
 
+export function SelectNoneLabel() {
+  const [cafe, setCafe] = useState("");
+
+  return (
+    <StorySurface>
+      <JacoSelect
+        label="Кафе"
+        value={cafe}
+        onChange={(event) => setCafe(event.target.value === "none" ? "" : event.target.value)}
+        options={cafes}
+        allowNone
+        noneLabel="Все точки в городе"
+      />
+    </StorySurface>
+  );
+}
+
+export function MultipleSelectWithSelectAll() {
+  const [statuses, setStatuses] = useState([]);
+  const [allStatuses, setAllStatuses] = useState(["1", "2", "3"]);
+  const statusOptions = [
+    { id: "1", name: "Зарегистрирована" },
+    { id: "2", name: "Отправлена в кафе" },
+    { id: "3", name: "Решена" },
+  ];
+
+  return (
+    <StorySurface>
+      <JacoSelect
+        label="Статус"
+        multiple
+        allowNone={false}
+        noneLabel="Все статусы"
+        selectAllLabel="Все"
+        withCheckboxes
+        options={statusOptions}
+        value={statuses}
+        onChange={(event) => setStatuses(event.target.value)}
+      />
+      <JacoSelect
+        label="Статус — выбраны все"
+        multiple
+        allowNone={false}
+        noneLabel="Все статусы"
+        selectAllLabel="Все"
+        withCheckboxes
+        options={statusOptions}
+        value={allStatuses}
+        onChange={(event) => setAllStatuses(event.target.value)}
+      />
+      <JacoSelect
+        label="Без чекбоксов и пункта «Все» (по умолчанию)"
+        multiple
+        allowNone={false}
+        options={statusOptions}
+        value={["1", "2", "3"]}
+      />
+    </StorySurface>
+  );
+}
+
 export function UnifiedDatePickerPopup() {
   const [date, setDate] = useState(dayjs("2026-09-16"));
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Box, Stack, Typography } from "@mui/material";
-import { JacoModal, JacoSurface } from "@/design-system/shared/ui";
+import { Box, Stack, Typography } from "@mui/material";
+import { JacoAlert, JacoModal, JacoSurface } from "@/design-system/shared/ui";
+import { requestErrorText } from "../../requestErrors.mjs";
 import { historyChanges, historyTimestamp, historyValue } from "./catalogModel.mjs";
 
 export default function CatalogHistory({ node, api, onClose, withLoading }) {
@@ -14,7 +15,9 @@ export default function CatalogHistory({ node, api, onClose, withLoading }) {
     setError("");
     withLoading(() => api.getSettingHistory({ id: node.id }))
       .then((response) => setItems((response?.data ?? response)?.history || []))
-      .catch(() => setError("Не удалось загрузить историю изменений."));
+      .catch((loadError) =>
+        setError(requestErrorText(loadError, "Не удалось загрузить историю изменений.")),
+      );
   }, [api, node, withLoading]);
   return (
     <JacoModal
@@ -24,7 +27,7 @@ export default function CatalogHistory({ node, api, onClose, withLoading }) {
       maxWidth="sm"
     >
       <Stack spacing={1.5}>
-        {error ? <Alert severity="error">{error}</Alert> : null}
+        {error ? <JacoAlert severity="error">{error}</JacoAlert> : null}
         {!error && items.length === 0 ? (
           <Typography color="text.secondary">Изменений пока нет.</Typography>
         ) : null}

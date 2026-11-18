@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  ErrorOutline,
+  ErrorOutlineOutlined as ErrorOutline,
+  ExpandMore,
   LocalOfferOutlined,
   ReceiptLongOutlined,
-  ScheduleOutlined,
 } from "@mui/icons-material";
 import {
   Accordion,
@@ -55,22 +55,18 @@ function orderAmount(value) {
 const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails = false }) => {
   if (!orderObj) return null;
 
-  const { order = {}, order_items: orderItems = [], err_order: errOrder = null } = orderObj;
-  const isDelivery = Number(order.type_order_) === 1;
-  const isPreorder = Number(order.is_preorder) === 1;
+  const order = orderObj.order ?? {};
+  const orderItems = Array.isArray(orderObj.order_items) ? orderObj.order_items : [];
+  const errOrder = orderObj.err_order ?? null;
+  const isDelivery = Number.parseInt(order.type_order_, 10) === 1;
+  const isPreorder = Number.parseInt(order.is_preorder, 10) === 1;
   const showIntercom = !hideDeliveryDetails && isDelivery;
   const orderType = hideDeliveryDetails
     ? ""
     : [order.type_order, order.type_order_addr_new].filter(Boolean).join(" · ");
-  const expectedTime = ![0, "0", "00:00:00", null, undefined].includes(order.time_to_client)
-    ? order.time_to_client
-    : "";
-  const remainingTime = ![0, "0", "00:00:00", null, undefined].includes(order.time)
-    ? `${order.text_time || ""}${order.time}`.trim()
-    : "";
   const promisedTime =
     !hideDeliveryDetails && !isPreorder
-      ? [expectedTime, remainingTime].filter(Boolean).join(" · ")
+      ? `${order.time_to_client ?? ""} / ${order.text_time ?? ""}${order.time ?? ""}`
       : "";
 
   return (
@@ -135,7 +131,7 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
                 value={order.time_order}
               />
               <OrderDetailField
-                label="Ожидаемое время"
+                label="Обещали"
                 value={promisedTime}
               />
               {!hideDeliveryDetails && order.number?.length > 1 ? (
@@ -146,7 +142,11 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
               ) : null}
               <OrderDetailField
                 label="Сдача"
-                value={Number(order.sdacha) ? order.sdacha : null}
+                value={
+                  order.sdacha != null && Number.parseInt(order.sdacha, 10) !== 0
+                    ? order.sdacha
+                    : null
+                }
               />
               <OrderDetailField
                 fullWidth
@@ -167,7 +167,7 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
                 sx={{ alignSelf: "flex-start" }}
               />
             ) : null}
-            {order.delete_reason ? (
+            {order.delete_reason?.length > 0 ? (
               <Box sx={{ borderLeft: 3, borderColor: "error.main", pl: 1.25 }}>
                 <Typography
                   variant="body2"
@@ -179,7 +179,7 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
                 <Typography variant="body2">{order.delete_reason}</Typography>
               </Box>
             ) : null}
-            {order.check_pos_drive?.comment ? (
+            {order.check_pos_drive ? (
               <Box sx={{ borderLeft: 3, borderColor: "warning.main", pl: 1.25 }}>
                 <Typography
                   variant="caption"
@@ -187,7 +187,9 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
                 >
                   Довоз оформлен
                 </Typography>
-                <Typography variant="body2">{order.check_pos_drive.comment}</Typography>
+                {order.check_pos_drive.comment ? (
+                  <Typography variant="body2">{order.check_pos_drive.comment}</Typography>
+                ) : null}
               </Box>
             ) : null}
           </Stack>
@@ -320,7 +322,7 @@ const OrderDetailsModal = ({ open, onClose, order: orderObj, hideDeliveryDetails
               "&:before": { display: "none" },
             }}
           >
-            <AccordionSummary expandIcon={<ScheduleOutlined fontSize="small" />}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
               <Stack
                 direction="row"
                 spacing={1}

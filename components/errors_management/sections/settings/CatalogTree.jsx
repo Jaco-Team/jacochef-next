@@ -3,13 +3,56 @@
 import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Box, Chip, Collapse, Stack, Typography } from "@mui/material";
-import { JacoButton, JacoIconButton, JacoSurface } from "@/design-system/shared/ui";
+import { Box, Collapse, Stack, Typography } from "@mui/material";
+import {
+  JacoButton,
+  JacoIconButton,
+  JacoInfoLabel,
+  JacoStatusChip,
+  JacoSurface,
+} from "@/design-system/shared/ui";
 import { formatPlural } from "@/src/helpers/utils/i18n";
 import CatalogItemActions from "./CatalogItemActions";
-import { CATEGORY_DEFINITIONS, nodesOf, sortNodes } from "./catalogModel.mjs";
+import {
+  CATEGORY_DEFINITIONS,
+  categoriesForObjectType,
+  nodesOf,
+  preferredCategory,
+  sortNodes,
+} from "./catalogModel.mjs";
 
-function CategorySection({ definition, category, types, children, onEdit, onHistory, onToggle }) {
+function ErrorStages({ error, stages }) {
+  const stageIds = (error.rules?.stage_ids || []).map(Number);
+  const items = stages.filter((stage) => stageIds.includes(Number(stage.id)));
+  if (!items.length) return null;
+  return (
+    <Stack
+      direction="row"
+      spacing={0.75}
+      useFlexGap
+      sx={{ flexWrap: "wrap", alignItems: "center" }}
+    >
+      <Typography
+        variant="caption"
+        color="text.secondary"
+      >
+        Этапы:
+      </Typography>
+      {items.map((stage) => (
+        <JacoInfoLabel
+          key={stage.id}
+          variant="caption"
+          color="text.secondary"
+          tooltip={stage.description || null}
+        >
+          {stage.name}
+        </JacoInfoLabel>
+      ))}
+    </Stack>
+  );
+}
+
+function CategorySection({ definition, category, typesCount, children, actionProps }) {
   const [expanded, setExpanded] = useState(definition.objectType === "dish");
   return (
     <JacoSurface
@@ -27,16 +70,15 @@ function CategorySection({ definition, category, types, children, onEdit, onHist
         >
           {definition.name}
         </Typography>
-        <Chip
-          size="small"
-          label={category ? formatPlural(types.length, ["тип", "типа", "типов"]) : "Не настроено"}
+        <JacoStatusChip
+          tone="neutral"
+          variant="soft"
+          label={category ? formatPlural(typesCount, ["тип", "типа", "типов"]) : "Не настроено"}
         />
         {category ? (
           <CatalogItemActions
             node={category}
-            onEdit={onEdit}
-            onHistory={onHistory}
-            onToggle={onToggle}
+            {...actionProps}
           />
         ) : null}
         <JacoIconButton
@@ -54,7 +96,7 @@ function CategorySection({ definition, category, types, children, onEdit, onHist
   );
 }
 
-export function InactiveCatalogGroups({ nodes, onEdit, onHistory, onToggle }) {
+export function InactiveCatalogGroups({ nodes, pointId, isEditable, onEdit, onHistory, onToggle }) {
   const groups = [
     { kind: "category", label: "Категории" },
     { kind: "error_type", label: "Типы ошибок" },
@@ -105,6 +147,8 @@ export function InactiveCatalogGroups({ nodes, onEdit, onHistory, onToggle }) {
                       </Box>
                       <CatalogItemActions
                         node={node}
+                        pointId={pointId}
+                        isEditable={isEditable}
                         onEdit={onEdit}
                         onHistory={onHistory}
                         onToggle={onToggle}
@@ -121,24 +165,32 @@ export function InactiveCatalogGroups({ nodes, onEdit, onHistory, onToggle }) {
   );
 }
 
-export default function CatalogTree({ nodes, pointId, onEdit, onCreate, onHistory, onToggle }) {
-  const categories = new Map(
-    nodesOf(nodes, "category").map((node) => [node.rules?.object_types?.[0], node]),
-  );
+export default function CatalogTree({
+  nodes,
+  stages = [],
+  pointId,
+  isEditable,
+  onEdit,
+  onCreate,
+  onHistory,
+  onToggle,
+}) {
+  const actionProps = { pointId, isEditable, onEdit, onHistory, onToggle };
   return (
     <Stack spacing={1.25}>
       {CATEGORY_DEFINITIONS.map((definition) => {
-        const category = categories.get(definition.objectType);
-        const types = category ? sortNodes(nodesOf(nodes, "error_type", category.id)) : [];
+        const categories = categoriesForObjectType(nodes, definition.objectType);
+        const category = preferredCategory(categories, pointId);
+        const types = sortNodes(
+          categories.flatMap((item) => nodesOf(nodes, "error_type", item.id)),
+        );
         return (
           <CategorySection
             key={definition.objectType}
             definition={definition}
             category={category}
-            types={types}
-            onEdit={onEdit}
-            onHistory={onHistory}
-            onToggle={onToggle}
+            typesCount={types.length}
+            actionProps={actionProps}
           >
             {!category ? (
               onCreate ? (
@@ -182,9 +234,7 @@ export default function CatalogTree({ nodes, pointId, onEdit, onCreate, onHistor
                           </Typography>
                           <CatalogItemActions
                             node={type}
-                            onEdit={onEdit}
-                            onHistory={onHistory}
-                            onToggle={onToggle}
+                            {...actionProps}
                           />
                         </Stack>
                         {errors.map((error) => (
@@ -194,7 +244,10 @@ export default function CatalogTree({ nodes, pointId, onEdit, onCreate, onHistor
                             spacing={1}
                             sx={{ alignItems: "center", pl: { xs: 0, sm: 2 } }}
                           >
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Stack
+                              spacing={0.25}
+                              sx={{ flex: 1, minWidth: 0 }}
+                            >
                               <Typography>{error.name}</Typography>
                               {error.rules?.requires_ingredient ? (
                                 <Typography
@@ -204,12 +257,14 @@ export default function CatalogTree({ nodes, pointId, onEdit, onCreate, onHistor
                                   С выбором продукта из состава
                                 </Typography>
                               ) : null}
-                            </Box>
+                              <ErrorStages
+                                error={error}
+                                stages={stages}
+                              />
+                            </Stack>
                             <CatalogItemActions
                               node={error}
-                              onEdit={onEdit}
-                              onHistory={onHistory}
-                              onToggle={onToggle}
+                              {...actionProps}
                             />
                           </Stack>
                         ))}

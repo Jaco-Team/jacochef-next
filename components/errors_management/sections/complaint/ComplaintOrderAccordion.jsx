@@ -7,10 +7,10 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  Button,
   Stack,
   Typography,
 } from "@mui/material";
+import { JacoButton } from "@/design-system/shared/ui";
 import { amountLabel } from "../../errorsManagementViewModel.mjs";
 import DetailField from "./DetailField";
 
@@ -97,15 +97,15 @@ export default function ComplaintOrderAccordion({ detail, onOpenOrder }) {
               />
             ) : null}
           </Box>
-          <Button
-            size="small"
-            variant="outlined"
+          <JacoButton
+            compact
+            tone="outlinePrimary"
             startIcon={<ReceiptLongOutlinedIcon />}
             onClick={() => onOpenOrder?.(detail)}
             sx={{ alignSelf: "flex-start" }}
           >
             Открыть состав заказа
-          </Button>
+          </JacoButton>
         </Stack>
       </AccordionDetails>
     </Accordion>

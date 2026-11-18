@@ -26,6 +26,7 @@ export default function JacoSelect({
   label,
   multiple = false,
   selectAllLabel,
+  withCheckboxes = false,
   disabled = false,
   sx,
   menuSx,
@@ -64,6 +65,7 @@ export default function JacoSelect({
       : withNone
         ? "none"
         : "";
+  const showCheckboxes = multiple && withCheckboxes;
   const isOpen = controlledOpen ?? internalOpen;
   const controlRadius = uiRadii.md;
 
@@ -79,14 +81,13 @@ export default function JacoSelect({
 
   const renderValue = (selected) => {
     if (multiple) {
-      if (
-        !Array.isArray(selected) ||
-        selected.length === 0 ||
-        selected.length === normalizedOptions.length
-      ) {
-        return selectAllLabel || noneLabel;
+      if (!Array.isArray(selected) || selected.length === 0) {
+        return noneLabel;
       }
-      return normalizedOptions
+      if (selectAllLabel && selected.length === normalizedOptions.length) {
+        return selectAllLabel;
+      }
+      return items
         .filter((item) => selected.includes(item.id))
         .map((item) => item.name)
         .join(", ");
@@ -129,7 +130,7 @@ export default function JacoSelect({
         multiple={multiple}
         value={normalizedValue}
         label={label}
-        onChange={(event) => {
+        onChange={(event, child) => {
           if (multiple && selectAllLabel && Array.isArray(event.target.value)) {
             const next = event.target.value.map(String);
             if (next.includes("__all__")) {
@@ -139,7 +140,7 @@ export default function JacoSelect({
                   : normalizedOptions.map((item) => item.id);
             }
           }
-          (onChange ?? func)?.(event);
+          (onChange ?? func)?.(event, child);
         }}
         open={controlledOpen}
         defaultOpen={defaultOpen}
@@ -236,20 +237,22 @@ export default function JacoSelect({
             value="__all__"
             sx={{
               minHeight: "44px !important",
-              px: "11px",
+              px: showCheckboxes ? "11px" : "15px",
               py: 0,
               ...uiTypography.body,
               color: uiColors.textStrong,
             }}
           >
-            <Checkbox
-              checked={normalizedValue.length === normalizedOptions.length}
-              indeterminate={
-                normalizedValue.length > 0 && normalizedValue.length < normalizedOptions.length
-              }
-              size="small"
-            />
-            <ListItemText primary={selectAllLabel} />
+            {showCheckboxes ? (
+              <Checkbox
+                checked={normalizedValue.length === normalizedOptions.length}
+                indeterminate={
+                  normalizedValue.length > 0 && normalizedValue.length < normalizedOptions.length
+                }
+                size="small"
+              />
+            ) : null}
+            {showCheckboxes ? <ListItemText primary={selectAllLabel} /> : selectAllLabel}
           </MenuItem>
         ) : null}
         {items.map((item) => (
@@ -270,13 +273,13 @@ export default function JacoSelect({
               },
             }}
           >
-            {multiple ? (
+            {showCheckboxes ? (
               <Checkbox
                 checked={normalizedValue.includes(item.id)}
                 size="small"
               />
             ) : null}
-            {multiple ? <ListItemText primary={item.name} /> : item.name}
+            {showCheckboxes ? <ListItemText primary={item.name} /> : item.name}
           </MenuItem>
         ))}
       </Select>

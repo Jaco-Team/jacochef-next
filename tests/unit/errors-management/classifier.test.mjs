@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  changeClassifier,
   classifierDraft,
+  complaintErrorsPayload,
+  newClientRequestId,
+  positionQuantityLimit,
   validComplaintError,
 } from "../../../components/errors_management/complaintClassifier.mjs";
 
@@ -160,4 +164,61 @@ test("inactive classifier nodes are not auto-selected or accepted", () => {
     const inactive = catalog.map((node) => (node.id === id ? { ...node, is_active: 0 } : node));
     assert.equal(validComplaintError(validDraft, inactive, positions, stages), false);
   }
+});
+
+test("changing category, type or error resets the stage and ingredient", () => {
+  const filled = {
+    ...classifierDraft(catalog, "dish", "log:100"),
+    stage_id: "20",
+    ingredient_id: "30",
+    comment: "Холодное",
+  };
+  for (const [field, value] of [
+    ["category_id", "1"],
+    ["error_type_id", "2"],
+    ["error_id", "3"],
+  ]) {
+    const next = changeClassifier(catalog, filled, field, value);
+    assert.equal(next.stage_id, "", field);
+    assert.equal(next.ingredient_id, "", field);
+    assert.equal(next.comment, "Холодное", field);
+  }
+  const typeChanged = changeClassifier(catalog, filled, "error_type_id", "");
+  assert.equal(typeChanged.error_id, "");
+  const stageChanged = changeClassifier(catalog, filled, "stage_id", "21");
+  assert.equal(stageChanged.stage_id, "21");
+  assert.equal(stageChanged.ingredient_id, "30");
+});
+
+test("quantity is limited by the position quantity and defaults to one", () => {
+  const grouped = [{ ...positions[0], total_count: 3 }];
+  const draft = {
+    ...classifierDraft(catalog, "dish", "log:100"),
+    stage_id: "20",
+    ingredient_id: "30",
+  };
+  assert.equal(draft.quantity, 1);
+  assert.equal(positionQuantityLimit(grouped[0]), 3);
+  assert.equal(positionQuantityLimit(positions[0]), 1);
+  assert.equal(validComplaintError({ ...draft, quantity: "3" }, catalog, grouped, stages), true);
+  assert.equal(validComplaintError({ ...draft, quantity: "4" }, catalog, grouped, stages), false);
+  assert.equal(validComplaintError({ ...draft, quantity: "0" }, catalog, grouped, stages), false);
+  assert.equal(validComplaintError({ ...draft, quantity: "1.5" }, catalog, grouped, stages), false);
+  assert.equal(validComplaintError({ ...draft, quantity: "" }, catalog, grouped, stages), false);
+  assert.equal(validComplaintError({ ...draft, quantity: 2 }, catalog, positions, stages), false);
+  assert.deepEqual(
+    complaintErrorsPayload([{ ...draft, quantity: "2" }, draft]).map((item) => item.quantity),
+    [2, 1],
+  );
+});
+
+test("client request id is a v4 uuid even without crypto.randomUUID", () => {
+  const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  assert.match(newClientRequestId(), pattern);
+  const fallback = newClientRequestId({
+    getRandomValues: (bytes) => bytes.fill(255),
+  });
+  assert.match(fallback, pattern);
+  assert.notEqual(newClientRequestId(), newClientRequestId());
+  assert.equal(newClientRequestId({ randomUUID: () => "fixed" }), "fixed");
 });

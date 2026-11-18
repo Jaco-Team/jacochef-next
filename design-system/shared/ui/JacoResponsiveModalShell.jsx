@@ -169,6 +169,7 @@ export default function JacoResponsiveModalShell({
         disableDiscovery
         disableSwipeToOpen
         ModalProps={{
+          keepMounted: true,
           disableRestoreFocus: true,
           onTransitionExited: restoreTriggerFocus,
         }}

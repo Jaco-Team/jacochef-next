@@ -7,16 +7,40 @@ import {
   JacoSelect,
   JacoSurface,
   JacoTextInput,
+  JacoTimePicker,
 } from "@/design-system/shared/ui";
 import {
+  ALL_POINTS_LABEL,
   COMPLAINT_STATUS_OPTIONS,
   ORDER_STAGE_OPTIONS,
   ORDER_TYPE_OPTIONS,
   filterSx,
 } from "../constants";
-import { STATISTICS_SOURCES } from "../errorsManagementViewModel.mjs";
+import { STATISTICS_SOURCES, WORKFLOW_SOURCES } from "../errorsManagementViewModel.mjs";
+import { ORDER_NUMBER_DIGITS_HINT, orderNumberLookup } from "../orderSearchModel.mjs";
 
-export default function ComplaintListFilters({ filters, cities, cafes, mode, onChange, onApply }) {
+const fieldSize = { xs: 12, sm: 6, md: 4, lg: 2 };
+const ORDER_CHANNELS = STATISTICS_SOURCES.filter((item) => item.id !== "legacy");
+
+function noneToEmpty(value) {
+  return value === "none" ? "" : value;
+}
+
+function dateValue(value) {
+  return value?.format?.("YYYY-MM-DD") || "";
+}
+
+export default function ComplaintListFilters({
+  filters,
+  cities,
+  cafes,
+  mode,
+  canSeePhone,
+  onChange,
+  onApply,
+}) {
+  const journal = mode === "journal";
+  const invalidJournalOrder = journal && orderNumberLookup(filters.orderNumber).invalid;
   return (
     <JacoSurface
       component="form"
@@ -31,7 +55,7 @@ export default function ComplaintListFilters({ filters, cities, cafes, mode, onC
         spacing={1.5}
         sx={{ alignItems: "center" }}
       >
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        <Grid size={fieldSize}>
           <JacoSelect
             label="Город"
             options={cities}
@@ -41,108 +65,141 @@ export default function ComplaintListFilters({ filters, cities, cafes, mode, onC
             onChange={(event) => onChange("cityId", event.target.value)}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        <Grid size={fieldSize}>
           <JacoSelect
             label="Кафе"
             options={cafes}
             value={filters.pointId}
             multiple={false}
-            allowNone={false}
-            onChange={(event) => onChange("pointId", event.target.value)}
+            allowNone
+            noneLabel={ALL_POINTS_LABEL}
+            onChange={(event) => onChange("pointId", noneToEmpty(event.target.value))}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        <Grid size={fieldSize}>
           <JacoSelect
-            label="Источник заказа"
-            options={STATISTICS_SOURCES.filter((item) => item.id !== "legacy")}
+            label="Канал заказа"
+            options={ORDER_CHANNELS}
             value={filters.orderSource}
             multiple={false}
             allowNone
-            noneLabel="Все источники"
-            onChange={(event) =>
-              onChange("orderSource", event.target.value === "none" ? "" : event.target.value)
-            }
+            noneLabel="Все каналы"
+            onChange={(event) => onChange("orderSource", noneToEmpty(event.target.value))}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        {journal ? (
+          <Grid size={fieldSize}>
+            <JacoSelect
+              label="Кто зарегистрировал"
+              options={WORKFLOW_SOURCES}
+              value={filters.registrationSource}
+              multiple={false}
+              allowNone
+              noneLabel="КК и кафе"
+              onChange={(event) => onChange("registrationSource", noneToEmpty(event.target.value))}
+            />
+          </Grid>
+        ) : null}
+        <Grid size={fieldSize}>
           <JacoSelect
-            label={mode === "journal" ? "Статус жалобы" : "Этап заказа"}
-            options={mode === "journal" ? COMPLAINT_STATUS_OPTIONS : ORDER_STAGE_OPTIONS}
-            value={mode === "journal" ? filters.complaintStatuses : filters.orderStages}
+            label={journal ? "Статус жалобы" : "Этап заказа"}
+            options={journal ? COMPLAINT_STATUS_OPTIONS : ORDER_STAGE_OPTIONS}
+            value={journal ? filters.complaintStatuses : filters.orderStages}
             multiple
             allowNone={false}
             noneLabel="Все статусы"
             selectAllLabel="Все"
+            withCheckboxes
             onChange={(event) =>
-              onChange(mode === "journal" ? "complaintStatuses" : "orderStages", event.target.value)
+              onChange(journal ? "complaintStatuses" : "orderStages", event.target.value)
             }
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        {!journal ? (
+          <Grid size={fieldSize}>
+            <JacoSelect
+              label="Тип заказа"
+              options={ORDER_TYPE_OPTIONS}
+              value={filters.orderType}
+              multiple={false}
+              allowNone
+              noneLabel="Все типы"
+              onChange={(event) => onChange("orderType", noneToEmpty(event.target.value))}
+            />
+          </Grid>
+        ) : null}
+        <Grid size={fieldSize}>
           <JacoDatePicker
-            label="Дата от"
+            label={journal ? "Дата жалобы от" : "Дата заказа от"}
             value={filters.dateFrom}
-            onChange={(value) => onChange("dateFrom", value?.format?.("YYYY-MM-DD") || "")}
+            onChange={(value) => onChange("dateFrom", dateValue(value))}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        <Grid size={fieldSize}>
           <JacoDatePicker
-            label="Дата до"
+            label={journal ? "Дата жалобы до" : "Дата заказа до"}
             value={filters.dateTo}
-            onChange={(value) => onChange("dateTo", value?.format?.("YYYY-MM-DD") || "")}
+            onChange={(value) => onChange("dateTo", dateValue(value))}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-          <JacoTextInput
-            label="Сумма от"
-            type="number"
-            min={0}
-            value={filters.amountFrom}
-            slotProps={{ htmlInput: { inputMode: "decimal" } }}
-            onChange={(event) => onChange("amountFrom", event.target.value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-          <JacoTextInput
-            label="Сумма до"
-            type="number"
-            min={0}
-            value={filters.amountTo}
-            slotProps={{ htmlInput: { inputMode: "decimal" } }}
-            onChange={(event) => onChange("amountTo", event.target.value)}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-          <JacoSelect
-            label="Тип заказа"
-            options={ORDER_TYPE_OPTIONS}
-            value={filters.orderType}
-            multiple={false}
-            allowNone
-            noneLabel="Все типы"
-            onChange={(event) =>
-              onChange("orderType", event.target.value === "none" ? "" : event.target.value)
-            }
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+        {!journal ? (
+          <>
+            <Grid size={fieldSize}>
+              <JacoTimePicker
+                label="Время заказа с"
+                value={filters.timeFrom}
+                onChange={(event) => onChange("timeFrom", event.target.value)}
+              />
+            </Grid>
+            <Grid size={fieldSize}>
+              <JacoTimePicker
+                label="Время заказа по"
+                value={filters.timeTo}
+                onChange={(event) => onChange("timeTo", event.target.value)}
+              />
+            </Grid>
+            <Grid size={fieldSize}>
+              <JacoTextInput
+                label="Сумма от"
+                type="number"
+                value={filters.amountFrom}
+                slotProps={{ htmlInput: { min: 0, inputMode: "decimal" } }}
+                onChange={(event) => onChange("amountFrom", event.target.value)}
+              />
+            </Grid>
+            <Grid size={fieldSize}>
+              <JacoTextInput
+                label="Сумма до"
+                type="number"
+                value={filters.amountTo}
+                slotProps={{ htmlInput: { min: 0, inputMode: "decimal" } }}
+                onChange={(event) => onChange("amountTo", event.target.value)}
+              />
+            </Grid>
+          </>
+        ) : null}
+        <Grid size={fieldSize}>
           <JacoTextInput
             label="ID заказа"
             value={filters.orderNumber}
+            error={invalidJournalOrder}
+            helperText={invalidJournalOrder ? ORDER_NUMBER_DIGITS_HINT : undefined}
             slotProps={{ htmlInput: { inputMode: "numeric" } }}
             onChange={(event) => onChange("orderNumber", event.target.value)}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-          <JacoTextInput
-            label="Телефон клиента"
-            value={filters.phone}
-            slotProps={{ htmlInput: { inputMode: "tel" } }}
-            onChange={(event) => onChange("phone", event.target.value)}
-          />
-        </Grid>
+        {!journal && canSeePhone ? (
+          <Grid size={fieldSize}>
+            <JacoTextInput
+              label="Телефон клиента"
+              value={filters.phone}
+              slotProps={{ htmlInput: { inputMode: "tel" } }}
+              onChange={(event) => onChange("phone", event.target.value)}
+            />
+          </Grid>
+        ) : null}
         <Grid
-          size={{ xs: 12, sm: 6, md: 4, lg: 2 }}
+          size={fieldSize}
           sx={{ display: "flex", alignItems: "flex-end" }}
         >
           <JacoButton

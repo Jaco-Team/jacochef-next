@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { JacoButton, JacoDatePicker, JacoSelect, JacoSurface } from "@/design-system/shared/ui";
-import { filterSx } from "../constants";
+import { ALL_POINTS_LABEL, filterSx } from "../constants";
 import { STATISTICS_SOURCES, orderSourceLabel } from "../errorsManagementViewModel.mjs";
 
 export default function ComplaintStatisticsSection({ model }) {
@@ -60,8 +60,11 @@ export default function ComplaintStatisticsSection({ model }) {
               options={statisticsCafes}
               value={statisticsDraft.pointId}
               multiple={false}
-              allowNone={false}
-              onChange={(event) => updateStatistics("pointId", event.target.value)}
+              allowNone
+              noneLabel={ALL_POINTS_LABEL}
+              onChange={(event) =>
+                updateStatistics("pointId", event.target.value === "none" ? "" : event.target.value)
+              }
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>

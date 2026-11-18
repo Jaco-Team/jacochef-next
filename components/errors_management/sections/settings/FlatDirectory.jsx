@@ -10,6 +10,7 @@ export default function FlatDirectory({
   kind,
   nodes,
   pointId,
+  isEditable,
   onEdit,
   onCreate,
   onHistory,
@@ -67,6 +68,8 @@ export default function FlatDirectory({
             </Box>
             <CatalogItemActions
               node={node}
+              pointId={pointId}
+              isEditable={isEditable}
               onEdit={onEdit}
               onHistory={onHistory}
               onToggle={onToggle}

@@ -38,7 +38,7 @@ export const COMPLAINT_STATUS_LABELS = {
 export function historyFieldLabel(field) {
   if (COMPLAINT_HISTORY_FIELDS[field]) return COMPLAINT_HISTORY_FIELDS[field];
   const errorField = field.match(
-    /^errors\.\d+\.(category_name|error_type_name|error_name|stage_name|solution_name|error_amount|changed_amount|comment)$/,
+    /^errors\.\d+\.(category_name|error_type_name|error_name|stage_name|solution_name|error_amount|changed_amount|comment|quantity|removed_at|removed_comment)$/,
   )?.[1];
   return {
     category_name: "Категория",
@@ -49,6 +49,9 @@ export function historyFieldLabel(field) {
     error_amount: "Сумма ошибки",
     changed_amount: "Сумма изменения",
     comment: "Комментарий к ошибке",
+    quantity: "Количество",
+    removed_at: "Ошибка снята",
+    removed_comment: "Комментарий снятия",
   }[errorField];
 }
 
@@ -99,9 +102,12 @@ export function historyFieldOrder(field) {
   if (field.endsWith(".error_amount")) return 6;
   if (field.endsWith(".changed_amount")) return 7;
   if (field.endsWith(".comment")) return 8;
-  if (field === "common_comment") return 9;
-  if (field === "resolution_promo_code") return 10;
-  return 11;
+  if (field.endsWith(".quantity")) return 9;
+  if (field.endsWith(".removed_at")) return 10;
+  if (field.endsWith(".removed_comment")) return 11;
+  if (field === "common_comment") return 12;
+  if (field === "resolution_promo_code") return 13;
+  return 14;
 }
 
 export const HISTORY_STATUS_LABELS = {
@@ -115,7 +121,7 @@ export const HISTORY_STATUS_LABELS = {
 export function historyValue(value, field) {
   if (value === null || value === undefined || value === "") return "—";
   if (field === "status") return HISTORY_STATUS_LABELS[value] || String(value);
-  if (["sent_to_cafe_at", "accepted_at", "resolved_at"].includes(field))
+  if (["sent_to_cafe_at", "accepted_at", "resolved_at"].includes(field) || field.endsWith(".removed_at"))
     return historyTimestamp(value);
   if (field.endsWith(".error_amount") || field.endsWith(".changed_amount"))
     return amountLabel(value);
@@ -152,16 +158,15 @@ export function complaintStatusLabel(item) {
   return item?.status_context ? `${label} · ${item.status_context}` : label;
 }
 
-export function complaintStatusColor(status) {
-  return (
-    {
-      registered: "info",
-      sent_to_cafe: "warning",
-      accepted_by_cafe: "warning",
-      resolved: "success",
-      cancelled: "error",
-    }[status] || "default"
-  );
+export function orderAddressLabel(row) {
+  if (Number.parseInt(row?.type_order_ ?? row?.type_origin, 10) === 1) {
+    return `${row?.street || ""} ${row?.home || ""}`.trim() || "—";
+  }
+  return row?.type_order_addr_new || "—";
+}
+
+export function orderTimeLabel(value, emptyValue) {
+  return value && value !== emptyValue ? String(value) : "—";
 }
 
 export function complaintObjectLabel(item) {
