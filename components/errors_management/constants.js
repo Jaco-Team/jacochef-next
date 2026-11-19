@@ -78,4 +78,3 @@ export const ORDER_STAGE_OPTIONS = [
 export const COMPLAINT_STATUS_OPTIONS = complaintStatusOptions();
 
 export const ALL_POINTS_LABEL = "Все точки в городе";
-export const GLOBAL_SCOPE_LABEL = "Все кафе (общие)";

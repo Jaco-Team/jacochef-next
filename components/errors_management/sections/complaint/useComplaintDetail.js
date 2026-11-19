@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { allowedCommands, isRemovedError } from "../../errorsManagementPermissions.mjs";
+import {
+  canResolveErrors,
+  resolutionDrafts,
+  resolutionPayload,
+} from "../../complaintTree.mjs";
 import { requestErrorText, requestFieldErrors } from "../../requestErrors.mjs";
 
 const NO_ERROR = { text: "", fields: {} };
@@ -64,13 +69,7 @@ export default function useComplaintDetail({
   );
 
   useEffect(() => {
-    setResolutions(
-      activeErrors.map((item) => ({
-        id: item.id,
-        solution_id: item.solution_id ? String(item.solution_id) : "",
-        changed_amount: item.changed_amount ?? "",
-      })),
-    );
+    setResolutions(resolutionDrafts(activeErrors));
   }, [detail?.id, detail?.lock_version]);
 
   useEffect(
@@ -79,10 +78,7 @@ export default function useComplaintDetail({
   );
 
   const solutions = detail?.resolution_solutions || [];
-  const canResolve =
-    solutions.length === 0 ||
-    (resolutions.length === activeErrors.length &&
-      resolutions.every((item) => Boolean(item.solution_id)));
+  const canResolve = canResolveErrors(resolutions, activeErrors);
   const commands = useMemo(() => allowedCommands(detail, permissions), [detail, permissions]);
   const cafeContext = useMemo(() => {
     const point = points.find((item) => String(item.id) === String(detail?.point_id));
@@ -111,7 +107,10 @@ export default function useComplaintDetail({
           lock_version: detail.lock_version,
           command,
           ...(command === "resolve"
-            ? { resolution_errors: resolutions, resolution_promo_code: promoCode }
+            ? {
+                resolution_errors: resolutionPayload(resolutions, activeErrors),
+                resolution_promo_code: promoCode,
+              }
             : {}),
         }),
       );

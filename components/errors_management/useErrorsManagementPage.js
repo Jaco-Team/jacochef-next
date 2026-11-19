@@ -25,10 +25,23 @@ function selectOptions(items = []) {
   }));
 }
 
-function siteCategoryOptions(items = []) {
+function namedOptions(items = []) {
   return (Array.isArray(items) ? items : [])
     .filter((item) => item?.id !== undefined && item?.id !== null)
-    .map((item) => ({ id: String(item.id), name: item.name || String(item.id) }));
+    .map((item) => ({
+      id: String(item.id),
+      name: item.name || String(item.id),
+      ...(item.description ? { description: item.description } : {}),
+    }));
+}
+
+function treeData(payload) {
+  return {
+    errCats: Array.isArray(payload?.err_cats) ? payload.err_cats : [],
+    siteCategories: namedOptions(payload?.site_cats),
+    stages: namedOptions(payload?.all_stages),
+    solutions: namedOptions(payload?.solutions),
+  };
 }
 
 function cafesOf(points, cityId) {
@@ -49,7 +62,7 @@ export default function useErrorsManagementPage() {
   const [title, setTitle] = useState("Регистрация ошибок");
   const [cities, setCities] = useState([]);
   const [points, setPoints] = useState([]);
-  const [siteCategories, setSiteCategories] = useState([]);
+  const [tree, setTree] = useState(() => treeData(null));
   const [permissions, setPermissions] = useState(() => normalizePermissions(null));
   const [tab, setTabState] = useState(null);
   const [ready, setReady] = useState(false);
@@ -75,7 +88,6 @@ export default function useErrorsManagementPage() {
   const [statistics, setStatistics] = useState(null);
   const [statisticsLoaded, setStatisticsLoaded] = useState(false);
 
-  const [settingsScope, setSettingsScope] = useState({ cityId: "", pointId: "" });
 
   const [selected, setSelected] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -213,7 +225,7 @@ export default function useErrorsManagementPage() {
       setTitle(payload?.module_info?.name || "Регистрация ошибок");
       setCities(nextCities);
       setPoints(nextPoints);
-      setSiteCategories(siteCategoryOptions(payload?.site_cats));
+      setTree(treeData(payload));
       setPermissions(nextPermissions);
       setTabState((current) => resolveTab(current, availableTabs(nextPermissions)));
       setJournalDraft(journalFilterDefaults(scope));
@@ -222,7 +234,6 @@ export default function useErrorsManagementPage() {
       setOrderApplied(orderFilterDefaults(scope));
       setStatisticsDraft(statisticsFilterDefaults(scope));
       setStatisticsApplied(statisticsFilterDefaults(scope));
-      setSettingsScope({ cityId, pointId: "" });
       setReady(true);
     } catch (error) {
       setMessage(requestErrorText(error, "Не удалось загрузить модуль."));
@@ -324,14 +335,10 @@ export default function useErrorsManagementPage() {
     setStatisticsLoaded(false);
     setStatisticsApplied({ ...statisticsDraft });
   };
-  const settingsCafes = useMemo(
-    () => cafesOf(points, settingsScope.cityId),
-    [points, settingsScope.cityId],
-  );
-  const updateSettingsScope = (field, value) =>
-    setSettingsScope((previous) =>
-      field === "cityId" ? { cityId: value, pointId: "" } : { ...previous, [field]: value },
-    );
+  const reloadTree = useCallback(async () => {
+    const response = await api.bootstrap();
+    setTree(treeData(payloadOf(response)));
+  }, [api]);
 
   const openComplaint = useCallback((complaint) => setSelectedComplaint(complaint), []);
   const openRegistration = useCallback((order) => setSelected(order), []);
@@ -403,12 +410,11 @@ export default function useErrorsManagementPage() {
     settingsSection: {
       api,
       canEdit: permissions.settings_edit,
-      cafes: settingsCafes,
-      cities,
-      points,
-      scope: settingsScope,
-      siteCategories,
-      updateScope: updateSettingsScope,
+      errCats: tree.errCats,
+      reloadTree,
+      siteCategories: tree.siteCategories,
+      solutions: tree.solutions,
+      stages: tree.stages,
       withLoading,
     },
     complaintDrawer: {

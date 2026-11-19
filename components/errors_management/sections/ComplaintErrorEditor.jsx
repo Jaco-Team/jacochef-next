@@ -11,71 +11,73 @@ import {
   JacoTextInput,
 } from "@/design-system/shared/ui";
 import {
-  activeNodes,
-  changeClassifier,
+  cascadeLevelLabel,
+  cascadeLevels,
+  changeTreePath,
+  findLeaf,
+  leavesForPosition,
   positionQuantityLimit,
+  solutionOptionsForLeaf,
+  stageOptionsForLeaf,
   validQuantity,
-} from "../complaintClassifier.mjs";
+} from "../complaintTree.mjs";
 import FieldMessage from "./FieldMessage";
+import PhotoPicker from "./PhotoPicker";
 import StageHint from "./StageHint";
 
 const surfaceSx = { boxShadow: "none" };
 const EDITOR_FIELDS = [
-  "category_id",
-  "error_type_id",
   "error_id",
-  "ingredient_id",
   "stage_id",
+  "solution_id",
+  "ingredient_id",
+  "photo_ids",
   "quantity",
   "comment",
   "error_amount",
-  "solution_id",
 ];
 
 function selectValue(event) {
   return event.target.value === "none" ? "" : event.target.value;
 }
 
+function matchesField(entry, field) {
+  return entry.field === field || entry.field.startsWith(`${field}.`);
+}
+
 export function ComplaintErrorEditor({
   value,
-  positions,
+  position,
   positionNumber,
-  catalog,
+  leaves,
   solutions,
   stages,
   serverErrors = [],
   onChange,
   onRemove,
+  onAddPhotos,
+  onRemovePhoto,
 }) {
-  const position = positions.find((item) => item.position_key === value.position_key);
-  const categories = useMemo(
-    () =>
-      activeNodes(catalog, "category").filter((node) =>
-        node.rules?.object_types?.includes(value.object_type),
-      ),
-    [catalog, value.object_type],
+  const allowedLeaves = useMemo(() => leavesForPosition(leaves, position), [leaves, position]);
+  const pathIds = value.path_ids || [];
+  const levels = useMemo(() => cascadeLevels(allowedLeaves, pathIds), [allowedLeaves, pathIds]);
+  const leaf = findLeaf(allowedLeaves, pathIds);
+  const stageOptions = useMemo(
+    () => stageOptionsForLeaf(leaf, position?.product_kind ?? null, stages),
+    [leaf, position?.product_kind, stages],
   );
-  const types = useMemo(
-    () => activeNodes(catalog, "error_type", value.category_id),
-    [catalog, value.category_id],
+  const solutionOptions = useMemo(
+    () => solutionOptionsForLeaf(leaf, solutions),
+    [leaf, solutions],
   );
-  const errors = useMemo(
-    () => activeNodes(catalog, "error", value.error_type_id),
-    [catalog, value.error_type_id],
-  );
-  const selectedError = errors.find((node) => String(node.id) === String(value.error_id));
-  const configuredStages = useMemo(() => {
-    const stageIds = selectedError?.rules?.stage_ids;
-    if (!Array.isArray(stageIds)) return [];
-    return stages.filter((stage) => stageIds.map(Number).includes(Number(stage.id)));
-  }, [selectedError, stages]);
-  const selectedStage = configuredStages.find((node) => String(node.id) === String(value.stage_id));
-  const requiresIngredient = Boolean(selectedError?.rules?.requires_ingredient);
+  const selectedStage = stageOptions.find((stage) => String(stage.id) === String(value.stage_id));
+  const ingredients = Array.isArray(position?.ingredients) ? position.ingredients : [];
   const quantityLimit = positionQuantityLimit(position);
   const quantityValid = validQuantity(value, position);
-  const change = (field, nextValue) => onChange(changeClassifier(catalog, value, field, nextValue));
-  const fieldError = (field) => serverErrors.find((entry) => entry.field === field)?.message;
-  const otherErrors = serverErrors.filter((entry) => !EDITOR_FIELDS.includes(entry.field));
+  const fieldError = (field) => serverErrors.find((entry) => matchesField(entry, field))?.message;
+  const otherErrors = serverErrors.filter(
+    (entry) => !EDITOR_FIELDS.some((field) => matchesField(entry, field)),
+  );
 
   return (
     <JacoSurface
@@ -108,105 +110,101 @@ export function ComplaintErrorEditor({
             {entry.message}
           </JacoAlert>
         ))}
-        {categories.length === 0 ? (
-          <JacoAlert severity="warning">Для выбранной позиции варианты ошибок не настроены.</JacoAlert>
+        {allowedLeaves.length === 0 ? (
+          <JacoAlert severity="warning">
+            Для этой позиции в дереве категорий нет подходящих вариантов ошибок.
+          </JacoAlert>
         ) : null}
         <Grid
           container
           spacing={1.5}
         >
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <JacoSelect
-              required
-              label="Категория"
-              options={categories}
-              disabled={categories.length === 0}
-              value={value.category_id}
-              allowNone
-              noneLabel="Выберите категорию"
-              onChange={(event) => change("category_id", selectValue(event))}
-            />
-            <FieldMessage>{fieldError("category_id")}</FieldMessage>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <JacoSelect
-              required
-              label="Тип ошибки"
-              options={types}
-              disabled={!value.category_id}
-              value={value.error_type_id}
-              allowNone
-              noneLabel="Выберите тип ошибки"
-              onChange={(event) => change("error_type_id", selectValue(event))}
-            />
-            <FieldMessage>{fieldError("error_type_id")}</FieldMessage>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <JacoSelect
-              required
-              label="Ошибка"
-              options={errors}
-              disabled={!value.error_type_id}
-              value={value.error_id}
-              allowNone
-              noneLabel="Выберите ошибку"
-              onChange={(event) => change("error_id", selectValue(event))}
-            />
-            <FieldMessage>{fieldError("error_id")}</FieldMessage>
-          </Grid>
-          {requiresIngredient ? (
+          {levels.map((options, level) => {
+            const isLast = !options.some((option) =>
+              allowedLeaves.some(
+                (item) => item.pathIds[level] === option.id && item.pathIds.length > level + 1,
+              ),
+            );
+            return (
+              <Grid
+                key={level}
+                size={{ xs: 12, sm: levels.length > 1 ? 6 : 12 }}
+              >
+                <JacoSelect
+                  required
+                  label={cascadeLevelLabel(level, isLast)}
+                  options={options}
+                  value={pathIds[level] ? String(pathIds[level]) : ""}
+                  allowNone
+                  noneLabel="Выберите вариант"
+                  onChange={(event) => onChange(changeTreePath(value, level, selectValue(event)))}
+                />
+              </Grid>
+            );
+          })}
+          {fieldError("error_id") ? (
+            <Grid size={12}>
+              <FieldMessage>{fieldError("error_id")}</FieldMessage>
+            </Grid>
+          ) : null}
+          {leaf && stageOptions.length ? (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{ alignItems: "flex-start" }}
+              >
+                <JacoSelect
+                  required
+                  label="Этап возникновения ошибки"
+                  options={stageOptions}
+                  value={value.stage_id}
+                  allowNone
+                  noneLabel="Выберите этап"
+                  onChange={(event) => onChange({ ...value, stage_id: selectValue(event) })}
+                />
+                <StageHint
+                  stages={stageOptions}
+                  selectedIds={value.stage_id ? [value.stage_id] : []}
+                />
+              </Stack>
+              {selectedStage?.description ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  {selectedStage.description}
+                </Typography>
+              ) : null}
+              <FieldMessage>{fieldError("stage_id")}</FieldMessage>
+            </Grid>
+          ) : null}
+          {leaf && solutionOptions.length ? (
             <Grid size={{ xs: 12, sm: 6 }}>
               <JacoSelect
-                required
+                label="Решение ошибки"
+                options={solutionOptions}
+                value={value.solution_id}
+                allowNone
+                noneLabel="Не выбрано"
+                onChange={(event) => onChange({ ...value, solution_id: selectValue(event) })}
+              />
+              <FieldMessage>{fieldError("solution_id")}</FieldMessage>
+            </Grid>
+          ) : null}
+          {leaf && ingredients.length ? (
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <JacoSelect
                 label="Продукт из состава"
-                options={position?.ingredients || []}
+                options={ingredients}
                 value={value.ingredient_id}
                 allowNone
-                noneLabel="Выберите продукт"
-                onChange={(event) => change("ingredient_id", selectValue(event))}
+                noneLabel="Не выбран"
+                onChange={(event) => onChange({ ...value, ingredient_id: selectValue(event) })}
               />
               <FieldMessage>{fieldError("ingredient_id")}</FieldMessage>
             </Grid>
           ) : null}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            {value.error_id && configuredStages.length === 0 ? (
-              <JacoAlert
-                severity="warning"
-                sx={{ mb: 1 }}
-              >
-                Для выбранной ошибки этапы не настроены.
-              </JacoAlert>
-            ) : null}
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{ alignItems: "flex-start" }}
-            >
-              <JacoSelect
-                required
-                label="Этап возникновения ошибки"
-                options={configuredStages}
-                disabled={!value.error_id || configuredStages.length === 0}
-                value={value.stage_id}
-                allowNone
-                noneLabel="Выберите этап"
-                onChange={(event) => change("stage_id", selectValue(event))}
-              />
-              <StageHint
-                stages={configuredStages}
-                selectedIds={value.stage_id ? [value.stage_id] : []}
-              />
-            </Stack>
-            <FieldMessage>{fieldError("stage_id")}</FieldMessage>
-            {selectedStage?.description ? (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
-                {selectedStage.description}
-              </Typography>
-            ) : null}
-          </Grid>
           {quantityLimit > 1 ? (
             <Grid size={{ xs: 12, sm: 6 }}>
               <JacoTextInput
@@ -250,15 +248,13 @@ export function ComplaintErrorEditor({
             />
           </Grid>
           <Grid size={12}>
-            <JacoSelect
-              label="Решение ошибки"
-              options={solutions}
-              value={value.solution_id}
-              allowNone
-              noneLabel="Не выбрано"
-              onChange={(event) => onChange({ ...value, solution_id: selectValue(event) })}
+            <PhotoPicker
+              photos={value.photos || []}
+              required={Boolean(leaf?.needImg)}
+              error={fieldError("photo_ids")}
+              onAdd={onAddPhotos}
+              onRemove={onRemovePhoto}
             />
-            <FieldMessage>{fieldError("solution_id")}</FieldMessage>
           </Grid>
         </Grid>
       </Stack>

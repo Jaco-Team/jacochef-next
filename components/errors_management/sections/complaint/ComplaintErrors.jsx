@@ -28,9 +28,11 @@ import { isRemovedError } from "../../errorsManagementPermissions.mjs";
 import {
   amountLabel,
   complaintObjectLabel,
+  complaintProblemLabel,
   historyTimestamp,
 } from "../../errorsManagementViewModel.mjs";
 import DetailField from "./DetailField";
+import PhotoThumbnails from "./PhotoThumbnails";
 
 function positionLabel(item) {
   const name = item.position_name || complaintObjectLabel(item);
@@ -39,7 +41,7 @@ function positionLabel(item) {
 }
 
 function problemLabel(item) {
-  return [item.error_type_name, item.error_name].filter(Boolean).join(" / ") || "—";
+  return complaintProblemLabel(item);
 }
 
 function amountsLabel(item) {
@@ -109,7 +111,7 @@ const removedCellSx = { color: "text.secondary", textDecoration: "line-through" 
 
 function ErrorsTable({ errors, canRemove, onRemove }) {
   const withActions = errors.some((item) => canRemove?.(item));
-  const columns = withActions ? 6 : 5;
+  const columns = withActions ? 7 : 6;
   return (
     <JacoSurface
       variant="outlined"
@@ -124,6 +126,7 @@ function ErrorsTable({ errors, canRemove, onRemove }) {
           <TableHead>
             <TableRow>
               <TableCell>Позиция</TableCell>
+              <TableCell>Фотография</TableCell>
               <TableCell>Категория проблемы</TableCell>
               <TableCell>Проблема</TableCell>
               <TableCell>Решение</TableCell>
@@ -141,6 +144,13 @@ function ErrorsTable({ errors, canRemove, onRemove }) {
                     sx={removed ? { backgroundColor: uiColors.warningSoft } : undefined}
                   >
                     <TableCell sx={cellSx}>{positionLabel(item)}</TableCell>
+                    <TableCell>
+                      <PhotoThumbnails
+                        photos={item.photos || []}
+                        size={40}
+                        max={2}
+                      />
+                    </TableCell>
                     <TableCell sx={cellSx}>{item.category_name || "—"}</TableCell>
                     <TableCell>
                       <Typography
@@ -235,6 +245,21 @@ function ErrorsCards({ errors, canRemove, onRemove }) {
                   value={positionLabel(item)}
                   emphasized
                 />
+                {(item.photos || []).length ? (
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                    >
+                      Фотография
+                    </Typography>
+                    <PhotoThumbnails
+                      photos={item.photos}
+                      size={56}
+                      max={5}
+                    />
+                  </Box>
+                ) : null}
                 <DetailField
                   label="Категория проблемы"
                   value={item.category_name}

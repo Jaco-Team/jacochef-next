@@ -38,10 +38,11 @@ export const COMPLAINT_STATUS_LABELS = {
 export function historyFieldLabel(field) {
   if (COMPLAINT_HISTORY_FIELDS[field]) return COMPLAINT_HISTORY_FIELDS[field];
   const errorField = field.match(
-    /^errors\.\d+\.(category_name|error_type_name|error_name|stage_name|solution_name|error_amount|changed_amount|comment|quantity|removed_at|removed_comment)$/,
+    /^errors\.\d+\.(category_name|problem_name|error_type_name|error_name|stage_name|solution_name|error_amount|changed_amount|comment|quantity|removed_at|removed_comment)$/,
   )?.[1];
   return {
-    category_name: "Категория",
+    category_name: "Категория проблемы",
+    problem_name: "Проблема",
     error_type_name: "Тип ошибки",
     error_name: "Ошибка",
     stage_name: "Этап возникновения ошибки",
@@ -95,7 +96,7 @@ export function historySummaryLines(changes) {
 export function historyFieldOrder(field) {
   if (field === "status") return 0;
   if (field.endsWith(".category_name")) return 1;
-  if (field.endsWith(".error_type_name")) return 2;
+  if (field.endsWith(".problem_name") || field.endsWith(".error_type_name")) return 2;
   if (field.endsWith(".error_name")) return 3;
   if (field.endsWith(".stage_name")) return 4;
   if (field.endsWith(".solution_name")) return 5;
@@ -169,13 +170,20 @@ export function orderTimeLabel(value, emptyValue) {
   return value && value !== emptyValue ? String(value) : "—";
 }
 
+export function complaintProblemLabel(item) {
+  return (
+    item?.problem_name ||
+    [item?.error_type_name, item?.error_name].filter(Boolean).join(" / ") ||
+    "—"
+  );
+}
+
 export function complaintObjectLabel(item) {
   return (
     {
       dish: "Блюдо",
       order: "Заказ",
       extra: "Допы",
-      cutlery: "Столовые приборы",
       delivery: "Доставка",
     }[item?.object_type] ||
     item?.category_name ||

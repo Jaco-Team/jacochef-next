@@ -9,6 +9,8 @@ import {
   JacoSurface,
   JacoTextInput,
 } from "@/design-system/shared/ui";
+import { errorSolutionOptions } from "../../complaintTree.mjs";
+import { complaintProblemLabel } from "../../errorsManagementViewModel.mjs";
 import { fieldErrorsWithPrefix } from "../../requestErrors.mjs";
 import FieldMessage from "../FieldMessage";
 
@@ -94,11 +96,6 @@ export default function ComplaintResolutionModal({
               Зафиксируйте решение по каждой действующей ошибке перед завершением рассмотрения.
               Снятые ошибки не требуют решения.
             </Typography>
-            {solutions.length === 0 ? (
-              <JacoAlert severity="warning">
-                Активные варианты решения не настроены. Укажите сумму изменения, если она известна.
-              </JacoAlert>
-            ) : null}
             {errors.map((item) => {
               const index = resolutions.findIndex((entry) => Number(entry.id) === Number(item.id));
               const resolution = resolutions[index] || {
@@ -109,6 +106,7 @@ export default function ComplaintResolutionModal({
               const messages =
                 index >= 0 ? fieldErrorsWithPrefix(fields, `resolution_errors.${index}.`) : [];
               const fieldError = (field) => messages.find((entry) => entry.field === field)?.message;
+              const options = errorSolutionOptions(item, solutions);
               return (
                 <JacoSurface
                   key={item.id}
@@ -117,7 +115,7 @@ export default function ComplaintResolutionModal({
                 >
                   <Stack spacing={1.25}>
                     <Typography fontWeight={700}>
-                      {[item.error_type_name, item.error_name].filter(Boolean).join(" / ")}
+                      {complaintProblemLabel(item)}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -141,13 +139,13 @@ export default function ComplaintResolutionModal({
                       container
                       spacing={1.25}
                     >
+                      {options.length ? (
                       <Grid size={{ xs: 12, sm: 7 }}>
                         <JacoSelect
-                          required={solutions.length > 0}
+                          required
                           multiple={false}
                           label="Решение"
-                          options={solutions}
-                          disabled={solutions.length === 0}
+                          options={options}
                           value={resolution.solution_id}
                           allowNone
                           noneLabel="Выберите решение"
@@ -161,6 +159,19 @@ export default function ComplaintResolutionModal({
                         />
                         <FieldMessage>{fieldError("solution_id")}</FieldMessage>
                       </Grid>
+                      ) : (
+                        <Grid size={{ xs: 12, sm: 7 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            {item.solution_name
+                              ? `Решение: ${item.solution_name}`
+                              : "Для этой ошибки решение не выбирается."}
+                          </Typography>
+                          <FieldMessage>{fieldError("solution_id")}</FieldMessage>
+                        </Grid>
+                      )}
                       <Grid size={{ xs: 12, sm: 5 }}>
                         <JacoTextInput
                           type="number"

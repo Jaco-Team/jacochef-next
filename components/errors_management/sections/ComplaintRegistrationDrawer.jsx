@@ -12,13 +12,27 @@ import {
 } from "@/design-system/shared/ui";
 import { ComplaintErrorEditor } from "./ComplaintErrorEditor";
 import {
-  classifierDraft,
-  complaintErrorsPayload,
+  acceptPhotoFiles,
+  buildLeaves,
   newClientRequestId,
-  validComplaintError,
-} from "../complaintClassifier.mjs";
+  treeErrorDraft,
+  treeErrorIssues,
+  treeErrorPayload,
+} from "../complaintTree.mjs";
 import { orderId, pointId } from "../errorsManagementViewModel.mjs";
 import { fieldErrorsWithPrefix, requestErrorText, requestFieldErrors } from "../requestErrors.mjs";
+
+const ISSUE_HINTS = {
+  leaf: "выберите вариант ошибки до конца дерева",
+  stage: "выберите этап",
+  solution: "выберите решение из списка",
+  quantity: "укажите количество",
+  photos_pending: "дождитесь загрузки фото",
+  photos_limit: "оставьте не больше 5 фото",
+  photos_required: "добавьте фото",
+};
+
+let photoCounter = 0;
 
 export default function ComplaintRegistrationDrawer({
   selected,
@@ -38,11 +52,20 @@ export default function ComplaintRegistrationDrawer({
   const [confirmClose, setConfirmClose] = useState(false);
   const requestRef = useRef(0);
   const clientRequestIdRef = useRef(null);
+  const previewUrlsRef = useRef(new Set());
+
+  const revokePreviews = () => {
+    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    previewUrlsRef.current.clear();
+  };
+
+  useEffect(() => () => revokePreviews(), []);
 
   useEffect(() => {
     requestRef.current += 1;
     if (!selected) return;
     const requestId = requestRef.current;
+    revokePreviews();
     clientRequestIdRef.current = newClientRequestId();
     setConfirmClose(false);
     setSaving(false);
@@ -64,21 +87,95 @@ export default function ComplaintRegistrationDrawer({
       });
   }, [api, selected, withLoading]);
 
+  const leaves = useMemo(() => buildLeaves(context?.tree), [context?.tree]);
+  const positions = useMemo(() => context?.positions || [], [context?.positions]);
+  const stages = context?.stages || [];
+  const solutions = context?.solutions || [];
+
   const changeStructure = (update) => {
     setFieldErrors({});
     setErrors(update);
   };
+  const updateError = (uid, update) =>
+    setErrors((previous) =>
+      previous.map((item) => (item.uid === uid ? update(item) : item)),
+    );
   const addError = (position) =>
-    changeStructure((previous) => [
-      ...previous,
-      classifierDraft(context?.catalog || [], position.type, position.position_key),
-    ]);
+    changeStructure((previous) => [...previous, treeErrorDraft(leaves, position.type, position)]);
   const addOrderError = () =>
-    changeStructure((previous) => [...previous, classifierDraft(context?.catalog || [], "order")]);
-  const updateError = (index, next) =>
-    setErrors((previous) => previous.map((item, itemIndex) => (itemIndex === index ? next : item)));
-  const removeError = (index) =>
-    changeStructure((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+    changeStructure((previous) => [...previous, treeErrorDraft(leaves, "order", null)]);
+  const removeError = (uid) =>
+    changeStructure((previous) => {
+      previous
+        .find((item) => item.uid === uid)
+        ?.photos?.forEach((photo) => {
+          if (photo.previewUrl) {
+            URL.revokeObjectURL(photo.previewUrl);
+            previewUrlsRef.current.delete(photo.previewUrl);
+          }
+        });
+      return previous.filter((item) => item.uid !== uid);
+    });
+
+  const uploadPhoto = async (uid, entry, file, requestId) => {
+    try {
+      const response = await api.uploadPhoto(file, { point_id: pointId(selected) });
+      const photo = response?.photo;
+      if (requestRef.current !== requestId) return;
+      if (!photo?.id) throw new Error("photo");
+      updateError(uid, (item) => ({
+        ...item,
+        photos: item.photos.map((current) =>
+          current.key === entry.key
+            ? { ...current, status: "done", id: Number(photo.id), url: photo.url || "" }
+            : current,
+        ),
+      }));
+    } catch (error) {
+      if (requestRef.current !== requestId) return;
+      const fields = requestFieldErrors(error);
+      const text = fields.file || requestErrorText(error, "Не удалось загрузить фото.");
+      updateError(uid, (item) => ({
+        ...item,
+        photos: item.photos.map((current) =>
+          current.key === entry.key ? { ...current, status: "error", error: text } : current,
+        ),
+      }));
+    }
+  };
+
+  const addPhotos = (uid, files) => {
+    const draft = errors.find((item) => item.uid === uid);
+    if (!draft) return;
+    const activeCount = (draft.photos || []).filter((photo) => photo.status !== "error").length;
+    const { accepted, rejected } = acceptPhotoFiles(files, activeCount);
+    const entries = accepted.map((file) => {
+      photoCounter += 1;
+      const previewUrl = URL.createObjectURL(file);
+      previewUrlsRef.current.add(previewUrl);
+      return { key: `photo-${photoCounter}`, name: file.name, previewUrl, status: "uploading" };
+    });
+    const rejectedEntries = rejected.map(({ file, error }) => {
+      photoCounter += 1;
+      return { key: `photo-${photoCounter}`, name: file?.name, status: "error", error };
+    });
+    updateError(uid, (item) => ({
+      ...item,
+      photos: [...(item.photos || []), ...entries, ...rejectedEntries],
+    }));
+    const requestId = requestRef.current;
+    entries.forEach((entry, index) => uploadPhoto(uid, entry, accepted[index], requestId));
+  };
+
+  const removePhoto = (uid, key) =>
+    updateError(uid, (item) => {
+      const photo = item.photos.find((current) => current.key === key);
+      if (photo?.previewUrl) {
+        URL.revokeObjectURL(photo.previewUrl);
+        previewUrlsRef.current.delete(photo.previewUrl);
+      }
+      return { ...item, photos: item.photos.filter((current) => current.key !== key) };
+    });
 
   const requestClose = () => {
     if (saving) return;
@@ -88,6 +185,9 @@ export default function ComplaintRegistrationDrawer({
     }
     onClose();
   };
+  const issues = errors.map((error) => treeErrorIssues(error, { leaves, positions }));
+  const canSave = errors.length > 0 && issues.every((list) => list.length === 0);
+  const firstIssues = issues.find((list) => list.length) || [];
   const save = async () => {
     const requestId = requestRef.current;
     setMessage("");
@@ -99,7 +199,7 @@ export default function ComplaintRegistrationDrawer({
           point_id: pointId(selected),
           order_id: orderId(selected),
           client_request_id: clientRequestIdRef.current,
-          errors: complaintErrorsPayload(errors),
+          errors: errors.map((error) => treeErrorPayload(error, leaves, positions)),
           common_comment: comment,
         }),
       );
@@ -127,28 +227,20 @@ export default function ComplaintRegistrationDrawer({
     );
   }, [cities, context?.order?.city_id, context?.order?.point_id, points]);
 
-  const canSave =
-    errors.length > 0 &&
-    errors.every((error) =>
-      validComplaintError(
-        error,
-        context?.catalog || [],
-        context?.positions || [],
-        context?.stages || [],
-      ),
-    );
-  const editorFor = (error, index, positionNumber) => (
+  const editorFor = (error, index, position, positionNumber) => (
     <ComplaintErrorEditor
-      key={`${error.position_key || "order"}-${index}`}
+      key={error.uid}
       value={error}
-      positions={context.positions || []}
+      position={position}
       positionNumber={positionNumber}
-      catalog={context.catalog || []}
-      solutions={context.solutions || []}
-      stages={context.stages || []}
+      leaves={leaves}
+      solutions={solutions}
+      stages={stages}
       serverErrors={fieldErrorsWithPrefix(fieldErrors, `errors.${index}.`)}
-      onChange={(next) => updateError(index, next)}
-      onRemove={() => removeError(index)}
+      onChange={(next) => updateError(error.uid, () => next)}
+      onRemove={() => removeError(error.uid)}
+      onAddPhotos={(files) => addPhotos(error.uid, files)}
+      onRemovePhoto={(key) => removePhoto(error.uid, key)}
     />
   );
   const actions = !context ? null : confirmClose ? (
@@ -216,7 +308,7 @@ export default function ComplaintRegistrationDrawer({
             </JacoSurface>
             <Stack spacing={1.25}>
               <Typography fontWeight={700}>Позиции заказа</Typography>
-              {context.positions?.map((position, positionIndex) => (
+              {positions.map((position, positionIndex) => (
                 <Stack
                   key={position.position_key}
                   spacing={1.5}
@@ -250,7 +342,7 @@ export default function ComplaintRegistrationDrawer({
                   </JacoSurface>
                   {errors.map((error, index) =>
                     error.position_key === position.position_key
-                      ? editorFor(error, index, positionIndex + 1)
+                      ? editorFor(error, index, position, positionIndex + 1)
                       : null,
                   )}
                 </Stack>
@@ -264,7 +356,9 @@ export default function ComplaintRegistrationDrawer({
               >
                 Добавить ошибку заказа
               </JacoButton>
-              {errors.map((error, index) => (!error.position_key ? editorFor(error, index, 0) : null))}
+              {errors.map((error, index) =>
+                !error.position_key ? editorFor(error, index, null, 0) : null,
+              )}
             </Stack>
             {!canSave ? (
               <Typography
@@ -272,8 +366,11 @@ export default function ComplaintRegistrationDrawer({
                 color="text.secondary"
               >
                 {errors.length === 0
-                  ? "Добавьте ошибку блюда или заказа."
-                  : "Для каждой ошибки выберите категорию, тип, ошибку и этап. Если требуется, укажите продукт из состава и количество."}
+                  ? "Добавьте ошибку позиции или заказа."
+                  : `Чтобы зарегистрировать жалобу: ${firstIssues
+                      .map((issue) => ISSUE_HINTS[issue])
+                      .filter(Boolean)
+                      .join(", ")}.`}
               </Typography>
             ) : null}
             <JacoTextInput

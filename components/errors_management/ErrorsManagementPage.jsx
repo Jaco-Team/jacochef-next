@@ -11,7 +11,7 @@ import {
 import ComplaintDrawer from "./sections/ComplaintDrawer";
 import ComplaintListSection from "./sections/ComplaintListSection";
 import ComplaintRegistrationDrawer from "./sections/ComplaintRegistrationDrawer";
-import ComplaintSettingsSection from "./sections/ComplaintSettingsSection";
+import ComplaintTreeSettings from "./sections/ComplaintTreeSettings";
 import ComplaintStatisticsSection from "./sections/ComplaintStatisticsSection";
 import useErrorsManagementPage from "./useErrorsManagementPage";
 import { rootSx, titleSx } from "./constants";
@@ -33,7 +33,7 @@ function NoAccess() {
 }
 
 function ActiveSection({ tab, complaintList, statisticsSection, settingsSection }) {
-  if (tab === "settings") return <ComplaintSettingsSection model={settingsSection} />;
+  if (tab === "settings") return <ComplaintTreeSettings model={settingsSection} />;
   if (tab === "statistics") return <ComplaintStatisticsSection model={statisticsSection} />;
   if (tab === "journal" || tab === "registration") {
     return <ComplaintListSection model={complaintList} />;

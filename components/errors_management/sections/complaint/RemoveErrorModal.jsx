@@ -2,6 +2,7 @@
 
 import { Stack, Typography } from "@mui/material";
 import { JacoAlert, JacoButton, JacoModal, JacoTextInput } from "@/design-system/shared/ui";
+import { complaintProblemLabel } from "../../errorsManagementViewModel.mjs";
 
 export const REMOVAL_COMMENT_LIMIT = 1000;
 
@@ -44,7 +45,7 @@ export default function RemoveErrorModal({ state, onChange, onClose, onConfirm }
         {state?.text ? <JacoAlert severity="error">{state.text}</JacoAlert> : null}
         {item ? (
           <Typography>
-            Ошибка «{[item.error_type_name, item.error_name].filter(Boolean).join(" / ")}» останется
+            Ошибка «{complaintProblemLabel(item)}» останется
             в жалобе с отметкой «Снята» и перестанет учитываться в суммах и количестве ошибок.
           </Typography>
         ) : null}
