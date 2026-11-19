@@ -135,7 +135,10 @@ test("one searchable list groups leaves by category and middle path", () => {
   assert.equal(leafGroupTitle(deep), "Глубокий · Уровень 2 / Уровень 3");
   assert.equal(leafGroupTitle(leaves.find((leaf) => leaf.id === 31)), "Заказ");
   assert.equal(matchesQuery(options[1].search, "холод"), true);
-  assert.equal(matchesQuery(options[1].search, "блюдо качество"), true);
+  assert.equal(matchesQuery(options[1].search, "ХОЛО"), true);
+  // Only the problem name is searched: category or subsection words must not pull in the whole group.
+  assert.equal(matchesQuery(options[1].search, "качество"), false);
+  assert.equal(matchesQuery(options[1].search, "блюдо"), false);
   assert.equal(matchesQuery(options[1].search, "упаковка"), false);
   assert.equal(matchesQuery("Ёжик в тумане", "ежик"), true);
   assert.equal(findLeafById(dish, "3")?.id, 3);

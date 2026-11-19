@@ -120,7 +120,8 @@ export function leafPickerOptions(leaves) {
       id: leaf.id,
       name: leaf.path[leaf.path.length - 1]?.name || leaf.name,
       group: leafGroupTitle(leaf),
-      search: leaf.path.map((node) => node.name).join(" "),
+      // Search only the problem name: matching the category or subsection would pull in its whole group.
+      search: leaf.path[leaf.path.length - 1]?.name || leaf.name,
       needImg: leaf.needImg,
       sortKey: leaf.path.map((node) => [node.sort, node.name]),
     }))
