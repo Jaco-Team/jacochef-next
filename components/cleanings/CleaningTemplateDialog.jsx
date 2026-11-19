@@ -90,7 +90,7 @@ export default function CleaningTemplateDialog({
       ? [...resolvedRoles, { id: form.roleId, name: form.role }]
       : resolvedRoles;
   const roleOptions = [
-    { id: "", name: "Выберите роль" },
+    { id: "", name: "Выберите должность" },
     ...resolvedRoleValues.map((role) => ({ id: role.id, name: role.name })),
   ];
   const additionTypeSelectOptions = [
@@ -271,7 +271,7 @@ export default function CleaningTemplateDialog({
               spacing={2}
             >
               <Grid size={12}>
-                <FormLabel>Название</FormLabel>
+                <FormLabel>Объект уборки</FormLabel>
                 <MyTextInput
                   value={form.name}
                   disabled={!canEdit}
@@ -279,14 +279,14 @@ export default function CleaningTemplateDialog({
                 />
               </Grid>
               <Grid size={12}>
-                <FormLabel>Категория</FormLabel>
+                <FormLabel>Вид уборки</FormLabel>
                 <MyAutocomplite
                   multiple={false}
                   data={categories}
                   value={selectedCategory}
                   disabled={!canEdit}
                   func={(_, value) => changeField("categoryId", value?.id ?? null)}
-                  placeholder="Начните вводить категорию"
+                  placeholder="Начните вводить вид уборки"
                 />
               </Grid>
             </Grid>
@@ -301,7 +301,7 @@ export default function CleaningTemplateDialog({
               spacing={2}
             >
               <Grid size={{ xs: 12, md: 6 }}>
-                <FormLabel>Роль</FormLabel>
+                <FormLabel>Должность</FormLabel>
                 <MySelect
                   data={roleOptions}
                   value={form.roleId ?? ""}
@@ -498,11 +498,11 @@ export default function CleaningTemplateDialog({
 
           <FormSection
             icon={<PlaceOutlinedIcon />}
-            title="Локации"
+            title="Кафе"
           >
             <MyAutoCompleteWithAll
-              label="Локации"
-              placeholder="Выберите локации"
+              label="Кафе"
+              placeholder="Выберите кафе"
               options={locations}
               value={selectedLocations}
               disabled={!canEdit}

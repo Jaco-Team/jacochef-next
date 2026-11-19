@@ -1,4 +1,4 @@
-import { days } from "./constants";
+import { cleaningSectionTabs, controlKindTabs, days } from "./constants";
 
 export function getScheduleTypeFromDays(item = {}) {
   if (item.scheduleType && item.scheduleType !== "weekly") {
@@ -42,7 +42,51 @@ export function getScheduleText(item, scheduleTypeOptions = []) {
 }
 
 export function getCategoryName(categories, categoryId) {
-  return categories.find((category) => category.id === categoryId)?.name || "Без категории";
+  return categories.find((category) => category.id === categoryId)?.name || "Без вида уборки";
+}
+
+export function getVisibleSectionTabs(canView) {
+  return cleaningSectionTabs.filter((tab) => tab.accessKeys.some((key) => canView(key)));
+}
+
+export function getVisibleControlKindTabs(canView) {
+  return controlKindTabs.filter((tab) => canView(tab.accessKey));
+}
+
+// Maps URL segments to an accessible section; unknown or forbidden segments fall back to the first visible tab.
+export function resolveCleaningsRoute(segments = [], canView) {
+  const sectionTabs = getVisibleSectionTabs(canView);
+  const [requestedPath, requestedKind] = segments;
+  const sectionTab = sectionTabs.find((tab) => tab.path === requestedPath) || sectionTabs[0];
+
+  if (!sectionTab) {
+    return null;
+  }
+
+  if (sectionTab.value !== "control") {
+    return { section: sectionTab.value, controlKind: null, segments: [sectionTab.path] };
+  }
+
+  const kindTabs = getVisibleControlKindTabs(canView);
+  const kindTab = kindTabs.find((tab) => tab.value === requestedKind) || kindTabs[0];
+
+  return {
+    section: sectionTab.value,
+    controlKind: kindTab.value,
+    segments: [sectionTab.path, kindTab.value],
+  };
+}
+
+export function getSectionSegments(sectionValue, controlKind = null) {
+  const sectionTab = cleaningSectionTabs.find((tab) => tab.value === sectionValue);
+
+  if (!sectionTab) {
+    return [];
+  }
+
+  return sectionTab.value === "control" && controlKind
+    ? [sectionTab.path, controlKind]
+    : [sectionTab.path];
 }
 
 export function getTemplateLocationNames(locationIds = [], locations = []) {

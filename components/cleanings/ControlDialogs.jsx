@@ -127,7 +127,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
     },
     delete: {
       title: "Удалить запись?",
-      text: `Запись «${cleaningName}»${employeeSuffix} будет удалена из контроля.`,
+      text: `Запись «${cleaningName}»${employeeSuffix} будет удалена из проверки.`,
       button: "Удалить",
       icon: <DeleteOutlineIcon />,
       bgcolor: "primary.main",
@@ -191,7 +191,7 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
     },
     delete: {
       title: "Удалить заготовку?",
-      text: `Заготовка «${item?.name || "Заготовка"}» будет удалена из контроля.`,
+      text: `Заготовка «${item?.name || "Заготовка"}» будет удалена из проверки.`,
       button: "Удалить",
       icon: <DeleteOutlineIcon />,
       bgcolor: "primary.main",

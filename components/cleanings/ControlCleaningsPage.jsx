@@ -237,7 +237,7 @@ export default function ControlView({
             >
               <TableHead>
                 <TableRow sx={tableHeaderSx}>
-                  <TableCell sx={{ width: "20%" }}>Уборка</TableCell>
+                  <TableCell sx={{ width: "20%" }}>Объект уборки</TableCell>
                   <TableCell>Сотрудник</TableCell>
                   <TableCell>Начало</TableCell>
                   <TableCell>Завершение</TableCell>
@@ -535,7 +535,7 @@ export function AddManualCleaningDialog({
         <TextField
           size="small"
           value={query}
-          placeholder="Поиск по названию, роли или категории"
+          placeholder="Поиск по объекту, должности или виду уборки"
           onChange={(event) => onQueryChange(event.target.value)}
           slotProps={{
             input: {

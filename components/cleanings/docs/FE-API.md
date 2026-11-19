@@ -2,6 +2,22 @@
 
 Документ описывает маршруты, которые реально вызывает модуль `/cleanings` (`components/cleanings/useCleaningsApi.js`), и форму их запросов/ответов. Backend-описание модуля — `app/Chef/Cleanings/README.md` в репозитории Chef BE.
 
+## Навигация
+
+Одна страница `pages/cleanings/[[...section]].js` (`CleaningsPage`, без SSR). Заголовок `h1` и `document.title` — всегда название модуля `module_info.name` из `get_all`, фолбэк «Уборки и заготовки». Подмодули — вкладки под заголовком, описание подмодуля — под вкладками. Переключение вкладок — shallow-роутинг: страница не перемонтируется, `get_all` повторно не запрашивается.
+
+| Вкладка | URL | Право (`access`) |
+| --- | --- | --- |
+| Виды уборок | `/cleanings/categories` | `categories` |
+| Время уборок | `/cleanings/times` | `cleanings` |
+| Уборки Кафе | `/cleanings/cafes` | `cafes` |
+| Проверка заготовок и уборок | `/cleanings/control/cleanings`, `/cleanings/control/preparations` | `control_cleanings` / `control_pf` |
+
+- Вкладка видна при праве на просмотр (`_view`, `_edit` или `_access`). Внутри проверки вкладки «Уборки» / «Заготовки» — по `control_cleanings` / `control_pf`.
+- `/cleanings` без раздела, неизвестный или недоступный раздел заменяются (`router.replace`) на первую доступную вкладку; `/cleanings/control` — на первую доступную вкладку проверки.
+- Шаблоны уборок («Время уборок») раньше открывались по `/cleanings`, теперь — `/cleanings/times`.
+- Кнопки добавления — в тулбаре своей вкладки: «Новая уборка» (право `create_cleaning`), «Новый вид уборки» (`categories` edit), «Добавить уборку» и «Сохранить изменения» доп. времени (`cafes` edit), «Добавить уборку» в проверке (`control_cleanings` edit).
+
 ## Транспорт и конверт ответа
 
 - Все вызовы идут через `useApi("cleanings").api_laravel(method, payload)`: `POST /cleanings/<method>`, payload уходит JSON-строкой в поле `data`.
@@ -73,7 +89,7 @@
 #### `get_all` (`getBootstrap`)
 
 - Request: без параметров.
-- Response: `module_info`, `locations`, `roles`, `scheduleTypeOptions`, `additionTypeOptions`, `access`.
+- Response: `module_info`, `locations`, `roles`, `scheduleTypeOptions`, `additionTypeOptions`, `access`. `module_info.name` — заголовок страницы и вкладки браузера.
 - Грузится один раз за сессию модуля и переиспользуется между подстраницами.
 
 ### Шаблоны уборок
@@ -97,7 +113,7 @@
 - Request: `{ id }`.
 - Response: `st`, `text`. Полное удаление; в UI кнопка есть только у шаблонов в архиве.
 
-### Категории
+### Виды уборок (категории)
 
 #### `categories` (`getCategories`)
 
@@ -106,12 +122,12 @@
 #### `categories/save_new` (`createCategory`), `categories/save_edit` (`updateCategory`)
 
 - Request: `{ name, instruction }`; для `save_edit` дополнительно `id`.
-- Response: `st`, `text`, `id`. После создания FE выбирает категорию по `id`.
+- Response: `st`, `text`, `id`. После создания FE выбирает вид уборки по `id`.
 
 #### `categories/delete` (`deleteCategory`)
 
 - Request: `{ id }`.
-- Response: `st`, `text`. Если категория используется в шаблонах — `st: false`, `text: "Категория используется в уборках"`.
+- Response: `st`, `text`. Если вид уборки применяется к шаблонам — `st: false`, `text: "Вид уборки применяется к уборкам, удалить нельзя"`.
 
 ### Уборки кафе
 
@@ -188,10 +204,10 @@
 ## Перезагрузка после изменений
 
 - Шаблоны: `templates`, затем `categories`; на вкладке кафе — ещё `cafes`.
-- Категории: `categories`.
+- Виды уборок: `categories`.
 - Кафе (`assign`, `remove`): `cafes` по выбранной точке, затем `templates`; `save_dop_time` — `cafes`.
 - Проверка (все действия): `control` по текущим точке и датам.
-- Ответы `control` кэшируются на сессию модуля по точке и датам. После изменений шаблонов (`save_new`, `save_edit`, `save_status`, `delete`) и кафе (`assign`, `remove`, `save_dop_time`) кэш сбрасывается, и при возврате в «Контроль» `control` запрашивается заново.
+- Ответы `control` кэшируются на сессию модуля по точке и датам. После изменений шаблонов (`save_new`, `save_edit`, `save_status`, `delete`) и кафе (`assign`, `remove`, `save_dop_time`) кэш сбрасывается, и при возврате в «Проверку заготовок и уборок» `control` запрашивается заново.
 - `get_all` не используется как универсальная перезагрузка.
 
 ## Не используется FE

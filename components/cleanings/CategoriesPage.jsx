@@ -18,11 +18,14 @@ import {
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchIcon from "@mui/icons-material/Search";
 import { TextEditor } from "@/ui/Forms";
 import HistoryLog from "@/ui/history/HistoryLog";
+import { JacoButton } from "@/design-system/shared/ui";
+import { formatPlural } from "@/src/helpers/utils/i18n";
 import { FormLabel } from "./shared";
 
 const centeredButtonSx = {
@@ -41,6 +44,12 @@ const actionButtonSx = {
   whiteSpace: "nowrap",
 };
 
+function getAppliedToText(count) {
+  return count
+    ? `Применяется к ${formatPlural(count, ["уборке", "уборкам", "уборкам"])}`
+    : "Пока ни к одной уборке не применяется";
+}
+
 function CategoryTemplatesAccordion({ templates }) {
   return (
     <Accordion
@@ -54,7 +63,7 @@ function CategoryTemplatesAccordion({ templates }) {
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Уборки этой категории</Typography>
+          <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Применяется для</Typography>
           <Chip
             label={templates.length}
             size="small"
@@ -77,7 +86,7 @@ function CategoryTemplatesAccordion({ templates }) {
           </Box>
         ) : (
           <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-            В этой категории пока нет уборок
+            Пока ни к одной уборке не применяется
           </Typography>
         )}
       </AccordionDetails>
@@ -92,6 +101,7 @@ export default function CleaningCategoriesView({
   categoryQuery,
   onCategoryQueryChange,
   onSelectCategory,
+  onCreateCategory,
   draftCategory,
   onDraftCategoryChange,
   onSaveCategory,
@@ -142,10 +152,6 @@ export default function CleaningCategoriesView({
     }
   }, [draftCategory, isMobile]);
 
-  if (!selectedCategory) {
-    return null;
-  }
-
   return (
     <Grid
       container
@@ -156,12 +162,20 @@ export default function CleaningCategoriesView({
           variant="outlined"
           sx={{ borderRadius: "8px", overflow: "hidden", height: "100%" }}
         >
-          <Box sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+          <Box
+            sx={{
+              p: 1.5,
+              display: "grid",
+              gap: 1.5,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
             <TextField
               size="small"
               fullWidth
               value={categoryQuery}
-              placeholder="Поиск категории"
+              placeholder="Поиск вида уборки"
               onChange={(event) => onCategoryQueryChange(event.target.value)}
               slotProps={{
                 input: {
@@ -173,6 +187,16 @@ export default function CleaningCategoriesView({
                 },
               }}
             />
+            {canEdit ? (
+              <JacoButton
+                compact
+                fullWidth
+                startIcon={<AddIcon />}
+                onClick={onCreateCategory}
+              >
+                Новый вид уборки
+              </JacoButton>
+            ) : null}
           </Box>
 
           <Box>
@@ -180,7 +204,7 @@ export default function CleaningCategoriesView({
               const usedCount = templates.filter(
                 (template) => template.categoryId === category.id,
               ).length;
-              const selected = category.id === selectedCategory.id;
+              const selected = category.id === selectedCategory?.id;
 
               return (
                 <Box
@@ -210,116 +234,123 @@ export default function CleaningCategoriesView({
                 </Box>
               );
             })}
-          </Box>
-        </Paper>
-      </Grid>
-      <Grid
-        size={{ xs: 12, md: 9 }}
-        sx={{ display: { xs: "none", md: "block" } }}
-      >
-        <Paper
-          variant="outlined"
-          sx={{
-            borderRadius: { xs: 0, md: "8px" },
-            overflow: "hidden",
-            border: { xs: 0, md: "1px solid #e0e0e0" },
-            bgcolor: { xs: "transparent", md: "background.paper" },
-          }}
-        >
-          <Box
-            sx={{
-              p: { xs: 0, md: 1.5 },
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Box>
-              <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
-                {selectedCategory.name}
+            {filteredCategories.length ? null : (
+              <Typography sx={{ px: 1.5, py: 2, color: "text.secondary", fontSize: 14 }}>
+                {categories.length ? "Ничего не найдено" : "Видов уборок пока нет"}
               </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-                Используется в {selectedTemplatesCount} уборках
-              </Typography>
-            </Box>
-
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<DeleteOutlineIcon />}
-              onClick={() => onDeleteCategory(selectedCategory.id)}
-              disabled={
-                !canEdit ||
-                !selectedCategory.id ||
-                categories.length <= 1 ||
-                selectedCategory.deletable === false
-              }
-              sx={actionButtonSx}
-            >
-              Удалить
-            </Button>
-          </Box>
-
-          <Box sx={{ px: 2, pt: 2 }}>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={onSaveCategory}
-              disabled={!canEdit}
-              sx={actionButtonSx}
-            >
-              Сохранить
-            </Button>
-          </Box>
-
-          <Box sx={{ p: 2, display: "grid", gap: 2 }}>
-            <Grid
-              container
-              spacing={2}
-            >
-              <Grid size={12}>
-                <FormLabel>Название</FormLabel>
-                <TextField
-                  size="small"
-                  fullWidth
-                  value={selectedCategory.name}
-                  disabled={!canEdit}
-                  onChange={(event) => updateSelectedCategory("name", event.target.value)}
-                />
-              </Grid>
-            </Grid>
-
-            <Box>
-              <FormLabel>Подробная инструкция</FormLabel>
-              <TextEditor
-                value={selectedCategory.instruction}
-                func={(value) => updateSelectedCategory("instruction", value)}
-                disabled={!canEdit}
-                height={300}
-                variant="newsDialog"
-                menubar="file edit view insert format tools table"
-                toolbar="undo redo | blocks | bold italic forecolor | bullist numlist | alignleft aligncenter alignright | removeformat"
-              />
-            </Box>
-
-            <CategoryTemplatesAccordion templates={selectedTemplates} />
-
-            {historyLoading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                <CircularProgress size={24} />
-              </Box>
-            ) : (
-              <HistoryLog
-                history={history}
-                defaultExpanded={false}
-              />
             )}
           </Box>
         </Paper>
       </Grid>
+      {selectedCategory ? (
+        <Grid
+          size={{ xs: 12, md: 9 }}
+          sx={{ display: { xs: "none", md: "block" } }}
+        >
+          <Paper
+            variant="outlined"
+            sx={{
+              borderRadius: { xs: 0, md: "8px" },
+              overflow: "hidden",
+              border: { xs: 0, md: "1px solid #e0e0e0" },
+              bgcolor: { xs: "transparent", md: "background.paper" },
+            }}
+          >
+            <Box
+              sx={{
+                p: { xs: 0, md: 1.5 },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+                  {selectedCategory.name}
+                </Typography>
+                <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
+                  {getAppliedToText(selectedTemplatesCount)}
+                </Typography>
+              </Box>
+
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => onDeleteCategory(selectedCategory.id)}
+                disabled={
+                  !canEdit ||
+                  !selectedCategory.id ||
+                  categories.length <= 1 ||
+                  selectedCategory.deletable === false
+                }
+                sx={actionButtonSx}
+              >
+                Удалить
+              </Button>
+            </Box>
+
+            <Box sx={{ px: 2, pt: 2 }}>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={onSaveCategory}
+                disabled={!canEdit}
+                sx={actionButtonSx}
+              >
+                Сохранить
+              </Button>
+            </Box>
+
+            <Box sx={{ p: 2, display: "grid", gap: 2 }}>
+              <Grid
+                container
+                spacing={2}
+              >
+                <Grid size={12}>
+                  <FormLabel>Название</FormLabel>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    value={selectedCategory.name}
+                    disabled={!canEdit}
+                    onChange={(event) => updateSelectedCategory("name", event.target.value)}
+                  />
+                </Grid>
+              </Grid>
+
+              <Box>
+                <FormLabel>Подробная инструкция</FormLabel>
+                <TextEditor
+                  value={selectedCategory.instruction}
+                  func={(value) => updateSelectedCategory("instruction", value)}
+                  disabled={!canEdit}
+                  height={300}
+                  variant="newsDialog"
+                  menubar="file edit view insert format tools table"
+                  toolbar="undo redo | blocks | bold italic forecolor | bullist numlist | alignleft aligncenter alignright | removeformat"
+                />
+              </Box>
+
+              <CategoryTemplatesAccordion templates={selectedTemplates} />
+
+              {historyLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                <HistoryLog
+                  history={history}
+                  defaultExpanded={false}
+                />
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+      ) : null}
       <CategoryMobileEditDialog
         open={mobileEditorOpen}
         category={selectedCategory}
@@ -368,7 +399,7 @@ function CategoryMobileEditDialog({
       <DialogTitle sx={{ fontWeight: 700 }}>
         {category.name}
         <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
-          Используется в {templatesCount} уборках
+          {getAppliedToText(templatesCount)}
         </Typography>
       </DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 2, overflow: "auto" }}>
@@ -443,12 +474,12 @@ export function DeleteCategoryDialog({ open, category, templates = [], onClose, 
       maxWidth="xs"
       slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>Удалить категорию?</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>Удалить вид уборки?</DialogTitle>
       <DialogContent>
         <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
           {hasLinkedTemplates
-            ? `Категорию «${category?.name || ""}» нельзя удалить, пока она связана с уборками. Сначала перенесите или удалите связанные уборки.`
-            : `Категория «${category?.name || ""}» будет удалена.`}
+            ? `Вид уборки «${category?.name || ""}» нельзя удалить, пока он применяется к уборкам. Сначала перенесите или удалите связанные уборки.`
+            : `Вид уборки «${category?.name || ""}» будет удалён.`}
         </Typography>
 
         {hasLinkedTemplates ? (

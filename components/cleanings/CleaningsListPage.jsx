@@ -16,9 +16,11 @@ import {
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import { JacoButton } from "@/design-system/shared/ui";
 import { getCategoryName, getScheduleText, tableHeaderSx, tableRowSx } from "./helpers";
 import { CleaningActions } from "./shared";
 
@@ -31,6 +33,8 @@ export default function CleaningsListPage({
   templates,
   categories,
   scheduleTypeOptions,
+  onCreate,
+  canCreate = false,
   openEdit,
   toggleArchive,
   removeTemplate,
@@ -67,7 +71,7 @@ export default function CleaningsListPage({
               size="small"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Поиск по названию или роли"
+              placeholder="Поиск по объекту уборки или должности"
               sx={{ width: { xs: "100%", sm: 420 } }}
               slotProps={{
                 input: {
@@ -115,21 +119,40 @@ export default function CleaningsListPage({
             </ToggleButtonGroup>
           </Box>
 
-          <Typography sx={{ color: "text.secondary", fontSize: 14, whiteSpace: "nowrap" }}>
-            Показано <b>{filteredTemplates.length}</b> из {templates.length}
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: { xs: "space-between", md: "flex-end" },
+              gap: 1.5,
+              flexWrap: "wrap",
+            }}
+          >
+            <Typography sx={{ color: "text.secondary", fontSize: 14, whiteSpace: "nowrap" }}>
+              Показано <b>{filteredTemplates.length}</b> из {templates.length}
+            </Typography>
+            {canCreate ? (
+              <JacoButton
+                compact
+                startIcon={<AddIcon />}
+                onClick={onCreate}
+              >
+                Новая уборка
+              </JacoButton>
+            ) : null}
+          </Box>
         </Box>
 
         <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
           <Table size="small">
             <TableHead>
               <TableRow sx={tableHeaderSx}>
-                <TableCell sx={{ width: "34%" }}>Название</TableCell>
-                <TableCell>Категория</TableCell>
-                <TableCell>Роль</TableCell>
+                <TableCell sx={{ width: "34%" }}>Объект уборки</TableCell>
+                <TableCell>Вид уборки</TableCell>
+                <TableCell>Должность</TableCell>
                 <TableCell>Длительность</TableCell>
                 <TableCell sx={{ width: "18%" }}>Расписание</TableCell>
-                <TableCell align="center">Локации</TableCell>
+                <TableCell align="center">Кафе</TableCell>
                 <TableCell>Статус</TableCell>
                 <TableCell align="right">Действия</TableCell>
               </TableRow>
@@ -287,7 +310,7 @@ export default function CleaningsListPage({
                 </Typography>
               </Box>
               <Typography sx={{ color: "text.secondary", mb: 1, fontSize: 14 }}>
-                Локаций: {item.locationIds.length}
+                Кафе: {item.locationIds.length}
               </Typography>
               <CleaningActions
                 item={item}

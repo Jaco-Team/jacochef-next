@@ -28,6 +28,7 @@ import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import { MySelect, MyTextInput } from "@/ui/Forms";
+import { JacoButton } from "@/design-system/shared/ui";
 import {
   getCategoryName,
   getLocationName,
@@ -65,6 +66,9 @@ export default function CafesView({
   onCafeChange,
   onRoleFilterChange,
   onRemoveCleaning,
+  onAddOpen,
+  onSaveDopTimes,
+  hasDopTimeChanges = false,
   dopTimeDrafts = {},
   onDopTimeChange,
   canEdit,
@@ -75,7 +79,7 @@ export default function CafesView({
     name: getLocationName(location),
   }));
   const roleOptions = [
-    { id: "all", name: "Все роли" },
+    { id: "all", name: "Все должности" },
     ...roles.map((role) => ({
       id: role?.name || "",
       name: role?.name || "",
@@ -151,7 +155,7 @@ export default function CafesView({
               />
 
               <MySelect
-                label="Роль"
+                label="Должность"
                 data={roleOptions}
                 value={roleFilter}
                 func={(event) => onRoleFilterChange(event.target.value)}
@@ -163,16 +167,46 @@ export default function CafesView({
               />
             </Box>
 
-            <Typography
+            <Box
               sx={{
-                color: "text.secondary",
-                fontSize: 14,
-                whiteSpace: { xs: "normal", md: "nowrap" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: { xs: "flex-start", md: "flex-end" },
+                flexWrap: "wrap",
+                gap: 1.5,
                 width: { xs: "100%", md: "auto" },
               }}
             >
-              <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe?.name || "—"}»
-            </Typography>
+              <Typography
+                sx={{
+                  color: "text.secondary",
+                  fontSize: 14,
+                  whiteSpace: { xs: "normal", md: "nowrap" },
+                  width: { xs: "100%", md: "auto" },
+                }}
+              >
+                <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe?.name || "—"}»
+              </Typography>
+              {canEdit ? (
+                <>
+                  <JacoButton
+                    compact
+                    startIcon={<AddIcon />}
+                    onClick={onAddOpen}
+                  >
+                    Добавить уборку
+                  </JacoButton>
+                  <JacoButton
+                    compact
+                    tone="success"
+                    onClick={onSaveDopTimes}
+                    disabled={!hasDopTimeChanges}
+                  >
+                    Сохранить изменения
+                  </JacoButton>
+                </>
+              ) : null}
+            </Box>
           </Box>
         </Paper>
       </Grid>
@@ -191,9 +225,9 @@ export default function CafesView({
             <Table size="small">
               <TableHead>
                 <TableRow sx={tableHeaderSx}>
-                  <TableCell sx={{ width: "34%" }}>Уборка</TableCell>
-                  <TableCell>Категория</TableCell>
-                  <TableCell>Роль</TableCell>
+                  <TableCell sx={{ width: "34%" }}>Объект уборки</TableCell>
+                  <TableCell>Вид уборки</TableCell>
+                  <TableCell>Должность</TableCell>
                   <TableCell>Длительность</TableCell>
                   <TableCell sx={{ width: 132 }}>Доп. время</TableCell>
                   <TableCell sx={{ width: "24%" }}>Расписание</TableCell>
@@ -458,7 +492,7 @@ function CafeCleaningInfoDialog({ open, cleaning, category, onClose }) {
               {cleaning?.name || ""}
             </Typography>
             <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.75 }}>
-              {category?.name || "Без категории"} · {cleaning?.role || "Без роли"} ·{" "}
+              {category?.name || "Без вида уборки"} · {cleaning?.role || "Без должности"} ·{" "}
               {cleaning?.duration || "—"} мин
             </Typography>
           </Box>
@@ -507,7 +541,7 @@ export function AddCafeCleaningDialog({
 }) {
   const { pendingKey, isPending, runPending } = usePendingAction();
   const roleOptions = [
-    { id: "all", name: "Все роли" },
+    { id: "all", name: "Все должности" },
     ...roles.map((role) => ({
       id: role?.name || "",
       name: role?.name || "",
@@ -551,7 +585,7 @@ export function AddCafeCleaningDialog({
           <TextField
             size="small"
             value={query}
-            placeholder="Поиск по названию, роли или категории"
+            placeholder="Поиск по объекту, должности или виду уборки"
             onChange={(event) => onQueryChange(event.target.value)}
             slotProps={{
               input: {
@@ -564,7 +598,7 @@ export function AddCafeCleaningDialog({
             }}
           />
           <MySelect
-            label="Роль"
+            label="Должность"
             data={roleOptions}
             value={roleFilter}
             func={(event) => onRoleFilterChange(event.target.value)}

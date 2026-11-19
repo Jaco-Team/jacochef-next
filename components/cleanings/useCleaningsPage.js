@@ -14,7 +14,13 @@ import {
   normalizeTemplatesResponse,
 } from "./cleaningsNormalizers";
 import useCleaningsApi from "./useCleaningsApi";
-import { getCategoryName } from "./helpers";
+import { CLEANINGS_MODULE_NAME } from "./constants";
+import {
+  getCategoryName,
+  getVisibleControlKindTabs,
+  getVisibleSectionTabs,
+  resolveCleaningsRoute,
+} from "./helpers";
 
 const cleaningsSessionCache = {
   bootstrap: null,
@@ -42,9 +48,11 @@ function invalidateControlCache() {
   cleaningsSessionCache.controlByFilters = {};
 }
 
+// `requestedPath` / `requestedKind` are raw URL segments; the active section is resolved against access.
 export default function useCleaningsPage({
-  initialSection = "templates",
-  initialControlKind = "cleanings",
+  requestedPath = null,
+  requestedKind = null,
+  routeReady = false,
 } = {}) {
   const cleaningsApi = useCleaningsApi();
   const { isAlert, showAlert, closeAlert, alertStatus, alertMessage } = useMyAlert();
@@ -52,8 +60,7 @@ export default function useCleaningsPage({
   const cachedBootstrap = cleaningsSessionCache.bootstrap;
   const cachedLocations = cachedBootstrap?.locations || [];
 
-  const [section, setSection] = useState(initialSection);
-  const [controlKind, setControlKind] = useState(initialControlKind);
+  const [bootstrapReady, setBootstrapReady] = useState(Boolean(cachedBootstrap));
   const [bootstrapLoading, setBootstrapLoading] = useState(false);
   const [controlLoading, setControlLoading] = useState(false);
   const [mutationLoading, setMutationLoading] = useState(false);
@@ -70,6 +77,23 @@ export default function useCleaningsPage({
     cachedBootstrap?.additionTypeOptions || [],
   );
   const [access, setAccess] = useState(cachedBootstrap?.access || {});
+
+  const accessApi = useMemo(() => handleUserAccess(access), [access]);
+  const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
+  const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
+  const canAccess = useCallback((key) => accessApi.userCan("access", key), [accessApi]);
+
+  const sectionTabs = useMemo(() => getVisibleSectionTabs(canView), [canView]);
+  const controlKindTabs = useMemo(() => getVisibleControlKindTabs(canView), [canView]);
+  const route = useMemo(
+    () =>
+      bootstrapReady && routeReady
+        ? resolveCleaningsRoute([requestedPath, requestedKind], canView)
+        : null,
+    [bootstrapReady, canView, requestedKind, requestedPath, routeReady],
+  );
+  const section = route?.section ?? null;
+  const controlKind = route?.controlKind ?? null;
 
   const [controlItems, setControlItems] = useState([]);
   const [preparationItems, setPreparationItems] = useState([]);
@@ -128,14 +152,6 @@ export default function useCleaningsPage({
   const [controlAction, setControlAction] = useState(null);
   const [preparationAction, setPreparationAction] = useState(null);
   const [editingPreparation, setEditingPreparation] = useState(null);
-
-  useEffect(() => {
-    setSection(initialSection);
-  }, [initialSection]);
-
-  useEffect(() => {
-    setControlKind(initialControlKind);
-  }, [initialControlKind]);
 
   useEffect(() => {
     cleaningsSessionCache.controlFilters = {
@@ -202,6 +218,7 @@ export default function useCleaningsPage({
       setAdditionTypeOptions(normalized.additionTypeOptions);
       setAccess(normalized.access);
       syncLocationFilters(normalized.locations);
+      setBootstrapReady(true);
     },
     [syncLocationFilters],
   );
@@ -308,12 +325,12 @@ export default function useCleaningsPage({
       try {
         const response = await cleaningsApi.getCategories();
         if (!response?.st) {
-          throw new Error(response?.text || "Ошибка загрузки категорий");
+          throw new Error(response?.text || "Ошибка загрузки видов уборок");
         }
 
         return applyCategories(response);
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки категорий");
+        showAlert(error?.message || "Ошибка загрузки видов уборок");
         return [];
       } finally {
         setBootstrapLoading(false);
@@ -403,7 +420,7 @@ export default function useCleaningsPage({
               dateTo: activeDateTo,
             });
             if (!response?.st) {
-              throw new Error(response?.text || "Ошибка загрузки данных контроля");
+              throw new Error(response?.text || "Ошибка загрузки данных проверки");
             }
 
             const normalized = normalizeControlResponse(response);
@@ -424,7 +441,7 @@ export default function useCleaningsPage({
         setManualTemplatesSupported(normalized.manualTemplatesSupported);
         setControlPermissions(normalized.permissions);
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки данных контроля");
+        showAlert(error?.message || "Ошибка загрузки данных проверки");
       } finally {
         if (cleaningsSessionCache.inFlightControlRequest?.key === requestKey) {
           cleaningsSessionCache.inFlightControlRequest = null;
@@ -484,11 +501,6 @@ export default function useCleaningsPage({
       categoryDraft || categories.find((category) => category.id === selectedCategoryId) || null,
     [categories, categoryDraft, selectedCategoryId],
   );
-
-  const accessApi = useMemo(() => handleUserAccess(access), [access]);
-  const canView = useCallback((key) => accessApi.userCan("view", key), [accessApi]);
-  const canEdit = useCallback((key) => accessApi.userCan("edit", key), [accessApi]);
-  const canAccess = useCallback((key) => accessApi.userCan("access", key), [accessApi]);
 
   useEffect(() => {
     if (section !== "categories" || !selectedCategory?.id) {
@@ -709,7 +721,6 @@ export default function useCleaningsPage({
       templatesCount: 0,
       deletable: true,
     });
-    setSection("categories");
   }, []);
 
   const saveCategory = useCallback(async () => {
@@ -1109,24 +1120,7 @@ export default function useCleaningsPage({
     [cleaningsApi, loadControl, locations, runMutation, showAlert],
   );
 
-  const pageTitle =
-    section === "categories"
-      ? "Категории уборок"
-      : section === "cafes"
-        ? "Кафе"
-        : section === "control"
-          ? controlKind === "preparations"
-            ? "Контроль - заготовки"
-            : "Контроль - уборки"
-          : moduleInfo?.name || "Уборки";
-  const pageSubtitle =
-    section === "categories"
-      ? "Группируйте уборки по типу работ. В каждой категории — инструкция для сотрудника."
-      : section === "cafes"
-        ? "Просматривайте уборки, назначенные на выбранное кафе."
-        : section === "control"
-          ? "Подтверждайте выполненные уборки и заготовки."
-          : "Создавайте и настраивайте уборки. Назначьте их на локации во вкладке «Кафе».";
+  const moduleName = moduleInfo?.name || CLEANINGS_MODULE_NAME;
 
   return {
     access,
@@ -1139,6 +1133,7 @@ export default function useCleaningsPage({
     alertMessage,
     alertStatus,
     bootstrapLoading,
+    bootstrapReady,
     cafeAssignedTemplates,
     cafeAvailableTemplates,
     cafeRoleFilter,
@@ -1174,19 +1169,17 @@ export default function useCleaningsPage({
     historyItem,
     historyLoading,
     historyRows,
-    initialSection,
     isAlert,
     loading: bootstrapLoading || mutationLoading,
     locations,
     manualTemplates,
     manualTemplatesSupported,
+    moduleName,
     mutationLoading,
     openCreate,
     openEdit,
     openPreparationEdit,
     openTemplateHistory,
-    pageSubtitle,
-    pageTitle,
     preparationAction,
     preparationActionCandidate,
     preparationCafeId,
@@ -1200,7 +1193,10 @@ export default function useCleaningsPage({
     savePreparation,
     saveTemplate,
     scheduleTypeOptions,
+    route,
     section,
+    sectionTabs,
+    controlKindTabs,
     selectedCafe,
     selectedCafeId,
     selectedCategoryId,
@@ -1215,7 +1211,6 @@ export default function useCleaningsPage({
     setControlDateFrom,
     setControlDateTo,
     setControlFilter,
-    setControlKind,
     setDeleteCategoryId,
     setEditingPreparation,
     setFilter,
@@ -1225,7 +1220,6 @@ export default function useCleaningsPage({
     setPreparationDateTo,
     setQuery,
     setRemoveCafeCleaningId,
-    setSection,
     setSelectedCafeId,
     setCategoryDraft: updateCategoryDraft,
     setCafeRoleFilter,

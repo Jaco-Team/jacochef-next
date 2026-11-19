@@ -1,19 +1,18 @@
 import React, { useEffect } from "react";
-import Link from "next/link";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { Box, Grid, Typography } from "@mui/material";
 import {
-  Backdrop,
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import MyAlert from "@/ui/MyAlert";
+  JacoAlert,
+  JacoBackdropLoader,
+  JacoCompactTabs,
+  JacoSegmentedTabs,
+  JacoSurface,
+  uiColors,
+  uiShadows,
+} from "@/design-system/shared/ui";
 import { useConfirm } from "@/src/hooks/useConfirm";
-import { cleaningSectionTabs, controlKindTabs } from "./constants";
+import { getSectionSegments } from "./helpers";
 import CleaningTemplateDialog from "./CleaningTemplateDialog";
 import CleaningHistoryDialog from "./CleaningHistoryDialog";
 import CleaningsListPage from "./CleaningsListPage";
@@ -24,18 +23,81 @@ import PreparationControlView, { PreparationEditDialog } from "./ControlPreparat
 import { ControlActionConfirmDialog, PreparationActionConfirmDialog } from "./ControlDialogs";
 import useCleaningsPage from "./useCleaningsPage";
 
-export default function CleaningsPage({
-  initialSection = "templates",
-  initialControlKind = "cleanings",
-} = {}) {
-  const page = useCleaningsPage({ initialSection, initialControlKind });
-  const { withConfirm, ConfirmDialog } = useConfirm();
+const PAGE_PATHNAME = "/cleanings/[[...section]]";
 
+function getRouteSegments(section) {
+  if (Array.isArray(section)) {
+    return section;
+  }
+
+  return section ? [section] : [];
+}
+
+function sectionUrl(query, segments) {
+  const { section, ...otherQuery } = query;
+
+  return {
+    pathname: PAGE_PATHNAME,
+    query: { ...otherQuery, section: segments },
+  };
+}
+
+export default function CleaningsPage() {
+  const router = useRouter();
+  const routeSegments = getRouteSegments(router.query.section);
+  const routeKey = routeSegments.join("/");
+  const page = useCleaningsPage({
+    requestedPath: routeSegments[0] ?? null,
+    requestedKind: routeSegments[1] ?? null,
+    routeReady: router.isReady,
+  });
+  const { withConfirm, ConfirmDialog } = useConfirm();
+  const { route, showAlert } = page;
+  const canonicalKey = route ? route.segments.join("/") : null;
+  const activeTab = page.sectionTabs.find((tab) => tab.value === page.section) || null;
+
+  const navigate = (segments, method = "push") =>
+    router[method](sectionUrl(router.query, segments), undefined, {
+      shallow: true,
+      scroll: false,
+    }).catch((error) => {
+      if (!error?.cancelled) {
+        showAlert("Не удалось открыть раздел");
+      }
+    });
+
+  // Bare /cleanings, unknown or forbidden sections are replaced with the resolved accessible one.
   useEffect(() => {
-    document.title = page.pageTitle;
-  }, [page.pageTitle]);
+    if (!route || canonicalKey === routeKey) {
+      return;
+    }
+
+    navigate(route.segments, "replace");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canonicalKey, routeKey]);
+
+  const changeSection = (_, value) => {
+    if (value === page.section) {
+      return;
+    }
+
+    const kind = value === "control" ? page.controlKindTabs[0]?.value : null;
+    navigate(getSectionSegments(value, kind));
+  };
+
+  const changeControlKind = (_, value) => {
+    if (value === page.controlKind) {
+      return;
+    }
+
+    navigate(getSectionSegments("control", value));
+  };
 
   return (
+    <>
+    <Head>
+      <title>{page.moduleName}</title>
+    </Head>
     <Box
       sx={{
         "& .MuiButton-root": {
@@ -48,14 +110,12 @@ export default function CleaningsPage({
         },
       }}
     >
-      <Backdrop
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 2 }}
+      <JacoBackdropLoader
         open={page.bootstrapLoading || page.controlLoading || page.mutationLoading}
-      >
-        <CircularProgress />
-      </Backdrop>
+        sx={{ "& .MuiCircularProgress-root": { color: "common.white" } }}
+      />
 
-      <MyAlert
+      <JacoAlert
         isOpen={page.isAlert}
         onClose={page.closeAlert}
         status={page.alertStatus}
@@ -68,155 +128,53 @@ export default function CleaningsPage({
         className="container_first_child"
       >
         <Grid size={12}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: { xs: "flex-start", md: "center" },
-              justifyContent: "space-between",
-              gap: 2,
-              flexDirection: { xs: "column", md: "row" },
-            }}
-          >
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ fontWeight: 700, mb: 0.5, fontSize: { xs: 28, md: 32 } }}
-              >
-                {page.pageTitle}
-              </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
-                {page.pageSubtitle}
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={page.section}
-                sx={{
-                  "& .MuiToggleButton-root": {
-                    width: 92,
-                    height: 40,
-                    px: 0,
-                    py: 0,
-                    minHeight: 40,
-                    lineHeight: "20px",
-                    textTransform: "none",
-                    fontSize: 14,
-                    fontWeight: 600,
-                  },
-                }}
-              >
-                {cleaningSectionTabs
-                  .filter((tab) => {
-                    if (tab.value === "templates") return page.canView("cleanings");
-                    if (tab.value === "categories") return page.canView("categories");
-                    if (tab.value === "cafes") return page.canView("cafes");
-                    if (tab.value === "control") {
-                      return page.canView("control_cleanings") || page.canView("control_pf");
-                    }
-                    return true;
-                  })
-                  .map((tab) => (
-                    <ToggleButton
-                      key={tab.value}
-                      component={Link}
-                      href={tab.href}
-                      value={tab.value}
-                      onClick={() => page.setSection(tab.value)}
-                    >
-                      {tab.label}
-                    </ToggleButton>
-                  ))}
-              </ToggleButtonGroup>
-
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={page.openCreate}
-                sx={{
-                  minHeight: 40,
-                  px: 2.25,
-                  borderRadius: "8px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  display:
-                    page.section === "templates" && page.canAccess("create_cleaning")
-                      ? "inline-flex"
-                      : "none",
-                }}
-              >
-                Новая уборка
-              </Button>
-
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={page.createCategory}
-                sx={{
-                  minHeight: 40,
-                  px: 2.25,
-                  borderRadius: "8px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  display:
-                    page.section === "categories" && page.canEdit("categories")
-                      ? "inline-flex"
-                      : "none",
-                }}
-              >
-                Новая категория
-              </Button>
-
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => page.setAddCafeDialogOpen(true)}
-                sx={{
-                  minHeight: 40,
-                  px: 2.25,
-                  borderRadius: "8px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  display:
-                    page.section === "cafes" && page.canEdit("cafes") ? "inline-flex" : "none",
-                }}
-              >
-                Добавить уборку
-              </Button>
-
-              <Button
-                size="small"
-                variant="contained"
-                color="success"
-                onClick={withConfirm(page.saveCafeDopTimes, "Сохранить изменения доп. времени?")}
-                disabled={!Object.keys(page.cafeDopTimeDrafts).length}
-                sx={{
-                  minHeight: 40,
-                  px: 2.25,
-                  borderRadius: "8px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  display:
-                    page.section === "cafes" && page.canEdit("cafes") ? "inline-flex" : "none",
-                }}
-              >
-                Сохранить изменения
-              </Button>
-            </Box>
-          </Box>
+          <h1>{page.moduleName}</h1>
         </Grid>
 
-        {page.section === "categories" && page.canView("categories") ? (
+        {page.sectionTabs.length ? (
+          <Grid size={12}>
+            <JacoSurface
+              sx={{
+                p: 0,
+                overflow: "hidden",
+                backgroundColor: uiColors.surface,
+                borderColor: uiColors.border,
+                boxShadow: uiShadows.surface,
+              }}
+            >
+              <JacoCompactTabs
+                value={page.section ?? false}
+                onChange={changeSection}
+                items={page.sectionTabs.map((tab) => ({
+                  id: tab.value,
+                  value: tab.value,
+                  label: tab.label,
+                }))}
+                aria-label="cleanings tabs"
+                variant="scrollable"
+                scrollButtons={false}
+                allowScrollButtonsMobile
+                tabSx={{ textTransform: "uppercase" }}
+              />
+            </JacoSurface>
+            {activeTab?.description ? (
+              <Typography sx={{ mt: 1.5, color: "text.secondary", fontSize: 15 }}>
+                {activeTab.description}
+              </Typography>
+            ) : null}
+          </Grid>
+        ) : null}
+
+        {page.bootstrapReady && !page.sectionTabs.length ? (
+          <Grid size={12}>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>Нет доступных разделов</Typography>
+            <Typography sx={{ color: "text.secondary" }}>
+              Проверьте права доступа к модулю.
+            </Typography>
+          </Grid>
+        ) : null}
+
+        {page.section === "categories" ? (
           <Grid size={12}>
             <CleaningCategoriesView
               categories={page.categories}
@@ -225,6 +183,7 @@ export default function CleaningsPage({
               categoryQuery={page.categoryQuery}
               onCategoryQueryChange={page.setCategoryQuery}
               onSelectCategory={page.selectCategory}
+              onCreateCategory={page.createCategory}
               draftCategory={page.categoryDraft}
               onDraftCategoryChange={page.setCategoryDraft}
               onSaveCategory={page.saveCategory}
@@ -236,7 +195,27 @@ export default function CleaningsPage({
           </Grid>
         ) : null}
 
-        {page.section === "cafes" && page.canView("cafes") ? (
+        {page.section === "templates" ? (
+          <CleaningsListPage
+            query={page.query}
+            setQuery={page.setQuery}
+            filter={page.filter}
+            setFilter={page.setFilter}
+            filteredTemplates={page.filteredTemplates}
+            templates={page.templates}
+            categories={page.categories}
+            scheduleTypeOptions={page.scheduleTypeOptions}
+            onCreate={page.openCreate}
+            canCreate={page.canAccess("create_cleaning")}
+            openEdit={page.openEdit}
+            toggleArchive={page.toggleArchive}
+            removeTemplate={withConfirm(page.removeTemplate, "Удалить уборку полностью?", 3)}
+            onHistory={page.openTemplateHistory}
+            canEdit={page.canEdit("cleanings")}
+          />
+        ) : null}
+
+        {page.section === "cafes" ? (
           <Grid size={12}>
             <CafesView
               templates={page.cafeAssignedTemplates}
@@ -249,6 +228,12 @@ export default function CleaningsPage({
               onCafeChange={page.setSelectedCafeId}
               onRoleFilterChange={page.setCafeRoleFilter}
               onRemoveCleaning={page.setRemoveCafeCleaningId}
+              onAddOpen={() => page.setAddCafeDialogOpen(true)}
+              onSaveDopTimes={withConfirm(
+                page.saveCafeDopTimes,
+                "Сохранить изменения доп. времени?",
+              )}
+              hasDopTimeChanges={Object.keys(page.cafeDopTimeDrafts).length > 0}
               dopTimeDrafts={page.cafeDopTimeDrafts}
               onDopTimeChange={page.setCafeDopTimeDraft}
               canEdit={page.canEdit("cafes")}
@@ -256,46 +241,18 @@ export default function CleaningsPage({
           </Grid>
         ) : null}
 
-        {page.section === "control" &&
-        (page.canView("control_cleanings") || page.canView("control_pf")) ? (
+        {page.section === "control" ? (
           <Grid size={12}>
-            <Box sx={{ display: "flex", mb: 1.5 }}>
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={page.controlKind}
-                sx={{
-                  "& .MuiToggleButton-root": {
-                    minHeight: 38,
-                    px: 2,
-                    py: 0,
-                    textTransform: "none",
-                    fontSize: 14,
-                    fontWeight: 700,
-                  },
-                }}
-              >
-                {controlKindTabs
-                  .filter((tab) => {
-                    if (tab.value === "cleanings") return page.canView("control_cleanings");
-                    if (tab.value === "preparations") return page.canView("control_pf");
-                    return true;
-                  })
-                  .map((tab) => (
-                    <ToggleButton
-                      key={tab.value}
-                      component={Link}
-                      href={tab.href}
-                      value={tab.value}
-                      onClick={() => page.setControlKind(tab.value)}
-                    >
-                      {tab.label}
-                    </ToggleButton>
-                  ))}
-              </ToggleButtonGroup>
-            </Box>
+            <JacoSegmentedTabs
+              size="compact"
+              value={page.controlKind ?? false}
+              onChange={changeControlKind}
+              items={page.controlKindTabs.map((tab) => ({ id: tab.value, label: tab.label }))}
+              aria-label="cleanings control tabs"
+              sx={{ maxWidth: 360, mb: 2 }}
+            />
 
-            {page.controlKind === "cleanings" && page.canView("control_cleanings") ? (
+            {page.controlKind === "cleanings" ? (
               <ControlView
                 items={page.controlItems}
                 templates={page.templates}
@@ -317,7 +274,9 @@ export default function CleaningsPage({
                 isLoading={page.controlLoading}
                 canEdit={page.canEdit("control_cleanings")}
               />
-            ) : page.canView("control_pf") ? (
+            ) : null}
+
+            {page.controlKind === "preparations" ? (
               <PreparationControlView
                 items={page.preparationItems}
                 locations={page.locations}
@@ -336,24 +295,6 @@ export default function CleaningsPage({
               />
             ) : null}
           </Grid>
-        ) : null}
-
-        {page.section === "templates" && page.canView("cleanings") ? (
-          <CleaningsListPage
-            query={page.query}
-            setQuery={page.setQuery}
-            filter={page.filter}
-            setFilter={page.setFilter}
-            filteredTemplates={page.filteredTemplates}
-            templates={page.templates}
-            categories={page.categories}
-            scheduleTypeOptions={page.scheduleTypeOptions}
-            openEdit={page.openEdit}
-            toggleArchive={page.toggleArchive}
-            removeTemplate={withConfirm(page.removeTemplate, "Удалить уборку полностью?", 3)}
-            onHistory={page.openTemplateHistory}
-            canEdit={page.canEdit("cleanings")}
-          />
         ) : null}
       </Grid>
 
@@ -447,5 +388,6 @@ export default function CleaningsPage({
 
       <ConfirmDialog />
     </Box>
+    </>
   );
 }

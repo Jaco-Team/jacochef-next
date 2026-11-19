@@ -29,16 +29,16 @@ const FALLBACK_ADDITION_TYPE_LABELS = {
   unlimited: "Без ограничений",
 };
 const TEMPLATE_HISTORY_LABELS = {
-  name: "Название",
+  name: "Объект уборки",
   status: "Статус",
-  category: "Категория",
-  role: "Роль",
+  category: "Вид уборки",
+  role: "Должность",
   duration: "Длительность",
   activationCount: "Количество активаций",
   schedule: "Расписание",
   deleteTimes: "Время удаления",
   additionType: "Тип добавления",
-  locations: "Локации",
+  locations: "Кафе",
 };
 
 function toArray(value) {
