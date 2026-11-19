@@ -1,4 +1,9 @@
-import { days, defaultForm } from "./constants";
+import {
+  ADDITION_TYPE_LABELS,
+  LEGACY_ONLY_OPTION_VALUE,
+  days,
+  defaultForm,
+} from "./constants";
 
 const PREPARATION_STATUS_FALLBACK = "pending";
 const CLEANING_STATUS_FALLBACK = "active";
@@ -17,16 +22,11 @@ const LEGACY_DOW_TO_SCHEDULE = {
   14: "after_cleaning",
 };
 const FALLBACK_SCHEDULE_LABELS = {
-  other: "По дням",
-  every_day: "Ежедневно",
-  every_day_shift_end: "Каждый день после смены",
-  manual: "Вручную",
-  after_cleaning: "После другой уборки",
-};
-const FALLBACK_ADDITION_TYPE_LABELS = {
-  other: "Без ограничений",
-  single_active: "Одна активная",
-  unlimited: "Без ограничений",
+  other: "Другое",
+  every_day: "Каждый день",
+  every_day_shift_end: "Каждый день в конце смены",
+  manual: "Ручное добавление",
+  after_cleaning: "После уборки",
 };
 const TEMPLATE_HISTORY_LABELS = {
   name: "Объект уборки",
@@ -60,6 +60,16 @@ function toStringArray(value) {
     .filter(Boolean);
 }
 
+// BE accepts strictly HH:MM: legacy "9:05" / "10:00:00" become "09:05" / "10:00", anything else is left for validation.
+function toShortTime(value) {
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(value);
+  return match ? `${match[1].padStart(2, "0")}:${match[2]}` : value;
+}
+
+function toTimeList(value) {
+  return toStringArray(value).map((time) => toShortTime(time.trim()));
+}
+
 function normalizeLocationIds(value) {
   return [...new Set(toArray(value).map((locationId) => toNumber(locationId, locationId)))].filter(
     (locationId) =>
@@ -67,10 +77,15 @@ function normalizeLocationIds(value) {
   );
 }
 
+// Older BE sends options without `description` / `selectable`: every option except "other" stays selectable.
 function normalizeOption(item = {}) {
+  const value = item?.value ?? item?.id ?? "";
+
   return {
-    value: item?.value ?? item?.id ?? "",
+    value,
     label: item?.label ?? item?.name ?? "",
+    description: item?.description ? String(item.description) : "",
+    selectable: toBoolean(item?.selectable, value !== LEGACY_ONLY_OPTION_VALUE),
   };
 }
 
@@ -215,7 +230,7 @@ function getAdditionTypeLabel(typeTime, additionTypeOptions = []) {
 
   return (
     additionTypeOptions.find((option) => option.value === additionType)?.label ||
-    FALLBACK_ADDITION_TYPE_LABELS[additionType] ||
+    ADDITION_TYPE_LABELS[additionType] ||
     ""
   );
 }
@@ -374,38 +389,52 @@ export function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
-export function normalizeLocation(item = {}) {
+// `fallbackCityId` comes from raw bootstrap `points` for BE versions without `cityId`.
+export function normalizeLocation(item = {}, fallbackCityId = null) {
   return {
     id: toNumber(item.id, item.id),
     name: item.name ? String(item.name) : "",
     base: item.base ? String(item.base) : "",
-    cityId: toNumber(item.city_id, item.city_id ?? null),
+    cityId: toNumber(item.cityId ?? item.city_id ?? item.legacy?.city_id, null) ?? fallbackCityId,
+    city: item.city ? String(item.city) : "",
   };
 }
 
-export function createLocationCities(locations = []) {
-  return Object.values(
-    locations.reduce((acc, location) => {
-      if (!location?.city) {
-        return acc;
-      }
+function getCityNameFromLocation(location) {
+  if (location.city) {
+    return location.city;
+  }
 
-      if (!acc[location.city]) {
-        acc[location.city] = {
-          id: location.city,
-          name: location.city,
-          cafes: [],
-        };
-      }
+  const [prefix, rest] = location.name.split(",");
+  return rest ? prefix.trim() : "";
+}
 
-      acc[location.city].cafes.push({
-        id: location.id,
-        name: location.name,
-      });
+// Bootstrap `cities`; without them the list is derived from the locations themselves.
+function normalizeCities(value, locations = []) {
+  const cities = toArray(value)
+    .map((city) => ({
+      id: toNumber(city?.id, null),
+      name: city?.name ? String(city.name) : "",
+    }))
+    .filter((city) => city.id != null && city.name);
 
-      return acc;
-    }, {}),
-  );
+  if (cities.length) {
+    return cities;
+  }
+
+  const derived = new Map();
+  locations.forEach((location) => {
+    if (location.cityId == null || derived.has(location.cityId)) {
+      return;
+    }
+
+    derived.set(location.cityId, {
+      id: location.cityId,
+      name: getCityNameFromLocation(location) || "Без города",
+    });
+  });
+
+  return [...derived.values()];
 }
 
 export function normalizeTemplate(item = {}) {
@@ -433,8 +462,8 @@ export function normalizeTemplate(item = {}) {
       item.triggerCleaningId ?? item.trigger_cleaning_id ?? null,
     ),
     days: toStringArray(item.days),
-    times: toStringArray(item.times),
-    deleteTimes: toStringArray(item.deleteTimes ?? item.delete_times),
+    times: toTimeList(item.times),
+    deleteTimes: toTimeList(item.deleteTimes ?? item.delete_times),
     is_not_del: toBoolean(item.is_not_del, false),
     is_need: toBoolean(item.is_need, false),
     locationIds: normalizeLocationIds(item.locationIds ?? item.location_ids),
@@ -580,9 +609,17 @@ export function normalizeHistoryRows(response, context = {}) {
 export function normalizeBootstrap(response) {
   const data = unwrapData(response);
 
+  const pointCityIds = new Map(
+    toArray(data.points).map((point) => [String(point?.id), toNumber(point?.city_id, null)]),
+  );
+  const locations = toArray(data.locations).map((location) =>
+    normalizeLocation(location, pointCityIds.get(String(location?.id)) ?? null),
+  );
+
   return {
     moduleInfo: data.module_info || {},
-    locations: toArray(data.locations).map(normalizeLocation),
+    locations,
+    cities: normalizeCities(data.cities, locations),
     roles: toArray(data.roles)
       .map(normalizeRole)
       .filter((item) => item.name),

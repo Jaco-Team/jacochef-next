@@ -1,6 +1,12 @@
+import { useMemo } from "react";
 import {
   Box,
+  Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
   InputAdornment,
@@ -17,12 +23,40 @@ import {
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import { JacoButton } from "@/design-system/shared/ui";
-import { getCategoryName, getScheduleText, tableHeaderSx, tableRowSx } from "./helpers";
-import { CleaningActions } from "./shared";
+import {
+  getCategoryName,
+  getScheduleSortValue,
+  getScheduleText,
+  tableHeaderSx,
+  tableRowSx,
+} from "./helpers";
+import {
+  CleaningActions,
+  CleaningTemplateChips,
+  SortableHeaderCell,
+  usePendingAction,
+} from "./shared";
+import useTableSort from "./useTableSort";
+
+const STATUS_LABELS = { active: "Активный", archive: "Архив" };
+
+const actionButtonSx = {
+  minHeight: 40,
+  minWidth: 112,
+  px: 2,
+  borderRadius: "8px",
+  fontWeight: 700,
+  lineHeight: "20px",
+  alignItems: "center",
+  justifyContent: "center",
+  whiteSpace: "nowrap",
+};
 
 export default function CleaningsListPage({
   query,
@@ -41,6 +75,24 @@ export default function CleaningsListPage({
   onHistory,
   canEdit,
 }) {
+  const sortAccessors = useMemo(
+    () => ({
+      name: (item) => item.name,
+      category: (item) => getCategoryName(categories, item.categoryId),
+      role: (item) => item.role,
+      duration: (item) => (item.duration === "" || item.duration == null ? "" : Number(item.duration)),
+      schedule: getScheduleSortValue,
+      locations: (item) => item.locationIds.length,
+      status: (item) => STATUS_LABELS[item.status] || "",
+    }),
+    [categories],
+  );
+  const { sortedRows, sortBy, sortDirection, requestSort } = useTableSort(
+    filteredTemplates,
+    sortAccessors,
+  );
+  const sortProps = { sortBy, sortDirection, onSort: requestSort };
+
   return (
     <Grid size={12}>
       <Paper
@@ -147,18 +199,56 @@ export default function CleaningsListPage({
           <Table size="small">
             <TableHead>
               <TableRow sx={tableHeaderSx}>
-                <TableCell sx={{ width: "34%" }}>Объект уборки</TableCell>
-                <TableCell>Вид уборки</TableCell>
-                <TableCell>Должность</TableCell>
-                <TableCell>Длительность</TableCell>
-                <TableCell sx={{ width: "18%" }}>Расписание</TableCell>
-                <TableCell align="center">Кафе</TableCell>
-                <TableCell>Статус</TableCell>
+                <SortableHeaderCell
+                  sortKey="name"
+                  sx={{ width: "34%" }}
+                  {...sortProps}
+                >
+                  Объект уборки
+                </SortableHeaderCell>
+                <SortableHeaderCell
+                  sortKey="category"
+                  {...sortProps}
+                >
+                  Вид уборки
+                </SortableHeaderCell>
+                <SortableHeaderCell
+                  sortKey="role"
+                  {...sortProps}
+                >
+                  Должность
+                </SortableHeaderCell>
+                <SortableHeaderCell
+                  sortKey="duration"
+                  {...sortProps}
+                >
+                  Длительность
+                </SortableHeaderCell>
+                <SortableHeaderCell
+                  sortKey="schedule"
+                  sx={{ width: "18%" }}
+                  {...sortProps}
+                >
+                  Расписание
+                </SortableHeaderCell>
+                <SortableHeaderCell
+                  sortKey="locations"
+                  align="center"
+                  {...sortProps}
+                >
+                  Кафе
+                </SortableHeaderCell>
+                <SortableHeaderCell
+                  sortKey="status"
+                  {...sortProps}
+                >
+                  Статус
+                </SortableHeaderCell>
                 <TableCell align="right">Действия</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredTemplates.map((item) => (
+              {sortedRows.map((item) => (
                 <TableRow
                   key={item.id}
                   hover
@@ -169,9 +259,10 @@ export default function CleaningsListPage({
                     sx={{ borderLeft: "3px solid transparent" }}
                   >
                     <Typography sx={{ fontSize: 15, fontWeight: 800 }}>{item.name}</Typography>
-                    <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-                      {item.confirmation ? "С подтверждением менеджера" : "Без подтверждения"}
-                    </Typography>
+                    <CleaningTemplateChips
+                      item={item}
+                      sx={{ mt: 0.5 }}
+                    />
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -232,7 +323,7 @@ export default function CleaningsListPage({
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={item.status === "archive" ? "Архив" : "Активный"}
+                      label={STATUS_LABELS[item.status] || STATUS_LABELS.active}
                       color={item.status === "archive" ? "default" : "success"}
                       size="small"
                       sx={{ fontWeight: 700, height: 22 }}
@@ -255,7 +346,7 @@ export default function CleaningsListPage({
         </TableContainer>
 
         <Box sx={{ display: { xs: "grid", md: "none" }, gap: 1.75, p: 0 }}>
-          {filteredTemplates.map((item) => (
+          {sortedRows.map((item) => (
             <Paper
               key={item.id}
               variant="outlined"
@@ -271,9 +362,10 @@ export default function CleaningsListPage({
                   <Typography sx={{ fontSize: 16, fontWeight: 800, lineHeight: 1.25 }}>
                     {item.name}
                   </Typography>
-                  <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-                    {item.confirmation ? "С подтверждением менеджера" : "Без подтверждения"}
-                  </Typography>
+                  <CleaningTemplateChips
+                    item={item}
+                    sx={{ mt: 0.75 }}
+                  />
                   <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.75 }}>
                     <Chip
                       label={getCategoryName(categories, item.categoryId)}
@@ -289,7 +381,7 @@ export default function CleaningsListPage({
                   </Box>
                 </Box>
                 <Chip
-                  label={item.status === "archive" ? "Архив" : "Активный"}
+                  label={STATUS_LABELS[item.status] || STATUS_LABELS.active}
                   color={item.status === "archive" ? "default" : "success"}
                   size="small"
                   sx={{ justifySelf: "start", width: "fit-content", height: 22 }}
@@ -325,5 +417,63 @@ export default function CleaningsListPage({
         </Box>
       </Paper>
     </Grid>
+  );
+}
+
+const templateStatusMeta = {
+  archive: {
+    title: "Перенести уборку в архив?",
+    text: (name) => `Уборка «${name}» будет перенесена в архив. Вернуть её можно в любой момент.`,
+    button: "В архив",
+    icon: <ArchiveOutlinedIcon />,
+  },
+  restore: {
+    title: "Вернуть уборку из архива?",
+    text: (name) => `Уборка «${name}» снова станет активной.`,
+    button: "Вернуть",
+    icon: <UnarchiveOutlinedIcon />,
+  },
+};
+
+export function TemplateStatusConfirmDialog({ open, item, onClose, onConfirm }) {
+  const { isPending, runPending } = usePendingAction();
+  const meta = item?.status === "archive" ? templateStatusMeta.restore : templateStatusMeta.archive;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xs"
+      slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
+    >
+      <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
+      <DialogContent>
+        <Typography sx={{ color: "text.secondary", fontSize: 15 }}>
+          {meta.text(item?.name || "")}
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={onClose}
+          sx={actionButtonSx}
+        >
+          Отмена
+        </Button>
+        <Button
+          size="small"
+          variant="contained"
+          startIcon={meta.icon}
+          onClick={() => runPending(onConfirm)}
+          loading={isPending}
+          loadingPosition="start"
+          sx={actionButtonSx}
+        >
+          {meta.button}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

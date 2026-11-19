@@ -45,7 +45,18 @@
 
 ### Location
 
-`id`, `name`, `city`, `base`.
+`id`, `name`, `city`, `cityId`, `base`.
+
+- `cityId` — id города точки; группировка «Все кафе города X» в карточке уборки. Старый BE без `cityId`: FE берёт `legacy.city_id` или `city_id` из сырого `points` в `get_all`.
+
+### Option (`scheduleTypeOptions`, `additionTypeOptions`)
+
+`id`, `name`, `description`, `selectable`.
+
+- `description` — пояснение режима, FE показывает его подсказкой в карточке уборки.
+- `selectable: false` — вариант не предлагается для новых шаблонов; у шаблона, где он уже стоит, показывается (`other` / «Другое»). Старый BE без этих полей: описаний нет, выбирать можно всё, кроме `other`.
+- `additionType`: `single_active` «Только 1 активная», `unlimited` «Добавление без ограничений», `other` «Другое».
+- `scheduleType`: `weekly` «По дням недели» (FE разворачивает в список дней), `every_day`, `every_day_shift_end`, `manual`, `after_cleaning`, `other` «Другое» — служебный тип (часть таких уборок создаётся отдельными системными задачами); у шаблона, где он стоит, режим можно сменить на обычный, после смены «Другое» из списка пропадает.
 
 ### Control item (`items`)
 
@@ -89,7 +100,8 @@
 #### `get_all` (`getBootstrap`)
 
 - Request: без параметров.
-- Response: `module_info`, `locations`, `roles`, `scheduleTypeOptions`, `additionTypeOptions`, `access`. `module_info.name` — заголовок страницы и вкладки браузера.
+- Response: `module_info`, `locations`, `cities` (`[{ id, name }]`), `roles`, `scheduleTypeOptions`, `additionTypeOptions`, `access`. `module_info.name` — заголовок страницы и вкладки браузера.
+- Без `cities` (старый BE) FE собирает список городов из `locations`.
 - Грузится один раз за сессию модуля и переиспользуется между подстраницами.
 
 ### Шаблоны уборок
@@ -102,6 +114,11 @@
 
 - Request: поля шаблона из `normalizeTemplatePayload` (`name`, `categoryId`, `roleId`, `duration`, `confirmation`, `scheduleType`, `days`, `times`, `deleteTimes`, `is_not_del`, `is_need`, `activationCount`, `additionType`, `triggerCleaningId`, `locationIds`); для `save_edit` дополнительно `id`.
 - Response: `st`, `text`, `id`.
+- BE отклоняет (`st: false`, `text` показывается как ошибка): время запуска не `ЧЧ:ММ` или не кратно 5 минутам; время удаления не `ЧЧ:ММ`; `after_cleaning` без `triggerCleaningId` или со ссылкой на сам шаблон; новый шаблон с `scheduleType` или `additionType` = `other`. FE ловит эти случаи до запроса.
+- `deleteTimes` — BE хранит одно время (первое). При `is_not_del: true` FE не очищает сохранённое время: оно остаётся в данных, но не действует.
+- `is_need` в форме не показывается; FE отправляет значение из загруженного шаблона без изменений.
+- `triggerCleaningId` отправляется всегда — значение из загруженного шаблона, в том числе не для `after_cleaning` (без поля BE обнуляет `work_id`). У нового шаблона без триггера — `0`.
+- `times` / `deleteTimes` — строго `ЧЧ:ММ`: FE приводит legacy-значения `Ч:ММ` и `ЧЧ:ММ:СС` к `ЧЧ:ММ` при загрузке и сохранении.
 
 #### `templates/save_status` (`updateTemplateStatus`)
 

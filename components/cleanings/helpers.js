@@ -1,4 +1,22 @@
-import { cleaningSectionTabs, controlKindTabs, days } from "./constants";
+import {
+  ADDITION_TYPE_LABELS,
+  ADDITION_TYPE_SHORT_LABELS,
+  NIGHTLY_CLEANUP_TIME,
+  cleaningSectionTabs,
+  controlKindTabs,
+  days,
+} from "./constants";
+
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const POOL_CLEANING_MARK = "(Г)";
+const SCHEDULE_SORT_ORDER = [
+  ...days.map((day) => day.value),
+  "every_day",
+  "every_day_shift_end",
+  "after_cleaning",
+  "manual",
+  "other",
+];
 
 export function getScheduleTypeFromDays(item = {}) {
   if (item.scheduleType && item.scheduleType !== "weekly") {
@@ -39,6 +57,96 @@ export function getScheduleText(item, scheduleTypeOptions = []) {
       ? "Ежедневно"
       : item.days?.map((day) => days.find((d) => d.value === day)?.label).join(", ");
   return `${dayLabels || "Без дней"} · ${(item.times || []).join(", ") || "Без времени"}`;
+}
+
+export function isValidTime(value) {
+  return TIME_PATTERN.test(String(value ?? ""));
+}
+
+export function isFiveMinuteTime(value) {
+  const match = TIME_PATTERN.exec(String(value ?? ""));
+  return Boolean(match) && Number(match[2]) % 5 === 0;
+}
+
+export function getScheduleSortValue(item) {
+  const scheduleType = getScheduleTypeFromDays(item);
+  const index = SCHEDULE_SORT_ORDER.indexOf(scheduleType);
+  const firstTime = [...(item.times || [])].sort()[0] || "";
+
+  return `${String(index === -1 ? SCHEDULE_SORT_ORDER.length : index).padStart(2, "0")} ${firstTime}`;
+}
+
+export function getAdditionTypeName(additionType, additionTypeOptions = []) {
+  if (!additionType) {
+    return "";
+  }
+
+  return (
+    additionTypeOptions.find((option) => option.value === additionType)?.label ||
+    ADDITION_TYPE_LABELS[additionType] ||
+    ""
+  );
+}
+
+export function getAdditionTypeShortName(additionType) {
+  return ADDITION_TYPE_SHORT_LABELS[additionType] || "";
+}
+
+// The nightly cleanup returns unassigned «(Г)» tasks to the pool instead of removing them (BE: `like '%(Г)%'`).
+function isPoolCleaning(item = {}) {
+  return String(item.name ?? "").toUpperCase().includes(POOL_CLEANING_MARK);
+}
+
+// What happens to an unassigned task of the template: kept, removed at its delete time,
+// removed by the nightly cleanup, or returned to the pool at night.
+export function getDeleteBehavior(item = {}) {
+  if (item.is_not_del) {
+    return { kind: "mandatory", time: "" };
+  }
+
+  const deleteTime = (item.deleteTimes || []).find(Boolean) || "";
+
+  if (deleteTime) {
+    return { kind: "time", time: deleteTime };
+  }
+
+  return isPoolCleaning(item)
+    ? { kind: "pool", time: "" }
+    : { kind: "nightly", time: NIGHTLY_CLEANUP_TIME };
+}
+
+// "Все кафе" or per city: "Тольятти: все (12)", "Самара: 3 из 8".
+export function getLocationSelectionSummary(locationIds = [], locations = [], cities = []) {
+  const selectedIds = new Set((locationIds || []).map((locationId) => String(locationId)));
+  const selected = locations.filter((location) => selectedIds.has(String(location.id)));
+
+  if (!selected.length) {
+    return "";
+  }
+
+  if (selected.length === locations.length) {
+    return `Все кафе (${locations.length})`;
+  }
+
+  const groups = new Map();
+  locations.forEach((location) => {
+    const key = location.cityId ?? "none";
+    const group = groups.get(key) || { cityId: location.cityId, total: 0, selected: 0 };
+    group.total += 1;
+    group.selected += selectedIds.has(String(location.id)) ? 1 : 0;
+    groups.set(key, group);
+  });
+
+  return [...groups.values()]
+    .filter((group) => group.selected > 0)
+    .map((group) => {
+      const cityName =
+        cities.find((city) => isSameId(city.id, group.cityId))?.name || "Без города";
+      return group.selected === group.total
+        ? `${cityName}: все (${group.total})`
+        : `${cityName}: ${group.selected} из ${group.total}`;
+    })
+    .join(" · ");
 }
 
 export function getCategoryName(categories, categoryId) {

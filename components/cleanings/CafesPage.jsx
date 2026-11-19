@@ -30,6 +30,7 @@ import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import { MySelect, MyTextInput } from "@/ui/Forms";
 import { JacoButton } from "@/design-system/shared/ui";
 import {
+  getAdditionTypeName,
   getCategoryName,
   getLocationName,
   getScheduleText,
@@ -37,7 +38,7 @@ import {
   tableHeaderSx,
   tableRowSx,
 } from "./helpers";
-import { usePendingAction } from "./shared";
+import { CleaningTemplateChips, usePendingAction } from "./shared";
 
 const actionButtonSx = {
   minHeight: 40,
@@ -61,6 +62,7 @@ export default function CafesView({
   locations = [],
   roles = [],
   scheduleTypeOptions = [],
+  additionTypeOptions = [],
   selectedCafeId,
   roleFilter,
   onCafeChange,
@@ -230,7 +232,8 @@ export default function CafesView({
                   <TableCell>Должность</TableCell>
                   <TableCell>Длительность</TableCell>
                   <TableCell sx={{ width: 132 }}>Доп. время</TableCell>
-                  <TableCell sx={{ width: "24%" }}>Расписание</TableCell>
+                  <TableCell sx={{ width: "20%" }}>Расписание</TableCell>
+                  <TableCell>Тип добавления</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
@@ -264,6 +267,11 @@ export default function CafesView({
                         >
                           {item.name}
                         </Typography>
+                        <CleaningTemplateChips
+                          item={item}
+                          withAdditionType={false}
+                          sx={{ mt: 0.5 }}
+                        />
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -327,6 +335,11 @@ export default function CafesView({
                         </Typography>
                       </Box>
                     </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontSize: 14 }}>
+                        {getAdditionTypeName(item.additionType, additionTypeOptions) || "—"}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="right">
                       {canEdit ? (
                         <Tooltip title="Убрать из кафе">
@@ -345,7 +358,7 @@ export default function CafesView({
                 {visibleCleanings.length ? null : (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       sx={{ py: 4, textAlign: "center", color: "text.secondary" }}
                     >
                       Нет уборок по выбранным фильтрам
@@ -389,6 +402,11 @@ export default function CafesView({
                     >
                       {item.name}
                     </Typography>
+                    <CleaningTemplateChips
+                      item={item}
+                      withAdditionType={false}
+                      sx={{ mt: 0.75 }}
+                    />
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.75 }}>
                       <Chip
                         label={getCategoryName(categories, item.categoryId)}
@@ -446,6 +464,10 @@ export default function CafesView({
                     {item.duration} мин · {getScheduleText(item, scheduleTypeOptions)}
                   </Typography>
                 </Box>
+                <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.75 }}>
+                  Тип добавления:{" "}
+                  {getAdditionTypeName(item.additionType, additionTypeOptions) || "—"}
+                </Typography>
               </Paper>
             ))}
             {visibleCleanings.length ? null : (

@@ -68,3 +68,22 @@ export const defaultForm = {
   locationIds: [],
   status: "active",
 };
+
+// Fallback names when `get_all` has no `additionTypeOptions`; keys are API `additionType` values.
+export const ADDITION_TYPE_LABELS = {
+  single_active: "Только 1 активная",
+  unlimited: "Добавление без ограничений",
+  other: "Другое",
+};
+
+export const ADDITION_TYPE_SHORT_LABELS = {
+  single_active: "1 активная",
+  unlimited: "Без ограничений",
+  other: "Другое",
+};
+
+// Options that are kept only for legacy templates and are never offered for new ones.
+export const LEGACY_ONLY_OPTION_VALUE = "other";
+
+// Unassigned tasks without a delete time are removed by the nightly cleanup at this time.
+export const NIGHTLY_CLEANUP_TIME = "23:30";

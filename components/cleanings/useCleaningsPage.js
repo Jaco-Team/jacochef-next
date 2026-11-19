@@ -69,6 +69,7 @@ export default function useCleaningsPage({
   const [templates, setTemplates] = useState(cleaningsSessionCache.templates || []);
   const [categories, setCategories] = useState(cleaningsSessionCache.categories || []);
   const [locations, setLocations] = useState(cachedLocations);
+  const [cities, setCities] = useState(cachedBootstrap?.cities || []);
   const [roles, setRoles] = useState(cachedBootstrap?.roles || []);
   const [scheduleTypeOptions, setScheduleTypeOptions] = useState(
     cachedBootstrap?.scheduleTypeOptions || [],
@@ -149,6 +150,7 @@ export default function useCleaningsPage({
   const [addCafeDialogOpen, setAddCafeDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
   const [removeCafeCleaningId, setRemoveCafeCleaningId] = useState(null);
+  const [archiveToggleId, setArchiveToggleId] = useState(null);
   const [controlAction, setControlAction] = useState(null);
   const [preparationAction, setPreparationAction] = useState(null);
   const [editingPreparation, setEditingPreparation] = useState(null);
@@ -213,6 +215,7 @@ export default function useCleaningsPage({
 
       setModuleInfo(normalized.moduleInfo);
       setLocations(normalized.locations);
+      setCities(normalized.cities);
       setRoles(normalized.roles);
       setScheduleTypeOptions(normalized.scheduleTypeOptions);
       setAdditionTypeOptions(normalized.additionTypeOptions);
@@ -583,6 +586,7 @@ export default function useCleaningsPage({
 
   const selectedCafe =
     locations.find((location) => location.id === selectedCafeId) || locations[0] || null;
+  const archiveToggleCandidate = templates.find((template) => template.id === archiveToggleId) || null;
   const removeCafeCleaningCandidate =
     cafeAssignedTemplates.find((template) => template.id === removeCafeCleaningId) || null;
   const deleteCategoryCandidate =
@@ -684,7 +688,7 @@ export default function useCleaningsPage({
 
       const nextStatus = template.status === "archive" ? "active" : "archive";
 
-      await runMutation(async () => {
+      return runMutation(async () => {
         const response = await cleaningsApi.updateTemplateStatus(id, nextStatus);
         invalidateControlCache();
         await loadTemplates({ force: true });
@@ -696,6 +700,17 @@ export default function useCleaningsPage({
     },
     [cleaningsApi, loadCafes, loadTemplates, runMutation, section, selectedCafeId, templates],
   );
+
+  const confirmArchiveToggle = useCallback(async () => {
+    if (!archiveToggleId) {
+      return;
+    }
+
+    const response = await toggleArchive(archiveToggleId);
+    if (response) {
+      setArchiveToggleId(null);
+    }
+  }, [archiveToggleId, toggleArchive]);
 
   const removeTemplate = useCallback(
     async (id) => {
@@ -1132,6 +1147,7 @@ export default function useCleaningsPage({
     additionTypeOptions,
     alertMessage,
     alertStatus,
+    archiveToggleCandidate,
     bootstrapLoading,
     bootstrapReady,
     cafeAssignedTemplates,
@@ -1142,9 +1158,11 @@ export default function useCleaningsPage({
     categoryHistoryLoading,
     categoryHistoryRows,
     categoryQuery,
+    cities,
     closeAlert,
     closeDialog,
     closeTemplateHistory,
+    confirmArchiveToggle,
     confirmControlAction,
     confirmPreparationAction,
     controlAction,
@@ -1205,6 +1223,7 @@ export default function useCleaningsPage({
     setAddCafeRoleFilter,
     setAddManualDialogOpen,
     setAddManualQuery,
+    setArchiveToggleId,
     setCategoryQuery,
     setControlAction,
     setControlCafeId,

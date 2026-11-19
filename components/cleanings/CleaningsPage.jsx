@@ -15,7 +15,7 @@ import { useConfirm } from "@/src/hooks/useConfirm";
 import { getSectionSegments } from "./helpers";
 import CleaningTemplateDialog from "./CleaningTemplateDialog";
 import CleaningHistoryDialog from "./CleaningHistoryDialog";
-import CleaningsListPage from "./CleaningsListPage";
+import CleaningsListPage, { TemplateStatusConfirmDialog } from "./CleaningsListPage";
 import CleaningCategoriesView, { DeleteCategoryDialog } from "./CategoriesPage";
 import CafesView, { AddCafeCleaningDialog, RemoveCafeCleaningDialog } from "./CafesPage";
 import ControlView, { AddManualCleaningDialog } from "./ControlCleaningsPage";
@@ -208,7 +208,7 @@ export default function CleaningsPage() {
             onCreate={page.openCreate}
             canCreate={page.canAccess("create_cleaning")}
             openEdit={page.openEdit}
-            toggleArchive={page.toggleArchive}
+            toggleArchive={page.setArchiveToggleId}
             removeTemplate={withConfirm(page.removeTemplate, "Удалить уборку полностью?", 3)}
             onHistory={page.openTemplateHistory}
             canEdit={page.canEdit("cleanings")}
@@ -223,6 +223,7 @@ export default function CleaningsPage() {
               locations={page.locations}
               roles={page.roles}
               scheduleTypeOptions={page.scheduleTypeOptions}
+              additionTypeOptions={page.additionTypeOptions}
               selectedCafeId={page.selectedCafeId}
               roleFilter={page.cafeRoleFilter}
               onCafeChange={page.setSelectedCafeId}
@@ -304,12 +305,20 @@ export default function CleaningsPage() {
         categories={page.categories}
         templates={page.templates}
         locations={page.locations}
+        cities={page.cities}
         roles={page.roles}
         scheduleTypeOptions={page.scheduleTypeOptions}
         additionTypeOptions={page.additionTypeOptions}
         onClose={page.closeDialog}
         onSave={page.saveTemplate}
         canEdit={page.canEdit("cleanings")}
+      />
+
+      <TemplateStatusConfirmDialog
+        open={Boolean(page.archiveToggleCandidate)}
+        item={page.archiveToggleCandidate}
+        onClose={() => page.setArchiveToggleId(null)}
+        onConfirm={page.confirmArchiveToggle}
       />
 
       <CleaningHistoryDialog
