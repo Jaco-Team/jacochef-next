@@ -87,3 +87,12 @@ export const LEGACY_ONLY_OPTION_VALUE = "other";
 
 // Unassigned tasks without a delete time are removed by the nightly cleanup at this time.
 export const NIGHTLY_CLEANUP_TIME = "23:30";
+
+// `useJacoConfirm` options for leaving a card, cafe or tab with unsaved changes.
+export const UNSAVED_CHANGES_CONFIRM = {
+  title: "Есть несохранённые изменения",
+  message: "Изменения не сохранены и будут потеряны.",
+  cancelLabel: "Остаться",
+  confirmLabel: "Уйти без сохранения",
+  confirmTone: "danger",
+};

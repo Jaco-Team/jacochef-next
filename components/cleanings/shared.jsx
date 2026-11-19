@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, IconButton, TableCell, TableSortLabel, Tooltip, Typography } from "@mui/material";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
@@ -29,6 +29,23 @@ export function usePendingAction() {
   }, []);
 
   return { pendingKey, isPending: pendingKey !== null, runPending };
+}
+
+// Browser prompt on reload / tab close while `active` (unsaved changes).
+export function useBeforeUnloadGuard(active) {
+  useEffect(() => {
+    if (!active) {
+      return undefined;
+    }
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [active]);
 }
 
 export function FormLabel({ children }) {

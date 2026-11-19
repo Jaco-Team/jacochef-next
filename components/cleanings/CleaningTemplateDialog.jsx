@@ -38,9 +38,10 @@ import {
   getScheduleTypeFromDays,
   isFiveMinuteTime,
   isSameId,
+  isSameIdSet,
   isValidTime,
 } from "./helpers";
-import { FormHint, FormLabel, FormSection } from "./shared";
+import { FormHint, FormLabel, FormSection, useBeforeUnloadGuard } from "./shared";
 
 const actionButtonSx = {
   minHeight: 44,
@@ -80,6 +81,38 @@ function getFormValues(item) {
     days: [...(item.days || [])],
     locationIds: [...(item.locationIds || [])],
   };
+}
+
+const DIRTY_CHECK_FIELDS = [
+  "name",
+  "categoryId",
+  "roleId",
+  "duration",
+  "activationCount",
+  "additionType",
+  "scheduleType",
+  "triggerCleaningId",
+  "is_not_del",
+  "is_need",
+];
+
+function toComparable(value) {
+  return value == null ? "" : String(value);
+}
+
+function isSameList(left = [], right = []) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function isFormDirty(form, initialForm) {
+  return (
+    DIRTY_CHECK_FIELDS.some(
+      (field) => toComparable(form[field]) !== toComparable(initialForm[field]),
+    ) ||
+    !isSameList(form.times, initialForm.times) ||
+    !isSameList(form.deleteTimes, initialForm.deleteTimes) ||
+    !isSameIdSet(form.locationIds, initialForm.locationIds)
+  );
 }
 
 function hasStartTimes(scheduleType) {
@@ -136,15 +169,31 @@ export default function CleaningTemplateDialog({
   additionTypeOptions = [],
   onClose,
   onSave,
+  confirmDiscardChanges,
   canEdit,
 }) {
   const [form, setForm] = useState(defaultForm);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const initialForm = useMemo(() => getFormValues(item), [item]);
 
   useEffect(() => {
-    setForm(getFormValues(item));
+    setForm(initialForm);
     setSubmitAttempted(false);
-  }, [item, open]);
+  }, [initialForm, open]);
+
+  const isDirty = Boolean(open && canEdit) && isFormDirty(form, initialForm);
+  useBeforeUnloadGuard(isDirty);
+
+  // X, backdrop, Esc and «Отмена» ask before dropping unsaved changes.
+  const requestClose = async () => {
+    if (isDirty && confirmDiscardChanges) {
+      if (!(await confirmDiscardChanges())) {
+        return;
+      }
+    }
+
+    onClose();
+  };
 
   const isEdit = Boolean(item?.id);
   const initialAdditionType = item?.additionType ?? "";
@@ -303,7 +352,7 @@ export default function CleaningTemplateDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={requestClose}
       fullWidth
       maxWidth="md"
       scroll="paper"
@@ -351,7 +400,7 @@ export default function CleaningTemplateDialog({
 
           <IconButton
             size="small"
-            onClick={onClose}
+            onClick={requestClose}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -689,7 +738,7 @@ export default function CleaningTemplateDialog({
         <Button
           size="small"
           variant="outlined"
-          onClick={onClose}
+          onClick={requestClose}
           sx={{ ...actionButtonSx, minWidth: 112, fontWeight: 500 }}
         >
           Отмена

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Box, Grid, Typography } from "@mui/material";
@@ -10,8 +10,10 @@ import {
   JacoSurface,
   uiColors,
   uiShadows,
+  useJacoConfirm,
 } from "@/design-system/shared/ui";
 import { useConfirm } from "@/src/hooks/useConfirm";
+import { UNSAVED_CHANGES_CONFIRM } from "./constants";
 import { getSectionSegments } from "./helpers";
 import CleaningTemplateDialog from "./CleaningTemplateDialog";
 import CleaningHistoryDialog from "./CleaningHistoryDialog";
@@ -46,10 +48,16 @@ export default function CleaningsPage() {
   const router = useRouter();
   const routeSegments = getRouteSegments(router.query.section);
   const routeKey = routeSegments.join("/");
+  const { confirm: confirmUnsaved, ConfirmDialog: UnsavedChangesDialog } = useJacoConfirm();
+  const confirmDiscardChanges = useCallback(
+    () => confirmUnsaved(UNSAVED_CHANGES_CONFIRM),
+    [confirmUnsaved],
+  );
   const page = useCleaningsPage({
     requestedPath: routeSegments[0] ?? null,
     requestedKind: routeSegments[1] ?? null,
     routeReady: router.isReady,
+    confirmDiscardChanges,
   });
   const { withConfirm, ConfirmDialog } = useConfirm();
   const { route, showAlert } = page;
@@ -76,8 +84,8 @@ export default function CleaningsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canonicalKey, routeKey]);
 
-  const changeSection = (_, value) => {
-    if (value === page.section) {
+  const changeSection = async (_, value) => {
+    if (value === page.section || !(await page.confirmSectionLeave())) {
       return;
     }
 
@@ -179,13 +187,14 @@ export default function CleaningsPage() {
             <CleaningCategoriesView
               categories={page.categories}
               templates={page.templates}
-              selectedCategoryId={page.selectedCategoryId}
               categoryQuery={page.categoryQuery}
               onCategoryQueryChange={page.setCategoryQuery}
               onSelectCategory={page.selectCategory}
               onCreateCategory={page.createCategory}
-              draftCategory={page.categoryDraft}
-              onDraftCategoryChange={page.setCategoryDraft}
+              card={page.categoryCard}
+              dirty={page.isCategoryDirty}
+              onCardChange={page.changeCategoryCard}
+              onCloseCard={page.confirmCategoryLeave}
               onSaveCategory={page.saveCategory}
               onDeleteCategory={page.setDeleteCategoryId}
               history={page.categoryHistoryRows}
@@ -226,7 +235,7 @@ export default function CleaningsPage() {
               additionTypeOptions={page.additionTypeOptions}
               selectedCafeId={page.selectedCafeId}
               roleFilter={page.cafeRoleFilter}
-              onCafeChange={page.setSelectedCafeId}
+              onCafeChange={page.selectCafe}
               onRoleFilterChange={page.setCafeRoleFilter}
               onRemoveCleaning={page.setRemoveCafeCleaningId}
               onAddOpen={() => page.setAddCafeDialogOpen(true)}
@@ -234,7 +243,7 @@ export default function CleaningsPage() {
                 page.saveCafeDopTimes,
                 "Сохранить изменения доп. времени?",
               )}
-              hasDopTimeChanges={Object.keys(page.cafeDopTimeDrafts).length > 0}
+              dopTimeDraftCount={Object.keys(page.cafeDopTimeDrafts).length}
               dopTimeDrafts={page.cafeDopTimeDrafts}
               onDopTimeChange={page.setCafeDopTimeDraft}
               canEdit={page.canEdit("cafes")}
@@ -311,6 +320,7 @@ export default function CleaningsPage() {
         additionTypeOptions={page.additionTypeOptions}
         onClose={page.closeDialog}
         onSave={page.saveTemplate}
+        confirmDiscardChanges={confirmDiscardChanges}
         canEdit={page.canEdit("cleanings")}
       />
 
@@ -396,6 +406,7 @@ export default function CleaningsPage() {
       />
 
       <ConfirmDialog />
+      <UnsavedChangesDialog />
     </Box>
     </>
   );

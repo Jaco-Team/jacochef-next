@@ -27,6 +27,8 @@ export default function useCleaningsApi() {
       createCategory: (payload) => request("categories/save_new", payload),
       updateCategory: (id, payload) => request("categories/save_edit", { ...payload, id }),
       deleteCategory: (id) => request("categories/delete", { id }),
+      saveCategoryTemplates: (id, templateIds) =>
+        request("categories/templates/save", { id, templateIds }),
       assignTemplateToCafe: (locationId, templateId, dopTime = 0) =>
         request("cafes/assign", { locationId, templateId, dop_time: dopTime }),
       removeTemplateFromCafe: (locationId, templateId) =>

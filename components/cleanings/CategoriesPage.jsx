@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -24,9 +24,10 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchIcon from "@mui/icons-material/Search";
 import { TextEditor } from "@/ui/Forms";
 import HistoryLog from "@/ui/history/HistoryLog";
-import { JacoButton } from "@/design-system/shared/ui";
+import { JacoAutocomplete, JacoButton } from "@/design-system/shared/ui";
 import { formatPlural } from "@/src/helpers/utils/i18n";
-import { FormLabel } from "./shared";
+import { getCategoryName, isSameId } from "./helpers";
+import { FormHint, FormLabel } from "./shared";
 
 const centeredButtonSx = {
   alignItems: "center",
@@ -50,7 +51,55 @@ function getAppliedToText(count) {
     : "Пока ни к одной уборке не применяется";
 }
 
-function CategoryTemplatesAccordion({ templates }) {
+function getCardTitle(card) {
+  return card.name || (card.id == null ? "Новый вид уборки" : "");
+}
+
+// TinyMCE emits its re-serialization of a loaded value while unfocused; user edits (typing, toolbar) focus it.
+function getInstructionChangeOptions(editor) {
+  return { userEdit: typeof editor?.hasFocus === "function" ? editor.hasFocus() : true };
+}
+
+function getTemplateOptionLabel(template) {
+  const label = template.role ? `${template.name} · ${template.role}` : template.name;
+
+  return template.status === "archive" ? `${label} · архив` : label;
+}
+
+function compareTemplateOptions(left, right) {
+  if (left.status !== right.status) {
+    return left.status === "archive" ? 1 : -1;
+  }
+
+  return getTemplateOptionLabel(left).localeCompare(getTemplateOptionLabel(right), "ru");
+}
+
+function UnsavedChangesHint({ dirty, sx }) {
+  return dirty ? (
+    <FormHint
+      tone="warning"
+      sx={{ mt: 0, ...sx }}
+    >
+      Есть несохранённые изменения
+    </FormHint>
+  ) : null;
+}
+
+// Every template incl. archived; one moved here leaves its current вид уборки on save.
+function CategoryTemplatesAccordion({
+  categoryId,
+  templates,
+  categories,
+  templateIds,
+  onChange,
+  canEdit,
+}) {
+  const options = useMemo(() => [...templates].sort(compareTemplateOptions), [templates]);
+  const selectedTemplates = useMemo(() => {
+    const selectedIds = new Set(templateIds.map((templateId) => String(templateId)));
+    return options.filter((template) => selectedIds.has(String(template.id)));
+  }, [options, templateIds]);
+
   return (
     <Accordion
       variant="outlined"
@@ -65,30 +114,48 @@ function CategoryTemplatesAccordion({ templates }) {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography sx={{ fontSize: 15, fontWeight: 700 }}>Применяется для</Typography>
           <Chip
-            label={templates.length}
+            label={selectedTemplates.length}
             size="small"
             sx={{ height: 22, minWidth: 28, fontWeight: 700 }}
           />
         </Box>
       </AccordionSummary>
       <AccordionDetails sx={{ pt: 0 }}>
-        {templates.length ? (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {templates.map((template) => (
-              <Chip
-                key={template.id}
-                label={`${template.name} · ${template.role}`}
-                size="small"
-                variant="outlined"
-                sx={{ height: 28, fontWeight: 600 }}
-              />
-            ))}
-          </Box>
-        ) : (
-          <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-            Пока ни к одной уборке не применяется
-          </Typography>
-        )}
+        <JacoAutocomplete
+          multiple
+          disableCloseOnSelect
+          options={options}
+          value={selectedTemplates}
+          disabled={!canEdit}
+          onChange={(_, value) => onChange(value.map((template) => template.id))}
+          getOptionLabel={getTemplateOptionLabel}
+          getOptionKey={(template) => String(template.id)}
+          isOptionEqualToValue={(option, value) => isSameId(option.id, value.id)}
+          placeholder={selectedTemplates.length ? "" : "Объект уборки или должность"}
+          noOptionsText="Уборки не найдены"
+          renderOption={(props, template) => {
+            const { key, ...optionProps } = props;
+            const movesFromCategory =
+              categoryId == null || !isSameId(template.categoryId, categoryId);
+
+            return (
+              <li
+                key={key}
+                {...optionProps}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 14 }}>{getTemplateOptionLabel(template)}</Typography>
+                  {movesFromCategory ? (
+                    <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
+                      Сейчас: {getCategoryName(categories, template.categoryId)}
+                    </Typography>
+                  ) : null}
+                </Box>
+              </li>
+            );
+          }}
+        />
+        <FormHint>Уборки, убранные из списка, останутся без вида уборки</FormHint>
       </AccordionDetails>
     </Accordion>
   );
@@ -97,13 +164,14 @@ function CategoryTemplatesAccordion({ templates }) {
 export default function CleaningCategoriesView({
   categories,
   templates,
-  selectedCategoryId,
   categoryQuery,
   onCategoryQueryChange,
   onSelectCategory,
   onCreateCategory,
-  draftCategory,
-  onDraftCategoryChange,
+  card,
+  dirty = false,
+  onCardChange,
+  onCloseCard,
   onSaveCategory,
   onDeleteCategory,
   history = [],
@@ -117,40 +185,38 @@ export default function CleaningCategoriesView({
 
     return !search || category.name.toLowerCase().includes(search);
   });
-  const selectedCategory =
-    draftCategory ||
-    categories.find((category) => category.id === selectedCategoryId) ||
-    categories[0];
-  const selectedTemplates = selectedCategory?.id
-    ? templates.filter((template) => template.categoryId === selectedCategory.id)
-    : [];
-  const selectedTemplatesCount = selectedTemplates.length;
-  const updateSelectedCategory = (field, value) => {
-    if (!selectedCategory) {
-      return;
+  const isCreating = Boolean(card) && card.id == null;
+  const changeCard = (field, value, options) => {
+    if (card) {
+      onCardChange(field, value, options);
     }
-
-    onDraftCategoryChange({ ...selectedCategory, [field]: value });
   };
 
-  const selectCategory = (id) => {
-    onSelectCategory(id);
-    const category = categories.find((item) => item.id === id);
+  const selectCategory = async (id) => {
+    const selected = await onSelectCategory(id);
 
-    if (category) {
-      onDraftCategoryChange(category);
-    }
-
-    if (isMobile) {
+    if (selected && isMobile) {
       setMobileEditorOpen(true);
+    }
+  };
+
+  const closeMobileEditor = async () => {
+    if (await onCloseCard()) {
+      setMobileEditorOpen(false);
+    }
+  };
+
+  const saveFromMobileEditor = async () => {
+    if (canEdit && (await onSaveCategory())) {
+      setMobileEditorOpen(false);
     }
   };
 
   useEffect(() => {
-    if (isMobile && draftCategory && !draftCategory.id) {
+    if (isMobile && isCreating) {
       setMobileEditorOpen(true);
     }
-  }, [draftCategory, isMobile]);
+  }, [isCreating, isMobile]);
 
   return (
     <Grid
@@ -204,7 +270,7 @@ export default function CleaningCategoriesView({
               const usedCount = templates.filter(
                 (template) => template.categoryId === category.id,
               ).length;
-              const selected = category.id === selectedCategory?.id;
+              const selected = category.id === card?.id;
 
               return (
                 <Box
@@ -242,7 +308,7 @@ export default function CleaningCategoriesView({
           </Box>
         </Paper>
       </Grid>
-      {selectedCategory ? (
+      {card ? (
         <Grid
           size={{ xs: 12, md: 9 }}
           sx={{ display: { xs: "none", md: "block" } }}
@@ -268,11 +334,9 @@ export default function CleaningCategoriesView({
               }}
             >
               <Box>
-                <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
-                  {selectedCategory.name}
-                </Typography>
+                <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{getCardTitle(card)}</Typography>
                 <Typography sx={{ color: "text.secondary", fontSize: 13 }}>
-                  {getAppliedToText(selectedTemplatesCount)}
+                  {getAppliedToText(card.templateIds.length)}
                 </Typography>
               </Box>
 
@@ -280,12 +344,9 @@ export default function CleaningCategoriesView({
                 size="small"
                 variant="outlined"
                 startIcon={<DeleteOutlineIcon />}
-                onClick={() => onDeleteCategory(selectedCategory.id)}
+                onClick={() => onDeleteCategory(card.id)}
                 disabled={
-                  !canEdit ||
-                  !selectedCategory.id ||
-                  categories.length <= 1 ||
-                  selectedCategory.deletable === false
+                  !canEdit || !card.id || categories.length <= 1 || card.deletable === false
                 }
                 sx={actionButtonSx}
               >
@@ -293,7 +354,7 @@ export default function CleaningCategoriesView({
               </Button>
             </Box>
 
-            <Box sx={{ px: 2, pt: 2 }}>
+            <Box sx={{ px: 2, pt: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
               <Button
                 size="small"
                 variant="contained"
@@ -303,6 +364,7 @@ export default function CleaningCategoriesView({
               >
                 Сохранить
               </Button>
+              <UnsavedChangesHint dirty={dirty} />
             </Box>
 
             <Box sx={{ p: 2, display: "grid", gap: 2 }}>
@@ -315,9 +377,9 @@ export default function CleaningCategoriesView({
                   <TextField
                     size="small"
                     fullWidth
-                    value={selectedCategory.name}
+                    value={card.name}
                     disabled={!canEdit}
-                    onChange={(event) => updateSelectedCategory("name", event.target.value)}
+                    onChange={(event) => changeCard("name", event.target.value)}
                   />
                 </Grid>
               </Grid>
@@ -325,8 +387,10 @@ export default function CleaningCategoriesView({
               <Box>
                 <FormLabel>Подробная инструкция</FormLabel>
                 <TextEditor
-                  value={selectedCategory.instruction}
-                  func={(value) => updateSelectedCategory("instruction", value)}
+                  value={card.instruction}
+                  func={(value, editor) =>
+                    changeCard("instruction", value, getInstructionChangeOptions(editor))
+                  }
                   disabled={!canEdit}
                   height={300}
                   variant="newsDialog"
@@ -335,7 +399,14 @@ export default function CleaningCategoriesView({
                 />
               </Box>
 
-              <CategoryTemplatesAccordion templates={selectedTemplates} />
+              <CategoryTemplatesAccordion
+                categoryId={card.id}
+                templates={templates}
+                categories={categories}
+                templateIds={card.templateIds}
+                onChange={(templateIds) => changeCard("templateIds", templateIds)}
+                canEdit={canEdit}
+              />
 
               {historyLoading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
@@ -353,19 +424,15 @@ export default function CleaningCategoriesView({
       ) : null}
       <CategoryMobileEditDialog
         open={mobileEditorOpen}
-        category={selectedCategory}
-        templates={selectedTemplates}
+        card={card}
+        dirty={dirty}
+        templates={templates}
+        categories={categories}
         history={history}
-        templatesCount={selectedTemplatesCount}
         historyLoading={historyLoading}
-        onClose={() => setMobileEditorOpen(false)}
-        onChange={updateSelectedCategory}
-        onSave={() => {
-          if (canEdit) {
-            onSaveCategory();
-            setMobileEditorOpen(false);
-          }
-        }}
+        onClose={closeMobileEditor}
+        onChange={changeCard}
+        onSave={saveFromMobileEditor}
         canEdit={canEdit}
       />
     </Grid>
@@ -374,17 +441,18 @@ export default function CleaningCategoriesView({
 
 function CategoryMobileEditDialog({
   open,
-  category,
+  card,
+  dirty,
   templates,
+  categories,
   history,
-  templatesCount,
   historyLoading,
   onClose,
   onChange,
   onSave,
   canEdit,
 }) {
-  if (!category) {
+  if (!card) {
     return null;
   }
 
@@ -397,10 +465,14 @@ function CategoryMobileEditDialog({
       slotProps={{ paper: { sx: { borderRadius: "12px", maxHeight: "calc(100dvh - 32px)" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>
-        {category.name}
+        {getCardTitle(card)}
         <Typography sx={{ color: "text.secondary", fontSize: 14, mt: 0.5 }}>
-          {getAppliedToText(templatesCount)}
+          {getAppliedToText(card.templateIds.length)}
         </Typography>
+        <UnsavedChangesHint
+          dirty={dirty}
+          sx={{ mt: 0.5 }}
+        />
       </DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 2, overflow: "auto" }}>
         <Box>
@@ -408,7 +480,7 @@ function CategoryMobileEditDialog({
           <TextField
             size="small"
             fullWidth
-            value={category.name}
+            value={card.name}
             disabled={!canEdit}
             onChange={(event) => onChange("name", event.target.value)}
           />
@@ -417,8 +489,10 @@ function CategoryMobileEditDialog({
         <Box>
           <FormLabel>Подробная инструкция</FormLabel>
           <TextEditor
-            value={category.instruction}
-            func={(value) => onChange("instruction", value)}
+            value={card.instruction}
+            func={(value, editor) =>
+              onChange("instruction", value, getInstructionChangeOptions(editor))
+            }
             disabled={!canEdit}
             height={420}
             variant="newsDialog"
@@ -427,7 +501,14 @@ function CategoryMobileEditDialog({
           />
         </Box>
 
-        <CategoryTemplatesAccordion templates={templates} />
+        <CategoryTemplatesAccordion
+          categoryId={card.id}
+          templates={templates}
+          categories={categories}
+          templateIds={card.templateIds}
+          onChange={(templateIds) => onChange("templateIds", templateIds)}
+          canEdit={canEdit}
+        />
 
         {historyLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>

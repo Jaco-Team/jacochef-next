@@ -228,6 +228,27 @@ export function getLocationNameById(locationId, locations = []) {
   return location ? getLocationName(location) : "Кафе не выбрано";
 }
 
+// Order-insensitive comparison of id lists ("12" and 12 are the same id).
+export function isSameIdSet(left = [], right = []) {
+  const leftIds = new Set((left || []).map((id) => String(id)));
+  const rightIds = new Set((right || []).map((id) => String(id)));
+
+  return leftIds.size === rightIds.size && [...leftIds].every((id) => rightIds.has(id));
+}
+
+export function getCategoryTemplateIds(templates = [], categoryId) {
+  return templates
+    .filter((template) => isSameId(template.categoryId, categoryId))
+    .map((template) => template.id);
+}
+
+// Stored cafe extra time as the string the dop. time input edits; empty means 0.
+export function getSavedDopTime(template) {
+  const value = template?.dopTime ?? template?.extraTime;
+
+  return value === "" || value == null ? "0" : String(value);
+}
+
 export function isSameId(left, right) {
   if (left == null || right == null || left === "" || right === "") {
     return false;

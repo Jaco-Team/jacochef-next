@@ -38,7 +38,7 @@ import {
   tableHeaderSx,
   tableRowSx,
 } from "./helpers";
-import { CleaningTemplateChips, usePendingAction } from "./shared";
+import { CleaningTemplateChips, FormHint, usePendingAction } from "./shared";
 
 const actionButtonSx = {
   minHeight: 40,
@@ -70,7 +70,7 @@ export default function CafesView({
   onRemoveCleaning,
   onAddOpen,
   onSaveDopTimes,
-  hasDopTimeChanges = false,
+  dopTimeDraftCount = 0,
   dopTimeDrafts = {},
   onDopTimeChange,
   canEdit,
@@ -98,8 +98,10 @@ export default function CafesView({
   const infoCleaning = templates.find((template) => template.id === infoCleaningId) || null;
   const infoCategory = infoCleaning ? getCategory(categories, infoCleaning.categoryId) : null;
 
+  const isDopTimeUnsaved = (item) => Object.prototype.hasOwnProperty.call(dopTimeDrafts, item.id);
+
   const getDopTimeValue = (item) => {
-    if (Object.prototype.hasOwnProperty.call(dopTimeDrafts, item.id)) {
+    if (isDopTimeUnsaved(item)) {
       return dopTimeDrafts[item.id];
     }
 
@@ -202,10 +204,17 @@ export default function CafesView({
                     compact
                     tone="success"
                     onClick={onSaveDopTimes}
-                    disabled={!hasDopTimeChanges}
+                    disabled={!dopTimeDraftCount}
                   >
                     Сохранить изменения
                   </JacoButton>
+                  {dopTimeDraftCount ? (
+                    <Typography
+                      sx={{ color: "warning.dark", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap" }}
+                    >
+                      Не сохранено: {dopTimeDraftCount}
+                    </Typography>
+                  ) : null}
                 </>
               ) : null}
             </Box>
@@ -246,7 +255,10 @@ export default function CafesView({
                   >
                     <TableCell
                       className="cleaning-name-cell"
-                      sx={{ borderLeft: "3px solid transparent" }}
+                      sx={{
+                        borderLeft: "3px solid",
+                        borderLeftColor: isDopTimeUnsaved(item) ? "warning.main" : "transparent",
+                      }}
                     >
                       <Box>
                         <Typography
@@ -319,6 +331,14 @@ export default function CafesView({
                         disabled={!canEdit}
                         sx={{ minWidth: 96 }}
                       />
+                      {isDopTimeUnsaved(item) ? (
+                        <FormHint
+                          tone="warning"
+                          sx={{ mt: 0.5, fontSize: 12 }}
+                        >
+                          Не сохранено
+                        </FormHint>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       <Box
@@ -378,7 +398,7 @@ export default function CafesView({
                   p: 1.5,
                   borderRadius: "10px",
                   borderLeft: "3px solid",
-                  borderLeftColor: "primary.main",
+                  borderLeftColor: isDopTimeUnsaved(item) ? "warning.main" : "primary.main",
                 }}
               >
                 <Box sx={{ display: "grid", gap: 1, mb: 1 }}>
@@ -454,6 +474,14 @@ export default function CafesView({
                       step={1}
                       disabled={!canEdit}
                     />
+                    {isDopTimeUnsaved(item) ? (
+                      <FormHint
+                        tone="warning"
+                        sx={{ mt: 0.5, fontSize: 12 }}
+                      >
+                        Не сохранено
+                      </FormHint>
+                    ) : null}
                   </Box>
                 </Box>
                 <Box
