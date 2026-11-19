@@ -29,7 +29,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import dayjs from "dayjs";
 import { MyDatePickerNew, MySelect } from "@/ui/Forms";
 import {
-  getCategoryName,
   getControlStatusMeta,
   getLocationName,
   getLocationNameById,
@@ -38,6 +37,7 @@ import {
   tableHeaderSx,
   tableRowSx,
 } from "./helpers";
+import { usePendingAction } from "./shared";
 
 const actionButtonSx = {
   borderRadius: "8px",
@@ -481,10 +481,20 @@ function ControlRowActions({
   );
 }
 
+function getManualTemplateDetails(item) {
+  return [item.role, item.category, item.duration ? `${item.duration} мин` : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function isManualTemplateLimitReached(item) {
+  return item.todayCount >= item.maxCount;
+}
+
 export function AddManualCleaningDialog({
   open,
-  items,
-  categories,
+  items = [],
+  supported = true,
   locations = [],
   cafeId,
   query,
@@ -492,17 +502,20 @@ export function AddManualCleaningDialog({
   onClose,
   onAdd,
 }) {
-  const filteredItems = items.filter((item) => {
-    const search = query.trim().toLowerCase();
-    const byCafe = !item.locationIds?.length || item.locationIds.includes(cafeId);
-    const bySearch =
+  const { pendingKey, isPending, runPending } = usePendingAction();
+  const search = query.trim().toLowerCase();
+  const filteredItems = items.filter(
+    (item) =>
       !search ||
       item.name.toLowerCase().includes(search) ||
       item.role.toLowerCase().includes(search) ||
-      getCategoryName(categories, item.categoryId).toLowerCase().includes(search);
-
-    return byCafe && bySearch;
-  });
+      item.category.toLowerCase().includes(search),
+  );
+  const emptyText = !supported
+    ? "Список уборок для ручного добавления пока недоступен: сервер его не вернул. Попробуйте позже."
+    : items.length
+      ? "Ничего не найдено"
+      : "Нет ручных уборок для выбранного кафе";
 
   return (
     <Dialog
@@ -537,58 +550,67 @@ export function AddManualCleaningDialog({
 
         <Box sx={{ display: "grid", gap: 1, maxHeight: 420, overflow: "auto" }}>
           {filteredItems.length ? (
-            filteredItems.map((item) => (
-              <Paper
-                key={item.id}
-                variant="outlined"
-                sx={{
-                  p: 1.5,
-                  display: "grid",
-                  gridTemplateColumns: { xs: "minmax(0, 1fr) 40px", sm: "minmax(0, 1fr) auto" },
-                  alignItems: "center",
-                  gap: { xs: 1.25, sm: 2 },
-                  borderRadius: "8px",
-                }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
-                    {item.name}
-                  </Typography>
-                  <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-                    {getCategoryName(categories, item.categoryId)} · {item.role} · {item.duration}{" "}
-                    мин
-                  </Typography>
-                </Box>
-                <Button
-                  size="small"
+            filteredItems.map((item) => {
+              const details = getManualTemplateDetails(item);
+
+              return (
+                <Paper
+                  key={item.id}
                   variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => onAdd(item.id)}
                   sx={{
-                    minWidth: { xs: 40, sm: 96 },
-                    width: { xs: 40, sm: "auto" },
-                    height: 40,
-                    px: { xs: 0, sm: 1.5 },
+                    p: 1.5,
+                    display: "grid",
+                    gridTemplateColumns: { xs: "minmax(0, 1fr) 40px", sm: "minmax(0, 1fr) auto" },
+                    alignItems: "center",
+                    gap: { xs: 1.25, sm: 2 },
                     borderRadius: "8px",
-                    whiteSpace: "nowrap",
-                    "& .MuiButton-startIcon": {
-                      m: { xs: 0, sm: "0 8px 0 -4px" },
-                    },
                   }}
                 >
-                  <Box
-                    component="span"
-                    sx={{ display: { xs: "none", sm: "inline" } }}
-                  >
-                    Добавить
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>
+                      {item.name}
+                    </Typography>
+                    {details ? (
+                      <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                        {details}
+                      </Typography>
+                    ) : null}
+                    <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+                      Сегодня: {item.todayCount} из {item.maxCount}
+                    </Typography>
                   </Box>
-                </Button>
-              </Paper>
-            ))
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => runPending(() => onAdd(item.id), item.id)}
+                    disabled={isPending || isManualTemplateLimitReached(item)}
+                    loading={pendingKey === item.id}
+                    loadingPosition="start"
+                    sx={{
+                      minWidth: { xs: 40, sm: 96 },
+                      width: { xs: 40, sm: "auto" },
+                      height: 40,
+                      px: { xs: 0, sm: 1.5 },
+                      borderRadius: "8px",
+                      whiteSpace: "nowrap",
+                      "& .MuiButton-startIcon": {
+                        m: { xs: 0, sm: "0 8px 0 -4px" },
+                      },
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{ display: { xs: "none", sm: "inline" } }}
+                    >
+                      Добавить
+                    </Box>
+                  </Button>
+                </Paper>
+              );
+            })
           ) : (
-            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>
-              Нет ручных уборок для выбранного кафе
-            </Typography>
+            <Typography sx={{ color: "text.secondary", fontSize: 14 }}>{emptyText}</Typography>
           )}
         </Box>
       </DialogContent>

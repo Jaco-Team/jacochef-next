@@ -36,6 +36,7 @@ import {
   tableHeaderSx,
   tableRowSx,
 } from "./helpers";
+import { usePendingAction } from "./shared";
 
 const actionButtonSx = {
   minHeight: 40,
@@ -504,6 +505,7 @@ export function AddCafeCleaningDialog({
   onClose,
   onAdd,
 }) {
+  const { pendingKey, isPending, runPending } = usePendingAction();
   const roleOptions = [
     { id: "all", name: "Все роли" },
     ...roles.map((role) => ({
@@ -598,7 +600,10 @@ export function AddCafeCleaningDialog({
                   size="small"
                   variant="outlined"
                   startIcon={<AddIcon />}
-                  onClick={() => onAdd(item.id)}
+                  onClick={() => runPending(() => onAdd(item.id), item.id)}
+                  disabled={isPending}
+                  loading={pendingKey === item.id}
+                  loadingPosition="start"
                   sx={{
                     minWidth: { xs: 40, sm: 96 },
                     width: { xs: 40, sm: "auto" },
@@ -642,6 +647,8 @@ export function AddCafeCleaningDialog({
 }
 
 export function RemoveCafeCleaningDialog({ open, cleaning, cafe, onClose, onConfirm }) {
+  const { isPending, runPending } = usePendingAction();
+
   return (
     <Dialog
       open={open}
@@ -668,7 +675,8 @@ export function RemoveCafeCleaningDialog({ open, cleaning, cafe, onClose, onConf
         <Button
           size="small"
           variant="contained"
-          onClick={onConfirm}
+          onClick={() => runPending(onConfirm)}
+          loading={isPending}
           sx={actionButtonSx}
         >
           Убрать

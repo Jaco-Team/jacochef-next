@@ -37,6 +37,11 @@ function getCacheKey(value) {
   return value == null || value === "" ? "" : String(value);
 }
 
+// Control responses embed template/cafe data (incl. manualTemplates).
+function invalidateControlCache() {
+  cleaningsSessionCache.controlByFilters = {};
+}
+
 export default function useCleaningsPage({
   initialSection = "templates",
   initialControlKind = "cleanings",
@@ -69,6 +74,7 @@ export default function useCleaningsPage({
   const [controlItems, setControlItems] = useState([]);
   const [preparationItems, setPreparationItems] = useState([]);
   const [manualTemplates, setManualTemplates] = useState([]);
+  const [manualTemplatesSupported, setManualTemplatesSupported] = useState(true);
   const [controlPermissions, setControlPermissions] = useState({});
 
   const [cafeAssignedTemplates, setCafeAssignedTemplates] = useState([]);
@@ -374,6 +380,7 @@ export default function useCleaningsPage({
         setControlItems(normalized.cleanings);
         setPreparationItems(normalized.preparations);
         setManualTemplates(normalized.manualTemplates);
+        setManualTemplatesSupported(normalized.manualTemplatesSupported);
         setControlPermissions(normalized.permissions);
         return normalized;
       }
@@ -414,6 +421,7 @@ export default function useCleaningsPage({
         setControlItems(normalized.cleanings);
         setPreparationItems(normalized.preparations);
         setManualTemplates(normalized.manualTemplates);
+        setManualTemplatesSupported(normalized.manualTemplatesSupported);
         setControlPermissions(normalized.permissions);
       } catch (error) {
         showAlert(error?.message || "Ошибка загрузки данных контроля");
@@ -466,12 +474,6 @@ export default function useCleaningsPage({
       loadCafes(selectedCafeId);
     }
   }, [loadCafes, section, selectedCafeId]);
-
-  useEffect(() => {
-    if (section === "control" && addManualDialogOpen) {
-      loadCategories();
-    }
-  }, [addManualDialogOpen, loadCategories, section]);
 
   useEffect(() => {
     loadControl();
@@ -588,6 +590,7 @@ export default function useCleaningsPage({
     (template) => template.status === "active",
   );
 
+  // Never rejects: shows the error and resolves to null, so callers keep their dialog open.
   const runMutation = useCallback(async (callback, successMessage) => {
     setMutationLoading(true);
     try {
@@ -603,7 +606,7 @@ export default function useCleaningsPage({
       return response;
     } catch (error) {
       showAlert(error?.message || "Ошибка сохранения");
-      throw error;
+      return null;
     } finally {
       setMutationLoading(false);
     }
@@ -628,18 +631,23 @@ export default function useCleaningsPage({
     async (template) => {
       const payload = normalizeTemplatePayload(template);
 
-      await runMutation(async () => {
-        const response = template.id
+      const response = await runMutation(async () => {
+        const result = template.id
           ? await cleaningsApi.updateTemplate(template.id, payload)
           : await cleaningsApi.createTemplate(payload);
 
+        invalidateControlCache();
         await loadTemplates({ force: true });
         await loadCategories({ force: true });
         if (section === "cafes" && selectedCafeId) {
           await loadCafes(selectedCafeId, { force: true });
         }
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       closeDialog();
     },
@@ -666,6 +674,7 @@ export default function useCleaningsPage({
 
       await runMutation(async () => {
         const response = await cleaningsApi.updateTemplateStatus(id, nextStatus);
+        invalidateControlCache();
         await loadTemplates({ force: true });
         if (section === "cafes" && selectedCafeId) {
           await loadCafes(selectedCafeId, { force: true });
@@ -680,6 +689,7 @@ export default function useCleaningsPage({
     async (id) => {
       await runMutation(async () => {
         const response = await cleaningsApi.deleteTemplate(id);
+        invalidateControlCache();
         await loadTemplates({ force: true });
         await loadCategories({ force: true });
         if (section === "cafes" && selectedCafeId) {
@@ -708,20 +718,29 @@ export default function useCleaningsPage({
     }
 
     const payload = normalizeCategoryPayload(categoryDraft);
+    let nextCategories = [];
 
     const response = await runMutation(async () => {
       const result = categoryDraft.id
         ? await cleaningsApi.updateCategory(categoryDraft.id, payload)
         : await cleaningsApi.createCategory(payload);
 
-      await loadCategories({ force: true });
+      nextCategories = await loadCategories({ force: true });
       return result;
     });
 
+    if (!response) {
+      return;
+    }
+
     setCategoryDraft(null);
-    const createdCategoryId = response?.data?.category?.id ?? response?.category?.id;
+    const createdCategoryId =
+      response?.id ?? response?.data?.category?.id ?? response?.category?.id;
     if (!categoryDraft.id && createdCategoryId != null) {
-      setSelectedCategoryId(createdCategoryId);
+      const createdCategory = nextCategories.find(
+        (category) => String(category.id) === String(createdCategoryId),
+      );
+      setSelectedCategoryId(createdCategory?.id ?? createdCategoryId);
     }
   }, [categoryDraft, cleaningsApi, loadCategories, runMutation]);
 
@@ -751,11 +770,15 @@ export default function useCleaningsPage({
       return;
     }
 
-    await runMutation(async () => {
-      const response = await cleaningsApi.deleteCategory(deleteCategoryId);
+    const response = await runMutation(async () => {
+      const result = await cleaningsApi.deleteCategory(deleteCategoryId);
       await loadCategories({ force: true });
-      return response;
+      return result;
     });
+
+    if (!response) {
+      return;
+    }
 
     setDeleteCategoryId(null);
   }, [cleaningsApi, deleteCategoryId, loadCategories, runMutation]);
@@ -812,12 +835,17 @@ export default function useCleaningsPage({
         return;
       }
 
-      await runMutation(async () => {
-        const response = await cleaningsApi.assignTemplateToCafe(selectedCafeId, templateId);
+      const response = await runMutation(async () => {
+        const result = await cleaningsApi.assignTemplateToCafe(selectedCafeId, templateId, 0);
+        invalidateControlCache();
         await loadCafes(selectedCafeId, { force: true });
         await loadTemplates({ force: true });
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       setAddCafeDialogOpen(false);
       setAddCafeQuery("");
@@ -858,15 +886,20 @@ export default function useCleaningsPage({
       return;
     }
 
-    await runMutation(async () => {
-      const response = await cleaningsApi.removeTemplateFromCafe(
+    const response = await runMutation(async () => {
+      const result = await cleaningsApi.removeTemplateFromCafe(
         selectedCafeId,
         removeCafeCleaningId,
       );
+      invalidateControlCache();
       await loadCafes(selectedCafeId, { force: true });
       await loadTemplates({ force: true });
-      return response;
+      return result;
     });
+
+    if (!response) {
+      return;
+    }
 
     setRemoveCafeCleaningId(null);
   }, [cleaningsApi, loadCafes, loadTemplates, removeCafeCleaningId, runMutation, selectedCafeId]);
@@ -876,19 +909,41 @@ export default function useCleaningsPage({
       return;
     }
 
-    await runMutation(async () => {
-      const items = Object.entries(cafeDopTimeDrafts).map(([id, value]) => ({
-        id: Number(id),
-        dop_time: value === "" ? 0 : Number(value),
-      }));
-      const response = await cleaningsApi.saveCafeAssignments({
-        locationId: selectedCafeId,
-        items,
-      });
+    const items = Object.entries(cafeDopTimeDrafts).map(([templateId, value]) => ({
+      templateId: Number(templateId),
+      dop_time: value === "" ? 0 : Number(value),
+    }));
+
+    const response = await runMutation(async () => {
+      const result = await cleaningsApi.saveCafeDopTimes(selectedCafeId, items);
+      invalidateControlCache();
       await loadCafes(selectedCafeId, { force: true });
-      return response;
+      return result;
     });
-  }, [cafeDopTimeDrafts, cleaningsApi, loadCafes, runMutation, selectedCafeId]);
+
+    if (!response) {
+      return;
+    }
+
+    const skippedTemplateIds = Array.isArray(response?.skippedTemplateIds)
+      ? response.skippedTemplateIds
+      : [];
+    if (skippedTemplateIds.length) {
+      const skippedNames = skippedTemplateIds.map(
+        (templateId) =>
+          cafeAssignedTemplates.find((template) => String(template.id) === String(templateId))
+            ?.name || `#${templateId}`,
+      );
+      showAlert(`Доп. время не сохранено: ${skippedNames.join(", ")}`);
+    }
+  }, [
+    cafeAssignedTemplates,
+    cafeDopTimeDrafts,
+    cleaningsApi,
+    loadCafes,
+    runMutation,
+    selectedCafeId,
+  ]);
 
   const addManualCleaning = useCallback(
     async (templateId) => {
@@ -896,71 +951,96 @@ export default function useCleaningsPage({
         return;
       }
 
-      await runMutation(async () => {
-        const response = await cleaningsApi.addManualCleaning({
-          templateId,
-          locationId: controlCafeId,
-          date: controlDateFrom || getTodayDate(),
-        });
+      const response = await runMutation(async () => {
+        const result = await cleaningsApi.addManualCleaning(controlCafeId, templateId);
         await loadControl({ force: true });
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       setAddManualDialogOpen(false);
       setAddManualQuery("");
     },
-    [cleaningsApi, controlCafeId, controlDateFrom, loadControl, runMutation],
+    [cleaningsApi, controlCafeId, loadControl, runMutation],
   );
 
-  const confirmControlAction = useCallback(async () => {
-    if (!controlAction) {
-      return;
-    }
+  const confirmControlAction = useCallback(
+    async (reason = "") => {
+      if (!controlAction) {
+        return;
+      }
 
-    const actions = {
-      approve: () => cleaningsApi.approveControlCleaning(controlAction.id),
-      return: () => cleaningsApi.returnControlCleaning(controlAction.id),
-      detach: () => cleaningsApi.detachControlCleaning(controlAction.id),
-      delete: () => cleaningsApi.deleteControlCleaning(controlAction.id, ""),
-    };
+      const { id } = controlAction;
+      const locationId = controlActionCandidate?.locationId || controlCafeId;
+      const actions = {
+        approve: () => cleaningsApi.approveControlCleaning(locationId, id),
+        return: () => cleaningsApi.returnControlCleaning(locationId, id),
+        detach: () => cleaningsApi.detachControlCleaning(locationId, id),
+        delete: () => cleaningsApi.deleteControlCleaning(locationId, id, reason),
+      };
 
-    const actionRunner = actions[controlAction.type];
-    if (!actionRunner) {
-      return;
-    }
+      const actionRunner = actions[controlAction.type];
+      if (!actionRunner || !locationId) {
+        return;
+      }
 
-    await runMutation(async () => {
-      const response = await actionRunner();
-      await loadControl({ force: true });
-      return response;
-    });
+      const response = await runMutation(async () => {
+        const result = await actionRunner();
+        await loadControl({ force: true });
+        return result;
+      });
 
-    setControlAction(null);
-  }, [cleaningsApi, controlAction, loadControl, runMutation]);
+      if (!response) {
+        return;
+      }
 
-  const confirmPreparationAction = useCallback(async () => {
-    if (!preparationAction) {
-      return;
-    }
+      setControlAction(null);
+    },
+    [cleaningsApi, controlAction, controlActionCandidate, controlCafeId, loadControl, runMutation],
+  );
 
-    const actions = {
-      approve: () => cleaningsApi.approvePreparation(preparationAction.id),
-      delete: () => cleaningsApi.deletePreparation(preparationAction.id, ""),
-    };
+  const confirmPreparationAction = useCallback(
+    async (reason = "") => {
+      if (!preparationAction) {
+        return;
+      }
 
-    const actionRunner = actions[preparationAction.type];
-    if (!actionRunner) {
-      return;
-    }
+      const { id } = preparationAction;
+      const locationId = preparationActionCandidate?.locationId || preparationCafeId;
+      const actions = {
+        approve: () => cleaningsApi.approvePreparation(locationId, id),
+        delete: () => cleaningsApi.deletePreparation(locationId, id, reason),
+      };
 
-    await runMutation(async () => {
-      const response = await actionRunner();
-      await loadControl({ force: true });
-      return response;
-    });
+      const actionRunner = actions[preparationAction.type];
+      if (!actionRunner || !locationId) {
+        return;
+      }
 
-    setPreparationAction(null);
-  }, [cleaningsApi, loadControl, preparationAction, runMutation]);
+      const response = await runMutation(async () => {
+        const result = await actionRunner();
+        await loadControl({ force: true });
+        return result;
+      });
+
+      if (!response) {
+        return;
+      }
+
+      setPreparationAction(null);
+    },
+    [
+      cleaningsApi,
+      loadControl,
+      preparationAction,
+      preparationActionCandidate,
+      preparationCafeId,
+      runMutation,
+    ],
+  );
 
   const openPreparationEdit = useCallback(
     async (id) => {
@@ -1005,8 +1085,8 @@ export default function useCleaningsPage({
         return;
       }
 
-      await runMutation(async () => {
-        const response = await cleaningsApi.savePreparationEdit({
+      const response = await runMutation(async () => {
+        const result = await cleaningsApi.savePreparationEdit({
           point_id: {
             id: location.id,
             base: location.base,
@@ -1017,8 +1097,12 @@ export default function useCleaningsPage({
           count_trash: preparation.waste,
         });
         await loadControl({ force: true });
-        return response;
+        return result;
       });
+
+      if (!response) {
+        return;
+      }
 
       setEditingPreparation(null);
     },
@@ -1095,6 +1179,7 @@ export default function useCleaningsPage({
     loading: bootstrapLoading || mutationLoading,
     locations,
     manualTemplates,
+    manualTemplatesSupported,
     mutationLoading,
     openCreate,
     openEdit,

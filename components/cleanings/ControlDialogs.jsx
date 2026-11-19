@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Button,
   Dialog,
@@ -9,6 +10,10 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { JacoTextInput } from "@/design-system/shared/ui";
+import { usePendingAction } from "./shared";
+
+const DELETE_REASON_MIN_LENGTH = 3;
 
 const actionButtonSx = {
   minHeight: 40,
@@ -22,11 +27,83 @@ const actionButtonSx = {
   whiteSpace: "nowrap",
 };
 
+function useDeleteReason(open, action) {
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setReason("");
+    }
+  }, [open, action?.id, action?.type]);
+
+  const isDelete = action?.type === "delete";
+  const trimmedReason = reason.trim();
+  const isReasonValid = !isDelete || trimmedReason.length >= DELETE_REASON_MIN_LENGTH;
+
+  return {
+    reason,
+    setReason,
+    isDelete,
+    isReasonValid,
+    confirmReason: isDelete ? trimmedReason : "",
+  };
+}
+
+function getEmployeeSuffix(employee) {
+  const name = String(employee || "").trim();
+  return name ? ` сотрудника ${name}` : "";
+}
+
+function DeleteReasonField({ value, onChange }) {
+  return (
+    <JacoTextInput
+      label="Причина удаления"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      helperText={`Не менее ${DELETE_REASON_MIN_LENGTH} символов`}
+      required
+      autoFocus
+      multiline
+      minRows={2}
+    />
+  );
+}
+
+function ConfirmActionButton({ meta, disabled, loading, onClick }) {
+  return (
+    <Button
+      size="small"
+      variant="contained"
+      startIcon={meta.icon}
+      onClick={onClick}
+      disabled={disabled}
+      loading={loading}
+      loadingPosition="start"
+      sx={{
+        ...actionButtonSx,
+        bgcolor: meta.bgcolor,
+        color: "#fff",
+        "&:hover": { bgcolor: meta.hoverBgcolor },
+        "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "action.disabled" },
+      }}
+    >
+      {meta.button}
+    </Button>
+  );
+}
+
 export function ControlActionConfirmDialog({ open, action, item, cleaning, onClose, onConfirm }) {
+  const { reason, setReason, isDelete, isReasonValid, confirmReason } = useDeleteReason(
+    open,
+    action,
+  );
+  const { isPending, runPending } = usePendingAction();
+  const cleaningName = cleaning?.name || "Уборка";
+  const employeeSuffix = getEmployeeSuffix(item?.employee);
   const actionMeta = {
     approve: {
       title: "Подтвердить уборку?",
-      text: `Уборка «${cleaning?.name || "Уборка"}» сотрудника ${item?.employee || ""} будет отмечена как подтверждённая.`,
+      text: `Уборка «${cleaningName}»${employeeSuffix} будет отмечена как подтверждённая.`,
       button: "Подтвердить",
       icon: <CheckCircleOutlineIcon />,
       bgcolor: "#16a34a",
@@ -34,7 +111,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
     },
     return: {
       title: "Вернуть уборку?",
-      text: `Уборка «${cleaning?.name || "Уборка"}» сотрудника ${item?.employee || ""} будет возвращена в процесс.`,
+      text: `Уборка «${cleaningName}»${employeeSuffix} будет возвращена в процесс.`,
       button: "Вернуть",
       icon: <ReplayIcon />,
       bgcolor: "#f59e0b",
@@ -42,7 +119,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
     },
     detach: {
       title: "Снять уборку?",
-      text: `Уборка «${cleaning?.name || "Уборка"}» будет переведена в активные. Сотрудник и время начала будут очищены.`,
+      text: `Уборка «${cleaningName}» будет переведена в активные. Сотрудник и время начала будут очищены.`,
       button: "Снять",
       icon: <ReplayIcon />,
       bgcolor: "#f59e0b",
@@ -50,7 +127,7 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
     },
     delete: {
       title: "Удалить запись?",
-      text: `Запись «${cleaning?.name || "Уборка"}» сотрудника ${item?.employee || ""} будет удалена из контроля.`,
+      text: `Запись «${cleaningName}»${employeeSuffix} будет удалена из контроля.`,
       button: "Удалить",
       icon: <DeleteOutlineIcon />,
       bgcolor: "primary.main",
@@ -68,8 +145,14 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
       slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ display: "grid", gap: 2 }}>
         <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{meta.text}</Typography>
+        {isDelete ? (
+          <DeleteReasonField
+            value={reason}
+            onChange={setReason}
+          />
+        ) : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <Button
@@ -80,26 +163,23 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
         >
           Отмена
         </Button>
-        <Button
-          size="small"
-          variant="contained"
-          startIcon={meta.icon}
-          onClick={onConfirm}
-          sx={{
-            ...actionButtonSx,
-            bgcolor: meta.bgcolor,
-            color: "#fff",
-            "&:hover": { bgcolor: meta.hoverBgcolor },
-          }}
-        >
-          {meta.button}
-        </Button>
+        <ConfirmActionButton
+          meta={meta}
+          disabled={!isReasonValid}
+          loading={isPending}
+          onClick={() => runPending(() => onConfirm(confirmReason))}
+        />
       </DialogActions>
     </Dialog>
   );
 }
 
 export function PreparationActionConfirmDialog({ open, action, item, onClose, onConfirm }) {
+  const { reason, setReason, isDelete, isReasonValid, confirmReason } = useDeleteReason(
+    open,
+    action,
+  );
+  const { isPending, runPending } = usePendingAction();
   const actionMeta = {
     approve: {
       title: "Подтвердить заготовку?",
@@ -129,8 +209,14 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
       slotProps={{ paper: { sx: { borderRadius: "12px" } } }}
     >
       <DialogTitle sx={{ fontWeight: 700 }}>{meta.title}</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ display: "grid", gap: 2 }}>
         <Typography sx={{ color: "text.secondary", fontSize: 15 }}>{meta.text}</Typography>
+        {isDelete ? (
+          <DeleteReasonField
+            value={reason}
+            onChange={setReason}
+          />
+        ) : null}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
         <Button
@@ -141,20 +227,12 @@ export function PreparationActionConfirmDialog({ open, action, item, onClose, on
         >
           Отмена
         </Button>
-        <Button
-          size="small"
-          variant="contained"
-          startIcon={meta.icon}
-          onClick={onConfirm}
-          sx={{
-            ...actionButtonSx,
-            bgcolor: meta.bgcolor,
-            color: "#fff",
-            "&:hover": { bgcolor: meta.hoverBgcolor },
-          }}
-        >
-          {meta.button}
-        </Button>
+        <ConfirmActionButton
+          meta={meta}
+          disabled={!isReasonValid}
+          loading={isPending}
+          onClick={() => runPending(() => onConfirm(confirmReason))}
+        />
       </DialogActions>
     </Dialog>
   );

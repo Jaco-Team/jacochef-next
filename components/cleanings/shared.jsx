@@ -1,8 +1,32 @@
+import { useCallback, useRef, useState } from "react";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import RestoreFromTrashOutlinedIcon from "@mui/icons-material/RestoreFromTrashOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
+
+// Blocks repeated submits until the async action settles; `pendingKey` marks the clicked row.
+export function usePendingAction() {
+  const [pendingKey, setPendingKey] = useState(null);
+  const pendingRef = useRef(false);
+
+  const runPending = useCallback(async (action, key = true) => {
+    if (pendingRef.current) {
+      return;
+    }
+
+    pendingRef.current = true;
+    setPendingKey(key);
+    try {
+      await action();
+    } finally {
+      pendingRef.current = false;
+      setPendingKey(null);
+    }
+  }, []);
+
+  return { pendingKey, isPending: pendingKey !== null, runPending };
+}
 
 export function FormLabel({ children }) {
   return (

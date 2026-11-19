@@ -442,6 +442,20 @@ export function normalizeTemplate(item = {}) {
   };
 }
 
+export function normalizeManualTemplate(item = {}) {
+  return {
+    id: toNumber(item.id, item.id),
+    name: item.name ? String(item.name) : "",
+    roleId: toNumber(item.roleId, null),
+    role: item.role ? String(item.role) : "",
+    categoryId: toNumber(item.categoryId, null),
+    category: item.category ? String(item.category) : "",
+    duration: toNumber(item.duration, null),
+    maxCount: toNumber(item.maxCount, 0) || 0,
+    todayCount: toNumber(item.todayCount, 0) || 0,
+  };
+}
+
 export function normalizeCategory(item = {}) {
   return {
     id: toNumber(item.id, item.id),
@@ -633,12 +647,8 @@ export function normalizeControlResponse(response) {
     preparations: toArray(data.preparations?.length ? data.preparations : data.pf_list).map(
       normalizePreparationItem,
     ),
-    manualTemplates: toArray(
-      data.availableManualCleanings ??
-        data.manualTemplates ??
-        data.manual_templates ??
-        data.all_work,
-    ).map(normalizeTemplate),
+    manualTemplates: toArray(data.manualTemplates).map(normalizeManualTemplate),
+    manualTemplatesSupported: Array.isArray(data.manualTemplates),
     permissions: data.permissions && typeof data.permissions === "object" ? data.permissions : {},
   };
 }

@@ -404,7 +404,7 @@ export default function CleaningsPage({
       <AddManualCleaningDialog
         open={page.addManualDialogOpen}
         items={page.manualTemplates}
-        categories={page.categories}
+        supported={page.manualTemplatesSupported}
         locations={page.locations}
         cafeId={page.controlCafeId}
         query={page.addManualQuery}
