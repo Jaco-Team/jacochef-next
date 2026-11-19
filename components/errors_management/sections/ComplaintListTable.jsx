@@ -135,24 +135,7 @@ function JournalHeaders({ sort, onSort }) {
       >
         Статус
       </SortableHeader>
-      <SortableHeader
-        field="error_amount"
-        sort={sort}
-        onSort={onSort}
-      >
-        <HeaderHint tooltip="Сумма по действующим ошибкам заказа. Снятые ошибки не учитываются.">
-          Сумма ошибки
-        </HeaderHint>
-      </SortableHeader>
-      <SortableHeader
-        field="changed_amount"
-        sort={sort}
-        onSort={onSort}
-      >
-        <HeaderHint tooltip="Корректировка суммы заказа после рассмотрения жалобы. Пока жалоба у кафе, сумма скрыта.">
-          Сумма изменения
-        </HeaderHint>
-      </SortableHeader>
+      <TableCell>Ошибок</TableCell>
       <TableCell />
     </>
   );
@@ -192,8 +175,7 @@ function JournalRow({ row, points, onOpenOrder, onOpenComplaint }) {
           variant={appearance.variant}
         />
       </TableCell>
-      <TableCell>{amountLabel(row.error_amount_total)}</TableCell>
-      <TableCell>{row.is_salary_visible ? amountLabel(row.changed_amount_total) : "—"}</TableCell>
+      <TableCell>{row.errors_count ?? "—"}</TableCell>
       <TableCell align="right">
         <JacoButton
           compact

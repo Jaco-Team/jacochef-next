@@ -2,21 +2,26 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   acceptPhotoFiles,
-  autoRootPath,
   buildLeaves,
   canResolveErrors,
-  cascadeLevels,
   errorSolutionOptions,
-  findLeaf,
+  errorsCountLabel,
+  findLeafById,
   idList,
+  leafGroupTitle,
+  leafPickerOptions,
   leavesForPosition,
+  matchesQuery,
+  missingLabel,
   newClientRequestId,
   photoFileError,
+  pickLeaf,
   resolutionDrafts,
   resolutionPayload,
   solutionOptionsForLeaf,
   stageIdsForLeaf,
   stageOptionsForLeaf,
+  stepQuantity,
   treeErrorDraft,
   treeErrorIssues,
   treeErrorPayload,
@@ -101,8 +106,6 @@ test("positions get leaves by inherited site categories; delivery and order get 
       .sort((a, b) => a - b),
     [11, 21],
   );
-  assert.deepEqual(autoRootPath(leavesForPosition(leaves, sauce)), []);
-  assert.deepEqual(autoRootPath(leavesForPosition(leaves, { site_category_id: 14 })), [1]);
   assert.deepEqual(
     leavesForPosition(leaves, { type: "delivery", site_category_id: null }).map((leaf) => leaf.id),
     [31],
@@ -118,23 +121,36 @@ test("positions get leaves by inherited site categories; delivery and order get 
   );
 });
 
-test("the cascade offers one level at a time down to the leaf", () => {
+test("one searchable list groups leaves by category and middle path", () => {
   const dish = leavesForPosition(leaves, { site_category_id: 14 });
-  const first = cascadeLevels(dish, []);
-  assert.equal(first.length, 1);
+  const options = leafPickerOptions(dish);
   assert.deepEqual(
-    first[0].map((option) => option.id),
-    [1],
+    options.map((option) => [option.name, option.group, option.needImg]),
+    [
+      ["Подгорело", "Блюдо · Качество", false],
+      ["Холодное", "Блюдо · Качество", true],
+    ],
   );
-  const levels = cascadeLevels(dish, [1, 2]);
-  assert.deepEqual(
-    levels.map((options) => options.map((option) => option.name)),
-    [["Блюдо"], ["Качество"], ["Подгорело", "Холодное"]],
-  );
-  assert.equal(findLeaf(dish, [1, 2, 3])?.id, 3);
-  assert.equal(findLeaf(dish, [1, 2]), null);
-  const deep = leavesForPosition(leaves, { site_category_id: 13 });
-  assert.equal(cascadeLevels(deep, [60, 61, 62]).length, 4);
+  const deep = leaves.find((leaf) => leaf.id === 63);
+  assert.equal(leafGroupTitle(deep), "Глубокий · Уровень 2 / Уровень 3");
+  assert.equal(leafGroupTitle(leaves.find((leaf) => leaf.id === 31)), "Заказ");
+  assert.equal(matchesQuery(options[1].search, "холод"), true);
+  assert.equal(matchesQuery(options[1].search, "блюдо качество"), true);
+  assert.equal(matchesQuery(options[1].search, "упаковка"), false);
+  assert.equal(matchesQuery("Ёжик в тумане", "ежик"), true);
+  assert.equal(findLeafById(dish, "3")?.id, 3);
+  assert.equal(findLeafById(dish, "31"), null);
+});
+
+test("picking a leaf auto-selects a single stage and never a solution", () => {
+  const draft = treeErrorDraft("dish", { position_key: "dish:1" });
+  const cold = leaves.find((leaf) => leaf.id === 3);
+  const pizza = pickLeaf({ ...draft, solution_id: "5" }, cold, "pizza");
+  assert.equal(pizza.leaf_id, "3");
+  assert.equal(pizza.stage_id, "3");
+  assert.equal(pizza.solution_id, "");
+  assert.equal(pickLeaf(draft, cold, "rolls").stage_id, "");
+  assert.equal(pickLeaf(draft, null, "rolls").leaf_id, "");
 });
 
 test("stages follow the product kind and fall back to the union", () => {
@@ -162,52 +178,76 @@ test("solutions come from the leaf list and are hidden when it is empty", () => 
   assert.deepEqual(solutionOptionsForLeaf(null, solutions), []);
 });
 
-test("a draft is valid only with a leaf, a resolved stage and required photos", () => {
+test("a draft is complete with a leaf, a resolved stage and required photos; solution is optional", () => {
   const positions = [
-    { position_key: "log:1", type: "dish", site_category_id: 14, product_kind: "pizza", total_count: 2 },
+    { position_key: "dish:3", type: "dish", site_category_id: 14, product_kind: "pizza", total_count: 2 },
   ];
   const context = { leaves, positions };
-  const draft = treeErrorDraft(leaves, "dish", positions[0]);
-  assert.deepEqual(draft.path_ids, [1]);
+  const draft = treeErrorDraft("dish", positions[0]);
   assert.deepEqual(treeErrorIssues(draft, context), ["leaf"]);
-  const chosen = { ...draft, path_ids: [1, 2, 3] };
+  assert.equal(missingLabel(treeErrorIssues(draft, context)), "Осталось: выберите проблему");
+  const chosen = { ...draft, leaf_id: "3", stage_id: "" };
   assert.deepEqual(treeErrorIssues(chosen, context), ["stage", "photos_required"]);
-  const uploading = {
-    ...chosen,
-    stage_id: "3",
-    photos: [{ key: "a", status: "uploading" }],
-  };
+  assert.equal(
+    missingLabel(treeErrorIssues(chosen, context)),
+    "Осталось: выберите этап, добавьте фото",
+  );
+  const uploading = { ...chosen, stage_id: "3", photos: [{ key: "a", status: "uploading" }] };
   assert.deepEqual(treeErrorIssues(uploading, context), ["photos_pending", "photos_required"]);
   const ready = {
     ...chosen,
     stage_id: "3",
-    solution_id: "5",
-    quantity: "2",
+    quantity: 2,
+    comment: "  ",
     photos: [
       { key: "a", status: "done", id: 70 },
       { key: "b", status: "error", error: "big" },
     ],
   };
   assert.deepEqual(treeErrorIssues(ready, context), []);
+  assert.equal(missingLabel([]), "");
   assert.deepEqual(treeErrorIssues({ ...ready, stage_id: "1" }, context), ["stage"]);
-  assert.deepEqual(treeErrorIssues({ ...ready, quantity: "3" }, context), ["quantity"]);
-  const payload = treeErrorPayload(ready, leaves, positions);
-  assert.equal(payload.error_id, 3);
-  assert.equal(payload.stage_id, 3);
-  assert.equal(payload.solution_id, 5);
-  assert.deepEqual(payload.photo_ids, [70]);
-  assert.equal(payload.quantity, 2);
+  assert.deepEqual(treeErrorIssues({ ...ready, solution_id: "7" }, context), ["solution"]);
+  assert.deepEqual(treeErrorIssues({ ...ready, quantity: 3 }, context), ["quantity"]);
+  assert.deepEqual(treeErrorPayload({ ...ready, solution_id: "5" }, leaves, positions), {
+    object_type: "dish",
+    position_key: "dish:3",
+    error_id: 3,
+    stage_id: 3,
+    solution_id: 5,
+    photo_ids: [70],
+    quantity: 2,
+    comment: null,
+  });
+});
+
+test("the quantity stepper stays within 1 and the position count", () => {
+  const position = { total_count: 3 };
+  const draft = treeErrorDraft("dish", { position_key: "dish:1" });
+  assert.equal(stepQuantity(draft, position, -1).quantity, 1);
+  assert.equal(stepQuantity({ ...draft, quantity: 2 }, position, 1).quantity, 3);
+  assert.equal(stepQuantity({ ...draft, quantity: 3 }, position, 1).quantity, 3);
+  assert.equal(stepQuantity(draft, null, 1).quantity, 1);
 });
 
 test("a leaf without stages needs no stage; order errors use the leaves without site categories", () => {
-  const positions = [{ position_key: "log:2", type: "dish", site_category_id: 14 }];
-  const noStage = { ...treeErrorDraft(leaves, "dish", positions[0]), path_ids: [1, 2, 4] };
+  const positions = [{ position_key: "dish:4", type: "dish", site_category_id: 14 }];
+  const noStage = { ...treeErrorDraft("dish", positions[0]), leaf_id: "4" };
   assert.deepEqual(treeErrorIssues(noStage, { leaves, positions }), []);
-  const order = { ...treeErrorDraft(leaves, "order", null), path_ids: [30, 31], stage_id: "6" };
-  assert.deepEqual(order.position_key, null);
+  const order = { ...treeErrorDraft("order", null), leaf_id: "31", stage_id: "6" };
+  assert.equal(order.position_key, null);
   assert.deepEqual(treeErrorIssues(order, { leaves, positions }), []);
   assert.equal(treeErrorPayload(order, leaves, positions).error_id, 31);
+  assert.deepEqual(treeErrorIssues({ ...order, leaf_id: "3" }, { leaves, positions }), ["leaf"]);
   assert.equal(validQuantity({ quantity: 2 }, null), false);
+});
+
+test("the register button counts errors in Russian", () => {
+  assert.equal(errorsCountLabel(1), "1 ошибка");
+  assert.equal(errorsCountLabel(3), "3 ошибки");
+  assert.equal(errorsCountLabel(5), "5 ошибок");
+  assert.equal(errorsCountLabel(11), "11 ошибок");
+  assert.equal(errorsCountLabel(22), "22 ошибки");
 });
 
 test("photo files are checked by type, size and the per-error limit", () => {
@@ -238,8 +278,8 @@ test("client request id is a v4 uuid even without crypto.randomUUID", () => {
 
 test("resolve offers each error only its leaf solutions and keeps an empty list optional", () => {
   const errors = [
-    { id: 11, solution_ids: [5, 6], solution_id: 6, changed_amount: null },
-    { id: 12, solution_ids: [], solution_id: 7, changed_amount: "10.00" },
+    { id: 11, solution_ids: [5, 6], solution_id: 6 },
+    { id: 12, solution_ids: [], solution_id: 7 },
     { id: 13, solution_ids: [5], solution_id: 7 },
   ];
   assert.deepEqual(
@@ -256,8 +296,8 @@ test("resolve offers each error only its leaf solutions and keeps an empty list 
   const ready = drafts.map((entry) => (entry.id === 13 ? { ...entry, solution_id: "5" } : entry));
   assert.equal(canResolveErrors(ready, errors), true);
   assert.deepEqual(resolutionPayload(ready, errors), [
-    { id: 11, changed_amount: "", solution_id: "6" },
-    { id: 12, changed_amount: "10.00" },
-    { id: 13, changed_amount: "", solution_id: "5" },
+    { id: 11, solution_id: "6" },
+    { id: 12 },
+    { id: 13, solution_id: "5" },
   ]);
 });

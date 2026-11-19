@@ -38,7 +38,7 @@ export const COMPLAINT_STATUS_LABELS = {
 export function historyFieldLabel(field) {
   if (COMPLAINT_HISTORY_FIELDS[field]) return COMPLAINT_HISTORY_FIELDS[field];
   const errorField = field.match(
-    /^errors\.\d+\.(category_name|problem_name|error_type_name|error_name|stage_name|solution_name|error_amount|changed_amount|comment|quantity|removed_at|removed_comment)$/,
+    /^errors\.\d+\.(category_name|problem_name|error_type_name|error_name|stage_name|solution_name|comment|quantity|removed_at|removed_comment)$/,
   )?.[1];
   return {
     category_name: "Категория проблемы",
@@ -47,8 +47,6 @@ export function historyFieldLabel(field) {
     error_name: "Ошибка",
     stage_name: "Этап возникновения ошибки",
     solution_name: "Решение",
-    error_amount: "Сумма ошибки",
-    changed_amount: "Сумма изменения",
     comment: "Комментарий к ошибке",
     quantity: "Количество",
     removed_at: "Ошибка снята",
@@ -100,8 +98,6 @@ export function historyFieldOrder(field) {
   if (field.endsWith(".error_name")) return 3;
   if (field.endsWith(".stage_name")) return 4;
   if (field.endsWith(".solution_name")) return 5;
-  if (field.endsWith(".error_amount")) return 6;
-  if (field.endsWith(".changed_amount")) return 7;
   if (field.endsWith(".comment")) return 8;
   if (field.endsWith(".quantity")) return 9;
   if (field.endsWith(".removed_at")) return 10;
@@ -124,8 +120,6 @@ export function historyValue(value, field) {
   if (field === "status") return HISTORY_STATUS_LABELS[value] || String(value);
   if (["sent_to_cafe_at", "accepted_at", "resolved_at"].includes(field) || field.endsWith(".removed_at"))
     return historyTimestamp(value);
-  if (field.endsWith(".error_amount") || field.endsWith(".changed_amount"))
-    return amountLabel(value);
   return String(value);
 }
 

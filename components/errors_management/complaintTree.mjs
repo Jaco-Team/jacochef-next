@@ -43,14 +43,6 @@ export function normalizeTreeNode(node) {
   };
 }
 
-function compareNodes(left, right) {
-  return (
-    left.sort - right.sort ||
-    left.name.localeCompare(right.name, "ru") ||
-    left.id - right.id
-  );
-}
-
 export function buildLeaves(tree) {
   const nodes = (Array.isArray(tree) ? tree : [])
     .map(normalizeTreeNode)
@@ -102,46 +94,53 @@ export function leavesForPosition(leaves, position) {
   return siteCategoryId ? leaves.filter((leaf) => leaf.siteCats.includes(siteCategoryId)) : leaves;
 }
 
-function samePrefix(leaf, pathIds, length) {
-  return pathIds.slice(0, length).every((id, index) => leaf.pathIds[index] === Number(id));
+export function leafGroupTitle(leaf) {
+  const names = (leaf?.path || []).map((node) => node.name);
+  if (names.length <= 1) return names[0] || "";
+  const middle = names.slice(1, -1).join(" / ");
+  return middle ? `${names[0]} · ${middle}` : names[0];
 }
 
-export function cascadeLevels(leaves, pathIds = []) {
-  const levels = [];
-  for (let level = 0; ; level += 1) {
-    if (level > 0 && !pathIds[level - 1]) break;
-    const options = new Map();
-    leaves.forEach((leaf) => {
-      const node = leaf.path[level];
-      if (node && samePrefix(leaf, pathIds, level) && !options.has(node.id)) {
-        options.set(node.id, node);
+function searchText(value) {
+  return String(value ?? "")
+    .toLocaleLowerCase("ru")
+    .replace(/ё/g, "е");
+}
+
+export function matchesQuery(text, query) {
+  const needle = searchText(query).trim();
+  if (!needle) return true;
+  const haystack = searchText(text);
+  return needle.split(/\s+/).every((word) => haystack.includes(word));
+}
+
+export function leafPickerOptions(leaves) {
+  return leaves
+    .map((leaf) => ({
+      id: leaf.id,
+      name: leaf.path[leaf.path.length - 1]?.name || leaf.name,
+      group: leafGroupTitle(leaf),
+      search: leaf.path.map((node) => node.name).join(" "),
+      needImg: leaf.needImg,
+      sortKey: leaf.path.map((node) => [node.sort, node.name]),
+    }))
+    .sort((left, right) => {
+      for (let index = 0; index < Math.max(left.sortKey.length, right.sortKey.length); index += 1) {
+        const a = left.sortKey[index];
+        const b = right.sortKey[index];
+        if (!a || !b) return a ? 1 : -1;
+        if (a[0] !== b[0]) return a[0] - b[0];
+        const byName = a[1].localeCompare(b[1], "ru");
+        if (byName) return byName;
       }
-    });
-    if (!options.size) break;
-    levels.push([...options.values()].sort(compareNodes));
-    if (!pathIds[level]) break;
-  }
-  return levels;
+      return left.id - right.id;
+    })
+    .map(({ sortKey, ...option }) => option);
 }
 
-export function cascadeLevelLabel(level, isLast) {
-  if (level === 0) return "Категория проблемы";
-  return isLast ? "Проблема" : "Подраздел";
-}
-
-export function autoRootPath(leaves) {
-  const roots = new Set(leaves.map((leaf) => leaf.pathIds[0]));
-  return roots.size === 1 ? [...roots] : [];
-}
-
-export function findLeaf(leaves, pathIds = []) {
-  const ids = pathIds.map(Number);
-  return (
-    leaves.find(
-      (leaf) =>
-        leaf.pathIds.length === ids.length && leaf.pathIds.every((id, index) => id === ids[index]),
-    ) || null
-  );
+export function findLeafById(leaves, id) {
+  const leafId = Number(id);
+  return leafId > 0 ? leaves.find((leaf) => leaf.id === leafId) || null : null;
 }
 
 export function stageIdsForLeaf(leaf, productKind) {
@@ -166,32 +165,42 @@ export function solutionOptionsForLeaf(leaf, solutions = []) {
 
 let draftCounter = 0;
 
-export function treeErrorDraft(leaves, objectType, position = null) {
+export function treeErrorDraft(objectType, position = null) {
   draftCounter += 1;
   return {
     uid: `error-${Date.now()}-${draftCounter}`,
     object_type: objectType,
     position_key: position?.position_key ?? null,
-    path_ids: autoRootPath(leavesForPosition(leaves, position)),
+    leaf_id: "",
     stage_id: "",
     solution_id: "",
-    ingredient_id: "",
-    error_amount: "",
     comment: "",
+    show_comment: false,
     quantity: 1,
     photos: [],
   };
 }
 
-export function changeTreePath(draft, level, nodeId) {
-  const pathIds = (draft.path_ids || []).slice(0, level);
-  if (nodeId) pathIds[level] = Number(nodeId);
-  return { ...draft, path_ids: pathIds, stage_id: "", solution_id: "" };
+export function pickLeaf(draft, leaf, productKind) {
+  if (!leaf) return { ...draft, leaf_id: "", stage_id: "", solution_id: "" };
+  const stageIds = stageIdsForLeaf(leaf, productKind);
+  return {
+    ...draft,
+    leaf_id: String(leaf.id),
+    stage_id: stageIds.length === 1 ? String(stageIds[0]) : "",
+    solution_id: "",
+  };
 }
 
 export function positionQuantityLimit(position) {
   const count = Number(position?.total_count);
   return Number.isInteger(count) && count > 1 ? count : 1;
+}
+
+export function stepQuantity(draft, position, step) {
+  const current = Number(draft?.quantity) || 1;
+  const next = Math.min(positionQuantityLimit(position), Math.max(1, current + step));
+  return { ...draft, quantity: next };
 }
 
 export function validQuantity(error, position) {
@@ -219,42 +228,72 @@ export function photosPending(draft) {
   return (draft?.photos || []).some((photo) => photo.status === "uploading");
 }
 
+export const ISSUE_LABELS = {
+  leaf: "выберите проблему",
+  stage: "выберите этап",
+  solution: "выберите решение из списка",
+  quantity: "укажите количество",
+  photos_pending: "дождитесь загрузки фото",
+  photos_limit: "оставьте не больше 5 фото",
+  photos_required: "добавьте фото",
+};
+
+function draftPosition(draft, positions) {
+  return draft.position_key
+    ? positions.find((item) => item.position_key === draft.position_key) || null
+    : null;
+}
+
 export function treeErrorIssues(draft, context) {
   const leaves = context?.leaves || [];
-  const position = (context?.positions || []).find(
-    (item) => item.position_key === draft.position_key,
-  );
-  const allowed = leavesForPosition(leaves, draft.position_key ? position : null);
-  const leaf = findLeaf(allowed, draft.path_ids);
+  const position = draftPosition(draft, context?.positions || []);
+  const leaf = findLeafById(leavesForPosition(leaves, position), draft.leaf_id);
   const issues = [];
-  if (!leaf) return ["leaf"];
-  const stageIds = stageIdsForLeaf(leaf, position?.product_kind ?? null);
-  if (stageIds.length && !stageIds.includes(Number(draft.stage_id))) issues.push("stage");
-  if (draft.solution_id && !leaf.solutionIds.includes(Number(draft.solution_id))) {
-    issues.push("solution");
+  if (!leaf) issues.push("leaf");
+  if (leaf) {
+    const stageIds = stageIdsForLeaf(leaf, position?.product_kind ?? null);
+    if (stageIds.length && !stageIds.includes(Number(draft.stage_id))) issues.push("stage");
+    if (draft.solution_id && !leaf.solutionIds.includes(Number(draft.solution_id))) {
+      issues.push("solution");
+    }
   }
   if (!validQuantity(draft, position)) issues.push("quantity");
   if (photosPending(draft)) issues.push("photos_pending");
   if (keptPhotos(draft).length > PHOTO_LIMIT) issues.push("photos_limit");
-  if (leaf.needImg && uploadedPhotoIds(draft).length === 0) issues.push("photos_required");
+  if (leaf?.needImg && uploadedPhotoIds(draft).length === 0) issues.push("photos_required");
   return issues;
 }
 
+export function missingLabel(issues) {
+  const labels = issues.map((issue) => ISSUE_LABELS[issue]).filter(Boolean);
+  return labels.length ? `Осталось: ${labels.join(", ")}` : "";
+}
+
 export function treeErrorPayload(draft, leaves, positions = []) {
-  const position = positions.find((item) => item.position_key === draft.position_key);
-  const leaf = findLeaf(leavesForPosition(leaves, draft.position_key ? position : null), draft.path_ids);
+  const position = draftPosition(draft, positions);
+  const leaf = findLeafById(leavesForPosition(leaves, position), draft.leaf_id);
   return {
     object_type: draft.object_type,
     position_key: draft.position_key,
     error_id: leaf?.id ?? null,
     stage_id: draft.stage_id ? Number(draft.stage_id) : null,
     solution_id: draft.solution_id ? Number(draft.solution_id) : null,
-    ingredient_id: draft.ingredient_id ? Number(draft.ingredient_id) : null,
     photo_ids: uploadedPhotoIds(draft),
     quantity: Number(draft.quantity) || 1,
-    error_amount: draft.error_amount === "" ? null : draft.error_amount,
-    comment: draft.comment || null,
+    comment: draft.comment?.trim() ? draft.comment : null,
   };
+}
+
+export function errorsCountLabel(count) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  const word =
+    mod10 === 1 && mod100 !== 11
+      ? "ошибка"
+      : mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)
+        ? "ошибки"
+        : "ошибок";
+  return `${count} ${word}`;
 }
 
 export function photoFileError(file) {
@@ -315,7 +354,6 @@ export function resolutionDrafts(errors = []) {
     return {
       id: error.id,
       solution_id: errorSolutionIds(error).includes(registered) ? String(registered) : "",
-      changed_amount: error?.changed_amount ?? "",
     };
   });
 }
@@ -333,7 +371,6 @@ export function resolutionPayload(resolutions = [], errors = []) {
     const entry = resolutions.find((item) => Number(item.id) === Number(error.id)) || {};
     return {
       id: error.id,
-      changed_amount: entry.changed_amount ?? "",
       ...(errorSolutionIds(error).length ? { solution_id: entry.solution_id || null } : {}),
     };
   });

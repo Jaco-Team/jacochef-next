@@ -1,11 +1,11 @@
 "use client";
 
-import { Grid, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import {
   JacoAlert,
   JacoButton,
+  JacoChoiceChips,
   JacoModal,
-  JacoSelect,
   JacoSurface,
   JacoTextInput,
 } from "@/design-system/shared/ui";
@@ -14,7 +14,7 @@ import { complaintProblemLabel } from "../../errorsManagementViewModel.mjs";
 import { fieldErrorsWithPrefix } from "../../requestErrors.mjs";
 import FieldMessage from "../FieldMessage";
 
-const RESOLUTION_FIELDS = ["solution_id", "changed_amount"];
+const RESOLUTION_FIELDS = ["solution_id"];
 
 const COMMAND_LABELS = {
   send_to_cafe: "Отправить в кафе",
@@ -98,11 +98,7 @@ export default function ComplaintResolutionModal({
             </Typography>
             {errors.map((item) => {
               const index = resolutions.findIndex((entry) => Number(entry.id) === Number(item.id));
-              const resolution = resolutions[index] || {
-                id: item.id,
-                solution_id: "",
-                changed_amount: "",
-              };
+              const resolution = resolutions[index] || { id: item.id, solution_id: "" };
               const messages =
                 index >= 0 ? fieldErrorsWithPrefix(fields, `resolution_errors.${index}.`) : [];
               const fieldError = (field) => messages.find((entry) => entry.field === field)?.message;
@@ -114,9 +110,7 @@ export default function ComplaintResolutionModal({
                   sx={{ p: 1.5 }}
                 >
                   <Stack spacing={1.25}>
-                    <Typography fontWeight={700}>
-                      {complaintProblemLabel(item)}
-                    </Typography>
+                    <Typography fontWeight={700}>{complaintProblemLabel(item)}</Typography>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -128,71 +122,43 @@ export default function ComplaintResolutionModal({
                     {messages
                       .filter((entry) => !RESOLUTION_FIELDS.includes(entry.field))
                       .map((entry) => (
-                      <JacoAlert
-                        key={entry.field}
-                        severity="error"
-                      >
-                        {entry.message}
-                      </JacoAlert>
-                    ))}
-                    <Grid
-                      container
-                      spacing={1.25}
-                    >
-                      {options.length ? (
-                      <Grid size={{ xs: 12, sm: 7 }}>
-                        <JacoSelect
-                          required
-                          multiple={false}
-                          label="Решение"
+                        <JacoAlert
+                          key={entry.field}
+                          severity="error"
+                        >
+                          {entry.message}
+                        </JacoAlert>
+                      ))}
+                    {options.length ? (
+                      <Stack spacing={0.75}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          Решение
+                        </Typography>
+                        <JacoChoiceChips
+                          ariaLabel="Решение"
                           options={options}
                           value={resolution.solution_id}
-                          allowNone
-                          noneLabel="Выберите решение"
-                          onChange={(event) =>
+                          onChange={(solutionId) =>
                             onResolutionsChange(
-                              updateResolution(resolutions, item.id, {
-                                solution_id: event.target.value === "none" ? "" : event.target.value,
-                              }),
+                              updateResolution(resolutions, item.id, { solution_id: solutionId }),
                             )
                           }
                         />
-                        <FieldMessage>{fieldError("solution_id")}</FieldMessage>
-                      </Grid>
-                      ) : (
-                        <Grid size={{ xs: 12, sm: 7 }}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            {item.solution_name
-                              ? `Решение: ${item.solution_name}`
-                              : "Для этой ошибки решение не выбирается."}
-                          </Typography>
-                          <FieldMessage>{fieldError("solution_id")}</FieldMessage>
-                        </Grid>
-                      )}
-                      <Grid size={{ xs: 12, sm: 5 }}>
-                        <JacoTextInput
-                          type="number"
-                          label="Сумма изменения"
-                          value={resolution.changed_amount}
-                          error={Boolean(fieldError("changed_amount"))}
-                          helperText={fieldError("changed_amount")}
-                          slotProps={{
-                            htmlInput: { min: 0, step: 0.01, inputMode: "decimal" },
-                            inputLabel: { shrink: true },
-                          }}
-                          onChange={(event) =>
-                            onResolutionsChange(
-                              updateResolution(resolutions, item.id, {
-                                changed_amount: event.target.value,
-                              }),
-                            )
-                          }
-                        />
-                      </Grid>
-                    </Grid>
+                      </Stack>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        {item.solution_name
+                          ? `Решение: ${item.solution_name}`
+                          : "Для этой ошибки решение не выбирается."}
+                      </Typography>
+                    )}
+                    <FieldMessage>{fieldError("solution_id")}</FieldMessage>
                   </Stack>
                 </JacoSurface>
               );

@@ -6,9 +6,9 @@
 - `useErrorsManagementPage` — состояние страницы: фильтры журнала, поиска заказов и статистики, данные дерева из `get_all`, загрузки с защитой от устаревших ответов.
 - `useErrorsManagementApi` — вызовы API; `{st: false}` превращается в `ErrorsManagementRequestError` с `text` и картой полей.
 - Чистые помощники с unit-тестами:
-  - `complaintTree.mjs` — листья и пути дерева, подбор по категории сайта позиции, этапы по типу товара, решения листа, проверка и payload ошибки, проверка фото, `client_request_id`;
+  - `complaintTree.mjs` — листья и пути дерева, подбор по категории сайта позиции, список «Проблема» с группами и поиском, этапы по типу товара, решения листа, проверка карточки («Осталось: …»), payload ошибки, проверка фото, `client_request_id`;
   - `optionTreeModel.mjs` — дерево для вкладки настроек и payload `add_cat`/`update_cat`;
   - `errorsManagementPermissions.mjs`, `complaintStatusModel.mjs`, `orderSearchModel.mjs`, `requestErrors.mjs`.
-- `sections/*` — визуальные блоки на `design-system/shared/ui`: редактор ошибки, `PhotoPicker`, `ComplaintTreeSettings` с `tree/CategoryEditor`, `complaint/PhotoThumbnails` (миниатюры и просмотр).
+- `sections/*` — визуальные блоки на `design-system/shared/ui`: карточка ошибки с `ProblemPicker`, `JacoChoiceChips` и `PhotoPicker`, `ComplaintTreeSettings` с `tree/CategoryEditor`, `complaint/PhotoThumbnails` (миниатюры и просмотр).
 
 Компоненты `components/option_to_win` не меняются: вкладка модуля использует собственные DS-компоненты с той же моделью данных.

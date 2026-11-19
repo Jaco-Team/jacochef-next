@@ -61,8 +61,7 @@ function JournalCard({ row, points, onOpenOrder, onOpenComplaint }) {
           {historyTimestamp(row.created_at)} · {workflowSourceLabel(row.source)}
         </Typography>
         <Typography color="text.secondary">
-          Ошибок: {row.errors_count ?? "—"} · Сумма: {amountLabel(row.error_amount_total)} ·
-          Промокоды: {row.issued_promos || 0}/{row.activated_promos || 0}
+          Ошибок: {row.errors_count ?? "—"} · Промокоды: {row.issued_promos || 0}/{row.activated_promos || 0}
         </Typography>
         {row.has_removed_errors ? (
           <Typography

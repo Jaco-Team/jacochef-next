@@ -128,6 +128,7 @@ export default function ErrorsManagementPage() {
         onSaved={registrationDrawer.saved}
         cities={registrationDrawer.cities}
         points={registrationDrawer.points}
+        siteCategories={registrationDrawer.siteCategories}
         withLoading={registrationDrawer.withLoading}
       />
     </Box>

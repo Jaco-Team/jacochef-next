@@ -26,7 +26,6 @@ import {
 import { formatPlural } from "@/src/helpers/utils/i18n";
 import { isRemovedError } from "../../errorsManagementPermissions.mjs";
 import {
-  amountLabel,
   complaintObjectLabel,
   complaintProblemLabel,
   historyTimestamp,
@@ -44,14 +43,6 @@ function problemLabel(item) {
   return complaintProblemLabel(item);
 }
 
-function amountsLabel(item) {
-  return [
-    item.error_amount != null ? `Ошибка: ${amountLabel(item.error_amount)}` : null,
-    item.changed_amount != null ? `Изменение: ${amountLabel(item.changed_amount)}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
 
 function removalLabel(item) {
   return [historyTimestamp(item.removed_at), item.removed_by_name].filter(Boolean).join(" · ");
@@ -175,14 +166,6 @@ function ErrorsTable({ errors, canRemove, onRemove }) {
                       >
                         {item.solution_name || "—"}
                       </Typography>
-                      {amountsLabel(item) ? (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                        >
-                          {amountsLabel(item)}
-                        </Typography>
-                      ) : null}
                     </TableCell>
                     <TableCell sx={cellSx}>{item.stage_name || "—"}</TableCell>
                     {withActions ? (
@@ -276,12 +259,6 @@ function ErrorsCards({ errors, canRemove, onRemove }) {
                   label="Этап"
                   value={item.stage_name}
                 />
-                {amountsLabel(item) ? (
-                  <DetailField
-                    label="Суммы"
-                    value={amountsLabel(item)}
-                  />
-                ) : null}
                 {item.comment ? (
                   <DetailField
                     label="Комментарий к ошибке"

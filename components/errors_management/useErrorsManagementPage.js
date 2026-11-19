@@ -432,6 +432,7 @@ export default function useErrorsManagementPage() {
       api,
       cities,
       points,
+      siteCategories: tree.siteCategories,
       selected,
       close: () => setSelected(null),
       saved: registrationSaved,

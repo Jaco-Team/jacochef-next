@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import {
   JacoAlert,
   JacoButton,
   JacoResponsiveModalShell,
+  JacoStatusChip,
   JacoSurface,
   JacoTextInput,
 } from "@/design-system/shared/ui";
@@ -14,23 +14,71 @@ import { ComplaintErrorEditor } from "./ComplaintErrorEditor";
 import {
   acceptPhotoFiles,
   buildLeaves,
+  errorsCountLabel,
   newClientRequestId,
+  positionSiteCategory,
   treeErrorDraft,
   treeErrorIssues,
   treeErrorPayload,
 } from "../complaintTree.mjs";
+import { ORDER_TYPE_OPTIONS } from "../constants";
+import { moveFocusInto } from "../focusModel.mjs";
 import { orderId, pointId } from "../errorsManagementViewModel.mjs";
 import { fieldErrorsWithPrefix, requestErrorText, requestFieldErrors } from "../requestErrors.mjs";
 
-const ISSUE_HINTS = {
-  leaf: "выберите вариант ошибки до конца дерева",
-  stage: "выберите этап",
-  solution: "выберите решение из списка",
-  quantity: "укажите количество",
-  photos_pending: "дождитесь загрузки фото",
-  photos_limit: "оставьте не больше 5 фото",
-  photos_required: "добавьте фото",
-};
+function positionCaption(position, siteCategories) {
+  if (position.type === "delivery") return "Доставка заказа";
+  const categoryId = positionSiteCategory(position);
+  const category = siteCategories.find((item) => Number(item.id) === categoryId);
+  return category?.name || (position.type === "extra" ? "Допы" : "Блюдо");
+}
+
+function PositionRow({ title, caption, count, addLabel, onAdd, children }) {
+  return (
+    <JacoSurface sx={{ p: { xs: 1.5, sm: 2 } }}>
+      <Stack spacing={1.5}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ alignItems: "center", justifyContent: "space-between" }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "center", flexWrap: "wrap" }}
+              useFlexGap
+            >
+              <Typography>{title}</Typography>
+              {count > 1 ? (
+                <JacoStatusChip
+                  label={`× ${count}`}
+                  tone="neutral"
+                  variant="soft"
+                />
+              ) : null}
+            </Stack>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {caption}
+            </Typography>
+          </Box>
+          <JacoButton
+            compact
+            tone="outlinePrimary"
+            onClick={onAdd}
+            sx={{ flexShrink: 0 }}
+          >
+            {addLabel}
+          </JacoButton>
+        </Stack>
+        {children}
+      </Stack>
+    </JacoSurface>
+  );
+}
 
 let photoCounter = 0;
 
@@ -41,6 +89,7 @@ export default function ComplaintRegistrationDrawer({
   onSaved,
   cities,
   points,
+  siteCategories = [],
   withLoading,
 }) {
   const [context, setContext] = useState(null);
@@ -53,6 +102,7 @@ export default function ComplaintRegistrationDrawer({
   const requestRef = useRef(0);
   const clientRequestIdRef = useRef(null);
   const previewUrlsRef = useRef(new Set());
+  const contentRef = useRef(null);
 
   const revokePreviews = () => {
     previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
@@ -87,6 +137,12 @@ export default function ComplaintRegistrationDrawer({
       });
   }, [api, selected, withLoading]);
 
+  useEffect(() => {
+    if (!selected) return undefined;
+    const frame = window.requestAnimationFrame(() => moveFocusInto(contentRef.current));
+    return () => window.cancelAnimationFrame(frame);
+  }, [context, selected]);
+
   const leaves = useMemo(() => buildLeaves(context?.tree), [context?.tree]);
   const positions = useMemo(() => context?.positions || [], [context?.positions]);
   const stages = context?.stages || [];
@@ -101,9 +157,12 @@ export default function ComplaintRegistrationDrawer({
       previous.map((item) => (item.uid === uid ? update(item) : item)),
     );
   const addError = (position) =>
-    changeStructure((previous) => [...previous, treeErrorDraft(leaves, position.type, position)]);
+    changeStructure((previous) => [
+      ...previous,
+      { ...treeErrorDraft(position.type, position), auto_open: true },
+    ]);
   const addOrderError = () =>
-    changeStructure((previous) => [...previous, treeErrorDraft(leaves, "order", null)]);
+    changeStructure((previous) => [...previous, { ...treeErrorDraft("order", null), auto_open: true }]);
   const removeError = (uid) =>
     changeStructure((previous) => {
       previous
@@ -187,7 +246,6 @@ export default function ComplaintRegistrationDrawer({
   };
   const issues = errors.map((error) => treeErrorIssues(error, { leaves, positions }));
   const canSave = errors.length > 0 && issues.every((list) => list.length === 0);
-  const firstIssues = issues.find((list) => list.length) || [];
   const save = async () => {
     const requestId = requestRef.current;
     setMessage("");
@@ -227,12 +285,15 @@ export default function ComplaintRegistrationDrawer({
     );
   }, [cities, context?.order?.city_id, context?.order?.point_id, points]);
 
-  const editorFor = (error, index, position, positionNumber) => (
+  const orderType = ORDER_TYPE_OPTIONS.find(
+    (option) => String(option.id) === String(context?.order?.type_order),
+  )?.name;
+  const editorFor = (error, index, position) => (
     <ComplaintErrorEditor
       key={error.uid}
       value={error}
       position={position}
-      positionNumber={positionNumber}
+      issues={issues[index] || []}
       leaves={leaves}
       solutions={solutions}
       stages={stages}
@@ -270,7 +331,9 @@ export default function ComplaintRegistrationDrawer({
       disabled={!canSave}
       onClick={save}
     >
-      Зарегистрировать жалобу
+      {errors.length
+        ? `Зарегистрировать жалобу · ${errorsCountLabel(errors.length)}`
+        : "Добавьте ошибку к позиции или заказу"}
     </JacoButton>
   );
 
@@ -285,99 +348,68 @@ export default function ComplaintRegistrationDrawer({
       mobileContentSx={{ px: 2, py: 2.5 }}
       mobileActionsSx={{ px: 2, pt: 1.5, pb: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
     >
-      <Stack spacing={2.5}>
+      <Stack
+        ref={contentRef}
+        tabIndex={-1}
+        aria-label="Регистрация жалобы"
+        spacing={2.5}
+        sx={{ outline: "none" }}
+      >
         {!context && message ? <JacoAlert severity="error">{message}</JacoAlert> : null}
         {confirmClose ? (
           <JacoAlert severity="warning">Несохранённые ошибки и комментарий будут потеряны.</JacoAlert>
         ) : null}
         {context ? (
           <>
-            <JacoSurface sx={{ p: 2 }}>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-              >
-                Заказ №{orderId(selected)}
-              </Typography>
-              <Typography
-                fontWeight={700}
-                mt={0.5}
-              >
-                Кафе: {cafeContext}
-              </Typography>
-            </JacoSurface>
-            <Stack spacing={1.25}>
-              <Typography fontWeight={700}>Позиции заказа</Typography>
-              {positions.map((position, positionIndex) => (
-                <Stack
-                  key={position.position_key}
-                  spacing={1.5}
-                >
-                  <JacoSurface sx={{ p: 1.5 }}>
-                    <Stack
-                      direction="row"
-                      gap={1}
-                      sx={{ alignItems: "center", justifyContent: "space-between" }}
-                    >
-                      <Box>
-                        <Typography fontWeight={600}>
-                          Позиция №{positionIndex + 1}: {position.name}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
-                          {position.total_count} шт.
-                        </Typography>
-                      </Box>
-                      <JacoButton
-                        compact
-                        tone="outlinePrimary"
-                        startIcon={<AddIcon />}
-                        onClick={() => addError(position)}
-                      >
-                        Ошибка
-                      </JacoButton>
-                    </Stack>
-                  </JacoSurface>
-                  {errors.map((error, index) =>
-                    error.position_key === position.position_key
-                      ? editorFor(error, index, position, positionIndex + 1)
-                      : null,
-                  )}
-                </Stack>
-              ))}
-            </Stack>
-            <Stack spacing={1.5}>
-              <JacoButton
-                tone="outlinePrimary"
-                startIcon={<AddIcon />}
-                onClick={addOrderError}
-              >
-                Добавить ошибку заказа
-              </JacoButton>
-              {errors.map((error, index) =>
-                !error.position_key ? editorFor(error, index, null, 0) : null,
-              )}
-            </Stack>
-            {!canSave ? (
+            <JacoSurface
+              variant="outlined"
+              sx={{ px: 2, py: 1.5 }}
+            >
               <Typography
                 variant="body2"
                 color="text.secondary"
               >
-                {errors.length === 0
-                  ? "Добавьте ошибку позиции или заказа."
-                  : `Чтобы зарегистрировать жалобу: ${firstIssues
-                      .map((issue) => ISSUE_HINTS[issue])
-                      .filter(Boolean)
-                      .join(", ")}.`}
+                {[`Заказ №${orderId(selected)}`, `Кафе: ${cafeContext}`, orderType]
+                  .filter(Boolean)
+                  .join(" · ")}
               </Typography>
-            ) : null}
+            </JacoSurface>
+            <Typography fontWeight={500}>Позиции заказа</Typography>
+            <Stack spacing={1.5}>
+              {positions.map((position) => (
+                <PositionRow
+                  key={position.position_key}
+                  title={position.name || position.position_name || "Позиция"}
+                  caption={positionCaption(position, siteCategories)}
+                  count={Number(position.total_count) || 1}
+                  addLabel="+ Ошибка"
+                  onAdd={() => addError(position)}
+                >
+                  {errors.map((error, index) =>
+                    error.position_key === position.position_key
+                      ? editorFor(error, index, position)
+                      : null,
+                  )}
+                </PositionRow>
+              ))}
+              <PositionRow
+                title="Весь заказ"
+                caption="Ошибка без позиции: ожидание, общение, термосумка"
+                count={1}
+                addLabel="+ Ошибка заказа"
+                onAdd={addOrderError}
+              >
+                {errors.map((error, index) =>
+                  !error.position_key ? editorFor(error, index, null) : null,
+                )}
+              </PositionRow>
+            </Stack>
             <JacoTextInput
               fullWidth
               multiline
               minRows={3}
-              label="Общий комментарий"
+              label="Общий комментарий к жалобе"
+              placeholder="Что сказал клиент"
               value={comment}
               error={Boolean(fieldErrors.common_comment)}
               helperText={fieldErrors.common_comment}
