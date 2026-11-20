@@ -2193,7 +2193,7 @@ const useStore = create((set, get) => ({
       get().check_price_item_new();
     }, 500);
 
-    get().changeKinds(res?.bill?.type_doc);
+    get().changeKinds(res?.bill?.type_bill);
   },
 
   clearForm: () => {
