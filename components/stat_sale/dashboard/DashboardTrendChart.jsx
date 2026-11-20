@@ -83,7 +83,7 @@ export default function DashboardTrendChart({ points, metric, source = "total", 
       if (disposed || !chartRef.current) return;
 
       root = am5.Root.new(chartRef.current);
-      root.locale = am5locales_ru_RU.default;
+      root.locale = { ...am5locales_ru_RU.default, _decimalSeparator: "." };
       root.numberFormatter.setAll({
         numberFormat: "#,###",
         bigNumberPrefixes: [

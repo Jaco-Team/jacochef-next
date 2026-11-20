@@ -314,7 +314,7 @@ const mapMonthFacts = (monthMap, getMetric) => {
     if (!period || !value || typeof value !== "object") return;
 
     const metric = getMetric(value);
-    if (!metric || metric.fact === null || metric.fact === undefined) return;
+    if (!metric || metric.fact === undefined) return;
 
     result[period.key] = {
       fact: metric.fact,
@@ -331,7 +331,7 @@ const firstMetricMap = (...maps) => {
 
   maps.forEach((map) => {
     Object.entries(map ?? {}).forEach(([key, value]) => {
-      if (result[key] || value?.fact === null || value?.fact === undefined) return;
+      if (result[key] || value?.fact === undefined) return;
       result[key] = value;
     });
   });
@@ -360,8 +360,12 @@ const derivedOrdersPerActive = (value) => {
   };
 };
 
-const ordersPerActiveMetric = (value) =>
-  explicitOrdersPerActive(value) ?? derivedOrdersPerActive(value);
+const ordersPerActiveMetric = (value) => {
+  if (value?.orders_per_active === null || readNumber(value?.orders ?? value?.order) === 0) {
+    return { fact: null };
+  }
+  return explicitOrdersPerActive(value) ?? derivedOrdersPerActive(value);
+};
 
 const efficiencyMetric = (value) => {
   const fact = readNumber(value?.percent_fact ?? value?.effect);
@@ -428,26 +432,19 @@ const buildClientsMetricMaps = (dataList) => {
       if (!buckets[period.key]) {
         buckets[period.key] = {
           orders: 0,
-          registred: 0,
           summ: 0,
           hasOrders: false,
-          hasRegistered: false,
           hasSumm: false,
         };
       }
 
       const bucket = buckets[period.key];
       const orders = readNumber(item?.orders);
-      const registred = readNumber(item?.registred);
       const summ = readNumber(item?.summ);
 
       if (orders !== null) {
         bucket.orders += orders;
         bucket.hasOrders = true;
-      }
-      if (registred !== null) {
-        bucket.registred += registred;
-        bucket.hasRegistered = true;
       }
       if (summ !== null) {
         bucket.summ += summ;
@@ -456,7 +453,6 @@ const buildClientsMetricMaps = (dataList) => {
     });
   });
 
-  const ordersPerActive = {};
   const revenue = {};
   const averageCheck = {};
 
@@ -466,13 +462,6 @@ const buildClientsMetricMaps = (dataList) => {
 
     const month_name = MONTH_NAMES_RU[period.month - 1];
 
-    if (bucket.hasOrders && bucket.hasRegistered && bucket.registred) {
-      ordersPerActive[key] = {
-        fact: roundMetric(bucket.orders / bucket.registred, 2),
-        plan: null,
-        month_name,
-      };
-    }
     if (bucket.hasSumm) {
       revenue[key] = { fact: bucket.summ, plan: null, month_name };
     }
@@ -485,7 +474,7 @@ const buildClientsMetricMaps = (dataList) => {
     }
   });
 
-  return { ordersPerActive, revenue, averageCheck };
+  return { revenue, averageCheck };
 };
 
 const buildSaleEfficiencyMaps = (saleList) => {
@@ -548,13 +537,14 @@ export const buildScalarMetricView = ({ monthMap, selectedStartIndex, selectedEn
     if (periodIndex < selectedStartIndex || periodIndex > selectedEndIndex) return;
 
     const fact = readNumber(value?.fact);
-    if (fact === null) return;
-
     const plan = readNumber(value?.plan);
     const previous = byPeriod.get(periodIndex - 1);
     const previousYear = byPeriod.get(periodIndex - 12);
     const prevFact = previous ? readNumber(previous.value?.fact) : null;
     const prevYearFact = previousYear ? readNumber(previousYear.value?.fact) : null;
+    const monthDelta = fact !== null && prevFact !== null ? fact - prevFact : null;
+    const yearDelta = fact !== null && prevYearFact !== null ? fact - prevYearFact : null;
+    const planPercent = fact !== null && plan ? calcPercent(fact, plan) : null;
 
     rows.push({
       periodKey: key,
@@ -562,14 +552,14 @@ export const buildScalarMetricView = ({ monthMap, selectedStartIndex, selectedEn
       monthNumber: month,
       month: value?.month_name || MONTH_NAMES_RU[month - 1],
       planQty: plan,
-      planLoad: plan ? calcPercent(fact, plan) : null,
+      planLoad: planPercent,
       factQty: fact,
-      planFact: plan ? calcPercent(fact, plan) : null,
-      factYoYPct: prevYearFact === null ? null : calcPercent(fact - prevYearFact, prevYearFact),
-      factYoYQty: prevYearFact === null ? null : fact - prevYearFact,
-      factDynPct: prevFact === null ? null : calcPercent(fact - prevFact, prevFact),
-      factDynQty: prevFact === null ? null : fact - prevFact,
-      factLoad: plan ? calcPercent(fact, plan) : null,
+      planFact: planPercent,
+      factYoYPct: yearDelta === null ? null : calcPercent(yearDelta, prevYearFact),
+      factYoYQty: yearDelta,
+      factDynPct: monthDelta === null ? null : calcPercent(monthDelta, prevFact),
+      factDynQty: monthDelta,
+      factLoad: planPercent,
     });
   });
 
@@ -611,29 +601,36 @@ export const assembleExtraSaleMetrics = ({
   selectedStartIndex,
   selectedEndIndex,
 }) => {
-  const clients = clientsRes?.st
-    ? buildClientsMetricMaps(clientsRes.data_list)
-    : { ordersPerActive: {}, revenue: {}, averageCheck: {} };
+  const clients = buildClientsMetricMaps(clientsRes?.st ? clientsRes.data_list : null);
+  const monthlyAverages = clientsRes?.st ? clientsRes.orders_per_active_by_month : null;
+  // Сохраняем строки таблицы даже при отсутствии значения за месяц.
+  const totalOrdersPerActive = mapMonthFacts(payRes?.res, () => ({ fact: null }));
+  for (const [month, average] of Object.entries(monthlyAverages ?? {})) {
+    const period = parseMonthKey(month);
+    if (period) totalOrdersPerActive[period.key] = { fact: readNumber(average) };
+  }
+  const ordersPerActiveBySource = {};
+  for (const source of SALES_SOURCE_KEYS) {
+    const dynamicsMonths = dynamicsRes?.st ? dynamicsRes[DYNAMICS_SOURCE_FIELDS[source]] : null;
+    ordersPerActiveBySource[source] = firstMetricMap(
+      mapMonthFacts(payRes?.res_by_source?.[source], ordersPerActiveMetric),
+      mapMonthFacts(dynamicsMonths, ordersPerActiveMetric),
+    );
+  }
   const sale = saleRes?.st
     ? buildSaleEfficiencyMaps(saleRes.data_sale_list)
     : { total: {}, ...emptySourceMaps() };
-  const payOrders = paySourceMaps(payRes, ordersPerActiveMetric);
   const payEfficiency = paySourceMaps(payRes, efficiencyMetric);
   const payRevenue = paySourceMaps(payRes, revenueMetric);
   const payAverageCheck = paySourceMaps(payRes, averageCheckMetric);
-  const dynamicsOrders = dynamicsSourceMaps(dynamicsRes, ordersPerActiveMetric);
   const dynamicsEfficiency = dynamicsSourceMaps(dynamicsRes, efficiencyMetric);
   const dynamicsRevenue = dynamicsSourceMaps(dynamicsRes, revenueMetric);
   const dynamicsAverageCheck = dynamicsSourceMaps(dynamicsRes, averageCheckMetric);
 
   const metrics = {
     ordersPerActive: viewPair(
-      firstMetricMap(clients.ordersPerActive, payOrders.total, dynamicsOrders.total),
-      {
-        site: firstMetricMap(payOrders.sources.site, dynamicsOrders.sources.site),
-        cafe: firstMetricMap(payOrders.sources.cafe, dynamicsOrders.sources.cafe),
-        kc: firstMetricMap(payOrders.sources.kc, dynamicsOrders.sources.kc),
-      },
+      totalOrdersPerActive,
+      ordersPerActiveBySource,
       selectedStartIndex,
       selectedEndIndex,
     ),
