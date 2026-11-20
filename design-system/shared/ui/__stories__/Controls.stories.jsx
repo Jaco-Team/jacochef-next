@@ -10,10 +10,13 @@ import {
   JacoButton,
   JacoCheckbox,
   JacoCheckboxField,
+  JacoChoiceChips,
   JacoCompactTabs,
   JacoFieldSwitch,
   JacoIconButton,
+  JacoInfoLabel,
   JacoSegmentedTabs,
+  JacoStatusChip,
   JacoSwitch,
   JacoTabPanel,
 } from "@/design-system/shared/ui";
@@ -210,6 +213,42 @@ export function SelectionControls() {
   );
 }
 
+export function StatusChips() {
+  const tones = ["success", "warning", "danger", "neutral"];
+  const variants = [
+    { id: "filled", hint: "Состояние требует внимания" },
+    { id: "soft", hint: "Обычное состояние" },
+    { id: "outlined", hint: "Состояние не задано" },
+  ];
+
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        {variants.map((variant) => (
+          <Stack
+            key={variant.id}
+            direction="row"
+            spacing={1.5}
+            sx={{ alignItems: "center", flexWrap: "wrap" }}
+          >
+            <Typography sx={{ width: 220, color: "text.secondary" }}>
+              {variant.id} · {variant.hint}
+            </Typography>
+            {tones.map((tone) => (
+              <JacoStatusChip
+                key={tone}
+                tone={tone}
+                variant={variant.id}
+                label={tone}
+              />
+            ))}
+          </Stack>
+        ))}
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
 export function Tabs() {
   const [segmented, setSegmented] = useState("month");
   const [source, setSource] = useState("total");
@@ -256,6 +295,73 @@ export function Tabs() {
         >
           Основная вкладка
         </JacoTabPanel>
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function InfoLabels() {
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        <JacoInfoLabel
+          variant="subtitle2"
+          fontWeight={700}
+          tooltip="Выписано / Активировано: сколько промокодов создано для решения жалоб и сколько из них применено в заказах."
+        >
+          Промокоды
+        </JacoInfoLabel>
+        <JacoInfoLabel
+          variant="body2"
+          tooltip="Сумма изменения показывает корректировку суммы заказа после рассмотрения жалобы."
+        >
+          Сумма изменения
+        </JacoInfoLabel>
+      </Stack>
+    </StoryCanvas>
+  );
+}
+
+export function ChoiceChips() {
+  const [stage, setStage] = useState("3");
+  const [solution, setSolution] = useState("");
+  const stages = [
+    { id: "1", name: "1 Этап" },
+    { id: "2", name: "2 Этап" },
+    { id: "3", name: "3 Этап" },
+    { id: "9", name: "Кассир" },
+  ];
+  const solutions = [
+    { id: "2", name: "Извинение" },
+    { id: "5", name: "Замена товара на аналогичный" },
+    { id: "8", name: "Выдать не достающую позицию" },
+  ];
+
+  return (
+    <StoryCanvas>
+      <Stack spacing={2}>
+        <Typography variant="subtitle2">Обязательный выбор</Typography>
+        <JacoChoiceChips
+          ariaLabel="Этап"
+          options={stages}
+          value={stage}
+          onChange={setStage}
+        />
+        <Typography variant="subtitle2">Необязательный выбор (повторный клик снимает)</Typography>
+        <JacoChoiceChips
+          ariaLabel="Решение"
+          options={solutions}
+          value={solution}
+          allowDeselect
+          onChange={setSolution}
+        />
+        <Typography variant="subtitle2">Недоступно</Typography>
+        <JacoChoiceChips
+          ariaLabel="Этап недоступен"
+          options={stages}
+          value="1"
+          disabled
+        />
       </Stack>
     </StoryCanvas>
   );

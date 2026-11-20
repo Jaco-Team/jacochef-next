@@ -26,6 +26,7 @@ import axios from "axios";
 import { credentialsConfig, getAuthHeaders } from "@/src/api_new";
 import StatSaleYearlyLineChart from "@/components/stat_sale/StatSaleYearlyLineChart";
 import StatSalePlanFactLineChart from "@/components/stat_sale/StatSalePlanFactLineChart";
+import { formatDecimal } from "./dashboard/dashboardFormat";
 import { JacoCompactTabs, JacoSegmentedTabs } from "@/design-system/shared/ui";
 import {
   assembleExtraSaleMetrics,
@@ -254,7 +255,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
 
     const [res, clientsRes, saleRes, dynamicsRes] = await Promise.all([
       this.props.getData("get_dynamics_pay", data),
-      this.props.getData("get_data_clients", { ...derivedRange, point: point ?? [] }),
+      this.props.getData("get_data_clients", {
+        ...derivedRange,
+        point: point ?? [],
+        include_orders_per_active: true,
+      }),
       this.props.getData("get_data_sale", { ...derivedRange, point: point ?? [] }),
       this.props.getData("get_dynamics", { ...derivedRange, points: point }),
     ]);
@@ -452,8 +457,9 @@ class StatSale_Tab_DynamicSale extends React.Component {
       preserveAccountPercentDecimals = false,
       sourceRows = null,
       headerContent = null,
-      quantityDecimals = 0,
-      padFractionDigits = false,
+      quantityDecimals,
+      formatFact,
+      roundDynamics = false,
       quantityHeader = "Кол-во, шт",
       dynamicsHeader = "Динамика, шт",
     } = options;
@@ -465,13 +471,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
       if (value === null || value === undefined || value === "") return "";
 
       const numericValue = getSafeNumber(value);
-      if (!quantityDecimals) {
-        return numericValue.toLocaleString("ru-RU").replace(/\s/g, " ");
-      }
+      if (quantityDecimals === 0 && Math.abs(numericValue) < 0.5) return "0";
 
       return numericValue
         .toLocaleString("ru-RU", {
-          minimumFractionDigits: padFractionDigits ? quantityDecimals : 0,
+          minimumFractionDigits: 0,
           maximumFractionDigits: quantityDecimals,
         })
         .replace(/\s/g, " ");
@@ -577,6 +581,11 @@ class StatSale_Tab_DynamicSale extends React.Component {
       const isSourceRow = Boolean(source);
       const canExpand = !isSourceRow && hasSourceRows;
       const rowBackground = isSourceRow ? "#f7f9fc" : index % 2 === 0 ? "#fafafa" : "white";
+      const delta = row.factDynQty;
+      // Разность двух сотых может оказаться 0.4999999999999998 вместо 0.50.
+      const displayedDelta = roundDynamics && delta != null
+        ? Math.sign(delta) * Math.round(Math.round(Math.abs(delta) * 100) / 100)
+        : delta;
 
       return (
         <TableRow
@@ -658,7 +667,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               backgroundColor: rowBackground,
             }}
           >
-            {formatQuantity(row.factQty)}
+            {(formatFact ?? formatQuantity)(row.factQty)}
           </TableCell>
           {showFactYoY && (
             <TableCell
@@ -684,7 +693,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
               backgroundColor: rowBackground,
             }}
           >
-            {renderColoredValue(row.factDynQty, { formatter: formatQuantity })}
+            {renderColoredValue(displayedDelta, { formatter: formatQuantity })}
           </TableCell>
           {showFactLoad && (
             <TableCell
@@ -921,7 +930,8 @@ class StatSale_Tab_DynamicSale extends React.Component {
     const hasPlan = selectedRows.some(
       (row) => row?.planQty !== null && row?.planQty !== undefined && row?.planQty !== "",
     );
-    const hasChartData = selectedRows.length > 0 || Object.keys(selectedLine).length > 0;
+    const hasChartRows = hasPlan || selectedRows.some((row) => row.factQty != null);
+    const hasChartData = hasChartRows || Object.keys(selectedLine).length > 0;
     const tableSourceRows = SALES_SOURCE_KEYS.reduce((result, source) => {
       result[source] = this.state.sourceRows?.[source]?.[metric] ?? [];
       return result;
@@ -961,7 +971,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
             valueDecimals={valueDecimals}
           />
         ) : null}
-        {selectedRows.length ? (
+        {hasChartRows ? (
           <StatSalePlanFactLineChart
             data={selectedRows}
             title={planFactTitle}
@@ -1090,7 +1100,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
         valueDecimals: 2,
         showProgress: false,
         tableOptions: {
-          quantityDecimals: 2,
+          quantityDecimals: 0,
           quantityHeader: "Эффект-ть, %",
           dynamicsHeader: "Динамика, п.п.",
         },
@@ -1184,8 +1194,9 @@ class StatSale_Tab_DynamicSale extends React.Component {
           valueDecimals: 2,
           showProgress: false,
           tableOptions: {
-            quantityDecimals: 2,
-            padFractionDigits: true,
+            quantityDecimals: 0,
+            formatFact: (value) => value == null ? "—" : formatDecimal(value, 2),
+            roundDynamics: true,
             quantityHeader: "Значение",
             dynamicsHeader: "Динамика",
           },

@@ -17,7 +17,7 @@ export function formatDecimal(value, digits = 1) {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
-  return decimalFormatters[digits].format(Number(value) || 0);
+  return decimalFormatters[digits].format(Number(value) || 0).replace(",", ".");
 }
 
 /** Процент до целого; −0 превращается в 0. */

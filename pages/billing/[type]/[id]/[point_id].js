@@ -2193,7 +2193,7 @@ const useStore = create((set, get) => ({
       get().check_price_item_new();
     }, 500);
 
-    get().changeKinds(res?.bill?.type_doc);
+    get().changeKinds(res?.bill?.type_bill);
   },
 
   clearForm: () => {
@@ -3959,6 +3959,7 @@ function VendorItemsTableEdit({ showPriceWarnings = true }) {
 }
 
 function VendorItemsTableView({ showPriceWarnings = true }) {
+  const [bill, vendors] = useStore((state) => [state.bill, state.vendors]);
   const [bill_items_doc, bill_items, allPrice, allPrice_w_nds, err_items] = useStore((state) => [
     state.bill_items_doc,
     state.bill_items,
@@ -3966,6 +3967,7 @@ function VendorItemsTableView({ showPriceWarnings = true }) {
     state.allPrice_w_nds,
     state.err_items,
   ]);
+  const vendorId = bill?.vendor_id ?? bill?.vendors?.[0]?.id ?? vendors?.[0]?.id ?? null;
 
   let summ_nds = 0;
 

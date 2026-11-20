@@ -1,7 +1,6 @@
 import {
   Box,
   LinearProgress,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -10,67 +9,89 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import ReviewsOutlinedIcon from "@mui/icons-material/ReviewsOutlined";
-import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
-import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
-import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import {
-  blockBackground,
-  blockBorder,
+  JacoSurface,
+  uiColors,
+  uiRadii,
+  uiTableColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
+import {
   desktopOnlySx,
   mobileOnlySx,
+  sectionTitleSx,
+  tableCellSx,
+  tableHeadCellSx,
   tabletOnlySx,
-  textSecondary,
 } from "./shared";
 
 const kpiDefinitions = [
-  { key: "reviews_total", label: "Всего отзывов", icon: ReviewsOutlinedIcon },
-  { key: "average_rating", label: "Средняя оценка", icon: StarRoundedIcon, decimals: 1 },
-  { key: "incidents_total", label: "Всего инцидентов", icon: ReportProblemOutlinedIcon },
-  { key: "incidents_open", label: "Открытые инциденты", icon: TaskAltOutlinedIcon },
-  { key: "reviews_with_photos", label: "Отзывы с фото", icon: PhotoCameraOutlinedIcon },
+  { key: "reviews_total", label: "Всего отзывов" },
+  { key: "average_rating", label: "Средняя оценка", decimals: 1 },
+  { key: "incidents_total", label: "Всего инцидентов" },
+  { key: "incidents_open", label: "Открытые инциденты", attention: true },
+  { key: "reviews_with_photos", label: "Отзывы с фото" },
 ];
+
+const pointMetrics = [
+  { key: "reviews_total", label: "Отзывы" },
+  { key: "reviews_with_photos", label: "С фото" },
+  { key: "average_rating", label: "Средняя оценка", decimals: 1 },
+  { key: "incidents_total", label: "Инциденты" },
+  { key: "incidents_open", label: "Открытые инциденты", attention: true },
+];
+
+function formatMetric(value, decimals) {
+  return decimals ? Number(value || 0).toFixed(decimals) : value || 0;
+}
 
 function KpiCards({ summary }) {
   return (
     <Box
+      role="group"
+      aria-label="Ключевые показатели"
       sx={{
         display: "grid",
-        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        "@media (min-width: 668px) and (max-width: 990px)": {
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-        },
-        "@media (min-width: 991px)": {
-          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-        },
-        gap: 1.5,
+        gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+        gap: 2,
       }}
     >
-      {kpiDefinitions.map(({ key, label, icon: Icon, decimals }) => {
+      {kpiDefinitions.map(({ key, label, decimals, attention }) => {
         const value = summary[key] || 0;
+
         return (
-          <Paper
+          <JacoSurface
             key={key}
-            variant="outlined"
-            sx={{ p: 2, borderRadius: "12px", borderColor: blockBorder, minWidth: 0 }}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: 1.25,
+              minHeight: 112,
+              minWidth: 0,
+              p: 2,
+            }}
           >
-            <Icon
-              aria-hidden="true"
-              sx={{ color: "primary.main", mb: 1 }}
-            />
             <Typography
+              component="div"
+              sx={{ fontSize: 15, fontWeight: 600, color: uiColors.textStrong }}
+            >
+              {label}
+            </Typography>
+            <Typography
+              component="div"
               sx={{
-                fontSize: 22,
-                "@media (min-width: 991px)": { fontSize: 28 },
-                fontWeight: 800,
+                fontSize: 30,
                 lineHeight: 1.1,
+                fontWeight: 700,
+                // Open incidents are the one number that calls for action.
+                color: attention && value > 0 ? uiColors.primary : uiColors.textStrong,
+                fontVariantNumeric: "tabular-nums",
               }}
             >
-              {decimals ? Number(value).toFixed(decimals) : value}
+              {formatMetric(value, decimals)}
             </Typography>
-            <Typography sx={{ mt: 0.75, color: textSecondary, fontSize: 13 }}>{label}</Typography>
-          </Paper>
+          </JacoSurface>
         );
       })}
     </Box>
@@ -84,15 +105,15 @@ function RatingDistribution({ items, total }) {
   }));
 
   return (
-    <Paper
+    <JacoSurface
       component="section"
       aria-labelledby="rating-distribution-title"
-      variant="outlined"
-      sx={{ p: 2, borderRadius: "12px", borderColor: blockBorder }}
+      sx={{ p: { xs: 2, md: 2.5 } }}
     >
       <Typography
         id="rating-distribution-title"
-        sx={{ fontSize: 18, fontWeight: 800, mb: 2 }}
+        component="h2"
+        sx={{ ...sectionTitleSx, mb: 2 }}
       >
         Распределение оценок
       </Typography>
@@ -102,23 +123,42 @@ function RatingDistribution({ items, total }) {
             key={item.rating}
             sx={{
               display: "grid",
-              gridTemplateColumns: "44px 1fr 52px",
+              gridTemplateColumns: "44px 1fr 44px",
               gap: 1,
               alignItems: "center",
             }}
           >
-            <Typography sx={{ fontWeight: 700 }}>{item.rating} ★</Typography>
+            <Typography sx={{ ...uiTypography.label, color: uiColors.textStrong }}>
+              {item.rating} ★
+            </Typography>
             <LinearProgress
               variant="determinate"
               value={total ? Math.min(100, (item.count / total) * 100) : 0}
               aria-label={`${item.rating} звёзд: ${item.count}`}
-              sx={{ height: 8, borderRadius: 999 }}
+              sx={{
+                height: 8,
+                borderRadius: uiRadii.full,
+                backgroundColor: uiColors.surfaceMuted,
+                "& .MuiLinearProgress-bar": {
+                  borderRadius: uiRadii.full,
+                  backgroundColor: uiColors.primary,
+                },
+              }}
             />
-            <Typography sx={{ textAlign: "right", color: textSecondary }}>{item.count}</Typography>
+            <Typography
+              sx={{
+                ...uiTypography.label,
+                textAlign: "right",
+                color: uiColors.text,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {item.count}
+            </Typography>
           </Box>
         ))}
       </Box>
-    </Paper>
+    </JacoSurface>
   );
 }
 
@@ -126,44 +166,98 @@ function PointCards({ points }) {
   return (
     <Box sx={{ display: "grid", gap: 1.25 }}>
       {points.map((point) => (
-        <Paper
+        <JacoSurface
           key={point.point_id}
-          variant="outlined"
-          sx={{ p: 1.75, borderRadius: "12px", borderColor: blockBorder }}
+          sx={{ p: 2, borderRadius: uiRadii.md }}
         >
-          <Typography sx={{ fontWeight: 800 }}>{point.point_name || "Кафе"}</Typography>
+          <Typography sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong }}>
+            {point.point_name || "Кафе"}
+          </Typography>
           {point.city_name ? (
-            <Typography sx={{ color: textSecondary, fontSize: 12, mb: 1 }}>
+            <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text, mb: 1 }}>
               {point.city_name}
             </Typography>
           ) : null}
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 1 }}>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: textSecondary }}>Отзывы</Typography>
-              <Typography sx={{ fontWeight: 700 }}>{point.reviews_total}</Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: textSecondary }}>С фото</Typography>
-              <Typography sx={{ fontWeight: 700 }}>{point.reviews_with_photos}</Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: textSecondary }}>Оценка</Typography>
-              <Typography sx={{ fontWeight: 700 }}>
-                {Number(point.average_rating).toFixed(1)}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: textSecondary }}>Инциденты</Typography>
-              <Typography sx={{ fontWeight: 700 }}>{point.incidents_total}</Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: textSecondary }}>Открыто</Typography>
-              <Typography sx={{ fontWeight: 700 }}>{point.incidents_open}</Typography>
-            </Box>
+            {pointMetrics.map(({ key, label, decimals, attention }) => (
+              <Box key={key}>
+                <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text }}>
+                  {label}
+                </Typography>
+                <Typography
+                  sx={{
+                    ...uiTypography.bodyMedium,
+                    color: attention && point[key] > 0 ? uiColors.primary : uiColors.textStrong,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {formatMetric(point[key], decimals)}
+                </Typography>
+              </Box>
+            ))}
           </Box>
-        </Paper>
+        </JacoSurface>
       ))}
     </Box>
+  );
+}
+
+function PointsTable({ points }) {
+  return (
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={tableHeadCellSx}>Кафе</TableCell>
+            {pointMetrics.map(({ key, label }) => (
+              <TableCell
+                key={key}
+                align="right"
+                sx={tableHeadCellSx}
+              >
+                {label}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {points.map((point) => (
+            <TableRow
+              key={point.point_id}
+              sx={{
+                "&:hover": { backgroundColor: uiTableColors.rowHover },
+                "&:last-of-type td": { borderBottom: 0 },
+              }}
+            >
+              <TableCell sx={tableCellSx}>
+                <Typography sx={{ ...uiTypography.label, fontWeight: 600, color: "inherit" }}>
+                  {point.point_name || "Кафе"}
+                </Typography>
+                {point.city_name ? (
+                  <Typography sx={{ ...uiTypography.compactLabel, color: uiColors.text }}>
+                    {point.city_name}
+                  </Typography>
+                ) : null}
+              </TableCell>
+              {pointMetrics.map(({ key, decimals, attention }) => (
+                <TableCell
+                  key={key}
+                  align="right"
+                  sx={{
+                    ...tableCellSx,
+                    ...(attention && point[key] > 0
+                      ? { color: uiColors.primary, fontWeight: 600 }
+                      : null),
+                  }}
+                >
+                  {formatMetric(point[key], decimals)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
@@ -176,7 +270,7 @@ export default function CafeReviewsOverview({ dashboard }) {
           display: "grid",
           gridTemplateColumns: "1fr",
           "@media (min-width: 991px)": { gridTemplateColumns: "minmax(300px, 0.75fr) 1.5fr" },
-          gap: 2,
+          gap: 2.5,
           alignItems: "start",
         }}
       >
@@ -184,81 +278,36 @@ export default function CafeReviewsOverview({ dashboard }) {
           items={dashboard.rating_distribution}
           total={dashboard.summary.completed_total}
         />
-        <Box
+        <JacoSurface
           component="section"
           aria-labelledby="points-summary-title"
-          sx={{
-            bgcolor: blockBackground,
-            borderRadius: "12px",
-            p: 1.5,
-            "@media (min-width: 991px)": { p: 2 },
-          }}
+          sx={{ overflow: "hidden" }}
         >
           <Typography
             id="points-summary-title"
-            sx={{ fontSize: 18, fontWeight: 800, mb: 1.5 }}
+            component="h2"
+            sx={{ ...sectionTitleSx, px: { xs: 2, md: 2.5 }, pt: { xs: 2, md: 2.5 }, pb: 2 }}
           >
             Кафе
           </Typography>
           {dashboard.points.length ? (
             <>
-              <TableContainer
-                component={Paper}
-                variant="outlined"
-                sx={{ ...desktopOnlySx, borderRadius: "12px", borderColor: blockBorder }}
-              >
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: "#F7F7F7" }}>
-                      <TableCell>Кафе</TableCell>
-                      <TableCell align="right">Отзывы</TableCell>
-                      <TableCell align="right">С фото</TableCell>
-                      <TableCell align="right">Средняя оценка</TableCell>
-                      <TableCell align="right">Инциденты</TableCell>
-                      <TableCell align="right">Открытые инциденты</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {dashboard.points.map((point) => (
-                      <TableRow
-                        key={point.point_id}
-                        hover
-                      >
-                        <TableCell>
-                          <Typography sx={{ fontWeight: 700 }}>
-                            {point.point_name || "Кафе"}
-                          </Typography>
-                          {point.city_name ? (
-                            <Typography sx={{ color: textSecondary, fontSize: 12 }}>
-                              {point.city_name}
-                            </Typography>
-                          ) : null}
-                        </TableCell>
-                        <TableCell align="right">{point.reviews_total}</TableCell>
-                        <TableCell align="right">{point.reviews_with_photos}</TableCell>
-                        <TableCell align="right">
-                          {Number(point.average_rating).toFixed(1)}
-                        </TableCell>
-                        <TableCell align="right">{point.incidents_total}</TableCell>
-                        <TableCell align="right">{point.incidents_open}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <Box sx={tabletOnlySx}>
+              <Box sx={desktopOnlySx}>
+                <PointsTable points={dashboard.points} />
+              </Box>
+              <Box sx={{ ...tabletOnlySx, px: 2, pb: 2 }}>
                 <PointCards points={dashboard.points} />
               </Box>
-              <Box sx={mobileOnlySx}>
+              <Box sx={{ ...mobileOnlySx, px: 2, pb: 2 }}>
                 <PointCards points={dashboard.points} />
               </Box>
             </>
           ) : (
-            <Typography sx={{ p: 2, color: textSecondary }}>
+            <Typography sx={{ px: { xs: 2, md: 2.5 }, pb: 2.5, color: uiColors.text }}>
               Нет данных по выбранным фильтрам
             </Typography>
           )}
-        </Box>
+        </JacoSurface>
       </Box>
     </Box>
   );

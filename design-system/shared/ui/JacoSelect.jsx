@@ -1,5 +1,5 @@
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Checkbox, FormControl, InputLabel, ListItemText, MenuItem, Select } from "@mui/material";
 import { useId, useState } from "react";
 
 import { uiColors, uiRadii, uiShadows, uiStateColors, uiTypography } from "../tokens";
@@ -22,8 +22,11 @@ export default function JacoSelect({
   func,
   allowNone,
   is_none,
+  noneLabel = "None",
   label,
   multiple = false,
+  selectAllLabel,
+  withCheckboxes = false,
   disabled = false,
   sx,
   menuSx,
@@ -45,7 +48,9 @@ export default function JacoSelect({
   const labelId = label ? `${selectId}-label` : undefined;
   const normalizedOptions = normalizeOptions(options ?? data);
   const withNone = (allowNone ?? is_none) !== false;
-  const items = withNone ? [{ id: "none", name: "None" }, ...normalizedOptions] : normalizedOptions;
+  const items = withNone
+    ? [{ id: "none", name: noneLabel }, ...normalizedOptions]
+    : normalizedOptions;
   const {
     MenuListProps: legacyMenuListProps,
     slotProps: providedSlotProps,
@@ -60,6 +65,7 @@ export default function JacoSelect({
       : withNone
         ? "none"
         : "";
+  const showCheckboxes = multiple && withCheckboxes;
   const isOpen = controlledOpen ?? internalOpen;
   const controlRadius = uiRadii.md;
 
@@ -76,7 +82,10 @@ export default function JacoSelect({
   const renderValue = (selected) => {
     if (multiple) {
       if (!Array.isArray(selected) || selected.length === 0) {
-        return "None";
+        return noneLabel;
+      }
+      if (selectAllLabel && selected.length === normalizedOptions.length) {
+        return selectAllLabel;
       }
       return items
         .filter((item) => selected.includes(item.id))
@@ -84,7 +93,7 @@ export default function JacoSelect({
         .join(", ");
     }
 
-    return items.find((item) => item.id === selected)?.name ?? (withNone ? "None" : "");
+    return items.find((item) => item.id === selected)?.name ?? (withNone ? noneLabel : "");
   };
 
   return (
@@ -121,7 +130,18 @@ export default function JacoSelect({
         multiple={multiple}
         value={normalizedValue}
         label={label}
-        onChange={onChange ?? func}
+        onChange={(event, child) => {
+          if (multiple && selectAllLabel && Array.isArray(event.target.value)) {
+            const next = event.target.value.map(String);
+            if (next.includes("__all__")) {
+              event.target.value =
+                normalizedValue.length === normalizedOptions.length
+                  ? []
+                  : normalizedOptions.map((item) => item.id);
+            }
+          }
+          (onChange ?? func)?.(event, child);
+        }}
         open={controlledOpen}
         defaultOpen={defaultOpen}
         onOpen={handleOpen}
@@ -212,6 +232,29 @@ export default function JacoSelect({
           },
         }}
       >
+        {multiple && selectAllLabel ? (
+          <MenuItem
+            value="__all__"
+            sx={{
+              minHeight: "44px !important",
+              px: showCheckboxes ? "11px" : "15px",
+              py: 0,
+              ...uiTypography.body,
+              color: uiColors.textStrong,
+            }}
+          >
+            {showCheckboxes ? (
+              <Checkbox
+                checked={normalizedValue.length === normalizedOptions.length}
+                indeterminate={
+                  normalizedValue.length > 0 && normalizedValue.length < normalizedOptions.length
+                }
+                size="small"
+              />
+            ) : null}
+            {showCheckboxes ? <ListItemText primary={selectAllLabel} /> : selectAllLabel}
+          </MenuItem>
+        ) : null}
         {items.map((item) => (
           <MenuItem
             key={item.id}
@@ -230,7 +273,13 @@ export default function JacoSelect({
               },
             }}
           >
-            {item.name}
+            {showCheckboxes ? (
+              <Checkbox
+                checked={normalizedValue.includes(item.id)}
+                size="small"
+              />
+            ) : null}
+            {showCheckboxes ? <ListItemText primary={item.name} /> : item.name}
           </MenuItem>
         ))}
       </Select>

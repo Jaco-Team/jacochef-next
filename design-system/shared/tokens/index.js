@@ -4,6 +4,7 @@ export const uiColors = {
   primarySoft: "#FFF1F3",
   success: "#16A34A",
   successHover: "#15803D",
+  successSoft: "#EAF7EE",
   danger: "#DD1A32",
   dangerHover: "#B81429",
   dangerSoft: "rgba(221, 26, 50, 0.08)",

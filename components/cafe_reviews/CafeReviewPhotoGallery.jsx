@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import BrokenImageOutlinedIcon from "@mui/icons-material/BrokenImageOutlined";
-import { blockBorder, textSecondary } from "./shared";
+import {
+  JacoModal,
+  uiColors,
+  uiRadii,
+  uiStateColors,
+  uiTypography,
+} from "@/design-system/shared/ui";
 
-export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
+export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix, title = "Фото" }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activePhoto, setActivePhoto] = useState(null);
@@ -77,9 +74,9 @@ export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
     >
       <Typography
         id={`${idPrefix}-photos-title`}
-        sx={{ fontSize: 16, fontWeight: 800, mb: 1 }}
+        sx={{ ...uiTypography.bodyMedium, color: uiColors.textStrong, mb: 1 }}
       >
-        Фото
+        {title}
       </Typography>
       {loading ? (
         <Box
@@ -87,7 +84,10 @@ export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
           aria-label="Загрузка фотографий"
           sx={{ minHeight: 100, display: "grid", placeItems: "center" }}
         >
-          <CircularProgress size={28} />
+          <CircularProgress
+            size={28}
+            sx={{ color: uiColors.primary }}
+          />
         </Box>
       ) : (
         <Box
@@ -106,14 +106,14 @@ export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
                   aspectRatio: "4 / 3",
                   display: "grid",
                   placeItems: "center",
-                  border: `1px solid ${blockBorder}`,
-                  borderRadius: "10px",
-                  color: textSecondary,
+                  border: `1px dashed ${uiColors.border}`,
+                  borderRadius: uiRadii.md,
+                  color: uiColors.text,
                 }}
               >
                 <Box sx={{ textAlign: "center" }}>
                   <BrokenImageOutlinedIcon />
-                  <Typography sx={{ fontSize: 12 }}>Фото недоступно</Typography>
+                  <Typography sx={uiTypography.compactLabel}>Фото недоступно</Typography>
                 </Box>
               </Box>
             ) : (
@@ -125,12 +125,12 @@ export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
                 aria-label={`Открыть фото ${index + 1}`}
                 sx={{
                   p: 0,
-                  border: `1px solid ${blockBorder}`,
-                  borderRadius: "10px",
+                  border: `1px solid ${uiColors.border}`,
+                  borderRadius: uiRadii.md,
                   overflow: "hidden",
                   background: "none",
                   cursor: "pointer",
-                  "&:focus-visible": { outline: "3px solid", outlineColor: "primary.light" },
+                  "&:focus-visible": { outline: `3px solid ${uiStateColors.focusRing}` },
                 }}
               >
                 <Box
@@ -145,37 +145,27 @@ export default function CafeReviewPhotoGallery({ photos, getPhoto, idPrefix }) {
         </Box>
       )}
 
-      <Dialog
+      <JacoModal
         open={Boolean(activePhoto)}
         onClose={() => setActivePhoto(null)}
+        title="Фото к отзыву"
         maxWidth="md"
-        fullWidth
-        aria-labelledby={`${idPrefix}-photo-preview-title`}
       >
-        <DialogTitle
-          id={`${idPrefix}-photo-preview-title`}
-          sx={{ pr: 7 }}
-        >
-          Фото к отзыву
-          <IconButton
-            onClick={() => setActivePhoto(null)}
-            aria-label="Закрыть просмотр фото"
-            sx={{ position: "absolute", right: 12, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {activePhoto ? (
-            <Box
-              component="img"
-              src={activePhoto.url}
-              alt="Фото к отзыву в полном размере"
-              sx={{ display: "block", width: "100%", maxHeight: "75vh", objectFit: "contain" }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        {activePhoto ? (
+          <Box
+            component="img"
+            src={activePhoto.url}
+            alt="Фото к отзыву в полном размере"
+            sx={{
+              display: "block",
+              width: "100%",
+              maxHeight: "75vh",
+              objectFit: "contain",
+              borderRadius: uiRadii.md,
+            }}
+          />
+        ) : null}
+      </JacoModal>
     </Box>
   );
 }

@@ -86,7 +86,8 @@ export function normalizeBootstrap(response) {
   const dictionaries = asObject(data.dictionaries);
   const filters = asObject(data.filters);
   const statusLabels = {
-    partial: "Частичный",
+    partial: "Пустой",
+    positive: "Решён",
     completed: "Завершён",
     blocked: "Заблокирован",
     new: "Новый",
@@ -166,7 +167,10 @@ export function normalizeReview(item) {
     point_name: String(item.point_name ?? ""),
     city_id: item.city_id ?? null,
     city_name: String(item.city_name ?? ""),
+    zone_code: item.zone_code == null ? "" : String(item.zone_code),
+    zone_label: item.zone_label == null ? "" : String(item.zone_label),
     rating: asNumber(item.rating, 0),
+    is_incident: asBoolean(item.is_incident),
     status: String(item.status ?? ""),
     comment: String(item.comment ?? ""),
     has_photos: asBoolean(item.has_photos),
@@ -187,6 +191,8 @@ export function normalizeIncident(item) {
     point_name: String(item.point_name ?? ""),
     city_id: item.city_id ?? null,
     city_name: String(item.city_name ?? ""),
+    zone_code: item.zone_code == null ? "" : String(item.zone_code),
+    zone_label: item.zone_label == null ? "" : String(item.zone_label),
     rating: asNumber(item.rating, 0),
     status: String(item.status ?? ""),
     severity: item.severity == null ? "" : String(item.severity),
@@ -272,7 +278,10 @@ function normalizeEvent(item) {
     status_to: item.status_to == null ? "" : String(item.status_to),
     severity: item.severity == null ? "" : String(item.severity),
     comment: String(item.comment ?? ""),
+    comment_type: String(item.comment_type ?? ""),
     ai_analysis_id: item.ai_analysis_id ?? null,
+    decision: item.decision === "accepted" || item.decision === "rejected" ? item.decision : "",
+    photos: asArray(item.photos).map(normalizePhoto).filter(Boolean),
   };
 }
 
@@ -288,14 +297,12 @@ function normalizeAiAnalysis(value) {
     recommended_actions: asArray(item.actions).map(String),
     evidence: asArray(item.evidence)
       .map((evidence) => {
-        if (typeof evidence === "string") return evidence;
-        if (!evidence || typeof evidence !== "object") return "";
-        return [
-          evidence.issue_code ? `Причина: ${evidence.issue_code}` : "",
-          evidence.photo_id ? `Фото: ${evidence.photo_id}` : "",
-        ]
-          .filter(Boolean)
-          .join(", ");
+        if (typeof evidence === "string") return { text: evidence };
+        if (!evidence || typeof evidence !== "object") return null;
+        return {
+          issue_code: evidence.issue_code ? String(evidence.issue_code) : "",
+          photo_id: evidence.photo_id ? asNumber(evidence.photo_id, 0) : null,
+        };
       })
       .filter(Boolean),
     confidence: asNumber(item.confidence, 0),
@@ -327,6 +334,8 @@ export function normalizeIncidentDetail(response) {
     point_name: nestedReview.point_name ?? incident.point_name,
     city_id: nestedReview.city_id ?? incident.city_id,
     city_name: nestedReview.city_name ?? incident.city_name,
+    zone_code: nestedReview.zone_code ?? incident.zone_code,
+    zone_label: nestedReview.zone_label ?? incident.zone_label,
   };
 
   return {
@@ -339,7 +348,7 @@ export function normalizeIncidentDetail(response) {
   };
 }
 
-export function getDefaultFilters() {
+export function getDefaultFilters(section = "reviews") {
   const dateTo = new Date();
   const dateFrom = new Date(dateTo);
   dateFrom.setDate(dateFrom.getDate() - 29);
@@ -352,13 +361,16 @@ export function getDefaultFilters() {
   };
 
   return {
-    date_from: toDateInput(dateFrom),
-    date_to: toDateInput(dateTo),
+    date_from: section === "incidents" ? "" : toDateInput(dateFrom),
+    date_to: section === "incidents" ? "" : toDateInput(dateTo),
     city_id: "",
     point_id: "",
+    point_ids: [],
     rating: "",
-    review_status: "",
-    incident_status: "",
+    review_status: [],
+    incident_status: section === "incidents" ? ["new", "in_progress"] : [],
+    sort: "created_at",
+    direction: "desc",
     severity: "",
     issue: "",
     has_photo: "",
@@ -370,16 +382,21 @@ export function buildFilterPayload(filters, section) {
   const payload = Object.fromEntries(
     Object.entries(filters).filter(
       ([key, value]) =>
-        !["point_id", "review_status", "incident_status"].includes(key) &&
+        !["city_id", "point_id", "point_ids", "review_status", "incident_status"].includes(key) &&
         value !== "" &&
         value != null,
     ),
   );
-  if (filters.point_id !== "" && filters.point_id != null) {
+  if (Array.isArray(filters.point_ids) && filters.point_ids.length) {
+    payload.point_ids = filters.point_ids;
+  } else if (filters.point_id !== "" && filters.point_id != null) {
     payload.point_ids = [filters.point_id];
   }
+  if (filters.city_id !== "" && filters.city_id != null) {
+    payload.city_id = filters.city_id;
+  }
   const status = section === "incidents" ? filters.incident_status : filters.review_status;
-  if (status) {
+  if (Array.isArray(status) ? status.length : status) {
     payload[section === "overview" ? "review_status" : "status"] = status;
   }
   return payload;

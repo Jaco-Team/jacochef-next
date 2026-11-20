@@ -41,6 +41,7 @@ export default function CityCafeAutocomplete2({
   singleCityOnly = false,
   withOrganizationMode = true,
   compact = false,
+  textFieldSx,
   onBlur,
 }) {
   // map for fast lookup
@@ -377,15 +378,16 @@ export default function CityCafeAutocomplete2({
           {...params}
           label={label}
           placeholder={placeholder}
-          sx={
-            compact
+          sx={{
+            ...textFieldSx,
+            ...(compact
               ? {
                   "& .MuiInputBase-root": { minHeight: 40 },
                   "& .MuiInputBase-input": { fontSize: 14 },
                   "& .MuiInputLabel-root": { fontSize: 13 },
                 }
-              : undefined
-          }
+              : {}),
+          }}
         />
       )}
       limitTags={compact ? 1 : 2}
