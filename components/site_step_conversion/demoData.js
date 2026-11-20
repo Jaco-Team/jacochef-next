@@ -1,0 +1,703 @@
+import dayjs from "dayjs";
+
+const authStart = dayjs("2025-10-27");
+const authPassword = [140, 146, 150, 156, 152, 160, 158, 164, 170, 166, 174, 172, 180, 186];
+
+const authPoints = authPassword.map((password, index) => {
+  const date = authStart.add(index, "day");
+  return {
+    date: date.format("YYYY-MM-DD"),
+    label: date.format("DD.MM"),
+    password,
+    passwordless: Math.round(password * 0.7),
+    recovery: Math.round(password * 0.22),
+    yandex: Math.round(password * 0.16),
+  };
+});
+
+const paymentCards = [108, 112, 104, 118, 110, 116, 102, 120, 114, 122, 118, 126, 124, 130];
+const paymentSbp = [32, 36, 28, 40, 34, 38, 30, 42, 36, 44, 40, 46, 42, 48];
+
+const paymentPoints = paymentCards.map((bankCard, index) => {
+  const date = authStart.add(index, "day");
+  return {
+    date: date.format("YYYY-MM-DD"),
+    label: date.format("DD.MM"),
+    bank_card: bankCard,
+    sbp: paymentSbp[index],
+  };
+});
+
+export const DEMO_BOOTSTRAP = {
+  module_info: { name: "Метрики сайта" },
+  cities: [
+    { id: "all", name: "Все города" },
+    { id: "samara", name: "Самара" },
+    { id: "togliatti", name: "Тольятти" },
+  ],
+  points: [
+    { id: "all", name: "Все точки", city_id: "all" },
+    { id: "samara_len", name: "Самара, Ленинградская", city_id: "samara" },
+    { id: "samara_pob", name: "Самара, Победы", city_id: "samara" },
+    { id: "togliatti_vor", name: "Тольятти, Ворошилова", city_id: "togliatti" },
+  ],
+  clients: [
+    { id: "all", name: "Сайт и приложение" },
+    { id: "site", name: "Сайт" },
+    { id: "app", name: "Приложение" },
+  ],
+  scenarios: [
+    { id: "all", name: "Все сценарии" },
+    { id: "passwordless", name: "Без пароля" },
+    { id: "recovery", name: "Восстановление" },
+    { id: "password", name: "Пароль" },
+    { id: "yandex", name: "Яндекс" },
+  ],
+  payment_methods: [
+    { id: "all", name: "Карта и СБП" },
+    { id: "bank_card", name: "Карта" },
+    { id: "sbp", name: "СБП" },
+  ],
+  defaults: {
+    period: "14d",
+    date_start: null,
+    date_end: null,
+    city_id: "all",
+    client: "all",
+    scenario: "all",
+    point_id: "all",
+    payment_method: "all",
+  },
+};
+
+export const DEMO_AUTH = {
+  meta: { is_demo: true },
+  kpis: [
+    {
+      key: "success_logins",
+      label: "Успешные входы",
+      value: 4812,
+      format: "number",
+      delta_label: "6% к прошлым 14 дням",
+      delta_direction: "up",
+      delta_tone: "success",
+      caption: null,
+    },
+    {
+      key: "success_rate",
+      label: "Доля успешных попыток",
+      value: 87.4,
+      format: "percent",
+      delta_label: "1,2 п. без учёта блокировок",
+      delta_direction: "up",
+      delta_tone: "success",
+      caption: null,
+    },
+    {
+      key: "new_users",
+      label: "Новые пользователи",
+      value: 612,
+      format: "number",
+      delta_label: null,
+      caption: "регистрация по коду и Яндекс",
+    },
+    {
+      key: "code_not_delivered",
+      label: "Код не доставлен",
+      value: 1.9,
+      format: "percent",
+      delta_label: "0,4 п. провайдер не принял",
+      delta_direction: "up",
+      delta_tone: "danger",
+      caption: null,
+    },
+    {
+      key: "rate_limits",
+      label: "Блокировки по лимиту",
+      value: 143,
+      format: "number",
+      delta_label: null,
+      caption: "96 уникальных номеров",
+    },
+  ],
+  chart: {
+    title: "Успешные входы по способам",
+    subtitle: "по дням, все города",
+    series: [
+      { key: "password", label: "Пароль", color: "#3B82F6" },
+      { key: "passwordless", label: "Без пароля", color: "#F59E0B" },
+      { key: "recovery", label: "Восстановление", color: "#34A853" },
+      { key: "yandex", label: "Яндекс", color: "#1B3A4B" },
+    ],
+    points: authPoints,
+  },
+  failures: [
+    { reason: "Неверный или истёкший код", code: "wrong_code", attempts: 1204, share: 46.2 },
+    { reason: "Неверный пароль", code: "wrong_password", attempts: 862, share: 33.1 },
+    { reason: "Капча не пройдена", code: "captcha_failed", attempts: 211, share: 8.1 },
+    { reason: "Лимит отправки кода", code: "rate_limited_sms", attempts: 143, share: 5.5 },
+    { reason: "Провайдер не принял сообщение", code: "delivery_failed", attempts: 96, share: 3.7 },
+    { reason: "Номер не зарегистрирован", code: "user_not_found", attempts: 74, share: 2.8 },
+    { reason: "Истёк токен смены пароля", code: "reset_token_invalid", attempts: 12, share: 0.5 },
+    { reason: "Ошибка сервера", code: "exception", attempts: 3, share: 0.1 },
+  ],
+  channels: [
+    { channel: "СМС", mode: "выбор", sent: 2140, failed: 38, error_share: 1.7, median_sec: 1.2 },
+    {
+      channel: "Telegram",
+      mode: "выбор",
+      sent: 1380,
+      failed: 41,
+      error_share: 2.9,
+      median_sec: 2.8,
+    },
+    { channel: "Звонок", mode: "выбор", sent: 220, failed: 9, error_share: 3.9, median_sec: 3.1 },
+    {
+      channel: "Каскад (FLASHCALL → Telegram → СМС)",
+      mode: "регистрация",
+      sent: 1910,
+      failed: 14,
+      error_share: 0.7,
+      median_sec: 2.4,
+    },
+  ],
+  funnels: {
+    passwordless: {
+      steps: [
+        { label: "Открыли «Войти без пароля»", count: 3920, rate_label: "100%" },
+        { label: "Запросили код", count: 3410, rate_label: "87% от шага выше" },
+        { label: "Код отправлен", count: 3330, rate_label: "98% от шага выше" },
+        { label: "Вошли", count: 2905, rate_label: "87% от шага выше" },
+      ],
+    },
+    recovery: {
+      steps: [
+        { label: "Открыли восстановление", count: 640, rate_label: "100%" },
+        { label: "Запросили код", count: 520, rate_label: "81% от шага выше" },
+        { label: "Код отправлен", count: 500, rate_label: "96% от шага выше" },
+        { label: "Сменили пароль", count: 410, rate_label: "82% от шага выше" },
+      ],
+    },
+    password: {
+      steps: [
+        { label: "Открыли вход по паролю", count: 2100, rate_label: "100%" },
+        { label: "Отправили пароль", count: 1980, rate_label: "94% от шага выше" },
+        { label: "Вошли", count: 1720, rate_label: "87% от шага выше" },
+      ],
+    },
+  },
+  recent_failures: [
+    {
+      flow_id: "auth-1",
+      time: "19:48",
+      scenario: "Пароль",
+      step: "login",
+      reason: "Неверный пароль",
+      reason_tone: "danger",
+      channel: null,
+      client: "Сайт",
+      user_id: 17622,
+    },
+    {
+      flow_id: "auth-2",
+      time: "19:46",
+      scenario: "Без пароля",
+      step: "send_code",
+      reason: "Провайдер не принял",
+      reason_tone: "danger",
+      channel: "СМС",
+      client: "Сайт",
+      user_id: 40218,
+    },
+    {
+      flow_id: "auth-3",
+      time: "19:41",
+      scenario: "Без пароля",
+      step: "verify_code",
+      reason: "Неверный код",
+      reason_tone: "danger",
+      channel: "Telegram",
+      client: "Сайт",
+      user_id: 38110,
+    },
+    {
+      flow_id: "auth-4",
+      time: "19:37",
+      scenario: "Восстановление",
+      step: "send_code",
+      reason: "Лимит отправки",
+      reason_tone: "warning",
+      channel: "СМС",
+      client: "Приложение",
+      user_id: 21974,
+    },
+    {
+      flow_id: "auth-5",
+      time: "19:30",
+      scenario: "Без пароля",
+      step: "send_code",
+      reason: "Капча не пройдена",
+      reason_tone: "warning",
+      channel: "Звонок",
+      client: "Сайт",
+      user_id: null,
+    },
+    {
+      flow_id: "auth-6",
+      time: "19:22",
+      scenario: "Яндекс",
+      step: "callback",
+      reason: "Нет телефона в профиле",
+      reason_tone: "danger",
+      channel: null,
+      client: "Сайт",
+      user_id: null,
+    },
+  ],
+};
+
+export const DEMO_PAYMENTS = {
+  meta: { is_demo: true },
+  kpis: [
+    {
+      key: "started",
+      label: "Начато оплат",
+      value: 2316,
+      format: "number",
+      caption: "create_order_pre с онлайн-оплатой",
+    },
+    {
+      key: "paid",
+      label: "Оплачено",
+      value: 2041,
+      format: "number",
+      delta_label: "1,8 п. 88,1% от начатых",
+      delta_direction: "up",
+      delta_tone: "success",
+    },
+    {
+      key: "amount",
+      label: "Сумма оплат",
+      value: 3842600,
+      format: "money",
+      caption: "средний чек 1 883 ₽",
+    },
+    {
+      key: "closed_form",
+      label: "Закрыли форму оплаты",
+      value: 162,
+      format: "number",
+      caption: "отмена пользователем, не ошибка",
+    },
+    {
+      key: "errors",
+      label: "Ошибки оплаты",
+      value: 113,
+      format: "number",
+      delta_label: "9 виджет, создание платежа, банк",
+      delta_direction: "up",
+      delta_tone: "danger",
+    },
+  ],
+  chart: {
+    title: "Успешные оплаты по способам",
+    subtitle: "по дням, подтверждено webhook",
+    series: [
+      { key: "bank_card", label: "Карта", color: "#3B82F6" },
+      { key: "sbp", label: "СБП", color: "#F59E0B" },
+    ],
+    points: paymentPoints,
+  },
+  funnels: {
+    all: {
+      steps: [
+        { label: "Заказ создан (create_order_pre)", count: 2316, rate_label: "100%" },
+        { label: "Платёж создан в ЮKassa", count: 2280, rate_label: "98,4% от шага выше" },
+        { label: "Форма оплаты показана", count: 2238, rate_label: "98,2% от шага выше" },
+        { label: "Виджет: success", count: 2063, rate_label: "92,1% от шага выше" },
+        { label: "Оплата подтверждена webhook", count: 2041, rate_label: "98,9% от шага выше" },
+      ],
+    },
+    bank_card: {
+      steps: [
+        { label: "Заказ создан (create_order_pre)", count: 1784, rate_label: "100%" },
+        { label: "Платёж создан в ЮKassa", count: 1758, rate_label: "98,5% от шага выше" },
+        { label: "Форма оплаты показана", count: 1724, rate_label: "98,1% от шага выше" },
+        { label: "Виджет: success", count: 1610, rate_label: "93,4% от шага выше" },
+        { label: "Оплата подтверждена webhook", count: 1590, rate_label: "98,8% от шага выше" },
+      ],
+    },
+    sbp: {
+      steps: [
+        { label: "Заказ создан (create_order_pre)", count: 532, rate_label: "100%" },
+        { label: "Платёж создан в ЮKassa", count: 522, rate_label: "98,1% от шага выше" },
+        { label: "Форма оплаты показана", count: 514, rate_label: "98,5% от шага выше" },
+        { label: "Виджет: success", count: 453, rate_label: "88,1% от шага выше" },
+        { label: "Оплата подтверждена webhook", count: 451, rate_label: "99,6% от шага выше" },
+      ],
+    },
+  },
+  methods: [
+    {
+      method: "Карта",
+      code: "bank_card",
+      started: 1784,
+      paid: 1590,
+      conversion: 89.1,
+      amount: 3012400,
+      median_sec: 48,
+    },
+    {
+      method: "СБП",
+      code: "sbp",
+      started: 532,
+      paid: 451,
+      conversion: 84.8,
+      amount: 830200,
+      median_sec: 71,
+    },
+    {
+      method: "Резервная форма ЮKassa",
+      code: "yookassa_hosted_payment_selected",
+      started: 41,
+      paid: 35,
+      conversion: 85.4,
+      amount: 61000,
+      median_sec: 93,
+    },
+  ],
+  problems: [
+    {
+      reason: "Пользователь закрыл форму",
+      code: "user_closed",
+      type_label: "Отмена",
+      type_tone: "muted",
+      count: 162,
+      share: 50,
+    },
+    {
+      reason: "Банк отклонил оплату в виджете",
+      code: "widget_fail",
+      type_label: "Ошибка",
+      type_tone: "danger",
+      count: 58,
+      share: 18.2,
+    },
+    {
+      reason: "Истёк срок подтверждения (webhook canceled)",
+      code: "expired_on_confirmation",
+      type_label: "Отмена банка",
+      type_tone: "warning",
+      count: 31,
+      share: 9.7,
+    },
+    {
+      reason: "Ошибка создания платежа (неверный email)",
+      code: "invalidPropertyValueException",
+      type_label: "Ошибка",
+      type_tone: "danger",
+      count: 27,
+      share: 8.5,
+    },
+    {
+      reason: "Недостаточно средств (webhook canceled)",
+      code: "insufficient_funds",
+      type_label: "Отмена банка",
+      type_tone: "warning",
+      count: 22,
+      share: 6.9,
+    },
+    {
+      reason: "Скрипт виджета не загрузился вовремя",
+      code: "script_timeout",
+      type_label: "Ошибка",
+      type_tone: "danger",
+      count: 9,
+      share: 2.8,
+    },
+    {
+      reason: "Ошибка загрузки скрипта виджета",
+      code: "script_load_error",
+      type_label: "Ошибка",
+      type_tone: "danger",
+      count: 6,
+      share: 1.9,
+    },
+    {
+      reason: "Виджет не отрисовался",
+      code: "widget_render_timeout",
+      type_label: "Ошибка",
+      type_tone: "danger",
+      count: 4,
+      share: 1.3,
+    },
+  ],
+  recent_problems: [
+    {
+      payment_flow_id: "pay-1",
+      time: "19:52",
+      order_label: "№ 418 220",
+      point_name: "Самара, Ленинградская",
+      method: "Карта",
+      stage: "widget_fail",
+      reason: "Банк отклонил",
+      reason_tone: "danger",
+      amount: 2140,
+    },
+    {
+      payment_flow_id: "pay-2",
+      time: "19:47",
+      order_label: "№ 418 207",
+      point_name: "Тольятти, Ворошилова",
+      method: "СБП",
+      stage: "webhook_canceled",
+      reason: "Истёк срок",
+      reason_tone: "warning",
+      amount: 1380,
+    },
+    {
+      payment_flow_id: "pay-3",
+      time: "19:40",
+      order_label: "№ 418 191",
+      point_name: "Самара, Победы",
+      method: "Карта",
+      stage: "provider_payment_created",
+      reason: "Неверный email",
+      reason_tone: "danger",
+      amount: 3020,
+    },
+    {
+      payment_flow_id: "pay-4",
+      time: "19:33",
+      order_label: "№ 418 176",
+      point_name: "Самара, Ленинградская",
+      method: "Карта",
+      stage: "provider_script_failed",
+      reason: "script_timeout",
+      reason_tone: "danger",
+      amount: 990,
+    },
+    {
+      payment_flow_id: "pay-5",
+      time: "19:21",
+      order_label: "№ 418 160",
+      point_name: "Тольятти, Ворошилова",
+      method: "Карта",
+      stage: "payment_form_closed",
+      reason: "Закрыл форму",
+      reason_tone: "success",
+      amount: 1760,
+    },
+    {
+      payment_flow_id: "pay-6",
+      time: "19:15",
+      order_label: "№ 418 152",
+      point_name: "Самара, Победы",
+      method: "СБП",
+      stage: "webhook_succeeded",
+      reason: "Оплачено после повтора",
+      reason_tone: "success",
+      amount: 2410,
+    },
+  ],
+};
+
+export const DEMO_FLOWS = {
+  "auth-1": {
+    title: "Попытка входа",
+    steps: [
+      { time: "19:47:40", step: "open_login", label: "Открыл вход по паролю", outcome: "success" },
+      {
+        time: "19:48:02",
+        step: "login",
+        label: "Отправил пароль",
+        outcome: "failure",
+        reason: "Неверный пароль",
+        reason_tone: "danger",
+      },
+    ],
+  },
+  "auth-2": {
+    title: "Попытка входа без пароля",
+    steps: [
+      {
+        time: "19:45:10",
+        step: "open_login",
+        label: "Открыл «Войти без пароля»",
+        outcome: "success",
+      },
+      {
+        time: "19:46:01",
+        step: "send_code",
+        label: "Запросил код",
+        outcome: "failure",
+        reason: "Провайдер не принял",
+        reason_tone: "danger",
+        channel: "СМС",
+      },
+    ],
+  },
+  "auth-3": {
+    title: "Попытка входа без пароля",
+    steps: [
+      {
+        time: "19:39:12",
+        step: "send_code",
+        label: "Код отправлен",
+        outcome: "success",
+        channel: "Telegram",
+      },
+      {
+        time: "19:41:04",
+        step: "verify_code",
+        label: "Проверка кода",
+        outcome: "failure",
+        reason: "Неверный код",
+        reason_tone: "danger",
+        channel: "Telegram",
+      },
+    ],
+  },
+  "auth-4": {
+    title: "Восстановление пароля",
+    steps: [
+      {
+        time: "19:37:18",
+        step: "send_code",
+        label: "Запросил код",
+        outcome: "failure",
+        reason: "Лимит отправки",
+        reason_tone: "warning",
+        channel: "СМС",
+      },
+    ],
+  },
+  "auth-5": {
+    title: "Попытка входа без пароля",
+    steps: [
+      {
+        time: "19:30:44",
+        step: "send_code",
+        label: "Запросил код",
+        outcome: "failure",
+        reason: "Капча не пройдена",
+        reason_tone: "warning",
+        channel: "Звонок",
+      },
+    ],
+  },
+  "auth-6": {
+    title: "Вход через Яндекс",
+    steps: [
+      { time: "19:21:50", step: "redirect", label: "Переход в Яндекс", outcome: "success" },
+      {
+        time: "19:22:11",
+        step: "callback",
+        label: "Возврат из Яндекса",
+        outcome: "failure",
+        reason: "Нет телефона в профиле",
+        reason_tone: "danger",
+      },
+    ],
+  },
+  "pay-1": {
+    title: "Оплата заказа № 418 220",
+    steps: [
+      { time: "19:51:10", step: "create_order_pre", label: "Заказ создан", outcome: "success" },
+      {
+        time: "19:51:14",
+        step: "provider_payment_created",
+        label: "Платёж создан в ЮKassa",
+        outcome: "success",
+      },
+      {
+        time: "19:52:02",
+        step: "widget_fail",
+        label: "Виджет",
+        outcome: "failure",
+        reason: "Банк отклонил",
+        reason_tone: "danger",
+      },
+    ],
+  },
+  "pay-2": {
+    title: "Оплата заказа № 418 207",
+    steps: [
+      { time: "19:40:00", step: "widget_success", label: "Виджет: success", outcome: "success" },
+      {
+        time: "19:47:12",
+        step: "webhook_canceled",
+        label: "Webhook",
+        outcome: "failure",
+        reason: "Истёк срок",
+        reason_tone: "warning",
+      },
+    ],
+  },
+  "pay-3": {
+    title: "Оплата заказа № 418 191",
+    steps: [
+      {
+        time: "19:40:21",
+        step: "provider_payment_created",
+        label: "Создание платежа",
+        outcome: "failure",
+        reason: "Неверный email",
+        reason_tone: "danger",
+      },
+    ],
+  },
+  "pay-4": {
+    title: "Оплата заказа № 418 176",
+    steps: [
+      {
+        time: "19:33:40",
+        step: "provider_script_failed",
+        label: "Скрипт виджета",
+        outcome: "failure",
+        reason: "script_timeout",
+        reason_tone: "danger",
+      },
+    ],
+  },
+  "pay-5": {
+    title: "Оплата заказа № 418 160",
+    steps: [
+      {
+        time: "19:20:02",
+        step: "payment_form_shown",
+        label: "Форма оплаты показана",
+        outcome: "success",
+      },
+      {
+        time: "19:21:16",
+        step: "payment_form_closed",
+        label: "Форма закрыта",
+        outcome: "cancel",
+        reason: "Закрыл форму",
+        reason_tone: "success",
+      },
+    ],
+  },
+  "pay-6": {
+    title: "Оплата заказа № 418 152",
+    steps: [
+      {
+        time: "19:05:11",
+        step: "webhook_canceled",
+        label: "Первая попытка",
+        outcome: "failure",
+        reason: "Истёк срок",
+        reason_tone: "warning",
+      },
+      {
+        time: "19:15:48",
+        step: "webhook_succeeded",
+        label: "Повторная оплата",
+        outcome: "success",
+        reason: "Оплачено после повтора",
+        reason_tone: "success",
+      },
+    ],
+  },
+};
