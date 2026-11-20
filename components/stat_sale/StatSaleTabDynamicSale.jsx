@@ -452,7 +452,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
       preserveAccountPercentDecimals = false,
       sourceRows = null,
       headerContent = null,
-      quantityDecimals = 0,
+      quantityDecimals,
       padFractionDigits = false,
       quantityHeader = "Кол-во, шт",
       dynamicsHeader = "Динамика, шт",
@@ -465,9 +465,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
       if (value === null || value === undefined || value === "") return "";
 
       const numericValue = getSafeNumber(value);
-      if (!quantityDecimals) {
-        return numericValue.toLocaleString("ru-RU").replace(/\s/g, " ");
-      }
+      if (quantityDecimals === 0 && Math.abs(numericValue) < 0.5) return "0";
 
       return numericValue
         .toLocaleString("ru-RU", {
@@ -1090,7 +1088,7 @@ class StatSale_Tab_DynamicSale extends React.Component {
         valueDecimals: 2,
         showProgress: false,
         tableOptions: {
-          quantityDecimals: 2,
+          quantityDecimals: 0,
           quantityHeader: "Эффект-ть, %",
           dynamicsHeader: "Динамика, п.п.",
         },
