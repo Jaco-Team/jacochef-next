@@ -61,11 +61,15 @@
 
 ### Control item (`items`)
 
-`id`, `name`, `cleaningId`, `locationId`, `date`, `employee`, `startedAt`, `finishedAt`, `confirmedAt`, `confirmer`, `status` (`active|in_progress|pending|approved|deleted`).
+`id`, `name`, `cleaningId`, `locationId`, `date`, `employee`, `startedAt`, `finishedAt`, `confirmedAt`, `confirmer`, `status` (`active|in_progress|pending|approved|deleted`), `deletedBy` (`system|manager|null`), `deleteReason`, `wasStarted`, `returnsCount`, `eventsCount`.
+
+- удалённая строка показывается статусом «Не выполнена — удалена автоматически» (`deletedBy: system`) или «Удалена менеджером» (`manager`) ; без `deletedBy` (старый BE) — «Удалено». У удалённой строки `confirmedAt` / `confirmer` — время и автор удаления, а не подтверждения: колонки «Подтвердили» / «Подтвердивший» показывают «—», под статусом — «Удалена в ЧЧ:ММ» (другой день — «ДД.ММ ЧЧ:ММ»), для `manager` — ещё и кем, затем «Причина: …». У никем не взятой удалённой строки (`wasStarted: false`) сотрудник и начало — «—»;
+- `returnsCount > 0` — чип «Возвращали: N» под названием;
+- `eventsCount > 0` — кнопка «История действий» в строке.
 
 ### Preparation item (`preparations`)
 
-`id`, `name`, `locationId`, `preparedAt`, `volume`, `waste`, `unit`, `employee`, `helper`, `confirmedAt`, `confirmer`, `status` (`pending|approved|deleted`).
+`id`, `name`, `locationId`, `preparedAt`, `volume`, `waste`, `unit`, `employee`, `helper`, `confirmedAt`, `confirmer`, `status` (`pending|approved|deleted`), `eventsCount` (`> 0` — кнопка «История действий»).
 
 ### Manual template (`manualTemplates`)
 
@@ -197,6 +201,7 @@
   - `manualTemplates` — шаблоны для ручного добавления (см. выше);
   - `work`, `pf_list`, `all_work`, `availableManualCleanings` — сырые legacy-срезы. `all_work` / `availableManualCleanings` — невзятые строки `<base>.work`, а не шаблоны; FE подмешивает их в список уборок, но не использует для ручного добавления.
 - Если `manualTemplates` нет в ответе (старый BE), диалог ручного добавления показывает пустое состояние с пояснением.
+- Обновление: ответ не кэшируется. Пока открыта вкладка проверки и вкладка браузера видима, `control` перезапрашивается раз в 60 с после окончания прошлой загрузки (`useControlPolling`); скрытая вкладка пропускает опрос и обновляется сразу при возврате, если интервал прошёл. Во время загрузки или действия опрос не идёт. Кнопка-иконка «Обновить сейчас» запрашивает сразу; рядом — «Обновлено в ЧЧ:ММ». Ошибка фонового опроса не показывается алертом, только подсказкой «не удалось обновить»; ошибка ручного обновления — алертом. Ответ запроса, который уже сменился новым (смена точки или дат), отбрасывается.
 
 Все действия ниже требуют точку (`locationId`). Response: `st`, `text`, опционально `status`. При `st: false` FE показывает `text` как ошибку.
 
@@ -211,8 +216,16 @@
 | `control/delete_preparation` | `deletePreparation` | `{ locationId, id, text }` |
 
 - `id` — id строки уборки (`<base>.work.id`) или заготовки (`<base>.pf_work.id`).
+- «Вернуть» (`return`) — только у выполненной, не подтверждённой уборки: возвращает её тому же сотруднику на доработку, сбрасывается только время окончания. «Снять» (`detach`) — у уборки в процессе или выполненной: сотрудник и время начала очищаются; в подтверждении предупреждение, что при прошедшем времени удаления система удалит уборку в течение 5 минут.
+- Повторное действие по уже изменённой строке BE отклоняет (`st: false`).
 - `text` — причина удаления. В диалоге удаления поле «Причина удаления» обязательно, не короче 3 символов (как в старом `check_works`).
 - `manual_add` добавляет уборку на сегодня. Кнопка «Добавить» неактивна, если `todayCount >= maxCount` (в том числе при `maxCount = 0`); в карточке всегда показывается «Сегодня: X из Y».
+
+#### `control/history` (`getControlHistory`)
+
+- Request: `{ locationId, id, type }`, `type` — `cleaning` или `preparation`.
+- Response: `history` — события строки, новые первыми: `id`, `action` (`manual_add|approve|return|detach|delete|edit`), `actorId`, `actorName`, `comment` (причина удаления), `createdAt`, `workName`, `workDate`, `meta`. `meta` для `return`/`detach` — состояние до действия `{user_id, user_name, date_unix_start, date_unix_end}` (unix-секунды), для `edit` — `{old_count_pf, old_count_trash, new_count_pf, new_count_trash}`.
+- UI: диалог «История действий», подзаголовок «Объект · ДД.ММ.ГГГГ», колонка «Время действия». `controlHistoryPresenter.mjs`: «Действие» (Добавлена вручную / Подтверждена / Возвращена на доработку / Снята с сотрудника / Удалена / Изменена), «Причина», для возврата — «Сотрудник» и «Окончание: ЧЧ:ММ → —», для снятия — «Сотрудник», «Начало», «Окончание» → «—», для правки заготовки — изменившиеся «Объём» / «Отходы». Время другого дня — с датой. История не кэшируется.
 
 #### `control/get_edit_work` (`getPreparationEditContext`)
 
@@ -234,11 +247,11 @@
 ## Перезагрузка после изменений
 
 - Шаблоны: `templates`, затем `categories`; на вкладке кафе — ещё `cafes`.
-- Виды уборок: `categories`; после `categories/templates/save` — ещё `templates`, кэш `control` и кафе сбрасывается.
+- Виды уборок: `categories`; после `categories/templates/save` — ещё `templates`, кэш кафе сбрасывается.
 - История уборок, видов уборок и кафе кэшируется на сессию модуля и сбрасывается целиком после любого изменения шаблона (`save_new`, `save_edit`, `save_status`, `delete`), вида уборки и после `cafes/assign`, `cafes/remove`, `cafes/save_dop_time`: повторно открытый диалог запрашивает историю заново.
 - Кафе (`assign`, `remove`): `cafes` по выбранной точке, затем `templates`; `save_dop_time` — `cafes`.
 - Проверка (все действия): `control` по текущим точке и датам.
-- Ответы `control` кэшируются на сессию модуля по точке и датам. После изменений шаблонов (`save_new`, `save_edit`, `save_status`, `delete`) и кафе (`assign`, `remove`, `save_dop_time`) кэш сбрасывается, и при возврате в «Проверку заготовок и уборок» `control` запрашивается заново.
+- Ответы `control` не кэшируются: при каждом входе в «Проверку заготовок и уборок», смене точки или дат `control` запрашивается заново, дальше — опрос раз в 60 с.
 - `get_all` не используется как универсальная перезагрузка.
 
 ## Не используется FE

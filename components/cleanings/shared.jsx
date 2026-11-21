@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, IconButton, TableCell, TableSortLabel, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  TableCell,
+  TableSortLabel,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
-import { JacoStatusChip } from "@/design-system/shared/ui";
-import { getAdditionTypeShortName, getDeleteBehavior } from "./helpers";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { JacoIconButton, JacoStatusChip } from "@/design-system/shared/ui";
+import { formatClockTime, getAdditionTypeShortName, getDeleteBehavior } from "./helpers";
 
 // Blocks repeated submits until the async action settles; `pendingKey` marks the clicked row.
 export function usePendingAction() {
@@ -203,4 +213,82 @@ export function CleaningActions({ item, onEdit, onArchiveToggle, onHistory, onRe
       ) : null}
     </Box>
   );
+}
+
+// «Обновить» of the control toolbars with the time of the last successful load; a failed load is a soft hint.
+export function ControlRefreshControl({ onRefresh, refreshing = false, disabled = false, updatedAt, error }) {
+  const updatedText = updatedAt ? `Обновлено в ${formatClockTime(updatedAt)}` : "";
+  const hint = error
+    ? [updatedText, "не удалось обновить"].filter(Boolean).join(" · ")
+    : updatedText;
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+      {hint ? (
+        <Tooltip title={error || ""}>
+          <Typography
+            sx={{
+              color: error ? "warning.dark" : "text.secondary",
+              fontSize: 13,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {hint}
+          </Typography>
+        </Tooltip>
+      ) : null}
+      <Tooltip title="Обновить сейчас">
+        <span>
+          <JacoIconButton
+            aria-label="Обновить"
+            onClick={onRefresh}
+            disabled={disabled || refreshing}
+            sx={{ width: 36, height: 36 }}
+          >
+            {refreshing ? <CircularProgress size={18} /> : <RefreshIcon fontSize="small" />}
+          </JacoIconButton>
+        </span>
+      </Tooltip>
+    </Box>
+  );
+}
+
+// «История» of a control row: an icon in the table, a full-width button in mobile cards.
+export function ControlHistoryButton({ onClick, mobile = false, sx }) {
+  if (mobile) {
+    return (
+      <Button
+        size="small"
+        variant="outlined"
+        startIcon={<HistoryIcon />}
+        onClick={onClick}
+        sx={sx}
+      >
+        История
+      </Button>
+    );
+  }
+
+  return (
+    <Tooltip title="История действий">
+      <IconButton
+        size="small"
+        aria-label="История"
+        onClick={onClick}
+      >
+        <HistoryIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+}
+
+export function ControlReturnsBadge({ count, sx }) {
+  return count > 0 ? (
+    <JacoStatusChip
+      label={`Возвращали: ${count}`}
+      tone="warning"
+      variant="soft"
+      sx={sx}
+    />
+  ) : null;
 }

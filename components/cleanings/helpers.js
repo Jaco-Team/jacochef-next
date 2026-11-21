@@ -282,6 +282,35 @@ export function formatControlTime(value) {
   return hours && minutes ? `${hours}:${minutes}` : value;
 }
 
+// Local «ЧЧ:ММ» of a timestamp in ms.
+export function formatClockTime(timestamp) {
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = new Date(timestamp);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+// Status chip and filter key of a control row: deleted rows are split by `deletedBy`;
+// plain `deleted` is left for rows without it (old BE).
+export function getControlStatusKey(item) {
+  if (item?.status !== "deleted") {
+    return item?.status;
+  }
+
+  if (item.deletedBy === "system") {
+    return "deleted_system";
+  }
+
+  return item.deletedBy === "manager" ? "deleted_manager" : "deleted";
+}
+
+// Deleted before anyone took it: there is no employee and no start to show.
+export function isControlItemNeverTaken(item) {
+  return item?.status === "deleted" && !item.wasStarted;
+}
+
 export function getControlStatusMeta(status) {
   const meta = {
     pending: {
@@ -313,6 +342,18 @@ export function getControlStatusMeta(status) {
       color: "#be123c",
       bgcolor: "#fff1f2",
       borderColor: "#fecdd3",
+    },
+    deleted_system: {
+      label: "Не выполнена — удалена автоматически",
+      color: "#be123c",
+      bgcolor: "#fff1f2",
+      borderColor: "#fecdd3",
+    },
+    deleted_manager: {
+      label: "Удалена менеджером",
+      color: "#475569",
+      bgcolor: "#f8fafc",
+      borderColor: "#cbd5e1",
     },
   };
 

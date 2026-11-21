@@ -23,10 +23,10 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import dayjs from "dayjs";
 import { MyDatePickerNew, MySelect } from "@/ui/Forms";
 import { getLocationName, isSameId, isDateInRange, tableHeaderSx, tableRowSx } from "./helpers";
+import { ControlHistoryButton, ControlRefreshControl } from "./shared";
 
 const actionButtonSx = {
   borderRadius: "8px",
@@ -65,8 +65,12 @@ export default function PreparationControlView({
   onEdit,
   onApprove,
   onDelete,
+  onHistory,
   onRefresh,
   isLoading,
+  refreshing,
+  updatedAt,
+  refreshError,
   canEdit,
 }) {
   const locationOptions = locations.map((location) => ({
@@ -117,16 +121,15 @@ export default function PreparationControlView({
               minDate={dateFrom ? dayjs(dateFrom) : null}
               func={(value) => onDateToChange(value ? value.format("YYYY-MM-DD") : "")}
             />
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={onRefresh}
-              disabled={isLoading}
-              sx={{ ...actionButtonSx, justifySelf: { xs: "stretch", md: "end" } }}
-            >
-              Обновить
-            </Button>
+            <Box sx={{ justifySelf: { xs: "stretch", md: "end" } }}>
+              <ControlRefreshControl
+                onRefresh={onRefresh}
+                refreshing={refreshing}
+                disabled={isLoading}
+                updatedAt={updatedAt}
+                error={refreshError}
+              />
+            </Box>
           </Box>
         </Paper>
       </Grid>
@@ -213,7 +216,14 @@ export default function PreparationControlView({
                       {item.confirmer || "—"}
                     </TableCell>
                     <TableCell align="right">
-                      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
                         {canEdit && item.status === "pending" ? (
                           <Button
                             size="small"
@@ -245,9 +255,12 @@ export default function PreparationControlView({
                           >
                             Удалить
                           </Button>
-                        ) : (
+                        ) : item.eventsCount > 0 ? null : (
                           <Typography sx={{ color: "text.disabled", fontSize: 14 }}>—</Typography>
                         )}
+                        {item.eventsCount > 0 ? (
+                          <ControlHistoryButton onClick={() => onHistory(item.id)} />
+                        ) : null}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -354,6 +367,13 @@ export default function PreparationControlView({
                         Удалить
                       </Button>
                     </>
+                  ) : null}
+                  {item.eventsCount > 0 ? (
+                    <ControlHistoryButton
+                      mobile
+                      onClick={() => onHistory(item.id)}
+                      sx={{ ...actionButtonSx, minHeight: 44, width: "100%" }}
+                    />
                   ) : null}
                 </Box>
               </Paper>

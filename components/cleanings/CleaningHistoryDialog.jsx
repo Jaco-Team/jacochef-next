@@ -16,6 +16,8 @@ export default function CleaningHistoryDialog({
   history = [],
   loading = false,
   onClose,
+  title = "История изменений",
+  dateLabel,
 }) {
   return (
     <Dialog
@@ -35,7 +37,7 @@ export default function CleaningHistoryDialog({
         sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}
       >
         <Box>
-          <Typography sx={{ fontSize: 20, fontWeight: 800 }}>История изменений</Typography>
+          <Typography sx={{ fontSize: 20, fontWeight: 800 }}>{title}</Typography>
           <Typography sx={{ color: "text.secondary", fontSize: 14 }}>{item?.name || ""}</Typography>
         </Box>
         <IconButton
@@ -54,6 +56,8 @@ export default function CleaningHistoryDialog({
         ) : (
           <HistoryLog
             history={history}
+            title={title}
+            dateLabel={dateLabel}
             defaultExpanded
           />
         )}

@@ -31,7 +31,9 @@ import {
   presentTemplateHistory,
 } from "./cleaningsHistoryPresenter.mjs";
 import { getRichTextBaseline, isRichTextChanged, settleRichTextBaseline } from "./richText.mjs";
+import { getControlHistorySubject, presentControlHistory } from "./controlHistoryPresenter.mjs";
 import { useBeforeUnloadGuard } from "./shared";
+import useControlPolling from "./useControlPolling";
 
 const cleaningsSessionCache = {
   bootstrap: null,
@@ -41,7 +43,6 @@ const cleaningsSessionCache = {
   templateHistoryById: {},
   categoryHistoryById: {},
   cafeHistoryByLocation: {},
-  controlByFilters: {},
   inFlightControlRequest: null,
   controlFilters: null,
   preparationFilters: null,
@@ -55,10 +56,6 @@ function getCacheKey(value) {
   return value == null || value === "" ? "" : String(value);
 }
 
-// Control responses embed template/cafe data (incl. manualTemplates).
-function invalidateControlCache() {
-  cleaningsSessionCache.controlByFilters = {};
-}
 
 // Template, вид уборки and cafe saves also write events of related templates, categories and cafes.
 function invalidateHistoryCache() {
@@ -111,6 +108,11 @@ export default function useCleaningsPage({
   const [bootstrapReady, setBootstrapReady] = useState(Boolean(cachedBootstrap));
   const [bootstrapLoading, setBootstrapLoading] = useState(false);
   const [controlLoading, setControlLoading] = useState(false);
+  const [controlRefreshing, setControlRefreshing] = useState(false);
+  const [controlUpdatedAt, setControlUpdatedAt] = useState(null);
+  const [controlCheckedAt, setControlCheckedAt] = useState(null);
+  const [controlRefreshError, setControlRefreshError] = useState("");
+  const controlRequestRef = useRef(0);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   const [moduleInfo, setModuleInfo] = useState(cachedBootstrap?.moduleInfo || {});
@@ -204,6 +206,10 @@ export default function useCleaningsPage({
   const [cafeHistoryRawRows, setCafeHistoryRawRows] = useState([]);
   const [cafeHistoryLoading, setCafeHistoryLoading] = useState(false);
   const cafeHistoryRequestRef = useRef(0);
+  const [controlHistoryTarget, setControlHistoryTarget] = useState(null);
+  const [controlHistoryRawRows, setControlHistoryRawRows] = useState([]);
+  const [controlHistoryLoading, setControlHistoryLoading] = useState(false);
+  const controlHistoryRequestRef = useRef(0);
   const [addCafeDialogOpen, setAddCafeDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
   const [removeCafeCleaningId, setRemoveCafeCleaningId] = useState(null);
@@ -427,8 +433,11 @@ export default function useCleaningsPage({
     [applyCafes, cleaningsApi, locations, selectedCafeId, cachedLocations],
   );
 
+  // `mode`: "load" — filters changed or after an action (full loader, alert on error);
+  // "refresh" — the refresh button (spinner, alert); "poll" — background poll (spinner, soft hint only).
+  // A response of a request superseded by a newer one is dropped.
   const loadControl = useCallback(
-    async ({ force = false } = {}) => {
+    async ({ force = false, mode = "load" } = {}) => {
       if (section !== "control") {
         return;
       }
@@ -442,18 +451,16 @@ export default function useCleaningsPage({
       }
 
       const requestKey = [activeLocationId, activeDateFrom, activeDateTo].join(":");
+      const requestId = controlRequestRef.current + 1;
+      const isCurrent = () => controlRequestRef.current === requestId;
+      controlRequestRef.current = requestId;
 
-      if (!force && cleaningsSessionCache.controlByFilters[requestKey]) {
-        const normalized = cleaningsSessionCache.controlByFilters[requestKey];
-        setControlItems(normalized.cleanings);
-        setPreparationItems(normalized.preparations);
-        setManualTemplates(normalized.manualTemplates);
-        setManualTemplatesSupported(normalized.manualTemplatesSupported);
-        setControlPermissions(normalized.permissions);
-        return normalized;
+      if (mode === "load") {
+        setControlLoading(true);
+      } else {
+        setControlRefreshing(true);
       }
 
-      setControlLoading(true);
       try {
         let requestPromise = !force
           ? cleaningsSessionCache.inFlightControlRequest?.promise || null
@@ -474,9 +481,7 @@ export default function useCleaningsPage({
               throw new Error(response?.text || "Ошибка загрузки данных проверки");
             }
 
-            const normalized = normalizeControlResponse(response);
-            cleaningsSessionCache.controlByFilters[requestKey] = normalized;
-            return normalized;
+            return normalizeControlResponse(response);
           })();
 
           cleaningsSessionCache.inFlightControlRequest = {
@@ -486,18 +491,36 @@ export default function useCleaningsPage({
         }
 
         const normalized = await requestPromise;
+        if (!isCurrent()) {
+          return;
+        }
+
         setControlItems(normalized.cleanings);
         setPreparationItems(normalized.preparations);
         setManualTemplates(normalized.manualTemplates);
         setManualTemplatesSupported(normalized.manualTemplatesSupported);
         setControlPermissions(normalized.permissions);
+        setControlUpdatedAt(Date.now());
+        setControlRefreshError("");
       } catch (error) {
-        showAlert(error?.message || "Ошибка загрузки данных проверки");
+        if (!isCurrent()) {
+          return;
+        }
+
+        const message = error?.message || "Ошибка загрузки данных проверки";
+        setControlRefreshError(message);
+        if (mode !== "poll") {
+          showAlert(message);
+        }
       } finally {
         if (cleaningsSessionCache.inFlightControlRequest?.key === requestKey) {
           cleaningsSessionCache.inFlightControlRequest = null;
         }
-        setControlLoading(false);
+        if (isCurrent()) {
+          setControlLoading(false);
+          setControlRefreshing(false);
+          setControlCheckedAt(Date.now());
+        }
       }
     },
     [
@@ -513,7 +536,20 @@ export default function useCleaningsPage({
     ],
   );
 
-  const refreshControl = useCallback(() => loadControl({ force: true }), [loadControl]);
+  const refreshControl = useCallback(
+    () => loadControl({ force: true, mode: "refresh" }),
+    [loadControl],
+  );
+  const pollControl = useCallback(
+    () => loadControl({ force: true, mode: "poll" }),
+    [loadControl],
+  );
+
+  useControlPolling({
+    enabled: section === "control" && !controlLoading && !mutationLoading,
+    lastCheckedAt: controlCheckedAt,
+    onPoll: pollControl,
+  });
 
   useEffect(() => {
     loadBootstrap();
@@ -764,7 +800,6 @@ export default function useCleaningsPage({
           ? await cleaningsApi.updateTemplate(template.id, payload)
           : await cleaningsApi.createTemplate(payload);
 
-        invalidateControlCache();
         invalidateHistoryCache();
         await loadTemplates({ force: true });
         await loadCategories({ force: true });
@@ -803,7 +838,6 @@ export default function useCleaningsPage({
 
       return runMutation(async () => {
         const response = await cleaningsApi.updateTemplateStatus(id, nextStatus);
-        invalidateControlCache();
         invalidateHistoryCache();
         await loadTemplates({ force: true });
         if (section === "cafes" && selectedCafeId) {
@@ -830,7 +864,6 @@ export default function useCleaningsPage({
     async (id) => {
       await runMutation(async () => {
         const response = await cleaningsApi.deleteTemplate(id);
-        invalidateControlCache();
         invalidateHistoryCache();
         await loadTemplates({ force: true });
         await loadCategories({ force: true });
@@ -976,8 +1009,7 @@ export default function useCleaningsPage({
         if (progress.fieldsSaved || progress.templatesSaved) {
           invalidateHistoryCache();
           if (progress.templatesSaved) {
-            invalidateControlCache();
-            cleaningsSessionCache.cafesByLocation = {};
+                cleaningsSessionCache.cafesByLocation = {};
             await loadTemplates({ force: true });
           }
           progress.nextCategories = await loadCategories({ force: true });
@@ -1134,6 +1166,69 @@ export default function useCleaningsPage({
     setCafeHistoryLoading(false);
   }, []);
 
+  // Journal of one control row; `kind` is "cleaning" or "preparation". Never cached: rows change with every action.
+  const openControlHistory = useCallback(
+    async (kind, id) => {
+      const isPreparation = kind === "preparation";
+      const item = (isPreparation ? preparationItems : controlItems).find((row) =>
+        isSameId(row.id, id),
+      );
+      const locationId = item?.locationId || (isPreparation ? preparationCafeId : controlCafeId);
+      if (!locationId) {
+        return;
+      }
+
+      const requestId = controlHistoryRequestRef.current + 1;
+      const isCurrent = () => controlHistoryRequestRef.current === requestId;
+      controlHistoryRequestRef.current = requestId;
+      setControlHistoryTarget({ kind: isPreparation ? "preparation" : "cleaning", item: item || { id } });
+      setControlHistoryRawRows([]);
+      setControlHistoryLoading(true);
+
+      try {
+        const response = await cleaningsApi.getControlHistory(
+          locationId,
+          id,
+          isPreparation ? "preparation" : "cleaning",
+        );
+        if (!response?.st) {
+          throw new Error(response?.text || "Ошибка загрузки истории действий");
+        }
+        if (isCurrent()) {
+          setControlHistoryRawRows(normalizeHistoryResponse(response));
+        }
+      } catch (error) {
+        if (isCurrent()) {
+          showAlert(error?.message || "Ошибка загрузки истории действий");
+        }
+      } finally {
+        if (isCurrent()) {
+          setControlHistoryLoading(false);
+        }
+      }
+    },
+    [cleaningsApi, controlCafeId, controlItems, preparationCafeId, preparationItems],
+  );
+
+  const closeControlHistory = useCallback(() => {
+    controlHistoryRequestRef.current += 1;
+    setControlHistoryTarget(null);
+    setControlHistoryRawRows([]);
+    setControlHistoryLoading(false);
+  }, []);
+
+  const controlHistoryRows = useMemo(
+    () => presentControlHistory(controlHistoryRawRows),
+    [controlHistoryRawRows],
+  );
+  const controlHistorySubject = useMemo(
+    () =>
+      controlHistoryTarget
+        ? getControlHistorySubject(controlHistoryTarget.item, controlHistoryRawRows)
+        : null,
+    [controlHistoryRawRows, controlHistoryTarget],
+  );
+
   const addCleaningToCafe = useCallback(
     async (templateId) => {
       if (!selectedCafeId) {
@@ -1142,7 +1237,6 @@ export default function useCleaningsPage({
 
       const response = await runMutation(async () => {
         const result = await cleaningsApi.assignTemplateToCafe(selectedCafeId, templateId, 0);
-        invalidateControlCache();
         invalidateHistoryCache();
         await loadCafes(selectedCafeId, { force: true });
         await loadTemplates({ force: true });
@@ -1197,7 +1291,6 @@ export default function useCleaningsPage({
         selectedCafeId,
         removeCafeCleaningId,
       );
-      invalidateControlCache();
       invalidateHistoryCache();
       await loadCafes(selectedCafeId, { force: true });
       await loadTemplates({ force: true });
@@ -1223,7 +1316,6 @@ export default function useCleaningsPage({
 
     const response = await runMutation(async () => {
       const result = await cleaningsApi.saveCafeDopTimes(selectedCafeId, items);
-      invalidateControlCache();
       invalidateHistoryCache();
       await loadCafes(selectedCafeId, { force: true });
       return result;
@@ -1499,6 +1591,15 @@ export default function useCleaningsPage({
     controlItems,
     controlKind,
     controlLoading,
+    controlRefreshing,
+    controlUpdatedAt,
+    controlRefreshError,
+    controlHistoryTarget,
+    controlHistorySubject,
+    controlHistoryRows,
+    controlHistoryLoading,
+    openControlHistory,
+    closeControlHistory,
     deleteCategory,
     deleteCategoryCandidate,
     deleteCategoryId,

@@ -281,8 +281,12 @@ export default function CleaningsPage() {
                 onReturn={(id) => page.setControlAction({ type: "return", id })}
                 onDetach={(id) => page.setControlAction({ type: "detach", id })}
                 onDelete={(id) => page.setControlAction({ type: "delete", id })}
+                onHistory={(id) => page.openControlHistory("cleaning", id)}
                 onRefresh={page.refreshControl}
                 isLoading={page.controlLoading}
+                refreshing={page.controlRefreshing}
+                updatedAt={page.controlUpdatedAt}
+                refreshError={page.controlRefreshError}
                 canEdit={page.canEdit("control_cleanings")}
               />
             ) : null}
@@ -300,8 +304,12 @@ export default function CleaningsPage() {
                 onEdit={page.openPreparationEdit}
                 onApprove={(id) => page.setPreparationAction({ type: "approve", id })}
                 onDelete={(id) => page.setPreparationAction({ type: "delete", id })}
+                onHistory={(id) => page.openControlHistory("preparation", id)}
                 onRefresh={page.refreshControl}
                 isLoading={page.controlLoading}
+                refreshing={page.controlRefreshing}
+                updatedAt={page.controlUpdatedAt}
+                refreshError={page.controlRefreshError}
                 canEdit={page.canEdit("control_pf")}
               />
             ) : null}
@@ -346,6 +354,16 @@ export default function CleaningsPage() {
         history={page.cafeHistoryRows}
         loading={page.cafeHistoryLoading}
         onClose={page.closeCafeHistory}
+      />
+
+      <CleaningHistoryDialog
+        open={Boolean(page.controlHistoryTarget)}
+        item={page.controlHistorySubject}
+        history={page.controlHistoryRows}
+        loading={page.controlHistoryLoading}
+        onClose={page.closeControlHistory}
+        title="История действий"
+        dateLabel="Время действия"
       />
 
       <DeleteCategoryDialog

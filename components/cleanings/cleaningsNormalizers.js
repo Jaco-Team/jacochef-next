@@ -2,6 +2,7 @@ import { LEGACY_ONLY_OPTION_VALUE, defaultForm } from "./constants";
 
 const PREPARATION_STATUS_FALLBACK = "pending";
 const CLEANING_STATUS_FALLBACK = "active";
+const CONTROL_DELETED_BY = ["system", "manager"];
 
 function toArray(value) {
   return Array.isArray(value) ? value : [];
@@ -250,6 +251,7 @@ export function normalizeCategory(item = {}) {
 export function normalizeControlItem(item = {}) {
   const workNameSource = item.name ?? item.name_work ?? item.legacy?.name_work;
   const workName = workNameSource ? String(workNameSource) : "";
+  const startedAt = item.startedAt || item.started_at || item.date_time_start || "";
 
   return {
     id: toNumber(item.id, item.id),
@@ -265,7 +267,7 @@ export function normalizeControlItem(item = {}) {
     ),
     date: item.date ? String(item.date) : item.date_start_work ? String(item.date_start_work) : "",
     employee: item.employee ? String(item.employee) : item.user_name ? String(item.user_name) : "",
-    startedAt: item.startedAt || item.started_at || item.date_time_start || "",
+    startedAt,
     finishedAt: item.finishedAt || item.finished_at || item.date_time_end || "",
     confirmedAt: item.confirmedAt || item.confirmed_at || item.manager_time || "",
     confirmer: item.confirmer
@@ -274,6 +276,11 @@ export function normalizeControlItem(item = {}) {
         ? String(item.manager_name)
         : "",
     status: normalizeControlStatus(item.status || normalizeLegacyControlStatus(item)),
+    deletedBy: CONTROL_DELETED_BY.includes(item.deletedBy) ? item.deletedBy : null,
+    deleteReason: item.deleteReason ? String(item.deleteReason).trim() : "",
+    wasStarted: toBoolean(item.wasStarted, Boolean(startedAt)),
+    returnsCount: toNumber(item.returnsCount, 0) || 0,
+    eventsCount: toNumber(item.eventsCount, 0) || 0,
   };
 }
 
@@ -291,6 +298,7 @@ export function normalizePreparationItem(item = {}) {
     confirmedAt: item.confirmedAt || item.confirmed_at || "",
     confirmer: item.confirmer ? String(item.confirmer) : "",
     status: normalizePreparationStatus(item.status),
+    eventsCount: toNumber(item.eventsCount, 0) || 0,
   };
 }
 

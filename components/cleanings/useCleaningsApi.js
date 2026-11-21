@@ -51,6 +51,8 @@ export default function useCleaningsApi() {
       getTemplateHistory: (id) => request("history/template", { id }),
       getCategoryHistory: (id) => request("history/category", { id }),
       getCafeHistory: (locationId) => request("history/cafe", { locationId }),
+      getControlHistory: (locationId, id, type) =>
+        request("control/history", { locationId, id, type }),
     };
   }, []);
 }

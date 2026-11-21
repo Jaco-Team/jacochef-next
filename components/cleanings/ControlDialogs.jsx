@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import PersonRemoveOutlinedIcon from "@mui/icons-material/PersonRemoveOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { JacoTextInput } from "@/design-system/shared/ui";
 import { usePendingAction } from "./shared";
@@ -52,6 +53,11 @@ function useDeleteReason(open, action) {
 function getEmployeeSuffix(employee) {
   const name = String(employee || "").trim();
   return name ? ` сотрудника ${name}` : "";
+}
+
+function getReturnTarget(employee) {
+  const name = String(employee || "").trim();
+  return name ? `сотруднику ${name}` : "сотруднику";
 }
 
 function DeleteReasonField({ value, onChange }) {
@@ -110,18 +116,18 @@ export function ControlActionConfirmDialog({ open, action, item, cleaning, onClo
       hoverBgcolor: "#15803d",
     },
     return: {
-      title: "Вернуть уборку?",
-      text: `Уборка «${cleaningName}»${employeeSuffix} будет возвращена в процесс.`,
+      title: "Вернуть на доработку?",
+      text: `Уборка «${cleaningName}» вернётся ${getReturnTarget(item?.employee)} на доработку: время окончания будет сброшено.`,
       button: "Вернуть",
       icon: <ReplayIcon />,
       bgcolor: "#f59e0b",
       hoverBgcolor: "#d97706",
     },
     detach: {
-      title: "Снять уборку?",
-      text: `Уборка «${cleaningName}» будет переведена в активные. Сотрудник и время начала будут очищены.`,
+      title: "Снять с сотрудника?",
+      text: `Уборка «${cleaningName}» станет свободной: сотрудник и время начала будут очищены. Если у уборки уже прошло время удаления, система удалит её в течение 5 минут.`,
       button: "Снять",
-      icon: <ReplayIcon />,
+      icon: <PersonRemoveOutlinedIcon />,
       bgcolor: "#f59e0b",
       hoverBgcolor: "#d97706",
     },
