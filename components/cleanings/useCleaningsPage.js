@@ -26,6 +26,7 @@ import {
   resolveCleaningsRoute,
 } from "./helpers";
 import {
+  presentCafeHistory,
   presentCategoryHistory,
   presentTemplateHistory,
 } from "./cleaningsHistoryPresenter.mjs";
@@ -39,6 +40,7 @@ const cleaningsSessionCache = {
   cafesByLocation: {},
   templateHistoryById: {},
   categoryHistoryById: {},
+  cafeHistoryByLocation: {},
   controlByFilters: {},
   inFlightControlRequest: null,
   controlFilters: null,
@@ -58,10 +60,11 @@ function invalidateControlCache() {
   cleaningsSessionCache.controlByFilters = {};
 }
 
-// Saving a template or a вид уборки also writes events of related templates and categories.
+// Template, вид уборки and cafe saves also write events of related templates, categories and cafes.
 function invalidateHistoryCache() {
   cleaningsSessionCache.templateHistoryById = {};
   cleaningsSessionCache.categoryHistoryById = {};
+  cleaningsSessionCache.cafeHistoryByLocation = {};
 }
 
 const NEW_CATEGORY_KEY = "new";
@@ -197,6 +200,10 @@ export default function useCleaningsPage({
   const [categoryHistoryRawRows, setCategoryHistoryRawRows] = useState([]);
   const [categoryHistoryLoading, setCategoryHistoryLoading] = useState(false);
   const [categoryHistoryVersion, setCategoryHistoryVersion] = useState(0);
+  const [cafeHistoryLocation, setCafeHistoryLocation] = useState(null);
+  const [cafeHistoryRawRows, setCafeHistoryRawRows] = useState([]);
+  const [cafeHistoryLoading, setCafeHistoryLoading] = useState(false);
+  const cafeHistoryRequestRef = useRef(0);
   const [addCafeDialogOpen, setAddCafeDialogOpen] = useState(false);
   const [addManualDialogOpen, setAddManualDialogOpen] = useState(false);
   const [removeCafeCleaningId, setRemoveCafeCleaningId] = useState(null);
@@ -664,6 +671,15 @@ export default function useCleaningsPage({
     () => presentTemplateHistory(templateHistoryRawRows, historyContext),
     [historyContext, templateHistoryRawRows],
   );
+  // «Уборки Кафе» does not load `templates`; the cafe slices hold every template as well.
+  const cafeHistoryRows = useMemo(
+    () =>
+      presentCafeHistory(cafeHistoryRawRows, {
+        ...historyContext,
+        templates: [...templates, ...cafeAssignedTemplates, ...cafeAvailableTemplates],
+      }),
+    [cafeAssignedTemplates, cafeAvailableTemplates, cafeHistoryRawRows, historyContext, templates],
+  );
 
   const filteredTemplates = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -1066,6 +1082,58 @@ export default function useCleaningsPage({
     setHistoryLoading(false);
   }, []);
 
+  // Rows of a request that finished after the dialog was closed or reopened are not shown.
+  const openCafeHistory = useCallback(async () => {
+    const location = selectedCafe;
+    if (!location) {
+      return;
+    }
+
+    const requestId = cafeHistoryRequestRef.current + 1;
+    const isCurrent = () => cafeHistoryRequestRef.current === requestId;
+    cafeHistoryRequestRef.current = requestId;
+    setCafeHistoryLocation(location);
+
+    const cacheKey = getCacheKey(location.id);
+    const cachedRows = cleaningsSessionCache.cafeHistoryByLocation[cacheKey];
+    if (cachedRows) {
+      setCafeHistoryRawRows(cachedRows);
+      setCafeHistoryLoading(false);
+      return;
+    }
+
+    setCafeHistoryRawRows([]);
+    setCafeHistoryLoading(true);
+    try {
+      const response = await cleaningsApi.getCafeHistory(location.id);
+      if (!response?.st) {
+        throw new Error(response?.text || "Ошибка загрузки истории");
+      }
+
+      const rawRows = normalizeHistoryResponse(response);
+      cleaningsSessionCache.cafeHistoryByLocation[cacheKey] = rawRows;
+      if (isCurrent()) {
+        setCafeHistoryRawRows(rawRows);
+      }
+    } catch (error) {
+      if (isCurrent()) {
+        setCafeHistoryRawRows([]);
+        showAlert(error?.message || "Ошибка загрузки истории");
+      }
+    } finally {
+      if (isCurrent()) {
+        setCafeHistoryLoading(false);
+      }
+    }
+  }, [cleaningsApi, selectedCafe]);
+
+  const closeCafeHistory = useCallback(() => {
+    cafeHistoryRequestRef.current += 1;
+    setCafeHistoryLocation(null);
+    setCafeHistoryRawRows([]);
+    setCafeHistoryLoading(false);
+  }, []);
+
   const addCleaningToCafe = useCallback(
     async (templateId) => {
       if (!selectedCafeId) {
@@ -1075,6 +1143,7 @@ export default function useCleaningsPage({
       const response = await runMutation(async () => {
         const result = await cleaningsApi.assignTemplateToCafe(selectedCafeId, templateId, 0);
         invalidateControlCache();
+        invalidateHistoryCache();
         await loadCafes(selectedCafeId, { force: true });
         await loadTemplates({ force: true });
         return result;
@@ -1129,6 +1198,7 @@ export default function useCleaningsPage({
         removeCafeCleaningId,
       );
       invalidateControlCache();
+      invalidateHistoryCache();
       await loadCafes(selectedCafeId, { force: true });
       await loadTemplates({ force: true });
       return result;
@@ -1154,6 +1224,7 @@ export default function useCleaningsPage({
     const response = await runMutation(async () => {
       const result = await cleaningsApi.saveCafeDopTimes(selectedCafeId, items);
       invalidateControlCache();
+      invalidateHistoryCache();
       await loadCafes(selectedCafeId, { force: true });
       return result;
     });
@@ -1399,6 +1470,9 @@ export default function useCleaningsPage({
     bootstrapReady,
     cafeAssignedTemplates,
     cafeAvailableTemplates,
+    cafeHistoryLoading,
+    cafeHistoryLocation,
+    cafeHistoryRows,
     cafeRoleFilter,
     categories,
     categoryCard,
@@ -1407,6 +1481,7 @@ export default function useCleaningsPage({
     categoryQuery,
     cities,
     closeAlert,
+    closeCafeHistory,
     closeDialog,
     closeTemplateHistory,
     confirmArchiveToggle,
@@ -1444,6 +1519,7 @@ export default function useCleaningsPage({
     manualTemplatesSupported,
     moduleName,
     mutationLoading,
+    openCafeHistory,
     openCreate,
     openEdit,
     openPreparationEdit,

@@ -24,6 +24,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
+import HistoryIcon from "@mui/icons-material/History";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
@@ -69,6 +70,7 @@ export default function CafesView({
   onRoleFilterChange,
   onRemoveCleaning,
   onAddOpen,
+  onHistoryOpen,
   onSaveDopTimes,
   dopTimeDraftCount = 0,
   dopTimeDrafts = {},
@@ -191,6 +193,15 @@ export default function CafesView({
               >
                 <b>{assignedCleanings.length}</b> уборок назначено на «{selectedCafe?.name || "—"}»
               </Typography>
+              <JacoButton
+                compact
+                tone="secondary"
+                startIcon={<HistoryIcon />}
+                onClick={onHistoryOpen}
+                disabled={!selectedCafe}
+              >
+                История изменений
+              </JacoButton>
               {canEdit ? (
                 <>
                   <JacoButton

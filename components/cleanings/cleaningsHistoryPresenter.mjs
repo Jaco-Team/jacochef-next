@@ -1,7 +1,7 @@
 import { ADDITION_TYPE_LABELS, days } from "./constants.js";
 import { htmlToText } from "./richText.mjs";
 
-// Turns raw `history/category` and `history/template` rows into HistoryLog rows with Russian labels.
+// Turns raw `history/category`, `history/template` and `history/cafe` rows into HistoryLog rows with Russian labels.
 // `context`: { categories, templates, roles, locations, scheduleTypeOptions, additionTypeOptions }.
 
 const ACTION_LABEL = "Действие";
@@ -12,6 +12,12 @@ const EVENT_LABELS = {
   delete: "Удаление",
   status: "Статус",
   templates: "Применяется для",
+};
+const CAFE_EVENT_LABELS = {
+  assign: "Добавлена уборка",
+  remove: "Убрана уборка",
+  dop_time: "Доп. время",
+  replace: "Замена списка уборок",
 };
 const DOW_TO_SCHEDULE_TYPE = {
   1: "mon",
@@ -336,7 +342,7 @@ function addChange(changes, label, from, to, mode, createDefault = "") {
   changes[label] = { from: from || null, to: to || EMPTY_VALUE };
 }
 
-function buildRow(row, changes) {
+function buildRow(row, changes, eventLabels = EVENT_LABELS) {
   const eventType = row?.event_type || "";
 
   return {
@@ -345,7 +351,7 @@ function buildRow(row, changes) {
     actor_name: row?.actor_name || "Неизвестно",
     event_type: eventType,
     diff_json: {
-      [ACTION_LABEL]: { from: null, to: EVENT_LABELS[eventType] || "Изменение" },
+      [ACTION_LABEL]: { from: null, to: eventLabels[eventType] || EVENT_LABELS.update },
       ...changes,
     },
   };
@@ -444,41 +450,53 @@ function readTimes(times, kind, legacyTypeAction) {
   return [...new Set(values.map(toShortTime).filter(Boolean))].sort();
 }
 
-// Old shape: [{id, point_id, dop_time, work_id}] (duplicates collapse to the latest row);
-// new shape: {"<pointId>": {dop_time}}, a JSON array when the point ids are exactly 0..n-1.
-function readPoints(points) {
+// `{"<id>": {dop_time}}` → Map<id, minutes>. An empty map arrives as `[]`, a map with ids exactly
+// 0..n-1 as a JSON array (index = id); id 0 is a broken legacy link, never a cafe or a template.
+function readDopTimeMap(map) {
   const dopTimes = new Map();
-  const isLegacyRows =
-    Array.isArray(points) && points.some((row) => isPlainObject(row) && "point_id" in row);
 
-  if (isLegacyRows) {
-    const latestRowIds = new Map();
-
-    points.forEach((row, index) => {
-      const pointId = toNumber(row?.point_id);
-      if (pointId == null) {
-        return;
-      }
-
-      const rowId = toNumber(row?.id) ?? index;
-      if (latestRowIds.has(pointId) && latestRowIds.get(pointId) > rowId) {
-        return;
-      }
-
-      latestRowIds.set(pointId, rowId);
-      dopTimes.set(String(pointId), toNumber(row?.dop_time) ?? 0);
-    });
-  } else if (Array.isArray(points) || isPlainObject(points)) {
-    Object.entries(points).forEach(([pointId, value]) => {
+  if (Array.isArray(map) || isPlainObject(map)) {
+    Object.entries(map).forEach(([id, value]) => {
       if (value == null) {
         return;
       }
 
-      dopTimes.set(String(pointId), toNumber(isPlainObject(value) ? value.dop_time : value) ?? 0);
+      dopTimes.set(String(id), toNumber(isPlainObject(value) ? value.dop_time : value) ?? 0);
     });
   }
 
-  // `point_id = 0` is a broken legacy link, not a cafe.
+  dopTimes.delete("0");
+  return dopTimes;
+}
+
+// Old shape: [{id, point_id, dop_time, work_id}] (duplicates collapse to the latest row);
+// new shape: see `readDopTimeMap`.
+function readPoints(points) {
+  const isLegacyRows =
+    Array.isArray(points) && points.some((row) => isPlainObject(row) && "point_id" in row);
+
+  if (!isLegacyRows) {
+    return readDopTimeMap(points);
+  }
+
+  const dopTimes = new Map();
+  const latestRowIds = new Map();
+
+  points.forEach((row, index) => {
+    const pointId = toNumber(row?.point_id);
+    if (pointId == null) {
+      return;
+    }
+
+    const rowId = toNumber(row?.id) ?? index;
+    if (latestRowIds.has(pointId) && latestRowIds.get(pointId) > rowId) {
+      return;
+    }
+
+    latestRowIds.set(pointId, rowId);
+    dopTimes.set(String(pointId), toNumber(row?.dop_time) ?? 0);
+  });
+
   dopTimes.delete("0");
   return dopTimes;
 }
@@ -633,6 +651,80 @@ function presentTemplateEvent(row, context) {
   return buildRow(row, changes);
 }
 
+// Cafe snapshot: `{templates: {"<templateId>": {dop_time}}}`.
+function readCafeSnapshot(value) {
+  const snapshot = parseJson(value);
+
+  return isPlainObject(snapshot) ? readDopTimeMap(snapshot.templates) : null;
+}
+
+function getCafeTemplateChanges(before, after, context) {
+  const changes = {};
+  const byLabel = (left, right) => left.label.localeCompare(right.label, "ru");
+  const toTemplate = ([templateId, dopTime]) => ({
+    templateId,
+    label: getTemplateLabel(templateId, context),
+    dopTime,
+  });
+
+  const added = [...after]
+    .filter(([templateId]) => !before.has(templateId))
+    .map(toTemplate)
+    .sort(byLabel);
+  const removed = [...before]
+    .filter(([templateId]) => !after.has(templateId))
+    .map(toTemplate)
+    .sort(byLabel);
+  const assignmentChanges = [
+    ...added.map(({ label, dopTime }) =>
+      dopTime > 0 ? `+ ${label} (доп. время ${formatDopTime(dopTime)})` : `+ ${label}`,
+    ),
+    ...removed.map(({ label }) => `− ${label}`),
+  ];
+  if (assignmentChanges.length) {
+    changes["Уборки"] = { from: null, to: assignmentChanges.join(", ") };
+  }
+
+  [...after]
+    .filter(([templateId, dopTime]) => before.has(templateId) && before.get(templateId) !== dopTime)
+    .map(toTemplate)
+    .sort(byLabel)
+    .forEach(({ templateId, label, dopTime }) => {
+      const key = `Доп. время «${label}»`;
+      changes[key in changes ? `${key} #${templateId}` : key] = {
+        from: formatDopTime(before.get(templateId)),
+        to: formatDopTime(dopTime),
+      };
+    });
+
+  return changes;
+}
+
+function presentCafeEvent(row, context) {
+  const before = readCafeSnapshot(row?.before_json);
+  const after = readCafeSnapshot(row?.after_json);
+  const source = toText(row?.comment);
+  const sourceChange = source ? { Источник: { from: null, to: source } } : {};
+
+  if (!before && !after) {
+    return buildRow(
+      row,
+      { ...sourceChange, Подробности: { from: null, to: "Недоступны" } },
+      CAFE_EVENT_LABELS,
+    );
+  }
+
+  // A missing side is a cafe without cleanings, as in the BE diff.
+  const templateChanges = getCafeTemplateChanges(before || new Map(), after || new Map(), context);
+
+  // Only ignored ids changed (template 0): nothing to show.
+  if (!Object.keys(templateChanges).length) {
+    return null;
+  }
+
+  return buildRow(row, { ...sourceChange, ...templateChanges }, CAFE_EVENT_LABELS);
+}
+
 // One malformed row never breaks the list: it falls back to a bare «Изменение».
 function presentRows(rows, context, presentEvent) {
   const safeContext = context || {};
@@ -657,4 +749,8 @@ export function presentCategoryHistory(rows, context = {}) {
 
 export function presentTemplateHistory(rows, context = {}) {
   return presentRows(rows, context, presentTemplateEvent);
+}
+
+export function presentCafeHistory(rows, context = {}) {
+  return presentRows(rows, context, presentCafeEvent);
 }

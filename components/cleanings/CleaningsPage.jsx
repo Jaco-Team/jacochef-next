@@ -239,6 +239,7 @@ export default function CleaningsPage() {
               onRoleFilterChange={page.setCafeRoleFilter}
               onRemoveCleaning={page.setRemoveCafeCleaningId}
               onAddOpen={() => page.setAddCafeDialogOpen(true)}
+              onHistoryOpen={page.openCafeHistory}
               onSaveDopTimes={withConfirm(
                 page.saveCafeDopTimes,
                 "Сохранить изменения доп. времени?",
@@ -337,6 +338,14 @@ export default function CleaningsPage() {
         history={page.historyRows}
         loading={page.historyLoading}
         onClose={page.closeTemplateHistory}
+      />
+
+      <CleaningHistoryDialog
+        open={Boolean(page.cafeHistoryLocation)}
+        item={page.cafeHistoryLocation}
+        history={page.cafeHistoryRows}
+        loading={page.cafeHistoryLoading}
+        onClose={page.closeCafeHistory}
       />
 
       <DeleteCategoryDialog
